@@ -9,6 +9,7 @@ import { toHex } from "viem";
 /**
  * The RP ID for the webauthn
  */
+export const rpName = "Frak Wallet [POC]";
 export const rpId = process.env.IS_LOCAL === "true" ? "localhost" : "frak.id";
 export const rpOrigin =
     process.env.IS_LOCAL === "true"
@@ -112,7 +113,7 @@ function parseSignature(signature: ArrayBuffer): P256Signature {
  */
 function hexStringToUint8Array(input: string): Uint8Array {
     return new Uint8Array(
-        input.match(/[\da-f]{2}/gi).map((h) => parseInt(h, 16))
+        input.match(/[\da-f]{2}/gi)?.map((h) => parseInt(h, 16)) ?? []
     );
 }
 
@@ -130,6 +131,15 @@ function findChallengeOffset(arr: Uint8Array): number {
     const targetSeq = hexStringToUint8Array(challengePrefix);
 
     // Iterate over the array
+    const findIndexMethod = arr.findIndex((_, i) =>
+        targetSeq.every((value, j) => arr[i + j] === value)
+    );
+    const findViaDoubl = findViaDoubleFor(arr, targetSeq);
+    console.log("Results", { findIndexMethod, findViaDoubl });
+    return findViaDoubl ?? -1;
+}
+
+function findViaDoubleFor(arr: Uint8Array, targetSeq: Uint8Array) {
     for (let i = 0; i < arr.length; ++i) {
         for (let j = 0; j < targetSeq.length; j++) {
             if (arr[i + j] !== targetSeq[j]) {
@@ -140,5 +150,4 @@ function findChallengeOffset(arr: Uint8Array): number {
             }
         }
     }
-    return -1;
 }

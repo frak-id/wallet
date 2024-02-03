@@ -16,6 +16,8 @@
     "@peculiar/asn1-schema": "^2.3.8",
     "@simplewebauthn/browser": "^9.0.1",
     "@simplewebauthn/server": "^9.0.1",
+    "iron-session": "^8.0.1",
+    "mongodb": "^6.3.0",
     "next": "14.1.0",
     "permissionless": "^0.0.35",
     "radash": "^11.0.0",
