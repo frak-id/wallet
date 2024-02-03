@@ -24,6 +24,8 @@ It's built on the Mumbai blockchain (polygon testnet) and utilizes a range of cu
 The project is structured to support a modular and scalable architecture, incorporating Domain-Driven Design (DDD) principles and Infrastructure as Code (IaC) for efficient deployment and management. Below is a detailed explanation of the directory structure:
 
 - `src/app/`: Main Next.js entry point, encompassing all routing logic and pages. It orchestrates user navigation throughout the application.
+- 
+- `src/types/`: All the shared types between the client and server, ensuring type safety and consistency across the application.
 
 - `src/module/`: Organized by domains, each representing a specific area of functionality within the application. For each domain (e.g., `wallet`, `login`), the structure includes:
     - `hook/`: React hooks specific to the domain, encapsulating logic and side effects.
@@ -36,7 +38,6 @@ The project is structured to support a modular and scalable architecture, incorp
     - `action/`: Server-side actions for the domain, such as database operations or API calls.
     - `dto/`: Data Transfer Objects (DTOs) for structuring data exchanged with the server.
     - `repository/`: Repository patterns for abstracting data access and manipulation.
-    - `type/`: Shared TypeScript types and interfaces between client and server for type safety.
 
 - `public/`: Contains public static assets like images, fonts, and `robots.txt`, accessible without authentication and served directly by the web server.
 

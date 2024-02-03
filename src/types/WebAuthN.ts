@@ -1,0 +1,39 @@
+import {Address, Hex} from "viem";
+
+/**
+ * Represent a user WebAuthN wallet
+ */
+export type WebAuthNWallet = Readonly<{
+    // The address of the wallet
+    address: Address;
+    // The public key of the wallet
+    publicKey: P256PubKey;
+    // The authenticator id
+    authenticatorId: Hex;
+}>
+
+/**
+ * Represent a public key on the p265 curve
+ */
+export type P256PubKey = Readonly<{
+    x: Hex;
+    y: Hex;
+}>;
+
+/**
+ * Represent a signature using the P256 curve
+ */
+export type P256Signature = Readonly<{
+    r: Hex;
+    s: Hex;
+}>;
+
+/**
+ * The signature of a webauthn authentication
+ */
+export type WebAuthNSignature = Readonly<{
+    authenticatorData: Hex;
+    clientData: Hex;
+    challengeOffset: bigint;
+    signature: P256Signature;
+}>;
