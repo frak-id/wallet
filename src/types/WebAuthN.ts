@@ -1,4 +1,4 @@
-import {Address, Hex} from "viem";
+import type { Address, Hex } from "viem";
 
 /**
  * Represent a user WebAuthN wallet
@@ -10,7 +10,7 @@ export type WebAuthNWallet = Readonly<{
     publicKey: P256PubKey;
     // The authenticator id
     authenticatorId: Hex;
-}>
+}>;
 
 /**
  * Represent a public key on the p265 curve

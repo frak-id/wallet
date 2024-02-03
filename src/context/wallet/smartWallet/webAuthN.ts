@@ -1,10 +1,10 @@
+import type { P256Signature } from "@/types/WebAuthN";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import { base64URLStringToBuffer } from "@simplewebauthn/browser";
 import { decodeCredentialPublicKey } from "@simplewebauthn/server/helpers";
-import { AuthenticationResponseJSON } from "@simplewebauthn/typescript-types";
+import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
 import { toHex } from "viem";
-import {P256Signature} from "@/types/WebAuthN";
 
 /**
  * The RP ID for the webauthn
@@ -32,8 +32,12 @@ export function decodePublicKey({
         get(key: DecodedPubKeyIndexes.y): Uint8Array | undefined;
     };
 
-    const x = toHex(publicKey.get(DecodedPubKeyIndexes.x) ?? Uint8Array.from([]));
-    const y = toHex(publicKey.get(DecodedPubKeyIndexes.y) ?? Uint8Array.from([]));
+    const x = toHex(
+        publicKey.get(DecodedPubKeyIndexes.x) ?? Uint8Array.from([])
+    );
+    const y = toHex(
+        publicKey.get(DecodedPubKeyIndexes.y) ?? Uint8Array.from([])
+    );
 
     return { x, y };
 }

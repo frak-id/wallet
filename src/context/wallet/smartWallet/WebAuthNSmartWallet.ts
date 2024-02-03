@@ -1,11 +1,16 @@
 import {
+    KernelExecuteAbi,
+    KernelInitAbi,
+} from "@/context/wallet/abi/KernelAccountAbi";
+import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
+import {
     getAccountNonce,
     getSenderAddress,
     getUserOperationHash,
 } from "permissionless";
 import {
     SignTransactionNotSupportedBySmartAccount,
-    SmartAccount,
+    type SmartAccount,
 } from "permissionless/accounts";
 import {
     type Address,
@@ -21,8 +26,6 @@ import {
 } from "viem";
 import { toAccount } from "viem/accounts";
 import { getBytecode, getChainId } from "viem/actions";
-import {P256PubKey, WebAuthNSignature} from "@/types/WebAuthN";
-import {KernelExecuteAbi, KernelInitAbi} from "@/context/wallet/abi/KernelAccountAbi";
 
 export type KernelP256SmartAccount<
     transport extends Transport = Transport,
@@ -364,14 +367,13 @@ export async function webAuthNSmartAccount<
                         })),
                     ],
                 });
-            } else {
-                // Encode a simple call
-                return encodeFunctionData({
-                    abi: KernelExecuteAbi,
-                    functionName: "execute",
-                    args: [_tx.to, _tx.value, _tx.data, 0],
-                });
             }
+            // Encode a simple call
+            return encodeFunctionData({
+                abi: KernelExecuteAbi,
+                functionName: "execute",
+                args: [_tx.to, _tx.value, _tx.data, 0],
+            });
         },
 
         // Get simple dummy signature
