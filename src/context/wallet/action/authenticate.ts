@@ -1,3 +1,7 @@
+"use server";
+
+import { setSession } from "@/context/session/actions/session";
+import { formatWallet } from "@/context/wallet/formatter/walletFormatter";
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
 import { getUserRepository } from "@/context/wallet/repository/UserRepository";
 import { rpId, rpOrigin } from "@/context/wallet/smartWallet/webAuthN";
@@ -121,10 +125,17 @@ export async function validateAuthentication({
         });
     }
 
-    // Return a readable authenticator
-    /*
-    TODO:
-      - Return readable stuff
-      - Add to session
-     */
+    // Format the wallet
+    const wallet = await formatWallet({
+        authenticatorId: authenticator._id,
+        publicKey: authenticator.publicKey,
+    });
+
+    // Add it to the session
+    await setSession({
+        username: user.username,
+        wallet,
+    });
+
+    return wallet;
 }

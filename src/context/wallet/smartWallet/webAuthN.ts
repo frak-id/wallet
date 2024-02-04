@@ -1,4 +1,4 @@
-import type { P256Signature } from "@/types/WebAuthN";
+import type { P256Signature, WebAuthNSignature } from "@/types/WebAuthN";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import { base64URLStringToBuffer } from "@simplewebauthn/browser";
@@ -72,7 +72,7 @@ enum DecodedPubKeyCrv {
  */
 export function parseWebAuthNAuthentication({
     response,
-}: AuthenticationResponseJSON) {
+}: AuthenticationResponseJSON): WebAuthNSignature {
     // Extract the signature from the response
     const signature = parseSignature(
         base64URLStringToBuffer(response.signature)
@@ -91,7 +91,7 @@ export function parseWebAuthNAuthentication({
             new Uint8Array(base64URLStringToBuffer(response.authenticatorData))
         ),
         // Return sig + challenge offset
-        challengeOffset,
+        challengeOffset: BigInt(challengeOffset),
         signature,
     };
 }
@@ -131,6 +131,7 @@ function findChallengeOffset(arr: Uint8Array): number {
     const targetSeq = hexStringToUint8Array(challengePrefix);
 
     // Iterate over the array
+    // TODO: Check if both method return the same result
     const findIndexMethod = arr.findIndex((_, i) =>
         targetSeq.every((value, j) => arr[i + j] === value)
     );

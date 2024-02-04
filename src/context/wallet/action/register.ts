@@ -1,3 +1,7 @@
+"use server";
+
+import { setSession } from "@/context/session/actions/session";
+import { formatWallet } from "@/context/wallet/formatter/walletFormatter";
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
 import { getUserRepository } from "@/context/wallet/repository/UserRepository";
 import {
@@ -146,10 +150,17 @@ export async function validateRegistration({
         transports: registrationResponse.response.transports,
     });
 
-    // Return a readable authenticator
-    /*
-    TODO:
-      - Return readable stuff
-      - Add to session
-     */
+    // Format the wallet
+    const wallet = await formatWallet({
+        authenticatorId: id,
+        publicKey,
+    });
+
+    // Add it to the session
+    await setSession({
+        username,
+        wallet,
+    });
+
+    return wallet;
 }

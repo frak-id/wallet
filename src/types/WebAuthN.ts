@@ -9,7 +9,7 @@ export type WebAuthNWallet = Readonly<{
     // The public key of the wallet
     publicKey: P256PubKey;
     // The authenticator id
-    authenticatorId: Hex;
+    authenticatorId: string;
 }>;
 
 /**

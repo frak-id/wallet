@@ -1,3 +1,5 @@
+"use server";
+
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import { base64URLStringToBuffer } from "@simplewebauthn/browser";
