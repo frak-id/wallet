@@ -4,12 +4,13 @@
   "description": "Simple demo of a future Frak Wallet",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "sst bind next dev --turbo",
+    "build": "sst bind next dev next build",
+    "start": "sst bind next dev next start",
+    "lint": "biome lint .",
     "format:check": "biome check .",
-    "format": "biome check --apply ."
+    "format": "biome check --apply .",
+    "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
     "@peculiar/asn1-ecc": "^2.3.8",
@@ -26,6 +27,7 @@
     "viem": "^2.7.1"
   },
   "devDependencies": {
+    "sst": "^2.40.1",
     "@biomejs/biome": "1.5.3",
     "@simplewebauthn/types": "^9.0.1",
     "@types/node": "^20",

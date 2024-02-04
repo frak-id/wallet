@@ -4,12 +4,13 @@ import type { Session } from "@/types/Session";
 import { getIronSession } from "iron-session";
 import type { SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
+import { Config } from "sst/node/config";
 
 /**
  * Options used to store the session in the cookies
  */
 const sessionOptions: SessionOptions = {
-    password: process.env.SESSION_ENCRYPTION_KEY ?? "",
+    password: Config.SESSION_ENCRYPTION_KEY ?? "",
     cookieName: "session",
     ttl: 60 * 60 * 24 * 7, // 1 week
     cookieOptions: {

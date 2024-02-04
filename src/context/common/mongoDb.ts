@@ -1,5 +1,8 @@
+"use server";
+
 import { DI } from "@/context/common/di";
 import { MongoClient } from "mongodb";
+import {Config} from "sst/node/config";
 
 // Get the mongo db client
 export const getMongoDb = DI.registerAndExposeGetter({
@@ -8,7 +11,7 @@ export const getMongoDb = DI.registerAndExposeGetter({
     getter: async () => {
         // Get the mongo client
         const client = new MongoClient(
-            process.env.MONGODB_FRAK_POC_URI as string
+            Config.MONGODB_FRAK_POC_URI as string
         );
         // Connect to the database
         await client.connect();

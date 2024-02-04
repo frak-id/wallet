@@ -1,3 +1,5 @@
+"use server";
+
 import { DI } from "@/context/common/di";
 import { getMongoDb } from "@/context/common/mongoDb";
 import type { UserDocument } from "@/context/wallet/dto/UserDocument";
