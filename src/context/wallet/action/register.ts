@@ -20,6 +20,34 @@ import {
 } from "@simplewebauthn/server";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { map } from "radash";
+import {
+    adjectives,
+    nouns,
+    uniqueUsernameGenerator,
+} from "unique-username-generator";
+
+/**
+ * Generate a new username
+ */
+export async function getUsername(): Promise<string> {
+    // Generate a new username
+    const username = uniqueUsernameGenerator({
+        dictionaries: [nouns, adjectives],
+        separator: "-",
+        randomDigits: 0,
+        length: 20,
+        style: "lowerCase",
+    });
+
+    // Check if it's available
+    const isAvailable = await isUsernameAvailable(username);
+    if (!isAvailable) {
+        // If not, try again
+        return getUsername();
+    }
+
+    return username;
+}
 
 /**
  * Check if a username is available

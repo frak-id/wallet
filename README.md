@@ -66,7 +66,6 @@ To get started with this POC, you need to have Bun installed on your machine. If
 - [NextJS](https://nextjs.org/) - The React framework for server-side rendering.
 - [Biome](https://biomejs.dev/) - For ultra-fast linting/formatting.
 - [TanStack Query](https://tanstack.com/) - For efficient data fetching and async state management.
-- [ZuStand](https://github.com/pmndrs/zustand) - For simple state management.
 - [Wagmi 2.0](https://wagmi.sh/) - For Ethereum hooks.
 - [Viem 2.0](https://viem.sh/) - For blockchain communication.
 - [Permissionless](https://github.com/pimlicolabs/permissionless.js) - For account abstraction (ERC-4337) SDK.

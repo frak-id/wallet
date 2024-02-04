@@ -2,7 +2,6 @@
 
 import { DI } from "@/context/common/di";
 import { MongoClient } from "mongodb";
-import {Config} from "sst/node/config";
 
 // Get the mongo db client
 export const getMongoDb = DI.registerAndExposeGetter({
@@ -10,8 +9,9 @@ export const getMongoDb = DI.registerAndExposeGetter({
     isAsync: true,
     getter: async () => {
         // Get the mongo client
+        // TODO: Should use Config.MONGODB_FRAK_POC_URI instead, but next isn't happy about it
         const client = new MongoClient(
-            Config.MONGODB_FRAK_POC_URI as string
+            process.env.MONGODB_FRAK_POC_URI as string
         );
         // Connect to the database
         await client.connect();
