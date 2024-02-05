@@ -1,0 +1,48 @@
+.inputWrapper {
+    position: relative;
+    display: block;
+}
+
+.input {
+    all: unset;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    width: 100%;
+    line-height: 1.7;
+    background-color: var(--frak-input-background-color);
+    border: 1px solid var(--frak-input-border-color);
+    color: var(--frak-input-text-color);
+
+}
+
+.input:focus,
+.input:focus-within {
+    border: 1px solid var(--frak-input-border-color);
+}
+
+.input::placeholder {
+    /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: var(--frak-input-placeholder-color);
+    opacity: 1;
+    /* Firefox */
+}
+
+.input::-ms-input-placeholder {
+    /* Microsoft Edge */
+    color: var(--frak-input-placeholder-color);
+}
+
+.input[data-invalid="true"] {
+    border-color: #818c9c;
+    color: #adadad;
+}
+
+.input::-webkit-outer-spin-button,
+.input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.input[type="number"] {
+    -moz-appearance: textfield;
+}

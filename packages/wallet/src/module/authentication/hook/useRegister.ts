@@ -1,6 +1,7 @@
 import {
     getRegisterOptions,
     getUsername,
+    isUsernameAvailable,
     validateRegistration,
 } from "@/context/wallet/action/register";
 import { useLastAuthentications } from "@/module/authentication/hook/useLastAuthentications";
@@ -25,9 +26,17 @@ export function useRegister() {
 
     // Generate a random username on mount
     useEffect(() => {
-        // Generate a new username on mount
-        getUsername().then(setUsername);
-    });
+        if (username === "") {
+            // Generate a new username on mount
+            getUsername().then(setUsername);
+            return;
+        }
+
+        // Check if it's available
+        isUsernameAvailable(username).then((isAvailable) => {
+            console.log("isAvailable", isAvailable);
+        });
+    }, [username]);
 
     // The mutation that will be used to perform the registration process
     const {

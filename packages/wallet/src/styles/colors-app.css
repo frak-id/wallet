@@ -3,4 +3,8 @@
     --frak-link-color: var(--frak-color-white);
     --frak-background-color: var(--frak-color-dark);
     --frak-panel-background-color: var(--frak-color-blue-zodiac-darker);
+    --frak-input-background-color: var(--frak-color-blue-zodiac-darker);
+    --frak-input-border-color: var(--frak-color-white);
+    --frak-input-text-color: var(--frak-color-white);
+    --frak-input-placeholder-color: var(--frak-color-silver-chalice);
 }

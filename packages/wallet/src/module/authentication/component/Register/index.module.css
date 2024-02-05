@@ -7,3 +7,14 @@
 .inner {
     flex: 1;
 }
+
+.input {
+    padding-bottom: 28px;
+}
+
+.button {
+    all: unset;
+    cursor: pointer;
+    display: block;
+    margin: 0 auto;
+}

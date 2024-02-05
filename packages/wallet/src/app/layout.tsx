@@ -1,3 +1,4 @@
+import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Viewport } from "next";
 import { Fira_Mono } from "next/font/google";
@@ -49,7 +50,9 @@ export default function RootLayout({
         <html lang="en">
             <body className={firaMono.className}>
                 <main className={styles.main}>
-                    <div className={styles.inner}>{children}</div>
+                    <div className={styles.inner}>
+                        <RootProvider>{children}</RootProvider>
+                    </div>
                 </main>
             </body>
         </html>
