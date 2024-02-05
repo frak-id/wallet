@@ -4,7 +4,7 @@
   "description": "Simple demo of a future Frak Wallet",
   "private": true,
   "type": "module",
-  "license": "GNU GPL 3.0",
+  "license": "MIT",
   "scripts": {
     "dev": "sst bind PORT=3001 next dev",
     "build": "sst bind next dev next build",
