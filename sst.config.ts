@@ -1,5 +1,5 @@
 import type { SSTConfig } from "sst";
-import { WalletAppStack } from "./stacks/WebApp";
+import { WalletAppStack } from "./iac/WebApp";
 
 export default {
     config(_input) {

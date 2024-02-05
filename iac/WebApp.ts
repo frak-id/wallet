@@ -24,7 +24,7 @@ export function WalletAppStack({ stack }: StackContext) {
 
     // Declare the Next.js site
     const site = new NextjsSite(stack, "wallet", {
-        path: "./",
+        path: "packages/wallet",
         // Set the custom domain
         customDomain: {
             domainName: `${subDomain}`.toLowerCase(),
