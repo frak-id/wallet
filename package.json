@@ -20,6 +20,7 @@
   },
   "workspaces": ["packages/*"],
   "dependencies": {
+    "@tanstack/react-query": "^5.18.1",
     "viem": "^2.7.3"
   }
 }
