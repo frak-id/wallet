@@ -1,10 +1,10 @@
 "use server";
 
 import { setSession } from "@/context/session/actions/session";
-import { formatWallet } from "@/context/wallet/formatter/walletFormatter";
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
 import { getUserRepository } from "@/context/wallet/repository/UserRepository";
 import { rpId, rpOrigin } from "@/context/wallet/smartWallet/webAuthN";
+import { formatWallet } from "@/context/wallet/utils/walletFormatter";
 import { base64URLStringToBuffer } from "@simplewebauthn/browser";
 import {
     generateAuthenticationOptions,

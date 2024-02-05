@@ -44,6 +44,7 @@ export function useRegister() {
         isPending: isLoading,
         isSuccess,
         isError,
+        error,
         mutate: register,
     } = useMutation({
         mutationKey: ["register", username],
@@ -91,6 +92,7 @@ export function useRegister() {
         isLoading,
         isSuccess,
         isError,
+        error,
         register,
     };
 }

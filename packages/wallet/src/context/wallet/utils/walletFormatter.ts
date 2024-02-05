@@ -1,4 +1,4 @@
-import { viemClient } from "@/context/common/blockchain";
+import { viemClient } from "@/context/common/blockchain/provider";
 import { webAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
 

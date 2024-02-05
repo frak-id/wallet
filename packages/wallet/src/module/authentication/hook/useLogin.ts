@@ -27,6 +27,7 @@ export function useLogin() {
         isPending: isLoading,
         isSuccess,
         isError,
+        error,
         mutate: login,
     } = useMutation({
         mutationKey: ["login", selectedUsername],
@@ -72,6 +73,7 @@ export function useLogin() {
         isLoading,
         isSuccess,
         isError,
+        error,
         login,
     };
 }
