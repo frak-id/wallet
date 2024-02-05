@@ -24,6 +24,9 @@ export function useRegister() {
     // The current username
     const [username, setUsername] = useState<string>("");
 
+    // The current username
+    const [isAvailable, setIsAvailable] = useState<boolean>(false);
+
     // Generate a random username on mount
     useEffect(() => {
         if (username === "") {
@@ -33,9 +36,7 @@ export function useRegister() {
         }
 
         // Check if it's available
-        isUsernameAvailable(username).then((isAvailable) => {
-            console.log("isAvailable", isAvailable);
-        });
+        isUsernameAvailable(username).then(setIsAvailable);
     }, [username]);
 
     // The mutation that will be used to perform the registration process
@@ -47,6 +48,11 @@ export function useRegister() {
     } = useMutation({
         mutationKey: ["register", username],
         mutationFn: async () => {
+            // If username not available, early exit
+            if (!isAvailable) {
+                return;
+            }
+
             // Get the registration options
             const registrationOptions = await getRegisterOptions({ username });
 
@@ -80,6 +86,7 @@ export function useRegister() {
 
     return {
         username,
+        isAvailable,
         setUsername,
         isLoading,
         isSuccess,

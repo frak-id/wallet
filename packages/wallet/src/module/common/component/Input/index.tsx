@@ -1,13 +1,13 @@
+import { useDebounce } from "@uidotdev/usehooks";
 import {
     type InputHTMLAttributes,
     forwardRef,
-    useState,
-    useEffect,
     useCallback,
+    useEffect,
     useRef,
+    useState,
 } from "react";
 import styles from "./index.module.css";
-import { useDebounce } from "@uidotdev/usehooks";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     classNameWrapper?: string;

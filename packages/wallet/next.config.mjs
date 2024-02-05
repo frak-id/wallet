@@ -7,12 +7,16 @@ const wantedFromConfig = [
     "PIMLICO_API_KEY",
     // TODO: Shouldn't be here, but Next is crying all over the place when using SST.Config, to fix
     "MONGODB_FRAK_POC_URI",
+    "SESSION_ENCRYPTION_KEY",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    env: { ...envFromSstConfig },
+    env: {
+        ...envFromSstConfig,
+        IS_LOCAL: (Config.STAGE !== "prod").toString(),
+    },
     transpilePackages: ["lucide-react"],
 };
 
