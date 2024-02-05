@@ -1,0 +1,6 @@
+:root {
+    --frak-text-color: var(--frak-color-white);
+    --frak-link-color: var(--frak-color-white);
+    --frak-background-color: var(--frak-color-dark);
+    --frak-panel-background-color: var(--frak-color-blue-zodiac-darker);
+}

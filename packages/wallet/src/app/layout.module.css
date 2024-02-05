@@ -1,0 +1,13 @@
+.main {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.inner {
+    margin: 0 20px;
+    flex: 1;
+}

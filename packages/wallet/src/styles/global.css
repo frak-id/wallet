@@ -1,0 +1,57 @@
+*,
+*::after,
+*::before {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+html {
+    background: var(--frak-background-color);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    color: var(--frak-text-color);
+    scroll-behavior: smooth;
+    height: 100dvh;
+
+    & body {
+        height: 100dvh;
+        @mixin flex flex-start, flex-start, column;
+        position: relative;
+    }
+}
+
+@media (min-width: 600px) {
+    html {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        background: var(--frak-panel-background-color);
+        overflow: hidden;
+
+        & body {
+            margin: auto;
+            width: 390px;
+            height: 760px;
+            overflow: auto;
+            background: var(--frak-background-color);
+        }
+    }
+}
+
+body {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+a {
+    color: var(--frak-link-color);
+    text-decoration: none;
+}

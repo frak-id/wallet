@@ -1,8 +1,16 @@
+import "@/styles/all.css";
 import type { Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Fira_Mono } from "next/font/google";
 import type { ReactNode } from "react";
+import styles from "./layout.module.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const firaMono = Fira_Mono({
+    subsets: ["latin"],
+    variable: "--font-family",
+    fallback: ["--font-family-sans"],
+    weight: ["400", "500", "700"],
+    display: "swap",
+});
 
 export const metadata = {
     title: "Frak Wallet",
@@ -39,7 +47,11 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={inter.className}>{children}</body>
+            <body className={firaMono.className}>
+                <main className={styles.main}>
+                    <div className={styles.inner}>{children}</div>
+                </main>
+            </body>
         </html>
     );
 }
