@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "sst bind next dev",
+    "dev": "sst bind PORT=3001 next dev",
     "build": "sst bind next dev next build",
     "start": "sst bind next dev next start",
     "lint": "biome lint .",

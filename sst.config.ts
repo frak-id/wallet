@@ -1,5 +1,7 @@
 import type { SSTConfig } from "sst";
-import { WalletAppStack } from "./iac/WebApp";
+import { ConfigStack } from "./iac/Config";
+import { ExampleAppStack } from "./iac/ExampleWebApp";
+import { WalletAppStack } from "./iac/WalletWebApp";
 
 export default {
     config(_input) {
@@ -9,6 +11,8 @@ export default {
         };
     },
     stacks(app) {
+        app.stack(ConfigStack);
         app.stack(WalletAppStack);
+        app.stack(ExampleAppStack);
     },
 } satisfies SSTConfig;

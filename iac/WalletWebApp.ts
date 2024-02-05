@@ -1,5 +1,7 @@
 import type { StackContext } from "sst/constructs";
-import { Config, NextjsSite } from "sst/constructs";
+import { use } from "sst/constructs";
+import { NextjsSite } from "sst/constructs";
+import { ConfigStack } from "./Config";
 
 /**
  * Define the wallet webapp SST stack
@@ -8,12 +10,19 @@ import { Config, NextjsSite } from "sst/constructs";
  */
 export function WalletAppStack({ stack }: StackContext) {
     // The configs required to run the app
+    const {
+        sessionEncryptionKey,
+        mongoUri,
+        rpcUrl,
+        pimlicoApiKey,
+        airdropPrivateKey,
+    } = use(ConfigStack);
     const configs = [
-        new Config.Secret(stack, "SESSION_ENCRYPTION_KEY"),
-        new Config.Secret(stack, "MONGODB_FRAK_POC_URI"),
-        new Config.Secret(stack, "RPC_URL"),
-        new Config.Secret(stack, "PIMLICO_API_KEY"),
-        new Config.Secret(stack, "AIRDROP_PRIVATE_KEY"),
+        sessionEncryptionKey,
+        mongoUri,
+        rpcUrl,
+        pimlicoApiKey,
+        airdropPrivateKey,
     ];
 
     // Base domain for our whole app
