@@ -21,31 +21,43 @@ It's built on the Mumbai blockchain (polygon testnet) and utilizes a range of cu
 
 ## Folder Architecture Overview
 
-The project is structured to support a modular and scalable architecture, incorporating Domain-Driven Design (DDD) principles and Infrastructure as Code (IaC) for efficient deployment and management. Below is a detailed explanation of the directory structure:
+The project is built using a monorepo structure to further enhance modularity and scalability, incorporating Domain-Driven Design (DDD) principles and Infrastructure as Code (IaC) for efficient deployment and management. 
 
-- `src/app/`: Main Next.js entry point, encompassing all routing logic and pages. It orchestrates user navigation throughout the application.
-- 
-- `src/types/`: All the shared types between the client and server, ensuring type safety and consistency across the application.
+This new structure allows for multiple projects, such as POCs and example applications, to coexist within the same repository while maintaining their individual architectures. Below is the revised directory structure:
 
-- `src/module/`: Organized by domains, each representing a specific area of functionality within the application. For each domain (e.g., `wallet`, `login`), the structure includes:
-    - `hook/`: React hooks specific to the domain, encapsulating logic and side effects.
-    - `component/`: React components related to the domain, constructing the user interface.
-    - `store/`: State management for the domain, handling relevant application state.
-    - `provider/`: Context providers for the domain, allowing state and functionality to be accessed globally.
-    - `style/`: CSS or styled components for the domain, defining visual appearance.
+### Monorepo Structure
 
-- `src/context/`: Manages global context and server-side logic, structured per domain with:
-    - `action/`: Server-side actions for the domain, such as database operations or API calls.
-    - `dto/`: Data Transfer Objects (DTOs) for structuring data exchanged with the server.
-    - `repository/`: Repository patterns for abstracting data access and manipulation.
+- `packages/`: Root directory for all projects within the monorepo, each project contained within its own subdirectory.
+  - `wallet/`: The wallet proof of concept (POC), demonstrating the core functionalities.
+  - `example/`: An example application interacting with the wallet POC.
 
-- `public/`: Contains public static assets like images, fonts, and `robots.txt`, accessible without authentication and served directly by the web server.
+- `iac/`: Infrastructure as Code (IaC) setup using Serverless Stack (SST), located at the root of each project within the `packages/` directory. It houses definitions and configurations for cloud infrastructure deployment on AWS.
 
-- `iac/`: Infrastructure as Code (IaC) setup using Serverless Stack (SST), housing definitions and configurations for cloud infrastructure deployment on AWS.
+- `sst.config.ts`: Located at the root of each project within the `packages/` directory, this is the root SST configuration file. It specifies global settings and resource definitions for deploying the project's infrastructure.
 
-- `sst.config.ts`: The root SST configuration file, specifying global settings and resource definitions for deploying the application infrastructure.
+Each project within the `packages/` directory follows the same internal architecture, as detailed below:
 
-This architecture not only facilitates separation of concerns and modularity but also ensures scalability and ease of deployment through automated infrastructure management.
+### Project Structure (Applicable to Both `wallet` and `example`)
+
+- `src/app/`: Main Next.js entry point for the project, encompassing all routing logic and pages. It orchestrates user navigation throughout the application.
+
+- `src/types/`: Holds all shared TypeScript types and interfaces between the client and server for the project, ensuring type safety and consistency across the application.
+
+- `src/module/`: Organized by domains, with each domain representing a specific area of functionality within the project. For each domain (e.g., `wallet`, `login`), the structure includes:
+  - `hook/`: React hooks specific to the domain, encapsulating logic and side effects.
+  - `component/`: React components related to the domain, used to construct the user interface.
+  - `store/`: State management logic for the domain, managing relevant application state.
+  - `provider/`: Context providers for the domain, enabling state and functionality to be accessed globally.
+  - `style/`: CSS or styled components for the domain, defining its visual appearance.
+
+- `src/context/`: Manages global context and server-side logic for the project, structured per domain with:
+  - `action/`: Defines server-side actions for the domain, such as database operations or external API calls.
+  - `dto/`: Data Transfer Objects (DTOs) for structuring data exchanged with the server.
+  - `repository/`: Repository patterns for abstracting data access and manipulation.
+
+- `public/`: Contains public static assets like images, fonts, accessible without authentication and served directly by the web server.
+
+This architecture not only supports the separation of concerns and modularity but also facilitates scalability and ease of deployment through automated infrastructure management across multiple projects within the monorepo.
 
 ## Getting Started
 
