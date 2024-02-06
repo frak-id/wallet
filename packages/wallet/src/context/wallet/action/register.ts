@@ -19,7 +19,7 @@ import {
     verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
-import { map } from "radash";
+import { map, tryit } from "radash";
 import {
     adjectives,
     nouns,
@@ -134,15 +134,19 @@ export async function validateRegistration({
     }
 
     // Find a challenges in the user matching the one performed
-    const verifications = await map(user.challenges, async (challenge) =>
-        verifyRegistrationResponse({
-            response: registrationResponse,
-            expectedChallenge: challenge,
-            expectedOrigin: rpOrigin,
-            expectedRPID: rpId,
-        })
-    );
-    const verification = verifications.find((v) => v.verified);
+    const verifications = await map(user.challenges, async (challenge) => {
+        // Encapsulated inside a try it since it can throw error if invalid challenge
+        const [, result] = await tryit(async () =>
+            verifyRegistrationResponse({
+                response: registrationResponse,
+                expectedChallenge: challenge,
+                expectedOrigin: rpOrigin,
+                expectedRPID: rpId,
+            })
+        )();
+        return result;
+    });
+    const verification = verifications.find((v) => v?.verified === true);
     if (!verification?.registrationInfo) {
         throw new Error("Registration failed");
     }

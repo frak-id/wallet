@@ -14,7 +14,7 @@ import type {
     AuthenticationResponseJSON,
     PublicKeyCredentialDescriptorFuture,
 } from "@simplewebauthn/types";
-import { map } from "radash";
+import { map, tryit } from "radash";
 
 /**
  * Generate the webauthn authenticate options for a user
@@ -92,24 +92,29 @@ export async function validateAuthentication({
     }
 
     // Find a challenges in the user matching the one performed
-    const verifications = await map(user.challenges, async (challenge) =>
-        verifyAuthenticationResponse({
-            response: authenticationResponse,
-            expectedOrigin: rpOrigin,
-            expectedRPID: rpId,
-            authenticator: {
-                counter: authenticator.counter,
-                credentialID: new Uint8Array(
-                    base64URLStringToBuffer(authenticator._id)
-                ),
-                credentialPublicKey: new Uint8Array(
-                    base64URLStringToBuffer(authenticator.credentialPublicKey)
-                ),
-            },
-            expectedChallenge: challenge,
-        })
-    );
-    const verification = verifications.find((v) => v.verified);
+    const verifications = await map(user.challenges, async (challenge) => {
+        const [, result] = await tryit(async () =>
+            verifyAuthenticationResponse({
+                response: authenticationResponse,
+                expectedOrigin: rpOrigin,
+                expectedRPID: rpId,
+                authenticator: {
+                    counter: authenticator.counter,
+                    credentialID: new Uint8Array(
+                        base64URLStringToBuffer(authenticator._id)
+                    ),
+                    credentialPublicKey: new Uint8Array(
+                        base64URLStringToBuffer(
+                            authenticator.credentialPublicKey
+                        )
+                    ),
+                },
+                expectedChallenge: challenge,
+            })
+        )();
+        return result;
+    });
+    const verification = verifications.find((v) => v?.verified === true);
     if (!verification) {
         throw new Error("Authentication failed");
     }
