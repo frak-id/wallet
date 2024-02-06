@@ -1,0 +1,11 @@
+.walletAddress {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.walletAddress__icon {
+    display: block;
+}

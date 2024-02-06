@@ -18,6 +18,7 @@ import {
     useEffect,
     useState,
 } from "react";
+import { formatEther } from "viem";
 import { polygonMumbai } from "viem/chains";
 import { useConnect, useReadContract } from "wagmi";
 
@@ -93,7 +94,7 @@ function useWalletHook({ session }: { session: Session }) {
 
     return {
         address: smartWallet?.address,
-        balance,
+        balance: formatEther(balance ?? 0n),
         smartWallet,
         refreshBalance,
         // Stuff related to the wagmi connector

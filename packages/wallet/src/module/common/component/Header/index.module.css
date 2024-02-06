@@ -1,0 +1,21 @@
+.header {
+    height: 100px;
+    text-align: center;
+}
+
+.header__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header__row--centered {
+    justify-content: center;
+    gap: 50px;
+}
+
+.header__button {
+    all: unset;
+    cursor: pointer;
+}
