@@ -50,8 +50,10 @@ export async function deleteSession() {
 /**
  * Get the current session
  */
-export async function getSession(): Promise<Session> {
+export async function getSession(): Promise<Session | null> {
     const session = await getFullSession();
+    if (!session.username) return null;
+
     return {
         username: session.username,
         wallet: session.wallet,

@@ -1,14 +1,26 @@
 "use client";
 
+import { rpcTransport } from "@/context/common/blockchain/provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PropsWithChildren } from "react";
+import { polygonMumbai } from "viem/chains";
+import { WagmiProvider, createConfig } from "wagmi";
 
+// The query client that will be used by tanstack/react-query
 const queryClient = new QueryClient();
+
+// The wagmi config
+const wagmiConfig = createConfig({
+    chains: [polygonMumbai],
+    transports: {
+        [polygonMumbai.id]: rpcTransport,
+    },
+});
 
 export function RootProvider({ children }: PropsWithChildren) {
     return (
         <QueryClientProvider client={queryClient}>
-            {children}
+            <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
         </QueryClientProvider>
     );
 }

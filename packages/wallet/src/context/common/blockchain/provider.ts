@@ -6,10 +6,17 @@ import {
 import { http, createPublicClient, createWalletClient } from "viem";
 import { polygonMumbai } from "viem/chains";
 
+export const rpcTransport = http(process.env.RPC_URL, {
+    batch: { wait: 50 },
+    retryCount: 5,
+    retryDelay: 200,
+    timeout: 20_000,
+});
+
 // Build the viem client
 export const viemClient = createPublicClient({
     chain: polygonMumbai,
-    transport: http(process.env.RPC_URL),
+    transport: rpcTransport,
     cacheTime: 60_000,
     batch: {
         multicall: { wait: 50 },
@@ -19,7 +26,7 @@ export const viemClient = createPublicClient({
 // Build the viem wallet client
 export const viemWalletClient = createWalletClient({
     chain: polygonMumbai,
-    transport: http(process.env.RPC_URL),
+    transport: rpcTransport,
     cacheTime: 60_000,
 });
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { setSession } from "@/context/session/actions/session";
+import { setSession } from "@/context/session/action/session";
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
 import { getUserRepository } from "@/context/wallet/repository/UserRepository";
 import { rpId, rpOrigin } from "@/context/wallet/smartWallet/webAuthN";

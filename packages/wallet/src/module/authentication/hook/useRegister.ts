@@ -4,20 +4,15 @@ import {
     isUsernameAvailable,
     validateRegistration,
 } from "@/context/wallet/action/register";
-import { useLastAuthentications } from "@/module/authentication/hook/useLastAuthentications";
+import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Hook that handle the registration process
  */
 export function useRegister() {
-    // Router and transition that will be used post login
-    const router = useRouter();
-    const [, startTransition] = useTransition();
-
     // Setter for the last authentication
     const { addLastAuthentication } = useLastAuthentications();
 
@@ -72,15 +67,6 @@ export function useRegister() {
             addLastAuthentication({
                 username,
                 wallet,
-            });
-
-            // TODO: Also trigger a FRK airdrop here
-
-            // Start the transition
-            startTransition(() => {
-                // Redirect to the wallet
-                // TODO: page path TBD
-                router.push("/wallet");
             });
         },
     });

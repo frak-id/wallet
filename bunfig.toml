@@ -1,0 +1,2 @@
+# Disable bun telemetry metrics
+telemetry = false

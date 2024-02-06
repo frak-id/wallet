@@ -1,12 +1,14 @@
-import { TestRegister } from "@/module/authentication/component/Register";
+import { AuthGate } from "@/module/authentication/component/AuthGate";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
+import { WalletHomePage } from "@/module/wallet/component/Home";
 
 export default async function HomePage() {
-    // Otherwise, display the login page
     return (
         <>
             <ClientOnly>
-                <TestRegister />
+                <AuthGate>
+                    <WalletHomePage />
+                </AuthGate>
             </ClientOnly>
         </>
     );

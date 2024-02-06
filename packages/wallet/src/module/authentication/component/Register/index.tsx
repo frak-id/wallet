@@ -6,7 +6,7 @@ import { Fingerprint } from "lucide-react";
 import type { FormEvent } from "react";
 import styles from "./index.module.css";
 
-export function TestRegister() {
+export function Register() {
     const { username, setUsername, register } = useRegister();
 
     /**

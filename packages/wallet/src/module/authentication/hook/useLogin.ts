@@ -2,23 +2,17 @@ import {
     getAuthenticateOptions,
     validateAuthentication,
 } from "@/context/wallet/action/authenticate";
-import { useLastAuthentications } from "@/module/authentication/hook/useLastAuthentications";
+import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 /**
  * Hook that handle the registration process
  */
 export function useLogin() {
-    // Router and transition that will be used post login
-    const router = useRouter();
-    const [, startTransition] = useTransition();
-
     // Setter for the last authentication
-    const { lastAuthentications, addLastAuthentication } =
-        useLastAuthentications();
+    const { addLastAuthentication } = useLastAuthentications();
 
     const [selectedUsername, setSelectedUsername] = useState<string>();
 
@@ -57,18 +51,10 @@ export function useLogin() {
                 username: selectedUsername,
                 wallet,
             });
-
-            // Start the transition
-            startTransition(() => {
-                // Redirect to the wallet
-                // TODO: page path TBD
-                router.push("/wallet");
-            });
         },
     });
 
     return {
-        lastAuthentications,
         setSelectedUsername,
         isLoading,
         isSuccess,
