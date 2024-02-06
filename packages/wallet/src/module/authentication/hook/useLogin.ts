@@ -16,6 +16,11 @@ export function useLogin() {
 
     const [selectedUsername, setSelectedUsername] = useState<string>();
 
+    async function setUsernameAndLogin(username: string) {
+        setSelectedUsername(username);
+        await login();
+    }
+
     // The mutation that will be used to perform the registration process
     const {
         isPending: isLoading,
@@ -55,11 +60,10 @@ export function useLogin() {
     });
 
     return {
-        setSelectedUsername,
         isLoading,
         isSuccess,
         isError,
         error,
-        login,
+        login: setUsernameAndLogin,
     };
 }

@@ -1,0 +1,19 @@
+.loginItem {
+    margin-bottom: 20px;
+    padding: 10px;
+    font-size: 14px;
+    background-color: var(--frak-panel-background-color);
+}
+
+.loginItem__button {
+    all: unset;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.loginItem__icon {
+    display: block;
+}
