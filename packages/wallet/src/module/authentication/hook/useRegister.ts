@@ -40,7 +40,7 @@ export function useRegister() {
         isSuccess,
         isError,
         error,
-        mutate: register,
+        mutateAsync: register,
     } = useMutation({
         mutationKey: ["register", username],
         mutationFn: async () => {

@@ -1,5 +1,5 @@
 import { WalletHomePage } from "@/module/wallet/component/Home";
 
-export default async function HomePage() {
+export default function WalletPage() {
     return <WalletHomePage />;
 }

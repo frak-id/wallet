@@ -2,6 +2,8 @@
 
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 /**
  * Login from previous authentication
@@ -9,6 +11,8 @@ import { useLastAuthentications } from "@/module/authentication/providers/LastAu
  * @constructor
  */
 export function Login() {
+    const router = useRouter();
+    const [, startTransition] = useTransition();
     const { lastAuthentications } = useLastAuthentications();
     const { login, setSelectedUsername } = useLogin();
 
@@ -21,10 +25,13 @@ export function Login() {
                     <li key={auth.username}>
                         <button
                             type={"button"}
-                            onClick={() => {
+                            onClick={async () => {
                                 // TODO: This could be merge in the same function??
                                 setSelectedUsername(auth.username);
-                                login();
+                                await login();
+                                startTransition(() => {
+                                    router.push("/");
+                                });
                             }}
                         >
                             {auth.username}

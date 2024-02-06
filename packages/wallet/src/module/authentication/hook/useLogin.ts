@@ -22,7 +22,7 @@ export function useLogin() {
         isSuccess,
         isError,
         error,
-        mutate: login,
+        mutateAsync: login,
     } = useMutation({
         mutationKey: ["login", selectedUsername],
         mutationFn: async () => {

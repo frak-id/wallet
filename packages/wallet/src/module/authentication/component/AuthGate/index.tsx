@@ -21,7 +21,7 @@ export async function AuthGate({ children }: AuthGateProps) {
     if (!currentSession) {
         return (
             <LastAuthenticationsProvider>
-                <LoginOrRegister />
+                <LoginOrRegister>{children}</LoginOrRegister>
             </LastAuthenticationsProvider>
         );
     }

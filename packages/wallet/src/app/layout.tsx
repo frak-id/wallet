@@ -1,3 +1,5 @@
+import { AuthGate } from "@/module/authentication/component/AuthGate";
+import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Viewport } from "next";
@@ -51,7 +53,11 @@ export default function RootLayout({
             <body className={firaMono.className}>
                 <main className={styles.main}>
                     <div className={styles.inner}>
-                        <RootProvider>{children}</RootProvider>
+                        <RootProvider>
+                            <ClientOnly>
+                                <AuthGate>{children}</AuthGate>
+                            </ClientOnly>
+                        </RootProvider>
                     </div>
                 </main>
             </body>

@@ -1,22 +1,22 @@
 "use client";
 
-import { Login } from "@/module/authentication/component/Login";
-import { Register } from "@/module/authentication/component/Register";
 import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import type { PropsWithChildren } from "react";
 
-// Components that return different children based on the user's authentication state
-export function LoginOrRegister() {
+// Components that redirect based on the user's authentication state
+export function LoginOrRegister({ children }: PropsWithChildren) {
+    const router = useRouter();
     const { wasAuthenticated } = useLastAuthentications();
 
-    // todo
-    // This should be smth like a navigation maybe?
-    // Like signup, login, recover etc path
-    // Having all in the same place isn't ideal at all
-    // The auth gate should only perform a redirection to '/login',
-    // the login should expose the initial state and softly redirect to either '/register' or '/authentications' based on the state (and later to '/recover' or '/link')
+    useEffect(() => {
+        if (wasAuthenticated) {
+            router.push("/login");
+            return;
+        }
+        router.push("/register");
+    }, [router, wasAuthenticated]);
 
-    if (wasAuthenticated) {
-        return <Login />;
-    }
-    return <Register />;
+    return children;
 }

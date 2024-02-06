@@ -1,13 +1,3 @@
-.main {
-    @mixin flex flex-start, center, row;
-    height: 100%;
-    width: 100%;
-}
-
-.inner {
-    flex: 1;
-}
-
 .input {
     padding-bottom: 28px;
 }
