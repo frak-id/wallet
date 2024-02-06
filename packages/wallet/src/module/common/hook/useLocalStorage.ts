@@ -30,7 +30,10 @@ function useLocalStorageSubscribe(
  * From https://github.com/uidotdev/usehooks
  * Need to reimport since it uses fcked up react import
  */
-export function useLocalStorage<T>(key: string, initialValue: T) {
+export function useLocalStorage<T>(
+    key: string,
+    initialValue: T
+): [T, (valueUpdater: (oldValue: T) => T) => void] {
     const getSnapshot = () => getLocalStorageItem(key);
 
     const store = useSyncExternalStore(

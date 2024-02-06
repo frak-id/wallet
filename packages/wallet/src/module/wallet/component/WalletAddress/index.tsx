@@ -1,5 +1,5 @@
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
-import { useCopyToClipboard } from "@uidotdev/usehooks";
+import { useCopyToClipboard } from "@/module/common/hook/useCopyToClipadboard";
 import { Copy, CopyCheck } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import styles from "./index.module.css";

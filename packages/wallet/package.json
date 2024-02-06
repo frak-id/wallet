@@ -7,8 +7,8 @@
   "license": "GNU GPL 3.0",
   "browserslist": [ "Chrome 118" ],
   "scripts": {
-    "dev": "sst bind next dev",
-    "build": "sst bind next build",
+    "dev": "sst bind next dev --turbo",
+    "build": "sst bind next build --experimental-turbo",
     "start": "sst bind next start",
     "lint": "biome lint .",
     "format:check": "biome check .",

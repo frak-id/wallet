@@ -148,6 +148,13 @@ export async function validateRegistration({
     });
     const verification = verifications.find((v) => v?.verified === true);
     if (!verification?.registrationInfo) {
+        console.error("Registration failed", {
+            verifications,
+            userChallenges: user.challenges,
+            response: registrationResponse,
+            rpOrigin,
+            rpId,
+        });
         throw new Error("Registration failed");
     }
 

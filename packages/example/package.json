@@ -6,8 +6,8 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "sst bind PORT=3001 next dev",
-    "build": "sst bind next build",
+    "dev": "sst bind PORT=3001 next dev --turbo",
+    "build": "sst bind next build --experimental-turbo",
     "start": "sst bind next start",
     "lint": "biome lint .",
     "format:check": "biome check .",
