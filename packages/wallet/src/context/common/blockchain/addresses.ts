@@ -1,3 +1,5 @@
+import type { Address } from "viem";
+
 /**
  * The frak smart contract addresses on mumbai
  */
@@ -15,3 +17,9 @@ export const addresses = {
     swapPool: "0xa5C6ff96B2417d5477d0ab27881b3D60675E0d30",
     walletMigrator: "0xD70cC0da193344bb6387536DFb2A542acE15A484",
 } as const;
+
+/**
+ * The address where the paywall is deployed
+ */
+export const paywallAddress: Address =
+    "0xD2a304D5E3427AeF3319De435b530d4B3f7eab5F";

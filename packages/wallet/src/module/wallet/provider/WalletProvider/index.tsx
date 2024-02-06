@@ -2,9 +2,15 @@
 
 import { addresses } from "@/context/common/blockchain/addresses";
 import { frakTokenAbi } from "@/context/common/blockchain/frak-abi";
+import {
+    pimlicoBundlerTransport,
+    pimlicoPaymasterClient,
+} from "@/context/common/blockchain/provider";
 import type { KernelP256SmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import { buildSmartWallet } from "@/context/wallet/utils/buildSmartWallet";
 import type { Session } from "@/types/Session";
+import { smartAccount } from "@permissionless/wagmi";
+import { createSmartAccountClient } from "permissionless";
 import {
     type ReactNode,
     createContext,
@@ -12,10 +18,16 @@ import {
     useEffect,
     useState,
 } from "react";
-import { useReadContract } from "wagmi";
+import { polygonMumbai } from "viem/chains";
+import { useConnect, useReadContract } from "wagmi";
 
 function useWalletHook({ session }: { session: Session }) {
     const { wallet } = session;
+    const {
+        connect,
+        status: connectStatus,
+        error: connectError,
+    } = useConnect();
 
     // The current user smart wallet
     const [smartWallet, setSmartWallet] =
@@ -42,23 +54,51 @@ function useWalletHook({ session }: { session: Session }) {
      * Every time the authenticator changes, rebuild the smart wallet and refresh the balance
      */
     useEffect(() => {
+        refreshSmartWallet(wallet);
+    }, [wallet]);
+
+    async function refreshSmartWallet(wallet: Session["wallet"]) {
         // If there is no authenticator, return
         if (!wallet) {
             setSmartWallet(null);
             return;
         }
 
-        buildSmartWallet({
+        // Build our smart wallet
+        const smartWallet = await buildSmartWallet({
             authenticatorId: wallet.authenticatorId,
             publicKey: wallet.publicKey,
-        }).then(setSmartWallet);
-    }, [wallet]);
+        });
+        setSmartWallet(smartWallet);
+
+        // If there is no smart wallet, return
+        if (!smartWallet) {
+            return;
+        }
+
+        // Otherwise, build the wagmi connector
+        const client = createSmartAccountClient({
+            account: smartWallet,
+            chain: polygonMumbai,
+            transport: pimlicoBundlerTransport,
+            sponsorUserOperation: pimlicoPaymasterClient.sponsorUserOperation,
+        });
+
+        // Build the wagmi connector and connect to it
+        const connector = smartAccount({
+            smartAccountClient: client,
+        });
+        connect({ connector });
+    }
 
     return {
         address: smartWallet?.address,
         balance,
         smartWallet,
         refreshBalance,
+        // Stuff related to the wagmi connector
+        connectStatus,
+        connectError,
     };
 }
 

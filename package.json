@@ -18,5 +18,8 @@
     "@types/node": "^20",
     "typescript": "^5"
   },
-  "workspaces": ["packages/*"]
+  "workspaces": ["packages/*"],
+  "dependencies": {
+    "@types/humanize-duration": "^3.27.4"
+  }
 }

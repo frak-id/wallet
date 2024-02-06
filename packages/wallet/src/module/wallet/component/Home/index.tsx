@@ -6,6 +6,7 @@ export function WalletHomePage() {
     return (
         <div>
             <h1>I'm logged in</h1>
+
             <button
                 type={"button"}
                 onClick={() => {
