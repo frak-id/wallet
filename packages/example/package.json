@@ -7,8 +7,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "sst bind PORT=3001 next dev",
-    "build": "sst bind next dev next build",
-    "start": "sst bind next dev next start",
+    "build": "sst bind next build",
+    "start": "sst bind next start",
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --apply .",
@@ -17,7 +17,6 @@
   "dependencies": {
     "@tanstack/react-query": "^5.18.1",
     "@tanstack/store": "^0.3.1",
-    "@uidotdev/usehooks": "experimental",
     "iron-session": "^8.0.1",
     "mongodb": "^6.3.0",
     "next": "14.1.0",

@@ -36,7 +36,7 @@ export function WalletAppStack({ stack }: StackContext) {
         path: "packages/wallet",
         // Set the custom domain
         customDomain: {
-            domainName: `${subDomain}`.toLowerCase(),
+            domainName: `${subDomain}.frak.id`.toLowerCase(),
             hostedZone: "frak.id",
         },
         // Bind to the configs

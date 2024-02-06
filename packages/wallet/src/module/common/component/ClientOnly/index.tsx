@@ -1,11 +1,20 @@
 "use client";
 
-import { useIsClient } from "@uidotdev/usehooks";
-import type { FC, ReactNode } from "react";
+import { type FC, type ReactNode, useEffect, useState } from "react";
 
 type ClientOnlyProps = {
     children: ReactNode;
 };
+
+function useIsClient() {
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    return isClient;
+}
 
 /**
  * Hack to work around next.js hydration

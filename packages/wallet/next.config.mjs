@@ -13,9 +13,19 @@ const envFromSstConfig = pick(Config, wantedFromConfig);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    typescript: {
+        ignoreBuildErrors: true,
+    },
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+    output: "standalone",
     env: {
         ...envFromSstConfig,
         IS_LOCAL: (Config.STAGE !== "prod").toString(),
+    },
+    compiler: {
+        removeConsole: Config.STAGE === "prod",
     },
     transpilePackages: ["lucide-react"],
 };

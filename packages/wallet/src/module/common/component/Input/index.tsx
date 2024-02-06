@@ -1,4 +1,4 @@
-import { useDebounce } from "@uidotdev/usehooks";
+import { useDebounce } from "@/module/common/hook/useDebounce";
 import {
     type InputHTMLAttributes,
     forwardRef,
