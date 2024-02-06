@@ -15,6 +15,7 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.18.1",
     "@tanstack/store": "^0.3.1",
     "@uidotdev/usehooks": "experimental",
     "iron-session": "^8.0.1",

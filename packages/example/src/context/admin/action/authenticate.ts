@@ -33,10 +33,22 @@ export async function isAdmin() {
 }
 
 /**
+ * Small function to lock the usage to admin only people
+ */
+export async function onlyAdmin() {
+    const isUserAdmin = await isAdmin();
+    if (!isUserAdmin) {
+        throw new Error("You are not an admin");
+    }
+}
+
+/**
  * Try to login as an admin
  * @param password
  */
-export async function login(password: string) {
+export async function performAdminLogin(password: string) {
+    console.log("password", password);
+    console.log("password env", process.env.ADMIN_PASSWORD);
     if (password !== process.env.ADMIN_PASSWORD) {
         throw new Error("Invalid password");
     }

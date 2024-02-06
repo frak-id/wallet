@@ -15,6 +15,7 @@ export function ConfigStack({ stack }: StackContext) {
     const rpcUrl = new Config.Secret(stack, "RPC_URL");
     const pimlicoApiKey = new Config.Secret(stack, "PIMLICO_API_KEY");
     const airdropPrivateKey = new Config.Secret(stack, "AIRDROP_PRIVATE_KEY");
+    const adminPassword = new Config.Secret(stack, "ADMIN_PASSWORD");
 
     const frakWalletUrl = new Config.Parameter(stack, "FRAK_WALLET_URL", {
         value:
@@ -29,6 +30,7 @@ export function ConfigStack({ stack }: StackContext) {
         rpcUrl,
         pimlicoApiKey,
         airdropPrivateKey,
+        adminPassword,
         frakWalletUrl,
     };
 }

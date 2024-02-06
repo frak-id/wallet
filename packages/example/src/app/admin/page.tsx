@@ -1,0 +1,17 @@
+import { AdminGate } from "@/module/admin/component/AdminGate";
+import { ArticleCreation } from "@/module/admin/component/ArticleCreation";
+import { ArticleList } from "@/module/article/component/List/ArticleList";
+
+export default function AdminPage() {
+    return (
+        <div>
+            <AdminGate>
+                <h1>Admin Page</h1>
+                <h2>List of all the articles</h2>
+                <ArticleList />
+                <h2>Create a new article</h2>
+                <ArticleCreation />
+            </AdminGate>
+        </div>
+    );
+}

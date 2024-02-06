@@ -20,8 +20,8 @@ export const metadata = {
     description:
         "POC showcasing ERC-4337 with WebAuthN inside the frak ecosystem.",
     authors: [
-        { name: "Frak" },
-        { name: "Rodolphe Stoclin\n", url: "https://github.com/srod" },
+        { name: "Frak labs", url: "https://frak.id/" },
+        { name: "Rodolphe Stoclin", url: "https://github.com/srod" },
         { name: "Quentin Nivelais", url: "https://github.com/KONFeature" },
     ],
     icons: {

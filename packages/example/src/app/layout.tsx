@@ -1,3 +1,4 @@
+import { RootProvider } from "@/module/common/provider/RootProvider";
 import type { Viewport } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
@@ -9,8 +10,8 @@ export const metadata = {
     description:
         "Example showcasing the possible interaction with the Frak wallet.",
     authors: [
-        { name: "Frak" },
-        { name: "Rodolphe Stoclin\n", url: "https://github.com/srod" },
+        { name: "Frak labs", url: "https://frak.id/" },
+        { name: "Rodolphe Stoclin", url: "https://github.com/srod" },
         { name: "Quentin Nivelais", url: "https://github.com/KONFeature" },
     ],
     icons: {
@@ -39,7 +40,9 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={inter.className}>{children}</body>
+            <body className={inter.className}>
+                <RootProvider>{children}</RootProvider>
+            </body>
         </html>
     );
 }

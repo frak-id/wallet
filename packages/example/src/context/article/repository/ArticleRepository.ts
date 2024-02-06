@@ -1,7 +1,7 @@
 import type { ArticleDocument } from "@/context/article/dto/ArticleDocument";
 import { DI } from "@/context/common/di";
 import { getMongoDb } from "@/context/common/mongoDb";
-import type { Collection, WithId } from "mongodb";
+import type { Collection } from "mongodb";
 import type { Hex } from "viem";
 
 /**
@@ -14,18 +14,14 @@ export class ArticleRepository {
      * Get an article by its id
      * @param id
      */
-    public async getById(
-        id: Hex
-    ): Promise<WithId<ArticleDocument> | undefined> {
+    public async getById(id: Hex): Promise<ArticleDocument | null> {
         return this.collection.findOne({ _id: id });
     }
-
     /**
-     * Get multiple article by their ids
-     * @param ids
+     * Get all the articles
      */
-    public async getByIds(ids: Hex[]): Promise<WithId<ArticleDocument>[]> {
-        return this.collection.find({ _id: { $in: ids } }).toArray();
+    public async getAll(): Promise<ArticleDocument[]> {
+        return this.collection.find().toArray();
     }
 
     /**

@@ -10,14 +10,20 @@ import { ConfigStack } from "./Config";
  */
 export function ExampleAppStack({ stack }: StackContext) {
     // The configs required to run the app
-    const { sessionEncryptionKey, mongoUri, frakWalletUrl } = use(ConfigStack);
-    const configs = [sessionEncryptionKey, mongoUri, frakWalletUrl];
+    const { sessionEncryptionKey, mongoUri, frakWalletUrl, adminPassword } =
+        use(ConfigStack);
+    const configs = [
+        sessionEncryptionKey,
+        mongoUri,
+        frakWalletUrl,
+        adminPassword,
+    ];
 
     // Base domain for our whole app
     const subDomain =
         stack.stage === "prod"
-            ? "article"
-            : `article-${stack.stage.toLowerCase()}`;
+            ? "wallet-example"
+            : `wallet-example-${stack.stage.toLowerCase()}`;
 
     // Declare the Next.js site
     const site = new NextjsSite(stack, "example", {
