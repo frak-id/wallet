@@ -21,7 +21,7 @@ export function ConfigStack({ stack }: StackContext) {
         value:
             stack.stage === "prod"
                 ? "https://poc-wallet.frak.id"
-                : "http://localhost:3000/",
+                : "http://localhost:3000",
     });
 
     return {

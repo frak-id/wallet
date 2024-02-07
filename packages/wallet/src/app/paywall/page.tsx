@@ -11,14 +11,14 @@ export default function PaywallPage() {
     const { data: unlockData, isPending: isParsing } = useQuery({
         queryKey: ["getEncodedUnlockData"],
         queryFn: async () => {
-            const rawCompressedParams = get("compressedParams");
-            if (!rawCompressedParams) {
-                throw new Error("Missing query params");
+            const params = get("params");
+            const hash = get("hash");
+            if (!(params && hash)) {
+                throw new Error("Invalid unlock request");
             }
 
             // Parse the data and return them
-            console.log("rawCompressedParams", { rawCompressedParams });
-            return await parseUnlockRequest(rawCompressedParams);
+            return await parseUnlockRequest({ params, hash });
         },
     });
 

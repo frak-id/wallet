@@ -1,12 +1,10 @@
-import type { Hex } from "viem";
-
 /**
  * The received encoded data from a client
  *  -> The encoded should contain a HashProtectedData once decoded
  */
 export type CompressedData = Readonly<{
     compressed: string;
-    compressedHash: Hex;
+    compressedHash: string;
 }>;
 
 /**
@@ -14,6 +12,6 @@ export type CompressedData = Readonly<{
  */
 export type HashProtectedData<DataType> = Readonly<
     DataType & {
-        validationHash: Hex;
+        validationHash: string;
     }
 >;

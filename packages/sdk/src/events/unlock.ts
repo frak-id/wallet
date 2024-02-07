@@ -1,7 +1,5 @@
 import {
-    compressJson,
     decompressDataAndCheckHash,
-    decompressJson,
     hashAndCompressData,
 } from "../compression";
 import type {
@@ -36,28 +34,26 @@ export const getUnlockRequestUrl = async (
     params: UnlockRequestParams
 ) => {
     // Compress our params
-    const compressedParams = await hashAndCompressData(
+    const { compressed, compressedHash } = await hashAndCompressData(
         params,
         unlockParamKeyAccessor
     );
-    // Compress yet again the params into a single string
-    const compressedParamsString = encodeURIComponent(
-        await compressJson(compressedParams)
-    );
     // Then build the URL
-    return `${config.walletUrl}/paywall?compressedParams=${compressedParamsString}`;
+    return `${config.walletUrl}/paywall?params=${encodeURIComponent(
+        compressed
+    )}&hash=${compressedHash}`;
 };
-export const parseUnlockRequest = async (compressedDataParam: string) => {
-    // Decode it
-    const compressedParams = await decompressJson<CompressedData>(
-        decodeURIComponent(compressedDataParam)
-    );
-    if (!compressedParams) {
-        throw new Error("Invalid compressed data");
+export const parseUnlockRequest = async ({
+    params,
+    hash,
+}: { params: string; hash: string }) => {
+    // Ensure we got the required params first
+    if (!(params && hash)) {
+        throw new Error("Missing compressed data");
     }
     // Decompress the data
     return decompressDataAndCheckHash<UnlockRequestParams>(
-        compressedParams,
+        { compressed: params, compressedHash: hash },
         unlockParamKeyAccessor
     );
 };

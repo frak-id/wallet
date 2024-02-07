@@ -1,5 +1,5 @@
 import { decompressFromBase64 } from "async-lz-string";
-import { keccak256, toHex } from "viem";
+import { sha256 } from "js-sha256";
 import type { CompressedData, HashProtectedData } from "../types";
 
 /**
@@ -30,14 +30,14 @@ export async function decompressDataAndCheckHash<T>(
     }
 
     //  Then check the global compressed hash
-    const expectedCompressedHash = keccak256(toHex(compressedData.compressed));
+    const expectedCompressedHash = sha256(compressedData.compressed);
     if (expectedCompressedHash !== compressedData.compressedHash) {
         throw new Error("Invalid compressed hash");
     }
 
     // And check the validation hash
     const keys = keyAccessor(parsedData);
-    const expectedValidationHash = keccak256(toHex(keys.join("_")));
+    const expectedValidationHash = sha256(keys.join("_"));
     if (expectedValidationHash !== parsedData.validationHash) {
         throw new Error("Invalid data validation hash");
     }

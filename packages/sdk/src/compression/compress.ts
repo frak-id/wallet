@@ -1,9 +1,12 @@
 import { compressToBase64 } from "async-lz-string";
-import { keccak256, toHex } from "viem";
-import type {
-    CompressedData,
-    HashProtectedData,
-} from "../types/communication/Encoded.ts";
+import { sha256 } from "js-sha256";
+import type { CompressedData, HashProtectedData } from "../types";
+
+/*
+ * After investigation, here is the result:
+ *   - Single level compression -> Ok (save approx 20% on the overral size, we can do better with the hash I think)
+ *   - Second level (compressing json containing a compressed string) -> useless, increase by approx 5%
+ */
 
 /**
  * Compress the given params, and add hash protection to (rapidly) prevent interception modification
@@ -17,8 +20,7 @@ export async function hashAndCompressData<T>(
 ): Promise<CompressedData> {
     // Create a hash of the main params
     const keys = keyAccessor(data);
-    const validationHash = keccak256(toHex(keys.join("_")));
-
+    const validationHash = sha256(keys.join("_"));
     const hashProtectedData: HashProtectedData<T> = {
         ...data,
         validationHash,
@@ -28,7 +30,7 @@ export async function hashAndCompressData<T>(
     const compressed = await compressJson(hashProtectedData);
 
     // Digest the compressed string
-    const compressedHash = keccak256(toHex(compressed));
+    const compressedHash = sha256(compressed);
 
     return {
         compressed,

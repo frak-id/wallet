@@ -1,6 +1,6 @@
 "use client";
 
-import { getUnlockRequestUrl } from "@frak-wallet/sdk";
+import { getMockedUnlockLink } from "@/context/article/action/unlock";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,24 +18,7 @@ export default function HomePage() {
 
     const { data: unlockUrl } = useQuery({
         queryKey: ["getEncodedUnlockData"],
-        queryFn: async () =>
-            await getUnlockRequestUrl(
-                {
-                    walletUrl: process.env.FRAK_WALLET_URL as string,
-                },
-                {
-                    articleId: "0xdeadbeef",
-                    contentId: "0xdeadbeef",
-                    price: {
-                        index: 0,
-                        unlockDurationInSec: 0,
-                        frkAmount: "0x0",
-                    },
-                    articleUrl: "https://path-to-the-article.com/",
-                    redirectUrl:
-                        "https://path-to-the-article.with-unlock-handling.com/",
-                }
-            ),
+        queryFn: async () => getMockedUnlockLink(),
     });
 
     return (
