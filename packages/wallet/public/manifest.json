@@ -19,5 +19,8 @@
     "start_url": "/",
     "display": "standalone",
     "background_color": "#001432",
-    "theme_color": "#001432"
+    "theme_color": "#001432",
+    "launch_handler": {
+        "client_mode": ["focus-existing", "navigate-existing", "auto"]
+    }
 }

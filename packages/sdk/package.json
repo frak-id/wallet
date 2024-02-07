@@ -1,0 +1,16 @@
+{
+  "name": "@frak-wallet/sdk",
+  "type": "module",
+  "scripts": {
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --apply ."
+  },
+  "dependencies": {
+    "viem": "^2.7.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}

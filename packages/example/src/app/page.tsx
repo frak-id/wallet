@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
@@ -24,6 +25,13 @@ export default function HomePage() {
             <button onClick={goToArticles} type="button">
                 Checkout the articles
             </button>
+
+            <br />
+            <br />
+
+            <Link href={`${process.env.FRAK_WALLET_URL}/paywall`}>
+                Unlock with FRK
+            </Link>
         </div>
     );
 }

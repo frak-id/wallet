@@ -20,7 +20,7 @@ export function ConfigStack({ stack }: StackContext) {
     const frakWalletUrl = new Config.Parameter(stack, "FRAK_WALLET_URL", {
         value:
             stack.stage === "prod"
-                ? "https://wallet.frak.id"
+                ? "https://poc-wallet.frak.id"
                 : "http://localhost:3000/",
     });
 
