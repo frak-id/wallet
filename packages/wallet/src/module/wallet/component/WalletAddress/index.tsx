@@ -6,9 +6,13 @@ import styles from "./index.module.css";
 
 type WalletAddressProps = {
     wallet: string;
+    onlyIcon?: boolean;
 };
 
-export function WalletAddress({ wallet }: WalletAddressProps) {
+export function WalletAddress({
+    wallet,
+    onlyIcon = false,
+}: WalletAddressProps) {
     const [copied, setCopied] = useState(false);
     const [, copyToClipboard] = useCopyToClipboard();
     const Icon = copied ? CopyCheck : Copy;
@@ -34,7 +38,7 @@ export function WalletAddress({ wallet }: WalletAddressProps) {
             }}
         >
             <Icon width={16} className={styles.walletAddress__icon} />
-            {formatHash(wallet)}
+            {!onlyIcon && formatHash(wallet)}
         </button>
     );
 }

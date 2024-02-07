@@ -15,7 +15,7 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
             <h2 className={styles.articleUnlock__title}>Unlocked article</h2>
             <p>Expire in: {article.remainingTimeFormatted}</p>
             <p>
-                Transaction: <PolygonLink txHash={article.txHash} />
+                Transaction: <PolygonLink hash={article.txHash} />
             </p>
             {/*<p>
                 <a href={`/article/${article.articleId}`}>

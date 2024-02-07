@@ -1,6 +1,7 @@
 "use client";
 
 import { formatFrk } from "@/context/wallet/utils/frkFormatter";
+import { PolygonLink } from "@/module/wallet/component/PolygonLink";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { Clock8, Home, Settings } from "lucide-react";
@@ -15,8 +16,16 @@ export function HeaderRestricted() {
         <header className={styles.header}>
             <div className={styles.header__row}>
                 {smartWallet?.address && (
-                    <p>
-                        <WalletAddress wallet={smartWallet.address} />
+                    <p className={styles.header__wallet}>
+                        <WalletAddress
+                            wallet={smartWallet.address}
+                            onlyIcon={true}
+                        />
+                        <PolygonLink
+                            hash={smartWallet.address}
+                            wallet={true}
+                            icon={false}
+                        />
                     </p>
                 )}
                 <p>{formatFrk(Number(balance))}</p>

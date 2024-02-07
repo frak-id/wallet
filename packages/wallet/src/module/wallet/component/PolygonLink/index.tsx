@@ -5,16 +5,20 @@ import styles from "./index.module.css";
 
 const polygonMumbaiUrl = polygonMumbai.blockExplorers.default.url;
 
-export function PolygonLink({ txHash }: { txHash: string }) {
+export function PolygonLink({
+    hash,
+    wallet = false,
+    icon = true,
+}: { hash: string; wallet?: boolean; icon?: boolean }) {
     return (
         <a
-            href={`${polygonMumbaiUrl}/tx/${txHash}`}
+            href={`${polygonMumbaiUrl}/${wallet ? "address" : "tx"}/${hash}`}
             target={"_blank"}
             rel={"noreferrer"}
             className={styles.polygonLink}
         >
-            {formatHash(txHash)}
-            <ExternalLink size={16} />
+            {formatHash(hash)}
+            {icon && <ExternalLink size={16} />}
         </a>
     );
 }

@@ -14,7 +14,7 @@ export function FrkReceived({ frkReceived }: ArticleUnlockProps) {
         <div className={styles.frkReceived}>
             <h2 className={styles.frkReceived__title}>Fraks received</h2>
             <p>
-                Transaction: <PolygonLink txHash={frkReceived.txHash} />
+                Transaction: <PolygonLink hash={frkReceived.txHash} />
             </p>
             <p>Frak amount: {formatFrk(Number(frkReceived.receivedAmount))}</p>
         </div>
