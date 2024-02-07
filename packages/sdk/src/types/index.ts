@@ -1,3 +1,6 @@
+// Config type
+export type { FrakWalletSdkConfig } from "./Config";
+
 // Unlock related exports
 export type {
     GetUnlockStatusParams,
@@ -6,20 +9,24 @@ export type {
 export type {
     UnlockRequestParams,
     UnlockRequestResponse,
-} from "./unlock/UnlockRequest.ts";
+} from "./unlock/UnlockRequest";
 
 // Prices related exports
 export type {
     GetPricesParam,
     GetPricesResponse,
-} from "./price/GetPrices.ts";
+} from "./price/GetPrices";
 
-// Glboal communication
+// Global communication
 export type {
     EventsParam,
     EventsResponse,
-} from "./communication/Events.ts";
+} from "./communication/Events";
 export type {
     RedirectionParams,
     RedirectionResponse,
-} from "./communication/Redirections.ts";
+} from "./communication/Redirections";
+export type {
+    CompressedData,
+    HashProtectedData,
+} from "./communication/Encoded";

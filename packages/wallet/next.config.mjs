@@ -21,7 +21,7 @@ const nextConfig = {
     compiler: {
         // removeConsole: Config.STAGE === "prod",
     },
-    transpilePackages: ["lucide-react"],
+    transpilePackages: ["lucide-react", "@frak-wallet/sdk"],
 };
 
 export default nextConfig;
