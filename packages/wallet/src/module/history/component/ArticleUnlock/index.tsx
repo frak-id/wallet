@@ -1,9 +1,10 @@
 "use client";
 
+// import { ExternalLink } from "lucide-react";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
 import { PolygonLink } from "@/module/wallet/component/PolygonLink";
 import type { ArticleUnlock as ArticleUnlockType } from "@/types/HistoryItem";
-// import { ExternalLink } from "lucide-react";
-import styles from "./index.module.css";
 
 type ArticleUnlockProps = {
     article: ArticleUnlockType;
@@ -11,8 +12,8 @@ type ArticleUnlockProps = {
 
 export function ArticleUnlock({ article }: ArticleUnlockProps) {
     return (
-        <div className={styles.articleUnlock}>
-            <h2 className={styles.articleUnlock__title}>Unlocked article</h2>
+        <Panel>
+            <Title>Unlocked article</Title>
             <p>Expire in: {article.remainingTimeFormatted}</p>
             <p>
                 Transaction: <PolygonLink hash={article.txHash} />
@@ -22,6 +23,6 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
                     Read it <ExternalLink size={16} />
                 </a>
             </p>*/}
-        </div>
+        </Panel>
     );
 }

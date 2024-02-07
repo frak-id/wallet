@@ -23,7 +23,7 @@ import { polygonMumbai } from "viem/chains";
 import { useConnect, useReadContract } from "wagmi";
 
 function useWalletHook({ session }: { session: Session }) {
-    const { wallet } = session;
+    const { wallet, username } = session;
     const {
         connect,
         status: connectStatus,
@@ -100,6 +100,8 @@ function useWalletHook({ session }: { session: Session }) {
         // Stuff related to the wagmi connector
         connectStatus,
         connectError,
+        username,
+        wallet,
     };
 }
 

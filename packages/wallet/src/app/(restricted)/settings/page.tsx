@@ -1,9 +1,11 @@
 import { Logout } from "@/module/authentication/component/Logout";
+import { Grid } from "@/module/common/component/Grid";
+import { Settings } from "@/module/settings/component/Settings";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
     return (
-        <div>
-            <Logout />
-        </div>
+        <Grid footer={<Logout />}>
+            <Settings />
+        </Grid>
     );
 }
