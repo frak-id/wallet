@@ -1,7 +1,7 @@
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
-import { useCopyToClipboard } from "@/module/common/hook/useCopyToClipadboard";
+import { useCopyToClipboard } from "@uidotdev/usehooks";
 import { Copy, CopyCheck } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./index.module.css";
 
 type WalletAddressProps = {

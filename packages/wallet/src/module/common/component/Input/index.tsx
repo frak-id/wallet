@@ -1,12 +1,6 @@
-import { useDebounce } from "@/module/common/hook/useDebounce";
-import {
-    type InputHTMLAttributes,
-    forwardRef,
-    useCallback,
-    useEffect,
-    useRef,
-    useState,
-} from "react";
+import { useDebounce } from "@uidotdev/usehooks";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import type { InputHTMLAttributes } from "react";
 import styles from "./index.module.css";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {

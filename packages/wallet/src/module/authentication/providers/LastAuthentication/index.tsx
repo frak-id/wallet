@@ -1,8 +1,9 @@
 "use client";
 
-import { useLocalStorage } from "@/module/common/hook/useLocalStorage";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import type { Session } from "@/types/Session";
-import { type ReactNode, createContext, useCallback, useContext } from "react";
+import { createContext, useCallback, useContext } from "react";
+import type { ReactNode } from "react";
 import { isAddressEqual } from "viem";
 
 type LastAuthentication = Session;
