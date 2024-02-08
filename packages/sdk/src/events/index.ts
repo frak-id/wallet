@@ -1,5 +1,5 @@
 export {
-    parseUnlockRequest,
+    parseUnlockResponse,
     parseUnlockRequestResponse,
     getUnlockRequestUrl,
     prepareUnlockRequestResponse,

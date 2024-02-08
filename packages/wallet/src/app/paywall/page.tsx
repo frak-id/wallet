@@ -1,14 +1,22 @@
 "use client";
 
-import { parseUnlockRequest } from "@frak-wallet/sdk";
+import {
+    parseUnlockResponse,
+    prepareUnlockRequestResponse,
+} from "@frak-wallet/sdk";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 export default function PaywallPage() {
     const { get } = useSearchParams();
 
-    const { data: unlockData, isPending: isParsing } = useQuery({
+    const {
+        data: unlockData,
+        isPending: isParsing,
+        error,
+    } = useQuery({
         queryKey: ["getEncodedUnlockData"],
         queryFn: async () => {
             const params = get("params");
@@ -18,13 +26,41 @@ export default function PaywallPage() {
             }
 
             // Parse the data and return them
-            return await parseUnlockRequest({ params, hash });
+            return await parseUnlockResponse({ params, hash });
         },
     });
 
     useEffect(() => {
         console.log("Unlock data", unlockData);
-    }, [unlockData]);
+        console.log("Unlock error", error);
+    }, [unlockData, error]);
+
+    const { data: redirectUrl, isPending: isBuildingResponse } = useQuery({
+        queryKey: [
+            "buildRedirectUrl",
+            unlockData?.articleId,
+            unlockData?.contentId,
+        ],
+        queryFn: async () => {
+            if (!unlockData) {
+                return undefined;
+            }
+            const params = get("params");
+            const hash = get("hash");
+            if (!(params && hash)) {
+                throw new Error("Invalid unlock request");
+            }
+
+            // Parse the data and return them
+            return prepareUnlockRequestResponse(unlockData.redirectUrl, {
+                key: "success",
+                status: "in-progress",
+                user: "0x00",
+                userOpHash: "0x00",
+            });
+        },
+        enabled: !!unlockData,
+    });
 
     return (
         <div>
@@ -39,7 +75,15 @@ export default function PaywallPage() {
                 Unlocking price {unlockData?.price?.frkAmount} for{" "}
                 {unlockData?.price?.unlockDurationInSec} seconds
             </p>
+
             <button type="button">Pay</button>
+
+            <br />
+            <br />
+
+            <p>Is building response? {isBuildingResponse}</p>
+            <p>Would redirect to {redirectUrl}</p>
+            {redirectUrl && <Link href={redirectUrl}>Redirect</Link>}
         </div>
     );
 }

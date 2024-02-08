@@ -3,10 +3,9 @@ import {
     hashAndCompressData,
 } from "../compression";
 import type {
-    CompressedData,
     FrakWalletSdkConfig,
     UnlockRequestParams,
-    UnlockRequestResponse,
+    UnlockRequestResult,
 } from "../types";
 
 /**
@@ -18,7 +17,7 @@ const unlockParamKeyAccessor = (params: UnlockRequestParams) => [
     params.contentId,
     params.price.index.toString(),
 ];
-const unlockResponseKeyAccessor = (response: UnlockRequestResponse) => [
+const unlockResponseKeyAccessor = (response: UnlockRequestResult) => [
     response.key,
     response.status,
     response.user,
@@ -29,44 +28,92 @@ const unlockResponseKeyAccessor = (response: UnlockRequestResponse) => [
  * @param config
  * @param params
  */
-export const getUnlockRequestUrl = async (
+export async function getUnlockRequestUrl(
     config: FrakWalletSdkConfig,
     params: UnlockRequestParams
-) => {
+) {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
         params,
         unlockParamKeyAccessor
     );
     // Then build the URL
-    return `${config.walletUrl}/paywall?params=${encodeURIComponent(
-        compressed
-    )}&hash=${compressedHash}`;
-};
-export const parseUnlockRequest = async ({
+    const outputUrl = new URL(config.walletUrl);
+    outputUrl.pathname = "/paywall";
+    outputUrl.searchParams.set("params", encodeURIComponent(compressed));
+    outputUrl.searchParams.set("hash", encodeURIComponent(compressedHash));
+    return outputUrl.toString();
+}
+
+/**
+ * Parse the unlock request response
+ * @param data
+ */
+export async function parseUnlockRequestResponse({
+    result,
+    hash,
+}: { result: string; hash: string }) {
+    // Ensure we got the required params first
+    if (!(result && hash)) {
+        throw new Error("Missing compressed data");
+    }
+    // Decompress the data
+    return decompressDataAndCheckHash<UnlockRequestResult>(
+        { compressed: result, compressedHash: hash },
+        unlockResponseKeyAccessor
+    );
+}
+
+/**
+ * Parse an unlock request
+ *   - TODO: This should be moved to the wallet app directly, no needed for external usage
+ * @param params
+ * @param hash
+ */
+export async function parseUnlockResponse({
     params,
     hash,
-}: { params: string; hash: string }) => {
+}: { params: string; hash: string }) {
     // Ensure we got the required params first
     if (!(params && hash)) {
         throw new Error("Missing compressed data");
     }
     // Decompress the data
     return decompressDataAndCheckHash<UnlockRequestParams>(
-        { compressed: params, compressedHash: hash },
+        {
+            compressed: decodeURIComponent(params),
+            compressedHash: decodeURIComponent(hash),
+        },
         unlockParamKeyAccessor
     );
-};
+}
 
 /**
- * Helper for the unlock request response
+ * Build the response for the unlock request
+ *   - TODO: This should be moved to the wallet app directly, no needed for external usage
+ * @param redirectUrl
  * @param response
  */
-export const prepareUnlockRequestResponse = async (
-    response: UnlockRequestResponse
-) => hashAndCompressData(response, unlockResponseKeyAccessor);
-export const parseUnlockRequestResponse = async (data: CompressedData) =>
-    decompressDataAndCheckHash<UnlockRequestResponse>(
-        data,
+export async function prepareUnlockRequestResponse(
+    redirectUrl: string,
+    response: UnlockRequestResult
+) {
+    // Compress our params
+    const { compressed, compressedHash } = await hashAndCompressData(
+        response,
         unlockResponseKeyAccessor
     );
+    // Parse the redirect URL provided
+    const parsedRedirectUrl = new URL(redirectUrl);
+    // Add the params to the URL
+    parsedRedirectUrl.searchParams.set(
+        "result",
+        encodeURIComponent(compressed)
+    );
+    parsedRedirectUrl.searchParams.set(
+        "hash",
+        encodeURIComponent(compressedHash)
+    );
+    // Then build the URL
+    return parsedRedirectUrl.toString();
+}

@@ -8,7 +8,7 @@ export type {
 } from "./unlock/UnlockStatus";
 export type {
     UnlockRequestParams,
-    UnlockRequestResponse,
+    UnlockRequestResult,
 } from "./unlock/UnlockRequest";
 
 // Prices related exports

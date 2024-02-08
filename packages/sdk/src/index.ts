@@ -10,7 +10,7 @@ export type {
     GetUnlockStatusParams,
     GetUnlockStatusResponse,
     UnlockRequestParams,
-    UnlockRequestResponse,
+    UnlockRequestResult,
     EventsParam,
     EventsResponse,
     RedirectionParams,
@@ -21,7 +21,7 @@ export type {
 
 export {
     // Unlock request
-    parseUnlockRequest,
+    parseUnlockResponse,
     parseUnlockRequestResponse,
     getUnlockRequestUrl,
     prepareUnlockRequestResponse,

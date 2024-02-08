@@ -20,7 +20,7 @@ export async function getMockedUnlockLink() {
             },
             articleUrl: "https://path-to-the-article.com/",
             redirectUrl:
-                "https://path-to-the-article.with-unlock-handling.com/",
+                "https://wallet-example.frak.id/articles/0x7cc3567eb1c096b67f36d70b209016769bf6e45934ad62abaacb20a3c681de27",
         }
     );
 }

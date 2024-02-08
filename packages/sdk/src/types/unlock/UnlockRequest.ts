@@ -20,7 +20,7 @@ export type UnlockRequestParams = Readonly<{
 /**
  * Response to the unlock request
  */
-export type UnlockRequestResponse = Readonly<
+export type UnlockRequestResult = Readonly<
     UnlockSuccess | AlreadyUnlocked | UnlockError
 >;
 
