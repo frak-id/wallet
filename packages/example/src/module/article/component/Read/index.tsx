@@ -1,10 +1,15 @@
-import {type EventsFormat, getPricesEvent, parseGetPricesEventResponse, Provider} from "@frak-wallet/sdk";
+import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import type { Article } from "@/type/Article";
+import {
+    type EventsFormat,
+    Provider,
+    getPricesEvent,
+    parseGetPricesEventResponse,
+} from "@frak-wallet/sdk";
+import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
-import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
-import {frakWalletSdkConfig} from "@/context/frak-wallet/config";
 
 const provider = new Provider();
 
@@ -21,11 +26,10 @@ export function ReadArticle({
      */
     async function handleGetPrice(data: EventsFormat) {
         if (!data) return;
-        console.log("===read page get-price", data);
-        // setPrices(data);
-        // Here we should parse the data
         const parsed = await parseGetPricesEventResponse(data);
-        console.log("Received prices infos", parsed);
+        // TODO - we should need to remove the validationHash on higher level
+        parsed.validationHash = undefined;
+        setPrices(Object.values(parsed).filter(Boolean));
     }
 
     useEffect(() => {
@@ -42,10 +46,9 @@ export function ReadArticle({
              * Ask our listener for the price of the article
              */
             async function run() {
-                const priceEvent = await getPricesEvent(
-                    frakWalletSdkConfig,
-                    { articleId: article.id as Hex }
-                );
+                const priceEvent = await getPricesEvent(frakWalletSdkConfig, {
+                    articleId: article.id as Hex,
+                });
                 console.log("priceEvent", priceEvent);
                 provider.emitToListener(priceEvent);
             }

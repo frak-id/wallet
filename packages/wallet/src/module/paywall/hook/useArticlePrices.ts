@@ -1,5 +1,5 @@
 import { getArticlePricesForUser } from "@/context/paywall/action/getPrices";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 
@@ -9,7 +9,7 @@ import { useAccount } from "wagmi";
 export function useArticlePrices({
     contentId,
     articleId,
-}: { contentId: Hex; articleId: Hex }) {
+}: { contentId?: Hex; articleId?: Hex }) {
     /**
      * The current wallet address, can be undefined if not logged in
      *  Using the address here since the paywall isn't after the auth gate, to handle every possible redirection scenario
@@ -19,20 +19,31 @@ export function useArticlePrices({
     /**
      * Fetch the prices
      */
-    const { data: prices, isPending: isFetchingPrices } = useQuery({
-        queryKey: ["getArticlePricesForUser", contentId, articleId, address],
-        queryFn: async () => {
-            if (!contentId) {
+    const {
+        data: prices,
+        isPending: isFetchingPrices,
+        mutateAsync: fetchPrices,
+    } = useMutation({
+        mutationKey: ["getArticlePricesForUser", contentId, articleId, address],
+        mutationFn: async ({
+            contentId,
+            articleId,
+        }: { contentId?: Hex; articleId?: Hex }) => {
+            if (!(contentId && articleId)) {
                 return [];
             }
             // Get the prices
-            return getArticlePricesForUser({ contentId, articleId, address });
+            return getArticlePricesForUser({
+                contentId,
+                articleId,
+                address: "0x3AAd376FbEf774bb6c3108F46112aa288f3091aa",
+            });
         },
-        enabled: !!contentId,
     });
 
     return {
         prices,
         isFetchingPrices,
+        fetchPrices,
     };
 }

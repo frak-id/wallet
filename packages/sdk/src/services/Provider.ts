@@ -9,7 +9,6 @@ type MessagesEvent = {
 export class Provider {
     /**
      * Event emitter that will be used to emit messages to the listener
-     * @private
      */
     emitter: Emittery<MessagesEvent> = new Emittery<MessagesEvent>();
 
