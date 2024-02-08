@@ -84,3 +84,35 @@ export async function getArticlePricesForUser({
         isUserAccessible: userBalance >= BigInt(p.frkAmount),
     }));
 }
+
+/**
+ * Get an up to date price for a given article
+ * TODO: Should expose a simpler blockchain method maybe?
+ * @param contentId
+ * @param priceIndex
+ */
+export async function getArticlePrice({
+    contentId,
+    priceIndex,
+}: { contentId: Hex; priceIndex: number }): Promise<ArticlePrice | null> {
+    // Read all the prices from the blockchain
+    const prices = await viemClient.readContract({
+        address: paywallAddress,
+        abi: paywallAbi,
+        functionName: "getContentPrices",
+        args: [BigInt(contentId)],
+    });
+
+    // Find the one at the given index
+    const price = prices[priceIndex];
+    if (!price?.isPriceEnabled) {
+        return null;
+    }
+
+    // Return the price formatted
+    return {
+        index: priceIndex,
+        frkAmount: toHex(price.price),
+        unlockDurationInSec: Number(price.allowanceTime),
+    };
+}

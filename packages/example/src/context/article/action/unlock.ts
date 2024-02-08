@@ -2,13 +2,14 @@
 
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { getUnlockRequestUrl } from "@frak-wallet/sdk";
+import { keccak256 } from "viem";
 
 /**
  * Generate a mocked unlock link
  */
 export async function getMockedUnlockLink() {
     return getUnlockRequestUrl(frakWalletSdkConfig, {
-        articleId: "0xdeadbeef",
+        articleId: keccak256("0xdeadbeef"),
         articleTitle: "Example Article",
         price: {
             index: 0,
