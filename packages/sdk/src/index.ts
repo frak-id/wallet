@@ -21,8 +21,8 @@ export type {
 
 export {
     // Unlock request
-    parseUnlockResponse,
-    parseUnlockRequestResponse,
+    parseUnlockRequestParams,
+    parseUnlockRequestResult,
     getUnlockRequestUrl,
     prepareUnlockRequestResponse,
 } from "./events";

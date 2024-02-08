@@ -1,6 +1,6 @@
 export {
-    parseUnlockResponse,
-    parseUnlockRequestResponse,
+    parseUnlockRequestParams,
+    parseUnlockRequestResult,
     getUnlockRequestUrl,
     prepareUnlockRequestResponse,
 } from "./unlock";

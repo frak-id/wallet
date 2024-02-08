@@ -49,7 +49,7 @@ export async function getUnlockRequestUrl(
  * Parse the unlock request response
  * @param data
  */
-export async function parseUnlockRequestResponse({
+export async function parseUnlockRequestResult({
     result,
     hash,
 }: { result: string; hash: string }) {
@@ -59,7 +59,10 @@ export async function parseUnlockRequestResponse({
     }
     // Decompress the data
     return decompressDataAndCheckHash<UnlockRequestResult>(
-        { compressed: result, compressedHash: hash },
+        {
+            compressed: decodeURIComponent(result),
+            compressedHash: decodeURIComponent(hash),
+        },
         unlockResponseKeyAccessor
     );
 }
@@ -70,7 +73,7 @@ export async function parseUnlockRequestResponse({
  * @param params
  * @param hash
  */
-export async function parseUnlockResponse({
+export async function parseUnlockRequestParams({
     params,
     hash,
 }: { params: string; hash: string }) {

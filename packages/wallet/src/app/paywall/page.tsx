@@ -1,7 +1,7 @@
 "use client";
 
 import {
-    parseUnlockResponse,
+    parseUnlockRequestParams,
     prepareUnlockRequestResponse,
 } from "@frak-wallet/sdk";
 import { useQuery } from "@tanstack/react-query";
@@ -26,7 +26,7 @@ export default function PaywallPage() {
             }
 
             // Parse the data and return them
-            return await parseUnlockResponse({ params, hash });
+            return await parseUnlockRequestParams({ params, hash });
         },
     });
 

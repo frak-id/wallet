@@ -21,9 +21,7 @@ const wagmiConfig = createConfig({
 export function RootProvider({ children }: PropsWithChildren) {
     return (
         <QueryClientProvider client={queryClient}>
-            <WagmiProvider config={wagmiConfig}>
-                {children}
-            </WagmiProvider>
+            <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
         </QueryClientProvider>
     );
 }
