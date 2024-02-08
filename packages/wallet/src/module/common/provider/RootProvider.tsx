@@ -17,6 +17,7 @@ const wagmiConfig = createConfig({
     },
 });
 
+// TODO: Include a small 'build with ZeroDev and Permissionless' on the bottom
 export function RootProvider({ children }: PropsWithChildren) {
     return (
         <QueryClientProvider client={queryClient}>

@@ -17,7 +17,7 @@ const nextConfig = {
         ...envFromSstConfig,
         IS_LOCAL: (Config.STAGE !== "prod").toString(),
     },
-    transpilePackages: ["lucide-react"],
+    transpilePackages: ["lucide-react", "@frak-wallet/sdk"],
 };
 
 export default nextConfig;

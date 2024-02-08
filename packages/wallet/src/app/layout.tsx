@@ -2,7 +2,7 @@ import { AuthGate } from "@/module/authentication/component/AuthGate";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
-import type { Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fira_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import styles from "./layout.module.css";
@@ -15,7 +15,7 @@ const firaMono = Fira_Mono({
     display: "swap",
 });
 
-export const metadata = {
+export const metadata: Metadata = {
     title: "Frak Wallet",
     description:
         "POC showcasing ERC-4337 with WebAuthN inside the frak ecosystem.",
