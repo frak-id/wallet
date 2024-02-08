@@ -21,6 +21,7 @@ export type {
 export type {
     EventsParam,
     EventsResponse,
+    EventsFormat,
 } from "./communication/Events";
 export type {
     RedirectionParams,

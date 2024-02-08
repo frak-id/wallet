@@ -3,6 +3,7 @@ import type {
     GetUnlockStatusParams,
     GetUnlockStatusResponse,
 } from "../unlock/UnlockStatus.ts";
+import type { CompressedData } from "./Encoded.ts";
 
 /**
  * Generic events params
@@ -29,3 +30,11 @@ export type EventsResponse =
           key: "unlock-status";
           value: GetUnlockStatusResponse;
       };
+
+/**
+ * Format of an event
+ */
+export type EventsFormat = Readonly<{
+    topic: "get-price" | "unlock-status";
+    data: CompressedData;
+}>;

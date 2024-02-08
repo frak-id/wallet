@@ -13,6 +13,7 @@ export type {
     UnlockRequestResult,
     EventsParam,
     EventsResponse,
+    EventsFormat,
     RedirectionParams,
     RedirectionResponse,
     CompressedData,
@@ -25,4 +26,9 @@ export {
     parseUnlockRequestResult,
     getUnlockRequestUrl,
     prepareUnlockRequestResponse,
+    // Get prices request
+    parseGetPricesEventData,
+    parseGetPricesEventResponse,
+    getPricesResponseEvent,
+    getPricesEvent,
 } from "./events";
