@@ -1,6 +1,7 @@
 "use client";
 
 import { rpcTransport } from "@/context/common/blockchain/provider";
+import { PaywallProvider } from "@/module/paywall/provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PropsWithChildren } from "react";
 import { polygonMumbai } from "viem/chains";
@@ -21,7 +22,9 @@ const wagmiConfig = createConfig({
 export function RootProvider({ children }: PropsWithChildren) {
     return (
         <QueryClientProvider client={queryClient}>
-            <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
+            <WagmiProvider config={wagmiConfig}>
+                <PaywallProvider>{children}</PaywallProvider>
+            </WagmiProvider>
         </QueryClientProvider>
     );
 }

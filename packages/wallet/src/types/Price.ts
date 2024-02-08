@@ -5,7 +5,6 @@ import type { Hex } from "viem";
  */
 export type ArticlePrice = Readonly<{
     index: number; // Index of the price
-    isPriceEnabled: boolean;
     frkAmount: Hex; // Hex representing a bigint
     unlockDurationInSec: number; // The duration for which this price unlock an article
 }>;

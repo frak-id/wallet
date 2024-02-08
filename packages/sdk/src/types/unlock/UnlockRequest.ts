@@ -43,8 +43,8 @@ type AlreadyUnlocked = {
 };
 
 type UnlockError = {
-    key: "error";
+    key: "error" | "cancelled";
     status: "locked";
-    user: Address;
+    user?: Address;
     reason?: string;
 };

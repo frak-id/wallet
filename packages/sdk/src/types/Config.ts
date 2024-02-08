@@ -1,4 +1,4 @@
-import type {Hex} from "viem";
+import type { Hex } from "viem";
 
 /**
  * Configuration for the Frak Wallet SDK
