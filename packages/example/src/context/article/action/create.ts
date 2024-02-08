@@ -31,7 +31,7 @@ export async function createArticle({
     const articleLinkBasePath =
         process.env.IS_LOCAL === "true"
             ? "http://localhost:3001/articles/"
-            : "https://wallet-example.frak.id/articles/";
+            : "https://news-example.frak.id/articles/";
 
     // Insert a test article for this content
     const articleRepository = await getArticleRepository();

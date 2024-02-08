@@ -22,8 +22,8 @@ export function ExampleAppStack({ stack }: StackContext) {
     // Base domain for our whole app
     const subDomain =
         stack.stage === "prod"
-            ? "wallet-example"
-            : `wallet-example-${stack.stage.toLowerCase()}`;
+            ? "news-example"
+            : `news-example-${stack.stage.toLowerCase()}`;
 
     // Declare the Next.js site
     const site = new NextjsSite(stack, "example", {

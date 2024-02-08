@@ -1,5 +1,5 @@
 import { viemClient } from "@/context/common/blockchain/provider";
-import { triggerFrkAirdrop } from "@/context/mock/actions/airdropFrk";
+import { triggerFrkAirdrop } from "@/context/mock/action/airdropFrk";
 import {
     getRegisterOptions,
     getUsername,
