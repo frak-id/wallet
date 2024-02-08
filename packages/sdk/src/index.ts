@@ -32,3 +32,5 @@ export {
     getPricesResponseEvent,
     getPricesEvent,
 } from "./events";
+
+export { Listener, Provider } from "./services";
