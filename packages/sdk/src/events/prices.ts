@@ -2,7 +2,7 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "../compression";
-import type { EventsFormat, GetPricesParam, GetPricesResponse } from "../types";
+import type {EventsFormat, FrakWalletSdkConfig, GetPricesParam, GetPricesResponse} from "../types";
 
 const getPricesParamsKeyAccessor = (params: GetPricesParam) => [
     params.contentId,
@@ -14,14 +14,16 @@ const getPriceResponseKeyAccessor = (response: GetPricesResponse) => [
 
 /**
  * Helper for the get prices request params
+ * @param config
  * @param params
  */
 export async function getPricesEvent(
-    params: GetPricesParam
+    config: FrakWalletSdkConfig,
+    params: Omit<GetPricesParam, 'contentId'>
 ): Promise<EventsFormat> {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
-        params,
+        { ...params, contentId: config.contentId },
         getPricesParamsKeyAccessor
     );
     return {

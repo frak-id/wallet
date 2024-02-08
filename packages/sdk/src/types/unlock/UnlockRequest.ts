@@ -7,6 +7,9 @@ import type { ArticlePrice } from "../ArticlePrice.ts";
 export type UnlockRequestParams = Readonly<{
     articleId: Hex;
     contentId: Hex;
+    // The displayable article and content title
+    articleTitle: string;
+    contentTitle: string;
     // The selected prices for the article
     price: ArticlePrice;
     // Url of the article to unlock

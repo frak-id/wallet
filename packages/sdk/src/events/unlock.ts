@@ -30,11 +30,11 @@ const unlockResponseKeyAccessor = (response: UnlockRequestResult) => [
  */
 export async function getUnlockRequestUrl(
     config: FrakWalletSdkConfig,
-    params: UnlockRequestParams
+    params: Omit<UnlockRequestParams, 'contentId' | 'contentTitle'>
 ) {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
-        params,
+        { ...params, contentId: config.contentId, contentTitle: config.contentTitle },
         unlockParamKeyAccessor
     );
     // Then build the URL

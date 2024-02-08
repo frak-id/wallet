@@ -1,18 +1,17 @@
 "use server";
 
 import { getUnlockRequestUrl } from "@frak-wallet/sdk";
+import {frakWalletSdkConfig} from "@/context/frak-wallet/config";
 
 /**
  * Generate a mocked unlock link
  */
 export async function getMockedUnlockLink() {
     return getUnlockRequestUrl(
-        {
-            walletUrl: process.env.FRAK_WALLET_URL as string,
-        },
+        frakWalletSdkConfig,
         {
             articleId: "0xdeadbeef",
-            contentId: "0xdeadbeef",
+            articleTitle: "Example Article",
             price: {
                 index: 0,
                 unlockDurationInSec: 0,
