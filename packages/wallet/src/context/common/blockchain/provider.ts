@@ -3,7 +3,7 @@ import {
     pimlicoBundlerActions,
     pimlicoPaymasterActions,
 } from "permissionless/actions/pimlico";
-import { http, createPublicClient, createWalletClient } from "viem";
+import { http, createPublicClient } from "viem";
 import { polygonMumbai } from "viem/chains";
 
 export const rpcTransport = http(process.env.RPC_URL, {
@@ -21,13 +21,6 @@ export const viemClient = createPublicClient({
     batch: {
         multicall: { wait: 50 },
     },
-});
-
-// Build the viem wallet client
-export const viemWalletClient = createWalletClient({
-    chain: polygonMumbai,
-    transport: rpcTransport,
-    cacheTime: 60_000,
 });
 
 export const pimlicoBundlerTransport = http(

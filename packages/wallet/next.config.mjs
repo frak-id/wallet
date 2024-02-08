@@ -8,6 +8,7 @@ const wantedFromConfig = [
     // TODO: Shouldn't be here, but Next is crying all over the place when using SST.Config, to fix
     "MONGODB_FRAK_POC_URI",
     "SESSION_ENCRYPTION_KEY",
+    "AIRDROP_PRIVATE_KEY",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 

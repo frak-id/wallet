@@ -11,7 +11,14 @@ import styles from "./index.module.css";
 export function Register() {
     const router = useRouter();
     const [, startTransition] = useTransition();
-    const { username, setUsername, register, error } = useRegister();
+    const {
+        username,
+        setUsername,
+        register,
+        error,
+        isRegisterInProgress,
+        isAirdroppingFrk,
+    } = useRegister();
 
     /**
      * Startup the sign up process once the form is submitted
@@ -48,6 +55,11 @@ export function Register() {
             </form>
             <br />
             {error && <p>Error during registration: {JSON.stringify(error)}</p>}
+            <br />
+            <br />
+            {isRegisterInProgress && <p>Registering...</p>}
+            <br />
+            {isAirdroppingFrk && <p>Offering you a few FRK...</p>}
         </div>
     );
 }
