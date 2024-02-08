@@ -1,9 +1,10 @@
-import { type EventsFormat, getPricesEvent, Provider } from "@frak-wallet/sdk";
+import {type EventsFormat, getPricesEvent, parseGetPricesEventResponse, Provider} from "@frak-wallet/sdk";
 import type { Article } from "@/type/Article";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
+import {frakWalletSdkConfig} from "@/context/frak-wallet/config";
 
 const provider = new Provider();
 
@@ -18,10 +19,13 @@ export function ReadArticle({
      * Handle the get-price event response
      * @param data
      */
-    function handleGetPrice(data: EventsFormat) {
+    async function handleGetPrice(data: EventsFormat) {
         if (!data) return;
         console.log("===read page get-price", data);
         // setPrices(data);
+        // Here we should parse the data
+        const parsed = await parseGetPricesEventResponse(data);
+        console.log("Received prices infos", parsed);
     }
 
     useEffect(() => {
@@ -39,13 +43,7 @@ export function ReadArticle({
              */
             async function run() {
                 const priceEvent = await getPricesEvent(
-                    {
-                        config: {
-                            walletUrl: process.env.FRAK_WALLET_URL,
-                            contentId: article.contentId as Hex,
-                            contentTitle: article.title,
-                        },
-                    },
+                    frakWalletSdkConfig,
                     { articleId: article.id as Hex }
                 );
                 console.log("priceEvent", priceEvent);
@@ -53,7 +51,7 @@ export function ReadArticle({
             }
             run();
         }, 2000);
-    }, [article.contentId, article.title, article.id]);
+    }, [article.id]);
 
     return (
         <div>

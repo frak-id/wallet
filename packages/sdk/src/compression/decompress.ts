@@ -36,6 +36,10 @@ export async function decompressDataAndCheckHash<T>(
     }
 
     // And check the validation hash
+    console.log("parsed data", {
+        test: "test",
+        parsedData,
+    })
     const keys = keyAccessor(parsedData);
     const expectedValidationHash = sha256(keys.join("_"));
     if (expectedValidationHash !== parsedData.validationHash) {
