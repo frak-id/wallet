@@ -1,4 +1,5 @@
 import { getSession } from "@/context/session/action/session";
+import { AuthGate } from "@/module/authentication/component/AuthGate";
 import { HeaderRestricted } from "@/module/common/component/Header";
 import { WalletProvider } from "@/module/wallet/provider/WalletProvider";
 import { redirect } from "next/navigation";
@@ -17,9 +18,11 @@ export default async function RestrictedLayout({
         redirect("/");
     }
     return (
-        <WalletProvider session={session}>
-            <HeaderRestricted />
-            {children}
-        </WalletProvider>
+        <AuthGate>
+            <WalletProvider session={session}>
+                <HeaderRestricted />
+                {children}
+            </WalletProvider>
+        </AuthGate>
     );
 }

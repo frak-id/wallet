@@ -1,4 +1,3 @@
-import { AuthGate } from "@/module/authentication/component/AuthGate";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
@@ -54,9 +53,7 @@ export default function RootLayout({
                 <main className={styles.main}>
                     <div className={styles.inner}>
                         <RootProvider>
-                            <ClientOnly>
-                                <AuthGate>{children}</AuthGate>
-                            </ClientOnly>
+                            <ClientOnly>{children}</ClientOnly>
                         </RootProvider>
                     </div>
                 </main>
