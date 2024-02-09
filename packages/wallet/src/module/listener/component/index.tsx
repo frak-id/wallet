@@ -7,6 +7,7 @@ import {
     getPricesResponseEvent,
     parseGetPricesEventData,
 } from "@frak-wallet/sdk";
+import { parseUnlockStatusEventData } from "@frak-wallet/sdk/src/events/unlock";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 
@@ -41,11 +42,24 @@ export function ListenerCompo() {
         listener.emitToProvider(responseEvent);
     }
 
+    /**
+     * Handle the unlock-status event response
+     * @param data
+     */
+    async function handleUnlockRequest(data: EventsFormat) {
+        if (!data) return;
+        console.log("handleUnlockRequest", data);
+        const { articleId, contentId } = await parseUnlockStatusEventData(data);
+        console.log("handleUnlockRequest", articleId, contentId);
+    }
+
     useEffect(() => {
         listener.emitter.on("get-price", handleGetPriceRequest);
+        listener.emitter.on("unlock-status", handleUnlockRequest);
 
         return () => {
             listener.emitter.off("get-price", handleGetPriceRequest);
+            listener.emitter.off("unlock-status", handleUnlockRequest);
         };
     }, []);
 

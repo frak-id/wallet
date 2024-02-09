@@ -6,6 +6,7 @@ import {
     getPricesEvent,
     parseGetPricesEventResponse,
 } from "@frak-wallet/sdk";
+import { getUnlockStatusEvent } from "@frak-wallet/sdk/src/events/unlock";
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -51,6 +52,15 @@ export function ReadArticle({
                 });
                 console.log("priceEvent", priceEvent);
                 provider.emitToListener(priceEvent);
+
+                const unlockEvent = await getUnlockStatusEvent(
+                    frakWalletSdkConfig,
+                    {
+                        articleId: article.id as Hex,
+                    }
+                );
+                console.log("unlockEvent", unlockEvent);
+                provider.emitToListener(unlockEvent);
             }
             run();
         }, 2000);
