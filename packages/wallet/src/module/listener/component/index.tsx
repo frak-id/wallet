@@ -2,18 +2,18 @@
 
 import { useArticlePrices } from "@/module/paywall/hook/useArticlePrices";
 import {
-    type EventsFormat,
     Listener,
     getPricesResponseEvent,
     parseGetPricesEventData,
 } from "@frak-wallet/sdk";
+import type { EventsFormat } from "@frak-wallet/sdk";
 import { parseUnlockStatusEventData } from "@frak-wallet/sdk/src/events/unlock";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 
 const listener = new Listener();
 
-export function ListenerCompo() {
+export function ListenerUI() {
     const [contentId, setContentId] = useState<Hex>();
     const [articleId, setArticleId] = useState<Hex>();
     const { fetchPrices } = useArticlePrices({

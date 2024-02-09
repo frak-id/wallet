@@ -1,5 +1,5 @@
-import { ListenerCompo } from "@/module/listener/component";
+import { ListenerUI } from "@/module/listener/component";
 
 export default function ListenerPage() {
-    return <ListenerCompo />;
+    return <ListenerUI />;
 }

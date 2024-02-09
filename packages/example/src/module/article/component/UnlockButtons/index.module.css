@@ -1,0 +1,23 @@
+.floatingActions {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    min-height: 64px;
+    padding: 20px;
+    background-color: #001432;
+    color: #fff;
+}
+
+.floatingActions__list {
+    @mixin flex space-between;
+    gap: 10px;
+}
+
+.floatingActions__loader {
+    vertical-align: text-bottom;
+}
+
+.floatingActions__buttonUnlock {
+    display: block;
+    margin: 0 auto;
+}

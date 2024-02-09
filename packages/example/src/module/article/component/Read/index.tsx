@@ -11,6 +11,7 @@ import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
+import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 
 const provider = new Provider();
 
@@ -79,13 +80,7 @@ export function ReadArticle({
                 Unlock with FRK
             </Link>
 
-            {prices.map((price) => (
-                <div key={`index-${price.index}`}>
-                    <button type={"button"} disabled={!price.isPriceEnabled}>
-                        Unlock for {price.frkAmount} FRK
-                    </button>
-                </div>
-            ))}
+            {prices && <UnlockButtons prices={prices} />}
         </div>
     );
 }
