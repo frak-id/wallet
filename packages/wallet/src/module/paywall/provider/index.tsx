@@ -1,16 +1,17 @@
 "use client";
 
+import { dexieDb } from "@/context/common/dexie/dexieDb";
 import type { ArticlePrice } from "@/types/Price";
 import {
     type UnlockRequestParams,
     prepareUnlockRequestResponse,
 } from "@frak-wallet/sdk";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { useRouter } from "next/navigation";
 import {
     type ReactNode,
     createContext,
     useContext,
-    useState,
     useTransition,
 } from "react";
 import type { Hex } from "viem";
@@ -33,6 +34,26 @@ export type PaywallContext = {
     previewUrl?: string;
 };
 
+export type PaywallStatus =
+    | {
+          key: "idle" | "cancelled" | "pendingSignature";
+      }
+    | {
+          key: "pendingTx";
+          userOpHash: Hex;
+      }
+    | {
+          key: "success";
+          txHash: Hex;
+          userOpHash: Hex;
+      }
+    | {
+          key: "error";
+          txHash?: Hex;
+          userOpHash?: Hex;
+          reason?: string;
+      };
+
 /**
  * Hook used to store current data about the paywall context
  */
@@ -40,7 +61,14 @@ function usePaywallHook() {
     const router = useRouter();
     const [, startTransition] = useTransition();
 
-    const [currentContext, setContext] = useState<PaywallContext | null>(null);
+    const [currentContext, setContext] = useLocalStorage<PaywallContext | null>(
+        "paywallContext",
+        null
+    );
+    const [currentStatus, setStatus] = useLocalStorage<PaywallStatus | null>(
+        "paywallStatus",
+        null
+    );
 
     /**
      * Handle a new unlock request
@@ -48,7 +76,15 @@ function usePaywallHook() {
      */
     async function handleNewUnlockRequest(unlockRequest: UnlockRequestParams) {
         setContext(unlockRequest);
-        // Other shit to do? Find out the right path? Like going to the register / login page?
+        setStatus({ key: "idle" });
+
+        // Insert/Update the article link mapping
+        await dexieDb.articleInfo.put({
+            articleId: unlockRequest.articleId,
+            contentId: unlockRequest.contentId,
+            articleTitle: unlockRequest.articleTitle,
+            articleUrl: unlockRequest.articleUrl,
+        });
     }
 
     /**
@@ -57,8 +93,13 @@ function usePaywallHook() {
     async function discard() {
         // If we have no current context, nothing to do
         if (!currentContext) {
+            setContext(null);
+            setStatus(null);
             return;
         }
+
+        // Update the status to discarded
+        setStatus({ key: "cancelled" });
 
         // Build the redirection url
         const unlockResponseUrl = await prepareUnlockRequestResponse(
@@ -80,9 +121,10 @@ function usePaywallHook() {
     }
 
     return {
-        test: "paywallContext",
         context: currentContext,
+        status: currentStatus,
         handleNewUnlockRequest,
+        setStatus,
         discard,
     };
 }

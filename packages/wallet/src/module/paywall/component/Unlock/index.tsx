@@ -17,7 +17,7 @@ import { prepareUnlockRequestResponse } from "@frak-wallet/sdk";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { createSmartAccountClient } from "permissionless";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
     type Address,
     type Hex,
@@ -33,9 +33,55 @@ type UnlockSuccessData = Readonly<{
     userOpExplorerLink: string;
 }>;
 
+type UiState =
+    | {
+          success: {
+              redirectUrl: string;
+              userOpHash: Hex;
+              userOpExplorerLink: string;
+          };
+          error?: never;
+          loading?: never;
+      }
+    | {
+          error: {
+              reason: string;
+          };
+          success?: never;
+          loading?: never;
+      }
+    | {
+          loading: {
+              info: "checkingParams" | "buildingTx" | "pendingSignature";
+          };
+          error?: never;
+          success?: never;
+      };
+
 export function PaywallUnlock({ context }: { context: PaywallContext }) {
     const { wallet, smartWallet, balance, refreshBalance } = useWallet();
-    const { discard } = usePaywall();
+    const { discard, setStatus: setGlobalPaywallStatus } = usePaywall();
+
+    const [uiState, setUiState] = useState<UiState>({
+        loading: { info: "checkingParams" },
+    });
+
+    // Helper to set the loading state
+    function setLoadingUiState(
+        info: "checkingParams" | "buildingTx" | "pendingSignature"
+    ) {
+        setUiState({ loading: { info } });
+    }
+
+    // Set the error state
+    function setErrorState(reason: string) {
+        setUiState({ error: { reason } });
+        // Set the error globally
+        setGlobalPaywallStatus({
+            key: "error",
+            reason,
+        });
+    }
 
     /**
      * Launch the article unlocking
@@ -46,24 +92,18 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
      *     - Success (with redirect data + user op hash + user op explorer link)
      *     - Error (with retry + redirect data + error message)
      */
-    const {
-        data: unlockResponse,
-        mutate: launchArticleUnlock,
-        isPending: isUnlockInProgress,
-        isError: isUnlockError,
-        error,
-    } = useMutation({
+    const { mutate: launchArticleUnlock, error } = useMutation({
         mutationKey: ["unlock", context.articleId, context.contentId],
         mutationFn: async (): Promise<UnlockSuccessData | undefined> => {
-            console.log("Unlocking article");
+            setLoadingUiState("checkingParams");
             if (!context) {
-                console.log("No context");
                 // Error that we are missing context
+                setErrorState("Missing paywall context");
                 return undefined;
             }
             if (!smartWallet) {
-                console.log("No smart wallet");
                 // Error that the user doesn't have a smart wallet
+                setErrorState("No smart wallet");
                 return;
             }
 
@@ -88,11 +128,12 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
             const weiPrice = BigInt(blockchainPrice?.frkAmount ?? "0x00");
 
             if (weiPrice > weiBalance) {
-                console.log("Not enough balance");
-                throw new Error("Not enough balance");
+                setErrorState("Not enough balance");
+                return;
             }
 
             // Build the list of tx we will st
+            setLoadingUiState("buildingTx");
             // TODO: All of this stuff should be done somewhere else, like a build article tx helper function
             const txs: {
                 to: Address;
@@ -110,7 +151,6 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
 
             // If the allowance isn't enough, we need to approve the paywall contract
             if (weiPrice > allowance) {
-                console.log("Increasing paywall allowance");
                 const allowanceFnCall = encodeFunctionData({
                     abi: frakTokenAbi,
                     functionName: "approve",
@@ -124,7 +164,6 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
             }
 
             // Build the unlock tx and add it
-            console.log("Adding unlock function call");
             const unlockFnCall = encodeFunctionData({
                 abi: paywallAbi,
                 functionName: "unlockAccess",
@@ -141,7 +180,6 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
             });
 
             // Build the smart account client we will use to send the txs
-            console.log("Building smart account client", { txs });
             const smartAccountClient = createSmartAccountClient({
                 account: smartWallet,
                 chain: polygonMumbai,
@@ -150,21 +188,25 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
                     pimlicoPaymasterClient.sponsorUserOperation,
             });
 
-            console.log("Sending user operation via", {
-                smartAccountClient: smartAccountClient.account.address,
-            });
-
             // Encode the user op data
             const smartWalletData = await smartWallet.encodeCallData(txs);
 
             // TODO: Adding a simulation before sending the tx
 
             // TODO: Update state before that telling that we are waiting for his signature
+            setLoadingUiState("pendingSignature");
+            setGlobalPaywallStatus({ key: "pendingSignature" });
             const userOpHash = await smartAccountClient.sendUserOperation({
                 userOperation: {
                     callData: smartWalletData,
                 },
                 account: smartWallet,
+            });
+
+            // Update the global paywall status
+            setGlobalPaywallStatus({
+                key: "pendingTx",
+                userOpHash,
             });
 
             // Parse the data and return them
@@ -178,17 +220,20 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
                 }
             );
 
-            return {
-                redirectUrl,
-                userOpHash,
-                userOpExplorerLink: `https://jiffyscan.xyz/userOpHash/${userOpHash}?network=mumbai`,
-            };
+            // Set the ui success state
+            setUiState({
+                success: {
+                    redirectUrl,
+                    userOpHash,
+                    userOpExplorerLink: `https://jiffyscan.xyz/userOpHash/${userOpHash}?network=mumbai`,
+                },
+            });
         },
     });
 
     useEffect(() => {
         if (error) {
-            console.error("Unlock error", error);
+            setErrorState(error?.message ?? "Unknown error");
         }
     }, [error]);
 
@@ -213,26 +258,65 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
                 Launch unlock
             </button>
 
-            {isUnlockInProgress && <p>Unlock in progress ...</p>}
-            {isUnlockError && (
-                <p>An error occurred during the unlock process</p>
-            )}
-            {unlockResponse && <DisplaySuccessResult result={unlockResponse} />}
+            <br />
+            <br />
+
+            <UiStateComponent uiState={uiState} />
         </div>
     );
 }
 
-function DisplaySuccessResult({ result }: { result: UnlockSuccessData }) {
+function UiStateComponent({ uiState }: { uiState: UiState }) {
+    return (
+        <div>
+            <LoadingUiState loading={uiState.loading} />
+            <ErrorUiState error={uiState.error} />
+            <SuccessUiState success={uiState.success} />
+        </div>
+    );
+}
+
+function LoadingUiState({ loading }: { loading: UiState["loading"] }) {
+    if (!loading) {
+        return null;
+    }
+
+    return (
+        <div>
+            <h2>Loading...</h2>
+            <p>{loading.info}</p>
+        </div>
+    );
+}
+
+function ErrorUiState({ error }: { error: UiState["error"] }) {
+    if (!error) {
+        return null;
+    }
+
+    return (
+        <div>
+            <h2>Error</h2>
+            <p>{error.reason}</p>
+        </div>
+    );
+}
+
+function SuccessUiState({ success }: { success: UiState["success"] }) {
+    if (!success) {
+        return null;
+    }
+
     return (
         <div>
             <h2>Unlock success</h2>
-            <p>User op hash: {result.userOpHash}</p>
+            <p>User op hash: {success.userOpHash}</p>
             <br />
             <br />
 
             <p>
                 <a
-                    href={result.userOpExplorerLink}
+                    href={success.userOpExplorerLink}
                     target="_blank"
                     rel="noopener noreferrer"
                 >
@@ -242,7 +326,7 @@ function DisplaySuccessResult({ result }: { result: UnlockSuccessData }) {
             <br />
             <br />
 
-            <Link href={result.redirectUrl}>Read the article</Link>
+            <Link href={success.redirectUrl}>Read the article</Link>
         </div>
     );
 }
