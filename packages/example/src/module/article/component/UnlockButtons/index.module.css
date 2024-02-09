@@ -6,10 +6,12 @@
     padding: 20px;
     background-color: #001432;
     color: #fff;
+    text-align: center;
 }
 
 .floatingActions__list {
-    @mixin flex space-between;
+    display: flex;
+    justify-content: center;
     gap: 10px;
 }
 

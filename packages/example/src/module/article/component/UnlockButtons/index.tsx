@@ -1,13 +1,12 @@
-import type { ArticlePrice } from "@frak-wallet/sdk/src/types/ArticlePrice";
-import styles from "./index.module.css";
-import { useEffect, useState } from "react";
-import { Button } from "@/module/common/component/Button";
-import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
-import { useQuery } from "@tanstack/react-query";
 import { getMockedUnlockLink } from "@/context/article/action/unlock";
+import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
+import { Button } from "@/module/common/component/Button";
+import type { ArticlePrice } from "@frak-wallet/sdk/src/types/ArticlePrice";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import styles from "./index.module.css";
 
 export function UnlockButtons({ prices }: { prices: ArticlePrice[] }) {
-    console.log("UnlockButtons prices", prices);
     const [step, setStep] = useState(1);
     const [articlePrice, setArticlePrice] = useState<ArticlePrice | null>(null);
     /*const { unlockStatus, errorMessage, unlock } = useUnlockArticleHook({
@@ -50,6 +49,7 @@ export function UnlockButtons({ prices }: { prices: ArticlePrice[] }) {
                     ))}
                 </ul>
             )}
+            {step === 3 && <p>Redirecting...</p>}
             {/*{step === 3 && (
                 <>
                     {unlockStatus === "waiting_signature" && (

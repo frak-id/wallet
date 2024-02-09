@@ -1,4 +1,5 @@
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
+import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import type { Article } from "@/type/Article";
 import {
     type EventsFormat,
@@ -11,7 +12,6 @@ import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
-import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 
 const provider = new Provider();
 
@@ -51,7 +51,6 @@ export function ReadArticle({
                 const priceEvent = await getPricesEvent(frakWalletSdkConfig, {
                     articleId: article.id as Hex,
                 });
-                console.log("priceEvent", priceEvent);
                 provider.emitToListener(priceEvent);
 
                 const unlockEvent = await getUnlockStatusEvent(
@@ -60,7 +59,6 @@ export function ReadArticle({
                         articleId: article.id as Hex,
                     }
                 );
-                console.log("unlockEvent", unlockEvent);
                 provider.emitToListener(unlockEvent);
             }
             run();

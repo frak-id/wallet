@@ -48,7 +48,6 @@ export function ListenerUI() {
      */
     async function handleUnlockRequest(data: EventsFormat) {
         if (!data) return;
-        console.log("handleUnlockRequest", data);
         const { articleId, contentId } = await parseUnlockStatusEventData(data);
         console.log("handleUnlockRequest", articleId, contentId);
     }

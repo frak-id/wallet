@@ -1,8 +1,8 @@
 import { RootProvider } from "@/module/common/provider/RootProvider";
+import "@/styles/all.css";
 import type { Viewport } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
-import "@/styles/all.css";
 
 const inter = Inter({ subsets: ["latin"] });
 

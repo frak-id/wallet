@@ -1,13 +1,13 @@
+import { Loader } from "@/assets/icons/Loader";
+import { Slot } from "@radix-ui/react-slot";
 import { cloneElement, forwardRef, isValidElement } from "react";
 import type {
     ButtonHTMLAttributes,
     ComponentType,
-    ReactNode,
     ReactElement,
+    ReactNode,
 } from "react";
 import styles from "./index.module.css";
-import { Slot } from "@radix-ui/react-slot";
-import { Loader } from "@/assets/icons/Loader";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?:
