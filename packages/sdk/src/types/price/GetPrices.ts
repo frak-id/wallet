@@ -12,10 +12,10 @@ export type GetPricesParam = Readonly<{
 /**
  * The response to the get prices request
  */
-export type GetPricesResponse = Readonly<
-    (ArticlePrice & {
+export type GetPricesResponse = Readonly<{
+    prices: (ArticlePrice & {
         // Boolean to know if the prices are accessible for the user or not
         // Can be null if user not logged in
         isUserAccessible: boolean | null;
-    })[]
->;
+    })[];
+}>;

@@ -2,12 +2,12 @@ import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import type { Article } from "@/type/Article";
 import {
-    type EventsFormat,
     Provider,
     getPricesEvent,
+    getUnlockStatusEvent,
     parseGetPricesEventResponse,
 } from "@frak-wallet/sdk";
-import { getUnlockStatusEvent } from "@frak-wallet/sdk/src/events/unlock";
+import type { EventsFormat } from "@frak-wallet/sdk";
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -28,10 +28,8 @@ export function ReadArticle({
      */
     async function handleGetPrice(data: EventsFormat) {
         if (!data) return;
-        const parsed = await parseGetPricesEventResponse(data);
-        // TODO - we should need to remove the validationHash on higher level
-        parsed.validationHash = undefined;
-        setPrices(Object.values(parsed).filter(Boolean));
+        const responseParsed = await parseGetPricesEventResponse(data);
+        setPrices(Object.values(responseParsed.prices).filter(Boolean));
     }
 
     useEffect(() => {

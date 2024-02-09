@@ -5,9 +5,9 @@ import {
     Listener,
     getPricesResponseEvent,
     parseGetPricesEventData,
+    parseUnlockStatusEventData,
 } from "@frak-wallet/sdk";
 import type { EventsFormat } from "@frak-wallet/sdk";
-import { parseUnlockStatusEventData } from "@frak-wallet/sdk/src/events/unlock";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 
@@ -38,7 +38,7 @@ export function ListenerUI() {
             return;
         }
 
-        const responseEvent = await getPricesResponseEvent(prices);
+        const responseEvent = await getPricesResponseEvent({ prices });
         listener.emitToProvider(responseEvent);
     }
 

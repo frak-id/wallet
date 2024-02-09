@@ -14,7 +14,8 @@ const getPricesParamsKeyAccessor = (params: GetPricesParam) => [
     params.articleId,
 ];
 const getPriceResponseKeyAccessor = (response: GetPricesResponse) => [
-    response.length.toString(),
+    response.prices.length.toString(),
+    ...response.prices.map((p) => p.frkAmount),
 ];
 
 /**

@@ -10,3 +10,7 @@ export {
     getPricesResponseEvent,
     getPricesEvent,
 } from "./prices";
+export {
+    getUnlockStatusEvent,
+    parseUnlockStatusEventData,
+} from "./status.ts";

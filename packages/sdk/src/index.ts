@@ -31,6 +31,9 @@ export {
     parseGetPricesEventResponse,
     getPricesResponseEvent,
     getPricesEvent,
+    // Get status event
+    getUnlockStatusEvent,
+    parseUnlockStatusEventData,
 } from "./events";
 
 export { Listener, Provider } from "./services";

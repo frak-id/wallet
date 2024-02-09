@@ -3,9 +3,7 @@ import {
     hashAndCompressData,
 } from "../compression";
 import type {
-    EventsFormat,
     FrakWalletSdkConfig,
-    GetUnlockStatusParams,
     UnlockRequestParams,
     UnlockRequestResult,
 } from "../types";
@@ -22,7 +20,7 @@ const unlockParamKeyAccessor = (params: UnlockRequestParams) => [
 const unlockResponseKeyAccessor = (response: UnlockRequestResult) => [
     response.key,
     response.status,
-    response.user,
+    response.user ?? "",
 ];
 
 /**
@@ -125,37 +123,4 @@ export async function prepareUnlockRequestResponse(
     );
     // Then build the URL
     return parsedRedirectUrl.toString();
-}
-
-/**
- * Helper for the get unlock request params
- * @param config
- * @param params
- */
-export async function getUnlockStatusEvent(
-    config: FrakWalletSdkConfig,
-    params: Omit<GetUnlockStatusParams, "contentId">
-): Promise<EventsFormat> {
-    // Compress our params
-    const { compressed, compressedHash } = await hashAndCompressData(
-        { ...params, contentId: config.contentId },
-        unlockResponseKeyAccessor
-    );
-    return {
-        topic: "unlock-status",
-        data: {
-            compressed,
-            compressedHash: compressedHash,
-        },
-    };
-}
-
-/**
- * Helper to parse the unlock params
- *   - TODO: This should be moved to the wallet app directly, no needed for external usage
- */
-export async function parseUnlockStatusEventData(
-    event: EventsFormat
-): Promise<GetUnlockStatusParams> {
-    return decompressDataAndCheckHash(event.data, unlockResponseKeyAccessor);
 }
