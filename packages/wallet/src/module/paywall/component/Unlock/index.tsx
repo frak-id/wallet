@@ -14,6 +14,7 @@ import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getUnlockStatusOnArticle } from "@/context/paywall/action/getStatus";
 import { type PaywallContext, usePaywall } from "@/module/paywall/provider";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
+import { formatSecondDuration } from "@frak-wallet/example/src/module/article/utils/duration";
 import { prepareUnlockRequestResponse } from "@frak-wallet/sdk";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -27,7 +28,6 @@ import {
     parseEther,
 } from "viem";
 import { polygonMumbai } from "viem/chains";
-import {formatSecondDuration} from "@frak-wallet/example/src/module/article/utils/duration";
 
 type UnlockSuccessData = Readonly<{
     redirectUrl: string;
@@ -146,7 +146,8 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
             const { data: onchainStatus } = await refreshOnChainUnlockStatus();
             if (onchainStatus?.isAllowed === true) {
                 // Compute the expiration time
-                const expireIn = Date.now() - (onchainStatus.allowedUntilInSec * 1000);
+                const expireIn =
+                    Date.now() - onchainStatus.allowedUntilInSec * 1000;
                 const formattedDuration = formatSecondDuration(expireIn / 1000);
                 // Parse the data and return them
                 const redirectUrl = await prepareUnlockRequestResponse(
@@ -160,7 +161,7 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
                 setUiState({
                     already: {
                         redirectUrl,
-                        expireIn: formattedDuration
+                        expireIn: formattedDuration,
                     },
                 });
                 return;

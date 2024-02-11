@@ -10,7 +10,7 @@ export class WalletDB extends Dexie {
 
     constructor() {
         super("WalletDb");
-        this.version(1).stores({
+        this?.version(1)?.stores({
             articleInfo: "++id, [articleId,contentId]",
         });
     }

@@ -1,6 +1,5 @@
 "use client";
 
-import { dexieDb } from "@/context/common/dexie/dexieDb";
 import type { ArticlePrice } from "@/types/Price";
 import {
     type UnlockRequestParams,
@@ -79,13 +78,13 @@ function usePaywallHook() {
         setStatus({ key: "idle" });
 
         // Insert/Update the article link mapping
-        await dexieDb.articleInfo.put({
+        /*await dexieDb.articleInfo.put({
             articleId: unlockRequest.articleId,
             contentId: unlockRequest.contentId,
             contentTitle: unlockRequest.contentTitle,
             articleTitle: unlockRequest.articleTitle,
             articleUrl: unlockRequest.articleUrl,
-        });
+        });*/
     }
 
     /**
