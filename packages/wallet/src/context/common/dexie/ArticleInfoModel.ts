@@ -10,6 +10,9 @@ export type ArticleInfoModel = {
     articleId: Hex;
     contentId: Hex;
 
+    // Some info about the content
+    contentTitle: string;
+
     // The info about the articles
     articleTitle: string;
     articleUrl: string;

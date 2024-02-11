@@ -30,16 +30,17 @@ export type GetUnlockStatusParams = Readonly<{
  */
 export type GetUnlockStatusResponse = Readonly<
     | UnlockStatusNotConnectedResponse
-    | UnlockStatusExpiredResponse
+    | UnlockStatusLockedResponse
     | UnlockStatusProcessingResponse
     | UnlockStatusValidResponse
+    | UnlockStatusErrorResponse
 >;
 
 /**
  * Response when a user isn't logged in (not registered or not logged in if previously registered)
  */
 type UnlockStatusNotConnectedResponse = Readonly<{
-    key: "not-registered" | "not-logged-in";
+    key: "not-logged-in";
     status: "locked";
 }>;
 
@@ -48,18 +49,23 @@ type UnlockStatusNotConnectedResponse = Readonly<{
  */
 type LoggedUnlockStatusResponse = {
     user: Address;
-    // The raw frk balance
-    frkBalance: Hex;
 };
 
 /**
  * When the content unlocked was expired a few time ago
  */
-type UnlockStatusExpiredResponse = LoggedUnlockStatusResponse & {
-    key: "expired";
-    status: "locked";
-    expiredAt: number;
-};
+type UnlockStatusLockedResponse = LoggedUnlockStatusResponse &
+    (
+        | {
+              key: "expired";
+              status: "locked";
+              expiredAt: number;
+          }
+        | {
+              key: "not-unlocked";
+              status: "locked";
+          }
+    );
 
 /**
  * When the content unlocked was expired a few time ago
@@ -68,17 +74,14 @@ type UnlockStatusProcessingResponse = LoggedUnlockStatusResponse & {
     status: "in-progress";
 } & (
         | {
-              key: "waiting-user-validation";
-              status: "in-progress";
+              key: "preparing" | "waiting-user-validation";
           }
         | {
               key: "waiting-transaction-bundling";
-              status: "in-progress";
               userOpHash: Hex;
           }
         | {
               key: "waiting-transaction-confirmation";
-              status: "in-progress";
               userOpHash: Hex;
               txHash: Hex;
           }
@@ -90,7 +93,14 @@ type UnlockStatusProcessingResponse = LoggedUnlockStatusResponse & {
 type UnlockStatusValidResponse = LoggedUnlockStatusResponse & {
     key: "valid";
     status: "unlocked";
-    userOpHash: Hex;
-    txHash: Hex;
     allowedUntil: number;
+};
+
+/**
+ * When the content unlocked was expired a few time ago
+ */
+type UnlockStatusErrorResponse = {
+    key: "error";
+    status: "locked";
+    reason: string;
 };

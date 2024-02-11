@@ -82,6 +82,7 @@ function usePaywallHook() {
         await dexieDb.articleInfo.put({
             articleId: unlockRequest.articleId,
             contentId: unlockRequest.contentId,
+            contentTitle: unlockRequest.contentTitle,
             articleTitle: unlockRequest.articleTitle,
             articleUrl: unlockRequest.articleUrl,
         });
