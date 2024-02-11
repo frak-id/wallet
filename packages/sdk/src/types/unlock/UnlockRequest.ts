@@ -38,8 +38,6 @@ type AlreadyUnlocked = {
     key: "already-unlocked";
     status: "unlocked";
     user: Address;
-    userOpHash: Hex;
-    txHash: Hex;
 };
 
 type UnlockError = {

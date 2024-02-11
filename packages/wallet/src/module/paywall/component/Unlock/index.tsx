@@ -11,10 +11,11 @@ import {
     viemClient,
 } from "@/context/common/blockchain/provider";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
+import { getUnlockStatusOnArticle } from "@/context/paywall/action/getStatus";
 import { type PaywallContext, usePaywall } from "@/module/paywall/provider";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { prepareUnlockRequestResponse } from "@frak-wallet/sdk";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { createSmartAccountClient } from "permissionless";
 import { useEffect, useState } from "react";
@@ -26,6 +27,7 @@ import {
     parseEther,
 } from "viem";
 import { polygonMumbai } from "viem/chains";
+import {formatSecondDuration} from "@frak-wallet/example/src/module/article/utils/duration";
 
 type UnlockSuccessData = Readonly<{
     redirectUrl: string;
@@ -35,11 +37,21 @@ type UnlockSuccessData = Readonly<{
 
 type UiState =
     | {
+          already: {
+              redirectUrl: string;
+              expireIn: string;
+          };
+          success?: never;
+          error?: never;
+          loading?: never;
+      }
+    | {
           success: {
               redirectUrl: string;
               userOpHash: Hex;
               userOpExplorerLink: string;
           };
+          already?: never;
           error?: never;
           loading?: never;
       }
@@ -47,6 +59,7 @@ type UiState =
           error: {
               reason: string;
           };
+          already?: never;
           success?: never;
           loading?: never;
       }
@@ -54,6 +67,7 @@ type UiState =
           loading: {
               info: "checkingParams" | "buildingTx" | "pendingSignature";
           };
+          already?: never;
           error?: never;
           success?: never;
       };
@@ -64,6 +78,27 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
 
     const [uiState, setUiState] = useState<UiState>({
         loading: { info: "checkingParams" },
+    });
+
+    // Fetch the user allowance on chain
+    const { refetch: refreshOnChainUnlockStatus } = useQuery({
+        queryKey: [
+            "getUnlockStatus",
+            context.contentId,
+            context.articleId,
+            wallet?.address,
+        ],
+        queryFn: async () => {
+            if (!wallet?.address) {
+                return;
+            }
+            return getUnlockStatusOnArticle({
+                contentId: context.contentId,
+                articleId: context.articleId,
+                user: wallet.address,
+            });
+        },
+        enabled: !!wallet?.address && !!context,
     });
 
     // Helper to set the loading state
@@ -104,6 +139,30 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
             if (!smartWallet) {
                 // Error that the user doesn't have a smart wallet
                 setErrorState("No smart wallet");
+                return;
+            }
+
+            // Refresh the on chain stuff
+            const { data: onchainStatus } = await refreshOnChainUnlockStatus();
+            if (onchainStatus?.isAllowed === true) {
+                // Compute the expiration time
+                const expireIn = Date.now() - (onchainStatus.allowedUntilInSec * 1000);
+                const formattedDuration = formatSecondDuration(expireIn / 1000);
+                // Parse the data and return them
+                const redirectUrl = await prepareUnlockRequestResponse(
+                    context.redirectUrl,
+                    {
+                        key: "already-unlocked",
+                        status: "unlocked",
+                        user: wallet.address,
+                    }
+                );
+                setUiState({
+                    already: {
+                        redirectUrl,
+                        expireIn: formattedDuration
+                    },
+                });
                 return;
             }
 

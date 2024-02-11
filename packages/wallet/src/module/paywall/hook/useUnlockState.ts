@@ -28,9 +28,9 @@ export function useUnlockState({
 
     // Fetch the user allowance on chain
     const {
-        isPending: isfetchingUnlockStatus,
-        data: currentUnlockStatus,
-        refetch: refetchUnlockStatus,
+        isPending: isLoadingOnChainUnlockStatus,
+        data: onChainUnlockStatus,
+        refetch: refreshOnChainUnlockStatus,
     } = useQuery({
         queryKey: ["getUnlockStatus", contentId, articleId, address],
         queryFn: async () => {
@@ -49,24 +49,23 @@ export function useUnlockState({
     // Every time the status change, update the unlock state
     useEffect(() => {
         // If we are fetching the unlock status, don't do anything
-        if (isfetchingUnlockStatus) {
+        if (isLoadingOnChainUnlockStatus) {
             return;
         }
 
         // If no address, tell the user isn't logged in
-        // TODO: In the case he is not logged in, also check real time stuff
         if (!address) {
             setUnlockState({ key: "not-logged-in", status: "locked" });
             return;
         }
 
         // If we got an allowed unlock status from the blockchain, return that
-        if (currentUnlockStatus?.isAllowed) {
+        if (onChainUnlockStatus?.isAllowed) {
             setUnlockState({
                 key: "valid",
                 status: "unlocked",
                 user: address,
-                allowedUntil: currentUnlockStatus.allowedUntilInSec * 1000,
+                allowedUntil: onChainUnlockStatus.allowedUntilInSec * 1000,
             });
             return;
         }
@@ -83,11 +82,11 @@ export function useUnlockState({
         }
 
         // If we arrived here, the user isn't allowed to read the content
-        if ((currentUnlockStatus?.allowedUntilInSec ?? 0) > 0) {
+        if ((onChainUnlockStatus?.allowedUntilInSec ?? 0) > 0) {
             setUnlockState({
                 key: "expired",
                 status: "locked",
-                expiredAt: (currentUnlockStatus?.allowedUntilInSec ?? 0) * 1000,
+                expiredAt: (onChainUnlockStatus?.allowedUntilInSec ?? 0) * 1000,
                 user: address,
             });
             return;
@@ -101,10 +100,10 @@ export function useUnlockState({
         address,
         contentId,
         articleId,
-        isfetchingUnlockStatus,
+        isLoadingOnChainUnlockStatus,
         context,
         status,
-        currentUnlockStatus,
+        onChainUnlockStatus,
     ]);
 
     /**
@@ -187,7 +186,7 @@ export function useUnlockState({
                 hash: txHash,
                 confirmations: 1,
             });
-            await refetchUnlockStatus();
+            await refreshOnChainUnlockStatus();
         }
     }
 
