@@ -2,9 +2,9 @@
 
 import { setSession } from "@/context/session/action/session";
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
-import { getUserRepository } from "@/context/wallet/repository/UserRepository";
 import {
     decodePublicKey,
+    defaultUsername,
     rpId,
     rpName,
     rpOrigin,
@@ -18,68 +18,38 @@ import {
     generateRegistrationOptions,
     verifyRegistrationResponse,
 } from "@simplewebauthn/server";
-import type { RegistrationResponseJSON } from "@simplewebauthn/types";
-import { map, tryit } from "radash";
-import {
-    adjectives,
-    nouns,
-    uniqueUsernameGenerator,
-} from "unique-username-generator";
-
-/**
- * Generate a new username
- */
-export async function getUsername(): Promise<string> {
-    // Generate a new username
-    const username = uniqueUsernameGenerator({
-        dictionaries: [nouns, adjectives],
-        separator: "-",
-        randomDigits: 0,
-        length: 20,
-        style: "lowerCase",
-    });
-
-    // Check if it's available
-    const isAvailable = await isUsernameAvailable(username);
-    if (!isAvailable) {
-        // If not, try again
-        return getUsername();
-    }
-
-    return username;
-}
-
-/**
- * Check if a username is available
- * @param username
- */
-export async function isUsernameAvailable(username: string) {
-    const userRepository = await getUserRepository();
-    return userRepository.isUsernameAvailable(username);
-}
+import type {
+    AuthenticatorTransportFuture,
+    RegistrationResponseJSON,
+} from "@simplewebauthn/types";
+import { keccak256, toHex } from "viem";
 
 /**
  * Generate the webauthn registration options for a user
  * @param username
+ * @param excludeCredentials
  */
-export async function getRegisterOptions({ username }: { username: string }) {
-    const userRepository = await getUserRepository();
-    const authenticatorRepository = await getAuthenticatorRepository();
-
-    // Get or create the user
-    const user = await userRepository.getOrCreate(username);
-    // Get the current authenticators for the user
-    const authenticators = await authenticatorRepository.getAllForUser(
-        user._id
-    );
+export async function getRegisterOptions({
+    username,
+    excludeCredentials,
+}: {
+    username?: string;
+    excludeCredentials?: {
+        id: string;
+        transports?: AuthenticatorTransportFuture[];
+    }[];
+}) {
+    // Get the username id
+    const realUsername = username ?? defaultUsername;
+    const userId = keccak256(toHex(realUsername)).slice(2);
 
     // Generate the registration options
-    const options = await generateRegistrationOptions({
+    return await generateRegistrationOptions({
         rpName,
         rpID: rpId,
-        userID: user._id.toHexString(),
-        userName: username,
-        userDisplayName: username,
+        userID: userId,
+        userName: realUsername,
+        userDisplayName: realUsername,
         timeout: 120_000,
         attestationType: "direct",
         authenticatorSelection: {
@@ -88,78 +58,52 @@ export async function getRegisterOptions({ username }: { username: string }) {
             userVerification: "required",
         },
         supportedAlgorithmIDs: [-7],
-        excludeCredentials: authenticators.map(({ _id, transports }) => ({
-            id: base64URLStringToBuffer(_id),
-            type: "public-key",
-            transports,
-        })),
+        excludeCredentials:
+            excludeCredentials?.map((cred) => ({
+                id: base64URLStringToBuffer(cred.id),
+                type: "public-key",
+                transports: cred.transports,
+            })) ?? [],
     });
-
-    // Add the challenge to the user
-    await userRepository.addChallenge({
-        userId: user._id,
-        challenge: options.challenge,
-    });
-
-    // Return the options for signup
-    return options;
 }
 
 /**
  * Validate a new wallet registration
  * @param username
+ * @param expectedChallenge
  * @param registrationResponse
  * @param userAgent
  */
 export async function validateRegistration({
     username,
+    expectedChallenge,
     registrationResponse,
     userAgent,
 }: {
-    username: string;
+    username?: string;
+    expectedChallenge: string;
     registrationResponse: RegistrationResponseJSON;
     userAgent: string;
 }) {
-    const userRepository = await getUserRepository();
     const authenticatorRepository = await getAuthenticatorRepository();
 
-    const user = await userRepository.get({ username });
-    if (!user) {
-        throw new Error("No user found for this username");
-    }
-
-    // Throw error if not found
-    if (!user.challenges) {
-        throw new Error("No challenge found for user");
-    }
-
-    // Find a challenges in the user matching the one performed
-    const verifications = await map(user.challenges, async (challenge) => {
-        // Encapsulated inside a try it since it can throw error if invalid challenge
-        const [, result] = await tryit(async () =>
-            verifyRegistrationResponse({
-                response: registrationResponse,
-                expectedChallenge: challenge,
-                expectedOrigin: rpOrigin,
-                expectedRPID: rpId,
-            })
-        )();
-        return result;
+    // Verify the registration response
+    const verification = await verifyRegistrationResponse({
+        response: registrationResponse,
+        expectedChallenge,
+        expectedOrigin: rpOrigin,
+        expectedRPID: rpId,
     });
-    const verification = verifications.find((v) => v?.verified === true);
-    if (!verification?.registrationInfo) {
+    if (!verification.registrationInfo) {
         console.error("Registration failed", {
-            verifications,
-            userChallenges: user.challenges,
+            verification,
+            expectedChallenge,
             response: registrationResponse,
             rpOrigin,
             rpId,
         });
         throw new Error("Registration failed");
     }
-
-    // Delete the challenge
-    await userRepository.clearChallenges({ userId: user._id });
 
     // Get the public key
     const publicKey = decodePublicKey({
@@ -179,13 +123,13 @@ export async function validateRegistration({
     const id = bufferToBase64URLString(credentialID);
     await authenticatorRepository.createAuthenticator({
         _id: id,
+        userAgent,
+        username: username ?? defaultUsername,
         credentialPublicKey: bufferToBase64URLString(credentialPublicKey),
         counter,
         credentialDeviceType,
         credentialBackedUp,
-        userAgent,
         publicKey,
-        userId: user._id,
         transports: registrationResponse.response.transports,
     });
 
@@ -197,9 +141,12 @@ export async function validateRegistration({
 
     // Add it to the session
     await setSession({
-        username,
+        username: username ?? defaultUsername,
         wallet,
     });
 
-    return wallet;
+    return {
+        username: username ?? defaultUsername,
+        wallet,
+    };
 }

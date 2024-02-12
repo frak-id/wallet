@@ -1,6 +1,5 @@
-"use client";
-
 import { LoginList } from "@/module/authentication/component/LoginList";
+import { RecoverAccount } from "@/module/authentication/component/Recover";
 import { Grid } from "@/module/common/component/Grid";
 import Link from "next/link";
 
@@ -11,14 +10,22 @@ import Link from "next/link";
  */
 export function Login() {
     return (
-        <Grid
-            footer={
-                <Link href={"/register"} title="Frak">
-                    Create new account
-                </Link>
-            }
-        >
-            <LoginList />
-        </Grid>
+        <div>
+            <h3>Recover Account</h3>
+            <RecoverAccount />
+
+            <br />
+
+            <h3>Login to previous account</h3>
+            <Grid
+                footer={
+                    <Link href={"/register"} title="Frak">
+                        Create new account
+                    </Link>
+                }
+            >
+                <LoginList />
+            </Grid>
+        </div>
     );
 }

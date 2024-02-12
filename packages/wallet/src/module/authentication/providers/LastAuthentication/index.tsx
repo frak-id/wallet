@@ -1,69 +1,77 @@
 "use client";
 
 import type { Session } from "@/types/Session";
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { createContext, useCallback, useContext } from "react";
+import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
 import { isAddressEqual } from "viem";
 
-type LastAuthentication = Session;
+export type LastAuthentication = Session & {
+    transports?: AuthenticatorTransportFuture[];
+};
 
 function useLastAuthenticationsHook() {
     /**
-     * TODO: Should we experiment with IndexedDb here? With Dexie/IDB/idb-keyval? Idk what's the best, maybe ussing zustand and a wrapper arround it?
+     * All of the last authentications used
      */
     const [lastAuthentications, setLastAuthentications] = useLocalStorage<
         LastAuthentication[] | null
     >("lastAuthentications", null);
 
-    // Add a last authentication
-    const addLastAuthentication = useCallback(
-        (authentication: LastAuthentication) => {
-            setLastAuthentications((lastAuthentications) => {
-                const currentAuthentications = lastAuthentications ?? [];
-                // Check if the same wallet is already present
-                const sameWalletAlreadyPresent = currentAuthentications.some(
-                    (auth) =>
-                        isAddressEqual(
-                            auth.wallet.address,
-                            authentication.wallet.address
-                        )
-                );
-                // If yes, return the same array
-                if (sameWalletAlreadyPresent) {
-                    // If yes, return the same array
-                    return lastAuthentications;
-                }
+    /**
+     * The last authentication used
+     */
+    const [lastAuthentication, setLastAuthentication] =
+        useLocalStorage<LastAuthentication | null>("lastAuthentication", null);
 
-                // If not, add the new authentication
-                return [authentication, ...currentAuthentications];
-            });
-        },
-        [setLastAuthentications]
-    );
+    // Add a last authentication
+    function addLastAuthentication(authentication: LastAuthentication) {
+        // Define it as last authentication
+        setLastAuthentication(authentication);
+
+        // Add it to the last authentications
+        setLastAuthentications((lastAuthentications) => {
+            const currentAuthentications = lastAuthentications ?? [];
+            // Check if the same wallet is already present
+            const sameWalletAlreadyPresent = currentAuthentications.some(
+                (auth) =>
+                    isAddressEqual(
+                        auth.wallet.address,
+                        authentication.wallet.address
+                    )
+            );
+            // If yes, return the same array
+            if (sameWalletAlreadyPresent) {
+                // If yes, return the same array
+                return lastAuthentications;
+            }
+
+            // If not, add the new authentication
+            return [authentication, ...currentAuthentications];
+        });
+    }
 
     // Remove a last authentication
-    const removeLastAuthentication = useCallback(
-        (authentication: LastAuthentication) => {
-            setLastAuthentications((lastAuthentications) => {
-                // Get the current authentications
-                const currentAuthentications = lastAuthentications ?? [];
+    function removeLastAuthentication(authentication: LastAuthentication) {
+        setLastAuthentications((lastAuthentications) => {
+            // Get the current authentications
+            const currentAuthentications = lastAuthentications ?? [];
 
-                // Remove the authentication and return the new array
-                return currentAuthentications.filter(
-                    (auth) =>
-                        !isAddressEqual(
-                            auth.wallet.address,
-                            authentication.wallet.address
-                        )
-                );
-            });
-        },
-        [setLastAuthentications]
-    );
+            // Remove the authentication and return the new array
+            return currentAuthentications.filter(
+                (auth) =>
+                    !isAddressEqual(
+                        auth.wallet.address,
+                        authentication.wallet.address
+                    )
+            );
+        });
+    }
 
     return {
-        wasAuthenticated: (lastAuthentications?.length ?? 0) > 0,
+        wasAuthenticated: !!lastAuthentication,
+        lastAuthentication,
         lastAuthentications,
         // Update last authentication
         addLastAuthentication,

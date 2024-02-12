@@ -3,6 +3,7 @@
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Input } from "@/module/common/component/Input";
 import { Fingerprint } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import type { FormEvent } from "react";
@@ -42,11 +43,15 @@ export function Register() {
                         name={"username"}
                         id={"username"}
                         aria-label="Your username"
-                        placeholder="Enter your username"
+                        placeholder="Enter your username (optional)"
                         value={username}
                         onChangeValue={(value) => value && setUsername(value)}
                     />
                 </p>
+
+                <br />
+                <br />
+
                 <p>
                     <button type={"submit"} className={styles.button}>
                         <Fingerprint size={48} />
@@ -60,6 +65,13 @@ export function Register() {
             {isRegisterInProgress && <p>Registering...</p>}
             <br />
             {isAirdroppingFrk && <p>Offering you a few FRK...</p>}
+
+            <br />
+            <br />
+
+            <Link href={"/login"} title="Frak">
+                Recover an account
+            </Link>
         </div>
     );
 }

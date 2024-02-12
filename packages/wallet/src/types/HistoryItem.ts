@@ -30,3 +30,14 @@ export type FrkReceived = Readonly<{
     // The amount in FRK the wallet received
     receivedAmount: string;
 }>;
+
+/**
+ * Represent an article unlocking history item with the front data
+ */
+export type ArticleUnlockWithFrontData = ArticleUnlock & {
+    articleUrl?: string;
+    articleTitle?: string;
+    contentTitle?: string;
+};
+
+export type HistoryItemWithFrontData = ArticleUnlockWithFrontData | FrkReceived;

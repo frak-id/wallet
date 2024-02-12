@@ -1,5 +1,5 @@
 import { getSession } from "@/context/session/action/session";
-import { LoginOrRegister } from "@/module/authentication/component/LoginOrRegister";
+import { AuthenticationRouter } from "@/module/authentication/component/AuthenticationRouter";
 import { LastAuthenticationsProvider } from "@/module/authentication/providers/LastAuthentication";
 import type { ReactNode } from "react";
 
@@ -21,7 +21,7 @@ export async function AuthGate({ children }: AuthGateProps) {
     if (!currentSession) {
         return (
             <LastAuthenticationsProvider>
-                <LoginOrRegister>{children}</LoginOrRegister>
+                <AuthenticationRouter>{children}</AuthenticationRouter>
             </LastAuthenticationsProvider>
         );
     }

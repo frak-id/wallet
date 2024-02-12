@@ -2,14 +2,12 @@ import { viemClient } from "@/context/common/blockchain/provider";
 import { triggerFrkAirdrop } from "@/context/mock/action/airdropFrk";
 import {
     getRegisterOptions,
-    getUsername,
-    isUsernameAvailable,
     validateRegistration,
 } from "@/context/wallet/action/register";
 import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Address } from "viem";
 
 /**
@@ -17,27 +15,15 @@ import type { Address } from "viem";
  */
 export function useRegister() {
     // Setter for the last authentication
-    const { addLastAuthentication } = useLastAuthentications();
+    const { addLastAuthentication, lastAuthentications } =
+        useLastAuthentications();
 
     // The current username
-    const [username, setUsername] = useState<string>("");
+    const [username, setUsername] = useState<string | undefined>(undefined);
 
-    // The current username
-    const [isAvailable, setIsAvailable] = useState<boolean>(false);
-
-    // Generate a random username on mount
-    useEffect(() => {
-        if (username === "") {
-            // Generate a new username on mount
-            getUsername().then(setUsername);
-            return;
-        }
-
-        // Check if it's available
-        isUsernameAvailable(username).then(setIsAvailable);
-    }, [username]);
-
-    // The mutation that will be used to perform the registration process
+    /**
+     * Mutation used to launch the registration process
+     */
     const {
         isPending: isRegisterInProgress,
         isSuccess,
@@ -47,29 +33,40 @@ export function useRegister() {
     } = useMutation({
         mutationKey: ["register", username],
         mutationFn: async () => {
-            // If username not available, early exit
-            if (!isAvailable) {
-                return;
-            }
+            // Build the credentials to exclude
+            const excludeCredentials = lastAuthentications?.map(
+                (auth) =>
+                    ({
+                        id: auth.wallet.authenticatorId,
+                        transports: auth.transports,
+                    }) as const
+            );
 
+            console.log("Fetching register options", { excludeCredentials });
             // Get the registration options
-            const registrationOptions = await getRegisterOptions({ username });
+            const registrationOptions = await getRegisterOptions({
+                username,
+                excludeCredentials,
+            });
 
             // Start the registration
             const registrationResponse =
                 await startRegistration(registrationOptions);
 
             // Verify it
-            const wallet = await validateRegistration({
-                username,
-                registrationResponse,
-                userAgent: navigator.userAgent,
-            });
+            const { username: registeredUsername, wallet } =
+                await validateRegistration({
+                    username,
+                    expectedChallenge: registrationOptions.challenge,
+                    registrationResponse,
+                    userAgent: navigator.userAgent,
+                });
 
             // Save this to the last authenticator
             addLastAuthentication({
-                username,
+                username: registeredUsername,
                 wallet,
+                transports: registrationResponse.response.transports,
             });
 
             // Launch the frk airdrop
@@ -77,6 +74,9 @@ export function useRegister() {
         },
     });
 
+    /**
+     * Mutation used to airdrop frk
+     */
     const { isPending: isAirdroppingFrk, mutateAsync: airdropFrk } =
         useMutation({
             mutationKey: ["airdropFrk"],
@@ -98,7 +98,6 @@ export function useRegister() {
 
     return {
         username,
-        isAvailable,
         setUsername,
         isRegisterInProgress,
         isAirdroppingFrk,

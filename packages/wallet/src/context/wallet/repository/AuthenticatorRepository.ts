@@ -1,7 +1,7 @@
 import { DI } from "@/context/common/di";
 import { getMongoDb } from "@/context/common/mongoDb";
 import type { AuthenticatorDocument } from "@/context/wallet/dto/AuthenticatorDocument";
-import type { Collection, ObjectId } from "mongodb";
+import type { Collection } from "mongodb";
 
 /**
  * Repository used to access the authenticator collection
@@ -10,14 +10,6 @@ export class AuthenticatorRepository {
     constructor(
         private readonly collection: Collection<AuthenticatorDocument>
     ) {}
-
-    /**
-     * Get all authenticators for the given user
-     * @param userId
-     */
-    public getAllForUser(userId: ObjectId): Promise<AuthenticatorDocument[]> {
-        return this.collection.find({ userId }).toArray();
-    }
 
     /**
      * Get all authenticators for the given user

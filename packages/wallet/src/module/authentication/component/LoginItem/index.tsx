@@ -1,12 +1,14 @@
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
 import { useLogin } from "@/module/authentication/hook/useLogin";
-import type { Session } from "@/types/Session";
+import type { LastAuthentication } from "@/module/authentication/providers/LastAuthentication";
 import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import styles from "./index.module.css";
 
-export function LoginItem({ auth }: { auth: Session }) {
+export function LoginItem({
+    lastAuthentication,
+}: { lastAuthentication: LastAuthentication }) {
     const router = useRouter();
     const [, startTransition] = useTransition();
     const { login } = useLogin();
@@ -17,16 +19,16 @@ export function LoginItem({ auth }: { auth: Session }) {
                 type={"button"}
                 className={styles.loginItem__button}
                 onClick={async () => {
-                    await login(auth.username);
+                    await login({ lastAuthentication });
                     startTransition(() => {
                         router.push("/");
                     });
                 }}
             >
                 <span>
-                    {formatHash(auth.wallet.address)}
+                    {formatHash(lastAuthentication.wallet.address)}
                     <br />
-                    ID: {auth.username}
+                    ID: {lastAuthentication.username}
                 </span>
                 <span>
                     <Fingerprint size={36} className={styles.loginItem__icon} />

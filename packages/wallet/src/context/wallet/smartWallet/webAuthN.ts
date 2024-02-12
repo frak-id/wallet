@@ -17,6 +17,11 @@ export const rpOrigin =
         : "https://poc-wallet.frak.id";
 
 /**
+ * The default user name
+ */
+export const defaultUsername = "Nexus Wallet";
+
+/**
  * Decode the public key from the attestation object
  * @param credentialPubKey
  */

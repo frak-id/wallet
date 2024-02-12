@@ -36,7 +36,6 @@
     "radash": "^11.0.0",
     "react": "^18",
     "react-dom": "^18",
-    "unique-username-generator": "^1.3.0",
     "viem": "^2.7.6",
     "wagmi": "^2.5.5"
   },

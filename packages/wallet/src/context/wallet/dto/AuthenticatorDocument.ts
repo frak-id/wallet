@@ -3,7 +3,6 @@ import type {
     AuthenticatorTransportFuture,
     CredentialDeviceType,
 } from "@simplewebauthn/types";
-import type { ObjectId } from "mongodb";
 
 /**
  * Represent a authenticator for a user
@@ -11,9 +10,8 @@ import type { ObjectId } from "mongodb";
 export type AuthenticatorDocument = Readonly<{
     // This is the credential id
     _id: string;
-    // The user id
-    userId: ObjectId;
     // The user agent from the device where it came from
+    username: string;
     userAgent: string;
     // The extracted pub key
     publicKey: P256PubKey;

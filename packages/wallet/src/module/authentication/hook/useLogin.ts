@@ -1,11 +1,15 @@
+import { validateAuthentication } from "@/context/wallet/action/authenticate";
+import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import {
-    getAuthenticateOptions,
-    validateAuthentication,
-} from "@/context/wallet/action/authenticate";
-import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
-import { startAuthentication } from "@simplewebauthn/browser";
+    type LastAuthentication,
+    useLastAuthentications,
+} from "@/module/authentication/providers/LastAuthentication";
+import {
+    base64URLStringToBuffer,
+    startAuthentication,
+} from "@simplewebauthn/browser";
+import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
 
 /**
  * Hook that handle the registration process
@@ -13,13 +17,6 @@ import { useState } from "react";
 export function useLogin() {
     // Setter for the last authentication
     const { addLastAuthentication } = useLastAuthentications();
-
-    const [selectedUsername, setSelectedUsername] = useState<string>();
-
-    async function setUsernameAndLogin(username: string) {
-        setSelectedUsername(username);
-        await login();
-    }
 
     // The mutation that will be used to perform the registration process
     const {
@@ -29,16 +26,28 @@ export function useLogin() {
         error,
         mutateAsync: login,
     } = useMutation({
-        mutationKey: ["login", selectedUsername],
-        mutationFn: async () => {
-            // If no username selected, directly exit
-            if (!selectedUsername) {
-                return;
-            }
+        mutationKey: ["login"],
+        mutationFn: async ({
+            lastAuthentication,
+        }: { lastAuthentication?: LastAuthentication }) => {
+            // Get the authenticate options (if needed)
+            const allowCredentials = lastAuthentication
+                ? [
+                      {
+                          id: base64URLStringToBuffer(
+                              lastAuthentication.wallet.authenticatorId
+                          ),
+                          type: "public-key",
+                          transports: lastAuthentication.transports,
+                      } as const,
+                  ]
+                : undefined;
 
             // Get the authenticate options
-            const authenticationOptions = await getAuthenticateOptions({
-                username: selectedUsername,
+            const authenticationOptions = await generateAuthenticationOptions({
+                rpID: rpId,
+                userVerification: "required",
+                allowCredentials,
             });
 
             // Start the authentication
@@ -47,13 +56,14 @@ export function useLogin() {
             );
 
             // Verify it
-            const wallet = await validateAuthentication({
+            const { username, wallet } = await validateAuthentication({
+                expectedChallenge: authenticationOptions.challenge,
                 authenticationResponse,
             });
 
             // Save this to the last authenticator
             addLastAuthentication({
-                username: selectedUsername,
+                username,
                 wallet,
             });
         },
@@ -64,6 +74,6 @@ export function useLogin() {
         isSuccess,
         isError,
         error,
-        login: setUsernameAndLogin,
+        login,
     };
 }
