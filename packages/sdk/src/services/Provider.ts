@@ -1,34 +1,27 @@
-import Emittery from "emittery";
-import type { EventsFormat } from "../types";
+import { frakWalletSdkConfig } from "@frak-wallet/example/src/context/frak-wallet/config";
+import RxPostmessenger from "rx-postmessenger";
+// @ts-ignore
+import type { Messenger } from "rx-postmessenger";
+import { firstValueFrom } from "rxjs";
+import type { Hex } from "viem";
+import { getPricesEvent, parseGetPricesEventResponse } from "../events";
+import type { EventsFormat, GetPricesResponse } from "../types";
 
-type MessagesEvent = {
-    "get-price": EventsFormat;
-    "unlock-status": EventsFormat;
-};
+const PROVIDER_URL = "http://localhost:3000";
 
 export class Provider {
     /**
-     * Event emitter that will be used to emit messages to the listener
+     * The messenger that will be used to communicate with the listener
      */
-    emitter: Emittery<MessagesEvent> = new Emittery<MessagesEvent>();
+    messenger: Messenger = undefined;
 
     /**
      * The iframe that will be used to communicate with the listener
      * @private
      */
-    private iframe: HTMLIFrameElement | null = null;
-
-    /**
-     * The message event listener
-     * @private
-     */
-    private readonly messages: (event: MessageEvent) => void;
+    private iframe: HTMLIFrameElement | undefined = undefined;
 
     constructor() {
-        console.log("Provider constructor");
-        // this.listeners();
-        this.messages = this.handleMessages.bind(this);
-
         if (typeof window === "undefined") {
             return;
         }
@@ -39,68 +32,59 @@ export class Provider {
     /**
      * Initialize the provider
      */
-    init() {
-        console.log("Provider init");
-        this.iframe = this.createIframe();
-        window.addEventListener("message", this.messages, false);
+    async init() {
+        // Create iframe and wait for it to load
+        this.iframe = await this.createIframe();
+
+        this.messenger = RxPostmessenger.connect(
+            this.iframe?.contentWindow as Window,
+            PROVIDER_URL
+        );
     }
 
     /**
      * Destroy the provider
      */
     destroy() {
-        console.log("Provider destroy");
-        window.removeEventListener("message", this.messages, false);
         this.iframe?.parentNode?.removeChild(this.iframe);
     }
 
     /**
-     * Create the emitter listeners
+     * Ask the listener for the prices of the article
+     * @param articleId
      */
-    listeners() {
-        /*this.emitter.on("get-price", (data) => {
-            console.log("provider get-price", data);
+    async getPrices({
+        articleId,
+    }: { articleId: Hex }): Promise<GetPricesResponse> {
+        // Build price event to be sent to the listener
+        const priceEvent = await getPricesEvent(frakWalletSdkConfig, {
+            articleId,
         });
-        this.emitter.on("unlock-status", (data) => {
-            console.log("provider unlock-status", data);
-        });*/
-    }
 
-    /**
-     * Handle the messages from the listener
-     * @param event
-     */
-    handleMessages(
-        event: MessageEvent<{ source: string; data: EventsFormat }>
-    ) {
-        if (
-            event.origin !== "http://localhost:3000" ||
-            event?.data?.source !== "frak"
-        ) {
-            return;
-        }
-        const { data } = event.data;
-        this.emitter.emit(data.topic, data);
-    }
-
-    /**
-     * Emit a message to the listener
-     */
-    emitToListener(data: EventsFormat) {
-        this?.iframe?.contentWindow?.postMessage(
-            {
-                source: "frak",
-                data,
-            },
-            "http://localhost:3000"
+        // Send the event to the listener
+        const getPriceResponse$ = this.messenger.request(
+            "get-price",
+            priceEvent
         );
+
+        // Wait for the listener to respond
+        const responseFromListener =
+            await firstValueFrom<EventsFormat>(getPriceResponse$);
+
+        if (!responseFromListener) {
+            console.log("No response from listener");
+            return { prices: [] };
+        }
+
+        // Parse the response and respond with a compressed event
+        return await parseGetPricesEventResponse(responseFromListener);
     }
 
     /**
      * Create the iframe
      * @private
      */
-    createIframe() {
+    private async createIframe(): Promise<HTMLIFrameElement> {
         const iframe = document.createElement("iframe");
         iframe.name = "frak-wallet";
         iframe.style.width = "0";
@@ -111,10 +95,9 @@ export class Provider {
         iframe.style.left = "-1000px";
         document.body.appendChild(iframe);
 
-        iframe.addEventListener("load", () => {
-            console.log("listener frame loaded");
+        return new Promise((resolve) => {
+            iframe?.addEventListener("load", () => resolve(iframe));
+            iframe.src = `${PROVIDER_URL}/listener`;
         });
-        iframe.src = "http://localhost:3000/listener";
-        return iframe;
     }
 }

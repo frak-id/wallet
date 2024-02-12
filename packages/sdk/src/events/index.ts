@@ -13,4 +13,4 @@ export {
 export {
     getUnlockStatusEvent,
     parseUnlockStatusEventData,
-} from "./status.ts";
+} from "./status";

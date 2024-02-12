@@ -1,92 +1,93 @@
-import Emittery from "emittery";
-import type { EventsFormat } from "../types";
+import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price.ts";
+import RxPostmessenger from "rx-postmessenger";
+// @ts-ignore
+import type { Messenger, Request } from "rx-postmessenger";
+import { getPricesResponseEvent, parseGetPricesEventData } from "../events";
+import type { EventsFormat, GetPricesParam } from "../types";
 
-type MessagesEvent = {
-    "get-price": EventsFormat;
-    "unlock-status": EventsFormat;
-};
+const LISTENER_URL = "http://localhost:3001";
 
 export class Listener {
     /**
-     * Event emitter that will be used to emit messages to the provider
+     * The messenger that will be used to communicate with the provider
      */
-    emitter: Emittery<MessagesEvent> = new Emittery<MessagesEvent>();
+    messenger: Messenger = undefined;
 
     /**
-     * The message event listener
-     * @private
+     * The price fetcher function that will be used to fetch the prices
      */
-    private readonly messages: (event: MessageEvent) => void;
+    public priceFetcher:
+        | (({ contentId, articleId }: GetPricesParam) => Promise<{
+              prices: ArticlePriceForUser[];
+          }>)
+        | undefined;
 
     constructor() {
-        console.log("Listener constructor");
-        // this.listeners();
-        this.messages = this.handleMessages.bind(this);
-
         if (typeof window === "undefined") {
             return;
         }
 
         this.init();
+        this.listeners();
     }
 
     /**
      * Initialize the listener
      */
     init() {
-        console.log("Listener init");
-        window.addEventListener("message", this.messages, false);
+        this.messenger = RxPostmessenger.connect(window.parent, LISTENER_URL);
     }
 
     /**
      * Destroy the listener
      */
-    destroy() {
-        console.log("Listener destroy");
-        window.removeEventListener("message", this.messages, false);
-    }
+    destroy() {}
 
     /**
      * Create the emitter listeners
      */
     listeners() {
-        /*this.emitter.on("get-price", (data) => {
-            console.log("listener get-price", data);
-        });
-        this.emitter.on("unlock-status", (data) => {
-            console.log("listener unlock-status", data);
-        });*/
+        this.messenger
+            .requests("get-price")
+            .subscribe(this.handleGetPriceRequest.bind(this));
     }
 
     /**
-     * Handle the messages from the provider
-     * @param event
+     * Set the price fetcher
+     * @param callback
      */
-    handleMessages(
-        event: MessageEvent<{ source: string; data: EventsFormat }>
+    setPriceFetcher(
+        callback: ({ contentId, articleId }: GetPricesParam) => Promise<{
+            prices: ArticlePriceForUser[];
+        }>
     ) {
-        if (
-            event.origin !== "http://localhost:3001" ||
-            event?.data?.source !== "frak"
-        ) {
+        this.priceFetcher = callback;
+    }
+
+    /**
+     * Handle the get-price event request
+     * @param request
+     */
+    async handleGetPriceRequest(request: Request<EventsFormat>) {
+        if (!request.payload) return;
+
+        // Parse the event data
+        const { articleId, contentId } = await parseGetPricesEventData(
+            request.payload
+        );
+
+        // Fetch the prices
+        const prices = await this.priceFetcher?.({ articleId, contentId });
+        if (!prices) {
+            console.error(
+                `No prices found for articleId ${articleId} and contentId ${contentId}`
+            );
             return;
         }
-        console.log("received message in /listener route", event.data);
-        // console.log(event);
-        const { data } = event.data;
-        this.emitter.emit(data.topic, data);
-    }
 
-    /**
-     * Emit a message to the provider
-     */
-    emitToProvider(data: EventsFormat) {
-        window?.parent?.postMessage(
-            {
-                source: "frak",
-                data,
-            },
-            "http://localhost:3001"
-        );
+        // Respond with the prices
+        const responseEvent = await getPricesResponseEvent(prices);
+        if (!responseEvent) return;
+        request.respond(responseEvent);
     }
 }

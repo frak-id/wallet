@@ -40,11 +40,12 @@
     "wagmi": "^2.5.5"
   },
   "devDependencies": {
-    "sst": "^2.40.1",
     "@simplewebauthn/types": "^9.0.1",
+    "@types/humanize-duration": "^3.27.4",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "sst": "^2.40.1",
     "typescript": "^5"
   }
 }

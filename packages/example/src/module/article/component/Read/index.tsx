@@ -1,13 +1,6 @@
-import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import type { Article } from "@/type/Article";
-import {
-    Provider,
-    getPricesEvent,
-    getUnlockStatusEvent,
-    parseGetPricesEventResponse,
-} from "@frak-wallet/sdk";
-import type { EventsFormat } from "@frak-wallet/sdk";
+import { Provider } from "@frak-wallet/sdk";
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -22,42 +15,16 @@ export function ReadArticle({
 }) {
     const [prices, setPrices] = useState<ArticlePriceForUser[]>([]);
 
-    /**
-     * Handle the get-price event response
-     * @param data
-     */
-    async function handleGetPrice(data: EventsFormat) {
-        if (!data) return;
-        const responseParsed = await parseGetPricesEventResponse(data);
-        setPrices(Object.values(responseParsed.prices).filter(Boolean));
-    }
-
-    useEffect(() => {
-        provider.emitter.on("get-price", handleGetPrice);
-
-        return () => {
-            provider.emitter.off("get-price", handleGetPrice);
-        };
-    }, []);
-
     useEffect(() => {
         setTimeout(() => {
             /**
              * Ask our listener for the price of the article
              */
             async function run() {
-                const priceEvent = await getPricesEvent(frakWalletSdkConfig, {
+                const getPricesResponse = await provider.getPrices({
                     articleId: article.id as Hex,
                 });
-                provider.emitToListener(priceEvent);
-
-                const unlockEvent = await getUnlockStatusEvent(
-                    frakWalletSdkConfig,
-                    {
-                        articleId: article.id as Hex,
-                    }
-                );
-                provider.emitToListener(unlockEvent);
+                setPrices(getPricesResponse.prices);
             }
             run();
         }, 2000);

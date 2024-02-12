@@ -6,10 +6,7 @@ import { useAccount } from "wagmi";
 /**
  * Hook used to fetch and handle the prices
  */
-export function useArticlePrices({
-    contentId,
-    articleId,
-}: { contentId?: Hex; articleId?: Hex }) {
+export function useArticlePrices() {
     /**
      * The current wallet address, can be undefined if not logged in
      *  Using the address here since the paywall isn't after the auth gate, to handle every possible redirection scenario
@@ -24,20 +21,22 @@ export function useArticlePrices({
         isPending: isFetchingPrices,
         mutateAsync: fetchPrices,
     } = useMutation({
-        mutationKey: ["getArticlePricesForUser", contentId, articleId, address],
+        mutationKey: ["getArticlePricesForUser", address],
         mutationFn: async ({
             contentId,
             articleId,
         }: { contentId?: Hex; articleId?: Hex }) => {
             if (!(contentId && articleId)) {
-                return [];
+                return { prices: [] };
             }
             // Get the prices
-            return getArticlePricesForUser({
-                contentId,
-                articleId,
-                address: "0x3AAd376FbEf774bb6c3108F46112aa288f3091aa",
-            });
+            return {
+                prices: await getArticlePricesForUser({
+                    contentId,
+                    articleId,
+                    address: "0x3AAd376FbEf774bb6c3108F46112aa288f3091aa",
+                }),
+            };
         },
     });
 

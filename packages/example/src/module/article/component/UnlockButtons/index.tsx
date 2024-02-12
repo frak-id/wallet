@@ -22,6 +22,7 @@ export function UnlockButtons({ prices }: { prices: ArticlePrice[] }) {
         async function run() {
             setStep(3);
             // await unlock();
+            if (!unlockUrl) return;
             window.location.href = unlockUrl;
         }
         run();
