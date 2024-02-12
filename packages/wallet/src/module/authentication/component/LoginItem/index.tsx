@@ -1,6 +1,6 @@
+import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
 import { useLogin } from "@/module/authentication/hook/useLogin";
-import type { LastAuthentication } from "@/module/authentication/providers/LastAuthentication";
 import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -8,7 +8,7 @@ import styles from "./index.module.css";
 
 export function LoginItem({
     lastAuthentication,
-}: { lastAuthentication: LastAuthentication }) {
+}: { lastAuthentication: PreviousAuthenticatorModel }) {
     const router = useRouter();
     const [, startTransition] = useTransition();
     const { login } = useLogin();
@@ -26,7 +26,7 @@ export function LoginItem({
                 }}
             >
                 <span>
-                    {formatHash(lastAuthentication.wallet.address)}
+                    {formatHash(lastAuthentication.wallet)}
                     <br />
                     ID: {lastAuthentication.username}
                 </span>

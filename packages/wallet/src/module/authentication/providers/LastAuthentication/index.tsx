@@ -1,13 +1,15 @@
 "use client";
 
+import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
+import { dexieDb } from "@/context/common/dexie/dexieDb";
 import type { Session } from "@/types/Session";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { useLocalStorage } from "@uidotdev/usehooks";
+import { useLiveQuery } from "dexie-react-hooks";
 import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-import { isAddressEqual } from "viem";
 
-export type LastAuthentication = Session & {
+type LastAuthentication = Session & {
     transports?: AuthenticatorTransportFuture[];
 };
 
@@ -15,9 +17,11 @@ function useLastAuthenticationsHook() {
     /**
      * All of the last authentications used
      */
-    const [lastAuthentications, setLastAuthentications] = useLocalStorage<
-        LastAuthentication[] | null
-    >("lastAuthentications", null);
+    const previousAuthenticators: PreviousAuthenticatorModel[] = useLiveQuery(
+        () => dexieDb.previousAuthenticator.toArray(),
+        [],
+        []
+    );
 
     /**
      * The last authentication used
@@ -26,53 +30,33 @@ function useLastAuthenticationsHook() {
         useLocalStorage<LastAuthentication | null>("lastAuthentication", null);
 
     // Add a last authentication
-    function addLastAuthentication(authentication: LastAuthentication) {
+    async function addLastAuthentication(authentication: LastAuthentication) {
         // Define it as last authentication
         setLastAuthentication(authentication);
 
         // Add it to the last authentications
-        setLastAuthentications((lastAuthentications) => {
-            const currentAuthentications = lastAuthentications ?? [];
-            // Check if the same wallet is already present
-            const sameWalletAlreadyPresent = currentAuthentications.some(
-                (auth) =>
-                    isAddressEqual(
-                        auth.wallet.address,
-                        authentication.wallet.address
-                    )
-            );
-            // If yes, return the same array
-            if (sameWalletAlreadyPresent) {
-                // If yes, return the same array
-                return lastAuthentications;
-            }
-
-            // If not, add the new authentication
-            return [authentication, ...currentAuthentications];
+        await dexieDb.previousAuthenticator.put({
+            wallet: authentication.wallet.address,
+            username: authentication.username,
+            authenticatorId: authentication.wallet.authenticatorId,
+            transports: authentication.transports,
         });
     }
 
     // Remove a last authentication
-    function removeLastAuthentication(authentication: LastAuthentication) {
-        setLastAuthentications((lastAuthentications) => {
-            // Get the current authentications
-            const currentAuthentications = lastAuthentications ?? [];
-
-            // Remove the authentication and return the new array
-            return currentAuthentications.filter(
-                (auth) =>
-                    !isAddressEqual(
-                        auth.wallet.address,
-                        authentication.wallet.address
-                    )
-            );
+    async function removeLastAuthentication(
+        authentication: LastAuthentication
+    ) {
+        // Remove the authenticator
+        await dexieDb.previousAuthenticator.delete({
+            authenticatorId: authentication.wallet.authenticatorId,
         });
     }
 
     return {
         wasAuthenticated: !!lastAuthentication,
         lastAuthentication,
-        lastAuthentications,
+        previousAuthenticators,
         // Update last authentication
         addLastAuthentication,
         removeLastAuthentication,

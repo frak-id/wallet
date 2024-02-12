@@ -1,6 +1,6 @@
 "use client";
 
-import { getDexieDb } from "@/context/common/dexie/dexieDb";
+import { dexieDb } from "@/context/common/dexie/dexieDb";
 import { fetchWalletHistory } from "@/context/history/action/fetchHistory";
 import type {
     ArticleUnlock,
@@ -25,7 +25,6 @@ export function useGetHistory() {
     } = useQuery({
         queryKey: ["history", address],
         queryFn: async () => {
-            const db = await getDexieDb();
             const rawHistory = await fetchWalletHistory({
                 account: address ?? "0x",
             });
@@ -35,7 +34,7 @@ export function useGetHistory() {
                 (item) => item.key === "article-unlock"
             ) as ArticleUnlock[];
             const articleInfos = sift(
-                await db.articleInfo.bulkGet(
+                await dexieDb.articleInfo.bulkGet(
                     articleHistoryItems.map((item: ArticleUnlock) => ({
                         articleId: item.articleId,
                         contentId: item.contentId,

@@ -1,9 +1,7 @@
+import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { validateAuthentication } from "@/context/wallet/action/authenticate";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
-import {
-    type LastAuthentication,
-    useLastAuthentications,
-} from "@/module/authentication/providers/LastAuthentication";
+import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
 import {
     base64URLStringToBuffer,
     startAuthentication,
@@ -29,13 +27,13 @@ export function useLogin() {
         mutationKey: ["login"],
         mutationFn: async ({
             lastAuthentication,
-        }: { lastAuthentication?: LastAuthentication }) => {
+        }: { lastAuthentication?: PreviousAuthenticatorModel }) => {
             // Get the authenticate options (if needed)
             const allowCredentials = lastAuthentication
                 ? [
                       {
                           id: base64URLStringToBuffer(
-                              lastAuthentication.wallet.authenticatorId
+                              lastAuthentication.authenticatorId
                           ),
                           type: "public-key",
                           transports: lastAuthentication.transports,
@@ -62,7 +60,7 @@ export function useLogin() {
             });
 
             // Save this to the last authenticator
-            addLastAuthentication({
+            await addLastAuthentication({
                 username,
                 wallet,
             });

@@ -15,7 +15,7 @@ import type { Address } from "viem";
  */
 export function useRegister() {
     // Setter for the last authentication
-    const { addLastAuthentication, lastAuthentications } =
+    const { addLastAuthentication, previousAuthenticators } =
         useLastAuthentications();
 
     // The current username
@@ -34,10 +34,10 @@ export function useRegister() {
         mutationKey: ["register", username],
         mutationFn: async () => {
             // Build the credentials to exclude
-            const excludeCredentials = lastAuthentications?.map(
+            const excludeCredentials = previousAuthenticators?.map(
                 (auth) =>
                     ({
-                        id: auth.wallet.authenticatorId,
+                        id: auth.authenticatorId,
                         transports: auth.transports,
                     }) as const
             );
@@ -63,7 +63,7 @@ export function useRegister() {
                 });
 
             // Save this to the last authenticator
-            addLastAuthentication({
+            await addLastAuthentication({
                 username: registeredUsername,
                 wallet,
                 transports: registrationResponse.response.transports,

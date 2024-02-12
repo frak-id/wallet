@@ -1,6 +1,6 @@
 "use client";
 
-import { getDexieDb } from "@/context/common/dexie/dexieDb";
+import { dexieDb } from "@/context/common/dexie/dexieDb";
 import type { ArticlePrice } from "@/types/Price";
 import {
     type UnlockRequestParams,
@@ -80,15 +80,13 @@ function usePaywallHook() {
 
         // Insert/Update the article link mapping
         try {
-            const db = await getDexieDb();
-            const insertResult = db.articleInfo.put({
+            await dexieDb.articleInfo.put({
                 articleId: unlockRequest.articleId,
                 contentId: unlockRequest.contentId,
                 contentTitle: unlockRequest.contentTitle,
                 articleTitle: unlockRequest.articleTitle,
                 articleUrl: unlockRequest.articleUrl,
             });
-            console.log("Inserted article link", { insertResult });
         } catch (e) {
             console.error("Error inserting article link", e);
         }
