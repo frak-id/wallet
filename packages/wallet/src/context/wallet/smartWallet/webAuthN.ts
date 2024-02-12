@@ -131,24 +131,8 @@ function findChallengeOffset(arr: Uint8Array): number {
     const targetSeq = hexStringToUint8Array(challengePrefix);
 
     // Iterate over the array
-    // TODO: Check if both method return the same result
-    const findIndexMethod = arr.findIndex((_, i) =>
+    const index = arr.findIndex((_, i) =>
         targetSeq.every((value, j) => arr[i + j] === value)
     );
-    const findViaDoubl = findViaDoubleFor(arr, targetSeq);
-    console.log("Results", { findIndexMethod, findViaDoubl });
-    return findViaDoubl ?? -1;
-}
-
-function findViaDoubleFor(arr: Uint8Array, targetSeq: Uint8Array) {
-    for (let i = 0; i < arr.length; ++i) {
-        for (let j = 0; j < targetSeq.length; j++) {
-            if (arr[i + j] !== targetSeq[j]) {
-                break;
-            }
-            if (j === targetSeq.length - 1) {
-                return i;
-            }
-        }
-    }
+    return index ?? -1;
 }
