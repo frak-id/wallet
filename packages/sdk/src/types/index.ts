@@ -23,6 +23,7 @@ export type {
     EventsResponse,
     EventResponseFromParam,
     EventsFormat,
+    DecompressedFormat,
 } from "./communication/Events";
 export type {
     RedirectionParams,

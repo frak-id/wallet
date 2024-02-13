@@ -3,7 +3,7 @@ import {
     getUnlockStatusEvent,
     parseGetPricesEventResponse,
 } from "../events";
-import { parseUnlockStatusEventResponse } from "../events/status.ts";
+import { parseUnlockStatusEventResponse } from "../events";
 import type {
     EventResponseFromParam,
     EventsFormat,
@@ -13,7 +13,7 @@ import type {
 import { Deferred } from "./Deferred.ts";
 
 /**
- * Represent a query provider interface (base class that should be used to query data to the Frak wallet via iframe)
+ * Represent a query provider (base class that should be used to query data to the Frak wallet via iframe)
  */
 export class QueryProvider {
     /**
@@ -37,28 +37,6 @@ export class QueryProvider {
         (event: EventsFormat) => unknown
     > = new Map();
 
-    constructor({
-        iframe,
-        config,
-    }: {
-        config: FrakWalletSdkConfig;
-        iframe: HTMLIFrameElement;
-    }) {
-        if (typeof window === "undefined") {
-            throw new Error("QueryProvider should be used in the browser");
-        }
-
-        if (!iframe.contentWindow) {
-            throw new Error("Iframe should have a contentWindow");
-        }
-
-        this._iframeWindow = iframe.contentWindow;
-        this._config = config;
-
-        // Setup the message listener
-        window.addEventListener("message", this.handleNewMessage);
-    }
-
     /**
      * Static method to create an invisible iframe that will be used to fetch data
      */
@@ -81,6 +59,57 @@ export class QueryProvider {
         });
     }
 
+    constructor({
+        iframe,
+        config,
+    }: {
+        config: FrakWalletSdkConfig;
+        iframe: HTMLIFrameElement;
+    }) {
+        if (typeof window === "undefined") {
+            throw new Error("QueryProvider should be used in the browser");
+        }
+
+        if (!iframe.contentWindow) {
+            throw new Error("Iframe should have a contentWindow");
+        }
+
+        this._iframeWindow = iframe.contentWindow;
+        this._config = config;
+
+        // Setup the message listener
+        window.addEventListener("message", this.handleNewMessage.bind(this));
+    }
+
+    /**
+     * Handle an incoming message
+     * @param message
+     * @private
+     */
+    private handleNewMessage(message: MessageEvent<EventsFormat>) {
+        // Check that the origin match the current window url
+        // TODO: That's buggy
+        /*if (message?.origin !== this._config.walletUrl) {
+            return;
+        }*/
+
+        // Ensure we got everything in the response
+        if (!(message?.data?.id && message?.data?.topic)) {
+            return;
+        }
+
+        // Try to find a current resolver=
+        const resolver = this._messageResolvers.get(message.data.id);
+
+        // If no resolver found, exit
+        if (!resolver) {
+            return;
+        }
+
+        // Resolve the data
+        resolver(message.data);
+    }
+
     /**
      * Perform a one shot request (getting the response in an sync)
      * @param param
@@ -100,7 +129,7 @@ export class QueryProvider {
         // Set our resolver (expose a promise that will be resolved when the response is received)
         const executor = (event: EventsFormat) => {
             // Parse the response according to the request
-            const parsedEvent = this.parseEventRequest({
+            const parsedEvent = this.parseEventResponse({
                 param,
                 response: event,
             });
@@ -138,7 +167,7 @@ export class QueryProvider {
         // Set our resolver (expose a promise that will be resolved when the response is received)
         const executor = async (event: EventsFormat) => {
             // Parse the response according to the request
-            const parsedEvent = await this.parseEventRequest({
+            const parsedEvent = await this.parseEventResponse({
                 param,
                 response: event,
             });
@@ -191,7 +220,7 @@ export class QueryProvider {
      * @param response
      * @private
      */
-    private async parseEventRequest<Param extends EventsParam>({
+    private async parseEventResponse<Param extends EventsParam>({
         param,
         response,
     }: { param: Param; response: EventsFormat }): Promise<
@@ -221,33 +250,5 @@ export class QueryProvider {
         throw new Error(
             `Unknown event response key: ${JSON.stringify(response)}`
         );
-    }
-
-    /**
-     * Handle an incoming message
-     * @param message
-     * @private
-     */
-    private handleNewMessage(message: MessageEvent<EventsFormat>) {
-        // Check that the origin match the current window url
-        if (message?.origin !== window.origin) {
-            return;
-        }
-
-        // Ensure we got enverything in the response
-        if (!(message?.data?.id && message?.data?.topic)) {
-            return;
-        }
-
-        // Try to find a current resolver=
-        const resolver = this._messageResolvers.get(message.data.id);
-
-        // If no resolver found, exit
-        if (!resolver) {
-            return;
-        }
-
-        // Resolve the data
-        resolver(message.data);
     }
 }

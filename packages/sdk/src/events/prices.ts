@@ -3,6 +3,7 @@ import {
     hashAndCompressData,
 } from "../compression";
 import type {
+    DecompressedFormat,
     EventsFormat,
     FrakWalletSdkConfig,
     GetPricesParam,
@@ -66,8 +67,16 @@ export async function parseGetPricesEventResponse(
  */
 export async function parseGetPricesEventData(
     event: EventsFormat
-): Promise<GetPricesParam> {
-    return decompressDataAndCheckHash(event.data, getPricesParamsKeyAccessor);
+): Promise<DecompressedFormat<GetPricesParam>> {
+    const data = await decompressDataAndCheckHash(
+        event.data,
+        getPricesParamsKeyAccessor
+    );
+    return {
+        data,
+        topic: event.topic,
+        id: event.id,
+    };
 }
 
 /**
@@ -75,7 +84,8 @@ export async function parseGetPricesEventData(
  *   - TODO: This should be moved to the wallet app directly, no needed for external usage
  */
 export async function getPricesResponseEvent(
-    response: GetPricesResponse
+    response: GetPricesResponse,
+    id: string
 ): Promise<EventsFormat> {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
@@ -83,8 +93,8 @@ export async function getPricesResponseEvent(
         getPriceResponseKeyAccessor
     );
     return {
+        id,
         topic: "get-price-response",
-        id: response.id,
         data: {
             compressed,
             compressedHash: compressedHash,

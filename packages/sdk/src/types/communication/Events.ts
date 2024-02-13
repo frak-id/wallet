@@ -51,3 +51,16 @@ export type EventsFormat = Readonly<{
     id: string;
     data: CompressedData;
 }>;
+
+/**
+ * Type of a decompressed event
+ */
+export type DecompressedFormat<Data> = Readonly<{
+    topic:
+        | "get-price-param"
+        | "unlock-status-param"
+        | "get-price-response"
+        | "unlock-status-response";
+    id: string;
+    data: Data;
+}>;

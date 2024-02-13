@@ -14,6 +14,7 @@ export type {
     EventsParam,
     EventsResponse,
     EventsFormat,
+    DecompressedFormat,
     EventResponseFromParam,
     RedirectionParams,
     RedirectionResponse,
@@ -34,7 +35,9 @@ export {
     getPricesEvent,
     // Get status event
     getUnlockStatusEvent,
-    parseUnlockStatusEventData,
+    parseUnlockStatusEvent,
+    getUnlockStatusResponseEvent,
+    parseUnlockStatusEventResponse,
 } from "./events";
 
-export { Listener, Provider } from "./services";
+export { QueryProvider, QueryListener } from "./services";

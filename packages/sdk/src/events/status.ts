@@ -3,6 +3,7 @@ import {
     hashAndCompressData,
 } from "../compression";
 import type {
+    DecompressedFormat,
     EventsFormat,
     FrakWalletSdkConfig,
     GetUnlockStatusParam,
@@ -36,7 +37,12 @@ export async function getUnlockStatusEvent(
         { ...params, contentId: config.contentId },
         unlockParamKeyAccessor
     );
+
+    // Generate a random id
+    const id = Math.random().toString(36).substring(7);
+
     return {
+        id,
         topic: "unlock-status-param",
         data: {
             compressed,
@@ -60,8 +66,16 @@ export async function parseUnlockStatusEventResponse(
  */
 export async function parseUnlockStatusEvent(
     event: EventsFormat
-): Promise<GetUnlockStatusParam> {
-    return decompressDataAndCheckHash(event.data, unlockParamKeyAccessor);
+): Promise<DecompressedFormat<GetUnlockStatusParam>> {
+    const data = await decompressDataAndCheckHash(
+        event.data,
+        unlockParamKeyAccessor
+    );
+    return {
+        topic: event.topic,
+        id: event.id,
+        data,
+    };
 }
 
 /**
@@ -69,7 +83,8 @@ export async function parseUnlockStatusEvent(
  *   - TODO: This should be moved to the wallet app directly, no needed for external usage
  */
 export async function getUnlockStatusResponseEvent(
-    response: GetUnlockStatusResponse
+    response: GetUnlockStatusResponse,
+    id: string
 ): Promise<EventsFormat> {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
@@ -77,6 +92,7 @@ export async function getUnlockStatusResponseEvent(
         unlockResponseKeyAccessor
     );
     return {
+        id,
         topic: "unlock-status-response",
         data: {
             compressed,
