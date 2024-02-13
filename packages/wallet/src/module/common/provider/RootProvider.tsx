@@ -1,12 +1,12 @@
 "use client";
 
 import { rpcTransport } from "@/context/common/blockchain/provider";
+import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { PaywallProvider } from "@/module/paywall/provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PropsWithChildren } from "react";
 import { polygonMumbai } from "viem/chains";
 import { WagmiProvider, createConfig } from "wagmi";
-import { ClientOnly } from "@/module/common/component/ClientOnly";
 
 // The query client that will be used by tanstack/react-query
 const queryClient = new QueryClient();

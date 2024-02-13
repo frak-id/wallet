@@ -7,13 +7,15 @@ export {
 export type {
     GetPricesParam,
     GetPricesResponse,
-    GetUnlockStatusParams,
+    GetUnlockStatusParam,
     GetUnlockStatusResponse,
     UnlockRequestParams,
     UnlockRequestResult,
     EventsParam,
     EventsResponse,
     EventsFormat,
+    DecompressedFormat,
+    EventResponseFromParam,
     RedirectionParams,
     RedirectionResponse,
     CompressedData,
@@ -33,7 +35,9 @@ export {
     getPricesEvent,
     // Get status event
     getUnlockStatusEvent,
-    parseUnlockStatusEventData,
+    parseUnlockStatusEvent,
+    getUnlockStatusResponseEvent,
+    parseUnlockStatusEventResponse,
 } from "./events";
 
-export { Listener, Provider } from "./services";
+export { QueryProvider, QueryListener } from "./services";

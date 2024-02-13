@@ -3,6 +3,7 @@ import {
     hashAndCompressData,
 } from "../compression";
 import type {
+    DecompressedFormat,
     EventsFormat,
     FrakWalletSdkConfig,
     GetPricesParam,
@@ -21,6 +22,7 @@ const getPriceResponseKeyAccessor = (response: GetPricesResponse) => [
 /**
  * Helper for the get prices request params
  * @param config
+ * @param id
  * @param params
  */
 export async function getPricesEvent(
@@ -32,8 +34,13 @@ export async function getPricesEvent(
         { ...params, contentId: config.contentId },
         getPricesParamsKeyAccessor
     );
+
+    // Generate a random id
+    const id = Math.random().toString(36).substring(7);
+
     return {
-        topic: "get-price",
+        topic: "get-price-param",
+        id,
         data: {
             compressed,
             compressedHash: compressedHash,
@@ -60,8 +67,16 @@ export async function parseGetPricesEventResponse(
  */
 export async function parseGetPricesEventData(
     event: EventsFormat
-): Promise<GetPricesParam> {
-    return decompressDataAndCheckHash(event.data, getPricesParamsKeyAccessor);
+): Promise<DecompressedFormat<GetPricesParam>> {
+    const data = await decompressDataAndCheckHash(
+        event.data,
+        getPricesParamsKeyAccessor
+    );
+    return {
+        data,
+        topic: event.topic,
+        id: event.id,
+    };
 }
 
 /**
@@ -69,7 +84,8 @@ export async function parseGetPricesEventData(
  *   - TODO: This should be moved to the wallet app directly, no needed for external usage
  */
 export async function getPricesResponseEvent(
-    response: GetPricesResponse
+    response: GetPricesResponse,
+    id: string
 ): Promise<EventsFormat> {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
@@ -77,7 +93,8 @@ export async function getPricesResponseEvent(
         getPriceResponseKeyAccessor
     );
     return {
-        topic: "get-price",
+        id,
+        topic: "get-price-response",
         data: {
             compressed,
             compressedHash: compressedHash,

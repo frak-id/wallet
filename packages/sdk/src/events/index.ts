@@ -12,5 +12,7 @@ export {
 } from "./prices";
 export {
     getUnlockStatusEvent,
-    parseUnlockStatusEventData,
+    parseUnlockStatusEvent,
+    getUnlockStatusResponseEvent,
+    parseUnlockStatusEventResponse,
 } from "./status";

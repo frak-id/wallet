@@ -3,9 +3,10 @@ import {
     hashAndCompressData,
 } from "../compression";
 import type {
+    DecompressedFormat,
     EventsFormat,
     FrakWalletSdkConfig,
-    GetUnlockStatusParams,
+    GetUnlockStatusParam,
     GetUnlockStatusResponse,
 } from "../types";
 
@@ -13,7 +14,7 @@ import type {
  * Key accessor for the params and the response
  * @param params
  */
-const unlockParamKeyAccessor = (params: GetUnlockStatusParams) => [
+const unlockParamKeyAccessor = (params: GetUnlockStatusParam) => [
     params.articleId,
     params.contentId,
 ];
@@ -29,15 +30,20 @@ const unlockResponseKeyAccessor = (response: GetUnlockStatusResponse) => [
  */
 export async function getUnlockStatusEvent(
     config: FrakWalletSdkConfig,
-    params: Omit<GetUnlockStatusParams, "contentId">
+    params: Omit<GetUnlockStatusParam, "contentId">
 ): Promise<EventsFormat> {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
         { ...params, contentId: config.contentId },
         unlockParamKeyAccessor
     );
+
+    // Generate a random id
+    const id = Math.random().toString(36).substring(7);
+
     return {
-        topic: "unlock-status",
+        id,
+        topic: "unlock-status-param",
         data: {
             compressed,
             compressedHash: compressedHash,
@@ -48,10 +54,10 @@ export async function getUnlockStatusEvent(
 /**
  * Helper to parse the unlock status response
  */
-export async function parseUnlockStatusEventData(
+export async function parseUnlockStatusEventResponse(
     event: EventsFormat
-): Promise<GetUnlockStatusParams> {
-    return decompressDataAndCheckHash(event.data, unlockParamKeyAccessor);
+): Promise<GetUnlockStatusResponse> {
+    return decompressDataAndCheckHash(event.data, unlockResponseKeyAccessor);
 }
 
 /**
@@ -60,8 +66,16 @@ export async function parseUnlockStatusEventData(
  */
 export async function parseUnlockStatusEvent(
     event: EventsFormat
-): Promise<GetUnlockStatusParams> {
-    return decompressDataAndCheckHash(event.data, unlockParamKeyAccessor);
+): Promise<DecompressedFormat<GetUnlockStatusParam>> {
+    const data = await decompressDataAndCheckHash(
+        event.data,
+        unlockParamKeyAccessor
+    );
+    return {
+        topic: event.topic,
+        id: event.id,
+        data,
+    };
 }
 
 /**
@@ -69,7 +83,8 @@ export async function parseUnlockStatusEvent(
  *   - TODO: This should be moved to the wallet app directly, no needed for external usage
  */
 export async function getUnlockStatusResponseEvent(
-    response: GetUnlockStatusResponse
+    response: GetUnlockStatusResponse,
+    id: string
 ): Promise<EventsFormat> {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
@@ -77,7 +92,8 @@ export async function getUnlockStatusResponseEvent(
         unlockResponseKeyAccessor
     );
     return {
-        topic: "unlock-status",
+        id,
+        topic: "unlock-status-response",
         data: {
             compressed,
             compressedHash: compressedHash,

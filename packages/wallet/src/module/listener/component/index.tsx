@@ -1,13 +1,22 @@
 "use client";
 
 import { useArticlePrices } from "@/module/paywall/hook/useArticlePrices";
-import { Listener } from "@frak-wallet/sdk";
+import { QueryListener } from "@frak-wallet/sdk";
+import { useEffect } from "react";
 
-const listener = new Listener();
+const listener = new QueryListener();
 
 export function ListenerUI() {
     const { fetchPrices } = useArticlePrices();
-    listener.setPriceFetcher(fetchPrices);
+    useEffect(() => {
+        if (!fetchPrices) {
+            return;
+        }
+
+        listener.onPriceRequested = fetchPrices;
+    }, [fetchPrices]);
+
+    // TODO: Similar logic for  the unlock status
 
     return <h1>Listener</h1>;
 }

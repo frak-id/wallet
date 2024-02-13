@@ -1,2 +1,2 @@
-export { Provider } from "./Provider";
-export { Listener } from "./Listener";
+export { QueryProvider } from "./QueryProvider";
+export { QueryListener } from "./QueryListener";

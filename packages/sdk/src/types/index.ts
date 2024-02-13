@@ -3,7 +3,7 @@ export type { FrakWalletSdkConfig } from "./Config";
 
 // Unlock related exports
 export type {
-    GetUnlockStatusParams,
+    GetUnlockStatusParam,
     GetUnlockStatusResponse,
 } from "./unlock/UnlockStatus";
 export type {
@@ -21,7 +21,9 @@ export type {
 export type {
     EventsParam,
     EventsResponse,
+    EventResponseFromParam,
     EventsFormat,
+    DecompressedFormat,
 } from "./communication/Events";
 export type {
     RedirectionParams,
