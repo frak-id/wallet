@@ -21,6 +21,7 @@ const getPriceResponseKeyAccessor = (response: GetPricesResponse) => [
 /**
  * Helper for the get prices request params
  * @param config
+ * @param id
  * @param params
  */
 export async function getPricesEvent(
@@ -32,8 +33,13 @@ export async function getPricesEvent(
         { ...params, contentId: config.contentId },
         getPricesParamsKeyAccessor
     );
+
+    // Generate a random id
+    const id = Math.random().toString(36).substring(7);
+
     return {
-        topic: "get-price",
+        topic: "get-price-param",
+        id,
         data: {
             compressed,
             compressedHash: compressedHash,
@@ -77,7 +83,8 @@ export async function getPricesResponseEvent(
         getPriceResponseKeyAccessor
     );
     return {
-        topic: "get-price",
+        topic: "get-price-response",
+        id: response.id,
         data: {
             compressed,
             compressedHash: compressedHash,

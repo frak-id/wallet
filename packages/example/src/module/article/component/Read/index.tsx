@@ -1,12 +1,16 @@
+import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import type { Article } from "@/type/Article";
-import { Provider } from "@frak-wallet/sdk";
+import { QueryProvider } from "@frak-wallet/sdk/src/services/QueryProvider";
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 
-const provider = new Provider();
+const provider = new QueryProvider({
+    config: frakWalletSdkConfig,
+    iframe: document.createElement("iframe"),
+});
 
 export function ReadArticle({
     article,
@@ -21,8 +25,14 @@ export function ReadArticle({
              * Ask our listener for the price of the article
              */
             async function run() {
-                const getPricesResponse = await provider.getPrices({
-                    articleId: article.id as Hex,
+                const getPricesResponse = await provider.oneShotRequest({
+                    param: {
+                        key: "get-price-param",
+                        value: {
+                            contentId: frakWalletSdkConfig.contentId,
+                            articleId: article.id as Hex,
+                        },
+                    },
                 });
                 setPrices(getPricesResponse.prices);
             }

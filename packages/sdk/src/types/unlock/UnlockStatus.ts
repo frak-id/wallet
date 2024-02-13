@@ -20,7 +20,7 @@ import type { Address, Hex } from "viem";
 /**
  * The request sent tà get the unlock status for the given article
  */
-export type GetUnlockStatusParams = Readonly<{
+export type GetUnlockStatusParam = Readonly<{
     contentId: Hex;
     articleId: Hex;
 }>;

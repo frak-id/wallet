@@ -5,7 +5,7 @@ import {
 import type {
     EventsFormat,
     FrakWalletSdkConfig,
-    GetUnlockStatusParams,
+    GetUnlockStatusParam,
     GetUnlockStatusResponse,
 } from "../types";
 
@@ -13,7 +13,7 @@ import type {
  * Key accessor for the params and the response
  * @param params
  */
-const unlockParamKeyAccessor = (params: GetUnlockStatusParams) => [
+const unlockParamKeyAccessor = (params: GetUnlockStatusParam) => [
     params.articleId,
     params.contentId,
 ];
@@ -29,7 +29,7 @@ const unlockResponseKeyAccessor = (response: GetUnlockStatusResponse) => [
  */
 export async function getUnlockStatusEvent(
     config: FrakWalletSdkConfig,
-    params: Omit<GetUnlockStatusParams, "contentId">
+    params: Omit<GetUnlockStatusParam, "contentId">
 ): Promise<EventsFormat> {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
@@ -37,7 +37,7 @@ export async function getUnlockStatusEvent(
         unlockParamKeyAccessor
     );
     return {
-        topic: "unlock-status",
+        topic: "unlock-status-param",
         data: {
             compressed,
             compressedHash: compressedHash,
@@ -48,10 +48,10 @@ export async function getUnlockStatusEvent(
 /**
  * Helper to parse the unlock status response
  */
-export async function parseUnlockStatusEventData(
+export async function parseUnlockStatusEventResponse(
     event: EventsFormat
-): Promise<GetUnlockStatusParams> {
-    return decompressDataAndCheckHash(event.data, unlockParamKeyAccessor);
+): Promise<GetUnlockStatusResponse> {
+    return decompressDataAndCheckHash(event.data, unlockResponseKeyAccessor);
 }
 
 /**
@@ -60,7 +60,7 @@ export async function parseUnlockStatusEventData(
  */
 export async function parseUnlockStatusEvent(
     event: EventsFormat
-): Promise<GetUnlockStatusParams> {
+): Promise<GetUnlockStatusParam> {
     return decompressDataAndCheckHash(event.data, unlockParamKeyAccessor);
 }
 
@@ -77,7 +77,7 @@ export async function getUnlockStatusResponseEvent(
         unlockResponseKeyAccessor
     );
     return {
-        topic: "unlock-status",
+        topic: "unlock-status-response",
         data: {
             compressed,
             compressedHash: compressedHash,
