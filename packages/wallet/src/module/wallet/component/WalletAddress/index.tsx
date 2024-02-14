@@ -1,6 +1,5 @@
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
 import { useCopyToClipboard } from "@uidotdev/usehooks";
-import { Copy, CopyCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import styles from "./index.module.css";
 
@@ -9,13 +8,9 @@ type WalletAddressProps = {
     onlyIcon?: boolean;
 };
 
-export function WalletAddress({
-    wallet,
-    onlyIcon = false,
-}: WalletAddressProps) {
+export function WalletAddress({ wallet }: WalletAddressProps) {
     const [copied, setCopied] = useState(false);
     const [, copyToClipboard] = useCopyToClipboard();
-    const Icon = copied ? CopyCheck : Copy;
 
     useEffect(() => {
         if (copied) {
@@ -37,8 +32,7 @@ export function WalletAddress({
                 }
             }}
         >
-            <Icon width={16} className={styles.walletAddress__icon} />
-            {!onlyIcon && formatHash(wallet)}
+            {formatHash(wallet)}
         </button>
     );
 }

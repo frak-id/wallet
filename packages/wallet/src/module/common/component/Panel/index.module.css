@@ -1,6 +1,14 @@
 .panel {
-    margin-bottom: 20px;
-    padding: 10px;
-    font-size: 14px;
+    padding: 7px 10px;
+    border-radius: 8px;
     background-color: var(--frak-panel-background-color);
+}
+
+.panel + .panel {
+    margin-top: 8px;
+}
+
+.outlined {
+    border: 4px solid #12244B;
+    background: none;
 }

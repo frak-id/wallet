@@ -1,28 +1,26 @@
 .header {
-    margin-bottom: 50px;
-    height: 100px;
-    text-align: center;
-}
-
-.header__row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-}
-
-.header__row--centered {
     justify-content: center;
-    gap: 50px;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    width: 100%;
+    min-height: 38px;
 }
 
-.header__button {
-    all: unset;
-    cursor: pointer;
+.header__logo {
+    position: absolute;
+    margin-top: -18px;
+    top: 50%;
+    left: 0;
+}
+
+.header__title {
+    display: flex;
+    margin: 0;
 }
 
 .header__wallet {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    color: #3F5279;
 }

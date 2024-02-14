@@ -1,6 +1,6 @@
 import { AuthGate } from "@/module/authentication/component/AuthGate";
-import { HeaderAuthentication } from "@/module/authentication/component/Header";
 import type { ReactNode } from "react";
+import { Header } from "@/module/common/component/Header";
 
 export default function AuthenticationLayout({
     children,
@@ -9,7 +9,7 @@ export default function AuthenticationLayout({
 }>) {
     return (
         <AuthGate>
-            <HeaderAuthentication />
+            <Header authenticated={false} />
             {children}
         </AuthGate>
     );

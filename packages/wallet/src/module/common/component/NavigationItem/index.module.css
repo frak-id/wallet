@@ -1,0 +1,13 @@
+.navigation__button {
+    all: unset;
+    display: flex;
+    cursor: pointer;
+}
+
+.navigation__button > svg {
+    stroke: #818C9C;
+}
+
+.navigation__button--active > svg {
+    stroke: #fff;
+}

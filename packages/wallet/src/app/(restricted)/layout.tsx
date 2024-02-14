@@ -1,6 +1,6 @@
 import { getSession } from "@/context/session/action/session";
 import { AuthGate } from "@/module/authentication/component/AuthGate";
-import { HeaderRestricted } from "@/module/common/component/Header";
+import { Header } from "@/module/common/component/Header";
 import { WalletProvider } from "@/module/wallet/provider/WalletProvider";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
@@ -20,7 +20,7 @@ export default async function RestrictedLayout({
     return (
         <AuthGate>
             <WalletProvider session={session}>
-                <HeaderRestricted />
+                <Header />
                 {children}
             </WalletProvider>
         </AuthGate>

@@ -1,6 +1,11 @@
 import type { PropsWithChildren } from "react";
 import styles from "./index.module.css";
 
-export function Panel({ children }: PropsWithChildren) {
-    return <div className={styles.panel}>{children}</div>;
+type PanelProps = {
+    variant?: "primary" | "secondary" | "outlined";
+};
+
+export function Panel({ variant, children }: PropsWithChildren<PanelProps>) {
+    const variantClass = variant ? styles[variant] : styles.primary;
+    return <div className={`${styles.panel} ${variantClass}`}>{children}</div>;
 }
