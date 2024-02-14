@@ -1,3 +1,4 @@
+import { keccak256, toHex } from "viem";
 import {
     decompressDataAndCheckHash,
     hashAndCompressData,
@@ -5,7 +6,6 @@ import {
 import type {
     DecompressedFormat,
     EventsFormat,
-    FrakWalletSdkConfig,
     GetUnlockStatusParam,
     GetUnlockStatusResponse,
 } from "../types";
@@ -25,21 +25,21 @@ const unlockResponseKeyAccessor = (response: GetUnlockStatusResponse) => [
 
 /**
  * Helper for the get unlock request params
- * @param config
  * @param params
  */
 export async function getUnlockStatusEvent(
-    config: FrakWalletSdkConfig,
-    params: Omit<GetUnlockStatusParam, "contentId">
+    params: GetUnlockStatusParam
 ): Promise<EventsFormat> {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
-        { ...params, contentId: config.contentId },
+        params,
         unlockParamKeyAccessor
     );
 
-    // Generate a random id
-    const id = Math.random().toString(36).substring(7);
+    // Generate the id of this exchange
+    const id = keccak256(
+        toHex(`getUnlockStatus-${unlockParamKeyAccessor(params).join("-")}`)
+    );
 
     return {
         id,

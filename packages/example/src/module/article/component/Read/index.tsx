@@ -16,15 +16,16 @@ export function ReadArticle({
     const [queryProvider, setQueryProvider] = useState<
         QueryProvider | undefined
     >(undefined);
-    useEffect(() => {
-        // If we already got a query provider, do nothing
-        if (queryProvider) {
-            return;
-        }
 
+    useEffect(() => {
         // Otherwise, build it
         initQueryProvider();
-    }, [queryProvider]);
+
+        // On cleanup, destroy the query provider
+        /*return () => {
+            queryProvider?.destroy();
+        }*/
+    }, []);
 
     // Build the query provider
     async function initQueryProvider() {
@@ -47,24 +48,42 @@ export function ReadArticle({
             return;
         }
 
-        setTimeout(() => {
-            /**
-             * Ask our listener for the price of the article
-             */
-            async function run() {
-                const getPricesResponse = await queryProvider.oneShotRequest({
-                    param: {
-                        key: "get-price-param",
-                        value: {
-                            contentId: frakWalletSdkConfig.contentId,
-                            articleId: article.id as Hex,
-                        },
+        const fetchPrices = async () => {
+            const getPricesResponse = await queryProvider.oneShotRequest({
+                param: {
+                    key: "get-price-param",
+                    value: {
+                        contentId: frakWalletSdkConfig.contentId,
+                        articleId: article.id as Hex,
                     },
-                });
-                setPrices(getPricesResponse.prices);
-            }
-            run();
-        }, 2000);
+                },
+            });
+            setPrices(getPricesResponse.prices);
+        };
+
+        const fetchStatus = async () => {
+            const unlockStatus = await queryProvider.listenerRequest({
+                param: {
+                    key: "unlock-status-param",
+                    value: {
+                        contentId: frakWalletSdkConfig.contentId,
+                        articleId: article.id as Hex,
+                    },
+                },
+                onResponse: async (event) => {
+                    console.log("Unlock status response event", event);
+                },
+            });
+            console.log("unlockStatus", unlockStatus);
+        };
+
+        // Setup fetcher once listener linked
+        console.log("Waiting for listener link");
+        queryProvider.waitForListenerLink().then(() => {
+            console.log("Listener linked");
+            fetchPrices();
+            fetchStatus();
+        });
     }, [article.id, queryProvider]);
 
     return (

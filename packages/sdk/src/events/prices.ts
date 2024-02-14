@@ -1,3 +1,4 @@
+import { keccak256, toHex } from "viem";
 import {
     decompressDataAndCheckHash,
     hashAndCompressData,
@@ -5,7 +6,6 @@ import {
 import type {
     DecompressedFormat,
     EventsFormat,
-    FrakWalletSdkConfig,
     GetPricesParam,
     GetPricesResponse,
 } from "../types";
@@ -21,22 +21,21 @@ const getPriceResponseKeyAccessor = (response: GetPricesResponse) => [
 
 /**
  * Helper for the get prices request params
- * @param config
- * @param id
  * @param params
  */
 export async function getPricesEvent(
-    config: FrakWalletSdkConfig,
-    params: Omit<GetPricesParam, "contentId">
+    params: GetPricesParam
 ): Promise<EventsFormat> {
     // Compress our params
     const { compressed, compressedHash } = await hashAndCompressData(
-        { ...params, contentId: config.contentId },
+        params,
         getPricesParamsKeyAccessor
     );
 
-    // Generate a random id
-    const id = Math.random().toString(36).substring(7);
+    // Generate the id of this exchange
+    const id = keccak256(
+        toHex(`getPrice-${getPricesParamsKeyAccessor(params).join("-")}`)
+    );
 
     return {
         topic: "get-price-param",

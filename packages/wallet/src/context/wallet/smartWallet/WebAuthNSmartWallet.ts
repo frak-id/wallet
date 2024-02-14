@@ -21,13 +21,14 @@ import {
     concatHex,
     encodeAbiParameters,
     encodeFunctionData,
+    encodePacked,
     hashMessage,
     maxUint256,
 } from "viem";
 import { toAccount } from "viem/accounts";
 import { getBytecode, getChainId } from "viem/actions";
 
-export type KernelP256SmartAccount<
+export type KernelWebAuthNSmartAccount<
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<"kernelWebAuthNSmartAccount", transport, chain>;
@@ -69,21 +70,16 @@ const createAccountAbi = [
 
 /**
  * Default addresses for kernel smart account
- *   p256 wrapper address: 0xC06343F2BEC213A3c21a5B0404A70F30BD7d5216
  *   validator address: 0xB38806b3b3aE69271b2A57319E21998A41A1d82d
  */
 const KERNEL_ADDRESSES: {
-    P256_VALIDATOR: Address;
     WEB_AUTHN_VALIDATOR: Address;
     ACCOUNT_V3_LOGIC: Address;
     FACTORY: Address;
     ENDTRYPOINT_V0_6: Address;
 } = {
     // Validators
-    P256_VALIDATOR: "0xea91Fc104e3EE4A249ae7CE617fd988Ef020DD0c",
-    // WEB_AUTHN_VALIDATOR: "0xB38806b3b3aE69271b2A57319E21998A41A1d82d",
-    // New validator that use pre compiled p256
-    WEB_AUTHN_VALIDATOR: "0x005521022941F7b2A1E7B8E4421B16140c7fB6f9",
+    WEB_AUTHN_VALIDATOR: "0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
     // Kernel stuff
     ACCOUNT_V3_LOGIC: "0xD3F582F6B4814E989Ee8E96bc3175320B5A540ab",
     FACTORY: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",
@@ -184,6 +180,17 @@ const getAccountAddress = async <
 };
 
 /**
+ * Represent the layout of the calldata used for a webauthn signature
+ */
+const webAuthNSignatureLayoutParam = [
+    { name: "useOnChainP256Verifier", type: "bool" },
+    { name: "authenticatorData", type: "bytes" },
+    { name: "clientData", type: "bytes" },
+    { name: "challengeOffset", type: "uint256" },
+    { name: "rs", type: "uint256[2]" },
+] as const;
+
+/**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
  * @param client
  * @param privateKey
@@ -218,7 +225,7 @@ export async function webAuthNSmartAccount<
         webAuthNValidatorAddress?: Address;
         deployedAccountAddress?: Address;
     }
-): Promise<KernelP256SmartAccount<TTransport, TChain>> {
+): Promise<KernelWebAuthNSmartAccount<TTransport, TChain>> {
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
         getAccountInitCode({
@@ -259,20 +266,13 @@ export async function webAuthNSmartAccount<
             } = await signatureProvider(challenge);
 
             // Return the encoded stuff for the web auth n validator
-            return encodeAbiParameters(
-                [
-                    { name: "authenticatorData", type: "bytes" },
-                    { name: "clientData", type: "bytes" },
-                    { name: "challengeOffset", type: "uint256" },
-                    { name: "rs", type: "uint256[2]" },
-                ],
-                [
-                    authenticatorData,
-                    clientData,
-                    challengeOffset,
-                    [BigInt(signature.r), BigInt(signature.s)],
-                ]
-            );
+            return encodePacked(webAuthNSignatureLayoutParam, [
+                false,
+                authenticatorData,
+                clientData,
+                challengeOffset,
+                [BigInt(signature.r), BigInt(signature.s)],
+            ]);
         },
         async signTransaction(_, __) {
             throw new SignTransactionNotSupportedBySmartAccount();
@@ -318,13 +318,9 @@ export async function webAuthNSmartAccount<
 
             // Encode the signature with the web auth n validator info
             const encodedSignature = encodeAbiParameters(
+                webAuthNSignatureLayoutParam,
                 [
-                    { name: "authenticatorData", type: "bytes" },
-                    { name: "clientData", type: "bytes" },
-                    { name: "challengeOffset", type: "uint256" },
-                    { name: "rs", type: "uint256[2]" },
-                ],
-                [
+                    false,
                     authenticatorData,
                     clientData,
                     challengeOffset,
@@ -387,21 +383,14 @@ export async function webAuthNSmartAccount<
                 ) - 1n;
 
             // Generate a template signature for the webauthn validator
-            const sig = encodeAbiParameters(
-                [
-                    { name: "authenticatorData", type: "bytes" },
-                    { name: "clientData", type: "bytes" },
-                    { name: "challengeOffset", type: "uint256" },
-                    { name: "rs", type: "uint256[2]" },
-                ],
-                [
-                    // Randon 120 byte
-                    `0x${maxUint256.toString(16).repeat(2)}`,
-                    `0x${maxUint256.toString(16).repeat(6)}`,
-                    maxUint256,
-                    [maxCurveValue, maxCurveValue],
-                ]
-            );
+            const sig = encodeAbiParameters(webAuthNSignatureLayoutParam, [
+                false,
+                // Randon 120 byte
+                `0x${maxUint256.toString(16).repeat(2)}`,
+                `0x${maxUint256.toString(16).repeat(6)}`,
+                maxUint256,
+                [maxCurveValue, maxCurveValue],
+            ]);
 
             // return the coded signature
             return concatHex(["0x00000000", sig]);

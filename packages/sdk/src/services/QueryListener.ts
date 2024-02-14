@@ -39,18 +39,47 @@ export class QueryListener {
     ) => Promise<void> = async () => {};
     public set onStatusRequested(value: (
         param: GetUnlockStatusParam,
-        emitter: (response: GetUnlockStatusResponse) => void
+        emitter: (response: GetUnlockStatusResponse) => Promise<void>
     ) => Promise<void>) {
         this._onStatusRequested = value;
     }
 
+    /**
+     * The  current message handler we are using
+     * @private
+     */
+    private readonly _messageHandler: (
+        message: MessageEvent<EventsFormat>
+    ) => void;
+
     constructor() {
+        console.log("Creating a new query listener");
         if (typeof window === "undefined") {
             throw new Error("QueryProvider should be used in the browser");
         }
 
         // Setup the message listener
-        window.addEventListener("message", this.handleNewMessage.bind(this));
+        this._messageHandler = this.handleNewMessage.bind(this);
+        window.addEventListener("message", this._messageHandler);
+    }
+
+    /**
+     * Tell that the listener is rdy to receive msg
+     */
+    public setReadyToHandleRequest() {
+        // Once we are good, send the ready event
+        window.parent?.postMessage({ topic: "ready" }, "*");
+    }
+
+    /**
+     * Destroy the query provider
+     */
+    public destroy() {
+        // Destroy both resolver methods
+        this._onPriceRequested = async () => undefined;
+        this._onStatusRequested = async () => {};
+        // Remove the message listener
+        window.removeEventListener("message", this._messageHandler);
     }
 
     /**
@@ -64,7 +93,9 @@ export class QueryListener {
             return;
         }*/
 
-        console.log("Received a new message", { data: message.data });
+        console.log("Received a new message in the listener", {
+            data: message.data,
+        });
 
         // Ensure we got everything in the response
         if (!(message?.data?.id && message?.data?.topic)) {
@@ -84,7 +115,7 @@ export class QueryListener {
 
         // Parse the params
         const event = await this.parseEventRequest({ event: message.data });
-        console.log("Parsed event", { event });
+        console.log("Parsed event from listener", { event });
 
         // Depending on the type, we will call the right method
         if (event.topic === "get-price-param") {

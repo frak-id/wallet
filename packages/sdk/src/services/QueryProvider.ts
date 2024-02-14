@@ -26,7 +26,20 @@ export class QueryProvider {
      * The iframe in which we will send request
      * @private
      */
+    private readonly _iframe: HTMLIFrameElement;
+
+    /**
+     * The iframe in which we will send request
+     * @private
+     */
     private readonly _iframeWindow: Window;
+
+    /**
+     * The listener linked promise
+     * @private
+     */
+    private readonly _listenerLinked: Deferred<boolean> =
+        new Deferred<boolean>();
 
     /**
      * All the one shot resolvers
@@ -36,6 +49,14 @@ export class QueryProvider {
         string,
         (event: EventsFormat) => unknown
     > = new Map();
+
+    /**
+     * The  current message handler we are using
+     * @private
+     */
+    private readonly _messageHandler: (
+        message: MessageEvent<EventsFormat>
+    ) => void;
 
     /**
      * Static method to create an invisible iframe that will be used to fetch data
@@ -66,6 +87,7 @@ export class QueryProvider {
         config: FrakWalletSdkConfig;
         iframe: HTMLIFrameElement;
     }) {
+        console.log("Creating a new query provider");
         if (typeof window === "undefined") {
             throw new Error("QueryProvider should be used in the browser");
         }
@@ -74,11 +96,33 @@ export class QueryProvider {
             throw new Error("Iframe should have a contentWindow");
         }
 
+        this._iframe = iframe;
         this._iframeWindow = iframe.contentWindow;
         this._config = config;
 
         // Setup the message listener
-        window.addEventListener("message", this.handleNewMessage.bind(this));
+        this._messageHandler = this.handleNewMessage.bind(this);
+        window.addEventListener("message", this._messageHandler);
+    }
+
+    /**
+     * Wait for the listener message handler to be linked
+     */
+    public async waitForListenerLink() {
+        await this._listenerLinked.promise;
+    }
+
+    /**
+     * Destroy the query provider
+     */
+    public destroy() {
+        console.log("Destroying the query provider");
+        // Cleanup our receiver
+        this._messageResolvers.clear();
+        // Remove the message listener
+        window.removeEventListener("message", this._messageHandler);
+        // Remove the iframe
+        this._iframe.remove();
     }
 
     /**
@@ -86,12 +130,29 @@ export class QueryProvider {
      * @param message
      * @private
      */
-    private handleNewMessage(message: MessageEvent<EventsFormat>) {
-        // Check that the origin match the current window url
-        // TODO: That's buggy
-        /*if (message?.origin !== this._config.walletUrl) {
+    private handleNewMessage(
+        message: MessageEvent<EventsFormat | { topic: "ready" }>
+    ) {
+        console.log("Received a new message in the listener", {
+            data: message.data,
+        });
+
+        if (!message.origin) {
             return;
-        }*/
+        }
+        // Check that the origin match the wallet
+        if (
+            new URL(message.origin).origin !==
+            new URL(this._config.walletUrl).origin
+        ) {
+            return;
+        }
+
+        // If it's a ready topic, resolve the listener linked promise
+        if (message?.data?.topic === "ready") {
+            this._listenerLinked.resolve(true);
+            return;
+        }
 
         // Ensure we got everything in the response
         if (!(message?.data?.id && message?.data?.topic)) {
@@ -202,12 +263,12 @@ export class QueryProvider {
     }: { param: Param }): Promise<EventsFormat> {
         // Format the get price param
         if (param.key === "get-price-param") {
-            return await getPricesEvent(this._config, param.value);
+            return await getPricesEvent(param.value);
         }
 
         // Format unlock status param
         if (param.key === "unlock-status-param") {
-            return await getUnlockStatusEvent(this._config, param.value);
+            return await getUnlockStatusEvent(param.value);
         }
 
         // Unknown event

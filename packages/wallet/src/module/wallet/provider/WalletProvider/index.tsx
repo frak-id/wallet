@@ -6,7 +6,7 @@ import {
     pimlicoBundlerTransport,
     pimlicoPaymasterClient,
 } from "@/context/common/blockchain/provider";
-import type { KernelP256SmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
+import type { KernelWebAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import { buildSmartWallet } from "@/context/wallet/utils/buildSmartWallet";
 import type { Session } from "@/types/Session";
 import { smartAccount } from "@permissionless/wagmi";
@@ -32,7 +32,7 @@ function useWalletHook({ session }: { session: Session }) {
 
     // The current user smart wallet
     const [smartWallet, setSmartWallet] =
-        useState<KernelP256SmartAccount | null>();
+        useState<KernelWebAuthNSmartAccount | null>();
 
     // Listen to the smart wallet FRK balance
     const { data: balance, refetch: refreshBalance } = useReadContract({

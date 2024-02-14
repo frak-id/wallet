@@ -16,7 +16,7 @@ import { useAccount } from "wagmi";
 export function useUnlockState({
     articleId,
     contentId,
-}: { articleId: Hex; contentId: Hex }) {
+}: { articleId?: Hex; contentId?: Hex }) {
     // The current user wallet
     const { address } = useAccount();
 
@@ -34,7 +34,7 @@ export function useUnlockState({
     } = useQuery({
         queryKey: ["getUnlockStatus", contentId, articleId, address],
         queryFn: async () => {
-            if (!address) {
+            if (!(address && contentId && articleId)) {
                 return;
             }
             return getUnlockStatusOnArticle({
