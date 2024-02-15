@@ -10,7 +10,7 @@ import type {
     EventsParam,
     FrakWalletSdkConfig,
 } from "../types";
-import { Deferred } from "./Deferred.ts";
+import { Deferred } from "./Deferred";
 
 /**
  * Represent a query provider (base class that should be used to query data to the Frak wallet via iframe)

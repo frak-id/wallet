@@ -3,7 +3,7 @@ import type {
     GetUnlockStatusParam,
     GetUnlockStatusResponse,
 } from "../unlock/UnlockStatus.ts";
-import type { CompressedData } from "./Encoded.ts";
+import type { CompressedData } from "./Encoded";
 
 /**
  * Generic events params

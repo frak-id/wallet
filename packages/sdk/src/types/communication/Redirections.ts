@@ -1,4 +1,4 @@
-import type { UnlockRequestParams } from "../unlock/UnlockRequest.ts";
+import type { UnlockRequestParams } from "../unlock/UnlockRequest";
 
 /**
  * Generic redirections params

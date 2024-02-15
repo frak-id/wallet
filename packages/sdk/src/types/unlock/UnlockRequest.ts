@@ -1,5 +1,5 @@
 import type { Address, Hex } from "viem";
-import type { ArticlePrice } from "../ArticlePrice.ts";
+import type { ArticlePrice } from "../ArticlePrice";
 
 /**
  * Request to unlock a paid article

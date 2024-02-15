@@ -20,6 +20,7 @@ const sessionOptions: SessionOptions = {
  * Get the full session from the cookies
  */
 async function getFullSession() {
+    // @ts-ignore
     return await getIronSession<AdminSession>(cookies(), sessionOptions);
 }
 

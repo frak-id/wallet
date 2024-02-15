@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import type { ArticlePrice } from "../ArticlePrice.ts";
+import type { ArticlePrice } from "../ArticlePrice";
 
 /**
  * Get the article prices
