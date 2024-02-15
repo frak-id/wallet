@@ -12,11 +12,12 @@
     all: unset;
     position: relative;
     font-family: inherit;
-    margin-bottom: 50px;
     cursor: pointer;
 }
 
 .accordion__chevron {
+    display: block;
+    margin: 0 auto;
     font-size: 2em;
     transition: transform 300ms cubic-bezier(0.87, 0, 0.13, 1);
 }
@@ -27,7 +28,6 @@
 
 .accordion__content {
     overflow: hidden;
-    background-color: var(--frak-accordion-content-background-color);
 }
 
 .accordion__content[data-state="open"] {

@@ -86,6 +86,7 @@ export async function fetchWalletHistory({
         return {
             key: "frk-received",
             txHash: log.transactionHash,
+            fromHash: log.address,
             blockNumber: log.blockNumber,
             receivedAmount: formatEther(value),
         };

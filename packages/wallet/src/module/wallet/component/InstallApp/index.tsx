@@ -1,4 +1,5 @@
 import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
 import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
 import { ArrowDownToLine } from "lucide-react";
 import styles from "./index.module.css";
@@ -14,13 +15,10 @@ export function InstallApp() {
                     className={`button ${styles.wallet__install}`}
                     onClick={launchInstallation}
                 >
-                    <span>
-                        <ArrowDownToLine width={32} height={32} />
-                    </span>
-                    <span>
+                    <Title icon={<ArrowDownToLine width={32} height={32} />}>
                         Install <strong>Nexus Wallet</strong> on your phone for
                         a better experience!
-                    </span>
+                    </Title>
                 </button>
             </Panel>
         )

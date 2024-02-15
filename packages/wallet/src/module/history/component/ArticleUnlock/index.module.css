@@ -1,0 +1,14 @@
+.articleUnlock--isAllowed {
+    color: var(--frak-color-green);
+    font-weight: 700;
+}
+
+.articleUnlock--isNotAllowed {
+    color: var(--frak-color-red);
+    font-weight: 700;
+}
+
+.articleUnlock__link {
+    display: flex;
+    margin-left: auto;
+}

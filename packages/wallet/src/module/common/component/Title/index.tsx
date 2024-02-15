@@ -1,6 +1,14 @@
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 
-export function Title({ children }: PropsWithChildren) {
-    return <h2 className={styles.title}>{children}</h2>;
+export function Title({
+    icon,
+    children,
+}: PropsWithChildren<{ icon?: ReactNode }>) {
+    return (
+        <h2 className={styles.title}>
+            {icon && <span>{icon}</span>}
+            <span className={styles.title__text}>{children}</span>
+        </h2>
+    );
 }

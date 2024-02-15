@@ -17,8 +17,8 @@ export function PolygonLink({
             rel={"noreferrer"}
             className={styles.polygonLink}
         >
-            {formatHash(hash)}
-            {icon && <ExternalLink size={16} />}
+            <span>{formatHash(hash)}</span>
+            {icon && <ExternalLink className={styles.polygonLink__icon} />}
         </a>
     );
 }

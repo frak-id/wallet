@@ -26,6 +26,7 @@ export type ArticleUnlock = Readonly<{
 export type FrkReceived = Readonly<{
     key: "frk-received";
     txHash: Hex;
+    fromHash: Hex;
     blockNumber: bigint;
     // The amount in FRK the wallet received
     receivedAmount: string;
