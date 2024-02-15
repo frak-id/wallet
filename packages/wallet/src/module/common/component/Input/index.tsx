@@ -29,7 +29,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         callback.current = onChangeValue;
 
         const debounceValueCompare = useCallback(
-            (debouncedValue: string) => {
+            (debouncedValue: string): string | undefined => {
                 if (value !== debouncedValue) {
                     return debouncedValue;
                 }
@@ -43,7 +43,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         }, [value]);
 
         useEffect(() => {
-            callback.current?.(debounceValueCompare(debouncedValue));
+            const difference = debounceValueCompare(debouncedValue);
+            typeof difference === "string" && callback.current?.(difference);
         }, [debouncedValue, debounceValueCompare]);
 
         return (

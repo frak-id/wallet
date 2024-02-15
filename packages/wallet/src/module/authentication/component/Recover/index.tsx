@@ -1,31 +1,30 @@
-"use client";
+import { Fingerprint } from "@/assets/icons/Fingerprint";
+import { FingerprintGrey } from "@/assets/icons/FingerprintGrey";
+import { Panel } from "@/module/common/component/Panel";
+import type { PropsWithChildren } from "react";
+import styles from "./index.module.css";
 
-import styles from "@/module/authentication/component/LoginItem/index.module.css";
-import { useLogin } from "@/module/authentication/hook/useLogin";
-import { Fingerprint } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+type AuthFingerprintProps = {
+    action: () => void;
+    disabled?: boolean;
+};
 
-export function RecoverAccount() {
-    const { login } = useLogin();
-
-    const router = useRouter();
-    const [, startTransition] = useTransition();
-
+export function AuthFingerprint({
+    children,
+    action,
+    disabled,
+}: PropsWithChildren<AuthFingerprintProps>) {
     return (
-        <button
-            type={"button"}
-            onClick={async () => {
-                await login({});
-                startTransition(() => {
-                    router.push("/");
-                });
-            }}
-        >
-            <span>Recover</span>
-            <span>
-                <Fingerprint size={36} className={styles.loginItem__icon} />
-            </span>
-        </button>
+        <Panel size={"big"} withShadow={true}>
+            <button
+                type={"button"}
+                className={`button ${styles.recover__button}`}
+                disabled={disabled}
+                onClick={action}
+            >
+                {disabled ? <FingerprintGrey /> : <Fingerprint />}
+                <span>{children}</span>
+            </button>
+        </Panel>
     );
 }

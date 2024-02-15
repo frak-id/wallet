@@ -19,6 +19,7 @@
     "@peculiar/asn1-ecc": "^2.3.8",
     "@peculiar/asn1-schema": "^2.3.8",
     "@permissionless/wagmi": "^0.0.3",
+    "@radix-ui/react-accordion": "^1.1.2",
     "@simplewebauthn/browser": "^9.0.1",
     "@simplewebauthn/server": "^9.0.1",
     "@tanstack/react-query": "^5.18.1",

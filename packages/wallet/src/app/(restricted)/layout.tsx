@@ -1,5 +1,4 @@
 import { getSession } from "@/context/session/action/session";
-import { AuthGate } from "@/module/authentication/component/AuthGate";
 import { Header } from "@/module/common/component/Header";
 import { WalletProvider } from "@/module/wallet/provider/WalletProvider";
 import { redirect } from "next/navigation";
@@ -13,16 +12,14 @@ export default async function RestrictedLayout({
     // Check if a user is logged in or not
     const session = await getSession();
 
-    // If we don't have a session, redirect to root
+    // If we don't have a session, redirect to register
     if (!session) {
-        redirect("/");
+        redirect("/register");
     }
     return (
-        <AuthGate>
-            <WalletProvider session={session}>
-                <Header />
-                {children}
-            </WalletProvider>
-        </AuthGate>
+        <WalletProvider session={session}>
+            <Header />
+            {children}
+        </WalletProvider>
     );
 }

@@ -6,18 +6,13 @@
 .input {
     all: unset;
     box-sizing: border-box;
-    padding: 12px 16px;
+    padding: 5px 8px;
     width: 100%;
     line-height: 1.7;
     background-color: var(--frak-input-background-color);
-    border: 1px solid var(--frak-input-border-color);
+    border-radius: 8px;
     color: var(--frak-input-text-color);
-
-}
-
-.input:focus,
-.input:focus-within {
-    border: 1px solid var(--frak-input-border-color);
+    font-size: 16px;
 }
 
 .input::placeholder {

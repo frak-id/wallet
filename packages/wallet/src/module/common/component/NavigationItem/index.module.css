@@ -5,9 +5,9 @@
 }
 
 .navigation__button > svg {
-    stroke: #818C9C;
+    stroke: var(--frak-color-grayText);
 }
 
 .navigation__button--active > svg {
-    stroke: #fff;
+    stroke: var(--frak-color-white);
 }

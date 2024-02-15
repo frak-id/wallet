@@ -1,6 +1,6 @@
+import { NavigationItem } from "@/module/common/component/NavigationItem";
 import { History, Settings, Wallet } from "lucide-react";
 import styles from "./index.module.css";
-import { NavigationItem } from "@/module/common/component/NavigationItem";
 
 export function Navigation() {
     return (

@@ -3,8 +3,14 @@
     --frak-link-color: var(--frak-color-white);
     --frak-background-color: var(--frak-color-dark);
     --frak-panel-background-color: var(--frak-color-blue-zodiac-darker);
+    --frak-panel-outlined-border-color: var(--frak-color-blue-zodiac-darker);
+    --frak-panel-shadow-color: #00000040;
     --frak-input-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-input-border-color: var(--frak-color-white);
     --frak-input-text-color: var(--frak-color-white);
     --frak-input-placeholder-color: var(--frak-color-silver-chalice);
+    --frak-accordion-content-background-color: var(
+            --frak-color-blue-background
+    );
+    --frak-notice-text-color: var(--frak-color-grayText);
 }

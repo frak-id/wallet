@@ -6,5 +6,5 @@ export default async function HomePage() {
     const currentSession = await getSession();
 
     // If we have a current session, redirect to the wallet or login if not
-    redirect(currentSession ? "/wallet" : "/login");
+    redirect(currentSession ? "/wallet" : "/register");
 }

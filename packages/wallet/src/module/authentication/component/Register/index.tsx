@@ -1,13 +1,13 @@
 "use client";
 
+import { AccountName } from "@/module/authentication/component/AccountName";
+import { AuthFingerprint } from "@/module/authentication/component/Recover";
 import { useRegister } from "@/module/authentication/hook/useRegister";
-import { Input } from "@/module/common/component/Input";
-import { Fingerprint } from "lucide-react";
+import { Grid } from "@/module/common/component/Grid";
+import { Notice } from "@/module/common/component/Notice";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import type { FormEvent } from "react";
-import styles from "./index.module.css";
+import { useEffect, useState, useTransition } from "react";
 
 export function Register() {
     const router = useRouter();
@@ -20,58 +20,89 @@ export function Register() {
         isRegisterInProgress,
         isAirdroppingFrk,
     } = useRegister();
+    const [disabled, setDisabled] = useState(false);
 
-    /**
-     * Startup the sign up process once the form is submitted
-     * @param event
-     */
-    const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    function getMessages() {
+        if (error) {
+            return <>Error during registration, please try again</>;
+        }
+        if (isAirdroppingFrk) {
+            return (
+                <>
+                    NEXUS Account creation in progress
+                    <br />
+                    <br />
+                    Offering you a few frak
+                    <span className={"dotsLoading"}>...</span>
+                </>
+            );
+        }
+        if (isRegisterInProgress) {
+            return (
+                <>
+                    NEXUS Account creation in progress
+                    <br />
+                    <br />
+                    Waiting for your biometry validation
+                    <span className={"dotsLoading"}>...</span>
+                </>
+            );
+        }
+        if (username) {
+            return (
+                <>
+                    Create your <strong>NEXUS</strong>* in a second with
+                    biometry
+                    <br />
+                    <br />
+                    The wallet name will be {username}
+                </>
+            );
+        }
+        return (
+            <>
+                Create your <strong>NEXUS</strong>* in a second with biometry
+            </>
+        );
+    }
+
+    async function triggerAction() {
+        setDisabled(true);
         await register();
         startTransition(() => {
-            router.push("/");
+            router.push("/wallet");
         });
-    };
+        setDisabled(false);
+    }
+
+    useEffect(() => {
+        if (error) {
+            setDisabled(false);
+        }
+    }, [error]);
 
     return (
-        <div>
-            <form onSubmit={onSubmit}>
-                <p className={styles.input}>
-                    <label htmlFor="username">Account name</label>
-                    <Input
-                        type={"text"}
-                        name={"username"}
-                        id={"username"}
-                        aria-label="Your username"
-                        placeholder="Enter your username (optional)"
-                        value={username}
-                        onChangeValue={(value) => value && setUsername(value)}
-                    />
-                </p>
+        <Grid
+            footer={
+                <Link href={"/login"} title="Login">
+                    Use an existing NEXUS
+                </Link>
+            }
+        >
+            <AuthFingerprint action={triggerAction} disabled={disabled}>
+                {getMessages()}
+            </AuthFingerprint>
 
-                <br />
-                <br />
+            <AccountName
+                username={username}
+                setUsername={setUsername}
+                disabled={disabled}
+            />
 
-                <p>
-                    <button type={"submit"} className={styles.button}>
-                        <Fingerprint size={48} />
-                    </button>
-                </p>
-            </form>
-            <br />
-            {error && <p>Error during registration: {JSON.stringify(error)}</p>}
-            <br />
-            <br />
-            {isRegisterInProgress && <p>Registering...</p>}
-            <br />
-            {isAirdroppingFrk && <p>Offering you a few FRK...</p>}
-
-            <br />
-            <br />
-
-            <Link href={"/login"} title="Frak">
-                Recover an account
-            </Link>
-        </div>
+            <Notice>
+                *encrypted digital account where you can find all the content
+                you own, your consumption data and the rewards you earn
+            </Notice>
+        </Grid>
     );
 }

@@ -1,6 +1,6 @@
-import { AuthGate } from "@/module/authentication/component/AuthGate";
-import type { ReactNode } from "react";
+import { LastAuthenticationsProvider } from "@/module/authentication/providers/LastAuthentication";
 import { Header } from "@/module/common/component/Header";
+import type { ReactNode } from "react";
 
 export default function AuthenticationLayout({
     children,
@@ -8,9 +8,9 @@ export default function AuthenticationLayout({
     children: ReactNode;
 }>) {
     return (
-        <AuthGate>
+        <LastAuthenticationsProvider>
             <Header authenticated={false} />
             {children}
-        </AuthGate>
+        </LastAuthenticationsProvider>
     );
 }

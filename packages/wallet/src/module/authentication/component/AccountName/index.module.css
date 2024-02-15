@@ -1,0 +1,34 @@
+.accountName {
+    margin: 50px 0;
+}
+
+.accountName__triggerButton {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--frak-color-alto);
+}
+
+.accountName__triggerButton:disabled {
+    color: #7C7B8C;
+}
+
+.accountName__input {
+    display: flex;
+    align-items: center;
+}
+
+.accountName__input > span {
+    flex: 1;
+}
+
+.accountName__label {
+    display: block;
+    padding-bottom: 5px;
+    color: #818C9C;
+}
+
+.accountName__button {
+    display: flex;
+    margin-left: 20px;
+}

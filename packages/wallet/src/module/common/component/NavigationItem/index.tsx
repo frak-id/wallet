@@ -1,6 +1,6 @@
 import { usePathname, useRouter } from "next/navigation";
-import styles from "./index.module.css";
 import type { PropsWithChildren } from "react";
+import styles from "./index.module.css";
 
 type NavigationProps = {
     url: string;

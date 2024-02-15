@@ -9,7 +9,10 @@ export function LoginList() {
     return (
         <ul>
             {previousAuthenticators.map((auth) => (
-                <LoginItem key={auth.username} lastAuthentication={auth} />
+                <LoginItem
+                    key={`${auth.username}-${auth.wallet}`}
+                    lastAuthentication={auth}
+                />
             ))}
         </ul>
     );

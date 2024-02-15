@@ -1,0 +1,12 @@
+.login__accordion {
+    margin-top: 50px;
+}
+
+.login__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--frak-color-alto);
+    font-weight: 400;
+    font-size: 14px;
+}
