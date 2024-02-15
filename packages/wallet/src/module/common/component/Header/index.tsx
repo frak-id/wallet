@@ -11,7 +11,11 @@ import styles from "./index.module.css";
 export function Header({ authenticated = true }: { authenticated?: boolean }) {
     return (
         <>
-            <Panel variant={"outlined"} size={"small"}>
+            <Panel
+                variant={"outlined"}
+                size={"small"}
+                className={styles.header__panel}
+            >
                 <header className={styles.header}>
                     <Link href={"/wallet"} className={styles.header__logo}>
                         <LogoFrak />
@@ -23,7 +27,11 @@ export function Header({ authenticated = true }: { authenticated?: boolean }) {
                 </header>
             </Panel>
             {authenticated && (
-                <Panel variant={"outlined"} size={"small"}>
+                <Panel
+                    variant={"outlined"}
+                    size={"small"}
+                    className={styles.header__panel}
+                >
                     <Navigation />
                 </Panel>
             )}

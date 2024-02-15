@@ -9,6 +9,10 @@
     min-height: 38px;
 }
 
+.header__panel + .header__panel {
+    margin-top: 8px !important;
+}
+
 .header__logo {
     position: absolute;
     margin-top: -18px;

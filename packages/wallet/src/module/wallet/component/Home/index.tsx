@@ -1,6 +1,8 @@
 "use client";
 
-import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
+import { Grid } from "@/module/common/component/Grid";
+import { Balances } from "@/module/wallet/component/Balances";
+import { InstallApp } from "@/module/wallet/component/InstallApp";
 
 /*
  * This lib can be nice to display a list of tokens on a wallet:
@@ -8,23 +10,10 @@ import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScree
  */
 
 export function WalletHomePage() {
-    const { prompt, outcome, launchInstallation } = useAddToHomeScreenPrompt();
     return (
-        <div>
-            <h1>I'm logged in</h1>
-
-            {prompt && (
-                <button type={"button"} onClick={launchInstallation}>
-                    Install the app
-                </button>
-            )}
-
-            {prompt && (
-                <div>
-                    <p>plateforms: {JSON.stringify(prompt.platforms)}</p>
-                    <p>Outcome: {outcome}</p>
-                </div>
-            )}
-        </div>
+        <Grid>
+            <InstallApp />
+            <Balances />
+        </Grid>
     );
 }

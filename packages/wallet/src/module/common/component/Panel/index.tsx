@@ -7,6 +7,7 @@ type PanelProps = {
     size?: "none" | "small" | "normal" | "big";
     withShadow?: boolean;
     asChild?: boolean;
+    className?: string;
 };
 
 export function Panel({
@@ -14,6 +15,7 @@ export function Panel({
     size,
     withShadow,
     asChild = false,
+    className = "",
     children,
 }: PropsWithChildren<PanelProps>) {
     const variantClass = variant ? styles[variant] : styles.primary;
@@ -22,7 +24,7 @@ export function Panel({
     const Comp = asChild ? Slot : "div";
     return (
         <Comp
-            className={`${styles.panel} ${variantClass} ${sizeClass} ${shadowClass}`}
+            className={`${styles.panel} ${className} ${variantClass} ${sizeClass} ${shadowClass}`}
         >
             {children}
         </Comp>
