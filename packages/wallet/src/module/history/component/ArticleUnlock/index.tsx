@@ -46,7 +46,7 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
                     Unlock: {article.paidAmount} FRK for{" "}
                     {article.remainingTimeFormatted}
                 </Row>
-                {/*<Row>At: 10/02/2024 12:00</Row>*/}
+                <Row>At: {article.txDate.toISOString()}</Row>
                 {/*<Row>User Op: 0xAbC...DeF</Row>*/}
                 <Row withIcon={true}>
                     Tx: <PolygonLink hash={article.txHash} />

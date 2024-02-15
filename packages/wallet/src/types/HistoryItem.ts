@@ -9,6 +9,7 @@ export type ArticleUnlock = Readonly<{
     key: "article-unlock";
     txHash: Hex;
     blockNumber: bigint;
+    txDate: Date;
     contentId: bigint;
     articleId: Hex;
     // Paid amount in FRK, formatted
@@ -28,6 +29,7 @@ export type FrkReceived = Readonly<{
     txHash: Hex;
     fromHash: Hex;
     blockNumber: bigint;
+    txDate: Date;
     // The amount in FRK the wallet received
     receivedAmount: string;
 }>;
