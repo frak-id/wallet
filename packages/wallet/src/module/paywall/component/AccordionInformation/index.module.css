@@ -1,0 +1,13 @@
+.accordionInformation__trigger {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 10px;
+    color: var(--frak-color-alto);
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.accordionInformation__content {
+    margin-top: 15px;
+}

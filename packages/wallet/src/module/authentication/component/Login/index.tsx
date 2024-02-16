@@ -6,6 +6,7 @@ import { AuthFingerprint } from "@/module/authentication/component/Recover";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
+import { usePaywall } from "@/module/paywall/provider";
 import { HardDrive } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -17,13 +18,14 @@ import { useTransition } from "react";
  */
 export function Login() {
     const { login } = useLogin();
+    const { context } = usePaywall();
     const router = useRouter();
     const [, startTransition] = useTransition();
 
     async function triggerAction() {
         await login({});
         startTransition(() => {
-            router.push("/wallet");
+            router.push(context ? "/unlock" : "/wallet");
         });
     }
 

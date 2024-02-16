@@ -18,7 +18,7 @@ export default async function RestrictedLayout({
     }
     return (
         <WalletProvider session={session}>
-            <Header authenticated={true} />
+            <Header navigation={false} authenticated={true} />
             {children}
         </WalletProvider>
     );

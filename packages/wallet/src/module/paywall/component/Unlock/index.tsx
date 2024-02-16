@@ -12,14 +12,23 @@ import {
 } from "@/context/common/blockchain/provider";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getUnlockStatusOnArticle } from "@/context/paywall/action/getStatus";
-import { type PaywallContext, usePaywall } from "@/module/paywall/provider";
+import { formatFrk } from "@/context/wallet/utils/frkFormatter";
+import { formatHash } from "@/context/wallet/utils/hashFormatter";
+import { AuthFingerprint } from "@/module/authentication/component/Recover";
+import { Back } from "@/module/common/component/Back";
+import { Grid } from "@/module/common/component/Grid";
+import { Panel } from "@/module/common/component/Panel";
+import { AccordionInformation } from "@/module/paywall/component/AccordionInformation";
+import { usePaywall } from "@/module/paywall/provider";
+import type { PaywallContext } from "@/module/paywall/provider";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { formatSecondDuration } from "@frak-wallet/example/src/module/article/utils/duration";
 import { prepareUnlockRequestResponse } from "@frak-wallet/sdk";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+import { BookText } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { createSmartAccountClient } from "permissionless";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     type Address,
     type Hex,
@@ -28,6 +37,7 @@ import {
     parseEther,
 } from "viem";
 import { polygonMumbai } from "viem/chains";
+import styles from "./index.module.css";
 
 type UnlockSuccessData = Readonly<{
     redirectUrl: string;
@@ -65,7 +75,11 @@ type UiState =
       }
     | {
           loading: {
-              info: "checkingParams" | "buildingTx" | "pendingSignature";
+              info:
+                  | "idle"
+                  | "checkingParams"
+                  | "buildingTx"
+                  | "pendingSignature";
           };
           already?: never;
           error?: never;
@@ -75,9 +89,10 @@ type UiState =
 export function PaywallUnlock({ context }: { context: PaywallContext }) {
     const { wallet, smartWallet, balance, refreshBalance } = useWallet();
     const { discard, setStatus: setGlobalPaywallStatus } = usePaywall();
+    const [disabled, setDisabled] = useState(false);
 
     const [uiState, setUiState] = useState<UiState>({
-        loading: { info: "checkingParams" },
+        loading: { info: "idle" },
     });
 
     // Fetch the user allowance on chain
@@ -103,13 +118,14 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
 
     // Helper to set the loading state
     function setLoadingUiState(
-        info: "checkingParams" | "buildingTx" | "pendingSignature"
+        info: "idle" | "checkingParams" | "buildingTx" | "pendingSignature"
     ) {
         setUiState({ loading: { info } });
     }
 
     // Set the error state
     function setErrorState(reason: string) {
+        setDisabled(false);
         setUiState({ error: { reason } });
         // Set the error globally
         setGlobalPaywallStatus({
@@ -127,7 +143,7 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
      *     - Success (with redirect data + user op hash + user op explorer link)
      *     - Error (with retry + redirect data + error message)
      */
-    const { mutate: launchArticleUnlock, error } = useMutation({
+    const { mutateAsync: launchArticleUnlock, error } = useMutation({
         mutationKey: ["unlock", context.articleId, context.contentId],
         mutationFn: async (): Promise<UnlockSuccessData | undefined> => {
             setLoadingUiState("checkingParams");
@@ -297,42 +313,105 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
         }
     }, [error]);
 
+    async function action() {
+        setDisabled(true);
+        await launchArticleUnlock();
+    }
+
     return (
-        <div>
-            <h1>Paywall Unlock</h1>
-            <p>Content: {context.contentTitle}</p>
-            <p>Article: {context.articleTitle}</p>
-            <p>Price: {formatEther(BigInt(context.price.frkAmount))} FRK </p>
-            <p>Balance: {balance}</p>
-            <p>Wallet: {wallet?.address}</p>
+        <>
+            {!(uiState.success || uiState.already) && (
+                <Back onClick={discard} disabled={disabled}>
+                    Back to the locked article
+                </Back>
+            )}
 
-            <br />
-            <br />
-            <button type="button" onClick={discard}>
-                Discard unlock request
-            </button>
+            <Grid>
+                <Panel
+                    size={"normal"}
+                    cover={context.imageUrl}
+                    className={styles.unlock__article}
+                >
+                    <p>
+                        <strong>{context.contentTitle}</strong>
+                    </p>
+                    <p>
+                        From: <strong>{context.articleTitle}</strong>
+                    </p>
+                </Panel>
 
-            <br />
-            <br />
-            <button type="button" onClick={() => launchArticleUnlock()}>
-                Launch unlock
-            </button>
+                <AuthFingerprint
+                    icon={
+                        (uiState.success || uiState.already) && (
+                            <BookText size={100} absoluteStrokeWidth={true} />
+                        )
+                    }
+                    disabled={disabled}
+                    action={
+                        uiState.success || uiState.already ? undefined : action
+                    }
+                >
+                    <UiStateComponent uiState={uiState} />
+                </AuthFingerprint>
 
-            <br />
-            <br />
-
-            <UiStateComponent uiState={uiState} />
-        </div>
+                <Panel size={"small"}>
+                    <AccordionInformation trigger={"Informations"}>
+                        <p className={styles.unlock__row}>
+                            <span>Current balance</span>
+                            <span>{formatFrk(Number(balance))}</span>
+                        </p>
+                        {!uiState.already?.expireIn && (
+                            <p className={styles.unlock__row}>
+                                <span>Unlock price</span>
+                                <span>
+                                    {formatEther(
+                                        BigInt(context.price.frkAmount)
+                                    )}{" "}
+                                    FRK
+                                </span>
+                            </p>
+                        )}
+                        {uiState.already?.expireIn && (
+                            <p className={styles.unlock__row}>
+                                <span>Expire in</span>
+                                <span>{uiState.already.expireIn}</span>
+                            </p>
+                        )}
+                        {/*<p className={styles.unlock__row}>
+                            <span>Unlock duration</span>
+                        </p>*/}
+                        {uiState.success?.userOpHash && (
+                            <p
+                                className={`${styles.unlock__row} ${styles.unlock__information}`}
+                            >
+                                <span>User op hash</span>
+                                <span>
+                                    {formatHash(uiState.success?.userOpHash)}
+                                </span>
+                            </p>
+                        )}
+                        {uiState.error?.reason && (
+                            <p
+                                className={`${styles.unlock__information} ${styles["unlock__information--error"]}`}
+                            >
+                                {uiState.error.reason}
+                            </p>
+                        )}
+                    </AccordionInformation>
+                </Panel>
+            </Grid>
+        </>
     );
 }
 
 function UiStateComponent({ uiState }: { uiState: UiState }) {
     return (
-        <div>
+        <>
             <LoadingUiState loading={uiState.loading} />
             <ErrorUiState error={uiState.error} />
             <SuccessUiState success={uiState.success} />
-        </div>
+            <AlreadyUiState already={uiState.already} />
+        </>
     );
 }
 
@@ -342,10 +421,16 @@ function LoadingUiState({ loading }: { loading: UiState["loading"] }) {
     }
 
     return (
-        <div>
-            <h2>Loading...</h2>
-            <p>{loading.info}</p>
-        </div>
+        <>
+            {loading.info === "idle" ? (
+                "Click to launch the unlock"
+            ) : (
+                <span className={styles.unlock__loading}>
+                    Checking everything{" "}
+                    <span className={"dotsLoading"}>...</span>
+                </span>
+            )}
+        </>
     );
 }
 
@@ -355,38 +440,91 @@ function ErrorUiState({ error }: { error: UiState["error"] }) {
     }
 
     return (
-        <div>
-            <h2>Error</h2>
-            <p>{error.reason}</p>
-        </div>
+        <>
+            An error occurred
+            <br />
+            <br />
+            Click to retry the transaction
+        </>
     );
 }
 
 function SuccessUiState({ success }: { success: UiState["success"] }) {
+    const router = useRouter();
+    const { clear: clearPaywallContext } = usePaywall();
+
+    function clearAndRedirect() {
+        if (!success?.redirectUrl) return;
+        clearPaywallContext();
+        router.push(success.redirectUrl);
+    }
+
+    useEffect(() => {
+        if (!success?.redirectUrl) return;
+
+        // Do a redirect in 5sec
+        const timeout = setTimeout(clearAndRedirect, 5000);
+        return () => clearTimeout(timeout);
+    }, [success?.redirectUrl]);
+
     if (!success) {
         return null;
     }
 
     return (
-        <div>
-            <h2>Unlock success</h2>
-            <p>User op hash: {success.userOpHash}</p>
+        <>
+            The transaction was sent with success!
             <br />
+            <button
+                type={"button"}
+                className={"button"}
+                onClick={clearAndRedirect}
+            >
+                Click to read the article
+            </button>
             <br />
+            You will be redirected in 5sec
+        </>
+    );
+}
 
-            <p>
-                <a
-                    href={success.userOpExplorerLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Check user op
-                </a>
-            </p>
-            <br />
-            <br />
+function AlreadyUiState({ already }: { already: UiState["already"] }) {
+    const router = useRouter();
+    const { clear: clearPaywallContext } = usePaywall();
 
-            <Link href={success.redirectUrl}>Read the article</Link>
-        </div>
+    function clearAndRedirect() {
+        if (!already?.redirectUrl) return;
+        clearPaywallContext();
+        router.push(already.redirectUrl);
+    }
+
+    useEffect(() => {
+        if (!already?.redirectUrl) return;
+
+        // Do a redirect in 5sec
+        const timeout = setTimeout(clearAndRedirect, 5000);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [already?.redirectUrl]);
+
+    if (!already) {
+        return null;
+    }
+
+    return (
+        <>
+            You have already purchased this article
+            <br />
+            <button
+                type={"button"}
+                className={"button"}
+                onClick={clearAndRedirect}
+            >
+                Click to read the article
+            </button>
+            <br />
+            You will be redirected in 5sec
+        </>
     );
 }
