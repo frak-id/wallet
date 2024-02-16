@@ -18,7 +18,7 @@ export default function ArticlePage() {
 
 function ArticlePageComponent() {
     // Get the article id
-    const { get, size: queryParamSize } = useSearchParams();
+    const { get, has, size: queryParamSize } = useSearchParams();
     const [articleId, setArticleId] = useState<Hex | null>(null);
 
     useEffect(() => {
@@ -44,7 +44,7 @@ function ArticlePageComponent() {
         isPending: isParsingUnlockResult,
         error: unlockParsingError,
     } = useQuery({
-        queryKey: ["getUnlockResponse", articleId, article?.id],
+        queryKey: ["parseUnlockResult", articleId, article?.id],
         queryFn: async () => {
             const result = get("result");
             const hash = get("hash");
@@ -55,7 +55,12 @@ function ArticlePageComponent() {
             // Parse the data and return them
             return await parseUnlockRequestResult({ result, hash });
         },
-        enabled: !!articleId && !!article?.id && queryParamSize > 0,
+        enabled:
+            !!articleId &&
+            !!article?.id &&
+            queryParamSize > 0 &&
+            has("result") &&
+            has("hash"),
     });
 
     useEffect(() => {

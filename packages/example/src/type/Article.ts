@@ -4,4 +4,5 @@ export type Article = Readonly<{
     title: string;
     description?: string;
     link: string;
+    imageUrl: string;
 }>;

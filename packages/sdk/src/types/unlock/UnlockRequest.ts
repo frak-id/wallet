@@ -7,6 +7,7 @@ import type { ArticlePrice } from "../ArticlePrice";
 export type UnlockRequestParams = Readonly<{
     articleId: Hex;
     contentId: Hex;
+    imageUrl: string;
     // The displayable article and content title
     articleTitle: string;
     contentTitle: string;

@@ -38,6 +38,7 @@ export async function createArticle({
         title: title,
         description: description || `This is a test content for ${title}`,
         link: `${origin}/article?id=${articleId}`,
+        imageUrl: `https://picsum.photos/seed/${articleId}/500`,
     });
 
     // And return the article id

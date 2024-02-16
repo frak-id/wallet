@@ -30,6 +30,7 @@ export function UnlockButtons({
             return getUnlockRequestUrl(frakWalletSdkConfig, {
                 articleId: article.id as Hex,
                 articleTitle: article.title,
+                imageUrl: article.imageUrl,
                 price: {
                     index: articlePrice.index,
                     unlockDurationInSec: articlePrice.unlockDurationInSec,

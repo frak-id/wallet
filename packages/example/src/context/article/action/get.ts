@@ -34,5 +34,6 @@ function mapArticleDocument(document: ArticleDocument): Article {
         title: document.title,
         description: document.description,
         link: document.link,
+        imageUrl: document.imageUrl,
     };
 }

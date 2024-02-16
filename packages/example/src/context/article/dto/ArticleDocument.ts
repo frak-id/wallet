@@ -11,4 +11,6 @@ export type ArticleDocument = Readonly<{
     description?: string;
     // The link to access this article
     link: string;
+    // The main image of this article
+    imageUrl: string;
 }>;
