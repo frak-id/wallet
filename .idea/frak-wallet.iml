@@ -5,6 +5,10 @@
       <excludeFolder url="file://$MODULE_DIR$/.tmp" />
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/.sst/artifacts" />
+      <excludeFolder url="file://$MODULE_DIR$/.sst/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/example/.open-next" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/wallet/.open-next" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -1,12 +1,18 @@
-import { getMockedUnlockLink } from "@/context/article/action/unlock";
+import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
 import { Button } from "@/module/common/component/Button";
+import type { Article } from "@/type/Article";
+import { getUnlockRequestUrl } from "@frak-wallet/sdk";
 import type { ArticlePrice } from "@frak-wallet/sdk/src/types/ArticlePrice";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
-export function UnlockButtons({ prices }: { prices: ArticlePrice[] }) {
+export function UnlockButtons({
+    prices,
+    article,
+}: { prices: ArticlePrice[]; article: Article }) {
     const [step, setStep] = useState(1);
     const [articlePrice, setArticlePrice] = useState<ArticlePrice | null>(null);
     /*const { unlockStatus, errorMessage, unlock } = useUnlockArticleHook({
@@ -14,7 +20,21 @@ export function UnlockButtons({ prices }: { prices: ArticlePrice[] }) {
     });*/
     const { data: unlockUrl } = useQuery({
         queryKey: ["getEncodedUnlockData"],
-        queryFn: async () => getMockedUnlockLink(),
+        queryFn: async () => {
+            if (!articlePrice) return;
+
+            return getUnlockRequestUrl(frakWalletSdkConfig, {
+                articleId: article.id as Hex,
+                articleTitle: article.title,
+                price: {
+                    index: articlePrice.index,
+                    unlockDurationInSec: articlePrice.unlockDurationInSec,
+                    frkAmount: articlePrice.frkAmount,
+                },
+                articleUrl: `${window.location.origin}/article?id=${article.id}`,
+                redirectUrl: `${window.location.origin}/article?id=${article.id}`,
+            });
+        },
     });
 
     useEffect(() => {

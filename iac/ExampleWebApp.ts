@@ -37,7 +37,7 @@ export function ExampleAppStack({ stack }: StackContext) {
         bind: configs,
         // Set to combined logging to prevent SSR huuuge cost
         logging: "combined",
-        openNextVersion: "2.3.4",
+        openNextVersion: "2.3.6",
         // Number of server side instance to keep warm
         warm: 3,
     });

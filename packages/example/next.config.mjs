@@ -18,6 +18,10 @@ const nextConfig = {
         IS_LOCAL: (Config.STAGE !== "prod").toString(),
     },
     transpilePackages: ["lucide-react", "@frak-wallet/sdk"],
+    compiler: {
+        removeConsole: Config.STAGE === "prod",
+    },
+    output: "standalone",
 };
 
 export default nextConfig;

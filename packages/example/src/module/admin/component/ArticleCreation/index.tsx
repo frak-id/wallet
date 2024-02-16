@@ -16,7 +16,11 @@ export function ArticleCreation() {
     } = useMutation({
         mutationKey: ["createArticle", title],
         mutationFn: async () => {
-            await createArticle({ title, description });
+            await createArticle({
+                title,
+                description,
+                origin: window.location.origin,
+            });
             setTitle("");
             setDescription("");
         },

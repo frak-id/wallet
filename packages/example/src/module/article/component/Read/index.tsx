@@ -3,7 +3,6 @@ import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import type { Article } from "@/type/Article";
 import { QueryProvider } from "@frak-wallet/sdk";
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 
@@ -91,15 +90,10 @@ export function ReadArticle({
             <h1>Reading Article {article.title}</h1>
             <p>{article.description}</p>
 
-            <button type="button">unlock</button>
-
+            <br />
             <br />
 
-            <Link href={`${process.env.FRAK_WALLET_URL}/paywall`}>
-                Unlock with FRK
-            </Link>
-
-            {prices && <UnlockButtons prices={prices} />}
+            {prices && <UnlockButtons prices={prices} article={article} />}
         </div>
     );
 }

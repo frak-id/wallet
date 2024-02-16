@@ -15,9 +15,11 @@ const contentId: Hex = "0xDD";
 export async function createArticle({
     title,
     description,
+    origin,
 }: {
     title: string;
     description?: string;
+    origin: string;
 }) {
     // Lock this function to admin only
     await onlyAdmin();
@@ -28,11 +30,6 @@ export async function createArticle({
     // Generate a random article id
     const articleId = keccak256(randomBytes(64));
 
-    const articleLinkBasePath =
-        process.env.IS_LOCAL === "true"
-            ? "http://localhost:3001/articles/"
-            : "https://news-example.frak.id/articles/";
-
     // Insert a test article for this content
     const articleRepository = await getArticleRepository();
     await articleRepository.create({
@@ -40,7 +37,7 @@ export async function createArticle({
         contentId: content._id,
         title: title,
         description: description || `This is a test content for ${title}`,
-        link: `${articleLinkBasePath}${articleId}`,
+        link: `${origin}/article?id=${articleId}`,
     });
 
     // And return the article id

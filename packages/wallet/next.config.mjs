@@ -14,15 +14,15 @@ const envFromSstConfig = pick(Config, wantedFromConfig);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: "standalone",
     env: {
         ...envFromSstConfig,
         IS_LOCAL: (Config.STAGE !== "prod").toString(),
     },
-    compiler: {
-        // removeConsole: Config.STAGE === "prod",
-    },
     transpilePackages: ["lucide-react", "@frak-wallet/sdk"],
+    compiler: {
+        removeConsole: Config.STAGE === "prod",
+    },
+    output: "standalone",
 };
 
 export default nextConfig;

@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-    title: "Frak Wallet - Example",
+    title: "Frak NewsPaper - Example",
     description:
         "Example showcasing the possible interaction with the Frak wallet.",
     authors: [

@@ -5,19 +5,38 @@ import { ReadArticle } from "@/module/article/component/Read";
 import { parseUnlockRequestResult } from "@frak-wallet/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import type { Hex } from "viem";
 
-export default function ArticlePage({ params }: { params: { id: string } }) {
+export default function ArticlePage() {
+    return (
+        <Suspense fallback={<h1>Loading...</h1>}>
+            <ArticlePageComponent />
+        </Suspense>
+    );
+}
+
+function ArticlePageComponent() {
+    // Get the article id
+    const { get, size: queryParamSize } = useSearchParams();
+    const [articleId, setArticleId] = useState<Hex | null>(null);
+
+    useEffect(() => {
+        const id = get("id") as Hex | null;
+        setArticleId(id);
+    }, [get]);
+
     // Fetch the articles
     const { data: article, isPending: isFetchingArticle } = useQuery({
-        queryKey: ["getArticle", params.id],
-        queryFn: async () => getArticle(params.id as Hex),
-        enabled: !!params.id,
+        queryKey: ["getArticle", articleId],
+        queryFn: async () => {
+            if (!articleId) {
+                throw new Error("Invalid article id");
+            }
+            return getArticle(articleId);
+        },
+        enabled: !!articleId,
     });
-
-    // Access the query params
-    const { get, size: queryParamSize } = useSearchParams();
 
     // Get the unlock data response (if any)
     const {
@@ -25,7 +44,7 @@ export default function ArticlePage({ params }: { params: { id: string } }) {
         isPending: isParsingUnlockResult,
         error: unlockParsingError,
     } = useQuery({
-        queryKey: ["getUnlockResponse", params.id, article?.id],
+        queryKey: ["getUnlockResponse", articleId, article?.id],
         queryFn: async () => {
             const result = get("result");
             const hash = get("hash");
@@ -36,13 +55,17 @@ export default function ArticlePage({ params }: { params: { id: string } }) {
             // Parse the data and return them
             return await parseUnlockRequestResult({ result, hash });
         },
-        enabled: !!article?.id && queryParamSize > 0,
+        enabled: !!articleId && !!article?.id && queryParamSize > 0,
     });
 
     useEffect(() => {
         console.log("Unlock result", unlockResult);
         console.log("Unlock error", unlockParsingError);
     }, [unlockResult, unlockParsingError]);
+
+    if (!articleId) {
+        return <h1>Invalid article</h1>;
+    }
 
     // If we are loading display another component
     if (isFetchingArticle) {
