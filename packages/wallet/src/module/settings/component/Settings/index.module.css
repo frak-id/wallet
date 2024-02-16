@@ -1,5 +1,13 @@
-.list {
+.settings__list {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.settings__disabled {
+    color: var(--frak-color-grayText);
+}
+
+.settings__comingSoon {
+    text-align: center;
 }
