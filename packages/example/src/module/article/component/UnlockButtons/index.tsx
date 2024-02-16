@@ -19,7 +19,11 @@ export function UnlockButtons({
         articlePrice,
     });*/
     const { data: unlockUrl } = useQuery({
-        queryKey: ["getEncodedUnlockData"],
+        queryKey: [
+            "getEncodedUnlockData",
+            article.id,
+            articlePrice?.index ?? 0,
+        ],
         queryFn: async () => {
             if (!articlePrice) return;
 
@@ -35,6 +39,7 @@ export function UnlockButtons({
                 redirectUrl: `${window.location.origin}/article?id=${article.id}`,
             });
         },
+        enabled: !!articlePrice,
     });
 
     useEffect(() => {

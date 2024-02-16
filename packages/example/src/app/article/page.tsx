@@ -28,7 +28,7 @@ function ArticlePageComponent() {
 
     // Fetch the articles
     const { data: article, isPending: isFetchingArticle } = useQuery({
-        queryKey: ["getArticle", articleId],
+        queryKey: ["getArticle", articleId ?? "undefined"],
         queryFn: async () => {
             if (!articleId) {
                 throw new Error("Invalid article id");
