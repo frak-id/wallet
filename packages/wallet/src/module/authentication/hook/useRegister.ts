@@ -1,14 +1,12 @@
-import { viemClient } from "@/context/common/blockchain/provider";
-import { triggerFrkAirdrop } from "@/context/mock/action/airdropFrk";
 import {
     getRegisterOptions,
     validateRegistration,
 } from "@/context/wallet/action/register";
 import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
+import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import type { Address } from "viem";
 
 /**
  * Hook that handle the registration process
@@ -17,6 +15,9 @@ export function useRegister() {
     // Setter for the last authentication
     const { addLastAuthentication, previousAuthenticators } =
         useLastAuthentications();
+
+    // Get some FRK
+    const { isAirdroppingFrk, airdropFrk } = useAirdropFrk();
 
     // The current username
     const [username, setUsername] = useState<string | undefined>(undefined);
@@ -73,28 +74,6 @@ export function useRegister() {
             await airdropFrk({ wallet: wallet.address });
         },
     });
-
-    /**
-     * Mutation used to airdrop frk
-     */
-    const { isPending: isAirdroppingFrk, mutateAsync: airdropFrk } =
-        useMutation({
-            mutationKey: ["airdropFrk"],
-            mutationFn: async ({ wallet }: { wallet: Address }) => {
-                // Trigger the airdrop
-                const { txHash } = await triggerFrkAirdrop({
-                    user: wallet,
-                    amount: "100",
-                });
-                // Wait for the tx receipt
-                await viemClient.waitForTransactionReceipt({
-                    hash: txHash,
-                    confirmations: 1,
-                });
-                // Return the tx hash
-                return txHash;
-            },
-        });
 
     return {
         username,
