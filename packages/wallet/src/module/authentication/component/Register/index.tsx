@@ -23,6 +23,7 @@ export function Register() {
         isAirdroppingFrk,
     } = useRegister();
     const [disabled, setDisabled] = useState(false);
+    const [showAccountName, setShowAccountName] = useState(false);
 
     function getMessages() {
         if (error) {
@@ -57,7 +58,7 @@ export function Register() {
                     biometry
                     <br />
                     <br />
-                    The wallet name will be {username}
+                    The wallet name will be <strong>{username}</strong>
                 </>
             );
         }
@@ -86,9 +87,22 @@ export function Register() {
     return (
         <Grid
             footer={
-                <Link href={"/login"} title="Login">
-                    Use an existing NEXUS
-                </Link>
+                <>
+                    <Link href={"/login"} title="Login">
+                        Use an existing NEXUS
+                    </Link>
+                    <Notice>
+                        *encrypted digital account where you can find all the
+                        content you own, your consumption data and the rewards
+                        you earn
+                    </Notice>
+                    {showAccountName && (
+                        <Notice>
+                            **this name will enable you to retrieve your Nexus
+                            easily
+                        </Notice>
+                    )}
+                </>
             }
         >
             <AuthFingerprint action={triggerAction} disabled={disabled}>
@@ -98,13 +112,9 @@ export function Register() {
             <AccountName
                 username={username}
                 setUsername={setUsername}
+                setShowAccountName={setShowAccountName}
                 disabled={disabled}
             />
-
-            <Notice>
-                *encrypted digital account where you can find all the content
-                you own, your consumption data and the rewards you earn
-            </Notice>
         </Grid>
     );
 }

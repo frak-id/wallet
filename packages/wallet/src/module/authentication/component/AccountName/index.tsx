@@ -7,16 +7,19 @@ import styles from "./index.module.css";
 export function AccountName({
     username,
     setUsername,
+    setShowAccountName,
     disabled,
 }: {
     username?: string;
     setUsername: (value: string) => void;
+    setShowAccountName: (value: boolean) => void;
     disabled?: boolean;
 }) {
     const [showForm, setShowForm] = useState(false);
     const onSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setShowForm(!showForm);
+        setShowAccountName(!showForm);
     };
 
     return (
@@ -26,7 +29,10 @@ export function AccountName({
                     type={"button"}
                     disabled={disabled}
                     className={`button ${styles.accountName__triggerButton}`}
-                    onClick={() => setShowForm(!showForm)}
+                    onClick={() => {
+                        setShowForm(!showForm);
+                        setShowAccountName(!showForm);
+                    }}
                 >
                     <Pencil color={disabled ? "#7C7B8C" : undefined} />
                     Customise my Nexus account
