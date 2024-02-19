@@ -21,16 +21,24 @@ export function ReadArticle({
         initQueryProvider();
 
         // On cleanup, destroy the query provider
-        /*return () => {
+        return () => {
             queryProvider?.destroy();
-        }*/
-    }, []);
+        };
+    }, [queryProvider]);
 
     // Build the query provider
     async function initQueryProvider() {
+        // Create the iframe
         const iframe = await QueryProvider.createIframe({
             walletBaseUrl: frakWalletSdkConfig.walletUrl,
         });
+
+        // If we don't have an iframe, do nothing
+        if (!iframe) {
+            return;
+        }
+
+        // Create the query provider
         const queryProvider = new QueryProvider({
             config: frakWalletSdkConfig,
             iframe,

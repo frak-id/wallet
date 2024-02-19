@@ -63,9 +63,18 @@ export class QueryProvider {
      */
     public static createIframe({
         walletBaseUrl,
-    }: { walletBaseUrl: string }): Promise<HTMLIFrameElement> {
+    }: { walletBaseUrl: string }): Promise<HTMLIFrameElement | undefined> {
+        // Check if the iframe is already created
+        const isAlreadyCreated = document.querySelector("#frak-wallet");
+
+        // If the iframe is already created, return undefined
+        if (isAlreadyCreated) {
+            return Promise.resolve(undefined);
+        }
+
         const iframe = document.createElement("iframe");
         iframe.name = "frak-wallet";
+        iframe.id = "frak-wallet";
         iframe.style.width = "0";
         iframe.style.height = "0";
         iframe.style.border = "0";
@@ -133,10 +142,6 @@ export class QueryProvider {
     private handleNewMessage(
         message: MessageEvent<EventsFormat | { topic: "ready" }>
     ) {
-        console.log("Received a new message in the listener", {
-            data: message.data,
-        });
-
         if (!message.origin) {
             return;
         }
@@ -147,6 +152,10 @@ export class QueryProvider {
         ) {
             return;
         }
+
+        console.log("Received a new message in the listener", {
+            data: message.data,
+        });
 
         // If it's a ready topic, resolve the listener linked promise
         if (message?.data?.topic === "ready") {
