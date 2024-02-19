@@ -9,7 +9,7 @@ export default function AuthenticationLayout({
 }>) {
     return (
         <LastAuthenticationsProvider>
-            <Header authenticated={false} />
+            <Header navigation={false} />
             {children}
         </LastAuthenticationsProvider>
     );

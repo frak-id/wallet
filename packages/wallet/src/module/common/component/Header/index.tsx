@@ -8,7 +8,10 @@ import { Panel } from "@/module/common/component/Panel";
 import Link from "next/link";
 import styles from "./index.module.css";
 
-export function Header({ authenticated = true }: { authenticated?: boolean }) {
+export function Header({
+    navigation = true,
+    authenticated = false,
+}: { navigation?: boolean; authenticated?: boolean }) {
     return (
         <>
             <Panel
@@ -26,7 +29,7 @@ export function Header({ authenticated = true }: { authenticated?: boolean }) {
                     {authenticated && <HeaderWallet />}
                 </header>
             </Panel>
-            {authenticated && (
+            {navigation && (
                 <Panel
                     variant={"outlined"}
                     size={"small"}

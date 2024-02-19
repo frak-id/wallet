@@ -1,0 +1,25 @@
+.unlock__information {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 2px solid var(--frak-color-grayText);
+}
+
+.unlock__information--error {
+    color: var(--frak-color-red);
+    font-weight: 500;
+}
+
+.unlock__article p + p {
+    margin-top: 10px;
+}
+
+.unlock__loading {
+    color: var(--frak-color-grayText);
+}
+
+.unlock__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}

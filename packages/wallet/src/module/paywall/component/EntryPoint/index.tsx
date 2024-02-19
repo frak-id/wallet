@@ -1,5 +1,7 @@
 "use client";
 
+import { Grid } from "@/module/common/component/Grid";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import { usePaywall } from "@/module/paywall/provider";
 import { parseUnlockRequestParams } from "@frak-wallet/sdk";
 import { useQuery } from "@tanstack/react-query";
@@ -33,7 +35,7 @@ export function PaywallEntryPoint() {
 
             // Smoothly navigate to /
             startTransition(() => {
-                router.replace("/");
+                router.replace("/unlock");
             });
 
             // Return the parsed unlock data
@@ -41,10 +43,9 @@ export function PaywallEntryPoint() {
         },
     });
 
-    // TODO: Display a smooth loader here
     return (
-        <div>
-            <h1>Parsing unlock data...</h1>
-        </div>
+        <Grid>
+            <Skeleton height={400} />
+        </Grid>
     );
 }

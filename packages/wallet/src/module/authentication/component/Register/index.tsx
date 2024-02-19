@@ -5,11 +5,13 @@ import { AuthFingerprint } from "@/module/authentication/component/Recover";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
+import { usePaywall } from "@/module/paywall/provider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 export function Register() {
+    const { context } = usePaywall();
     const router = useRouter();
     const [, startTransition] = useTransition();
     const {
@@ -70,7 +72,7 @@ export function Register() {
         setDisabled(true);
         await register();
         startTransition(() => {
-            router.push("/wallet");
+            router.push(context ? "/unlock" : "/wallet");
         });
         setDisabled(false);
     }

@@ -10,7 +10,7 @@ const Accordion = AccordionPrimitive.Root;
 const AccordionItem = React.forwardRef<
     React.ElementRef<typeof AccordionPrimitive.Item>,
     React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
->(({ className, ...props }, ref) => (
+>(({ className = "", ...props }, ref) => (
     <AccordionPrimitive.Item
         ref={ref}
         className={`${styles.accordion__item} ${className}`}
@@ -22,7 +22,7 @@ AccordionItem.displayName = "AccordionItem";
 const AccordionTrigger = React.forwardRef<
     React.ElementRef<typeof AccordionPrimitive.Trigger>,
     React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+>(({ className = "", children, ...props }, ref) => (
     <AccordionPrimitive.Header className={styles.accordion__header} asChild>
         <h2>
             <AccordionPrimitive.Trigger
@@ -46,7 +46,7 @@ const AccordionContent = React.forwardRef<
     React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content> & {
         classNameText?: string;
     }
->(({ className, classNameText, children, ...props }, ref) => (
+>(({ className = "", classNameText = "", children, ...props }, ref) => (
     <AccordionPrimitive.Content
         ref={ref}
         className={`${styles.accordion__content} ${className}`}

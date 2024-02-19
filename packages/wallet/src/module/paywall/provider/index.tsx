@@ -23,6 +23,7 @@ export type PaywallContext = {
     // Content related
     contentId: Hex;
     contentTitle: string;
+    imageUrl: string;
     // Article related
     articleId: Hex;
     articleTitle: string;
@@ -125,12 +126,31 @@ function usePaywallHook() {
         });
     }
 
+    /**
+     * Clear context and status
+     */
+    function clear() {
+        // If we have no current context, nothing to do
+        if (!currentContext) {
+            setContext(null);
+            setStatus(null);
+            return;
+        }
+
+        // Update the status to idle
+        setStatus({ key: "idle" });
+
+        // Cleanup the context
+        window.localStorage.removeItem("paywallContext");
+    }
+
     return {
         context: currentContext,
         status: currentStatus,
         handleNewUnlockRequest,
         setStatus,
         discard,
+        clear,
     };
 }
 
