@@ -5,4 +5,6 @@ export type Article = Readonly<{
     description?: string;
     link: string;
     imageUrl: string;
+    lockedContentUrl: string;
+    unlockedContentUrl: string;
 }>;

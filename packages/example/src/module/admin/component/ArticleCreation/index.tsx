@@ -6,40 +6,41 @@ import { useState } from "react";
 
 // Component used to create new article
 export function ArticleCreation() {
-    const [title, setTitle] = useState<string>("");
-    const [description, setDescription] = useState<string | undefined>();
+    const [id, setId] = useState<number>(0);
 
     const {
         mutate: create,
         isPending: isLoading,
         error,
     } = useMutation({
-        mutationKey: ["createArticle", title],
+        mutationKey: ["createArticle", id],
         mutationFn: async () => {
             await createArticle({
-                title,
-                description,
+                id,
                 origin: window.location.origin,
+                isLocal: process.env.IS_LOCAL === "true",
             });
-            setTitle("");
-            setDescription("");
+            setId(0);
         },
     });
 
     return (
         <div>
-            <label>Title</label>
-            <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-            />
+            <p>
+                Id 1: Le Cambodge
+                <br />
+                Id 2: Les NFT pompidou
+                <br />
+                Id 3: Une tech qui revolutionne la finance
+            </p>
+
             <br />
 
-            <label>Description</label>
-            <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+            <label>Id</label>
+            <input
+                type="number"
+                value={id}
+                onChange={(e) => setId(parseInt(e.target.value))}
             />
             <br />
 

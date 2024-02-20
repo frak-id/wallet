@@ -13,4 +13,7 @@ export type ArticleDocument = Readonly<{
     link: string;
     // The main image of this article
     imageUrl: string;
+    // The content url for locked and unlock
+    lockedContentUrl: string;
+    unlockedContentUrl: string;
 }>;
