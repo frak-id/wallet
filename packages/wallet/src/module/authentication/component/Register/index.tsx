@@ -1,7 +1,7 @@
 "use client";
 
 import { AccountName } from "@/module/authentication/component/AccountName";
-import { AuthFingerprint } from "@/module/authentication/component/Recover";
+import { AuthFingerprint } from "@/module/authentication/component/AuthFingerprint";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
@@ -54,8 +54,8 @@ export function Register() {
         if (username) {
             return (
                 <>
-                    Create your <strong>NEXUS</strong>* in a second with
-                    biometry
+                    Create your <strong>NEXUS</strong>
+                    <sup>*</sup> in a second with biometry
                     <br />
                     <br />
                     The wallet name will be <strong>{username}</strong>
@@ -64,7 +64,8 @@ export function Register() {
         }
         return (
             <>
-                Create your <strong>NEXUS</strong>* in a second with biometry
+                Create your <strong>NEXUS</strong>
+                <sup>*</sup> in a second with biometry
             </>
         );
     }
@@ -92,14 +93,14 @@ export function Register() {
                         Use an existing NEXUS
                     </Link>
                     <Notice>
-                        *encrypted digital account where you can find all the
-                        content you own, your consumption data and the rewards
-                        you earn
+                        <sup>*</sup>encrypted digital account where you can find
+                        all the content you own, your consumption data and the
+                        rewards you earn
                     </Notice>
                     {showAccountName && (
                         <Notice>
-                            **this name will enable you to retrieve your Nexus
-                            easily
+                            <sup>**</sup>this name will enable you to retrieve
+                            your Nexus easily
                         </Notice>
                     )}
                 </>

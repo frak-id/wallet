@@ -56,6 +56,15 @@ a {
     text-decoration: none;
 }
 
+sub,
+sup {
+    font-size: 100%;
+}
+
+sup {
+    top: -0.15em;
+}
+
 .button {
     all: unset;
     cursor: pointer;

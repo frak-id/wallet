@@ -2,7 +2,7 @@
 
 import { formatFrk } from "@/context/wallet/utils/frkFormatter";
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
-import { AuthFingerprint } from "@/module/authentication/component/Recover";
+import { AuthFingerprint } from "@/module/authentication/component/AuthFingerprint";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";

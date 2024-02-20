@@ -45,7 +45,7 @@ export function AccountName({
                             htmlFor="walletName"
                             className={styles.accountName__label}
                         >
-                            Wallet name**
+                            Wallet name<sup>**</sup>
                         </label>
                         <span className={styles.accountName__input}>
                             <Input
