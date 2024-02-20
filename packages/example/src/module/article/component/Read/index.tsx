@@ -101,6 +101,16 @@ export function ReadArticle({
             <br />
             <br />
 
+            <iframe
+                src={article.lockedContentUrl}
+                width="100%"
+                height="500"
+                title={article.title}
+            />
+
+            <br />
+            <br />
+
             {prices && <UnlockButtons prices={prices} article={article} />}
         </div>
     );
