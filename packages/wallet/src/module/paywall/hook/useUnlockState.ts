@@ -3,12 +3,12 @@ import {
     viemClient,
 } from "@/context/common/blockchain/provider";
 import { getUnlockStatusOnArticle } from "@/context/paywall/action/getStatus";
+import { useSession } from "@/module/common/hook/useSession";
 import { type PaywallStatus, usePaywall } from "@/module/paywall/provider";
 import type { GetUnlockStatusResponse } from "@frak-wallet/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import type { Hex } from "viem";
-import { useAccount } from "wagmi";
+import type { Address, Hex } from "viem";
 
 /**
  * Get the current unlock state of an article
@@ -17,8 +17,12 @@ export function useUnlockState({
     articleId,
     contentId,
 }: { articleId?: Hex; contentId?: Hex }) {
-    // The current user wallet
-    const { address } = useAccount();
+    // The current user session
+    const {
+        session,
+        isFetchingSession,
+        isSuccess: isSessionFetchSuccess,
+    } = useSession();
 
     // The current context (used to display real time data if a current unlock is in progress)
     const { context, status } = usePaywall();
@@ -26,33 +30,42 @@ export function useUnlockState({
     // The unlock state to return
     const [unlockState, setUnlockState] = useState<GetUnlockStatusResponse>();
 
+    // Get the current user session
+
     // Fetch the user allowance on chain
     const {
-        isPending: isLoadingOnChainUnlockStatus,
+        isLoading: isLoadingOnChainUnlockStatus,
         data: onChainUnlockStatus,
         refetch: refreshOnChainUnlockStatus,
     } = useQuery({
-        queryKey: ["getUnlockStatus", contentId, articleId, address],
+        queryKey: [
+            "getUnlockStatus",
+            contentId,
+            articleId,
+            session?.wallet?.address,
+        ],
         queryFn: async () => {
-            if (!(address && contentId && articleId)) {
+            if (!(session?.wallet?.address && contentId && articleId)) {
                 return;
             }
             return getUnlockStatusOnArticle({
                 contentId,
                 articleId,
-                user: address,
+                user: session.wallet.address,
             });
         },
-        enabled: !!address && !!contentId && !!articleId,
+        enabled:
+            isSessionFetchSuccess && !!session && !!contentId && !!articleId,
     });
 
     // Every time the status change, update the unlock state
     useEffect(() => {
-        // If we are fetching the unlock status, don't do anything
-        if (isLoadingOnChainUnlockStatus) {
+        // If we are fetching the unlock status or the session, don't do anything
+        if (isLoadingOnChainUnlockStatus || isFetchingSession) {
             return;
         }
 
+        const address = session?.wallet?.address;
         // If no address, tell the user isn't logged in
         if (!address) {
             setUnlockState({ key: "not-logged-in", status: "locked" });
@@ -77,11 +90,11 @@ export function useUnlockState({
             context.articleId === articleId &&
             context.contentId === contentId
         ) {
-            realTimeUnlockState({ status });
+            realTimeUnlockState({ status, user: address });
             return;
         }
 
-        // If we arrived here, the user isn't allowed to read the content
+        // If the user has an expired unlock status, tell the user it's expired
         if ((onChainUnlockStatus?.allowedUntilInSec ?? 0) > 0) {
             setUnlockState({
                 key: "expired",
@@ -91,15 +104,18 @@ export function useUnlockState({
             });
             return;
         }
+
+        // If we arrived here, the user isn't allowed to read the content
         setUnlockState({
             key: "not-unlocked",
             status: "locked",
             user: address,
         });
     }, [
-        address,
+        session,
         contentId,
         articleId,
+        isFetchingSession,
         isLoadingOnChainUnlockStatus,
         context,
         status,
@@ -110,9 +126,12 @@ export function useUnlockState({
      * Compute the real time unlock status
      * @param status
      */
-    async function realTimeUnlockState({ status }: { status: PaywallStatus }) {
+    async function realTimeUnlockState({
+        status,
+        user,
+    }: { status: PaywallStatus; user: Address }) {
         // If no address, tell the user isn't logged in
-        if (!address) {
+        if (!user) {
             setUnlockState({ key: "not-logged-in", status: "locked" });
             return;
         }
@@ -142,7 +161,7 @@ export function useUnlockState({
             setUnlockState({
                 key: "preparing",
                 status: "in-progress",
-                user: address,
+                user: user,
             });
             return;
         }
@@ -152,7 +171,7 @@ export function useUnlockState({
             setUnlockState({
                 key: "waiting-user-validation",
                 status: "in-progress",
-                user: address,
+                user: user,
             });
         }
 
@@ -162,7 +181,7 @@ export function useUnlockState({
                 key: "waiting-transaction-bundling",
                 status: "in-progress",
                 userOpHash: status.userOpHash,
-                user: address,
+                user: user,
             });
 
             // Wait for the user operation receipt
@@ -178,7 +197,7 @@ export function useUnlockState({
                 status: "in-progress",
                 userOpHash: status.userOpHash,
                 txHash: txHash,
-                user: address,
+                user: user,
             });
 
             // Wait for the transaction to be confirmed and refetch the unlock status

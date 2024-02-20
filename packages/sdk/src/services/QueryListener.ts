@@ -93,10 +93,6 @@ export class QueryListener {
             return;
         }*/
 
-        console.log("Received a new message in the listener", {
-            data: message.data,
-        });
-
         // Ensure we got everything in the response
         if (!(message?.data?.id && message?.data?.topic)) {
             return;

@@ -81,13 +81,13 @@ export function ReadArticle({
                     console.log("Unlock status response event", event);
                 },
             });
-            console.log("unlockStatus", unlockStatus);
+            console.log("Unlock status listener ID", { unlockStatus });
+            // TODO: The listener id should be used to remove the listener on destroy
         };
 
         // Setup fetcher once listener linked
-        console.log("Waiting for listener link");
         queryProvider.waitForListenerLink().then(() => {
-            console.log("Listener linked");
+            console.log("Query listener linked");
             fetchPrices();
             fetchStatus();
         });

@@ -57,6 +57,9 @@ export function ListenerUI() {
     // Every time the unlock state change, send it to the listener
     useEffect(() => {
         if (unlockState) {
+            console.log("Sending the unlock state to the listener", {
+                unlockState,
+            });
             unlockStatusParam?.emitter(unlockState);
         }
     }, [unlockState, unlockStatusParam]);

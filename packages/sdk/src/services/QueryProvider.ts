@@ -153,10 +153,6 @@ export class QueryProvider {
             return;
         }
 
-        console.log("Received a new message in the listener", {
-            data: message.data,
-        });
-
         // If it's a ready topic, resolve the listener linked promise
         if (message?.data?.topic === "ready") {
             this._listenerLinked.resolve(true);
