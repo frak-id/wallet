@@ -1,4 +1,4 @@
-.authFingerprint__button {
+.buttonRipple__button {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -14,19 +14,15 @@
     transition: background 400ms;
 }
 
-.authFingerprint__button--centered {
-    text-align: center;
-}
-
-.authFingerprint__button:hover {
+.buttonRipple__button:hover {
     box-shadow: 6px 6px 6px 0 var(--frak-panel-shadow-color);
 }
 
-.authFingerprint__button:active, .authFingerprint__button:target, .authFingerprint__button:disabled {
+.buttonRipple__button:active, .buttonRipple__button:target, .buttonRipple__button:disabled {
     box-shadow: none;
 }
 
-.authFingerprint__span {
+.buttonRipple__span {
     position: absolute;
     border-radius: 50%;
     transform: scale(0);
@@ -39,4 +35,16 @@
         transform: scale(4);
         opacity: 0;
     }
+}
+
+.size--small {
+    padding: 8px;
+}
+
+.size--normal {
+    padding: 17px 8px;
+}
+
+.size--big {
+    padding: 25px 8px;
 }

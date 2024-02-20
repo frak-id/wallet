@@ -3,7 +3,7 @@ import type { PropsWithChildren } from "react";
 import styles from "./index.module.css";
 
 type PanelProps = {
-    variant?: "primary" | "secondary" | "outlined";
+    variant?: "primary" | "secondary" | "outlined" | "empty";
     size?: "none" | "small" | "normal" | "big";
     withShadow?: boolean;
     asChild?: boolean;

@@ -1,11 +1,11 @@
 "use client";
 
+import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { Landmark } from "lucide-react";
-import styles from "./index.module.css";
 
 /**
  * Get some FRK
@@ -15,10 +15,9 @@ export function GetFrk() {
     const { isAirdroppingFrk, airdropFrk } = useAirdropFrk();
 
     return (
-        <Panel withShadow={true} size={"small"}>
-            <button
-                type={"button"}
-                className={styles.getFrk}
+        <Panel size={"none"} variant={"empty"}>
+            <ButtonRipple
+                size={"small"}
                 onClick={async () => {
                     await airdropFrk({ wallet: wallet.address });
                 }}
@@ -31,7 +30,7 @@ export function GetFrk() {
                         ""
                     )}
                 </Row>
-            </button>
+            </ButtonRipple>
         </Panel>
     );
 }

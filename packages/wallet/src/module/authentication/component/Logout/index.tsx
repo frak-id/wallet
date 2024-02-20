@@ -1,10 +1,10 @@
 "use client";
 
 import { deleteSession } from "@/context/session/action/session";
+import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { LogOut } from "lucide-react";
-import styles from "./index.module.css";
 
 /**
  * Logout from current authentication
@@ -12,10 +12,9 @@ import styles from "./index.module.css";
  */
 export function Logout() {
     return (
-        <Panel withShadow={true} size={"small"}>
-            <button
-                type={"button"}
-                className={styles.logout}
+        <Panel size={"none"} variant={"empty"}>
+            <ButtonRipple
+                size={"small"}
                 onClick={() => {
                     deleteSession();
                 }}
@@ -23,7 +22,7 @@ export function Logout() {
                 <Row>
                     <LogOut size={32} /> Logout
                 </Row>
-            </button>
+            </ButtonRipple>
         </Panel>
     );
 }

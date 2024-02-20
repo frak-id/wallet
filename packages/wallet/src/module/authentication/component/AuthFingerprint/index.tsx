@@ -1,6 +1,7 @@
 import { Fingerprint } from "@/assets/icons/Fingerprint";
 import { FingerprintGrey } from "@/assets/icons/FingerprintGrey";
-import { Panel } from "@/module/common/component/Panel";
+import { ButtonRipple } from "@/module/common/component/ButtonRipple";
+import type React from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 
@@ -8,28 +9,19 @@ type AuthFingerprintProps = {
     action?: () => void;
     disabled?: boolean;
     icon?: ReactNode;
+    className?: string;
 };
 
-function ComponentAsSpan({ children }: PropsWithChildren) {
-    return (
-        <span className={`button ${styles.recover__button}`}>{children}</span>
-    );
-}
-
-function ComponentAsButton({
+function ComponentAsSpan({
+    className = "",
     children,
-    disabled,
-    action,
-}: PropsWithChildren<AuthFingerprintProps>) {
+}: PropsWithChildren<{ className?: string }>) {
     return (
-        <button
-            type={"button"}
-            className={`button ${styles.recover__button}`}
-            disabled={disabled}
-            onClick={action}
+        <span
+            className={`button ${styles.authFingerprint__button} ${className}`}
         >
             {children}
-        </button>
+        </span>
     );
 }
 
@@ -38,6 +30,7 @@ export function AuthFingerprint({
     action,
     disabled,
     icon,
+    className = "",
 }: PropsWithChildren<AuthFingerprintProps>) {
     const content = icon ? (
         icon
@@ -46,13 +39,18 @@ export function AuthFingerprint({
     ) : (
         <Fingerprint />
     );
-    const Component = action ? ComponentAsButton : ComponentAsSpan;
+    const Component = action ? ButtonRipple : ComponentAsSpan;
     return (
-        <Panel size={"big"} withShadow={true}>
-            <Component action={action} disabled={disabled}>
+        <>
+            <Component
+                onClick={action}
+                disabled={disabled}
+                size={"big"}
+                className={`${className} ${styles["authFingerprint__button--centered"]}`}
+            >
                 {content}
                 <span>{children}</span>
             </Component>
-        </Panel>
+        </>
     );
 }

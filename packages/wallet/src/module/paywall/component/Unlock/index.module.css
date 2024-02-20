@@ -23,3 +23,7 @@
     justify-content: space-between;
     margin-bottom: 10px;
 }
+
+.unlock__fingerprints {
+    margin: 32px 0;
+}

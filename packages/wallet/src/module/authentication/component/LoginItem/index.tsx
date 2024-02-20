@@ -2,7 +2,7 @@ import { Fingerprint } from "@/assets/icons/Fingerprint";
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
 import { useLogin } from "@/module/authentication/hook/useLogin";
-import { Panel } from "@/module/common/component/Panel";
+import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { SquareUser } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -16,11 +16,11 @@ export function LoginItem({
     const { login } = useLogin();
 
     return (
-        <Panel asChild={true} size={"small"} withShadow={true}>
+        <>
             <li>
-                <button
-                    type={"button"}
-                    className={`button ${styles.loginItem__button}`}
+                <ButtonRipple
+                    size={"small"}
+                    className={styles.loginItem__button}
                     onClick={async () => {
                         await login({ lastAuthentication });
                         startTransition(() => {
@@ -40,8 +40,8 @@ export function LoginItem({
                             className={styles.loginItem__icon}
                         />
                     </span>
-                </button>
+                </ButtonRipple>
             </li>
-        </Panel>
+        </>
     );
 }

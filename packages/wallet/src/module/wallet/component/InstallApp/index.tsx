@@ -1,3 +1,4 @@
+import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
@@ -9,9 +10,9 @@ export function InstallApp() {
 
     return (
         prompt && (
-            <Panel withShadow={true} size={"small"}>
-                <button
-                    type={"button"}
+            <Panel variant={"empty"} size={"none"}>
+                <ButtonRipple
+                    size={"small"}
                     className={`button ${styles.wallet__install}`}
                     onClick={launchInstallation}
                 >
@@ -19,7 +20,7 @@ export function InstallApp() {
                         Install <strong>Nexus Wallet</strong> on your phone for
                         a better experience!
                     </Title>
-                </button>
+                </ButtonRipple>
             </Panel>
         )
     );

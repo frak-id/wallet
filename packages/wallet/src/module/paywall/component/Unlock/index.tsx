@@ -61,6 +61,7 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
                     action={
                         uiState.success || uiState.already ? undefined : action
                     }
+                    className={styles.unlock__fingerprints}
                 >
                     <UnlockLoading loading={uiState.loading} />
                     <UnlockError error={uiState.error} />
