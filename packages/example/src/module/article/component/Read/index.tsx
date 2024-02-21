@@ -127,7 +127,7 @@ export function ReadArticle({
             setPrices(getPricesResponse.prices);
         };
 
-        const fetchStatus = async () => {
+        const fetchUnlockStatus = async () => {
             const unlockStatus = await queryProvider.listenerRequest({
                 param: {
                     key: "unlock-status-param",
@@ -144,11 +144,26 @@ export function ReadArticle({
             // TODO: The listener id should be used to remove the listener on destroy
         };
 
+        const fetchUserStatus = async () => {
+            const unlockStatus = await queryProvider.listenerRequest({
+                param: {
+                    key: "user-status-param",
+                    value: undefined,
+                },
+                onResponse: async (event) => {
+                    console.log("User status response event", event);
+                },
+            });
+            console.log("User status listener ID", { unlockStatus });
+            // TODO: The listener id should be used to remove the listener on destroy
+        };
+
         // Setup fetcher once listener linked
         queryProvider.waitForListenerLink().then(() => {
             console.log("Query listener linked");
             fetchPrices();
-            fetchStatus();
+            fetchUnlockStatus();
+            fetchUserStatus();
         });
     }, [article.id, queryProvider]);
 

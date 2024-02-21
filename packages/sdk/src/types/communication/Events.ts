@@ -3,6 +3,10 @@ import type {
     GetUnlockStatusParam,
     GetUnlockStatusResponse,
 } from "../unlock/UnlockStatus.ts";
+import type {
+    GetUserStatusParam,
+    GetUserStatusResponse,
+} from "../user/UserStatus.ts";
 import type { CompressedData } from "./Encoded";
 
 /**
@@ -16,6 +20,10 @@ export type EventsParam =
     | {
           key: "unlock-status-param";
           value: GetUnlockStatusParam;
+      }
+    | {
+          key: "user-status-param";
+          value: GetUserStatusParam;
       };
 
 /**
@@ -29,6 +37,10 @@ export type EventsResponse =
     | {
           key: "unlock-status-response";
           value: GetUnlockStatusResponse;
+      }
+    | {
+          key: "user-status-response";
+          value: GetUserStatusResponse;
       };
 
 // Get the right response from an events params
@@ -37,7 +49,9 @@ export type EventResponseFromParam<T extends EventsParam> =
         ? GetPricesResponse
         : T["key"] extends "unlock-status-param"
           ? GetUnlockStatusResponse
-          : never;
+          : T["key"] extends "user-status-param"
+              ? GetUserStatusResponse
+              : never;
 
 /**
  * Format of an event
@@ -46,8 +60,10 @@ export type EventsFormat = Readonly<{
     topic:
         | "get-price-param"
         | "unlock-status-param"
+        | "user-status-param"
         | "get-price-response"
-        | "unlock-status-response";
+        | "unlock-status-response"
+        | "user-status-response";
     id: string;
     data: CompressedData;
 }>;
@@ -59,8 +75,10 @@ export type DecompressedFormat<Data> = Readonly<{
     topic:
         | "get-price-param"
         | "unlock-status-param"
+        | "user-status-param"
         | "get-price-response"
-        | "unlock-status-response";
+        | "unlock-status-response"
+        | "user-status-response";
     id: string;
     data: Data;
 }>;

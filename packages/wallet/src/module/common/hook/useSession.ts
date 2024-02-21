@@ -17,6 +17,7 @@ export function useSession() {
             // Just fetch the session
             return await getSession();
         },
+        refetchOnMount: "always",
     });
     return { session, refetchSession, isFetchingSession, isSuccess, isError };
 }

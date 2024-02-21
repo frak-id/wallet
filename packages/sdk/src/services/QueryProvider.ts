@@ -1,7 +1,9 @@
 import {
     getPricesEvent,
     getUnlockStatusEvent,
+    getUserStatusEvent,
     parseGetPricesEventResponse,
+    parseUserStatusEventResponse,
 } from "../events";
 import { parseUnlockStatusEventResponse } from "../events";
 import type {
@@ -276,6 +278,11 @@ export class QueryProvider {
             return await getUnlockStatusEvent(param.value);
         }
 
+        // Format user status param
+        if (param.key === "user-status-param") {
+            return await getUserStatusEvent(param.value);
+        }
+
         // Unknown event
         throw new Error(`Unknown event key: ${JSON.stringify(param)}`);
     }
@@ -308,6 +315,16 @@ export class QueryProvider {
             response.topic === "unlock-status-response"
         ) {
             return (await parseUnlockStatusEventResponse(
+                response
+            )) as EventResponseFromParam<Param>;
+        }
+
+        // Format user status param
+        if (
+            param.key === "user-status-param" &&
+            response.topic === "user-status-response"
+        ) {
+            return (await parseUserStatusEventResponse(
                 response
             )) as EventResponseFromParam<Param>;
         }

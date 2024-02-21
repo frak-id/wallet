@@ -17,6 +17,14 @@ export type {
     GetPricesResponse,
 } from "./price/GetPrices";
 
+// User related exports
+export type {
+    GetUserStatusParam,
+    GetUserStatusResponse,
+    UserLoggedInStatus,
+    UserNotLoggedIn,
+} from "./user/UserStatus";
+
 // Global communication
 export type {
     EventsParam,

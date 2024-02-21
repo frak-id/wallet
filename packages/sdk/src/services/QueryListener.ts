@@ -1,4 +1,9 @@
-import { getPricesResponseEvent, parseGetPricesEventData } from "../events";
+import {
+    getPricesResponseEvent,
+    getUserStatusResponseEvent,
+    parseGetPricesEventData,
+    parseUserStatusEvent,
+} from "../events";
 import {
     getUnlockStatusResponseEvent,
     parseUnlockStatusEvent,
@@ -10,6 +15,8 @@ import type {
     GetPricesResponse,
     GetUnlockStatusParam,
     GetUnlockStatusResponse,
+    GetUserStatusParam,
+    GetUserStatusResponse,
 } from "../types";
 
 /**
@@ -33,15 +40,29 @@ export class QueryListener {
     /**
      * Method used when the unlock status is requested
      */
-    private _onStatusRequested: (
+    private _onUnlockStatusRequested: (
         param: GetUnlockStatusParam,
         emitter: (response: GetUnlockStatusResponse) => Promise<void>
     ) => Promise<void> = async () => {};
-    public set onStatusRequested(value: (
+    public set onUnlockStatusRequested(value: (
         param: GetUnlockStatusParam,
         emitter: (response: GetUnlockStatusResponse) => Promise<void>
     ) => Promise<void>) {
-        this._onStatusRequested = value;
+        this._onUnlockStatusRequested = value;
+    }
+
+    /**
+     * Method used when the user status is requested
+     */
+    private _onUserStatusRequested: (
+        param: GetUserStatusParam,
+        emitter: (response: GetUserStatusResponse) => Promise<void>
+    ) => Promise<void> = async () => {};
+    public set onUserStatusRequested(value: (
+        param: GetUserStatusParam,
+        emitter: (response: GetUserStatusResponse) => Promise<void>
+    ) => Promise<void>) {
+        this._onUserStatusRequested = value;
     }
 
     /**
@@ -77,7 +98,8 @@ export class QueryListener {
     public destroy() {
         // Destroy both resolver methods
         this._onPriceRequested = async () => undefined;
-        this._onStatusRequested = async () => {};
+        this._onUnlockStatusRequested = async () => {};
+        this._onUserStatusRequested = async () => {};
         // Remove the message listener
         window.removeEventListener("message", this._messageHandler);
     }
@@ -121,8 +143,15 @@ export class QueryListener {
             );
         }
         if (event.topic === "unlock-status-param") {
-            await this.handleStatusRequest(
+            await this.handleUnlockStatusRequest(
                 event as DecompressedFormat<GetUnlockStatusParam>,
+                responseEmitter
+            );
+        }
+
+        if (event.topic === "user-status-param") {
+            await this.handleUserStatusRequest(
+                event as DecompressedFormat<GetUserStatusParam>,
                 responseEmitter
             );
         }
@@ -145,6 +174,12 @@ export class QueryListener {
 
         if (event.topic === "unlock-status-param") {
             return (await parseUnlockStatusEvent(
+                event
+            )) as DecompressedFormat<DataType>;
+        }
+
+        if (event.topic === "user-status-param") {
+            return (await parseUserStatusEvent(
                 event
             )) as DecompressedFormat<DataType>;
         }
@@ -188,12 +223,14 @@ export class QueryListener {
      * @param eventEmitter
      * @private
      */
-    private async handleStatusRequest(
+    private async handleUnlockStatusRequest(
         param: DecompressedFormat<GetPricesParam>,
         eventEmitter: (event: EventsFormat) => void
     ) {
         // Build the response emitter
         const responseEmitter = async (response: GetUnlockStatusResponse) => {
+            // Early exit if we have nothing
+            if (!response) return;
             // Format the response
             const formattedResponse = await getUnlockStatusResponseEvent(
                 response,
@@ -205,6 +242,34 @@ export class QueryListener {
         };
 
         // Tell that a status is requested
-        await this._onStatusRequested(param.data, responseEmitter);
+        await this._onUnlockStatusRequested(param.data, responseEmitter);
+    }
+
+    /**
+     * Handle an unlock status request
+     * @param param
+     * @param eventEmitter
+     * @private
+     */
+    private async handleUserStatusRequest(
+        param: DecompressedFormat<GetUserStatusParam>,
+        eventEmitter: (event: EventsFormat) => void
+    ) {
+        // Build the response emitter
+        const responseEmitter = async (response: GetUserStatusResponse) => {
+            // Early exit if we have nothing
+            if (!response) return;
+            // Format the response
+            const formattedResponse = await getUserStatusResponseEvent(
+                response,
+                param.id
+            );
+
+            // And emit it
+            eventEmitter(formattedResponse);
+        };
+
+        // Tell that a status is requested
+        await this._onUserStatusRequested(param.data, responseEmitter);
     }
 }

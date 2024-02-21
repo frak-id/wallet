@@ -16,3 +16,9 @@ export {
     getUnlockStatusResponseEvent,
     parseUnlockStatusEventResponse,
 } from "./status";
+export {
+    getUserStatusEvent,
+    parseUserStatusEvent,
+    getUserStatusResponseEvent,
+    parseUserStatusEventResponse,
+} from "./user";
