@@ -8,7 +8,7 @@ import { type PaywallStatus, usePaywall } from "@/module/paywall/provider";
 import type { GetUnlockStatusResponse } from "@frak-wallet/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import type { Address, Hex } from "viem";
+import type { Hex } from "viem";
 
 /**
  * Get the current unlock state of an article
@@ -68,7 +68,7 @@ export function useUnlockState({
         const address = session?.wallet?.address;
         // If no address, tell the user isn't logged in
         if (!address) {
-            setUnlockState({ key: "not-logged-in", status: "locked" });
+            setUnlockState({ key: "not-unlocked", status: "locked" });
             return;
         }
 
@@ -77,7 +77,6 @@ export function useUnlockState({
             setUnlockState({
                 key: "valid",
                 status: "unlocked",
-                user: address,
                 allowedUntil: onChainUnlockStatus.allowedUntilInSec * 1000,
             });
             return;
@@ -90,7 +89,7 @@ export function useUnlockState({
             context.articleId === articleId &&
             context.contentId === contentId
         ) {
-            realTimeUnlockState({ status, user: address });
+            realTimeUnlockState({ status });
             return;
         }
 
@@ -100,7 +99,6 @@ export function useUnlockState({
                 key: "expired",
                 status: "locked",
                 expiredAt: (onChainUnlockStatus?.allowedUntilInSec ?? 0) * 1000,
-                user: address,
             });
             return;
         }
@@ -109,7 +107,6 @@ export function useUnlockState({
         setUnlockState({
             key: "not-unlocked",
             status: "locked",
-            user: address,
         });
     }, [
         session,
@@ -126,16 +123,7 @@ export function useUnlockState({
      * Compute the real time unlock status
      * @param status
      */
-    async function realTimeUnlockState({
-        status,
-        user,
-    }: { status: PaywallStatus; user: Address }) {
-        // If no address, tell the user isn't logged in
-        if (!user) {
-            setUnlockState({ key: "not-logged-in", status: "locked" });
-            return;
-        }
-
+    async function realTimeUnlockState({ status }: { status: PaywallStatus }) {
         // If it's an error, tell the user it's an error
         if (status.key === "error") {
             setUnlockState({
@@ -161,7 +149,6 @@ export function useUnlockState({
             setUnlockState({
                 key: "preparing",
                 status: "in-progress",
-                user: user,
             });
             return;
         }
@@ -171,7 +158,6 @@ export function useUnlockState({
             setUnlockState({
                 key: "waiting-user-validation",
                 status: "in-progress",
-                user: user,
             });
         }
 
@@ -181,7 +167,6 @@ export function useUnlockState({
                 key: "waiting-transaction-bundling",
                 status: "in-progress",
                 userOpHash: status.userOpHash,
-                user: user,
             });
 
             // Wait for the user operation receipt
@@ -197,7 +182,6 @@ export function useUnlockState({
                 status: "in-progress",
                 userOpHash: status.userOpHash,
                 txHash: txHash,
-                user: user,
             });
 
             // Wait for the transaction to be confirmed and refetch the unlock status
