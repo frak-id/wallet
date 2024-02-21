@@ -20,7 +20,6 @@ const unlockParamKeyAccessor = (params: GetUnlockStatusParam) => [
 ];
 const unlockResponseKeyAccessor = (response: GetUnlockStatusResponse) => [
     response.key,
-    response.status,
 ];
 
 /**

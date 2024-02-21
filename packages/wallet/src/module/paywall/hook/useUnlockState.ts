@@ -148,7 +148,6 @@ export function useUnlockState({
         if (status.key === "idle") {
             setUnlockState({
                 key: "preparing",
-                status: "in-progress",
             });
             return;
         }
@@ -157,7 +156,6 @@ export function useUnlockState({
         if (status.key === "pendingSignature") {
             setUnlockState({
                 key: "waiting-user-validation",
-                status: "in-progress",
             });
         }
 
@@ -165,7 +163,6 @@ export function useUnlockState({
         if (status.key === "success") {
             setUnlockState({
                 key: "waiting-transaction-bundling",
-                status: "in-progress",
                 userOpHash: status.userOpHash,
             });
 
@@ -179,7 +176,6 @@ export function useUnlockState({
             const txHash = userOpReceipt.receipt.transactionHash;
             setUnlockState({
                 key: "waiting-transaction-confirmation",
-                status: "in-progress",
                 userOpHash: status.userOpHash,
                 txHash: txHash,
             });
