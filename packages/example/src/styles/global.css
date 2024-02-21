@@ -10,3 +10,19 @@ ul {
     padding: 0;
     list-style: none;
 }
+
+#frak-paywall {
+    width: 100%;
+}
+
+.dotsLoading {
+    display: inline-block;
+    clip-path: inset(0 3ch 0 0);
+    animation: l 1s steps(4) infinite;
+}
+
+@keyframes l {
+    to {
+        clip-path: inset(0 -1ch 0 0);
+    }
+}

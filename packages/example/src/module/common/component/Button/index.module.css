@@ -68,6 +68,18 @@
     border: 1px solid var(--frak-button-danger-border-color);
 }
 
+.le-monde {
+    padding: 13px 20px 13px 20px;
+    background: #FFC700;
+    border: none;
+    color: #2A303B;
+    border-radius: 3px;
+}
+
+.le-monde:hover {
+    background-color: #eab002;
+}
+
 .fontNormal {
     font-weight: 400;
 }

@@ -1,25 +1,24 @@
-.floatingActions {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
+.unlockButtons {
     min-height: 64px;
     padding: 20px;
-    background-color: #001432;
-    color: #fff;
     text-align: center;
 }
 
-.floatingActions__list {
+.unlockButtons__logo {
+    margin-right: 10px;
+}
+
+.unlockButtons__list {
     display: flex;
     justify-content: center;
     gap: 10px;
 }
 
-.floatingActions__loader {
+.unlockButtons__loader {
     vertical-align: text-bottom;
 }
 
-.floatingActions__buttonUnlock {
+.unlockButtons__buttonUnlock {
     display: block;
     margin: 0 auto;
 }

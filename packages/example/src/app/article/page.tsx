@@ -39,11 +39,7 @@ function ArticlePageComponent() {
     });
 
     // Get the unlock data response (if any)
-    const {
-        data: unlockResult,
-        isPending: isParsingUnlockResult,
-        error: unlockParsingError,
-    } = useQuery({
+    const { data: unlockResult } = useQuery({
         queryKey: ["parseUnlockResult", articleId, article?.id],
         queryFn: async () => {
             const result = get("result");
@@ -63,11 +59,6 @@ function ArticlePageComponent() {
             has("hash"),
     });
 
-    useEffect(() => {
-        console.log("Unlock result", unlockResult);
-        console.log("Unlock error", unlockParsingError);
-    }, [unlockResult, unlockParsingError]);
-
     if (!articleId) {
         return <h1>Invalid article</h1>;
     }
@@ -82,18 +73,5 @@ function ArticlePageComponent() {
         return <h1>Article not found</h1>;
     }
 
-    return (
-        <div>
-            <ReadArticle article={article} />
-
-            <br />
-            <br />
-
-            {isParsingUnlockResult && <p>Parsing unlock result...</p>}
-            {unlockParsingError && (
-                <p>Parsing unlock error {JSON.stringify(unlockParsingError)}</p>
-            )}
-            {unlockResult && <p>Unlock result: {unlockResult.status}</p>}
-        </div>
-    );
+    return <ReadArticle article={article} unlockStatusRequest={unlockResult} />;
 }

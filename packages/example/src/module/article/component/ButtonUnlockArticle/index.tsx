@@ -2,7 +2,6 @@ import { formatSecondDuration } from "@/module/article/utils/duration";
 import { Button } from "@/module/common/component/Button";
 import type { ArticlePrice } from "@frak-wallet/sdk/src/types/ArticlePrice";
 import { formatEther } from "viem";
-import styles from "./index.module.css";
 
 export function ButtonUnlockArticle({
     price,
@@ -15,15 +14,17 @@ export function ButtonUnlockArticle({
 }) {
     return (
         <Button
+            variant={"le-monde"}
             size={"small"}
-            className={styles.button}
             disabled={disabled}
             onClick={() => doUnlockArticle(price)}
         >
             <span>
-                {price.index === 2
-                    ? "1 month"
-                    : formatSecondDuration(price?.unlockDurationInSec)}
+                <strong>
+                    {price.index === 2
+                        ? "1 month"
+                        : formatSecondDuration(price?.unlockDurationInSec)}
+                </strong>
                 <br />
                 {formatEther(BigInt(price.frkAmount))} FRK
             </span>
