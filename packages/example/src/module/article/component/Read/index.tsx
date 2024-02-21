@@ -25,18 +25,22 @@ function InjectUnlockComponent({
     userStatus: GetUserStatusResponse | undefined;
     article: Article | undefined;
 }) {
-    // Don't inject if the article is already unlocked
-    if (unlockStatus?.key === "valid") {
-        return null;
-    }
-
+    const selectors = {
+        locked: { selector: ".lmd-paywall", position: "afterbegin" },
+        unlocked: { selector: ".article__reactions", position: "beforebegin" },
+    };
+    const currentSelector =
+        selectors[unlockStatus?.key === "valid" ? "unlocked" : "locked"];
     const containerName = "frak-paywall";
     let containerRoot = document.getElementById(containerName);
     if (!containerRoot) {
         const appRoot = document.createElement("div");
         appRoot.id = containerName;
-        const element = document.querySelector(".lmd-paywall");
-        element?.insertAdjacentElement("afterbegin", appRoot);
+        const element = document.querySelector(currentSelector.selector);
+        element?.insertAdjacentElement(
+            currentSelector.position as InsertPosition,
+            appRoot
+        );
         containerRoot = document.getElementById(containerName);
     }
 

@@ -103,12 +103,24 @@ export function UnlockButtons({
 
     return (
         <>
-            <div className={"lmd-paywall__header"}>
+            <div
+                className={`lmd-paywall__header ${
+                    unlockStatus?.key === "valid"
+                        ? styles["unlockButtons__header--valid"]
+                        : ""
+                }`}
+            >
                 <FrakLogo className={styles.unlockButtons__logo} />
                 {unlockStatus?.key === "not-unlocked" ? "Unlock" : "Unlocked"}{" "}
                 with Frak
             </div>
-            <div className={"lmd-paywall__content"}>
+            <div
+                className={`lmd-paywall__content ${
+                    unlockStatus?.key === "valid"
+                        ? styles["unlockButtons__content--valid"]
+                        : ""
+                }`}
+            >
                 <div
                     className={`${styles.unlockButtons} ${styles["unlockButtons--le-monde"]}`}
                 >
@@ -141,7 +153,9 @@ export function UnlockButtons({
                                     <>
                                         You have access to this article until{" "}
                                         <strong>
-                                            {unlockStatus?.allowedUntil}
+                                            {new Date(
+                                                unlockStatus?.allowedUntil
+                                            ).toLocaleString()}
                                         </strong>
                                     </>
                                 )}

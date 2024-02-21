@@ -22,3 +22,12 @@
     display: block;
     margin: 0 auto;
 }
+
+.unlockButtons__header--valid {
+    margin-top: 20px;
+    background: #FFE38F !important;
+}
+
+.unlockButtons__content--valid {
+    background: #FFF6D3 !important;
+}
