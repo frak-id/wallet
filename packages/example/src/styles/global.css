@@ -15,6 +15,10 @@ ul {
     width: 100%;
 }
 
+.lmd-paywall__text {
+    max-width: 60rem !important;
+}
+
 .dotsLoading {
     display: inline-block;
     clip-path: inset(0 3ch 0 0);

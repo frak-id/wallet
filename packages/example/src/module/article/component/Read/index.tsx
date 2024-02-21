@@ -1,21 +1,35 @@
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { UnlockButtons } from "@/module/article/component/UnlockButtons";
-import { RootProvider } from "@/module/common/provider/RootProvider";
 import type { Article } from "@/type/Article";
 import { QueryProvider } from "@frak-wallet/sdk";
 import type {
     GetUnlockStatusResponse,
+    GetUserStatusResponse,
     UnlockRequestResult,
 } from "@frak-wallet/sdk";
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { useEffect, useState } from "react";
 import React from "react";
-import { createRoot } from "react-dom/client";
+import { createPortal } from "react-dom";
 import type { Hex } from "viem";
 import { ArticleContent } from "../ArticleContent";
 
-function injectUnlockComponent() {
+function InjectUnlockComponent({
+    prices,
+    unlockStatus,
+    userStatus,
+    article,
+}: {
+    prices: ArticlePriceForUser[];
+    unlockStatus: GetUnlockStatusResponse | UnlockRequestResult | undefined;
+    userStatus: GetUserStatusResponse | undefined;
+    article: Article | undefined;
+}) {
+    // Don't inject if the article is already unlocked
+    if (unlockStatus?.key === "valid") {
+        return null;
+    }
+
     const containerName = "frak-paywall";
     let containerRoot = document.getElementById(containerName);
     if (!containerRoot) {
@@ -31,13 +45,14 @@ function injectUnlockComponent() {
         return;
     }
 
-    const root = createRoot(containerRoot);
-    root.render(
-        <React.StrictMode>
-            <RootProvider>
-                <UnlockButtons />
-            </RootProvider>
-        </React.StrictMode>
+    return createPortal(
+        <UnlockButtons
+            prices={prices}
+            unlockStatus={unlockStatus}
+            userStatus={userStatus}
+            article={article}
+        />,
+        containerRoot
     );
 }
 
@@ -83,16 +98,21 @@ export function ReadArticle({
     // The article html data
     const [data, setData] = useState<string | undefined>();
 
-    // The price, shared with unlock component
-    const [, setPrices] = useLocalStorage<ArticlePriceForUser[]>("prices", []);
+    // The injecting state for the unlock component
+    const [injecting, setInjecting] = useState(false);
 
-    // The unlock status, shared with unlock component
-    const [unlockStatus, setUnlockStatus] = useLocalStorage<
+    // The prices
+    const [prices, setPrices] = useState<ArticlePriceForUser[]>([]);
+
+    // The unlock status
+    const [unlockStatus, setUnlockStatus] = useState<
         GetUnlockStatusResponse | UnlockRequestResult | undefined
-    >("unlockStatus", unlockStatusRequest);
+    >(unlockStatusRequest);
 
-    // The article, shared with unlock component
-    useLocalStorage<Article | null>("article", article);
+    // The user status
+    const [userStatus, setUserStatus] = useState<
+        GetUserStatusResponse | undefined
+    >();
 
     useEffect(() => {
         // Build the query provider
@@ -107,7 +127,6 @@ export function ReadArticle({
         };
     }, [queryProvider?.destroy]);
 
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
     useEffect(() => {
         // If we don't have a query provider, do nothing
         if (!queryProvider) {
@@ -152,6 +171,7 @@ export function ReadArticle({
                 },
                 onResponse: async (event) => {
                     console.log("User status response event", event);
+                    setUserStatus(event);
                 },
             });
             console.log("User status listener ID", { unlockStatus });
@@ -169,25 +189,38 @@ export function ReadArticle({
 
     // Load the article content
     useEffect(() => {
-        if (!(article.lockedContentUrl && unlockStatus)) {
+        if (!(article && unlockStatus)) {
             return;
         }
-        const isLocked = unlockStatus?.status !== "unlocked";
+        const isLocked = unlockStatus?.key !== "valid";
         loadArticle({
             url: isLocked
                 ? article.lockedContentUrl
                 : article.unlockedContentUrl,
         }).then((data) => {
             setData(data);
+            // If not locked, scroll to top
             !isLocked && window.scrollTo(0, 0);
         });
-    }, [article.lockedContentUrl, article.unlockedContentUrl, unlockStatus]);
+    }, [article, unlockStatus]);
 
     // Inject the unlock component into article html
     useEffect(() => {
         if (!data) return;
-        injectUnlockComponent();
+        setInjecting(true);
     }, [data]);
 
-    return <ArticleContent data={data} />;
+    return (
+        <>
+            {injecting && (
+                <InjectUnlockComponent
+                    prices={prices}
+                    unlockStatus={unlockStatus}
+                    userStatus={userStatus}
+                    article={article}
+                />
+            )}
+            <ArticleContent data={data} />
+        </>
+    );
 }
