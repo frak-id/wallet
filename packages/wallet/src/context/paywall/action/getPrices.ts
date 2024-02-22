@@ -8,6 +8,7 @@ import { frakTokenAbi, paywallAbi } from "@/context/common/blockchain/frak-abi";
 import { viemClient } from "@/context/common/blockchain/provider";
 import type { ArticlePrice, ArticlePriceForUser } from "@/types/Price";
 import { type Hex, toHex } from "viem";
+import { readContract } from "viem/actions";
 
 /**
  * Get the prices for an article on the given `contentId`
@@ -17,7 +18,7 @@ async function getArticlePrices({
     contentId,
 }: { contentId: Hex }): Promise<ArticlePrice[]> {
     // Read all the prices from the blockchain
-    const prices = await viemClient.readContract({
+    const prices = await readContract(viemClient, {
         address: paywallAddress,
         abi: paywallAbi,
         functionName: "getContentPrices",
@@ -57,7 +58,7 @@ export async function getArticlePricesForUser({
     }
 
     // Check if the user already unlocked an article
-    const [isAllowed] = await viemClient.readContract({
+    const [isAllowed] = await readContract(viemClient, {
         address: paywallAddress,
         abi: paywallAbi,
         functionName: "isReadAllowed",
@@ -71,7 +72,7 @@ export async function getArticlePricesForUser({
     }
 
     // Get the frk balance of the user
-    const userBalance = await viemClient.readContract({
+    const userBalance = await readContract(viemClient, {
         address: addresses.frakToken,
         abi: frakTokenAbi,
         functionName: "balanceOf",
@@ -96,7 +97,7 @@ export async function getArticlePrice({
     priceIndex,
 }: { contentId: Hex; priceIndex: number }): Promise<ArticlePrice | null> {
     // Read all the prices from the blockchain
-    const prices = await viemClient.readContract({
+    const prices = await readContract(viemClient, {
         address: paywallAddress,
         abi: paywallAbi,
         functionName: "getContentPrices",

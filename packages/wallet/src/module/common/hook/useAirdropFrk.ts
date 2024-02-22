@@ -2,6 +2,7 @@ import { viemClient } from "@/context/common/blockchain/provider";
 import { triggerFrkAirdrop } from "@/context/mock/action/airdropFrk";
 import { useMutation } from "@tanstack/react-query";
 import type { Address } from "viem";
+import { waitForTransactionReceipt } from "viem/actions";
 
 /**
  * Hook that handle the airdrop frk
@@ -17,7 +18,7 @@ export function useAirdropFrk() {
                     amount: "100",
                 });
                 // Wait for the tx receipt
-                await viemClient.waitForTransactionReceipt({
+                await waitForTransactionReceipt(viemClient, {
                     hash: txHash,
                     confirmations: 1,
                 });

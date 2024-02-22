@@ -4,6 +4,7 @@ import { paywallAddress } from "@/context/common/blockchain/addresses";
 import { paywallAbi } from "@/context/common/blockchain/frak-abi";
 import { viemClient } from "@/context/common/blockchain/provider";
 import type { Address, Hex } from "viem";
+import { readContract } from "viem/actions";
 
 /**
  * Get the current unlock status of a user on the given article
@@ -21,7 +22,7 @@ export async function getUnlockStatusOnArticle({
     user: Address;
 }) {
     // Get the status
-    const [isAllowed, allowedUntilInSec] = await viemClient.readContract({
+    const [isAllowed, allowedUntilInSec] = await readContract(viemClient, {
         address: paywallAddress,
         abi: paywallAbi,
         functionName: "isReadAllowed",

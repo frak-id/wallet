@@ -11,6 +11,7 @@ import { buildSmartWallet } from "@/context/wallet/utils/buildSmartWallet";
 import type { Session } from "@/types/Session";
 import { smartAccount } from "@permissionless/wagmi";
 import { createSmartAccountClient } from "permissionless";
+import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import {
     type ReactNode,
     createContext,
@@ -82,7 +83,8 @@ function useWalletHook({ session }: { session: Session }) {
             account: smartWallet,
             chain: polygonMumbai,
             transport: pimlicoBundlerTransport,
-            sponsorUserOperation: pimlicoPaymasterClient.sponsorUserOperation,
+            sponsorUserOperation: (args) =>
+                sponsorUserOperation(pimlicoPaymasterClient, args),
         });
 
         // Build the wagmi connector and connect to it

@@ -18,9 +18,11 @@ import { formatSecondDuration } from "@frak-wallet/example/src/module/article/ut
 import { prepareUnlockRequestResponse } from "@frak-wallet/sdk";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSmartAccountClient } from "permissionless";
+import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import { useEffect, useState } from "react";
 import { type Hex, encodeFunctionData, parseEther } from "viem";
 import type { Address } from "viem";
+import { readContract } from "viem/actions";
 import { polygonMumbai } from "viem/chains";
 
 /**
@@ -158,7 +160,7 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
             }[] = [];
 
             // Check the user allowance to the paywall contract
-            const allowance = await viemClient.readContract({
+            const allowance = await readContract(viemClient, {
                 address: addresses.frakToken,
                 abi: frakTokenAbi,
                 functionName: "allowance",
@@ -200,8 +202,8 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
                 account: smartWallet,
                 chain: polygonMumbai,
                 transport: pimlicoBundlerTransport,
-                sponsorUserOperation:
-                    pimlicoPaymasterClient.sponsorUserOperation,
+                sponsorUserOperation: (args) =>
+                    sponsorUserOperation(pimlicoPaymasterClient, args),
             });
 
             // Encode the user op data

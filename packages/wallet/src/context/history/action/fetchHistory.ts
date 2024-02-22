@@ -17,6 +17,7 @@ import type {
 } from "@/types/HistoryItem";
 import { map, sort } from "radash";
 import { type Address, type Hash, formatEther, toHex } from "viem";
+import { getBlock, getLogs } from "viem/actions";
 
 /**
  * The initial block from where we fetch the logs
@@ -33,7 +34,7 @@ export async function fetchWalletHistory({
     account,
 }: { account: Address }): Promise<HistoryItem[]> {
     // Get the paid item unlocked events for a user
-    const unlockedItemsEvents = await viemClient.getLogs({
+    const unlockedItemsEvents = await getLogs(viemClient, {
         address: paywallAddress,
         event: paidItemUnlockedEventAbi,
         args: { user: account },
@@ -77,7 +78,7 @@ export async function fetchWalletHistory({
     );
 
     // Get the paid item unlocked events for a user
-    const frkReceivedEvents = await viemClient.getLogs({
+    const frkReceivedEvents = await getLogs(viemClient, {
         address: addresses.frakToken,
         event: frkTransferEvent,
         args: { to: account },
@@ -111,7 +112,7 @@ export async function fetchWalletHistory({
  * @param blockHash
  */
 async function getBlockDate(blockHash: Hash) {
-    const block = await viemClient.getBlock({
+    const block = await getBlock(viemClient, {
         blockHash,
         includeTransactions: false,
     });

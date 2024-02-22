@@ -7,8 +7,10 @@ import { useSession } from "@/module/common/hook/useSession";
 import { type PaywallStatus, usePaywall } from "@/module/paywall/provider";
 import type { GetUnlockStatusResponse } from "@frak-wallet/sdk";
 import { useQuery } from "@tanstack/react-query";
+import { waitForUserOperationReceipt } from "permissionless";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
+import { waitForTransactionReceipt } from "viem/actions";
 
 /**
  * Get the current unlock state of an article
@@ -169,10 +171,12 @@ export function useUnlockState({
             // Wait for the user operation receipt
             // TODO: should be in a mutation or any other thing?
             // TODO: Should be able to be cancelled if the user cancel the unlock
-            const userOpReceipt =
-                await pimlicoBundlerClient.waitForUserOperationReceipt({
+            const userOpReceipt = await waitForUserOperationReceipt(
+                pimlicoBundlerClient,
+                {
                     hash: status.userOpHash,
-                });
+                }
+            );
             const txHash = userOpReceipt.receipt.transactionHash;
             setUnlockState({
                 key: "waiting-transaction-confirmation",
@@ -181,7 +185,7 @@ export function useUnlockState({
             });
 
             // Wait for the transaction to be confirmed and refetch the unlock status
-            await viemClient.waitForTransactionReceipt({
+            await waitForTransactionReceipt(viemClient, {
                 hash: txHash,
                 confirmations: 1,
             });

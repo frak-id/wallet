@@ -1,9 +1,4 @@
-import { bundlerActions } from "permissionless";
-import {
-    pimlicoBundlerActions,
-    pimlicoPaymasterActions,
-} from "permissionless/actions/pimlico";
-import { http, createPublicClient } from "viem";
+import { http, createClient, createPublicClient } from "viem";
 import { polygonMumbai } from "viem/chains";
 
 export const rpcTransport = http(process.env.RPC_URL, {
@@ -14,7 +9,7 @@ export const rpcTransport = http(process.env.RPC_URL, {
 });
 
 // Build the viem client
-export const viemClient = createPublicClient({
+export const viemClient = createClient({
     chain: polygonMumbai,
     transport: rpcTransport,
     cacheTime: 60_000,
@@ -27,12 +22,10 @@ export const pimlicoBundlerTransport = http(
     `https://api.pimlico.io/v1/mumbai/rpc?apikey=${process.env.PIMLICO_API_KEY}`
 );
 // Build the pimlico bundler client
-export const pimlicoBundlerClient = createPublicClient({
+export const pimlicoBundlerClient = createClient({
     chain: polygonMumbai,
     transport: pimlicoBundlerTransport,
-})
-    .extend(bundlerActions)
-    .extend(pimlicoBundlerActions);
+});
 
 // Build the pimlico paymaster client
 export const pimlicoPaymasterClient = createPublicClient({
@@ -40,9 +33,7 @@ export const pimlicoPaymasterClient = createPublicClient({
     transport: http(
         `https://api.pimlico.io/v2/mumbai/rpc?apikey=${process.env.PIMLICO_API_KEY}`
     ),
-})
-    .extend(pimlicoBundlerActions)
-    .extend(pimlicoPaymasterActions);
+});
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
