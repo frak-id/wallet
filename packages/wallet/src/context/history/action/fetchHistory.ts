@@ -16,7 +16,7 @@ import type {
     HistoryItem,
 } from "@/types/HistoryItem";
 import { map, sort } from "radash";
-import { type Address, type Hash, formatEther } from "viem";
+import { type Address, type Hash, formatEther, toHex } from "viem";
 
 /**
  * The initial block from where we fetch the logs
@@ -63,7 +63,7 @@ export async function fetchWalletHistory({
                 txHash: log.transactionHash,
                 blockNumber: log.blockNumber,
                 txDate: await getBlockDate(log.blockHash),
-                contentId,
+                contentId: toHex(contentId),
                 articleId,
                 paidAmount: formatEther(paidAmount),
                 allowedUntil: allowedUntilDate,

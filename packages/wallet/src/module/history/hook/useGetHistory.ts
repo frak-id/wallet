@@ -2,12 +2,8 @@
 
 import { dexieDb } from "@/context/common/dexie/dexieDb";
 import { fetchWalletHistory } from "@/context/history/action/fetchHistory";
-import type {
-    ArticleUnlock,
-    HistoryItemWithFrontData,
-} from "@/types/HistoryItem";
+import type { HistoryItemWithFrontData } from "@/types/HistoryItem";
 import { useQuery } from "@tanstack/react-query";
-import { sift } from "radash";
 import { useAccount } from "wagmi";
 
 // Fetch the current wallet history
@@ -30,17 +26,9 @@ export function useGetHistory() {
             });
 
             // Fetch every frontend data we have in the dexie db
-            const articleHistoryItems = rawHistory.filter(
-                (item) => item.key === "article-unlock"
-            ) as ArticleUnlock[];
-            const articleInfos = sift(
-                await dexieDb.articleInfo.bulkGet(
-                    articleHistoryItems.map((item: ArticleUnlock) => ({
-                        articleId: item.articleId,
-                        contentId: item.contentId,
-                    }))
-                )
-            );
+            // TODO: Should use a bulk get here, but would imply a small rewrite of the DTO to have a hash or a bigint has key
+            const articleInfos = await dexieDb.articleInfo.toArray();
+            console.log("articleInfos", { articleInfos });
 
             // Map every article unlock with the front data
             const history = rawHistory.map((item) => {
@@ -53,7 +41,7 @@ export function useGetHistory() {
                 const articleInfo = articleInfos.find(
                     (info) =>
                         info.articleId === item.articleId &&
-                        BigInt(info.contentId) === item.contentId
+                        BigInt(info.contentId) === BigInt(item.contentId)
                 );
 
                 return {

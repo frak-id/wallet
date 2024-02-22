@@ -10,7 +10,7 @@ export type ArticleUnlock = Readonly<{
     txHash: Hex;
     blockNumber: bigint;
     txDate: Date;
-    contentId: bigint;
+    contentId: Hex;
     articleId: Hex;
     // Paid amount in FRK, formatted
     paidAmount: string;

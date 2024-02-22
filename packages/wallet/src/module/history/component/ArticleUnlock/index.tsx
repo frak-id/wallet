@@ -7,7 +7,6 @@ import { AccordionArticle } from "@/module/history/component/AccordionArticle";
 import { PolygonLink } from "@/module/wallet/component/PolygonLink";
 import type { ArticleUnlockWithFrontData } from "@/types/HistoryItem";
 import { BookText, ExternalLink, Hourglass } from "lucide-react";
-import { formatEther } from "viem";
 import styles from "./index.module.css";
 
 type ArticleUnlockProps = {
@@ -25,7 +24,7 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
             <Row withIcon={true}>
                 <Hourglass />{" "}
                 <span className={stillAllowedClassName}>
-                    {article.remainingTimeFormatted}
+                    {article.remainingTimeFormatted ?? "Expired"}
                 </span>
                 <a
                     href={article.articleUrl}
@@ -38,8 +37,7 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
             </Row>
             <AccordionArticle>
                 <Row>
-                    Content: {article.contentTitle} (id:{" "}
-                    {formatEther(BigInt(article.contentId))})
+                    Content: {article.contentTitle} (id: {article.contentId})
                 </Row>
                 <Row>Article Id: {article.articleId}</Row>
                 <Row>
