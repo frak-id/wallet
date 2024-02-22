@@ -39,12 +39,15 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
                 <Row>
                     Content: {article.contentTitle} (id: {article.contentId})
                 </Row>
-                <Row>Article Id: {article.articleId}</Row>
+                <Row>
+                    Article Id:{" "}
+                    <PolygonLink hash={article.articleId} icon={false} />
+                </Row>
                 <Row>
                     Unlock: {article.paidAmount} FRK for{" "}
                     {article.remainingTimeFormatted}
                 </Row>
-                <Row>At: {article.txDate.toISOString()}</Row>
+                <Row>At: {new Date(article.txDate).toLocaleString()}</Row>
                 {/*<Row>User Op: 0xAbC...DeF</Row>*/}
                 <Row withIcon={true}>
                     Tx: <PolygonLink hash={article.txHash} />

@@ -9,3 +9,7 @@
     ".";
     flex: 1;
 }
+
+.grid > div {
+    margin-bottom: 24px;
+}
