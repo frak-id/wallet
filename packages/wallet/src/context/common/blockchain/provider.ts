@@ -1,4 +1,4 @@
-import { http, createClient, createPublicClient } from "viem";
+import { http, createClient } from "viem";
 import { polygonMumbai } from "viem/chains";
 
 export const rpcTransport = http(process.env.RPC_URL, {
@@ -18,6 +18,13 @@ export const viemClient = createClient({
     },
 });
 
+// Build the alchemy client (same as the viem one but batch cache)
+export const alchemyClient = createClient({
+    chain: polygonMumbai,
+    transport: rpcTransport,
+    cacheTime: 60_000,
+});
+
 export const pimlicoBundlerTransport = http(
     `https://api.pimlico.io/v1/mumbai/rpc?apikey=${process.env.PIMLICO_API_KEY}`
 );
@@ -28,7 +35,7 @@ export const pimlicoBundlerClient = createClient({
 });
 
 // Build the pimlico paymaster client
-export const pimlicoPaymasterClient = createPublicClient({
+export const pimlicoPaymasterClient = createClient({
     chain: polygonMumbai,
     transport: http(
         `https://api.pimlico.io/v2/mumbai/rpc?apikey=${process.env.PIMLICO_API_KEY}`
