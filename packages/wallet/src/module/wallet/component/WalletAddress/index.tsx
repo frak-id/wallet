@@ -5,7 +5,6 @@ import styles from "./index.module.css";
 
 type WalletAddressProps = {
     wallet: string;
-    onlyIcon?: boolean;
 };
 
 export function WalletAddress({ wallet }: WalletAddressProps) {
@@ -32,7 +31,7 @@ export function WalletAddress({ wallet }: WalletAddressProps) {
                 }
             }}
         >
-            {formatHash(wallet)}
+            {copied ? <>copied</> : formatHash(wallet)}
         </button>
     );
 }
