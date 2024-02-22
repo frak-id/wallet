@@ -16,14 +16,12 @@ import { usePaywall } from "@/module/paywall/provider";
 import type { PaywallContext } from "@/module/paywall/provider";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { BookText } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { formatEther } from "viem";
 import styles from "./index.module.css";
 
 export function PaywallUnlock({ context }: { context: PaywallContext }) {
-    const router = useRouter();
     const { balance } = useWallet();
-    const { discard } = usePaywall();
+    const { discard, clear: clearPaywallContext } = usePaywall();
     const { disabled, launchArticleUnlock, uiState } = useArticlePrices({
         context,
     });
@@ -33,7 +31,7 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
     }
 
     function redirectToArticle() {
-        router.push(context.redirectUrl);
+        clearPaywallContext({ redirectUrl: context.redirectUrl });
     }
 
     return (
