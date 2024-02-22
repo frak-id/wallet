@@ -236,6 +236,8 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
                 }
             );
 
+            setDisabled(false);
+
             // Set the ui success state
             setUiState({
                 success: {

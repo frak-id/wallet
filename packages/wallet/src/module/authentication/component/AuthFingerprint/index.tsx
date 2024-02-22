@@ -12,19 +12,6 @@ type AuthFingerprintProps = {
     className?: string;
 };
 
-function ComponentAsSpan({
-    className = "",
-    children,
-}: PropsWithChildren<{ className?: string }>) {
-    return (
-        <span
-            className={`button ${styles.authFingerprint__button} ${className}`}
-        >
-            {children}
-        </span>
-    );
-}
-
 export function AuthFingerprint({
     children,
     action,
@@ -39,10 +26,9 @@ export function AuthFingerprint({
     ) : (
         <Fingerprint />
     );
-    const Component = action ? ButtonRipple : ComponentAsSpan;
     return (
         <>
-            <Component
+            <ButtonRipple
                 onClick={action}
                 disabled={disabled}
                 size={"big"}
@@ -50,7 +36,7 @@ export function AuthFingerprint({
             >
                 {content}
                 <span>{children}</span>
-            </Component>
+            </ButtonRipple>
         </>
     );
 }

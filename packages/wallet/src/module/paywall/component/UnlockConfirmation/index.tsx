@@ -33,13 +33,7 @@ export function UnlockConfirmation({
             {already && "You have already purchased this article"}
             {success && "The transaction was sent with success!"}
             <br />
-            <button
-                type={"button"}
-                className={"button"}
-                onClick={clearAndRedirect}
-            >
-                Click to read the article
-            </button>
+            Click to read the article
             <br />
             You will be redirected in 5sec
         </>
