@@ -9,7 +9,7 @@ export function ArticleList() {
     const { data: articles, isPending: isLoading } = useQuery({
         queryKey: ["articles"],
         queryFn: () => getAllArticles(),
-        refetchInterval: 120_000,
+        refetchInterval: 300_000,
     });
 
     // List all the articles

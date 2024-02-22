@@ -22,9 +22,19 @@ export async function getArticle(id: Hex): Promise<Article | null> {
  * Get all the articles
  */
 export async function getAllArticles() {
+    const isLocal = process.env.IS_LOCAL === "true";
+
     const articleRepository = await getArticleRepository();
     const allDocuments = await articleRepository.getAll();
-    return allDocuments.map(mapArticleDocument);
+
+    // Filter the articles documents to get the one matching our current env
+    const filteredDocuments = allDocuments.filter((document) => {
+        return isLocal
+            ? document.title.includes("[DEV]")
+            : !document.title.includes("[DEV]");
+    });
+
+    return filteredDocuments.map(mapArticleDocument);
 }
 
 function mapArticleDocument(document: ArticleDocument): Article {

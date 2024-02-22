@@ -1,18 +1,6 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { ArticleList } from "@/module/article/component/List/ArticleList";
 
 export default function HomePage() {
-    const router = useRouter();
-    const [, startTransition] = useTransition();
-
-    function goToArticles() {
-        startTransition(() => {
-            router.push("/articles");
-        });
-    }
-
     return (
         <div>
             <h1>Example interaction with Frak wallet</h1>
@@ -24,9 +12,9 @@ export default function HomePage() {
             <br />
             <br />
 
-            <button onClick={goToArticles} type="button">
-                Checkout the articles
-            </button>
+            <p>Explore a few of our articles</p>
+
+            <ArticleList />
         </div>
     );
 }
