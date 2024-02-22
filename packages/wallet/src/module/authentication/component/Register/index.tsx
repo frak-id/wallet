@@ -5,7 +5,6 @@ import { AuthFingerprint } from "@/module/authentication/component/AuthFingerpri
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { ArticlePreview } from "@/module/paywall/component/ArticlePreview";
 import { usePaywall } from "@/module/paywall/provider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -107,8 +106,6 @@ export function Register() {
                 </>
             }
         >
-            <ArticlePreview />
-
             <AuthFingerprint action={triggerAction} disabled={disabled}>
                 {getMessages()}
             </AuthFingerprint>

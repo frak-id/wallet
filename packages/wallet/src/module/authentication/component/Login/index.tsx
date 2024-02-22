@@ -6,7 +6,6 @@ import { LoginList } from "@/module/authentication/component/LoginList";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
-import { ArticlePreview } from "@/module/paywall/component/ArticlePreview";
 import { usePaywall } from "@/module/paywall/provider";
 import { HardDrive } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -34,8 +33,6 @@ export function Login() {
         <>
             <Back href={"/register"}>Account creation</Back>
             <Grid>
-                <ArticlePreview />
-
                 <AuthFingerprint action={triggerAction}>
                     Recover your <strong>NEXUS</strong>
                 </AuthFingerprint>
