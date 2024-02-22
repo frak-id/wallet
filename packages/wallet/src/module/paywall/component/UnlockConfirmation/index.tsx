@@ -1,24 +1,17 @@
-// import { usePaywall } from "@/module/paywall/provider";
+import { usePaywall } from "@/module/paywall/provider";
 import type { UiState } from "@/types/Unlock";
-import { useRouter } from "next/navigation";
-import { useEffect, useTransition } from "react";
+import { useEffect } from "react";
 
 export function UnlockConfirmation({
     already,
     success,
 }: { already?: UiState["already"]; success: UiState["success"] }) {
     const current = already || success;
-    const router = useRouter();
-    // const { clear: clearPaywallContext } = usePaywall();
-    const [, startTransition] = useTransition();
+    const { clear: clearPaywallContext } = usePaywall();
 
     function clearAndRedirect() {
         if (!current?.redirectUrl) return;
-        console.log("clearAndRedirect", current.redirectUrl);
-        // clearPaywallContext();
-        startTransition(() => {
-            router.push(current.redirectUrl);
-        });
+        clearPaywallContext({ redirectUrl: current.redirectUrl });
     }
 
     useEffect(() => {

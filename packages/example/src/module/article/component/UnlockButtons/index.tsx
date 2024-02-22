@@ -165,7 +165,7 @@ export function UnlockButtons({
                         )}
                     </p>
 
-                    {isLocked && (
+                    {isLocked && !isInProgress && (
                         <ul className={styles.unlockButtons__list}>
                             {prices.map((price) => (
                                 <li key={price.index}>

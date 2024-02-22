@@ -12,6 +12,7 @@ import {
     type ReactNode,
     createContext,
     useContext,
+    useState,
     useTransition,
 } from "react";
 import type { Hex } from "viem";
@@ -70,6 +71,7 @@ function usePaywallHook() {
         "paywallStatus",
         null
     );
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     /**
      * Handle a new unlock request
@@ -121,6 +123,7 @@ function usePaywallHook() {
         setContext(null);
 
         // And go to the redirect url
+        setIsRedirecting(true);
         startTransition(() => {
             router.push(unlockResponseUrl);
         });
@@ -129,7 +132,7 @@ function usePaywallHook() {
     /**
      * Clear context and status
      */
-    function clear() {
+    function clear({ redirectUrl }: { redirectUrl?: string }) {
         // If we have no current context, nothing to do
         if (!currentContext) {
             setContext(null);
@@ -141,7 +144,15 @@ function usePaywallHook() {
         setStatus({ key: "idle" });
 
         // Cleanup the context
-        window.localStorage.removeItem("paywallContext");
+        setContext(null);
+
+        // If we need to redirect
+        if (redirectUrl) {
+            setIsRedirecting(true);
+            startTransition(() => {
+                router.push(redirectUrl);
+            });
+        }
     }
 
     return {
@@ -151,6 +162,7 @@ function usePaywallHook() {
         setStatus,
         discard,
         clear,
+        isRedirecting,
     };
 }
 

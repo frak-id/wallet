@@ -7,12 +7,12 @@ import { useEffect } from "react";
 
 export default function UnlockPage() {
     const router = useRouter();
-    const { context } = usePaywall();
+    const { context, isRedirecting } = usePaywall();
 
-    // If we don't have something to unlock, redirect to wallet
     useEffect(() => {
+        if (isRedirecting) return;
         !context && router.push("/wallet");
-    }, [context, router.push]);
+    }, [context, router.push, isRedirecting]);
 
     if (!context) {
         return null;
