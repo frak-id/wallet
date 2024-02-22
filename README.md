@@ -4,12 +4,18 @@ This repository contains a Proof of Concept (POC) that demonstrates the potentia
 
 It showcases the future of paywalls across various Web2 spectrums through secure and transparent Web3 technologies like account abstraction, paymasters, and more.
 
-Try it directly here: [poc-wallet.frak.id](https://poc-wallet.frak.id).
+Try it the wallet directly here: [poc-wallet.frak.id](https://poc-wallet.frak.id).
+
+Try the flow using a newspaper article here: [news-example.frak.id](https://news-example.frak.id/).
+
+Or even, try real life flow by following some article shared via the demo X account here: [Frak Demo account](https://twitter.com/FrakDemo). 
 
 ## Overview
 
 This POC enables users to quickly create a wallet, unlock access to premium newspaper articles, and read them in seconds using the advancements of ERC-4337. 
 It's built on the Mumbai blockchain (polygon testnet) and utilizes a range of cutting-edge libraries and frameworks to demonstrate the integration of Web3 technologies into Web2 interfaces.
+
+If you are brave enough and have an overview of how it works under the hood, you can check a few sequence flow graph here: [Sequence Flow Graph](https://twitter.com/FrakDemo)
 
 ### Features
 
@@ -61,7 +67,7 @@ This architecture not only supports the separation of concerns and modularity bu
 
 ## Getting Started
 
-To get started with this POC, you need to have Bun installed on your machine. If you're testing it locally, ensure to create a `.env` file based on the `.env.example` provided.
+To get started with this POC, you need to have Bun installed on your machine, and have an AWS account setup using AWS CLI. The AWS account will be used to store the config and upload each websites.
 
 ### Installation
 
@@ -75,13 +81,13 @@ To get started with this POC, you need to have Bun installed on your machine. If
 ## Built With
 
 - [Bun](https://bun.sh/) - The JS toolkit for maximum efficiency.
+- [Kernel SDK](https://github.com/zerodevapp/sdk) - For smart wallet compatibility.
+- [Permissionless](https://github.com/pimlicolabs/permissionless.js) - For account abstraction (ERC-4337) SDK.
 - [NextJS](https://nextjs.org/) - The React framework for server-side rendering.
 - [Biome](https://biomejs.dev/) - For ultra-fast linting/formatting.
 - [TanStack Query](https://tanstack.com/) - For efficient data fetching and async state management.
 - [Wagmi 2.0](https://wagmi.sh/) - For Ethereum hooks.
 - [Viem 2.0](https://viem.sh/) - For blockchain communication.
-- [Permissionless](https://github.com/pimlicolabs/permissionless.js) - For account abstraction (ERC-4337) SDK.
-- [Kernel SDK](https://github.com/zerodevapp/sdk) - For smart wallet compatibility.
 - [Lucid](https://lucide.dev/) - For beautiful icons.
 
 ### Infrastructure
@@ -91,17 +97,9 @@ To get started with this POC, you need to have Bun installed on your machine. If
 - [Pimlico](https://www.pimlico.io/): For Paymaster and bundler operations.
 - [ZeroDev](https://zerodev.app/): For smart account solutions.
 
-## Articles on Account Abstraction
-
-To gain a deeper understanding of account abstraction and its impact on the Web3 ecosystem, consider exploring the following articles:
-
-- [Understanding ERC-4337: Account Abstraction](https://ethereum.org/en/developers/docs/standards/account-abstraction/)
-- [The Future of Ethereum Wallets: Account Abstraction](https://blog.ethereum.org/2021/02/04/account-abstraction/)
-- [ERC-4337: Simplifying User Experience in Ethereum](https://medium.com/ethereum-foundation/erc-4337-account-abstraction-7a987039c7d9)
-
 ## Contributing
 
-We welcome contributions! Please read our contributing guidelines before submitting pull requests to the project.
+We welcome contributions! Don't hesitate to submit PR :)
 
 ## License
 

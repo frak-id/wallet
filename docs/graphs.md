@@ -2,7 +2,8 @@
 
 This md file contain different flow representing interaction between User, content publisher, the Frak SDK and the Frak Wallet.
 
-### Sequence flow of  registration process
+<details>
+<summary><b>Sequence flow of  registration process</b></summary>
 
 This graph show how the registration process is done with the Frak Wallet
 
@@ -36,8 +37,10 @@ participant Blockchain as Blockchain
     Wallet->>Storage: Add this wallet to<br> the previous authenticators wallet
     Wallet->>User: Wallet created with address `wAddress`
 ```
+</details>
 
-### Sequence flow of a wallet recovery process
+<details>
+<summary><b>Sequence flow of a wallet recovery process</b></summary>
 
 This graph show how the recovery process is done with the Frak Wallet
 
@@ -84,8 +87,11 @@ sequenceDiagram
     Wallet->>Storage: Add this wallet to<br> the previous authenticators wallet if not present yet
     Wallet->>User: Recovered wallet with address `wAddress`
 ```
+</details>
 
-### Sequence flow of a wallet login process
+
+<details>
+<summary><b>Sequence flow of a wallet login process</b></summary>
 
 This graph show how the login on a given authenticator is done with the Frak Wallet
 
@@ -127,9 +133,10 @@ sequenceDiagram
     Wallet->>Storage: Add this wallet to<br> the previous authenticators wallet if not present yet
     Wallet->>User: Recovered wallet with address `wAddress`
 ```
+</details>
 
-
-### Sequence flow of a transaction
+<details>
+<summary><b>Sequence flow of a transaction</b></summary>
 
 This graph show how a transaction is performed with the Frak Wallet
 
@@ -182,8 +189,10 @@ sequenceDiagram
     Blockchain-->>Wallet: The transaction is finalised and confirmed by 4 blocks
     Wallet-->>User: Your transaction has reached his final state<br> and was bundled in `txHash`
 ```
+</details>
 
-### Sequence flow of an article unlock
+<details>
+<summary><b>Sequence flow of an article unlock</b></summary>
 
 This diagram represent the sequence flow during an article unlock from a content provider
 
@@ -234,3 +243,4 @@ sequenceDiagram
     end
     Content-->>User: Provide unlocked article
 ```
+</details>
