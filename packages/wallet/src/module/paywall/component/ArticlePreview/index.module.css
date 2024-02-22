@@ -1,0 +1,27 @@
+.articlePreview {
+    position: relative;
+}
+
+.articlePreview + button {
+    margin-top: 32px;
+}
+
+.articlePreview p + p {
+    margin-top: 10px;
+}
+
+.articlePreview__blur {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: #03193A;
+    opacity: 0.6;
+}
+
+.articlePreview__content {
+    position: relative;
+    z-index: 20;
+}

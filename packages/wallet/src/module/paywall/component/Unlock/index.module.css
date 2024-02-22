@@ -9,10 +9,6 @@
     font-weight: 500;
 }
 
-.unlock__article p + p {
-    margin-top: 10px;
-}
-
 .unlock__loading {
     color: var(--frak-color-grayText);
 }

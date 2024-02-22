@@ -7,6 +7,7 @@ import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
 import { AccordionInformation } from "@/module/paywall/component/AccordionInformation";
+import { ArticlePreview } from "@/module/paywall/component/ArticlePreview";
 import { UnlockConfirmation } from "@/module/paywall/component/UnlockConfirmation";
 import { UnlockError } from "@/module/paywall/component/UnlockError";
 import { UnlockLoading } from "@/module/paywall/component/UnlockLoading";
@@ -38,18 +39,7 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
             )}
 
             <Grid>
-                <Panel
-                    size={"normal"}
-                    cover={context.imageUrl}
-                    className={styles.unlock__article}
-                >
-                    <p>
-                        <strong>{context.contentTitle}</strong>
-                    </p>
-                    <p>
-                        From: <strong>{context.articleTitle}</strong>
-                    </p>
-                </Panel>
+                <ArticlePreview />
 
                 <AuthFingerprint
                     icon={

@@ -1,6 +1,7 @@
 .panel {
     border-radius: 8px;
     background-size: cover;
+    background-position: -100%;
 }
 
 .panel + .panel {
