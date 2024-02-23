@@ -1,5 +1,5 @@
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
-import { UnlockButtons } from "@/module/article/component/UnlockButtons";
+import { InjectUnlockComponent } from "@/module/article/component/Read/InjectUnlockComponent";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import type { ArticlePreparedForReading } from "@/type/Article";
 import { QueryProvider } from "@frak-wallet/sdk";
@@ -11,55 +11,8 @@ import type {
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import { useEffect, useState } from "react";
 import React from "react";
-import { createPortal } from "react-dom";
 import type { Hex } from "viem";
-import { ArticleContent } from "../ArticleContent";
-
-function InjectUnlockComponent({
-    prices,
-    unlockStatus,
-    userStatus,
-    article,
-}: {
-    prices: ArticlePriceForUser[];
-    unlockStatus: GetUnlockStatusResponse | UnlockRequestResult | undefined;
-    userStatus: GetUserStatusResponse | undefined;
-    article: ArticlePreparedForReading | undefined;
-}) {
-    const selectors = {
-        locked: { selector: ".lmd-paywall", position: "afterbegin" },
-        unlocked: { selector: ".article__reactions", position: "beforebegin" },
-    };
-    const currentSelector =
-        selectors[unlockStatus?.key === "valid" ? "unlocked" : "locked"];
-    const containerName = "frak-paywall";
-    let containerRoot = document.getElementById(containerName);
-    if (!containerRoot) {
-        const appRoot = document.createElement("div");
-        appRoot.id = containerName;
-        const element = document.querySelector(currentSelector.selector);
-        element?.insertAdjacentElement(
-            currentSelector.position as InsertPosition,
-            appRoot
-        );
-        containerRoot = document.getElementById(containerName);
-    }
-
-    if (!containerRoot) {
-        console.log("Element frak-paywall not found");
-        return;
-    }
-
-    return createPortal(
-        <UnlockButtons
-            prices={prices}
-            unlockStatus={unlockStatus}
-            userStatus={userStatus}
-            article={article}
-        />,
-        containerRoot
-    );
-}
+import styles from "./index.module.css";
 
 async function initQueryProvider() {
     // Create the iframe
@@ -90,9 +43,6 @@ export function ReadArticle({
     const [queryProvider, setQueryProvider] = useState<
         QueryProvider | undefined
     >(undefined);
-
-    // The article html data
-    const [data, setData] = useState<string | undefined>();
 
     // The injecting state for the unlock component
     const [injecting, setInjecting] = useState(false);
@@ -183,28 +133,6 @@ export function ReadArticle({
         });
     }, [article.id, queryProvider]);
 
-    // Load the article content
-    useEffect(() => {
-        if (!(article && unlockStatus)) {
-            return;
-        }
-        const isLocked = unlockStatus?.key !== "valid";
-
-        // Fetch and set the data of the article
-        setData(
-            isLocked ? article.rawLockedContent : article.rawUnlockedContent
-        );
-
-        // If not locked, scroll to top
-        !isLocked && window.scrollTo(0, 0);
-    }, [article, unlockStatus]);
-
-    // Inject the unlock component into article html
-    useEffect(() => {
-        if (!data) return;
-        setInjecting(true);
-    }, [data]);
-
     return (
         <>
             {injecting && (
@@ -215,8 +143,18 @@ export function ReadArticle({
                     article={article}
                 />
             )}
-            {data ? (
-                <ArticleContent data={data} />
+            {unlockStatus ? (
+                <iframe
+                    id="frak-article-iframe"
+                    title={"frak"}
+                    className={styles.readArticle__iframe}
+                    srcDoc={`${
+                        unlockStatus?.key !== "valid"
+                            ? article.rawLockedContent
+                            : article.rawUnlockedContent
+                    }`}
+                    onLoad={() => setInjecting(true)}
+                />
             ) : (
                 <div style={{ margin: "16px" }}>
                     <Skeleton />

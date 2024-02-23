@@ -14,7 +14,32 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 import { formatEther, fromHex } from "viem";
-import styles from "./index.module.css";
+
+const styles = {
+    unlockButtons: {
+        minHeight: "64px",
+        padding: "20px",
+        textAlign: "center" as const,
+    },
+    unlockButtons__logo: {
+        marginRight: "10px",
+    },
+    unlockButtons__list: {
+        display: "flex",
+        justifyContent: "center",
+        gap: "10px",
+        margin: "0",
+        padding: "0",
+        listStyle: "none",
+    },
+    unlockButtons__header_valid: {
+        marginTop: "20px",
+        backgroundColor: "#FFE38F",
+    },
+    unlockButtons__content_valid: {
+        backgroundColor: "#FFF6D3",
+    },
+};
 
 export function UnlockButtons({
     prices,
@@ -101,29 +126,22 @@ export function UnlockButtons({
         return "Loading";
     }
 
+    const stylesHeader =
+        unlockStatus?.key === "valid" ? styles.unlockButtons__header_valid : {};
+    const stylesContent =
+        unlockStatus?.key === "valid"
+            ? styles.unlockButtons__content_valid
+            : {};
+
     return (
         <>
-            <div
-                className={`lmd-paywall__header ${
-                    unlockStatus?.key === "valid"
-                        ? styles["unlockButtons__header--valid"]
-                        : ""
-                }`}
-            >
-                <FrakLogo className={styles.unlockButtons__logo} />
+            <div style={stylesHeader} className={"lmd-paywall__header"}>
+                <FrakLogo style={styles.unlockButtons__logo} />
                 {unlockStatus?.key === "not-unlocked" ? "Unlock" : "Unlocked"}{" "}
                 with Frak
             </div>
-            <div
-                className={`lmd-paywall__content ${
-                    unlockStatus?.key === "valid"
-                        ? styles["unlockButtons__content--valid"]
-                        : ""
-                }`}
-            >
-                <div
-                    className={`${styles.unlockButtons} ${styles["unlockButtons--le-monde"]}`}
-                >
+            <div style={stylesContent} className={"lmd-paywall__content"}>
+                <div style={styles.unlockButtons}>
                     <p className={"lmd-paywall__text"}>
                         {isInProgress ? (
                             <>
@@ -166,7 +184,7 @@ export function UnlockButtons({
                     </p>
 
                     {isLocked && !isInProgress && (
-                        <ul className={styles.unlockButtons__list}>
+                        <ul style={styles.unlockButtons__list}>
                             {prices.map((price) => {
                                 const priceInEther = Number(
                                     formatEther(BigInt(price.frkAmount))

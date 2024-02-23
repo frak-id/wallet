@@ -11,9 +11,11 @@ import type { Hex } from "viem";
 
 export default function ArticlePage() {
     return (
-        <Suspense fallback={<h1>Loading...</h1>}>
-            <ArticlePageComponent />
-        </Suspense>
+        <div id={"theme-article"}>
+            <Suspense fallback={<h1>Loading...</h1>}>
+                <ArticlePageComponent />
+            </Suspense>
+        </div>
     );
 }
 

@@ -5,14 +5,22 @@
     box-sizing: border-box;
 }
 
+body {
+    height: 100dvh;
+
+    & > div {
+        height: 100dvh;
+    }
+}
+
+html:has(body>div[id="theme-article"]) {
+    overflow: hidden;
+}
+
 ul {
     margin: 0;
     padding: 0;
     list-style: none;
-}
-
-#frak-paywall {
-    width: 100%;
 }
 
 .lmd-paywall__text {

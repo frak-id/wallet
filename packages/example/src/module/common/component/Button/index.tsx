@@ -48,6 +48,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref
     ) => {
         const variantClass = variant ? styles[variant] : styles.primary;
+        const variantStyles = {
+            padding: "13px 20px 13px 20px",
+            background: "#FFC700",
+            border: "none",
+            color: "#2A303B",
+            borderRadius: "3px",
+            cursor: "pointer",
+            "&:hover": {
+                background: "#eab002",
+            },
+        };
         const sizeClass = size ? styles[`size--${size}`] : styles["size--big"];
         const fontSizeClass = fontSize
             ? styles[`fontSize--${fontSize}`]
@@ -57,7 +68,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         } ${fontBold ? styles.fontBold : ""} ${fontSizeClass} ${className}`;
         const Comp = asChild ? Slot : "button";
         return (
-            <Comp className={allClassNames} ref={ref} {...props}>
+            <Comp
+                className={allClassNames}
+                ref={ref}
+                {...props}
+                style={variantStyles}
+            >
                 <>
                     {isLoading && <Loader className={styles.loader} />}
                     {LeftIcon && <LeftIcon className={styles.leftIcon} />}

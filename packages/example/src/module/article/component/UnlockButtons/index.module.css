@@ -12,15 +12,9 @@
     display: flex;
     justify-content: center;
     gap: 10px;
-}
-
-.unlockButtons__loader {
-    vertical-align: text-bottom;
-}
-
-.unlockButtons__buttonUnlock {
-    display: block;
-    margin: 0 auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .unlockButtons__header--valid {
