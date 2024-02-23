@@ -8,6 +8,9 @@ import type {
     ReactNode,
 } from "react";
 import styles from "./index.module.css";
+import css from "!!raw-loader!./index.module.css";
+
+export const cssRaw = css;
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?:
@@ -17,7 +20,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
         | "empty"
         | "submit"
         | "danger"
-        | "le-monde";
+        | "le-monde"
+        | "wired";
     fontNormal?: boolean;
     fontBold?: boolean;
     fontSize?: "small" | "normal" | "big";
@@ -48,31 +52,22 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref
     ) => {
         const variantClass = variant ? styles[variant] : styles.primary;
-        const variantStyles = {
-            padding: "13px 20px 13px 20px",
-            background: "#FFC700",
-            border: "none",
-            color: "#2A303B",
-            borderRadius: "3px",
-            cursor: "pointer",
-            "&:hover": {
-                background: "#eab002",
-            },
-        };
+        const variantClassRaw = variant ? variant : "primary";
         const sizeClass = size ? styles[`size--${size}`] : styles["size--big"];
+        const sizeClassRaw = size ? `size--${size}` : "size--big";
         const fontSizeClass = fontSize
             ? styles[`fontSize--${fontSize}`]
             : styles["fontSize--big"];
         const allClassNames = `${styles.button} ${variantClass} ${sizeClass} ${
             fontNormal ? styles.fontNormal : ""
         } ${fontBold ? styles.fontBold : ""} ${fontSizeClass} ${className}`;
+        const allClassNamesRaw = `frak-button frak-${variantClassRaw} frak-${sizeClassRaw}`;
         const Comp = asChild ? Slot : "button";
         return (
             <Comp
-                className={allClassNames}
+                className={`${allClassNames} ${allClassNamesRaw}`}
                 ref={ref}
                 {...props}
-                style={variantStyles}
             >
                 <>
                     {isLoading && <Loader className={styles.loader} />}

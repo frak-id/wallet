@@ -14,32 +14,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 import { formatEther, fromHex } from "viem";
+import css from "!!raw-loader!./index.module.css";
 
-const styles = {
-    unlockButtons: {
-        minHeight: "64px",
-        padding: "20px",
-        textAlign: "center" as const,
-    },
-    unlockButtons__logo: {
-        marginRight: "10px",
-    },
-    unlockButtons__list: {
-        display: "flex",
-        justifyContent: "center",
-        gap: "10px",
-        margin: "0",
-        padding: "0",
-        listStyle: "none",
-    },
-    unlockButtons__header_valid: {
-        marginTop: "20px",
-        backgroundColor: "#FFE38F",
-    },
-    unlockButtons__content_valid: {
-        backgroundColor: "#FFF6D3",
-    },
-};
+export const cssRaw = css;
 
 export function UnlockButtons({
     prices,
@@ -127,88 +104,84 @@ export function UnlockButtons({
     }
 
     const stylesHeader =
-        unlockStatus?.key === "valid" ? styles.unlockButtons__header_valid : {};
+        unlockStatus?.key === "valid" ? "unlockButtons__header--valid" : "";
     const stylesContent =
-        unlockStatus?.key === "valid"
-            ? styles.unlockButtons__content_valid
-            : {};
+        unlockStatus?.key === "valid" ? "unlockButtons__content--valid" : "";
 
     return (
-        <>
-            <div style={stylesHeader} className={"lmd-paywall__header"}>
-                <FrakLogo style={styles.unlockButtons__logo} />
-                {unlockStatus?.key === "not-unlocked" ? "Unlock" : "Unlocked"}{" "}
-                with Frak
+        <div className={`unlockButtons unlockButtons--${article.provider}`}>
+            <div className={`unlockButtons__header ${stylesHeader}`}>
+                <FrakLogo className={"unlockButtons__logo"} />
+                {unlockStatus?.key === "valid" ? "Unlocked" : "Unlock"} with
+                Frak
             </div>
-            <div style={stylesContent} className={"lmd-paywall__content"}>
-                <div style={styles.unlockButtons}>
-                    <p className={"lmd-paywall__text"}>
-                        {isInProgress ? (
-                            <>
-                                {getMessages()}{" "}
-                                <span className={"dotsLoading"}>...</span>
-                            </>
-                        ) : (
-                            <>
-                                {isLocked && (
-                                    <>
-                                        {userStatus?.key === "not-logged-in" ? (
-                                            <>
-                                                A Frak account will be created
-                                                during the unlock process.
-                                            </>
-                                        ) : (
-                                            <>
-                                                You are logged in with{" "}
-                                                {formatHash(userStatus?.wallet)}
-                                                <br />
-                                                You have {balance} FRK
-                                            </>
-                                        )}
-                                    </>
-                                )}
-                                {unlockStatus?.key === "valid" && (
-                                    <>
-                                        You have access to this article until{" "}
-                                        <strong>
-                                            {new Date(
-                                                unlockStatus?.allowedUntil
-                                            ).toLocaleString()}
-                                        </strong>
-                                    </>
-                                )}
-                                {/*{unlockStatus?.key === "error" &&
+            <div className={`unlockButtons__content ${stylesContent}`}>
+                <p className={"unlockButtons__text"}>
+                    {isInProgress ? (
+                        <>
+                            {getMessages()}{" "}
+                            <span className={"dotsLoading"}>...</span>
+                        </>
+                    ) : (
+                        <>
+                            {isLocked && (
+                                <>
+                                    {userStatus?.key === "not-logged-in" ? (
+                                        <>
+                                            A Frak account will be created
+                                            during the unlock process.
+                                        </>
+                                    ) : (
+                                        <>
+                                            You are logged in with{" "}
+                                            {formatHash(userStatus?.wallet)}
+                                            <br />
+                                            You have {balance} FRK
+                                        </>
+                                    )}
+                                </>
+                            )}
+                            {unlockStatus?.key === "valid" && (
+                                <>
+                                    You have access to this article until{" "}
+                                    <strong>
+                                        {new Date(
+                                            unlockStatus?.allowedUntil
+                                        ).toLocaleString()}
+                                    </strong>
+                                </>
+                            )}
+                            {/*{unlockStatus?.key === "error" &&
                                     unlockStatus?.reason}*/}
-                            </>
-                        )}
-                    </p>
-
-                    {isLocked && !isInProgress && (
-                        <ul style={styles.unlockButtons__list}>
-                            {prices.map((price) => {
-                                const priceInEther = Number(
-                                    formatEther(BigInt(price.frkAmount))
-                                );
-                                return (
-                                    <li key={price.index}>
-                                        <ButtonUnlockArticle
-                                            disabled={
-                                                userStatus?.key ===
-                                                    "logged-in" &&
-                                                Number(balance) < priceInEther
-                                            }
-                                            price={price}
-                                            doUnlockArticle={() =>
-                                                setArticlePrice(price)
-                                            }
-                                        />
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                        </>
                     )}
-                </div>
+                </p>
+
+                {isLocked && !isInProgress && (
+                    <ul className={"unlockButtons__list"}>
+                        {prices.map((price) => {
+                            const priceInEther = Number(
+                                formatEther(BigInt(price.frkAmount))
+                            );
+                            return (
+                                <li key={price.index}>
+                                    <ButtonUnlockArticle
+                                        provider={article.provider}
+                                        disabled={
+                                            userStatus?.key === "logged-in" &&
+                                            Number(balance) < priceInEther
+                                        }
+                                        price={price}
+                                        doUnlockArticle={() =>
+                                            setArticlePrice(price)
+                                        }
+                                    />
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
             </div>
-        </>
+        </div>
     );
 }

@@ -1,4 +1,4 @@
-.button {
+.button, .frak-button {
     box-sizing: border-box;
     text-align: center;
     cursor: pointer;
@@ -8,25 +8,31 @@
     line-height: 1.5;
 }
 
-.button > svg {
+.button > svg, .frak-button > svg {
     vertical-align: middle;
 }
 
-.button:disabled {
+.button:disabled, .frak-button:disabled {
     background-color: var(--frak-button-disabled-background-color);
     color: var(--frak-button-disabled-text-color);
     cursor: not-allowed;
 }
 
-.button:disabled:hover {
-    background-color: var(--frak-button-disabled-background-color);
+.frak-button:disabled {
+    background-color: rgba(129, 140, 156, 0.34);
+    color: #818c9c;
+    cursor: not-allowed;
+}
+
+.frak-button:disabled:hover {
+    background-color: rgba(129, 140, 156, 0.34);
 }
 
 .size--none {
     padding: 0;
 }
 
-.size--small {
+.size--small, .frak-size--small {
     padding: 6px 10px;
 }
 
@@ -34,7 +40,7 @@
     padding: 6px 15px;
 }
 
-.size--big {
+.size--big, .frak-size--big {
     padding: 6px 22px;
 }
 
@@ -46,7 +52,7 @@
     margin-left: 8px;
 }
 
-.primary {
+.primary, .frak-primary {
     background: var(--frak-button-primary-background-color);
     border: 1px solid var(--frak-button-primary-border-color);
 }
@@ -69,18 +75,6 @@
 .danger {
     background: var(--frak-button-danger-background-color);
     border: 1px solid var(--frak-button-danger-border-color);
-}
-
-.le-monde {
-    padding: 13px 20px 13px 20px;
-    background: #FFC700;
-    border: none;
-    color: #2A303B;
-    border-radius: 3px;
-}
-
-.le-monde:hover {
-    background-color: #eab002;
 }
 
 .fontNormal {
@@ -106,4 +100,39 @@
 
 .fontSize--big {
     font-size: 16px;
+}
+
+.frak-le-monde {
+    padding: 10px 24px;
+    background: #ffc700;
+    border: none;
+    color: #2a303b;
+    border-radius: 3px;
+    font-family: Marr Sans, Arial, Roboto, sans-serif;
+    font-size: 16px;
+}
+
+.frak-le-monde:hover {
+    background-color: #eab002;
+}
+
+.frak-wired {
+    padding: 10px 24px;
+    background-color: rgb(5, 125, 188);
+    font-family: Apercu, helvetica, sans-serif;
+    letter-spacing: 0.1em;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 4px;
+    color: rgb(255, 255, 255);
+    transition-property: color, background, text-shadow;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
+    text-transform: uppercase;
+}
+
+.frak-wired:hover {
+    text-decoration: none;
+    background-color: rgb(117, 117, 117);
+    outline: 0;
 }

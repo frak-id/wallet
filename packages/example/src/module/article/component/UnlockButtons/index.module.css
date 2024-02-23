@@ -1,11 +1,23 @@
-.unlockButtons {
-    min-height: 64px;
-    padding: 20px;
-    text-align: center;
+.unlockButtons__header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: .8rem 1.6rem;
+    height: 3rem;
 }
 
 .unlockButtons__logo {
     margin-right: 10px;
+}
+
+.unlockButtons__content {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 64px;
+    padding: 20px;
+    text-align: center;
 }
 
 .unlockButtons__list {
@@ -17,11 +29,64 @@
     list-style: none;
 }
 
-.unlockButtons__header--valid {
-    margin-top: 20px;
-    background: #FFE38F !important;
+.unlockButtons__text {
+    font-size: 30px;
+    line-height: 36px;
+    font-weight: 500;
+    letter-spacing: .02rem;
+    margin-bottom: 16px;
+    max-width: 47rem;
+    text-align: center;
 }
 
-.unlockButtons__content--valid {
-    background: #FFF6D3 !important;
+/**
+ * Le Monde
+ */
+.unlockButtons--le-monde .unlockButtons__header {
+    color: #454f5f;
+    font-family: Marr Sans, Arial, Roboto, sans-serif;
+    background-color: #ffe38f;
+    font-size: 14px;
+}
+
+.unlockButtons--le-monde .unlockButtons__header--valid {
+    margin-top: 20px;
+}
+
+.unlockButtons--le-monde .unlockButtons__content {
+    font-family: The Antiqua B, Georgia, Droid-serif, serif;
+    background-color: #fff6d3;
+}
+
+.unlockButtons--le-monde .unlockButtons__text {
+    color: #2a303b;
+}
+
+/**
+ * Wired
+ */
+@media (min-width: 1024px) {
+    .gncDne {
+        height: auto;
+    }
+}
+
+@media (min-width: 768px) and (max-width: calc(1023px)) {
+    .gncDne {
+        height: auto;
+    }
+}
+
+@media (max-width: calc(767px)) {
+    .gncDne {
+        height: auto;
+    }
+
+    .dkAtsv {
+        flex-direction: column;
+    }
+
+    .ifcKKK {
+        max-height: 100%;
+    }
 }
