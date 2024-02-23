@@ -5,9 +5,10 @@ export type ArticleDocument = Readonly<{
     _id: Hex;
     // The content id linked to this article
     contentId: Hex;
-    // The title of the article
+    // The initial provider of this article
+    provider: "le-monde" | "wired";
+    // The title and description of the article
     title: string;
-    // The description of the article
     description?: string;
     // The link to access this article
     link: string;

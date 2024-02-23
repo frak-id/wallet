@@ -41,6 +41,7 @@ function mapArticleDocument(document: ArticleDocument): Article {
     return {
         id: document._id,
         contentId: document.contentId,
+        provider: document.provider,
         title: document.title,
         description: document.description,
         link: document.link,
