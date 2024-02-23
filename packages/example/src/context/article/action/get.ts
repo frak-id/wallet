@@ -7,12 +7,23 @@ import { all } from "radash";
 import type { Hex } from "viem";
 
 /**
+ * Small in memory cache for already fetched articles
+ */
+const preparedArticleCache = new Map<Hex, ArticlePreparedForReading>();
+
+/**
  * Find an article by its id
  * @param id
  */
 export async function getArticleReadyToRead(
     id: Hex
 ): Promise<ArticlePreparedForReading | null> {
+    // Check if the article is already in the cache
+    const cachedArticle = preparedArticleCache.get(id);
+    if (cachedArticle) {
+        return cachedArticle;
+    }
+
     const articleRepository = await getArticleRepository();
     const articleDocument = await articleRepository.getById(id);
     if (!articleDocument) {
@@ -34,10 +45,17 @@ export async function getArticleReadyToRead(
         ),
     });
 
-    return {
+    // Build our final prepared article
+    const preparedArticle: ArticlePreparedForReading = {
         ...mappedArticle,
         ...rawContents,
     };
+
+    // Cache the prepared article
+    preparedArticleCache.set(id, preparedArticle);
+
+    // And return it
+    return preparedArticle;
 }
 
 /**

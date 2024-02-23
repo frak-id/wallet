@@ -39,7 +39,7 @@ export function ExampleAppStack({ stack }: StackContext) {
         logging: "combined",
         openNextVersion: "2.3.6",
         // Number of server side instance to keep warm
-        warm: 3,
+        warm: 10,
     });
 
     stack.addOutputs({

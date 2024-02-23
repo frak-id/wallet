@@ -45,7 +45,7 @@ export function WalletAppStack({ stack }: StackContext) {
         logging: "combined",
         openNextVersion: "2.3.6",
         // Number of server side instance to keep warm
-        warm: 3,
+        warm: 20,
     });
 
     stack.addOutputs({
