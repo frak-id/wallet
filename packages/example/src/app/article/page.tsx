@@ -2,6 +2,7 @@
 
 import { getArticle } from "@/context/article/action/get";
 import { ReadArticle } from "@/module/article/component/Read";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import { parseUnlockRequestResult } from "@frak-wallet/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
@@ -65,7 +66,11 @@ function ArticlePageComponent() {
 
     // If we are loading display another component
     if (isFetchingArticle) {
-        return <h1>Loading...</h1>;
+        return (
+            <div style={{ margin: "16px" }}>
+                <Skeleton />
+            </div>
+        );
     }
 
     // If no article found display a component

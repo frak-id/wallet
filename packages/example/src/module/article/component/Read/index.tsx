@@ -1,5 +1,6 @@
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { UnlockButtons } from "@/module/article/component/UnlockButtons";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import type { Article } from "@/type/Article";
 import { QueryProvider } from "@frak-wallet/sdk";
 import type {
@@ -220,7 +221,13 @@ export function ReadArticle({
                     article={article}
                 />
             )}
-            <ArticleContent data={data} />
+            {data ? (
+                <ArticleContent data={data} />
+            ) : (
+                <div style={{ margin: "16px" }}>
+                    <Skeleton />
+                </div>
+            )}
         </>
     );
 }
