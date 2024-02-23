@@ -167,20 +167,26 @@ export function UnlockButtons({
 
                     {isLocked && !isInProgress && (
                         <ul className={styles.unlockButtons__list}>
-                            {prices.map((price) => (
-                                <li key={price.index}>
-                                    <ButtonUnlockArticle
-                                        disabled={
-                                            userStatus?.key === "logged-in" &&
-                                            balance < price.frkAmount
-                                        }
-                                        price={price}
-                                        doUnlockArticle={() =>
-                                            setArticlePrice(price)
-                                        }
-                                    />
-                                </li>
-                            ))}
+                            {prices.map((price) => {
+                                const priceInEther = Number(
+                                    formatEther(BigInt(price.frkAmount))
+                                );
+                                return (
+                                    <li key={price.index}>
+                                        <ButtonUnlockArticle
+                                            disabled={
+                                                userStatus?.key ===
+                                                    "logged-in" &&
+                                                Number(balance) < priceInEther
+                                            }
+                                            price={price}
+                                            doUnlockArticle={() =>
+                                                setArticlePrice(price)
+                                            }
+                                        />
+                                    </li>
+                                );
+                            })}
                         </ul>
                     )}
                 </div>

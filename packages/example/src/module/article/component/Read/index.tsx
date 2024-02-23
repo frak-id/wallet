@@ -61,11 +61,7 @@ function InjectUnlockComponent({
 }
 
 async function loadArticle({ url }: { url: string }) {
-    const fetching = await fetch(
-        process.env.IS_LOCAL === "true"
-            ? url.replace("https://news-example.frak.id/", "/")
-            : url
-    );
+    const fetching = await fetch(url);
     return await fetching.text();
 }
 
