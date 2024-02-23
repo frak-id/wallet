@@ -1,10 +1,10 @@
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Newsreader } from "next/font/google";
 import type { ReactNode } from "react";
 
-const inter = Inter({ subsets: ["latin"] });
+const newsReader = Newsreader({ subsets: ["latin"] });
 
 export const metadata = {
     title: "Frak NewsPaper - Example",
@@ -41,7 +41,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={inter.className}>
+            <body className={newsReader.className}>
                 <RootProvider>{children}</RootProvider>
             </body>
         </html>

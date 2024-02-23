@@ -1,20 +1,26 @@
-import { ArticleList } from "@/module/article/component/List/ArticleList";
+import { ArticlesList } from "@/module/article/component/ArticlesList";
+import styles from "./page.module.css";
 
 export default function HomePage() {
     return (
-        <div>
-            <h1>Example interaction with Frak wallet</h1>
-            <p>
-                Welcome to the Frak Wallet example. This is a simple example
-                showcasing the possible interaction with the Frak wallet.
-            </p>
+        <div className={styles.container}>
+            <header className={styles.header}>
+                <h1 className={styles.title}>Frak news</h1>
+            </header>
+            <main>
+                <p className={styles.introduction}>
+                    Demo news paper website showcasing possible integration
+                    within the Frak ecosystem
+                </p>
 
-            <br />
-            <br />
-
-            <p>Explore a few of our articles</p>
-
-            <ArticleList />
+                <ArticlesList />
+            </main>
+            <footer className={styles.footer}>
+                2024 -{" "}
+                <a href={"https://frak.id"} target={"_blank"} rel="noreferrer">
+                    Frak-labs
+                </a>
+            </footer>
         </div>
     );
 }

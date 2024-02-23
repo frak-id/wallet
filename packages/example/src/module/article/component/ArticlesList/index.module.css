@@ -1,0 +1,17 @@
+.articlesList__item {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 64px;
+    text-decoration: none;
+}
+
+.articlesList__title {
+    font-size: 18px;
+    color: #0D141C;
+}
+
+.articlesList__description {
+    font-size: 16px;
+    color: #4F7396;
+}

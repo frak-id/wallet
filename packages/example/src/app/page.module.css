@@ -1,0 +1,36 @@
+.container {
+    margin: auto;
+    max-width: 590px;
+    padding: 16px;
+}
+
+.header {
+    padding: 16px;
+    text-align: center;
+    font-size: 18px;
+}
+
+.title {
+    font-size: 18px;
+    color: #0D141C;
+}
+
+.introduction {
+    margin-bottom: 64px;
+    padding: 20px 0;
+    font-size: 22px;
+    font-weight: 500;
+    color: #0D141C;
+}
+
+.footer {
+    padding: 40px 20px;
+    text-align: center;
+    font-size: 16px;
+    color: #4F7396;
+}
+
+.footer a {
+    color: #4F7396;
+    text-decoration: none;
+}

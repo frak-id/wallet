@@ -1,0 +1,10 @@
+.skeleton {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    border-radius: 8px;
+}
+
+.skeleton + .skeleton {
+    margin-top: 64px;
+}

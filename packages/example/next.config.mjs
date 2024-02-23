@@ -22,6 +22,9 @@ const nextConfig = {
         removeConsole: Config.STAGE === "prod",
     },
     output: "standalone",
+    images: {
+        domains: ["localhost", "news-example.frak.id"],
+    },
 };
 
 export default nextConfig;
