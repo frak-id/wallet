@@ -1,7 +1,7 @@
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import { Skeleton } from "@/module/common/component/Skeleton";
-import type { Article } from "@/type/Article";
+import type { ArticlePreparedForReading } from "@/type/Article";
 import { QueryProvider } from "@frak-wallet/sdk";
 import type {
     GetUnlockStatusResponse,
@@ -24,7 +24,7 @@ function InjectUnlockComponent({
     prices: ArticlePriceForUser[];
     unlockStatus: GetUnlockStatusResponse | UnlockRequestResult | undefined;
     userStatus: GetUserStatusResponse | undefined;
-    article: Article | undefined;
+    article: ArticlePreparedForReading | undefined;
 }) {
     const selectors = {
         locked: { selector: ".lmd-paywall", position: "afterbegin" },
@@ -61,11 +61,6 @@ function InjectUnlockComponent({
     );
 }
 
-async function loadArticle({ url }: { url: string }) {
-    const fetching = await fetch(url);
-    return await fetching.text();
-}
-
 async function initQueryProvider() {
     // Create the iframe
     const iframe = await QueryProvider.createIframe({
@@ -88,7 +83,7 @@ export function ReadArticle({
     article,
     unlockStatusRequest,
 }: {
-    article: Article;
+    article: ArticlePreparedForReading;
     unlockStatusRequest: UnlockRequestResult | undefined;
 }) {
     // Init our query provider
@@ -194,15 +189,14 @@ export function ReadArticle({
             return;
         }
         const isLocked = unlockStatus?.key !== "valid";
-        loadArticle({
-            url: isLocked
-                ? article.lockedContentUrl
-                : article.unlockedContentUrl,
-        }).then((data) => {
-            setData(data);
-            // If not locked, scroll to top
-            !isLocked && window.scrollTo(0, 0);
-        });
+
+        // Fetch and set the data of the article
+        setData(
+            isLocked ? article.rawLockedContent : article.rawUnlockedContent
+        );
+
+        // If not locked, scroll to top
+        !isLocked && window.scrollTo(0, 0);
     }, [article, unlockStatus]);
 
     // Inject the unlock component into article html

@@ -1,6 +1,6 @@
 "use client";
 
-import { getArticle } from "@/context/article/action/get";
+import { getArticleReadyToRead } from "@/context/article/action/get";
 import { ReadArticle } from "@/module/article/component/Read";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { parseUnlockRequestResult } from "@frak-wallet/sdk";
@@ -34,7 +34,7 @@ function ArticlePageComponent() {
             if (!articleId) {
                 throw new Error("Invalid article id");
             }
-            return getArticle(articleId);
+            return getArticleReadyToRead(articleId);
         },
         enabled: !!articleId,
     });

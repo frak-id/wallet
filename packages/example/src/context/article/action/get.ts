@@ -2,20 +2,42 @@
 
 import type { ArticleDocument } from "@/context/article/dto/ArticleDocument";
 import { getArticleRepository } from "@/context/article/repository/ArticleRepository";
-import type { Article } from "@/type/Article";
+import type { Article, ArticlePreparedForReading } from "@/type/Article";
+import { all } from "radash";
 import type { Hex } from "viem";
 
 /**
  * Find an article by its id
  * @param id
  */
-export async function getArticle(id: Hex): Promise<Article | null> {
+export async function getArticleReadyToRead(
+    id: Hex
+): Promise<ArticlePreparedForReading | null> {
     const articleRepository = await getArticleRepository();
     const articleDocument = await articleRepository.getById(id);
     if (!articleDocument) {
         return null;
     }
-    return mapArticleDocument(articleDocument);
+    const mappedArticle = mapArticleDocument(articleDocument);
+
+    // Populate the content of the articles
+    const urlToArticleContent = async (url: string) => {
+        const fetching = await fetch(url);
+        return await fetching.text();
+    };
+
+    // Fetch the raw content of the article
+    const rawContents = await all({
+        rawLockedContent: urlToArticleContent(mappedArticle.lockedContentUrl),
+        rawUnlockedContent: urlToArticleContent(
+            mappedArticle.unlockedContentUrl
+        ),
+    });
+
+    return {
+        ...mappedArticle,
+        ...rawContents,
+    };
 }
 
 /**
