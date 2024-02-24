@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@frak-labs/nexus-sdk": "workspace:*",
+    "@aarc-xyz/deposit-widget": "^0.0.6",
     "@peculiar/asn1-ecc": "^2.3.8",
     "@peculiar/asn1-schema": "^2.3.8",
     "@permissionless/wagmi": "^0.0.4",
