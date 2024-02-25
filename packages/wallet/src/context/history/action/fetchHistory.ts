@@ -15,6 +15,7 @@ import type {
     FrkReceived,
     HistoryItem,
 } from "@/types/HistoryItem";
+import { unstable_cache } from "next/cache";
 import { map, sort } from "radash";
 import { type Address, type Hash, formatEther, toHex } from "viem";
 import { getBlock, getLogs } from "viem/actions";
@@ -30,7 +31,7 @@ const initialBlock = 45609416n;
  *   - In a non POC world, this shouldn't use getLogs, but instead use an indexed database like thegraph or pounder.sh
  * @param account
  */
-export async function fetchWalletHistory({
+async function _fetchWalletHistory({
     account,
 }: { account: Address }): Promise<HistoryItem[]> {
     // Get the paid item unlocked events for a user
@@ -106,6 +107,18 @@ export async function fetchWalletHistory({
     const allItems = [...unlockedItems, ...frkReceivedItems];
     return sort(allItems, (item) => Number(item.blockNumber), true);
 }
+
+/**
+ * Cached version of the wallet history fetch
+ */
+export const fetchWalletHistory = unstable_cache(
+    _fetchWalletHistory,
+    ["fetch-wallet-history"],
+    {
+        // Keep that in server cache for 2min
+        revalidate: 120,
+    }
+);
 
 /**
  * Get the timestamp of the given block

@@ -3,6 +3,7 @@
 import type { ArticleDocument } from "@/context/article/dto/ArticleDocument";
 import { getArticleRepository } from "@/context/article/repository/ArticleRepository";
 import type { Article, ArticlePreparedForReading } from "@/type/Article";
+import { unstable_cache } from "next/cache";
 import { all } from "radash";
 import type { Hex } from "viem";
 
@@ -15,7 +16,7 @@ const preparedArticleCache = new Map<Hex, ArticlePreparedForReading>();
  * Find an article by its id
  * @param id
  */
-export async function getArticleReadyToRead(
+async function _getArticleReadyToRead(
     id: Hex
 ): Promise<ArticlePreparedForReading | null> {
     // Check if the article is already in the cache
@@ -59,9 +60,21 @@ export async function getArticleReadyToRead(
 }
 
 /**
+ * Cached version of the article to read fetch
+ */
+export const getArticleReadyToRead = unstable_cache(
+    _getArticleReadyToRead,
+    ["get-article-ready-to-read"],
+    {
+        // Keep that in server cache for 1 hour
+        revalidate: 3600,
+    }
+);
+
+/**
  * Get all the articles
  */
-export async function getAllArticles() {
+async function _getAllArticles() {
     const isLocal = process.env.IS_LOCAL === "true";
 
     const articleRepository = await getArticleRepository();
@@ -76,6 +89,18 @@ export async function getAllArticles() {
 
     return filteredDocuments.map(mapArticleDocument);
 }
+
+/**
+ * Cached version of the articles fetch
+ */
+export const getAllArticles = unstable_cache(
+    _getAllArticles,
+    ["get-all-articles"],
+    {
+        // Keep that in server cache for 1 hour
+        revalidate: 3600,
+    }
+);
 
 function mapArticleDocument(document: ArticleDocument): Article {
     return {

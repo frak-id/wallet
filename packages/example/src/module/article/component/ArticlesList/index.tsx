@@ -12,7 +12,6 @@ export function ArticlesList() {
     const { data: articles, isPending: isLoading } = useQuery({
         queryKey: ["articles"],
         queryFn: () => getAllArticles(),
-        refetchInterval: 300_000,
     });
 
     // List all the articles

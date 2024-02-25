@@ -7,6 +7,7 @@ import {
 import { frakTokenAbi, paywallAbi } from "@/context/common/blockchain/frak-abi";
 import { viemClient } from "@/context/common/blockchain/provider";
 import type { ArticlePrice, ArticlePriceForUser } from "@/types/Price";
+import { unstable_cache } from "next/cache";
 import { type Hex, toHex } from "viem";
 import { readContract } from "viem/actions";
 
@@ -14,7 +15,7 @@ import { readContract } from "viem/actions";
  * Get the prices for an article on the given `contentId`
  * @param contentId
  */
-async function getArticlePrices({
+async function _getArticlePrices({
     contentId,
 }: { contentId: Hex }): Promise<ArticlePrice[]> {
     // Read all the prices from the blockchain
@@ -37,9 +38,20 @@ async function getArticlePrices({
 }
 
 /**
+ * Cached version of the article prices fetch
+ */
+const getArticlePrices = unstable_cache(
+    _getArticlePrices,
+    ["get-article-prices"],
+    {
+        revalidate: 3600,
+    }
+);
+
+/**
  * Get the article prices for a user
  */
-export async function getArticlePricesForUser({
+async function _getArticlePricesForUser({
     contentId,
     articleId,
     address,
@@ -87,12 +99,24 @@ export async function getArticlePricesForUser({
 }
 
 /**
+ * Cached version of the article prices for user fetch
+ */
+export const getArticlePricesForUser = unstable_cache(
+    _getArticlePricesForUser,
+    ["get-article-prices-for-user"],
+    {
+        // Keep that in cache for 30 seconds
+        revalidate: 30,
+    }
+);
+
+/**
  * Get an up to date price for a given article
  * TODO: Should expose a simpler blockchain method maybe?
  * @param contentId
  * @param priceIndex
  */
-export async function getArticlePrice({
+async function _getArticlePrice({
     contentId,
     priceIndex,
 }: { contentId: Hex; priceIndex: number }): Promise<ArticlePrice | null> {
@@ -117,3 +141,15 @@ export async function getArticlePrice({
         unlockDurationInSec: Number(price.allowanceTime),
     };
 }
+
+/**
+ * Cached version of the article price fetch
+ */
+export const getArticlePrice = unstable_cache(
+    _getArticlePrice,
+    ["get-article-price"],
+    {
+        // Keep in cache for an hour
+        revalidate: 3600,
+    }
+);
