@@ -16,7 +16,7 @@ export type GetTokenMetadataParams = {
  * @param client
  * @param args
  */
-export async function getBalances<
+export async function getTokenMetadata<
     TChain extends Chain | undefined,
     TAccount extends Account | undefined = undefined,
 >(
