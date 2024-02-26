@@ -23,7 +23,16 @@ const nextConfig = {
     },
     output: "standalone",
     images: {
-        domains: ["localhost", "news-example.frak.id"],
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "news-example.frak.id",
+            },
+            {
+                protocol: "http",
+                hostname: "localhost",
+            },
+        ],
     },
 };
 
