@@ -15,8 +15,8 @@ import type {
     FrkReceived,
     HistoryItem,
 } from "@/types/HistoryItem";
-import { unstable_cache } from "next/cache";
 import { map, sort } from "radash";
+import { cache } from "react";
 import { type Address, type Hash, formatEther, toHex } from "viem";
 import { getBlock, getLogs } from "viem/actions";
 
@@ -111,14 +111,7 @@ async function _fetchWalletHistory({
 /**
  * Cached version of the wallet history fetch
  */
-export const fetchWalletHistory = unstable_cache(
-    _fetchWalletHistory,
-    ["fetch-wallet-history"],
-    {
-        // Keep that in server cache for 2min
-        revalidate: 120,
-    }
-);
+export const fetchWalletHistory = cache(_fetchWalletHistory);
 
 /**
  * Get the timestamp of the given block

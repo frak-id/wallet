@@ -3,8 +3,8 @@
 import type { ArticleDocument } from "@/context/article/dto/ArticleDocument";
 import { getArticleRepository } from "@/context/article/repository/ArticleRepository";
 import type { Article, ArticlePreparedForReading } from "@/type/Article";
-import { unstable_cache } from "next/cache";
 import { all } from "radash";
+import { cache } from "react";
 import type { Hex } from "viem";
 
 /**
@@ -62,14 +62,7 @@ async function _getArticleReadyToRead(
 /**
  * Cached version of the article to read fetch
  */
-export const getArticleReadyToRead = unstable_cache(
-    _getArticleReadyToRead,
-    ["get-article-ready-to-read"],
-    {
-        // Keep that in server cache for 1 hour
-        revalidate: 3600,
-    }
-);
+export const getArticleReadyToRead = cache(_getArticleReadyToRead);
 
 /**
  * Get all the articles
@@ -93,14 +86,7 @@ async function _getAllArticles() {
 /**
  * Cached version of the articles fetch
  */
-export const getAllArticles = unstable_cache(
-    _getAllArticles,
-    ["get-all-articles"],
-    {
-        // Keep that in server cache for 1 hour
-        revalidate: 3600,
-    }
-);
+export const getAllArticles = cache(_getAllArticles);
 
 function mapArticleDocument(document: ArticleDocument): Article {
     return {
