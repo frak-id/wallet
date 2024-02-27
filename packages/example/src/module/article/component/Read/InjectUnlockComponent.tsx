@@ -21,7 +21,10 @@ const selectorsWired = {
         selector: ".PaywallBarContentContainer-geBYFf",
         position: "afterbegin",
     },
-    unlocked: { selector: ".article__reactions", position: "beforebegin" },
+    unlocked: {
+        selector: ".body__inline-barrier",
+        position: "afterbegin",
+    },
 };
 
 function getSelectors(provider: Article["provider"]) {
