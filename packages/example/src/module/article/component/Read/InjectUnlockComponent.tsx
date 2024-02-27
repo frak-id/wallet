@@ -44,7 +44,6 @@ function findSelector(
         currentSelector.selector
     );
     if (!element) {
-        console.log(`Selector ${currentSelector.selector} not found`);
         return null;
     }
     return element;
@@ -80,7 +79,6 @@ export function InjectUnlockComponent({
         const interval = setInterval(() => {
             const found = findSelector(currentSelector, articleIframeDocument);
             if (found) {
-                console.log("found", found);
                 clearInterval(interval);
                 clearTimeout(timeout);
                 setElement(found);
