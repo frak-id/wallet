@@ -1,6 +1,5 @@
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
-import { useCopyToClipboard } from "@uidotdev/usehooks";
-import { useEffect, useState } from "react";
+import { useCopyAddress } from "@/module/wallet/hooks/useCopyAddress";
 import styles from "./index.module.css";
 
 type WalletAddressProps = {
@@ -8,30 +7,16 @@ type WalletAddressProps = {
 };
 
 export function WalletAddress({ wallet }: WalletAddressProps) {
-    const [copied, setCopied] = useState(false);
-    const [, copyToClipboard] = useCopyToClipboard();
-
-    useEffect(() => {
-        if (copied) {
-            setTimeout(() => {
-                setCopied(false);
-            }, 2000);
-        }
-    }, [copied]);
+    const { copied, copyAddress } = useCopyAddress();
 
     if (!wallet) return null;
     return (
         <button
             type={"button"}
             className={styles.walletAddress}
-            onClick={() => {
-                if (!copied) {
-                    copyToClipboard(wallet);
-                    setCopied(true);
-                }
-            }}
+            onClick={() => copyAddress(wallet)}
         >
-            {copied ? <>copied</> : formatHash(wallet)}
+            {copied ? "Copied!" : formatHash(wallet)}
         </button>
     );
 }

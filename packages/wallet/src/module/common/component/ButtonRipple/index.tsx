@@ -4,6 +4,7 @@ import styles from "./index.module.css";
 
 type AuthFingerprintProps = {
     onClick?: () => void;
+    timeout?: number;
     disabled?: boolean;
     icon?: ReactNode;
     className?: string;
@@ -40,6 +41,7 @@ export function ButtonRipple({
     children,
     disabled,
     onClick,
+    timeout = 0,
     className = "",
     size,
 }: PropsWithChildren<AuthFingerprintProps>) {
@@ -51,7 +53,7 @@ export function ButtonRipple({
             disabled={disabled}
             onClick={(event) => {
                 createRipple(event);
-                onClick?.();
+                setTimeout(() => onClick?.(), timeout);
             }}
         >
             {children}
