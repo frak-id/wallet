@@ -1,3 +1,4 @@
+import css from "!!raw-loader!./index.module.css";
 import { Loader } from "@/assets/icons/Loader";
 import { Slot } from "@radix-ui/react-slot";
 import { cloneElement, forwardRef, isValidElement } from "react";
@@ -8,7 +9,6 @@ import type {
     ReactNode,
 } from "react";
 import styles from "./index.module.css";
-import css from "!!raw-loader!./index.module.css";
 
 export const cssRaw = css;
 

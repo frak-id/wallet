@@ -19,6 +19,7 @@ const preparedArticleCache = new Map<Hex, ArticlePreparedForReading>();
 async function _getArticleReadyToRead(
     id: Hex
 ): Promise<ArticlePreparedForReading | null> {
+    console.log("Fetching article", id);
     // Check if the article is already in the cache
     const cachedArticle = preparedArticleCache.get(id);
     if (cachedArticle) {
