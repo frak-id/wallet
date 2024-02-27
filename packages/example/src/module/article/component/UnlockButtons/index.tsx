@@ -1,4 +1,3 @@
-import css from "!!raw-loader!./index.module.css";
 import { FrakLogo } from "@/assets/icons/FrakLogo";
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
@@ -15,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 import { formatEther, fromHex } from "viem";
+import css from "!!raw-loader!./index.module.css";
 
 export const cssRaw = css;
 

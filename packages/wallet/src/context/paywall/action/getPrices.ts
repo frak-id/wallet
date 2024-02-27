@@ -7,7 +7,7 @@ import {
 import { frakTokenAbi, paywallAbi } from "@/context/common/blockchain/frak-abi";
 import { viemClient } from "@/context/common/blockchain/provider";
 import type { ArticlePrice, ArticlePriceForUser } from "@/types/Price";
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { type Hex, toHex } from "viem";
 import { readContract } from "viem/actions";
 
@@ -40,7 +40,13 @@ async function _getArticlePrices({
 /**
  * Cached version of the article prices fetch
  */
-const getArticlePrices = cache(_getArticlePrices);
+const getArticlePrices = unstable_cache(
+    _getArticlePrices,
+    ["get-article-prices"],
+    {
+        revalidate: 3600,
+    }
+);
 
 /**
  * Get the article prices for a user
@@ -95,7 +101,14 @@ async function _getArticlePricesForUser({
 /**
  * Cached version of the article prices for user fetch
  */
-export const getArticlePricesForUser = cache(_getArticlePricesForUser);
+export const getArticlePricesForUser = unstable_cache(
+    _getArticlePricesForUser,
+    ["get-article-prices-for-user"],
+    {
+        // Keep that in cache for 30 seconds
+        revalidate: 30,
+    }
+);
 
 /**
  * Get an up to date price for a given article
@@ -132,4 +145,11 @@ async function _getArticlePrice({
 /**
  * Cached version of the article price fetch
  */
-export const getArticlePrice = cache(_getArticlePrice);
+export const getArticlePrice = unstable_cache(
+    _getArticlePrice,
+    ["get-article-price"],
+    {
+        // Keep in cache for an hour
+        revalidate: 3600,
+    }
+);

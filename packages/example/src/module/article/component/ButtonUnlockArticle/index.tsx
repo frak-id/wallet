@@ -1,8 +1,8 @@
 import { formatSecondDuration } from "@/module/article/utils/duration";
 import { Button } from "@/module/common/component/Button";
-import type { Article } from "@/type/Article";
 import type { ArticlePrice } from "@frak-wallet/sdk/src/types/ArticlePrice";
 import { formatEther } from "viem";
+import type { Article } from "@/type/Article";
 
 export function ButtonUnlockArticle({
     price,
