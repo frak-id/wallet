@@ -7,6 +7,7 @@ import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useQuery } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import { useEffect } from "react";
+import {getUserErc20Tokens} from "@/context/tokens/action/getTokenAsset";
 
 export function Balances() {
     const { address, balance } = useWallet();
@@ -18,9 +19,8 @@ export function Balances() {
                 return;
             }
             console.log("Fetching all user balances", { address });
-            const balances = await getTokenBalances(alchemyClient, {
-                address,
-                type: "erc20",
+            const balances = await getUserErc20Tokens({
+                wallet: address
             });
             console.log("All user balances", { balances });
             return balances;

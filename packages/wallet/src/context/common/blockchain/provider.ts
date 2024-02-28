@@ -21,7 +21,7 @@ export const viemClient = createClient({
 // Build the alchemy client (same as the viem one but batch cache)
 export const alchemyClient = createClient({
     chain: polygonMumbai,
-    transport: rpcTransport,
+    transport: http(process.env.RPC_URL),
     cacheTime: 60_000,
 });
 
