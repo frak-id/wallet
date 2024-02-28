@@ -3,7 +3,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useCopyAddress } from "@/module/wallet/hook/useCopyAddress";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
-import { ArrowDownToLine } from "lucide-react";
+import { ArrowDownToLine, Copy } from "lucide-react";
 import { useQRCode } from "next-qrcode";
 import styles from "./index.module.css";
 
@@ -42,7 +42,9 @@ export function QRCodeWallet() {
                     <ButtonRipple
                         onClick={() => copyAddress(address)}
                         timeout={300}
+                        className={styles.QRCodeWallet__button}
                     >
+                        <Copy />
                         {copied ? <>Copied!</> : "Copy address"}
                     </ButtonRipple>
                 </Panel>
