@@ -1,10 +1,16 @@
 import type { FrakWalletSdkConfig } from "../../types";
+import type { FrakClient } from "../types/client.ts";
 import type { IFrameRpcSchema } from "../types/rpc";
-import type {
-    ExtractedParametersFromRpc,
-    RequestFn,
-} from "../types/transport";
+import type { ListenerRequestFn, RequestFn } from "../types/transport";
 import { Deferred } from "../utils/Deferred";
+import {
+    decompressDataAndCheckHash,
+    hashAndCompressData,
+} from "../utils/compression";
+import {
+    getIFrameResponseKeyProvider,
+    iFrameRequestKeyProvider,
+} from "../utils/compression/rpcKeyProvider.ts";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
 import { createIFrameMessageHandler } from "./transports/iframeMessageHandler";
 
@@ -17,18 +23,7 @@ export function createIFrameFrakClient({
 }: {
     config: FrakWalletSdkConfig;
     iframe: HTMLIFrameElement;
-}) {
-    // TODO: Setup everything for the iframe listener
-    // TODO: Should we split a bit the logic here? Like having one stuff handling the channels, another ones handling the connection etc?
-
-    /*
-    TODO: Need to port:
-     - Channel management
-     - messageHandler + messageResolver
-     - waitForConnection
-     - destroy
-     */
-
+}): FrakClient {
     // Build our channel manager
     const channelManager = createIFrameChannelManager();
 
@@ -40,9 +35,7 @@ export function createIFrameFrakClient({
     });
 
     // Build our request function
-    const request: RequestFn<IFrameRpcSchema> = async <TParameters, TReturn>(
-        args: TParameters
-    ) => {
+    const request: RequestFn<IFrameRpcSchema> = async (args) => {
         // Ensure the iframe is init
         const isConnected = await messageHandler.isConnected;
         if (!isConnected) {
@@ -50,35 +43,96 @@ export function createIFrameFrakClient({
         }
 
         // Create the deferrable result
-        // TODO: Better typing on the result
-        // TODO: Extract typing from the arg one?
-        const result = new Deferred<TReturn>();
+        const result = new Deferred<unknown>();
+
+        // Get the right key provider for the result
+        const resultCompressionKeyProvider = getIFrameResponseKeyProvider(args);
 
         // Create the channel
-        const channelId = channelManager.createChannel((message) => {
-            // TODO: Parse the message, then resolve the result
-            result.resolve(message as TReturn);
+        const channelId = channelManager.createChannel(async (message) => {
+            // Decompress the message
+            const decompressed = await decompressDataAndCheckHash(
+                message.data,
+                resultCompressionKeyProvider
+            );
+            // Then resolve with the decompressed data
+            result.resolve(decompressed);
             // Then close the channel
             channelManager.removeChannel(channelId);
         });
 
-        // TODO: Format the message
+        // Compress the message to send
+        const compressedMessage = await hashAndCompressData(
+            args,
+            iFrameRequestKeyProvider
+        );
 
         // Send the message to the iframe
         messageHandler.sendEvent({
             id: channelId,
-            topic: (args as ExtractedParametersFromRpc<IFrameRpcSchema>).method,
-            data: {
-                compressed: "Compressed data",
-                compressedHash: "Compressed hash",
-            },
+            topic: args.method,
+            data: compressedMessage,
         });
 
-        return result.promise;
+        // TODO: How to clean a proper typing onm the result?
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        return result.promise as any;
+    };
+
+    // Build our listener function
+    const listenerRequest: ListenerRequestFn<IFrameRpcSchema> = async (
+        args,
+        callback
+    ) => {
+        // Ensure the iframe is init
+        const isConnected = await messageHandler.isConnected;
+        if (!isConnected) {
+            throw new Error("The iframe provider isn't connected yet");
+        }
+
+        // Get the right key provider for the result
+        const resultCompressionKeyProvider = getIFrameResponseKeyProvider(args);
+
+        // Create the channel
+        const channelId = channelManager.createChannel(async (message) => {
+            // Decompress the message
+            const decompressed = await decompressDataAndCheckHash(
+                message.data,
+                resultCompressionKeyProvider
+            );
+            // And then call the callback
+            // TODO: Fix the typing here as well
+            // @ts-ignore
+            callback(decompressed);
+        });
+
+        // Compress the message to send
+        const compressedMessage = await hashAndCompressData(
+            args,
+            iFrameRequestKeyProvider
+        );
+
+        // Send the message to the iframe
+        messageHandler.sendEvent({
+            id: channelId,
+            topic: args.method,
+            data: compressedMessage,
+        });
+    };
+
+    // Build our destroy function
+    const destroy = async () => {
+        // Destroy the channel manager
+        channelManager.destroy();
+        // Cleanup the message handler
+        messageHandler.cleanup();
     };
 
     return {
         config,
+        waitForConnection: messageHandler.isConnected,
         request,
+        listenerRequest,
+        destroy,
     };
 }

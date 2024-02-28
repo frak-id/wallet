@@ -60,7 +60,7 @@ export function createIFrameMessageHandler({
     const isConnected = new Deferred<boolean>();
 
     // Create the function that will handle incoming iframe messages
-    const msgHandler = (event: MessageEvent<IFrameEvent>) => {
+    const msgHandler = async (event: MessageEvent<IFrameEvent>) => {
         // TODO: Uri check???
 
         // Check if that's a lifecycle event
@@ -77,10 +77,8 @@ export function createIFrameMessageHandler({
             return;
         }
 
-        // TODO: We should perform message decoding here before sending it to the channel
-
         // If founded, call the resolver
-        resolver(event.data);
+        await resolver(event.data);
     };
 
     // Copy the reference to our message handler
