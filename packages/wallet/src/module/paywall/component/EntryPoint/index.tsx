@@ -3,7 +3,11 @@
 import { Grid } from "@/module/common/component/Grid";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { usePaywall } from "@/module/paywall/provider";
-import { parseUnlockRequestParams } from "@frak-wallet/sdk";
+import {
+    decompressDataAndCheckHash,
+    redirectRequestKeyProvider,
+} from "@frak-wallet/sdk/core";
+import type { StartArticleUnlockParams } from "@frak-wallet/sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -25,11 +29,18 @@ export function PaywallEntryPoint() {
             }
 
             // Parse the data
-            const parsedUnlockData = await parseUnlockRequestParams({
-                params,
-                hash,
-            });
-
+            const parsedUnlockData =
+                await decompressDataAndCheckHash<StartArticleUnlockParams>(
+                    {
+                        compressed: decodeURIComponent(params),
+                        compressedHash: decodeURIComponent(hash),
+                    },
+                    (data: StartArticleUnlockParams) =>
+                        redirectRequestKeyProvider({
+                            method: "frak_startArticleUnlock",
+                            params: data,
+                        })
+                );
             // Handle the new unlock request
             await handleNewUnlockRequest(parsedUnlockData);
 

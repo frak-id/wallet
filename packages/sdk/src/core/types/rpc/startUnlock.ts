@@ -4,7 +4,7 @@ import type { PaidArticleUnlockPrice } from "../generic";
 /**
  * Request to unlock a paid article
  */
-export type StartUnlockParams = Readonly<{
+export type StartArticleUnlockParams = Readonly<{
     articleId: Hex;
     contentId: Hex;
     imageUrl: string;
@@ -24,7 +24,7 @@ export type StartUnlockParams = Readonly<{
 /**
  * Return type of the unlock request
  */
-export type StartUnlockReturnType =
+export type StartArticleUnlockReturnType =
     | UnlockSuccess
     | AlreadyUnlocked
     | UnlockError;

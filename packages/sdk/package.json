@@ -11,6 +11,10 @@
     "build:esm": "tsc --project ./tsconfig/tsconfig.esm.json && tsc-alias -p ./tsconfig/tsconfig.esm.json && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./_esm/package.json",
     "build:types": "tsc --project ./tsconfig/tsconfig.types.json && tsc-alias -p ./tsconfig/tsconfig.types.json"
   },
+  "main": "./_cjs/core/index.js",
+  "module": "./_esm/core/index.js",
+  "types": "./_types/core/index.d.ts",
+  "typings": "./_types/core/index.d.ts",
   "exports": {
     "./core": {
       "types": "./_types/core/index.d.ts",

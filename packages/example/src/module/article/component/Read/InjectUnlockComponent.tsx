@@ -3,9 +3,9 @@ import { cssRaw as cssRaw2 } from "@/module/common/component/Button";
 import type { Article, ArticlePreparedForReading } from "@/type/Article";
 import type {
     ArticleUnlockStatusReturnType,
+    UnlockOptionsReturnType,
     WalletStatusReturnType,
 } from "@frak-wallet/sdk/core";
-import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cssRaw } from "../UnlockButtons";
@@ -54,7 +54,7 @@ export function InjectUnlockComponent({
     walletStatus,
     article,
 }: {
-    prices: ArticlePriceForUser[];
+    prices: UnlockOptionsReturnType["prices"];
     unlockStatus: ArticleUnlockStatusReturnType | undefined;
     walletStatus: WalletStatusReturnType | undefined;
     article: ArticlePreparedForReading;
@@ -136,7 +136,7 @@ export function InjectUnlockComponent({
                     <UnlockButtons
                         prices={prices}
                         unlockStatus={unlockStatus}
-                        userStatus={walletStatus}
+                        walletStatus={walletStatus}
                         article={article}
                     />,
                     containerRoot

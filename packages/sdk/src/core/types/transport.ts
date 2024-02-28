@@ -34,10 +34,18 @@ export type ExtractedReturnTypeFromRpc<
     TParameters extends
         ExtractedParametersFromRpc<TRpcSchema> = ExtractedParametersFromRpc<TRpcSchema>,
 > = TRpcSchema extends RpcSchema
-    ? Extract<
-          TRpcSchema[number],
-          { Method: TParameters["method"] }
-      >["ReturnType"]
+    ? ExtractedMethodFromRpc<TRpcSchema, TParameters["method"]>["ReturnType"]
+    : unknown;
+
+/**
+ * Type that extract the possible return type from a RPC Schema
+ */
+export type ExtractedMethodFromRpc<
+    TRpcSchema extends RpcSchema | undefined = undefined,
+    TMethod extends
+        ExtractedParametersFromRpc<TRpcSchema>["method"] = ExtractedParametersFromRpc<TRpcSchema>["method"],
+> = TRpcSchema extends RpcSchema
+    ? Extract<TRpcSchema[number], { Method: TMethod }>
     : unknown;
 
 /**

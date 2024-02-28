@@ -1,11 +1,9 @@
 "use client";
 
 import { dexieDb } from "@/context/common/dexie/dexieDb";
+import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
 import type { ArticlePrice } from "@/types/Price";
-import {
-    type UnlockRequestParams,
-    prepareUnlockRequestResponse,
-} from "@frak-wallet/sdk";
+import type { StartArticleUnlockParams } from "@frak-wallet/sdk/core";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useRouter } from "next/navigation";
 import {
@@ -77,7 +75,9 @@ function usePaywallHook() {
      * Handle a new unlock request
      * @param unlockRequest
      */
-    async function handleNewUnlockRequest(unlockRequest: UnlockRequestParams) {
+    async function handleNewUnlockRequest(
+        unlockRequest: StartArticleUnlockParams
+    ) {
         setContext(unlockRequest);
         setStatus({ key: "idle" });
 
@@ -110,14 +110,14 @@ function usePaywallHook() {
         setStatus({ key: "cancelled" });
 
         // Build the redirection url
-        const unlockResponseUrl = await prepareUnlockRequestResponse(
-            currentContext.redirectUrl,
-            {
+        const unlockResponseUrl = await getStartUnlockResponseRedirectUrl({
+            redirectUrl: currentContext.redirectUrl,
+            response: {
                 key: "cancelled",
                 status: "locked",
                 reason: "User discarded the unlock request",
-            }
-        );
+            },
+        });
 
         // Cleanup the context
         setContext(null);

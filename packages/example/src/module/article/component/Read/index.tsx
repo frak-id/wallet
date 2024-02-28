@@ -9,12 +9,12 @@ import {
 } from "@frak-wallet/sdk/actions";
 import {
     type ArticleUnlockStatusReturnType,
+    type UnlockOptionsReturnType,
     type WalletStatusReturnType,
     createIFrameFrakClient,
     createIframe,
 } from "@frak-wallet/sdk/core";
 import type { FrakClient } from "@frak-wallet/sdk/core";
-import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import { useEffect, useState } from "react";
 import React from "react";
 import type { Hex } from "viem";
@@ -25,9 +25,11 @@ async function initFrakTransport() {
     const iframe = await createIframe({
         walletBaseUrl: frakWalletSdkConfig.walletUrl,
     });
+    console.log("Iframe created", { iframe });
 
     // If we don't have an iframe, do nothing
     if (!iframe) {
+        console.error("No iframe created");
         return;
     }
 
@@ -54,7 +56,7 @@ export function ReadArticle({
     const [injecting, setInjecting] = useState(false);
 
     // The prices
-    const [prices, setPrices] = useState<ArticlePriceForUser[]>([]);
+    const [prices, setPrices] = useState<UnlockOptionsReturnType["prices"]>([]);
 
     // The unlock status
     const [unlockStatus, setUnlockStatus] = useState<

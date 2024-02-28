@@ -1,7 +1,7 @@
 import { formatSecondDuration } from "@/module/article/utils/duration";
 import { Button } from "@/module/common/component/Button";
 import type { Article } from "@/type/Article";
-import type { ArticlePrice } from "@frak-wallet/sdk/src/types/ArticlePrice";
+import type { PaidArticleUnlockPrice } from "@frak-wallet/sdk/core";
 import { formatEther } from "viem";
 
 export function ButtonUnlockArticle({
@@ -10,8 +10,8 @@ export function ButtonUnlockArticle({
     disabled,
     provider,
 }: {
-    price: ArticlePrice;
-    doUnlockArticle: (price: ArticlePrice) => void;
+    price: PaidArticleUnlockPrice;
+    doUnlockArticle: (price: PaidArticleUnlockPrice) => void;
     disabled?: boolean;
     provider: Article["provider"];
 }) {

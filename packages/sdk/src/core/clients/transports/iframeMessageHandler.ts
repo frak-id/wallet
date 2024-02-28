@@ -50,6 +50,10 @@ export function createIFrameMessageHandler({
     iframe,
     channelManager,
 }: IFrameMessageHandlerParam): IFrameMessageHandler {
+    // Ensure the window is valid
+    if (typeof window === "undefined") {
+        throw new Error("iframe client should be used in the browser");
+    }
     // Ensure the iframe is valid
     if (!iframe.contentWindow) {
         throw new Error("The iframe does not have a content window");
@@ -61,7 +65,18 @@ export function createIFrameMessageHandler({
 
     // Create the function that will handle incoming iframe messages
     const msgHandler = async (event: MessageEvent<IFrameEvent>) => {
-        // TODO: Uri check???
+        if (!event.origin) {
+            return;
+        }
+        // Check that the origin match the wallet
+        if (
+            new URL(event.origin).origin.toLowerCase() !==
+            new URL(frakWalletUrl).origin.toLowerCase()
+        ) {
+            return;
+        }
+
+        console.log("Received a response message from the iframe", { event });
 
         // Check if that's a lifecycle event
         if ("lifecycle" in event.data) {
@@ -82,7 +97,7 @@ export function createIFrameMessageHandler({
     };
 
     // Copy the reference to our message handler
-    contentWindow.addEventListener("message", msgHandler);
+    window.addEventListener("message", msgHandler);
 
     // Build our helpers function
     const sendEvent = (message: IFrameEvent) => {
@@ -91,7 +106,7 @@ export function createIFrameMessageHandler({
         });
     };
     const cleanup = () => {
-        contentWindow.removeEventListener("message", msgHandler);
+        window.removeEventListener("message", msgHandler);
     };
 
     return {

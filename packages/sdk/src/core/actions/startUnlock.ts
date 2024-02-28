@@ -1,7 +1,7 @@
 import type {
     FrakWalletSdkConfig,
-    StartUnlockParams,
-    StartUnlockReturnType,
+    StartArticleUnlockParams,
+    StartArticleUnlockReturnType,
 } from "../types";
 import { decompressDataAndCheckHash, hashAndCompressData } from "../utils";
 import {
@@ -10,7 +10,7 @@ import {
 } from "../utils/compression/redirectKeyProvider";
 
 export type GetStartUnlockUrlParams = Omit<
-    StartUnlockParams,
+    StartArticleUnlockParams,
     "contentId" | "contentTitle"
 >;
 
@@ -19,7 +19,7 @@ export type GetStartUnlockUrlParams = Omit<
  * @param config
  * @param params
  */
-export async function getStartUnlockUrl(
+export async function getStartArticleUnlockUrl(
     config: FrakWalletSdkConfig,
     params: GetStartUnlockUrlParams
 ) {
@@ -48,17 +48,17 @@ export async function getStartUnlockUrl(
  * Function used to decode the response from the start unlock request (return typed passed as query param)
  */
 export async function decodeStartUnlockReturn({
-    params,
+    result,
     hash,
-}: { params: string; hash: string }) {
+}: { result: string; hash: string }) {
     const keyProvider = getRedirectResponseResponseKeyProvider(
         "frak_startArticleUnlock"
     );
 
     // Decompress the data
-    return decompressDataAndCheckHash<StartUnlockReturnType>(
+    return decompressDataAndCheckHash<StartArticleUnlockReturnType>(
         {
-            compressed: decodeURIComponent(params),
+            compressed: decodeURIComponent(result),
             compressedHash: decodeURIComponent(hash),
         },
         keyProvider

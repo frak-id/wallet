@@ -8,14 +8,14 @@ import {
     pimlicoPaymasterClient,
     viemClient,
 } from "@/context/common/blockchain/provider";
+import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getUnlockStatusOnArticle } from "@/context/paywall/action/getStatus";
+import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
 import { usePaywall } from "@/module/paywall/provider";
 import type { PaywallContext } from "@/module/paywall/provider";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import type { UiState, UnlockSuccessData } from "@/types/Unlock";
-import { formatSecondDuration } from "@frak-wallet/example/src/module/article/utils/duration";
-import { prepareUnlockRequestResponse } from "@frak-wallet/sdk";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSmartAccountClient } from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
@@ -108,14 +108,14 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
                     Date.now() - onchainStatus.allowedUntilInSec * 1000;
                 const formattedDuration = formatSecondDuration(expireIn / 1000);
                 // Parse the data and return them
-                const redirectUrl = await prepareUnlockRequestResponse(
-                    context.redirectUrl,
-                    {
+                const redirectUrl = await getStartUnlockResponseRedirectUrl({
+                    redirectUrl: context.redirectUrl,
+                    response: {
                         key: "already-unlocked",
                         status: "unlocked",
                         user: wallet.address,
-                    }
-                );
+                    },
+                });
                 setUiState({
                     already: {
                         redirectUrl,
@@ -228,15 +228,15 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
             });
 
             // Parse the data and return them
-            const redirectUrl = await prepareUnlockRequestResponse(
-                context.redirectUrl,
-                {
+            const redirectUrl = await getStartUnlockResponseRedirectUrl({
+                redirectUrl: context.redirectUrl,
+                response: {
                     key: "success",
                     status: "in-progress",
                     user: wallet.address,
                     userOpHash: userOpHash,
-                }
-            );
+                },
+            });
 
             setDisabled(false);
 

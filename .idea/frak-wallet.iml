@@ -9,6 +9,9 @@
       <excludeFolder url="file://$MODULE_DIR$/.sst/dist" />
       <excludeFolder url="file://$MODULE_DIR$/packages/example/.open-next" />
       <excludeFolder url="file://$MODULE_DIR$/packages/wallet/.open-next" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/sdk/_cjs" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/sdk/_esm" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/sdk/_types" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

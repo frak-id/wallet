@@ -1,7 +1,7 @@
 import type { Hex } from "viem";
 import type {
-    StartUnlockParams,
-    StartUnlockReturnType,
+    StartArticleUnlockParams,
+    StartArticleUnlockReturnType,
 } from "./rpc/startUnlock";
 import type { UnlockOptionsReturnType } from "./rpc/unlockOption";
 import type { ArticleUnlockStatusReturnType } from "./rpc/unlockStatus";
@@ -47,7 +47,7 @@ export type RedirectRpcSchema = [
     {
         Method: "frak_startArticleUnlock";
         Path: "/paywall";
-        Parameters: StartUnlockParams;
-        ReturnType: StartUnlockReturnType;
+        Parameters: StartArticleUnlockParams;
+        ReturnType: StartArticleUnlockReturnType;
     },
 ];

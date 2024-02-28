@@ -36,6 +36,7 @@ export function createIFrameFrakClient({
 
     // Build our request function
     const request: RequestFn<IFrameRpcSchema> = async (args) => {
+        console.log("Sending a request to the iframe", { args });
         // Ensure the iframe is init
         const isConnected = await messageHandler.isConnected;
         if (!isConnected) {

@@ -35,15 +35,29 @@ export const iFrameRequestKeyProvider: KeyProvider<
 };
 
 type RpcResponseKeyProvider<
-    TParameters extends ExtractedParametersFromRpc<IFrameRpcSchema>,
-> = KeyProvider<ExtractedReturnTypeFromRpc<IFrameRpcSchema, TParameters>>;
+    TParameters extends Pick<
+        ExtractedParametersFromRpc<IFrameRpcSchema>,
+        "method"
+    >,
+> = KeyProvider<
+    ExtractedReturnTypeFromRpc<
+        IFrameRpcSchema,
+        Extract<
+            ExtractedParametersFromRpc<IFrameRpcSchema>,
+            { method: TParameters["method"] }
+        >
+    >
+>;
 
 /**
  * Get the right response key provider for the given param
  * @param param
  */
 export function getIFrameResponseKeyProvider<
-    TParameters extends ExtractedParametersFromRpc<IFrameRpcSchema>,
+    TParameters extends Pick<
+        ExtractedParametersFromRpc<IFrameRpcSchema>,
+        "method"
+    >,
 >(param: TParameters): RpcResponseKeyProvider<TParameters> {
     // Unlock options key
     if (param.method === "frak_getArticleUnlockOptions") {

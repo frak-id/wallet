@@ -3,7 +3,7 @@
 import { getArticleReadyToRead } from "@/context/article/action/get";
 import { ReadArticle } from "@/module/article/component/Read";
 import { Skeleton } from "@/module/common/component/Skeleton";
-import { parseUnlockRequestResult } from "@frak-wallet/sdk";
+import { decodeStartUnlockReturn } from "@frak-wallet/sdk/actions";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -42,7 +42,7 @@ function ArticlePageComponent() {
     });
 
     // Get the unlock data response (if any)
-    const { data: unlockResult } = useQuery({
+    useQuery({
         queryKey: ["parseUnlockResult", articleId, article?.id],
         queryFn: async () => {
             const result = get("result");
@@ -52,7 +52,14 @@ function ArticlePageComponent() {
             }
 
             // Parse the data and return them
-            return await parseUnlockRequestResult({ result, hash });
+            const startUnlockResult = await decodeStartUnlockReturn({
+                result,
+                hash,
+            });
+            console.log("Response from the start unlock", {
+                startUnlockResult,
+            });
+            return startUnlockResult;
         },
         enabled:
             !!articleId &&
@@ -80,5 +87,5 @@ function ArticlePageComponent() {
         return <h1>Article not found</h1>;
     }
 
-    return <ReadArticle article={article} unlockStatusRequest={unlockResult} />;
+    return <ReadArticle article={article} />;
 }

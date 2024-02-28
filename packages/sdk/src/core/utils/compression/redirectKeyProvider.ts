@@ -1,4 +1,4 @@
-import type { StartUnlockReturnType } from "../../types";
+import type { StartArticleUnlockReturnType } from "../../types";
 import type { KeyProvider } from "../../types/compression";
 import type { RedirectRpcSchema } from "../../types/rpc";
 import type { ExtractedParametersFromRpc } from "../../types/transport";
@@ -39,7 +39,7 @@ export function getRedirectResponseResponseKeyProvider<
 >(method: TMethod): RedirectRpcResponseKeyProvider<TMethod> {
     // Unlock options key
     if (method === "frak_startArticleUnlock") {
-        return ((response: StartUnlockReturnType) => [
+        return ((response: StartArticleUnlockReturnType) => [
             "start-unlock",
             response.key,
             response.status,

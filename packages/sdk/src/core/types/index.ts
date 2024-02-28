@@ -3,8 +3,8 @@ export type { UnlockOptionsReturnType } from "./rpc/unlockOption";
 export type { ArticleUnlockStatusReturnType } from "./rpc/unlockStatus";
 export type { WalletStatusReturnType } from "./rpc/walletStatus";
 export type {
-    StartUnlockParams,
-    StartUnlockReturnType,
+    StartArticleUnlockParams,
+    StartArticleUnlockReturnType,
 } from "./rpc/startUnlock";
 export type { IFrameRpcSchema, RedirectRpcSchema } from "./rpc";
 // Client related
@@ -15,6 +15,7 @@ export type {
     IFrameEvent,
     ExtractedParametersFromRpc,
     ExtractedReturnTypeFromRpc,
+    ExtractedMethodFromRpc,
 } from "./transport";
 export type { FrakWalletSdkConfig } from "./config";
 export type {

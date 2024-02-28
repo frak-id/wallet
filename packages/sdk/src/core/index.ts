@@ -6,6 +6,10 @@ export {
     hashAndCompressData,
     decompressDataAndCheckHash,
     createIframe,
+    getIFrameResponseKeyProvider,
+    iFrameRequestKeyProvider,
+    getRedirectResponseResponseKeyProvider,
+    redirectRequestKeyProvider,
 } from "./utils";
 
 // Types
@@ -15,6 +19,9 @@ export type {
     ArticleUnlockStatusReturnType,
     WalletStatusReturnType,
     IFrameRpcSchema,
+    RedirectRpcSchema,
+    StartArticleUnlockParams,
+    StartArticleUnlockReturnType,
     // Client
     FrakClient,
     // Transport
@@ -25,4 +32,10 @@ export type {
     ExtractedReturnTypeFromRpc,
     // Config
     FrakWalletSdkConfig,
+    // Generics
+    PaidArticleUnlockPrice,
+    // Compression
+    KeyProvider,
+    CompressedData,
+    HashProtectedData,
 } from "./types";
