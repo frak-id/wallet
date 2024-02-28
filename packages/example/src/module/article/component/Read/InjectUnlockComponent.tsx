@@ -2,10 +2,9 @@ import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import { cssRaw as cssRaw2 } from "@/module/common/component/Button";
 import type { Article, ArticlePreparedForReading } from "@/type/Article";
 import type {
-    GetUnlockStatusResponse,
-    GetUserStatusResponse,
-    UnlockRequestResult,
-} from "@frak-wallet/sdk";
+    ArticleUnlockStatusReturnType,
+    WalletStatusReturnType,
+} from "@frak-wallet/sdk/core";
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -52,12 +51,12 @@ function findSelector(
 export function InjectUnlockComponent({
     prices,
     unlockStatus,
-    userStatus,
+    walletStatus,
     article,
 }: {
     prices: ArticlePriceForUser[];
-    unlockStatus: GetUnlockStatusResponse | UnlockRequestResult | undefined;
-    userStatus: GetUserStatusResponse | undefined;
+    unlockStatus: ArticleUnlockStatusReturnType | undefined;
+    walletStatus: WalletStatusReturnType | undefined;
     article: ArticlePreparedForReading;
 }) {
     const [element, setElement] = useState<Element | undefined>();
@@ -137,7 +136,7 @@ export function InjectUnlockComponent({
                     <UnlockButtons
                         prices={prices}
                         unlockStatus={unlockStatus}
-                        userStatus={userStatus}
+                        userStatus={walletStatus}
                         article={article}
                     />,
                     containerRoot

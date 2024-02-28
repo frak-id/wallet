@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import type { FrakClient } from "../types/client.ts";
+import type { FrakClient } from "../types/client";
 
 /**
  * Type used to get the unlock options

@@ -1,5 +1,5 @@
-import type { FrakClient } from "../types/client.ts";
-import type { WalletStatusReturnType } from "../types/rpc/walletStatus.ts";
+import type { FrakClient } from "../types/client";
+import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
 
 /**
  * Function used to watch the current nexus wallet status

@@ -1,3 +1,3 @@
-export { Deferred } from "./Deferred";
+export { createIframe } from "./iframeHelper";
 export { hashAndCompressData } from "./compression/compress";
 export { decompressDataAndCheckHash } from "./compression/decompress";

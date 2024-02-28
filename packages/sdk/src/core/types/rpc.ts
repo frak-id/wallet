@@ -1,4 +1,8 @@
 import type { Hex } from "viem";
+import type {
+    StartUnlockParams,
+    StartUnlockReturnType,
+} from "./rpc/startUnlock";
 import type { UnlockOptionsReturnType } from "./rpc/unlockOption";
 import type { ArticleUnlockStatusReturnType } from "./rpc/unlockStatus";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
@@ -30,5 +34,20 @@ export type IFrameRpcSchema = [
         Method: "frak_listenToArticleUnlockStatus";
         Parameters: [contentId: Hex, articleId: Hex];
         ReturnType: ArticleUnlockStatusReturnType;
+    },
+];
+
+/**
+ * RPC interface that's used for the redirection communication
+ */
+export type RedirectRpcSchema = [
+    /**
+     * Method used to start the unlock of an article
+     */
+    {
+        Method: "frak_startArticleUnlock";
+        Path: "/paywall";
+        Parameters: StartUnlockParams;
+        ReturnType: StartUnlockReturnType;
     },
 ];

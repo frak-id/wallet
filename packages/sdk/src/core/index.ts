@@ -5,6 +5,7 @@ export { createIFrameFrakClient } from "./clients";
 export {
     hashAndCompressData,
     decompressDataAndCheckHash,
+    createIframe,
 } from "./utils";
 
 // Types

@@ -1,6 +1,6 @@
 import type { Hex } from "viem";
-import type { FrakClient } from "../types/client.ts";
-import type { ArticleUnlockStatusReturnType } from "../types/rpc/unlockStatus.ts";
+import type { FrakClient } from "../types/client";
+import type { ArticleUnlockStatusReturnType } from "../types/rpc/unlockStatus";
 
 /**
  * Type used to get the unlock options

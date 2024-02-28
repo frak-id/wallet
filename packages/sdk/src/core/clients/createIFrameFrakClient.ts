@@ -1,5 +1,5 @@
-import type { FrakWalletSdkConfig } from "../../types";
-import type { FrakClient } from "../types/client.ts";
+import type { FrakClient } from "../types/client";
+import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
 import type { ListenerRequestFn, RequestFn } from "../types/transport";
 import { Deferred } from "../utils/Deferred";
@@ -10,7 +10,7 @@ import {
 import {
     getIFrameResponseKeyProvider,
     iFrameRequestKeyProvider,
-} from "../utils/compression/rpcKeyProvider";
+} from "../utils/compression/iframeRpcKeyProvider";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
 import { createIFrameMessageHandler } from "./transports/iframeMessageHandler";
 
