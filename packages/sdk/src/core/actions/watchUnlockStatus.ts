@@ -20,7 +20,7 @@ export function watchUnlockStatus(
     { articleId }: WatchUnlockStatusParams,
     callback: (status: ArticleUnlockStatusReturnType) => void
 ) {
-    return client.transport.listenerRequest(
+    return client.listenerRequest(
         {
             method: "frak_listenToArticleUnlockStatus",
             params: [client.config.contentId, articleId],

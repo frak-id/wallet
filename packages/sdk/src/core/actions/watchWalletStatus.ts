@@ -10,7 +10,7 @@ export function watchWalletStatus(
     client: FrakClient,
     callback: (status: WalletStatusReturnType) => void
 ) {
-    return client.transport.listenerRequest(
+    return client.listenerRequest(
         {
             method: "frak_listenToWalletStatus",
         },

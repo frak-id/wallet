@@ -13,11 +13,11 @@ type GetUnlockOptionsParams = {
  * @param client
  * @param articleId
  */
-export function getArticleUnlockOptionsTs(
+export function getArticleUnlockOptions(
     client: FrakClient,
     { articleId }: GetUnlockOptionsParams
 ) {
-    return client.transport.request({
+    return client.request({
         method: "frak_getArticleUnlockOptions",
         params: [client.config.contentId, articleId],
     });

@@ -41,16 +41,6 @@ export type ExtractedReturnTypeFromRpc<
     : unknown;
 
 /**
- * Type that extract the possible return type from a RPC Schema
- */
-export type ExtractedReturnTypeFromRpcMethod<
-    TRpcSchema extends RpcSchema,
-    TMethod extends TRpcSchema[number]["Method"],
-> = TRpcSchema extends RpcSchema
-    ? Extract<TRpcSchema[number], { Method: TMethod }>["ReturnType"]
-    : unknown;
-
-/**
  * Type used for a one shot request function
  */
 export type RequestFn<TRpcSchema extends RpcSchema | undefined = undefined> = <

@@ -10,7 +10,7 @@ import {
 import {
     getIFrameResponseKeyProvider,
     iFrameRequestKeyProvider,
-} from "../utils/compression/rpcKeyProvider.ts";
+} from "../utils/compression/rpcKeyProvider";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
 import { createIFrameMessageHandler } from "./transports/iframeMessageHandler";
 

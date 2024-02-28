@@ -1,7 +1,17 @@
 {
     "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
     "files": {
-        "ignore": ["node_modules/**", ".sst/**", ".open-next/**", ".next/**"]
+        "ignore": [
+            "_cjs",
+            "_esm",
+            "_types",
+            "node_modules/**",
+            ".sst/**",
+            ".open-next/**",
+            ".next/**",
+            "tsconfig.json",
+            "tsconfig.*.json"
+        ]
     },
     "organizeImports": {
         "enabled": true

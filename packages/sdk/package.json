@@ -4,7 +4,24 @@
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
-    "format": "biome check --apply ."
+    "format": "biome check --apply .",
+    "clean": "rimraf _esm _cjs _types",
+    "build": "bun run clean && bun run build:cjs && bun run build:esm && bun run build:types",
+    "build:cjs": "tsc --project ./tsconfig/tsconfig.cjs.json && tsc-alias -p ./tsconfig/tsconfig.cjs.json && printf '{\"type\":\"commonjs\"}' > ./_cjs/package.json",
+    "build:esm": "tsc --project ./tsconfig/tsconfig.esm.json && tsc-alias -p ./tsconfig/tsconfig.esm.json && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./_esm/package.json",
+    "build:types": "tsc --project ./tsconfig/tsconfig.types.json && tsc-alias -p ./tsconfig/tsconfig.types.json"
+  },
+  "exports": {
+    "./core": {
+      "types": "./_types/core/index.d.ts",
+      "import": "./_esm/core/index.js",
+      "default": "./_cjs/core/index.js"
+    },
+    "./actions": {
+      "types": "./_types/core/actions/index.d.ts",
+      "import": "./_esm/core/actions/index.js",
+      "default": "./_cjs/core/actions/index.js"
+    }
   },
   "dependencies": {
     "async-lz-string": "^1.1.0",
@@ -13,6 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
-    "typescript": "^5"
+    "typescript": "^5",
+    "tsc-alias": "^1.8.8"
   }
 }
