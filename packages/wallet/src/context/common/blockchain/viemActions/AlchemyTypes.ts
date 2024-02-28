@@ -31,11 +31,8 @@ export type GetTokenBalancesRawResponse = {
  * Raw response of the get token balances method
  */
 export type GetTokenMetadataResponse = {
-    address: Address;
-    tokenBalances: {
-        name: string;
-        symbol: string;
-        decimals: number;
-        logo: string | null;
-    }[];
+    name: string;
+    symbol: string;
+    decimals: number;
+    logo: string | null;
 };

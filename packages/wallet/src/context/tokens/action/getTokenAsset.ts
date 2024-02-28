@@ -1,6 +1,7 @@
 "use server";
 
 import { alchemyClient } from "@/context/common/blockchain/provider";
+import type { GetTokenMetadataResponse } from "@/context/common/blockchain/viemActions/AlchemyTypes";
 import { getTokenBalances } from "@/context/common/blockchain/viemActions/getTokenBalances";
 import {
     type GetTokenMetadataParams,
@@ -34,10 +35,18 @@ async function _getUserErc20Tokens({ wallet }: { wallet: Address }) {
     return await parallel(2, effectiveBalances, async (tBalance) => {
         return {
             ...tBalance,
-            metadata: _getTokenMetadata({ address: tBalance.contractAddress }),
+            metadata: await _getTokenMetadata({
+                address: tBalance.contractAddress,
+            }),
         };
     });
 }
+
+export type GetUserErc20Token = {
+    contractAddress: Address;
+    tokenBalance: bigint;
+    metadata: GetTokenMetadataResponse;
+};
 
 /**
  * Cached version of the user tokens
