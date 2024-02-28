@@ -117,7 +117,7 @@ export function ReadArticle({
 
         // Setup fetcher once listener linked
         iframeFrakClient.waitForConnection.then(() => {
-            console.log("IFrame frak client linked");
+            console.log("IFrame transport ready to use");
             fetchPrices();
             fetchUnlockStatus();
             fetchUserStatus();

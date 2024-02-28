@@ -7,7 +7,10 @@ import {
     decompressDataAndCheckHash,
     redirectRequestKeyProvider,
 } from "@frak-wallet/sdk/core";
-import type { StartArticleUnlockParams } from "@frak-wallet/sdk/core";
+import type {
+    ExtractedParametersFromRpc,
+    RedirectRpcSchema,
+} from "@frak-wallet/sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -22,27 +25,30 @@ export function PaywallEntryPoint() {
     useQuery({
         queryKey: ["getEncodedUnlockData"],
         queryFn: async () => {
+            console.log("getEncodedUnlockData");
+
             const params = get("params");
             const hash = get("hash");
+
+            console.log("params", { params, hash });
+
             if (!(params && hash)) {
+                console.error("Invalid unlock request");
                 throw new Error("Invalid unlock request");
             }
 
             // Parse the data
-            const parsedUnlockData =
-                await decompressDataAndCheckHash<StartArticleUnlockParams>(
-                    {
-                        compressed: decodeURIComponent(params),
-                        compressedHash: decodeURIComponent(hash),
-                    },
-                    (data: StartArticleUnlockParams) =>
-                        redirectRequestKeyProvider({
-                            method: "frak_startArticleUnlock",
-                            params: data,
-                        })
-                );
+            const parsedUnlockData = await decompressDataAndCheckHash<
+                ExtractedParametersFromRpc<RedirectRpcSchema>
+            >(
+                {
+                    compressed: decodeURIComponent(params),
+                    compressedHash: decodeURIComponent(hash),
+                },
+                redirectRequestKeyProvider
+            );
             // Handle the new unlock request
-            await handleNewUnlockRequest(parsedUnlockData);
+            await handleNewUnlockRequest(parsedUnlockData.args);
 
             // Smoothly navigate to /
             startTransition(() => {

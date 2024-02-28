@@ -95,22 +95,15 @@ export function createIFrameRequestResolver(
             );
         };
 
-        try {
-            // Decompress the data
-            const uncompressedData = await decompressDataAndCheckHash(
-                data,
-                getIframeRequestKeyProvider(message.data)
-            );
+        // Decompress the data
+        const uncompressedData = await decompressDataAndCheckHash(
+            data,
+            getIframeRequestKeyProvider(message.data)
+        );
 
-            // Response to the requests
-            // @ts-ignore
-            await resolver(uncompressedData, responseEmitter);
-        } catch (error) {
-            console.error("Error while processing the request", {
-                error,
-                event: message.data,
-            });
-        }
+        // Response to the requests
+        // @ts-ignore
+        await resolver(uncompressedData, responseEmitter);
     };
 
     // Add the message listener
@@ -123,8 +116,6 @@ export function createIFrameRequestResolver(
 
     // Helper to tell when we are ready to process message
     function setReadyToHandleRequest() {
-        // Once we are good, send the ready event
-        console.log("Sending the ready event to the parent");
         window.parent?.postMessage({ lifecycle: "connected" }, "*");
     }
 
@@ -149,7 +140,7 @@ export function getIframeRequestKeyProvider(
                 { method: "frak_getArticleUnlockOptions" }
             >
         ) => [
-            "get-price-response",
+            "get-price",
             request.params[0],
             request.params[1],
         ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;

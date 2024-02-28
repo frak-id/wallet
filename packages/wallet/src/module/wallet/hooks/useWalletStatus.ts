@@ -3,12 +3,12 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { frakTokenAbi } from "@/context/common/blockchain/frak-abi";
 import { useSession } from "@/module/common/hook/useSession";
-import type { GetUserStatusResponse } from "@frak-wallet/sdk";
+import type { WalletStatusReturnType } from "@frak-wallet/sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { toHex } from "viem";
 import { useReadContract } from "wagmi";
 
-export function useUserStatus() {
+export function useWalletStatus() {
     // Get the current session
     const { session, isFetchingSession } = useSession();
 
@@ -34,19 +34,19 @@ export function useUserStatus() {
             session?.wallet?.address ?? "no-wallet",
             toHex(walletBalance ?? 0n),
         ],
-        queryFn: async (): Promise<GetUserStatusResponse> => {
+        queryFn: async (): Promise<WalletStatusReturnType> => {
             const wallet = session?.wallet?.address;
 
             // If no wallet present, just return the not logged in status
             if (!wallet) {
                 return {
-                    key: "not-logged-in",
+                    key: "not-connected",
                 };
             }
 
             // Otherwise, return hte logged in status
             return {
-                key: "logged-in",
+                key: "connected",
                 wallet,
                 frkBalanceAsHex: toHex(walletBalance ?? 0n),
             };
@@ -56,6 +56,6 @@ export function useUserStatus() {
     });
 
     return {
-        userStatus,
+        walletStatus: userStatus,
     };
 }

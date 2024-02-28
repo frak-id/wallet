@@ -26,6 +26,8 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
         context,
     });
 
+    console.log("context", context);
+
     async function doUnlock() {
         await launchArticleUnlock();
     }

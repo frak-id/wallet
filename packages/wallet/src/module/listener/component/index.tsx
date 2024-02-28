@@ -3,7 +3,7 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useArticlePrices } from "@/module/paywall/hook/useArticlePrices";
 import { useUnlockState } from "@/module/paywall/hook/useUnlockState";
-import { useUserStatus } from "@/module/wallet/hooks/useUserStatus";
+import { useWalletStatus } from "@/module/wallet/hooks/useWalletStatus";
 import type {
     ArticleUnlockStatusReturnType,
     WalletStatusReturnType,
@@ -17,7 +17,7 @@ type UnlockStateListenerParam = {
     emitter: (response: ArticleUnlockStatusReturnType) => Promise<void>;
 };
 
-type UserStateListenerParam = {
+type WalletStatusListenerParam = {
     emitter: (response: WalletStatusReturnType) => Promise<void>;
 };
 
@@ -39,12 +39,12 @@ export function ListenerUI() {
     });
 
     // Info required about the user status
-    const [userStatusParam, setUserStatusParam] = useState<
-        UserStateListenerParam | undefined
+    const [walletStatusParam, setWalletStatusParam] = useState<
+        WalletStatusListenerParam | undefined
     >(undefined);
 
     // Listen to the current user status
-    const { userStatus } = useUserStatus();
+    const { walletStatus } = useWalletStatus();
 
     // Create the resolver
     useEffect(() => {
@@ -60,12 +60,14 @@ export function ListenerUI() {
                     emitter,
                 });
             },
+
             /**
              * Listen request on the wallet status
              */
             frak_listenToWalletStatus: async (_, emitter) => {
-                setUserStatusParam({ emitter });
+                setWalletStatusParam({ emitter });
             },
+
             /**
              * Get the unlock options for an article
              * @param request
@@ -82,14 +84,11 @@ export function ListenerUI() {
             },
         });
 
-        console.log("Resolver created", { newResolver });
-
         // Set our new resolver
         setResolver(newResolver);
 
         // On cleanup, destroy the resolver
         return () => {
-            console.log("Destroying resolver", { newResolver });
             newResolver.destroy();
         };
     }, [fetchPrices]);
@@ -119,14 +118,14 @@ export function ListenerUI() {
      * Every time the user status change, send it to the listener
      */
     useEffect(() => {
-        if (userStatus) {
+        if (walletStatus) {
             console.log("Sending the user status to the listener", {
-                userStatus,
-                userStatusEmitter: userStatusParam,
+                walletStatus: walletStatus,
+                userStatusEmitter: walletStatusParam,
             });
-            userStatusParam?.emitter(userStatus);
+            walletStatusParam?.emitter(walletStatus);
         }
-    }, [userStatus, userStatusParam]);
+    }, [walletStatus, walletStatusParam]);
 
     return <h1>Listener</h1>;
 }

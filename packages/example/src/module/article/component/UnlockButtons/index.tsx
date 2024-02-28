@@ -13,7 +13,7 @@ import { formatHash } from "@frak-wallet/wallet/src/context/wallet/utils/hashFor
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { type Hex, fromHex } from "viem";
+import type { Hex } from "viem";
 import { formatEther } from "viem";
 
 export const cssRaw = css;
@@ -29,8 +29,9 @@ export function UnlockButtons({
     walletStatus: WalletStatusReturnType | undefined;
     article: Article | undefined;
 }) {
-    const [articlePrice, setArticlePrice] =
-        useState<ArticlePriceForUser | null>(null);
+    const [articlePrice, setArticlePrice] = useState<
+        ArticlePriceForUser | undefined
+    >(undefined);
     const [isLoading, setIsLoading] = useState(false);
 
     const isLocked =
@@ -46,34 +47,11 @@ export function UnlockButtons({
         unlockStatus?.key === "waiting-transaction-bundling";
 
     const balance =
-        walletStatus?.key === "connected" &&
-        walletStatus?.frkBalanceAsHex &&
-        formatEther(fromHex(walletStatus.frkBalanceAsHex, "bigint"));
+        walletStatus?.key === "connected" && walletStatus?.frkBalanceAsHex
+            ? formatEther(BigInt(walletStatus.frkBalanceAsHex))
+            : undefined;
 
-    const { data: unlockUrl } = useQuery({
-        queryKey: [
-            "getEncodedUnlockData",
-            article?.id,
-            articlePrice?.index ?? 0,
-        ],
-        queryFn: async () => {
-            if (!(article && articlePrice)) return;
-
-            return getStartArticleUnlockUrl(frakWalletSdkConfig, {
-                articleId: article.id as Hex,
-                articleTitle: article.title,
-                imageUrl: article.imageUrl,
-                price: {
-                    index: articlePrice.index,
-                    unlockDurationInSec: articlePrice.unlockDurationInSec,
-                    frkAmount: articlePrice.frkAmount,
-                },
-                articleUrl: `${window.location.origin}/article?id=${article.id}`,
-                redirectUrl: `${window.location.origin}/article?id=${article.id}`,
-            });
-        },
-        enabled: !!articlePrice,
-    });
+    const { data: unlockUrl } = useUnlockRedirectUrl({ article, articlePrice });
 
     useEffect(() => {
         if (!articlePrice) return;
@@ -185,3 +163,32 @@ export function UnlockButtons({
         </div>
     );
 }
+
+const useUnlockRedirectUrl = ({
+    article,
+    articlePrice,
+}: { article?: Article; articlePrice?: ArticlePriceForUser }) =>
+    useQuery({
+        queryKey: [
+            "getEncodedUnlockData",
+            article?.id,
+            articlePrice?.index ?? 0,
+        ],
+        queryFn: async () => {
+            if (!(article && articlePrice)) return;
+
+            return getStartArticleUnlockUrl(frakWalletSdkConfig, {
+                articleId: article.id as Hex,
+                articleTitle: article.title,
+                imageUrl: article.imageUrl,
+                price: {
+                    index: articlePrice.index,
+                    unlockDurationInSec: articlePrice.unlockDurationInSec,
+                    frkAmount: articlePrice.frkAmount,
+                },
+                articleUrl: `${window.location.origin}/article?id=${article.id}`,
+                redirectUrl: `${window.location.origin}/article?id=${article.id}`,
+            });
+        },
+        enabled: !!article && !!articlePrice,
+    });

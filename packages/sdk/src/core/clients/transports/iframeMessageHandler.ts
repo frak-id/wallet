@@ -76,8 +76,6 @@ export function createIFrameMessageHandler({
             return;
         }
 
-        console.log("Received a response message from the iframe", { event });
-
         // Check if that's a lifecycle event
         if ("lifecycle" in event.data) {
             // Mark it as connected only if the event is 'connected'
