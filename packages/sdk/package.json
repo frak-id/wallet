@@ -1,40 +1,48 @@
 {
   "name": "@frak-wallet/sdk",
+  "description": "Frak Wallet client SDK, helping any person to interact with the Frak wallet, and require the unlock of a premium article within the Frak ecosystem.",
   "type": "module",
+  "sideEffects": false,
+  "license": "GNU GPL 3.0",
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --apply .",
-    "clean": "rimraf _esm _cjs _types",
-    "build": "bun run clean && bun run build:cjs && bun run build:esm && bun run build:types",
-    "build:cjs": "tsc --project ./tsconfig/tsconfig.cjs.json && tsc-alias -p ./tsconfig/tsconfig.cjs.json && printf '{\"type\":\"commonjs\"}' > ./_cjs/package.json",
-    "build:esm": "tsc --project ./tsconfig/tsconfig.esm.json && tsc-alias -p ./tsconfig/tsconfig.esm.json && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./_esm/package.json",
-    "build:types": "tsc --project ./tsconfig/tsconfig.types.json && tsc-alias -p ./tsconfig/tsconfig.types.json"
+    "clean": "rimraf dist",
+    "build": "tsup --splitting"
   },
-  "main": "./_cjs/core/index.js",
-  "module": "./_esm/core/index.js",
-  "types": "./_types/core/index.d.ts",
-  "typings": "./_types/core/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
   "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.cjs"
+    },
     "./core": {
-      "types": "./_types/core/index.d.ts",
-      "import": "./_esm/core/index.js",
-      "default": "./_cjs/core/index.js"
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js",
+      "default": "./dist/core/index.cjs"
     },
     "./actions": {
-      "types": "./_types/core/actions/index.d.ts",
-      "import": "./_esm/core/actions/index.js",
-      "default": "./_cjs/core/actions/index.js"
+      "types": "./dist/core/actions/index.d.ts",
+      "import": "./dist/core/actions/index.js",
+      "default": "./dist/core/actions/index.cjs"
     }
+  },
+  "peerDependencies": {
+    "viem": "^2.7.10"
   },
   "dependencies": {
     "async-lz-string": "^1.1.0",
-    "js-sha256": "^0.11.0",
-    "viem": "^2.7.10"
+    "js-sha256": "^0.11.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "typescript": "^5",
-    "tsc-alias": "^1.8.8"
+    "tsup": "^8.0.2"
   }
 }
