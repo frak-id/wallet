@@ -1,29 +1,31 @@
 "use client";
 
+import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useArticlePrices } from "@/module/paywall/hook/useArticlePrices";
 import { useUnlockState } from "@/module/paywall/hook/useUnlockState";
-import { useUserStatus } from "@/module/wallet/hooks/useUserStatus";
-import {
-    type GetUnlockStatusResponse,
-    type GetUserStatusResponse,
-    QueryListener,
-} from "@frak-wallet/sdk";
+import { useWalletStatus } from "@/module/wallet/hooks/useWalletStatus";
+import type {
+    ArticleUnlockStatusReturnType,
+    WalletStatusReturnType,
+} from "@frak-wallet/sdk/core";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 
 type UnlockStateListenerParam = {
     contentId: Hex;
     articleId: Hex;
-    emitter: (response: GetUnlockStatusResponse) => Promise<void>;
+    emitter: (response: ArticleUnlockStatusReturnType) => Promise<void>;
 };
 
-type UserStateListenerParam = {
-    emitter: (response: GetUserStatusResponse) => Promise<void>;
+type WalletStatusListenerParam = {
+    emitter: (response: WalletStatusReturnType) => Promise<void>;
 };
-
-const queryListener = new QueryListener();
 
 export function ListenerUI() {
+    const [resolver, setResolver] = useState<
+        ReturnType<typeof createIFrameRequestResolver> | undefined
+    >(undefined);
+
     // Hook used to fetch the prices
     const { fetchPrices } = useArticlePrices();
 
@@ -37,44 +39,72 @@ export function ListenerUI() {
     });
 
     // Info required about the user status
-    const [userStatusParam, setUserStatusParam] = useState<
-        UserStateListenerParam | undefined
+    const [walletStatusParam, setWalletStatusParam] = useState<
+        WalletStatusListenerParam | undefined
     >(undefined);
 
     // Listen to the current user status
-    const { userStatus } = useUserStatus();
+    const { walletStatus } = useWalletStatus();
 
-    // Bind the fetch price hook
+    // Create the resolver
     useEffect(() => {
-        if (!fetchPrices) {
-            return;
-        }
+        const newResolver = createIFrameRequestResolver({
+            /**
+             * Listen request on an article unlock status
+             */
+            frak_listenToArticleUnlockStatus: async (request, emitter) => {
+                // Register our unlock status listener
+                setUnlockStatusParam({
+                    contentId: request.params[0],
+                    articleId: request.params[1],
+                    emitter,
+                });
+            },
 
-        queryListener.onPriceRequested = fetchPrices;
-        queryListener.onUnlockStatusRequested = async (param, emitter) => {
-            setUnlockStatusParam({
-                contentId: param.contentId,
-                articleId: param.articleId,
-                emitter,
-            });
-        };
-        queryListener.onUserStatusRequested = async (_, emitter) => {
-            setUserStatusParam({ emitter });
-        };
+            /**
+             * Listen request on the wallet status
+             */
+            frak_listenToWalletStatus: async (_, emitter) => {
+                setWalletStatusParam({ emitter });
+            },
 
-        // Tell that the listener is rdy to handle data
-        queryListener.setReadyToHandleRequest();
+            /**
+             * Get the unlock options for an article
+             * @param request
+             * @param emitter
+             */
+            frak_getArticleUnlockOptions: async (request, emitter) => {
+                // Directly fetch the price here
+                const prices = await fetchPrices({
+                    contentId: request.params[0],
+                    articleId: request.params[1],
+                });
+                // And send the response
+                await emitter(prices);
+            },
+        });
 
-        // Cleanup the listener on destroy
+        // Set our new resolver
+        setResolver(newResolver);
+
+        // On cleanup, destroy the resolver
         return () => {
-            queryListener.onPriceRequested = async (_) => {
-                return undefined;
-            };
-            queryListener.onUnlockStatusRequested = async () => {};
+            newResolver.destroy();
         };
     }, [fetchPrices]);
 
-    // Every time the unlock state change, send it to the listener
+    /**
+     * Once all the required state are set, we can start handling the request
+     */
+    useEffect(() => {
+        if (resolver && typeof fetchPrices === "function") {
+            resolver.setReadyToHandleRequest();
+        }
+    }, [resolver, fetchPrices]);
+
+    /**
+     * Every time the unlock state change, send it to the listener
+     */
     useEffect(() => {
         if (unlockState) {
             console.log("Sending the unlock state to the listener", {
@@ -84,16 +114,18 @@ export function ListenerUI() {
         }
     }, [unlockState, unlockStatusParam]);
 
-    // Every time the user status change, send it to the listener
+    /**
+     * Every time the user status change, send it to the listener
+     */
     useEffect(() => {
-        if (userStatus) {
+        if (walletStatus) {
             console.log("Sending the user status to the listener", {
-                userStatus,
-                userStatusEmitter: userStatusParam,
+                walletStatus: walletStatus,
+                userStatusEmitter: walletStatusParam,
             });
-            userStatusParam?.emitter(userStatus);
+            walletStatusParam?.emitter(walletStatus);
         }
-    }, [userStatus, userStatusParam]);
+    }, [walletStatus, walletStatusParam]);
 
     return <h1>Listener</h1>;
 }

@@ -2,31 +2,39 @@ import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { InjectUnlockComponent } from "@/module/article/component/Read/InjectUnlockComponent";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import type { ArticlePreparedForReading } from "@/type/Article";
-import { QueryProvider } from "@frak-wallet/sdk";
-import type {
-    GetUnlockStatusResponse,
-    GetUserStatusResponse,
-    UnlockRequestResult,
-} from "@frak-wallet/sdk";
-import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
+import {
+    getArticleUnlockOptions,
+    watchUnlockStatus,
+    watchWalletStatus,
+} from "@frak-wallet/sdk/actions";
+import {
+    type ArticleUnlockStatusReturnType,
+    type UnlockOptionsReturnType,
+    type WalletStatusReturnType,
+    createIFrameFrakClient,
+    createIframe,
+} from "@frak-wallet/sdk/core";
+import type { FrakClient } from "@frak-wallet/sdk/core";
 import { useEffect, useState } from "react";
 import React from "react";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
 
-async function initQueryProvider() {
+async function initFrakTransport() {
     // Create the iframe
-    const iframe = await QueryProvider.createIframe({
+    const iframe = await createIframe({
         walletBaseUrl: frakWalletSdkConfig.walletUrl,
     });
+    console.log("Iframe created", { iframe });
 
     // If we don't have an iframe, do nothing
     if (!iframe) {
+        console.error("No iframe created");
         return;
     }
 
     // Create the query provider
-    return new QueryProvider({
+    return createIFrameFrakClient({
         config: frakWalletSdkConfig,
         iframe,
     });
@@ -34,104 +42,87 @@ async function initQueryProvider() {
 
 export function ReadArticle({
     article,
-    unlockStatusRequest,
+    //unlockStatusRequest,
 }: {
     article: ArticlePreparedForReading;
-    unlockStatusRequest: UnlockRequestResult | undefined;
+    //unlockStatusRequest: UnlockRequestResult | undefined;
 }) {
     // Init our query provider
-    const [queryProvider, setQueryProvider] = useState<
-        QueryProvider | undefined
+    const [iframeFrakClient, setIframeFrakClient] = useState<
+        FrakClient | undefined
     >(undefined);
 
     // The injecting state for the unlock component
     const [injecting, setInjecting] = useState(false);
 
     // The prices
-    const [prices, setPrices] = useState<ArticlePriceForUser[]>([]);
+    const [prices, setPrices] = useState<UnlockOptionsReturnType["prices"]>([]);
 
     // The unlock status
     const [unlockStatus, setUnlockStatus] = useState<
-        GetUnlockStatusResponse | UnlockRequestResult | undefined
-    >(unlockStatusRequest);
+        ArticleUnlockStatusReturnType | undefined
+    >(undefined);
 
     // The user status
-    const [userStatus, setUserStatus] = useState<
-        GetUserStatusResponse | undefined
+    const [walletStatus, setWalletStatus] = useState<
+        WalletStatusReturnType | undefined
     >();
 
     useEffect(() => {
         // Build the query provider
-        initQueryProvider().then((queryProvider) => {
-            if (!queryProvider) return;
-            setQueryProvider(queryProvider);
+        initFrakTransport().then((client) => {
+            if (!client) return;
+            setIframeFrakClient(client);
         });
 
         // On cleanup, destroy the query provider
         return () => {
-            queryProvider?.destroy();
+            iframeFrakClient?.destroy();
         };
-    }, [queryProvider?.destroy]);
+    }, [iframeFrakClient?.destroy]);
 
     useEffect(() => {
         // If we don't have a query provider, do nothing
-        if (!queryProvider) {
+        if (!iframeFrakClient) {
             return;
         }
 
         const fetchPrices = async () => {
-            const getPricesResponse = await queryProvider.oneShotRequest({
-                param: {
-                    key: "get-price-param",
-                    value: {
-                        contentId: frakWalletSdkConfig.contentId,
-                        articleId: article.id as Hex,
-                    },
-                },
-            });
-            setPrices(getPricesResponse.prices);
+            const unlockOptionsResponses = await getArticleUnlockOptions(
+                iframeFrakClient,
+                {
+                    articleId: article.id as Hex,
+                }
+            );
+            setPrices(unlockOptionsResponses.prices);
         };
 
-        const fetchUnlockStatus = async () => {
-            const unlockStatus = await queryProvider.listenerRequest({
-                param: {
-                    key: "unlock-status-param",
-                    value: {
-                        contentId: frakWalletSdkConfig.contentId,
-                        articleId: article.id as Hex,
-                    },
+        const fetchUnlockStatus = async () =>
+            watchUnlockStatus(
+                iframeFrakClient,
+                {
+                    articleId: article.id as Hex,
                 },
-                onResponse: async (event) => {
+                (event) => {
+                    console.log("Unlock status response event", { event });
                     setUnlockStatus(event);
-                },
-            });
-            console.log("Unlock status listener ID", { unlockStatus });
-            // TODO: The listener id should be used to remove the listener on destroy
-        };
+                }
+            );
 
-        const fetchUserStatus = async () => {
-            const unlockStatus = await queryProvider.listenerRequest({
-                param: {
-                    key: "user-status-param",
-                    value: undefined,
-                },
-                onResponse: async (event) => {
-                    console.log("User status response event", event);
-                    setUserStatus(event);
-                },
+        const fetchUserStatus = async () =>
+            watchWalletStatus(iframeFrakClient, (event) => {
+                console.log("Wallet status response event", { event });
+                setWalletStatus(event);
             });
-            console.log("User status listener ID", { unlockStatus });
-            // TODO: The listener id should be used to remove the listener on destroy
-        };
 
         // Setup fetcher once listener linked
-        queryProvider.waitForListenerLink().then(() => {
-            console.log("Query listener linked");
+        iframeFrakClient.waitForConnection.then(() => {
+            console.log("IFrame transport ready to use");
             fetchPrices();
             fetchUnlockStatus();
             fetchUserStatus();
         });
-    }, [article.id, queryProvider]);
+    }, [article.id, iframeFrakClient]);
 
     return (
         <>
@@ -139,7 +130,7 @@ export function ReadArticle({
                 <InjectUnlockComponent
                     prices={prices}
                     unlockStatus={unlockStatus}
-                    userStatus={userStatus}
+                    walletStatus={walletStatus}
                     article={article}
                 />
             )}

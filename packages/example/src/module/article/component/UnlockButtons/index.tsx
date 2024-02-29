@@ -3,34 +3,35 @@ import { FrakLogo } from "@/assets/icons/FrakLogo";
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
 import type { Article } from "@/type/Article";
-import { getUnlockRequestUrl } from "@frak-wallet/sdk";
+import { getStartArticleUnlockUrl } from "@frak-wallet/sdk/actions";
 import type {
-    GetUnlockStatusResponse,
-    GetUserStatusResponse,
-    UnlockRequestResult,
-} from "@frak-wallet/sdk";
+    ArticleUnlockStatusReturnType,
+    UnlockOptionsReturnType,
+    WalletStatusReturnType,
+} from "@frak-wallet/sdk/core";
 import { formatHash } from "@frak-wallet/wallet/src/context/wallet/utils/hashFormatter";
 import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
-import { formatEther, fromHex } from "viem";
+import { formatEther } from "viem";
 
 export const cssRaw = css;
 
 export function UnlockButtons({
     prices,
     unlockStatus,
-    userStatus,
+    walletStatus,
     article,
 }: {
-    prices: ArticlePriceForUser[];
-    unlockStatus: GetUnlockStatusResponse | UnlockRequestResult | undefined;
-    userStatus: GetUserStatusResponse | undefined;
+    prices: UnlockOptionsReturnType["prices"];
+    unlockStatus: ArticleUnlockStatusReturnType | undefined;
+    walletStatus: WalletStatusReturnType | undefined;
     article: Article | undefined;
 }) {
-    const [articlePrice, setArticlePrice] =
-        useState<ArticlePriceForUser | null>(null);
+    const [articlePrice, setArticlePrice] = useState<
+        ArticlePriceForUser | undefined
+    >(undefined);
     const [isLoading, setIsLoading] = useState(false);
 
     const isLocked =
@@ -46,34 +47,11 @@ export function UnlockButtons({
         unlockStatus?.key === "waiting-transaction-bundling";
 
     const balance =
-        userStatus?.key === "logged-in" &&
-        userStatus?.frkBalanceAsHex &&
-        formatEther(fromHex(userStatus.frkBalanceAsHex as Hex, "bigint"));
+        walletStatus?.key === "connected" && walletStatus?.frkBalanceAsHex
+            ? formatEther(BigInt(walletStatus.frkBalanceAsHex))
+            : undefined;
 
-    const { data: unlockUrl } = useQuery({
-        queryKey: [
-            "getEncodedUnlockData",
-            article?.id,
-            articlePrice?.index ?? 0,
-        ],
-        queryFn: async () => {
-            if (!(article && articlePrice)) return;
-
-            return getUnlockRequestUrl(frakWalletSdkConfig, {
-                articleId: article.id as Hex,
-                articleTitle: article.title,
-                imageUrl: article.imageUrl,
-                price: {
-                    index: articlePrice.index,
-                    unlockDurationInSec: articlePrice.unlockDurationInSec,
-                    frkAmount: articlePrice.frkAmount,
-                },
-                articleUrl: `${window.location.origin}/article?id=${article.id}`,
-                redirectUrl: `${window.location.origin}/article?id=${article.id}`,
-            });
-        },
-        enabled: !!articlePrice,
-    });
+    const { data: unlockUrl } = useUnlockRedirectUrl({ article, articlePrice });
 
     useEffect(() => {
         if (!articlePrice) return;
@@ -126,7 +104,7 @@ export function UnlockButtons({
                         <>
                             {isLocked && (
                                 <>
-                                    {userStatus?.key === "not-logged-in" ? (
+                                    {walletStatus?.key === "not-connected" ? (
                                         <>
                                             A Frak account will be created
                                             during the unlock process.
@@ -134,7 +112,7 @@ export function UnlockButtons({
                                     ) : (
                                         <>
                                             You are logged in with{" "}
-                                            {formatHash(userStatus?.wallet)}
+                                            {formatHash(walletStatus?.wallet)}
                                             <br />
                                             You have {balance} FRK
                                         </>
@@ -168,7 +146,7 @@ export function UnlockButtons({
                                     <ButtonUnlockArticle
                                         provider={article.provider}
                                         disabled={
-                                            userStatus?.key === "logged-in" &&
+                                            walletStatus?.key === "connected" &&
                                             Number(balance) < priceInEther
                                         }
                                         price={price}
@@ -185,3 +163,32 @@ export function UnlockButtons({
         </div>
     );
 }
+
+const useUnlockRedirectUrl = ({
+    article,
+    articlePrice,
+}: { article?: Article; articlePrice?: ArticlePriceForUser }) =>
+    useQuery({
+        queryKey: [
+            "getEncodedUnlockData",
+            article?.id,
+            articlePrice?.index ?? 0,
+        ],
+        queryFn: async () => {
+            if (!(article && articlePrice)) return;
+
+            return getStartArticleUnlockUrl(frakWalletSdkConfig, {
+                articleId: article.id as Hex,
+                articleTitle: article.title,
+                imageUrl: article.imageUrl,
+                price: {
+                    index: articlePrice.index,
+                    unlockDurationInSec: articlePrice.unlockDurationInSec,
+                    frkAmount: articlePrice.frkAmount,
+                },
+                articleUrl: `${window.location.origin}/article?id=${article.id}`,
+                redirectUrl: `${window.location.origin}/article?id=${article.id}`,
+            });
+        },
+        enabled: !!article && !!articlePrice,
+    });

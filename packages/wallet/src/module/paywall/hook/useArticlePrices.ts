@@ -34,7 +34,7 @@ export function useArticlePrices() {
                 prices: await getArticlePricesForUser({
                     contentId,
                     articleId,
-                    address: "0x3AAd376FbEf774bb6c3108F46112aa288f3091aa",
+                    address,
                 }),
             };
         },

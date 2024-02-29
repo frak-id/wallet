@@ -5,7 +5,7 @@ import {
 import { getUnlockStatusOnArticle } from "@/context/paywall/action/getStatus";
 import { useSession } from "@/module/common/hook/useSession";
 import { type PaywallStatus, usePaywall } from "@/module/paywall/provider";
-import type { GetUnlockStatusResponse } from "@frak-wallet/sdk";
+import type { ArticleUnlockStatusReturnType } from "@frak-wallet/sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { waitForUserOperationReceipt } from "permissionless";
 import { useEffect, useState } from "react";
@@ -30,7 +30,8 @@ export function useUnlockState({
     const { context, status } = usePaywall();
 
     // The unlock state to return
-    const [unlockState, setUnlockState] = useState<GetUnlockStatusResponse>();
+    const [unlockState, setUnlockState] =
+        useState<ArticleUnlockStatusReturnType>();
 
     // Get the current user session
 
