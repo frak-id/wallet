@@ -25,12 +25,8 @@ export function PaywallEntryPoint() {
     useQuery({
         queryKey: ["getEncodedUnlockData"],
         queryFn: async () => {
-            console.log("getEncodedUnlockData");
-
             const params = get("params");
             const hash = get("hash");
-
-            console.log("params", { params, hash });
 
             if (!(params && hash)) {
                 console.error("Invalid unlock request");
@@ -48,7 +44,7 @@ export function PaywallEntryPoint() {
                 redirectRequestKeyProvider
             );
             // Handle the new unlock request
-            await handleNewUnlockRequest(parsedUnlockData.args);
+            await handleNewUnlockRequest(parsedUnlockData.params);
 
             // Smoothly navigate to /
             startTransition(() => {
