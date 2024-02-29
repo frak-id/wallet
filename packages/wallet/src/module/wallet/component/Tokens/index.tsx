@@ -1,8 +1,8 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { TokenListLite } from "@/module/wallet/component/TokenListLite";
 import { CircleDollarSign, HandCoins, Send } from "lucide-react";
 import Link from "next/link";
-import { TokenList } from "../TokenList";
 import styles from "./index.module.css";
 
 export function Tokens() {
@@ -11,7 +11,7 @@ export function Tokens() {
             <Title icon={<CircleDollarSign width={32} height={32} />}>
                 Tokens
             </Title>
-            <TokenList />
+            <TokenListLite />
             <div className={styles.tokens__buttons}>
                 <Link
                     href={"/tokens/receive"}

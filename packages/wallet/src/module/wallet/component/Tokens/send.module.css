@@ -1,0 +1,43 @@
+.tokensSend__inputWrapper {
+    margin-bottom: 30px;
+}
+
+.tokensSend__label {
+    display: block;
+    padding-bottom: 5px;
+    color: var(--frak-color-grayText);
+}
+
+.tokensSend__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px 6px 6px;
+    border-right: 1px solid #656774;
+    font-weight: 700;
+    transition: background 0.2s ease-in-out;
+}
+
+.tokensSend__trigger:hover {
+    background-color: rgba(0, 20, 50, .5);
+}
+
+.tokensSend__trigger::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 5px 4px 0 4px;
+    border-color: #656774 transparent transparent transparent;
+    transform: rotate(0deg);
+}
+
+.tokensSend__buttonMax {
+    margin-left: 10px;
+    padding: 6px 10px 3px 10px;
+    background-color: var(--frak-panel-background-color);
+    border: none;
+    color: var(--frak-color-white);
+    font-size: 12px;
+    cursor: pointer;
+}

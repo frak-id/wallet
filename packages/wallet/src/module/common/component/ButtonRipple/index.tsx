@@ -3,6 +3,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 
 type AuthFingerprintProps = {
+    type?: "button" | "submit";
     onClick?: () => void;
     timeout?: number;
     disabled?: boolean;
@@ -16,16 +17,9 @@ function createRipple(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     const circle = document.createElement("span");
     const diameter = Math.max(button.clientWidth, button.clientHeight);
     const radius = diameter / 2;
-    const main = document.querySelector("main");
-    const mainSizes = main?.getBoundingClientRect();
-    if (!mainSizes) return;
     circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${
-        event.clientX - button.offsetLeft - mainSizes?.left - radius
-    }px`;
-    circle.style.top = `${
-        event.clientY - button.offsetTop - mainSizes?.top - radius
-    }px`;
+    circle.style.left = `${event.clientX - button.offsetLeft - radius}px`;
+    circle.style.top = `${event.clientY - button.offsetTop - radius}px`;
     circle.classList.add(styles.buttonRipple__span);
 
     const ripple = button.getElementsByClassName(styles.buttonRipple__span)[0];
@@ -39,6 +33,7 @@ function createRipple(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
 
 export function ButtonRipple({
     children,
+    type = "button",
     disabled,
     onClick,
     timeout = 0,
@@ -48,7 +43,7 @@ export function ButtonRipple({
     const sizeClass = size ? styles[`size--${size}`] : styles["size--normal"];
     return (
         <button
-            type={"button"}
+            type={type}
             className={`button ${styles.buttonRipple__button} ${sizeClass} ${className}`}
             disabled={disabled}
             onClick={(event) => {

@@ -1,15 +1,18 @@
 import type { SVGProps } from "react";
 
-export const FrakToken = (props: SVGProps<SVGSVGElement>) => {
+export const FrakToken = (
+    props: SVGProps<SVGSVGElement> & { size?: number }
+) => {
+    const { size, ...rest } = props;
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
             xmlnsXlink="http://www.w3.org/1999/xlink"
-            width="16"
-            height="16"
+            width={size ?? 16}
+            height={size ?? 16}
             fill="none"
             viewBox="0 0 16 16"
-            {...props}
+            {...rest}
         >
             <title>Frak Token</title>
             <path fill="url(#pattern0)" d="M0 0H16V16H0z" />

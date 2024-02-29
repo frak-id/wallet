@@ -7,7 +7,7 @@
     width: 100%;
     padding: 25px 8px;
     border-radius: 8px;
-    background-color: var(--frak-panel-background-color);
+    background-color: var(--frak-button-primary-background-color);
     box-shadow: 4px 4px 4px 0 var(--frak-panel-shadow-color);
     position: relative;
     overflow: hidden;
