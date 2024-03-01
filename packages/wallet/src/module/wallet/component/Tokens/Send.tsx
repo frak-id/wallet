@@ -12,9 +12,12 @@ import { TokenLogo } from "@/module/wallet/component/TokenLogo";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
-import { formatEther } from "viem";
+import { formatEther, parseEther } from "viem";
 import type { Hex } from "viem";
 import styles from "./send.module.css";
+import { useWriteContract } from "wagmi";
+import { erc20Abi } from "viem";
+import { useWallet } from "@/module/wallet/provider/WalletProvider";
 
 type FormInput = {
     walletAddress: Hex;
@@ -31,14 +34,30 @@ export function TokensSend() {
     const { tokens } = useGetUserTokens();
     const [selectedToken, setSelectedToken] = useState<GetUserErc20Token>();
     const [openModal, setOpenModal] = useState(false);
+    const { writeContractAsync, data, error } = useWriteContract();
+    const { refreshBalance } = useWallet();
+    console.log(data, error);
 
     useEffect(() => {
         if (!tokens) return;
         setSelectedToken(tokens[0]);
     }, [tokens?.[0]]);
 
-    const onSubmit: SubmitHandler<FormInput> = (data) => {
+    const onSubmit: SubmitHandler<FormInput> = async (data) => {
         console.log(data);
+        console.log(selectedToken);
+        if (!selectedToken) return;
+        const { walletAddress, amount } = data;
+        // console.log(parseEther(amount));
+        // return;
+        const result = await writeContractAsync({
+            abi: erc20Abi,
+            address: selectedToken.contractAddress,
+            functionName: "transfer",
+            args: [walletAddress, parseEther(amount)],
+        });
+        console.log(result);
+        refreshBalance();
     };
 
     const modalTokens = (
