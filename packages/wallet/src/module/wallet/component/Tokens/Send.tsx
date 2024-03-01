@@ -12,7 +12,7 @@ import { TokenLogo } from "@/module/wallet/component/TokenLogo";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
-import { formatEther, parseEther } from "viem";
+import {parseUnits} from "viem";
 import type { Hex } from "viem";
 import styles from "./send.module.css";
 import { useWriteContract } from "wagmi";
@@ -48,13 +48,12 @@ export function TokensSend() {
         console.log(selectedToken);
         if (!selectedToken) return;
         const { walletAddress, amount } = data;
-        // console.log(parseEther(amount));
-        // return;
+
         const result = await writeContractAsync({
             abi: erc20Abi,
             address: selectedToken.contractAddress,
             functionName: "transfer",
-            args: [walletAddress, parseEther(amount)],
+            args: [walletAddress, parseUnits(amount, selectedToken.metadata.decimals)],
         });
         console.log(result);
         refreshBalance();
@@ -90,7 +89,7 @@ export function TokensSend() {
             type={"button"}
             className={styles.tokensSend__buttonMax}
             onClick={() => {
-                setValue("amount", formatEther(selectedToken.tokenBalance), {
+                setValue("amount", selectedToken?.formattedBalance, {
                     shouldValidate: true,
                 });
             }}
@@ -141,7 +140,7 @@ export function TokensSend() {
                                     className={styles.tokensSend__label}
                                 >
                                     Balance:{" "}
-                                    {formatEther(selectedToken.tokenBalance)}
+                                    {selectedToken.formattedBalance}
                                     {buttonSetToMax}
                                 </label>
                                 <Input
