@@ -1,6 +1,6 @@
 "use client";
 
-import { TokensReceive } from "@/module/wallet/component/Tokens/Receive";
+import { TokensReceive } from "@/module/wallet/component/TokensReceive";
 
 export default function TokensReceivePage() {
     return <TokensReceive />;

@@ -2,22 +2,27 @@
 
 import { userErc20TokensRevalidate } from "@/context/tokens/action/getTokenAsset";
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
-import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Back } from "@/module/common/component/Back";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Grid } from "@/module/common/component/Grid";
 import { Input } from "@/module/common/component/Input";
 import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
-import { PolygonLink } from "@/module/wallet/component/PolygonLink";
-import { TokenList } from "@/module/wallet/component/TokenList";
-import { TokenLogo } from "@/module/wallet/component/TokenLogo";
+import { TokenMax } from "@/module/wallet/component/TokenMax";
+import { TokenModalList } from "@/module/wallet/component/TokenModalList";
+import {
+    getFrkToken,
+    getUpdatedToken,
+    validateAmount,
+} from "@/module/wallet/component/TokensSend/utils";
+import { TransactionError } from "@/module/wallet/component/TransactionError";
+import { TransactionSuccess } from "@/module/wallet/component/TransactionSuccess";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 import { erc20Abi, parseUnits } from "viem";
 import type { Hex } from "viem";
 import { useWriteContract } from "wagmi";
-import styles from "./send.module.css";
+import styles from "./index.module.css";
 
 type FormInput = {
     toAddress: Hex;
@@ -25,6 +30,7 @@ type FormInput = {
 };
 
 export function TokensSend() {
+    // Form control and validation
     const {
         register,
         handleSubmit,
@@ -32,9 +38,16 @@ export function TokensSend() {
         reset,
         formState: { errors },
     } = useForm<FormInput>();
+
+    // Get the user tokens
     const { tokens, refetch } = useGetUserTokens();
-    const [selectedToken, setSelectedToken] = useState<GetUserErc20Token>();
-    const [openModal, setOpenModal] = useState(false);
+
+    // Set the selected token
+    const [selectedToken, setSelectedToken] = useState<
+        GetUserErc20Token | undefined
+    >();
+
+    // Get the write contract function
     const {
         writeContractAsync,
         data: hash,
@@ -44,22 +57,26 @@ export function TokensSend() {
         isError,
     } = useWriteContract();
 
-    useEffect(() => {
-        if (!tokens) return;
-        setSelectedToken(tokens[0]);
-    }, [tokens?.[0]]);
-
+    /**
+     * When the tokens change, check if the selected token has been updated
+     */
     // biome-ignore lint/correctness/useExhaustiveDependencies: trigger only when tokens change, not when the selected token changes
     useEffect(() => {
         if (!tokens) return;
-        const findTokenUpdated = tokens.find(
-            ({ contractAddress, formattedBalance }) =>
-                contractAddress === selectedToken?.contractAddress &&
-                formattedBalance !== selectedToken?.formattedBalance
-        );
+
+        // If no token is selected, select the FRK token by default
+        if (!selectedToken) {
+            const frkToken = getFrkToken({ tokens });
+            setSelectedToken(frkToken);
+            return;
+        }
+
+        // If the selected token has been updated, update the selected token
+        const findTokenUpdated = getUpdatedToken({ tokens, selectedToken });
         if (findTokenUpdated) setSelectedToken(findTokenUpdated);
     }, [tokens]);
 
+    // Submit handler that launches the transaction
     const onSubmit: SubmitHandler<FormInput> = async (data) => {
         if (!selectedToken) return;
         const { toAddress, amount } = data;
@@ -84,45 +101,6 @@ export function TokensSend() {
         // Refetch the tokens
         await refetch();
     };
-
-    const modalTokens = (
-        <AlertDialog
-            title={"Select a token"}
-            text={
-                <TokenList
-                    setSelectedValue={(token) => {
-                        setSelectedToken(token);
-                        setOpenModal(false);
-                    }}
-                />
-            }
-            button={{
-                label: (
-                    <>
-                        <TokenLogo token={selectedToken} />
-                        <span>{selectedToken?.metadata.symbol}</span>
-                    </>
-                ),
-                className: styles.tokensSend__trigger,
-            }}
-            open={openModal}
-            onOpenChange={(open) => setOpenModal(open)}
-        />
-    );
-
-    const buttonSetToMax = selectedToken?.tokenBalance ? (
-        <button
-            type={"button"}
-            className={styles.tokensSend__buttonMax}
-            onClick={() => {
-                setValue("amount", selectedToken?.formattedBalance, {
-                    shouldValidate: true,
-                });
-            }}
-        >
-            MAX
-        </button>
-    ) : null;
 
     return (
         <>
@@ -164,10 +142,25 @@ export function TokensSend() {
                                     className={styles.tokensSend__label}
                                 >
                                     Balance: {selectedToken.formattedBalance}
-                                    {buttonSetToMax}
+                                    <TokenMax
+                                        onClick={() => {
+                                            setValue(
+                                                "amount",
+                                                selectedToken?.formattedBalance,
+                                                {
+                                                    shouldValidate: true,
+                                                }
+                                            );
+                                        }}
+                                    />
                                 </label>
                                 <Input
-                                    leftSection={modalTokens}
+                                    leftSection={
+                                        <TokenModalList
+                                            token={selectedToken}
+                                            setSelectedToken={setSelectedToken}
+                                        />
+                                    }
                                     type={"number"}
                                     step={"any"}
                                     id={"amount"}
@@ -175,17 +168,11 @@ export function TokensSend() {
                                     placeholder="Amount to send"
                                     {...register("amount", {
                                         required: "Amount is required",
-                                        validate: {
-                                            positive: (value) =>
-                                                parseFloat(value) > 0 ||
-                                                "Amount must be positive",
-                                            lessThanBalance: (value) =>
-                                                parseFloat(value) <=
-                                                    parseFloat(
-                                                        selectedToken.formattedBalance
-                                                    ) ||
-                                                "Amount must be less than balance",
-                                        },
+                                        validate: (value) =>
+                                            validateAmount(
+                                                value,
+                                                selectedToken
+                                            ),
                                     })}
                                     aria-invalid={
                                         errors.amount ? "true" : "false"
@@ -200,6 +187,7 @@ export function TokensSend() {
                             <p>
                                 <ButtonRipple
                                     type={"submit"}
+                                    size={"small"}
                                     disabled={isPending}
                                     isLoading={isPending}
                                 >
@@ -207,25 +195,11 @@ export function TokensSend() {
                                 </ButtonRipple>
                             </p>
                             <p className={styles.tokensSend__bottom}>
-                                {isSuccess && (
-                                    <>
-                                        Transaction Success!
-                                        <br />
-                                        <br />
-                                        Transaction Hash:{" "}
-                                        <PolygonLink
-                                            hash={hash as Hex}
-                                            icon={false}
-                                            className={
-                                                styles.tokensSend__polygonLink
-                                            }
-                                        />
-                                    </>
+                                {isSuccess && hash && (
+                                    <TransactionSuccess hash={hash} />
                                 )}
-                                {isError && (
-                                    <span className={"error"}>
-                                        {error?.message}
-                                    </span>
+                                {isError && error && (
+                                    <TransactionError message={error.message} />
                                 )}
                             </p>
                         </>

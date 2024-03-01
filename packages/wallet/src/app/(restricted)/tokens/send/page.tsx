@@ -1,6 +1,6 @@
 "use client";
 
-import { TokensSend } from "@/module/wallet/component/Tokens/Send";
+import { TokensSend } from "@/module/wallet/component/TokensSend";
 
 export default function TokensSendPage() {
     return <TokensSend />;
