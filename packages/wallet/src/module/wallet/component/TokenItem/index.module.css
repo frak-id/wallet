@@ -1,0 +1,21 @@
+.tokenItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+}
+
+.tokenItem__button {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px 5px 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+}
+
+.tokenItem__button:hover {
+    background-color: var(--frak-color-blue-zodiac-darker);
+}

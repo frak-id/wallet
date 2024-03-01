@@ -3,7 +3,7 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useArticlePrices } from "@/module/paywall/hook/useArticlePrices";
 import { useUnlockState } from "@/module/paywall/hook/useUnlockState";
-import { useWalletStatus } from "@/module/wallet/hooks/useWalletStatus";
+import { useWalletStatus } from "@/module/wallet/hook/useWalletStatus";
 import type {
     ArticleUnlockStatusReturnType,
     WalletStatusReturnType,

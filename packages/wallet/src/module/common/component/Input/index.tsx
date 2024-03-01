@@ -1,60 +1,26 @@
-import { useDebounce } from "@uidotdev/usehooks";
-import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import type { InputHTMLAttributes } from "react";
+import { forwardRef } from "react";
+import type { ChangeEvent, InputHTMLAttributes, ReactNode } from "react";
 import styles from "./index.module.css";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     classNameWrapper?: string;
     defaultValue?: string;
     value?: string;
+    onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
     onChangeValue?: (value: string | undefined) => void;
+    leftSection?: string | ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
-        {
-            type,
-            className,
-            defaultValue = "",
-            value = "",
-            classNameWrapper = "",
-            onChangeValue,
-            ...props
-        },
+        { type, className = "", classNameWrapper = "", leftSection, ...props },
         ref
     ) => {
-        const [valueLocal, setValueLocal] = useState<string>(defaultValue);
-        const debouncedValue = useDebounce(valueLocal, 300);
-        const callback = useRef<typeof onChangeValue>();
-        callback.current = onChangeValue;
-
-        const debounceValueCompare = useCallback(
-            (debouncedValue: string): string | undefined => {
-                if (value !== debouncedValue) {
-                    return debouncedValue;
-                }
-            },
-            [value]
-        );
-
-        useEffect(() => {
-            if (!value) return;
-            setValueLocal(value);
-        }, [value]);
-
-        useEffect(() => {
-            const difference = debounceValueCompare(debouncedValue);
-            typeof difference === "string" && callback.current?.(difference);
-        }, [debouncedValue, debounceValueCompare]);
-
         return (
             <span className={`${styles.inputWrapper} ${classNameWrapper}`}>
+                {leftSection}
                 <input
                     type={type}
-                    value={valueLocal}
-                    onChange={(event) =>
-                        setValueLocal(event.currentTarget.value)
-                    }
                     className={`${className} ${styles.input}`}
                     ref={ref}
                     {...props}

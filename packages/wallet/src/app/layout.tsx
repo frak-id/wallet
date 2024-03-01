@@ -50,13 +50,15 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={firaMono.className}>
-                <main className={styles.main}>
-                    <div className={styles.inner}>
-                        <RootProvider>
-                            <ClientOnly>{children}</ClientOnly>
-                        </RootProvider>
-                    </div>
-                </main>
+                <div className={"desktop"}>
+                    <main className={styles.main}>
+                        <div className={styles.inner}>
+                            <RootProvider>
+                                <ClientOnly>{children}</ClientOnly>
+                            </RootProvider>
+                        </div>
+                    </main>
+                </div>
             </body>
         </html>
     );

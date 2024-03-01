@@ -9,7 +9,7 @@ import { Grid } from "@/module/common/component/Grid";
 import { usePaywall } from "@/module/paywall/provider";
 import { HardDrive } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 /**
  * Login from previous authentication
@@ -21,11 +21,14 @@ export function Login() {
     const { context } = usePaywall();
     const router = useRouter();
     const [, startTransition] = useTransition();
+    const [disabled, setDisabled] = useState(false);
 
     async function triggerAction() {
+        setDisabled(true);
         await login({});
         startTransition(() => {
             router.push(context ? "/unlock" : "/wallet");
+            setDisabled(false);
         });
     }
 
@@ -33,7 +36,7 @@ export function Login() {
         <>
             <Back href={"/register"}>Account creation</Back>
             <Grid>
-                <AuthFingerprint action={triggerAction}>
+                <AuthFingerprint action={triggerAction} disabled={disabled}>
                     Recover your <strong>NEXUS</strong>
                 </AuthFingerprint>
 

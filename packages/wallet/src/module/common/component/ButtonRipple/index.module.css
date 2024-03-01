@@ -7,11 +7,17 @@
     width: 100%;
     padding: 25px 8px;
     border-radius: 8px;
-    background-color: var(--frak-panel-background-color);
+    background-color: var(--frak-button-primary-background-color);
     box-shadow: 4px 4px 4px 0 var(--frak-panel-shadow-color);
     position: relative;
     overflow: hidden;
     transition: background 400ms;
+}
+
+.buttonRipple__button:disabled {
+    color: var(--frak-button-disabled-text-color);
+    box-shadow: none;
+    cursor: not-allowed;
 }
 
 .buttonRipple__button:hover {
@@ -47,4 +53,9 @@
 
 .size--big {
     padding: 25px 8px;
+}
+
+.isLoading {
+    flex-direction: row;
+    justify-content: center;
 }

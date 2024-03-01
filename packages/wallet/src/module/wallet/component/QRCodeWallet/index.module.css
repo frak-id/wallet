@@ -8,3 +8,8 @@
     font-size: 12px;
     text-align: center;
 }
+
+.QRCodeWallet__button {
+    flex-direction: row;
+    justify-content: center;
+}

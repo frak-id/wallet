@@ -1,23 +1,32 @@
 import { Pencil } from "@/assets/icons/Pencil";
 import { Input } from "@/module/common/component/Input";
 import { Check } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import type { SubmitHandler } from "react-hook-form";
 import styles from "./index.module.css";
 
+type FormInput = {
+    walletName: string;
+};
+
 export function AccountName({
-    username,
     setUsername,
     setShowAccountName,
     disabled,
 }: {
-    username?: string;
-    setUsername: (value: string) => void;
+    setUsername: (value: string | undefined) => void;
     setShowAccountName: (value: boolean) => void;
     disabled?: boolean;
 }) {
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<FormInput>();
     const [showForm, setShowForm] = useState(false);
-    const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    const onSubmit: SubmitHandler<FormInput> = (data) => {
+        setUsername(data.walletName !== "" ? data.walletName : undefined);
         setShowForm(!showForm);
         setShowAccountName(!showForm);
     };
@@ -39,7 +48,7 @@ export function AccountName({
                 </button>
             )}
             {showForm && (
-                <form onSubmit={onSubmit}>
+                <form onSubmit={handleSubmit(onSubmit)}>
                     <p>
                         <label
                             htmlFor="walletName"
@@ -51,15 +60,16 @@ export function AccountName({
                             <Input
                                 type={"text"}
                                 disabled={disabled}
-                                name={"walletName"}
                                 id={"walletName"}
                                 aria-label="Your wallet name"
                                 placeholder="Enter your wallet name"
-                                value={username}
-                                onChangeValue={(value) =>
-                                    setUsername(value ?? "")
-                                }
+                                {...register("walletName")}
                             />
+                            {errors.walletName && (
+                                <span className={"error"}>
+                                    {errors.walletName.message}
+                                </span>
+                            )}
                             <button
                                 type={"submit"}
                                 disabled={disabled}

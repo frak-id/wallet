@@ -111,7 +111,6 @@ export function Register() {
             </AuthFingerprint>
 
             <AccountName
-                username={username}
                 setUsername={setUsername}
                 setShowAccountName={setShowAccountName}
                 disabled={disabled}

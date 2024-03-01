@@ -13,4 +13,10 @@
             --frak-color-blue-background
     );
     --frak-notice-text-color: var(--frak-color-grayText);
+    --frak-alertDialog-background-color: var(--frak-color-blue-background);
+    --frak-button-primary-background-color: var(
+            --frak-color-blue-zodiac-darker
+    );
+    --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
+    --frak-button-disabled-text-color: var(--frak-color-grayText);
 }

@@ -19,6 +19,7 @@ import {
     useEffect,
     useState,
 } from "react";
+import { useMemo } from "react";
 import { formatEther } from "viem";
 import { polygonMumbai } from "viem/chains";
 import { useConnect, useReadContract } from "wagmi";
@@ -94,17 +95,27 @@ function useWalletHook({ session }: { session: Session }) {
         connect({ connector });
     }
 
-    return {
-        address: smartWallet?.address,
-        balance: formatEther(balance ?? 0n),
+    return useMemo(() => {
+        return {
+            address: smartWallet?.address,
+            balance: formatEther(balance ?? 0n),
+            smartWallet,
+            refreshBalance,
+            // Stuff related to the wagmi connector
+            connectStatus,
+            connectError,
+            username,
+            wallet,
+        };
+    }, [
         smartWallet,
+        balance,
         refreshBalance,
-        // Stuff related to the wagmi connector
         connectStatus,
         connectError,
         username,
         wallet,
-    };
+    ]);
 }
 
 type UseWalletHook = ReturnType<typeof useWalletHook>;

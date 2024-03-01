@@ -1,5 +1,5 @@
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
-import { useCopyAddress } from "@/module/wallet/hooks/useCopyAddress";
+import { useCopyAddress } from "@/module/wallet/hook/useCopyAddress";
 import styles from "./index.module.css";
 
 type WalletAddressProps = {
