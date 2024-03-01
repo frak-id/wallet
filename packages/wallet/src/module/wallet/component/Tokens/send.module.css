@@ -41,3 +41,11 @@
     font-size: 12px;
     cursor: pointer;
 }
+
+.tokensSend__bottom {
+    margin-top: 20px;
+}
+
+.tokensSend__polygonLink {
+    display: inline;
+}

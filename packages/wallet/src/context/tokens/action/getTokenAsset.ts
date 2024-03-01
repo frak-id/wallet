@@ -7,9 +7,10 @@ import {
     type GetTokenMetadataParams,
     getTokenMetadata,
 } from "@/context/common/blockchain/viemActions/getTokenMetadata";
-import { unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { parallel } from "radash";
-import {type Address, formatUnits} from "viem";
+import { formatUnits } from "viem";
+import type { Address } from "viem";
 
 /**
  * Get all the user tokens
@@ -36,7 +37,10 @@ async function _getUserErc20Tokens({ wallet }: { wallet: Address }) {
         const metadata = await _getTokenMetadata({
             address: tBalance.contractAddress,
         });
-        const formattedBalance = formatUnits(tBalance.tokenBalance, metadata.decimals);
+        const formattedBalance = formatUnits(
+            tBalance.tokenBalance,
+            metadata.decimals
+        );
         return {
             ...tBalance,
             formattedBalance,
@@ -52,6 +56,8 @@ export type GetUserErc20Token = {
     metadata: GetTokenMetadataResponse;
 };
 
+const TAG = "userErc20Tokens";
+
 /**
  * Cached version of the user tokens
  */
@@ -59,10 +65,19 @@ export const getUserErc20Tokens = unstable_cache(
     _getUserErc20Tokens,
     ["get-erc20-assets"],
     {
+        // Tags for revalidation
+        tags: [TAG],
         // Keep that in server cache for 2min
         revalidate: 120,
     }
 );
+
+/**
+ * Revalidate the user tokens
+ */
+export async function userErc20TokensRevalidate() {
+    revalidateTag(TAG);
+}
 
 /**
  * Get the metadata of a token, cached version

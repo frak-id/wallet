@@ -9,8 +9,8 @@ export function TokenItemLite({
 }) {
     return (
         <li className={`${styles.tokenItemLite}`}>
-            <TokenLogo token={token} size={16} />{" "}
-            {token.formattedBalance} {token.metadata.symbol}
+            <TokenLogo token={token} size={16} /> {token.formattedBalance}{" "}
+            {token.metadata.symbol}
         </li>
     );
 }

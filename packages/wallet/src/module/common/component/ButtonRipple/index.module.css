@@ -14,6 +14,12 @@
     transition: background 400ms;
 }
 
+.buttonRipple__button:disabled {
+    color: var(--frak-button-disabled-text-color);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
 .buttonRipple__button:hover {
     box-shadow: 6px 6px 6px 0 var(--frak-panel-shadow-color);
 }
@@ -47,4 +53,9 @@
 
 .size--big {
     padding: 25px 8px;
+}
+
+.isLoading {
+    flex-direction: row;
+    justify-content: center;
 }

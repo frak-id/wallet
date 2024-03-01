@@ -1,3 +1,4 @@
+import { Loader } from "@/assets/icons/Loader";
 import type React from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
@@ -10,6 +11,7 @@ type AuthFingerprintProps = {
     icon?: ReactNode;
     className?: string;
     size?: "none" | "small" | "normal" | "big";
+    isLoading?: boolean;
 };
 
 function createRipple(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
@@ -39,19 +41,25 @@ export function ButtonRipple({
     timeout = 0,
     className = "",
     size,
+    isLoading,
 }: PropsWithChildren<AuthFingerprintProps>) {
     const sizeClass = size ? styles[`size--${size}`] : styles["size--normal"];
     return (
         <button
             type={type}
-            className={`button ${styles.buttonRipple__button} ${sizeClass} ${className}`}
+            className={`button ${
+                styles.buttonRipple__button
+            } ${sizeClass} ${className} ${isLoading ? styles.isLoading : ""}`}
             disabled={disabled}
             onClick={(event) => {
                 createRipple(event);
                 setTimeout(() => onClick?.(), timeout);
             }}
         >
-            {children}
+            <>
+                {isLoading && <Loader className={styles.loader} />}
+                {children}
+            </>
         </button>
     );
 }

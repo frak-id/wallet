@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 export function useGetUserTokens() {
     const { address } = useWallet();
 
-    const { data, error, isLoading } = useQuery({
+    const { data, error, isLoading, refetch } = useQuery({
         queryKey: ["getUserTokens", address],
         queryFn: async () => {
             if (!address) {
@@ -24,5 +24,6 @@ export function useGetUserTokens() {
         tokens: data,
         error,
         isLoading,
+        refetch,
     };
 }
