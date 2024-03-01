@@ -9,7 +9,7 @@ import {
 } from "@/context/common/blockchain/viemActions/getTokenMetadata";
 import { unstable_cache } from "next/cache";
 import { parallel } from "radash";
-import type { Address } from "viem";
+import {type Address, formatUnits} from "viem";
 
 /**
  * Get all the user tokens
@@ -33,11 +33,14 @@ async function _getUserErc20Tokens({ wallet }: { wallet: Address }) {
 
     // Fetch every token metadata and return that
     return await parallel(2, effectiveBalances, async (tBalance) => {
+        const metadata = await _getTokenMetadata({
+            address: tBalance.contractAddress,
+        });
+        const formattedBalance = formatUnits(tBalance.tokenBalance, metadata.decimals);
         return {
             ...tBalance,
-            metadata: await _getTokenMetadata({
-                address: tBalance.contractAddress,
-            }),
+            formattedBalance,
+            metadata,
         };
     });
 }
@@ -45,6 +48,7 @@ async function _getUserErc20Tokens({ wallet }: { wallet: Address }) {
 export type GetUserErc20Token = {
     contractAddress: Address;
     tokenBalance: bigint;
+    formattedBalance: string;
     metadata: GetTokenMetadataResponse;
 };
 

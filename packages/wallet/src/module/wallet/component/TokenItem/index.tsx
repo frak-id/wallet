@@ -1,6 +1,5 @@
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { TokenLogo } from "@/module/wallet/component/TokenLogo";
-import { formatEther } from "viem";
 import styles from "./index.module.css";
 
 export function TokenItem({
@@ -20,7 +19,7 @@ export function TokenItem({
             >
                 <TokenLogo token={token} size={32} />{" "}
                 <span>
-                    <strong>{formatEther(token.tokenBalance)}</strong>{" "}
+                    <strong>{token.formattedBalance}</strong>{" "}
                     {token.metadata.symbol}
                 </span>
             </button>
