@@ -126,6 +126,8 @@ export function createIFrameNexusClient({
         channelManager.destroy();
         // Cleanup the message handler
         messageHandler.cleanup();
+        // Remove the iframe
+        iframe.remove();
     };
 
     return {
