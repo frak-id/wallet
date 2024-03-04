@@ -105,8 +105,8 @@ export const getArticlePricesForUser = unstable_cache(
     _getArticlePricesForUser,
     ["get-article-prices-for-user"],
     {
-        // Keep that in cache for 30 seconds
-        revalidate: 30,
+        // Keep that in cache for 5 minutes
+        revalidate: 300,
     }
 );
 

@@ -8,7 +8,7 @@ import type {
     IFrameRpcSchema,
     WalletStatusReturnType,
 } from "@frak-labs/nexus-sdk/core";
-import { useQuery} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { toHex } from "viem";
 import { useReadContract } from "wagmi";
@@ -23,7 +23,7 @@ type OnListenToWallet = IFrameRequestResolver<
 /**
  * Hook use to listen to the wallet status
  */
-export function useWalletListenerHook() {
+export function useWalletStatusListener() {
     /**
      * The current wallet status state
      */
@@ -51,7 +51,7 @@ export function useWalletListenerHook() {
             blockTag: "pending",
             // Some query options
             query: {
-                enabled: session?.wallet?.address !== undefined
+                enabled: session?.wallet?.address !== undefined,
             },
         });
 
@@ -62,7 +62,6 @@ export function useWalletListenerHook() {
      */
     const onWalletListenRequest: OnListenToWallet = useCallback(
         async (_, emitter) => {
-            console.log("Received a wallet listen request", { _, emitter });
             // Save our emitter, this will trigger session and balance fetching
             setEmitter({ emitter });
         },
@@ -97,7 +96,11 @@ export function useWalletListenerHook() {
      * Emit an updated version of the wallet status every time on our props has changed
      */
     useQuery({
-        queryKey: ["walletStatusAutoEmitter", session?.wallet?.address ?? "no-wallet", toHex(walletFrkBalance ?? 0n) ],
+        queryKey: [
+            "walletStatusAutoEmitter",
+            session?.wallet?.address ?? "no-wallet",
+            toHex(walletFrkBalance ?? 0n),
+        ],
         queryFn: () => {
             // Early exit if no emitter
             if (!emitter) {
