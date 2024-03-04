@@ -11,10 +11,10 @@ import {
     type ArticleUnlockStatusReturnType,
     type UnlockOptionsReturnType,
     type WalletStatusReturnType,
-    createIFrameFrakClient,
+    createIFrameNexusClient,
     createIframe,
 } from "@frak-labs/nexus-sdk/core";
-import type { FrakClient } from "@frak-labs/nexus-sdk/core";
+import type { NexusClient } from "@frak-labs/nexus-sdk/core";
 import { useEffect, useState } from "react";
 import React from "react";
 import type { Hex } from "viem";
@@ -34,7 +34,7 @@ async function initFrakTransport() {
     }
 
     // Create the query provider
-    return createIFrameFrakClient({
+    return createIFrameNexusClient({
         config: frakWalletSdkConfig,
         iframe,
     });
@@ -49,7 +49,7 @@ export function ReadArticle({
 }) {
     // Init our query provider
     const [iframeFrakClient, setIframeFrakClient] = useState<
-        FrakClient | undefined
+        NexusClient | undefined
     >(undefined);
 
     // The injecting state for the unlock component
