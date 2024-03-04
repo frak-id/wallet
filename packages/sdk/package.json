@@ -1,6 +1,7 @@
 {
-  "name": "@frak-wallet/sdk",
-  "description": "Frak Wallet client SDK, helping any person to interact with the Frak wallet, and require the unlock of a premium article within the Frak ecosystem.",
+  "name": "@frak-labs/nexus-sdk",
+  "version": "0.0.1-alpha",
+  "description": "Nexus Wallet client SDK, helping any person to interact with the Frak wallet, and require the unlock of a premium article within the Frak ecosystem.",
   "type": "module",
   "sideEffects": false,
   "license": "GNU GPL 3.0",

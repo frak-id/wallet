@@ -6,11 +6,11 @@ import { usePaywall } from "@/module/paywall/provider";
 import {
     decompressDataAndCheckHash,
     redirectRequestKeyProvider,
-} from "@frak-wallet/sdk/core";
+} from "@frak-labs/nexus-sdk/core";
 import type {
     ExtractedParametersFromRpc,
     RedirectRpcSchema,
-} from "@frak-wallet/sdk/core";
+} from "@frak-labs/nexus-sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";

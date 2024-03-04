@@ -5,7 +5,7 @@ import {
 import { getUnlockStatusOnArticle } from "@/context/paywall/action/getStatus";
 import { useSession } from "@/module/common/hook/useSession";
 import { type PaywallStatus, usePaywall } from "@/module/paywall/provider";
-import type { ArticleUnlockStatusReturnType } from "@frak-wallet/sdk/core";
+import type { ArticleUnlockStatusReturnType } from "@frak-labs/nexus-sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { waitForUserOperationReceipt } from "permissionless";
 import { useEffect, useState } from "react";

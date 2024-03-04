@@ -3,14 +3,14 @@ import { FrakLogo } from "@/assets/icons/FrakLogo";
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
 import type { Article } from "@/type/Article";
-import { getStartArticleUnlockUrl } from "@frak-wallet/sdk/actions";
+import { getStartArticleUnlockUrl } from "@frak-labs/nexus-sdk/actions";
 import type {
     ArticleUnlockStatusReturnType,
     UnlockOptionsReturnType,
     WalletStatusReturnType,
-} from "@frak-wallet/sdk/core";
-import { formatHash } from "@frak-wallet/wallet/src/context/wallet/utils/hashFormatter";
-import type { ArticlePriceForUser } from "@frak-wallet/wallet/src/types/Price";
+} from "@frak-labs/nexus-sdk/core";
+import { formatHash } from "@frak-labs/nexus-wallet/src/context/wallet/utils/hashFormatter";
+import type { ArticlePriceForUser } from "@frak-labs/nexus-wallet/src/types/Price";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";

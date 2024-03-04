@@ -1,5 +1,5 @@
 {
-  "name": "@frak-wallet/wallet",
+  "name": "@frak-labs/nexus-wallet",
   "version": "0.1.0",
   "description": "Simple demo of a future Frak Wallet",
   "private": true,
@@ -15,7 +15,7 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
-    "@frak-wallet/sdk": "workspace:*",
+    "@frak-labs/nexus-sdk": "workspace:*",
     "@peculiar/asn1-ecc": "^2.3.8",
     "@peculiar/asn1-schema": "^2.3.8",
     "@permissionless/wagmi": "^0.0.4",

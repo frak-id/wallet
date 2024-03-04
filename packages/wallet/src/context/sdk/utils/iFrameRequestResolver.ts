@@ -7,7 +7,7 @@ import {
     decompressDataAndCheckHash,
     getIFrameResponseKeyProvider,
     hashAndCompressData,
-} from "@frak-wallet/sdk/core";
+} from "@frak-labs/nexus-sdk/core";
 
 /**
  * Type for our iframe rpc response emitter

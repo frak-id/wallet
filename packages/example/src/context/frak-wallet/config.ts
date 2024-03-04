@@ -1,4 +1,4 @@
-import type { FrakWalletSdkConfig } from "@frak-wallet/sdk/core";
+import type { FrakWalletSdkConfig } from "@frak-labs/nexus-sdk/core";
 
 export const frakWalletSdkConfig: FrakWalletSdkConfig = {
     walletUrl: process.env.FRAK_WALLET_URL as string,

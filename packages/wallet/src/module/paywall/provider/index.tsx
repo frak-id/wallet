@@ -3,7 +3,7 @@
 import { dexieDb } from "@/context/common/dexie/dexieDb";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
 import type { ArticlePrice } from "@/types/Price";
-import type { StartArticleUnlockParams } from "@frak-wallet/sdk/core";
+import type { StartArticleUnlockParams } from "@frak-labs/nexus-sdk/core";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useRouter } from "next/navigation";
 import {

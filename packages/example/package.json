@@ -1,5 +1,5 @@
 {
-  "name": "@frak-wallet/example",
+  "name": "@frak-labs/nexus-example",
   "version": "0.1.0",
   "description": "Simple demo of a future Frak Wallet",
   "private": true,
@@ -15,7 +15,7 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
-    "@frak-wallet/sdk": "workspace:*",
+    "@frak-labs/nexus-sdk": "workspace:*",
     "@radix-ui/react-slot": "^1.0.2",
     "@tanstack/react-query": "^5.21.7",
     "@tanstack/store": "^0.3.1",

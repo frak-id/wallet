@@ -3,7 +3,7 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { frakTokenAbi } from "@/context/common/blockchain/frak-abi";
 import { useSession } from "@/module/common/hook/useSession";
-import type { WalletStatusReturnType } from "@frak-wallet/sdk/core";
+import type { WalletStatusReturnType } from "@frak-labs/nexus-sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { toHex } from "viem";
 import { useReadContract } from "wagmi";

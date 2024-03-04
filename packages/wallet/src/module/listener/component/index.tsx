@@ -7,7 +7,7 @@ import { useWalletStatus } from "@/module/wallet/hook/useWalletStatus";
 import type {
     ArticleUnlockStatusReturnType,
     WalletStatusReturnType,
-} from "@frak-wallet/sdk/core";
+} from "@frak-labs/nexus-sdk/core";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 

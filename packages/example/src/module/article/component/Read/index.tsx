@@ -6,15 +6,15 @@ import {
     getArticleUnlockOptions,
     watchUnlockStatus,
     watchWalletStatus,
-} from "@frak-wallet/sdk/actions";
+} from "@frak-labs/nexus-sdk/actions";
 import {
     type ArticleUnlockStatusReturnType,
     type UnlockOptionsReturnType,
     type WalletStatusReturnType,
     createIFrameFrakClient,
     createIframe,
-} from "@frak-wallet/sdk/core";
-import type { FrakClient } from "@frak-wallet/sdk/core";
+} from "@frak-labs/nexus-sdk/core";
+import type { FrakClient } from "@frak-labs/nexus-sdk/core";
 import { useEffect, useState } from "react";
 import React from "react";
 import type { Hex } from "viem";

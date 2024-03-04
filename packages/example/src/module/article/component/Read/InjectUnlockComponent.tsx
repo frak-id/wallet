@@ -5,7 +5,7 @@ import type {
     ArticleUnlockStatusReturnType,
     UnlockOptionsReturnType,
     WalletStatusReturnType,
-} from "@frak-wallet/sdk/core";
+} from "@frak-labs/nexus-sdk/core";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cssRaw } from "../UnlockButtons";

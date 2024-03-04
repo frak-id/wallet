@@ -1,8 +1,8 @@
 import {
     getRedirectResponseResponseKeyProvider,
     hashAndCompressData,
-} from "@frak-wallet/sdk/core";
-import type { StartArticleUnlockReturnType } from "@frak-wallet/sdk/core";
+} from "@frak-labs/nexus-sdk/core";
+import type { StartArticleUnlockReturnType } from "@frak-labs/nexus-sdk/core";
 
 /**
  * Function used to build the redirect url from a start unlock query
