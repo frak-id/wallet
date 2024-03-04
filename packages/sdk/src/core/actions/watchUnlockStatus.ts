@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import type { FrakClient } from "../types/client";
+import type { NexusClient } from "../types/client";
 import type { ArticleUnlockStatusReturnType } from "../types/rpc/unlockStatus";
 
 /**
@@ -16,7 +16,7 @@ type WatchUnlockStatusParams = {
  * @param callback
  */
 export function watchUnlockStatus(
-    client: FrakClient,
+    client: NexusClient,
     { articleId }: WatchUnlockStatusParams,
     callback: (status: ArticleUnlockStatusReturnType) => void
 ) {

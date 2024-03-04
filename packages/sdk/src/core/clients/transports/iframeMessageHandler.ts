@@ -7,9 +7,9 @@ import type { IFrameChannelManager } from "./iframeChannelManager";
  */
 export type IFrameMessageHandlerParam = {
     /**
-     * the frak wallet base url
+     * the nexus wallet base url
      */
-    frakWalletUrl: string;
+    nexusWalletUrl: string;
     /**
      * The iframe on which we will bound our listener
      */
@@ -41,12 +41,12 @@ export type IFrameMessageHandler = {
 
 /**
  * Create an iframe message handler
- * @param frakWalletBaseUrl
+ * @param nexusWalletUrl
  * @param iframe
  * @param channelManager
  */
 export function createIFrameMessageHandler({
-    frakWalletUrl,
+    nexusWalletUrl,
     iframe,
     channelManager,
 }: IFrameMessageHandlerParam): IFrameMessageHandler {
@@ -71,7 +71,7 @@ export function createIFrameMessageHandler({
         // Check that the origin match the wallet
         if (
             new URL(event.origin).origin.toLowerCase() !==
-            new URL(frakWalletUrl).origin.toLowerCase()
+            new URL(nexusWalletUrl).origin.toLowerCase()
         ) {
             return;
         }
@@ -100,7 +100,7 @@ export function createIFrameMessageHandler({
     // Build our helpers function
     const sendEvent = (message: IFrameEvent) => {
         contentWindow.postMessage(message, {
-            targetOrigin: frakWalletUrl,
+            targetOrigin: nexusWalletUrl,
         });
     };
     const cleanup = () => {

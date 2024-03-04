@@ -1,4 +1,4 @@
-import type { FrakClient } from "../types/client";
+import type { NexusClient } from "../types/client";
 import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
 
 /**
@@ -7,7 +7,7 @@ import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
  * @param callback
  */
 export function watchWalletStatus(
-    client: FrakClient,
+    client: NexusClient,
     callback: (status: WalletStatusReturnType) => void
 ) {
     return client.listenerRequest(

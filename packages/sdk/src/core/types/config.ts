@@ -1,9 +1,9 @@
 import type { Hex } from "viem";
 
 /**
- * Configuration for the Frak Wallet SDK
+ * Configuration for the Nexus Wallet SDK
  */
-export type FrakWalletSdkConfig = Readonly<{
+export type NexusWalletSdkConfig = Readonly<{
     // The current url for the wallet sdk
     walletUrl: string;
     // The content id on which this sdk will be used

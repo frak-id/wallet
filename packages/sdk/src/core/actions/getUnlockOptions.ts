@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import type { FrakClient } from "../types/client";
+import type { NexusClient } from "../types/client";
 
 /**
  * Type used to get the unlock options
@@ -14,7 +14,7 @@ type GetUnlockOptionsParams = {
  * @param articleId
  */
 export function getArticleUnlockOptions(
-    client: FrakClient,
+    client: NexusClient,
     { articleId }: GetUnlockOptionsParams
 ) {
     return client.request({

@@ -1,5 +1,5 @@
-import type { FrakClient } from "../types/client";
-import type { FrakWalletSdkConfig } from "../types/config";
+import type { NexusClient } from "../types/client";
+import type { NexusWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
 import type { ListenerRequestFn, RequestFn } from "../types/transport";
 import { Deferred } from "../utils/Deferred";
@@ -15,21 +15,21 @@ import { createIFrameChannelManager } from "./transports/iframeChannelManager";
 import { createIFrameMessageHandler } from "./transports/iframeMessageHandler";
 
 /**
- * Create a new iframe Frak client
+ * Create a new iframe Nexus client
  */
-export function createIFrameFrakClient({
+export function createIFrameNexusClient({
     config,
     iframe,
 }: {
-    config: FrakWalletSdkConfig;
+    config: NexusWalletSdkConfig;
     iframe: HTMLIFrameElement;
-}): FrakClient {
+}): NexusClient {
     // Build our channel manager
     const channelManager = createIFrameChannelManager();
 
     // Build our message handler
     const messageHandler = createIFrameMessageHandler({
-        frakWalletUrl: config.walletUrl,
+        nexusWalletUrl: config.walletUrl,
         iframe,
         channelManager,
     });

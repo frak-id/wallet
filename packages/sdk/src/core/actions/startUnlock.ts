@@ -1,5 +1,5 @@
 import type {
-    FrakWalletSdkConfig,
+    NexusWalletSdkConfig,
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
 } from "../types";
@@ -20,7 +20,7 @@ export type GetStartUnlockUrlParams = Omit<
  * @param params
  */
 export async function getStartArticleUnlockUrl(
-    config: FrakWalletSdkConfig,
+    config: NexusWalletSdkConfig,
     params: GetStartUnlockUrlParams
 ) {
     // Compress our params

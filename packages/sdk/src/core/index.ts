@@ -1,5 +1,5 @@
 // Clients
-export { createIFrameFrakClient } from "./clients";
+export { createIFrameNexusClient } from "./clients";
 
 // Utils
 export {
@@ -23,7 +23,7 @@ export type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
     // Client
-    FrakClient,
+    NexusClient,
     // Transport
     IFrameTransport,
     IFrameRpcEvent,
@@ -31,7 +31,7 @@ export type {
     ExtractedParametersFromRpc,
     ExtractedReturnTypeFromRpc,
     // Config
-    FrakWalletSdkConfig,
+    NexusWalletSdkConfig,
     // Generics
     PaidArticleUnlockPrice,
     // Compression

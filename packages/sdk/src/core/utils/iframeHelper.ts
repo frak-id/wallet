@@ -6,7 +6,7 @@ export function createIframe({
     walletBaseUrl,
 }: { walletBaseUrl: string }): Promise<HTMLIFrameElement | undefined> {
     // Check if the iframe is already created
-    const isAlreadyCreated = document.querySelector("#frak-wallet");
+    const isAlreadyCreated = document.querySelector("#nexus-wallet");
 
     // If the iframe is already created, return undefined
     if (isAlreadyCreated) {
@@ -14,8 +14,8 @@ export function createIframe({
     }
 
     const iframe = document.createElement("iframe");
-    iframe.name = "frak-wallet";
-    iframe.id = "frak-wallet";
+    iframe.name = "nexus-wallet";
+    iframe.id = "nexus-wallet";
     iframe.style.width = "0";
     iframe.style.height = "0";
     iframe.style.border = "0";
