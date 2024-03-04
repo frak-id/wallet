@@ -1,13 +1,10 @@
 "use client";
 
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { useWalletListenerHook } from "@/module/listener/hooks/useWalletListenerHook";
 import { useArticlePrices } from "@/module/paywall/hook/useArticlePrices";
 import { useUnlockState } from "@/module/paywall/hook/useUnlockState";
-import { useWalletStatus } from "@/module/wallet/hook/useWalletStatus";
-import type {
-    ArticleUnlockStatusReturnType,
-    WalletStatusReturnType,
-} from "@frak-labs/nexus-sdk/core";
+import type { ArticleUnlockStatusReturnType } from "@frak-labs/nexus-sdk/core";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 
@@ -17,14 +14,13 @@ type UnlockStateListenerParam = {
     emitter: (response: ArticleUnlockStatusReturnType) => Promise<void>;
 };
 
-type WalletStatusListenerParam = {
-    emitter: (response: WalletStatusReturnType) => Promise<void>;
-};
-
 export function ListenerUI() {
     const [resolver, setResolver] = useState<
         ReturnType<typeof createIFrameRequestResolver> | undefined
     >(undefined);
+
+    // Hook used when a wallet status is requested
+    const { onWalletListenRequest } = useWalletListenerHook();
 
     // Hook used to fetch the prices
     const { fetchPrices } = useArticlePrices();
@@ -37,14 +33,6 @@ export function ListenerUI() {
         contentId: unlockStatusParam?.contentId,
         articleId: unlockStatusParam?.articleId,
     });
-
-    // Info required about the user status
-    const [walletStatusParam, setWalletStatusParam] = useState<
-        WalletStatusListenerParam | undefined
-    >(undefined);
-
-    // Listen to the current user status
-    const { walletStatus } = useWalletStatus();
 
     // Create the resolver
     useEffect(() => {
@@ -64,9 +52,7 @@ export function ListenerUI() {
             /**
              * Listen request on the wallet status
              */
-            frak_listenToWalletStatus: async (_, emitter) => {
-                setWalletStatusParam({ emitter });
-            },
+            frak_listenToWalletStatus: onWalletListenRequest,
 
             /**
              * Get the unlock options for an article
@@ -91,7 +77,7 @@ export function ListenerUI() {
         return () => {
             newResolver.destroy();
         };
-    }, [fetchPrices]);
+    }, [fetchPrices, onWalletListenRequest]);
 
     /**
      * Once all the required state are set, we can start handling the request
@@ -113,19 +99,6 @@ export function ListenerUI() {
             unlockStatusParam?.emitter(unlockState);
         }
     }, [unlockState, unlockStatusParam]);
-
-    /**
-     * Every time the user status change, send it to the listener
-     */
-    useEffect(() => {
-        if (walletStatus) {
-            console.log("Sending the user status to the listener", {
-                walletStatus: walletStatus,
-                userStatusEmitter: walletStatusParam,
-            });
-            walletStatusParam?.emitter(walletStatus);
-        }
-    }, [walletStatus, walletStatusParam]);
 
     return <h1>Listener</h1>;
 }
