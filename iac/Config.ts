@@ -14,6 +14,7 @@ export function ConfigStack({ stack }: StackContext) {
     const mongoUri = new Config.Secret(stack, "MONGODB_FRAK_POC_URI");
     const rpcUrl = new Config.Secret(stack, "RPC_URL");
     const pimlicoApiKey = new Config.Secret(stack, "PIMLICO_API_KEY");
+    const zeroDevApiKey = new Config.Secret(stack, "ZERODEV_API_KEY");
     const airdropPrivateKey = new Config.Secret(stack, "AIRDROP_PRIVATE_KEY");
     const adminPassword = new Config.Secret(stack, "ADMIN_PASSWORD");
 
@@ -29,6 +30,7 @@ export function ConfigStack({ stack }: StackContext) {
         mongoUri,
         rpcUrl,
         pimlicoApiKey,
+        zeroDevApiKey,
         airdropPrivateKey,
         adminPassword,
         frakWalletUrl,

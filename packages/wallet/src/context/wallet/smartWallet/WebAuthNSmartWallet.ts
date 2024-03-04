@@ -74,14 +74,14 @@ const createAccountAbi = [
  */
 const KERNEL_ADDRESSES: {
     WEB_AUTHN_VALIDATOR: Address;
-    ACCOUNT_V3_LOGIC: Address;
+    ACCOUNT_V4_LOGIC: Address;
     FACTORY: Address;
     ENDTRYPOINT_V0_6: Address;
 } = {
     // Validators
     WEB_AUTHN_VALIDATOR: "0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
     // Kernel stuff
-    ACCOUNT_V3_LOGIC: "0xD3F582F6B4814E989Ee8E96bc3175320B5A540ab",
+    ACCOUNT_V4_LOGIC: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
     FACTORY: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",
     // ERC-4337 stuff
     ENDTRYPOINT_V0_6: "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
@@ -212,7 +212,7 @@ export async function webAuthNSmartAccount<
         entryPoint = KERNEL_ADDRESSES.ENDTRYPOINT_V0_6,
         index = 0n,
         factoryAddress = KERNEL_ADDRESSES.FACTORY,
-        accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_V3_LOGIC,
+        accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_V4_LOGIC,
         webAuthNValidatorAddress = KERNEL_ADDRESSES.WEB_AUTHN_VALIDATOR,
         deployedAccountAddress,
     }: {

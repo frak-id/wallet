@@ -15,6 +15,7 @@ export function WalletAppStack({ stack }: StackContext) {
         mongoUri,
         rpcUrl,
         pimlicoApiKey,
+        zeroDevApiKey,
         airdropPrivateKey,
     } = use(ConfigStack);
     const configs = [
@@ -22,6 +23,7 @@ export function WalletAppStack({ stack }: StackContext) {
         mongoUri,
         rpcUrl,
         pimlicoApiKey,
+        zeroDevApiKey,
         airdropPrivateKey,
     ];
 

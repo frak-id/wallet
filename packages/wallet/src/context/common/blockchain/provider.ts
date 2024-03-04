@@ -26,7 +26,7 @@ export const alchemyClient = createClient({
 });
 
 export const pimlicoBundlerTransport = http(
-    `https://api.pimlico.io/v1/mumbai/rpc?apikey=${process.env.PIMLICO_API_KEY}`
+    `https://rpc.zerodev.app/api/v2/bundler/${process.env.ZERODEV_API_KEY}`
 );
 // Build the pimlico bundler client
 export const pimlicoBundlerClient = createClient({
