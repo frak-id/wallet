@@ -1,19 +1,35 @@
 {
   "name": "@frak-labs/nexus-sdk",
-  "version": "0.0.1-alpha",
+  "author": "Frak Labs",
+  "maintainers": [
+    {
+      "name": "srod",
+      "url": "https://twitter.com/srod"
+    },
+    {
+      "name": "Quentin Nivelais",
+      "url": "https://twitter.com/QNivelais"
+    }
+  ],
+  "version": "0.0.2-alpha",
   "description": "Nexus Wallet client SDK, helping any person to interact with the Frak wallet, and require the unlock of a premium article within the Frak ecosystem.",
-  "type": "module",
-  "sideEffects": false,
+  "repository": "https://github.com/frak-id/wallet",
+  "homepage": "https://docs.frak.id/wallet-sdk",
+  "keywords": [
+    "frak-labs",
+    "nexus-wallet",
+    "erc-4337",
+    "eip-4337",
+    "smart-wallet"
+  ],
   "license": "GNU GPL 3.0",
-  "scripts": {
-    "lint": "biome lint .",
-    "format:check": "biome check .",
-    "format": "biome check --apply .",
-    "clean": "rimraf dist",
-    "build": "tsup --splitting"
-  },
-  "main": "dist/index.js",
+  "sideEffects": false,
+  "private": false,
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "typings": "dist/index.d.ts",
+  "type": "module",
   "files": [
     "/dist"
   ],
@@ -34,6 +50,13 @@
       "default": "./dist/core/actions/index.cjs"
     }
   },
+  "scripts": {
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --apply .",
+    "clean": "rimraf dist",
+    "build": "tsup --splitting"
+  },
   "peerDependencies": {
     "viem": "^2.7.10"
   },
@@ -43,7 +66,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
-    "typescript": "^5",
-    "tsup": "^8.0.2"
+    "tsup": "^8.0.2",
+    "typescript": "^5"
   }
 }
