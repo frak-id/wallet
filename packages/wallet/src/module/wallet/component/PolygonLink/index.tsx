@@ -10,7 +10,14 @@ export function PolygonLink({
     wallet = false,
     icon = true,
     className = "",
-}: { hash: string; wallet?: boolean; icon?: boolean; className?: string }) {
+    text = "",
+}: {
+    hash: string;
+    wallet?: boolean;
+    icon?: boolean;
+    className?: string;
+    text?: string;
+}) {
     return (
         <a
             href={`${polygonMumbaiUrl}/${wallet ? "address" : "tx"}/${hash}`}
@@ -18,7 +25,7 @@ export function PolygonLink({
             rel={"noreferrer"}
             className={`${styles.polygonLink} ${className}`}
         >
-            <span>{formatHash(hash)}</span>
+            {text ? <span>{text}</span> : <span>{formatHash(hash)}</span>}
             {icon && <ExternalLink className={styles.polygonLink__icon} />}
         </a>
     );
