@@ -13,6 +13,7 @@ import { formatSecondDuration } from "@/context/common/duration";
 import type {
     ArticleUnlock,
     FrkReceived,
+    FrkSent,
     HistoryItem,
 } from "@/types/HistoryItem";
 import { unstable_cache } from "next/cache";
@@ -78,14 +79,18 @@ async function _fetchWalletHistory({
         }
     );
 
-    // Get the paid item unlocked events for a user
-    const frkReceivedEvents = await getLogs(viemClient, {
-        address: addresses.frakToken,
-        event: frkTransferEvent,
-        args: { to: account },
-        strict: true,
-        fromBlock: initialBlock,
-    });
+    // Get the frk received or sent events for a user
+    function getFrkEvents(args: { to?: Address; from?: Address }) {
+        return getLogs(viemClient, {
+            address: addresses.frakToken,
+            event: frkTransferEvent,
+            args,
+            strict: true,
+            fromBlock: initialBlock,
+        });
+    }
+    const frkReceivedEvents = await getFrkEvents({ to: account });
+    const frkSentEvents = await getFrkEvents({ from: account });
 
     // Map them to the FrkReceived type
     const frkReceivedItems: FrkReceived[] = await map(
@@ -103,8 +108,21 @@ async function _fetchWalletHistory({
         }
     );
 
+    // Map them to the FrkSent type
+    const frkSentItems: FrkSent[] = await map(frkSentEvents, async (log) => {
+        const { value } = log.args;
+        return {
+            key: "frk-sent",
+            txHash: log.transactionHash,
+            txDate: await getBlockDate(log.blockHash),
+            toHash: log.address,
+            blockNumber: log.blockNumber,
+            sentAmount: formatEther(value),
+        };
+    });
+
     // Put all of that in one list and sort it
-    const allItems = [...unlockedItems, ...frkReceivedItems];
+    const allItems = [...unlockedItems, ...frkReceivedItems, ...frkSentItems];
     return sort(allItems, (item) => Number(item.blockNumber), true);
 }
 

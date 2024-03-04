@@ -1,6 +1,6 @@
 import type { Hex } from "viem";
 
-export type HistoryItem = ArticleUnlock | FrkReceived;
+export type HistoryItem = ArticleUnlock | FrkReceived | FrkSent;
 
 /**
  * Represent an article unlocking history item
@@ -34,6 +34,16 @@ export type FrkReceived = Readonly<{
     receivedAmount: string;
 }>;
 
+export type FrkSent = Readonly<{
+    key: "frk-sent";
+    txHash: Hex;
+    toHash: Hex;
+    blockNumber: bigint;
+    txDate: Date;
+    // The amount in FRK the wallet received
+    sentAmount: string;
+}>;
+
 /**
  * Represent an article unlocking history item with the front data
  */
@@ -43,4 +53,7 @@ export type ArticleUnlockWithFrontData = ArticleUnlock & {
     contentTitle?: string;
 };
 
-export type HistoryItemWithFrontData = ArticleUnlockWithFrontData | FrkReceived;
+export type HistoryItemWithFrontData =
+    | ArticleUnlockWithFrontData
+    | FrkReceived
+    | FrkSent;
