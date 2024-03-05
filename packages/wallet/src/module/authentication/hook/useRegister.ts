@@ -1,7 +1,5 @@
-import {
-    getRegisterOptions,
-    validateRegistration,
-} from "@/context/wallet/action/register";
+import { validateRegistration } from "@/context/wallet/action/register";
+import { getRegisterOptions } from "@/context/wallet/action/registerOptions";
 import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import { startRegistration } from "@simplewebauthn/browser";

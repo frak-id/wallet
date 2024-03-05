@@ -6,63 +6,12 @@ import {
     decodePublicKey,
     defaultUsername,
     rpId,
-    rpName,
     rpOrigin,
 } from "@/context/wallet/smartWallet/webAuthN";
 import { formatWallet } from "@/context/wallet/utils/walletFormatter";
-import {
-    base64URLStringToBuffer,
-    bufferToBase64URLString,
-} from "@simplewebauthn/browser";
-import {
-    generateRegistrationOptions,
-    verifyRegistrationResponse,
-} from "@simplewebauthn/server";
-import type {
-    AuthenticatorTransportFuture,
-    RegistrationResponseJSON,
-} from "@simplewebauthn/types";
-import { keccak256, toHex } from "viem";
-
-/**
- * Generate the webauthn registration options for a user
- * @param username
- * @param excludeCredentials
- */
-export async function getRegisterOptions({
-    excludeCredentials,
-}: {
-    excludeCredentials?: {
-        id: string;
-        transports?: AuthenticatorTransportFuture[];
-    }[];
-}) {
-    // Get the username id
-    const userId = keccak256(toHex(defaultUsername)).slice(2);
-
-    // Generate the registration options
-    return await generateRegistrationOptions({
-        rpName,
-        rpID: rpId,
-        userID: userId,
-        userName: defaultUsername,
-        userDisplayName: defaultUsername,
-        timeout: 120_000,
-        attestationType: "direct",
-        authenticatorSelection: {
-            requireResidentKey: true,
-            // authenticatorAttachment: "platform", TODO: With that we can specify mobile / desktop / or neither
-            userVerification: "required",
-        },
-        supportedAlgorithmIDs: [-7],
-        excludeCredentials:
-            excludeCredentials?.map((cred) => ({
-                id: base64URLStringToBuffer(cred.id),
-                type: "public-key",
-                transports: cred.transports,
-            })) ?? [],
-    });
-}
+import { bufferToBase64URLString } from "@simplewebauthn/browser";
+import { verifyRegistrationResponse } from "@simplewebauthn/server";
+import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 
 /**
  * Validate a new wallet registration

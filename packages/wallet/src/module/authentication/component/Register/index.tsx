@@ -61,10 +61,23 @@ export function Register() {
     }
 
     useEffect(() => {
-        if (error) {
-            setDisabled(false);
+        if (!error) return;
+
+        setDisabled(false);
+
+        // If the authenticator was previously registered
+        // TODO: Content on the login page? Main btn mutation to a login one?
+        if (
+            "code" in error &&
+            error.code === "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED"
+        ) {
+            router.push("/login");
+            console.error("Authenticator previously registered", {
+                code: error.code,
+                name: error.name,
+            });
         }
-    }, [error]);
+    }, [error, router]);
 
     return (
         <Grid
