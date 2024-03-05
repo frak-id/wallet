@@ -7,7 +7,7 @@ import { Notice } from "@/module/common/component/Notice";
 import { usePaywall } from "@/module/paywall/provider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 export function Register() {
     const { context } = usePaywall();
@@ -17,7 +17,31 @@ export function Register() {
         useRegister();
     const [disabled, setDisabled] = useState(false);
 
+    /**
+     * Boolean used to know if the error is about a previously used authenticator
+     */
+    const isPreviouslyUsedAuthenticatorError = useMemo(
+        () =>
+            !!error &&
+            "code" in error &&
+            error.code === "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",
+        [error]
+    );
+
+    /**
+     * Get the message that will displayed inside the button
+     */
     function getMessages() {
+        if (isPreviouslyUsedAuthenticatorError) {
+            return (
+                <>
+                    You already have a NEXUS account on your device
+                    <br />
+                    <br />
+                    You will be redirected to the existing login page
+                </>
+            );
+        }
         if (error) {
             return <>Error during registration, please try again</>;
         }
@@ -64,20 +88,15 @@ export function Register() {
         if (!error) return;
 
         setDisabled(false);
+    }, [error]);
 
-        // If the authenticator was previously registered
-        // TODO: Content on the login page? Main btn mutation to a login one?
-        if (
-            "code" in error &&
-            error.code === "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED"
-        ) {
+    useEffect(() => {
+        if (!isPreviouslyUsedAuthenticatorError) return;
+
+        setTimeout(() => {
             router.push("/login");
-            console.error("Authenticator previously registered", {
-                code: error.code,
-                name: error.name,
-            });
-        }
-    }, [error, router]);
+        }, 3000);
+    }, [isPreviouslyUsedAuthenticatorError, router]);
 
     return (
         <Grid
@@ -94,7 +113,10 @@ export function Register() {
                 </>
             }
         >
-            <AuthFingerprint action={triggerAction} disabled={disabled}>
+            <AuthFingerprint
+                action={triggerAction}
+                disabled={disabled || isPreviouslyUsedAuthenticatorError}
+            >
                 {getMessages()}
             </AuthFingerprint>
         </Grid>
