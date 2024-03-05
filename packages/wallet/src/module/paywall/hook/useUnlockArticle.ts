@@ -10,13 +10,13 @@ import {
 } from "@/context/common/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
-import { getUnlockStatusOnArticle } from "@/context/paywall/action/getStatus";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
+import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
 import { usePaywall } from "@/module/paywall/provider";
 import type { PaywallContext } from "@/module/paywall/provider";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import type { UiState, UnlockSuccessData } from "@/types/Unlock";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createSmartAccountClient } from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import { useEffect, useState } from "react";
@@ -38,25 +38,12 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
     });
 
     // Fetch the user allowance on chain
-    const { refetch: refreshOnChainUnlockStatus } = useQuery({
-        queryKey: [
-            "getUnlockStatus",
-            context.contentId,
-            context.articleId,
-            wallet?.address,
-        ],
-        queryFn: async () => {
-            if (!wallet?.address) {
-                return;
-            }
-            return getUnlockStatusOnArticle({
-                contentId: context.contentId,
-                articleId: context.articleId,
-                user: wallet.address,
-            });
-        },
-        enabled: !!wallet?.address && !!context,
-    });
+    const { refetch: refreshOnChainUnlockStatus } =
+        useOnChainArticleUnlockStatus({
+            contentId: context.contentId,
+            articleId: context.articleId,
+            address: wallet?.address,
+        });
 
     // Helper to set the loading state
     function setLoadingUiState(
