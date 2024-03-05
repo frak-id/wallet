@@ -6,7 +6,6 @@ import { useLastAuthentications } from "@/module/authentication/providers/LastAu
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
 
 /**
  * Hook that handle the registration process
@@ -19,9 +18,6 @@ export function useRegister() {
     // Get some FRK
     const { isAirdroppingFrk, airdropFrk } = useAirdropFrk();
 
-    // The current username
-    const [username, setUsername] = useState<string | undefined>(undefined);
-
     /**
      * Mutation used to launch the registration process
      */
@@ -32,7 +28,7 @@ export function useRegister() {
         error,
         mutateAsync: register,
     } = useMutation({
-        mutationKey: ["register", username],
+        mutationKey: ["register"],
         mutationFn: async () => {
             // Build the credentials to exclude
             const excludeCredentials = previousAuthenticators?.map(
@@ -46,7 +42,6 @@ export function useRegister() {
             console.log("Fetching register options", { excludeCredentials });
             // Get the registration options
             const registrationOptions = await getRegisterOptions({
-                username,
                 excludeCredentials,
             });
 
@@ -57,7 +52,6 @@ export function useRegister() {
             // Verify it
             const { username: registeredUsername, wallet } =
                 await validateRegistration({
-                    username,
                     expectedChallenge: registrationOptions.challenge,
                     registrationResponse,
                     userAgent: navigator.userAgent,
@@ -76,8 +70,6 @@ export function useRegister() {
     });
 
     return {
-        username,
-        setUsername,
         isRegisterInProgress,
         isAirdroppingFrk,
         isSuccess,

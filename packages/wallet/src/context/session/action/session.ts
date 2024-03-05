@@ -53,7 +53,7 @@ export async function deleteSession() {
  */
 export async function getSession(): Promise<Session | null> {
     const session = await getFullSession();
-    if (!session.username) return null;
+    if (!session.wallet) return null;
 
     return {
         username: session.username,

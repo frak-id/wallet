@@ -1,6 +1,5 @@
 "use client";
 
-import { AccountName } from "@/module/authentication/component/AccountName";
 import { AuthFingerprint } from "@/module/authentication/component/AuthFingerprint";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
@@ -14,16 +13,9 @@ export function Register() {
     const { context } = usePaywall();
     const router = useRouter();
     const [, startTransition] = useTransition();
-    const {
-        username,
-        setUsername,
-        register,
-        error,
-        isRegisterInProgress,
-        isAirdroppingFrk,
-    } = useRegister();
+    const { register, error, isRegisterInProgress, isAirdroppingFrk } =
+        useRegister();
     const [disabled, setDisabled] = useState(false);
-    const [showAccountName, setShowAccountName] = useState(false);
 
     function getMessages() {
         if (error) {
@@ -48,17 +40,6 @@ export function Register() {
                     <br />
                     Waiting for your biometry validation
                     <span className={"dotsLoading"}>...</span>
-                </>
-            );
-        }
-        if (username) {
-            return (
-                <>
-                    Create your <strong>NEXUS</strong>
-                    <sup>*</sup> in a second with biometry
-                    <br />
-                    <br />
-                    The wallet name will be <strong>{username}</strong>
                 </>
             );
         }
@@ -97,24 +78,12 @@ export function Register() {
                         all the content you own, your consumption data and the
                         rewards you earn
                     </Notice>
-                    {showAccountName && (
-                        <Notice>
-                            <sup>**</sup>this name will enable you to retrieve
-                            your Nexus easily
-                        </Notice>
-                    )}
                 </>
             }
         >
             <AuthFingerprint action={triggerAction} disabled={disabled}>
                 {getMessages()}
             </AuthFingerprint>
-
-            <AccountName
-                setUsername={setUsername}
-                setShowAccountName={setShowAccountName}
-                disabled={disabled}
-            />
         </Grid>
     );
 }

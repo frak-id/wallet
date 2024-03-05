@@ -30,26 +30,23 @@ import { keccak256, toHex } from "viem";
  * @param excludeCredentials
  */
 export async function getRegisterOptions({
-    username,
     excludeCredentials,
 }: {
-    username?: string;
     excludeCredentials?: {
         id: string;
         transports?: AuthenticatorTransportFuture[];
     }[];
 }) {
     // Get the username id
-    const realUsername = username ?? defaultUsername;
-    const userId = keccak256(toHex(realUsername)).slice(2);
+    const userId = keccak256(toHex(defaultUsername)).slice(2);
 
     // Generate the registration options
     return await generateRegistrationOptions({
         rpName,
         rpID: rpId,
         userID: userId,
-        userName: realUsername,
-        userDisplayName: realUsername,
+        userName: defaultUsername,
+        userDisplayName: defaultUsername,
         timeout: 120_000,
         attestationType: "direct",
         authenticatorSelection: {
@@ -75,12 +72,10 @@ export async function getRegisterOptions({
  * @param userAgent
  */
 export async function validateRegistration({
-    username,
     expectedChallenge,
     registrationResponse,
     userAgent,
 }: {
-    username?: string;
     expectedChallenge: string;
     registrationResponse: RegistrationResponseJSON;
     userAgent: string;
@@ -124,7 +119,7 @@ export async function validateRegistration({
     await authenticatorRepository.createAuthenticator({
         _id: id,
         userAgent,
-        username: username ?? defaultUsername,
+        username: defaultUsername,
         credentialPublicKey: bufferToBase64URLString(credentialPublicKey),
         counter,
         credentialDeviceType,
@@ -141,12 +136,12 @@ export async function validateRegistration({
 
     // Add it to the session
     await setSession({
-        username: username ?? defaultUsername,
+        username: defaultUsername,
         wallet,
     });
 
     return {
-        username: username ?? defaultUsername,
+        username: defaultUsername,
         wallet,
     };
 }
