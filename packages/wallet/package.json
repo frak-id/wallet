@@ -12,6 +12,7 @@
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --apply .",
+    "typecheck": "tsc --noEmit",
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
@@ -23,26 +24,26 @@
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@simplewebauthn/browser": "^9.0.1",
     "@simplewebauthn/server": "^9.0.3",
-    "@tanstack/react-query": "^5.21.7",
-    "@tanstack/react-query-devtools": "^5.24.1",
+    "@tanstack/react-query": "^5.25.0",
+    "@tanstack/react-query-devtools": "^5.25.0",
     "@tanstack/store": "^0.3.1",
     "@uidotdev/usehooks": "^2.4.1",
     "dexie": "^4.0.1-beta.9",
     "dexie-react-hooks": "^1.1.7",
     "humanize-duration": "^3.31.0",
     "iron-session": "^8.0.1",
-    "lucide-react": "^0.334.0",
-    "mongodb": "^6.3.0",
-    "next": "14.1.0",
+    "lucide-react": "^0.344.0",
+    "mongodb": "^6.4.0",
+    "next": "14.1.2",
     "next-qrcode": "^2.5.1",
     "normalize.css": "^8.0.1",
-    "permissionless": "^0.0.36",
-    "radash": "^11.0.0",
+    "permissionless": "^0.1.5",
+    "radash": "^12.0.0",
     "react": "^18",
     "react-dom": "^18",
-    "react-hook-form": "^7.50.1",
+    "react-hook-form": "^7.51.0",
     "react-loading-skeleton": "^3.4.0",
-    "viem": "^2.7.10",
+    "viem": "^2.7.19",
     "wagmi": "^2.5.7"
   },
   "devDependencies": {
@@ -51,7 +52,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "sst": "2.40.3",
+    "sst": "2.40.6",
     "typescript": "^5"
   }
 }

@@ -1,5 +1,3 @@
-"use server";
-
 import { DI } from "@/context/common/di";
 import { MongoClient } from "mongodb";
 

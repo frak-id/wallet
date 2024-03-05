@@ -17,25 +17,25 @@
   "dependencies": {
     "@frak-labs/nexus-sdk": "workspace:*",
     "@radix-ui/react-slot": "^1.0.2",
-    "@tanstack/react-query": "^5.21.7",
+    "@tanstack/react-query": "^5.25.0",
     "@tanstack/store": "^0.3.1",
     "humanize-duration": "^3.31.0",
     "iron-session": "^8.0.1",
-    "mongodb": "^6.3.0",
-    "next": "14.1.0",
-    "radash": "^11.0.0",
+    "mongodb": "^6.4.0",
+    "next": "14.1.2",
+    "radash": "^12.0.0",
     "raw-loader": "^4.0.2",
     "react": "^18",
     "react-dom": "^18",
     "react-loading-skeleton": "^3.4.0",
-    "viem": "^2.7.10"
+    "viem": "^2.7.19"
   },
   "devDependencies": {
     "@types/humanize-duration": "^3.27.4",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "sst": "2.40.3",
+    "sst": "2.40.6",
     "typescript": "^5"
   }
 }

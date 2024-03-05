@@ -11,7 +11,7 @@
     "format:check": "biome check .",
     "format": "biome check --apply .",
     "deploy": "sst deploy --stage prod",
-    "clean:build": "rimraf **/.open-next/ **/.next/ **/.sst/dist/ **/.sst/artifacts/",
+    "clean:build": "rimraf **/.open-next/ **/.next/ .sst/dist/ .sst/artifacts/",
     "clean:stack": "sst remove --stage prod",
     "update:deps": "npm-check-updates -ui -ws"
   },
@@ -19,9 +19,11 @@
     "@biomejs/biome": "1.5.3",
     "@types/node": "^20",
     "rimraf": "^5.0.5",
-    "sst": "2.40.3",
+    "sst": "2.40.6",
     "typescript": "^5",
     "npm-check-updates": "^16.14.15"
   },
-  "workspaces": ["packages/*"]
+  "workspaces": [
+    "packages/*"
+  ]
 }

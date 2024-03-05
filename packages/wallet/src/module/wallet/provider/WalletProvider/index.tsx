@@ -82,10 +82,13 @@ function useWalletHook({ session }: { session: Session }) {
         // Otherwise, build the wagmi connector
         const client = createSmartAccountClient({
             account: smartWallet,
+            entryPoint: smartWallet.entryPoint,
             chain: polygonMumbai,
-            transport: pimlicoBundlerTransport,
-            sponsorUserOperation: (args) =>
-                sponsorUserOperation(pimlicoPaymasterClient, args),
+            bundlerTransport: pimlicoBundlerTransport,
+            middleware: {
+                sponsorUserOperation: (args) =>
+                    sponsorUserOperation(pimlicoPaymasterClient, args),
+            },
         });
 
         // Build the wagmi connector and connect to it

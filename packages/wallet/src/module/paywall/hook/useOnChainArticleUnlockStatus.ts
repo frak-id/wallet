@@ -28,5 +28,5 @@ export const useOnChainArticleUnlockStatus = ({
                 user: address,
             });
         },
-        enabled: !!contentId && !!articleId && !address,
+        enabled: !!contentId && !!articleId && !!address,
     });
