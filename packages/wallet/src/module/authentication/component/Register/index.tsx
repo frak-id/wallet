@@ -38,7 +38,8 @@ export function Register() {
                     You already have a NEXUS account on your device
                     <br />
                     <br />
-                    You will be redirected to the existing login page
+                    Redirecting to the login page
+                    <span className={"dotsLoading"}>...</span>
                 </>
             );
         }

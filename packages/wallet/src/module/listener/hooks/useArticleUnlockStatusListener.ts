@@ -55,6 +55,7 @@ export function useArticleUnlockStatusListener() {
         isLoading: isLoadingOnChainUnlockStatus,
         data: onChainUnlockStatus,
         refetch: refreshOnChainUnlockStatus,
+        dataUpdatedAt: onChainUnlockStatusUpdatedAt,
     } = useOnChainArticleUnlockStatus({
         contentId: listenerParam?.contentId,
         articleId: listenerParam?.articleId,
@@ -106,6 +107,7 @@ export function useArticleUnlockStatusListener() {
             listenerParam?.articleId ?? "no-article",
             // On chain data related
             onChainUnlockStatus?.isAllowed ?? "no-on-chain-status",
+            onChainUnlockStatusUpdatedAt,
             // Real time data
             currentPaywallStatus?.key ?? "no-status",
             currentPaywallContext?.contentId ?? "no-content",
@@ -136,6 +138,15 @@ export function useArticleUnlockStatusListener() {
                     status: "unlocked",
                     allowedUntil: onChainUnlockStatus.allowedUntilInSec * 1000,
                 });
+                return;
+            }
+
+            // If the data wasn't updated recently (less than 30sec) refresh it
+            if (
+                !onChainUnlockStatusUpdatedAt ||
+                Date.now() - onChainUnlockStatusUpdatedAt > 30 * 1000
+            ) {
+                await refreshOnChainUnlockStatus();
                 return;
             }
 
