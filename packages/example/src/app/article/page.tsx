@@ -69,12 +69,8 @@ function ArticlePageComponent() {
             has("hash"),
     });
 
-    if (!articleId) {
-        return <h1>Invalid article</h1>;
-    }
-
     // If we are loading display another component
-    if (isFetchingArticle) {
+    if (!articleId || isFetchingArticle) {
         return (
             <div style={{ margin: "16px" }}>
                 <Skeleton />
