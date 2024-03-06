@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/module/common/component/Skeleton";
 import { ArticleUnlock } from "@/module/history/component/ArticleUnlock";
 import { FrkReceived } from "@/module/history/component/FrkReceived";
 import { FrkSent } from "@/module/history/component/FrkSent";
@@ -8,6 +9,8 @@ import { Fragment } from "react";
 
 export function History() {
     const { history } = useGetHistory();
+
+    if (!history) return <Skeleton />;
 
     return history?.map((historyItem) => (
         <Fragment key={`${historyItem.key} ${historyItem.txHash}`}>
