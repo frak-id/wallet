@@ -1,5 +1,6 @@
 .panel {
     border-radius: 8px;
+    transition: background .3s;
 }
 
 .panel + .panel {

@@ -6,6 +6,11 @@ import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { LogOut } from "lucide-react";
 
+function cleanLocalStorage() {
+    const localStorageItems = ["theme", "paywallContext", "paywallStatus"];
+    localStorageItems.map((item) => window.localStorage.removeItem(item));
+}
+
 /**
  * Logout from current authentication
  * @constructor
@@ -17,6 +22,7 @@ export function Logout() {
                 size={"small"}
                 onClick={() => {
                     deleteSession();
+                    cleanLocalStorage();
                 }}
             >
                 <Row>

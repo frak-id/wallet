@@ -62,9 +62,20 @@ export default function RootLayout({
                 </div>
                 <Script id="theme" strategy="beforeInteractive">
                     {`
-                const themeLocalStorage = localStorage.getItem("theme");
-                const themeSystem = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-                document.querySelector(":root").dataset.theme = themeLocalStorage ?? themeSystem;
+                    function setTheme(newTheme) {
+                        document.querySelector(":root").dataset.theme = newTheme;
+                    }
+                    const queryDark = "(prefers-color-scheme: dark)";
+                    const watchSystemTheme = window.matchMedia(queryDark);
+                    const themeSystem = watchSystemTheme.matches ? "dark" : "light";
+                    const themeLocalStorage = JSON.parse(localStorage.getItem("theme"));
+                    setTheme(themeLocalStorage ?? themeSystem);
+                    watchSystemTheme.addEventListener("change", function (event) {
+                        const themeLocalStorage = JSON.parse(localStorage.getItem("theme"));
+                        if(themeLocalStorage === null) {
+                            setTheme(event.matches ? "dark" : "light");
+                        }
+                    });
                 `}
                 </Script>
             </body>

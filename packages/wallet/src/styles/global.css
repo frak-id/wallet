@@ -13,6 +13,7 @@ html {
     color: var(--frak-text-color);
     scroll-behavior: smooth;
     height: 100dvh;
+    transition: background .3s;
 
     & body {
         height: 100dvh;
@@ -35,6 +36,7 @@ html {
             height: 805px;
             overflow: auto;
             background-size: cover;
+            transition: background .3s;
         }
     }
 }
@@ -47,8 +49,8 @@ html {
 }
 
 @media (min-width: 600px) {
-    :root[data-theme="light"] body {
-        background-color: var(--frak-contrast-background-color);
+    :root[data-theme="light"] {
+        background: var(--frak-contrast-background-color);
 
         & .desktop {
             background: center no-repeat var(--frak-background-image-light);
@@ -64,7 +66,7 @@ html {
 }
 
 @media (min-width: 600px) {
-    :root[data-theme="dark"] body {
+    :root[data-theme="dark"] {
         background: var(--frak-contrast-background-color);
 
         & .desktop {
