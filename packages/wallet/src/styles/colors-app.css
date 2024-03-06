@@ -1,4 +1,4 @@
-:root {
+:root[data-theme="light"] {
     --frak-text-color: var(--frak-color-black);
     --frak-link-color: var(--frak-color-black);
     --frak-background-color: var(--frak-color-mystic);
@@ -35,7 +35,7 @@
     --frak-token-max-color: var(--frak-color-black);
 }
 
-:root.theme-dark {
+:root[data-theme="dark"] {
     --frak-text-color: var(--frak-color-white);
     --frak-link-color: var(--frak-color-white);
     --frak-background-color: var(--frak-color-dark);

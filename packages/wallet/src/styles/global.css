@@ -6,21 +6,18 @@
 }
 
 html {
-    background: center no-repeat var(--frak-background-image-light);
-    background-size: cover;
     font-style: normal;
     font-weight: 400;
     font-size: 16px;
+    background-size: cover;
     color: var(--frak-text-color);
     scroll-behavior: smooth;
     height: 100dvh;
-    transition: background 0.3s;
 
     & body {
         height: 100dvh;
         @mixin flex flex-start, flex-start, column;
         position: relative;
-        transition: background 0.3s;
     }
 }
 
@@ -30,7 +27,6 @@ html {
         flex-direction: row;
         justify-content: center;
         align-items: center;
-        background-color: var(--frak-contrast-background-color);
         overflow: hidden;
 
         & .desktop {
@@ -38,9 +34,24 @@ html {
             width: 430px;
             height: 805px;
             overflow: auto;
-            background: center no-repeat var(--frak-background-image-light);
             background-size: cover;
-            transition: background 0.3s;
+        }
+    }
+}
+
+/**
+ * Light mode
+ */
+:root[data-theme="light"] {
+    background: center no-repeat var(--frak-background-image-light);
+}
+
+@media (min-width: 600px) {
+    :root[data-theme="light"] body {
+        background-color: var(--frak-contrast-background-color);
+
+        & .desktop {
+            background: center no-repeat var(--frak-background-image-light);
         }
     }
 }
@@ -48,18 +59,16 @@ html {
 /**
  * Dark mode
  */
-html.theme-dark {
+:root[data-theme="dark"] {
     background: center no-repeat var(--frak-background-image-dark);
-    background-size: cover;
 }
 
 @media (min-width: 600px) {
-    html.theme-dark body {
+    :root[data-theme="dark"] body {
         background: var(--frak-contrast-background-color);
 
         & .desktop {
             background: center no-repeat var(--frak-background-image-dark);
-            background-size: cover;
         }
     }
 }
@@ -77,7 +86,6 @@ ul {
 
 a {
     color: var(--frak-link-color);
-    /*text-decoration: none;*/
 }
 
 sub,

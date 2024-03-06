@@ -3,6 +3,7 @@ import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
+import Script from "next/script";
 import type { ReactNode } from "react";
 import styles from "./layout.module.css";
 
@@ -48,7 +49,7 @@ export default function RootLayout({
     children: ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <body className={sora.className}>
                 <div className={"desktop"}>
                     <main className={styles.main}>
@@ -59,6 +60,13 @@ export default function RootLayout({
                         </div>
                     </main>
                 </div>
+                <Script id="theme" strategy="beforeInteractive">
+                    {`
+                const themeLocalStorage = localStorage.getItem("theme");
+                const themeSystem = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+                document.querySelector(":root").dataset.theme = themeLocalStorage ?? themeSystem;
+                `}
+                </Script>
             </body>
         </html>
     );
