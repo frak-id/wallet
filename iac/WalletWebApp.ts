@@ -17,6 +17,8 @@ export function WalletAppStack({ stack }: StackContext) {
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,
+        transakApiKey,
+        aarcApiKey,
     } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
@@ -25,6 +27,8 @@ export function WalletAppStack({ stack }: StackContext) {
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,
+        transakApiKey,
+        aarcApiKey,
     ];
 
     // Base domain for our whole app

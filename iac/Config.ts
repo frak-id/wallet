@@ -18,6 +18,10 @@ export function ConfigStack({ stack }: StackContext) {
     const airdropPrivateKey = new Config.Secret(stack, "AIRDROP_PRIVATE_KEY");
     const adminPassword = new Config.Secret(stack, "ADMIN_PASSWORD");
 
+    // On ramp stuff
+    const aarcApiKey = new Config.Secret(stack, "AARC_API_KEY");
+    const transakApiKey = new Config.Secret(stack, "TRANSAK_API_KEY");
+
     const frakWalletUrl = new Config.Parameter(stack, "FRAK_WALLET_URL", {
         value:
             stack.stage === "prod"
@@ -34,5 +38,7 @@ export function ConfigStack({ stack }: StackContext) {
         airdropPrivateKey,
         adminPassword,
         frakWalletUrl,
+        aarcApiKey,
+        transakApiKey,
     };
 }

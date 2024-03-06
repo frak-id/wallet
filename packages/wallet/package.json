@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@frak-labs/nexus-sdk": "workspace:*",
-    "@aarc-xyz/deposit-widget": "^0.0.6",
+    "@aarc-xyz/deposit-widget": "^0.1.0",
     "@peculiar/asn1-ecc": "^2.3.8",
     "@peculiar/asn1-schema": "^2.3.8",
     "@permissionless/wagmi": "^0.0.4",
@@ -57,6 +57,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "sst": "2.41.3",
+    "pino-pretty": "^10.3.1",
     "typescript": "^5"
   }
 }
