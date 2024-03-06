@@ -36,6 +36,7 @@ export function TokensSend() {
         handleSubmit,
         setValue,
         reset,
+        resetField,
         formState: { errors },
     } = useForm<FormInput>();
 
@@ -158,7 +159,10 @@ export function TokensSend() {
                                     leftSection={
                                         <TokenModalList
                                             token={selectedToken}
-                                            setSelectedToken={setSelectedToken}
+                                            setSelectedToken={(value) => {
+                                                setSelectedToken(value);
+                                                resetField("amount");
+                                            }}
                                         />
                                     }
                                     type={"number"}
