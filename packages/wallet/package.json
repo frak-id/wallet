@@ -37,7 +37,7 @@
     "next": "14.1.2",
     "next-qrcode": "^2.5.1",
     "normalize.css": "^8.0.1",
-    "permissionless": "^0.1.5",
+    "permissionless": "0.1.6",
     "radash": "^12.0.0",
     "react": "^18",
     "react-dom": "^18",

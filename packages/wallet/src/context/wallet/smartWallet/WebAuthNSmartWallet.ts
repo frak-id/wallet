@@ -14,8 +14,7 @@ import {
     type SmartAccount,
     toSmartAccount,
 } from "permissionless/accounts";
-import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
-import type { EntryPoint } from "permissionless/types/entrypoint";
+import type { EntryPoint, ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
 import {
     type Address,
     type Chain,
@@ -140,7 +139,7 @@ const getAccountInitCode = async ({
  */
 const getAccountAddress = async <
     TTransport extends Transport = Transport,
-    TChain extends Chain | undefined = Chain | undefined,
+    TChain extends Chain = Chain,
 >({
     client,
     signerPubKey,
@@ -205,7 +204,7 @@ const webAuthNSignatureLayoutParam = [
 export async function webAuthNSmartAccount<
     TEntryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
     TTransport extends Transport = Transport,
-    TChain extends Chain | undefined = Chain | undefined,
+    TChain extends Chain = Chain,
 >(
     client: Client<TTransport, TChain>,
     {
@@ -239,7 +238,7 @@ export async function webAuthNSmartAccount<
 
     // Fetch account address and chain id
     const [accountAddress, chainId] = await Promise.all([
-        getAccountAddress<TTransport, TChain>({
+        getAccountAddress({
             client,
             entryPoint,
             factoryAddress,

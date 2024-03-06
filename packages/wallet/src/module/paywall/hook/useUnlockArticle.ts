@@ -187,7 +187,6 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
             // Build the smart account client we will use to send the txs
             const smartAccountClient = createSmartAccountClient({
                 account: smartWallet,
-                entryPoint: smartWallet.entryPoint,
                 chain: polygonMumbai,
                 bundlerTransport: pimlicoBundlerTransport,
                 middleware: {
