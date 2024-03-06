@@ -35,8 +35,8 @@ html {
 
         & .desktop {
             margin: auto;
-            width: 390px;
-            height: 760px;
+            width: 430px;
+            height: 805px;
             overflow: auto;
             background: center no-repeat var(--frak-background-image-light);
             background-size: cover;

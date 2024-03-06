@@ -2,11 +2,11 @@ import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
-import { Fira_Mono } from "next/font/google";
+import { Sora } from "next/font/google";
 import type { ReactNode } from "react";
 import styles from "./layout.module.css";
 
-const firaMono = Fira_Mono({
+const sora = Sora({
     subsets: ["latin"],
     variable: "--font-family",
     fallback: ["--font-family-sans"],
@@ -49,7 +49,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={firaMono.className}>
+            <body className={sora.className}>
                 <div className={"desktop"}>
                     <main className={styles.main}>
                         <div className={styles.inner}>
