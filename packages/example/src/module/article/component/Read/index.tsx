@@ -1,4 +1,3 @@
-import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { InjectUnlockComponent } from "@/module/article/component/Read/InjectUnlockComponent";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import type { ArticlePreparedForReading } from "@/type/Article";
@@ -7,38 +6,16 @@ import {
     watchUnlockStatus,
     watchWalletStatus,
 } from "@frak-labs/nexus-sdk/actions";
-import {
-    type ArticleUnlockStatusReturnType,
-    type UnlockOptionsReturnType,
-    type WalletStatusReturnType,
-    createIFrameNexusClient,
-    createIframe,
+import type {
+    ArticleUnlockStatusReturnType,
+    UnlockOptionsReturnType,
+    WalletStatusReturnType,
 } from "@frak-labs/nexus-sdk/core";
-import type { NexusClient } from "@frak-labs/nexus-sdk/core";
+import { useNexusClient } from "@frak-labs/nexus-sdk/react";
 import { useEffect, useState } from "react";
 import React from "react";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
-
-async function initFrakTransport() {
-    // Create the iframe
-    const iframe = await createIframe({
-        walletBaseUrl: frakWalletSdkConfig.walletUrl,
-    });
-    console.log("Iframe created", { iframe });
-
-    // If we don't have an iframe, do nothing
-    if (!iframe) {
-        console.error("No iframe created");
-        return;
-    }
-
-    // Create the query provider
-    return createIFrameNexusClient({
-        config: frakWalletSdkConfig,
-        iframe,
-    });
-}
 
 export function ReadArticle({
     article,
@@ -48,9 +25,7 @@ export function ReadArticle({
     //unlockStatusRequest: UnlockRequestResult | undefined;
 }) {
     // Init our query provider
-    const [iframeFrakClient, setIframeFrakClient] = useState<
-        NexusClient | undefined
-    >(undefined);
+    const iframeFrakClient = useNexusClient();
 
     // The injecting state for the unlock component
     const [injecting, setInjecting] = useState(false);
@@ -67,19 +42,6 @@ export function ReadArticle({
     const [walletStatus, setWalletStatus] = useState<
         WalletStatusReturnType | undefined
     >();
-
-    useEffect(() => {
-        // Build the query provider
-        initFrakTransport().then((client) => {
-            if (!client) return;
-            setIframeFrakClient(client);
-        });
-
-        // On cleanup, destroy the query provider
-        return () => {
-            iframeFrakClient?.destroy();
-        };
-    }, [iframeFrakClient?.destroy]);
 
     useEffect(() => {
         // If we don't have a query provider, do nothing

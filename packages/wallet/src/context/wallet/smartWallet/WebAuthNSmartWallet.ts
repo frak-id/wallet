@@ -14,7 +14,10 @@ import {
     type SmartAccount,
     toSmartAccount,
 } from "permissionless/accounts";
-import type { EntryPoint, ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
+import type {
+    ENTRYPOINT_ADDRESS_V06_TYPE,
+    EntryPoint,
+} from "permissionless/types";
 import {
     type Address,
     type Chain,

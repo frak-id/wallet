@@ -1,6 +1,14 @@
 // Providers export
-export { NexusConfigContext, NexusConfigProvider } from "./provider";
-export type { NexusConfigProviderProps } from "./provider";
+export {
+    NexusConfigContext,
+    NexusConfigProvider,
+    NexusIFrameClientContext,
+    NexusIFrameClientProvider,
+} from "./provider";
+export type {
+    NexusConfigProviderProps,
+    NexusIFrameClientProps,
+} from "./provider";
 
 // Hooks export
-export { useNexusConfig } from "./hook";
+export { useNexusConfig, useNexusClient } from "./hook";

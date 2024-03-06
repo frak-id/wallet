@@ -63,9 +63,8 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "^2.7.10",
-    "react": "^18",
-    "react-dom": "^18"
+    "viem": "^2.x",
+    "react": ">=18"
   },
   "dependencies": {
     "async-lz-string": "^1.1.0",
