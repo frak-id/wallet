@@ -5,11 +5,6 @@
     padding: 6px 10px 6px 6px;
     border-right: 1px solid #656774;
     font-weight: 700;
-    transition: background 0.2s ease-in-out;
-}
-
-.tokenModalList__trigger:hover {
-    background-color: rgba(0, 20, 50, .5);
 }
 
 .tokenModalList__trigger::after {

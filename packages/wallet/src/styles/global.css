@@ -27,7 +27,7 @@ html {
         flex-direction: row;
         justify-content: center;
         align-items: center;
-        background: var(--frak-panel-background-color);
+        background: var(--frak-contrast-background-color);
         overflow: hidden;
 
         & .desktop {

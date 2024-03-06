@@ -16,32 +16,30 @@ export function LoginItem({
     const { login } = useLogin();
 
     return (
-        <>
-            <li>
-                <ButtonRipple
-                    size={"small"}
-                    className={styles.loginItem__button}
-                    onClick={async () => {
-                        await login({ lastAuthentication });
-                        startTransition(() => {
-                            router.push("/wallet");
-                        });
-                    }}
-                >
-                    <span>
-                        <span className={styles.loginItem__name}>
-                            <SquareUser /> {lastAuthentication.username}
-                        </span>
-                        Address: {formatHash(lastAuthentication.wallet)}
+        <li className={styles.loginItem}>
+            <ButtonRipple
+                size={"small"}
+                className={styles.loginItem__button}
+                onClick={async () => {
+                    await login({ lastAuthentication });
+                    startTransition(() => {
+                        router.push("/wallet");
+                    });
+                }}
+            >
+                <span>
+                    <span className={styles.loginItem__name}>
+                        <SquareUser /> {lastAuthentication.username}
                     </span>
-                    <span>
-                        <Fingerprint
-                            width={36}
-                            className={styles.loginItem__icon}
-                        />
-                    </span>
-                </ButtonRipple>
-            </li>
-        </>
+                    Address: {formatHash(lastAuthentication.wallet)}
+                </span>
+                <span>
+                    <Fingerprint
+                        width={36}
+                        className={styles.loginItem__icon}
+                    />
+                </span>
+            </ButtonRipple>
+        </li>
     );
 }

@@ -1,7 +1,38 @@
 :root {
+    --frak-text-color: var(--frak-color-black);
+    --frak-link-color: var(--frak-color-black);
+    --frak-background-color: var(--frak-color-mystic);
+    --frak-contrast-background-color: var(--frak-color-white);
+    --frak-panel-background-color: var(--frak-color-white);
+    --frak-panel-outlined-border-color: var(--frak-color-white);
+    --frak-panel-shadow-color: #00000040;
+    --frak-input-background-color: var(--frak-color-white);
+    --frak-input-border-color: var(--frak-color-white);
+    --frak-input-text-color: var(--frak-color-black);
+    --frak-input-placeholder-color: var(--frak-color-silver-chalice);
+    --frak-accordion-content-background-color: var(
+            --frak-color-blue-background
+    );
+    --frak-notice-text-color: var(--frak-color-dark);
+    --frak-alertDialog-background-color: var(--frak-color-white);
+    --frak-button-primary-background-color: var(
+            --frak-color-white
+    );
+    --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
+    --frak-button-disabled-text-color: var(--frak-color-grayText);
+    --frak-navigation-color: var(--frak-color-black);
+    --frak-navigation-border-color: var(--frak-color-black);
+    --frak-button-ripple-color: var(--frak-color-white);
+    --frak-accordion-trigger-color: var(--frak-color-black);
+    --frak-token-item-hover-color: var(--frak-color-mystic);
+    --frak-header-border-color: var(--frak-color-black);
+}
+
+:root.theme-dark {
     --frak-text-color: var(--frak-color-white);
     --frak-link-color: var(--frak-color-white);
     --frak-background-color: var(--frak-color-dark);
+    --frak-contrast-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-panel-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-panel-outlined-border-color: var(--frak-color-blue-zodiac-darker);
     --frak-panel-shadow-color: #00000040;
@@ -19,4 +50,10 @@
     );
     --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
     --frak-button-disabled-text-color: var(--frak-color-grayText);
+    --frak-navigation-color: var(--frak-color-white);
+    --frak-navigation-border-color: var(--frak-color-white);
+    --frak-button-ripple-color: var(--frak-color-black);
+    --frak-accordion-trigger-color: var(--frak-color-white);
+    --frak-token-item-hover-color: var(--frak-color-grayText);
+    --frak-header-border-color: var(--frak-color-white);
 }

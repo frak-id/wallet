@@ -9,5 +9,5 @@
 }
 
 .navigation__button--active > svg {
-    stroke: var(--frak-color-white);
+    stroke: var(--frak-navigation-color);
 }

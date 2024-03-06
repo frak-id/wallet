@@ -17,5 +17,5 @@
 }
 
 .tokenItem__button:hover {
-    background-color: var(--frak-color-blue-zodiac-darker);
+    background-color: var(--frak-token-item-hover-color);
 }

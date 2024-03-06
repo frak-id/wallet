@@ -31,10 +31,7 @@ const AccordionTrigger = React.forwardRef<
                 {...props}
             >
                 {children}
-                <ChevronDown
-                    className={styles.accordion__chevron}
-                    stroke={"white"}
-                />
+                <ChevronDown className={styles.accordion__chevron} />
             </AccordionPrimitive.Trigger>
         </h2>
     </AccordionPrimitive.Header>

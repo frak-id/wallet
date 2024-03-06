@@ -7,11 +7,14 @@
     width: 100%;
     padding: 25px 8px;
     border-radius: 8px;
-    background-color: var(--frak-button-primary-background-color);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
     box-shadow: 4px 4px 4px 0 var(--frak-panel-shadow-color);
     position: relative;
     overflow: hidden;
-    transition: background 400ms;
+    transition: background, box-shadow 400ms;
+    color: var(--frak-button-ripple-color);
 }
 
 .buttonRipple__button:disabled {

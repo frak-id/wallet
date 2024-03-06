@@ -21,7 +21,9 @@ export function AccordionLogin({
                 <AccordionTrigger className={styles.accordionLogin__trigger}>
                     {trigger}
                 </AccordionTrigger>
-                <AccordionContent>{children}</AccordionContent>
+                <AccordionContent className={styles.accordionLogin__content}>
+                    {children}
+                </AccordionContent>
             </AccordionItem>
         </Accordion>
     );

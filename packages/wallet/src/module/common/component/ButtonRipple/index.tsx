@@ -1,5 +1,8 @@
 import { Loader } from "@/assets/icons/Loader";
+import backgroundImage from "@/assets/images/background-auth-fingerprint.svg";
+import { preloadImage } from "@/module/common/utils/preloadImage";
 import type React from "react";
+import { useEffect, useState } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 
@@ -44,22 +47,38 @@ export function ButtonRipple({
     isLoading,
 }: PropsWithChildren<AuthFingerprintProps>) {
     const sizeClass = size ? styles[`size--${size}`] : styles["size--normal"];
+    const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+    /**
+     * Check if the image is loaded
+     */
+    useEffect(() => {
+        preloadImage(backgroundImage.src).then(setIsImageLoaded);
+    }, []);
+
     return (
-        <button
-            type={type}
-            className={`button ${
-                styles.buttonRipple__button
-            } ${sizeClass} ${className} ${isLoading ? styles.isLoading : ""}`}
-            disabled={disabled}
-            onClick={(event) => {
-                createRipple(event);
-                setTimeout(() => onClick?.(), timeout);
-            }}
-        >
-            <>
-                {isLoading && <Loader className={styles.loader} />}
-                {children}
-            </>
-        </button>
+        isImageLoaded && (
+            <button
+                type={type}
+                style={{
+                    backgroundImage: `url(${backgroundImage.src})`,
+                }}
+                className={`button ${
+                    styles.buttonRipple__button
+                } ${sizeClass} ${className} ${
+                    isLoading ? styles.isLoading : ""
+                }`}
+                disabled={disabled}
+                onClick={(event) => {
+                    createRipple(event);
+                    setTimeout(() => onClick?.(), timeout);
+                }}
+            >
+                <>
+                    {isLoading && <Loader className={styles.loader} />}
+                    {children}
+                </>
+            </button>
+        )
     );
 }

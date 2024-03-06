@@ -4,7 +4,7 @@ import styles from "./index.module.css";
 
 export function Navigation() {
     return (
-        <nav>
+        <nav className={styles.navigation}>
             <ul className={styles.navigation__list}>
                 <NavigationItem url={"/wallet"}>
                     <Wallet />
