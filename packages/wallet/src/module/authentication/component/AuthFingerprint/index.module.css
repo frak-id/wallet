@@ -7,8 +7,8 @@
     width: 100%;
     padding: 25px 8px;
     border-radius: 8px;
-    background-color: var(--frak-panel-background-color);
-    box-shadow: 4px 4px 4px 0 var(--frak-panel-shadow-color);
+    background-color: var(--frak-auth-fingerprint-background-color);
+    box-shadow: 4px 4px 4px 0 var(--frak-auth-fingerprint-shadow-color);
     position: relative;
     overflow: hidden;
     transition: background 400ms;
@@ -19,7 +19,7 @@
 }
 
 .authFingerprint__button:hover {
-    box-shadow: 6px 6px 6px 0 var(--frak-panel-shadow-color);
+    box-shadow: 6px 6px 6px 0 var(--frak-auth-fingerprint-shadow-color);
 }
 
 .authFingerprint__button:active, .authFingerprint__button:target, .authFingerprint__button:disabled {

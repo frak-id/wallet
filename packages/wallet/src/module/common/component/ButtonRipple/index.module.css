@@ -7,14 +7,13 @@
     width: 100%;
     padding: 25px 8px;
     border-radius: 8px;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
     box-shadow: 4px 4px 4px 0 var(--frak-panel-shadow-color);
     position: relative;
     overflow: hidden;
     transition: background, box-shadow 400ms;
     color: var(--frak-button-ripple-color);
+    background: center no-repeat var(--frak-button-ripple-background-image);
+    background-size: cover;
 }
 
 .buttonRipple__button:disabled {
@@ -36,7 +35,7 @@
     border-radius: 50%;
     transform: scale(0);
     animation: ripple 600ms linear;
-    background-color: var(--frak-color-blue-background);
+    background-color: var(--frak-button-ripple-effect-color);
 }
 
 @keyframes ripple {

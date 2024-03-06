@@ -10,6 +10,6 @@
     flex: 1;
 }
 
-.grid > div {
-    margin-bottom: 24px;
+.grid > div + div {
+    margin-top: 24px;
 }
