@@ -2,7 +2,12 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
     // All of our entry-points
-    entry: ["src/index.ts", "src/core/index.ts", "src/core/actions/index.ts"],
+    entry: [
+        "src/index.ts",
+        "src/core/index.ts",
+        "src/core/actions/index.ts",
+        "src/react/index.ts",
+    ],
     external: [
         // Mark react as external dependencies
         "react",

@@ -27,6 +27,9 @@
     "allowJs": false,
     "checkJs": false,
 
+    // JSX for the react part of the SDK
+    "jsx": "preserve",
+
     // Interop constraints
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": false,

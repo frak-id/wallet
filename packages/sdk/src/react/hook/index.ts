@@ -1,0 +1,1 @@
+export { useNexusConfig } from "./useNexusConfig";
