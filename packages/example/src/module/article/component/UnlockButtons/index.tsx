@@ -4,11 +4,11 @@ import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
 import type { Article } from "@/type/Article";
 import { getStartArticleUnlockUrl } from "@frak-labs/nexus-sdk/actions";
+import type { UnlockOptionsReturnType } from "@frak-labs/nexus-sdk/core";
 import type {
-    ArticleUnlockStatusReturnType,
-    UnlockOptionsReturnType,
-    WalletStatusReturnType,
-} from "@frak-labs/nexus-sdk/core";
+    ArticleUnlockStatusQueryReturnType,
+    WalletStatusQueryReturnType,
+} from "@frak-labs/nexus-sdk/react";
 import { formatHash } from "@frak-labs/nexus-wallet/src/context/wallet/utils/hashFormatter";
 import type { ArticlePriceForUser } from "@frak-labs/nexus-wallet/src/types/Price";
 import { useQuery } from "@tanstack/react-query";
@@ -25,8 +25,8 @@ export function UnlockButtons({
     article,
 }: {
     prices: UnlockOptionsReturnType["prices"];
-    unlockStatus: ArticleUnlockStatusReturnType | undefined;
-    walletStatus: WalletStatusReturnType | undefined;
+    unlockStatus: ArticleUnlockStatusQueryReturnType | undefined;
+    walletStatus: WalletStatusQueryReturnType | undefined;
     article: Article | undefined;
 }) {
     const [articlePrice, setArticlePrice] = useState<
@@ -34,17 +34,9 @@ export function UnlockButtons({
     >(undefined);
     const [isLoading, setIsLoading] = useState(false);
 
-    const isLocked =
-        unlockStatus?.key === "expired" ||
-        unlockStatus?.key === "not-unlocked" ||
-        unlockStatus?.key === "error";
+    const isLocked = unlockStatus?.status !== "unlocked";
 
-    const isInProgress =
-        isLoading ||
-        unlockStatus?.key === "preparing" ||
-        unlockStatus?.key === "waiting-user-validation" ||
-        unlockStatus?.key === "waiting-transaction-confirmation" ||
-        unlockStatus?.key === "waiting-transaction-bundling";
+    const isInProgress = isLoading || unlockStatus?.status === "in-progress";
 
     const balance =
         walletStatus?.key === "connected" && walletStatus?.frkBalanceAsHex
@@ -103,21 +95,9 @@ export function UnlockButtons({
                     ) : (
                         <>
                             {isLocked && (
-                                <>
-                                    {walletStatus?.key === "not-connected" ? (
-                                        <>
-                                            A Frak account will be created
-                                            during the unlock process.
-                                        </>
-                                    ) : (
-                                        <>
-                                            You are logged in with{" "}
-                                            {formatHash(walletStatus?.wallet)}
-                                            <br />
-                                            You have {balance} FRK
-                                        </>
-                                    )}
-                                </>
+                                <LockedWalletStatusInfo
+                                    walletStatus={walletStatus}
+                                />
                             )}
                             {unlockStatus?.key === "valid" && (
                                 <>
@@ -161,6 +141,33 @@ export function UnlockButtons({
                 )}
             </div>
         </div>
+    );
+}
+
+/**
+ * Small component for the wallet status text
+ * @param walletStatus
+ * @constructor
+ */
+function LockedWalletStatusInfo({
+    walletStatus,
+}: { walletStatus: WalletStatusQueryReturnType | undefined }) {
+    if (!walletStatus || walletStatus.key === "waiting-response") {
+        return <>Fetching your current wallet...</>;
+    }
+
+    // If not connected status
+    if (walletStatus.key === "not-connected") {
+        return <>A Frak account will be created during the unlock process.</>;
+    }
+
+    // Otherwise, connected and ready to use
+    return (
+        <>
+            You are logged in with {formatHash(walletStatus?.wallet)}
+            <br />
+            You have {formatEther(BigInt(walletStatus.frkBalanceAsHex))} FRK
+        </>
     );
 }
 

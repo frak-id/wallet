@@ -64,6 +64,7 @@
   },
   "peerDependencies": {
     "viem": "^2.x",
+    "@tanstack/react-query": ">=5.0.0",
     "react": ">=18"
   },
   "dependencies": {
@@ -71,6 +72,7 @@
     "js-sha256": "^0.11.0"
   },
   "devDependencies": {
+    "@tanstack/react-query": ">=5.0.0",
     "@types/node": "^20",
     "tsup": "^8.0.2",
     "typescript": "^5"

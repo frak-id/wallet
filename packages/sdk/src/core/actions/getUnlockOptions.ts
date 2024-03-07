@@ -4,7 +4,7 @@ import type { NexusClient } from "../types/client";
 /**
  * Type used to get the unlock options
  */
-type GetUnlockOptionsParams = {
+export type GetUnlockOptionsParams = {
     articleId: Hex;
 };
 

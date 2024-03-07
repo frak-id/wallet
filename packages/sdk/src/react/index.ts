@@ -11,4 +11,14 @@ export type {
 } from "./provider";
 
 // Hooks export
-export { useNexusConfig, useNexusClient } from "./hook";
+export {
+    useNexusConfig,
+    useNexusClient,
+    useArticleUnlockOptions,
+    useWalletStatus,
+    useArticleUnlockStatus,
+} from "./hook";
+export type {
+    WalletStatusQueryReturnType,
+    ArticleUnlockStatusQueryReturnType,
+} from "./hook";

@@ -1,4 +1,5 @@
 import {
+    Fragment,
     type ReactNode,
     createContext,
     createElement,
@@ -83,5 +84,5 @@ export function NexusIFrameClientProvider({
     );
 
     // Return both components
-    return createElement("Fragment", null, iFrame, providerComponent);
+    return createElement(Fragment, null, iFrame, providerComponent);
 }

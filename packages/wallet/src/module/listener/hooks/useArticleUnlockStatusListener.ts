@@ -222,6 +222,7 @@ export function useArticleUnlockStatusListener() {
             // If the status is success, tell the user it's a success
             if (status.key === "idle") {
                 await emitter({
+                    status: "in-progress",
                     key: "preparing",
                 });
                 return;
@@ -230,6 +231,7 @@ export function useArticleUnlockStatusListener() {
             // If we are waiting for the user to sign the transaction
             if (status.key === "pendingSignature") {
                 await emitter({
+                    status: "in-progress",
                     key: "waiting-user-validation",
                 });
             }
@@ -237,6 +239,7 @@ export function useArticleUnlockStatusListener() {
             // If it's a success, setup a listener that update the status
             if (status.key === "success") {
                 await emitter({
+                    status: "in-progress",
                     key: "waiting-transaction-bundling",
                     userOpHash: status.userOpHash,
                 });
@@ -252,6 +255,7 @@ export function useArticleUnlockStatusListener() {
                 );
                 const txHash = userOpReceipt.receipt.transactionHash;
                 await emitter({
+                    status: "in-progress",
                     key: "waiting-transaction-confirmation",
                     userOpHash: status.userOpHash,
                     txHash: txHash,

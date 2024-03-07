@@ -5,7 +5,7 @@ import type { ArticleUnlockStatusReturnType } from "../types/rpc/unlockStatus";
 /**
  * Type used to get the unlock options
  */
-type WatchUnlockStatusParams = {
+export type WatchUnlockStatusParams = {
     articleId: Hex;
 };
 
