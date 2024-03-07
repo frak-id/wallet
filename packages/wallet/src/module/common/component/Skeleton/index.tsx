@@ -1,4 +1,4 @@
-import ReactSkeleton, { SkeletonTheme } from "react-loading-skeleton";
+import ReactSkeleton from "react-loading-skeleton";
 import styles from "./index.module.css";
 
 type SkeletonProps = {
@@ -15,17 +15,11 @@ export function Skeleton({
     className = "",
 }: SkeletonProps) {
     return (
-        <SkeletonTheme
-            baseColor="#12244b"
-            highlightColor="#001432"
-            borderRadius={0}
-        >
-            <ReactSkeleton
-                width={width}
-                height={height}
-                containerClassName={`${containerClassName} ${styles.skeleton}`}
-                className={`${styles.skeleton} ${className}`}
-            />
-        </SkeletonTheme>
+        <ReactSkeleton
+            width={width}
+            height={height}
+            containerClassName={`${containerClassName} ${styles.skeleton}`}
+            className={`${styles.skeleton} ${className}`}
+        />
     );
 }
