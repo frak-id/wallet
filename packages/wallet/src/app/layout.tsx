@@ -51,7 +51,7 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={sora.className}>
-                <div className={"desktop"}>
+                <div className={"desktop scrollbars"}>
                     <main className={styles.main}>
                         <div className={styles.inner}>
                             <RootProvider>

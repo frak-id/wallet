@@ -138,3 +138,24 @@ sup {
     --highlight-color: var(--frak-skeleton-highlight-color);
     border-radius: 8px;
 }
+
+.scrollbars {
+    --scrollbar-foreground: #999;
+    --scrollbar-background: transparent;
+    /* Foreground, Background */
+    scrollbar-color: var(--scrollbar-foreground) var(--scrollbar-background);
+    scrollbar-width: thin;
+}
+
+.scrollbars::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.scrollbars::-webkit-scrollbar-thumb { /* Foreground */
+    background: var(--scrollbar-foreground);
+}
+
+.scrollbars::-webkit-scrollbar-track { /* Background */
+    background: var(--scrollbar-background);
+}
