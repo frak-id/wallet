@@ -9,31 +9,39 @@ html {
     font-style: normal;
     font-weight: 400;
     font-size: 16px;
+    background-position: center;
+    background-repeat: no-repeat;
     background-size: cover;
     color: var(--frak-text-color);
     scroll-behavior: smooth;
     height: 100dvh;
     transition: background .3s;
+    overflow: hidden;
 
     & body {
         height: 100dvh;
         @mixin flex flex-start, flex-start, column;
         position: relative;
+        overflow: auto;
+
+        & .desktop {
+            min-height: 100dvh;
+        }
     }
 }
 
 @media (min-width: 600px) {
-    body {
+    html body {
         display: flex;
         flex-direction: row;
         justify-content: center;
         align-items: center;
-        overflow: hidden;
 
         & .desktop {
             margin: auto;
             width: 430px;
             height: 805px;
+            min-height: auto;
             overflow: auto;
             background-size: cover;
             transition: background .3s;
@@ -45,15 +53,16 @@ html {
  * Light mode
  */
 :root[data-theme="light"] {
-    background: center no-repeat var(--frak-background-image-light);
+    background-image: var(--frak-background-image-light);
 }
 
 @media (min-width: 600px) {
     :root[data-theme="light"] {
-        background: var(--frak-contrast-background-color);
+        background-image: none;
+        background-color: var(--frak-contrast-background-color);
 
         & .desktop {
-            background: center no-repeat var(--frak-background-image-light);
+            background-image: var(--frak-background-image-light);
         }
     }
 }
@@ -62,15 +71,17 @@ html {
  * Dark mode
  */
 :root[data-theme="dark"] {
-    background: center no-repeat var(--frak-background-image-dark);
+    background-color: var(--frak-contrast-background-color);
+    background-image: var(--frak-background-image-dark);
 }
 
 @media (min-width: 600px) {
     :root[data-theme="dark"] {
-        background: var(--frak-contrast-background-color);
+        background-image: none;
+        background-color: var(--frak-contrast-background-color);
 
         & .desktop {
-            background: center no-repeat var(--frak-background-image-dark);
+            background-image: var(--frak-background-image-dark);
         }
     }
 }

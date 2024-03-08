@@ -3,10 +3,15 @@ import styles from "./index.module.css";
 
 export default function Row({
     withIcon,
+    className = "",
     children,
-}: PropsWithChildren<{ withIcon?: boolean }>) {
+}: PropsWithChildren<{ withIcon?: boolean; className?: string }>) {
     return (
-        <p className={`${styles.row} ${withIcon ? styles.row__withIcon : ""}`}>
+        <p
+            className={`${styles.row} ${
+                withIcon ? styles.row__withIcon : ""
+            } ${className}`}
+        >
             {children}
         </p>
     );

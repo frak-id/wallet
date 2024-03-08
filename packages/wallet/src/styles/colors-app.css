@@ -35,6 +35,8 @@
     --frak-token-max-color: var(--frak-color-black);
     --frak-skeleton-base-color: #ebebeb;
     --frak-skeleton-highlight-color: #f5f5f5;
+    --frak-drawer-background-color: var(--frak-color-white);
+    --frak-drawer-handle-background-color: var(--frak-color-mystic);
 }
 
 :root[data-theme="dark"] {
@@ -53,7 +55,7 @@
             --frak-color-blue-background
     );
     --frak-notice-text-color: var(--frak-color-grayText);
-    --frak-alertDialog-background-color: var(--frak-color-blue-background);
+    --frak-alertDialog-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-button-primary-background-color: var(
             --frak-color-blue-zodiac-darker
     );
@@ -74,4 +76,6 @@
     --frak-token-max-color: var(--frak-color-white);
     --frak-skeleton-base-color: var(--frak-color-blue-zodiac-darker);
     --frak-skeleton-highlight-color: var(--frak-color-blue-background);
+    --frak-drawer-background-color: var(--frak-color-blue-zodiac-darker);
+    --frak-drawer-handle-background-color: var(--frak-color-white);
 }

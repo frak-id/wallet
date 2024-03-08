@@ -10,7 +10,14 @@ import { Fragment } from "react";
 export function History() {
     const { history } = useGetHistory();
 
-    if (!history) return <Skeleton />;
+    if (!history)
+        return (
+            <>
+                <Skeleton height={110} />
+                <Skeleton height={110} />
+                <Skeleton height={110} />
+            </>
+        );
 
     return history?.map((historyItem) => (
         <Fragment key={`${historyItem.key} ${historyItem.txHash}`}>

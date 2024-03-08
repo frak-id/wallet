@@ -12,13 +12,7 @@ export function useGetHistory() {
 
     // The query fn that will fetch the history
     // TODO: Should populate the history with the article and content link we have in the dexie db
-    const {
-        data: history,
-        isPending: isLoading,
-        isSuccess,
-        isError,
-        refetch,
-    } = useQuery({
+    const { data: history } = useQuery({
         queryKey: ["history", address],
         queryFn: async () => {
             const rawHistory = await fetchWalletHistory({
@@ -28,10 +22,9 @@ export function useGetHistory() {
             // Fetch every frontend data we have in the dexie db
             // TODO: Should use a bulk get here, but would imply a small rewrite of the DTO to have a hash or a bigint has key
             const articleInfos = await dexieDb.articleInfo.toArray();
-            console.log("articleInfos", { articleInfos });
 
             // Map every article unlock with the front data
-            const history = rawHistory.map((item) => {
+            return rawHistory.map((item) => {
                 // If that's not an article unlock, we don't need to do anything
                 if (item.key !== "article-unlock") {
                     return item;
@@ -51,17 +44,11 @@ export function useGetHistory() {
                     contentTitle: articleInfo?.contentTitle,
                 };
             }) as HistoryItemWithFrontData[];
-
-            return history;
         },
         enabled: !!address,
     });
 
     return {
         history,
-        isLoading,
-        isSuccess,
-        isError,
-        refetch,
     };
 }

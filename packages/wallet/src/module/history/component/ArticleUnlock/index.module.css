@@ -1,14 +1,34 @@
-.articleUnlock--isAllowed {
+.articleUnlock__timer {
+    padding-left: 40px;
+}
+
+.articleUnlock__isAllowed {
     color: var(--frak-color-green);
-    font-weight: 700;
 }
 
-.articleUnlock--isNotAllowed {
+.articleUnlock__isNotAllowed {
     color: var(--frak-color-red);
-    font-weight: 700;
 }
 
-.articleUnlock__link {
-    display: flex;
-    margin-left: auto;
+.articleUnlock__title {
+    color: #7C7B8C;
+}
+
+.articleUnlock__provider {
+    color: var(--frak-text-color);
+}
+
+.articleUnlock__image {
+    display: block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+
+.articleUnlock__image--fallback {
+    background-color: var(--frak-color-mystic);
+}
+
+:root[data-theme="dark"] .articleUnlock__image--fallback {
+    background-color: var(--frak-color-blue-zodiac);
 }

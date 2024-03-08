@@ -1,0 +1,15 @@
+.drawerArticle__trigger {
+    width: 100%;
+}
+
+.drawerArticle__trigger + div {
+    margin-top: 32px;
+}
+
+.drawerArticle__trigger:has(+ div) {
+    margin-top: 32px;
+}
+
+.drawerArticle__trigger:first-child {
+    margin-top: 0;
+}
