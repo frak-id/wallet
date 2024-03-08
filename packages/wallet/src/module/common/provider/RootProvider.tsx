@@ -3,8 +3,11 @@
 import { rpcTransport } from "@/context/common/blockchain/provider";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { PaywallProvider } from "@/module/paywall/provider";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import type { PropsWithChildren } from "react";
 import { polygonMumbai } from "viem/chains";
 import { WagmiProvider, createConfig } from "wagmi";
@@ -27,16 +30,32 @@ const wagmiConfig = createConfig({
     },
 });
 
+/**
+ * The storage persister to cache our query data's
+ */
+const persister = createSyncStoragePersister({
+    storage: typeof window !== "undefined" ? window.localStorage : undefined,
+    // Throttle for 50ms to prevent storage spamming
+    throttleTime: 50,
+});
+
+const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
+    persister,
+};
+
 // TODO: Include a small 'build with ZeroDev and Permissionless' on the bottom
 export function RootProvider({ children }: PropsWithChildren) {
     return (
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={persistOptions}
+        >
             <WagmiProvider config={wagmiConfig}>
                 <ClientOnly>
                     <PaywallProvider>{children}</PaywallProvider>
                 </ClientOnly>
             </WagmiProvider>
             <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
     );
 }
