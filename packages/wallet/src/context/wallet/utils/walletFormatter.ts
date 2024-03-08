@@ -1,6 +1,7 @@
 import { viemClient } from "@/context/common/blockchain/provider";
 import { webAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
+import { ENTRYPOINT_ADDRESS_V06 } from "permissionless";
 
 /**
  * Format a wallet
@@ -17,6 +18,7 @@ export async function formatWallet({
     // Build the smart wallet account
     // @ts-ignore
     const smartWallet = await webAuthNSmartAccount(viemClient, {
+        entryPoint: ENTRYPOINT_ADDRESS_V06,
         signerPubKey: publicKey,
         signatureProvider: async () => {
             throw new Error("Read only wallet");

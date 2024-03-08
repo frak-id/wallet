@@ -4,6 +4,7 @@ import { webAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmart
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import type { P256PubKey } from "@/types/WebAuthN";
 import { startAuthentication } from "@simplewebauthn/browser";
+import { ENTRYPOINT_ADDRESS_V06 } from "permissionless";
 
 /**
  * Helper to ease the build of a webauthn smart wallet
@@ -19,6 +20,7 @@ export async function buildSmartWallet({
     // Build the user smart wallet
     // @ts-ignore
     return await webAuthNSmartAccount(viemClient, {
+        entryPoint: ENTRYPOINT_ADDRESS_V06,
         signerPubKey: publicKey,
         signatureProvider: async (message) => {
             // Get the signature options from server

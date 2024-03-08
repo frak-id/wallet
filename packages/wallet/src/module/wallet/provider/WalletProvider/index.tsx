@@ -10,7 +10,10 @@ import type { KernelWebAuthNSmartAccount } from "@/context/wallet/smartWallet/We
 import { buildSmartWallet } from "@/context/wallet/utils/buildSmartWallet";
 import type { Session } from "@/types/Session";
 import { smartAccount } from "@permissionless/wagmi";
-import { createSmartAccountClient } from "permissionless";
+import {
+    ENTRYPOINT_ADDRESS_V06,
+    createSmartAccountClient,
+} from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import {
     type ReactNode,
@@ -82,6 +85,7 @@ function useWalletHook({ session }: { session: Session }) {
         // Otherwise, build the wagmi connector
         const client = createSmartAccountClient({
             account: smartWallet,
+            entryPoint: ENTRYPOINT_ADDRESS_V06,
             chain: polygonMumbai,
             bundlerTransport: pimlicoBundlerTransport,
             middleware: {
@@ -92,6 +96,7 @@ function useWalletHook({ session }: { session: Session }) {
 
         // Build the wagmi connector and connect to it
         const connector = smartAccount({
+            // @ts-ignore
             smartAccountClient: client,
         });
         connect({ connector });

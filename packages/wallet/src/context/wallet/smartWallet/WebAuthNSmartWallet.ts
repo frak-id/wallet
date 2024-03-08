@@ -14,10 +14,7 @@ import {
     type SmartAccount,
     toSmartAccount,
 } from "permissionless/accounts";
-import type {
-    ENTRYPOINT_ADDRESS_V06_TYPE,
-    EntryPoint,
-} from "permissionless/types";
+import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
 import {
     type Address,
     type Chain,
@@ -141,6 +138,7 @@ const getAccountInitCode = async ({
  * @param deployedAccountAddress
  */
 const getAccountAddress = async <
+    TEntryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
     TTransport extends Transport = Transport,
     TChain extends Chain = Chain,
 >({
@@ -155,7 +153,7 @@ const getAccountAddress = async <
     client: Client<TTransport, TChain>;
     signerPubKey: P256PubKey;
     initCodeProvider: () => Promise<Hex>;
-    entryPoint: EntryPoint;
+    entryPoint: TEntryPoint;
     factoryAddress: Address;
     webAuthNValidatorAddress: Address;
     deployedAccountAddress?: Address;
@@ -213,7 +211,7 @@ export async function webAuthNSmartAccount<
     {
         signerPubKey,
         signatureProvider,
-        entryPoint = KERNEL_ADDRESSES.ENDTRYPOINT_V0_6,
+        entryPoint,
         index = 0n,
         factoryAddress = KERNEL_ADDRESSES.FACTORY,
         accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_V4_LOGIC,
@@ -222,7 +220,7 @@ export async function webAuthNSmartAccount<
     }: {
         signerPubKey: P256PubKey;
         signatureProvider: (message: Hex) => Promise<WebAuthNSignature>;
-        entryPoint?: TEntryPoint;
+        entryPoint: TEntryPoint;
         index?: bigint;
         factoryAddress?: Address;
         accountLogicAddress?: Address;
