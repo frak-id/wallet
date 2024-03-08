@@ -48,6 +48,11 @@
       "types": "./dist/core/actions/index.d.ts",
       "import": "./dist/core/actions/index.js",
       "default": "./dist/core/actions/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "default": "./dist/react/index.cjs"
     }
   },
   "scripts": {
@@ -58,13 +63,16 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "^2.7.10"
+    "viem": "^2.x",
+    "@tanstack/react-query": ">=5.0.0",
+    "react": ">=18"
   },
   "dependencies": {
     "async-lz-string": "^1.1.0",
     "js-sha256": "^0.11.0"
   },
   "devDependencies": {
+    "@tanstack/react-query": ">=5.0.0",
     "@types/node": "^20",
     "tsup": "^8.0.2",
     "typescript": "^5"

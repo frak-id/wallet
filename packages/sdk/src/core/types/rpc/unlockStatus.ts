@@ -27,7 +27,7 @@ type UnlockStatusLocked =
 /**
  * When the content unlocked was expired a few time ago
  */
-type UnlockStatusProcessing =
+type UnlockStatusProcessing = { status: "in-progress" } & (
     | {
           key: "preparing" | "waiting-user-validation";
       }
@@ -39,7 +39,8 @@ type UnlockStatusProcessing =
           key: "waiting-transaction-confirmation";
           userOpHash: Hex;
           txHash: Hex;
-      };
+      }
+);
 
 /**
  * When the content unlocked was expired a few time ago

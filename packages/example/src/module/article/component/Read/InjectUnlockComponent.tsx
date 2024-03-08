@@ -1,11 +1,11 @@
 import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import { cssRaw as cssRaw2 } from "@/module/common/component/Button";
 import type { Article, ArticlePreparedForReading } from "@/type/Article";
+import type { UnlockOptionsReturnType } from "@frak-labs/nexus-sdk/core";
 import type {
-    ArticleUnlockStatusReturnType,
-    UnlockOptionsReturnType,
-    WalletStatusReturnType,
-} from "@frak-labs/nexus-sdk/core";
+    ArticleUnlockStatusQueryReturnType,
+    WalletStatusQueryReturnType,
+} from "@frak-labs/nexus-sdk/react";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cssRaw } from "../UnlockButtons";
@@ -55,8 +55,8 @@ export function InjectUnlockComponent({
     article,
 }: {
     prices: UnlockOptionsReturnType["prices"];
-    unlockStatus: ArticleUnlockStatusReturnType | undefined;
-    walletStatus: WalletStatusReturnType | undefined;
+    unlockStatus: ArticleUnlockStatusQueryReturnType | undefined;
+    walletStatus: WalletStatusQueryReturnType | undefined;
     article: ArticlePreparedForReading;
 }) {
     const [element, setElement] = useState<Element | undefined>();
@@ -72,7 +72,7 @@ export function InjectUnlockComponent({
     // Selectors to be queried for the unlock component
     const selectors = getSelectors(article?.provider);
     const currentSelector =
-        selectors[unlockStatus?.key === "valid" ? "unlocked" : "locked"];
+        selectors[unlockStatus?.status === "unlocked" ? "unlocked" : "locked"];
 
     useEffect(() => {
         const interval = setInterval(() => {

@@ -64,6 +64,7 @@ export function useWalletStatusListener() {
         async (_, emitter) => {
             // Save our emitter, this will trigger session and balance fetching
             setEmitter({ emitter });
+            await refetch();
         },
         []
     );
@@ -95,7 +96,7 @@ export function useWalletStatusListener() {
     /**
      * Emit an updated version of the wallet status every time on our props has changed
      */
-    useQuery({
+    const { refetch } = useQuery({
         queryKey: [
             "walletStatusAutoEmitter",
             session?.wallet?.address ?? "no-wallet",
