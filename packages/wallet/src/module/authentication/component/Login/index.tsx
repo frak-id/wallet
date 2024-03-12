@@ -7,6 +7,7 @@ import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { usePaywall } from "@/module/paywall/provider";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { HardDrive } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -22,11 +23,21 @@ export function Login() {
     const router = useRouter();
     const [, startTransition] = useTransition();
     const [disabled, setDisabled] = useState(false);
+    const [redirectUrl, setRedirectUrl] = useLocalStorage<string | null>(
+        "redirectUrl",
+        null
+    );
 
     async function triggerAction() {
         setDisabled(true);
         await login({});
         startTransition(() => {
+            if (redirectUrl) {
+                setRedirectUrl(null);
+                window.location.href = decodeURIComponent(redirectUrl);
+                return;
+            }
+
             router.push(context ? "/unlock" : "/wallet");
             setDisabled(false);
         });

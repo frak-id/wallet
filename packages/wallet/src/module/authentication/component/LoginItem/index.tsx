@@ -3,6 +3,7 @@ import type { PreviousAuthenticatorModel } from "@/context/common/dexie/Previous
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { SquareUser } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -14,6 +15,10 @@ export function LoginItem({
     const router = useRouter();
     const [, startTransition] = useTransition();
     const { login } = useLogin();
+    const [redirectUrl, setRedirectUrl] = useLocalStorage<string | null>(
+        "redirectUrl",
+        null
+    );
 
     return (
         <li className={styles.loginItem}>
@@ -23,6 +28,13 @@ export function LoginItem({
                 onClick={async () => {
                     await login({ lastAuthentication });
                     startTransition(() => {
+                        if (redirectUrl) {
+                            setRedirectUrl(null);
+                            window.location.href =
+                                decodeURIComponent(redirectUrl);
+                            return;
+                        }
+
                         router.push("/wallet");
                     });
                 }}

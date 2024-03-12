@@ -41,6 +41,14 @@ const persister = createSyncStoragePersister({
 
 const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     persister,
+    maxAge: Infinity,
+    dehydrateOptions: {
+        shouldDehydrateQuery: ({ meta, state }) => {
+            const isValid = state.status === "success";
+            const isStorable = (meta?.storable as boolean) ?? true;
+            return isValid && isStorable;
+        },
+    },
 };
 
 // TODO: Include a small 'build with ZeroDev and Permissionless' on the bottom

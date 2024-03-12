@@ -5,8 +5,10 @@ import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { usePaywall } from "@/module/paywall/provider";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 export function Register() {
@@ -16,6 +18,20 @@ export function Register() {
     const { register, error, isRegisterInProgress, isAirdroppingFrk } =
         useRegister();
     const [disabled, setDisabled] = useState(false);
+    const { get } = useSearchParams();
+    const redirectUrlFromQuery = get("redirectUrl") as string | null;
+    const [redirectUrl, setRedirectUrl] = useLocalStorage<string | null>(
+        "redirectUrl",
+        redirectUrlFromQuery
+    );
+
+    /**
+     * Get the redirectUrl from the URL
+     */
+    useEffect(() => {
+        if (!redirectUrlFromQuery) return;
+        setRedirectUrl(redirectUrlFromQuery);
+    }, [redirectUrlFromQuery, setRedirectUrl]);
 
     /**
      * Boolean used to know if the error is about a previously used authenticator
@@ -80,6 +96,12 @@ export function Register() {
         setDisabled(true);
         await register();
         startTransition(() => {
+            if (redirectUrl) {
+                setRedirectUrl(null);
+                window.location.href = decodeURIComponent(redirectUrl);
+                return;
+            }
+
             router.push(context ? "/unlock" : "/wallet");
         });
         setDisabled(false);

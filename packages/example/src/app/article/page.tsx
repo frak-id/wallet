@@ -23,9 +23,12 @@ function ArticlePageComponent() {
     // Get the article id
     const { get, has, size: queryParamSize } = useSearchParams();
     const [articleId, setArticleId] = useState<Hex | null>(null);
+    const [isFree, setIsFree] = useState<boolean>(false);
 
     useEffect(() => {
         const id = get("id") as Hex | null;
+        const isFree = get("isFree") as string | null;
+        setIsFree(isFree === "1" ?? false);
         setArticleId(id);
     }, [get]);
 
@@ -83,5 +86,5 @@ function ArticlePageComponent() {
         return <h1>Article not found</h1>;
     }
 
-    return <ReadArticle article={article} />;
+    return <ReadArticle article={article} isFree={isFree} />;
 }

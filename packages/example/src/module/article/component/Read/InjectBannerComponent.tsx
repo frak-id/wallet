@@ -1,0 +1,71 @@
+import { Banner } from "@/module/article/component/Banner";
+import { cssRaw as cssRawButton } from "@/module/common/component/Button";
+import type { ArticlePreparedForReading } from "@/type/Article";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { cssRaw } from "../Banner";
+
+export function InjectBannerComponent({
+    article,
+}: {
+    article: ArticlePreparedForReading;
+}) {
+    const [containerRoot, setContainerRoot] = useState<Element | undefined>();
+
+    // Get the article's iframe
+    const articleIframeName = "frak-article-iframe";
+    const articleIframe = document.querySelector(
+        `#${articleIframeName}`
+    ) as HTMLIFrameElement;
+    const articleIframeDocument = articleIframe?.contentWindow?.document;
+
+    useEffect(() => {
+        const containerName = "frak-paywall";
+        let containerRoot =
+            articleIframeDocument?.getElementById(containerName);
+
+        // If the container does not exist, create it
+        if (!containerRoot) {
+            const appRoot = document.createElement("div");
+            appRoot.id = containerName;
+            articleIframeDocument?.body?.insertAdjacentElement(
+                "beforeend",
+                appRoot
+            );
+            containerRoot =
+                articleIframeDocument?.getElementById(containerName);
+
+            if (containerRoot) {
+                containerRoot.style.width = "100%";
+                setContainerRoot(containerRoot);
+            }
+        }
+    }, [articleIframeDocument]);
+
+    if (
+        !(
+            articleIframe &&
+            articleIframeDocument &&
+            articleIframe.contentDocument
+        )
+    ) {
+        console.log(`iframe ${articleIframeName} not found`);
+        return null;
+    }
+
+    return (
+        containerRoot && (
+            <>
+                {createPortal(<Banner article={article} />, containerRoot)}
+                {/* Inject the styles into the iframe */}
+                {createPortal(
+                    <style>
+                        {cssRaw.toString()}
+                        {cssRawButton.toString()}
+                    </style>,
+                    articleIframe.contentDocument.head
+                )}
+            </>
+        )
+    );
+}

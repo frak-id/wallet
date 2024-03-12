@@ -21,6 +21,9 @@ export function useSession(
         },
         refetchOnMount: "always",
         enabled,
+        meta: {
+            storable: false,
+        },
     });
     return { session, refetchSession, isFetchingSession, isSuccess, isError };
 }
