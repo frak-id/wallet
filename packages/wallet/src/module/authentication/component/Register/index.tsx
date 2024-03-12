@@ -15,8 +15,7 @@ export function Register() {
     const { context } = usePaywall();
     const router = useRouter();
     const [, startTransition] = useTransition();
-    const { register, error, isRegisterInProgress, isAirdroppingFrk } =
-        useRegister();
+    const { register, error, isRegisterInProgress } = useRegister();
     const [disabled, setDisabled] = useState(false);
     const { get } = useSearchParams();
     const redirectUrlFromQuery = get("redirectUrl") as string | null;
@@ -61,17 +60,6 @@ export function Register() {
         }
         if (error) {
             return <>Error during registration, please try again</>;
-        }
-        if (isAirdroppingFrk) {
-            return (
-                <>
-                    NEXUS Account creation in progress
-                    <br />
-                    <br />
-                    Offering you a few frak
-                    <span className={"dotsLoading"}>...</span>
-                </>
-            );
         }
         if (isRegisterInProgress) {
             return (
