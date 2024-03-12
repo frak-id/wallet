@@ -12,6 +12,15 @@
 
 .articleUnlock__title {
     color: #7C7B8C;
+    font-weight: 400;
+}
+
+.articleUnlock__titleText {
+    line-height: 1.4em;
+}
+
+.articleUnlock__titleText > span {
+    display: block;
 }
 
 .articleUnlock__provider {
@@ -23,10 +32,6 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-}
-
-.articleUnlock__image--fallback {
-    background-color: var(--frak-color-mystic);
 }
 
 :root[data-theme="dark"] .articleUnlock__image--fallback {

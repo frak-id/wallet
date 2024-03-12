@@ -1,5 +1,11 @@
 import type { Hex } from "viem";
 
+export type ArticleProvider = {
+    slug: "le-monde" | "wired";
+    name: string;
+    imageUrl: string;
+};
+
 /**
  * Interface representing the mapping between an article, a content, and it's link
  */
@@ -14,4 +20,7 @@ export type ArticleInfoModel = {
     // The info about the articles
     articleTitle: string;
     articleUrl: string;
+
+    // The info about the provider
+    provider?: ArticleProvider;
 };

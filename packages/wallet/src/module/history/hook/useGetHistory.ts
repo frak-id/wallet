@@ -42,6 +42,7 @@ export function useGetHistory() {
                     articleUrl: articleInfo?.articleUrl,
                     articleTitle: articleInfo?.articleTitle,
                     contentTitle: articleInfo?.contentTitle,
+                    provider: articleInfo?.provider,
                 };
             }) as HistoryItemWithFrontData[];
         },

@@ -195,6 +195,7 @@ const useUnlockRedirectUrl = ({
                 },
                 articleUrl: `${window.location.origin}/article?id=${article.id}`,
                 redirectUrl: `${window.location.origin}/article?id=${article.id}`,
+                provider: article.provider,
             });
         },
         enabled: !!article && !!articlePrice,

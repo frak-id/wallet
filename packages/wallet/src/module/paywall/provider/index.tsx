@@ -55,6 +55,22 @@ export type PaywallStatus =
       };
 
 /**
+ * Providers mapping to get more details
+ */
+const providersMap = {
+    "le-monde": {
+        slug: "le-monde",
+        name: "Le Monde",
+        imageUrl: "/images/le-monde.png",
+    },
+    wired: {
+        slug: "wired",
+        name: "Wired",
+        imageUrl: "/images/wired.png",
+    },
+} as const;
+
+/**
  * Hook used to store current data about the paywall context
  */
 function usePaywallHook() {
@@ -89,6 +105,7 @@ function usePaywallHook() {
                 contentTitle: unlockRequest.contentTitle,
                 articleTitle: unlockRequest.articleTitle,
                 articleUrl: unlockRequest.articleUrl,
+                provider: providersMap[unlockRequest.provider],
             });
         } catch (e) {
             console.error("Error inserting article link", e);

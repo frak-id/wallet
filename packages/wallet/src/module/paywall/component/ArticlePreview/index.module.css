@@ -19,9 +19,11 @@
     z-index: 10;
     background: #03193A;
     opacity: 0.6;
+    border-radius: 8px;
 }
 
 .articlePreview__content {
     position: relative;
     z-index: 20;
+    color: var(--frak-color-white);
 }

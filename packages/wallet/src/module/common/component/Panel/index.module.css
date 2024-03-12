@@ -1,6 +1,8 @@
 .panel {
     border-radius: 8px;
     transition: background .3s;
+    background-size: cover;
+    background-position: -100%;
 }
 
 .panel + .panel {

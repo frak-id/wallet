@@ -3,7 +3,7 @@
     flex-direction: row-reverse;
     align-items: center;
     gap: 10px;
-    color: var(--frak-color-alto);
+    color: var(--frak-accordion-trigger-color);
     font-weight: 400;
     font-size: 14px;
 }

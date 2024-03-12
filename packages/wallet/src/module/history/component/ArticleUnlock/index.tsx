@@ -8,6 +8,8 @@ import { AlertDialogArticle } from "@/module/history/component/AlertDialogArticl
 import { DrawerArticle } from "@/module/history/component/DrawerArticle";
 import type { ArticleUnlockWithFrontData } from "@/types/HistoryItem";
 import { useMediaQuery } from "@uidotdev/usehooks";
+import { BookText } from "lucide-react";
+import Image from "next/image";
 import styles from "./index.module.css";
 
 type ArticleUnlockProps = {
@@ -24,26 +26,31 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
 
     // Use a Drawer for mobile and an AlertDialog for desktop
     const Component = isDesktop ? AlertDialogArticle : DrawerArticle;
-    // console.log(article);
-
-    const ImageFallback = (
-        <span
-            className={`${styles.articleUnlock__image} ${styles["articleUnlock__image--fallback"]}`}
-        />
-    );
 
     return (
         <Component
             trigger={
                 <Panel size={"small"}>
                     <Title
-                        icon={ImageFallback}
+                        icon={
+                            article.provider?.imageUrl ? (
+                                <Image
+                                    src={article.provider?.imageUrl}
+                                    width={"30"}
+                                    height={"30"}
+                                    alt={article.provider?.name}
+                                    className={styles.articleUnlock__image}
+                                />
+                            ) : (
+                                <BookText size={30} />
+                            )
+                        }
                         className={styles.articleUnlock__title}
+                        classNameText={styles.articleUnlock__titleText}
                     >
                         <span className={styles.articleUnlock__provider}>
-                            Le Monde
+                            {article.provider?.name}
                         </span>
-                        <br />
                         <span>{article.articleTitle}</span>
                     </Title>
                     <Row
@@ -60,11 +67,24 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
         >
             <>
                 <Title
-                    icon={ImageFallback}
+                    icon={
+                        article.provider?.imageUrl ? (
+                            <Image
+                                src={article.provider?.imageUrl}
+                                width={"30"}
+                                height={"30"}
+                                alt={article.provider?.name}
+                                className={styles.articleUnlock__image}
+                            />
+                        ) : (
+                            <BookText size={30} />
+                        )
+                    }
                     className={styles.articleUnlock__title}
+                    classNameText={styles.articleUnlock__titleText}
                 >
                     <span className={styles.articleUnlock__provider}>
-                        Le Monde
+                        {article.provider?.name}
                     </span>
                 </Title>
                 <Row>

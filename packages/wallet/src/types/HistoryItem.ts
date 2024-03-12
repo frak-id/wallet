@@ -1,3 +1,4 @@
+import type { ArticleProvider } from "@/context/common/dexie/ArticleInfoModel";
 import type { Hex } from "viem";
 
 export type HistoryItem = ArticleUnlock | FrkReceived | FrkSent;
@@ -51,6 +52,7 @@ export type ArticleUnlockWithFrontData = ArticleUnlock & {
     articleUrl?: string;
     articleTitle?: string;
     contentTitle?: string;
+    provider?: ArticleProvider;
 };
 
 export type HistoryItemWithFrontData =
