@@ -184,7 +184,8 @@ export function useArticleUnlockStatusListener() {
         enabled:
             !!listenerParam &&
             !isFetchingSession &&
-            !isLoadingOnChainUnlockStatus,
+            !isLoadingOnChainUnlockStatus &&
+            !!currentPaywallStatus,
     });
 
     /**

@@ -9,7 +9,7 @@ import type {
     WalletStatusReturnType,
 } from "@frak-labs/nexus-sdk/core";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toHex } from "viem";
 import { useReadContract } from "wagmi";
 
@@ -64,10 +64,15 @@ export function useWalletStatusListener() {
         async (_, emitter) => {
             // Save our emitter, this will trigger session and balance fetching
             setEmitter({ emitter });
-            await refetch();
+            setTimeout(() => refetch(), 100);
         },
         []
     );
+
+    useEffect(() => {
+        if (!(walletFrkBalance || session)) return;
+        setTimeout(() => refetch(), 100);
+    }, [walletFrkBalance, session]);
 
     /**
      * Build the wallet status
@@ -89,7 +94,9 @@ export function useWalletStatusListener() {
         return {
             key: "connected",
             wallet,
-            frkBalanceAsHex: toHex(walletFrkBalance ?? 0n),
+            frkBalanceAsHex: toHex(
+                walletFrkBalance ? BigInt(walletFrkBalance) : 0n
+            ),
         };
     }
 
@@ -100,24 +107,21 @@ export function useWalletStatusListener() {
         queryKey: [
             "walletStatusAutoEmitter",
             session?.wallet?.address ?? "no-wallet",
-            toHex(walletFrkBalance ?? 0n),
+            toHex(walletFrkBalance ? BigInt(walletFrkBalance) : 0n),
         ],
-        queryFn: () => {
+        queryFn: async () => {
             // Early exit if no emitter
             if (!emitter) {
                 return;
             }
 
-            // Early exit if fetching datas
-            if (isFetchingSession || isFetchingBalance) {
-                return;
-            }
-
             // Build the wallet status and emit it
             const walletStatus = buildWalletStatus(session, walletFrkBalance);
-            return emitter.emitter(walletStatus);
+            await emitter.emitter(walletStatus);
+            return true;
         },
-        enabled: !!emitter && !isFetchingSession && !isFetchingBalance,
+        enabled:
+            !!emitter && !isFetchingSession && !isFetchingBalance && !!session,
     });
 
     return {
