@@ -7,8 +7,12 @@
 }
 
 .alertDialog__trigger {
-    all: unset;
     cursor: pointer;
+    border: none;
+    padding: 0;
+    background: none;
+    text-align: left;
+    color: inherit;
 }
 
 .alertDialog__close {

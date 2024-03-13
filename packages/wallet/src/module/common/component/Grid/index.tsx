@@ -4,9 +4,10 @@ import styles from "./index.module.css";
 export function Grid({
     children,
     footer,
-}: PropsWithChildren<{ footer?: ReactNode }>) {
+    className = "",
+}: PropsWithChildren<{ footer?: ReactNode; className?: string }>) {
     return (
-        <div className={styles.grid}>
+        <div className={`${styles.grid} ${className}`}>
             <div>{children}</div>
             {footer && <div>{footer}</div>}
         </div>

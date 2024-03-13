@@ -7,7 +7,7 @@ import styles from "./index.module.css";
 
 export function Tokens() {
     return (
-        <Panel withShadow={true} size={"small"}>
+        <Panel size={"small"}>
             <Title icon={<CircleDollarSign width={32} height={32} />}>
                 Tokens
             </Title>

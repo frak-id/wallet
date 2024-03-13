@@ -15,7 +15,7 @@ export function QRCodeWallet() {
     return (
         address && (
             <>
-                <Panel withShadow={true} size={"small"}>
+                <Panel size={"small"}>
                     <Title icon={<ArrowDownToLine width={32} height={32} />}>
                         Receive assets on <b>Polygon Mumbai</b>
                     </Title>

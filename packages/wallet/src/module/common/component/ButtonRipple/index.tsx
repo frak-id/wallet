@@ -45,10 +45,37 @@ export function ButtonRipple({
 }: PropsWithChildren<AuthFingerprintProps>) {
     const sizeClass = size ? styles[`size--${size}`] : styles["size--normal"];
 
+    /*const buttonRef = React.useRef(null);
+    // throw your mousemove callback up here to "add" and "remove" later
+    // might be worth a useCallback based on the containerRef as well!
+    function mouseMoveEvent(e) {
+        if (!buttonRef.current) return;
+        const { x, y } = buttonRef.current.getBoundingClientRect();
+        buttonRef.current.style.setProperty("--x", e.clientX - x);
+        buttonRef.current.style.setProperty("--y", e.clientY - y);
+    }*/
+
+    /*useEffect(() => {
+        if (buttonRef.current) {
+            buttonRef.current.addEventListener("mousemove", mouseMoveEvent);
+        }
+        // don't forget to *remove* the eventListener
+        // when your component unmounts!
+        return () => {
+            if (buttonRef.current) {
+                buttonRef.current.removeEventListener(
+                    "mousemove",
+                    mouseMoveEvent
+                );
+            }
+        };
+    }, []);*/
+
     return (
         <button
+            // ref={buttonRef}
             type={type}
-            className={`button ${
+            className={`button ${styles.buttonRipple__shiny} ${
                 styles.buttonRipple__button
             } ${sizeClass} ${className} ${isLoading ? styles.isLoading : ""}`}
             disabled={disabled}

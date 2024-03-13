@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import styles from "./index.module.css";
 
 export function Register() {
     const { context } = usePaywall();
@@ -111,6 +112,7 @@ export function Register() {
 
     return (
         <Grid
+            className={styles.register__grid}
             footer={
                 <>
                     <Link href={"/login"} title="Login">

@@ -1,9 +1,15 @@
-.skeleton {
+.skeletonContainer {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
-    width: 100%;
+    gap: 30px;
 }
 
-.skeleton + .skeleton {
-    margin-top: 30px;
+.skeletonContainer br {
+    display: none;
+}
+
+.skeleton {
+    border: 1px solid var(--frak-skeleton-border-color);
+    border-radius: 8px;
 }

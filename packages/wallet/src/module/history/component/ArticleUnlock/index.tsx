@@ -1,6 +1,7 @@
 "use client";
 
 import { Timer } from "@/assets/icons/Timer";
+import { formatSecondDuration } from "@/context/common/duration";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
@@ -17,15 +18,17 @@ type ArticleUnlockProps = {
 };
 
 export function ArticleUnlock({ article }: ArticleUnlockProps) {
-    const stillAllowedClassName = article.isStillAllowed
-        ? styles.articleUnlock__isAllowed
-        : styles.articleUnlock__isNotAllowed;
-
     // Check if the screen is desktop or mobile
     const isDesktop = useMediaQuery("(min-width : 600px)");
 
     // Use a Drawer for mobile and an AlertDialog for desktop
     const Component = isDesktop ? AlertDialogArticle : DrawerArticle;
+
+    const timeExpired =
+        !article.remainingTimeFormatted &&
+        formatSecondDuration(
+            (Date.now() - new Date(article.allowedUntil).getTime()) / 1000
+        );
 
     return (
         <Component
@@ -53,15 +56,27 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
                         </span>
                         <span>{article.articleTitle}</span>
                     </Title>
-                    <Row
-                        withIcon={true}
-                        className={styles.articleUnlock__timer}
-                    >
-                        <Timer />{" "}
-                        <span className={stillAllowedClassName}>
-                            {article.remainingTimeFormatted ?? "Expired"}
-                        </span>
-                    </Row>
+                    {article.remainingTimeFormatted && (
+                        <Row
+                            withIcon={true}
+                            className={styles.articleUnlock__timer}
+                        >
+                            <Timer />{" "}
+                            <span className={styles.articleUnlock__isAllowed}>
+                                {article.remainingTimeFormatted}
+                            </span>
+                        </Row>
+                    )}
+                    {!article.remainingTimeFormatted && (
+                        <Row className={styles.articleUnlock__timer}>
+                            Expired:{" "}
+                            <span
+                                className={styles.articleUnlock__isNotAllowed}
+                            >
+                                {timeExpired}
+                            </span>
+                        </Row>
+                    )}
                 </Panel>
             }
         >
@@ -123,6 +138,14 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
                 {/*<Row withIcon={true}>
                     Tx: <PolygonLink hash={article.txHash} />
                 </Row>*/}
+                {timeExpired && (
+                    <Row>
+                        Expired:{" "}
+                        <span className={styles.articleUnlock__isNotAllowed}>
+                            {timeExpired}
+                        </span>
+                    </Row>
+                )}
             </>
         </Component>
     );

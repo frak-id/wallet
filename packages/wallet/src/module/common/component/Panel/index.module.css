@@ -3,6 +3,7 @@
     transition: background .3s;
     background-size: cover;
     background-position: -100%;
+    border: 1px solid var(--frak-panel-border-color);
 }
 
 .panel + .panel {

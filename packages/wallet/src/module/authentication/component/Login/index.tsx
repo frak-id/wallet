@@ -11,6 +11,7 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import { HardDrive } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import styles from "./index.module.css";
 
 /**
  * Login from previous authentication
@@ -46,20 +47,23 @@ export function Login() {
     return (
         <>
             <Back href={"/register"}>Account creation</Back>
-            <Grid>
+            <Grid
+                className={styles.login__grid}
+                footer={
+                    <AccordionLogin
+                        trigger={
+                            <>
+                                <HardDrive /> Nexus used on this device
+                            </>
+                        }
+                    >
+                        <LoginList />
+                    </AccordionLogin>
+                }
+            >
                 <AuthFingerprint action={triggerAction} disabled={disabled}>
                     Recover your <strong>NEXUS</strong>
                 </AuthFingerprint>
-
-                <AccordionLogin
-                    trigger={
-                        <>
-                            <HardDrive /> Nexus used on this device
-                        </>
-                    }
-                >
-                    <LoginList />
-                </AccordionLogin>
             </Grid>
         </>
     );

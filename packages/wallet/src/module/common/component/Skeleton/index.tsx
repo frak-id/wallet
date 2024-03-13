@@ -6,6 +6,7 @@ type SkeletonProps = {
     height?: string | number;
     containerClassName?: string;
     className?: string;
+    count?: number;
 };
 
 export function Skeleton({
@@ -13,13 +14,15 @@ export function Skeleton({
     height = 250,
     containerClassName = "",
     className = "",
+    count,
 }: SkeletonProps) {
     return (
         <ReactSkeleton
             width={width}
             height={height}
-            containerClassName={`${containerClassName} ${styles.skeleton}`}
+            containerClassName={`${styles.skeletonContainer} ${containerClassName}`}
             className={`${styles.skeleton} ${className}`}
+            count={count}
         />
     );
 }
