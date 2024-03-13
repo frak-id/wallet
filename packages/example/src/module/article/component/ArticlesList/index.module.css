@@ -6,6 +6,13 @@
     text-decoration: none;
 }
 
+.articlesList__image {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+
+}
+
 .articlesList__title {
     font-size: 18px;
     color: #0D141C;

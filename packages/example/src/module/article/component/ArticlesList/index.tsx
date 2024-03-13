@@ -4,7 +4,6 @@ import { getAllArticles } from "@/context/article/action/get";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import type { Article } from "@/type/Article";
 import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
 import Link from "next/link";
 import styles from "./index.module.css";
 
@@ -39,16 +38,13 @@ function ArticlesContainer({ articles }: { articles?: Article[] }) {
                         href={article.link}
                         className={styles.articlesList__item}
                     >
-                        <Image
+                        <img
                             src={article.imageUrl}
-                            sizes="100vw"
-                            style={{
-                                width: "100%",
-                                height: "auto",
-                            }}
                             width={358}
                             height={358}
-                            alt="Picture of the author"
+                            loading={"lazy"}
+                            className={styles.articlesList__image}
+                            alt={article.title}
                         />
                         <h2 className={styles.articlesList__title}>
                             {article.title}
