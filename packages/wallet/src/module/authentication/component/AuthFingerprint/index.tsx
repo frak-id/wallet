@@ -32,7 +32,7 @@ export function AuthFingerprint({
                 onClick={action}
                 disabled={disabled}
                 size={"big"}
-                className={`${className} ${styles["authFingerprint__button--centered"]}`}
+                className={`${className} ${styles["authFingerprint__button--centered"]} ${styles.authFingerprint__shiny}`}
             >
                 {content}
                 <span>{children}</span>
