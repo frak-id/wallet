@@ -76,6 +76,33 @@
 }
 
 /**
+ * L'équipe
+ */
+.unlockButtons--l-equipe {
+    margin-bottom: 30px;
+}
+
+.unlockButtons--l-equipe .unlockButtons__header {
+    padding: 0;
+    font-size: 18px;
+    color: #454f5f;
+    background-color: rgb(255, 187, 0);
+}
+
+.unlockButtons--l-equipe .unlockButtons__header--valid {
+    margin-top: 20px;
+}
+
+.unlockButtons--l-equipe .unlockButtons__content {
+    background-color: rgb(60, 60, 59);
+}
+
+.unlockButtons--l-equipe .unlockButtons__text {
+    font-size: 16px;
+    color: rgb(197, 197, 197);
+}
+
+/**
  * Wired
  */
 @media (min-width: 1024px) {

@@ -20,7 +20,7 @@ export type StartArticleUnlockParams = Readonly<{
     // The url to display a preview of the content to be unlocked
     previewUrl?: string;
     // The provider of the article
-    provider: "le-monde" | "wired";
+    provider: "le-monde" | "wired" | "l-equipe";
 }>;
 
 /**

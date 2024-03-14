@@ -136,3 +136,16 @@
     background-color: rgb(117, 117, 117);
     outline: 0;
 }
+
+.frak-l-equipe {
+    padding: 10px 24px;
+    background: #ffbb00;
+    border: none;
+    color: #1d1d1b;
+    border-radius: 32px;
+    font-family: "DINNextLTPro-Regular", sans-serif;
+}
+
+.frak-l-equipe:hover {
+    opacity: .85;
+}

@@ -4,9 +4,14 @@ import { createArticle } from "@/context/article/action/create";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
+const providers = ["le-monde", "wired", "l-equipe"] as const;
+
 // Component used to create new article
 export function ArticleCreation() {
-    const [provider, setProvider] = useState<"le-monde" | "wired">("le-monde");
+    const [providerIndex, setProviderIndex] = useState<number>(0);
+    const [provider, setProvider] = useState<"le-monde" | "wired" | "l-equipe">(
+        providers[providerIndex]
+    );
     const [id, setId] = useState<number>(0);
 
     const {
@@ -50,15 +55,26 @@ export function ArticleCreation() {
 
             <br />
 
+            <h3>L'équipe Ids</h3>
+            <p>
+                Id 1: Ces petites choses invisibles qui font de Rudy Gobert une
+                superstar de la défense en NBA
+            </p>
+
+            <br />
+
             <label>Provider, current: {provider}</label>
             <br />
             <button
                 type="button"
-                onClick={() =>
-                    setProvider((prev) =>
-                        prev === "le-monde" ? "wired" : "le-monde"
-                    )
-                }
+                onClick={() => {
+                    setProviderIndex((prev) => {
+                        const next =
+                            prev === providers.length - 1 ? 0 : prev + 1;
+                        setProvider(providers[next]);
+                        return next;
+                    });
+                }}
             >
                 Switch provider
             </button>

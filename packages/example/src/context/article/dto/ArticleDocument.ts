@@ -6,7 +6,7 @@ export type ArticleDocument = Readonly<{
     // The content id linked to this article
     contentId: Hex;
     // The initial provider of this article
-    provider: "le-monde" | "wired";
+    provider: "le-monde" | "wired" | "l-equipe";
     // The title and description of the article
     title: string;
     description?: string;

@@ -1,7 +1,7 @@
 import type { Hex } from "viem";
 
 export type ArticleProvider = {
-    slug: "le-monde" | "wired";
+    slug: "le-monde" | "wired" | "l-equipe";
     name: string;
     imageUrl: string;
 };

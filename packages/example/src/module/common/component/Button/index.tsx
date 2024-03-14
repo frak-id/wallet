@@ -21,7 +21,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
         | "submit"
         | "danger"
         | "le-monde"
-        | "wired";
+        | "wired"
+        | "l-equipe";
     fontNormal?: boolean;
     fontBold?: boolean;
     fontSize?: "small" | "normal" | "big";

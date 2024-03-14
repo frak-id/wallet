@@ -1,5 +1,6 @@
 .articlePreview {
     position: relative;
+    border: none;
 }
 
 .articlePreview + button {

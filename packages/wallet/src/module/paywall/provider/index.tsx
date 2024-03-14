@@ -68,6 +68,11 @@ const providersMap = {
         name: "Wired",
         imageUrl: "/images/wired.png",
     },
+    "l-equipe": {
+        slug: "l-equipe",
+        name: "L'équipe'",
+        imageUrl: "/images/l-equipe.png",
+    },
 } as const;
 
 /**

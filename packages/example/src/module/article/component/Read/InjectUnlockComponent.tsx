@@ -26,12 +26,25 @@ const selectorsWired = {
     },
 };
 
+const selectorsLEquipe = {
+    locked: {
+        selector: ".js-paywall",
+        position: "beforebegin",
+    },
+    unlocked: {
+        selector: ".Article__relatedTags",
+        position: "afterend",
+    },
+};
+
 function getSelectors(provider: Article["provider"]) {
     switch (provider) {
         case "le-monde":
             return selectorsLeMonde;
         case "wired":
             return selectorsWired;
+        case "l-equipe":
+            return selectorsLEquipe;
     }
 }
 

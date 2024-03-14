@@ -18,7 +18,7 @@ type LocalArticleDef = {
     description?: string;
 };
 const articlesMap: Record<
-    "le-monde" | "wired",
+    "le-monde" | "wired" | "l-equipe",
     Record<ArticleIdKeys, LocalArticleDef>
 > = {
     "le-monde": {
@@ -55,6 +55,23 @@ const articlesMap: Record<
                 "Being fully anonymous is next to impossible—but you can significantly limit what the internet knows about you by sticking to a few basic rules.",
         },
     },
+    "l-equipe": {
+        1: {
+            title: "Ces petites choses invisibles qui font de Rudy Gobert une superstar de la défense en NBA",
+            description:
+                "S'il ne brille que rarement en attaque, Rudy Gobert est un défenseur émérite et reconnu. Au point d'être considéré comme une superstar NBA ? Sans avoir l'aura d'un LeBron James ou d'un Stephen Curry, il a le même impact sur le jeu, affirme l'un de ses coéquipiers. Nous avons voulu vérifier.",
+        },
+        2: {
+            title: "Ces petites choses invisibles qui font de Rudy Gobert une superstar de la défense en NBA",
+            description:
+                "S'il ne brille que rarement en attaque, Rudy Gobert est un défenseur émérite et reconnu. Au point d'être considéré comme une superstar NBA ? Sans avoir l'aura d'un LeBron James ou d'un Stephen Curry, il a le même impact sur le jeu, affirme l'un de ses coéquipiers. Nous avons voulu vérifier.",
+        },
+        3: {
+            title: "Ces petites choses invisibles qui font de Rudy Gobert une superstar de la défense en NBA",
+            description:
+                "S'il ne brille que rarement en attaque, Rudy Gobert est un défenseur émérite et reconnu. Au point d'être considéré comme une superstar NBA ? Sans avoir l'aura d'un LeBron James ou d'un Stephen Curry, il a le même impact sur le jeu, affirme l'un de ses coéquipiers. Nous avons voulu vérifier.",
+        },
+    },
 };
 
 /**
@@ -67,7 +84,7 @@ export async function createArticle({
     isLocal,
 }: {
     id: number;
-    provider: "le-monde" | "wired";
+    provider: "le-monde" | "wired" | "l-equipe";
     origin: string;
     isLocal: boolean;
 }) {
@@ -96,7 +113,7 @@ export async function createArticle({
         description: articleDef.description,
         link: `${origin}/article?id=${articleId}`,
         imageUrl: `${origin}/_articles/${provider}-img-${id}.${
-            provider === "le-monde" ? "jpeg" : "webp"
+            provider === "le-monde" || provider === "l-equipe" ? "jpeg" : "webp"
         }`,
         lockedContentUrl: `${origin}/_articles/${provider}-locked-${id}.html`,
         unlockedContentUrl: `${origin}/_articles/${provider}-unlocked-${id}.html`,
