@@ -154,7 +154,7 @@ function usePaywallHook() {
     /**
      * Clear context and status
      */
-    function clear({ redirectUrl }: { redirectUrl?: string }) {
+    function clear() {
         // If we have no current context, nothing to do
         if (!currentContext) {
             setContext(null);
@@ -167,14 +167,13 @@ function usePaywallHook() {
 
         // Cleanup the context
         setContext(null);
+    }
 
-        // If we need to redirect
-        if (redirectUrl) {
-            setIsRedirecting(true);
-            startTransition(() => {
-                router.push(redirectUrl);
-            });
-        }
+    function redirect({ redirectUrl }: { redirectUrl: string }) {
+        setIsRedirecting(true);
+        startTransition(() => {
+            router.push(redirectUrl);
+        });
     }
 
     return {
@@ -184,6 +183,7 @@ function usePaywallHook() {
         setStatus,
         discard,
         clear,
+        redirect,
         isRedirecting,
     };
 }

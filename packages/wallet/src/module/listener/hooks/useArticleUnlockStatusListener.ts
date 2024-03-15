@@ -65,8 +65,11 @@ export function useArticleUnlockStatusListener() {
     /**
      * The current context (used to display real time data if a current unlock is in progress)
      */
-    const { context: currentPaywallContext, status: currentPaywallStatus } =
-        usePaywall();
+    const {
+        context: currentPaywallContext,
+        status: currentPaywallStatus,
+        clear: currentPaywallClear,
+    } = usePaywall();
 
     /**
      * The function that will be called when we want to listen to an article unlock status
@@ -138,6 +141,9 @@ export function useArticleUnlockStatusListener() {
                     status: "unlocked",
                     allowedUntil: onChainUnlockStatus.allowedUntilInSec * 1000,
                 });
+
+                // Clear the current paywall context
+                currentPaywallClear();
                 return;
             }
 
@@ -184,8 +190,7 @@ export function useArticleUnlockStatusListener() {
         enabled:
             !!listenerParam &&
             !isFetchingSession &&
-            !isLoadingOnChainUnlockStatus &&
-            !!currentPaywallStatus,
+            !isLoadingOnChainUnlockStatus,
     });
 
     /**
@@ -238,7 +243,7 @@ export function useArticleUnlockStatusListener() {
             }
 
             // If it's a success, setup a listener that update the status
-            if (status.key === "success") {
+            if (status.key === "success" || status.key === "pendingTx") {
                 await emitter({
                     status: "in-progress",
                     key: "waiting-transaction-bundling",
@@ -268,9 +273,12 @@ export function useArticleUnlockStatusListener() {
                     confirmations: 1,
                 });
                 await refreshOnChainUnlockStatus();
+
+                // Clear the current paywall context
+                currentPaywallClear();
             }
         },
-        [refreshOnChainUnlockStatus]
+        [refreshOnChainUnlockStatus, currentPaywallClear]
     );
 
     return {

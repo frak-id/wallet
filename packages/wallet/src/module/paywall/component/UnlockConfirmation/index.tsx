@@ -7,11 +7,11 @@ export function UnlockConfirmation({
     success,
 }: { already?: UiState["already"]; success: UiState["success"] }) {
     const current = already || success;
-    const { clear: clearPaywallContext } = usePaywall();
+    const { redirect: redirectPaywallContext } = usePaywall();
 
     function clearAndRedirect() {
         if (!current?.redirectUrl) return;
-        clearPaywallContext({ redirectUrl: current.redirectUrl });
+        redirectPaywallContext({ redirectUrl: current.redirectUrl });
     }
 
     useEffect(() => {

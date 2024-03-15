@@ -21,7 +21,7 @@ import styles from "./index.module.css";
 
 export function PaywallUnlock({ context }: { context: PaywallContext }) {
     const { balance } = useWallet();
-    const { discard, clear: clearPaywallContext } = usePaywall();
+    const { discard, redirect: redirectPaywallContext } = usePaywall();
     const { disabled, launchArticleUnlock, uiState } = useArticlePrices({
         context,
     });
@@ -31,7 +31,7 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
     }
 
     function redirectToArticle() {
-        clearPaywallContext({ redirectUrl: context.redirectUrl });
+        redirectPaywallContext({ redirectUrl: context.redirectUrl });
     }
 
     return (
