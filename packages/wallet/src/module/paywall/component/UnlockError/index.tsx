@@ -7,7 +7,7 @@ export function UnlockError({ error }: { error: UiState["error"] }) {
 
     return (
         <>
-            An error occurred
+            An error occurred{error.reason ? `: ${error.reason}` : ""}
             <br />
             <br />
             Click to retry the transaction
