@@ -20,7 +20,7 @@ export function ReadArticle({
     isFree: boolean;
 }) {
     // The injecting state for the unlock component
-    const [injecting, setInjecting] = useState(false);
+    const [injecting, setInjecting] = useState(0);
 
     // The unlock options for the article
     const { data: unlockOptions } = useArticleUnlockOptions({
@@ -46,7 +46,7 @@ export function ReadArticle({
 
     return (
         <>
-            {injecting && !isFree && (
+            {injecting > 0 && !isFree && (
                 <InjectUnlockComponent
                     prices={unlockOptions?.prices ?? []}
                     unlockStatus={articleUnlockStatus}
@@ -54,16 +54,19 @@ export function ReadArticle({
                     article={article}
                 />
             )}
-            {injecting && isFree && walletStatus?.key === "not-connected" && (
-                <InjectBannerComponent article={article} />
-            )}
-            {articleUnlockStatus ? (
+            {injecting > 0 &&
+                isFree &&
+                walletStatus?.key === "not-connected" && (
+                    <InjectBannerComponent article={article} />
+                )}
+            {articleUnlockStatus &&
+            articleUnlockStatus?.key !== "waiting-response" ? (
                 <iframe
                     id="frak-article-iframe"
                     title={"frak"}
                     className={styles.readArticle__iframe}
                     srcDoc={`${lockedOrUnlocked()}`}
-                    onLoad={() => setInjecting(true)}
+                    onLoad={() => setInjecting((prev) => prev + 1)}
                 />
             ) : (
                 <div style={{ margin: "16px" }}>
