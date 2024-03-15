@@ -2,23 +2,20 @@
 
 import type { ArticleDocument } from "@/context/article/dto/ArticleDocument";
 import { getArticleRepository } from "@/context/article/repository/ArticleRepository";
-import type { Article, ArticlePreparedForReading } from "@/type/Article";
+import type { Article } from "@/type/Article";
 import { unstable_cache } from "next/cache";
-import { all } from "radash";
 import type { Hex } from "viem";
 
 /**
  * Small in memory cache for already fetched articles
  */
-const preparedArticleCache = new Map<Hex, ArticlePreparedForReading>();
+const preparedArticleCache = new Map<Hex, Article>();
 
 /**
  * Find an article by its id
  * @param id
  */
-async function _getArticleReadyToRead(
-    id: Hex
-): Promise<ArticlePreparedForReading | null> {
+async function _getArticleReadyToRead(id: Hex): Promise<Article | null> {
     console.log("Fetching article", id);
     // Check if the article is already in the cache
     const cachedArticle = preparedArticleCache.get(id);
@@ -33,31 +30,11 @@ async function _getArticleReadyToRead(
     }
     const mappedArticle = mapArticleDocument(articleDocument);
 
-    // Populate the content of the articles
-    const urlToArticleContent = async (url: string) => {
-        const fetching = await fetch(url);
-        return await fetching.text();
-    };
-
-    // Fetch the raw content of the article
-    const rawContents = await all({
-        rawLockedContent: urlToArticleContent(mappedArticle.lockedContentUrl),
-        rawUnlockedContent: urlToArticleContent(
-            mappedArticle.unlockedContentUrl
-        ),
-    });
-
-    // Build our final prepared article
-    const preparedArticle: ArticlePreparedForReading = {
-        ...mappedArticle,
-        ...rawContents,
-    };
-
     // Cache the prepared article
-    preparedArticleCache.set(id, preparedArticle);
+    preparedArticleCache.set(id, mappedArticle);
 
     // And return it
-    return preparedArticle;
+    return mappedArticle;
 }
 
 /**

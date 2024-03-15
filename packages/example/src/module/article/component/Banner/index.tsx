@@ -1,7 +1,7 @@
 import css from "!!raw-loader!./index.module.css";
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { Button } from "@/module/common/component/Button";
-import type { ArticlePreparedForReading } from "@/type/Article";
+import type { Article } from "@/type/Article";
 
 export const cssRaw = css;
 
@@ -12,7 +12,7 @@ function buildRedirectUrl(redirectUrl: string) {
     return outputUrl.toString();
 }
 
-export function Banner({ article }: { article: ArticlePreparedForReading }) {
+export function Banner({ article }: { article: Article }) {
     return (
         <div className={"banner"}>
             <div className={"banner__content"}>

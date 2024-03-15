@@ -1,7 +1,7 @@
 import { InjectBannerComponent } from "@/module/article/component/Read/InjectBannerComponent";
 import { InjectUnlockComponent } from "@/module/article/component/Read/InjectUnlockComponent";
 import { Skeleton } from "@/module/common/component/Skeleton";
-import type { ArticlePreparedForReading } from "@/type/Article";
+import type { Article } from "@/type/Article";
 import {
     useArticleUnlockOptions,
     useArticleUnlockStatus,
@@ -16,7 +16,7 @@ export function ReadArticle({
     article,
     isFree,
 }: {
-    article: ArticlePreparedForReading;
+    article: Article;
     isFree: boolean;
 }) {
     // The injecting state for the unlock component
@@ -37,11 +37,11 @@ export function ReadArticle({
 
     function lockedOrUnlocked() {
         if (isFree) {
-            return article.rawUnlockedContent;
+            return article.unlockedContentUrl;
         }
         return articleUnlockStatus?.status !== "unlocked"
-            ? article.rawLockedContent
-            : article.rawUnlockedContent;
+            ? article.lockedContentUrl
+            : article.unlockedContentUrl;
     }
 
     return (
@@ -65,7 +65,7 @@ export function ReadArticle({
                     id="frak-article-iframe"
                     title={"frak"}
                     className={styles.readArticle__iframe}
-                    srcDoc={`${lockedOrUnlocked()}`}
+                    src={`${lockedOrUnlocked()}`}
                     onLoad={() => setInjecting((prev) => prev + 1)}
                 />
             ) : (

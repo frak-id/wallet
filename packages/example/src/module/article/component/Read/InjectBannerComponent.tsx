@@ -1,6 +1,6 @@
 import { Banner } from "@/module/article/component/Banner";
 import { cssRaw as cssRawButton } from "@/module/common/component/Button";
-import type { ArticlePreparedForReading } from "@/type/Article";
+import type { Article } from "@/type/Article";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cssRaw } from "../Banner";
@@ -8,7 +8,7 @@ import { cssRaw } from "../Banner";
 export function InjectBannerComponent({
     article,
 }: {
-    article: ArticlePreparedForReading;
+    article: Article;
 }) {
     const [containerRoot, setContainerRoot] = useState<Element | undefined>();
 
