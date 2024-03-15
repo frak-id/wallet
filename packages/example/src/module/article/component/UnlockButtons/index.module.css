@@ -102,6 +102,10 @@
     color: rgb(197, 197, 197);
 }
 
+.article__content--restricted-media {
+    height: auto !important;
+}
+
 /**
  * Wired
  */
