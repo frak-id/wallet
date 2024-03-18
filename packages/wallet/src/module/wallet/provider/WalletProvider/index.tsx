@@ -3,8 +3,8 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { frakTokenAbi } from "@/context/common/blockchain/frak-abi";
 import {
-    pimlicoTransport,
     pimlicoPaymasterClient,
+    pimlicoTransport,
 } from "@/context/common/blockchain/provider";
 import type { KernelWebAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import { buildSmartWallet } from "@/context/wallet/utils/buildSmartWallet";

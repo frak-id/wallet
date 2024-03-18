@@ -1,5 +1,5 @@
 import { http, createClient } from "viem";
-import {polygonAmoy, polygonMumbai} from "viem/chains";
+import { polygonAmoy } from "viem/chains";
 
 export const rpcTransport = http(process.env.RPC_URL, {
     batch: { wait: 50 },

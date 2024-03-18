@@ -21,6 +21,7 @@ export async function buildSmartWallet({
     // @ts-ignore
     return await webAuthNSmartAccount(viemClient, {
         entryPoint: ENTRYPOINT_ADDRESS_V06,
+        authenticatorId,
         signerPubKey: publicKey,
         signatureProvider: async (message) => {
             // Get the signature options from server
