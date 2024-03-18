@@ -109,6 +109,18 @@
 /**
  * Wired
  */
+.unlockButtons--wired .unlockButtons__header {
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.unlockButtons--wired .unlockButtons__content {
+    border-bottom: 2px solid #e1e1e1;
+}
+
+.unlockButtons--wired .unlockButtons__text {
+    margin-top: 0;
+}
+
 @media (min-width: 1024px) {
     .gncDne {
         height: auto;
