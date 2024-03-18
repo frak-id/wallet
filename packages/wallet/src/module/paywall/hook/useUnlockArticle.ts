@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 import { type Hex, encodeFunctionData, parseEther } from "viem";
 import type { Address } from "viem";
 import { readContract } from "viem/actions";
-import { polygonMumbai } from "viem/chains";
+import { polygonAmoy } from "viem/chains";
 
 /**
  * Hook used to fetch and handle the prices
@@ -187,7 +187,7 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
             // Build the smart account client we will use to send the txs
             const smartAccountClient = createSmartAccountClient({
                 account: smartWallet,
-                chain: polygonMumbai,
+                chain: polygonAmoy,
                 bundlerTransport: pimlicoTransport,
                 middleware: {
                     sponsorUserOperation: (args) =>

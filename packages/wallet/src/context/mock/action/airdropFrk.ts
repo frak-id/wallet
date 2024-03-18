@@ -5,7 +5,7 @@ import { viemClient } from "@/context/common/blockchain/provider";
 import { type Address, type Hex, encodeFunctionData, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { prepareTransactionRequest, sendTransaction } from "viem/actions";
-import { polygonMumbai } from "viem/chains";
+import { polygonAmoy } from "viem/chains";
 
 /**
  * Abi used to trigger an airdrop from the treasury contract
@@ -42,7 +42,7 @@ export async function triggerFrkAirdrop({
     // Prepare the tx
     const preparationResult = await prepareTransactionRequest(viemClient, {
         account: airdropperAccount,
-        chain: polygonMumbai,
+        chain: polygonAmoy,
         to: addresses.frakTreasuryWallet,
         data: encodeFunctionData({
             abi: [airdropAbi],

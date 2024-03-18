@@ -9,7 +9,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import type { PropsWithChildren } from "react";
-import { polygonMumbai } from "viem/chains";
+import { polygonAmoy } from "viem/chains";
 import { WagmiProvider, createConfig } from "wagmi";
 
 // The query client that will be used by tanstack/react-query
@@ -24,9 +24,9 @@ const queryClient = new QueryClient({
 
 // The wagmi config
 const wagmiConfig = createConfig({
-    chains: [polygonMumbai],
+    chains: [polygonAmoy],
     transports: {
-        [polygonMumbai.id]: rpcTransport,
+        [polygonAmoy.id]: rpcTransport,
     },
 });
 

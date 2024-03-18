@@ -19,7 +19,7 @@ export const rpOrigin =
 /**
  * The default user name
  */
-export const defaultUsername = "Nexus Wallet";
+export const defaultUsername = "Nexus Wallet - Amoy";
 
 /**
  * Decode the public key from the attestation object

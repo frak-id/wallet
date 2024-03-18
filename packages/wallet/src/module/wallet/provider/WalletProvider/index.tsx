@@ -24,7 +24,7 @@ import {
 } from "react";
 import { useMemo } from "react";
 import { formatEther } from "viem";
-import { polygonMumbai } from "viem/chains";
+import { polygonAmoy } from "viem/chains";
 import { useConnect, useReadContract } from "wagmi";
 
 function useWalletHook({ session }: { session: Session }) {
@@ -86,7 +86,7 @@ function useWalletHook({ session }: { session: Session }) {
         const client = createSmartAccountClient({
             account: smartWallet,
             entryPoint: ENTRYPOINT_ADDRESS_V06,
-            chain: polygonMumbai,
+            chain: polygonAmoy,
             bundlerTransport: pimlicoTransport,
             middleware: {
                 sponsorUserOperation: (args) =>
