@@ -37,7 +37,7 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
                     <Title
                         icon={
                             article.provider?.imageUrl ? (
-                                <Image
+                                <img
                                     src={article.provider?.imageUrl}
                                     width={"30"}
                                     height={"30"}
