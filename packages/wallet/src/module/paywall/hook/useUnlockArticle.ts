@@ -4,7 +4,7 @@ import {
 } from "@/context/common/blockchain/addresses";
 import { frakTokenAbi, paywallAbi } from "@/context/common/blockchain/frak-abi";
 import {
-    pimlicoBundlerTransport,
+    pimlicoTransport,
     pimlicoPaymasterClient,
     viemClient,
 } from "@/context/common/blockchain/provider";
@@ -188,7 +188,7 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
             const smartAccountClient = createSmartAccountClient({
                 account: smartWallet,
                 chain: polygonMumbai,
-                bundlerTransport: pimlicoBundlerTransport,
+                bundlerTransport: pimlicoTransport,
                 middleware: {
                     sponsorUserOperation: (args) =>
                         sponsorUserOperation(pimlicoPaymasterClient, args),
@@ -234,7 +234,7 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
                 success: {
                     redirectUrl,
                     userOpHash,
-                    userOpExplorerLink: `https://jiffyscan.xyz/userOpHash/${userOpHash}?network=mumbai`,
+                    userOpExplorerLink: `https://jiffyscan.xyz/userOpHash/${userOpHash}?network=amoy`,
                 },
             });
         },

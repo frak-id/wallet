@@ -1,5 +1,5 @@
 import { http, createClient } from "viem";
-import { polygonMumbai } from "viem/chains";
+import {polygonAmoy, polygonMumbai} from "viem/chains";
 
 export const rpcTransport = http(process.env.RPC_URL, {
     batch: { wait: 50 },
@@ -10,7 +10,7 @@ export const rpcTransport = http(process.env.RPC_URL, {
 
 // Build the viem client
 export const viemClient = createClient({
-    chain: polygonMumbai,
+    chain: polygonAmoy,
     transport: rpcTransport,
     cacheTime: 60_000,
     batch: {
@@ -20,26 +20,24 @@ export const viemClient = createClient({
 
 // Build the alchemy client (same as the viem one but batch cache)
 export const alchemyClient = createClient({
-    chain: polygonMumbai,
+    chain: polygonAmoy,
     transport: http(process.env.RPC_URL),
     cacheTime: 60_000,
 });
 
-export const pimlicoBundlerTransport = http(
-    `https://rpc.zerodev.app/api/v2/bundler/${process.env.ZERODEV_API_KEY}`
+export const pimlicoTransport = http(
+    `https://api.pimlico.io/v2/80002/rpc?apikey=${process.env.PIMLICO_API_KEY}`
 );
 // Build the pimlico bundler client
 export const pimlicoBundlerClient = createClient({
-    chain: polygonMumbai,
-    transport: pimlicoBundlerTransport,
+    chain: polygonAmoy,
+    transport: pimlicoTransport,
 });
 
 // Build the pimlico paymaster client
 export const pimlicoPaymasterClient = createClient({
-    chain: polygonMumbai,
-    transport: http(
-        `https://api.pimlico.io/v2/mumbai/rpc?apikey=${process.env.PIMLICO_API_KEY}`
-    ),
+    chain: polygonAmoy,
+    transport: pimlicoTransport,
 });
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
