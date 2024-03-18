@@ -94,12 +94,14 @@ export function useArticleUnlockStatusListener() {
                 articleId,
                 emitter,
             });
+
+            setTimeout(() => refetch(), 100);
         }, []);
 
     /**
      * Emit an updated version of the wallet status every time on our props has changed
      */
-    useQuery({
+    const { refetch } = useQuery({
         // Basically, all the trigger arguments to re-send a new states
         queryKey: [
             "articleUnlockStatusAutoEmitter",
