@@ -40,6 +40,23 @@ export function ExampleAppStack({ stack }: StackContext) {
         openNextVersion: "2.3.6",
         // Number of server side instance to keep warm
         warm: 10,
+        // Cache options
+        assets: {
+            fileOptions: [
+                // Cache articles html pages
+                {
+                    files: "_articles/**/*.html",
+                    cacheControl: "public, max-age=1209600", // 14 days in seconds
+                    contentType: "text/html",
+                },
+                // Cache article images
+                {
+                    files: "_articles/**/*.{jpg,jpeg,png,gif,webp}",
+                    cacheControl: "public, max-age=1209600", // 14 days in seconds
+                    contentType: "image/*",
+                },
+            ],
+        },
     });
 
     stack.addOutputs({

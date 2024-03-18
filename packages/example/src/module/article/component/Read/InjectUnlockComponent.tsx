@@ -1,6 +1,6 @@
 import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import { cssRaw as cssRaw2 } from "@/module/common/component/Button";
-import type { Article, ArticlePreparedForReading } from "@/type/Article";
+import type { Article } from "@/type/Article";
 import type { UnlockOptionsReturnType } from "@frak-labs/nexus-sdk/core";
 import type {
     ArticleUnlockStatusQueryReturnType,
@@ -70,7 +70,7 @@ export function InjectUnlockComponent({
     prices: UnlockOptionsReturnType["prices"];
     unlockStatus: ArticleUnlockStatusQueryReturnType | undefined;
     walletStatus: WalletStatusQueryReturnType | undefined;
-    article: ArticlePreparedForReading;
+    article: Article;
 }) {
     const [element, setElement] = useState<Element | undefined>();
     const [containerRoot, setContainerRoot] = useState<Element | undefined>();

@@ -9,10 +9,3 @@ export type Article = Readonly<{
     lockedContentUrl: string;
     unlockedContentUrl: string;
 }>;
-
-export type ArticlePreparedForReading = Article &
-    Readonly<{
-        // Raw content in text format
-        rawLockedContent: string;
-        rawUnlockedContent: string;
-    }>;
