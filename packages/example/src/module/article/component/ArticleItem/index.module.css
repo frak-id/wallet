@@ -1,4 +1,4 @@
-.articlesList__item {
+.articleItem {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -6,19 +6,19 @@
     text-decoration: none;
 }
 
-.articlesList__image {
+.articleItem__image {
     width: 100%;
     height: auto;
     border-radius: 8px;
 
 }
 
-.articlesList__title {
+.articleItem__title {
     font-size: 18px;
     color: #0D141C;
 }
 
-.articlesList__description {
+.articleItem__description {
     font-size: 16px;
     color: #4F7396;
 }

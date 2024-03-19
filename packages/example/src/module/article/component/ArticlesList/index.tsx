@@ -1,11 +1,9 @@
 "use client";
 
 import { getAllArticles } from "@/context/article/action/get";
+import { ArticleItem } from "@/module/article/component/ArticleItem";
 import { Skeleton } from "@/module/common/component/Skeleton";
-import type { Article } from "@/type/Article";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import styles from "./index.module.css";
 
 export function ArticlesList() {
     const { data: articles, isPending: isLoading } = useQuery({
@@ -18,43 +16,21 @@ export function ArticlesList() {
         <div>
             {isLoading ? (
                 <>
-                    <Skeleton />
-                    <Skeleton />
-                    <Skeleton />
+                    <Skeleton height={383} />
+                    <Skeleton height={383} />
+                    <Skeleton height={383} />
                 </>
             ) : (
-                <ArticlesContainer articles={articles} />
+                <ul>
+                    {articles?.map((article, index) => (
+                        <ArticleItem
+                            article={article}
+                            index={index}
+                            key={article.id}
+                        />
+                    ))}
+                </ul>
             )}
         </div>
-    );
-}
-
-function ArticlesContainer({ articles }: { articles?: Article[] }) {
-    return (
-        <ul>
-            {articles?.map((article) => (
-                <li key={article.id}>
-                    <Link
-                        href={article.link}
-                        className={styles.articlesList__item}
-                    >
-                        <img
-                            src={article.imageUrl}
-                            width={358}
-                            height={358}
-                            loading={"lazy"}
-                            className={styles.articlesList__image}
-                            alt={article.title}
-                        />
-                        <h2 className={styles.articlesList__title}>
-                            {article.title}
-                        </h2>
-                        <span className={styles.articlesList__description}>
-                            {article.description}
-                        </span>
-                    </Link>
-                </li>
-            ))}
-        </ul>
     );
 }
