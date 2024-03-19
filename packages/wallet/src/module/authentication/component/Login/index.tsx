@@ -1,6 +1,5 @@
 "use client";
 
-import { AccordionLogin } from "@/module/authentication/component/AccordionLogin";
 import { AuthFingerprint } from "@/module/authentication/component/AuthFingerprint";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import { useLogin } from "@/module/authentication/hook/useLogin";
@@ -8,7 +7,6 @@ import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { usePaywall } from "@/module/paywall/provider";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { HardDrive } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import styles from "./index.module.css";
@@ -47,20 +45,7 @@ export function Login() {
     return (
         <>
             <Back href={"/register"}>Account creation</Back>
-            <Grid
-                className={styles.login__grid}
-                footer={
-                    <AccordionLogin
-                        trigger={
-                            <>
-                                <HardDrive /> Nexus used on this device
-                            </>
-                        }
-                    >
-                        <LoginList />
-                    </AccordionLogin>
-                }
-            >
+            <Grid className={styles.login__grid} footer={<LoginList />}>
                 <AuthFingerprint action={triggerAction} disabled={disabled}>
                     Recover your <strong>NEXUS</strong>
                 </AuthFingerprint>
