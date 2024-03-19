@@ -118,7 +118,7 @@ function parseSignature(signature: ArrayBuffer): P256Signature {
  */
 function hexStringToUint8Array(input: string): Uint8Array {
     return new Uint8Array(
-        input.match(/[\da-f]{2}/gi)?.map((h) => parseInt(h, 16)) ?? []
+        input.match(/[\da-f]{2}/gi)?.map((h) => Number.parseInt(h, 16)) ?? []
     );
 }
 

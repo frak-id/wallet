@@ -23,10 +23,13 @@ export const validateAmount = (
     value: string,
     selectedToken: GetUserErc20Token
 ) => {
-    if (parseFloat(value) <= 0) {
+    if (Number.parseFloat(value) <= 0) {
         return "Amount must be positive";
     }
-    if (parseFloat(value) > parseFloat(selectedToken.formattedBalance)) {
+    if (
+        Number.parseFloat(value) >
+        Number.parseFloat(selectedToken.formattedBalance)
+    ) {
         return "Amount must be less than balance";
     }
     return true;

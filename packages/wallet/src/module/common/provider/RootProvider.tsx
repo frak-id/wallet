@@ -16,7 +16,7 @@ import { WagmiProvider, createConfig } from "wagmi";
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            gcTime: Infinity,
+            gcTime: Number.POSITIVE_INFINITY,
             staleTime: 60 * 1000, // 1 minute
         },
     },
@@ -41,7 +41,7 @@ const persister = createSyncStoragePersister({
 
 const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     persister,
-    maxAge: Infinity,
+    maxAge: Number.POSITIVE_INFINITY,
     dehydrateOptions: {
         shouldDehydrateQuery: ({ meta, state }) => {
             const isValid = state.status === "success";

@@ -19,7 +19,7 @@
     "changeset:version": "changeset version && bun install --lockfile-only"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.5.3",
+    "@biomejs/biome": "1.6.1",
     "@types/node": "^20",
     "rimraf": "^5.0.5",
     "sst": "2.40.6",

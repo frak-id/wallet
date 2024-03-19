@@ -86,7 +86,7 @@ export function ArticleCreation() {
             <input
                 type="number"
                 value={id}
-                onChange={(e) => setId(parseInt(e.target.value))}
+                onChange={(e) => setId(Number.parseInt(e.target.value))}
             />
 
             <br />

@@ -11,7 +11,8 @@
             ".open-next/**",
             ".next/**",
             "tsconfig.json",
-            "tsconfig.*.json"
+            "tsconfig.*.json",
+            "package.json"
         ]
     },
     "organizeImports": {
@@ -31,21 +32,20 @@
                 "useSimplifiedLogicExpression": "error"
             },
             "nursery": {
-                "useImportType": "error",
-                "useGroupedTypeImport": "error",
-                "useExportType": "error",
-                "noUnusedPrivateClassMembers": "error",
                 "noUselessTernary": "error"
             },
             "correctness": {
                 "useHookAtTopLevel": "error",
                 "noUnusedVariables": "error",
-                "noUndeclaredVariables": "error"
+                "noUndeclaredVariables": "error",
+                "noUnusedPrivateClassMembers": "error"
             },
             "style": {
                 "useFragmentSyntax": "error",
                 "useShorthandArrayType": "error",
-                "useShorthandAssign": "error"
+                "useShorthandAssign": "error",
+                "useImportType": "error",
+                "useExportType": "error"
             }
         }
     },
