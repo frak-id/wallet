@@ -13,7 +13,7 @@ import type {
 } from "@frak-labs/nexus-sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 
 export function PaywallEntryPoint() {
     const router = useRouter();
@@ -22,7 +22,11 @@ export function PaywallEntryPoint() {
     const { get } = useSearchParams();
     const { handleNewUnlockRequest } = usePaywall();
 
-    useQuery({
+    useEffect(() => {
+        refetch();
+    }, []);
+
+    const { refetch } = useQuery({
         queryKey: ["getEncodedUnlockData"],
         queryFn: async () => {
             const params = get("params");
