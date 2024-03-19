@@ -1,5 +1,6 @@
 "use client";
 
+import { userErc20TokensRevalidate } from "@/context/tokens/action/getTokenAsset";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
@@ -20,6 +21,8 @@ export function GetFrk() {
                 size={"small"}
                 onClick={async () => {
                     await airdropFrk({ wallet: wallet.address });
+                    // Invalidate the user tokens
+                    await userErc20TokensRevalidate();
                 }}
             >
                 <Row>
