@@ -25,19 +25,21 @@ export const alchemyClient = createClient({
     cacheTime: 60_000,
 });
 
-export const pimlicoTransport = http(
-    `https://api.pimlico.io/v2/80002/rpc?apikey=${process.env.PIMLICO_API_KEY}`
+export const pimlicoBundlerTransport = http(
+    `https://api.pimlico.io/v1/80002/rpc?apikey=${process.env.PIMLICO_API_KEY}`
 );
 // Build the pimlico bundler client
 export const pimlicoBundlerClient = createClient({
     chain: polygonAmoy,
-    transport: pimlicoTransport,
+    transport: pimlicoBundlerTransport,
 });
 
 // Build the pimlico paymaster client
 export const pimlicoPaymasterClient = createClient({
     chain: polygonAmoy,
-    transport: pimlicoTransport,
+    transport: http(
+        `https://api.pimlico.io/v2/80002/rpc?apikey=${process.env.PIMLICO_API_KEY}`
+    ),
 });
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -353,7 +353,7 @@ export async function webAuthNSmartAccount<
             const encodedSignature = encodeAbiParameters(
                 webAuthNSignatureLayoutParam,
                 [
-                    false,
+                    true,
                     authenticatorData,
                     clientData,
                     challengeOffset,
@@ -457,8 +457,8 @@ export async function webAuthNSmartAccount<
             const sig = encodeAbiParameters(webAuthNSignatureLayoutParam, [
                 false,
                 // Random 120 byte
-                `0x${maxUint256.toString(16).repeat(2)}`,
-                `0x${maxUint256.toString(16).repeat(6)}`,
+                `0x${maxUint256.toString(16).repeat(20)}`,
+                `0x${maxUint256.toString(16).repeat(80)}`,
                 maxUint256,
                 [maxCurveValue, maxCurveValue],
             ]);

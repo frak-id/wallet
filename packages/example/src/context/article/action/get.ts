@@ -7,42 +7,24 @@ import { unstable_cache } from "next/cache";
 import type { Hex } from "viem";
 
 /**
- * Small in memory cache for already fetched articles
- */
-const preparedArticleCache = new Map<Hex, Article>();
-
-/**
  * Find an article by its id
  * @param id
  */
-async function _getArticleReadyToRead(id: Hex): Promise<Article | null> {
-    console.log("Fetching article", id);
-    // Check if the article is already in the cache
-    const cachedArticle = preparedArticleCache.get(id);
-    if (cachedArticle) {
-        return cachedArticle;
-    }
-
+async function _getDetailedArticle(id: Hex): Promise<Article | null> {
     const articleRepository = await getArticleRepository();
     const articleDocument = await articleRepository.getById(id);
     if (!articleDocument) {
         return null;
     }
-    const mappedArticle = mapArticleDocument(articleDocument);
-
-    // Cache the prepared article
-    preparedArticleCache.set(id, mappedArticle);
-
-    // And return it
-    return mappedArticle;
+    return mapArticleDocument(articleDocument);
 }
 
 /**
  * Cached version of the article to read fetch
  */
-export const getArticleReadyToRead = unstable_cache(
-    _getArticleReadyToRead,
-    ["get-article-ready-to-read"],
+export const getDetailedArticle = unstable_cache(
+    _getDetailedArticle,
+    ["get-detailed-article"],
     {
         // Keep that in server cache for 1 hour
         revalidate: 3600,
@@ -73,10 +55,12 @@ async function _getAllArticles() {
  */
 export const getAllArticles = unstable_cache(
     _getAllArticles,
-    ["get-all-articles"],
+    ["get-articles"],
     {
         // Keep that in server cache for 1 hour
-        revalidate: 3600,
+        revalidate: 1,
+        // The tag that will be used to revalidate the cache
+        tags: ["get-articles"],
     }
 );
 

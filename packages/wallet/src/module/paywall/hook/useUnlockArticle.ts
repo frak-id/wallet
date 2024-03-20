@@ -4,8 +4,8 @@ import {
 } from "@/context/common/blockchain/addresses";
 import { frakTokenAbi, paywallAbi } from "@/context/common/blockchain/frak-abi";
 import {
+    pimlicoBundlerTransport,
     pimlicoPaymasterClient,
-    pimlicoTransport,
     viemClient,
 } from "@/context/common/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
@@ -188,7 +188,7 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
             const smartAccountClient = createSmartAccountClient({
                 account: smartWallet,
                 chain: polygonAmoy,
-                bundlerTransport: pimlicoTransport,
+                bundlerTransport: pimlicoBundlerTransport,
                 middleware: {
                     sponsorUserOperation: (args) =>
                         sponsorUserOperation(pimlicoPaymasterClient, args),

@@ -3,8 +3,8 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { frakTokenAbi } from "@/context/common/blockchain/frak-abi";
 import {
+    pimlicoBundlerTransport,
     pimlicoPaymasterClient,
-    pimlicoTransport,
 } from "@/context/common/blockchain/provider";
 import type { KernelWebAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import { buildSmartWallet } from "@/context/wallet/utils/buildSmartWallet";
@@ -87,7 +87,7 @@ function useWalletHook({ session }: { session: Session }) {
             account: smartWallet,
             entryPoint: ENTRYPOINT_ADDRESS_V06,
             chain: polygonAmoy,
-            bundlerTransport: pimlicoTransport,
+            bundlerTransport: pimlicoBundlerTransport,
             middleware: {
                 sponsorUserOperation: (args) =>
                     sponsorUserOperation(pimlicoPaymasterClient, args),
