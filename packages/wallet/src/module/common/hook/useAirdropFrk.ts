@@ -11,17 +11,22 @@ export function useAirdropFrk() {
     const { isPending: isAirdroppingFrk, mutateAsync: airdropFrk } =
         useMutation({
             mutationKey: ["airdropFrk"],
-            mutationFn: async ({ wallet }: { wallet: Address }) => {
+            mutationFn: async ({
+                wallet,
+                waitForReceipt,
+            }: { wallet: Address; waitForReceipt: boolean }) => {
                 // Trigger the airdrop
                 const { txHash } = await triggerFrkAirdrop({
                     user: wallet,
                     amount: "100",
                 });
                 // Wait for the tx receipt
-                await waitForTransactionReceipt(viemClient, {
-                    hash: txHash,
-                    confirmations: 1,
-                });
+                if (waitForReceipt) {
+                    await waitForTransactionReceipt(viemClient, {
+                        hash: txHash,
+                        confirmations: 1,
+                    });
+                }
                 // Return the tx hash
                 return txHash;
             },

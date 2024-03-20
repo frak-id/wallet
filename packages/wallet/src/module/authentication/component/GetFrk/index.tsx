@@ -20,7 +20,10 @@ export function GetFrk() {
             <ButtonRipple
                 size={"small"}
                 onClick={async () => {
-                    await airdropFrk({ wallet: wallet.address });
+                    await airdropFrk({
+                        wallet: wallet.address,
+                        waitForReceipt: true,
+                    });
                     // Invalidate the user tokens
                     await userErc20TokensRevalidate();
                 }}

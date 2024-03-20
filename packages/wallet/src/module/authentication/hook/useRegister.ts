@@ -63,7 +63,7 @@ export function useRegister() {
             });
 
             // Launch the frk airdrop
-            airdropFrk({ wallet: wallet.address });
+            await airdropFrk({ wallet: wallet.address, waitForReceipt: false });
         },
     });
 
