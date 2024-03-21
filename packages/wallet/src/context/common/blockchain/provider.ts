@@ -2,7 +2,7 @@ import { http, createClient } from "viem";
 import { polygonAmoy } from "viem/chains";
 
 export const rpcTransport = http(process.env.RPC_URL, {
-    batch: { wait: 50 },
+    batch: false,
     retryCount: 5,
     retryDelay: 200,
     timeout: 20_000,
