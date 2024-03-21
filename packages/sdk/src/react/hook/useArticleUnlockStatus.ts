@@ -15,7 +15,7 @@ export type ArticleUnlockStatusQueryReturnType =
       };
 
 /**
- * Hooks used to listen to the current wallet status
+ * Hooks used to listen to the current article unlock status
  */
 export function useArticleUnlockStatus({ articleId }: WatchUnlockStatusParams) {
     const queryClient = useQueryClient();

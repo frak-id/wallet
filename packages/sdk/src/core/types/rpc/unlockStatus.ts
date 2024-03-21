@@ -11,7 +11,7 @@ export type ArticleUnlockStatusReturnType = Readonly<
 >;
 
 /**
- * When the content unlocked was expired a few time ago
+ * When the content unlocked was expired or not unlocked
  */
 type UnlockStatusLocked =
     | {
@@ -25,7 +25,7 @@ type UnlockStatusLocked =
       };
 
 /**
- * When the content unlocked was expired a few time ago
+ * When the content unlock is in progress
  */
 type UnlockStatusProcessing = { status: "in-progress" } & (
     | {
@@ -43,7 +43,7 @@ type UnlockStatusProcessing = { status: "in-progress" } & (
 );
 
 /**
- * When the content unlocked was expired a few time ago
+ * When the content is unlocked
  */
 type UnlockStatusValid = {
     key: "valid";
@@ -52,7 +52,7 @@ type UnlockStatusValid = {
 };
 
 /**
- * When the content unlocked was expired a few time ago
+ * When the unlock content is in error
  */
 type UnlockStatusError = {
     key: "error";

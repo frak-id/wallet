@@ -39,7 +39,7 @@ export function NexusIFrameClientProvider({
     const config = useNexusConfig();
 
     // Using a state for the iframe client since using directly a client built inside the ref cause re-render loop
-    const [iframeElem, setIframElem] = useState<HTMLIFrameElement | undefined>(
+    const [iframeElem, setIframeElem] = useState<HTMLIFrameElement | undefined>(
         undefined
     );
 
@@ -67,12 +67,12 @@ export function NexusIFrameClientProvider({
         ref: (iframe: HTMLIFrameElement) => {
             if (!iframe) {
                 // Remove the client
-                setIframElem(undefined);
+                setIframeElem(undefined);
                 return;
             }
 
             // Add the client
-            setIframElem(iframe);
+            setIframeElem(iframe);
         },
     });
 
