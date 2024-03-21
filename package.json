@@ -22,7 +22,7 @@
     "@biomejs/biome": "1.6.1",
     "@types/node": "^20",
     "rimraf": "^5.0.5",
-    "sst": "2.40.6",
+    "sst": "2.41.3",
     "typescript": "^5",
     "npm-check-updates": "^16.14.15",
     "@changesets/changelog-git": "^0.2.0",
