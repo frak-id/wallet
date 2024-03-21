@@ -2,6 +2,7 @@ import type { PreviousAuthenticatorModel } from "@/context/common/dexie/Previous
 import { validateAuthentication } from "@/context/wallet/action/authenticate";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
+import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import {
     base64URLStringToBuffer,
     startAuthentication,
@@ -15,6 +16,9 @@ import { useMutation } from "@tanstack/react-query";
 export function useLogin() {
     // Setter for the last authentication
     const { addLastAuthentication } = useLastAuthentications();
+
+    // Get some FRK
+    const { airdropFrk } = useAirdropFrk();
 
     // The mutation that will be used to perform the registration process
     const {
@@ -64,6 +68,9 @@ export function useLogin() {
                 username,
                 wallet,
             });
+
+            // Trigger the frk airdrop without waiting for the tx hash
+            await airdropFrk({ wallet: wallet.address, waitForReceipt: false });
         },
     });
 

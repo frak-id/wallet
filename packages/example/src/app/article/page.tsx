@@ -1,6 +1,6 @@
 "use client";
 
-import { getArticleReadyToRead } from "@/context/article/action/get";
+import { getArticle } from "@/context/article/action/get";
 import { ReadArticle } from "@/module/article/component/Read";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { decodeStartUnlockReturn } from "@frak-labs/nexus-sdk/actions";
@@ -39,7 +39,7 @@ function ArticlePageComponent() {
             if (!articleId) {
                 throw new Error("Invalid article id");
             }
-            return getArticleReadyToRead(articleId);
+            return getArticle(articleId);
         },
         enabled: !!articleId,
     });

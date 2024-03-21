@@ -1,4 +1,5 @@
 import type { ArticleDocument } from "@/context/article/dto/ArticleDocument";
+import { contentId } from "@/context/common/config";
 import { DI } from "@/context/common/di";
 import { getMongoDb } from "@/context/common/mongoDb";
 import type { Collection } from "mongodb";
@@ -21,7 +22,7 @@ export class ArticleRepository {
      * Get all the articles
      */
     public async getAll(): Promise<ArticleDocument[]> {
-        return this.collection.find().toArray();
+        return this.collection.find({ contentId }).toArray();
     }
 
     /**

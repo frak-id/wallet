@@ -15,8 +15,7 @@ const preparedArticleCache = new Map<Hex, Article>();
  * Find an article by its id
  * @param id
  */
-async function _getArticleReadyToRead(id: Hex): Promise<Article | null> {
-    console.log("Fetching article", id);
+async function _getArticle(id: Hex): Promise<Article | null> {
     // Check if the article is already in the cache
     const cachedArticle = preparedArticleCache.get(id);
     if (cachedArticle) {
@@ -40,14 +39,10 @@ async function _getArticleReadyToRead(id: Hex): Promise<Article | null> {
 /**
  * Cached version of the article to read fetch
  */
-export const getArticleReadyToRead = unstable_cache(
-    _getArticleReadyToRead,
-    ["get-article-ready-to-read"],
-    {
-        // Keep that in server cache for 1 hour
-        revalidate: 3600,
-    }
-);
+export const getArticle = unstable_cache(_getArticle, ["get-article"], {
+    // Keep that in server cache for 1 hour
+    revalidate: 3600,
+});
 
 /**
  * Get all the articles
@@ -73,10 +68,12 @@ async function _getAllArticles() {
  */
 export const getAllArticles = unstable_cache(
     _getAllArticles,
-    ["get-all-articles"],
+    ["get-articles"],
     {
         // Keep that in server cache for 1 hour
         revalidate: 3600,
+        // The tag that will be used to revalidate the cache
+        tags: ["get-articles"],
     }
 );
 

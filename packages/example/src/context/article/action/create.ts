@@ -4,10 +4,9 @@ import { randomBytes } from "node:crypto";
 import { onlyAdmin } from "@/context/admin/action/authenticate";
 import { getArticleRepository } from "@/context/article/repository/ArticleRepository";
 import { getContentRepository } from "@/context/article/repository/ContentRepository";
+import { contentId } from "@/context/common/config";
+import { revalidateTag } from "next/cache";
 import { keccak256 } from "viem";
-import type { Hex } from "viem";
-
-const contentId: Hex = "0xDD";
 
 /**
  * Map of content article id to le monde article
@@ -19,7 +18,7 @@ type LocalArticleDef = {
 };
 const articlesMap: Record<
     "le-monde" | "wired" | "l-equipe",
-    Record<ArticleIdKeys, LocalArticleDef>
+    Record<ArticleIdKeys, LocalArticleDef | undefined>
 > = {
     "le-monde": {
         1: {
@@ -61,16 +60,8 @@ const articlesMap: Record<
             description:
                 "S'il ne brille que rarement en attaque, Rudy Gobert est un défenseur émérite et reconnu. Au point d'être considéré comme une superstar NBA ? Sans avoir l'aura d'un LeBron James ou d'un Stephen Curry, il a le même impact sur le jeu, affirme l'un de ses coéquipiers. Nous avons voulu vérifier.",
         },
-        2: {
-            title: "Ces petites choses invisibles qui font de Rudy Gobert une superstar de la défense en NBA",
-            description:
-                "S'il ne brille que rarement en attaque, Rudy Gobert est un défenseur émérite et reconnu. Au point d'être considéré comme une superstar NBA ? Sans avoir l'aura d'un LeBron James ou d'un Stephen Curry, il a le même impact sur le jeu, affirme l'un de ses coéquipiers. Nous avons voulu vérifier.",
-        },
-        3: {
-            title: "Ces petites choses invisibles qui font de Rudy Gobert une superstar de la défense en NBA",
-            description:
-                "S'il ne brille que rarement en attaque, Rudy Gobert est un défenseur émérite et reconnu. Au point d'être considéré comme une superstar NBA ? Sans avoir l'aura d'un LeBron James ou d'un Stephen Curry, il a le même impact sur le jeu, affirme l'un de ses coéquipiers. Nous avons voulu vérifier.",
-        },
+        2: undefined,
+        3: undefined,
     },
 };
 
@@ -118,6 +109,9 @@ export async function createArticle({
         lockedContentUrl: `${origin}/_articles/${provider}-locked-${id}.html`,
         unlockedContentUrl: `${origin}/_articles/${provider}-unlocked-${id}.html`,
     });
+
+    // Reset the cache for all the articles fetching
+    revalidateTag("get-articles");
 
     // And return the article id
     return articleId;

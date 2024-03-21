@@ -19,6 +19,7 @@ export async function formatWallet({
     // @ts-ignore
     const smartWallet = await webAuthNSmartAccount(viemClient, {
         entryPoint: ENTRYPOINT_ADDRESS_V06,
+        authenticatorId,
         signerPubKey: publicKey,
         signatureProvider: async () => {
             throw new Error("Read only wallet");

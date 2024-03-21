@@ -74,7 +74,6 @@ const createAccountAbi = [
 
 /**
  * Default addresses for kernel smart account
- *   validator address: 0xB38806b3b3aE69271b2A57319E21998A41A1d82d
  */
 const KERNEL_ADDRESSES: {
     WEB_AUTHN_VALIDATOR: Address;
@@ -83,13 +82,22 @@ const KERNEL_ADDRESSES: {
     ENDTRYPOINT_V0_6: ENTRYPOINT_ADDRESS_V06_TYPE;
 } = {
     // Validators
-    WEB_AUTHN_VALIDATOR: "0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
+    WEB_AUTHN_VALIDATOR: "0x42085b533b27B9AfDAF3864a38c72eF853943DAB",
     // Kernel stuff
     ACCOUNT_V4_LOGIC: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
     FACTORY: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",
     // ERC-4337 stuff
     ENDTRYPOINT_V0_6: "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
 };
+
+/**
+ * Represent the layout of the calldata used for a webauthn signature
+ */
+const webAuthNValidatorEnablingLayout = [
+    { name: "authenticatorId", type: "string" },
+    { name: "x", type: "uint256" },
+    { name: "y", type: "uint256" },
+] as const;
 
 /**
  * Get the account initialization code for a kernel smart account
@@ -99,11 +107,13 @@ const KERNEL_ADDRESSES: {
  * @param webAuthNValidatorAddress
  */
 const getAccountInitCode = async ({
+    authenticatorId,
     signerPubKey,
     index,
     accountLogicAddress,
     webAuthNValidatorAddress,
 }: {
+    authenticatorId: string;
     signerPubKey: P256PubKey;
     index: bigint;
     accountLogicAddress: Address;
@@ -111,7 +121,10 @@ const getAccountInitCode = async ({
 }): Promise<Hex> => {
     if (!signerPubKey) throw new Error("Owner account not found");
 
-    const encodedPublicKey = concatHex([signerPubKey.x, signerPubKey.y]);
+    const encodedPublicKey = encodeAbiParameters(
+        webAuthNValidatorEnablingLayout,
+        [authenticatorId, BigInt(signerPubKey.x), BigInt(signerPubKey.y)]
+    );
 
     // Build the account initialization data
     const initialisationData = encodeFunctionData({
@@ -209,6 +222,7 @@ export async function webAuthNSmartAccount<
 >(
     client: Client<TTransport, TChain>,
     {
+        authenticatorId,
         signerPubKey,
         signatureProvider,
         entryPoint,
@@ -218,6 +232,7 @@ export async function webAuthNSmartAccount<
         webAuthNValidatorAddress = KERNEL_ADDRESSES.WEB_AUTHN_VALIDATOR,
         deployedAccountAddress,
     }: {
+        authenticatorId: string;
         signerPubKey: P256PubKey;
         signatureProvider: (message: Hex) => Promise<WebAuthNSignature>;
         entryPoint: TEntryPoint;
@@ -231,6 +246,7 @@ export async function webAuthNSmartAccount<
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
         getAccountInitCode({
+            authenticatorId,
             signerPubKey,
             index,
             accountLogicAddress,
