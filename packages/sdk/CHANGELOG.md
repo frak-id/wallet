@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.6
+
+### Patch Changes
+
+- [#7](https://github.com/frak-id/wallet/pull/7) [`b81ccba`](https://github.com/frak-id/wallet/commit/b81ccbafdc630d56b2f343e84b9d9df2b2e15668) Thanks [@srod](https://github.com/srod)! - Update dependencies, some texts and comments
+
 ## 0.0.5
 
 ### Patch Changes
