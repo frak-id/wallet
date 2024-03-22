@@ -1,7 +1,7 @@
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { Skeleton } from "@/module/common/component/Skeleton";
+import { TokenItem } from "@/module/tokens/component/TokenItem";
 import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
-import { TokenItem } from "@/module/wallet/component/TokenItem";
 import styles from "./index.module.css";
 
 export function TokenList({

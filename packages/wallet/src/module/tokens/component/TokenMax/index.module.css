@@ -1,6 +1,6 @@
 .tokenMax__button {
-    margin-left: 10px;
-    padding: 6px 10px 3px 10px;
+    margin: 0 0 -3px 10px;
+    padding: 6px 10px 6px 10px;
     background-color: var(--frak-token-max-background-color);
     border: none;
     font-size: 12px;

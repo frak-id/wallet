@@ -1,6 +1,6 @@
 import { Skeleton } from "@/module/common/component/Skeleton";
+import { TokenItemLite } from "@/module/tokens/component/TokenItemLite";
 import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
-import { TokenItemLite } from "@/module/wallet/component/TokenItemLite";
 import { useEffect } from "react";
 import styles from "./index.module.css";
 

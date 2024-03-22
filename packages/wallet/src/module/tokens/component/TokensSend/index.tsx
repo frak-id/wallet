@@ -6,16 +6,16 @@ import { Back } from "@/module/common/component/Back";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Grid } from "@/module/common/component/Grid";
 import { Input } from "@/module/common/component/Input";
-import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
-import { TokenMax } from "@/module/wallet/component/TokenMax";
-import { TokenModalList } from "@/module/wallet/component/TokenModalList";
+import { TokenMax } from "@/module/tokens/component/TokenMax";
+import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import {
     getFrkToken,
     getUpdatedToken,
     validateAmount,
-} from "@/module/wallet/component/TokensSend/utils";
-import { TransactionError } from "@/module/wallet/component/TransactionError";
-import { TransactionSuccess } from "@/module/wallet/component/TransactionSuccess";
+} from "@/module/tokens/component/TokensSend/utils";
+import { TransactionError } from "@/module/tokens/component/TransactionError";
+import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
+import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";

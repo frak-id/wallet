@@ -1,7 +1,7 @@
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { TokenList } from "@/module/wallet/component/TokenList";
-import { TokenLogo } from "@/module/wallet/component/TokenLogo";
+import { TokenList } from "@/module/tokens/component/TokenList";
+import { TokenLogo } from "@/module/tokens/component/TokenLogo";
 import { useState } from "react";
 import styles from "./index.module.css";
 

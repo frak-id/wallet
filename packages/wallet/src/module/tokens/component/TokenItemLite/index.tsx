@@ -1,5 +1,5 @@
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
-import { TokenLogo } from "@/module/wallet/component/TokenLogo";
+import { TokenLogo } from "@/module/tokens/component/TokenLogo";
 import styles from "./index.module.css";
 
 export function TokenItemLite({

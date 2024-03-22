@@ -1,6 +1,6 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { TokenListLite } from "@/module/wallet/component/TokenListLite";
+import { TokenListLite } from "@/module/tokens/component/TokenListLite";
 import { CircleDollarSign, HandCoins, Send } from "lucide-react";
 import Link from "next/link";
 import styles from "./index.module.css";
