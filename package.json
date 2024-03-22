@@ -15,7 +15,7 @@
     "clean:stack": "sst remove --stage prod",
     "update:deps": "npm-check-updates -ui -ws",
     "changeset": "changeset",
-    "changeset:release": "bun run build && changeset publish",
+    "changeset:release": "bun run --cwd packages/sdk build && changeset publish",
     "changeset:version": "changeset version && bun install --lockfile-only"
   },
   "devDependencies": {
