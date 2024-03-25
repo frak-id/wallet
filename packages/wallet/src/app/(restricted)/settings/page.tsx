@@ -1,8 +1,8 @@
-import { GetFrk } from "@/module/authentication/component/GetFrk";
 import { Logout } from "@/module/authentication/component/Logout";
-import { SwitchTheme } from "@/module/authentication/component/SwitchTheme";
 import { Grid } from "@/module/common/component/Grid";
-import { Settings } from "@/module/wallet/component/Settings";
+import { GetFrk } from "@/module/settings/component/GetFrk";
+import { Settings } from "@/module/settings/component/Settings";
+import { SwitchTheme } from "@/module/settings/component/SwitchTheme";
 
 export default async function SettingsPage() {
     return (
