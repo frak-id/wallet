@@ -1,7 +1,7 @@
 "use client";
 
-import { AuthFingerprint } from "@/module/authentication/component/AuthFingerprint";
 import { useRegister } from "@/module/authentication/hook/useRegister";
+import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { usePaywall } from "@/module/paywall/provider";
