@@ -1,8 +1,8 @@
 "use client";
 
+import { DI } from "@/context/common/di";
 import { Core } from "@walletconnect/core";
 import { Web3Wallet } from "@walletconnect/web3wallet";
-import {DI} from "@/context/common/di";
 
 /**
  * Initialize WalletConnect core instance
@@ -34,4 +34,4 @@ export const getWalletConnectWallet = DI.registerAndExposeGetter({
         console.log("WalletConnect wallet", { walletConnectWallet });
         return walletConnectWallet;
     },
-})
+});

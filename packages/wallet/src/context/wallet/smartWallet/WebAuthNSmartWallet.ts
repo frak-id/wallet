@@ -101,6 +101,7 @@ const webAuthNValidatorEnablingLayout = [
 
 /**
  * Get the account initialization code for a kernel smart account
+ * @param authenticatorId
  * @param signerPubKey
  * @param index
  * @param accountLogicAddress
