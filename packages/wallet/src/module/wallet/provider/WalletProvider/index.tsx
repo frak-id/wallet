@@ -54,6 +54,11 @@ function useWalletHook({ session }: { session: Session }) {
             viemClient?.chain?.id ?? "no-viem-chain-id",
         ],
         queryFn: async (): Promise<KernelWebAuthNSmartAccount | null> => {
+            console.log("rebuilding smartWallet", {
+                wallet,
+                viemClient,
+                chain: viemClient?.chain?.name,
+            });
             // If there is no authenticator, return
             if (!(wallet && viemClient)) {
                 return null;
