@@ -6,7 +6,6 @@ import { frakTokenAbi, paywallAbi } from "@/context/common/blockchain/frak-abi";
 import {
     pimlicoBundlerTransport,
     pimlicoPaymasterClient,
-    viemClient,
 } from "@/context/common/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
@@ -14,6 +13,7 @@ import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlo
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
 import { usePaywall } from "@/module/paywall/provider";
 import type { PaywallContext } from "@/module/paywall/provider";
+import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import type { UiState, UnlockSuccessData } from "@/types/Unlock";
 import { useMutation } from "@tanstack/react-query";
@@ -24,18 +24,24 @@ import { type Hex, encodeFunctionData, parseEther } from "viem";
 import type { Address } from "viem";
 import { readContract } from "viem/actions";
 import { polygonMumbai } from "viem/chains";
+import { useClient } from "wagmi";
 
 /**
  * Hook used to fetch and handle the prices
+ * TODO: If not on mumbai, use wagmi hook to switch to the right chain
  */
 export function useArticlePrices({ context }: { context: PaywallContext }) {
-    const { wallet, smartWallet, balance, refreshBalance } = useWallet();
+    const { wallet, smartWallet } = useWallet();
+    const { balance, refreshBalance } = useFrkBalance();
     const { setStatus: setGlobalPaywallStatus } = usePaywall();
     const [disabled, setDisabled] = useState(false);
 
     const [uiState, setUiState] = useState<UiState>({
         loading: { info: "idle" },
     });
+
+    // Fetch the mumbai client
+    const viemClient = useClient({ chainId: polygonMumbai.id });
 
     // Fetch the user allowance on chain
     const { refetch: refreshOnChainUnlockStatus } =
@@ -84,6 +90,11 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
             if (!smartWallet) {
                 // Error that the user doesn't have a smart wallet
                 setErrorState("No smart wallet");
+                return;
+            }
+            if (!viemClient) {
+                // Error telling that we don't have a blockchain communication client
+                setErrorState("No blockchain communication client");
                 return;
             }
 

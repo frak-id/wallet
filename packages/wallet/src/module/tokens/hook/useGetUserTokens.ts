@@ -8,10 +8,10 @@ export function useGetUserTokens() {
     const { address } = useWallet();
 
     const { data, error, isLoading, refetch } = useQuery({
-        queryKey: ["getUserTokens", address],
+        queryKey: ["getUserTokens", address ?? "no-address"],
         queryFn: async () => {
             if (!address) {
-                return;
+                return null;
             }
             return await getUserErc20Tokens({
                 wallet: address,

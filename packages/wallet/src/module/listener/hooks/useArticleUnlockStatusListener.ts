@@ -1,7 +1,4 @@
-import {
-    pimlicoBundlerClient,
-    viemClient,
-} from "@/context/common/blockchain/provider";
+import { pimlicoBundlerClient } from "@/context/common/blockchain/provider";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useSession } from "@/module/common/hook/useSession";
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
@@ -13,9 +10,12 @@ import type {
 } from "@frak-labs/nexus-sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { waitForUserOperationReceipt } from "permissionless";
+import { sleep } from "radash";
 import { useCallback, useState } from "react";
 import type { Hex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
+import { polygonMumbai } from "viem/chains";
+import { useClient } from "wagmi";
 
 type OnListenToArticleUnlockStatus = IFrameRequestResolver<
     Extract<
@@ -34,6 +34,9 @@ type UnlockStateListenerParam = {
  * Hook use to listen to the wallet status
  */
 export function useArticleUnlockStatusListener() {
+    // Fetch the mumbai client
+    const viemClient = useClient({ chainId: polygonMumbai.id });
+
     /**
      * The current wallet status state
      */
@@ -270,17 +273,23 @@ export function useArticleUnlockStatusListener() {
                 });
 
                 // Wait for the transaction to be confirmed and re-fetch the unlock status
-                await waitForTransactionReceipt(viemClient, {
-                    hash: txHash,
-                    confirmations: 1,
-                });
-                await refreshOnChainUnlockStatus();
+                if (viemClient) {
+                    await waitForTransactionReceipt(viemClient, {
+                        hash: txHash,
+                        confirmations: 1,
+                    });
+                    await refreshOnChainUnlockStatus();
+                } else {
+                    // If we don't have a viem client, wait for 10sec
+                    await sleep(10_000);
+                    await refreshOnChainUnlockStatus();
+                }
 
                 // Clear the current paywall context
                 currentPaywallClear();
             }
         },
-        [refreshOnChainUnlockStatus, currentPaywallClear]
+        [refreshOnChainUnlockStatus, currentPaywallClear, viemClient]
     );
 
     return {
