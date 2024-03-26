@@ -3,6 +3,7 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { SwitchChain } from "@/module/settings/component/SwitchChain";
+import { SessionsConnected } from "@/module/wallet-connect/component/SessionsConnected";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { Fingerprint, Shield } from "lucide-react";
@@ -36,6 +37,7 @@ export function Settings() {
                 <p className={styles.settings__comingSoon}>Coming soon</p>
             </Panel>
             <SwitchChain />
+            <SessionsConnected />
         </>
     );
 }

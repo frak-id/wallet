@@ -1,0 +1,14 @@
+.topicItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topicItem + .topicItem {
+    margin-top: 20px;
+}
+
+.topicItem__button {
+    display: flex;
+    margin-left: auto;
+}
