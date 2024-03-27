@@ -1,5 +1,6 @@
 "use client";
 
+import { useSwitchConfigChain } from "@/module/chain/component/hook/useSwitchConfigChain";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
@@ -8,7 +9,7 @@ import { AccordionChain } from "@/module/settings/component/SwitchChain/Accordio
 import { Link } from "lucide-react";
 import { useMemo } from "react";
 import type { Chain } from "viem";
-import { useChainId, useChains, useConfig } from "wagmi";
+import { useChainId, useChains } from "wagmi";
 
 /**
  * Switch theme between light and dark mode
@@ -16,7 +17,7 @@ import { useChainId, useChains, useConfig } from "wagmi";
 export function SwitchChain() {
     const chains = useChains();
     const chainId = useChainId();
-    const wagmiConfig = useConfig();
+    const performChainSwitch = useSwitchConfigChain();
 
     /**
      * The current user chain
@@ -38,13 +39,7 @@ export function SwitchChain() {
                 <ChainSelectionList
                     chains={chains}
                     currentChain={currentChain}
-                    onSelect={(chainId) => {
-                        // Update the current wagmi chain
-                        wagmiConfig.setState((x) => ({
-                            ...x,
-                            chainId,
-                        }));
-                    }}
+                    onSelect={performChainSwitch}
                 />
             </AccordionChain>
         </Panel>

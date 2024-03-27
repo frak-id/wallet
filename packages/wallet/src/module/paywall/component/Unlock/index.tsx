@@ -14,13 +14,13 @@ import { UnlockLoading } from "@/module/paywall/component/UnlockLoading";
 import { useArticlePrices } from "@/module/paywall/hook/useUnlockArticle";
 import { usePaywall } from "@/module/paywall/provider";
 import type { PaywallContext } from "@/module/paywall/provider";
-import { useWallet } from "@/module/wallet/provider/WalletProvider";
+import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import { BookText } from "lucide-react";
 import { formatEther } from "viem";
 import styles from "./index.module.css";
 
 export function PaywallUnlock({ context }: { context: PaywallContext }) {
-    const { balance } = useWallet();
+    const { balance } = useFrkBalance();
     const { discard, redirect: redirectPaywallContext } = usePaywall();
     const { disabled, launchArticleUnlock, uiState } = useArticlePrices({
         context,
