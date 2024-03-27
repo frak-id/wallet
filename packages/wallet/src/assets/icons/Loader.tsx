@@ -6,7 +6,7 @@ export const Loader = (props: SVGProps<SVGSVGElement>) => (
         height="1.125rem"
         viewBox="0 0 38 38"
         xmlns="http://www.w3.org/2000/svg"
-        stroke="#ffffff"
+        stroke="currentColor"
         {...props}
     >
         <title>Loading</title>

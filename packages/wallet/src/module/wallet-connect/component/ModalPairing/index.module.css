@@ -1,0 +1,26 @@
+.modalPairing__header {
+    text-align: center;
+}
+
+.modalPairing__title {
+    margin: 0;
+    font-size: 18px;
+}
+
+.modalPairing__subTitle {
+    font-size: 16px;
+}
+
+.modalPairing__link {
+    text-decoration: none;
+}
+
+.modalPairing__error {
+    text-align: center;
+}
+
+.modalPairing__buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
