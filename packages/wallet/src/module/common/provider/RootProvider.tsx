@@ -9,7 +9,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import type { PropsWithChildren } from "react";
 import { http, createClient } from "viem";
-import { arbitrumSepolia, polygonMumbai } from "viem/chains";
+import { arbitrumSepolia, optimismSepolia, polygonMumbai } from "viem/chains";
 import { WagmiProvider, createConfig } from "wagmi";
 
 /**
@@ -28,7 +28,7 @@ const queryClient = new QueryClient({
  * Our global wagmi config (define the possible chain and the client factory)
  */
 const wagmiConfig = createConfig({
-    chains: [polygonMumbai, arbitrumSepolia],
+    chains: [polygonMumbai, arbitrumSepolia, optimismSepolia],
     client: ({ chain }) => {
         // TODO: Should create our map of chainId to paid RPC networks and add them as fallback
         // Find the default http transports

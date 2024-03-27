@@ -33,13 +33,12 @@ export function useFrkBalance() {
         },
     });
 
-    const formattedBalance = useMemo(() => {
-        return formatEther(balance ?? 0n);
-    }, [balance]);
-
-    return {
-        balance: formattedBalance,
-        rawBalance: balance,
-        refreshBalance,
-    };
+    return useMemo(
+        () => ({
+            balance: formatEther(balance ?? 0n),
+            rawBalance: balance,
+            refreshBalance,
+        }),
+        [balance, refreshBalance]
+    );
 }

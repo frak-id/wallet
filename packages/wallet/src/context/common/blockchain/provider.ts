@@ -25,23 +25,6 @@ export const alchemyClient = createClient({
     cacheTime: 60_000,
 });
 
-export const pimlicoBundlerTransport = http(
-    `https://rpc.zerodev.app/api/v2/bundler/${process.env.ZERODEV_API_KEY}`
-);
-// Build the pimlico bundler client
-export const pimlicoBundlerClient = createClient({
-    chain: polygonMumbai,
-    transport: pimlicoBundlerTransport,
-});
-
-// Build the pimlico paymaster client
-export const pimlicoPaymasterClient = createClient({
-    chain: polygonMumbai,
-    transport: http(
-        `https://api.pimlico.io/v2/mumbai/rpc?apikey=${process.env.PIMLICO_API_KEY}`
-    ),
-});
-
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
 BigInt.prototype.toJSON = function (): string {

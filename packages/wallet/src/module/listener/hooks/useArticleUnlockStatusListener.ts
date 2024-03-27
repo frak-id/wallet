@@ -1,5 +1,5 @@
-import { pimlicoBundlerClient } from "@/context/common/blockchain/provider";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { useAAClients } from "@/module/common/hook/useAAClients";
 import { useSession } from "@/module/common/hook/useSession";
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
 import { type PaywallStatus, usePaywall } from "@/module/paywall/provider";
@@ -10,7 +10,6 @@ import type {
 } from "@frak-labs/nexus-sdk/core";
 import { useQuery } from "@tanstack/react-query";
 import { waitForUserOperationReceipt } from "permissionless";
-import { sleep } from "radash";
 import { useCallback, useState } from "react";
 import type { Hex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
@@ -36,6 +35,10 @@ type UnlockStateListenerParam = {
 export function useArticleUnlockStatusListener() {
     // Fetch the mumbai client
     const viemClient = useClient({ chainId: polygonMumbai.id });
+
+    // Fetch the AA transports
+    // TODO: Should be able to specify the chain id
+    const { bundlerClient } = useAAClients();
 
     /**
      * The current wallet status state
@@ -255,11 +258,16 @@ export function useArticleUnlockStatusListener() {
                     userOpHash: status.userOpHash,
                 });
 
+                // Early exit if no bundler client or viem client present
+                if (!(bundlerClient && viemClient)) {
+                    return;
+                }
+
                 // Wait for the user operation receipt
                 // TODO: should be in a mutation or any other thing?
                 // TODO: Should be able to be cancelled if the user cancel the unlock
                 const userOpReceipt = await waitForUserOperationReceipt(
-                    pimlicoBundlerClient,
+                    bundlerClient,
                     {
                         hash: status.userOpHash,
                     }
@@ -273,23 +281,22 @@ export function useArticleUnlockStatusListener() {
                 });
 
                 // Wait for the transaction to be confirmed and re-fetch the unlock status
-                if (viemClient) {
-                    await waitForTransactionReceipt(viemClient, {
-                        hash: txHash,
-                        confirmations: 1,
-                    });
-                    await refreshOnChainUnlockStatus();
-                } else {
-                    // If we don't have a viem client, wait for 10sec
-                    await sleep(10_000);
-                    await refreshOnChainUnlockStatus();
-                }
+                await waitForTransactionReceipt(viemClient, {
+                    hash: txHash,
+                    confirmations: 1,
+                });
+                await refreshOnChainUnlockStatus();
 
                 // Clear the current paywall context
                 currentPaywallClear();
             }
         },
-        [refreshOnChainUnlockStatus, currentPaywallClear, viemClient]
+        [
+            refreshOnChainUnlockStatus,
+            currentPaywallClear,
+            viemClient,
+            bundlerClient,
+        ]
     );
 
     return {
