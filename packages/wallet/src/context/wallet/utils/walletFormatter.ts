@@ -1,4 +1,4 @@
-import { viemClient } from "@/context/common/blockchain/provider";
+import { mumbaiPocClient } from "@/context/common/blockchain/provider";
 import { webAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
 import { ENTRYPOINT_ADDRESS_V06 } from "permissionless";
@@ -17,7 +17,7 @@ export async function formatWallet({
 }): Promise<WebAuthNWallet> {
     // Build the smart wallet account
     // @ts-ignore
-    const smartWallet = await webAuthNSmartAccount(viemClient, {
+    const smartWallet = await webAuthNSmartAccount(mumbaiPocClient, {
         entryPoint: ENTRYPOINT_ADDRESS_V06,
         authenticatorId,
         signerPubKey: publicKey,

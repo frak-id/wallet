@@ -1,7 +1,6 @@
 import { Fingerprint } from "@/assets/icons/Fingerprint";
 import { FingerprintGrey } from "@/assets/icons/FingerprintGrey";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
-import type React from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 

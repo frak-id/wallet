@@ -8,7 +8,6 @@ import {
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
 import { useState } from "react";
-import React from "react";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
 

@@ -37,6 +37,7 @@
             "correctness": {
                 "useHookAtTopLevel": "error",
                 "noUnusedVariables": "error",
+                "noUnusedImports": "error",
                 "noUndeclaredVariables": "error",
                 "noUnusedPrivateClassMembers": "error"
             },

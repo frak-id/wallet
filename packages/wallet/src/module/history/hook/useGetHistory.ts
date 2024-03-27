@@ -4,11 +4,12 @@ import { dexieDb } from "@/context/common/dexie/dexieDb";
 import { fetchWalletHistory } from "@/context/history/action/fetchHistory";
 import type { HistoryItemWithFrontData } from "@/types/HistoryItem";
 import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 
 // Fetch the current wallet history
 export function useGetHistory() {
     const { address } = useAccount();
+    const chainId = useChainId();
 
     // The query fn that will fetch the history
     // TODO: Should populate the history with the article and content link we have in the dexie db
@@ -17,6 +18,7 @@ export function useGetHistory() {
         queryFn: async () => {
             const rawHistory = await fetchWalletHistory({
                 account: address ?? "0x",
+                chainId,
             });
 
             // Fetch every frontend data we have in the dexie db

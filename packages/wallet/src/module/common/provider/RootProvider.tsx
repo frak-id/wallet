@@ -1,5 +1,9 @@
 "use client";
 
+import {
+    availableChains,
+    getClientFromChain,
+} from "@/context/common/blockchain/provider";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { PaywallProvider } from "@/module/paywall/provider";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -8,8 +12,6 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import type { PropsWithChildren } from "react";
-import { http, createClient } from "viem";
-import { arbitrumSepolia, optimismSepolia, polygonMumbai } from "viem/chains";
 import { WagmiProvider, createConfig } from "wagmi";
 
 /**
@@ -28,31 +30,8 @@ const queryClient = new QueryClient({
  * Our global wagmi config (define the possible chain and the client factory)
  */
 const wagmiConfig = createConfig({
-    chains: [polygonMumbai, arbitrumSepolia, optimismSepolia],
-    client: ({ chain }) => {
-        // TODO: Should create our map of chainId to paid RPC networks and add them as fallback
-        // Find the default http transports
-        const httpTransports = chain.rpcUrls.default.http;
-        if (!httpTransports) {
-            throw new Error(
-                `Chain with id ${chain.id} does not have a default http transport`
-            );
-        }
-
-        // Build the viem client
-        return createClient({
-            chain,
-            transport: http(httpTransports[0], {
-                retryCount: 5,
-                retryDelay: 200,
-                timeout: 20_000,
-            }),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 200 },
-            },
-        });
-    },
+    chains: availableChains,
+    client: ({ chain }) => getClientFromChain({ chainId: chain.id }),
 });
 
 /**
