@@ -1,5 +1,5 @@
 import { Loader } from "@/assets/icons/Loader";
-import type React from "react";
+import type { MouseEvent } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 
@@ -14,7 +14,7 @@ type AuthFingerprintProps = {
     isLoading?: boolean;
 };
 
-function createRipple(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+function createRipple(event: MouseEvent<HTMLButtonElement>) {
     const button = event.currentTarget as HTMLButtonElement;
     const circle = document.createElement("span");
     const diameter = Math.max(button.clientWidth, button.clientHeight);

@@ -1,10 +1,13 @@
 "use client";
 
+import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
-import Row from "@/module/common/component/Row";
+import { Title } from "@/module/common/component/Title";
 import styles from "@/module/settings/component/Settings/index.module.css";
-import { Database } from "lucide-react";
+import { AccordionChain } from "@/module/settings/component/SwitchChain/AccordionChain";
+import { Link } from "lucide-react";
 import { useMemo } from "react";
+import type { Chain } from "viem";
 import { useChainId, useChains, useConfig } from "wagmi";
 
 /**
@@ -23,37 +26,53 @@ export function SwitchChain() {
         [chains, chainId]
     );
 
-    /**
-     * The available chains for switching
-     */
-    const availableChains = useMemo(
-        () => chains.filter((chain) => chain.id !== chainId),
-        [chains, chainId]
-    );
-
     return (
         <Panel size={"normal"} variant={"primary"}>
-            <Row>
-                <Database size={32} /> Chain <b>{currentChain?.name}</b>
-            </Row>
-            <ul className={styles.settings__list}>
-                {availableChains.map((chain) => (
-                    <li key={chain.id}>
-                        <button
-                            key={chain.id}
-                            onClick={() => {
-                                wagmiConfig.setState((x) => ({
-                                    ...x,
-                                    chainId: chain.id,
-                                }));
-                            }}
-                            type={"button"}
-                        >
-                            {chain.name}
-                        </button>
-                    </li>
-                ))}
-            </ul>
+            <AccordionChain
+                trigger={
+                    <Title icon={<Link size={32} />}>
+                        Chain <b>{currentChain?.name}</b>
+                    </Title>
+                }
+            >
+                <ChainSelectionList
+                    chains={chains}
+                    currentChain={currentChain}
+                    onSelect={(chainId) => {
+                        // Update the current wagmi chain
+                        wagmiConfig.setState((x) => ({
+                            ...x,
+                            chainId,
+                        }));
+                    }}
+                />
+            </AccordionChain>
         </Panel>
+    );
+}
+
+function ChainSelectionList({
+    chains,
+    currentChain,
+    onSelect,
+}: {
+    chains: readonly Chain[];
+    currentChain?: Chain;
+    onSelect: (chainId: number) => void;
+}) {
+    return (
+        <ul className={styles.settings__list}>
+            {chains.map((chain) => (
+                <li key={chain.id}>
+                    <ButtonRipple
+                        size={"small"}
+                        onClick={() => onSelect(chain.id)}
+                        disabled={chain.id === currentChain?.id}
+                    >
+                        {chain.name}
+                    </ButtonRipple>
+                </li>
+            ))}
+        </ul>
     );
 }
