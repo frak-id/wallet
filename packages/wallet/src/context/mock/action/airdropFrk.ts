@@ -1,7 +1,7 @@
 "use server";
 
 import { addresses } from "@/context/common/blockchain/addresses";
-import { viemClient } from "@/context/common/blockchain/provider";
+import { mumbaiPocClient } from "@/context/common/blockchain/provider";
 import { type Address, type Hex, encodeFunctionData, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { prepareTransactionRequest, sendTransaction } from "viem/actions";
@@ -40,7 +40,7 @@ export async function triggerFrkAirdrop({
     const airdropperAccount = privateKeyToAccount(airdropperPrivateKey as Hex);
 
     // Prepare the tx
-    const preparationResult = await prepareTransactionRequest(viemClient, {
+    const preparationResult = await prepareTransactionRequest(mumbaiPocClient, {
         account: airdropperAccount,
         chain: polygonMumbai,
         to: addresses.frakTreasuryWallet,
@@ -52,6 +52,6 @@ export async function triggerFrkAirdrop({
     });
 
     // Send the tx
-    const txHash = await sendTransaction(viemClient, preparationResult);
+    const txHash = await sendTransaction(mumbaiPocClient, preparationResult);
     return { txHash };
 }

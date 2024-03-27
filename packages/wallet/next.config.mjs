@@ -3,7 +3,7 @@ import { Config } from "sst/node/config";
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
-    "RPC_URL",
+    "ALCHEMY_API_KEYS",
     "ZERODEV_API_KEY",
     "PIMLICO_API_KEY",
     // TODO: Shouldn't be here, but Next is crying all over the place when using SST.Config, to fix

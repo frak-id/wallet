@@ -3,39 +3,39 @@ import {
     paywallAddress,
 } from "@/context/common/blockchain/addresses";
 import { frakTokenAbi, paywallAbi } from "@/context/common/blockchain/frak-abi";
-import {
-    pimlicoBundlerTransport,
-    pimlicoPaymasterClient,
-    viemClient,
-} from "@/context/common/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
 import { usePaywall } from "@/module/paywall/provider";
 import type { PaywallContext } from "@/module/paywall/provider";
+import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import type { UiState, UnlockSuccessData } from "@/types/Unlock";
 import { useMutation } from "@tanstack/react-query";
-import { createSmartAccountClient } from "permissionless";
-import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import { useEffect, useState } from "react";
 import { type Hex, encodeFunctionData, parseEther } from "viem";
 import type { Address } from "viem";
 import { readContract } from "viem/actions";
 import { polygonMumbai } from "viem/chains";
+import { useClient } from "wagmi";
 
 /**
  * Hook used to fetch and handle the prices
+ * TODO: If not on mumbai, modal to inform the user that he is on the wrong network and asking him to switch to mumbai
  */
 export function useArticlePrices({ context }: { context: PaywallContext }) {
-    const { wallet, smartWallet, balance, refreshBalance } = useWallet();
+    const { wallet, smartWallet, smartWalletClient } = useWallet();
+    const { balance, refreshBalance } = useFrkBalance();
     const { setStatus: setGlobalPaywallStatus } = usePaywall();
     const [disabled, setDisabled] = useState(false);
 
     const [uiState, setUiState] = useState<UiState>({
         loading: { info: "idle" },
     });
+
+    // Fetch the mumbai client
+    const viemClient = useClient({ chainId: polygonMumbai.id });
 
     // Fetch the user allowance on chain
     const { refetch: refreshOnChainUnlockStatus } =
@@ -81,9 +81,14 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
                 setErrorState("Missing paywall context");
                 return undefined;
             }
-            if (!smartWallet) {
+            if (!(smartWallet && smartWalletClient)) {
                 // Error that the user doesn't have a smart wallet
                 setErrorState("No smart wallet");
+                return;
+            }
+            if (!viemClient) {
+                // Error telling that we don't have a blockchain communication client
+                setErrorState("No blockchain communication client");
                 return;
             }
 
@@ -184,17 +189,6 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
                 data: unlockFnCall,
             });
 
-            // Build the smart account client we will use to send the txs
-            const smartAccountClient = createSmartAccountClient({
-                account: smartWallet,
-                chain: polygonMumbai,
-                bundlerTransport: pimlicoBundlerTransport,
-                middleware: {
-                    sponsorUserOperation: (args) =>
-                        sponsorUserOperation(pimlicoPaymasterClient, args),
-                },
-            });
-
             // Encode the user op data
             const smartWalletData = await smartWallet.encodeCallData(txs);
 
@@ -203,7 +197,7 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
             // TODO: Update state before that telling that we are waiting for his signature
             setLoadingUiState("pendingSignature");
             setGlobalPaywallStatus({ key: "pendingSignature" });
-            const userOpHash = await smartAccountClient.sendUserOperation({
+            const userOpHash = await smartWalletClient.sendUserOperation({
                 userOperation: {
                     callData: smartWalletData,
                 },

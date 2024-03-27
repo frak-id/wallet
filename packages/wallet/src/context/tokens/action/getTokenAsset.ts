@@ -1,6 +1,6 @@
 "use server";
 
-import { alchemyClient } from "@/context/common/blockchain/provider";
+import { getAlchemyClient } from "@/context/common/blockchain/provider";
 import type { GetTokenMetadataResponse } from "@/context/common/blockchain/viemActions/AlchemyTypes";
 import { getTokenBalances } from "@/context/common/blockchain/viemActions/getTokenBalances";
 import {
@@ -9,17 +9,24 @@ import {
 } from "@/context/common/blockchain/viemActions/getTokenMetadata";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { parallel } from "radash";
-import { formatUnits } from "viem";
+import { type Client, formatUnits } from "viem";
 import type { Address } from "viem";
 
 /**
  * Get all the user tokens
  * @param wallet
+ * @param chainId
  */
-async function _getUserErc20Tokens({ wallet }: { wallet: Address }) {
+async function _getUserErc20Tokens({
+    wallet,
+    chainId,
+}: { wallet: Address; chainId: number }) {
     if (!wallet) {
         return;
     }
+
+    // Get the alchemy client
+    const alchemyClient = getAlchemyClient({ chainId });
 
     // Get all of his assets
     const balances = await getTokenBalances(alchemyClient, {
@@ -34,7 +41,7 @@ async function _getUserErc20Tokens({ wallet }: { wallet: Address }) {
 
     // Fetch every token metadata and return that
     return await parallel(2, effectiveBalances, async (tBalance) => {
-        const metadata = await _getTokenMetadata({
+        const metadata = await _getTokenMetadata(alchemyClient, {
             address: tBalance.contractAddress,
         });
         const formattedBalance = formatUnits(
@@ -84,7 +91,8 @@ export async function userErc20TokensRevalidate() {
  * @param address
  */
 const _getTokenMetadata = unstable_cache(
-    (args: GetTokenMetadataParams) => getTokenMetadata(alchemyClient, args),
+    (alchemyClient: Client, args: GetTokenMetadataParams) =>
+        getTokenMetadata(alchemyClient, args),
     ["get-token-metadata"],
     {
         // Keep that in server cache for 2min

@@ -6,7 +6,7 @@ import type {
     ArticleUnlockStatusQueryReturnType,
     WalletStatusQueryReturnType,
 } from "@frak-labs/nexus-sdk/react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cssRaw } from "../UnlockButtons";
 

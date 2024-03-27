@@ -1,7 +1,7 @@
 import { Banner } from "@/module/article/component/Banner";
 import { cssRaw as cssRawButton } from "@/module/common/component/Button";
 import type { Article } from "@/type/Article";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cssRaw } from "../Banner";
 

@@ -1,6 +1,9 @@
 "use client";
 
-import { rpcTransport } from "@/context/common/blockchain/provider";
+import {
+    availableChains,
+    getClientFromChain,
+} from "@/context/common/blockchain/provider";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { PaywallProvider } from "@/module/paywall/provider";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -9,10 +12,11 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import type { PropsWithChildren } from "react";
-import { polygonMumbai } from "viem/chains";
 import { WagmiProvider, createConfig } from "wagmi";
 
-// The query client that will be used by tanstack/react-query
+/**
+ * The query client that will be used by tanstack/react-query
+ */
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -22,25 +26,24 @@ const queryClient = new QueryClient({
     },
 });
 
-// The wagmi config
+/**
+ * Our global wagmi config (define the possible chain and the client factory)
+ */
 const wagmiConfig = createConfig({
-    chains: [polygonMumbai],
-    transports: {
-        [polygonMumbai.id]: rpcTransport,
-    },
+    chains: availableChains,
+    client: ({ chain }) => getClientFromChain({ chainId: chain.id }),
 });
 
 /**
  * The storage persister to cache our query data's
  */
-const persister = createSyncStoragePersister({
-    storage: typeof window !== "undefined" ? window.localStorage : undefined,
-    // Throttle for 50ms to prevent storage spamming
-    throttleTime: 50,
-});
-
 const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
-    persister,
+    persister: createSyncStoragePersister({
+        storage:
+            typeof window !== "undefined" ? window.localStorage : undefined,
+        // Throttle for 50ms to prevent storage spamming
+        throttleTime: 50,
+    }),
     maxAge: Number.POSITIVE_INFINITY,
     dehydrateOptions: {
         shouldDehydrateQuery: ({ meta, state }) => {

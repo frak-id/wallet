@@ -1,128 +1,153 @@
 "use client";
 
-import { addresses } from "@/context/common/blockchain/addresses";
-import { frakTokenAbi } from "@/context/common/blockchain/frak-abi";
+import { getSignOptions } from "@/context/wallet/action/sign";
 import {
-    pimlicoBundlerTransport,
-    pimlicoPaymasterClient,
-} from "@/context/common/blockchain/provider";
-import type { KernelWebAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
-import { buildSmartWallet } from "@/context/wallet/utils/buildSmartWallet";
+    type KernelWebAuthNSmartAccount,
+    webAuthNSmartAccount,
+} from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
+import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
+import { useAAClients } from "@/module/common/hook/useAAClients";
 import type { Session } from "@/types/Session";
 import { smartAccount } from "@permissionless/wagmi";
+import { startAuthentication } from "@simplewebauthn/browser";
+import { useQuery } from "@tanstack/react-query";
 import {
     ENTRYPOINT_ADDRESS_V06,
     createSmartAccountClient,
 } from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
-import {
-    type ReactNode,
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-} from "react";
+import { type ReactNode, createContext, useContext } from "react";
 import { useMemo } from "react";
-import { formatEther } from "viem";
-import { polygonMumbai } from "viem/chains";
-import { useConnect, useReadContract } from "wagmi";
+import { useClient, useConnect } from "wagmi";
 
 function useWalletHook({ session }: { session: Session }) {
+    /**
+     * Current user session
+     */
     const { wallet, username } = session;
-    const {
-        connect,
-        status: connectStatus,
-        error: connectError,
-    } = useConnect();
 
-    // The current user smart wallet
-    const [smartWallet, setSmartWallet] =
-        useState<KernelWebAuthNSmartAccount | null>();
+    /**
+     * The current viem client
+     */
+    const viemClient = useClient();
 
-    // Listen to the smart wallet FRK balance
-    const { data: balance, refetch: refreshBalance } = useReadContract({
-        abi: frakTokenAbi,
-        address: addresses.frakToken,
-        functionName: "balanceOf",
-        args: [smartWallet?.address ?? "0x0"],
-        // Get the data on the pending block, to get the fastest possible data
-        blockTag: "pending",
-        // Some query options
-        query: {
-            // Only enable the hook if the smart wallet is present
-            enabled: !!smartWallet,
-            // Refetch every minute, will be available once wagmi is updated (and should then be moved into a query sub object)
-            refetchInterval: 60_000,
+    /**
+     * The current AA related clients
+     */
+    const { bundlerTransport, bundlerClient, paymasterClient } = useAAClients();
+
+    /**
+     * Hook to connect the wagmi connector to the smart wallet client
+     */
+    const { connect } = useConnect();
+
+    /**
+     * The current smart wallet
+     */
+    const { data: smartWallet } = useQuery({
+        queryKey: [
+            "kernel-smartWallet",
+            wallet?.authenticatorId ?? "no-authenticator-id",
+            viemClient?.key ?? "no-viem-key",
+            viemClient?.chain?.id ?? "no-viem-chain-id",
+        ],
+        queryFn: async (): Promise<KernelWebAuthNSmartAccount | null> => {
+            console.log("rebuilding smartWallet", {
+                wallet,
+                viemClient,
+                chain: viemClient?.chain?.name,
+            });
+            // If there is no authenticator, return
+            if (!(wallet && viemClient)) {
+                return null;
+            }
+
+            const { authenticatorId, publicKey } = wallet;
+
+            // Build the user smart wallet
+            return await webAuthNSmartAccount(viemClient, {
+                entryPoint: ENTRYPOINT_ADDRESS_V06,
+                authenticatorId,
+                signerPubKey: publicKey,
+                signatureProvider: async (message) => {
+                    // Get the signature options from server
+                    const options = await getSignOptions({
+                        authenticatorId,
+                        toSign: message,
+                    });
+
+                    // Start the client authentication
+                    const authenticationResponse =
+                        await startAuthentication(options);
+
+                    // Perform the verification of the signature
+                    return parseWebAuthNAuthentication(authenticationResponse);
+                },
+            });
         },
+        enabled: !!viemClient,
     });
 
     /**
-     * Every time the authenticator changes, rebuild the smart wallet and refresh the balance
+     * The smart wallet client
      */
-    useEffect(() => {
-        refreshSmartWallet(wallet);
-    }, [wallet]);
+    const { data: smartWalletClient } = useQuery({
+        queryKey: [
+            "kernel-smartWallet-client",
+            smartWallet?.address ?? "no-address",
+            viemClient,
+            bundlerTransport,
+            paymasterClient,
+        ],
+        enabled:
+            !!smartWallet &&
+            !!viemClient &&
+            !!bundlerTransport &&
+            !!bundlerClient &&
+            viemClient.chain.id === bundlerClient.chain.id,
+        queryFn: async () => {
+            if (!(smartWallet && viemClient && bundlerTransport)) {
+                return;
+            }
 
-    async function refreshSmartWallet(wallet: Session["wallet"]) {
-        // If there is no authenticator, return
-        if (!wallet) {
-            setSmartWallet(null);
-            return;
-        }
+            // Build the smart wallet client
+            const smartAccountClient = createSmartAccountClient({
+                account: smartWallet,
+                entryPoint: ENTRYPOINT_ADDRESS_V06,
+                chain: viemClient.chain,
+                bundlerTransport,
+                // Only add a middleware if the paymaster client is available
+                middleware: paymasterClient
+                    ? {
+                          sponsorUserOperation: (args) =>
+                              sponsorUserOperation(paymasterClient, args),
+                      }
+                    : {},
+            });
 
-        // Build our smart wallet
-        const smartWallet = await buildSmartWallet({
-            authenticatorId: wallet.authenticatorId,
-            publicKey: wallet.publicKey,
-        });
-        setSmartWallet(smartWallet);
+            // Build the wagmi connector and connect to it
+            const connector = smartAccount({
+                // @ts-ignore
+                smartAccountClient,
+            });
+            connect({ connector });
 
-        // If there is no smart wallet, return
-        if (!smartWallet) {
-            return;
-        }
+            // Return it
+            return smartAccountClient;
+        },
+    });
 
-        // Otherwise, build the wagmi connector
-        const client = createSmartAccountClient({
-            account: smartWallet,
-            entryPoint: ENTRYPOINT_ADDRESS_V06,
-            chain: polygonMumbai,
-            bundlerTransport: pimlicoBundlerTransport,
-            middleware: {
-                sponsorUserOperation: (args) =>
-                    sponsorUserOperation(pimlicoPaymasterClient, args),
-            },
-        });
-
-        // Build the wagmi connector and connect to it
-        const connector = smartAccount({
-            // @ts-ignore
-            smartAccountClient: client,
-        });
-        connect({ connector });
-    }
-
-    return useMemo(() => {
-        return {
+    return useMemo(
+        () => ({
             address: smartWallet?.address,
-            balance: formatEther(balance ?? 0n),
             smartWallet,
-            refreshBalance,
-            // Stuff related to the wagmi connector
-            connectStatus,
-            connectError,
+            smartWalletClient,
+            // Current session related
             username,
             wallet,
-        };
-    }, [
-        smartWallet,
-        balance,
-        refreshBalance,
-        connectStatus,
-        connectError,
-        username,
-        wallet,
-    ]);
+        }),
+        [smartWallet, smartWalletClient, username, wallet]
+    );
 }
 
 type UseWalletHook = ReturnType<typeof useWalletHook>;

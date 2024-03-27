@@ -12,7 +12,7 @@ export function ConfigStack({ stack }: StackContext) {
         "SESSION_ENCRYPTION_KEY"
     );
     const mongoUri = new Config.Secret(stack, "MONGODB_FRAK_POC_URI");
-    const rpcUrl = new Config.Secret(stack, "RPC_URL");
+    const alchemyApiKeys = new Config.Secret(stack, "ALCHEMY_API_KEYS");
     const pimlicoApiKey = new Config.Secret(stack, "PIMLICO_API_KEY");
     const zeroDevApiKey = new Config.Secret(stack, "ZERODEV_API_KEY");
     const airdropPrivateKey = new Config.Secret(stack, "AIRDROP_PRIVATE_KEY");
@@ -28,7 +28,7 @@ export function ConfigStack({ stack }: StackContext) {
     return {
         sessionEncryptionKey,
         mongoUri,
-        rpcUrl,
+        alchemyApiKeys,
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,

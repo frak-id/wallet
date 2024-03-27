@@ -1,8 +1,5 @@
-import {
-    pimlicoBundlerClient,
-    viemClient,
-} from "@/context/common/blockchain/provider";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { useAAClients } from "@/module/common/hook/useAAClients";
 import { useSession } from "@/module/common/hook/useSession";
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
 import { type PaywallStatus, usePaywall } from "@/module/paywall/provider";
@@ -16,6 +13,8 @@ import { waitForUserOperationReceipt } from "permissionless";
 import { useCallback, useState } from "react";
 import type { Hex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
+import { polygonMumbai } from "viem/chains";
+import { useClient } from "wagmi";
 
 type OnListenToArticleUnlockStatus = IFrameRequestResolver<
     Extract<
@@ -34,6 +33,13 @@ type UnlockStateListenerParam = {
  * Hook use to listen to the wallet status
  */
 export function useArticleUnlockStatusListener() {
+    // Fetch the mumbai client
+    const viemClient = useClient({ chainId: polygonMumbai.id });
+
+    // Fetch the AA transports
+    // TODO: Should be able to specify the chain id
+    const { bundlerClient } = useAAClients();
+
     /**
      * The current wallet status state
      */
@@ -252,11 +258,16 @@ export function useArticleUnlockStatusListener() {
                     userOpHash: status.userOpHash,
                 });
 
+                // Early exit if no bundler client or viem client present
+                if (!(bundlerClient && viemClient)) {
+                    return;
+                }
+
                 // Wait for the user operation receipt
                 // TODO: should be in a mutation or any other thing?
                 // TODO: Should be able to be cancelled if the user cancel the unlock
                 const userOpReceipt = await waitForUserOperationReceipt(
-                    pimlicoBundlerClient,
+                    bundlerClient,
                     {
                         hash: status.userOpHash,
                     }
@@ -280,7 +291,12 @@ export function useArticleUnlockStatusListener() {
                 currentPaywallClear();
             }
         },
-        [refreshOnChainUnlockStatus, currentPaywallClear]
+        [
+            refreshOnChainUnlockStatus,
+            currentPaywallClear,
+            viemClient,
+            bundlerClient,
+        ]
     );
 
     return {

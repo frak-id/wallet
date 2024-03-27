@@ -1,13 +1,18 @@
-import { viemClient } from "@/context/common/blockchain/provider";
 import { triggerFrkAirdrop } from "@/context/mock/action/airdropFrk";
 import { useMutation } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
+import { polygonMumbai } from "viem/chains";
+import { useClient } from "wagmi";
 
 /**
  * Hook that handle the airdrop frk
  */
 export function useAirdropFrk() {
+    // Fetch the mumbai client
+    const viemClient = useClient({ chainId: polygonMumbai.id });
+
+    // Airdrop the FRK and wait for the receipt if needed
     const { isPending: isAirdroppingFrk, mutateAsync: airdropFrk } =
         useMutation({
             mutationKey: ["airdropFrk"],
@@ -21,7 +26,7 @@ export function useAirdropFrk() {
                     amount: "100",
                 });
                 // Wait for the tx receipt
-                if (waitForReceipt) {
+                if (waitForReceipt && viemClient) {
                     await waitForTransactionReceipt(viemClient, {
                         hash: txHash,
                         confirmations: 1,

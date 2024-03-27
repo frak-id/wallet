@@ -8,7 +8,7 @@ import {
     frkTransferEvent,
     paidItemUnlockedEventAbi,
 } from "@/context/common/blockchain/event-abi";
-import { viemClient } from "@/context/common/blockchain/provider";
+import { getClientFromChain } from "@/context/common/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import type {
     ArticleUnlock,
@@ -18,7 +18,7 @@ import type {
 } from "@/types/HistoryItem";
 import { unstable_cache } from "next/cache";
 import { map, sort } from "radash";
-import { type Address, type Hash, formatEther, toHex } from "viem";
+import { type Address, type Client, type Hash, formatEther, toHex } from "viem";
 import { getBlock, getLogs } from "viem/actions";
 
 /**
@@ -31,10 +31,18 @@ const initialBlock = 45609416n;
  * Get am account full history
  *   - In a non POC world, this shouldn't use getLogs, but instead use an indexed database like thegraph or pounder.sh
  * @param account
+ * @param chainId
  */
 async function _fetchWalletHistory({
     account,
-}: { account: Address }): Promise<HistoryItem[]> {
+    chainId,
+}: {
+    account: Address;
+    chainId: number;
+}): Promise<HistoryItem[]> {
+    // Get the client for the given chain
+    const viemClient = getClientFromChain({ chainId });
+
     // Get the paid item unlocked events for a user
     const unlockedItemsEvents = await getLogs(viemClient, {
         address: paywallAddress,
@@ -65,7 +73,10 @@ async function _fetchWalletHistory({
                 key: "article-unlock",
                 txHash: log.transactionHash,
                 blockNumber: log.blockNumber,
-                txDate: await getBlockDate(log.blockHash),
+                txDate: await getBlockDate({
+                    blockHash: log.blockHash,
+                    viemClient,
+                }),
                 contentId: toHex(contentId),
                 articleId,
                 paidAmount: formatEther(paidAmount),
@@ -100,7 +111,10 @@ async function _fetchWalletHistory({
             return {
                 key: "frk-received",
                 txHash: log.transactionHash,
-                txDate: await getBlockDate(log.blockHash),
+                txDate: await getBlockDate({
+                    blockHash: log.blockHash,
+                    viemClient,
+                }),
                 fromHash: log.address,
                 blockNumber: log.blockNumber,
                 receivedAmount: formatEther(value),
@@ -114,7 +128,10 @@ async function _fetchWalletHistory({
         return {
             key: "frk-sent",
             txHash: log.transactionHash,
-            txDate: await getBlockDate(log.blockHash),
+            txDate: await getBlockDate({
+                blockHash: log.blockHash,
+                viemClient,
+            }),
             toHash: log.address,
             blockNumber: log.blockNumber,
             sentAmount: formatEther(value),
@@ -142,7 +159,10 @@ export const fetchWalletHistory = unstable_cache(
  * Get the timestamp of the given block
  * @param blockHash
  */
-async function getBlockDate(blockHash: Hash) {
+async function getBlockDate({
+    blockHash,
+    viemClient,
+}: { blockHash: Hash; viemClient: Client }) {
     const block = await getBlock(viemClient, {
         blockHash,
         includeTransactions: false,
