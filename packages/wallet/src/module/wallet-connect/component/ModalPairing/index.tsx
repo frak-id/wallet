@@ -32,7 +32,7 @@ export function ModalPairing({
     } = params;
     const { name, url, icons } = metadata;
     const { wallet } = useWallet();
-    const { walletConnectInstance, setInstanceData } = useWalletConnect();
+    const { walletConnectInstance, refreshSessions } = useWalletConnect();
     const [isLoading, setIsLoading] = useState(false);
     const notSupportedChains = getNotSupportedChains(
         requiredNamespaces,
@@ -60,7 +60,7 @@ export function ModalPairing({
                 topic,
                 acknowledged,
             });
-            setInstanceData();
+            await refreshSessions();
         } catch (error) {
             console.error("Wallet connect session proposal error", { error });
             await walletConnectInstance.rejectSession({

@@ -17,11 +17,9 @@ const walletConnectCore = new Core({
 export const getWalletConnectWallet = DI.registerAndExposeGetter({
     id: "wallet-connect",
     isAsync: true,
-    getter: async () => {
-        // Check a few stuff about the core component
-        console.log("WalletConnect core", { walletConnectCore });
-        // Initialise the web3 connect interface
-        const walletConnectWallet = await Web3Wallet.init({
+    // Initialise the web3 connect interface
+    getter: async () =>
+        await Web3Wallet.init({
             core: walletConnectCore,
             name: "Nexus Wallet - Frak",
             metadata: {
@@ -30,8 +28,5 @@ export const getWalletConnectWallet = DI.registerAndExposeGetter({
                 url: "poc-wallet.frak.id",
                 icons: ["https://poc-wallet.frak.id/favicons/icon.svg"],
             },
-        });
-        console.log("WalletConnect wallet", { walletConnectWallet });
-        return walletConnectWallet;
-    },
+        }),
 });

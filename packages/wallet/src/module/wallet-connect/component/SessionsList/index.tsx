@@ -7,7 +7,7 @@ import { useMediaQuery } from "@uidotdev/usehooks";
 import styles from "./index.module.css";
 
 export default function SessionsList() {
-    const { sessions, setSessions } = useWalletConnect();
+    const { sessions, refreshSessions } = useWalletConnect();
 
     // Check if the screen is desktop or mobile
     const isDesktop = useMediaQuery("(min-width : 600px)");
@@ -18,6 +18,7 @@ export default function SessionsList() {
         : DrawerWalletConnect;
 
     return (
+        sessions &&
         sessions.length > 0 && (
             <Component
                 trigger={<Title>List of sessions ({sessions.length})</Title>}
@@ -34,12 +35,7 @@ export default function SessionsList() {
                                 icon={icons?.[0]}
                                 url={url}
                                 onClick={() => {
-                                    const newSessions = sessions.filter(
-                                        (originSession) =>
-                                            originSession.topic !==
-                                            session.topic
-                                    );
-                                    setSessions(newSessions);
+                                    refreshSessions();
                                 }}
                             />
                         );

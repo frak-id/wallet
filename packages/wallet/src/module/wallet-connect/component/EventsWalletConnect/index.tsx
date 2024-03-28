@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import type { PropsWithChildren } from "react";
 
 export function EventsWalletConnect({ children }: PropsWithChildren) {
-    const { walletConnectInstance, sessions, setSessions } = useWalletConnect();
+    const { walletConnectInstance, refreshSessions } = useWalletConnect();
     const [pairing, setPairing] = useState<boolean>(false);
     const [pairingData, setPairingData] = useState<
         | {
@@ -43,10 +43,7 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
     }: Web3WalletTypes.SessionDelete) {
         console.log("Wallet connect session delete", { id, topic });
         if (!walletConnectInstance) return;
-        const newSessions = sessions.filter(
-            (originSession) => originSession.topic !== topic
-        );
-        setSessions(newSessions);
+        await refreshSessions();
     }
 
     useEffect(() => {
