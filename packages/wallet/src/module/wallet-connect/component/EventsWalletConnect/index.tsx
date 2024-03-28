@@ -4,10 +4,17 @@ import { ModalPairing } from "@/module/wallet-connect/component/ModalPairing";
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import type { ProposalTypes } from "@walletconnect/types";
 import type { Web3WalletTypes } from "@walletconnect/web3wallet";
-import { type PropsWithChildren, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { PropsWithChildren } from "react";
 
 export function EventsWalletConnect({ children }: PropsWithChildren) {
-    const { walletConnectInstance } = useWalletConnect();
+    const {
+        walletConnectInstance,
+        sessions,
+        setSessions,
+        pairings,
+        setPairings,
+    } = useWalletConnect();
     const [pairing, setPairing] = useState<boolean>(false);
     const [pairingData, setPairingData] = useState<
         | {
@@ -27,21 +34,79 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
         setPairing(true);
     }
 
+    async function onProposalExpire({ id }: Web3WalletTypes.ProposalExpire) {
+        console.log("Wallet connect proposal expire", { id });
+        if (!walletConnectInstance) return;
+        if (pairingData?.id !== id) return;
+        setPairingData(undefined);
+        setPairing(false);
+        // TODO: Check expiration logic
+    }
+
+    async function onSessionDelete({
+        id,
+        topic,
+    }: Web3WalletTypes.SessionDelete) {
+        console.log("Wallet connect session delete", { id, topic });
+        if (!walletConnectInstance) return;
+        const newSessions = sessions.filter(
+            (originSession) => originSession.topic !== topic
+        );
+        setSessions(newSessions);
+    }
+
+    async function onPairingExpire({
+        id,
+        topic,
+    }: Web3WalletTypes.SessionDelete) {
+        console.log("Wallet connect pairing expire", { id, topic });
+        // TODO: Implement pairing expire logic
+    }
+
+    async function onPairingDelete({
+        id,
+        topic,
+    }: Web3WalletTypes.SessionDelete) {
+        console.log("Wallet connect pairing delete", { id, topic });
+        if (!walletConnectInstance) return;
+        const newPairings = pairings.filter(
+            (originPairing) => originPairing.topic !== topic
+        );
+        setPairings(newPairings);
+    }
+
     useEffect(() => {
         if (!walletConnectInstance) return;
         walletConnectInstance.on("session_proposal", onSessionProposal);
-        // walletConnectInstance.on("session_request", (proposal) => {
-        //     console.log("Wallet connect session request", { proposal });
-        // });
-        // walletConnectInstance.on("auth_request", (proposal) => {
-        //     console.log("Wallet connect auth request", { proposal });
-        // });
-        // walletConnectInstance.on("session_delete", (proposal) => {
-        //     console.log("Wallet connect session delete", { proposal });
-        // });
+        walletConnectInstance.on("proposal_expire", onProposalExpire);
+        walletConnectInstance.on("session_request", (proposal) => {
+            console.log("Wallet connect session request", { proposal });
+        });
+        walletConnectInstance.on("auth_request", (proposal) => {
+            console.log("Wallet connect auth request", { proposal });
+        });
+        walletConnectInstance.on("session_delete", onSessionDelete);
+        walletConnectInstance.core.pairing.events?.on(
+            "pairing_expire",
+            onPairingExpire
+        );
+        walletConnectInstance.core.pairing.events?.on(
+            "pairing_delete",
+            onPairingDelete
+        );
 
         return () => {
             walletConnectInstance.off("session_proposal", onSessionProposal);
+            walletConnectInstance.off("proposal_expire", onProposalExpire);
+            walletConnectInstance.off("session_delete", onSessionDelete);
+            walletConnectInstance.core.pairing.events?.off(
+                "pairing_expire",
+                onPairingExpire
+            );
+            walletConnectInstance.core.pairing.events?.off(
+                "pairing_delete",
+                onPairingDelete
+            );
         };
     }, [walletConnectInstance]);
 

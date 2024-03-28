@@ -17,21 +17,6 @@ function useWalletConnectHook() {
             setWalletConnectInstance(walletConnectClient);
             setSessions(walletConnectClient.engine.signClient.session.values);
             setPairings(walletConnectClient.core.pairing.getPairings());
-
-            walletConnectClient.engine.signClient.events.on(
-                "session_delete",
-                async (event) => {
-                    const { topic, id } = event;
-                    console.log("session_delete", { topic, id });
-                }
-            );
-            walletConnectClient.core.pairing.events?.on(
-                "pairing_delete",
-                async (event) => {
-                    const { topic, id } = event;
-                    console.log("pairing_delete", { topic, id });
-                }
-            );
         });
     }, []);
 
