@@ -8,7 +8,7 @@ import {
     frkTransferEvent,
     paidItemUnlockedEventAbi,
 } from "@/context/common/blockchain/event-abi";
-import { getClientFromChain } from "@/context/common/blockchain/provider";
+import { getAlchemyClient } from "@/context/common/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import type {
     ArticleUnlock,
@@ -41,7 +41,7 @@ async function _fetchWalletHistory({
     chainId: number;
 }): Promise<HistoryItem[]> {
     // Get the client for the given chain
-    const viemClient = getClientFromChain({ chainId });
+    const viemClient = getAlchemyClient({ chainId });
 
     // Get the paid item unlocked events for a user
     const unlockedItemsEvents = await getLogs(viemClient, {

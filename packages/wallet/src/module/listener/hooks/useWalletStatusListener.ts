@@ -42,18 +42,21 @@ export function useWalletStatusListener() {
     /**
      * Listen to the current session FRK balance if needed
      */
-    const { data: walletFrkBalance, isLoading: isFetchingBalance } =
-        useReadContract({
-            abi: frakTokenAbi,
-            address: addresses.frakToken,
-            functionName: "balanceOf",
-            args: [session?.wallet?.address ?? "0x0"],
-            blockTag: "pending",
-            // Some query options
-            query: {
-                enabled: session?.wallet?.address !== undefined,
-            },
-        });
+    const {
+        data: walletFrkBalance,
+        isLoading: isFetchingBalance,
+        refetch: refreshBalance,
+    } = useReadContract({
+        abi: frakTokenAbi,
+        address: addresses.frakToken,
+        functionName: "balanceOf",
+        args: [session?.wallet?.address ?? "0x0"],
+        blockTag: "pending",
+        // Some query options
+        query: {
+            enabled: session?.wallet?.address !== undefined,
+        },
+    });
 
     /**
      * The function that will be called when a wallet status is requested
@@ -62,11 +65,13 @@ export function useWalletStatusListener() {
      */
     const onWalletListenRequest: OnListenToWallet = useCallback(
         async (_, emitter) => {
+            // Trigger a balance refresh, and wait for it
+            await refreshBalance();
             // Save our emitter, this will trigger session and balance fetching
             setEmitter({ emitter });
             setTimeout(() => refetch(), 100);
         },
-        []
+        [refreshBalance]
     );
 
     useEffect(() => {
