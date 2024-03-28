@@ -9,19 +9,18 @@ import {
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMediaQuery } from "@uidotdev/usehooks";
-import type { ProposalTypes } from "@walletconnect/types";
 import { getSdkError } from "@walletconnect/utils";
+import type { Web3WalletTypes } from "@walletconnect/web3wallet";
 import { type Dispatch, type SetStateAction, useState } from "react";
 import styles from "./index.module.css";
 
 export function ModalPairing({
     id,
     params,
+    verifyContext,
     open,
     onOpenChange,
-}: {
-    id: number;
-    params: ProposalTypes.Struct;
+}: Web3WalletTypes.SessionProposal & {
     open: boolean;
     onOpenChange: Dispatch<SetStateAction<boolean>>;
 }) {
@@ -30,6 +29,9 @@ export function ModalPairing({
         requiredNamespaces,
         optionalNamespaces,
     } = params;
+    const {
+        verified: { isScam, validation },
+    } = verifyContext;
     const { name, url, icons } = metadata;
     const { wallet } = useWallet();
     const { walletConnectInstance, refreshSessions } = useWalletConnect();
@@ -122,6 +124,9 @@ export function ModalPairing({
                                 </a>
                             </p>
                         )}
+                        {isScam && <ScamWarning />}
+                        {validation === "UNKNOWN" && <UnknownWarning />}
+                        {validation === "INVALID" && <InvalidWarning />}
                     </header>
                     {notSupportedChains.length > 0 && (
                         <p className={`error ${styles.modalPairing__error}`}>
@@ -155,5 +160,42 @@ export function ModalPairing({
                 </section>
             </Component>
         </>
+    );
+}
+
+function ScamWarning() {
+    return (
+        <p className={`error ${styles.modalPairing__error}`}>
+            Known security risk.
+            <br />
+            This website is flagged as unsafe by multiple security reports.
+            <br />
+            Leave immediately to protect your assets.
+        </p>
+    );
+}
+
+function UnknownWarning() {
+    return (
+        <p className={styles.modalPairing__warning}>
+            Unknown domain
+            <br />
+            This domain cannot be verified.
+            <br />
+            Please check the request carefully before approving.
+        </p>
+    );
+}
+
+function InvalidWarning() {
+    return (
+        <p className={styles.modalPairing__warning}>
+            Domain mismatch
+            <br />
+            This website has a domain that does not match the sender of this
+            request.
+            <br />
+            Approving may lead to loss of funds.
+        </p>
     );
 }
