@@ -24,3 +24,10 @@
     gap: 10px;
     margin-top: 20px;
 }
+
+.modalPairing__warning {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--frak-color-grayText);
+}
