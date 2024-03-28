@@ -1,7 +1,7 @@
 "use client";
 
 import { getWalletConnectWallet } from "@/context/wallet-connect/provider";
-import type { PairingTypes, SessionTypes } from "@walletconnect/types";
+import type { SessionTypes } from "@walletconnect/types";
 import type Web3Wallet from "@walletconnect/web3wallet";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
@@ -10,20 +10,17 @@ function useWalletConnectHook() {
     const [walletConnectInstance, setWalletConnectInstance] =
         useState<Web3Wallet>();
     const [sessions, setSessions] = useState<SessionTypes.Struct[]>([]);
-    const [pairings, setPairings] = useState<PairingTypes.Struct[]>([]);
 
     useEffect(() => {
         getWalletConnectWallet().then((walletConnectClient) => {
             setWalletConnectInstance(walletConnectClient);
             setSessions(walletConnectClient.engine.signClient.session.values);
-            setPairings(walletConnectClient.core.pairing.getPairings());
         });
     }, []);
 
     function setInstanceData() {
         if (!walletConnectInstance) return;
         setSessions(walletConnectInstance.engine.signClient.session.values);
-        setPairings(walletConnectInstance.core.pairing.getPairings());
     }
 
     return useMemo(() => {
@@ -31,11 +28,9 @@ function useWalletConnectHook() {
             walletConnectInstance,
             sessions,
             setSessions,
-            pairings,
-            setPairings,
             setInstanceData,
         };
-    }, [walletConnectInstance, sessions, pairings]);
+    }, [walletConnectInstance, sessions]);
 }
 
 type UseWalletConnectHook = ReturnType<typeof useWalletConnectHook>;

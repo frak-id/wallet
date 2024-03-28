@@ -1,6 +1,5 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import type { Dispatch, PropsWithChildren, SetStateAction } from "react";
-import * as React from "react";
 
 export function AlertDialogPairing({
     children,
