@@ -1,6 +1,5 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import type { PropsWithChildren, ReactNode } from "react";
-import * as React from "react";
 import styles from "./index.module.css";
 
 export function AlertDialogWalletConnect({

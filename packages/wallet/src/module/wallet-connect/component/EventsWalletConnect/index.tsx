@@ -8,13 +8,7 @@ import { useEffect, useState } from "react";
 import type { PropsWithChildren } from "react";
 
 export function EventsWalletConnect({ children }: PropsWithChildren) {
-    const {
-        walletConnectInstance,
-        sessions,
-        setSessions,
-        pairings,
-        setPairings,
-    } = useWalletConnect();
+    const { walletConnectInstance, sessions, setSessions } = useWalletConnect();
     const [pairing, setPairing] = useState<boolean>(false);
     const [pairingData, setPairingData] = useState<
         | {
@@ -55,26 +49,6 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
         setSessions(newSessions);
     }
 
-    async function onPairingExpire({
-        id,
-        topic,
-    }: Web3WalletTypes.SessionDelete) {
-        console.log("Wallet connect pairing expire", { id, topic });
-        // TODO: Implement pairing expire logic
-    }
-
-    async function onPairingDelete({
-        id,
-        topic,
-    }: Web3WalletTypes.SessionDelete) {
-        console.log("Wallet connect pairing delete", { id, topic });
-        if (!walletConnectInstance) return;
-        const newPairings = pairings.filter(
-            (originPairing) => originPairing.topic !== topic
-        );
-        setPairings(newPairings);
-    }
-
     useEffect(() => {
         if (!walletConnectInstance) return;
         walletConnectInstance.on("session_proposal", onSessionProposal);
@@ -86,27 +60,11 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
             console.log("Wallet connect auth request", { proposal });
         });
         walletConnectInstance.on("session_delete", onSessionDelete);
-        walletConnectInstance.core.pairing.events?.on(
-            "pairing_expire",
-            onPairingExpire
-        );
-        walletConnectInstance.core.pairing.events?.on(
-            "pairing_delete",
-            onPairingDelete
-        );
 
         return () => {
             walletConnectInstance.off("session_proposal", onSessionProposal);
             walletConnectInstance.off("proposal_expire", onProposalExpire);
             walletConnectInstance.off("session_delete", onSessionDelete);
-            walletConnectInstance.core.pairing.events?.off(
-                "pairing_expire",
-                onPairingExpire
-            );
-            walletConnectInstance.core.pairing.events?.off(
-                "pairing_delete",
-                onPairingDelete
-            );
         };
     }, [walletConnectInstance]);
 

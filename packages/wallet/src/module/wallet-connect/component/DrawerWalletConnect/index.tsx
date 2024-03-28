@@ -4,7 +4,6 @@ import {
     DrawerTrigger,
 } from "@/module/common/component/Drawer";
 import type { PropsWithChildren, ReactNode } from "react";
-import * as React from "react";
 import styles from "./index.module.css";
 
 export function DrawerWalletConnect({

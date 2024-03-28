@@ -1,6 +1,5 @@
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import type { Dispatch, PropsWithChildren, SetStateAction } from "react";
-import * as React from "react";
 
 export function DrawerPairing({
     children,
