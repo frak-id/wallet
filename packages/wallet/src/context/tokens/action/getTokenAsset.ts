@@ -9,7 +9,7 @@ import {
 } from "@/context/common/blockchain/viemActions/getTokenMetadata";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { parallel } from "radash";
-import { type Client, formatUnits } from "viem";
+import { formatUnits } from "viem";
 import type { Address } from "viem";
 
 /**
@@ -41,7 +41,7 @@ async function _getUserErc20Tokens({
 
     // Fetch every token metadata and return that
     return await parallel(2, effectiveBalances, async (tBalance) => {
-        const metadata = await _getTokenMetadata(alchemyClient, {
+        const metadata = await _getTokenMetadata(chainId, {
             address: tBalance.contractAddress,
         });
         const formattedBalance = formatUnits(
@@ -91,9 +91,13 @@ export async function userErc20TokensRevalidate() {
  * @param address
  */
 const _getTokenMetadata = unstable_cache(
-    (alchemyClient: Client, args: GetTokenMetadataParams) =>
-        getTokenMetadata(alchemyClient, args),
-    ["get-token-metadata"],
+    (chainId: number, args: GetTokenMetadataParams) => {
+        // Get the alchemy client
+        const alchemyClient = getAlchemyClient({ chainId });
+        // Get and return token metadata
+        return getTokenMetadata(alchemyClient, args);
+    },
+    ["token-metadata"],
     {
         // Keep that in server cache for 2min
         revalidate: 120,
