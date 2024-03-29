@@ -47,7 +47,7 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
      * All the requests that are currently pending
      * TODO: Should have a small indicator with a list of pending requests
      */
-    const [requests, setRequests] = useState<WalletConnectRequestArgs[]>([]);
+    const [_requests, setRequests] = useState<WalletConnectRequestArgs[]>([]);
 
     /**
      * The current request that is being displayed
@@ -214,7 +214,7 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
         if (request) {
             setRequests((prev) => prev.filter((req) => req.id !== request.id));
         }
-    }, []);
+    }, [currentRequest]);
 
     return (
         <>

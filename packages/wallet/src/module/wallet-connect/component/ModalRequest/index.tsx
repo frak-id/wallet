@@ -3,6 +3,7 @@ import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import { PairingModal } from "@/module/wallet-connect/component/ModalRequest/Pairing";
+import { SignRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignRequest";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import type { Verify } from "@walletconnect/types";
 import type { SignClientTypes } from "@walletconnect/types/dist/types/sign-client/client";
@@ -21,13 +22,49 @@ export function ModalWalletConnectRequest({
     args: WalletConnectRequestArgs;
     onClose: () => void;
 }) {
+    // Handle a pairing modal
     if (args.type === "pairing") {
         return <PairingModal args={args} onClose={onClose} />;
     }
 
+    // Handle a request modal
+    if (args.type === "request") {
+        return <RequestModal args={args} onClose={onClose} />;
+    }
+
+    // TODO: Also handle auth modal (with SIWE)
+
     // TODO: Handle request type (for sign, send tx and stuff)
 
     return <> </>;
+}
+
+/**
+ * Switch to pick the right modal for a request
+ * @param args
+ * @param onClose
+ * @constructor
+ */
+function RequestModal({
+    args,
+    onClose,
+}: {
+    args: Extract<WalletConnectRequestArgs, { type: "request" }>;
+    onClose: () => void;
+}) {
+    const method = useMemo(
+        () => args.params.request.method,
+        [args.params.request.method]
+    );
+
+    // TODO: Should check the chain and enforce it here? Or maybe enforce it inside the modal view?
+
+    // If that's a signature request
+    if (method === "eth_sign" || method === "personal_sign") {
+        return <SignRequestModal args={args} onClose={onClose} />;
+    }
+
+    return <>Unknown request type</>;
 }
 
 /**
