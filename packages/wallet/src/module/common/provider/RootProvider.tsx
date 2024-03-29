@@ -2,7 +2,7 @@
 
 import {
     availableChains,
-    getClientFromChain,
+    availableTransports,
 } from "@/context/common/blockchain/provider";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { PaywallProvider } from "@/module/paywall/provider";
@@ -31,7 +31,11 @@ const queryClient = new QueryClient({
  */
 const wagmiConfig = createConfig({
     chains: availableChains,
-    client: ({ chain }) => getClientFromChain({ chainId: chain.id }),
+    transports: availableTransports,
+    cacheTime: 60_000,
+    batch: {
+        multicall: { wait: 50 },
+    },
 });
 
 /**

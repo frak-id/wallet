@@ -1,6 +1,6 @@
 "use server";
 
-import { getAlchemyClient } from "@/context/common/blockchain/provider";
+import { getAlchemyClientNoBatch } from "@/context/common/blockchain/provider";
 import type { GetTokenMetadataResponse } from "@/context/common/blockchain/viemActions/AlchemyTypes";
 import { getTokenBalances } from "@/context/common/blockchain/viemActions/getTokenBalances";
 import {
@@ -26,7 +26,7 @@ async function _getUserErc20Tokens({
     }
 
     // Get the alchemy client
-    const alchemyClient = getAlchemyClient({ chainId });
+    const alchemyClient = getAlchemyClientNoBatch({ chainId });
 
     // Get all of his assets
     const balances = await getTokenBalances(alchemyClient, {
@@ -93,13 +93,13 @@ export async function userErc20TokensRevalidate() {
 const _getTokenMetadata = unstable_cache(
     (chainId: number, args: GetTokenMetadataParams) => {
         // Get the alchemy client
-        const alchemyClient = getAlchemyClient({ chainId });
+        const alchemyClient = getAlchemyClientNoBatch({ chainId });
         // Get and return token metadata
         return getTokenMetadata(alchemyClient, args);
     },
     ["token-metadata"],
     {
-        // Keep that in server cache for 2min
-        revalidate: 120,
+        // Keep that in server cache for 48hr
+        revalidate: 48 * 60 * 60,
     }
 );
