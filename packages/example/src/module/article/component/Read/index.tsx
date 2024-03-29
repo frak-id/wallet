@@ -7,7 +7,7 @@ import {
     useArticleUnlockStatus,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
 
@@ -20,6 +20,9 @@ export function ReadArticle({
 }) {
     // The injecting state for the unlock component
     const [injecting, setInjecting] = useState(0);
+
+    // The iframe reference
+    const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
     // The unlock options for the article
     const { data: unlockOptions } = useArticleUnlockOptions({
@@ -43,6 +46,13 @@ export function ReadArticle({
             : article.unlockedContentUrl;
     }
 
+    useEffect(() => {
+        if (!iframeRef) return;
+        iframeRef.contentWindow?.addEventListener("DOMContentLoaded", () => {
+            setInjecting((prev) => prev + 1);
+        });
+    }, [iframeRef]);
+
     return (
         <>
             {injecting > 0 && !isFree && (
@@ -61,11 +71,11 @@ export function ReadArticle({
             {articleUnlockStatus &&
             articleUnlockStatus?.key !== "waiting-response" ? (
                 <iframe
+                    ref={setIframeRef}
                     id="frak-article-iframe"
                     title={"frak"}
                     className={styles.readArticle__iframe}
                     src={`${lockedOrUnlocked()}`}
-                    onLoad={() => setInjecting((prev) => prev + 1)}
                 />
             ) : (
                 <div style={{ margin: "16px" }}>
