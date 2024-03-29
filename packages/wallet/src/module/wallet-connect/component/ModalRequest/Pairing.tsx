@@ -66,13 +66,17 @@ export function PairingModal({
     /**
      * Mutation to approve the pairing
      */
-    const { mutate: onApprove, isPending: isApproving } = useMutation({
+    const {
+        mutate: onApprove,
+        isPending: isApproving,
+        isSuccess: isApproveInSuccess,
+    } = useMutation({
         mutationKey: [
             "session-approval",
             args.id,
             smartWallet?.address ?? "no-smart-wallet-address",
         ],
-        onMutate: async () => {
+        mutationFn: async () => {
             console.log("Approving pairing");
             // Ensure we got everything needed
             if (!(walletConnectInstance && smartWallet?.address && args.id)) {
@@ -104,8 +108,8 @@ export function PairingModal({
             // Once we are here, refresh the sessions
             await refreshSessions();
 
-            // And close the modal
-            close();
+            // And close the modal after 3 seconds
+            setTimeout(close, 3_000);
 
             return true;
         },
@@ -166,12 +170,18 @@ export function PairingModal({
                 </p>
             )}
 
-            <WcModalAction
-                isLoading={isLoading}
-                isApproveDisabled={isApproveDisabled}
-                onApprove={onApprove}
-                onReject={onReject}
-            />
+            {isApproveInSuccess ? (
+                <p className={styles.modalPairing__success}>
+                    Connection successful to {metadata.name}
+                </p>
+            ) : (
+                <WcModalAction
+                    isLoading={isLoading}
+                    isApproveDisabled={isApproveDisabled}
+                    onApprove={onApprove}
+                    onReject={onReject}
+                />
+            )}
         </WcModal>
     );
 }

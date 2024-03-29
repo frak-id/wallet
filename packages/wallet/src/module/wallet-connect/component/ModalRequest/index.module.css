@@ -31,3 +31,9 @@
     font-size: 12px;
     color: var(--frak-color-grayText);
 }
+
+.modalPairing__success {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--frak-color-green);
+}

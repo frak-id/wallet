@@ -197,11 +197,7 @@ export function WcModalAction({
 }) {
     return (
         <div className={styles.modalPairing__buttons}>
-            <ButtonRipple
-                size={"small"}
-                isLoading={isLoading}
-                onClick={onReject}
-            >
+            <ButtonRipple size={"small"} onClick={onReject}>
                 Reject
             </ButtonRipple>
             <ButtonRipple
