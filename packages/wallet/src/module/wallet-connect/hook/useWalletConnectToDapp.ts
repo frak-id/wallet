@@ -1,19 +1,17 @@
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import { useMutation } from "@tanstack/react-query";
 
-export function useWalletConnectToDapp({
-    connectionUri,
-}: { connectionUri: string }) {
+export function useWalletConnectToDapp() {
     const { walletConnectInstance } = useWalletConnect();
 
     const {
-        mutate: onConnect,
+        mutateAsync: onConnect,
         status,
         error,
     } = useMutation({
-        mutationKey: ["wallet-connect-pairing", connectionUri],
-        mutationFn: async () => {
-            if (!(connectionUri && walletConnectInstance)) return true;
+        mutationKey: ["wallet-connect-pairing"],
+        mutationFn: async (connectionUri: string) => {
+            if (!(connectionUri && walletConnectInstance)) return;
 
             console.log("Wallet connect pairing with uri", {
                 connectionUri,
