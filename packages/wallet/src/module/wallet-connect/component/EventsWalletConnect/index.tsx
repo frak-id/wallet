@@ -1,91 +1,237 @@
 "use client";
 
-import { ModalPairing } from "@/module/wallet-connect/component/ModalPairing";
+import { ModalWalletConnectRequest } from "@/module/wallet-connect/component/ModalRequest";
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
+import type { ProposalTypes, SessionTypes, Verify } from "@walletconnect/types";
 import type { Web3WalletTypes } from "@walletconnect/web3wallet";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { PropsWithChildren } from "react";
 
+/**
+ * Represent wallet connect modal data
+ */
+export type WalletConnectRequestArgs = {
+    id: number;
+    verifyContext: Verify.Context;
+} & (
+    | {
+          type: "pairing";
+          params: ProposalTypes.Struct;
+      }
+    | {
+          type: "request";
+          topic: string;
+          params: {
+              request: {
+                  method: string;
+                  params: any;
+              };
+              chainId: string;
+          };
+          session: SessionTypes.Struct;
+      }
+);
+
+/**
+ * Component handling wallet connect events
+ * @param children
+ * @constructor
+ * TODO: Each proposal as an ID
+ *   - Store of queued ID proposals + expiration + type + verify context
+ *   - Proposal can be pairing or request
+ */
 export function EventsWalletConnect({ children }: PropsWithChildren) {
     const { walletConnectInstance, refreshSessions } = useWalletConnect();
-    const [pairing, setPairing] = useState<boolean>(false);
-    const [pairingData, setPairingData] = useState<
-        Web3WalletTypes.SessionProposal | undefined
+
+    /**
+     * All the requests that are currently pending
+     * TODO: Should have a small indicator with a list of pending requests
+     */
+    const [requests, setRequests] = useState<WalletConnectRequestArgs[]>([]);
+
+    /**
+     * The current request that is being displayed
+     */
+    const [currentRequest, setCurrentRequest] = useState<
+        WalletConnectRequestArgs | undefined
     >(undefined);
 
+    /**
+     * When we receive a session proposal
+     * @param id
+     * @param params
+     * @param verifyContext
+     */
     async function onSessionProposal({
         id,
         params,
         verifyContext,
     }: Web3WalletTypes.SessionProposal) {
-        console.log("Wallet connect session proposal", {
+        // Build our request args
+        const args: WalletConnectRequestArgs = {
             id,
+            type: "pairing",
             params,
             verifyContext,
+        };
+        console.log("Wallet connect session proposal", {
+            args,
         });
-        if (!walletConnectInstance) return;
-        setPairingData({ id, params, verifyContext });
-        setPairing(true);
-    }
 
-    async function onProposalExpire({ id }: Web3WalletTypes.ProposalExpire) {
-        console.log("Wallet connect proposal expire", { id });
-        if (!walletConnectInstance) return;
-        if (pairingData?.id !== id) return;
-        setPairingData(undefined);
-        setPairing(false);
-        // TODO: Check expiration logic
-    }
+        // Store the pairing proposal
+        setRequests((prev) => [...prev, args]);
 
-    async function onSessionDelete({
+        // If no current request, display it directly
+        if (!currentRequest) {
+            setCurrentRequest(args);
+        }
+    }
+    /**
+     * Callback when a session perform a request
+     * @param proposal
+     */
+    const onSessionRequest = async ({
         id,
         topic,
-    }: Web3WalletTypes.SessionDelete) {
+        params,
+        verifyContext,
+    }: Web3WalletTypes.SessionRequest) => {
+        // Get the matching session, if none exit directly
+        const requestSession =
+            walletConnectInstance?.engine?.signClient?.session?.get(topic);
+        if (!requestSession) return;
+
+        // Build our request args
+        const args: WalletConnectRequestArgs = {
+            id,
+            topic,
+            type: "request",
+            params,
+            verifyContext,
+            session: requestSession,
+        };
+
+        console.log("Wallet connect session request", {
+            args,
+        });
+
+        requestSession.peer.metadata;
+
+        // Store the pairing proposal
+        setRequests((prev) => [...prev, args]);
+
+        // If no current request, display it directly
+        if (!currentRequest) {
+            setCurrentRequest(args);
+        }
+    };
+
+    /**
+     * Callback when a proposal expires
+     */
+    const onProposalExpire = ({ id }: Web3WalletTypes.ProposalExpire) => {
+        console.log("Wallet connect proposal expire", { id });
+
+        // Remove the request from the list
+        setRequests((prev) => prev.filter((req) => req.id !== id));
+
+        // If that's the currently displayed one, remove it
+        if (currentRequest?.id === id) {
+            // TODO: If that's the currently displayed one, maybe a small info like expired and soft close with 1-2sec delay?
+            setCurrentRequest(undefined);
+        }
+    };
+
+    /**
+     * Callback when a session is deleted
+     */
+    const onSessionDelete = async ({
+        id,
+        topic,
+    }: Web3WalletTypes.SessionDelete) => {
         console.log("Wallet connect session delete", { id, topic });
         if (!walletConnectInstance) return;
         await refreshSessions();
-    }
+    };
 
+    /**
+     * Listener to the wallet connect event
+     */
     useEffect(() => {
         if (!walletConnectInstance) return;
+        console.log("Wallet connect event listener attached");
+
+        // TODO: Initial with load of `getPendingSessionProposals` and `getPendingSessionRequests`
+
+        // Pairing and request events
         walletConnectInstance.on("session_proposal", onSessionProposal);
+        walletConnectInstance.on("session_request", onSessionRequest);
+
+        // Expiration events
         walletConnectInstance.on("proposal_expire", onProposalExpire);
-        walletConnectInstance.on("session_request", (proposal) => {
-            console.log("Wallet connect session request", { proposal });
-        });
+        walletConnectInstance.on("session_request_expire", onProposalExpire);
+
+        // Auth request??? Seems like pairing + SIWE combined
         walletConnectInstance.on("auth_request", (proposal) => {
             console.log("Wallet connect auth request", { proposal });
         });
+
+        // On session delete, refresh the sessions
         walletConnectInstance.on("session_delete", onSessionDelete);
 
         return () => {
-            walletConnectInstance.off("session_proposal", onSessionProposal);
-            walletConnectInstance.off("proposal_expire", onProposalExpire);
-            walletConnectInstance.off("session_delete", onSessionDelete);
+            console.log("Wallet connect event listener cleaned");
+
+            walletConnectInstance.removeListener(
+                "session_proposal",
+                onSessionProposal
+            );
+            walletConnectInstance.removeListener(
+                "session_request",
+                onSessionRequest
+            );
+            walletConnectInstance.removeListener(
+                "proposal_expire",
+                onProposalExpire
+            );
+            walletConnectInstance.removeListener(
+                "session_request_expire",
+                onProposalExpire
+            );
+            walletConnectInstance.removeListener(
+                "session_delete",
+                onSessionDelete
+            );
         };
     }, [walletConnectInstance]);
 
-    /**
-     * Reset pairing data when pairing is closed
-     */
-    useEffect(() => {
-        if (!pairing) {
-            setPairingData(undefined);
+    const onModalClose = useCallback(() => {
+        // Get the current request
+        const request = currentRequest;
+        // Remove the request from the list
+        setCurrentRequest(undefined);
+        // If we have a request, remove it from the list
+        if (request) {
+            setRequests((prev) => prev.filter((req) => req.id !== request.id));
         }
-    }, [pairing]);
+    }, []);
 
     return (
         <>
-            {pairing && pairingData && (
-                <ModalPairing
-                    id={pairingData.id}
-                    params={pairingData.params}
-                    verifyContext={pairingData.verifyContext}
-                    open={pairing}
-                    onOpenChange={setPairing}
+            {currentRequest && (
+                <ModalWalletConnectRequest
+                    args={currentRequest}
+                    onClose={onModalClose}
                 />
             )}
             {children}
         </>
     );
 }
+
+/**
+ * TODO: WalletConnect Modal component
+ *  - Handling pairing or request modal
+ *  - Generic component to display global info about the context and stuff
+ *  - Display and accept / reject the request
+ */
