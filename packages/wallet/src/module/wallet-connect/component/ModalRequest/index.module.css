@@ -37,3 +37,16 @@
     margin-top: 20px;
     color: var(--frak-color-green);
 }
+
+
+.modalWc__accordion {
+}
+.modalWc__accordionTrigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--frak-accordion-trigger-color);
+    font-weight: 400;
+    font-size: 14px;
+}
+

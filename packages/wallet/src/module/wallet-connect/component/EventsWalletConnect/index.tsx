@@ -2,6 +2,7 @@
 
 import { ModalWalletConnectRequest } from "@/module/wallet-connect/component/ModalRequest";
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
+import { useMutation } from "@tanstack/react-query";
 import type { ProposalTypes, SessionTypes, Verify } from "@walletconnect/types";
 import type { Web3WalletTypes } from "@walletconnect/web3wallet";
 import { useCallback, useEffect, useState } from "react";
@@ -62,97 +63,107 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
      * @param params
      * @param verifyContext
      */
-    async function onSessionProposal({
-        id,
-        params,
-        verifyContext,
-    }: Web3WalletTypes.SessionProposal) {
-        // Build our request args
-        const args: WalletConnectRequestArgs = {
+    const { mutate: onSessionProposal } = useMutation({
+        mutationKey: ["on-session-proposal"],
+        mutationFn: async ({
             id,
-            type: "pairing",
             params,
             verifyContext,
-        };
-        console.log("Wallet connect session proposal", {
-            args,
-        });
+        }: Web3WalletTypes.SessionProposal) => {
+            // Build our request args
+            const args: WalletConnectRequestArgs = {
+                id,
+                type: "pairing",
+                params,
+                verifyContext,
+            };
+            console.log("Wallet connect session proposal", {
+                args,
+            });
 
-        // Store the pairing proposal
-        setRequests((prev) => [...prev, args]);
+            // Store the pairing proposal
+            setRequests((prev) => [...prev, args]);
 
-        // If no current request, display it directly
-        if (!currentRequest) {
-            setCurrentRequest(args);
-        }
-    }
+            // If no current request, display it directly
+            if (!currentRequest) {
+                setCurrentRequest(args);
+            }
+        },
+    });
+
     /**
      * Callback when a session perform a request
      * @param proposal
      */
-    const onSessionRequest = async ({
-        id,
-        topic,
-        params,
-        verifyContext,
-    }: Web3WalletTypes.SessionRequest) => {
-        // Get the matching session, if none exit directly
-        const requestSession =
-            walletConnectInstance?.engine?.signClient?.session?.get(topic);
-        if (!requestSession) return;
-
-        // Build our request args
-        const args: WalletConnectRequestArgs = {
+    const { mutate: onSessionRequest } = useMutation({
+        mutationKey: ["on-session-request"],
+        mutationFn: async ({
             id,
             topic,
-            type: "request",
             params,
             verifyContext,
-            session: requestSession,
-        };
+        }: Web3WalletTypes.SessionRequest) => {
+            // Get the matching session, if none exit directly
+            const requestSession =
+                walletConnectInstance?.engine?.signClient?.session?.get(topic);
+            if (!requestSession) return false;
 
-        console.log("Wallet connect session request", {
-            args,
-        });
+            // Build our request args
+            const args: WalletConnectRequestArgs = {
+                id,
+                topic,
+                type: "request",
+                params,
+                verifyContext,
+                session: requestSession,
+            };
 
-        requestSession.peer.metadata;
+            console.log("Wallet connect session request", {
+                args,
+            });
 
-        // Store the pairing proposal
-        setRequests((prev) => [...prev, args]);
+            requestSession.peer.metadata;
 
-        // If no current request, display it directly
-        if (!currentRequest) {
-            setCurrentRequest(args);
-        }
-    };
+            // Store the pairing proposal
+            setRequests((prev) => [...prev, args]);
+
+            // If no current request, display it directly
+            if (!currentRequest) {
+                setCurrentRequest(args);
+            }
+        },
+    });
 
     /**
      * Callback when a proposal expires
      */
-    const onProposalExpire = ({ id }: Web3WalletTypes.ProposalExpire) => {
-        console.log("Wallet connect proposal expire", { id });
+    const { mutate: onProposalExpire } = useMutation({
+        mutationKey: ["on-proposal-expire"],
+        mutationFn: async ({ id }: Web3WalletTypes.ProposalExpire) => {
+            console.log("Wallet connect proposal expire", { id });
 
-        // Remove the request from the list
-        setRequests((prev) => prev.filter((req) => req.id !== id));
+            // Remove the request from the list
+            setRequests((prev) => prev.filter((req) => req.id !== id));
 
-        // If that's the currently displayed one, remove it
-        if (currentRequest?.id === id) {
-            // TODO: If that's the currently displayed one, maybe a small info like expired and soft close with 1-2sec delay?
-            setCurrentRequest(undefined);
-        }
-    };
+            // If that's the currently displayed one, remove it
+            if (currentRequest?.id === id) {
+                // TODO: If that's the currently displayed one, maybe a small info like expired and soft close with 1-2sec delay?
+                setCurrentRequest(undefined);
+            }
+        },
+    });
 
     /**
      * Callback when a session is deleted
      */
-    const onSessionDelete = async ({
-        id,
-        topic,
-    }: Web3WalletTypes.SessionDelete) => {
-        console.log("Wallet connect session delete", { id, topic });
-        if (!walletConnectInstance) return;
-        await refreshSessions();
-    };
+    const { mutate: onSessionDelete } = useMutation({
+        mutationKey: ["on-session-delete"],
+        mutationFn: async ({ id, topic }: Web3WalletTypes.SessionDelete) => {
+            console.log("Wallet connect session delete", { id, topic });
+            if (!walletConnectInstance) return;
+            await refreshSessions();
+        },
+    });
 
     /**
      * Listener to the wallet connect event
@@ -203,7 +214,13 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
                 onSessionDelete
             );
         };
-    }, [walletConnectInstance]);
+    }, [
+        walletConnectInstance,
+        onSessionProposal,
+        onSessionRequest,
+        onProposalExpire,
+        onSessionDelete,
+    ]);
 
     const onModalClose = useCallback(() => {
         // Get the current request

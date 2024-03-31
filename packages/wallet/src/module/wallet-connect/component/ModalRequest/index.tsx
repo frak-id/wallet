@@ -1,9 +1,11 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
+import { Panel } from "@/module/common/component/Panel";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import { PairingModal } from "@/module/wallet-connect/component/ModalRequest/Pairing";
 import { SignRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignRequest";
+import { SignTypedDataRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignTypedDataRequest";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import type { Verify } from "@walletconnect/types";
 import type { SignClientTypes } from "@walletconnect/types/dist/types/sign-client/client";
@@ -63,6 +65,14 @@ function RequestModal({
     if (method === "eth_sign" || method === "personal_sign") {
         return <SignRequestModal args={args} onClose={onClose} />;
     }
+    // If that's a typed data signature request
+    if (
+        method === "eth_signTypedData" ||
+        method === "eth_signTypedData_v3" ||
+        method === "eth_signTypedData_v4"
+    ) {
+        return <SignTypedDataRequestModal args={args} onClose={onClose} />;
+    }
 
     return <>Unknown request type</>;
 }
@@ -86,6 +96,13 @@ export function WcModal({
     );
 }
 
+/**
+ * Main component for the wallet connect modal (either drawer or alert bx depending on the client)
+ * @param open
+ * @param onOpenChange
+ * @param children
+ * @constructor
+ */
 function WcModalComponent({
     open,
     onOpenChange,
@@ -246,5 +263,25 @@ export function WcModalAction({
                 Approve
             </ButtonRipple>
         </div>
+    );
+}
+
+/**
+ * Action for a wallet connect modal
+ * @constructor
+ */
+export function WcModalRequestContext({
+    chain,
+    protocol,
+}: {
+    chain: string;
+    protocol: string;
+}) {
+    const formattedChain = useMemo(() => chain.replace("eip155:", ""), [chain]);
+    return (
+        <>
+            <Panel size={"small"}>Chain: {formattedChain}</Panel>
+            <Panel size={"small"}>Protocol: {protocol}</Panel>
+        </>
     );
 }

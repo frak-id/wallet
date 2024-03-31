@@ -1,3 +1,9 @@
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/module/common/component/Accordion";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
@@ -14,15 +20,10 @@ import { useMutation } from "@tanstack/react-query";
 import { getSdkError } from "@walletconnect/utils";
 import { FileSignature } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-    type Hex,
-    type SignableMessage,
-    fromHex,
-    isAddress,
-    isHex,
-} from "viem";
+import { CodeBlock, monokai } from "react-code-blocks";
+import { type TypedDataDefinition, isAddress } from "viem";
 
-export function SignRequestModal({
+export function SignTypedDataRequestModal({
     args,
     onClose,
 }: {
@@ -42,18 +43,25 @@ export function SignRequestModal({
     /**
      * Extract the data used for the signature
      */
-    const { message, rawMessage } = useMemo(() => {
+    const { rawTypedDataPayload, typedDataPayload } = useMemo(() => {
         const rawParams = args.params.request.params as string[];
+        console.log("Params received", { rawParams });
         const address = rawParams.find((p) => isAddress(p));
-        const rawMessage = rawParams.find((p) => !isAddress(p));
+
+        // Extract the raw typed data definition
+        const rawTypedDataPayload = rawParams.find((p) => !isAddress(p));
+        if (!rawTypedDataPayload) {
+            throw new Error("Unable to decode typed data params");
+        }
+
+        // Parse it
+        const typedDataPayload: TypedDataDefinition =
+            JSON.parse(rawTypedDataPayload);
 
         return {
             address,
-            rawMessage,
-            message:
-                rawMessage && isHex(rawMessage)
-                    ? fromHex(rawMessage as Hex, "string")
-                    : rawMessage,
+            rawTypedDataPayload,
+            typedDataPayload,
         };
     }, [args.params.request.params]);
 
@@ -61,8 +69,13 @@ export function SignRequestModal({
      * Check if the approve button should be disabled
      */
     const isApproveDisabled = useMemo(
-        () => !(rawMessage && walletConnectInstance && smartWallet?.address),
-        [rawMessage, smartWallet, walletConnectInstance]
+        () =>
+            !(
+                rawTypedDataPayload &&
+                walletConnectInstance &&
+                smartWallet?.address
+            ),
+        [rawTypedDataPayload, smartWallet, walletConnectInstance]
     );
 
     /**
@@ -76,10 +89,10 @@ export function SignRequestModal({
         error: approveError,
     } = useMutation({
         mutationKey: [
-            "session-sign-request",
+            "session-sign-typed-data-request",
             args.id,
             smartWallet?.address ?? "no-smart-wallet-address",
-            rawMessage ?? "no-msg",
+            rawTypedDataPayload ?? "no-payload",
         ],
         mutationFn: async () => {
             // Ensure we got everything needed
@@ -88,21 +101,14 @@ export function SignRequestModal({
                     walletConnectInstance &&
                     smartWallet?.address &&
                     args.id &&
-                    rawMessage
+                    typedDataPayload
                 )
             ) {
                 return false;
             }
 
             // Try to sign the message
-            const msgPayload: SignableMessage = isHex(rawMessage)
-                ? {
-                      raw: rawMessage as Hex,
-                  }
-                : rawMessage;
-            const signature = await smartWallet.signMessage({
-                message: msgPayload,
-            });
+            const signature = await smartWallet.signTypedData(typedDataPayload);
 
             // Send the signature
             await walletConnectInstance.respondSessionRequest({
@@ -176,7 +182,7 @@ export function SignRequestModal({
             <WcModalHeader
                 metadata={args.session.peer.metadata}
                 verifyContext={args.verifyContext}
-                subTitle={"request a signature"}
+                subTitle={"request a typed data signature"}
             />
 
             <WcModalRequestContext
@@ -186,8 +192,8 @@ export function SignRequestModal({
 
             {/*Format this stuff, maybe small panel for each parts? */}
             <Panel size={"normal"}>
-                <Title icon={<FileSignature />}>Message to sign</Title>
-                {message}
+                <Title icon={<FileSignature />}>Data to sign</Title>
+                <TypedDataCodeBlocks typedData={typedDataPayload} />
             </Panel>
 
             {approveError && (
@@ -209,5 +215,61 @@ export function SignRequestModal({
                 />
             )}
         </WcModal>
+    );
+}
+
+function TypedDataCodeBlocks({
+    typedData,
+}: { typedData: TypedDataDefinition }) {
+    return (
+        <Accordion
+            type={"single"}
+            collapsible
+            className={styles.modalWc__accordion}
+        >
+            <AccordionItem value={"domain"}>
+                <AccordionTrigger className={styles.modalWc__accordionTrigger}>
+                    Domain
+                </AccordionTrigger>
+                <AccordionContent>
+                    <CodeBlock
+                        showLineNumbers={false}
+                        text={JSON.stringify(typedData?.domain ?? {}, null, 2)}
+                        theme={monokai}
+                        language="json"
+                    />
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value={"types"}>
+                <AccordionTrigger className={styles.modalWc__accordionTrigger}>
+                    Types
+                </AccordionTrigger>
+                <AccordionContent>
+                    <p>Primary type: {typedData?.primaryType}</p>
+
+                    <CodeBlock
+                        showLineNumbers={false}
+                        text={JSON.stringify(typedData?.types ?? {}, null, 2)}
+                        theme={monokai}
+                        language="json"
+                    />
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value={"message"}>
+                <AccordionTrigger className={styles.modalWc__accordionTrigger}>
+                    Message
+                </AccordionTrigger>
+                <AccordionContent>
+                    <CodeBlock
+                        showLineNumbers={false}
+                        text={JSON.stringify(typedData?.message ?? {}, null, 2)}
+                        theme={monokai}
+                        language="json"
+                    />
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
     );
 }
