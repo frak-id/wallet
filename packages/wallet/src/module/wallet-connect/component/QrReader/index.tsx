@@ -67,6 +67,7 @@ export function QrReader() {
                         setErrorMessage(undefined);
                         setShow(!show);
                     }}
+                    size={"small"}
                 >
                     <p>{show ? "Hide" : "Show"} QR code scanner</p>
                 </ButtonRipple>

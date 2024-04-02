@@ -13,10 +13,6 @@ export function useWalletConnectToDapp() {
         mutationFn: async (connectionUri: string) => {
             if (!(connectionUri && walletConnectInstance)) return;
 
-            console.log("Wallet connect pairing with uri", {
-                connectionUri,
-            });
-
             await walletConnectInstance.pair({
                 uri: connectionUri,
             });

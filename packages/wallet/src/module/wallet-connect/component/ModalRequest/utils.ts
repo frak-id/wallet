@@ -29,11 +29,12 @@ export function getNamespaces(params: ProposalTypes.Struct, address: string) {
                     // Signature stuff
                     "personal_sign",
                     "eth_sign",
-                    "eth_signTypedData",
-                    "eth_signTypedData_v3",
-                    "eth_signTypedData_v4",
+                    // Typed data signature
+                    //"eth_signTypedData",
+                    //"eth_signTypedData_v3",
+                    //"eth_signTypedData_v4",
                     // Sending tx
-                    "eth_sendTransaction",
+                    //"eth_sendTransaction",
                 ],
                 events: ["accountsChanged", "chainChanged"],
                 accounts: chainsAvailable.flatMap(

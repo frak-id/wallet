@@ -31,6 +31,7 @@ export function ConnectionWithUri() {
                 onChange={(e) => setConnectionUri(e.target.value ?? "")}
             />
             <ButtonRipple
+                size={"small"}
                 onClick={async () => {
                     setErrorMessage(undefined);
                     if (!checkWalletConnectUri(connectionUri)) {
