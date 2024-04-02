@@ -1,5 +1,5 @@
 import { addresses } from "@/context/common/blockchain/addresses";
-import { frakTokenAbi } from "@/context/common/blockchain/frak-abi";
+import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMemo } from "react";
 import { formatEther } from "viem";
@@ -16,8 +16,8 @@ export function useFrkBalance() {
      * Listen to the balance of the user
      */
     const { data: balance, refetch: refreshBalance } = useReadContract({
-        abi: frakTokenAbi,
-        address: addresses.frakToken,
+        abi: paywallTokenAbi,
+        address: addresses.paywallToken,
         functionName: "balanceOf",
         args: [wallet?.address ?? "0x0"],
         // Target the mumbai chain

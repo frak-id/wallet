@@ -4,7 +4,8 @@ import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 export function getFrkToken({ tokens }: { tokens: GetUserErc20Token[] }) {
     return tokens.find(
         ({ contractAddress }) =>
-            contractAddress.toLowerCase() === addresses.frakToken.toLowerCase()
+            contractAddress.toLowerCase() ===
+            addresses.paywallToken.toLowerCase()
     );
 }
 

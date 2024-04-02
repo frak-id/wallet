@@ -1,5 +1,5 @@
 import { addresses } from "@/context/common/blockchain/addresses";
-import { frakTokenAbi } from "@/context/common/blockchain/frak-abi";
+import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useSession } from "@/module/common/hook/useSession";
 import type { Session } from "@/types/Session";
@@ -47,8 +47,8 @@ export function useWalletStatusListener() {
         isLoading: isFetchingBalance,
         refetch: refreshBalance,
     } = useReadContract({
-        abi: frakTokenAbi,
-        address: addresses.frakToken,
+        abi: paywallTokenAbi,
+        address: addresses.paywallToken,
         functionName: "balanceOf",
         args: [session?.wallet?.address ?? "0x0"],
         blockTag: "pending",

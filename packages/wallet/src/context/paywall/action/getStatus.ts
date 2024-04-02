@@ -1,7 +1,7 @@
 "use server";
 
-import { paywallAddress } from "@/context/common/blockchain/addresses";
-import { paywallAbi } from "@/context/common/blockchain/frak-abi";
+import { addresses } from "@/context/common/blockchain/addresses";
+import { paywallAbi } from "@/context/common/blockchain/poc-abi";
 import { mumbaiPocClient } from "@/context/common/blockchain/provider";
 import type { Address, Hex } from "viem";
 import { readContract } from "viem/actions";
@@ -23,7 +23,7 @@ export async function getUnlockStatusOnArticle({
 }) {
     // Get the status
     const [isAllowed, allowedUntilInSec] = await readContract(mumbaiPocClient, {
-        address: paywallAddress,
+        address: addresses.paywall,
         abi: paywallAbi,
         functionName: "isReadAllowed",
         args: [BigInt(contentId), articleId, user],

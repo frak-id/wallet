@@ -166,7 +166,7 @@ function LockedWalletStatusInfo({
         <>
             You are logged in with {formatHash(walletStatus?.wallet)}
             <br />
-            You have {formatEther(BigInt(walletStatus.frkBalanceAsHex))} FRK
+            You have {formatEther(BigInt(walletStatus.frkBalanceAsHex))} pFRK
         </>
     );
 }

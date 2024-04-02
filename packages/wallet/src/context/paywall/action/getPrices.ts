@@ -1,10 +1,10 @@
 "use server";
 
+import { addresses } from "@/context/common/blockchain/addresses";
 import {
-    addresses,
-    paywallAddress,
-} from "@/context/common/blockchain/addresses";
-import { frakTokenAbi, paywallAbi } from "@/context/common/blockchain/frak-abi";
+    paywallAbi,
+    paywallTokenAbi,
+} from "@/context/common/blockchain/poc-abi";
 import { mumbaiPocClient } from "@/context/common/blockchain/provider";
 import type { ArticlePrice, ArticlePriceForUser } from "@/types/Price";
 import { unstable_cache } from "next/cache";
@@ -20,7 +20,7 @@ async function _getArticlePrices({
 }: { contentId: Hex }): Promise<ArticlePrice[]> {
     // Read all the prices from the blockchain
     const prices = await readContract(mumbaiPocClient, {
-        address: paywallAddress,
+        address: addresses.paywall,
         abi: paywallAbi,
         functionName: "getContentPrices",
         args: [BigInt(contentId)],
@@ -71,7 +71,7 @@ async function _getArticlePricesForUser({
 
     // Check if the user already unlocked an article
     const [isAllowed] = await readContract(mumbaiPocClient, {
-        address: paywallAddress,
+        address: addresses.paywall,
         abi: paywallAbi,
         functionName: "isReadAllowed",
         args: [BigInt(contentId), articleId, address],
@@ -85,8 +85,8 @@ async function _getArticlePricesForUser({
 
     // Get the frk balance of the user
     const userBalance = await readContract(mumbaiPocClient, {
-        address: addresses.frakToken,
-        abi: frakTokenAbi,
+        address: addresses.paywallToken,
+        abi: paywallTokenAbi,
         functionName: "balanceOf",
         args: [address],
     });
@@ -103,10 +103,10 @@ async function _getArticlePricesForUser({
  */
 export const getArticlePricesForUser = unstable_cache(
     _getArticlePricesForUser,
-    ["get-article-prices-for-user"],
+    ["get-user-article-prices"],
     {
         // Keep that in cache for 5 minutes
-        revalidate: 300,
+        revalidate: 1,
     }
 );
 
@@ -122,7 +122,7 @@ async function _getArticlePrice({
 }: { contentId: Hex; priceIndex: number }): Promise<ArticlePrice | null> {
     // Read all the prices from the blockchain
     const prices = await readContract(mumbaiPocClient, {
-        address: paywallAddress,
+        address: addresses.paywall,
         abi: paywallAbi,
         functionName: "getContentPrices",
         args: [BigInt(contentId)],
@@ -147,7 +147,7 @@ async function _getArticlePrice({
  */
 export const getArticlePrice = unstable_cache(
     _getArticlePrice,
-    ["get-article-price"],
+    ["get-article-prices"],
     {
         // Keep in cache for an hour
         revalidate: 3600,

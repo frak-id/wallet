@@ -9,7 +9,7 @@ export function TokenLogo({
     return (
         token && (
             <span className={styles.tokenLogo}>
-                {token.metadata.name === "Frak" ? (
+                {token.metadata.symbol.indexOf("FRK") >= 0 ? (
                     <FrakToken size={size} />
                 ) : token.metadata.logo ? (
                     <img

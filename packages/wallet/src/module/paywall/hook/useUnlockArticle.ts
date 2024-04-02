@@ -1,8 +1,8 @@
+import { addresses } from "@/context/common/blockchain/addresses";
 import {
-    addresses,
-    paywallAddress,
-} from "@/context/common/blockchain/addresses";
-import { frakTokenAbi, paywallAbi } from "@/context/common/blockchain/frak-abi";
+    paywallAbi,
+    paywallTokenAbi,
+} from "@/context/common/blockchain/poc-abi";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
@@ -153,21 +153,21 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
 
             // Check the user allowance to the paywall contract
             const allowance = await readContract(viemClient, {
-                address: addresses.frakToken,
-                abi: frakTokenAbi,
+                address: addresses.paywallToken,
+                abi: paywallTokenAbi,
                 functionName: "allowance",
-                args: [wallet?.address, paywallAddress],
+                args: [wallet?.address, addresses.paywall],
             });
 
             // If the allowance isn't enough, we need to approve the paywall contract
             if (weiPrice > allowance) {
                 const allowanceFnCall = encodeFunctionData({
-                    abi: frakTokenAbi,
+                    abi: paywallTokenAbi,
                     functionName: "approve",
-                    args: [paywallAddress, weiPrice * 10n],
+                    args: [addresses.paywall, weiPrice * 10n],
                 });
                 txs.push({
-                    to: addresses.frakToken,
+                    to: addresses.paywallToken,
                     value: 0n,
                     data: allowanceFnCall,
                 });
@@ -184,7 +184,7 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
                 ],
             });
             txs.push({
-                to: paywallAddress,
+                to: addresses.paywall,
                 value: 0n,
                 data: unlockFnCall,
             });

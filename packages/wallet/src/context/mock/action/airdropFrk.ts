@@ -1,25 +1,12 @@
 "use server";
 
 import { addresses } from "@/context/common/blockchain/addresses";
+import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { mumbaiPocClient } from "@/context/common/blockchain/provider";
 import { type Address, type Hex, encodeFunctionData, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { prepareTransactionRequest, sendTransaction } from "viem/actions";
 import { polygonMumbai } from "viem/chains";
-
-/**
- * Abi used to trigger an airdrop from the treasury contract
- */
-const airdropAbi = {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [
-        { name: "target", internalType: "address", type: "address" },
-        { name: "amount", internalType: "uint256", type: "uint256" },
-    ],
-    name: "transfer",
-    outputs: [],
-} as const;
 
 /**
  * Trigger a frk airdrop to a user
@@ -43,10 +30,10 @@ export async function triggerFrkAirdrop({
     const preparationResult = await prepareTransactionRequest(mumbaiPocClient, {
         account: airdropperAccount,
         chain: polygonMumbai,
-        to: addresses.frakTreasuryWallet,
+        to: addresses.paywallToken,
         data: encodeFunctionData({
-            abi: [airdropAbi],
-            functionName: "transfer",
+            abi: paywallTokenAbi,
+            functionName: "mint",
             args: [user, parseEther(amount)],
         }),
     });
