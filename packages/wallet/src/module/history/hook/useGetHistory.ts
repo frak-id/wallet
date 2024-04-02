@@ -14,7 +14,7 @@ export function useGetHistory() {
     // The query fn that will fetch the history
     // TODO: Should populate the history with the article and content link we have in the dexie db
     const { data: history } = useQuery({
-        queryKey: ["history", address],
+        queryKey: ["history", address, chainId],
         queryFn: async () => {
             const rawHistory = await fetchWalletHistory({
                 account: address ?? "0x",

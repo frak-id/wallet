@@ -16,13 +16,7 @@ import type {
 import { unstable_cache } from "next/cache";
 import { map, sort } from "radash";
 import { type Address, formatEther, toHex } from "viem";
-import { getBlock, getLogs } from "viem/actions";
-
-/**
- * The initial block from where we fetch the logs
- *  - This match the block during time of developments
- */
-const initialBlock = 45609416n;
+import {getBlock, getBlockNumber, getLogs} from "viem/actions";
 
 /**
  * Get am account full history
@@ -41,12 +35,14 @@ async function _fetchWalletHistory({
     const viemClient = availableClients[chainId];
 
     // Get the paid item unlocked events for a user
+    const blockRange = await getBlockRange({ chainId });
     const unlockedItemsEvents = await getLogs(viemClient, {
         address: addresses.paywall,
         event: paidItemUnlockedEventAbi,
         args: { user: account },
         strict: true,
-        fromBlock: initialBlock,
+        fromBlock: "earliest",
+        toBlock: "latest",
     });
 
     // Map them to the ArticleUnlock type
@@ -94,7 +90,8 @@ async function _fetchWalletHistory({
             event: frkTransferEvent,
             args,
             strict: true,
-            fromBlock: initialBlock,
+            fromBlock: "earliest",
+            toBlock: "latest",
         });
     }
     const frkReceivedEvents = await getFrkEvents({ to: account });
@@ -171,4 +168,25 @@ async function _getBlockDate({
 const getBlockDate = unstable_cache(_getBlockDate, ["get-block-date"], {
     // Keep that in server cache for 48hr
     revalidate: 48 * 60 * 60,
+});
+
+
+/**
+ * Get the timestamp of the given block
+ * @param blockHash
+ */
+async function _getBlockRange({
+    chainId,
+}: { chainId: number }) {
+    const viemClient = availableClients[chainId];
+    const latest = await getBlockNumber(viemClient);
+    return {
+        fromBlock: latest - 100_000n,
+        toBlock: latest,
+    }
+}
+
+const getBlockRange = unstable_cache(_getBlockRange, ["get-block-range"], {
+    // Keep that in server cache for 5min
+    revalidate: 5 * 60,
 });

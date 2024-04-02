@@ -10,5 +10,5 @@ export function formatFrk(amount: number, fractionDigits = 2) {
         currencyDisplay: "code",
         maximumFractionDigits: amount % 1 !== 0 ? fractionDigits : 0,
     });
-    return `${formatter.format(amount).replace("USD", "").trim()} FRK`;
+    return `${formatter.format(amount).replace("USD", "").trim()} pFRK`;
 }
