@@ -25,6 +25,7 @@ export type WalletConnectRequestArgs = {
           params: {
               request: {
                   method: string;
+                  // biome-ignore lint/suspicious/noExplicitAny: Type from wallet connect interface
                   params: any;
               };
               chainId: string;

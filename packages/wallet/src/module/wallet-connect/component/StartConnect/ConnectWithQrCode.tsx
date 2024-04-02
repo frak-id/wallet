@@ -1,5 +1,5 @@
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
-import { checkWalletConnectUri } from "@/module/wallet-connect/component/ConnectionWithUri";
+import { checkWalletConnectUri } from "@/module/wallet-connect/component/StartConnect/ConnectWithUri";
 import { useWalletConnectToDapp } from "@/module/wallet-connect/hook/useWalletConnectToDapp";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -17,7 +17,7 @@ async function isConnectedVideoDevices() {
     return videosDevices.length > 0;
 }
 
-export function QrReader() {
+export function ConnectWithQrCode() {
     const { onConnect, status, error } = useWalletConnectToDapp();
     const [show, setShow] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string>();
