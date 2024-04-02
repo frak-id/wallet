@@ -3,7 +3,7 @@ import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMemo } from "react";
 import { formatEther } from "viem";
-import { polygonMumbai } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import { useReadContract } from "wagmi";
 
 export function useFrkBalance() {
@@ -20,8 +20,8 @@ export function useFrkBalance() {
         address: addresses.paywallToken,
         functionName: "balanceOf",
         args: [wallet?.address ?? "0x0"],
-        // Target the mumbai chain
-        chainId: polygonMumbai.id,
+        // Target the arb sepolia chain
+        chainId: arbitrumSepolia.id,
         // Get the data on the pending block, to get the fastest possible data
         blockTag: "pending",
         // Some query options

@@ -9,9 +9,9 @@ import { arbitrumSepolia, optimismSepolia, polygonMumbai } from "viem/chains";
  * All the available chains
  */
 export const availableChains = [
-    polygonMumbai,
     arbitrumSepolia,
     optimismSepolia,
+    polygonMumbai,
 ] as const;
 
 export type AvailableChainIds = (typeof availableChains)[number]["id"];
@@ -42,7 +42,7 @@ export const availableClients = Object.fromEntries(
 /**
  * Directly expose the mumbai viem client, since the paywall part is based on that
  */
-export const mumbaiPocClient = availableClients[polygonMumbai.id];
+export const arbSepoliaPocClient = availableClients[arbitrumSepolia.id];
 
 /**
  * Get the alchemy client with no batch on the rpc side

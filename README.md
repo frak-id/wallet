@@ -13,7 +13,7 @@ Or even, try real life flow by following some article shared via the demo X acco
 ## Overview
 
 This POC enables users to quickly create a wallet, unlock access to premium newspaper articles, and read them in seconds using the advancements of ERC-4337. 
-It's built on the Mumbai blockchain (polygon testnet) and utilizes a range of cutting-edge libraries and frameworks to demonstrate the integration of Web3 technologies into Web2 interfaces.
+It's built on the Arbitrum sepolia blockchain and utilizes a range of cutting-edge libraries and frameworks to demonstrate the integration of Web3 technologies into Web2 interfaces.
 
 If you are brave enough and have an overview of how it works under the hood, you can check a few sequence flow graph here: [Sequence Flow Graph](https://twitter.com/FrakDemo)
 

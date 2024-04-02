@@ -5,7 +5,7 @@ import { PaywallUnlock } from "@/module/paywall/component/Unlock";
 import { usePaywall } from "@/module/paywall/provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { polygonMumbai } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 
 export default function UnlockPage() {
     const router = useRouter();
@@ -21,7 +21,7 @@ export default function UnlockPage() {
     }
 
     return (
-        <EnforceChain targetChainId={polygonMumbai.id} silentSwitch={true}>
+        <EnforceChain targetChainId={arbitrumSepolia.id} silentSwitch={true}>
             <PaywallUnlock context={context} />
         </EnforceChain>
     );

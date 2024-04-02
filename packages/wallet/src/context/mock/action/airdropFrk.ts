@@ -2,11 +2,11 @@
 
 import { addresses } from "@/context/common/blockchain/addresses";
 import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
-import { mumbaiPocClient } from "@/context/common/blockchain/provider";
+import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
 import { type Address, type Hex, encodeFunctionData, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { prepareTransactionRequest, sendTransaction } from "viem/actions";
-import { polygonMumbai } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 
 /**
  * Trigger a frk airdrop to a user
@@ -27,18 +27,24 @@ export async function triggerFrkAirdrop({
     const airdropperAccount = privateKeyToAccount(airdropperPrivateKey as Hex);
 
     // Prepare the tx
-    const preparationResult = await prepareTransactionRequest(mumbaiPocClient, {
-        account: airdropperAccount,
-        chain: polygonMumbai,
-        to: addresses.paywallToken,
-        data: encodeFunctionData({
-            abi: paywallTokenAbi,
-            functionName: "mint",
-            args: [user, parseEther(amount)],
-        }),
-    });
+    const preparationResult = await prepareTransactionRequest(
+        arbSepoliaPocClient,
+        {
+            account: airdropperAccount,
+            chain: arbitrumSepolia,
+            to: addresses.paywallToken,
+            data: encodeFunctionData({
+                abi: paywallTokenAbi,
+                functionName: "mint",
+                args: [user, parseEther(amount)],
+            }),
+        }
+    );
 
     // Send the tx
-    const txHash = await sendTransaction(mumbaiPocClient, preparationResult);
+    const txHash = await sendTransaction(
+        arbSepoliaPocClient,
+        preparationResult
+    );
     return { txHash };
 }

@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import { type Hex, encodeFunctionData, parseEther } from "viem";
 import type { Address } from "viem";
 import { readContract } from "viem/actions";
-import { polygonMumbai } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import { useClient } from "wagmi";
 
 /**
@@ -34,8 +34,7 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
         loading: { info: "idle" },
     });
 
-    // Fetch the mumbai client
-    const viemClient = useClient({ chainId: polygonMumbai.id });
+    const viemClient = useClient({ chainId: arbitrumSepolia.id });
 
     // Fetch the user allowance on chain
     const { refetch: refreshOnChainUnlockStatus } =
@@ -228,7 +227,7 @@ export function useArticlePrices({ context }: { context: PaywallContext }) {
                 success: {
                     redirectUrl,
                     userOpHash,
-                    userOpExplorerLink: `https://jiffyscan.xyz/userOpHash/${userOpHash}?network=mumbai`,
+                    userOpExplorerLink: `https://jiffyscan.xyz/userOpHash/${userOpHash}?network=arbitrum-sepolia`,
                 },
             });
         },

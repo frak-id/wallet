@@ -1,11 +1,11 @@
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
 import { ExternalLink } from "lucide-react";
-import { polygonMumbai } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import styles from "./index.module.css";
 
-const polygonMumbaiUrl = polygonMumbai.blockExplorers.default.url;
+const arbSepoliaExplorerUrl = arbitrumSepolia.blockExplorers.default.url;
 
-export function PolygonLink({
+export function ExplorerLink({
     hash,
     wallet = false,
     icon = true,
@@ -20,7 +20,9 @@ export function PolygonLink({
 }) {
     return (
         <a
-            href={`${polygonMumbaiUrl}/${wallet ? "address" : "tx"}/${hash}`}
+            href={`${arbSepoliaExplorerUrl}/${
+                wallet ? "address" : "tx"
+            }/${hash}`}
             target={"_blank"}
             rel={"noreferrer"}
             className={`${styles.polygonLink} ${className}`}

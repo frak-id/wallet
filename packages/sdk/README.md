@@ -8,7 +8,7 @@ Checkout our documentation for more informations about the usage:
 
 To have more info about how does it works under the hood, you can check [this](https://docs.frak.id/wallet-sdk/under-the-hood)
 
-> :warning: **This is in active development**: Only supporting polygon Mumbai at the moment, **DO NOT USE IN PROD**
+> :warning: **This is in active development**: Only supporting testnets at the moment, **DO NOT USE IN PROD**
 
 
 ## Installation

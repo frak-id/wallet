@@ -13,7 +13,7 @@ import { waitForUserOperationReceipt } from "permissionless";
 import { useCallback, useState } from "react";
 import type { Hex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
-import { polygonMumbai } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import { useClient } from "wagmi";
 
 type OnListenToArticleUnlockStatus = IFrameRequestResolver<
@@ -33,8 +33,7 @@ type UnlockStateListenerParam = {
  * Hook use to listen to the wallet status
  */
 export function useArticleUnlockStatusListener() {
-    // Fetch the mumbai client
-    const viemClient = useClient({ chainId: polygonMumbai.id });
+    const viemClient = useClient({ chainId: arbitrumSepolia.id });
 
     // Fetch the AA transports
     // TODO: Should be able to specify the chain id

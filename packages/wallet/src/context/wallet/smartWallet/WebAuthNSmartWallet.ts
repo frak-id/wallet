@@ -350,7 +350,7 @@ export async function webAuthNSmartAccount<
             const encodedSignature = encodeAbiParameters(
                 webAuthNSignatureLayoutParam,
                 [
-                    false,
+                    true,
                     authenticatorData,
                     clientData,
                     challengeOffset,
@@ -379,7 +379,7 @@ export async function webAuthNSmartAccount<
 
             // Return the encoded stuff for the web auth n validator
             return encodePacked(webAuthNSignatureLayoutParam, [
-                false,
+                true,
                 authenticatorData,
                 clientData,
                 challengeOffset,
@@ -452,7 +452,7 @@ export async function webAuthNSmartAccount<
 
             // Generate a template signature for the webauthn validator
             const sig = encodeAbiParameters(webAuthNSignatureLayoutParam, [
-                false,
+                true,
                 // Random 120 byte
                 `0x${maxUint256.toString(16).repeat(2)}`,
                 `0x${maxUint256.toString(16).repeat(6)}`,

@@ -2,7 +2,7 @@
 
 import { addresses } from "@/context/common/blockchain/addresses";
 import { paywallAbi } from "@/context/common/blockchain/poc-abi";
-import { mumbaiPocClient } from "@/context/common/blockchain/provider";
+import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
 import type { Address, Hex } from "viem";
 import { readContract } from "viem/actions";
 
@@ -22,14 +22,17 @@ export async function getUnlockStatusOnArticle({
     user: Address;
 }) {
     // Get the status
-    const [isAllowed, allowedUntilInSec] = await readContract(mumbaiPocClient, {
-        address: addresses.paywall,
-        abi: paywallAbi,
-        functionName: "isReadAllowed",
-        args: [BigInt(contentId), articleId, user],
-        // Get the value on the pending block, to be fast as fast as possible
-        blockTag: "pending",
-    });
+    const [isAllowed, allowedUntilInSec] = await readContract(
+        arbSepoliaPocClient,
+        {
+            address: addresses.paywall,
+            abi: paywallAbi,
+            functionName: "isReadAllowed",
+            args: [BigInt(contentId), articleId, user],
+            // Get the value on the pending block, to be fast as fast as possible
+            blockTag: "pending",
+        }
+    );
 
     // Return the status
     return {

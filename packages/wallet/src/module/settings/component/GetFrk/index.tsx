@@ -7,7 +7,7 @@ import Row from "@/module/common/component/Row";
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { Landmark } from "lucide-react";
-import { polygonMumbai } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import { useChainId } from "wagmi";
 
 /**
@@ -18,8 +18,8 @@ export function GetFrk() {
     const { isAirdroppingFrk, airdropFrk } = useAirdropFrk();
     const chainId = useChainId();
 
-    // If we are not on mumbai, don't display FRK airdrop option
-    if (chainId !== polygonMumbai.id) {
+    // If we are not on arbitrum sepolia, don't display FRK airdrop option
+    if (chainId !== arbitrumSepolia.id) {
         return <></>;
     }
 

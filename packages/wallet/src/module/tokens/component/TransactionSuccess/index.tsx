@@ -1,4 +1,4 @@
-import { PolygonLink } from "@/module/wallet/component/PolygonLink";
+import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
 import styles from "./index.module.css";
 
@@ -11,7 +11,7 @@ export function TransactionSuccess({ hash }: { hash: string }) {
             Transaction Hash: <WalletAddress wallet={hash} />
             <br />
             <br />
-            <PolygonLink
+            <ExplorerLink
                 hash={hash}
                 icon={false}
                 className={styles.transactionSuccess__polygonLink}

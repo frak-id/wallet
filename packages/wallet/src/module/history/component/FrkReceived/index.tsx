@@ -6,7 +6,7 @@ import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { AlertDialogArticle } from "@/module/history/component/AlertDialogArticle";
 import { DrawerArticle } from "@/module/history/component/DrawerArticle";
-import { PolygonLink } from "@/module/wallet/component/PolygonLink";
+import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
 import type { FrkReceived as FrkReceivedType } from "@/types/HistoryItem";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { HandCoins } from "lucide-react";
@@ -44,10 +44,10 @@ export function FrkReceived({ frkReceived }: ArticleUnlockProps) {
                 </Title>
                 <Row withIcon={true}>
                     From:{" "}
-                    <PolygonLink wallet={true} hash={frkReceived.fromHash} />
+                    <ExplorerLink wallet={true} hash={frkReceived.fromHash} />
                 </Row>
                 <Row withIcon={true}>
-                    Transaction: <PolygonLink hash={frkReceived.txHash} />
+                    Transaction: <ExplorerLink hash={frkReceived.txHash} />
                 </Row>
             </>
         </Component>

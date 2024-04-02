@@ -17,7 +17,7 @@ export function QRCodeWallet() {
             <>
                 <Panel size={"small"}>
                     <Title icon={<ArrowDownToLine width={32} height={32} />}>
-                        Receive assets on <b>Polygon Mumbai</b>
+                        Receive assets on <b>Testnets</b>
                     </Title>
                     {address && (
                         <div className={styles.QRCodeWallet__code}>
