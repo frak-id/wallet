@@ -1,5 +1,7 @@
 import { getSession } from "@/context/session/action/session";
 import { Header } from "@/module/common/component/Header";
+import { EventsWalletConnect } from "@/module/wallet-connect/component/EventsWalletConnect";
+import { WalletConnectProvider } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import { WalletProvider } from "@/module/wallet/provider/WalletProvider";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
@@ -18,8 +20,12 @@ export default async function RestrictedLayout({
     }
     return (
         <WalletProvider session={session}>
-            <Header authenticated={true} />
-            {children}
+            <WalletConnectProvider>
+                <EventsWalletConnect>
+                    <Header authenticated={true} />
+                    {children}
+                </EventsWalletConnect>
+            </WalletConnectProvider>
         </WalletProvider>
     );
 }

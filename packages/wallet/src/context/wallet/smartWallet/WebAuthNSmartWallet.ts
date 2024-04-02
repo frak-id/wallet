@@ -24,7 +24,6 @@ import {
     concatHex,
     encodeAbiParameters,
     encodeFunctionData,
-    encodePacked,
     hashMessage,
     maxUint256,
 } from "viem";
@@ -101,6 +100,7 @@ const webAuthNValidatorEnablingLayout = [
 
 /**
  * Get the account initialization code for a kernel smart account
+ * @param authenticatorId
  * @param signerPubKey
  * @param index
  * @param accountLogicAddress
@@ -378,7 +378,7 @@ export async function webAuthNSmartAccount<
             } = await signatureProvider(challenge);
 
             // Return the encoded stuff for the web auth n validator
-            return encodePacked(webAuthNSignatureLayoutParam, [
+            return encodeAbiParameters(webAuthNSignatureLayoutParam, [
                 true,
                 authenticatorData,
                 clientData,

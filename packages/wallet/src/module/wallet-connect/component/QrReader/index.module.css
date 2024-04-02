@@ -1,0 +1,9 @@
+.qrReader {
+    margin: 10px 0;
+}
+
+.qrReader__reader {
+    margin-bottom: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+}

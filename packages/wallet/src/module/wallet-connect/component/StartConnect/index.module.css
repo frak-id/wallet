@@ -1,0 +1,12 @@
+.accordionConnect {
+    width: 100%;
+}
+
+.accordionConnect__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--frak-accordion-trigger-color);
+    font-weight: 400;
+    font-size: 14px;
+}
