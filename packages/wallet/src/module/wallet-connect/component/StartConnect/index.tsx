@@ -6,12 +6,18 @@ import {
 } from "@/module/common/component/Accordion";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { useBetaOptions } from "@/module/common/hook/useBetaOptions";
 import { ConnectWithQrCode } from "@/module/wallet-connect/component/StartConnect/ConnectWithQrCode";
 import { ConnectionWithUri } from "@/module/wallet-connect/component/StartConnect/ConnectWithUri";
 import { Plug } from "lucide-react";
 import styles from "./index.module.css";
 
 export function CreateWalletConnectConnection() {
+    const { options } = useBetaOptions();
+    if (!options.walletConnect) {
+        return <></>;
+    }
+
     return (
         <Panel withShadow={false} size={"small"}>
             <Accordion

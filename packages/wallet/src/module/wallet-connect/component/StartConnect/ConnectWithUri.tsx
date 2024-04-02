@@ -1,21 +1,8 @@
+import { isValidConnectionUri } from "@/context/wallet-connect/pairing";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Input } from "@/module/common/component/Input";
 import { useWalletConnectToDapp } from "@/module/wallet-connect/hook/useWalletConnectToDapp";
 import { useState } from "react";
-
-export function checkWalletConnectUri(uri: string) {
-    try {
-        const url = new URL(uri);
-        return (
-            url.protocol === "wc:" &&
-            url.searchParams.get("relay-protocol") !== null &&
-            url.searchParams.get("symKey") !== null
-        );
-    } catch (error) {
-        console.log("Invalid WalletConnect URI", error);
-        return false;
-    }
-}
 
 export function ConnectionWithUri() {
     const [connectionUri, setConnectionUri] = useState<string>("");
@@ -34,7 +21,7 @@ export function ConnectionWithUri() {
                 size={"small"}
                 onClick={async () => {
                     setErrorMessage(undefined);
-                    if (!checkWalletConnectUri(connectionUri)) {
+                    if (!isValidConnectionUri(connectionUri)) {
                         setErrorMessage("Invalid WalletConnect URI");
                         return;
                     }

@@ -1,5 +1,5 @@
+import { isValidConnectionUri } from "@/context/wallet-connect/pairing";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
-import { checkWalletConnectUri } from "@/module/wallet-connect/component/StartConnect/ConnectWithUri";
 import { useWalletConnectToDapp } from "@/module/wallet-connect/hook/useWalletConnectToDapp";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -35,7 +35,7 @@ export function ConnectWithQrCode() {
 
     async function onScan(data: string | null) {
         if (!data) return;
-        if (!checkWalletConnectUri(data)) {
+        if (!isValidConnectionUri(data)) {
             setShow(false);
             setErrorMessage("Invalid WalletConnect URI");
             return;

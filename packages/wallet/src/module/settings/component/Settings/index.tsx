@@ -2,6 +2,7 @@
 
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { BetaOptions } from "@/module/settings/component/BetaOptions";
 import { SwitchChain } from "@/module/settings/component/SwitchChain";
 import { SessionsConnected } from "@/module/wallet-connect/component/SessionsConnected";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
@@ -10,7 +11,7 @@ import { Fingerprint, Shield } from "lucide-react";
 import styles from "./index.module.css";
 
 export function Settings() {
-    const { address, username, wallet } = useWallet();
+    const { address, wallet } = useWallet();
 
     return (
         <>
@@ -23,8 +24,6 @@ export function Settings() {
                         Authenticator:{" "}
                         <WalletAddress wallet={wallet.authenticatorId} />
                     </li>
-                    <li>Username: {username}</li>
-                    {/*<li>UsernameId: </li>*/}
                     {address && (
                         <li>
                             Wallet: <WalletAddress wallet={address} />
@@ -32,11 +31,15 @@ export function Settings() {
                     )}
                 </ul>
             </Panel>
+
             <Panel size={"small"} className={styles.settings__disabled}>
                 <Title icon={<Shield size={32} />}>Recovery setup</Title>
                 <p className={styles.settings__comingSoon}>Coming soon</p>
             </Panel>
+
             <SwitchChain />
+            <BetaOptions />
+
             <SessionsConnected />
         </>
     );

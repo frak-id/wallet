@@ -28,7 +28,7 @@ export function SwitchChain() {
     );
 
     return (
-        <Panel size={"normal"} variant={"primary"}>
+        <Panel size={"small"} variant={"primary"}>
             <AccordionChain
                 trigger={
                     <Title icon={<Link size={32} />}>

@@ -1,3 +1,5 @@
+import { getNamespaces } from "@/context/wallet-connect/namespace";
+import { checkRequestedChain } from "@/context/wallet-connect/pairing";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import {
     WcModal,
@@ -5,11 +7,6 @@ import {
     WcModalHeader,
 } from "@/module/wallet-connect/component/ModalRequest/index";
 import styles from "@/module/wallet-connect/component/ModalRequest/index.module.css";
-import {
-    chainsNames,
-    getNamespaces,
-    getNotSupportedChains,
-} from "@/module/wallet-connect/component/ModalRequest/utils";
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMutation } from "@tanstack/react-query";
@@ -47,8 +44,12 @@ export function PairingModal({
      *   - TODO: Maybe filter for only the required not supported to throw an error
      *   - TODO: Display the optional one not supported as warning
      */
-    const notSupportedChains = useMemo(
-        () => getNotSupportedChains(requiredNamespaces, optionalNamespaces),
+    const {
+        supported: _supportedChains,
+        requiredMissing: requiredChainsMissing,
+        optionalMissing: _optionalChainsMissing,
+    } = useMemo(
+        () => checkRequestedChain(requiredNamespaces, optionalNamespaces),
         [requiredNamespaces, optionalNamespaces]
     );
 
@@ -57,10 +58,10 @@ export function PairingModal({
      */
     const isApproveDisabled = useMemo(
         () =>
-            notSupportedChains.length > 0 ||
+            requiredChainsMissing.length > 0 ||
             !walletConnectInstance ||
             !smartWallet?.address,
-        [notSupportedChains, smartWallet, walletConnectInstance]
+        [requiredChainsMissing, smartWallet, walletConnectInstance]
     );
 
     /**
@@ -161,12 +162,11 @@ export function PairingModal({
                 subTitle={"wants to connect"}
             />
 
-            {notSupportedChains.length > 0 && (
+            {requiredChainsMissing.length > 0 && (
                 <p className={`error ${styles.modalPairing__error}`}>
-                    Network not supported.
+                    Networks not supported:
                     <br />
-                    Networks available:{" "}
-                    {chainsNames.join(", ").replace(/,([^,]*)$/, " and$1")}
+                    {requiredChainsMissing.join(", ")}
                 </p>
             )}
 

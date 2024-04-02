@@ -4,6 +4,7 @@ import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import { Panel } from "@/module/common/component/Panel";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import { PairingModal } from "@/module/wallet-connect/component/ModalRequest/Pairing";
+import { SendTxModal } from "@/module/wallet-connect/component/ModalRequest/SendTxRequest";
 import { SignRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignRequest";
 import { SignTypedDataRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignTypedDataRequest";
 import { useMediaQuery } from "@uidotdev/usehooks";
@@ -73,6 +74,11 @@ function RequestModal({
     ) {
         return <SignTypedDataRequestModal args={args} onClose={onClose} />;
     }
+    // If that's a send tx request
+    if (method === "eth_sendTransaction") {
+        return <SendTxModal args={args} onClose={onClose} />;
+    }
+    console.log("Unknown request type", { method });
 
     return <>Unknown request type</>;
 }
