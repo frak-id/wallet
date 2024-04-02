@@ -16,7 +16,7 @@ import {
     createSmartAccountClient,
 } from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
-import { type ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, useContext, useEffect } from "react";
 import { useMemo } from "react";
 import { useClient, useConnect } from "wagmi";
 
@@ -34,7 +34,7 @@ function useWalletHook({ session }: { session: Session }) {
     /**
      * The current AA related clients
      */
-    const { bundlerTransport, bundlerClient, paymasterClient } = useAAClients();
+    const { bundlerTransport, paymasterClient } = useAAClients();
 
     /**
      * Hook to connect the wagmi connector to the smart wallet client
@@ -52,11 +52,6 @@ function useWalletHook({ session }: { session: Session }) {
             viemClient?.chain?.id ?? "no-viem-chain-id",
         ],
         queryFn: async (): Promise<KernelWebAuthNSmartAccount | null> => {
-            console.log("rebuilding smartWallet", {
-                wallet,
-                viemClient,
-                chain: viemClient?.chain?.name,
-            });
             // If there is no authenticator, return
             if (!(wallet && viemClient)) {
                 return null;
@@ -86,56 +81,53 @@ function useWalletHook({ session }: { session: Session }) {
             });
         },
         enabled: !!viemClient,
+        staleTime: 0,
+        refetchOnWindowFocus: true,
+        refetchOnMount: true,
+        refetchOnReconnect: true,
     });
 
     /**
-     * The smart wallet client
+     * Every time the smart wallet changes, we need to update the connector
      */
-    const { data: smartWalletClient } = useQuery({
-        queryKey: [
-            "kernel-smartWallet-client",
-            smartWallet?.address ?? "no-address",
-            viemClient,
+    const smartWalletClient = useMemo(() => {
+        if (!(smartWallet && viemClient && bundlerTransport)) {
+            return;
+        }
+
+        // Build the smart wallet client
+        return createSmartAccountClient({
+            account: smartWallet,
+            entryPoint: ENTRYPOINT_ADDRESS_V06,
+            chain: viemClient.chain,
             bundlerTransport,
-            paymasterClient,
-        ],
-        enabled:
-            !!smartWallet &&
-            !!viemClient &&
-            !!bundlerTransport &&
-            !!bundlerClient &&
-            viemClient.chain.id === bundlerClient.chain.id,
-        queryFn: async () => {
-            if (!(smartWallet && viemClient && bundlerTransport)) {
-                return;
-            }
+            // Only add a middleware if the paymaster client is available
+            middleware: paymasterClient
+                ? {
+                      sponsorUserOperation: (args) =>
+                          sponsorUserOperation(paymasterClient, args),
+                  }
+                : {},
+        });
+    }, [smartWallet, viemClient, bundlerTransport, paymasterClient]);
 
-            // Build the smart wallet client
-            const smartAccountClient = createSmartAccountClient({
-                account: smartWallet,
-                entryPoint: ENTRYPOINT_ADDRESS_V06,
-                chain: viemClient.chain,
-                bundlerTransport,
-                // Only add a middleware if the paymaster client is available
-                middleware: paymasterClient
-                    ? {
-                          sponsorUserOperation: (args) =>
-                              sponsorUserOperation(paymasterClient, args),
-                      }
-                    : {},
-            });
+    /**
+     * Every time the smart account changes, we need to update the connector
+     */
+    useEffect(() => {
+        if (!smartWalletClient || typeof connect !== "function") {
+            return;
+        }
 
-            // Build the wagmi connector and connect to it
-            const connector = smartAccount({
-                // @ts-ignore
-                smartAccountClient,
-            });
-            connect({ connector });
-
-            // Return it
-            return smartAccountClient;
-        },
-    });
+        // Build the wagmi connector and connect to it
+        const connector = smartAccount({
+            // @ts-ignore
+            smartAccountClient: smartWalletClient,
+            id: `nexus-wallet-${smartWalletClient.chain.id}`,
+            name: "Nexus Wallet",
+        });
+        connect({ connector });
+    }, [connect, smartWalletClient]);
 
     return useMemo(
         () => ({
