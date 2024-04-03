@@ -3,14 +3,19 @@
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
-import { useTheme } from "@/module/settings/provider/ThemeProvider";
+import {
+    reversedThemeAtom,
+    toggleThemeAtom,
+} from "@/module/settings/atoms/theme";
+import { useAtomValue, useSetAtom } from "jotai";
 import { SunMoon } from "lucide-react";
 
 /**
  * Switch theme between light and dark mode
  */
 export function SwitchTheme() {
-    const { toggleTheme, reversedTheme } = useTheme();
+    const toggleTheme = useSetAtom(toggleThemeAtom);
+    const reversedTheme = useAtomValue(reversedThemeAtom);
 
     return (
         <Panel size={"none"} variant={"empty"}>

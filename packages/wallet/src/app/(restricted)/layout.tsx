@@ -1,6 +1,5 @@
 import { getSession } from "@/context/session/action/session";
 import { Header } from "@/module/common/component/Header";
-import { ThemeProvider } from "@/module/settings/provider/ThemeProvider";
 import { EventsWalletConnect } from "@/module/wallet-connect/component/EventsWalletConnect";
 import { WalletConnectProvider } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import { WalletProvider } from "@/module/wallet/provider/WalletProvider";
@@ -20,15 +19,13 @@ export default async function RestrictedLayout({
         redirect("/register");
     }
     return (
-        <ThemeProvider>
-            <WalletProvider session={session}>
-                <WalletConnectProvider>
-                    <EventsWalletConnect>
-                        <Header authenticated={true} />
-                        {children}
-                    </EventsWalletConnect>
-                </WalletConnectProvider>
-            </WalletProvider>
-        </ThemeProvider>
+        <WalletProvider session={session}>
+            <WalletConnectProvider>
+                <EventsWalletConnect>
+                    <Header authenticated={true} />
+                    {children}
+                </EventsWalletConnect>
+            </WalletConnectProvider>
+        </WalletProvider>
     );
 }

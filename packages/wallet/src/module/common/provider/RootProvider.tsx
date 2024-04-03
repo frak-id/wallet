@@ -5,6 +5,7 @@ import {
     availableTransports,
 } from "@/context/common/blockchain/provider";
 import { PaywallProvider } from "@/module/paywall/provider";
+import { ThemeListener } from "@/module/settings/atoms/theme";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -60,14 +61,17 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 // TODO: Include a small 'build with ZeroDev and Permissionless' on the bottom
 export function RootProvider({ children }: PropsWithChildren) {
     return (
-        <PersistQueryClientProvider
-            client={queryClient}
-            persistOptions={persistOptions}
-        >
-            <WagmiProvider config={wagmiConfig}>
-                <PaywallProvider>{children}</PaywallProvider>
-            </WagmiProvider>
-            <ReactQueryDevtools initialIsOpen={false} />
-        </PersistQueryClientProvider>
+        <>
+            <PersistQueryClientProvider
+                client={queryClient}
+                persistOptions={persistOptions}
+            >
+                <WagmiProvider config={wagmiConfig}>
+                    <PaywallProvider>{children}</PaywallProvider>
+                </WagmiProvider>
+                <ReactQueryDevtools initialIsOpen={false} />
+            </PersistQueryClientProvider>
+            <ThemeListener />
+        </>
     );
 }

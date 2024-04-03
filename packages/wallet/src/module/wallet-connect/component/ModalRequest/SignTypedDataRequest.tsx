@@ -6,7 +6,7 @@ import {
 } from "@/module/common/component/Accordion";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useTheme } from "@/module/settings/provider/ThemeProvider";
+import { currentThemeAtom } from "@/module/settings/atoms/theme";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import {
     WcModal,
@@ -19,6 +19,7 @@ import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnect
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMutation } from "@tanstack/react-query";
 import { getSdkError } from "@walletconnect/utils";
+import { useAtomValue } from "jotai/index";
 import { FileSignature } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CodeBlock, tomorrow, tomorrowNightBlue } from "react-code-blocks";
@@ -222,7 +223,7 @@ export function SignTypedDataRequestModal({
 function TypedDataCodeBlocks({
     typedData,
 }: { typedData: TypedDataDefinition }) {
-    const { theme } = useTheme();
+    const theme = useAtomValue(currentThemeAtom);
     const codeBlockTheme = theme === "dark" ? tomorrowNightBlue : tomorrow;
 
     return (
