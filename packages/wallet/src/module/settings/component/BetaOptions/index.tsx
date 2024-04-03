@@ -9,13 +9,18 @@ import {
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
-import { useBetaOptions } from "@/module/common/hook/useBetaOptions";
+import {
+    betaOptionsAtom,
+    toggleWalletConnectOptionAtom,
+} from "@/module/settings/atoms/betaOptions";
 import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
+import { useAtomValue, useSetAtom } from "jotai";
 import { FlaskConical, Square, SquareCheck } from "lucide-react";
 import styles from "./index.module.css";
 
 export function BetaOptions() {
-    const { options, toggleWalletConnect } = useBetaOptions();
+    const options = useAtomValue(betaOptionsAtom);
+    const toggleWalletConnect = useSetAtom(toggleWalletConnectOptionAtom);
 
     return (
         <>
