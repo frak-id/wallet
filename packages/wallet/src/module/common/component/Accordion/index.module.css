@@ -9,7 +9,9 @@
 }
 
 .accordion__trigger {
-    all: unset;
+    border: none;
+    background: none;
+    padding: 0;
     position: relative;
     font-family: inherit;
     cursor: pointer;

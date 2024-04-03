@@ -286,8 +286,11 @@ export function WcModalRequestContext({
     const formattedChain = useMemo(() => chain.replace("eip155:", ""), [chain]);
     return (
         <>
-            <Panel size={"small"}>Chain: {formattedChain}</Panel>
-            <Panel size={"small"}>Protocol: {protocol}</Panel>
+            <Panel size={"small"}>
+                Chain: {formattedChain}
+                <br />
+                Protocol: {protocol}
+            </Panel>
         </>
     );
 }

@@ -1,5 +1,6 @@
 .modalPairing__header {
     text-align: center;
+    margin-bottom: 20px;
 }
 
 .modalPairing__title {
@@ -38,9 +39,9 @@
     color: var(--frak-color-green);
 }
 
-
 .modalWc__accordion {
 }
+
 .modalWc__accordionTrigger {
     display: flex;
     align-items: center;

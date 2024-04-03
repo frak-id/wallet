@@ -6,6 +6,7 @@ import {
 } from "@/module/common/component/Accordion";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { useTheme } from "@/module/settings/provider/ThemeProvider";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import {
     WcModal,
@@ -20,7 +21,7 @@ import { useMutation } from "@tanstack/react-query";
 import { getSdkError } from "@walletconnect/utils";
 import { FileSignature } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CodeBlock, monokai } from "react-code-blocks";
+import { CodeBlock, tomorrow, tomorrowNightBlue } from "react-code-blocks";
 import { type TypedDataDefinition, isAddress } from "viem";
 
 export function SignTypedDataRequestModal({
@@ -221,11 +222,15 @@ export function SignTypedDataRequestModal({
 function TypedDataCodeBlocks({
     typedData,
 }: { typedData: TypedDataDefinition }) {
+    const { theme } = useTheme();
+    const codeBlockTheme = theme === "dark" ? tomorrowNightBlue : tomorrow;
+
     return (
         <Accordion
             type={"single"}
             collapsible
             className={styles.modalWc__accordion}
+            defaultValue={"domain"}
         >
             <AccordionItem value={"domain"}>
                 <AccordionTrigger className={styles.modalWc__accordionTrigger}>
@@ -235,7 +240,7 @@ function TypedDataCodeBlocks({
                     <CodeBlock
                         showLineNumbers={false}
                         text={JSON.stringify(typedData?.domain ?? {}, null, 2)}
-                        theme={monokai}
+                        theme={codeBlockTheme}
                         language="json"
                     />
                 </AccordionContent>
@@ -251,7 +256,7 @@ function TypedDataCodeBlocks({
                     <CodeBlock
                         showLineNumbers={false}
                         text={JSON.stringify(typedData?.types ?? {}, null, 2)}
-                        theme={monokai}
+                        theme={codeBlockTheme}
                         language="json"
                     />
                 </AccordionContent>
@@ -265,7 +270,7 @@ function TypedDataCodeBlocks({
                     <CodeBlock
                         showLineNumbers={false}
                         text={JSON.stringify(typedData?.message ?? {}, null, 2)}
-                        theme={monokai}
+                        theme={codeBlockTheme}
                         language="json"
                     />
                 </AccordionContent>

@@ -12,6 +12,7 @@
     left: 0;
     right: 0;
     z-index: 10;
+    max-height: 100dvh;
     margin-top: 24px;
     display: flex;
     flex-direction: column;
@@ -22,6 +23,11 @@
 
 .drawer__content {
     padding: 20px;
+}
+
+.drawer__content > section {
+    overflow: auto;
+    max-height: 91dvh;
 }
 
 .drawer__handle {
