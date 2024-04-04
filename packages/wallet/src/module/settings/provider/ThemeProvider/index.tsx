@@ -1,9 +1,10 @@
 "use client";
 
-import { useLocalStorage } from "@uidotdev/usehooks";
+import useLocalStorageState from "use-local-storage-state";
 
 const queryDark = "(prefers-color-scheme: dark)";
-const watchSystemTheme = window.matchMedia(queryDark);
+const isClient = typeof window !== "undefined";
+const watchSystemTheme = isClient ? window.matchMedia(queryDark) : undefined;
 
 import {
     createContext,
@@ -16,12 +17,14 @@ import type { ReactNode } from "react";
 import { useMemo } from "react";
 
 function useThemeHook() {
-    const [theme, setTheme] = useLocalStorage<"light" | "dark" | null>(
+    const [theme, setTheme] = useLocalStorageState<"light" | "dark" | null>(
         "theme",
-        null
+        {
+            defaultValue: null,
+        }
     );
     const [themeSystem, setThemeSystem] = useState<"light" | "dark">(
-        watchSystemTheme.matches ? "dark" : "light"
+        watchSystemTheme?.matches ? "dark" : "light"
     );
     const currentTheme = theme ?? themeSystem;
     const reversedTheme = currentTheme === "light" ? "dark" : "light";
@@ -35,13 +38,16 @@ function useThemeHook() {
     }
 
     useEffect(() => {
-        const root = document.querySelector(":root") as HTMLElement;
+        const root = isClient
+            ? (document.querySelector(":root") as HTMLElement)
+            : undefined;
+        if (!root) return;
         root.dataset.theme = theme ?? themeSystem;
 
-        watchSystemTheme.addEventListener("change", useSetTheme);
+        watchSystemTheme?.addEventListener("change", useSetTheme);
 
         return () => {
-            watchSystemTheme.removeEventListener("change", useSetTheme);
+            watchSystemTheme?.removeEventListener("change", useSetTheme);
         };
     }, [theme, themeSystem]);
 

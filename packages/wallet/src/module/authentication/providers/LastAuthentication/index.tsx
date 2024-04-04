@@ -4,10 +4,10 @@ import type { PreviousAuthenticatorModel } from "@/context/common/dexie/Previous
 import { dexieDb } from "@/context/common/dexie/dexieDb";
 import type { Session } from "@/types/Session";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { useLiveQuery } from "dexie-react-hooks";
 import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
+import useLocalStorageState from "use-local-storage-state";
 
 type LastAuthentication = Session & {
     transports?: AuthenticatorTransportFuture[];
@@ -27,7 +27,9 @@ function useLastAuthenticationsHook() {
      * The last authentication used
      */
     const [lastAuthentication, setLastAuthentication] =
-        useLocalStorage<LastAuthentication | null>("lastAuthentication", null);
+        useLocalStorageState<LastAuthentication | null>("lastAuthentication", {
+            defaultValue: null,
+        });
 
     // Add a last authentication
     async function addLastAuthentication(authentication: LastAuthentication) {

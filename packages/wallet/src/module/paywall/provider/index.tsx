@@ -4,7 +4,6 @@ import { dexieDb } from "@/context/common/dexie/dexieDb";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
 import type { ArticlePrice } from "@/types/Price";
 import type { StartArticleUnlockParams } from "@frak-labs/nexus-sdk/core";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { useRouter } from "next/navigation";
 import {
     type ReactNode,
@@ -13,6 +12,7 @@ import {
     useState,
     useTransition,
 } from "react";
+import useLocalStorageState from "use-local-storage-state";
 import type { Hex } from "viem";
 
 /**
@@ -82,14 +82,14 @@ function usePaywallHook() {
     const router = useRouter();
     const [, startTransition] = useTransition();
 
-    const [currentContext, setContext] = useLocalStorage<PaywallContext | null>(
-        "paywallContext",
-        null
-    );
-    const [currentStatus, setStatus] = useLocalStorage<PaywallStatus | null>(
-        "paywallStatus",
-        null
-    );
+    const [currentContext, setContext] =
+        useLocalStorageState<PaywallContext | null>("paywallContext", {
+            defaultValue: null,
+        });
+    const [currentStatus, setStatus] =
+        useLocalStorageState<PaywallStatus | null>("paywallStatus", {
+            defaultValue: null,
+        });
     const [isRedirecting, setIsRedirecting] = useState(false);
 
     /**

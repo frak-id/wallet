@@ -50,6 +50,7 @@
     "react-hook-form": "^7.51.2",
     "react-loading-skeleton": "^3.4.0",
     "react-qr-reader-es6": "^2.2.1-2",
+    "use-local-storage-state": "^19.2.0",
     "vaul": "^0.9.0",
     "viem": "^2.9.6",
     "wagmi": "^2.5.17"

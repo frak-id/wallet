@@ -5,11 +5,11 @@ import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { usePaywall } from "@/module/paywall/provider";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import useLocalStorageState from "use-local-storage-state";
 import styles from "./index.module.css";
 
 export function Register() {
@@ -20,9 +20,9 @@ export function Register() {
     const [disabled, setDisabled] = useState(false);
     const { get } = useSearchParams();
     const redirectUrlFromQuery = get("redirectUrl") as string | null;
-    const [redirectUrl, setRedirectUrl] = useLocalStorage<string | null>(
+    const [redirectUrl, setRedirectUrl] = useLocalStorageState<string | null>(
         "redirectUrl",
-        redirectUrlFromQuery
+        { defaultValue: redirectUrlFromQuery }
     );
 
     /**

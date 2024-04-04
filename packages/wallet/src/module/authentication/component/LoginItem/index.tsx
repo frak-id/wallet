@@ -3,10 +3,10 @@ import type { PreviousAuthenticatorModel } from "@/context/common/dexie/Previous
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { SquareUser } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import useLocalStorageState from "use-local-storage-state";
 import styles from "./index.module.css";
 
 export function LoginItem({
@@ -15,9 +15,9 @@ export function LoginItem({
     const router = useRouter();
     const [, startTransition] = useTransition();
     const { login } = useLogin();
-    const [redirectUrl, setRedirectUrl] = useLocalStorage<string | null>(
+    const [redirectUrl, setRedirectUrl] = useLocalStorageState<string | null>(
         "redirectUrl",
-        null
+        { defaultValue: null }
     );
 
     return (

@@ -6,9 +6,9 @@ import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { usePaywall } from "@/module/paywall/provider";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import useLocalStorageState from "use-local-storage-state";
 import styles from "./index.module.css";
 
 /**
@@ -22,9 +22,9 @@ export function Login() {
     const router = useRouter();
     const [, startTransition] = useTransition();
     const [disabled, setDisabled] = useState(false);
-    const [redirectUrl, setRedirectUrl] = useLocalStorage<string | null>(
+    const [redirectUrl, setRedirectUrl] = useLocalStorageState<string | null>(
         "redirectUrl",
-        null
+        { defaultValue: null }
     );
 
     async function triggerAction() {

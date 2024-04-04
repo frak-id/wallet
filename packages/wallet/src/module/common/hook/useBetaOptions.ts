@@ -1,7 +1,7 @@
 "use client";
 
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { useCallback, useMemo } from "react";
+import useLocalStorageState from "use-local-storage-state";
 
 type BetaOptionsState = {
     walletConnect: boolean;
@@ -11,10 +11,12 @@ type BetaOptionsState = {
  * Hook to enable or disable certain features that are in beta
  */
 export function useBetaOptions() {
-    const [options, setOptions] = useLocalStorage<BetaOptionsState>(
+    const [options, setOptions] = useLocalStorageState<BetaOptionsState>(
         "betaOptions",
         {
-            walletConnect: false,
+            defaultValue: {
+                walletConnect: false,
+            },
         }
     );
 
