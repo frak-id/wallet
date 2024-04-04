@@ -11,6 +11,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
+import { Provider } from "jotai";
 import type { PropsWithChildren } from "react";
 import { WagmiProvider, createConfig } from "wagmi";
 
@@ -58,20 +59,21 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     },
 };
 
-// TODO: Include a small 'build with ZeroDev and Permissionless' on the bottom
 export function RootProvider({ children }: PropsWithChildren) {
     return (
         <>
-            <PersistQueryClientProvider
-                client={queryClient}
-                persistOptions={persistOptions}
-            >
-                <WagmiProvider config={wagmiConfig}>
-                    <PaywallProvider>{children}</PaywallProvider>
-                </WagmiProvider>
-                <ReactQueryDevtools initialIsOpen={false} />
-            </PersistQueryClientProvider>
-            <ThemeListener />
+            <Provider>
+                <PersistQueryClientProvider
+                    client={queryClient}
+                    persistOptions={persistOptions}
+                >
+                    <WagmiProvider config={wagmiConfig}>
+                        <PaywallProvider>{children}</PaywallProvider>
+                    </WagmiProvider>
+                    <ReactQueryDevtools initialIsOpen={false} />
+                </PersistQueryClientProvider>
+                <ThemeListener />
+            </Provider>
         </>
     );
 }

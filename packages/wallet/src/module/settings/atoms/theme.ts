@@ -1,33 +1,41 @@
-import { atom, useSetAtom } from "jotai";
+"use client";
+
+import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { useCallback, useEffect } from "react";
 
-const queryDark = "(prefers-color-scheme: dark)";
-const isClient = typeof window !== "undefined";
-const watchSystemTheme = isClient ? window.matchMedia(queryDark) : undefined;
+const isClientAtom = atom(() => typeof window !== "undefined");
 
-type Theme = "light" | "dark" | "auto";
+type SystemTheme = "light" | "dark";
+type Theme = SystemTheme | "auto";
 
 /**
  * Atom to store the system theme
  */
-const systemThemeAtom = atom<Omit<Theme, "auto">>(
-    watchSystemTheme?.matches ? "dark" : "light"
-);
+const systemThemeAtom = atom<SystemTheme>("light");
 
 /**
  * Atom to store the user base theme
  */
-const userBaseThemeAtom = atomWithStorage<Theme>("theme", "auto");
+const storageThemeAtom = atomWithStorage<Theme>("theme", "auto");
 
 /**
  * Atom to manipulate the base user theme and update the root element
  */
 export const userThemeAtom = atom(
-    (get) => get(userBaseThemeAtom),
-    (_get, set, theme: Theme) => {
-        set(userBaseThemeAtom, theme);
-        const root = isClient
+    (get) => {
+        const userTheme = get(storageThemeAtom);
+        if (userTheme === "auto") {
+            return get(systemThemeAtom);
+        }
+        return userTheme;
+    },
+    (get, set, theme: Theme) => {
+        // Set the theme in storage
+        set(storageThemeAtom, theme);
+
+        // Update the root theme
+        const root = get(isClientAtom)
             ? (document.querySelector(":root") as HTMLElement)
             : undefined;
         if (!root) return;
@@ -36,13 +44,11 @@ export const userThemeAtom = atom(
 );
 
 /**
- * Atom to store the current theme
+ * Atom to get the reversed theme
  */
-export const currentThemeAtom = atom((get) => {
-    const systemTheme = get(systemThemeAtom);
-    const userTheme = get(userThemeAtom);
-    return userTheme === "auto" ? systemTheme : userTheme;
-});
+export const reversedThemeAtom = atom((get) =>
+    get(userThemeAtom) === "light" ? "dark" : "light"
+);
 
 /**
  * Method used to toggle the theme
@@ -52,29 +58,44 @@ export const toggleThemeAtom = atom(null, (get, set) =>
 );
 
 /**
- * Atom to store the reversed theme
- */
-export const reversedThemeAtom = atom((get) =>
-    get(currentThemeAtom) === "light" ? "dark" : "light"
-);
-
-/**
  * Component to set the theme based on the system theme
  */
 export function ThemeListener() {
+    const isClient = useAtomValue(isClientAtom);
+
+    // Theme setter
     const setSystemTheme = useSetAtom(systemThemeAtom);
 
+    /**
+     * The system theme listener
+     */
     const listener = useCallback(
-        (event: MediaQueryListEvent) => {
+        (event: MediaQueryListEvent | MediaQueryList) => {
             setSystemTheme(event.matches ? "dark" : "light");
         },
         [setSystemTheme]
     );
 
+    /**+
+     * Setup the system theme listener
+     */
     useEffect(() => {
-        watchSystemTheme?.addEventListener("change", listener);
-        return () => watchSystemTheme?.removeEventListener("change", listener);
-    }, [listener]);
+        // Early return if not on the client
+        if (!isClient) return;
+
+        const watchSystemTheme = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+        );
+
+        // Set initial state
+        listener(watchSystemTheme);
+
+        // Setup listener
+        watchSystemTheme.addEventListener("change", listener);
+
+        // Remove listener
+        return () => watchSystemTheme.removeEventListener("change", listener);
+    }, [isClient, listener]);
 
     return null;
 }

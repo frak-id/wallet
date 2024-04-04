@@ -6,7 +6,7 @@ import {
 } from "@/module/common/component/Accordion";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { currentThemeAtom } from "@/module/settings/atoms/theme";
+import { userThemeAtom } from "@/module/settings/atoms/theme";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import {
     WcModal,
@@ -223,7 +223,7 @@ export function SignTypedDataRequestModal({
 function TypedDataCodeBlocks({
     typedData,
 }: { typedData: TypedDataDefinition }) {
-    const theme = useAtomValue(currentThemeAtom);
+    const theme = useAtomValue(userThemeAtom);
     const codeBlockTheme = theme === "dark" ? tomorrowNightBlue : tomorrow;
 
     return (
