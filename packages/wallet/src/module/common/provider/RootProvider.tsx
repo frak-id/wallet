@@ -4,7 +4,6 @@ import {
     availableChains,
     availableTransports,
 } from "@/context/common/blockchain/provider";
-import { PaywallProvider } from "@/module/paywall/provider";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
@@ -68,7 +67,7 @@ export function RootProvider({ children }: PropsWithChildren) {
                     persistOptions={persistOptions}
                 >
                     <WagmiProvider config={wagmiConfig}>
-                        <PaywallProvider>{children}</PaywallProvider>
+                        {children}
                     </WagmiProvider>
                     <ReactQueryDevtools initialIsOpen={false} />
                 </PersistQueryClientProvider>

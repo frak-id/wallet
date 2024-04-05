@@ -1,43 +1,95 @@
 "use client";
 
-import { formatFrk } from "@/context/wallet/utils/frkFormatter";
-import { formatHash } from "@/context/wallet/utils/hashFormatter";
+import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
+import { clearPaywallAtom } from "@/module/paywall/atoms/paywall";
+import type { PaywallContext } from "@/module/paywall/atoms/paywallContext";
+import { isPaywallUnlockActionDisabledAtom } from "@/module/paywall/atoms/unlockUiState";
 import { AccordionInformation } from "@/module/paywall/component/AccordionInformation";
 import { ArticlePreview } from "@/module/paywall/component/ArticlePreview";
-import { UnlockConfirmation } from "@/module/paywall/component/UnlockConfirmation";
-import { UnlockError } from "@/module/paywall/component/UnlockError";
-import { UnlockLoading } from "@/module/paywall/component/UnlockLoading";
-import { useArticlePrices } from "@/module/paywall/hook/useUnlockArticle";
-import { usePaywall } from "@/module/paywall/provider";
-import type { PaywallContext } from "@/module/paywall/provider";
+import {
+    UnlockConfirmation,
+    UnlockError,
+    UnlockIdle,
+    UnlockLoading,
+} from "@/module/paywall/component/Unlock/ButtonInfo";
+import {
+    InformationBalance,
+    InformationError,
+    InformationOpHash,
+    InformationUnlockPriceOrExpiration,
+} from "@/module/paywall/component/Unlock/DetailsInformation";
+import { usePaywallRedirection } from "@/module/paywall/hook/usePaywallRedirection";
+import { useUnlockArticle } from "@/module/paywall/hook/useUnlockArticle";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
+import { useAtomValue, useSetAtom } from "jotai/index";
 import { BookText } from "lucide-react";
-import { formatEther } from "viem";
+import { useCallback, useMemo } from "react";
 import styles from "./index.module.css";
 
 export function PaywallUnlock({ context }: { context: PaywallContext }) {
     const { balance } = useFrkBalance();
-    const { discard, redirect: redirectPaywallContext } = usePaywall();
-    const { disabled, launchArticleUnlock, uiState } = useArticlePrices({
+    const redirect = usePaywallRedirection();
+    const { launchArticleUnlock, uiState } = useUnlockArticle({
         context,
     });
 
-    async function doUnlock() {
-        await launchArticleUnlock();
-    }
+    const clearPaywall = useSetAtom(clearPaywallAtom);
+    const isDisabled = useAtomValue(isPaywallUnlockActionDisabledAtom);
 
-    function redirectToArticle() {
-        redirectPaywallContext({ redirectUrl: context.redirectUrl });
-    }
+    /**
+     * The main action to do when the user click on the main button
+     */
+    const mainAction = useCallback(async () => {
+        if (uiState.success || uiState.already) {
+            redirect({ redirectUrl: context.redirectUrl });
+        } else {
+            await launchArticleUnlock();
+        }
+    }, [
+        uiState.success,
+        uiState.already,
+        context,
+        launchArticleUnlock,
+        redirect,
+    ]);
+
+    /**
+     * The main action to do when the user click on the main button
+     */
+    const discardAction = useCallback(async () => {
+        // Build the redirection url
+        const unlockResponseUrl = await getStartUnlockResponseRedirectUrl({
+            redirectUrl: context.redirectUrl,
+            response: {
+                key: "cancelled",
+                status: "locked",
+                reason: "User discarded the unlock request",
+            },
+        });
+
+        // Clear the current paywall context
+        clearPaywall();
+
+        // And go to the redirect url
+        redirect({ redirectUrl: unlockResponseUrl });
+    }, [clearPaywall, redirect, context]);
+
+    /**
+     * The expiration date if already unlocked
+     */
+    const alreadyUnlockedExpirationDate = useMemo(
+        () => uiState.already?.expireIn,
+        [uiState.already]
+    );
 
     return (
         <>
             {!(uiState.success || uiState.already) && (
-                <Back onClick={discard} disabled={disabled}>
+                <Back onClick={discardAction} disabled={isDisabled}>
                     Back to the locked article
                 </Back>
             )}
@@ -51,14 +103,11 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
                             <BookText size={100} absoluteStrokeWidth={true} />
                         )
                     }
-                    disabled={disabled}
-                    action={
-                        uiState.success || uiState.already
-                            ? redirectToArticle
-                            : doUnlock
-                    }
+                    disabled={isDisabled}
+                    action={mainAction}
                     className={styles.unlock__fingerprints}
                 >
+                    <UnlockIdle idle={uiState.idle} />
                     <UnlockLoading loading={uiState.loading} />
                     <UnlockError error={uiState.error} />
                     <UnlockConfirmation
@@ -69,47 +118,20 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
 
                 <Panel size={"small"}>
                     <AccordionInformation trigger={"Informations"}>
-                        <p className={styles.unlock__row}>
-                            <span>Current balance</span>
-                            <span>{formatFrk(Number(balance))}</span>
-                        </p>
-                        {!uiState.already?.expireIn && (
-                            <p className={styles.unlock__row}>
-                                <span>Unlock price</span>
-                                <span>
-                                    {formatEther(
-                                        BigInt(context.price.frkAmount)
-                                    )}{" "}
-                                    FRK
-                                </span>
-                            </p>
-                        )}
-                        {uiState.already?.expireIn && (
-                            <p className={styles.unlock__row}>
-                                <span>Expire in</span>
-                                <span>{uiState.already.expireIn}</span>
-                            </p>
-                        )}
+                        <InformationBalance balance={balance} />
+                        <InformationUnlockPriceOrExpiration
+                            price={context.price.frkAmount}
+                            alreadyUnlockedExpiration={
+                                alreadyUnlockedExpirationDate
+                            }
+                        />
                         {/*<p className={styles.unlock__row}>
                             <span>Unlock duration</span>
                         </p>*/}
-                        {uiState.success?.userOpHash && (
-                            <p
-                                className={`${styles.unlock__row} ${styles.unlock__information}`}
-                            >
-                                <span>User op hash</span>
-                                <span>
-                                    {formatHash(uiState.success?.userOpHash)}
-                                </span>
-                            </p>
-                        )}
-                        {uiState.error?.reason && (
-                            <p
-                                className={`${styles.unlock__information} ${styles["unlock__information--error"]}`}
-                            >
-                                {uiState.error.reason}
-                            </p>
-                        )}
+                        <InformationOpHash
+                            userOpHash={uiState.success?.userOpHash}
+                        />
+                        <InformationError reason={uiState.error?.reason} />
                     </AccordionInformation>
                 </Panel>
             </Grid>

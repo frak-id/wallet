@@ -5,7 +5,8 @@ import { useLogin } from "@/module/authentication/hook/useLogin";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
-import { usePaywall } from "@/module/paywall/provider";
+import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
+import { useAtomValue } from "jotai/index";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import useLocalStorageState from "use-local-storage-state";
@@ -18,7 +19,7 @@ import styles from "./index.module.css";
  */
 export function Login() {
     const { login } = useLogin();
-    const { context } = usePaywall();
+    const hasPaywallContext = useAtomValue(hasPaywallContextAtom);
     const router = useRouter();
     const [, startTransition] = useTransition();
     const [disabled, setDisabled] = useState(false);
@@ -37,7 +38,7 @@ export function Login() {
                 return;
             }
 
-            router.push(context ? "/unlock" : "/wallet");
+            router.push(hasPaywallContext ? "/unlock" : "/wallet");
             setDisabled(false);
         });
     }

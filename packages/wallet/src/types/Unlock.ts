@@ -6,8 +6,16 @@ export type UnlockSuccessData = Readonly<{
     userOpExplorerLink: string;
 }>;
 
-export type UiState =
+export type PaywallUnlockUiState =
     | {
+          idle: true;
+          already?: never;
+          success?: never;
+          error?: never;
+          loading?: never;
+      }
+    | {
+          idle?: never;
           already: {
               redirectUrl: string;
               expireIn: string;
@@ -17,6 +25,7 @@ export type UiState =
           loading?: never;
       }
     | {
+          idle?: never;
           success: {
               redirectUrl: string;
               userOpHash: Hex;
@@ -27,6 +36,7 @@ export type UiState =
           loading?: never;
       }
     | {
+          idle?: never;
           error: {
               reason: string;
           };
@@ -35,12 +45,9 @@ export type UiState =
           loading?: never;
       }
     | {
+          idle?: never;
           loading: {
-              info:
-                  | "idle"
-                  | "checkingParams"
-                  | "buildingTx"
-                  | "pendingSignature";
+              info: "checkingParams" | "buildingTx" | "pendingSignature";
           };
           already?: never;
           error?: never;

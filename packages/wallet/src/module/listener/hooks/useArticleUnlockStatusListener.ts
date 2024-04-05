@@ -1,14 +1,21 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useAAClients } from "@/module/common/hook/useAAClients";
 import { useSession } from "@/module/common/hook/useSession";
+import { clearPaywallAtom } from "@/module/paywall/atoms/paywall";
+import { paywallContextAtom } from "@/module/paywall/atoms/paywallContext";
+import {
+    type PaywallStatus,
+    paywallStatusAtom,
+} from "@/module/paywall/atoms/paywallStatus";
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
-import { type PaywallStatus, usePaywall } from "@/module/paywall/provider";
 import type {
     ArticleUnlockStatusReturnType,
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
 import { useQuery } from "@tanstack/react-query";
+import { useSetAtom } from "jotai";
+import { useAtomValue } from "jotai/index";
 import { waitForUserOperationReceipt } from "permissionless";
 import { useCallback, useState } from "react";
 import type { Hex } from "viem";
@@ -70,11 +77,9 @@ export function useArticleUnlockStatusListener() {
     /**
      * The current context (used to display real time data if a current unlock is in progress)
      */
-    const {
-        context: currentPaywallContext,
-        status: currentPaywallStatus,
-        clear: currentPaywallClear,
-    } = usePaywall();
+    const currentPaywallContext = useAtomValue(paywallContextAtom);
+    const currentPaywallStatus = useAtomValue(paywallStatusAtom);
+    const currentPaywallClear = useSetAtom(clearPaywallAtom);
 
     /**
      * The function that will be called when we want to listen to an article unlock status
