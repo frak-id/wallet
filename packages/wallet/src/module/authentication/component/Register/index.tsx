@@ -4,7 +4,8 @@ import { useRegister } from "@/module/authentication/hook/useRegister";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { usePaywall } from "@/module/paywall/provider";
+import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
+import { useAtomValue } from "jotai/index";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
@@ -13,7 +14,7 @@ import useLocalStorageState from "use-local-storage-state";
 import styles from "./index.module.css";
 
 export function Register() {
-    const { context } = usePaywall();
+    const hasPaywallContext = useAtomValue(hasPaywallContextAtom);
     const router = useRouter();
     const [, startTransition] = useTransition();
     const { register, error, isRegisterInProgress } = useRegister();
@@ -91,7 +92,7 @@ export function Register() {
                 return;
             }
 
-            router.push(context ? "/unlock" : "/wallet");
+            router.push(hasPaywallContext ? "/unlock" : "/wallet");
         });
         setDisabled(false);
     }

@@ -5,6 +5,7 @@ import { base64URLStringToBuffer } from "@simplewebauthn/browser";
 import { decodeCredentialPublicKey } from "@simplewebauthn/server/helpers";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
 import { toHex } from "viem";
+import { polygon, polygonMumbai } from "viem/chains";
 
 /**
  * The RP ID for the webauthn
@@ -140,4 +141,12 @@ function findChallengeOffset(arr: Uint8Array): number {
         targetSeq.every((value, j) => arr[i + j] === value)
     );
     return index ?? -1;
+}
+
+/**
+ * Check if a chain support the RIP-7212
+ * @param chainId
+ */
+export function isRip7212ChainSupported(chainId: number) {
+    return chainId === polygonMumbai.id || chainId === polygon.id;
 }

@@ -9,14 +9,13 @@ import {
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
-import { useBetaOptions } from "@/module/common/hook/useBetaOptions";
+import { isWalletConnectEnableAtom } from "@/module/settings/atoms/betaOptions";
 import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
+import { useAtom } from "jotai";
 import { FlaskConical, Square, SquareCheck } from "lucide-react";
 import styles from "./index.module.css";
 
 export function BetaOptions() {
-    const { options, toggleWalletConnect } = useBetaOptions();
-
     return (
         <>
             <Panel size={"small"}>
@@ -34,10 +33,7 @@ export function BetaOptions() {
                             </Title>
                         </AccordionTrigger>
                         <AccordionContent>
-                            <WalletConnectToggle
-                                isEnable={options.walletConnect}
-                                toggleWalletConnect={toggleWalletConnect}
-                            />
+                            <WalletConnectToggle />
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
@@ -46,12 +42,10 @@ export function BetaOptions() {
     );
 }
 
-function WalletConnectToggle({
-    isEnable,
-    toggleWalletConnect,
-}: { isEnable: boolean; toggleWalletConnect: () => void }) {
+function WalletConnectToggle() {
+    const [isEnable, toggle] = useAtom(isWalletConnectEnableAtom);
     return (
-        <Button onClick={toggleWalletConnect} variant={"outlined"}>
+        <Button onClick={toggle} variant={"outlined"}>
             <Row>
                 {isEnable ? <SquareCheck /> : <Square />}
                 Wallet Connect

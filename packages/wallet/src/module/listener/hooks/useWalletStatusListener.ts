@@ -2,14 +2,15 @@ import { addresses } from "@/context/common/blockchain/addresses";
 import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useSession } from "@/module/common/hook/useSession";
+import { walletListenerEmitterAtom } from "@/module/listener/atoms/walletListener";
 import type { Session } from "@/types/Session";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
     WalletStatusReturnType,
 } from "@frak-labs/nexus-sdk/core";
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useAtom } from "jotai";
+import { useCallback, useEffect } from "react";
 import { toHex } from "viem";
 import { useReadContract } from "wagmi";
 
@@ -27,36 +28,30 @@ export function useWalletStatusListener() {
     /**
      * The current wallet status state
      */
-    const [emitter, setEmitter] = useState<
-        | { emitter: (response: WalletStatusReturnType) => Promise<void> }
-        | undefined
-    >(undefined);
+    const [listener, setListener] = useAtom(walletListenerEmitterAtom);
 
     /**
      * Get the current user session
      */
     const { session, isFetchingSession } = useSession({
-        enabled: emitter !== undefined,
+        enabled: !!listener,
     });
 
     /**
      * Listen to the current session FRK balance if needed
      */
-    const {
-        data: walletFrkBalance,
-        isLoading: isFetchingBalance,
-        refetch: refreshBalance,
-    } = useReadContract({
-        abi: paywallTokenAbi,
-        address: addresses.paywallToken,
-        functionName: "balanceOf",
-        args: [session?.wallet?.address ?? "0x0"],
-        blockTag: "pending",
-        // Some query options
-        query: {
-            enabled: session?.wallet?.address !== undefined,
-        },
-    });
+    const { data: walletFrkBalance, refetch: refreshBalance } = useReadContract(
+        {
+            abi: paywallTokenAbi,
+            address: addresses.paywallToken,
+            functionName: "balanceOf",
+            args: [session?.wallet?.address ?? "0x0"],
+            // Some query options
+            query: {
+                enabled: !!session?.wallet?.address,
+            },
+        }
+    );
 
     /**
      * The function that will be called when a wallet status is requested
@@ -68,16 +63,27 @@ export function useWalletStatusListener() {
             // Trigger a balance refresh, and wait for it
             await refreshBalance();
             // Save our emitter, this will trigger session and balance fetching
-            setEmitter({ emitter });
-            setTimeout(() => refetch(), 100);
+            setListener({ emitter });
+            // Refetch session and frk balance on request
+            refreshBalance();
         },
-        [refreshBalance]
+        [refreshBalance, setListener]
     );
 
+    /**
+     * Send the updated state every time we got one
+     */
     useEffect(() => {
-        if (!(walletFrkBalance || session)) return;
-        setTimeout(() => refetch(), 100);
-    }, [walletFrkBalance, session]);
+        // If we are fetching some data early exit
+        if (isFetchingSession) return;
+
+        // If we don't have an emitter, early exit
+        if (!listener) return;
+
+        // Build the wallet status and emit it
+        const walletStatus = buildWalletStatus(session, walletFrkBalance);
+        listener.emitter(walletStatus);
+    }, [listener, session, walletFrkBalance, isFetchingSession]);
 
     /**
      * Build the wallet status
@@ -104,30 +110,6 @@ export function useWalletStatusListener() {
             ),
         };
     }
-
-    /**
-     * Emit an updated version of the wallet status every time on our props has changed
-     */
-    const { refetch } = useQuery({
-        queryKey: [
-            "walletStatusAutoEmitter",
-            session?.wallet?.address ?? "no-wallet",
-            toHex(walletFrkBalance ? BigInt(walletFrkBalance) : 0n),
-        ],
-        queryFn: async () => {
-            // Early exit if no emitter
-            if (!emitter) {
-                return;
-            }
-
-            // Build the wallet status and emit it
-            const walletStatus = buildWalletStatus(session, walletFrkBalance);
-            await emitter.emitter(walletStatus);
-            return true;
-        },
-        enabled:
-            !!emitter && !isFetchingSession && !isFetchingBalance && !!session,
-    });
 
     return {
         onWalletListenRequest,

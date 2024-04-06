@@ -1,24 +1,25 @@
 import { Panel } from "@/module/common/component/Panel";
-import { usePaywall } from "@/module/paywall/provider";
+import { paywallContextAtom } from "@/module/paywall/atoms/paywallContext";
+import { useAtomValue } from "jotai/index";
 import styles from "./index.module.css";
 
 export function ArticlePreview() {
-    const { context } = usePaywall();
+    const paywallContext = useAtomValue(paywallContextAtom);
 
-    if (!context) return null;
+    if (!paywallContext) return null;
     return (
         <Panel
             size={"normal"}
-            cover={context.imageUrl}
+            cover={paywallContext.imageUrl}
             className={styles.articlePreview}
         >
             <div className={styles.articlePreview__blur} />
             <div className={styles.articlePreview__content}>
                 <p>
-                    <strong>{context.articleTitle}</strong>
+                    <strong>{paywallContext.articleTitle}</strong>
                 </p>
                 <p>
-                    From: <strong>{context.contentTitle}</strong>
+                    From: <strong>{paywallContext.contentTitle}</strong>
                 </p>
             </div>
         </Panel>

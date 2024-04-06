@@ -2,7 +2,7 @@
 
 import { Grid } from "@/module/common/component/Grid";
 import { Skeleton } from "@/module/common/component/Skeleton";
-import { usePaywall } from "@/module/paywall/provider";
+import { setPaywallDataAtom } from "@/module/paywall/atoms/paywall";
 import {
     decompressDataAndCheckHash,
     redirectRequestKeyProvider,
@@ -11,7 +11,8 @@ import type {
     ExtractedParametersFromRpc,
     RedirectRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { useSetAtom } from "jotai";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useTransition } from "react";
 
@@ -20,18 +21,26 @@ export function PaywallEntryPoint() {
     const [, startTransition] = useTransition();
 
     const { get } = useSearchParams();
-    const { handleNewUnlockRequest } = usePaywall();
+
+    const setPaywallContext = useSetAtom(setPaywallDataAtom);
 
     useEffect(() => {
-        refetch();
-    }, []);
+        const params = get("params");
+        const hash = get("hash");
 
-    const { refetch } = useQuery({
-        queryKey: ["getEncodedUnlockData"],
-        queryFn: async () => {
-            const params = get("params");
-            const hash = get("hash");
+        parseContext({ params, hash });
+    }, [get]);
 
+    /**
+     * Parse the unlock data provided
+     */
+    const { mutate: parseContext } = useMutation({
+        mutationKey: ["parseUnlockData"],
+        mutationFn: async ({
+            params,
+            hash,
+        }: { params?: string | null; hash?: string | null }) => {
+            // Ensure we got data
             if (!(params && hash)) {
                 console.error("Invalid unlock request");
                 throw new Error("Invalid unlock request");
@@ -48,9 +57,9 @@ export function PaywallEntryPoint() {
                 redirectRequestKeyProvider
             );
             // Handle the new unlock request
-            await handleNewUnlockRequest(parsedUnlockData.params);
+            await setPaywallContext(parsedUnlockData.params);
 
-            // Smoothly navigate to /
+            // Smoothly navigate to the unlock page
             startTransition(() => {
                 router.replace("/unlock");
             });
