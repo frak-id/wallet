@@ -7,7 +7,7 @@ import {
     unlockStatusListenerAtom,
 } from "@/module/listener/atoms/unlockStatusListener";
 import {
-    clearCurrentStateIfMatch,
+    clearCurrentStateIfMatchAtom,
     paywallListenerAdditionalLoaderParamAtom,
 } from "@/module/listener/atoms/unlockStatusListenerLocal";
 import { paywallStatusAtom } from "@/module/paywall/atoms/paywallStatus";
@@ -49,7 +49,7 @@ export function useArticleUnlockStatusListener() {
      * Get the current user session (only fetch it if needed)
      */
     const { session, isFetchingSession } = useSession({
-        enabled: listenerParam !== undefined,
+        enabled: !!listenerParam,
     });
 
     /**
@@ -89,7 +89,7 @@ export function useArticleUnlockStatusListener() {
     /**
      * The current context (used to display real time data if a current unlock is in progress)
      */
-    const currentPaywallClear = useSetAtom(clearCurrentStateIfMatch);
+    const currentPaywallClear = useSetAtom(clearCurrentStateIfMatchAtom);
 
     /**
      * The function that will be called when we want to listen to an article unlock status

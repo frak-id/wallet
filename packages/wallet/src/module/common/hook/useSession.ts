@@ -15,15 +15,14 @@ export function useSession(
         refetch: refetchSession,
     } = useQuery({
         queryKey: ["session"],
-        queryFn: async () => {
-            // Just fetch the session
-            return await getSession();
-        },
+        queryFn: async () => await getSession(),
         refetchOnMount: "always",
         enabled,
         meta: {
             storable: false,
         },
+        // Keep the session in cache for 10min
+        gcTime: 10 * 60_000,
     });
     return { session, refetchSession, isFetchingSession, isSuccess, isError };
 }

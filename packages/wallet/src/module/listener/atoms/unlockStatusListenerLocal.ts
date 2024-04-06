@@ -96,7 +96,7 @@ export const unlockStateFromCurrentAtom =
 /**
  * Unlock status from on chain
  */
-export const clearCurrentStateIfMatch = atom(null, (get, set) => {
+export const clearCurrentStateIfMatchAtom = atom(null, (get, set) => {
     const currentMatchRequest = get(isUnlockStatusListenerMatchingAtom);
     if (currentMatchRequest) {
         console.log("Apparently current listener matched here");

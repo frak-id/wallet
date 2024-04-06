@@ -25,7 +25,7 @@ export const unlockStateAtom = atom<ArticleUnlockStatusReturnType>((get) => {
     // TODO: Replacement SESSION-001
 
     // Get the current on chain status
-    const currentOnChainStatus = get(unlockStateFromOnChain);
+    const currentOnChainStatus = get(unlockStateFromOnChainAtom);
 
     // If that's unlocked, return it
     if (currentOnChainStatus?.status === "unlocked") {
@@ -53,7 +53,9 @@ export const unlockStateAtom = atom<ArticleUnlockStatusReturnType>((get) => {
 /**
  * Unlock status from on chain
  */
-const unlockStateFromOnChain = atom<ArticleUnlockStatusReturnType | null>(null);
+const unlockStateFromOnChainAtom = atom<ArticleUnlockStatusReturnType | null>(
+    null
+);
 
 /**
  * Mapper and setter for the on-chain status
@@ -70,7 +72,7 @@ export const unlockStateFromOnChainSetterAtom = atom(
     ) => {
         // Otherwise, set the on chain unlock status
         if (data?.isAllowed === true) {
-            set(unlockStateFromOnChain, {
+            set(unlockStateFromOnChainAtom, {
                 key: "valid",
                 status: "unlocked",
                 allowedUntil: (data?.allowedUntilInSec ?? 0) * 1000,
@@ -80,7 +82,7 @@ export const unlockStateFromOnChainSetterAtom = atom(
 
         // Otherwise, set the on chain unlock status to expired
         if ((data?.allowedUntilInSec ?? 0) > 0) {
-            set(unlockStateFromOnChain, {
+            set(unlockStateFromOnChainAtom, {
                 key: "expired",
                 status: "locked",
                 expiredAt: (data?.allowedUntilInSec ?? 0) * 1000,
@@ -88,6 +90,6 @@ export const unlockStateFromOnChainSetterAtom = atom(
             return;
         }
         // If no case match, set it to null
-        set(unlockStateFromOnChain, null);
+        set(unlockStateFromOnChainAtom, null);
     }
 );
