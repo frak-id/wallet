@@ -2,6 +2,11 @@ import {
     KernelExecuteAbi,
     KernelInitAbi,
 } from "@/context/wallet/abi/KernelAccountAbi";
+import {
+    type AccountMetadata,
+    fetchAccountMetadata,
+    wrapMessageForSignature,
+} from "@/context/wallet/smartWallet/signature";
 import { isRip7212ChainSupported } from "@/context/wallet/smartWallet/webAuthN";
 import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
 import {
@@ -29,7 +34,6 @@ import {
     hashTypedData,
     maxUint256,
 } from "viem";
-import { getChainId } from "viem/actions";
 
 export type KernelWebAuthNSmartAccount<
     entryPoint extends
@@ -148,6 +152,7 @@ const getAccountInitCode = async ({
  * @param client
  * @param signerPubKey
  * @param entryPoint
+ * @param factoryAddress
  * @param webAuthNValidatorAddress
  * @param initCodeProvider
  * @param deployedAccountAddress
@@ -256,28 +261,20 @@ export async function webAuthNSmartAccount<
         });
 
     // Fetch account address and chain id
-    const [accountAddress, chainId] = await Promise.all([
-        getAccountAddress({
-            client,
-            entryPoint,
-            factoryAddress,
-            signerPubKey,
-            webAuthNValidatorAddress,
-            initCodeProvider: generateInitCode,
-            deployedAccountAddress,
-        }),
-        getChainId(client),
-    ]);
+    const accountAddress = await getAccountAddress({
+        client,
+        entryPoint,
+        factoryAddress,
+        signerPubKey,
+        webAuthNValidatorAddress,
+        initCodeProvider: generateInitCode,
+        deployedAccountAddress,
+    });
 
     if (!accountAddress) throw new Error("Account address not found");
 
-    // Check if the smart account is already deployed
-    let smartAccountDeployed = await isSmartAccountDeployed(
-        client,
-        accountAddress
-    );
-
-    // Helper to check if a kernel account is deployed
+    // Helper to check if the smart account is already deployed (with caching)
+    let smartAccountDeployed = false;
     const isKernelAccountDeployed = async () => {
         if (smartAccountDeployed) return true;
         smartAccountDeployed = await isSmartAccountDeployed(
@@ -287,8 +284,17 @@ export async function webAuthNSmartAccount<
         return smartAccountDeployed;
     };
 
+    // Helper fetching the account metadata (used for msg signing)
+    let accountMetadata: AccountMetadata | undefined = undefined;
+    const getAccountMetadata = async () => {
+        if (accountMetadata) return accountMetadata;
+        // Fetch the account metadata
+        accountMetadata = await fetchAccountMetadata(client, accountAddress);
+        return accountMetadata;
+    };
+
     // Helper to perform a signature of a hash
-    const isRip7212Supported = isRip7212ChainSupported(chainId);
+    const isRip7212Supported = isRip7212ChainSupported(client.chain.id);
     const signHash = async (hash: Hex) => {
         // Sign the hash with the sig provider
         const { authenticatorData, clientData, challengeOffset, signature } =
@@ -357,7 +363,7 @@ export async function webAuthNSmartAccount<
                     signature: "0x",
                 },
                 entryPoint: entryPoint,
-                chainId: chainId,
+                chainId: client.chain.id,
             });
             const encodedSignature = await signHash(hash);
 
@@ -370,8 +376,14 @@ export async function webAuthNSmartAccount<
          * @param message
          */
         async signMessage({ message }) {
-            // Encode the msg
-            const challenge = hashMessage(message);
+            const metadata = await getAccountMetadata();
+            // Encode the msg and wrap it
+            const hashedMessage = hashMessage(message);
+            const challenge = wrapMessageForSignature({
+                message: hashedMessage,
+                metadata,
+            });
+            // And sign it
             return signHash(challenge);
         },
 
@@ -388,12 +400,20 @@ export async function webAuthNSmartAccount<
          * Sign typed data
          */
         async signTypedData(typedData) {
+            const metadata = await getAccountMetadata();
+            // Encode the msg and wrap it
             const typedDataHash = hashTypedData(typedData);
-            return signHash(typedDataHash);
+            const challenge = wrapMessageForSignature({
+                message: typedDataHash,
+                metadata,
+            });
+            // And sign it
+            return signHash(challenge);
         },
 
         /**
          * Encode the deployment call data of this account
+         * TODO: It's supported, just need to dev it
          * @param _
          */
         async encodeDeployCallData(_) {

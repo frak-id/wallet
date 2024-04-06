@@ -4,9 +4,7 @@ import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import { Panel } from "@/module/common/component/Panel";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import { PairingModal } from "@/module/wallet-connect/component/ModalRequest/Pairing";
-import { SendTxModal } from "@/module/wallet-connect/component/ModalRequest/SendTxRequest";
-import { SignRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignRequest";
-import { SignTypedDataRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignTypedDataRequest";
+import { RequestModal } from "@/module/wallet-connect/component/ModalRequest/Request";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import type { Verify } from "@walletconnect/types";
 import type { SignClientTypes } from "@walletconnect/types/dist/types/sign-client/client";
@@ -37,50 +35,7 @@ export function ModalWalletConnectRequest({
 
     // TODO: Also handle auth modal (with SIWE)
 
-    // TODO: Handle request type (for sign, send tx and stuff)
-
     return <> </>;
-}
-
-/**
- * Switch to pick the right modal for a request
- * @param args
- * @param onClose
- * @constructor
- */
-function RequestModal({
-    args,
-    onClose,
-}: {
-    args: Extract<WalletConnectRequestArgs, { type: "request" }>;
-    onClose: () => void;
-}) {
-    const method = useMemo(
-        () => args.params.request.method,
-        [args.params.request.method]
-    );
-
-    // TODO: Should check the chain and enforce it here? Or maybe enforce it inside the modal view?
-
-    // If that's a signature request
-    if (method === "eth_sign" || method === "personal_sign") {
-        return <SignRequestModal args={args} onClose={onClose} />;
-    }
-    // If that's a typed data signature request
-    if (
-        method === "eth_signTypedData" ||
-        method === "eth_signTypedData_v3" ||
-        method === "eth_signTypedData_v4"
-    ) {
-        return <SignTypedDataRequestModal args={args} onClose={onClose} />;
-    }
-    // If that's a send tx request
-    if (method === "eth_sendTransaction") {
-        return <SendTxModal args={args} onClose={onClose} />;
-    }
-    console.log("Unknown request type", { method });
-
-    return <>Unknown request type</>;
 }
 
 /**
