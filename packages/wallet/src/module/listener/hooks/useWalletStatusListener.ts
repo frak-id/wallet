@@ -117,13 +117,13 @@ export function useWalletStatusListener() {
         queryFn: async () => {
             // Early exit if no emitter
             if (!emitter) {
-                return;
+                return null;
             }
 
             // Build the wallet status and emit it
             const walletStatus = buildWalletStatus(session, walletFrkBalance);
             await emitter.emitter(walletStatus);
-            return true;
+            return null;
         },
         enabled:
             !!emitter && !isFetchingSession && !isFetchingBalance && !!session,

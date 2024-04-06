@@ -1,27 +1,28 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useAAClients } from "@/module/common/hook/useAAClients";
 import { useSession } from "@/module/common/hook/useSession";
-import { clearPaywallAtom } from "@/module/paywall/atoms/paywall";
-import { paywallContextAtom } from "@/module/paywall/atoms/paywallContext";
 import {
-    type PaywallStatus,
-    paywallStatusAtom,
-} from "@/module/paywall/atoms/paywallStatus";
+    unlockStateAtom,
+    unlockStateFromOnChainSetterAtom,
+    unlockStatusListenerAtom,
+} from "@/module/listener/atoms/unlockStatusListener";
+import {
+    clearCurrentStateIfMatch,
+    paywallListenerAdditionalLoaderParamAtom,
+} from "@/module/listener/atoms/unlockStatusListenerLocal";
+import { paywallStatusAtom } from "@/module/paywall/atoms/paywallStatus";
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
 import type {
-    ArticleUnlockStatusReturnType,
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
 import { useQuery } from "@tanstack/react-query";
-import { useSetAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useAtomValue } from "jotai/index";
 import { waitForUserOperationReceipt } from "permissionless";
-import { useCallback, useState } from "react";
-import type { Hex } from "viem";
+import { useCallback, useEffect } from "react";
 import { waitForTransactionReceipt } from "viem/actions";
 import { arbitrumSepolia } from "viem/chains";
-import { useClient } from "wagmi";
 
 type OnListenToArticleUnlockStatus = IFrameRequestResolver<
     Extract<
@@ -30,28 +31,19 @@ type OnListenToArticleUnlockStatus = IFrameRequestResolver<
     >
 >;
 
-type UnlockStateListenerParam = {
-    contentId: Hex;
-    articleId: Hex;
-    emitter: (response: ArticleUnlockStatusReturnType) => Promise<void>;
-};
-
 /**
  * Hook use to listen to the wallet status
  */
 export function useArticleUnlockStatusListener() {
-    const viemClient = useClient({ chainId: arbitrumSepolia.id });
-
     // Fetch the AA transports
-    // TODO: Should be able to specify the chain id
-    const { bundlerClient } = useAAClients();
+    const { viemClient, bundlerClient } = useAAClients({
+        chainId: arbitrumSepolia.id,
+    });
 
     /**
      * The current wallet status state
      */
-    const [listenerParam, setListenerParam] = useState<
-        UnlockStateListenerParam | undefined
-    >(undefined);
+    const [listenerParam, setListenerParam] = useAtom(unlockStatusListenerAtom);
 
     /**
      * Get the current user session (only fetch it if needed)
@@ -61,25 +53,43 @@ export function useArticleUnlockStatusListener() {
     });
 
     /**
+     * The current unlock status mapped from the current listener param
+     */
+    const currentUnlockStatus = useAtomValue(unlockStateAtom);
+
+    /**
+     * Setter for our atom about on chain unlock status
+     * TODO: Maybe tanstack queries + jotai would be great here
+     */
+    const setOnChainUnlockStatus = useSetAtom(unlockStateFromOnChainSetterAtom);
+
+    /**
+     * Setter for the global paywall status
+     */
+    const setCurrentPaywallStatusAtom = useSetAtom(paywallStatusAtom);
+
+    /**
      * Check if the user is allowed on chain
      */
     const {
-        isLoading: isLoadingOnChainUnlockStatus,
         data: onChainUnlockStatus,
         refetch: refreshOnChainUnlockStatus,
-        dataUpdatedAt: onChainUnlockStatusUpdatedAt,
+        isLoading: isFetchingOnChainStatus,
     } = useOnChainArticleUnlockStatus({
         contentId: listenerParam?.contentId,
         articleId: listenerParam?.articleId,
         address: session?.wallet?.address,
     });
 
+    // Just a syncer + mapper between tanstack and jotai
+    useEffect(() => {
+        setOnChainUnlockStatus(onChainUnlockStatus);
+    }, [setOnChainUnlockStatus, onChainUnlockStatus]);
+
     /**
      * The current context (used to display real time data if a current unlock is in progress)
      */
-    const currentPaywallContext = useAtomValue(paywallContextAtom);
-    const currentPaywallStatus = useAtomValue(paywallStatusAtom);
-    const currentPaywallClear = useSetAtom(clearPaywallAtom);
+    const currentPaywallClear = useSetAtom(clearCurrentStateIfMatch);
 
     /**
      * The function that will be called when we want to listen to an article unlock status
@@ -87,221 +97,129 @@ export function useArticleUnlockStatusListener() {
      * @param emitter
      */
     const onArticleUnlockStatusListenerRequest: OnListenToArticleUnlockStatus =
-        useCallback(async (request, emitter) => {
-            // Extract content id and article id
-            const contentId = request.params[0];
-            const articleId = request.params[1];
+        useCallback(
+            async (request, emitter) => {
+                // Extract content id and article id
+                const contentId = request.params[0];
+                const articleId = request.params[1];
 
-            // If we got nothing, early exit
-            if (!(contentId && articleId)) {
-                setListenerParam(undefined);
-                return;
-            }
-
-            // Otherwise, save emitter and params
-            setListenerParam({
-                contentId,
-                articleId,
-                emitter,
-            });
-
-            setTimeout(() => refetch(), 100);
-        }, []);
-
-    /**
-     * Emit an updated version of the wallet status every time on our props has changed
-     */
-    const { refetch } = useQuery({
-        // Basically, all the trigger arguments to re-send a new states
-        queryKey: [
-            "articleUnlockStatusAutoEmitter",
-            // User related
-            session?.wallet?.address ?? "no-wallet",
-            // Request related
-            listenerParam?.contentId ?? "no-content",
-            listenerParam?.articleId ?? "no-article",
-            // On chain data related
-            onChainUnlockStatus?.isAllowed ?? "no-on-chain-status",
-            onChainUnlockStatusUpdatedAt,
-            // Real time data
-            currentPaywallStatus?.key ?? "no-status",
-            currentPaywallContext?.contentId ?? "no-content",
-            currentPaywallContext?.articleId ?? "no-content",
-        ],
-        queryFn: async () => {
-            // Early exit if no params
-            if (!listenerParam) {
-                return;
-            }
-
-            // Current user address
-            const address = session?.wallet?.address;
-
-            // If no address, early exit
-            if (!address) {
-                await listenerParam.emitter({
-                    key: "not-unlocked",
-                    status: "locked",
-                });
-                return;
-            }
-
-            // If we got an allowed unlock status from the blockchain, return that
-            if (onChainUnlockStatus?.isAllowed) {
-                await listenerParam.emitter({
-                    key: "valid",
-                    status: "unlocked",
-                    allowedUntil: onChainUnlockStatus.allowedUntilInSec * 1000,
-                });
-
-                // Clear the current paywall context
-                currentPaywallClear();
-                return;
-            }
-
-            // If the data wasn't updated recently (less than 30sec) refresh it
-            if (
-                !onChainUnlockStatusUpdatedAt ||
-                Date.now() - onChainUnlockStatusUpdatedAt > 30 * 1000
-            ) {
-                await refreshOnChainUnlockStatus();
-                return;
-            }
-
-            // Then, check if it can be handled with real time data
-            if (
-                currentPaywallStatus &&
-                currentPaywallContext &&
-                currentPaywallContext.contentId === listenerParam.contentId &&
-                currentPaywallContext.articleId === listenerParam.articleId
-            ) {
-                await emitRealTimeUnlockStatus({
-                    status: currentPaywallStatus,
-                    emitter: listenerParam.emitter,
-                });
-                return;
-            }
-
-            // If the user has an expired unlock status, tell the user it's expired
-            if ((onChainUnlockStatus?.allowedUntilInSec ?? 0) > 0) {
-                await listenerParam.emitter({
-                    key: "expired",
-                    status: "locked",
-                    expiredAt:
-                        (onChainUnlockStatus?.allowedUntilInSec ?? 0) * 1000,
-                });
-                return;
-            }
-
-            // If we arrived here, the user isn't allowed to read the content
-            await listenerParam.emitter({
-                key: "not-unlocked",
-                status: "locked",
-            });
-        },
-        enabled:
-            !!listenerParam &&
-            !isFetchingSession &&
-            !isLoadingOnChainUnlockStatus,
-    });
-
-    /**
-     * Compute and emit the real time unlock status
-     * @param status
-     */
-    const emitRealTimeUnlockStatus = useCallback(
-        async ({
-            status,
-            emitter,
-        }: {
-            status: PaywallStatus;
-            emitter: UnlockStateListenerParam["emitter"];
-        }) => {
-            // If it's an error, tell the user it's an error
-            if (status.key === "error") {
-                await emitter({
-                    key: "error",
-                    status: "locked",
-                    reason: status.reason ?? "Unknown error",
-                });
-                return;
-            }
-
-            // If it was cancelled, tell the user it was cancelled
-            if (status.key === "cancelled") {
-                await emitter({
-                    key: "error",
-                    status: "locked",
-                    reason: "Paywall unlock cancelled",
-                });
-                return;
-            }
-
-            // If the status is success, tell the user it's a success
-            if (status.key === "idle") {
-                await emitter({
-                    status: "in-progress",
-                    key: "preparing",
-                });
-                return;
-            }
-
-            // If we are waiting for the user to sign the transaction
-            if (status.key === "pendingSignature") {
-                await emitter({
-                    status: "in-progress",
-                    key: "waiting-user-validation",
-                });
-            }
-
-            // If it's a success, setup a listener that update the status
-            if (status.key === "success" || status.key === "pendingTx") {
-                await emitter({
-                    status: "in-progress",
-                    key: "waiting-transaction-bundling",
-                    userOpHash: status.userOpHash,
-                });
-
-                // Early exit if no bundler client or viem client present
-                if (!(bundlerClient && viemClient)) {
+                // If we got nothing, early exit
+                if (!(contentId && articleId)) {
+                    setListenerParam(null);
+                    setOnChainUnlockStatus(undefined);
                     return;
                 }
 
-                // Wait for the user operation receipt
-                // TODO: should be in a mutation or any other thing?
-                // TODO: Should be able to be cancelled if the user cancel the unlock
-                const userOpReceipt = await waitForUserOperationReceipt(
+                // Reset the onchain unlock status and refetch it
+                setOnChainUnlockStatus(undefined);
+                refreshOnChainUnlockStatus();
+
+                // Otherwise, save emitter and params
+                setListenerParam({
+                    contentId,
+                    articleId,
+                    emitter,
+                });
+            },
+            [
+                setListenerParam,
+                refreshOnChainUnlockStatus,
+                setOnChainUnlockStatus,
+            ]
+        );
+
+    /**
+     * Every time the 'currentUnlockStatus' atom is updated, emit it (if we don't have any concurrent updates)
+     */
+    useEffect(() => {
+        // If we are loading a few stuff, directly exit
+        if (isFetchingOnChainStatus || isFetchingSession) {
+            return;
+        }
+
+        // If no emitter, or no status, directly exit
+        if (!(listenerParam?.emitter && currentUnlockStatus)) {
+            return;
+        }
+
+        // If we got no session, directly emit the locked state
+        // TODO: SESSION-001
+        if (!session) {
+            listenerParam?.emitter({
+                key: "not-unlocked",
+                status: "locked",
+            });
+            return;
+        }
+
+        // Emit the status
+        listenerParam?.emitter(currentUnlockStatus);
+
+        // If that's a valid status, clear the paywall context
+        if (currentUnlockStatus.key === "valid") {
+            currentPaywallClear();
+        }
+    }, [
+        currentUnlockStatus,
+        session,
+        listenerParam?.emitter,
+        currentPaywallClear,
+        isFetchingOnChainStatus,
+        isFetchingSession,
+    ]);
+
+    /**
+     * The additional loader params, used to listen to a user op or a tx hash
+     */
+    const loaderParam = useAtomValue(paywallListenerAdditionalLoaderParamAtom);
+
+    /**
+     * Query that will listen to the current context paywall status
+     */
+    useQuery({
+        queryKey: [
+            "currentPaywallListener",
+            loaderParam.key,
+            loaderParam.userOpHash ?? "no-op-hash",
+            loaderParam.txHash ?? "no-tx-hash",
+        ],
+        queryFn: async () => {
+            // If we are waiting for the user op hash
+            if (loaderParam.userOpHash && bundlerClient) {
+                const status = await waitForUserOperationReceipt(
                     bundlerClient,
                     {
-                        hash: status.userOpHash,
+                        hash: loaderParam.userOpHash,
                     }
                 );
-                const txHash = userOpReceipt.receipt.transactionHash;
-                await emitter({
-                    status: "in-progress",
-                    key: "waiting-transaction-confirmation",
-                    userOpHash: status.userOpHash,
-                    txHash: txHash,
+                // Set the global paywall status as a success with it's user op hash
+                setCurrentPaywallStatusAtom({
+                    key: "success",
+                    userOpHash: loaderParam.userOpHash,
+                    txHash: status.receipt.transactionHash,
                 });
-
-                // Wait for the transaction to be confirmed and re-fetch the unlock status
-                await waitForTransactionReceipt(viemClient, {
-                    hash: txHash,
-                    confirmations: 1,
-                });
-                await refreshOnChainUnlockStatus();
-
-                // Clear the current paywall context
-                currentPaywallClear();
+                return null;
             }
+
+            // If we are waiting for the tx hash
+            if (loaderParam.txHash && viemClient) {
+                await waitForTransactionReceipt(viemClient, {
+                    hash: loaderParam.txHash,
+                    confirmations: 2,
+                });
+                // Once we got our response, we can refresh the on chain unlock status
+                await refreshOnChainUnlockStatus();
+                return null;
+            }
+
+            // If we arrived here, nothing to load
+            return null;
         },
-        [
-            refreshOnChainUnlockStatus,
-            currentPaywallClear,
-            viemClient,
-            bundlerClient,
-        ]
-    );
+        enabled:
+            loaderParam.key !== "nothing-to-load" &&
+            !!viemClient &&
+            !!bundlerClient,
+    });
 
     return {
         onArticleUnlockStatusListenerRequest,

@@ -42,6 +42,7 @@ export const hasPaywallContextAtom = atom((get) => !!get(paywallContextAtom));
 export const setPaywallDataAtom = atom(
     null,
     async (_get, set, request: StartArticleUnlockParams) => {
+        console.log("Setting atom for unlock request", request);
         // Save our context info
         set(paywallContextAtom, request);
         set(paywallStatusAtom, { key: "idle" });
@@ -72,22 +73,6 @@ export const setPaywallDataAtom = atom(
 export const clearPaywallAtom = atom(null, (_get, set) => {
     set(paywallContextAtom, null);
     set(paywallStatusAtom, null);
-});
-
-/**
- * Atom used to clean up a context
- * @return true if a current paywall is discarded
- */
-export const discardPaywallAtom = atom(null, (get, set) => {
-    // If we got no context, just hard reset everything
-    if (!get(paywallContextAtom)) {
-        set(clearPaywallAtom);
-        return false;
-    }
-
-    // Otherwise, set that the request has been discard
-    set(paywallStatusAtom, { key: "cancelled" });
-    return true;
 });
 
 /**

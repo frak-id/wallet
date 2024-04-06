@@ -19,7 +19,7 @@ import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import type { UnlockSuccessData } from "@/types/Unlock";
 import { useMutation } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { type Hex, encodeFunctionData, parseEther } from "viem";
 import type { Address } from "viem";
 import { readContract } from "viem/actions";
@@ -28,7 +28,6 @@ import { useClient } from "wagmi";
 
 /**
  * Hook used to fetch and handle the prices
- * TODO: If not on mumbai, modal to inform the user that he is on the wrong network and asking him to switch to mumbai
  */
 export function useUnlockArticle({ context }: { context: PaywallContext }) {
     const { wallet, smartWallet, smartWalletClient } = useWallet();
@@ -127,57 +126,14 @@ export function useUnlockArticle({ context }: { context: PaywallContext }) {
 
             // Build the list of tx we will st
             setPaywallLoading("buildingTx");
-            // TODO: All of this stuff should be done somewhere else, like a build article tx helper function
-            const txs: {
-                to: Address;
-                value: bigint;
-                data: Hex;
-            }[] = [];
-
-            // Check the user allowance to the paywall contract
-            const allowance = await readContract(viemClient, {
-                address: addresses.paywallToken,
-                abi: paywallTokenAbi,
-                functionName: "allowance",
-                args: [wallet?.address, addresses.paywall],
+            const txs = await buildUnlockTxs({
+                weiPrice,
+                walletAddress: wallet.address,
+                context,
             });
-
-            // If the allowance isn't enough, we need to approve the paywall contract
-            if (weiPrice > allowance) {
-                const allowanceFnCall = encodeFunctionData({
-                    abi: paywallTokenAbi,
-                    functionName: "approve",
-                    args: [addresses.paywall, weiPrice * 10n],
-                });
-                txs.push({
-                    to: addresses.paywallToken,
-                    value: 0n,
-                    data: allowanceFnCall,
-                });
-            }
-
-            // Build the unlock transaction and add it
-            const unlockFnCall = encodeFunctionData({
-                abi: paywallAbi,
-                functionName: "unlockAccess",
-                args: [
-                    BigInt(context.contentId),
-                    context.articleId,
-                    BigInt(context.price.index),
-                ],
-            });
-            txs.push({
-                to: addresses.paywall,
-                value: 0n,
-                data: unlockFnCall,
-            });
-
-            // Encode the user op data
             const smartWalletData = await smartWallet.encodeCallData(txs);
 
-            // TODO: Adding a simulation before sending the tx
-
-            // TODO: Update state before that telling that we are waiting for his signature
+            // Launch the user operation
             setPaywallLoading("pendingSignature");
             const userOpHash = await smartWalletClient.sendUserOperation({
                 userOperation: {
@@ -213,6 +169,78 @@ export function useUnlockArticle({ context }: { context: PaywallContext }) {
             });
         },
     });
+
+    /**
+     * Build the unlock transactions
+     */
+    const buildUnlockTxs = useCallback(
+        async ({
+            weiPrice,
+            walletAddress,
+            context,
+        }: {
+            weiPrice: bigint;
+            walletAddress: Address;
+            context: PaywallContext;
+        }): Promise<
+            {
+                to: Address;
+                value: bigint;
+                data: Hex;
+            }[]
+        > => {
+            if (!viemClient) {
+                return [];
+            }
+
+            const txs: {
+                to: Address;
+                value: bigint;
+                data: Hex;
+            }[] = [];
+
+            // Check the user allowance to the paywall contract
+            const allowance = await readContract(viemClient, {
+                address: addresses.paywallToken,
+                abi: paywallTokenAbi,
+                functionName: "allowance",
+                args: [walletAddress, addresses.paywall],
+            });
+
+            // If the allowance isn't enough, we need to approve the paywall contract
+            if (weiPrice > allowance) {
+                const allowanceFnCall = encodeFunctionData({
+                    abi: paywallTokenAbi,
+                    functionName: "approve",
+                    args: [addresses.paywall, weiPrice * 10n],
+                });
+                txs.push({
+                    to: addresses.paywallToken,
+                    value: 0n,
+                    data: allowanceFnCall,
+                });
+            }
+
+            // Build the unlock transaction and add it
+            const unlockFnCall = encodeFunctionData({
+                abi: paywallAbi,
+                functionName: "unlockAccess",
+                args: [
+                    BigInt(context.contentId),
+                    context.articleId,
+                    BigInt(context.price.index),
+                ],
+            });
+            txs.push({
+                to: addresses.paywall,
+                value: 0n,
+                data: unlockFnCall,
+            });
+
+            return txs;
+        },
+        [viemClient]
+    );
 
     useEffect(() => {
         if (error) {

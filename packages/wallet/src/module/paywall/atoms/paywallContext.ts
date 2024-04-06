@@ -26,10 +26,5 @@ export type PaywallContext = {
  */
 export const paywallContextAtom = atomWithStorage<PaywallContext | null>(
     "paywallContext",
-    null,
-    undefined,
-    {
-        // Get on init to prevent initial null value if context present
-        getOnInit: true,
-    }
+    null
 );

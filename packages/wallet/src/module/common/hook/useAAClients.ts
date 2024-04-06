@@ -5,11 +5,11 @@ import { useClient } from "wagmi";
 /**
  * Fetch the AA clients
  */
-export function useAAClients() {
+export function useAAClients({ chainId }: { chainId?: number } = {}) {
     /**
      * The current viem client
      */
-    const viemClient = useClient();
+    const viemClient = useClient({ chainId });
 
     /**
      * Memo building the AA related clients (bundler and paymasters)
@@ -56,10 +56,11 @@ export function useAAClients() {
 
     return useMemo(
         () => ({
+            viemClient,
             bundlerTransport,
             bundlerClient,
             paymasterClient,
         }),
-        [bundlerTransport, bundlerClient, paymasterClient]
+        [viemClient, bundlerTransport, bundlerClient, paymasterClient]
     );
 }
