@@ -2,6 +2,7 @@ import {
     KernelExecuteAbi,
     KernelInitAbi,
 } from "@/context/wallet/abi/KernelAccountAbi";
+import { isRip7212ChainSupported } from "@/context/wallet/smartWallet/webAuthN";
 import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
 import {
     getAccountNonce,
@@ -25,6 +26,7 @@ import {
     encodeAbiParameters,
     encodeFunctionData,
     hashMessage,
+    hashTypedData,
     maxUint256,
 } from "viem";
 import { getChainId } from "viem/actions";
@@ -274,6 +276,8 @@ export async function webAuthNSmartAccount<
         client,
         accountAddress
     );
+
+    // Helper to check if a kernel account is deployed
     const isKernelAccountDeployed = async () => {
         if (smartAccountDeployed) return true;
         smartAccountDeployed = await isSmartAccountDeployed(
@@ -283,6 +287,24 @@ export async function webAuthNSmartAccount<
         return smartAccountDeployed;
     };
 
+    // Helper to perform a signature of a hash
+    const isRip7212Supported = isRip7212ChainSupported(chainId);
+    const signHash = async (hash: Hex) => {
+        // Sign the hash with the sig provider
+        const { authenticatorData, clientData, challengeOffset, signature } =
+            await signatureProvider(hash);
+
+        // Encode the signature with the web auth n validator info
+        return encodeAbiParameters(webAuthNSignatureLayoutParam, [
+            !isRip7212Supported,
+            authenticatorData,
+            clientData,
+            challengeOffset,
+            [BigInt(signature.r), BigInt(signature.s)],
+        ]);
+    };
+
+    // Build the smart account itself
     return toSmartAccount({
         address: accountAddress,
 
@@ -337,54 +359,20 @@ export async function webAuthNSmartAccount<
                 entryPoint: entryPoint,
                 chainId: chainId,
             });
-
-            // Sign the hash with the P256 signer
-            const {
-                authenticatorData,
-                clientData,
-                challengeOffset,
-                signature,
-            } = await signatureProvider(hash);
-
-            // Encode the signature with the web auth n validator info
-            const encodedSignature = encodeAbiParameters(
-                webAuthNSignatureLayoutParam,
-                [
-                    true,
-                    authenticatorData,
-                    clientData,
-                    challengeOffset,
-                    [BigInt(signature.r), BigInt(signature.s)],
-                ]
-            );
+            const encodedSignature = await signHash(hash);
 
             // Always use the sudo mode, since we are starting from the postula that this p256 signer is the default one for the smart account
             return concatHex(["0x00000000", encodedSignature]);
         },
 
         /**
-         * Signe a message
+         * Sign a message
          * @param message
          */
         async signMessage({ message }) {
             // Encode the msg
             const challenge = hashMessage(message);
-            // Sign it
-            const {
-                authenticatorData,
-                clientData,
-                challengeOffset,
-                signature,
-            } = await signatureProvider(challenge);
-
-            // Return the encoded stuff for the web auth n validator
-            return encodeAbiParameters(webAuthNSignatureLayoutParam, [
-                true,
-                authenticatorData,
-                clientData,
-                challengeOffset,
-                [BigInt(signature.r), BigInt(signature.s)],
-            ]);
+            return signHash(challenge);
         },
 
         /**
@@ -399,8 +387,9 @@ export async function webAuthNSmartAccount<
         /**
          * Sign typed data
          */
-        async signTypedData() {
-            throw new SignTransactionNotSupportedBySmartAccount();
+        async signTypedData(typedData) {
+            const typedDataHash = hashTypedData(typedData);
+            return signHash(typedDataHash);
         },
 
         /**

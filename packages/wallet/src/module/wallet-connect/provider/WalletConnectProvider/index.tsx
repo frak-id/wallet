@@ -1,12 +1,12 @@
 "use client";
 
 import { getWalletConnectWallet } from "@/context/wallet-connect/provider";
+import { isWalletConnectEnableAtom } from "@/module/settings/atoms/betaOptions";
 import { useQuery } from "@tanstack/react-query";
 import type { SessionTypes } from "@walletconnect/types";
+import { useAtomValue } from "jotai/index";
 import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
-import {useAtomValue} from "jotai/index";
-import {isWalletConnectEnableAtom} from "@/module/settings/atoms/betaOptions";
 
 function useWalletConnectHook() {
     /**

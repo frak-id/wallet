@@ -47,7 +47,6 @@ export function SignTypedDataRequestModal({
      */
     const { rawTypedDataPayload, typedDataPayload } = useMemo(() => {
         const rawParams = args.params.request.params as string[];
-        console.log("Params received", { rawParams });
         const address = rawParams.find((p) => isAddress(p));
 
         // Extract the raw typed data definition
