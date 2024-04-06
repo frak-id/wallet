@@ -5,8 +5,15 @@ import { useQuery } from "@tanstack/react-query";
 import type { SessionTypes } from "@walletconnect/types";
 import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
+import {useAtomValue} from "jotai/index";
+import {isWalletConnectEnableAtom} from "@/module/settings/atoms/betaOptions";
 
 function useWalletConnectHook() {
+    /**
+     * Check if the wallet connect feature is wanted
+     */
+    const isEnabled = useAtomValue(isWalletConnectEnableAtom);
+
     /**
      * Get the wallet connect instance
      *  Multiple refetch only here to ensure that our DI instance is well defined
@@ -17,6 +24,7 @@ function useWalletConnectHook() {
         refetchInterval: false,
         refetchOnMount: true,
         refetchOnReconnect: true,
+        enabled: isEnabled,
     });
 
     /**
