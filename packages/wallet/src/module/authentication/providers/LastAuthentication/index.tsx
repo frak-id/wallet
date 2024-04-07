@@ -5,7 +5,7 @@ import { dexieDb } from "@/context/common/dexie/dexieDb";
 import type { Session } from "@/types/Session";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { useLiveQuery } from "dexie-react-hooks";
-import { createContext, useContext } from "react";
+import { createContext, useCallback, useContext } from "react";
 import type { ReactNode } from "react";
 import useLocalStorageState from "use-local-storage-state";
 
@@ -32,28 +32,21 @@ function useLastAuthenticationsHook() {
         });
 
     // Add a last authentication
-    async function addLastAuthentication(authentication: LastAuthentication) {
-        // Define it as last authentication
-        setLastAuthentication(authentication);
+    const addLastAuthentication = useCallback(
+        async (authentication: LastAuthentication) => {
+            // Define it as last authentication
+            setLastAuthentication(authentication);
 
-        // Add it to the last authentications
-        await dexieDb.previousAuthenticator.put({
-            wallet: authentication.wallet.address,
-            username: authentication.username,
-            authenticatorId: authentication.wallet.authenticatorId,
-            transports: authentication.transports,
-        });
-    }
-
-    // Remove a last authentication
-    async function removeLastAuthentication(
-        authentication: LastAuthentication
-    ) {
-        // Remove the authenticator
-        await dexieDb.previousAuthenticator.delete({
-            authenticatorId: authentication.wallet.authenticatorId,
-        });
-    }
+            // Add it to the last authentications
+            await dexieDb.previousAuthenticator.put({
+                wallet: authentication.wallet.address,
+                username: authentication.username,
+                authenticatorId: authentication.wallet.authenticatorId,
+                transports: authentication.transports,
+            });
+        },
+        [setLastAuthentication]
+    );
 
     return {
         wasAuthenticated: !!lastAuthentication,
@@ -61,7 +54,6 @@ function useLastAuthenticationsHook() {
         previousAuthenticators,
         // Update last authentication
         addLastAuthentication,
-        removeLastAuthentication,
     };
 }
 

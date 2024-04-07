@@ -2,7 +2,7 @@ import { isValidConnectionUri } from "@/context/wallet-connect/pairing";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { useWalletConnectToDapp } from "@/module/wallet-connect/hook/useWalletConnectToDapp";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import styles from "./index.module.css";
 
 const ReactQrReader = dynamic(() => import("react-qr-reader-es6"), {
@@ -27,22 +27,25 @@ export function ConnectWithQrCode() {
         isConnectedVideoDevices().then(setIsVideoDeviceAvailable);
     }, []);
 
-    function onError(error: Error) {
+    const onError = useCallback((error: Error) => {
         setShow(false);
         setErrorMessage(error.message);
         console.log("Error scanning QR code", error);
-    }
+    }, []);
 
-    async function onScan(data: string | null) {
-        if (!data) return;
-        if (!isValidConnectionUri(data)) {
+    const onScan = useCallback(
+        async (data: string | null) => {
+            if (!data) return;
+            if (!isValidConnectionUri(data)) {
+                setShow(false);
+                setErrorMessage("Invalid WalletConnect URI");
+                return;
+            }
+            await onConnect(data);
             setShow(false);
-            setErrorMessage("Invalid WalletConnect URI");
-            return;
-        }
-        await onConnect(data);
-        setShow(false);
-    }
+        },
+        [onConnect]
+    );
 
     useEffect(() => {
         status === "error" && setErrorMessage(error?.message);

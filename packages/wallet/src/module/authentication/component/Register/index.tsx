@@ -9,7 +9,13 @@ import { useAtomValue } from "jotai/index";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+    useTransition,
+} from "react";
 import useLocalStorageState from "use-local-storage-state";
 import styles from "./index.module.css";
 
@@ -48,7 +54,7 @@ export function Register() {
     /**
      * Get the message that will displayed inside the button
      */
-    function getMessages() {
+    const message = useMemo(() => {
         if (isPreviouslyUsedAuthenticatorError) {
             return (
                 <>
@@ -80,9 +86,9 @@ export function Register() {
                 <sup>*</sup> in a second with biometry
             </>
         );
-    }
+    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress]);
 
-    async function triggerAction() {
+    const triggerAction = useCallback(async () => {
         setDisabled(true);
         await register();
         startTransition(() => {
@@ -95,7 +101,7 @@ export function Register() {
             router.push(hasPaywallContext ? "/unlock" : "/wallet");
         });
         setDisabled(false);
-    }
+    }, [redirectUrl, setRedirectUrl, router, register, hasPaywallContext]);
 
     useEffect(() => {
         if (!error) return;
@@ -131,7 +137,7 @@ export function Register() {
                 action={triggerAction}
                 disabled={disabled || isPreviouslyUsedAuthenticatorError}
             >
-                {getMessages()}
+                {message}
             </AuthFingerprint>
         </Grid>
     );

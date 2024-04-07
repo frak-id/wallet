@@ -8,7 +8,7 @@ import { Grid } from "@/module/common/component/Grid";
 import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
 import { useAtomValue } from "jotai/index";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import useLocalStorageState from "use-local-storage-state";
 import styles from "./index.module.css";
 
@@ -28,7 +28,7 @@ export function Login() {
         { defaultValue: null }
     );
 
-    async function triggerAction() {
+    const triggerAction = useCallback(async () => {
         setDisabled(true);
         await login({});
         startTransition(() => {
@@ -41,7 +41,7 @@ export function Login() {
             router.push(hasPaywallContext ? "/unlock" : "/wallet");
             setDisabled(false);
         });
-    }
+    }, [hasPaywallContext, redirectUrl, setRedirectUrl, router, login]);
 
     return (
         <>
