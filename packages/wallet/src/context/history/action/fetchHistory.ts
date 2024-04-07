@@ -14,7 +14,7 @@ import type {
     HistoryItem,
 } from "@/types/HistoryItem";
 import { unstable_cache } from "next/cache";
-import { map, sort } from "radash";
+import { parallel, sort } from "radash";
 import { type Address, formatEther, toHex } from "viem";
 import { getBlock, getLogs } from "viem/actions";
 
@@ -45,7 +45,8 @@ async function _fetchWalletHistory({
     });
 
     // Map them to the ArticleUnlock type
-    const unlockedItems: ArticleUnlock[] = await map(
+    const unlockedItems: ArticleUnlock[] = await parallel(
+        2,
         unlockedItemsEvents,
         async (log) => {
             const { contentId, articleId, paidAmount, allowedUntil } = log.args;
@@ -97,7 +98,8 @@ async function _fetchWalletHistory({
     const frkSentEvents = await getFrkEvents({ from: account });
 
     // Map them to the FrkReceived type
-    const frkReceivedItems: FrkReceived[] = await map(
+    const frkReceivedItems: FrkReceived[] = await parallel(
+        2,
         frkReceivedEvents,
         async (log) => {
             const { value } = log.args;
@@ -116,20 +118,24 @@ async function _fetchWalletHistory({
     );
 
     // Map them to the FrkSent type
-    const frkSentItems: FrkSent[] = await map(frkSentEvents, async (log) => {
-        const { value } = log.args;
-        return {
-            key: "frk-sent",
-            txHash: log.transactionHash,
-            txDate: await getBlockDate({
+    const frkSentItems: FrkSent[] = await parallel(
+        2,
+        frkSentEvents,
+        async (log) => {
+            const { value } = log.args;
+            return {
+                key: "frk-sent",
+                txHash: log.transactionHash,
+                txDate: await getBlockDate({
+                    blockNumber: log.blockNumber,
+                    chainId,
+                }),
+                toHash: log.address,
                 blockNumber: log.blockNumber,
-                chainId,
-            }),
-            toHash: log.address,
-            blockNumber: log.blockNumber,
-            sentAmount: formatEther(value),
-        };
-    });
+                sentAmount: formatEther(value),
+            };
+        }
+    );
 
     // Put all of that in one list and sort it
     const allItems = [...unlockedItems, ...frkReceivedItems, ...frkSentItems];
@@ -143,8 +149,8 @@ export const fetchWalletHistory = unstable_cache(
     _fetchWalletHistory,
     ["fetch-wallet-history"],
     {
-        // Keep that in server cache for 2min
-        revalidate: 120,
+        // Keep that in server cache for 10min
+        revalidate: 10 * 60,
     }
 );
 
@@ -165,6 +171,6 @@ async function _getBlockDate({
 }
 
 const getBlockDate = unstable_cache(_getBlockDate, ["get-block-date"], {
-    // Keep that in server cache for 48hr
-    revalidate: 48 * 60 * 60,
+    // Keep that in server cache for 30 days
+    revalidate: 720 * 60 * 60,
 });

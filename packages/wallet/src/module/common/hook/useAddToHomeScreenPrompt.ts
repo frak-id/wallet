@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface IBeforeInstallPromptEvent extends Event {
     readonly platforms: string[];
@@ -19,16 +19,16 @@ export function useAddToHomeScreenPrompt() {
     );
 
     // Launch the installation prompt
-    async function launchInstallation() {
-        if (prompt) {
-            const userChoices = await prompt.prompt();
-            setOutcome(userChoices.outcome);
+    const launchInstallation = useCallback(async () => {
+        if (!prompt) {
+            throw new Error(
+                'Tried installing before browser sent "beforeinstallprompt" event'
+            );
         }
 
-        throw new Error(
-            'Tried installing before browser sent "beforeinstallprompt" event'
-        );
-    }
+        const userChoices = await prompt.prompt();
+        setOutcome(userChoices.outcome);
+    }, [prompt]);
 
     // Listen on the beforeinstallprompt event (to know if we can install or not the PWA)
     useEffect(() => {
