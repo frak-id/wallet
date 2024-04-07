@@ -1,15 +1,15 @@
 "use client";
 
+import { postAuthRedirectAtom } from "@/module/authentication/atoms/redirection";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
-import { useAtomValue } from "jotai/index";
+import { useAtom, useAtomValue } from "jotai/index";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
-import useLocalStorageState from "use-local-storage-state";
 import styles from "./index.module.css";
 
 /**
@@ -23,10 +23,7 @@ export function Login() {
     const router = useRouter();
     const [, startTransition] = useTransition();
     const [disabled, setDisabled] = useState(false);
-    const [redirectUrl, setRedirectUrl] = useLocalStorageState<string | null>(
-        "redirectUrl",
-        { defaultValue: null }
-    );
+    const [redirectUrl, setRedirectUrl] = useAtom(postAuthRedirectAtom);
 
     const triggerAction = useCallback(async () => {
         setDisabled(true);

@@ -298,8 +298,6 @@ export function RequestGenericModal({
 
             // And close the modal after 3 seconds
             setTimeout(close, 3_000);
-
-            return true;
         },
     });
 
@@ -311,7 +309,7 @@ export function RequestGenericModal({
         onMutate: async () => {
             // Ensure we got everything needed
             if (!(walletConnectInstance && args.id)) {
-                return false;
+                return;
             }
 
             // Reject the sign proposal
@@ -330,8 +328,6 @@ export function RequestGenericModal({
 
             // And close the modal
             close();
-
-            return true;
         },
     });
 

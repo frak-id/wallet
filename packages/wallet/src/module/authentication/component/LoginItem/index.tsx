@@ -1,12 +1,13 @@
 import { Fingerprint } from "@/assets/icons/Fingerprint";
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
+import { postAuthRedirectAtom } from "@/module/authentication/atoms/redirection";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
+import { useAtom } from "jotai/index";
 import { SquareUser } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import useLocalStorageState from "use-local-storage-state";
 import styles from "./index.module.css";
 
 export function LoginItem({
@@ -15,10 +16,7 @@ export function LoginItem({
     const router = useRouter();
     const [, startTransition] = useTransition();
     const { login } = useLogin();
-    const [redirectUrl, setRedirectUrl] = useLocalStorageState<string | null>(
-        "redirectUrl",
-        { defaultValue: null }
-    );
+    const [redirectUrl, setRedirectUrl] = useAtom(postAuthRedirectAtom);
 
     return (
         <li className={styles.loginItem}>

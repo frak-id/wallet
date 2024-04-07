@@ -1,17 +1,19 @@
 import { validateRegistration } from "@/context/wallet/action/register";
 import { getRegisterOptions } from "@/context/wallet/action/registerOptions";
-import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
+import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
+import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
+import { useSetAtom } from "jotai/index";
 
 /**
  * Hook that handle the registration process
  */
 export function useRegister() {
     // Setter for the last authentication
-    const { addLastAuthentication, previousAuthenticators } =
-        useLastAuthentications();
+    const addLastAuthentication = useSetAtom(addLastAuthenticationAtom);
+    const { data: previousAuthenticators } = usePreviousAuthenticators();
 
     // Get some FRK
     const { isAirdroppingFrk, airdropFrk } = useAirdropFrk();

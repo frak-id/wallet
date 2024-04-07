@@ -2,13 +2,14 @@
 
 import { AccordionLogin } from "@/module/authentication/component/AccordionLogin";
 import { LoginItem } from "@/module/authentication/component/LoginItem";
-import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
+import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 import { HardDrive } from "lucide-react";
 
 export function LoginList() {
-    const { previousAuthenticators } = useLastAuthentications();
+    const { data: previousAuthenticators } = usePreviousAuthenticators();
+
     return (
-        previousAuthenticators.length > 0 && (
+        (previousAuthenticators?.length ?? 0) > 0 && (
             <AccordionLogin
                 trigger={
                     <>
@@ -17,7 +18,7 @@ export function LoginList() {
                 }
             >
                 <ul>
-                    {previousAuthenticators.map((auth) => (
+                    {previousAuthenticators?.map((auth) => (
                         <LoginItem
                             key={`${auth.username}-${auth.wallet}`}
                             lastAuthentication={auth}
