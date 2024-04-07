@@ -5,7 +5,7 @@ import {
     WcModal,
     WcModalAction,
     WcModalHeader,
-} from "@/module/wallet-connect/component/ModalRequest/index";
+} from "@/module/wallet-connect/component/ModalRequest/Components";
 import styles from "@/module/wallet-connect/component/ModalRequest/index.module.css";
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
