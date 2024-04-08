@@ -1,8 +1,0 @@
-.alertDialogWalletConnect {
-    display: block;
-    width: 100%;
-}
-
-.alertDialogWalletConnect + .alertDialogWalletConnect {
-    margin-top: 10px;
-}

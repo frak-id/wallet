@@ -1,62 +1,27 @@
-"use client";
-
-import { ModalWalletConnectRequest } from "@/module/wallet-connect/component/ModalRequest";
-import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
+import {
+    wcAddNewRequestAtom,
+    wcRemoveRequestAtom,
+} from "@/module/wallet-connect/atoms/events";
+import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
 import { useMutation } from "@tanstack/react-query";
-import type { ProposalTypes, SessionTypes, Verify } from "@walletconnect/types";
+import type Web3Wallet from "@walletconnect/web3wallet";
 import type { Web3WalletTypes } from "@walletconnect/web3wallet";
-import { useCallback, useEffect, useState } from "react";
-import type { PropsWithChildren } from "react";
+import { useSetAtom } from "jotai/index";
+import { useEffect } from "react";
 
 /**
- * Represent wallet connect modal data
+ * Hook used to handle the wallet connect events
  */
-export type WalletConnectRequestArgs = {
-    id: number;
-    verifyContext: Verify.Context;
-} & (
-    | {
-          type: "pairing";
-          params: ProposalTypes.Struct;
-      }
-    | {
-          type: "request";
-          topic: string;
-          params: {
-              request: {
-                  method: string;
-                  // biome-ignore lint/suspicious/noExplicitAny: Type from wallet connect interface
-                  params: any;
-              };
-              chainId: string;
-          };
-          session: SessionTypes.Struct;
-      }
-);
-
-/**
- * Component handling wallet connect events
- * @param children
- * @constructor
- * TODO: Each proposal as an ID
- *   - Store of queued ID proposals + expiration + type + verify context
- *   - Proposal can be pairing or request
- */
-export function EventsWalletConnect({ children }: PropsWithChildren) {
-    const { walletConnectInstance, refreshSessions } = useWalletConnect();
-
+export function useHandleWalletConnectEvents({
+    walletConnectInstance,
+}: {
+    walletConnectInstance: Web3Wallet | undefined;
+}) {
     /**
-     * All the requests that are currently pending
-     * TODO: Should have a small indicator with a list of pending requests
+     * Handle the request list
      */
-    const [_requests, setRequests] = useState<WalletConnectRequestArgs[]>([]);
-
-    /**
-     * The current request that is being displayed
-     */
-    const [currentRequest, setCurrentRequest] = useState<
-        WalletConnectRequestArgs | undefined
-    >(undefined);
+    const addRequest = useSetAtom(wcAddNewRequestAtom);
+    const removeRequest = useSetAtom(wcRemoveRequestAtom);
 
     /**
      * When we receive a session proposal
@@ -71,6 +36,7 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
             params,
             verifyContext,
         }: Web3WalletTypes.SessionProposal) => {
+            console.log("Wallet connect session proposal", { id });
             // Build our request args
             const args: WalletConnectRequestArgs = {
                 id,
@@ -78,17 +44,9 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
                 params,
                 verifyContext,
             };
-            console.log("Wallet connect session proposal", {
-                args,
-            });
 
             // Store the pairing proposal
-            setRequests((prev) => [...prev, args]);
-
-            // If no current request, display it directly
-            if (!currentRequest) {
-                setCurrentRequest(args);
-            }
+            addRequest(args);
         },
     });
 
@@ -104,6 +62,7 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
             params,
             verifyContext,
         }: Web3WalletTypes.SessionRequest) => {
+            console.log("Wallet connect session request", { id, topic });
             // Get the matching session, if none exit directly
             const requestSession =
                 walletConnectInstance?.engine?.signClient?.session?.get(topic);
@@ -119,19 +78,8 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
                 session: requestSession,
             };
 
-            console.log("Wallet connect session request", {
-                args,
-            });
-
-            requestSession.peer.metadata;
-
             // Store the pairing proposal
-            setRequests((prev) => [...prev, args]);
-
-            // If no current request, display it directly
-            if (!currentRequest) {
-                setCurrentRequest(args);
-            }
+            addRequest(args);
         },
     });
 
@@ -144,25 +92,19 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
             console.log("Wallet connect proposal expire", { id });
 
             // Remove the request from the list
-            setRequests((prev) => prev.filter((req) => req.id !== id));
-
-            // If that's the currently displayed one, remove it
-            if (currentRequest?.id === id) {
-                // TODO: If that's the currently displayed one, maybe a small info like expired and soft close with 1-2sec delay?
-                setCurrentRequest(undefined);
-            }
+            removeRequest(id);
         },
     });
 
     /**
      * Callback when a session is deleted
+     * TODO: Remove all the associated session requests? Invalidate queries?
      */
     const { mutate: onSessionDelete } = useMutation({
         mutationKey: ["on-session-delete"],
         mutationFn: async ({ id, topic }: Web3WalletTypes.SessionDelete) => {
             console.log("Wallet connect session delete", { id, topic });
             if (!walletConnectInstance) return;
-            await refreshSessions();
         },
     });
 
@@ -222,34 +164,4 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
         onProposalExpire,
         onSessionDelete,
     ]);
-
-    const onModalClose = useCallback(() => {
-        // Get the current request
-        const request = currentRequest;
-        // Remove the request from the list
-        setCurrentRequest(undefined);
-        // If we have a request, remove it from the list
-        if (request) {
-            setRequests((prev) => prev.filter((req) => req.id !== request.id));
-        }
-    }, [currentRequest]);
-
-    return (
-        <>
-            {currentRequest && (
-                <ModalWalletConnectRequest
-                    args={currentRequest}
-                    onClose={onModalClose}
-                />
-            )}
-            {children}
-        </>
-    );
 }
-
-/**
- * TODO: WalletConnect Modal component
- *  - Handling pairing or request modal
- *  - Generic component to display global info about the context and stuff
- *  - Display and accept / reject the request
- */

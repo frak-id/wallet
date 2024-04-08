@@ -29,6 +29,8 @@ export function getNamespaces(params: ProposalTypes.Struct, address: string) {
                     "eth_signTypedData",
                     "eth_signTypedData_v3",
                     "eth_signTypedData_v4",
+                    // Send transaction method (TODO: Not rly supported but required for test)
+                    "eth_sendTransaction",
                 ],
                 events: ["accountsChanged", "chainChanged"],
                 accounts: chainsAvailable.flatMap(

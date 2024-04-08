@@ -1,24 +1,53 @@
-import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
+"use client";
+
+import {
+    wcDisplayedRequestAtom,
+    wcRemoveRequestAtom,
+} from "@/module/wallet-connect/atoms/events";
 import { PairingModal } from "@/module/wallet-connect/component/ModalRequest/Pairing";
 import { SignRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignRequest";
 import { SignTypedDataRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignTypedDataRequest";
-import { useMemo } from "react";
+import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
+import { useAtomValue, useSetAtom } from "jotai/index";
+import { useCallback, useMemo } from "react";
 
-export function ModalWalletConnectRequest({
-    args,
-    onClose,
-}: {
-    args: WalletConnectRequestArgs;
-    onClose: () => void;
-}) {
+/**
+ * Display the current wallet connect modal
+ * @constructor
+ */
+export function WalletConnectModal() {
+    /**
+     * Handle the request list
+     */
+    const removeRequest = useSetAtom(wcRemoveRequestAtom);
+
+    /**
+     * The current request that is being displayed
+     */
+    const currentRequest = useAtomValue(wcDisplayedRequestAtom);
+
+    /**
+     * Action when a modal is closed
+     */
+    const onModalClose = useCallback(() => {
+        // Get the current request
+        const request = currentRequest;
+        // Remove the request from the list
+        if (!request) return;
+        removeRequest(request.id);
+    }, [currentRequest, removeRequest]);
+
+    // If we don't have a modal, do nothing
+    if (!currentRequest) return null;
+
     // Handle a pairing modal
-    if (args.type === "pairing") {
-        return <PairingModal args={args} onClose={onClose} />;
+    if (currentRequest.type === "pairing") {
+        return <PairingModal args={currentRequest} onClose={onModalClose} />;
     }
 
     // Handle a request modal
-    if (args.type === "request") {
-        return <RequestModal args={args} onClose={onClose} />;
+    if (currentRequest.type === "request") {
+        return <RequestModal args={currentRequest} onClose={onModalClose} />;
     }
 
     // TODO: Also handle auth modal (with SIWE)

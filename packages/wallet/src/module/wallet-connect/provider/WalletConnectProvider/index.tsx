@@ -2,8 +2,8 @@
 
 import { getWalletConnectWallet } from "@/context/wallet-connect/provider";
 import { isWalletConnectEnableAtom } from "@/module/settings/atoms/betaOptions";
+import { useHandleWalletConnectEvents } from "@/module/wallet-connect/hook/useHandleWalletConnectEvents";
 import { useQuery } from "@tanstack/react-query";
-import type { SessionTypes } from "@walletconnect/types";
 import { useAtomValue } from "jotai/index";
 import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
@@ -28,40 +28,23 @@ function useWalletConnectHook() {
     });
 
     /**
-     * Get the active wallet sessions
-     */
-    const { data: sessions, refetch: refreshSessions } = useQuery({
-        queryKey: [
-            "wallet-connect-sessions",
-            walletConnectInstance?.name ?? "no-name",
-            walletConnectInstance?.core?.context ?? "no-context",
-        ],
-        enabled: !!walletConnectInstance,
-        queryFn: () =>
-            Object.values(
-                walletConnectInstance?.getActiveSessions() ?? {}
-            ) as SessionTypes.Struct[],
-        placeholderData: [] as SessionTypes.Struct[],
-        refetchInterval: false,
-        refetchOnMount: true,
-        refetchOnReconnect: true,
-    });
-
-    /**
      * Check if the wallet connect instance is initialised
      */
     const isInitialised = useMemo(() => {
         return status === "success";
     }, [status]);
 
+    /**
+     * Setup our event listener
+     */
+    useHandleWalletConnectEvents({ walletConnectInstance });
+
     return useMemo(
         () => ({
             isInitialised,
             walletConnectInstance,
-            sessions,
-            refreshSessions,
         }),
-        [isInitialised, walletConnectInstance, sessions, refreshSessions]
+        [isInitialised, walletConnectInstance]
     );
 }
 

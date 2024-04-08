@@ -82,7 +82,6 @@ export function checkRequestedChain(
         requiredMissing,
         optionalMissing,
     });
-    console.log("Namespaces", { requiredNamespaces, optionalNamespaces });
 
     // Format each chain using the chain name
     return {

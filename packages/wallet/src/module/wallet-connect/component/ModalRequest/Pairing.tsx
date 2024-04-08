@@ -1,13 +1,14 @@
 import { getNamespaces } from "@/context/wallet-connect/namespace";
 import { checkRequestedChain } from "@/context/wallet-connect/pairing";
-import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import {
     WcModal,
     WcModalAction,
     WcModalHeader,
 } from "@/module/wallet-connect/component/ModalRequest/Components";
 import styles from "@/module/wallet-connect/component/ModalRequest/index.module.css";
+import { useInvalidateWalletConnectSessions } from "@/module/wallet-connect/hook/useWalletConnectSessions";
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
+import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMutation } from "@tanstack/react-query";
 import { getSdkError } from "@walletconnect/utils";
@@ -21,7 +22,9 @@ export function PairingModal({
     onClose: () => void;
 }) {
     const { smartWallet } = useWallet();
-    const { walletConnectInstance, refreshSessions } = useWalletConnect();
+    const { walletConnectInstance } = useWalletConnect();
+    const invalidateWalletConnectSessions =
+        useInvalidateWalletConnectSessions();
 
     const [isOpen, setIsOpen] = useState(true);
 
@@ -106,11 +109,11 @@ export function PairingModal({
                 });
             }
 
-            // Once we are here, refresh the sessions
-            await refreshSessions();
-
             // And close the modal after 3 seconds
             setTimeout(close, 3_000);
+
+            // Once we are here, refresh the sessions
+            await invalidateWalletConnectSessions();
         },
     });
 

@@ -1,7 +1,7 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import { RequestGenericModal } from "@/module/wallet-connect/component/ModalRequest/Components";
+import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { FileSignature } from "lucide-react";
 import { useCallback, useMemo } from "react";

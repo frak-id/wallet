@@ -7,9 +7,9 @@ import {
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { userThemeAtom } from "@/module/settings/atoms/theme";
-import type { WalletConnectRequestArgs } from "@/module/wallet-connect/component/EventsWalletConnect";
 import { RequestGenericModal } from "@/module/wallet-connect/component/ModalRequest/Components";
 import styles from "@/module/wallet-connect/component/ModalRequest/index.module.css";
+import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useAtomValue } from "jotai/index";
 import { FileSignature } from "lucide-react";
