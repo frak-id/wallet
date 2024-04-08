@@ -81,7 +81,7 @@ export function PairingModal({
             console.log("Approving pairing");
             // Ensure we got everything needed
             if (!(walletConnectInstance && smartWallet?.address && args.id)) {
-                return false;
+                return;
             }
 
             // Try to approve the pairing
@@ -111,8 +111,6 @@ export function PairingModal({
 
             // And close the modal after 3 seconds
             setTimeout(close, 3_000);
-
-            return true;
         },
     });
 
@@ -125,7 +123,7 @@ export function PairingModal({
             console.log("Rejecting pairing");
             // Ensure we got everything needed
             if (!(walletConnectInstance && args.id)) {
-                return false;
+                return;
             }
 
             // TODO: Change the error if networks not supported?
@@ -137,8 +135,6 @@ export function PairingModal({
 
             // And close the modal
             close();
-
-            return true;
         },
     });
 

@@ -31,7 +31,9 @@ import { useClient } from "wagmi";
  */
 export function useUnlockArticle({ context }: { context: PaywallContext }) {
     const { wallet, smartWallet, smartWalletClient } = useWallet();
-    const { balance, refreshBalance } = useFrkBalance();
+    const { balance, refreshBalance } = useFrkBalance({
+        wallet: wallet.address,
+    });
     const setGlobalPaywallStatus = useSetAtom(paywallStatusAtom);
 
     const [uiState, setUiState] = useAtom(paywallUnlockUiStateAtom);

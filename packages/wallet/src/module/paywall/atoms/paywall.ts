@@ -42,7 +42,6 @@ export const hasPaywallContextAtom = atom((get) => !!get(paywallContextAtom));
 export const setPaywallDataAtom = atom(
     null,
     async (_get, set, request: StartArticleUnlockParams) => {
-        console.log("Setting atom for unlock request", request);
         // Save our context info
         set(paywallContextAtom, request);
         set(paywallStatusAtom, { key: "idle" });

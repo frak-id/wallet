@@ -1,16 +1,23 @@
 "use client";
 
+import { postAuthRedirectAtom } from "@/module/authentication/atoms/redirection";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
+import { useAtom } from "jotai";
 import { useAtomValue } from "jotai/index";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
-import useLocalStorageState from "use-local-storage-state";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+    useTransition,
+} from "react";
 import styles from "./index.module.css";
 
 export function Register() {
@@ -19,20 +26,18 @@ export function Register() {
     const [, startTransition] = useTransition();
     const { register, error, isRegisterInProgress } = useRegister();
     const [disabled, setDisabled] = useState(false);
-    const { get } = useSearchParams();
-    const redirectUrlFromQuery = get("redirectUrl") as string | null;
-    const [redirectUrl, setRedirectUrl] = useLocalStorageState<string | null>(
-        "redirectUrl",
-        { defaultValue: redirectUrlFromQuery }
-    );
 
     /**
-     * Get the redirectUrl from the URL
+     * Get the redirectUrl from the URL and set it in storage if needed
      */
+    const { get: getSearchParam } = useSearchParams();
+    const [redirectUrl, setRedirectUrl] = useAtom(postAuthRedirectAtom);
     useEffect(() => {
-        if (!redirectUrlFromQuery) return;
-        setRedirectUrl(redirectUrlFromQuery);
-    }, [redirectUrlFromQuery, setRedirectUrl]);
+        const redirectUrl = getSearchParam("redirectUrl");
+        if (redirectUrl) {
+            setRedirectUrl(redirectUrl);
+        }
+    }, [getSearchParam, setRedirectUrl]);
 
     /**
      * Boolean used to know if the error is about a previously used authenticator
@@ -48,7 +53,7 @@ export function Register() {
     /**
      * Get the message that will displayed inside the button
      */
-    function getMessages() {
+    const message = useMemo(() => {
         if (isPreviouslyUsedAuthenticatorError) {
             return (
                 <>
@@ -80,9 +85,9 @@ export function Register() {
                 <sup>*</sup> in a second with biometry
             </>
         );
-    }
+    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress]);
 
-    async function triggerAction() {
+    const triggerAction = useCallback(async () => {
         setDisabled(true);
         await register();
         startTransition(() => {
@@ -95,7 +100,7 @@ export function Register() {
             router.push(hasPaywallContext ? "/unlock" : "/wallet");
         });
         setDisabled(false);
-    }
+    }, [redirectUrl, setRedirectUrl, router, register, hasPaywallContext]);
 
     useEffect(() => {
         if (!error) return;
@@ -131,7 +136,7 @@ export function Register() {
                 action={triggerAction}
                 disabled={disabled || isPreviouslyUsedAuthenticatorError}
             >
-                {getMessages()}
+                {message}
             </AuthFingerprint>
         </Grid>
     );

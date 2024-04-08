@@ -25,7 +25,7 @@ export function useAirdropFrk() {
                     amount: "100",
                 });
                 // Wait for the tx receipt
-                if (waitForReceipt && viemClient) {
+                if (waitForReceipt && viemClient && txHash) {
                     await waitForTransactionReceipt(viemClient, {
                         hash: txHash,
                         confirmations: 1,

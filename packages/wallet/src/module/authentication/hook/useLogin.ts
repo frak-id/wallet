@@ -1,7 +1,7 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { validateAuthentication } from "@/context/wallet/action/authenticate";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
-import { useLastAuthentications } from "@/module/authentication/providers/LastAuthentication";
+import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import {
     base64URLStringToBuffer,
@@ -9,13 +9,14 @@ import {
 } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
+import { useSetAtom } from "jotai";
 
 /**
  * Hook that handle the registration process
  */
 export function useLogin() {
     // Setter for the last authentication
-    const { addLastAuthentication } = useLastAuthentications();
+    const addLastAuthentication = useSetAtom(addLastAuthenticationAtom);
 
     // Get some FRK
     const { airdropFrk } = useAirdropFrk();

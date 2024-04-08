@@ -107,7 +107,7 @@ export function EventsWalletConnect({ children }: PropsWithChildren) {
             // Get the matching session, if none exit directly
             const requestSession =
                 walletConnectInstance?.engine?.signClient?.session?.get(topic);
-            if (!requestSession) return false;
+            if (!requestSession) return;
 
             // Build our request args
             const args: WalletConnectRequestArgs = {
