@@ -85,7 +85,7 @@ async function _getArticlePricesForUser({
     const userBalance = await getErc20Balance({
         token: addresses.paywallToken,
         wallet: address,
-        chainId: arbSepoliaPocClient.chainId,
+        chainId: arbSepoliaPocClient.chain.id,
     });
 
     // Map the prices with the user balance (to check if enabled or not)
@@ -120,13 +120,7 @@ async function _getArticlePrice({
     const prices = await getArticlePrices({ contentId });
 
     // Find the one at the given index
-    const price = prices.find((p) => p.index === priceIndex);
-    if (!price?.isPriceEnabled) {
-        return null;
-    }
-
-    // Return the price formatted
-    return price;
+    return prices.find((p) => p.index === priceIndex) ?? null;
 }
 
 /**

@@ -18,6 +18,10 @@ const AlchemyNetworkName: Record<AvailableChainIds, string> = {
     //80002: "polygon-amoy",
     11155420: "opt-sepolia",
     421614: "arb-sepolia",
+    84532: "base-sepolia",
+    // Mainnet's
+    137: "polygon-mainnet",
+    8453: "base-mainnet",
 };
 
 /**

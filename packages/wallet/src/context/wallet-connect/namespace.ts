@@ -6,17 +6,8 @@ import { buildApprovedNamespaces } from "@walletconnect/utils";
  * Get the available chains for the wallet connect
  *  - We add two mainnet chains to ease the usage
  */
-export const getAvailableChains = () => {
-    const currentChain = availableChains.map((chain) => `eip155:${chain.id}`);
-
-    return [
-        ...currentChain,
-        // Polygon mainnet
-        "eip155:137",
-        // Arbitrum mainnet
-        "eip155:42161",
-    ];
-};
+export const getAvailableChains = () =>
+    availableChains.map((chain) => `eip155:${chain.id}`);
 
 /**
  * Get the namespaces from the proposal

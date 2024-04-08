@@ -4,24 +4,46 @@ import {
 } from "@/context/common/blockchain/alchemy-transport";
 import { memo } from "radash";
 import { type Chain, createClient, extractChain } from "viem";
-import { arbitrumSepolia, optimismSepolia, polygonMumbai } from "viem/chains";
+import {
+    arbitrumSepolia,
+    base,
+    baseSepolia,
+    optimismSepolia,
+    polygon,
+    polygonMumbai,
+} from "viem/chains";
 
 /**
- * All the available chains
+ * All the testnet's chains
  */
-export const availableChains = [
+export const testnetChains = [
     // Testnet's
     arbitrumSepolia,
     optimismSepolia,
     polygonMumbai,
+    baseSepolia,
 ] as const;
+
+/**
+ * All the mainnet's chains
+ */
+export const mainnetChains = [
+    // Mainnet's
+    base,
+    polygon,
+] as const;
+
+/**
+ * All the available chains
+ */
+export const availableChains = [...testnetChains, ...mainnetChains] as const;
 
 export type AvailableChainIds = (typeof availableChains)[number]["id"];
 
 /**
  * Get the transport for the given chain
  */
-const getTransport = memo(
+export const getTransport = memo(
     ({ chain }: { chain: Chain }) => getAlchemyTransport({ chain }),
     {
         key: ({ chain }: { chain: Chain }) => `viem-transport-${chain.id}`,

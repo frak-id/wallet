@@ -36,13 +36,25 @@ export function BetaOptions() {
                             </Title>
                         </AccordionTrigger>
                         <AccordionContent>
-                            <MainnetToggle />
-                            <WalletConnectToggle />
+                            <BetaOptionsList />
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
             </Panel>
         </>
+    );
+}
+
+function BetaOptionsList() {
+    return (
+        <ul>
+            <li>
+                <MainnetToggle />
+            </li>
+            <li>
+                <WalletConnectToggle />
+            </li>
+        </ul>
     );
 }
 

@@ -11,26 +11,9 @@ import { Fingerprint, Shield } from "lucide-react";
 import styles from "./index.module.css";
 
 export function Settings() {
-    const { address, wallet } = useWallet();
-
     return (
         <>
-            <Panel size={"small"}>
-                <Title icon={<Fingerprint size={32} />}>
-                    Biometry informations
-                </Title>
-                <ul className={styles.settings__list}>
-                    <li>
-                        Authenticator:{" "}
-                        <WalletAddress wallet={wallet.authenticatorId} />
-                    </li>
-                    {address && (
-                        <li>
-                            Wallet: <WalletAddress wallet={address} />
-                        </li>
-                    )}
-                </ul>
-            </Panel>
+            <BiometryInfo />
 
             <Panel size={"small"} className={styles.settings__disabled}>
                 <Title icon={<Shield size={32} />}>Recovery setup</Title>
@@ -39,8 +22,29 @@ export function Settings() {
 
             <SwitchChain />
             <BetaOptions />
-
             <SessionsConnected />
         </>
+    );
+}
+
+function BiometryInfo() {
+    const { address, wallet } = useWallet();
+
+    return (
+        <Panel size={"small"}>
+            <Title icon={<Fingerprint size={32} />}>
+                Biometry informations
+            </Title>
+            <ul className={styles.settings__list}>
+                <li>
+                    Authenticator:{" "}
+                    <WalletAddress wallet={wallet.authenticatorId} />
+                </li>
+
+                <li>
+                    Wallet: <WalletAddress wallet={address ?? "0x"} />
+                </li>
+            </ul>
+        </Panel>
     );
 }

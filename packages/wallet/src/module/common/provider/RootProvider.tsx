@@ -1,9 +1,6 @@
 "use client";
 
-import {
-    availableChains,
-    getViemClientFromChain,
-} from "@/context/common/blockchain/provider";
+import { wagmiConfigAtom } from "@/module/common/atoms/wagmi";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
@@ -11,8 +8,9 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai";
+import { useAtomValue } from "jotai/index";
 import type { PropsWithChildren } from "react";
-import { WagmiProvider, createConfig } from "wagmi";
+import { WagmiProvider } from "wagmi";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -24,14 +22,6 @@ const queryClient = new QueryClient({
             staleTime: 60 * 1000, // 1 minute
         },
     },
-});
-
-/**
- * Our global wagmi config (define the possible chain and the client factory)
- */
-const wagmiConfig = createConfig({
-    chains: availableChains,
-    client: ({ chain }) => getViemClientFromChain({ chain }),
 });
 
 /**
@@ -62,13 +52,18 @@ export function RootProvider({ children }: PropsWithChildren) {
                     client={queryClient}
                     persistOptions={persistOptions}
                 >
-                    <WagmiProvider config={wagmiConfig}>
+                    <WagmiProviderWithDynamicConfig>
                         {children}
-                    </WagmiProvider>
+                    </WagmiProviderWithDynamicConfig>
                     <ReactQueryDevtools initialIsOpen={false} />
                 </PersistQueryClientProvider>
                 <ThemeListener />
             </Provider>
         </>
     );
+}
+
+function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
+    const config = useAtomValue(wagmiConfigAtom);
+    return <WagmiProvider config={config}>{children}</WagmiProvider>;
 }
