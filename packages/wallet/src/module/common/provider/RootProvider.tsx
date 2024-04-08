@@ -2,7 +2,7 @@
 
 import {
     availableChains,
-    availableTransports,
+    getViemClientFromChain,
 } from "@/context/common/blockchain/provider";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -31,11 +31,7 @@ const queryClient = new QueryClient({
  */
 const wagmiConfig = createConfig({
     chains: availableChains,
-    transports: availableTransports,
-    cacheTime: 60_000,
-    batch: {
-        multicall: { wait: 50 },
-    },
+    client: ({ chain }) => getViemClientFromChain({ chain }),
 });
 
 /**

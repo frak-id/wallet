@@ -9,7 +9,10 @@ import {
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
-import { isWalletConnectEnableAtom } from "@/module/settings/atoms/betaOptions";
+import {
+    isMainnetEnableAtom,
+    isWalletConnectEnableAtom,
+} from "@/module/settings/atoms/betaOptions";
 import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
 import { useAtom } from "jotai";
 import { FlaskConical, Square, SquareCheck } from "lucide-react";
@@ -33,6 +36,7 @@ export function BetaOptions() {
                             </Title>
                         </AccordionTrigger>
                         <AccordionContent>
+                            <MainnetToggle />
                             <WalletConnectToggle />
                         </AccordionContent>
                     </AccordionItem>
@@ -49,6 +53,18 @@ function WalletConnectToggle() {
             <Row>
                 {isEnable ? <SquareCheck /> : <Square />}
                 Wallet Connect
+            </Row>
+        </Button>
+    );
+}
+
+function MainnetToggle() {
+    const [isEnable, toggle] = useAtom(isMainnetEnableAtom);
+    return (
+        <Button onClick={toggle} variant={"outlined"}>
+            <Row>
+                {isEnable ? <SquareCheck /> : <Square />}
+                Mainnet
             </Row>
         </Button>
     );

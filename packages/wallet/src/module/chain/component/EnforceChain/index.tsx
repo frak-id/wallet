@@ -1,4 +1,4 @@
-import { useSwitchConfigChain } from "@/module/chain/component/hook/useSwitchConfigChain";
+import { useSwitchConfigChain } from "@/module/chain/hook/useSwitchConfigChain";
 import type { PropsWithChildren } from "react";
 import { useChainId } from "wagmi";
 

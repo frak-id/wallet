@@ -13,6 +13,7 @@ type AlchemyApiKeys = {
  * From: https://github.com/alchemyplatform/alchemy-sdk-js/blob/fddd65fff4bd7367469ccb44a0900aa1dcc0cc62/src/types/types.ts#L81
  */
 const AlchemyNetworkName: Record<AvailableChainIds, string> = {
+    // Testnet's
     80001: "polygon-mumbai",
     //80002: "polygon-amoy",
     11155420: "opt-sepolia",
@@ -26,13 +27,12 @@ const AlchemyNetworkName: Record<AvailableChainIds, string> = {
 export function getAlchemyTransport({ chain }: { chain: Chain }) {
     // Build the alchemy rpc url depending on the chain
     const rpcUrl = getAlchemyRpcUrl({ chain });
-
     if (!rpcUrl) {
         // Fallback to default transport
         return http();
     }
 
-    // Build the alchemy client (no batching or anything, isn't supported by alchemy custom endpoints)
+    // Build the alchemy client
     return http(rpcUrl, {
         batch: {
             wait: 50,
@@ -51,8 +51,7 @@ export function getAlchemyTransportNoBatch({ chain }: { chain: Chain }) {
     // Build the alchemy rpc url depending on the chain
     const rpcUrl = getAlchemyRpcUrl({ chain });
     if (!rpcUrl) {
-        // Fallback to default transport
-        return http();
+        throw new Error(`No alchemy rpc url for chain ${chain.id}`);
     }
 
     // Build the alchemy client (no batching or anything, isn't supported by alchemy custom endpoints)
@@ -63,6 +62,10 @@ export function getAlchemyTransportNoBatch({ chain }: { chain: Chain }) {
     });
 }
 
+/**
+ * Get the alchemy rpc url for the given chain
+ * @param chain
+ */
 function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
     // Extract the api keys and parse them
     const alchemyApiKeys = JSON.parse(

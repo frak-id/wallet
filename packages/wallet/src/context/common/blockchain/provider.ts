@@ -2,13 +2,15 @@ import {
     getAlchemyTransport,
     getAlchemyTransportNoBatch,
 } from "@/context/common/blockchain/alchemy-transport";
-import { type HttpTransport, createClient, extractChain } from "viem";
+import { memo } from "radash";
+import { type Chain, createClient, extractChain } from "viem";
 import { arbitrumSepolia, optimismSepolia, polygonMumbai } from "viem/chains";
 
 /**
  * All the available chains
  */
 export const availableChains = [
+    // Testnet's
     arbitrumSepolia,
     optimismSepolia,
     polygonMumbai,
@@ -17,32 +19,50 @@ export const availableChains = [
 export type AvailableChainIds = (typeof availableChains)[number]["id"];
 
 /**
- * Create alchemy transports for all the available chains
- * TODO: Probably a bit mem consuming, should be lazy loaded
+ * Get the transport for the given chain
  */
-export const availableTransports = Object.fromEntries(
-    availableChains.map((chain) => [chain.id, getAlchemyTransport({ chain })])
-) as Record<AvailableChainIds, HttpTransport>;
-
-/**
- * Create each viem client for all the available chains
- * TODO: Same should be lazy loaded
- */
-export const availableClients = Object.fromEntries(
-    availableChains.map((chain) => [
-        chain.id,
-        createClient({
-            chain,
-            transport: availableTransports[chain.id],
-            cacheTime: 60_000,
-        }),
-    ])
+const getTransport = memo(
+    ({ chain }: { chain: Chain }) => getAlchemyTransport({ chain }),
+    {
+        key: ({ chain }: { chain: Chain }) => `viem-transport-${chain.id}`,
+    }
 );
 
 /**
- * Directly expose the mumbai viem client, since the paywall part is based on that
+ * Get the viem client for the given chain
  */
-export const arbSepoliaPocClient = availableClients[arbitrumSepolia.id];
+export const getViemClientFromChain = memo(
+    ({ chain }: { chain: Chain }) =>
+        createClient({
+            chain,
+            transport: getTransport({ chain }),
+            cacheTime: 60_000,
+        }),
+    {
+        key: ({ chain }: { chain: Chain }) => `viem-client-${chain.id}`,
+    }
+);
+
+/**
+ * Get a viem client for the chain id
+ * @param chainId
+ */
+export function getViemClientFromChainId({ chainId }: { chainId: number }) {
+    // Get the matching chain
+    const chain = availableChains.find(({ id }) => id === chainId);
+    if (!chain) {
+        throw new Error(`Chain with id ${chainId} not configured`);
+    }
+    // And return the viem client
+    return getViemClientFromChain({ chain });
+}
+
+/**
+ * Directly expose the arbitrum sepolia viem client, since the paywall part is based on that
+ */
+export const arbSepoliaPocClient = getViemClientFromChainId({
+    chainId: arbitrumSepolia.id,
+});
 
 /**
  * Get the alchemy client with no batch on the rpc side
