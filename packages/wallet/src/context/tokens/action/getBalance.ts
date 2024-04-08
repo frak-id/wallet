@@ -1,6 +1,6 @@
 "use server";
 
-import { availableClients } from "@/context/common/blockchain/provider";
+import { getViemClientFromChainId } from "@/context/common/blockchain/provider";
 import { CachesTags } from "@/context/common/caching";
 import { unstable_cache } from "next/cache";
 import { erc20Abi } from "viem";
@@ -19,7 +19,7 @@ async function _getErc20Balance({
     token,
 }: { wallet: Address; chainId: number; token: Address }) {
     // Get the alchemy client
-    const viemClient = availableClients[chainId];
+    const viemClient = getViemClientFromChainId({ chainId });
 
     // Return the balance
     return await readContract(viemClient, {
