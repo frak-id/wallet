@@ -1,11 +1,9 @@
 "use server";
 
 import { addresses } from "@/context/common/blockchain/addresses";
-import {
-    paywallAbi,
-    paywallTokenAbi,
-} from "@/context/common/blockchain/poc-abi";
+import { paywallAbi } from "@/context/common/blockchain/poc-abi";
 import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
+import { getErc20Balance } from "@/context/tokens/action/getBalance";
 import type { ArticlePrice, ArticlePriceForUser } from "@/types/Price";
 import { unstable_cache } from "next/cache";
 import { type Hex, toHex } from "viem";
@@ -84,11 +82,10 @@ async function _getArticlePricesForUser({
     }
 
     // Get the frk balance of the user
-    const userBalance = await readContract(arbSepoliaPocClient, {
-        address: addresses.paywallToken,
-        abi: paywallTokenAbi,
-        functionName: "balanceOf",
-        args: [address],
+    const userBalance = await getErc20Balance({
+        token: addresses.paywallToken,
+        wallet: address,
+        chainId: arbSepoliaPocClient.chainId,
     });
 
     // Map the prices with the user balance (to check if enabled or not)
@@ -106,13 +103,12 @@ export const getArticlePricesForUser = unstable_cache(
     ["get-user-article-prices"],
     {
         // Keep that in cache for 5 minutes
-        revalidate: 1,
+        revalidate: 300,
     }
 );
 
 /**
  * Get an up to date price for a given article
- * TODO: Should expose a simpler blockchain method maybe?
  * @param contentId
  * @param priceIndex
  */
@@ -121,25 +117,16 @@ async function _getArticlePrice({
     priceIndex,
 }: { contentId: Hex; priceIndex: number }): Promise<ArticlePrice | null> {
     // Read all the prices from the blockchain
-    const prices = await readContract(arbSepoliaPocClient, {
-        address: addresses.paywall,
-        abi: paywallAbi,
-        functionName: "getContentPrices",
-        args: [BigInt(contentId)],
-    });
+    const prices = await getArticlePrices({ contentId });
 
     // Find the one at the given index
-    const price = prices[priceIndex];
+    const price = prices.find((p) => p.index === priceIndex);
     if (!price?.isPriceEnabled) {
         return null;
     }
 
     // Return the price formatted
-    return {
-        index: priceIndex,
-        frkAmount: toHex(price.price),
-        unlockDurationInSec: Number(price.allowanceTime),
-    };
+    return price;
 }
 
 /**
@@ -147,7 +134,7 @@ async function _getArticlePrice({
  */
 export const getArticlePrice = unstable_cache(
     _getArticlePrice,
-    ["get-article-prices"],
+    ["get-article-price"],
     {
         // Keep in cache for an hour
         revalidate: 3600,
