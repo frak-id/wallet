@@ -1,6 +1,5 @@
 "use client";
 
-import { userErc20TokensRevalidate } from "@/context/tokens/action/getTokenAsset";
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { Back } from "@/module/common/component/Back";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
@@ -95,9 +94,6 @@ export function TokensSend() {
 
         // Reset the form
         reset();
-
-        // Invalidate the user tokens
-        await userErc20TokensRevalidate();
 
         // Refetch the tokens
         await refetch();

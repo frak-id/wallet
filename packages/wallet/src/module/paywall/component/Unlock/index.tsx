@@ -25,13 +25,19 @@ import {
 import { usePaywallRedirection } from "@/module/paywall/hook/usePaywallRedirection";
 import { useUnlockArticle } from "@/module/paywall/hook/useUnlockArticle";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
+import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useAtomValue, useSetAtom } from "jotai/index";
 import { BookText } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import styles from "./index.module.css";
 
 export function PaywallUnlock({ context }: { context: PaywallContext }) {
-    const { balance } = useFrkBalance();
+    /**
+     * The current wallet
+     */
+    const { wallet } = useWallet();
+
+    const { balance } = useFrkBalance({ wallet: wallet.address });
     const redirect = usePaywallRedirection();
     const { launchArticleUnlock, uiState } = useUnlockArticle({
         context,

@@ -1,8 +1,7 @@
-import { addresses } from "@/context/common/blockchain/addresses";
-import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useSession } from "@/module/common/hook/useSession";
 import { walletListenerEmitterAtom } from "@/module/listener/atoms/walletListener";
+import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import type { Session } from "@/types/Session";
 import type {
     ExtractedParametersFromRpc,
@@ -12,7 +11,6 @@ import type {
 import { useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 import { toHex } from "viem";
-import { useReadContract } from "wagmi";
 
 type OnListenToWallet = IFrameRequestResolver<
     Extract<
@@ -40,18 +38,9 @@ export function useWalletStatusListener() {
     /**
      * Listen to the current session FRK balance if needed
      */
-    const { data: walletFrkBalance, refetch: refreshBalance } = useReadContract(
-        {
-            abi: paywallTokenAbi,
-            address: addresses.paywallToken,
-            functionName: "balanceOf",
-            args: [session?.wallet?.address ?? "0x0"],
-            // Some query options
-            query: {
-                enabled: !!session?.wallet?.address,
-            },
-        }
-    );
+    const { rawBalance: walletFrkBalance, refreshBalance } = useFrkBalance({
+        wallet: session?.wallet?.address,
+    });
 
     /**
      * The function that will be called when a wallet status is requested
