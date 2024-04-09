@@ -91,7 +91,7 @@ export function AuthRequestModal({
             message,
         ],
         mutationFn: async () => {
-            console.log("Approving authentication");
+            console.log("Approving authentication", { args });
             // Ensure we got everything needed
             if (
                 !(
@@ -169,7 +169,7 @@ export function AuthRequestModal({
             </Panel>
 
             {isApproveInSuccess ? (
-                <p className={styles.modalPairing__succemodalWc__messagess}>
+                <p className={styles.modalPairing__success}>
                     Connection successful to {metadata.name}
                 </p>
             ) : (

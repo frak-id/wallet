@@ -118,20 +118,26 @@ function RequestModal({
     args: Extract<WalletConnectRequestArgs, { type: "request" }>;
     onHandle: () => void;
 }) {
-    // Extract the method from the request
-    const method = useMemo(
-        () => args.params.request.method,
-        [args.params.request.method]
+    // Extract the method and the chain from the request
+    const { method, chainId } = useMemo(
+        () => ({
+            method: args.params.request.method,
+            chainId: Number.parseInt(
+                args.params.chainId.replace("eip155:", "")
+            ),
+        }),
+        [args.params.request.method, args.params.chainId]
     );
-
-    // TODO: We can have a few generics here (rejection and acceptance formatting, open / close state handling etc)
-    // TODO: The only thing differing is the inner content, and the smart wallet action
-
-    // TODO: Should check the chain and enforce it here? Or maybe enforce it inside the modal view?
 
     // If that's a signature request
     if (method === "eth_sign" || method === "personal_sign") {
-        return <SignRequestModal args={args} onHandle={onHandle} />;
+        return (
+            <SignRequestModal
+                args={args}
+                requestedChainId={chainId}
+                onHandle={onHandle}
+            />
+        );
     }
     // If that's a typed data signature request
     if (
@@ -139,7 +145,13 @@ function RequestModal({
         method === "eth_signTypedData_v3" ||
         method === "eth_signTypedData_v4"
     ) {
-        return <SignTypedDataRequestModal args={args} onHandle={onHandle} />;
+        return (
+            <SignTypedDataRequestModal
+                args={args}
+                requestedChainId={chainId}
+                onHandle={onHandle}
+            />
+        );
     }
 
     console.error("Unknown request type", { method });
