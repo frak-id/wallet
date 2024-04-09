@@ -49,12 +49,10 @@ export function useWalletStatusListener() {
      */
     const onWalletListenRequest: OnListenToWallet = useCallback(
         async (_, emitter) => {
-            // Trigger a balance refresh, and wait for it
-            await refreshBalance();
+            // Trigger a balance refresh
+            refreshBalance();
             // Save our emitter, this will trigger session and balance fetching
             setListener({ emitter });
-            // Refetch session and frk balance on request
-            refreshBalance();
         },
         [refreshBalance, setListener]
     );

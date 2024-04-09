@@ -17,10 +17,7 @@ async function _getErc20Balance({
     wallet,
     chainId,
     token,
-}: { wallet?: Address; chainId: number; token: Address }) {
-    if (!wallet) {
-        return undefined;
-    }
+}: { wallet: Address; chainId: number; token: Address }) {
     // Get the alchemy client
     const viemClient = getViemClientFromChainId({ chainId });
 

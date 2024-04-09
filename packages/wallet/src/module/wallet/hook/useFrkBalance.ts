@@ -11,12 +11,17 @@ export function useFrkBalance({ wallet }: { wallet?: Address }) {
      */
     const { data: balance, refetch: refreshBalance } = useQuery({
         queryKey: ["frk-balance", wallet ?? "no-wallet"],
-        queryFn: async () =>
-            getErc20Balance({
-                wallet: wallet,
+        queryFn: async () => {
+            if (!wallet) {
+                return 0n;
+            }
+
+            return getErc20Balance({
+                wallet,
                 chainId: arbitrumSepolia.id,
                 token: addresses.paywallToken,
-            }),
+            });
+        },
         // Only enable the hook if the smart wallet is present
         enabled: !!wallet,
         // Refetch every minute, will be available once wagmi is updated (and should then be moved into a query sub object)
