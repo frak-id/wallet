@@ -57,17 +57,20 @@ function ChainSelectionList({
 }) {
     return (
         <ul className={styles.settings__list}>
-            {chains.map((chain) => (
-                <li key={chain.id}>
-                    <ButtonRipple
-                        size={"small"}
-                        onClick={() => onSelect(chain.id)}
-                        disabled={chain.id === currentChain?.id}
-                    >
-                        {chain.name}
-                    </ButtonRipple>
-                </li>
-            ))}
+            {chains
+                // Remove ethereum from chain switch (only here to support SIWE, signature and stuff like that)
+                .filter((chain) => chain.id !== 1)
+                .map((chain) => (
+                    <li key={chain.id}>
+                        <ButtonRipple
+                            size={"small"}
+                            onClick={() => onSelect(chain.id)}
+                            disabled={chain.id === currentChain?.id}
+                        >
+                            {chain.name}
+                        </ButtonRipple>
+                    </li>
+                ))}
         </ul>
     );
 }

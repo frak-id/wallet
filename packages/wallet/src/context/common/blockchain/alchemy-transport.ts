@@ -22,6 +22,7 @@ const AlchemyNetworkName: Record<AvailableChainIds, string> = {
     // Mainnet's
     137: "polygon-mainnet",
     8453: "base-mainnet",
+    1: "eth-mainnet",
 };
 
 /**

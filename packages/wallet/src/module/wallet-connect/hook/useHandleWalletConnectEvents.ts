@@ -83,6 +83,31 @@ export function useHandleWalletConnectEvents({
     });
 
     /**
+     * Callback when we receive an auth request
+     * @param proposal
+     */
+    const { mutate: onAuthRequest } = useMutation({
+        mutationKey: ["on-auth-request"],
+        mutationFn: async ({
+            id,
+            topic,
+            params,
+        }: Web3WalletTypes.AuthRequest) => {
+            console.log("Wallet connect auth request", { id });
+            // Build our request args
+            const args: WalletConnectRequestArgs = {
+                id,
+                topic,
+                type: "auth",
+                params,
+            };
+
+            // Store the pairing proposal
+            addRequest(args);
+        },
+    });
+
+    /**
      * Callback when a proposal expires
      */
     const { mutate: onProposalExpire } = useMutation({
@@ -132,9 +157,7 @@ export function useHandleWalletConnectEvents({
         walletConnectInstance.on("session_request_expire", onProposalExpire);
 
         // Auth request??? Seems like pairing + SIWE combined
-        walletConnectInstance.on("auth_request", (proposal) => {
-            console.log("Wallet connect auth request", { proposal });
-        });
+        walletConnectInstance.on("auth_request", onAuthRequest);
 
         // On session delete, refresh the sessions
         walletConnectInstance.on("session_delete", onSessionDelete);
@@ -167,6 +190,7 @@ export function useHandleWalletConnectEvents({
         walletConnectInstance,
         onSessionProposal,
         onSessionRequest,
+        onAuthRequest,
         onProposalExpire,
         onSessionDelete,
     ]);
