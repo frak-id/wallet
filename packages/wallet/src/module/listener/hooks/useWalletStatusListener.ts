@@ -1,5 +1,5 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
-import { useSession } from "@/module/common/hook/useSession";
+import { sessionAtom } from "@/module/common/atoms/session";
 import { walletListenerEmitterAtom } from "@/module/listener/atoms/walletListener";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import type { Session } from "@/types/Session";
@@ -9,6 +9,7 @@ import type {
     WalletStatusReturnType,
 } from "@frak-labs/nexus-sdk/core";
 import { useAtom } from "jotai";
+import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect } from "react";
 import { toHex } from "viem";
 
@@ -31,9 +32,7 @@ export function useWalletStatusListener() {
     /**
      * Get the current user session
      */
-    const { session, isFetchingSession } = useSession({
-        enabled: !!listener,
-    });
+    const session = useAtomValue(sessionAtom);
 
     /**
      * Listen to the current session FRK balance if needed
@@ -63,16 +62,13 @@ export function useWalletStatusListener() {
      * Send the updated state every time we got one
      */
     useEffect(() => {
-        // If we are fetching some data early exit
-        if (isFetchingSession) return;
-
         // If we don't have an emitter, early exit
         if (!listener) return;
 
         // Build the wallet status and emit it
         const walletStatus = buildWalletStatus(session, walletFrkBalance);
         listener.emitter(walletStatus);
-    }, [listener, session, walletFrkBalance, isFetchingSession]);
+    }, [listener, session, walletFrkBalance]);
 
     /**
      * Build the wallet status

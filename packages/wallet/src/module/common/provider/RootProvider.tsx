@@ -1,7 +1,9 @@
 "use client";
 
 import { wagmiConfigAtom } from "@/module/common/atoms/wagmi";
+import { HydrateAtoms } from "@/module/common/component/HydrateAtoms";
 import { ThemeListener } from "@/module/settings/atoms/theme";
+import type { Session } from "@/types/Session";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -44,20 +46,25 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     },
 };
 
-export function RootProvider({ children }: PropsWithChildren) {
+export function RootProvider({
+    session,
+    children,
+}: PropsWithChildren<{ session: Session | null }>) {
     return (
         <>
             <Provider>
-                <PersistQueryClientProvider
-                    client={queryClient}
-                    persistOptions={persistOptions}
-                >
-                    <WagmiProviderWithDynamicConfig>
-                        {children}
-                    </WagmiProviderWithDynamicConfig>
-                    <ReactQueryDevtools initialIsOpen={false} />
-                </PersistQueryClientProvider>
-                <ThemeListener />
+                <HydrateAtoms session={session}>
+                    <PersistQueryClientProvider
+                        client={queryClient}
+                        persistOptions={persistOptions}
+                    >
+                        <WagmiProviderWithDynamicConfig>
+                            {children}
+                        </WagmiProviderWithDynamicConfig>
+                        <ReactQueryDevtools initialIsOpen={false} />
+                    </PersistQueryClientProvider>
+                    <ThemeListener />
+                </HydrateAtoms>
             </Provider>
         </>
     );

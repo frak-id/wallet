@@ -6,25 +6,27 @@ import {
     webAuthNSmartAccount,
 } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
+import { sessionAtom } from "@/module/common/atoms/session";
 import { useAAClients } from "@/module/common/hook/useAAClients";
-import type { Session } from "@/types/Session";
 import { smartAccount } from "@permissionless/wagmi";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { useQuery } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import {
     ENTRYPOINT_ADDRESS_V06,
     createSmartAccountClient,
 } from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
-import { type ReactNode, createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect } from "react";
+import type { PropsWithChildren } from "react";
 import { useMemo } from "react";
 import { useClient, useConnect } from "wagmi";
 
-function useWalletHook({ session }: { session: Session }) {
+function useWalletHook() {
     /**
      * Current user session
      */
-    const { wallet, username } = session;
+    const { wallet, username } = useAtomValue(sessionAtom) ?? {};
 
     /**
      * The current viem client
@@ -153,11 +155,8 @@ export const useWallet = (): UseWalletHook => {
     return context;
 };
 
-export function WalletProvider({
-    session,
-    children,
-}: { session: Session; children: ReactNode }) {
-    const hook = useWalletHook({ session });
+export function WalletProvider({ children }: PropsWithChildren) {
+    const hook = useWalletHook();
 
     return (
         <WalletContext.Provider value={hook}>{children}</WalletContext.Provider>
