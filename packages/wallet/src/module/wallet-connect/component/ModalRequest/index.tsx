@@ -4,6 +4,7 @@ import {
     wcDisplayedRequestAtom,
     wcRemoveRequestAtom,
 } from "@/module/wallet-connect/atoms/events";
+import { AuthRequestModal } from "@/module/wallet-connect/component/ModalRequest/AuthRequest";
 import { WcModal } from "@/module/wallet-connect/component/ModalRequest/Components";
 import { PairingModal } from "@/module/wallet-connect/component/ModalRequest/Pairing";
 import { SignRequestModal } from "@/module/wallet-connect/component/ModalRequest/SignRequest";
@@ -76,12 +77,17 @@ function WcModalDialog({
             return <PairingModal args={currentRequest} onHandle={onHandle} />;
         }
 
+        // Handle an auth modal
+        if (currentRequest.type === "auth") {
+            return (
+                <AuthRequestModal args={currentRequest} onHandle={onHandle} />
+            );
+        }
+
         // Handle a request modal
         if (currentRequest.type === "request") {
             return <RequestModal args={currentRequest} onHandle={onHandle} />;
         }
-
-        // TODO: Also handle auth modal (with SIWE)
 
         return <>Can't handle type {currentRequest} yet</>;
     }, [currentRequest, onHandle]);

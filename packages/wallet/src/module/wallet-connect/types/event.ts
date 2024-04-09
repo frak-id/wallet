@@ -1,3 +1,4 @@
+import type { AuthClientTypes } from "@walletconnect/auth-client";
 import type { ProposalTypes, SessionTypes, Verify } from "@walletconnect/types";
 
 /**
@@ -5,12 +6,17 @@ import type { ProposalTypes, SessionTypes, Verify } from "@walletconnect/types";
  */
 export type WalletConnectRequestArgs = {
     id: number;
-    verifyContext: Verify.Context;
 } & (
     | {
           type: "pairing";
           params: ProposalTypes.Struct;
           topic?: never;
+          verifyContext: Verify.Context;
+      }
+    | {
+          type: "auth";
+          topic: string;
+          params: AuthClientTypes.AuthRequestEventArgs;
       }
     | {
           type: "request";
@@ -24,5 +30,6 @@ export type WalletConnectRequestArgs = {
               chainId: string;
           };
           session: SessionTypes.Struct;
+          verifyContext: Verify.Context;
       }
 );

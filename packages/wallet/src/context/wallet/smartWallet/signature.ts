@@ -1,3 +1,4 @@
+import { tryit } from "radash";
 import {
     type Address,
     type Client,
@@ -50,16 +51,30 @@ export async function fetchAccountMetadata(
     client: Client,
     accountAddress: Address
 ): Promise<AccountMetadata> {
-    const result = await readContract(client, {
-        address: accountAddress,
-        abi: GetEip7212DomainAbi,
-        functionName: "eip712Domain",
-    });
+    const [, result] = await tryit(() =>
+        readContract(client, {
+            address: accountAddress,
+            abi: GetEip7212DomainAbi,
+            functionName: "eip712Domain",
+        })
+    )();
+    if (!result) {
+        return getMetadataDefaults(client, accountAddress);
+    }
     return {
         name: result[1],
         version: result[2],
         chainId: result[3],
         verifyingContract: result[4],
+    };
+}
+
+function getMetadataDefaults(client: Client, accountAddress: Address) {
+    return {
+        name: "Kernel",
+        version: "0.2.4",
+        chainId: BigInt(client.chain?.id ?? 0),
+        verifyingContract: accountAddress,
     };
 }
 

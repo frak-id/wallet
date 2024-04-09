@@ -8,6 +8,7 @@ import {
     arbitrumSepolia,
     base,
     baseSepolia,
+    mainnet,
     optimismSepolia,
     polygon,
     polygonMumbai,
@@ -31,6 +32,7 @@ export const mainnetChains = [
     // Mainnet's
     base,
     polygon,
+    mainnet,
 ] as const;
 
 /**

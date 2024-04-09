@@ -84,7 +84,7 @@ export function WcModalHeader({
     children,
 }: PropsWithChildren<{
     metadata: SignClientTypes.Metadata;
-    verifyContext: Verify.Context;
+    verifyContext?: Verify.Context;
     subTitle: string;
 }>) {
     // Extract icon, name and url from metadata
@@ -114,10 +114,12 @@ export function WcModalHeader({
                     </a>
                 </p>
             )}
-            <ContextWarningsInfo
-                isScam={verifyContext.verified.isScam}
-                validation={verifyContext.verified.validation}
-            />
+            {verifyContext && (
+                <ContextWarningsInfo
+                    isScam={verifyContext.verified.isScam}
+                    validation={verifyContext.verified.validation}
+                />
+            )}
             {children}
         </header>
     );

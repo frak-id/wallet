@@ -1,6 +1,7 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { RequestGenericModal } from "@/module/wallet-connect/component/ModalRequest/Components";
+import styles from "@/module/wallet-connect/component/ModalRequest/index.module.css";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { FileSignature } from "lucide-react";
@@ -79,7 +80,8 @@ export function SignRequestModal({
         >
             <Panel size={"normal"}>
                 <Title icon={<FileSignature />}>Message to sign</Title>
-                {message}
+                <br />
+                <p className={styles.modalWc__message}>{message}</p>
             </Panel>
         </RequestGenericModal>
     );

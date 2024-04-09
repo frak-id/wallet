@@ -66,6 +66,7 @@ export function PairingModal({
         mutate: onApprove,
         isPending: isApproving,
         isSuccess: isApproveInSuccess,
+        error: approveError,
     } = useMutation({
         mutationKey: [
             "session-approval",
@@ -165,6 +166,12 @@ export function PairingModal({
                     onApprove={onApprove}
                     onReject={onReject}
                 />
+            )}
+
+            {approveError && (
+                <p className={`error ${styles.modalPairing__error}`}>
+                    {approveError.message}
+                </p>
             )}
         </>
     );

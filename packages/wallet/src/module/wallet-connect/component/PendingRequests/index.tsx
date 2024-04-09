@@ -70,40 +70,46 @@ function PendingRequestItem({
 }: { request: WalletConnectRequestArgs }) {
     const setDisplayedRequest = useSetAtom(wcDisplayedRequestAtom);
 
+    const proposerMetadata = useMemo(() => {
+        if (request.type === "pairing") {
+            return request.params.proposer.metadata;
+        }
+        if (request.type === "auth") {
+            return request.params.requester.metadata;
+        }
+        return request.session.peer.metadata;
+    }, [request]);
+
     /**
      * Extract info about the request
      */
     const { icon, name } = useMemo(() => {
-        if (request.type === "pairing") {
-            return {
-                icon:
-                    first(request.params.proposer.metadata.icons) ?? undefined,
-                name: request.params.proposer.metadata.name,
-            };
-        }
-
         return {
-            icon: first(request.session.peer.metadata.icons) ?? undefined,
-            name: request.session.peer.metadata.name,
+            icon: first(proposerMetadata.icons) ?? undefined,
+            name: proposerMetadata.name,
         };
-    }, [request]);
+    }, [proposerMetadata.icons, proposerMetadata.name]);
 
     /**
      * The explanation of the request
      */
     const formattedMsg = useMemo(() => {
         if (request.type === "pairing") {
-            return `Pairing`;
+            return "Pairing";
+        }
+
+        if (request.type === "auth") {
+            return "Authenticate";
         }
 
         const method = request.params.request.method;
 
         if (method === "eth_sendTransaction") {
-            return `Send transaction`;
+            return "Send transaction";
         }
 
         if (method === "eth_sign" || method === "personal_sign") {
-            return `Sign message`;
+            return "Sign message";
         }
 
         if (
@@ -111,10 +117,10 @@ function PendingRequestItem({
             method === "eth_signTypedData_v3" ||
             method === "eth_signTypedData_v4"
         ) {
-            return `Sign typed data`;
+            return "Sign typed data";
         }
 
-        return `Unknown request`;
+        return "Unknown request";
     }, [request]);
 
     return (
