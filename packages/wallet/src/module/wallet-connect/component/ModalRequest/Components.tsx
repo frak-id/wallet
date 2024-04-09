@@ -14,9 +14,7 @@ import {
     type Dispatch,
     type PropsWithChildren,
     type SetStateAction,
-    useCallback,
     useMemo,
-    useState,
 } from "react";
 
 /**
@@ -63,7 +61,6 @@ function WcModalComponent({
                 text={children}
                 open={open}
                 onOpenChange={onOpenChange}
-                showCloseButton={false}
             />
         );
     }
@@ -236,7 +233,7 @@ export function WcModalRequestContext({
  * @param args
  * @param isApproveDisabled
  * @param getApprovalData
- * @param onClose
+ * @param onHandle
  * @param children
  * @param subtitle
  * @param successMessage
@@ -246,7 +243,7 @@ export function RequestGenericModal({
     args,
     isApproveDisabled,
     getApprovalData,
-    onClose,
+    onHandle,
     children,
     subtitle,
     successMessage,
@@ -254,18 +251,11 @@ export function RequestGenericModal({
     args: Extract<WalletConnectRequestArgs, { type: "request" }>;
     isApproveDisabled: boolean;
     getApprovalData: () => Promise<unknown>;
-    onClose: () => void;
+    onHandle: () => void;
     subtitle: string;
     successMessage: string;
 }>) {
     const { walletConnectInstance } = useWalletConnect();
-
-    const [isOpen, setIsOpen] = useState(true);
-
-    const close = useCallback(() => {
-        setIsOpen(false);
-        onClose();
-    }, [onClose]);
 
     /**
      * Mutation to approve the pairing
@@ -297,7 +287,7 @@ export function RequestGenericModal({
             });
 
             // And close the modal after 3 seconds
-            setTimeout(close, 3_000);
+            setTimeout(onHandle, 3_000);
         },
     });
 
@@ -327,7 +317,7 @@ export function RequestGenericModal({
             });
 
             // And close the modal
-            close();
+            onHandle();
         },
     });
 
@@ -340,14 +330,7 @@ export function RequestGenericModal({
     );
 
     return (
-        <WcModal
-            open={isOpen}
-            onOpenChange={(value) => {
-                if (value === false) {
-                    onReject();
-                }
-            }}
-        >
+        <>
             <WcModalHeader
                 metadata={args.session.peer.metadata}
                 verifyContext={args.verifyContext}
@@ -377,6 +360,6 @@ export function RequestGenericModal({
                     onReject={onReject}
                 />
             )}
-        </WcModal>
+        </>
     );
 }

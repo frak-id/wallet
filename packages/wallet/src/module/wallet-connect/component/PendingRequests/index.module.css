@@ -1,0 +1,25 @@
+.accordionPendingRequests {
+    width: 100%;
+}
+
+.accordionPendingRequests__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--frak-accordion-trigger-color);
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.pendingRequest__container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.pendingRequest__info {
+    flex-grow: 5;
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+}

@@ -19,10 +19,10 @@ import { type TypedDataDefinition, isAddress } from "viem";
 
 export function SignTypedDataRequestModal({
     args,
-    onClose,
+    onHandle,
 }: {
     args: Extract<WalletConnectRequestArgs, { type: "request" }>;
-    onClose: () => void;
+    onHandle: () => void;
 }) {
     const { smartWallet } = useWallet();
 
@@ -74,7 +74,7 @@ export function SignTypedDataRequestModal({
     return (
         <RequestGenericModal
             args={args}
-            onClose={onClose}
+            onHandle={onHandle}
             isApproveDisabled={isApproveDisabled}
             getApprovalData={getApprovalData}
             subtitle={"request a signature"}

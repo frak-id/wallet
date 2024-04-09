@@ -1,7 +1,6 @@
 import { getNamespaces } from "@/context/wallet-connect/namespace";
 import { checkRequestedChain } from "@/context/wallet-connect/pairing";
 import {
-    WcModal,
     WcModalAction,
     WcModalHeader,
 } from "@/module/wallet-connect/component/ModalRequest/Components";
@@ -12,26 +11,19 @@ import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/eve
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMutation } from "@tanstack/react-query";
 import { getSdkError } from "@walletconnect/utils";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 export function PairingModal({
     args,
-    onClose,
+    onHandle,
 }: {
     args: Extract<WalletConnectRequestArgs, { type: "pairing" }>;
-    onClose: () => void;
+    onHandle: () => void;
 }) {
     const { smartWallet } = useWallet();
     const { walletConnectInstance } = useWalletConnect();
     const invalidateWalletConnectSessions =
         useInvalidateWalletConnectSessions();
-
-    const [isOpen, setIsOpen] = useState(true);
-
-    const close = useCallback(() => {
-        setIsOpen(false);
-        onClose();
-    }, [onClose]);
 
     /**
      * Extract few mandatory stuff from the args
@@ -110,7 +102,7 @@ export function PairingModal({
             }
 
             // And close the modal after 3 seconds
-            setTimeout(close, 3_000);
+            setTimeout(onHandle, 3_000);
 
             // Once we are here, refresh the sessions
             await invalidateWalletConnectSessions();
@@ -137,7 +129,7 @@ export function PairingModal({
             });
 
             // And close the modal
-            close();
+            onHandle();
         },
     });
 
@@ -147,14 +139,7 @@ export function PairingModal({
     );
 
     return (
-        <WcModal
-            open={isOpen}
-            onOpenChange={(value) => {
-                if (value === false) {
-                    onReject();
-                }
-            }}
-        >
+        <>
             <WcModalHeader
                 metadata={metadata}
                 verifyContext={args.verifyContext}
@@ -181,6 +166,6 @@ export function PairingModal({
                     onReject={onReject}
                 />
             )}
-        </WcModal>
+        </>
     );
 }

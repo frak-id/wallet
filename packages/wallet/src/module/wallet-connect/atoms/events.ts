@@ -19,6 +19,10 @@ export const wcDisplayedRequestAtom = atom<
 export const wcAddNewRequestAtom = atom(
     null,
     (get, set, request: WalletConnectRequestArgs) => {
+        // Ensure it's not present in the list yet, if yes directly exit
+        const currentRequests = get(wcRequestsAtom);
+        if (currentRequests.some((r) => r.id === request.id)) return;
+
         // Add it to the list
         set(wcRequestsAtom, [...get(wcRequestsAtom), request]);
         // Then, if there is no current request, display it

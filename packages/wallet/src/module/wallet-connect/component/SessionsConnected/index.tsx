@@ -8,7 +8,7 @@ import { Plug } from "lucide-react";
 export function SessionsConnected() {
     const isEnable = useAtomValue(isWalletConnectEnableAtom);
     if (!isEnable) {
-        return <></>;
+        return null;
     }
 
     return (

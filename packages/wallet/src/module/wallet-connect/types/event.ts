@@ -10,6 +10,7 @@ export type WalletConnectRequestArgs = {
     | {
           type: "pairing";
           params: ProposalTypes.Struct;
+          topic?: never;
       }
     | {
           type: "request";

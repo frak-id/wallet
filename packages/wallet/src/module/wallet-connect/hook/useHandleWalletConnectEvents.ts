@@ -62,7 +62,6 @@ export function useHandleWalletConnectEvents({
             params,
             verifyContext,
         }: Web3WalletTypes.SessionRequest) => {
-            console.log("Wallet connect session request", { id, topic });
             // Get the matching session, if none exit directly
             const requestSession =
                 walletConnectInstance?.engine?.signClient?.session?.get(topic);
@@ -115,7 +114,14 @@ export function useHandleWalletConnectEvents({
         if (!walletConnectInstance) return;
         console.log("Wallet connect event listener attached");
 
-        // TODO: Initial with load of `getPendingSessionProposals` and `getPendingSessionRequests`
+        // TODO: Initial with load of `getPendingSessionProposals` (we don't have the verifyContext on pending proposals), and also pending auth stuff
+
+        // Handle each pending requests
+        const requests = walletConnectInstance.getPendingSessionRequests();
+        for (const request of Object.values(requests)) {
+            // Handle the request
+            onSessionRequest(request);
+        }
 
         // Pairing and request events
         walletConnectInstance.on("session_proposal", onSessionProposal);

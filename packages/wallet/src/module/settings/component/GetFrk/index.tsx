@@ -19,7 +19,7 @@ export function GetFrk() {
 
     // If we are not on arbitrum sepolia, don't display FRK airdrop option
     if (chainId !== arbitrumSepolia.id) {
-        return <></>;
+        return null;
     }
 
     return (

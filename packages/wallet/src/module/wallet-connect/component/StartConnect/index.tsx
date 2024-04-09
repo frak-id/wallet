@@ -16,7 +16,7 @@ import styles from "./index.module.css";
 export function CreateWalletConnectConnection() {
     const isEnable = useAtomValue(isWalletConnectEnableAtom);
     if (!isEnable) {
-        return <></>;
+        return null;
     }
 
     return (
