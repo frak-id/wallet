@@ -13,7 +13,7 @@ export function useFrkBalance({ wallet }: { wallet?: Address }) {
         queryKey: ["frk-balance", wallet ?? "no-wallet"],
         queryFn: async () =>
             getErc20Balance({
-                wallet: wallet ?? "0x",
+                wallet: wallet,
                 chainId: arbitrumSepolia.id,
                 token: addresses.paywallToken,
             }),

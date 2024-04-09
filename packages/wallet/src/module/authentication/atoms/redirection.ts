@@ -1,9 +1,6 @@
-import { atomWithStorage } from "jotai/utils";
+import { atom } from "jotai";
 
 /**
  * Atom with our last authenticator
  */
-export const postAuthRedirectAtom = atomWithStorage<string | null>(
-    "redirectUrl",
-    null
-);
+export const postAuthRedirectAtom = atom<string | null>(null);
