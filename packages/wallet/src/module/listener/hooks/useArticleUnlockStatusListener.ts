@@ -1,6 +1,6 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { sessionAtom } from "@/module/common/atoms/session";
 import { useAAClients } from "@/module/common/hook/useAAClients";
-import { useSession } from "@/module/common/hook/useSession";
 import {
     unlockStateAtom,
     unlockStateFromOnChainSetterAtom,
@@ -46,11 +46,9 @@ export function useArticleUnlockStatusListener() {
     const [listenerParam, setListenerParam] = useAtom(unlockStatusListenerAtom);
 
     /**
-     * Get the current user session (only fetch it if needed)
+     * Get the current user session
      */
-    const { session, isFetchingSession } = useSession({
-        enabled: !!listenerParam,
-    });
+    const session = useAtomValue(sessionAtom);
 
     /**
      * The current unlock status mapped from the current listener param
@@ -133,7 +131,7 @@ export function useArticleUnlockStatusListener() {
      */
     useEffect(() => {
         // If we are loading a few stuff, directly exit
-        if (isFetchingOnChainStatus || isFetchingSession) {
+        if (isFetchingOnChainStatus) {
             return;
         }
 
@@ -143,7 +141,6 @@ export function useArticleUnlockStatusListener() {
         }
 
         // If we got no session, directly emit the locked state
-        // TODO: SESSION-001
         if (!session) {
             listenerParam?.emitter({
                 key: "not-unlocked",
@@ -165,7 +162,6 @@ export function useArticleUnlockStatusListener() {
         listenerParam?.emitter,
         currentPaywallClear,
         isFetchingOnChainStatus,
-        isFetchingSession,
     ]);
 
     /**

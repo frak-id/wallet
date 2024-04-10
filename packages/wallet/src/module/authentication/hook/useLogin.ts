@@ -2,6 +2,7 @@ import type { PreviousAuthenticatorModel } from "@/context/common/dexie/Previous
 import { validateAuthentication } from "@/context/wallet/action/authenticate";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
+import { sessionAtom } from "@/module/common/atoms/session";
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import {
     base64URLStringToBuffer,
@@ -15,6 +16,9 @@ import { useSetAtom } from "jotai";
  * Hook that handle the registration process
  */
 export function useLogin() {
+    // Setter for the session
+    const setSession = useSetAtom(sessionAtom);
+
     // Setter for the last authentication
     const addLastAuthentication = useSetAtom(addLastAuthenticationAtom);
 
@@ -72,6 +76,9 @@ export function useLogin() {
 
             // Trigger the frk airdrop without waiting for the tx hash
             await airdropFrk({ wallet: wallet.address, waitForReceipt: false });
+
+            // Set the session
+            setSession({ username, wallet });
         },
     });
 

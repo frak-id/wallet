@@ -1,3 +1,4 @@
+import { sessionAtom } from "@/module/common/atoms/session";
 import { unlockStateFromCurrentAtom } from "@/module/listener/atoms/unlockStatusListenerLocal";
 import type { ArticleUnlockStatusReturnType } from "@frak-labs/nexus-sdk/core";
 import { atom } from "jotai";
@@ -20,9 +21,16 @@ export const unlockStatusListenerAtom = atom<UnlockStateListenerParam | null>(
  * Atom representing the current unlock state
  */
 export const unlockStateAtom = atom<ArticleUnlockStatusReturnType>((get) => {
-    // TODO: We should also have an atom for the current session, and early exit if no session here
-    // TODO: @srod: When the var would be available after the SSR stuff it would be great
-    // TODO: Replacement SESSION-001
+    // Get the current session
+    const session = get(sessionAtom);
+
+    // If no session, return a default locked state
+    if (!session) {
+        return {
+            key: "not-unlocked",
+            status: "locked",
+        };
+    }
 
     // Get the current on chain status
     const currentOnChainStatus = get(unlockStateFromOnChainAtom);

@@ -1,10 +1,11 @@
 import { getArticlePricesForUser } from "@/context/paywall/action/getPrices";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
-import { getSession } from "@/context/session/action/session";
+import { sessionAtom } from "@/module/common/atoms/session";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
+import { useAtomValue } from "jotai";
 import { useCallback } from "react";
 
 type OnGetArticleUnlockOptions = IFrameRequestResolver<
@@ -18,6 +19,9 @@ type OnGetArticleUnlockOptions = IFrameRequestResolver<
  * Hook use to answer the get article unlock options request
  */
 export function useGetArticleUnlockOptionsListener() {
+    // Fetch the current user session
+    const session = useAtomValue(sessionAtom);
+
     /**
      * The function that will be called when the unlock options for an article is requested
      * @param _
@@ -35,9 +39,6 @@ export function useGetArticleUnlockOptionsListener() {
                 return;
             }
 
-            // Fetch the current user session
-            const session = await getSession();
-
             // Fetch the prices
             const prices = await getArticlePricesForUser({
                 contentId,
@@ -48,7 +49,7 @@ export function useGetArticleUnlockOptionsListener() {
             // Send the prices
             await emitter({ prices: prices });
         },
-        []
+        [session?.wallet?.address]
     );
 
     return { onGetArticleUnlockOptions };

@@ -1,3 +1,4 @@
+import { getSession } from "@/context/session/action/session";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
@@ -43,18 +44,21 @@ export const viewport: Viewport = {
     themeColor: "#001432",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: ReactNode;
 }>) {
+    // Check if a user is logged in or not
+    const session = await getSession();
+
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`scrollbars ${sora.className}`}>
                 <div className={"desktop scrollbars"}>
                     <main className={styles.main}>
                         <div className={styles.inner}>
-                            <RootProvider>
+                            <RootProvider session={session}>
                                 <ClientOnly>{children}</ClientOnly>
                             </RootProvider>
                         </div>
