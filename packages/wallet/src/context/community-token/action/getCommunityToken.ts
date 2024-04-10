@@ -1,3 +1,5 @@
+"use server";
+
 import { addresses } from "@/context/common/blockchain/addresses";
 import { getAlchemyRpcUrl } from "@/context/common/blockchain/alchemy-transport";
 import { communityTokenFactoryAbi } from "@/context/common/blockchain/poc-abi";
