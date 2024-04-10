@@ -6,7 +6,7 @@ import { communityTokenFactoryAbi } from "@/context/common/blockchain/poc-abi";
 import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { unstable_cache } from "next/cache";
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 import { readContract } from "viem/actions";
 import { arbitrumSepolia } from "viem/chains";
 
@@ -15,7 +15,9 @@ import { arbitrumSepolia } from "viem/chains";
  *  - For now, available contentId is 0,1,2
  * @param contentId
  */
-async function _getCommunityTokenForContent({ contentId }: { contentId: Hex }) {
+async function _getCommunityTokenForContent({
+    contentId,
+}: { contentId: number }) {
     return await readContract(arbSepoliaPocClient, {
         address: addresses.communityTokenFactory,
         abi: communityTokenFactoryAbi,
@@ -60,6 +62,10 @@ export async function getCommunityTokensForWallet({
             balance: string;
         }[];
     };
+
+    if (!result.ownedNfts) {
+        return [];
+    }
 
     return result.ownedNfts.map((nft) => ({
         contractAddress: nft.contractAddress,

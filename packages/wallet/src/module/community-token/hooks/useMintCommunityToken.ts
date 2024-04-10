@@ -1,17 +1,16 @@
 import { contentCommunityTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMutation } from "@tanstack/react-query";
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 import { useWriteContract } from "wagmi";
 
 /**
  * Hook used to mint a new community token
- * @param tokenAddress
  */
 export function useMintCommunityToken({
     tokenAddress,
 }: {
-    tokenAddress: Address;
+    tokenAddress?: Address;
 }) {
     // Get the write contract function
     const { writeContractAsync } = useWriteContract();
@@ -21,10 +20,10 @@ export function useMintCommunityToken({
     return useMutation({
         mutationKey: [
             "mint-community-token",
-            tokenAddress,
+            tokenAddress ?? "no-token-address",
             smartWallet?.address ?? "no-address",
         ],
-        mutationFn: async () => {
+        mutationFn: async ({ tokenAddress }: { tokenAddress: Hex }) => {
             if (!smartWallet?.address) {
                 throw new Error("No smart wallet address found");
             }
