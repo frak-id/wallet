@@ -70,8 +70,12 @@ export function getAlchemyTransportNoBatch({ chain }: { chain: Chain }) {
 /**
  * Get the alchemy rpc url for the given chain
  * @param chain
+ * @param version
  */
-function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
+export function getAlchemyRpcUrl({
+    chain,
+    version = 2,
+}: { chain: Chain; version?: number }) {
     // Extract the api keys and parse them
     const alchemyApiKeys = JSON.parse(
         process.env.ALCHEMY_API_KEYS ?? "{}"
@@ -84,5 +88,5 @@ function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
     // Build the alchemy rpc url depending on the chain
     return `https://${
         AlchemyNetworkName[chain.id as AvailableChainIds]
-    }.g.alchemy.com/v2/${apiKey}`;
+    }.g.alchemy.com/v${version}/${apiKey}`;
 }
