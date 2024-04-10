@@ -19,5 +19,6 @@ export function useCommunityTokens() {
             }
             return getCommunityTokensForWallet({ wallet: smartWallet.address });
         },
+        placeholderData: [],
     });
 }

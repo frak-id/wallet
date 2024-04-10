@@ -1,7 +1,7 @@
 "use server";
 
 import { addresses } from "@/context/common/blockchain/addresses";
-import { getAlchemyRpcUrl } from "@/context/common/blockchain/alchemy-transport";
+import { getAlchemyNftUrl } from "@/context/common/blockchain/alchemy-transport";
 import { communityTokenFactoryAbi } from "@/context/common/blockchain/poc-abi";
 import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
@@ -44,14 +44,20 @@ export async function getCommunityTokensForWallet({
     wallet,
 }: { wallet: Address }): Promise<CommunityTokenBalance[]> {
     // Build the alchemy query url
-    const baseUrl = getAlchemyRpcUrl({ chain: arbitrumSepolia, version: 3 });
+    const baseUrl = getAlchemyNftUrl({ chain: arbitrumSepolia });
     if (!baseUrl) {
         throw new Error("No alchemy base url found");
     }
+
     const queryUrl = new URL(`${baseUrl}/getNFTsForOwner`);
     queryUrl.searchParams.set("owner", wallet);
     queryUrl.searchParams.set("withMetadata", "false");
-    // TODO: We can also specify 'contractAddresses' to filter out on specific community tokens
+    // Specify all the known community token right now
+    // TODO: In the long term, small pounder.sh indexer doing this stuff (indexing deployed community tokens, and for each community tokens, their holders)
+    queryUrl.searchParams.set(
+        "contractAddresses[]",
+        "0x000D4DA2f31DA29B7BD75C7e16Bef16c289F86aB,0x7352ab0dbfde3dbbb8335ae5757564b9d5687ea9,0xe8bd05dc31320186f220516d25b4b4c47949890a"
+    );
 
     // Then query it and parse the result
     const response = await fetch(queryUrl.toString());

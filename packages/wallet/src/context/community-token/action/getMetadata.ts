@@ -19,23 +19,40 @@ async function _getNftMetadata({
     tokenId: bigint;
 }) {
     // Get the metadata url
-    const metadataUrl = await readContract(arbSepoliaPocClient, {
+    let metadataUrl = await readContract(arbSepoliaPocClient, {
         address: tokenAddress,
         abi: contentCommunityTokenAbi,
         functionName: "tokenURI",
         args: [tokenId],
     });
 
+    if (
+        process.env.IS_LOCAL === "true" &&
+        metadataUrl.indexOf("poc-wallet.frak.id") >= 0
+    ) {
+        metadataUrl = metadataUrl
+            .replace("metadata", "metadata/")
+            .replace("https", "http")
+            .replace("poc-wallet.frak.id", "localhost:3000");
+    }
+
     // Query it and return it
     const response = await fetch(metadataUrl);
 
     // Return the metadata
-    // TODO: Add more fields in the metadata api and here if needed
-    return (await response.json()) as {
+    const result = (await response.json()) as {
         name: string;
         description: string;
         image: string;
     };
+
+    // Map the image url if local
+    if (process.env.IS_LOCAL === "true") {
+        result.image = result.image
+            .replace("https", "http")
+            .replace("poc-wallet.frak.id", "localhost:3000");
+    }
+    return result;
 }
 
 export const getNftMetadata = unstable_cache(
