@@ -20,10 +20,11 @@ export function useAirdropFrk() {
                 waitForReceipt,
             }: { wallet: Address; waitForReceipt: boolean }) => {
                 // Trigger the airdrop
-                const { txHash } = await triggerFrkAirdrop({
-                    user: wallet,
-                    amount: "100",
-                });
+                const { txHash } =
+                    (await triggerFrkAirdrop({
+                        user: wallet,
+                        amount: "100",
+                    })) ?? {};
                 // Wait for the tx receipt
                 if (waitForReceipt && viemClient && txHash) {
                     await waitForTransactionReceipt(viemClient, {

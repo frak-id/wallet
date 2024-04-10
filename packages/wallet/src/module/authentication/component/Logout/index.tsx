@@ -6,6 +6,7 @@ import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 function cleanLocalStorage() {
     const localStorageItems = [
@@ -22,6 +23,7 @@ function cleanLocalStorage() {
  * @constructor
  */
 export function Logout() {
+    const router = useRouter();
     const queryClient = useQueryClient();
     return (
         <Panel size={"none"} variant={"empty"}>
@@ -32,6 +34,7 @@ export function Logout() {
                     queryClient.removeQueries();
                     setTimeout(() => {
                         cleanLocalStorage();
+                        router.push("/register");
                     }, 100);
                 }}
             >
