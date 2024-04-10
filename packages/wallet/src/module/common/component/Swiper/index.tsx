@@ -18,16 +18,15 @@ export function Swiper({ slides = [] }: { slides: CommunityTokenBalance[] }) {
             className={styles.swiper}
         >
             {slides.map((slide, index) => (
-                <NftSlide nft={slide} index={index} />
+                <SwiperSlide key={`slide-${index}-${slide.tokenId}`}>
+                    <NftSlide nft={slide} />
+                </SwiperSlide>
             ))}
         </SwiperComponent>
     );
 }
 
-function NftSlide({
-    nft,
-    index,
-}: { nft: CommunityTokenBalance; index: number }) {
+function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
     const { data: metadata } = useCommunityTokenMetadata({
         tokenAddress: nft.contractAddress,
         id: nft.tokenId,
@@ -38,13 +37,11 @@ function NftSlide({
     );
 
     return (
-        <SwiperSlide key={`slide-${index}`}>
-            <img
-                src={imageUrl}
-                alt={metadata?.name ?? "NFT"}
-                width={160}
-                height={213}
-            />
-        </SwiperSlide>
+        <img
+            src={imageUrl}
+            alt={metadata?.name ?? "NFT"}
+            width={160}
+            height={213}
+        />
     );
 }
