@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
  */
 export function useCommunityTokenMetadata({ id }: { id: bigint }) {
     return useQuery({
-        queryKey: ["get-community-token-metadata", id.toString()],
+        queryKey: ["community-token-metadata", id.toString()],
         queryFn: async () => getCommunityTokenMetadata({ tokenId: id }),
     });
 }

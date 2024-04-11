@@ -10,7 +10,8 @@ export function useCommunityTokens() {
 
     return useQuery({
         queryKey: [
-            "get-community-tokens",
+            "community-token",
+            "get-all",
             smartWallet?.address ?? "no-address",
         ],
         queryFn: async () => {

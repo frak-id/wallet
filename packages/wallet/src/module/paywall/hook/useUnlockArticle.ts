@@ -1,11 +1,13 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import {
+    communityTokenAbi,
     paywallAbi,
     paywallTokenAbi,
 } from "@/context/common/blockchain/poc-abi";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
+import { useInvalidateCommunityTokenAvailability } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import {
     setPaywallErrorAtom,
     setPaywallLoadingAtom,
@@ -29,10 +31,13 @@ import { useClient } from "wagmi";
 /**
  * Hook used to fetch and handle the prices
  */
-export function useUnlockArticle({ context }: { context: PaywallContext }) {
+export function useUnlockArticle({
+    context,
+    joinCommunity,
+}: { context: PaywallContext; joinCommunity: boolean }) {
     const { wallet, smartWallet, smartWalletClient } = useWallet();
     const { balance, refreshBalance } = useFrkBalance({
-        wallet: wallet.address,
+        wallet: wallet?.address,
     });
     const setGlobalPaywallStatus = useSetAtom(paywallStatusAtom);
 
@@ -54,6 +59,8 @@ export function useUnlockArticle({ context }: { context: PaywallContext }) {
             articleId: context.articleId,
             address: wallet?.address,
         });
+
+    const invalidateCommunityTokens = useInvalidateCommunityTokenAvailability();
 
     /**
      * Launch the article unlocking
@@ -97,7 +104,7 @@ export function useUnlockArticle({ context }: { context: PaywallContext }) {
                     response: {
                         key: "already-unlocked",
                         status: "unlocked",
-                        user: wallet.address,
+                        user: smartWallet.address,
                     },
                 });
                 setUiState({
@@ -130,7 +137,7 @@ export function useUnlockArticle({ context }: { context: PaywallContext }) {
             setPaywallLoading("buildingTx");
             const txs = await buildUnlockTxs({
                 weiPrice,
-                walletAddress: wallet.address,
+                walletAddress: smartWallet.address,
                 context,
             });
             const smartWalletData = await smartWallet.encodeCallData(txs);
@@ -156,10 +163,13 @@ export function useUnlockArticle({ context }: { context: PaywallContext }) {
                 response: {
                     key: "success",
                     status: "in-progress",
-                    user: wallet.address,
+                    user: smartWallet.address,
                     userOpHash: userOpHash,
                 },
             });
+
+            // Invalidate the community token availability
+            await invalidateCommunityTokens();
 
             // Set the ui success state
             setUiState({
@@ -239,9 +249,23 @@ export function useUnlockArticle({ context }: { context: PaywallContext }) {
                 data: unlockFnCall,
             });
 
+            // If the user also want to join the community, add this tx to it
+            if (joinCommunity) {
+                const joinCommunityFnCall = encodeFunctionData({
+                    abi: communityTokenAbi,
+                    functionName: "mint",
+                    args: [walletAddress, BigInt(context.contentId)],
+                });
+                txs.push({
+                    to: addresses.communityToken,
+                    value: 0n,
+                    data: joinCommunityFnCall,
+                });
+            }
+
             return txs;
         },
-        [viemClient]
+        [viemClient, joinCommunity]
     );
 
     useEffect(() => {

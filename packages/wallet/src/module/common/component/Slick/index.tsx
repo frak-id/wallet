@@ -1,5 +1,6 @@
 "use client";
 
+import { useBurnCommunityToken } from "@/module/community-token/hooks/useBurnCommunityToken";
 import { useCommunityTokenMetadata } from "@/module/community-token/hooks/useCommunityTokenMetadata";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { useMemo } from "react";
@@ -26,6 +27,9 @@ export function Slick({ slides = [] }: { slides: CommunityTokenBalance[] }) {
 }
 
 function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
+    const { mutate: burnCommunityToken } = useBurnCommunityToken({
+        id: nft.tokenId,
+    });
     const { data: metadata } = useCommunityTokenMetadata({
         id: nft.tokenId,
     });
@@ -41,6 +45,7 @@ function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
             alt={metadata?.name ?? "NFT"}
             width={160}
             height={213}
+            onClick={() => burnCommunityToken()}
         />
     );
 }

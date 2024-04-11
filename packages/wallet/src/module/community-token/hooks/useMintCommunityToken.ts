@@ -1,5 +1,6 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
+import { useInvalidateCommunityTokenAvailability } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMutation } from "@tanstack/react-query";
 import { useWriteContract } from "wagmi";
@@ -17,6 +18,8 @@ export function useMintCommunityToken({
 
     const { smartWallet } = useWallet();
 
+    const invalidateCommunityTokens = useInvalidateCommunityTokenAvailability();
+
     return useMutation({
         mutationKey: [
             "mint-community-token",
@@ -31,12 +34,17 @@ export function useMintCommunityToken({
                 throw new Error("No content id found");
             }
 
-            return await writeContractAsync({
+            const txHash = await writeContractAsync({
                 address: addresses.communityToken,
                 abi: communityTokenAbi,
                 functionName: "mint",
                 args: [smartWallet.address, BigInt(contentId)],
             });
+
+            // Invalidate the community token availability
+            await invalidateCommunityTokens();
+
+            return txHash;
         },
     });
 }

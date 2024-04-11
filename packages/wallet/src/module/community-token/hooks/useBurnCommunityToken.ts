@@ -1,5 +1,6 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
+import { useInvalidateCommunityTokenAvailability } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import { useMutation } from "@tanstack/react-query";
 import { useWriteContract } from "wagmi";
 
@@ -15,16 +16,19 @@ export function useBurnCommunityToken({
 }) {
     // Get the write contract function
     const { writeContractAsync } = useWriteContract();
+    const invalidateCommunityTokens = useInvalidateCommunityTokenAvailability();
 
     return useMutation({
         mutationKey: ["burn-community-token", id],
         mutationFn: async () => {
-            return await writeContractAsync({
+            const txHash = await writeContractAsync({
                 address: addresses.communityToken,
                 abi: communityTokenAbi,
                 functionName: "burn",
                 args: [id],
             });
+            await invalidateCommunityTokens();
+            return txHash;
         },
     });
 }

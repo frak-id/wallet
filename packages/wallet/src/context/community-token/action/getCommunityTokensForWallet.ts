@@ -6,6 +6,7 @@ import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { unstable_cache } from "next/cache";
+import { unique } from "radash";
 import type { Address } from "viem";
 import { getLogs, multicall, readContract } from "viem/actions";
 
@@ -85,24 +86,26 @@ export async function getCommunityTokensForWallet({
         toBlock: "latest",
     });
 
+    const tokenIds = unique(transferToLogs.map((log) => log.args.id));
+
     // Then, for each logs, check if the user has a balance of this token
     const balances = await multicall(arbSepoliaPocClient, {
         allowFailure: false,
-        contracts: transferToLogs.map(
-            (log) =>
+        contracts: tokenIds.map(
+            (id) =>
                 ({
                     address: addresses.communityToken,
                     abi: communityTokenAbi,
                     functionName: "balanceOf",
-                    args: [wallet, BigInt(log.args.id)],
+                    args: [wallet, id],
                 }) as const
         ),
     });
 
     // Return the balances for each id
-    return transferToLogs
-        .map((log, index) => ({
-            tokenId: BigInt(log.args.id),
+    return tokenIds
+        .map((id, index) => ({
+            tokenId: id,
             balance: BigInt(balances[index]),
         }))
         .filter((balance) => balance.balance > 0n);

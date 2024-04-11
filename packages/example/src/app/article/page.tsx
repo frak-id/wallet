@@ -1,13 +1,13 @@
 "use client";
 
-import {getArticle} from "@/context/article/action/get";
-import {ReadArticle} from "@/module/article/component/Read";
-import {Skeleton} from "@/module/common/component/Skeleton";
-import {decodeStartUnlockReturn} from "@frak-labs/nexus-sdk/actions";
-import {useQuery} from "@tanstack/react-query";
-import {useSearchParams} from "next/navigation";
-import {Suspense, useEffect, useState} from "react";
-import type {Hex} from "viem";
+import { getArticle } from "@/context/article/action/get";
+import { ReadArticle } from "@/module/article/component/Read";
+import { Skeleton } from "@/module/common/component/Skeleton";
+import { decodeStartUnlockReturn } from "@frak-labs/nexus-sdk/actions";
+import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import type { Hex } from "viem";
 
 export default function ArticlePage() {
     return (
