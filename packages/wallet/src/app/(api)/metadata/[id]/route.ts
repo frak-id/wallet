@@ -2,32 +2,19 @@ import { type NextRequest, NextResponse } from "next/server";
 
 type ContentNames = "le-monde" | "equipe" | "wired";
 
-const rangePerContent: Record<ContentNames, [number, number]> = {
-    "le-monde": [1, 3],
-    wired: [1, 5],
-    equipe: [1, 4],
-};
-
 const contentIdToName: Record<number, ContentNames> = {
     0: "le-monde",
     1: "equipe",
     2: "wired",
 };
 
-function getImageForId({
-    contentName,
-    nftId,
-}: { contentName: ContentNames; nftId: number }) {
-    // Get the content name
-    if (!contentName) return "https://placehold.co/400";
-
-    // Get the range for this content
-    const [min, max] = rangePerContent[contentName];
-    if (!(min && max)) return "https://placehold.co/400";
-    // Get an image number in the range from the nft id, the range is inclusive
-    const imageNumber = (nftId % (max - min + 1)) + min;
-    return `https://poc-wallet.frak.id/images/nft/${contentName}-${imageNumber}.webp`;
-}
+const getImages = (contentName: ContentNames) => ({
+    image: `https://poc-wallet.frak.id/images/nft/${contentName}-dark.webp`,
+    images: {
+        dark: `https://poc-wallet.frak.id/images/nft/${contentName}-dark.webp`,
+        light: `https://poc-wallet.frak.id/images/nft/${contentName}-light.webp`,
+    },
+});
 
 /**
  * Get the metadata for a specific NFT
@@ -48,10 +35,7 @@ export function GET(
     return NextResponse.json({
         name: `${contentName} Community NFT`,
         description: "Super token description",
-        image: getImageForId({
-            contentName,
-            nftId: normalisedId,
-        }),
+        ...getImages(contentName),
         // Content related
         contentId: normalisedId,
         contentType: "news",

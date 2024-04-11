@@ -42,6 +42,10 @@ async function _getNftMetadata({
         name: string;
         description: string;
         image: string;
+        images: {
+            dark: string;
+            light: string;
+        };
     };
 
     // Map the image url if local
