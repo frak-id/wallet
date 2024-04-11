@@ -1,3 +1,11 @@
 .swiper {
     margin-top: 10px;
 }
+
+.swiper__slide {
+    margin: 10px;
+}
+
+.swiper__item {
+    border-radius: 8px;
+}

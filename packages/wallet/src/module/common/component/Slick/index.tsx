@@ -3,30 +3,32 @@
 import { useCommunityTokenMetadata } from "@/module/community-token/hooks/useCommunityTokenMetadata";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { useMemo } from "react";
-import "swiper/css";
-import { A11y } from "swiper/modules";
-import { Swiper as SwiperComponent, SwiperSlide } from "swiper/react";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick-theme.css";
+import "slick-carousel/slick/slick.css";
 import styles from "./index.module.css";
 
-export function Swiper({ slides = [] }: { slides: CommunityTokenBalance[] }) {
+export function Slick({ slides = [] }: { slides: CommunityTokenBalance[] }) {
+    const settings = {
+        infinite: false,
+        slidesToShow: 2,
+        slidesToScroll: 2,
+        variableWidth: true,
+        arrows: false,
+        className: styles.slick,
+    };
     return (
-        <SwiperComponent
-            modules={[A11y]}
-            spaceBetween={10}
-            slidesPerView={2}
-            className={styles.swiper}
-        >
+        <Slider {...settings}>
             {slides.map((slide, index) => (
-                <SwiperSlide key={`slide-${index}-${slide.tokenId}`}>
-                    <NftSlide nft={slide} />
-                </SwiperSlide>
+                <NftSlide nft={slide} key={`slide-${index}-${slide.tokenId}`} />
             ))}
-        </SwiperComponent>
+        </Slider>
     );
 }
 
 function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
     const { data: metadata } = useCommunityTokenMetadata({
+        tokenAddress: nft.contractAddress,
         id: nft.tokenId,
     });
     const imageUrl = useMemo(
@@ -36,11 +38,11 @@ function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
 
     return (
         <img
+            className={styles.slick__item}
             src={imageUrl}
             alt={metadata?.name ?? "NFT"}
-            width={"100%"}
+            width={160}
             height={213}
-            className={styles.swiper__item}
         />
     );
 }
