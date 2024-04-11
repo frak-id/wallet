@@ -74,15 +74,6 @@ export function checkRequestedChain(
         (chain) => !supported.includes(chain)
     );
 
-    console.log("Supported chains", {
-        availableChains,
-        supported,
-        required,
-        optional,
-        requiredMissing,
-        optionalMissing,
-    });
-
     // Format each chain using the chain name
     return {
         supported: supported.map((chain) => getChainName(chain)),

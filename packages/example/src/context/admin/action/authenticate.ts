@@ -48,8 +48,6 @@ export async function onlyAdmin() {
  * @param password
  */
 export async function performAdminLogin(password: string) {
-    console.log("password", password);
-    console.log("password env", process.env.ADMIN_PASSWORD);
     if (password !== process.env.ADMIN_PASSWORD) {
         throw new Error("Invalid password");
     }

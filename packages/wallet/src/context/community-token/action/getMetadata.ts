@@ -32,7 +32,6 @@ async function _getNftMetadata({
             .replace("https", "http")
             .replace("poc-wallet.frak.id", "localhost:3000");
     }
-    console.log("metadata url", { metadataUrl });
 
     // Query it and return it
     const response = await fetch(metadataUrl);
@@ -54,7 +53,6 @@ async function _getNftMetadata({
             .replace("https", "http")
             .replace("poc-wallet.frak.id", "localhost:3000");
     }
-    console.log("metadata results", { result });
     return result;
 }
 

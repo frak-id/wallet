@@ -99,7 +99,6 @@ export const unlockStateFromCurrentAtom =
 export const clearCurrentStateIfMatchAtom = atom(null, (get, set) => {
     const currentMatchRequest = get(isUnlockStatusListenerMatchingAtom);
     if (currentMatchRequest) {
-        console.log("Apparently current listener matched here");
         set(clearPaywallAtom);
     }
 });
