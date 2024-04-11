@@ -4,7 +4,6 @@ import { useCommunityTokenMetadata } from "@/module/community-token/hooks/useCom
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { useMemo } from "react";
 import Slider from "react-slick";
-import "slick-carousel/slick/slick-theme.css";
 import "slick-carousel/slick/slick.css";
 import styles from "./index.module.css";
 
