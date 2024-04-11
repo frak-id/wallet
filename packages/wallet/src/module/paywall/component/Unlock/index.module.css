@@ -23,3 +23,13 @@
 .unlock__fingerprints {
     margin: 32px 0;
 }
+
+.unlock__join {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.unlock__join > label {
+    margin-top: -3px;
+    margin-left: 8px;
+}
