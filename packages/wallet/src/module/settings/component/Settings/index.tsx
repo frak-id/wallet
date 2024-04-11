@@ -38,7 +38,7 @@ function BiometryInfo() {
             <ul className={styles.settings__list}>
                 <li>
                     Authenticator:{" "}
-                    <WalletAddress wallet={wallet.authenticatorId} />
+                    <WalletAddress wallet={wallet?.authenticatorId ?? "0"} />
                 </li>
 
                 <li>

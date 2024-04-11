@@ -60,6 +60,7 @@ function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
                 width={160}
                 height={213}
             />
+
             <ModalBurn
                 burnCommunityToken={burnCommunityToken}
                 openModal={openModal}
