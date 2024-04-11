@@ -56,7 +56,8 @@
     "slick-carousel": "^1.8.1",
     "vaul": "^0.9.0",
     "viem": "^2.9.16",
-    "wagmi": "^2.5.19"
+    "wagmi": "^2.5.19",
+    "@wagmi/core": "^2.6.16"
   },
   "devDependencies": {
     "@simplewebauthn/types": "^9.0.1",

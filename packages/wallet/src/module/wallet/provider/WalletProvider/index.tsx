@@ -1,26 +1,15 @@
 "use client";
 
-import { getSignOptions } from "@/context/wallet/action/sign";
-import {
-    type KernelWebAuthNSmartAccount,
-    webAuthNSmartAccount,
-} from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
-import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
+import type { KernelWebAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { useAAClients } from "@/module/common/hook/useAAClients";
-import { smartAccount } from "@permissionless/wagmi";
-import { startAuthentication } from "@simplewebauthn/browser";
-import { useQuery } from "@tanstack/react-query";
+import { useSmartWalletConnector } from "@/module/wallet/hook/useSmartWalletConnector";
 import { useAtomValue } from "jotai";
-import {
-    ENTRYPOINT_ADDRESS_V06,
-    createSmartAccountClient,
-} from "permissionless";
-import { sponsorUserOperation } from "permissionless/actions/pimlico";
+import type { SmartAccountClient } from "permissionless";
+import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
 import { createContext, useContext, useEffect } from "react";
 import type { PropsWithChildren } from "react";
 import { useMemo } from "react";
-import { useClient, useConnect } from "wagmi";
+import { useConfig, useConnect, useConnectorClient } from "wagmi";
 
 function useWalletHook() {
     /**
@@ -29,107 +18,61 @@ function useWalletHook() {
     const { wallet, username } = useAtomValue(sessionAtom) ?? {};
 
     /**
-     * The current viem client
-     */
-    const viemClient = useClient();
-
-    /**
-     * The current AA related clients
-     */
-    const { bundlerTransport, paymasterClient } = useAAClients();
-
-    /**
      * Hook to connect the wagmi connector to the smart wallet client
      */
     const { connect } = useConnect();
 
     /**
+     * Hook to listen to the current connection
+     */
+    const { data: connectorClient, status: connectorClientStatus } =
+        useConnectorClient();
+
+    // TODO: If connector client status = "pending" then show a loading spinner
+
+    const config = useConfig();
+    const connector = useSmartWalletConnector({ config, wallet });
+
+    useEffect(() => {
+        console.log("Connector client has changed", {
+            connectorClient,
+            connectorClientStatus,
+        });
+    }, [connectorClient, connectorClientStatus]);
+
+    /**
      * The current smart wallet
      */
-    const { data: smartWallet } = useQuery({
-        queryKey: [
-            "kernel-smartWallet",
-            wallet?.authenticatorId ?? "no-authenticator-id",
-            viemClient?.key ?? "no-viem-key",
-            viemClient?.chain?.id ?? "no-viem-chain-id",
-        ],
-        queryFn: async (): Promise<KernelWebAuthNSmartAccount | null> => {
-            // If there is no authenticator, return
-            if (!(wallet && viemClient)) {
-                return null;
-            }
+    const smartWallet = useMemo(() => {
+        if (!connectorClient?.account) {
+            return;
+        }
 
-            const { authenticatorId, publicKey } = wallet;
-
-            // Build the user smart wallet
-            return await webAuthNSmartAccount(viemClient, {
-                entryPoint: ENTRYPOINT_ADDRESS_V06,
-                authenticatorId,
-                signerPubKey: publicKey,
-                signatureProvider: async (message) => {
-                    // Get the signature options from server
-                    const options = await getSignOptions({
-                        authenticatorId,
-                        toSign: message,
-                    });
-
-                    // Start the client authentication
-                    const authenticationResponse =
-                        await startAuthentication(options);
-
-                    // Perform the verification of the signature
-                    return parseWebAuthNAuthentication(authenticationResponse);
-                },
-            });
-        },
-        enabled: !!viemClient,
-        staleTime: 0,
-        refetchOnWindowFocus: true,
-        refetchOnMount: true,
-        refetchOnReconnect: true,
-    });
+        return connectorClient.account as KernelWebAuthNSmartAccount;
+    }, [connectorClient]);
 
     /**
      * Every time the smart wallet changes, we need to update the connector
      */
     const smartWalletClient = useMemo(() => {
-        if (!(smartWallet && viemClient && bundlerTransport)) {
+        if (!connectorClient) {
             return;
         }
 
         // Build the smart wallet client
-        return createSmartAccountClient({
-            account: smartWallet,
-            entryPoint: ENTRYPOINT_ADDRESS_V06,
-            chain: viemClient.chain,
-            bundlerTransport,
-            // Only add a middleware if the paymaster client is available
-            middleware: paymasterClient
-                ? {
-                      sponsorUserOperation: (args) =>
-                          sponsorUserOperation(paymasterClient, args),
-                  }
-                : {},
-        });
-    }, [smartWallet, viemClient, bundlerTransport, paymasterClient]);
+        return connectorClient as SmartAccountClient<ENTRYPOINT_ADDRESS_V06_TYPE>;
+    }, [connectorClient]);
 
     /**
      * Every time the smart account changes, we need to update the connector
      */
     useEffect(() => {
-        if (!smartWalletClient || typeof connect !== "function") {
+        if (typeof connect !== "function") {
             return;
         }
-
-        // Build the wagmi connector and connect to it
-        const connector = smartAccount({
-            // @ts-ignore
-            smartAccountClient: smartWalletClient,
-            id: `nexus-wallet-${smartWalletClient.chain.id}`,
-            name: "Nexus Wallet",
-        });
+        console.log("Connecting to smart wallet", connector);
         connect({ connector });
-    }, [connect, smartWalletClient]);
+    }, [connect, connector]);
 
     return useMemo(
         () => ({
