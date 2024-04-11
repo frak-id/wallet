@@ -1,4 +1,4 @@
-import { getCommunityTokensForWallet } from "@/context/community-token/action/getCommunityToken";
+import { getCommunityTokensForWallet } from "@/context/community-token/action/getCommunityTokensForWallet";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useQuery } from "@tanstack/react-query";
 

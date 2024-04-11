@@ -1,29 +1,27 @@
-import { contentCommunityTokenAbi } from "@/context/common/blockchain/poc-abi";
+import { addresses } from "@/context/common/blockchain/addresses";
+import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { useMutation } from "@tanstack/react-query";
-import type { Address } from "viem";
 import { useWriteContract } from "wagmi";
 
 /**
- * Hook used to burn a new community token
+ * Hook used to burn a community token
  * @param tokenAddress
  * @param id
  */
 export function useBurnCommunityToken({
-    tokenAddress,
     id,
 }: {
-    tokenAddress: Address;
     id: bigint;
 }) {
     // Get the write contract function
     const { writeContractAsync } = useWriteContract();
 
     return useMutation({
-        mutationKey: ["burn-community-token", tokenAddress, id],
+        mutationKey: ["burn-community-token", id],
         mutationFn: async () => {
             return await writeContractAsync({
-                address: tokenAddress,
-                abi: contentCommunityTokenAbi,
+                address: addresses.communityToken,
+                abi: communityTokenAbi,
                 functionName: "burn",
                 args: [id],
             });

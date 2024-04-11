@@ -1,46 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// CommunityTokenFactory
+// CommunityToken
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-export const communityTokenFactoryAbi = [
-    {
-        type: "constructor",
-        inputs: [
-            {
-                name: "_contentRegistry",
-                internalType: "address",
-                type: "address",
-            },
-        ],
-        stateMutability: "nonpayable",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "_contentId", internalType: "uint256", type: "uint256" },
-        ],
-        name: "createCommunityToken",
-        outputs: [{ name: "", internalType: "address", type: "address" }],
-        stateMutability: "nonpayable",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "_contentId", internalType: "uint256", type: "uint256" },
-        ],
-        name: "getCommunityToken",
-        outputs: [{ name: "", internalType: "address", type: "address" }],
-        stateMutability: "view",
-    },
-    { type: "error", inputs: [], name: "AlreadyDeployed" },
-    { type: "error", inputs: [], name: "NotAuthorized" },
-] as const;
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ContentCommunityToken
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const contentCommunityTokenAbi = [
+export const communityTokenAbi = [
     {
         type: "constructor",
         inputs: [
@@ -49,84 +11,66 @@ export const contentCommunityTokenAbi = [
                 internalType: "contract ContentRegistry",
                 type: "address",
             },
-            { name: "_contentId", internalType: "uint256", type: "uint256" },
         ],
         stateMutability: "nonpayable",
     },
     {
         type: "function",
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
+        name: "allowCommunityToken",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
         inputs: [
-            { name: "account", internalType: "address", type: "address" },
+            { name: "owner", internalType: "address", type: "address" },
+            { name: "spender", internalType: "address", type: "address" },
             { name: "id", internalType: "uint256", type: "uint256" },
         ],
+        name: "allowance",
+        outputs: [{ name: "amount", internalType: "uint256", type: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "spender", internalType: "address", type: "address" },
+            { name: "id", internalType: "uint256", type: "uint256" },
+            { name: "amount", internalType: "uint256", type: "uint256" },
+        ],
         name: "approve",
-        outputs: [],
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
         stateMutability: "payable",
     },
     {
         type: "function",
-        inputs: [{ name: "owner", internalType: "address", type: "address" }],
+        inputs: [
+            { name: "owner", internalType: "address", type: "address" },
+            { name: "id", internalType: "uint256", type: "uint256" },
+        ],
         name: "balanceOf",
-        outputs: [{ name: "result", internalType: "uint256", type: "uint256" }],
+        outputs: [{ name: "amount", internalType: "uint256", type: "uint256" }],
         stateMutability: "view",
     },
     {
         type: "function",
         inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
         name: "burn",
-        outputs: [{ name: "id", internalType: "uint256", type: "uint256" }],
+        outputs: [],
         stateMutability: "nonpayable",
     },
     {
         type: "function",
-        inputs: [],
-        name: "cancelOwnershipHandover",
-        outputs: [],
-        stateMutability: "payable",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "pendingOwner", internalType: "address", type: "address" },
-        ],
-        name: "completeOwnershipHandover",
-        outputs: [],
-        stateMutability: "payable",
-    },
-    {
-        type: "function",
         inputs: [{ name: "id", internalType: "uint256", type: "uint256" }],
-        name: "getApproved",
-        outputs: [{ name: "result", internalType: "address", type: "address" }],
+        name: "decimals",
+        outputs: [{ name: "", internalType: "uint8", type: "uint8" }],
         stateMutability: "view",
     },
     {
         type: "function",
-        inputs: [
-            { name: "user", internalType: "address", type: "address" },
-            { name: "roles", internalType: "uint256", type: "uint256" },
-        ],
-        name: "grantRoles",
-        outputs: [],
-        stateMutability: "payable",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "user", internalType: "address", type: "address" },
-            { name: "roles", internalType: "uint256", type: "uint256" },
-        ],
-        name: "hasAllRoles",
-        outputs: [{ name: "", internalType: "bool", type: "bool" }],
-        stateMutability: "view",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "user", internalType: "address", type: "address" },
-            { name: "roles", internalType: "uint256", type: "uint256" },
-        ],
-        name: "hasAnyRole",
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
+        name: "isEnabled",
         outputs: [{ name: "", internalType: "bool", type: "bool" }],
         stateMutability: "view",
     },
@@ -134,119 +78,38 @@ export const contentCommunityTokenAbi = [
         type: "function",
         inputs: [
             { name: "owner", internalType: "address", type: "address" },
-            { name: "operator", internalType: "address", type: "address" },
+            { name: "spender", internalType: "address", type: "address" },
         ],
-        name: "isApprovedForAll",
-        outputs: [{ name: "result", internalType: "bool", type: "bool" }],
+        name: "isOperator",
+        outputs: [{ name: "status", internalType: "bool", type: "bool" }],
         stateMutability: "view",
     },
     {
         type: "function",
-        inputs: [{ name: "_to", internalType: "address", type: "address" }],
+        inputs: [
+            { name: "_to", internalType: "address", type: "address" },
+            { name: "_id", internalType: "uint256", type: "uint256" },
+        ],
         name: "mint",
-        outputs: [{ name: "id", internalType: "uint256", type: "uint256" }],
+        outputs: [],
         stateMutability: "nonpayable",
     },
     {
         type: "function",
-        inputs: [],
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
         name: "name",
         outputs: [{ name: "", internalType: "string", type: "string" }],
         stateMutability: "view",
     },
     {
         type: "function",
-        inputs: [],
-        name: "owner",
-        outputs: [{ name: "result", internalType: "address", type: "address" }],
-        stateMutability: "view",
-    },
-    {
-        type: "function",
-        inputs: [{ name: "id", internalType: "uint256", type: "uint256" }],
-        name: "ownerOf",
-        outputs: [{ name: "result", internalType: "address", type: "address" }],
-        stateMutability: "view",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "pendingOwner", internalType: "address", type: "address" },
-        ],
-        name: "ownershipHandoverExpiresAt",
-        outputs: [{ name: "result", internalType: "uint256", type: "uint256" }],
-        stateMutability: "view",
-    },
-    {
-        type: "function",
-        inputs: [],
-        name: "renounceOwnership",
-        outputs: [],
-        stateMutability: "payable",
-    },
-    {
-        type: "function",
-        inputs: [{ name: "roles", internalType: "uint256", type: "uint256" }],
-        name: "renounceRoles",
-        outputs: [],
-        stateMutability: "payable",
-    },
-    {
-        type: "function",
-        inputs: [],
-        name: "requestOwnershipHandover",
-        outputs: [],
-        stateMutability: "payable",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "user", internalType: "address", type: "address" },
-            { name: "roles", internalType: "uint256", type: "uint256" },
-        ],
-        name: "revokeRoles",
-        outputs: [],
-        stateMutability: "payable",
-    },
-    {
-        type: "function",
-        inputs: [{ name: "user", internalType: "address", type: "address" }],
-        name: "rolesOf",
-        outputs: [{ name: "roles", internalType: "uint256", type: "uint256" }],
-        stateMutability: "view",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "from", internalType: "address", type: "address" },
-            { name: "to", internalType: "address", type: "address" },
-            { name: "id", internalType: "uint256", type: "uint256" },
-        ],
-        name: "safeTransferFrom",
-        outputs: [],
-        stateMutability: "payable",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "from", internalType: "address", type: "address" },
-            { name: "to", internalType: "address", type: "address" },
-            { name: "id", internalType: "uint256", type: "uint256" },
-            { name: "data", internalType: "bytes", type: "bytes" },
-        ],
-        name: "safeTransferFrom",
-        outputs: [],
-        stateMutability: "payable",
-    },
-    {
-        type: "function",
         inputs: [
             { name: "operator", internalType: "address", type: "address" },
-            { name: "isApproved", internalType: "bool", type: "bool" },
+            { name: "approved", internalType: "bool", type: "bool" },
         ],
-        name: "setApprovalForAll",
-        outputs: [],
-        stateMutability: "nonpayable",
+        name: "setOperator",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "payable",
     },
     {
         type: "function",
@@ -259,14 +122,14 @@ export const contentCommunityTokenAbi = [
     },
     {
         type: "function",
-        inputs: [],
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
         name: "symbol",
         outputs: [{ name: "", internalType: "string", type: "string" }],
-        stateMutability: "pure",
+        stateMutability: "view",
     },
     {
         type: "function",
-        inputs: [{ name: "tokenId", internalType: "uint256", type: "uint256" }],
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
         name: "tokenURI",
         outputs: [{ name: "", internalType: "string", type: "string" }],
         stateMutability: "view",
@@ -274,21 +137,24 @@ export const contentCommunityTokenAbi = [
     {
         type: "function",
         inputs: [
-            { name: "from", internalType: "address", type: "address" },
             { name: "to", internalType: "address", type: "address" },
             { name: "id", internalType: "uint256", type: "uint256" },
+            { name: "amount", internalType: "uint256", type: "uint256" },
         ],
-        name: "transferFrom",
-        outputs: [],
+        name: "transfer",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
         stateMutability: "payable",
     },
     {
         type: "function",
         inputs: [
-            { name: "newOwner", internalType: "address", type: "address" },
+            { name: "from", internalType: "address", type: "address" },
+            { name: "to", internalType: "address", type: "address" },
+            { name: "id", internalType: "uint256", type: "uint256" },
+            { name: "amount", internalType: "uint256", type: "uint256" },
         ],
-        name: "transferOwnership",
-        outputs: [],
+        name: "transferFrom",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
         stateMutability: "payable",
     },
     {
@@ -302,7 +168,7 @@ export const contentCommunityTokenAbi = [
                 indexed: true,
             },
             {
-                name: "account",
+                name: "spender",
                 internalType: "address",
                 type: "address",
                 indexed: true,
@@ -312,6 +178,12 @@ export const contentCommunityTokenAbi = [
                 internalType: "uint256",
                 type: "uint256",
                 indexed: true,
+            },
+            {
+                name: "amount",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: false,
             },
         ],
         name: "Approval",
@@ -333,82 +205,24 @@ export const contentCommunityTokenAbi = [
                 indexed: true,
             },
             {
-                name: "isApproved",
+                name: "approved",
                 internalType: "bool",
                 type: "bool",
                 indexed: false,
             },
         ],
-        name: "ApprovalForAll",
+        name: "OperatorSet",
     },
     {
         type: "event",
         anonymous: false,
         inputs: [
             {
-                name: "pendingOwner",
+                name: "by",
                 internalType: "address",
                 type: "address",
-                indexed: true,
+                indexed: false,
             },
-        ],
-        name: "OwnershipHandoverCanceled",
-    },
-    {
-        type: "event",
-        anonymous: false,
-        inputs: [
-            {
-                name: "pendingOwner",
-                internalType: "address",
-                type: "address",
-                indexed: true,
-            },
-        ],
-        name: "OwnershipHandoverRequested",
-    },
-    {
-        type: "event",
-        anonymous: false,
-        inputs: [
-            {
-                name: "oldOwner",
-                internalType: "address",
-                type: "address",
-                indexed: true,
-            },
-            {
-                name: "newOwner",
-                internalType: "address",
-                type: "address",
-                indexed: true,
-            },
-        ],
-        name: "OwnershipTransferred",
-    },
-    {
-        type: "event",
-        anonymous: false,
-        inputs: [
-            {
-                name: "user",
-                internalType: "address",
-                type: "address",
-                indexed: true,
-            },
-            {
-                name: "roles",
-                internalType: "uint256",
-                type: "uint256",
-                indexed: true,
-            },
-        ],
-        name: "RolesUpdated",
-    },
-    {
-        type: "event",
-        anonymous: false,
-        inputs: [
             {
                 name: "from",
                 internalType: "address",
@@ -427,25 +241,21 @@ export const contentCommunityTokenAbi = [
                 type: "uint256",
                 indexed: true,
             },
+            {
+                name: "amount",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: false,
+            },
         ],
         name: "Transfer",
     },
-    { type: "error", inputs: [], name: "AccountBalanceOverflow" },
-    { type: "error", inputs: [], name: "AlreadyInitialized" },
-    { type: "error", inputs: [], name: "BalanceQueryForZeroAddress" },
-    { type: "error", inputs: [], name: "NewOwnerIsZeroAddress" },
-    { type: "error", inputs: [], name: "NoHandoverRequest" },
+    { type: "error", inputs: [], name: "BalanceOverflow" },
+    { type: "error", inputs: [], name: "InsufficientBalance" },
+    { type: "error", inputs: [], name: "InsufficientPermission" },
     { type: "error", inputs: [], name: "NotOwnerNorApproved" },
-    { type: "error", inputs: [], name: "TokenAlreadyExists" },
-    { type: "error", inputs: [], name: "TokenDoesNotExist" },
-    { type: "error", inputs: [], name: "TransferFromIncorrectOwner" },
-    {
-        type: "error",
-        inputs: [],
-        name: "TransferToNonERC721ReceiverImplementer",
-    },
-    { type: "error", inputs: [], name: "TransferToZeroAddress" },
-    { type: "error", inputs: [], name: "Unauthorized" },
+    { type: "error", inputs: [], name: "OnlyOneTokenPerUser" },
+    { type: "error", inputs: [], name: "TokenDoesntExist" },
 ] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

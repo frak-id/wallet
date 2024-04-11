@@ -28,7 +28,6 @@ export function Swiper({ slides = [] }: { slides: CommunityTokenBalance[] }) {
 
 function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
     const { data: metadata } = useCommunityTokenMetadata({
-        tokenAddress: nft.contractAddress,
         id: nft.tokenId,
     });
     const imageUrl = useMemo(

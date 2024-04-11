@@ -1,36 +1,32 @@
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
-import { useCommunityTokenForContent } from "@/module/community-token/hooks/useCommunityTokenForContent";
+import { useIsCommunityTokenMintAvailable } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import { useMintCommunityToken } from "@/module/community-token/hooks/useMintCommunityToken";
-import { useEffect, useState } from "react";
-import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 export function ButtonMintCommunity({
     name,
     contentId,
 }: { name: string; contentId: number }) {
-    const [tokenAddress, setTokenAddress] = useState<Hex | undefined>(
-        undefined
-    );
-    const { data: tokenAddressFetched } = useCommunityTokenForContent({
+    const { data: isMintAvailable } = useIsCommunityTokenMintAvailable({
         contentId,
     });
-    const { mutateAsync, isPending } = useMintCommunityToken({ tokenAddress });
+    const { mutateAsync: mintToken, isPending } = useMintCommunityToken({
+        contentId,
+    });
 
-    useEffect(() => {
-        if (!tokenAddressFetched) return;
-        setTokenAddress(tokenAddressFetched);
-    }, [tokenAddressFetched]);
+    // If mint not available early exit
+    if (!isMintAvailable) {
+        return null;
+    }
 
     return (
         <ButtonRipple
             className={styles.buttonMintCommunity}
             onClick={async () => {
-                if (!tokenAddressFetched) return;
-                await mutateAsync({ tokenAddress: tokenAddressFetched });
+                await mintToken();
             }}
             isLoading={isPending}
-            disabled={isPending || !tokenAddressFetched}
+            disabled={isPending || !isMintAvailable}
         >
             <span>
                 Join <strong>{name}</strong> community

@@ -1,9 +1,9 @@
 "use server";
 
-import { contentCommunityTokenAbi } from "@/context/common/blockchain/poc-abi";
+import { addresses } from "@/context/common/blockchain/addresses";
+import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
 import { unstable_cache } from "next/cache";
-import type { Address } from "viem";
 import { readContract } from "viem/actions";
 
 /**
@@ -12,16 +12,14 @@ import { readContract } from "viem/actions";
  * @param tokenId
  */
 async function _getNftMetadata({
-    tokenAddress,
     tokenId,
 }: {
-    tokenAddress: Address;
     tokenId: bigint;
 }) {
     // Get the metadata url
     let metadataUrl = await readContract(arbSepoliaPocClient, {
-        address: tokenAddress,
-        abi: contentCommunityTokenAbi,
+        address: addresses.communityToken,
+        abi: communityTokenAbi,
         functionName: "tokenURI",
         args: [tokenId],
     });
@@ -31,10 +29,10 @@ async function _getNftMetadata({
         metadataUrl.indexOf("poc-wallet.frak.id") >= 0
     ) {
         metadataUrl = metadataUrl
-            .replace("metadata", "metadata/")
             .replace("https", "http")
             .replace("poc-wallet.frak.id", "localhost:3000");
     }
+    console.log("metadata url", { metadataUrl });
 
     // Query it and return it
     const response = await fetch(metadataUrl);
@@ -52,12 +50,13 @@ async function _getNftMetadata({
             .replace("https", "http")
             .replace("poc-wallet.frak.id", "localhost:3000");
     }
+    console.log("metadata results", { result });
     return result;
 }
 
-export const getNftMetadata = unstable_cache(
+export const getCommunityTokenMetadata = unstable_cache(
     _getNftMetadata,
-    ["get-nft-metadata"],
+    ["get-community-token-metadata"],
     {
         // Keep that in server cache for 48hr
         revalidate: 60 * 60 * 48,

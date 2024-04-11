@@ -37,21 +37,23 @@ function getImageForId({
  */
 export function GET(
     _request: NextRequest,
-    { params }: { params: { contentId: string; nftId: string } }
+    { params }: { params: { id: string } }
 ) {
+    const normalisedId = Number.parseInt(params.id.replace(".json", ""));
+
     // Get the content name
-    const contentName = contentIdToName[Number.parseInt(params.contentId)];
+    const contentName = contentIdToName[normalisedId];
 
     // TODO: Define the metadata structure we need and we want
     return NextResponse.json({
-        name: `${contentName} NFT #${params.nftId}`,
+        name: `${contentName} Community NFT`,
         description: "Super token description",
         image: getImageForId({
             contentName,
-            nftId: Number.parseInt(params.nftId),
+            nftId: normalisedId,
         }),
         // Content related
-        contentId: params.contentId,
+        contentId: normalisedId,
         contentType: "news",
     });
 }
