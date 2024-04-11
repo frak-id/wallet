@@ -30,20 +30,20 @@ import {
 import { usePaywallRedirection } from "@/module/paywall/hook/usePaywallRedirection";
 import { useUnlockArticle } from "@/module/paywall/hook/useUnlockArticle";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
-import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useAtom } from "jotai";
 import { useAtomValue, useSetAtom } from "jotai/index";
 import { BookText } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
+import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
 export function PaywallUnlock({ context }: { context: PaywallContext }) {
     /**
      * The current wallet
      */
-    const { wallet } = useWallet();
+    const { address } = useAccount();
 
-    const { balance } = useFrkBalance({ wallet: wallet?.address });
+    const { balance } = useFrkBalance({ wallet: address });
     const redirect = usePaywallRedirection();
 
     const clearPaywall = useSetAtom(clearPaywallAtom);

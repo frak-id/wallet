@@ -1,17 +1,17 @@
 "use client";
 
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
-import { useWallet } from "@/module/wallet/provider/WalletProvider";
+import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
 export function HeaderWallet() {
-    const { smartWallet } = useWallet();
+    const { address } = useAccount();
 
     return (
         <>
-            {smartWallet?.address && (
+            {address && (
                 <span className={styles.header__wallet}>
-                    <WalletAddress wallet={smartWallet.address} />
+                    <WalletAddress wallet={address} />
                 </span>
             )}
         </>

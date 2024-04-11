@@ -4,16 +4,15 @@ import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
-import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { Landmark } from "lucide-react";
 import { arbitrumSepolia } from "viem/chains";
-import { useChainId } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 
 /**
  * Get some FRK
  */
 export function GetFrk() {
-    const { wallet } = useWallet();
+    const { address } = useAccount();
     const { isAirdroppingFrk, airdropFrk } = useAirdropFrk();
     const chainId = useChainId();
 
@@ -27,9 +26,12 @@ export function GetFrk() {
             <ButtonRipple
                 size={"small"}
                 onClick={async () => {
-                    if (!wallet) return;
+                    if (!address) {
+                        return;
+                    }
+
                     await airdropFrk({
-                        wallet: wallet.address,
+                        wallet: address,
                         waitForReceipt: true,
                     });
                 }}

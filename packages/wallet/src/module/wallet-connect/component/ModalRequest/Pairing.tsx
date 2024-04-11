@@ -8,10 +8,10 @@ import styles from "@/module/wallet-connect/component/ModalRequest/index.module.
 import { useInvalidateWalletConnectSessions } from "@/module/wallet-connect/hook/useWalletConnectSessions";
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
-import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useMutation } from "@tanstack/react-query";
 import { getSdkError } from "@walletconnect/utils";
 import { useMemo } from "react";
+import { useAccount } from "wagmi";
 
 export function PairingModal({
     args,
@@ -20,7 +20,7 @@ export function PairingModal({
     args: Extract<WalletConnectRequestArgs, { type: "pairing" }>;
     onHandle: () => void;
 }) {
-    const { smartWallet } = useWallet();
+    const { address } = useAccount();
     const { walletConnectInstance } = useWalletConnect();
     const invalidateWalletConnectSessions =
         useInvalidateWalletConnectSessions();
@@ -55,8 +55,8 @@ export function PairingModal({
         () =>
             requiredChainsMissing.length > 0 ||
             !walletConnectInstance ||
-            !smartWallet?.address,
-        [requiredChainsMissing, smartWallet, walletConnectInstance]
+            !address,
+        [requiredChainsMissing, address, walletConnectInstance]
     );
 
     /**
@@ -71,22 +71,19 @@ export function PairingModal({
         mutationKey: [
             "session-approval",
             args.id,
-            smartWallet?.address ?? "no-smart-wallet-address",
+            address ?? "no-smart-wallet-address",
         ],
         mutationFn: async () => {
             console.log("Approving pairing");
             // Ensure we got everything needed
-            if (!(walletConnectInstance && smartWallet?.address && args.id)) {
+            if (!(walletConnectInstance && address && args.id)) {
                 return;
             }
 
             // Try to approve the pairing
             try {
                 // Approve session proposal, use id from session proposal event and respond with namespace(s) that satisfy dapps request and contain approved accounts
-                const namespaces = getNamespaces(
-                    args.params,
-                    smartWallet.address
-                );
+                const namespaces = getNamespaces(args.params, address);
                 await walletConnectInstance.approveSession({
                     id: args.id,
                     namespaces,

@@ -1,7 +1,7 @@
 import { Header } from "@/module/common/component/Header";
 import { WalletConnectModal } from "@/module/wallet-connect/component/ModalRequest";
 import { WalletConnectProvider } from "@/module/wallet-connect/provider/WalletConnectProvider";
-import { WalletProvider } from "@/module/wallet/provider/WalletProvider";
+import { WalletLoader } from "@/module/wallet/component/WalletLoader";
 import type { ReactNode } from "react";
 
 export default async function RestrictedLayout({
@@ -10,12 +10,12 @@ export default async function RestrictedLayout({
     children: ReactNode;
 }>) {
     return (
-        <WalletProvider>
+        <WalletLoader>
             <WalletConnectProvider>
                 <WalletConnectModal />
                 <Header authenticated={true} />
                 {children}
             </WalletConnectProvider>
-        </WalletProvider>
+        </WalletLoader>
     );
 }

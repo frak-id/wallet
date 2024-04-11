@@ -1,9 +1,18 @@
 import type { SmartAccountClient } from "permissionless";
 import type { SmartAccount } from "permissionless/accounts";
 import type { EntryPoint } from "permissionless/types";
-import type { Chain, Transport } from "viem";
+import { type Address, type Chain, type Transport, isAddressEqual } from "viem";
 import { createConnector } from "wagmi";
 
+/**
+ * TODO: Should be dynamic, set during the wagmi config, and updated if the session is connected, sending the right events
+ *  - Maybe smth like a top level connector linked to a few atoms
+ *  - On this atom, react to the session changes and update the connector
+ * @param smartAccountClientBuilder
+ * @param id
+ * @param name
+ * @param type
+ */
 export function smartAccountConnector<
     entryPoint extends EntryPoint,
     transport extends Transport = Transport,
@@ -50,6 +59,9 @@ export function smartAccountConnector<
           })
         | undefined;
 
+    // The current computed address
+    let currentComputedAddress: Address | undefined;
+
     // Get an account for the given chain
     const getSmartAccountClient = async (chainId: number) => {
         // Try to find it in cache, or build it
@@ -62,6 +74,24 @@ export function smartAccountConnector<
         targetSmartAccount = await smartAccountClientBuilder({
             chainId,
         });
+
+        // Check if the address match
+        if (
+            currentComputedAddress &&
+            !isAddressEqual(
+                currentComputedAddress,
+                targetSmartAccount.account.address
+            )
+        ) {
+            throw new Error(
+                "The computed address doesn't match the smart account address"
+            );
+        }
+
+        // If we don't have any computed address yet, set it
+        if (!currentComputedAddress) {
+            currentComputedAddress = targetSmartAccount.account.address;
+        }
 
         // Don't remove this, it is needed because wagmi has an opinion on always estimating gas:
         // https://github.com/wevm/wagmi/blob/main/packages/core/src/actions/sendTransaction.ts#L77
