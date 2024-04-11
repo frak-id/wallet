@@ -3,6 +3,18 @@
 }
 
 .slick__item {
+    position: relative;
     margin-right: 10px;
     border-radius: 8px;
+}
+
+.slick__item:hover .slick__burn {
+    display: block;
+}
+
+.slick__burn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: none;
 }

@@ -1,9 +1,10 @@
 "use client";
 
+import { ModalBurn } from "@/module/community-token/component/ModalBurn";
 import { useBurnCommunityToken } from "@/module/community-token/hooks/useBurnCommunityToken";
 import { useCommunityTokenMetadata } from "@/module/community-token/hooks/useCommunityTokenMetadata";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import styles from "./index.module.css";
@@ -27,7 +28,11 @@ export function Slick({ slides = [] }: { slides: CommunityTokenBalance[] }) {
 }
 
 function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
-    const { mutate: burnCommunityToken } = useBurnCommunityToken({
+    const {
+        mutate: burnCommunityToken,
+        isPending,
+        isSuccess,
+    } = useBurnCommunityToken({
         id: nft.tokenId,
     });
     const { data: metadata } = useCommunityTokenMetadata({
@@ -37,15 +42,31 @@ function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
         () => metadata?.image ?? "https://via.placeholder.com/160x213",
         [metadata?.image]
     );
+    const [openModal, setOpenModal] = useState(false);
+
+    /**
+     * Close the modal when the burn is successful
+     */
+    useEffect(() => {
+        if (!isSuccess) return;
+        setOpenModal(false);
+    }, [isSuccess]);
 
     return (
-        <img
-            className={styles.slick__item}
-            src={imageUrl}
-            alt={metadata?.name ?? "NFT"}
-            width={160}
-            height={213}
-            onClick={() => burnCommunityToken()}
-        />
+        <div className={styles.slick__item}>
+            <img
+                src={imageUrl}
+                alt={metadata?.name ?? "NFT"}
+                width={160}
+                height={213}
+            />
+            <ModalBurn
+                burnCommunityToken={burnCommunityToken}
+                openModal={openModal}
+                setOpenModal={setOpenModal}
+                isLoading={isPending}
+                className={styles.slick__burn}
+            />
+        </div>
     );
 }
