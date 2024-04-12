@@ -30,14 +30,14 @@ export function Register() {
     /**
      * Get the redirectUrl from the URL and set it in storage if needed
      */
-    const { get: getSearchParam } = useSearchParams();
+    const searchParams = useSearchParams();
     const [redirectUrl, setRedirectUrl] = useAtom(postAuthRedirectAtom);
     useEffect(() => {
-        const redirectUrl = getSearchParam("redirectUrl");
+        const redirectUrl = searchParams.get("redirectUrl");
         if (redirectUrl) {
             setRedirectUrl(redirectUrl);
         }
-    }, [getSearchParam, setRedirectUrl]);
+    }, [searchParams.get, setRedirectUrl]);
 
     /**
      * Boolean used to know if the error is about a previously used authenticator

@@ -20,16 +20,16 @@ export function PaywallEntryPoint() {
     const router = useRouter();
     const [, startTransition] = useTransition();
 
-    const { get } = useSearchParams();
+    const searchParams = useSearchParams();
 
     const setPaywallContext = useSetAtom(setPaywallDataAtom);
 
     useEffect(() => {
-        const params = get("params");
-        const hash = get("hash");
+        const params = searchParams.get("params");
+        const hash = searchParams.get("hash");
 
         parseContext({ params, hash });
-    }, [get]);
+    }, [searchParams.get]);
 
     /**
      * Parse the unlock data provided
