@@ -1,43 +1,43 @@
 "use client";
 
-import { sessionAtom } from "@/module/common/atoms/session";
-import { useSmartWalletConnector } from "@/module/wallet/hook/useSmartWalletConnector";
+import type { SmartAccountProvider } from "@/context/wallet/smartWallet/connector";
+import { smartAccountBuilderAtom } from "@/module/common/atoms/clients";
+import { smartWalletConnectAtom } from "@/module/common/atoms/wagmi";
 import { useAtomValue } from "jotai/index";
+import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
 import { useEffect } from "react";
-import { useConfig, useConnect } from "wagmi";
+import { useConnect } from "wagmi";
 
 /**
  * Hook used to setup the smart wallet
  */
 export function useSmartWalletConnectorSetup() {
     /**
-     * Current user session
-     */
-    const { wallet } = useAtomValue(sessionAtom) ?? {};
-
-    /**
      * Hook to connect the wagmi connector to the smart wallet client
      */
-    const { connect } = useConnect();
-
-    /**
-     * Get the current wagmi config
-     */
-    const config = useConfig();
+    const { connectors } = useConnect();
 
     /**
      * Get our smart wallet connector builder
      */
-    const connector = useSmartWalletConnector({ config, wallet });
+    const connector = useAtomValue(smartWalletConnectAtom);
 
-    /**
-     * Every time the smart account changes, we need to update the connector
-     */
+    const builder = useAtomValue(smartAccountBuilderAtom);
+
     useEffect(() => {
-        if (typeof connect !== "function") {
+        const nexusConnector = connectors.find(
+            (c) => c.id === "nexus-connector"
+        );
+        console.log("nexusConnector", { nexusConnector, connectors });
+        if (!nexusConnector) {
             return;
         }
-        console.log("Connecting to smart wallet", connector);
-        connect({ connector });
-    }, [connect, connector]);
+        nexusConnector
+            .getProvider()
+            .then((p) =>
+                (
+                    p as SmartAccountProvider<ENTRYPOINT_ADDRESS_V06_TYPE>
+                ).onBuilderChange(builder)
+            );
+    }, [connector, builder]);
 }
