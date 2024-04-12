@@ -43,7 +43,6 @@ export function useRegister() {
                     }) as const
             );
 
-            console.log("Fetching register options", { excludeCredentials });
             // Get the registration options
             const registrationOptions = await getRegisterOptions({
                 excludeCredentials,

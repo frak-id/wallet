@@ -21,16 +21,16 @@ export default function ArticlePage() {
 
 function ArticlePageComponent() {
     // Get the article id
-    const { get, has, size: queryParamSize } = useSearchParams();
+    const searchParams = useSearchParams();
     const [articleId, setArticleId] = useState<Hex | null>(null);
     const [isFree, setIsFree] = useState<boolean>(false);
 
     useEffect(() => {
-        const id = get("id") as Hex | null;
-        const isFree = get("isFree") as string | null;
+        const id = searchParams.get("id") as Hex | null;
+        const isFree = searchParams.get("isFree") as string | null;
         setIsFree(isFree === "1" ?? false);
         setArticleId(id);
-    }, [get]);
+    }, [searchParams.get]);
 
     // Fetch the articles
     const { data: article, isPending: isFetchingArticle } = useQuery({
@@ -48,28 +48,24 @@ function ArticlePageComponent() {
     useQuery({
         queryKey: ["parseUnlockResult", articleId, article?.id],
         queryFn: async () => {
-            const result = get("result");
-            const hash = get("hash");
+            const result = searchParams.get("result");
+            const hash = searchParams.get("hash");
             if (!(result && hash)) {
                 throw new Error("Invalid unlock result");
             }
 
             // Parse the data and return them
-            const startUnlockResult = await decodeStartUnlockReturn({
+            return await decodeStartUnlockReturn({
                 result,
                 hash,
             });
-            console.log("Response from the start unlock", {
-                startUnlockResult,
-            });
-            return startUnlockResult;
         },
         enabled:
             !!articleId &&
             !!article?.id &&
-            queryParamSize > 0 &&
-            has("result") &&
-            has("hash"),
+            searchParams.size > 0 &&
+            searchParams.has("result") &&
+            searchParams.has("hash"),
     });
 
     // If we are loading display another component

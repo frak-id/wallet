@@ -1,4 +1,264 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CommunityToken
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const communityTokenAbi = [
+    {
+        type: "constructor",
+        inputs: [
+            {
+                name: "_contentRegistry",
+                internalType: "contract ContentRegistry",
+                type: "address",
+            },
+        ],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
+        name: "allowCommunityToken",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "owner", internalType: "address", type: "address" },
+            { name: "spender", internalType: "address", type: "address" },
+            { name: "id", internalType: "uint256", type: "uint256" },
+        ],
+        name: "allowance",
+        outputs: [{ name: "amount", internalType: "uint256", type: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "spender", internalType: "address", type: "address" },
+            { name: "id", internalType: "uint256", type: "uint256" },
+            { name: "amount", internalType: "uint256", type: "uint256" },
+        ],
+        name: "approve",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "owner", internalType: "address", type: "address" },
+            { name: "id", internalType: "uint256", type: "uint256" },
+        ],
+        name: "balanceOf",
+        outputs: [{ name: "amount", internalType: "uint256", type: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
+        name: "burn",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "id", internalType: "uint256", type: "uint256" }],
+        name: "decimals",
+        outputs: [{ name: "", internalType: "uint8", type: "uint8" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
+        name: "isEnabled",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "owner", internalType: "address", type: "address" },
+            { name: "spender", internalType: "address", type: "address" },
+        ],
+        name: "isOperator",
+        outputs: [{ name: "status", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "_to", internalType: "address", type: "address" },
+            { name: "_id", internalType: "uint256", type: "uint256" },
+        ],
+        name: "mint",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
+        name: "name",
+        outputs: [{ name: "", internalType: "string", type: "string" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "operator", internalType: "address", type: "address" },
+            { name: "approved", internalType: "bool", type: "bool" },
+        ],
+        name: "setOperator",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "interfaceId", internalType: "bytes4", type: "bytes4" },
+        ],
+        name: "supportsInterface",
+        outputs: [{ name: "result", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
+        name: "symbol",
+        outputs: [{ name: "", internalType: "string", type: "string" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "_id", internalType: "uint256", type: "uint256" }],
+        name: "tokenURI",
+        outputs: [{ name: "", internalType: "string", type: "string" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "to", internalType: "address", type: "address" },
+            { name: "id", internalType: "uint256", type: "uint256" },
+            { name: "amount", internalType: "uint256", type: "uint256" },
+        ],
+        name: "transfer",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "from", internalType: "address", type: "address" },
+            { name: "to", internalType: "address", type: "address" },
+            { name: "id", internalType: "uint256", type: "uint256" },
+            { name: "amount", internalType: "uint256", type: "uint256" },
+        ],
+        name: "transferFrom",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "payable",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "owner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "spender",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "id",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: true,
+            },
+            {
+                name: "amount",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: false,
+            },
+        ],
+        name: "Approval",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "owner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "operator",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "approved",
+                internalType: "bool",
+                type: "bool",
+                indexed: false,
+            },
+        ],
+        name: "OperatorSet",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "by",
+                internalType: "address",
+                type: "address",
+                indexed: false,
+            },
+            {
+                name: "from",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "to",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "id",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: true,
+            },
+            {
+                name: "amount",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: false,
+            },
+        ],
+        name: "Transfer",
+    },
+    { type: "error", inputs: [], name: "BalanceOverflow" },
+    { type: "error", inputs: [], name: "InsufficientBalance" },
+    { type: "error", inputs: [], name: "InsufficientPermission" },
+    { type: "error", inputs: [], name: "NotOwnerNorApproved" },
+    { type: "error", inputs: [], name: "OnlyOneTokenPerUser" },
+    { type: "error", inputs: [], name: "TokenDoesntExist" },
+] as const;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ContentRegistry
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

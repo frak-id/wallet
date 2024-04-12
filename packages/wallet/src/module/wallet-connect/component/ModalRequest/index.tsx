@@ -100,8 +100,9 @@ function WcModalDialog({
                     onClose();
                 }
             }}
-            children={component}
-        />
+        >
+            {component}
+        </WcModal>
     );
 }
 

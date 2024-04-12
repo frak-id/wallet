@@ -3,11 +3,16 @@
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Back } from "@/module/common/component/Back";
+import { Checkbox } from "@/module/common/component/Checkbox";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
+import { useIsCommunityTokenMintAvailable } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import { clearPaywallAtom } from "@/module/paywall/atoms/paywall";
 import type { PaywallContext } from "@/module/paywall/atoms/paywallContext";
-import { isPaywallUnlockActionDisabledAtom } from "@/module/paywall/atoms/unlockUiState";
+import {
+    isPaywallUnlockActionDisabledAtom,
+    paywallJoinCommunityDuringSetup,
+} from "@/module/paywall/atoms/unlockUiState";
 import { AccordionInformation } from "@/module/paywall/component/AccordionInformation";
 import { ArticlePreview } from "@/module/paywall/component/ArticlePreview";
 import {
@@ -26,9 +31,10 @@ import { usePaywallRedirection } from "@/module/paywall/hook/usePaywallRedirecti
 import { useUnlockArticle } from "@/module/paywall/hook/useUnlockArticle";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import { useWallet } from "@/module/wallet/provider/WalletProvider";
+import { useAtom } from "jotai";
 import { useAtomValue, useSetAtom } from "jotai/index";
 import { BookText } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import styles from "./index.module.css";
 
 export function PaywallUnlock({ context }: { context: PaywallContext }) {
@@ -37,14 +43,30 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
      */
     const { wallet } = useWallet();
 
-    const { balance } = useFrkBalance({ wallet: wallet.address });
+    const { balance } = useFrkBalance({ wallet: wallet?.address });
     const redirect = usePaywallRedirection();
-    const { launchArticleUnlock, uiState } = useUnlockArticle({
-        context,
-    });
 
     const clearPaywall = useSetAtom(clearPaywallAtom);
     const isDisabled = useAtomValue(isPaywallUnlockActionDisabledAtom);
+    const [join, setJoin] = useAtom(paywallJoinCommunityDuringSetup);
+    const { launchArticleUnlock, uiState } = useUnlockArticle({
+        context,
+        joinCommunity: join,
+    });
+
+    /**
+     * Check if the user can join the paywall or not
+     */
+    const { data: isJoinCommunityAvailable } = useIsCommunityTokenMintAvailable(
+        { contentId: Number(BigInt(context.contentId)) }
+    );
+
+    useEffect(() => {
+        // If the user can join the community, we set the join to true by default
+        if (isJoinCommunityAvailable) {
+            setJoin(true);
+        }
+    }, [isJoinCommunityAvailable, setJoin]);
 
     /**
      * The main action to do when the user click on the main button
@@ -121,6 +143,21 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
                         already={uiState.already}
                     />
                 </AuthFingerprint>
+
+                {isJoinCommunityAvailable && (
+                    <p className={styles.unlock__join}>
+                        <span>
+                            <Checkbox
+                                id={"join"}
+                                onClick={() => setJoin(!join)}
+                                checked={join}
+                            />
+                        </span>
+                        <label htmlFor={"join"}>
+                            Join this content community
+                        </label>
+                    </p>
+                )}
 
                 <Panel size={"small"}>
                     <AccordionInformation trigger={"Informations"}>

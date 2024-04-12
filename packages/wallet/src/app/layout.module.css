@@ -6,6 +6,7 @@
 }
 
 .inner {
+    width: 100%;
     padding: 24px;
     flex: 1;
     display: flex;
@@ -15,5 +16,9 @@
 @media (min-width: 600px) {
     .main {
         min-height: 100%;
+    }
+
+    .inner {
+        width: 430px;
     }
 }
