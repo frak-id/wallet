@@ -1,12 +1,18 @@
-import type { AvailableChainIds } from "@/context/common/blockchain/provider";
+import {
+    getBundlerClient,
+    getPaymasterClient,
+} from "@/context/common/blockchain/aa-provider";
+import { getAlchemyTransport } from "@/context/common/blockchain/alchemy-transport";
+import {
+    type AvailableChainIds,
+    availableChains,
+} from "@/context/common/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/sign";
 import { webAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
 import type { SmartAccountBuilder } from "@/context/wallet/smartWallet/connector";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { wagmiConfigAtom } from "@/module/common/atoms/wagmi";
 import { startAuthentication } from "@simplewebauthn/browser";
-import { getClient } from "@wagmi/core";
 import { atom } from "jotai/index";
 import {
     ENTRYPOINT_ADDRESS_V06,
@@ -14,44 +20,7 @@ import {
 } from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
-import { http, type Chain, createClient } from "viem";
-
-/**
- * Atom to get the bundler client for the given chain
- */
-const getBundlerClient = (chain: Chain) => {
-    // Build the pimlico bundler transport and client
-    const bundlerTransport = http(
-        `https://api.pimlico.io/v1/${chain.id}/rpc?apikey=${process.env.PIMLICO_API_KEY}`
-    );
-    const bundlerClient = createClient({
-        chain,
-        transport: bundlerTransport,
-    });
-
-    return {
-        bundlerTransport,
-        bundlerClient,
-    };
-};
-
-/**
- * Atom to get the paymaster client for the given chain
- */
-const getPaymasterClient = (chain: Chain) => {
-    // If the chain isn't a testnet, exit without paymaster as default
-    if (chain.testnet !== true) {
-        return undefined;
-    }
-
-    // Build the paymaster client
-    return createClient({
-        chain,
-        transport: http(
-            `https://api.pimlico.io/v2/${chain.id}/rpc?apikey=${process.env.PIMLICO_API_KEY}`
-        ),
-    });
-};
+import { createClient, extractChain } from "viem";
 
 /**
  * Our smart account builder that will be used to create the smart account client
@@ -65,23 +34,28 @@ export const smartAccountBuilderAtom = atom<
         return undefined;
     }
 
-    // Fetch the wagmi config
-    const config = get(wagmiConfigAtom);
-    if (!config) {
-        return undefined;
-    }
-
     // Then, create the fn that will build the smart account client
     const builder: SmartAccountBuilder<ENTRYPOINT_ADDRESS_V06_TYPE> = async ({
         chainId,
     }) => {
         // Get the viem client
-        const viemClient = getClient(config, {
-            chainId: chainId as AvailableChainIds,
+        const chain = extractChain({
+            chains: availableChains,
+            id: chainId as AvailableChainIds,
         });
-        if (!viemClient) {
-            throw new Error("No viem client found");
+        if (!chain) {
+            throw new Error(`Chain with id ${chainId} not configured`);
         }
+        const viemClient = createClient({
+            chain: chain,
+            transport: getAlchemyTransport({ chain }),
+            cacheTime: 60_000,
+            batch: {
+                multicall: {
+                    wait: 50,
+                },
+            },
+        });
 
         // Get the smart wallet client
         const { authenticatorId, publicKey } = session.wallet;

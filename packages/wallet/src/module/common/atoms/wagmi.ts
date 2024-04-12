@@ -4,19 +4,15 @@ import {
     testnetChains,
 } from "@/context/common/blockchain/provider";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
+import { smartAccountBuilderAtom } from "@/module/common/atoms/connector";
 import { isMainnetEnableAtom } from "@/module/settings/atoms/betaOptions";
 import { atom } from "jotai";
 import { createClient } from "viem";
 import { createConfig } from "wagmi";
 
-/**
- * The atom with our smart wallet connector
- */
-export const smartWalletConnectAtom = atom((get) => {
-    // TODO: Check the current session to provider the initial builder
-    return smartAccountConnector({
-        initialAccountBuilder: undefined,
-    });
+const connectorsAtom = atom((get) => {
+    const accountBuilder = get(smartAccountBuilderAtom);
+    return accountBuilder ? [smartAccountConnector({ accountBuilder })] : [];
 });
 
 /**
@@ -25,12 +21,12 @@ export const smartWalletConnectAtom = atom((get) => {
 export const wagmiConfigAtom = atom((get) => {
     // Get the chain for the current env
     const isMainnet = get(isMainnetEnableAtom);
-    const connector = get(smartWalletConnectAtom);
+    const connectors = get(connectorsAtom);
 
     // Then, create the config and return it
     return createConfig({
         chains: isMainnet ? mainnetChains : testnetChains,
-        connectors: [connector],
+        connectors: connectors,
         client: ({ chain }) =>
             createClient({
                 chain,
@@ -43,4 +39,6 @@ export const wagmiConfigAtom = atom((get) => {
                 },
             }),
     });
+
+    // TODO: Here we can access the created connector
 });
