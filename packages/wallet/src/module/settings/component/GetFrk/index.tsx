@@ -27,6 +27,7 @@ export function GetFrk() {
             <ButtonRipple
                 size={"small"}
                 onClick={async () => {
+                    if (!wallet) return;
                     await airdropFrk({
                         wallet: wallet.address,
                         waitForReceipt: true,
