@@ -4,7 +4,7 @@ import { EnforceChain } from "@/module/chain/component/EnforceChain";
 import { Title } from "@/module/common/component/Title";
 import { AccordionJoinCommunity } from "@/module/community-token/component/AccordionJoinCommunity";
 import { ButtonMintCommunity } from "@/module/community-token/component/ButtonMintCommunity";
-import { SwiperNfts } from "@/module/community-token/component/SwiperNfts";
+import { SliderNfts } from "@/module/community-token/component/SliderNfts";
 import { arbitrumSepolia } from "viem/chains";
 import styles from "./index.module.css";
 
@@ -16,7 +16,7 @@ export function Nfts() {
         >
             <div className={styles.nfts}>
                 <Title>Presse 🗞</Title>
-                <SwiperNfts />
+                <SliderNfts />
                 <AccordionJoinCommunity trigger={<span>Join</span>}>
                     <ButtonMintCommunity name="Le Monde" contentId={0} />
                     <ButtonMintCommunity name="L'équipe" contentId={1} />
