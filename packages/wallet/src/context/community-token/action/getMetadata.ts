@@ -6,9 +6,14 @@ import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
 import { unstable_cache } from "next/cache";
 import { readContract } from "viem/actions";
 
+function replaceMetadataUrlWithLocal(metadataUrl: string) {
+    return metadataUrl
+        .replace("https", "http")
+        .replace("poc-wallet.frak.id", "localhost:3000");
+}
+
 /**
  * Get the metadata for the given NFT
- * @param tokenAddress
  * @param tokenId
  */
 async function _getNftMetadata({
@@ -28,9 +33,7 @@ async function _getNftMetadata({
         process.env.IS_LOCAL === "true" &&
         metadataUrl.indexOf("poc-wallet.frak.id") >= 0
     ) {
-        metadataUrl = metadataUrl
-            .replace("https", "http")
-            .replace("poc-wallet.frak.id", "localhost:3000");
+        metadataUrl = replaceMetadataUrlWithLocal(metadataUrl);
     }
 
     // Query it and return it
@@ -49,9 +52,9 @@ async function _getNftMetadata({
 
     // Map the image url if local
     if (process.env.IS_LOCAL === "true") {
-        result.image = result.image
-            .replace("https", "http")
-            .replace("poc-wallet.frak.id", "localhost:3000");
+        result.image = replaceMetadataUrlWithLocal(result.image);
+        result.images.dark = replaceMetadataUrlWithLocal(result.images.dark);
+        result.images.light = replaceMetadataUrlWithLocal(result.images.light);
     }
     return result;
 }

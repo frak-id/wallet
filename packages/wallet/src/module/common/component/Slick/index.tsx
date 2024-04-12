@@ -3,7 +3,9 @@
 import { ModalBurn } from "@/module/community-token/component/ModalBurn";
 import { useBurnCommunityToken } from "@/module/community-token/hooks/useBurnCommunityToken";
 import { useCommunityTokenMetadata } from "@/module/community-token/hooks/useCommunityTokenMetadata";
+import { userThemeAtom } from "@/module/settings/atoms/theme";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
+import { useAtomValue } from "jotai";
 import { useEffect, useMemo, useState } from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -28,6 +30,7 @@ export function Slick({ slides = [] }: { slides: CommunityTokenBalance[] }) {
 }
 
 function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
+    const theme = useAtomValue(userThemeAtom);
     const {
         mutate: burnCommunityToken,
         isPending,
@@ -39,8 +42,9 @@ function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
         id: nft.tokenId,
     });
     const imageUrl = useMemo(
-        () => metadata?.image ?? "https://via.placeholder.com/160x213",
-        [metadata?.image]
+        () =>
+            metadata?.images?.[theme] ?? "https://via.placeholder.com/160x213",
+        [metadata?.images, theme]
     );
     const [openModal, setOpenModal] = useState(false);
 
