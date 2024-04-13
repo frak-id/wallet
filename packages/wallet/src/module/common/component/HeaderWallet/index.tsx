@@ -14,7 +14,7 @@ export function HeaderWallet() {
     const { data: connectorClient, status: connectionStatus } =
         useConnectorClient();
 
-    const component = useMemo(() => {
+    return useMemo(() => {
         // If we got a client and an address, we can display the wallet
         if (connectorClient?.account?.address) {
             // Get the chain name
@@ -35,6 +35,4 @@ export function HeaderWallet() {
             <span className={styles.header__wallet}>{connectionStatus}</span>
         );
     }, [connectorClient, connectionStatus]);
-
-    return component;
 }

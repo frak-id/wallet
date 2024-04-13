@@ -12,7 +12,7 @@ import type {
 import { formatHash } from "@frak-labs/nexus-wallet/src/context/wallet/utils/hashFormatter";
 import type { ArticlePriceForUser } from "@frak-labs/nexus-wallet/src/types/Price";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 import { formatEther } from "viem";
 
@@ -45,6 +45,9 @@ export function UnlockButtons({
 
     const { data: unlockUrl } = useUnlockRedirectUrl({ article, articlePrice });
 
+    /**
+     * Auto redirect the user when unlock url is ready
+     */
     useEffect(() => {
         if (!articlePrice) return;
         async function redirect() {
@@ -55,9 +58,10 @@ export function UnlockButtons({
         redirect();
     }, [articlePrice, unlockUrl]);
 
-    if (!(prices && article)) return null;
-
-    function getMessages() {
+    /**
+     * Message to display
+     */
+    const message = useMemo(() => {
         if (unlockStatus?.key === "preparing") {
             return "Loading";
         }
@@ -68,10 +72,12 @@ export function UnlockButtons({
             unlockStatus?.key === "waiting-transaction-bundling" ||
             unlockStatus?.key === "waiting-transaction-confirmation"
         ) {
-            return "Waiting for TX to be complete";
+            return "Waiting for the transaction";
         }
         return "Loading";
-    }
+    }, [unlockStatus?.key]);
+
+    if (!(prices && article)) return null;
 
     const stylesHeader =
         unlockStatus?.key === "valid" ? "unlockButtons__header--valid" : "";
@@ -89,8 +95,7 @@ export function UnlockButtons({
                 <p className={"unlockButtons__text"}>
                     {isInProgress ? (
                         <>
-                            {getMessages()}{" "}
-                            <span className={"dotsLoading"}>...</span>
+                            {message} <span className={"dotsLoading"}>...</span>
                         </>
                     ) : (
                         <>

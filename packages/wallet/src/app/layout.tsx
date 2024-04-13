@@ -1,4 +1,5 @@
 import { getSession } from "@/context/session/action/session";
+import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
@@ -58,7 +59,7 @@ export default async function RootLayout({
                     <main className={styles.main}>
                         <div className={styles.inner}>
                             <RootProvider session={session}>
-                                {children}
+                                <ClientOnly>{children}</ClientOnly>
                             </RootProvider>
                         </div>
                     </main>

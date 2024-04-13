@@ -76,7 +76,7 @@ export const unlockStateFromOnChainSetterAtom = atom(
         data?: {
             isAllowed: boolean;
             allowedUntilInSec?: number;
-        }
+        } | null
     ) => {
         // Otherwise, set the on chain unlock status
         if (data?.isAllowed === true) {

@@ -1,15 +1,17 @@
+"use client";
+
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { useEffect, useMemo } from "react";
-import { useConnect, useConnectorClient } from "wagmi";
+import { useConfig, useConnect } from "wagmi";
 
 /**
  * Hook that enforce wagmi connection
- * TODO: It can be rly spammy, should be optimized
  */
 export function useEnforceWagmiConnection() {
-    const { data: connectorClient } = useConnectorClient();
-
-    const { connect, connectors, isPending, status } = useConnect();
+    /**
+     * Get the current wagmi state
+     */
+    const { state, connectors } = useConfig();
 
     /**
      * Extract the nexus connector
@@ -22,29 +24,41 @@ export function useEnforceWagmiConnection() {
         [connectors]
     );
 
+    /**
+     * Connect to the nexus connector
+     */
+    const { connect, isPending } = useConnect();
+
     useEffect(() => {
+        console.log("Checking for manual connection to nexus connector", {
+            status: state.status,
+            current: state.current,
+            isPending,
+            nexusConnector,
+        });
+        // If we are not disconnected, early exit
+        if (
+            state.status !== "disconnected" &&
+            state.current === nexusConnector?.uid
+        ) {
+            return;
+        }
+
         // If we are currently connecting, do nothing
-        if (status === "pending") {
+        if (isPending) {
             return;
         }
 
-        // If we got a connected client, do nothing
-        if (connectorClient) {
-            return;
-        }
-
-        // If not found, do nothing
+        // If the nexus connector isn't found, do nothing
         if (!nexusConnector) {
             return;
         }
 
         // And then connect to it
         console.log("Manually connecting to nexus connector", {
-            nexusConnector,
-            status,
-            isPending,
-            connectorClient,
+            status: state.status,
+            current: state.current,
         });
         connect({ connector: nexusConnector });
-    }, [connect, nexusConnector, connectorClient, isPending, status]);
+    }, [connect, nexusConnector, isPending, state.current, state.status]);
 }
