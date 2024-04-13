@@ -1,7 +1,9 @@
 "use client";
 
+import { sessionAtom } from "@/module/common/atoms/session";
+import { jotaiStore } from "@/module/common/atoms/store";
 import { wagmiConfigAtom } from "@/module/common/atoms/wagmi";
-import { HydrateAtoms } from "@/module/common/component/HydrateAtoms";
+import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import type { Session } from "@/types/Session";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -9,8 +11,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
-import { Provider } from "jotai";
-import { useAtomValue } from "jotai/index";
+import { Provider, useAtomValue } from "jotai/index";
+import { useHydrateAtoms } from "jotai/utils";
 import type { PropsWithChildren } from "react";
 import { WagmiProvider } from "wagmi";
 
@@ -50,21 +52,24 @@ export function RootProvider({
     session,
     children,
 }: PropsWithChildren<{ session: Session | null }>) {
+    // Hydrate the session atoms
+    useHydrateAtoms([[sessionAtom, session]], {
+        store: jotaiStore,
+    });
+
     return (
         <>
-            <Provider>
-                <HydrateAtoms session={session}>
-                    <PersistQueryClientProvider
-                        client={queryClient}
-                        persistOptions={persistOptions}
-                    >
-                        <WagmiProviderWithDynamicConfig>
-                            {children}
-                        </WagmiProviderWithDynamicConfig>
-                        <ReactQueryDevtools initialIsOpen={false} />
-                    </PersistQueryClientProvider>
-                    <ThemeListener />
-                </HydrateAtoms>
+            <Provider store={jotaiStore}>
+                <PersistQueryClientProvider
+                    client={queryClient}
+                    persistOptions={persistOptions}
+                >
+                    <WagmiProviderWithDynamicConfig>
+                        {children}
+                    </WagmiProviderWithDynamicConfig>
+                    <ReactQueryDevtools initialIsOpen={false} />
+                </PersistQueryClientProvider>
+                <ThemeListener />
             </Provider>
         </>
     );
@@ -72,5 +77,15 @@ export function RootProvider({
 
 function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
     const config = useAtomValue(wagmiConfigAtom);
-    return <WagmiProvider config={config}>{children}</WagmiProvider>;
+    return (
+        <WagmiProvider config={config}>
+            <EnforceWagmiConnection />
+            {children}
+        </WagmiProvider>
+    );
+}
+
+function EnforceWagmiConnection() {
+    useEnforceWagmiConnection();
+    return null;
 }

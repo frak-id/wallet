@@ -7,7 +7,7 @@ import { createConnector } from "wagmi";
 export type SmartAccountBuilder<
     entryPoint extends EntryPoint,
     transport extends Transport = Transport,
-    chains extends Chain[] = Chain[],
+    chains extends readonly Chain[] = Chain[],
     account extends SmartAccount<entryPoint> = SmartAccount<entryPoint>,
 > = <chain extends chains[number]>(params: {
     chainId: chain["id"];
@@ -22,7 +22,7 @@ smartAccountConnector.type = "nexusSmartAccountConnector" as const;
 export function smartAccountConnector<
     entryPoint extends EntryPoint,
     transport extends Transport = Transport,
-    chains extends Chain[] = Chain[],
+    chains extends readonly Chain[] = Chain[],
     account extends SmartAccount<entryPoint> = SmartAccount<entryPoint>,
 >({
     accountBuilder,
@@ -93,14 +93,6 @@ export function smartAccountConnector<
          */
         async setup() {
             console.log("Setting up the connector");
-            // Create the initial smart account
-            const chainId = config.chains[0].id;
-            const initialAccount = await getSmartAccountClient(chainId);
-            currentSmartAccountClient = initialAccount;
-            config.emitter.emit("connect", {
-                chainId,
-                accounts: [initialAccount.account.address],
-            });
         },
 
         /**
@@ -132,7 +124,9 @@ export function smartAccountConnector<
             currentSmartAccountClient = smartAccountClient;
 
             return {
-                accounts: [smartAccountClient.account.address],
+                accounts: smartAccountClient
+                    ? [smartAccountClient.account.address]
+                    : [],
                 chainId: safeChainId,
             };
         },
@@ -176,15 +170,21 @@ export function smartAccountConnector<
                 currentSmartAccountClient,
                 smartAccounts,
             });
-            return getSmartAccountClient(chainId);
+            const client = getSmartAccountClient(chainId);
+            if (!client) {
+                throw new Error("No client found for the given chain");
+            }
+            return client;
         },
         onAccountsChanged() {
             // Not relevant
+            console.log("On account changed");
         },
         onChainChanged() {
             console.log("Chain changed");
         },
         onDisconnect() {
+            console.log("On disconnect");
             config.emitter.emit("disconnect");
         },
     }));
