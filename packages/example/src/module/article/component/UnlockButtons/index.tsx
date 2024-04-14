@@ -72,7 +72,7 @@ export function UnlockButtons({
             unlockStatus?.key === "waiting-transaction-bundling" ||
             unlockStatus?.key === "waiting-transaction-confirmation"
         ) {
-            return "Waiting for the transaction";
+            return "Unlock transaction in progress";
         }
         return "Loading";
     }, [unlockStatus?.key]);

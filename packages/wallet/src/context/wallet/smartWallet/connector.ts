@@ -1,89 +1,30 @@
-import type { SmartAccountClient } from "permissionless";
+import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccount } from "permissionless/accounts";
 import type { EntryPoint } from "permissionless/types";
-import { type Chain, type Transport, isAddressEqual } from "viem";
+import type { Chain, Transport } from "viem";
 import { createConnector } from "wagmi";
-
-export type SmartAccountBuilder<
-    entryPoint extends EntryPoint,
-    transport extends Transport = Transport,
-    chains extends readonly Chain[] = Chain[],
-    account extends SmartAccount<entryPoint> = SmartAccount<entryPoint>,
-> = <chain extends chains[number]>(params: {
-    chainId: chain["id"];
-}) => Promise<SmartAccountClient<entryPoint, transport, chain, account>>;
 
 smartAccountConnector.type = "nexusSmartAccountConnector" as const;
 
 /**
  * Create a connector for the smart account
- * @param accountBuilder
  */
 export function smartAccountConnector<
     entryPoint extends EntryPoint,
     transport extends Transport = Transport,
     chains extends readonly Chain[] = Chain[],
     account extends SmartAccount<entryPoint> = SmartAccount<entryPoint>,
->({
-    accountBuilder,
-}: {
-    accountBuilder: SmartAccountBuilder<entryPoint, transport, chains, account>;
-}) {
+>() {
     // A few types shortcut
-    type ConnectorClient = SmartAccountClient<
-        entryPoint,
-        transport,
-        chains[number],
-        account
-    > & {
-        estimateGas?: () => undefined | bigint;
-    };
+    type Provider = ReturnType<
+        typeof getSmartAccountProvider<entryPoint, transport, chains, account>
+    >;
 
-    // Cached smart accounts
-    let smartAccounts: Record<number, ConnectorClient | undefined> = {};
-
-    // The current smart account
-    let currentSmartAccountClient: ConnectorClient | undefined;
-
-    // Get an account for the given chain
-    const getSmartAccountClient = async (chainId: number) => {
-        // Try to find it in cache, or build it
-        let targetSmartAccount = smartAccounts[chainId];
-        if (targetSmartAccount) {
-            return targetSmartAccount;
-        }
-
-        // Otherwise, build it
-        targetSmartAccount = await accountBuilder({
-            chainId,
-        });
-
-        // Check if the address match
-        if (
-            currentSmartAccountClient?.account &&
-            !isAddressEqual(
-                currentSmartAccountClient?.account.address,
-                targetSmartAccount.account.address
-            )
-        ) {
-            throw new Error(
-                "The computed address doesn't match the smart account address"
-            );
-        }
-
-        // Don't remove this, it is needed because wagmi has an opinion on always estimating gas:
-        // https://github.com/wevm/wagmi/blob/main/packages/core/src/actions/sendTransaction.ts#L77
-        targetSmartAccount.estimateGas = () => {
-            return undefined;
-        };
-
-        smartAccounts[chainId] = targetSmartAccount;
-
-        return targetSmartAccount;
-    };
+    // The current provider
+    let provider: Provider | undefined;
 
     // Create the wagmi connector itself
-    return createConnector((config) => ({
+    return createConnector<Provider>((config) => ({
         id: "nexus-connector",
         name: "Nexus Smart Account",
         type: smartAccountConnector.type,
@@ -93,6 +34,7 @@ export function smartAccountConnector<
          */
         async setup() {
             console.log("Setting up the connector");
+            await this.getProvider();
         },
 
         /**
@@ -100,15 +42,17 @@ export function smartAccountConnector<
          * @param chainId
          */
         async connect({ chainId } = {}) {
-            console.log("Connecting the connector", {
-                chainId,
-                currentSmartAccountClient,
-                smartAccounts,
-            });
-            if (!chainId && currentSmartAccountClient) {
+            console.log("Connecting the connector", { chainId });
+
+            // Fetch the provider
+            const provider: Provider = await this.getProvider();
+
+            if (!chainId && provider.currentSmartAccountClient) {
                 return {
-                    accounts: [currentSmartAccountClient.account.address],
-                    chainId: currentSmartAccountClient.chain.id,
+                    accounts: [
+                        provider.currentSmartAccountClient.account.address,
+                    ],
+                    chainId: provider.currentSmartAccountClient.chain.id,
                 };
             }
 
@@ -119,10 +63,9 @@ export function smartAccountConnector<
                 );
             }
 
-            // Try to find  it in cache, or build it
-            const smartAccountClient = await getSmartAccountClient(safeChainId);
-            currentSmartAccountClient = smartAccountClient;
-
+            // Ask the provider to build it
+            const smartAccountClient =
+                await provider.getSmartAccountClient(safeChainId);
             return {
                 accounts: smartAccountClient
                     ? [smartAccountClient.account.address]
@@ -136,8 +79,7 @@ export function smartAccountConnector<
          */
         async disconnect() {
             console.log("Disconnecting the connector");
-            currentSmartAccountClient = undefined;
-            smartAccounts = {};
+            (await this.getProvider()).disconnect();
         },
 
         /**
@@ -145,10 +87,11 @@ export function smartAccountConnector<
          */
         async getAccounts() {
             console.log("Getting accounts");
-            if (!currentSmartAccountClient) {
+            const provider: Provider = await this.getProvider();
+            if (!provider.currentSmartAccountClient) {
                 return [];
             }
-            return [currentSmartAccountClient.account.address];
+            return [provider.currentSmartAccountClient.account.address];
         },
 
         /**
@@ -156,25 +99,39 @@ export function smartAccountConnector<
          */
         async getChainId() {
             console.log("Getting current chain");
-            return currentSmartAccountClient?.chain?.id ?? config.chains[0].id;
+            const provider: Provider = await this.getProvider();
+            return (
+                provider.currentSmartAccountClient?.chain?.id ??
+                config.chains[0].id
+            );
         },
-
-        async getProvider() {},
         async isAuthorized() {
             console.log("Checking authorisation");
-            return !!currentSmartAccountClient?.account?.address;
+            const provider: Provider = await this.getProvider();
+            return provider.isAuthorized();
         },
         async getClient({ chainId }: { chainId: number }) {
-            console.log("Getting client for given chain", {
-                chainId,
-                currentSmartAccountClient,
-                smartAccounts,
-            });
-            const client = getSmartAccountClient(chainId);
+            console.log("Getting client for given chain", { chainId });
+            const provider: Provider = await this.getProvider();
+            const client = await provider.getSmartAccountClient(chainId);
             if (!client) {
                 throw new Error("No client found for the given chain");
             }
             return client;
+        },
+
+        async getProvider(): Promise<Provider> {
+            if (!provider) {
+                console.log("Building the provider from connector");
+                // TODO: The provider should be outside of the connector
+                provider = getSmartAccountProvider({
+                    onAccountChanged: () => {
+                        // TODO: Do something here????
+                        console.log("Account changed");
+                    },
+                });
+            }
+            return provider;
         },
         onAccountsChanged() {
             // Not relevant
