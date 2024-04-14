@@ -1,12 +1,11 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { isCommunityTokenForContentEnabled } from "@/context/community-token/action/getCommunityToken";
-import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { readContract } from "viem/actions";
 import { arbitrumSepolia } from "viem/chains";
-import { useClient } from "wagmi";
+import { useAccount, useClient } from "wagmi";
 
 /**
  * Hook used to fetch community token for a content
@@ -14,7 +13,7 @@ import { useClient } from "wagmi";
 export function useIsCommunityTokenMintAvailable({
     contentId,
 }: { contentId: number }) {
-    const { smartWallet } = useWallet();
+    const { address } = useAccount();
     const viemClient = useClient({ chainId: arbitrumSepolia.id });
 
     return useQuery({
@@ -22,15 +21,11 @@ export function useIsCommunityTokenMintAvailable({
             "community-token",
             "is-mint-available",
             contentId,
-            smartWallet?.address ?? "no-address",
+            address ?? "no-address",
             viemClient?.uid ?? "no-client",
         ],
         queryFn: async () => {
-            if (
-                Number.isNaN(contentId) ||
-                !smartWallet?.address ||
-                !viemClient
-            ) {
+            if (Number.isNaN(contentId) || !address || !viemClient) {
                 return false;
             }
             // Check if that's enabled for the content
@@ -46,11 +41,11 @@ export function useIsCommunityTokenMintAvailable({
                 address: addresses.communityToken,
                 abi: communityTokenAbi,
                 functionName: "balanceOf",
-                args: [smartWallet.address, BigInt(contentId)],
+                args: [address, BigInt(contentId)],
             });
             return communityTokenBalance === 0n;
         },
-        enabled: !!smartWallet?.address && !!viemClient,
+        enabled: !!address && !!viemClient,
         placeholderData: false,
     });
 }

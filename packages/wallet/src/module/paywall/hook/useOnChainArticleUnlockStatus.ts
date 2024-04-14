@@ -20,7 +20,7 @@ export const useOnChainArticleUnlockStatus = ({
         ],
         queryFn: async () => {
             if (!(contentId && articleId && address)) {
-                return;
+                return null;
             }
             return getUnlockStatusOnArticle({
                 contentId,

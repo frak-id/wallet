@@ -17,16 +17,17 @@ import { paywallStatusAtom } from "@/module/paywall/atoms/paywallStatus";
 import { paywallUnlockUiStateAtom } from "@/module/paywall/atoms/unlockUiState";
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
-import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import type { UnlockSuccessData } from "@/types/Unlock";
 import { useMutation } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
-import { useCallback, useEffect } from "react";
+import type { SmartAccountClient } from "permissionless";
+import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
+import { useCallback, useEffect, useMemo } from "react";
 import { type Hex, encodeFunctionData, parseEther } from "viem";
 import type { Address } from "viem";
 import { readContract } from "viem/actions";
 import { arbitrumSepolia } from "viem/chains";
-import { useClient } from "wagmi";
+import { useClient, useConnectorClient } from "wagmi";
 
 /**
  * Hook used to fetch and handle the prices
@@ -35,9 +36,26 @@ export function useUnlockArticle({
     context,
     joinCommunity,
 }: { context: PaywallContext; joinCommunity: boolean }) {
-    const { wallet, smartWallet, smartWalletClient } = useWallet();
+    /**
+     * Get our current smart wallet client
+     */
+    const { data: connectorClient } = useConnectorClient();
+
+    const { address, smartWalletClient } = useMemo(() => {
+        if (!connectorClient) {
+            return {};
+        }
+
+        // Build the smart wallet client
+        return {
+            smartWalletClient:
+                connectorClient as SmartAccountClient<ENTRYPOINT_ADDRESS_V06_TYPE>,
+            address: connectorClient?.account?.address,
+        };
+    }, [connectorClient]);
+
     const { balance, refreshBalance } = useFrkBalance({
-        wallet: wallet?.address,
+        wallet: address,
     });
     const setGlobalPaywallStatus = useSetAtom(paywallStatusAtom);
 
@@ -57,7 +75,7 @@ export function useUnlockArticle({
         useOnChainArticleUnlockStatus({
             contentId: context.contentId,
             articleId: context.articleId,
-            address: wallet?.address,
+            address: address,
         });
 
     const invalidateCommunityTokens = useInvalidateCommunityTokenAvailability();
@@ -72,7 +90,7 @@ export function useUnlockArticle({
      *     - Error (with retry + redirect data + error message)
      */
     const { mutateAsync: launchArticleUnlock, error } = useMutation({
-        mutationKey: ["unlock", context.articleId, context.contentId],
+        mutationKey: ["unlock", context.articleId, context.contentId, address],
         mutationFn: async (): Promise<UnlockSuccessData | undefined> => {
             setPaywallLoading("checkingParams");
             if (!context) {
@@ -80,7 +98,7 @@ export function useUnlockArticle({
                 setPaywallError("Missing paywall context");
                 return undefined;
             }
-            if (!(smartWallet && smartWalletClient)) {
+            if (!(address && smartWalletClient?.account)) {
                 // Error that the user doesn't have a smart wallet
                 setPaywallError("No smart wallet");
                 return;
@@ -104,7 +122,7 @@ export function useUnlockArticle({
                     response: {
                         key: "already-unlocked",
                         status: "unlocked",
-                        user: smartWallet.address,
+                        user: address,
                     },
                 });
                 setUiState({
@@ -137,10 +155,11 @@ export function useUnlockArticle({
             setPaywallLoading("buildingTx");
             const txs = await buildUnlockTxs({
                 weiPrice,
-                walletAddress: smartWallet.address,
+                walletAddress: address,
                 context,
             });
-            const smartWalletData = await smartWallet.encodeCallData(txs);
+            const smartWalletData =
+                await smartWalletClient.account.encodeCallData(txs);
 
             // Launch the user operation
             setPaywallLoading("pendingSignature");
@@ -148,7 +167,7 @@ export function useUnlockArticle({
                 userOperation: {
                     callData: smartWalletData,
                 },
-                account: smartWallet,
+                account: smartWalletClient.account,
             });
 
             // Update the global paywall status
@@ -163,7 +182,7 @@ export function useUnlockArticle({
                 response: {
                     key: "success",
                     status: "in-progress",
-                    user: smartWallet.address,
+                    user: address,
                     userOpHash: userOpHash,
                 },
             });

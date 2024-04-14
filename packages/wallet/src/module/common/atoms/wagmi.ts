@@ -3,6 +3,7 @@ import {
     mainnetChains,
     testnetChains,
 } from "@/context/common/blockchain/provider";
+import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { isMainnetEnableAtom } from "@/module/settings/atoms/betaOptions";
 import { atom } from "jotai";
 import { createClient } from "viem";
@@ -18,6 +19,7 @@ export const wagmiConfigAtom = atom((get) => {
     // Then, create the config and return it
     return createConfig({
         chains: isMainnet ? mainnetChains : testnetChains,
+        connectors: [smartAccountConnector()],
         client: ({ chain }) =>
             createClient({
                 chain,

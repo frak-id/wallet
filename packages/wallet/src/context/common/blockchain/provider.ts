@@ -21,7 +21,6 @@ export const testnetChains = [
     // Testnet's
     arbitrumSepolia,
     optimismSepolia,
-    polygonMumbai,
     baseSepolia,
 ] as const;
 

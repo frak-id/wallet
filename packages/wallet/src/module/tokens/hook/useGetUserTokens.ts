@@ -1,12 +1,11 @@
 "use client";
 
 import { getUserErc20Tokens } from "@/context/tokens/action/getTokenAsset";
-import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useQuery } from "@tanstack/react-query";
-import { useChainId } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 
 export function useGetUserTokens() {
-    const { address } = useWallet();
+    const { address } = useAccount();
     const chainId = useChainId();
 
     const { data, error, isLoading, refetch } = useQuery({

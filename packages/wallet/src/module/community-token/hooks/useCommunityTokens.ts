@@ -1,24 +1,20 @@
 import { getCommunityTokensForWallet } from "@/context/community-token/action/getCommunityTokensForWallet";
-import { useWallet } from "@/module/wallet/provider/WalletProvider";
 import { useQuery } from "@tanstack/react-query";
+import { useAccount } from "wagmi";
 
 /**
  * Hook used to list all the current user community tokens
  */
 export function useCommunityTokens() {
-    const { smartWallet } = useWallet();
+    const { address } = useAccount();
 
     return useQuery({
-        queryKey: [
-            "community-token",
-            "get-all",
-            smartWallet?.address ?? "no-address",
-        ],
+        queryKey: ["community-token", "get-all", address ?? "no-address"],
         queryFn: async () => {
-            if (!smartWallet?.address) {
+            if (!address) {
                 return [];
             }
-            return getCommunityTokensForWallet({ wallet: smartWallet.address });
+            return getCommunityTokensForWallet({ wallet: address });
         },
         placeholderData: [],
     });

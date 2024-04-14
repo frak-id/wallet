@@ -7,7 +7,7 @@ import {
 import styles from "@/module/wallet-connect/component/ModalRequest/index.module.css";
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
-import { useChainSpecificSmartWallet } from "@/module/wallet/hook/useChainSpecificSmartWallet";
+import { useSmartWallet } from "@/module/wallet/hook/useSmartWallet";
 import { useMutation } from "@tanstack/react-query";
 import { getSdkError } from "@walletconnect/utils";
 import { FileSignature } from "lucide-react";
@@ -35,7 +35,7 @@ export function AuthRequestModal({
         return rawchainId ? Number.parseInt(rawchainId) : undefined;
     }, [args.params.cacaoPayload.chainId]);
 
-    const { smartWallet } = useChainSpecificSmartWallet({
+    const smartWallet = useSmartWallet({
         chainId: requestedChainId,
     });
 

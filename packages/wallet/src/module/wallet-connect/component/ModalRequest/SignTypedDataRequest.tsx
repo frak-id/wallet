@@ -10,7 +10,7 @@ import { userThemeAtom } from "@/module/settings/atoms/theme";
 import { RequestGenericModal } from "@/module/wallet-connect/component/ModalRequest/Components";
 import styles from "@/module/wallet-connect/component/ModalRequest/index.module.css";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
-import { useChainSpecificSmartWallet } from "@/module/wallet/hook/useChainSpecificSmartWallet";
+import { useSmartWallet } from "@/module/wallet/hook/useSmartWallet";
 import { useAtomValue } from "jotai/index";
 import { FileSignature } from "lucide-react";
 import { useCallback, useMemo } from "react";
@@ -26,7 +26,7 @@ export function SignTypedDataRequestModal({
     requestedChainId: number;
     onHandle: () => void;
 }) {
-    const { smartWallet } = useChainSpecificSmartWallet({
+    const smartWallet = useSmartWallet({
         chainId: requestedChainId,
     });
 
