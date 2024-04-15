@@ -18,9 +18,21 @@ export function Nfts() {
                 <Title>Presse 🗞</Title>
                 <SliderNfts />
                 <AccordionJoinCommunity trigger={<span>Join</span>}>
-                    <ButtonMintCommunity name="Le Monde" contentId={0} />
-                    <ButtonMintCommunity name="L'équipe" contentId={1} />
-                    <ButtonMintCommunity name="Wired" contentId={2} />
+                    <ButtonMintCommunity
+                        name="Le Monde"
+                        image={"le-monde.png"}
+                        contentId={0}
+                    />
+                    <ButtonMintCommunity
+                        name="L'équipe"
+                        image={"l-equipe.png"}
+                        contentId={1}
+                    />
+                    <ButtonMintCommunity
+                        name="Wired"
+                        image={"wired.png"}
+                        contentId={2}
+                    />
                 </AccordionJoinCommunity>
             </div>
         </EnforceChain>

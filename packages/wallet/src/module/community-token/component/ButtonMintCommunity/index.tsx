@@ -5,8 +5,9 @@ import styles from "./index.module.css";
 
 export function ButtonMintCommunity({
     name,
+    image,
     contentId,
-}: { name: string; contentId: number }) {
+}: { name: string; image: string; contentId: number }) {
     const { data: isMintAvailable } = useIsCommunityTokenMintAvailable({
         contentId,
     });
@@ -28,6 +29,13 @@ export function ButtonMintCommunity({
             isLoading={isPending}
             disabled={isPending || !isMintAvailable}
         >
+            <img
+                src={`/images/${image}`}
+                alt={name}
+                width={30}
+                height={30}
+                className={styles.buttonMintCommunity__image}
+            />
             <span>
                 Join <strong>{name}</strong> community
             </span>
