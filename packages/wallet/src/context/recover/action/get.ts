@@ -1,20 +1,29 @@
+"use server";
+
 import { getViemClientFromChainId } from "@/context/common/blockchain/provider";
-import {ecdsaValidatorStorageAbi, getExecutionAbi} from "@/context/recover/utils/abi";
+import {
+    ecdsaValidatorStorageAbi,
+    getExecutionAbi,
+} from "@/context/recover/utils/abi";
 import {
     kernelEcdsaValidator,
     recoveryAction,
 } from "@/context/recover/utils/recover";
-import {type Address, isAddressEqual, toFunctionSelector, zeroAddress} from "viem";
+import type { CurrentRecovery } from "@/types/Recovery";
+import {
+    type Address,
+    isAddressEqual,
+    toFunctionSelector,
+    zeroAddress,
+} from "viem";
 import { readContract } from "viem/actions";
-import type {CurrentRecovery} from "@/types/Recovery";
-
 
 /**
  * Get the current recovery options for the given wallet
  * @param wallet
  * @param chainId
  */
-export async function getRecoveryForWallet({
+export async function getCurrentRecoveryOption({
     wallet,
     chainId,
 }: { wallet: Address; chainId: number }): Promise<CurrentRecovery> {

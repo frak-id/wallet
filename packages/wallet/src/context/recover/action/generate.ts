@@ -1,23 +1,21 @@
 "use server";
+
 import { setExecutionAbi } from "@/context/recover/utils/abi";
 import {
     kernelEcdsaValidator,
     recoveryAction,
 } from "@/context/recover/utils/recover";
+import type { GeneratedRecoveryData } from "@/types/Recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import {
-    encodeFunctionData,
-    toFunctionSelector,
-} from "viem";
+import { encodeFunctionData, toFunctionSelector } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import type {GeneratedRecoveryData} from "@/types/Recovery";
 
 /**
  * Generate the recovery data
  */
 export async function generateRecoveryData({
     wallet,
-}: { wallet: WebAuthNWallet; }): Promise<GeneratedRecoveryData> {
+}: { wallet: WebAuthNWallet }): Promise<GeneratedRecoveryData> {
     // Generate burner info
     const burnerPrivateKey = generatePrivateKey();
     const burnerAccount = privateKeyToAccount(burnerPrivateKey);

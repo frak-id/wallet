@@ -4,11 +4,12 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { BetaOptions } from "@/module/settings/component/BetaOptions";
+import { RecoveryOption } from "@/module/settings/component/Recovery";
 import { SwitchChain } from "@/module/settings/component/SwitchChain";
 import { SessionsConnected } from "@/module/wallet-connect/component/SessionsConnected";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
 import { useAtomValue } from "jotai";
-import { Fingerprint, Shield } from "lucide-react";
+import { Fingerprint } from "lucide-react";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
@@ -16,12 +17,7 @@ export function Settings() {
     return (
         <>
             <BiometryInfo />
-
-            <Panel size={"small"} className={styles.settings__disabled}>
-                <Title icon={<Shield size={32} />}>Recovery setup</Title>
-                <p className={styles.settings__comingSoon}>Coming soon</p>
-            </Panel>
-
+            <RecoveryOption />
             <SwitchChain />
             <BetaOptions />
             <SessionsConnected />
