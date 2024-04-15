@@ -14,7 +14,6 @@ type AlchemyApiKeys = {
  */
 const AlchemyNetworkName: Record<AvailableChainIds, string> = {
     // Testnet's
-    80001: "polygon-mumbai",
     //80002: "polygon-amoy",
     11155420: "opt-sepolia",
     421614: "arb-sepolia",

@@ -11,7 +11,6 @@ import {
     mainnet,
     optimismSepolia,
     polygon,
-    polygonMumbai,
 } from "viem/chains";
 
 /**
