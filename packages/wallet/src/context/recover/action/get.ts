@@ -10,6 +10,7 @@ import {
     recoveryAction,
 } from "@/context/recover/utils/recover";
 import type { CurrentRecovery } from "@/types/Recovery";
+import { tryit } from "radash";
 import {
     type Address,
     isAddressEqual,
@@ -26,7 +27,7 @@ import { readContract } from "viem/actions";
 export async function getCurrentRecoveryOption({
     wallet,
     chainId,
-}: { wallet: Address; chainId: number }): Promise<CurrentRecovery> {
+}: { wallet: Address; chainId: number }): Promise<CurrentRecovery | null> {
     // Get the viem client for the given chain
     const viemClient = getViemClientFromChainId({ chainId });
 
@@ -34,12 +35,17 @@ export async function getCurrentRecoveryOption({
     const recoverySelector = toFunctionSelector(recoveryAction.executorFn);
 
     // Query the kernel wallet to see the current recovery options
-    const recoveryOption = await readContract(viemClient, {
-        address: wallet,
-        abi: [getExecutionAbi],
-        functionName: "getExecution",
-        args: [recoverySelector],
-    });
+    const [, recoveryOption] = await tryit(() =>
+        readContract(viemClient, {
+            address: wallet,
+            abi: [getExecutionAbi],
+            functionName: "getExecution",
+            args: [recoverySelector],
+        })
+    )();
+    if (!recoveryOption) {
+        return null;
+    }
 
     // Ensure the recovery options matches
     if (!isAddressEqual(recoveryOption.executor, recoveryAction.address)) {

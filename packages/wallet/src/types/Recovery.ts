@@ -17,3 +17,12 @@ export type GeneratedRecoveryData = {
     // The tx to setup the recovery
     setupTxData: Hex;
 };
+
+export type RecoveryFileContent = {
+    // The wallet data
+    initialWallet: WebAuthNWallet;
+    // The guardian address
+    guardianAddress: Address;
+    // The encrypted guardian private key
+    guardianPrivateKeyEncrypted: string;
+};
