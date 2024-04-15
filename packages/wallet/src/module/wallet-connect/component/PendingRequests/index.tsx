@@ -51,7 +51,10 @@ export function PendingWalletConnectRequests() {
                     <AccordionContent>
                         <ul>
                             {pendingRequests.map((request) => (
-                                <PendingRequestItem request={request} />
+                                <PendingRequestItem
+                                    key={request.id}
+                                    request={request}
+                                />
                             ))}
                         </ul>
                     </AccordionContent>
