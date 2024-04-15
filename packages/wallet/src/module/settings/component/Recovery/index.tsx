@@ -3,7 +3,7 @@
 import { getCurrentRecoveryOption } from "@/context/recover/action/get";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useGenerateRecoveryFile } from "@/module/recovery/hook/useGenerateRecoveryFile";
+import { useGenerateRecoveryOptions } from "@/module/recovery/hook/useGenerateRecoveryOptions";
 import { useParseRecoveryFile } from "@/module/recovery/hook/useParseRecoveryFile";
 import type { CurrentRecovery, GeneratedRecoveryData } from "@/types/Recovery";
 import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
@@ -62,39 +62,27 @@ function CurrentRecoveryOptions({
 }
 
 function TestRecoveryFile() {
-    const testEncryption = useGenerateRecoveryFile();
+    const testEncryption = useGenerateRecoveryOptions();
     const testDecryption = useParseRecoveryFile();
-
-    const baseOption: GeneratedRecoveryData = useMemo(
-        () => ({
-            wallet: {
-                address: "0x2951C0Dac251C4c015467ede5A9Cb31cEB4d3694",
-                publicKey: {
-                    x: "0x2951C0Dac251C4c015467ede5A9Cb31cEB4d3694",
-                    y: "0x2951C0Dac251C4c015467ede5A9Cb31cEB4d3694",
-                },
-                authenticatorId: "test",
-            },
-            burner: {
-                privateKey: "0x2951C0Dac251C4c015467ede5A9Cb31cEB4d3694",
-                address: "0x2951C0Dac251C4c015467ede5A9Cb31cEB4d3694",
-            },
-            setupTxData: "0x123",
-        }),
-        []
-    );
 
     return (
         <Button
             onClick={async () => {
-                const fileContent = await testEncryption({
-                    option: baseOption,
+                const recoveryOptions = await testEncryption({
+                    wallet: {
+                        address: "0x2951C0Dac251C4c015467ede5A9Cb31cEB4d3694",
+                        publicKey: {
+                            x: "0x2951C0Dac251C4c015467ede5A9Cb31cEB4d3694",
+                            y: "0x2951C0Dac251C4c015467ede5A9Cb31cEB4d3694",
+                        },
+                        authenticatorId: "test",
+                    },
                     pass: "test",
                 });
-                console.log("File content", fileContent);
+                console.log("File content", recoveryOptions);
 
                 const parsed = await testDecryption({
-                    file: fileContent,
+                    file: recoveryOptions.file,
                     pass: "test",
                 });
                 console.log("Parsed", parsed);

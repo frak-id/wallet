@@ -7,19 +7,18 @@ import {
 } from "@/context/recover/utils/recover";
 import type { GeneratedRecoveryData } from "@/types/Recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { encodeFunctionData, toFunctionSelector } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
 
 /**
  * Generate the recovery data
+ * TODO: Is wallet rly needed? Should we perform check beforehand?
  */
 export async function generateRecoveryData({
-    wallet,
-}: { wallet: WebAuthNWallet }): Promise<GeneratedRecoveryData> {
-    // Generate burner info
-    const burnerPrivateKey = generatePrivateKey();
-    const burnerAccount = privateKeyToAccount(burnerPrivateKey);
-
+    guardianAddress,
+}: {
+    wallet: WebAuthNWallet;
+    guardianAddress: Address;
+}): Promise<GeneratedRecoveryData> {
     // Get the recovery selector
     const recoverySelector = toFunctionSelector(recoveryAction.executorFn);
 
@@ -38,19 +37,12 @@ export async function generateRecoveryData({
             0,
             0,
             // Data used to validate the ecdsa validator
-            burnerAccount.address,
+            guardianAddress,
         ],
     });
-
-    // TODO: We should also fetch the initial initData for a wallet, it would help redeploy and change the wallet accross different chains
-
     // Return all the stuff wanted
     return {
-        wallet,
-        burner: {
-            privateKey: burnerPrivateKey,
-            address: burnerAccount.address,
-        },
+        guardianAddress,
         setupTxData: txData,
     };
 }

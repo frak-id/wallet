@@ -7,13 +7,8 @@ export type CurrentRecovery = {
 };
 
 export type GeneratedRecoveryData = {
-    // The info about the initially deployed wallet
-    wallet: WebAuthNWallet;
-    // The info about the burner wallet used for recovery
-    burner: {
-        privateKey: Hex;
-        address: Address;
-    };
+    // Guardian address
+    guardianAddress: Address;
     // The tx to setup the recovery
     setupTxData: Hex;
 };
