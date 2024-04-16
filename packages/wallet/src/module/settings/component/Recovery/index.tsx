@@ -125,7 +125,7 @@ function TestRecoverySetup() {
     const { recoverySetupStatus, isLoading } = useRecoverySetupStatus({
         chainId,
     });
-    const { setupRecoveryAsync, isPending } = useSetupRecovery({ chainId });
+    const { setupRecoveryAsync, isPending } = useSetupRecovery();
     const { generateRecoveryOptionsAsync } = useGenerateRecoveryOptions();
 
     if (isLoading) {
@@ -152,6 +152,7 @@ function TestRecoverySetup() {
                     console.log("Recovery options", recoveryOptions);
 
                     const txHash = await setupRecoveryAsync({
+                        chainId,
                         setupTxData: recoveryOptions.setupTxData,
                     });
                     console.log("Tx hash", txHash);

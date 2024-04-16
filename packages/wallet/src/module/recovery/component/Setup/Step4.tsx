@@ -1,55 +1,17 @@
 import { AccordionRecoveryItem } from "@/module/recovery/component/AccordionItem";
 import { getStatusCurrentStep } from "@/module/recovery/component/Setup";
-import { useSetupRecovery } from "@/module/recovery/hook/useSetupRecovery";
-import {
-    recoveryOptionsAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
-import { useAtom, useAtomValue } from "jotai";
-import { useEffect } from "react";
-import { useChainId } from "wagmi";
+import { recoveryStepAtom } from "@/module/settings/atoms/recovery";
+import { useAtomValue } from "jotai";
+import { useConfig } from "wagmi";
+import { ButtonSetupChain } from "@/module/recovery/component/Setup/ButtonSetupChain";
 
 const ACTUAL_STEP = 4;
 
 export function Step4() {
-    // Get or set the current step
-    const [step, setStep] = useAtom(recoveryStepAtom);
+    // Get the current step
+    const step = useAtomValue(recoveryStepAtom);
 
-    // Get the recovery options
-    const recoveryOptions = useAtomValue(recoveryOptionsAtom);
-
-    // Get the chain ID
-    const chainId = useChainId();
-
-    // Setup recovery
-    const { setupRecoveryAsync, isPending, isSuccess, isError, error } =
-        useSetupRecovery({
-            chainId,
-        });
-
-    /**
-     * Run when the step is 4
-     */
-    useEffect(() => {
-        if (step !== ACTUAL_STEP) return;
-
-        async function runStep() {
-            if (!recoveryOptions) return;
-            const txHash = await setupRecoveryAsync({
-                setupTxData: recoveryOptions.setupTxData,
-            });
-            console.log("Tx hash", txHash);
-        }
-        runStep();
-    }, [step, recoveryOptions, setupRecoveryAsync]);
-
-    /**
-     * Run when the transaction is successful
-     */
-    useEffect(() => {
-        if (!isSuccess) return;
-        setStep(ACTUAL_STEP + 1);
-    }, [isSuccess, setStep]);
+    const { chains } = useConfig();
 
     return (
         <AccordionRecoveryItem
@@ -57,15 +19,9 @@ export function Step4() {
             trigger={<span>{ACTUAL_STEP}. Enable recovery on-chain</span>}
             status={getStatusCurrentStep(ACTUAL_STEP, step)}
         >
-            {isPending && (
-                <p>
-                    Transaction in progress
-                    <span className={"dotsLoading"}>...</span>
-                </p>
-            )}
-            {isError && (
-                <p className={"error"}>Transaction error: {error?.message}</p>
-            )}
+            {chains.map((chain) => (
+                <ButtonSetupChain key={chain.id} chain={chain} />
+            ))}
         </AccordionRecoveryItem>
     );
 }

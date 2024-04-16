@@ -5,7 +5,7 @@ import { useAccount, useSendTransaction } from "wagmi";
 /**
  * Setup the recovery for the given chain
  */
-export function useSetupRecovery({ chainId }: { chainId: number }) {
+export function useSetupRecovery() {
     const { address } = useAccount();
     const { sendTransactionAsync } = useSendTransaction();
     const queryClient = useQueryClient();
@@ -16,7 +16,10 @@ export function useSetupRecovery({ chainId }: { chainId: number }) {
     const { mutate, mutateAsync, ...mutationStuff } = useMutation({
         mutationKey: ["recovery", "setup", address],
         gcTime: 0,
-        mutationFn: async ({ setupTxData }: { setupTxData: Hex }) => {
+        mutationFn: async ({
+            chainId,
+            setupTxData,
+        }: { chainId: number; setupTxData: Hex }) => {
             if (!address) return null;
 
             // Perform the setup transaction
