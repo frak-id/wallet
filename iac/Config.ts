@@ -22,6 +22,17 @@ export function ConfigStack({ stack }: StackContext) {
         "WALLETCONNECT_PROJECT_ID"
     );
 
+    // Biconomy
+    const biconomyDevApiKey = new Config.Secret(stack, "BICONOMY_API_KEY_DEV");
+    const biconomyProdApiKey = new Config.Secret(
+        stack,
+        "BICONOMY_API_KEY_MAINNET"
+    );
+    const biconomyPaymasterApiKeys = new Config.Secret(
+        stack,
+        "BICONOMY_PAYMASTER_API_KEYS"
+    );
+
     const frakWalletUrl = new Config.Parameter(stack, "FRAK_WALLET_URL", {
         value:
             stack.stage === "prod"
@@ -34,6 +45,11 @@ export function ConfigStack({ stack }: StackContext) {
         mongoUri,
         alchemyApiKeys,
         pimlicoApiKey,
+        biconomy: {
+            biconomyDevApiKey,
+            biconomyProdApiKey,
+            biconomyPaymasterApiKeys,
+        },
         zeroDevApiKey,
         airdropPrivateKey,
         adminPassword,

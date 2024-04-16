@@ -18,17 +18,27 @@ import {
     ENTRYPOINT_ADDRESS_V06,
     type SmartAccountClient,
     createSmartAccountClient,
+    deepHexlify,
 } from "permissionless";
+import type { PimlicoPaymasterRpcSchema } from "permissionless/_types/types/pimlico";
+import type { UserOperationWithBigIntAsHex } from "permissionless/_types/types/userOperation";
 import type { SmartAccount } from "permissionless/accounts";
-import { sponsorUserOperation } from "permissionless/actions/pimlico";
-import type { EntryPoint } from "permissionless/types";
+import type {
+    PimlicoSponsorUserOperationParameters,
+    SponsorUserOperationReturnType,
+} from "permissionless/actions/pimlico";
+import type { EntryPoint, GetEntryPointVersion } from "permissionless/types";
 import {
+    type Account,
     type Chain,
+    type Client,
+    type Hex,
     type Transport,
     createClient,
     extractChain,
     isAddressEqual,
 } from "viem";
+import type { Prettify } from "viem/chains";
 
 /**
  * Get the current authenticated wallet
@@ -254,3 +264,78 @@ async function buildSmartAccount<
 
     return client;
 }
+
+const sponsorUserOperation = async <
+    entryPoint extends EntryPoint,
+    TTransport extends Transport = Transport,
+    TChain extends Chain | undefined = Chain | undefined,
+    TAccount extends Account | undefined = Account | undefined,
+>(
+    client: Client<
+        TTransport,
+        TChain,
+        TAccount,
+        PimlicoPaymasterRpcSchema<entryPoint>
+    >,
+    args: Prettify<PimlicoSponsorUserOperationParameters<entryPoint>>
+): Promise<Prettify<SponsorUserOperationReturnType<entryPoint>>> => {
+    let mappedUserOp = deepHexlify(args.userOperation);
+    console.log("Mapped user operation", {
+        userOperation: args.userOperation,
+        mappedUserOp,
+    });
+
+    mappedUserOp = {
+        ...mappedUserOp,
+        callGasLimit: Number(BigInt(mappedUserOp.callGasLimit)).toString(),
+        maxFeePerGas: Number(BigInt(mappedUserOp.maxFeePerGas)).toString(),
+        maxPriorityFeePerGas: Number(
+            BigInt(mappedUserOp.maxPriorityFeePerGas)
+        ).toString(),
+        preVerificationGas: Number(
+            BigInt(mappedUserOp.preVerificationGas)
+        ).toString(),
+        verificationGasLimit: Number(
+            BigInt(mappedUserOp.verificationGasLimit)
+        ).toString(),
+    };
+    console.log("Final mapped user operation", {
+        userOperation: args.userOperation,
+        mappedUserOp,
+    });
+
+    const response = await client.request({
+        method: "pm_sponsorUserOperation",
+        params: [
+            mappedUserOp as UserOperationWithBigIntAsHex<
+                GetEntryPointVersion<entryPoint>
+            >,
+            {
+                mode: "SPONSORED",
+                calculateGasLimits: true,
+                expiryDuration: 300,
+                sponsorshipInfo: {
+                    webhookData: {},
+                    smartAccountInfo: {},
+                },
+            },
+        ],
+    });
+
+    const responseV06 = response as {
+        paymasterAndData: Hex;
+        preVerificationGas: Hex;
+        verificationGasLimit: Hex;
+        callGasLimit: Hex;
+        paymaster?: never;
+        paymasterVerificationGasLimit?: never;
+        paymasterPostOpGasLimit?: never;
+        paymasterData?: never;
+    };
+    return {
+        paymasterAndData: responseV06.paymasterAndData,
+        preVerificationGas: BigInt(responseV06.preVerificationGas),
+        verificationGasLimit: BigInt(responseV06.verificationGasLimit),
+        callGasLimit: BigInt(responseV06.callGasLimit),
+    } as SponsorUserOperationReturnType<entryPoint>;
+};

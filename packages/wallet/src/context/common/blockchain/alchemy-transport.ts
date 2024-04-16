@@ -86,24 +86,3 @@ export function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
         AlchemyNetworkName[chain.id as AvailableChainIds]
     }.g.alchemy.com/v2/${apiKey}`;
 }
-
-/**
- * Get the alchemy rpc url for the given chain
- * @param chain
- * @param version
- */
-export function getAlchemyNftUrl({ chain }: { chain: Chain }) {
-    // Extract the api keys and parse them
-    const alchemyApiKeys = JSON.parse(
-        process.env.ALCHEMY_API_KEYS ?? "{}"
-    ) as AlchemyApiKeys;
-    const apiKey = alchemyApiKeys[chain.id];
-    if (!apiKey) {
-        return undefined;
-    }
-
-    // Build the alchemy rpc url depending on the chain
-    return `https://${
-        AlchemyNetworkName[chain.id as AvailableChainIds]
-    }.g.alchemy.com/nft/v3/${apiKey}`;
-}
