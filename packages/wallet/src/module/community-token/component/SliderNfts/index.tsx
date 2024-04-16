@@ -3,5 +3,10 @@ import { useCommunityTokens } from "@/module/community-token/hooks/useCommunityT
 
 export function SliderNfts() {
     const { data: userTokens } = useCommunityTokens();
-    return <Slick slides={userTokens ?? []} />;
+
+    // Early exit if no slides
+    if (!userTokens || userTokens.length === 0) return null;
+
+    // Otherwise, display the slides
+    return <Slick slides={userTokens} />;
 }

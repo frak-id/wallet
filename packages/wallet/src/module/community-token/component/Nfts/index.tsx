@@ -1,7 +1,6 @@
 "use client";
 
 import { EnforceChain } from "@/module/chain/component/EnforceChain";
-import { Title } from "@/module/common/component/Title";
 import { AccordionJoinCommunity } from "@/module/community-token/component/AccordionJoinCommunity";
 import { ButtonMintCommunity } from "@/module/community-token/component/ButtonMintCommunity";
 import { SliderNfts } from "@/module/community-token/component/SliderNfts";
@@ -15,8 +14,8 @@ export function Nfts() {
             wantedAction={"manage your communities"}
         >
             <div className={styles.nfts}>
-                <Title>Presse 🗞</Title>
                 <SliderNfts />
+
                 <AccordionJoinCommunity trigger={<span>Join</span>}>
                     <ButtonMintCommunity
                         name="Le Monde"

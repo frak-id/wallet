@@ -1,5 +1,6 @@
 "use client";
 
+import { Title } from "@/module/common/component/Title";
 import { ModalBurn } from "@/module/community-token/component/ModalBurn";
 import { useBurnCommunityToken } from "@/module/community-token/hooks/useBurnCommunityToken";
 import { useCommunityTokenMetadata } from "@/module/community-token/hooks/useCommunityTokenMetadata";
@@ -12,20 +13,31 @@ import "slick-carousel/slick/slick.css";
 import styles from "./index.module.css";
 
 export function Slick({ slides = [] }: { slides: CommunityTokenBalance[] }) {
-    const settings = {
-        infinite: false,
-        slidesToShow: 2,
-        slidesToScroll: 2,
-        variableWidth: true,
-        arrows: false,
-        className: styles.slick,
-    };
+    // Settings for the slider
+    const settings = useMemo(
+        () => ({
+            infinite: false,
+            slidesToShow: 2,
+            slidesToScroll: 2,
+            variableWidth: true,
+            arrows: false,
+            className: styles.slick,
+        }),
+        []
+    );
+
     return (
-        <Slider {...settings}>
-            {slides.map((slide, index) => (
-                <NftSlide nft={slide} key={`slide-${index}-${slide.tokenId}`} />
-            ))}
-        </Slider>
+        <>
+            <Title>Presse 🗞</Title>
+            <Slider {...settings}>
+                {slides.map((slide, index) => (
+                    <NftSlide
+                        nft={slide}
+                        key={`slide-${index}-${slide.tokenId}`}
+                    />
+                ))}
+            </Slider>
+        </>
     );
 }
 
@@ -42,9 +54,8 @@ function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
         id: nft.tokenId,
     });
     const imageUrl = useMemo(
-        () =>
-            metadata?.images?.[theme] ?? "https://via.placeholder.com/160x213",
-        [metadata?.images, theme]
+        () => metadata?.images?.[theme] ?? metadata?.image,
+        [metadata?.images, metadata?.image, theme]
     );
     const [openModal, setOpenModal] = useState(false);
 
@@ -55,6 +66,9 @@ function NftSlide({ nft }: { nft: CommunityTokenBalance }) {
         if (!isSuccess) return;
         setOpenModal(false);
     }, [isSuccess]);
+
+    // If we don't have an image url yet, don't disply anything
+    if (!imageUrl) return null;
 
     return (
         <div className={styles.slick__item}>

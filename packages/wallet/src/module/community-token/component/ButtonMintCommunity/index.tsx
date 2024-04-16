@@ -8,17 +8,13 @@ export function ButtonMintCommunity({
     image,
     contentId,
 }: { name: string; image: string; contentId: number }) {
-    const { data: isMintAvailable } = useIsCommunityTokenMintAvailable({
-        contentId,
-    });
+    const { data: isMintAvailable, isLoading } =
+        useIsCommunityTokenMintAvailable({
+            contentId,
+        });
     const { mutateAsync: mintToken, isPending } = useMintCommunityToken({
         contentId,
     });
-
-    // If mint not available early exit
-    if (!isMintAvailable) {
-        return null;
-    }
 
     return (
         <ButtonRipple
@@ -26,8 +22,8 @@ export function ButtonMintCommunity({
             onClick={async () => {
                 await mintToken();
             }}
-            isLoading={isPending}
-            disabled={isPending || !isMintAvailable}
+            isLoading={isLoading || isPending}
+            disabled={isLoading || isPending || !isMintAvailable}
         >
             <img
                 src={`/images/${image}`}
@@ -37,7 +33,15 @@ export function ButtonMintCommunity({
                 className={styles.buttonMintCommunity__image}
             />
             <span>
-                Join <strong>{name}</strong> community
+                {isMintAvailable ? (
+                    <>
+                        Join <strong>{name}</strong> community
+                    </>
+                ) : (
+                    <>
+                        You are already in <strong>{name}</strong> community
+                    </>
+                )}
             </span>
         </ButtonRipple>
     );
