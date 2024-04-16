@@ -16,6 +16,9 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
+    "@aarc-xyz/deposit-widget": "^0.1.2",
+    "@aarc-xyz/deposit-widget-coinbase": "^0.0.1",
+    "@aarc-xyz/deposit-widget-transak": "^0.0.2",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@peculiar/asn1-ecc": "^2.3.8",
     "@peculiar/asn1-schema": "^2.3.8",

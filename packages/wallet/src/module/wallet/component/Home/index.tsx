@@ -5,11 +5,13 @@ import { Tokens } from "@/module/tokens/component/Tokens";
 import { PendingWalletConnectRequests } from "@/module/wallet-connect/component/PendingRequests";
 import { CreateWalletConnectConnection } from "@/module/wallet-connect/component/StartConnect";
 import { InstallApp } from "@/module/wallet/component/InstallApp";
+import { OnRampWidget } from "@/module/wallet/component/OnRamp";
 
 export function WalletHomePage() {
     return (
         <Grid>
             <InstallApp />
+            <OnRampWidget />
             <PendingWalletConnectRequests />
             <Tokens />
             <CreateWalletConnectConnection />
