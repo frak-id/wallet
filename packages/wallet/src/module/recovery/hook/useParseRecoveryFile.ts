@@ -3,10 +3,11 @@ import type { RecoveryFileContent } from "@/types/Recovery";
 import { useMutation } from "@tanstack/react-query";
 
 /**
- * Generate the recovery file
+ * Parse the guardian private key from the recovery file
+ * TODO: This should also trigger the wallet update function??
  */
 export function useParseRecoveryFile() {
-    const { mutateAsync } = useMutation({
+    const { mutateAsync, mutate, ...mutationStuff } = useMutation({
         mutationKey: ["recovery", "parse-file"],
         gcTime: 0,
         mutationFn: async ({
@@ -19,5 +20,9 @@ export function useParseRecoveryFile() {
             }),
     });
 
-    return mutateAsync;
+    return {
+        ...mutationStuff,
+        parseRecoveryFileAsync: mutateAsync,
+        parseRecoveryFile: mutate,
+    };
 }

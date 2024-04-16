@@ -10,7 +10,7 @@ import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
  * Generate the recovery file
  */
 export function useGenerateRecoveryOptions() {
-    const { mutateAsync } = useMutation({
+    const { mutate, mutateAsync, ...mutationStuff } = useMutation({
         mutationKey: ["recovery", "generate-file"],
         gcTime: 0,
         mutationFn: async ({
@@ -54,5 +54,9 @@ export function useGenerateRecoveryOptions() {
         },
     });
 
-    return mutateAsync;
+    return {
+        ...mutationStuff,
+        generateRecoveryOptionsAsyc: mutateAsync,
+        generateRecoveryOptions: mutate,
+    };
 }
