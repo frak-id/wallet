@@ -1,0 +1,30 @@
+.accordion {
+}
+
+.accordion__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    color: var(--frak-accordion-trigger-color);
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.accordion__trigger:disabled {
+    color: var(--frak-color-grayText);
+    cursor: not-allowed;
+}
+
+.accordion__trigger > span {
+    margin-right: auto;
+}
+
+.accordion__trigger > svg {
+    margin: 0;
+}
+
+
+.accordion__content > div {
+    margin-top: 20px;
+}

@@ -56,7 +56,7 @@ export function useGenerateRecoveryOptions() {
 
     return {
         ...mutationStuff,
-        generateRecoveryOptionsAsyc: mutateAsync,
+        generateRecoveryOptionsAsync: mutateAsync,
         generateRecoveryOptions: mutate,
     };
 }

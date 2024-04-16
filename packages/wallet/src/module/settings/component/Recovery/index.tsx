@@ -14,7 +14,21 @@ import { Button } from "@frak-labs/nexus-example/src/module/common/component/But
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { Shield } from "lucide-react";
+import Link from "next/link";
 import { useAccount, useChainId } from "wagmi";
+
+/**
+ * Component for the settings with the recovery link
+ * @constructor
+ */
+export function RecoveryLink() {
+    return (
+        <Panel size={"small"}>
+            <Title icon={<Shield size={32} />}>Recovery setup</Title>
+            <Link href={"/settings/recovery"}>Setup new recovery</Link>
+        </Panel>
+    );
+}
 
 /**
  * Component for the settings with the recovery options
@@ -67,14 +81,14 @@ function CurrentRecoveryOptions({
 }
 
 function TestRecoveryFile() {
-    const { generateRecoveryOptionsAsyc } = useGenerateRecoveryOptions();
+    const { generateRecoveryOptionsAsync } = useGenerateRecoveryOptions();
     const { parseRecoveryFileAsync } = useParseRecoveryFile();
     const { downloadRecoveryFileAsync } = useDownloadRecoveryFile();
 
     return (
         <Button
             onClick={async () => {
-                const recoveryOptions = await generateRecoveryOptionsAsyc({
+                const recoveryOptions = await generateRecoveryOptionsAsync({
                     wallet: {
                         address: "0x2951C0Dac251C4c015467ede5A9Cb31cEB4d3694",
                         publicKey: {
@@ -112,7 +126,7 @@ function TestRecoverySetup() {
         chainId,
     });
     const { setupRecoveryAsync, isPending } = useSetupRecovery({ chainId });
-    const { generateRecoveryOptionsAsyc } = useGenerateRecoveryOptions();
+    const { generateRecoveryOptionsAsync } = useGenerateRecoveryOptions();
 
     if (isLoading) {
         return <p>Loading status...</p>;
@@ -131,7 +145,7 @@ function TestRecoverySetup() {
                     if (!session) {
                         return;
                     }
-                    const recoveryOptions = await generateRecoveryOptionsAsyc({
+                    const recoveryOptions = await generateRecoveryOptionsAsync({
                         wallet: session.wallet,
                         pass: "test",
                     });

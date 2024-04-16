@@ -1,0 +1,9 @@
+.step1__input {
+    margin: 10px 0;
+}
+
+.step1__error {
+    display: block;
+    padding-bottom: 5px;
+    color: var(--frak-color-red);
+}

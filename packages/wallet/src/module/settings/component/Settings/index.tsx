@@ -4,7 +4,7 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { BetaOptions } from "@/module/settings/component/BetaOptions";
-import { RecoveryOption } from "@/module/settings/component/Recovery";
+import { RecoveryLink } from "@/module/settings/component/Recovery";
 import { SwitchChain } from "@/module/settings/component/SwitchChain";
 import { SessionsConnected } from "@/module/wallet-connect/component/SessionsConnected";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
@@ -17,7 +17,7 @@ export function Settings() {
     return (
         <>
             <BiometryInfo />
-            <RecoveryOption />
+            <RecoveryLink />
             <SwitchChain />
             <BetaOptions />
             <SessionsConnected />
