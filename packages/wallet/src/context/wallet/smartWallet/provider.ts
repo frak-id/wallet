@@ -8,7 +8,7 @@ import {
     availableChains,
 } from "@/context/common/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/sign";
-import { webAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
+import { nexusSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWalletNew";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { jotaiStore } from "@/module/common/atoms/store";
@@ -16,6 +16,7 @@ import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { startAuthentication } from "@simplewebauthn/browser";
 import {
     ENTRYPOINT_ADDRESS_V06,
+    ENTRYPOINT_ADDRESS_V07,
     type SmartAccountClient,
     createSmartAccountClient,
 } from "permissionless";
@@ -208,8 +209,8 @@ async function buildSmartAccount<
     });
 
     // Get the smart wallet client
-    const smartAccount = await webAuthNSmartAccount(viemClient, {
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
+    const smartAccount = await nexusSmartAccount(viemClient, {
+        entryPoint: ENTRYPOINT_ADDRESS_V07,
         authenticatorId: wallet.authenticatorId,
         signerPubKey: wallet.publicKey,
         signatureProvider: async (message) => {
