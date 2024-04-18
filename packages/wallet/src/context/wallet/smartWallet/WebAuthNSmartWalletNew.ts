@@ -406,7 +406,13 @@ export async function nexusSmartAccount<
                 metadata,
             });
             // And sign it
-            return signHash(challenge);
+            const signature = await signHash(challenge);
+            // Wrap it with the validator
+            return concatHex([
+                // Sudo mode for the validator
+                "0x00",
+                signature
+            ])
         },
 
         /**

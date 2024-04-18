@@ -5,7 +5,7 @@ import {
     type Hex,
     concatHex,
     domainSeparator,
-    keccak256,
+    keccak256, encodeAbiParameters, stringToHex,
 } from "viem";
 import { readContract } from "viem/actions";
 
@@ -87,6 +87,13 @@ export function wrapMessageForSignature({
     message,
     metadata,
 }: { message: Hex; metadata: AccountMetadata }) {
+    // Wrap it with the kernel type
+    const typedHash = keccak256(
+        encodeAbiParameters(
+            [{ type: "bytes32" }, { type: "bytes32" }],
+            [keccak256(stringToHex("Kernel(bytes32 hash)")), message]
+        )
+    )
     // Build the domain separator
     const accountDomainSeparator = domainSeparator({
         domain: {
@@ -96,5 +103,6 @@ export function wrapMessageForSignature({
             verifyingContract: metadata.verifyingContract,
         },
     });
-    return keccak256(concatHex(["0x1901", accountDomainSeparator, message]));
+    // Return msg concat of the sig
+    return keccak256(concatHex(["0x1901", accountDomainSeparator, typedHash]));
 }
