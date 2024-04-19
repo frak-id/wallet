@@ -1,14 +1,12 @@
 "use server";
 
+import { kernelAddresses } from "@/context/common/blockchain/addresses";
 import { getViemClientFromChainId } from "@/context/common/blockchain/provider";
 import {
+    addPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
     getExecutionAbi,
 } from "@/context/recover/utils/abi";
-import {
-    kernelEcdsaValidator,
-    recoveryAction,
-} from "@/context/recover/utils/recover";
 import type { CurrentRecovery } from "@/types/Recovery";
 import { tryit } from "radash";
 import {
@@ -32,7 +30,7 @@ export async function getCurrentRecoveryOption({
     const viemClient = getViemClientFromChainId({ chainId });
 
     // Get the recovery selector
-    const recoverySelector = toFunctionSelector(recoveryAction.executorFn);
+    const addPasskeySelector = toFunctionSelector(addPassKeyFnAbi);
 
     // Query the kernel wallet to see the current recovery options
     const [, recoveryOption] = await tryit(() =>
@@ -40,7 +38,7 @@ export async function getCurrentRecoveryOption({
             address: wallet,
             abi: [getExecutionAbi],
             functionName: "getExecution",
-            args: [recoverySelector],
+            args: [addPasskeySelector],
         })
     )();
     if (!recoveryOption) {
@@ -48,16 +46,26 @@ export async function getCurrentRecoveryOption({
     }
 
     // Ensure the recovery options matches
-    if (!isAddressEqual(recoveryOption.executor, recoveryAction.address)) {
+    if (
+        !isAddressEqual(
+            recoveryOption.executor,
+            kernelAddresses.multiWebAuthnValidator
+        )
+    ) {
         return null;
     }
-    if (!isAddressEqual(recoveryOption.validator, kernelEcdsaValidator)) {
+    if (
+        !isAddressEqual(
+            recoveryOption.validator,
+            kernelAddresses.ecdsaValidator
+        )
+    ) {
         return null;
     }
 
     // Fetch the burner wallet associated with the recovery
     const burnerAddress = await readContract(viemClient, {
-        address: kernelEcdsaValidator,
+        address: kernelAddresses.ecdsaValidator,
         abi: [ecdsaValidatorStorageAbi],
         functionName: "ecdsaValidatorStorage",
         args: [wallet],

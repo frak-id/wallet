@@ -7,3 +7,15 @@ export const addresses = {
     paywall: "0x9218521020EF26924B77188f4ddE0d0f7C405f21",
     communityToken: "0xD2849EB12DAcACB4940063007CCbC325cBBb290d",
 } as const;
+
+/**
+ * The kernel related addresses
+ */
+export const kernelAddresses = {
+    // Validators
+    multiWebAuthnValidator: "0x4De27de97DA4B7d885EED9154bb21510F1329AE1",
+    ecdsaValidator: "0xd9AB5096a832b9ce79914329DAEE236f8Eea0390",
+    // Kernel stuff
+    accountLogic: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
+    factory: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",
+} as const;

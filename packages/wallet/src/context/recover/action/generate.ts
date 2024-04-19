@@ -1,10 +1,7 @@
 "use server";
 
-import { setExecutionAbi } from "@/context/recover/utils/abi";
-import {
-    kernelEcdsaValidator,
-    recoveryAction,
-} from "@/context/recover/utils/recover";
+import { kernelAddresses } from "@/context/common/blockchain/addresses";
+import { addPassKeyFnAbi, setExecutionAbi } from "@/context/recover/utils/abi";
 import type { GeneratedRecoveryData } from "@/types/Recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
@@ -20,19 +17,19 @@ export async function generateRecoveryData({
     guardianAddress: Address;
 }): Promise<GeneratedRecoveryData> {
     // Get the recovery selector
-    const recoverySelector = toFunctionSelector(recoveryAction.executorFn);
+    const addPasskeySelector = toFunctionSelector(addPassKeyFnAbi);
 
     // Generate the setup tx data
     const txData = encodeFunctionData({
         abi: [setExecutionAbi],
         functionName: "setExecution",
         args: [
-            // Do recovery method
-            recoverySelector,
-            // And do recovery contract
-            recoveryAction.address,
+            // The passkey addition method
+            addPasskeySelector,
+            // The webauthn validator address
+            kernelAddresses.multiWebAuthnValidator,
             // The address of the ecdsa validator
-            kernelEcdsaValidator,
+            kernelAddresses.ecdsaValidator,
             // Valid until / valid after timestamps, keep that as 0
             0,
             0,

@@ -1,9 +1,9 @@
-import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
 import { useSetupRecovery } from "@/module/recovery/hook/useSetupRecovery";
-import { useAtomValue } from "jotai/index";
 import { recoveryOptionsAtom } from "@/module/settings/atoms/recovery";
-import type { Chain } from "viem";
+import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
+import { useAtomValue } from "jotai/index";
 import { Check } from "lucide-react";
+import type { Chain } from "viem";
 
 export function ButtonSetupChain({ chain }: { chain: Chain }) {
     // Get the recovery options

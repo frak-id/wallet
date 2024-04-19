@@ -1,9 +1,9 @@
 import { AccordionRecoveryItem } from "@/module/recovery/component/AccordionItem";
 import { getStatusCurrentStep } from "@/module/recovery/component/Setup";
+import { ButtonSetupChain } from "@/module/recovery/component/Setup/ButtonSetupChain";
 import { recoveryStepAtom } from "@/module/settings/atoms/recovery";
 import { useAtomValue } from "jotai";
 import { useConfig } from "wagmi";
-import { ButtonSetupChain } from "@/module/recovery/component/Setup/ButtonSetupChain";
 
 const ACTUAL_STEP = 4;
 

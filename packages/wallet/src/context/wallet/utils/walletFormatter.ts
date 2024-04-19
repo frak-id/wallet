@@ -1,7 +1,6 @@
 import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
-import { webAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
+import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
 import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
-import { ENTRYPOINT_ADDRESS_V06 } from "permissionless";
 
 /**
  * Format a wallet
@@ -17,8 +16,7 @@ export async function formatWallet({
 }): Promise<WebAuthNWallet> {
     // Build the smart wallet account
     // @ts-ignore
-    const smartWallet = await webAuthNSmartAccount(arbSepoliaPocClient, {
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
+    const smartWallet = await nexusSmartAccount(arbSepoliaPocClient, {
         authenticatorId,
         signerPubKey: publicKey,
         signatureProvider: async () => {
