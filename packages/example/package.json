@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs/nexus-example",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Simple demo of a future Frak Wallet",
   "private": true,
   "type": "module",

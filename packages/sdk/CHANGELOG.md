@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.7
+
+### Patch Changes
+
+- [`83efee2`](https://github.com/frak-id/wallet/commit/83efee2971b163465eb34bce5de26f9c08c1e180) Thanks [@KONFeature](https://github.com/KONFeature)! - Fix useQuery caching issue
+
 ## 0.0.6
 
 ### Patch Changes
