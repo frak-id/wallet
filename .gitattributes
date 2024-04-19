@@ -1,0 +1,2 @@
+# Remove the dumped html from the language stats
+packages/example/public/_articles/* linguist-vendored
