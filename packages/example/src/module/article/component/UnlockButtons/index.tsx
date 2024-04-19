@@ -25,7 +25,7 @@ export function UnlockButtons({
     article,
 }: {
     prices: UnlockOptionsReturnType["prices"];
-    unlockStatus: ArticleUnlockStatusQueryReturnType | undefined;
+    unlockStatus: ArticleUnlockStatusQueryReturnType | undefined | null;
     walletStatus: WalletStatusQueryReturnType | undefined;
     article: Article | undefined;
 }) {
