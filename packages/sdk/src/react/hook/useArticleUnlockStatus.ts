@@ -37,9 +37,13 @@ export function useArticleUnlockStatus({ articleId }: WatchUnlockStatusParams) {
     /**
      * Setup the query listener
      */
-    return useQuery<ArticleUnlockStatusQueryReturnType>({
+    return useQuery<ArticleUnlockStatusQueryReturnType | null>({
         queryKey: ["articleUnlockStatusListener", articleId ?? "no-article-id"],
+        gcTime: 0,
         queryFn: async () => {
+            if (!articleId) {
+                return null;
+            }
             // Setup the listener
             await watchUnlockStatus(client, { articleId }, newStatusUpdated);
             // Wait for the first response

@@ -4,7 +4,6 @@ import { addresses } from "@/context/common/blockchain/addresses";
 import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
 import { CachesTags } from "@/context/common/caching";
-import { getErc20Balance } from "@/context/tokens/action/getBalance";
 import { revalidateTag } from "next/cache";
 import { type Address, type Hex, encodeFunctionData, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -20,16 +19,6 @@ export async function triggerFrkAirdrop({
     user,
     amount,
 }: { user: Address; amount: string }) {
-    // Only airdrop if the user has less then 500frk
-    const userBalance = await getErc20Balance({
-        wallet: user,
-        chainId: arbitrumSepolia.id,
-        token: addresses.paywallToken,
-    });
-    if (userBalance > parseEther("500")) {
-        return { txHash: null };
-    }
-
     /// TODO: Can we use SST Config. here? To prevent replication in the local env
     const airdropperPrivateKey = process.env.AIRDROP_PRIVATE_KEY;
     if (!airdropperPrivateKey) {

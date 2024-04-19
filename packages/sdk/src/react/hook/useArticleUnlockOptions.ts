@@ -21,5 +21,6 @@ export function useArticleUnlockOptions({ articleId }: GetUnlockOptionsParams) {
             return await getArticleUnlockOptions(client, { articleId });
         },
         enabled: !!articleId,
+        gcTime: 0,
     });
 }

@@ -31,6 +31,7 @@ export function useWalletStatus() {
      * Setup the query listener
      */
     return useQuery<WalletStatusQueryReturnType>({
+        gcTime: 0,
         queryKey: ["walletStatusListener"],
         queryFn: async () => {
             // Setup the listener
