@@ -13,7 +13,7 @@ export const addresses = {
  */
 export const kernelAddresses = {
     // Validators
-    multiWebAuthnValidator: "0x4De27de97DA4B7d885EED9154bb21510F1329AE1",
+    multiWebAuthnValidator: "0xD546c4Ba2e8e5e5c961C36e6Db0460Be03425808",
     ecdsaValidator: "0xd9AB5096a832b9ce79914329DAEE236f8Eea0390",
     // Kernel stuff
     accountLogic: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",

@@ -1,6 +1,6 @@
+import type { NexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
 import { useMemo } from "react";
 import { useConnectorClient } from "wagmi";
-import type {NexusSmartAccount} from "@/context/wallet/smartWallet/NexusSmartWallet";
 
 /**
  * Use a chain specific wallet

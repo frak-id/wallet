@@ -29,6 +29,7 @@ import {
     type Client,
     type Hex,
     type Transport,
+    boolToHex,
     concatHex,
     encodeAbiParameters,
     encodeFunctionData,
@@ -36,6 +37,9 @@ import {
     hashTypedData,
     keccak256,
     maxUint256,
+    numberToHex,
+    pad,
+    size,
     toHex,
 } from "viem";
 
@@ -167,25 +171,39 @@ const getAccountAddress = async <
 };
 
 /**
- * Represent the layout of the calldata used for a webauthn signature
- * TODO: Need to work on the custom encoding to reduce calldata
+ * Format the given signature
  */
-const webAuthNSignatureLayoutParam = [
-    // Metadata
-    { name: "useOnChainP256Verifier", type: "bool" },
-    { name: "authenticatorIdHash", type: "bytes32" },
-    // Raw sig subtype
-    {
-        name: "fclSignature",
-        type: "tuple",
-        components: [
-            { name: "authenticatorData", type: "bytes" },
-            { name: "clientData", type: "bytes" },
-            { name: "challengeOffset", type: "uint256" },
-            { name: "rs", type: "uint256[2]" },
-        ],
-    },
-] as const;
+function formatSignature({
+    isRip7212Supported,
+    authenticatorIdHash,
+    challengeOffset,
+    rs,
+    authenticatorData,
+    clientData,
+}: {
+    isRip7212Supported: boolean;
+    authenticatorIdHash: Hex;
+    challengeOffset: bigint;
+    rs: [bigint, bigint];
+    authenticatorData: Hex;
+    clientData: Hex;
+}) {
+    return concatHex([
+        // Metadata stuff
+        pad(boolToHex(isRip7212Supported), { size: 1 }),
+        pad(authenticatorIdHash, { size: 32 }),
+        // Signature info
+        numberToHex(challengeOffset, { size: 32, signed: false }),
+        numberToHex(rs[0], { size: 32, signed: false }),
+        numberToHex(rs[1], { size: 32, signed: false }),
+        // The length of each bytes array (uint24 so 3 bytes)
+        numberToHex(size(authenticatorData), { size: 3, signed: false }),
+        numberToHex(size(clientData), { size: 3, signed: false }),
+        // Then the bytes values
+        authenticatorData,
+        clientData,
+    ]);
+}
 
 /**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
@@ -258,17 +276,14 @@ export async function nexusSmartAccount<
             await signatureProvider(hash);
 
         // Encode the signature with the web auth n validator info
-        return encodeAbiParameters(webAuthNSignatureLayoutParam, [
+        return formatSignature({
             isRip7212Supported,
             authenticatorIdHash,
-            {
-                // Random 120 byte
-                authenticatorData,
-                clientData,
-                challengeOffset,
-                rs: [BigInt(signature.r), BigInt(signature.s)],
-            },
-        ]);
+            rs: [BigInt(signature.r), BigInt(signature.s)],
+            challengeOffset,
+            authenticatorData,
+            clientData,
+        });
     };
 
     // Build the smart account itself
@@ -424,17 +439,14 @@ export async function nexusSmartAccount<
                 ) - 1n;
 
             // Generate a template signature for the webauthn validator
-            const sig = encodeAbiParameters(webAuthNSignatureLayoutParam, [
+            const sig = formatSignature({
                 isRip7212Supported,
                 authenticatorIdHash,
-                {
-                    // Random 120 byte
-                    authenticatorData: `0x${maxUint256.toString(16).repeat(6)}`,
-                    clientData: `0x${maxUint256.toString(16).repeat(12)}`,
-                    challengeOffset: maxUint256,
-                    rs: [maxCurveValue, maxCurveValue],
-                },
-            ]);
+                challengeOffset: maxUint256,
+                rs: [maxCurveValue, maxCurveValue],
+                authenticatorData: `0x${maxUint256.toString(16).repeat(6)}`,
+                clientData: `0x${maxUint256.toString(16).repeat(6)}`,
+            });
 
             // return the coded signature
             return concatHex(["0x00000000", sig]);
