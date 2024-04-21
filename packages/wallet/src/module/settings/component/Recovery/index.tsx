@@ -6,7 +6,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useDownloadRecoveryFile } from "@/module/recovery/hook/useDownloadRecoveryFile";
 import { useGenerateRecoveryOptions } from "@/module/recovery/hook/useGenerateRecoveryOptions";
-import { useParseRecoveryFile } from "@/module/recovery/hook/useParseRecoveryFile";
+import { useRecoveryLocalAccount } from "@/module/recovery/hook/useRecoveryLocalAccount";
 import { useRecoverySetupStatus } from "@/module/recovery/hook/useRecoverySetupStatus";
 import { useSetupRecovery } from "@/module/recovery/hook/useSetupRecovery";
 import type { CurrentRecovery } from "@/types/Recovery";
@@ -82,7 +82,7 @@ function CurrentRecoveryOptions({
 
 function TestRecoveryFile() {
     const { generateRecoveryOptionsAsync } = useGenerateRecoveryOptions();
-    const { parseRecoveryFileAsync } = useParseRecoveryFile();
+    const { parseRecoveryFileAsync } = useRecoveryLocalAccount();
     const { downloadRecoveryFileAsync } = useDownloadRecoveryFile();
 
     return (

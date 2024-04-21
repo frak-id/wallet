@@ -1,6 +1,6 @@
 import { passToKey } from "@/module/recovery/utils/encrypt";
 import { base64URLStringToBuffer } from "@simplewebauthn/browser";
-import { bytesToString } from "viem";
+import { type Hex, bytesToString } from "viem";
 
 /**
  * Decrypts the guardian private key using the password
@@ -38,5 +38,5 @@ export async function decryptPrivateKey({
         encyptedPrivKeyExtracted
     );
 
-    return bytesToString(new Uint8Array(decrypted));
+    return bytesToString(new Uint8Array(decrypted)) as Hex;
 }

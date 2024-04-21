@@ -102,13 +102,13 @@ const webAuthNValidatorEnablingLayout = [
  * @param authenticatorId
  * @param signerPubKey
  */
-const getAccountInitCode = async ({
+export function getAccountInitCode({
     authenticatorIdHash,
     signerPubKey,
 }: {
     authenticatorIdHash: Hex;
     signerPubKey: P256PubKey;
-}): Promise<Hex> => {
+}): Hex {
     if (!signerPubKey) throw new Error("Owner account not found");
 
     const encodedPublicKey = encodeAbiParameters(
@@ -129,7 +129,7 @@ const getAccountInitCode = async ({
         functionName: "createAccount",
         args: [kernelAddresses.accountLogic, initialisationData, 0n],
     }) as Hex;
-};
+}
 
 /**
  * Check the validity of an existing account address, or fetch the pre-deterministic account address for a kernel smart wallet
@@ -149,7 +149,7 @@ const getAccountAddress = async <
 }: {
     client: Client<TTransport, TChain>;
     signerPubKey: P256PubKey;
-    initCodeProvider: () => Promise<Hex>;
+    initCodeProvider: () => Hex;
     deployedAccountAddress?: Address;
 }): Promise<Address> => {
     // If we got an already deployed account, ensure it's well deployed, and the validator & signer are correct
@@ -161,7 +161,7 @@ const getAccountAddress = async <
     }
 
     // Find the init code for this account
-    const initCode = await initCodeProvider();
+    const initCode = initCodeProvider();
 
     // Get the sender address based on the init code
     return getSenderAddress(client, {
@@ -325,10 +325,7 @@ export async function nexusSmartAccount<
          */
         async getInitCode() {
             if (await isKernelAccountDeployed()) return "0x";
-            return concatHex([
-                kernelAddresses.factory,
-                await generateInitCode(),
-            ]);
+            return concatHex([kernelAddresses.factory, generateInitCode()]);
         },
 
         /**
