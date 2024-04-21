@@ -3,6 +3,7 @@ import type {
     AuthenticatorTransportFuture,
     CredentialDeviceType,
 } from "@simplewebauthn/types";
+import type { Address } from "viem";
 
 /**
  * Represent a authenticator for a user
@@ -10,8 +11,9 @@ import type {
 export type AuthenticatorDocument = Readonly<{
     // This is the credential id
     _id: string;
+    // The smart wallet address associated with it
+    smartWalletAddress: Address;
     // The user agent from the device where it came from
-    username: string;
     userAgent: string;
     // The extracted pub key
     publicKey: P256PubKey;

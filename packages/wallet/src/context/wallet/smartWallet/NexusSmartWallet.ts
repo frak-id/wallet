@@ -1,19 +1,19 @@
 import { kernelAddresses } from "@/context/common/blockchain/addresses";
-import {
-    KernelExecuteAbi,
-    KernelInitAbi,
-} from "@/context/wallet/abi/KernelAccountAbi";
+import { KernelExecuteAbi } from "@/context/wallet/abi/KernelAccountAbi";
 import {
     type AccountMetadata,
     fetchAccountMetadata,
     wrapMessageForSignature,
 } from "@/context/wallet/smartWallet/signature";
+import {
+    getAccountAddress,
+    getAccountInitCode,
+} from "@/context/wallet/smartWallet/utils";
 import { isRip7212ChainSupported } from "@/context/wallet/smartWallet/webAuthN";
 import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
 import {
     ENTRYPOINT_ADDRESS_V06,
     getAccountNonce,
-    getSenderAddress,
     getUserOperationHash,
     isSmartAccountDeployed,
 } from "permissionless";
@@ -31,10 +31,10 @@ import {
     type Transport,
     boolToHex,
     concatHex,
-    encodeAbiParameters,
     encodeFunctionData,
     hashMessage,
     hashTypedData,
+    isAddressEqual,
     keccak256,
     maxUint256,
     numberToHex,
@@ -52,123 +52,6 @@ export type NexusSmartAccount<
     transport,
     chain
 >;
-
-/**
- * The account creation ABI for a kernel smart account (from the KernelFactory)
- */
-const createAccountAbi = [
-    {
-        inputs: [
-            {
-                internalType: "address",
-                name: "_implementation",
-                type: "address",
-            },
-            {
-                internalType: "bytes",
-                name: "_data",
-                type: "bytes",
-            },
-            {
-                internalType: "uint256",
-                name: "_index",
-                type: "uint256",
-            },
-        ],
-        name: "createAccount",
-        outputs: [
-            {
-                internalType: "address",
-                name: "proxy",
-                type: "address",
-            },
-        ],
-        stateMutability: "payable",
-        type: "function",
-    },
-] as const;
-
-/**
- * Represent the layout of the calldata used for a webauthn signature
- */
-const webAuthNValidatorEnablingLayout = [
-    { name: "authenticatorIdHash", type: "bytes32" },
-    { name: "x", type: "uint256" },
-    { name: "y", type: "uint256" },
-] as const;
-
-/**
- * Get the account initialization code for a kernel smart account
- * @param authenticatorId
- * @param signerPubKey
- */
-export function getAccountInitCode({
-    authenticatorIdHash,
-    signerPubKey,
-}: {
-    authenticatorIdHash: Hex;
-    signerPubKey: P256PubKey;
-}): Hex {
-    if (!signerPubKey) throw new Error("Owner account not found");
-
-    const encodedPublicKey = encodeAbiParameters(
-        webAuthNValidatorEnablingLayout,
-        [authenticatorIdHash, BigInt(signerPubKey.x), BigInt(signerPubKey.y)]
-    );
-
-    // Build the account initialization data
-    const initialisationData = encodeFunctionData({
-        abi: KernelInitAbi,
-        functionName: "initialize",
-        args: [kernelAddresses.multiWebAuthnValidator, encodedPublicKey],
-    });
-
-    // Build the account init code
-    return encodeFunctionData({
-        abi: createAccountAbi,
-        functionName: "createAccount",
-        args: [kernelAddresses.accountLogic, initialisationData, 0n],
-    }) as Hex;
-}
-
-/**
- * Check the validity of an existing account address, or fetch the pre-deterministic account address for a kernel smart wallet
- * @param client
- * @param signerPubKey
- * @param initCodeProvider
- * @param deployedAccountAddress
- */
-const getAccountAddress = async <
-    TTransport extends Transport = Transport,
-    TChain extends Chain = Chain,
->({
-    client,
-    signerPubKey,
-    initCodeProvider,
-    deployedAccountAddress,
-}: {
-    client: Client<TTransport, TChain>;
-    signerPubKey: P256PubKey;
-    initCodeProvider: () => Hex;
-    deployedAccountAddress?: Address;
-}): Promise<Address> => {
-    // If we got an already deployed account, ensure it's well deployed, and the validator & signer are correct
-    if (deployedAccountAddress !== undefined) {
-        // TODO: Check the pub key match
-        console.log("TODO: Check the pub key match", signerPubKey);
-        // If ok, return the address
-        return deployedAccountAddress;
-    }
-
-    // Find the init code for this account
-    const initCode = initCodeProvider();
-
-    // Get the sender address based on the init code
-    return getSenderAddress(client, {
-        initCode: concatHex([kernelAddresses.factory, initCode]),
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
-    });
-};
 
 /**
  * Format the given signature
@@ -222,12 +105,12 @@ export async function nexusSmartAccount<
         authenticatorId,
         signerPubKey,
         signatureProvider,
-        deployedAccountAddress,
+        preDeterminedAccountAddress,
     }: {
         authenticatorId: string;
         signerPubKey: P256PubKey;
         signatureProvider: (message: Hex) => Promise<WebAuthNSignature>;
-        deployedAccountAddress?: Address;
+        preDeterminedAccountAddress?: Address;
     }
 ): Promise<NexusSmartAccount<TTransport, TChain>> {
     const authenticatorIdHash = keccak256(toHex(authenticatorId));
@@ -241,12 +124,15 @@ export async function nexusSmartAccount<
     // Fetch account address and chain id
     const accountAddress = await getAccountAddress({
         client,
-        signerPubKey,
         initCodeProvider: generateInitCode,
-        deployedAccountAddress,
     });
 
     if (!accountAddress) throw new Error("Account address not found");
+
+    // Check if we can handle account creation or not
+    const canCreateAccount = preDeterminedAccountAddress
+        ? isAddressEqual(accountAddress, preDeterminedAccountAddress)
+        : true;
 
     // Helper to check if the smart account is already deployed (with caching)
     let smartAccountDeployed = false;
@@ -309,6 +195,7 @@ export async function nexusSmartAccount<
          */
         async getFactory() {
             if (await isKernelAccountDeployed()) return undefined;
+            if (!canCreateAccount) return undefined;
             return kernelAddresses.factory;
         },
 
@@ -317,6 +204,7 @@ export async function nexusSmartAccount<
          */
         async getFactoryData() {
             if (await isKernelAccountDeployed()) return undefined;
+            if (!canCreateAccount) return undefined;
             return generateInitCode();
         },
 
@@ -325,6 +213,11 @@ export async function nexusSmartAccount<
          */
         async getInitCode() {
             if (await isKernelAccountDeployed()) return "0x";
+            if (!canCreateAccount) {
+                throw new Error(
+                    "Cannot create account with mismatching pre-determined address"
+                );
+            }
             return concatHex([kernelAddresses.factory, generateInitCode()]);
         },
 

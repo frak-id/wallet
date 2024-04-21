@@ -18,12 +18,13 @@ import { useClient } from "wagmi";
 /**
  * Perform the recovery on the given chain
  * Steps for recovery
- *  - Upload the recovery file
- *  - Get / Create a webauthn authenticator
- *  - If authenticator == authenticator for the wallet to recover, just login
- *  - Enter file passphrase
- *  - Decrypt the guardian private key and build local account
- *  - Display options to recover the wallet on every deplyoed chains
+ *  - Upload the recovery file -> TODO
+ *  - Perform a test using the `useLogin` hook to try to do a softRecover (passing wallet address and authenticator id from the file as param)  -> TODO
+ *  - If login good, then proceed as usual  -> TODO
+ *  - Create a webauthn authenticator  -> Hook op
+ *  - Enter file passphrase -> TODO
+ *  - Decrypt the guardian private key and build local account -> Hook op
+ *  - Display options to recover the wallet on every deployed chains -> Hook op
  */
 export function usePerformRecoveryOnChain(chainId: number) {
     // Get the viem client for the given chain

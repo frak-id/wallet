@@ -63,14 +63,13 @@ export function useLogin() {
             );
 
             // Verify it
-            const { username, wallet } = await validateAuthentication({
+            const { wallet } = await validateAuthentication({
                 expectedChallenge: authenticationOptions.challenge,
                 authenticationResponse,
             });
 
             // Save this to the last authenticator
             await addLastAuthentication({
-                username,
                 wallet,
             });
 
@@ -78,7 +77,7 @@ export function useLogin() {
             await airdropFrk({ wallet: wallet.address, waitForReceipt: false });
 
             // Set the session
-            setSession({ username, wallet });
+            setSession({ wallet });
         },
     });
 

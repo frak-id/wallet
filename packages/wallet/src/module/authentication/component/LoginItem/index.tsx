@@ -39,9 +39,10 @@ export function LoginItem({
             >
                 <span>
                     <span className={styles.loginItem__name}>
-                        <SquareUser /> {lastAuthentication.username}
+                        <SquareUser /> {formatHash(lastAuthentication.wallet)}
                     </span>
-                    Address: {formatHash(lastAuthentication.wallet)}
+                    Authenticator:{" "}
+                    {formatHash(lastAuthentication.authenticatorId)}
                 </span>
                 <span>
                     <Fingerprint

@@ -1,5 +1,5 @@
 import { kernelAddresses } from "@/context/common/blockchain/addresses";
-import { getAccountInitCode } from "@/context/wallet/smartWallet/NexusSmartWallet";
+import { getAccountInitCode } from "@/context/wallet/smartWallet/utils";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import {
     ENTRYPOINT_ADDRESS_V06,

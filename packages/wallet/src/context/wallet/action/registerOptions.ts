@@ -12,7 +12,6 @@ import { keccak256, toHex } from "viem";
 
 /**
  * Generate the webauthn registration options for a user
- * @param username
  * @param excludeCredentials
  */
 export async function getRegisterOptions({
@@ -22,7 +21,7 @@ export async function getRegisterOptions({
         id: string;
         transports?: AuthenticatorTransportFuture[];
     }[];
-}) {
+} = {}) {
     // Get the username id
     const userId = keccak256(toHex(defaultUsername)).slice(2);
 

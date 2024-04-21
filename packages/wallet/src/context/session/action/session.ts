@@ -27,13 +27,11 @@ async function getFullSession() {
 /**
  * Set the session for the user
  * TODO: Should be protected so it can only be called from the server
- * @param username
  * @param wallet
  */
-export async function setSession({ username, wallet }: Session) {
+export async function setSession({ wallet }: Session) {
     const session = await getFullSession();
 
-    session.username = username;
     session.wallet = wallet;
 
     await session.save();
@@ -55,7 +53,6 @@ export async function getSession(): Promise<Session | null> {
     if (!session.wallet) return null;
 
     return {
-        username: session.username,
         wallet: session.wallet,
     };
 }

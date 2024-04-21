@@ -224,6 +224,7 @@ async function buildSmartAccount<
             // Perform the verification of the signature
             return parseWebAuthNAuthentication(authenticationResponse);
         },
+        preDeterminedAccountAddress: wallet.address,
     });
 
     // Get the bundler and paymaster clients

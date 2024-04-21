@@ -4,7 +4,6 @@ import { setSession } from "@/context/session/action/session";
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
 import {
     decodePublicKey,
-    defaultUsername,
     rpId,
     rpOrigin,
 } from "@/context/wallet/smartWallet/webAuthN";
@@ -12,22 +11,28 @@ import { formatWallet } from "@/context/wallet/utils/walletFormatter";
 import { bufferToBase64URLString } from "@simplewebauthn/browser";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
+import type { Address } from "viem";
 
 /**
  * Validate a new wallet registration
- * @param username
  * @param expectedChallenge
  * @param registrationResponse
  * @param userAgent
+ * @param previousWallet
+ * @param setCookieSession
  */
 export async function validateRegistration({
     expectedChallenge,
     registrationResponse,
     userAgent,
+    previousWallet,
+    setCookieSession = true,
 }: {
     expectedChallenge: string;
     registrationResponse: RegistrationResponseJSON;
     userAgent: string;
+    previousWallet?: Address;
+    setCookieSession?: boolean;
 }) {
     const authenticatorRepository = await getAuthenticatorRepository();
 
@@ -65,10 +70,17 @@ export async function validateRegistration({
 
     // Create the authenticator for this user
     const id = bufferToBase64URLString(credentialID);
+
+    // Format the wallet
+    const wallet = await formatWallet({
+        authenticatorId: id,
+        publicKey,
+        previousWallet,
+    });
     await authenticatorRepository.createAuthenticator({
         _id: id,
+        smartWalletAddress: wallet.address,
         userAgent,
-        username: defaultUsername,
         credentialPublicKey: bufferToBase64URLString(credentialPublicKey),
         counter,
         credentialDeviceType,
@@ -77,20 +89,14 @@ export async function validateRegistration({
         transports: registrationResponse.response.transports,
     });
 
-    // Format the wallet
-    const wallet = await formatWallet({
-        authenticatorId: id,
-        publicKey,
-    });
-
     // Add it to the session
-    await setSession({
-        username: defaultUsername,
-        wallet,
-    });
+    if (setCookieSession) {
+        await setSession({
+            wallet,
+        });
+    }
 
     return {
-        username: defaultUsername,
         wallet,
     };
 }
