@@ -38,8 +38,8 @@ export function usePerformRecoveryOnChain(chainId: number) {
             newWallet,
         }: {
             file: RecoveryFileContent;
-            recoveryAccount: LocalAccount;
-            newWallet: WebAuthNWallet;
+            recoveryAccount: LocalAccount<string>;
+            newWallet: Omit<WebAuthNWallet, "address">;
         }) => {
             if (!client) {
                 throw new Error(`No client found for chain ${chainId}`);
@@ -51,7 +51,6 @@ export function usePerformRecoveryOnChain(chainId: number) {
             const smartAccount = recoverySmartAccount(client, {
                 localAccount: recoveryAccount,
                 initialWallet: file.initialWallet,
-                accountAddress: file.guardianAddress,
             });
 
             // Get the bundler and paymaster clients

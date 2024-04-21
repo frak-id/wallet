@@ -1,5 +1,4 @@
 import { kernelAddresses } from "@/context/common/blockchain/addresses";
-import { KernelExecuteAbi } from "@/context/wallet/abi/KernelAccountAbi";
 import { getAccountInitCode } from "@/context/wallet/smartWallet/NexusSmartWallet";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import {
@@ -15,13 +14,12 @@ import {
 } from "permissionless/accounts";
 import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
 import {
-    type Address,
     type Chain,
     type Client,
     type LocalAccount,
     type Transport,
     concatHex,
-    encodeFunctionData,
+    isAddressEqual,
     keccak256,
     toHex,
 } from "viem";
@@ -44,6 +42,7 @@ export type NexusRecoverySmartAccount<
  * @param deployedAccountAddress
  */
 export function recoverySmartAccount<
+    TAccountSource extends string,
     TTransport extends Transport = Transport,
     TChain extends Chain = Chain,
 >(
@@ -51,14 +50,12 @@ export function recoverySmartAccount<
     {
         localAccount,
         initialWallet,
-        accountAddress,
     }: {
-        localAccount: LocalAccount;
+        localAccount: LocalAccount<TAccountSource>;
         initialWallet: WebAuthNWallet;
-        accountAddress: Address;
     }
 ): NexusRecoverySmartAccount<TTransport, TChain> {
-    if (!accountAddress) throw new Error("Account address not found");
+    if (!initialWallet?.address) throw new Error("Account address not found");
 
     // Helper to check if the smart account is already deployed (with caching)
     let smartAccountDeployed = false;
@@ -66,14 +63,14 @@ export function recoverySmartAccount<
         if (smartAccountDeployed) return true;
         smartAccountDeployed = await isSmartAccountDeployed(
             client,
-            accountAddress
+            initialWallet.address
         );
         return smartAccountDeployed;
     };
 
     // Build the smart account itself
     return toSmartAccount({
-        address: accountAddress,
+        address: initialWallet.address,
 
         client: client,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
@@ -84,7 +81,7 @@ export function recoverySmartAccount<
          */
         async getNonce() {
             return getAccountNonce(client, {
-                sender: accountAddress,
+                sender: initialWallet.address,
                 entryPoint: ENTRYPOINT_ADDRESS_V06,
             });
         },
@@ -186,25 +183,18 @@ export function recoverySmartAccount<
          */
         async encodeCallData(_tx) {
             if (Array.isArray(_tx)) {
-                // Encode a batched call
-                return encodeFunctionData({
-                    abi: KernelExecuteAbi,
-                    functionName: "executeBatch",
-                    args: [
-                        _tx.map((tx) => ({
-                            to: tx.to,
-                            value: tx.value,
-                            data: tx.data,
-                        })),
-                    ],
-                });
+                throw new Error(
+                    "Recovery account doesn't support batched transactions"
+                );
             }
-            // Encode a simple call
-            return encodeFunctionData({
-                abi: KernelExecuteAbi,
-                functionName: "execute",
-                args: [_tx.to, _tx.value, _tx.data, 0],
-            });
+
+            if (!isAddressEqual(_tx.to, initialWallet.address)) {
+                throw new Error(
+                    "Recovery account doesn't support transactions to other addresses"
+                );
+            }
+
+            return _tx.data;
         },
 
         /**

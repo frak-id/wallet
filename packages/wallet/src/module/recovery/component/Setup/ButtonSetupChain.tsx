@@ -1,4 +1,4 @@
-import { useSetupRecovery } from "@/module/recovery/hook/useSetupRecovery";
+import { useSetupRecovery } from "@/module/recovery/hook/setup/useSetupRecovery";
 import { recoveryOptionsAtom } from "@/module/settings/atoms/recovery";
 import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
 import { useAtomValue } from "jotai/index";
