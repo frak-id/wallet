@@ -4,7 +4,8 @@ import { Title } from "@/module/common/component/Title";
 import { usePerformRecoveryOnChain } from "@/module/recovery/hook/activate/usePerformRecoveryOnChain";
 import { useRecoveryLocalAccount } from "@/module/recovery/hook/activate/useRecoveryLocalAccount";
 import type { RecoveryFileContent } from "@/types/Recovery";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import { FileUploader } from "react-drag-drop-files";
 import { arbitrumSepolia } from "viem/chains";
 
 /**
@@ -21,47 +22,84 @@ export function RecoverWallet() {
 }
 
 function PerformRecovery() {
+    const [fileContent, setFileContent] = useState<RecoveryFileContent | null>(
+        null
+    );
+
+    /**
+     * Handle the upload of a file
+     */
+    const handleChange = useCallback(async (file: File | null) => {
+        console.log("recovery file", file);
+        if (!file) {
+            setFileContent(null);
+            return null;
+        }
+        const fileText = await file.text();
+        const fileContent = JSON.parse(fileText) as RecoveryFileContent;
+        // Ensure all the fields are presents
+        if (
+            !(
+                fileContent.initialWallet &&
+                fileContent.guardianAddress &&
+                fileContent.guardianPrivateKeyEncrypted
+            )
+        ) {
+            // Should display a user message
+            setFileContent(null);
+            throw new Error("Invalid file content");
+        }
+        // If all good here, should check that the guardian address match the wallet address recovery options
+        // A backend actions checking possible recovery chains???
+        setFileContent(fileContent);
+    }, []);
+
+    return (
+        <>
+            <FileUploader
+                handleChange={handleChange}
+                label={"Upload or drag recovery file"}
+                types={["json"]}
+                disabled={fileContent !== null}
+            />
+            {fileContent && (
+                <TriggerRecovery recoveryFileContent={fileContent} />
+            )}
+        </>
+    );
+}
+
+function TriggerRecovery({
+    recoveryFileContent,
+}: { recoveryFileContent: RecoveryFileContent }) {
     const { getRecoveryLocalAccountAsync } = useRecoveryLocalAccount();
     const { performRecoveryAsync } = usePerformRecoveryOnChain(
         arbitrumSepolia.id
     );
 
     const doRecover = useCallback(async () => {
-        const file: RecoveryFileContent = {
-            initialWallet: {
-                address: "0x19999B107570AbC3Ae66b6DE84f90987c8c00294",
-                publicKey: {
-                    x: "0xb71fd5bbfd98566c4e41d0249b4c797ee0ba06c89caf12d06c3d302440c2a80f",
-                    y: "0x036d62743d3e7ea7df7c40cc0767412c20a4cfb0bcca7ff5f671c860ece981ae",
-                },
-                authenticatorId: "VA8bwe2Z5F7prQNqEmjgUlQ4qvUONyCSA70YXE8ZQPY",
-            },
-            guardianAddress: "0xd7133260566B6E548ec5DEa682eC8951EBD65218",
-            guardianPrivateKeyEncrypted:
-                "FhcqkH4vdKZvXSLkWRG0jaaKFv9hWlgl5QhMA71jWUFKblZeVMYhq-Wpghc2uq2ToxAkxVP5ZPIL83xUdLlu4riW0BoydvUS2Dz56xZNLH6t_ftITQQvCPNhqwOeAZ1p8VZ3W7IyjV6uw2ztsUTXcj0v-GxjHd8RanTTIsp2A_UXTvprGOpKZolagwUzM_J2GmFNWfgaUVYnOoVjKgrlXmxIxxryHk_c7x_ODqVEkg",
-        };
-
         // Extract the local account
         const localAccount = await getRecoveryLocalAccountAsync({
-            file,
+            file: recoveryFileContent,
             pass: "achanger",
         });
 
         // Perform the recovery
         const txHash = await performRecoveryAsync({
-            file,
+            file: recoveryFileContent,
             recoveryAccount: localAccount,
             newWallet: {
-                publicKey: {
-                    x: "0xb71fd5bbfd98566c4e41d0249b4c797ee0ba06c89caf12d06c3d302440c2a80f",
-                    y: "0x036d62743d3e7ea7df7c40cc0767412c20a4cfb0bcca7ff5f671c860ece981ae",
-                },
+                publicKey: recoveryFileContent.initialWallet.publicKey,
                 authenticatorId: "test",
             },
         });
 
         console.log("recovered tx hash", txHash);
-    }, [getRecoveryLocalAccountAsync, performRecoveryAsync]);
+    }, [
+        getRecoveryLocalAccountAsync,
+        performRecoveryAsync,
+        recoveryFileContent,
+    ]);
 
     return <ButtonRipple onClick={doRecover}>Recover</ButtonRipple>;
 }
