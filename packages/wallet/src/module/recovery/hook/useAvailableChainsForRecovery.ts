@@ -7,7 +7,8 @@ import { useQuery } from "@tanstack/react-query";
  */
 export function useAvailableChainsForRecovery({
     file,
-}: { file: RecoveryFileContent }) {
+    newAuthenticatorId,
+}: { file: RecoveryFileContent; newAuthenticatorId: string }) {
     const { data, ...queryStuff } = useQuery({
         queryKey: [
             "recovery",
@@ -22,6 +23,7 @@ export function useAvailableChainsForRecovery({
             getChainsAvailableForRecovery({
                 wallet: file.initialWallet.address,
                 expectedGuardian: file.guardianAddress,
+                newAuthenticatorId,
             }),
     });
     return {

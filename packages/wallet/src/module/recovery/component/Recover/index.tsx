@@ -9,6 +9,7 @@ import { useAvailableChainsForRecovery } from "@/module/recovery/hook/useAvailab
 import { usePerformRecoveryOnChain } from "@/module/recovery/hook/usePerformRecoveryOnChain";
 import { useRecoveryLocalAccount } from "@/module/recovery/hook/useRecoveryLocalAccount";
 import type { RecoveryFileContent } from "@/types/Recovery";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { useCallback, useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { type LocalAccount, extractChain } from "viem";
@@ -77,8 +78,19 @@ function PerformRecovery() {
 function TriggerRecovery({
     recoveryFileContent,
 }: { recoveryFileContent: RecoveryFileContent }) {
+    // Build the target wallet for the migration
+    const targetWallet = useMemo(
+        () => ({
+            ...recoveryFileContent.initialWallet,
+            authenticatorId: "test-1",
+        }),
+        [recoveryFileContent]
+    );
+
+    // Get the available chains for recovery
     const { availableChains, isLoading } = useAvailableChainsForRecovery({
         file: recoveryFileContent,
+        newAuthenticatorId: targetWallet.authenticatorId,
     });
     const [guardianAccount, setGuardianAccount] =
         useState<LocalAccount<string> | null>(null);
@@ -97,7 +109,7 @@ function TriggerRecovery({
     }, [recoveryFileContent, getRecoveryLocalAccountAsync]);
 
     if (!guardianAccount) {
-        return <p>Loading guardian account</p>;
+        return <p>Loading the guardian account</p>;
     }
 
     if (isLoading) {
@@ -110,20 +122,31 @@ function TriggerRecovery({
                 <p>No available chains for recovery</p>
             )}
 
-            {availableChains?.map(({ chainId, available }) => {
-                if (!available) {
-                    return null;
-                }
+            {availableChains?.map(
+                ({ chainId, available, alreadyRecovered }) => {
+                    if (!available) {
+                        return null;
+                    }
 
-                return (
-                    <TriggerRecoveryForChain
-                        key={chainId}
-                        recoveryFileContent={recoveryFileContent}
-                        guardianAccount={guardianAccount}
-                        chainId={chainId}
-                    />
-                );
-            })}
+                    if (alreadyRecovered === true) {
+                        return (
+                            <p key={`alreadyRecovered-${chainId}`}>
+                                Wallet already recovered on chain {chainId}
+                            </p>
+                        );
+                    }
+
+                    return (
+                        <TriggerRecoveryForChain
+                            key={chainId}
+                            recoveryFileContent={recoveryFileContent}
+                            guardianAccount={guardianAccount}
+                            chainId={chainId}
+                            targetWallet={targetWallet}
+                        />
+                    );
+                }
+            )}
         </>
     );
 }
@@ -132,10 +155,12 @@ function TriggerRecoveryForChain({
     recoveryFileContent,
     guardianAccount,
     chainId,
+    targetWallet,
 }: {
     recoveryFileContent: RecoveryFileContent;
     guardianAccount: LocalAccount<string>;
     chainId: AvailableChainIds;
+    targetWallet: Omit<WebAuthNWallet, "address">;
 }) {
     const { performRecoveryAsync } = usePerformRecoveryOnChain(chainId);
 
@@ -144,14 +169,16 @@ function TriggerRecoveryForChain({
         const txHash = await performRecoveryAsync({
             file: recoveryFileContent,
             recoveryAccount: guardianAccount,
-            newWallet: {
-                publicKey: recoveryFileContent.initialWallet.publicKey,
-                authenticatorId: "test",
-            },
+            newWallet: targetWallet,
         });
 
         console.log("recovered tx hash", txHash);
-    }, [performRecoveryAsync, recoveryFileContent, guardianAccount]);
+    }, [
+        performRecoveryAsync,
+        recoveryFileContent,
+        guardianAccount,
+        targetWallet,
+    ]);
 
     const chainName = useMemo(
         () => extractChain({ chains: availableChains, id: chainId }).name,

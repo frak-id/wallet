@@ -2,7 +2,7 @@ import {
     getBundlerClient,
     getPaymasterClient,
 } from "@/context/common/blockchain/aa-provider";
-import { multiWebAuthNValidatorV2Abi } from "@/context/common/blockchain/kernel-abi";
+import { doAddPassKeyFnAbi } from "@/context/recover/utils/abi";
 import { recoverySmartAccount } from "@/context/wallet/smartWallet/RecoverySmartWallet";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
@@ -75,8 +75,8 @@ export function usePerformRecoveryOnChain(chainId: number) {
 
             // Build the function data
             const fnData = encodeFunctionData({
-                abi: multiWebAuthNValidatorV2Abi,
-                functionName: "addPassKey",
+                abi: [doAddPassKeyFnAbi],
+                functionName: "doAddPasskey",
                 args: [
                     keccak256(toHex(newWallet.authenticatorId)),
                     BigInt(newWallet.publicKey.x),

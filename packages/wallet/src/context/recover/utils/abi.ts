@@ -85,18 +85,14 @@ export const ecdsaValidatorStorageAbi = {
 /**
  * Function to add a passkey to the multi webauthn contract
  */
-export const addPassKeyFnAbi = {
+export const doAddPassKeyFnAbi = {
     type: "function",
     inputs: [
-        {
-            name: "authenticatorId",
-            internalType: "bytes32",
-            type: "bytes32",
-        },
+        { name: "authenticatorId", internalType: "bytes32", type: "bytes32" },
         { name: "x", internalType: "uint256", type: "uint256" },
         { name: "y", internalType: "uint256", type: "uint256" },
     ],
-    name: "addPassKey",
+    name: "doAddPasskey",
     outputs: [],
     stateMutability: "nonpayable",
 } as const;
