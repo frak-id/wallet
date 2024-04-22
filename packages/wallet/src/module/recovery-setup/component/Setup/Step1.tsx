@@ -1,7 +1,7 @@
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Input } from "@/module/common/component/Input";
-import { AccordionRecoveryItem } from "@/module/recovery/component/AccordionItem";
-import { getStatusCurrentStep } from "@/module/recovery/component/Setup";
+import { AccordionRecoveryItem } from "@/module/recovery-setup/component/AccordionItem";
+import { getStatusCurrentStep } from "@/module/recovery-setup/component/Setup";
 import {
     recoveryPasswordAtom,
     recoveryStepAtom,

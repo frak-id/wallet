@@ -3,7 +3,7 @@ import type { Address, Hex } from "viem";
 
 export type CurrentRecovery = {
     executor: Address;
-    burnerAddress: Address;
+    guardianAddress: Address;
 };
 
 export type GeneratedRecoveryData = {

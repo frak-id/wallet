@@ -1,14 +1,18 @@
 "use server";
 
 import { kernelAddresses } from "@/context/common/blockchain/addresses";
-import { getViemClientFromChainId } from "@/context/common/blockchain/provider";
+import {
+    type AvailableChainIds,
+    availableChains,
+    getViemClientFromChainId,
+} from "@/context/common/blockchain/provider";
 import {
     addPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
     getExecutionAbi,
 } from "@/context/recover/utils/abi";
 import type { CurrentRecovery } from "@/types/Recovery";
-import { tryit } from "radash";
+import { map, tryit } from "radash";
 import {
     type Address,
     isAddressEqual,
@@ -64,18 +68,55 @@ export async function getCurrentRecoveryOption({
     }
 
     // Fetch the burner wallet associated with the recovery
-    const burnerAddress = await readContract(viemClient, {
+    const guardianAddress = await readContract(viemClient, {
         address: kernelAddresses.ecdsaValidator,
         abi: [ecdsaValidatorStorageAbi],
         functionName: "ecdsaValidatorStorage",
         args: [wallet],
     });
-    if (isAddressEqual(burnerAddress, zeroAddress)) {
+    if (isAddressEqual(guardianAddress, zeroAddress)) {
         return null;
     }
 
     return {
         executor: recoveryOption.executor,
-        burnerAddress,
+        guardianAddress,
     };
+}
+
+/**
+ * Get all the chains available chains for recovery for the given wallet
+ *  -> TODO: should also check if the new webauthn passkey is already set or not (to prevent double recovery)
+ * @param wallet
+ * @param expectedGuardian
+ */
+export async function getChainsAvailableForRecovery({
+    wallet,
+    expectedGuardian,
+}: {
+    wallet: Address;
+    expectedGuardian: Address;
+}): Promise<
+    {
+        chainId: AvailableChainIds;
+        available: boolean;
+    }[]
+> {
+    const chainsId = availableChains.map((c) => c.id) as AvailableChainIds[];
+    return await map(chainsId, async (chainId) => {
+        const currentRecovery = await getCurrentRecoveryOption({
+            wallet,
+            chainId,
+        });
+        if (!currentRecovery) {
+            return { chainId, available: false };
+        }
+        return {
+            chainId,
+            available: isAddressEqual(
+                currentRecovery.guardianAddress,
+                expectedGuardian
+            ),
+        };
+    });
 }

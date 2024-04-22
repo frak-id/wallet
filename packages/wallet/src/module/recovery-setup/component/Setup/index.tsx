@@ -1,11 +1,11 @@
 "use client";
 
 import { Accordion } from "@/module/common/component/Accordion";
-import styles from "@/module/recovery/component/AccordionItem/index.module.css";
-import { Step1 } from "@/module/recovery/component/Setup/Step1";
-import { Step2 } from "@/module/recovery/component/Setup/Step2";
-import { Step3 } from "@/module/recovery/component/Setup/Step3";
-import { Step4 } from "@/module/recovery/component/Setup/Step4";
+import styles from "@/module/recovery-setup/component/AccordionItem/index.module.css";
+import { Step1 } from "@/module/recovery-setup/component/Setup/Step1";
+import { Step2 } from "@/module/recovery-setup/component/Setup/Step2";
+import { Step3 } from "@/module/recovery-setup/component/Setup/Step3";
+import { Step4 } from "@/module/recovery-setup/component/Setup/Step4";
 import { recoveryStepAtom } from "@/module/settings/atoms/recovery";
 import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";

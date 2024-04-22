@@ -8,18 +8,19 @@ import { privateKeyToAccount } from "viem/accounts";
  * TODO: This should also trigger the wallet update function??
  */
 export function useRecoveryLocalAccount() {
-    const { mutateAsync, mutate, ...mutationStuff } = useMutation({
+    const { mutateAsync, mutate, data, ...mutationStuff } = useMutation({
         mutationKey: ["recovery", "parse-file"],
-        gcTime: 0,
         mutationFn: async ({
             file,
             pass,
         }: { file: RecoveryFileContent; pass: string }) => {
             // Decrypt the guardian private key
+            console.log("Starting unlock");
             const privateKey = await decryptPrivateKey({
                 pass,
                 guardianPrivateKeyEncrypted: file.guardianPrivateKeyEncrypted,
             });
+            console.log("Private key parsed", privateKey);
 
             // Build the recovery smart account
             return privateKeyToAccount(privateKey);
@@ -28,6 +29,7 @@ export function useRecoveryLocalAccount() {
 
     return {
         ...mutationStuff,
+        recoveryLocalAccount: data,
         getRecoveryLocalAccountAsync: mutateAsync,
         getRecoveryLocalAccount: mutate,
     };

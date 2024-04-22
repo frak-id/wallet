@@ -1,7 +1,7 @@
 import { sessionAtom } from "@/module/common/atoms/session";
-import { AccordionRecoveryItem } from "@/module/recovery/component/AccordionItem";
-import { getStatusCurrentStep } from "@/module/recovery/component/Setup";
-import { useGenerateRecoveryOptions } from "@/module/recovery/hook/setup/useGenerateRecoveryOptions";
+import { AccordionRecoveryItem } from "@/module/recovery-setup/component/AccordionItem";
+import { getStatusCurrentStep } from "@/module/recovery-setup/component/Setup";
+import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
 import {
     recoveryOptionsAtom,
     recoveryPasswordAtom,

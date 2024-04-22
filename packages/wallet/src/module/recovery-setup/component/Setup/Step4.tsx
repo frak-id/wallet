@@ -1,6 +1,6 @@
-import { AccordionRecoveryItem } from "@/module/recovery/component/AccordionItem";
-import { getStatusCurrentStep } from "@/module/recovery/component/Setup";
-import { ButtonSetupChain } from "@/module/recovery/component/Setup/ButtonSetupChain";
+import { AccordionRecoveryItem } from "@/module/recovery-setup/component/AccordionItem";
+import { getStatusCurrentStep } from "@/module/recovery-setup/component/Setup";
+import { ButtonSetupChain } from "@/module/recovery-setup/component/Setup/ButtonSetupChain";
 import { recoveryStepAtom } from "@/module/settings/atoms/recovery";
 import { useAtomValue } from "jotai";
 import { useConfig } from "wagmi";
