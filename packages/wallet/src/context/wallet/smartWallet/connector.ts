@@ -33,7 +33,6 @@ export function smartAccountConnector<
          * On setup, create the account for the first chain in the config
          */
         async setup() {
-            console.log("Setting up the connector");
             await this.getProvider();
         },
 
@@ -42,8 +41,6 @@ export function smartAccountConnector<
          * @param chainId
          */
         async connect({ chainId } = {}) {
-            console.log("Connecting the connector", { chainId });
-
             // Fetch the provider
             const provider: Provider = await this.getProvider();
 
@@ -78,7 +75,6 @@ export function smartAccountConnector<
          * Disconnect from the smart account, cleanup all the cached stuff
          */
         async disconnect() {
-            console.log("Disconnecting the connector");
             (await this.getProvider()).disconnect();
         },
 
@@ -86,7 +82,6 @@ export function smartAccountConnector<
          * Fetch the current accounts
          */
         async getAccounts() {
-            console.log("Getting accounts");
             const provider: Provider = await this.getProvider();
             if (!provider.currentSmartAccountClient) {
                 return [];
@@ -98,7 +93,6 @@ export function smartAccountConnector<
          * Get the current chain id (or otherwise the first one in the config)
          */
         async getChainId() {
-            console.log("Getting current chain");
             const provider: Provider = await this.getProvider();
             return (
                 provider.currentSmartAccountClient?.chain?.id ??
@@ -106,12 +100,10 @@ export function smartAccountConnector<
             );
         },
         async isAuthorized() {
-            console.log("Checking authorisation");
             const provider: Provider = await this.getProvider();
             return provider.isAuthorized();
         },
         async getClient({ chainId }: { chainId: number }) {
-            console.log("Getting client for given chain", { chainId });
             const provider: Provider = await this.getProvider();
             const client = await provider.getSmartAccountClient(chainId);
             if (!client) {
@@ -122,12 +114,23 @@ export function smartAccountConnector<
 
         async getProvider(): Promise<Provider> {
             if (!provider) {
-                console.log("Building the provider from connector");
-                // TODO: The provider should be outside of the connector
+                // Create the provider
                 provider = getSmartAccountProvider({
-                    onAccountChanged: () => {
-                        // TODO: Do something here????
-                        console.log("Account changed");
+                    onAccountChanged: (wallet) => {
+                        console.log("Wagmi provider account changed", {
+                            wallet,
+                        });
+                        // When the account change to no wallet, emit the disconnect event
+                        if (!wallet) {
+                            config.emitter.emit("disconnect");
+                            return;
+                        }
+
+                        // When the account change to a wallet, emit the connect event
+                        config.emitter.emit("connect", {
+                            accounts: [wallet.address],
+                            chainId: config.chains[0].id,
+                        });
                     },
                 });
             }
@@ -135,10 +138,9 @@ export function smartAccountConnector<
         },
         onAccountsChanged() {
             // Not relevant
-            console.log("On account changed");
         },
         onChainChanged() {
-            console.log("Chain changed");
+            // Not relevant -> TODO: But are we sure about that?
         },
         onDisconnect() {
             console.log("On disconnect");

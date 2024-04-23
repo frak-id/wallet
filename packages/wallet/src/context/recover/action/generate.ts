@@ -1,6 +1,7 @@
 "use server";
 
 import { kernelAddresses } from "@/context/common/blockchain/addresses";
+import { isRunningInProd } from "@/context/common/env";
 import {
     doAddPassKeyFnAbi,
     setExecutionAbi,
@@ -22,6 +23,11 @@ export async function generateRecoveryData({
     // Get the recovery selector
     const addPasskeySelector = toFunctionSelector(doAddPassKeyFnAbi);
 
+    // Crafter the valid after timestamp (one week from now)
+    const validAfter = isRunningInProd
+        ? Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7
+        : Math.floor(Date.now() / 1000);
+
     // Generate the setup tx data
     const txData = encodeFunctionData({
         abi: [setExecutionAbi],
@@ -33,9 +39,10 @@ export async function generateRecoveryData({
             kernelAddresses.multiWebAuthnRecovery,
             // The address of the ecdsa validator
             kernelAddresses.ecdsaValidator,
-            // Valid until / valid after timestamps, keep that as 0
+            // Valid until timestamps, in seconds
             0,
-            0,
+            // Valid after timestamp, in seconds
+            validAfter,
             // Data used to validate the ecdsa validator
             guardianAddress,
         ],

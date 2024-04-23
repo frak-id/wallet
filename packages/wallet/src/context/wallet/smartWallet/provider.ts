@@ -22,13 +22,7 @@ import {
 import type { SmartAccount } from "permissionless/accounts";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import type { EntryPoint } from "permissionless/types";
-import {
-    type Chain,
-    type Transport,
-    createClient,
-    extractChain,
-    isAddressEqual,
-} from "viem";
+import { type Chain, type Transport, createClient, extractChain } from "viem";
 
 /**
  * Get the current authenticated wallet
@@ -47,7 +41,7 @@ type SmartAccountProvierParameters = {
     /**
      * Method when the account has changed
      */
-    onAccountChanged: () => void;
+    onAccountChanged: (newWallet?: WebAuthNWallet) => void;
 };
 
 /**
@@ -80,7 +74,6 @@ export function getSmartAccountProvider<
     let currentWebAuthNWallet = getAuthenticatedWallet();
 
     // Subscribe to the session atom, to refresh the wallet and emit a few stuff?
-    // TODO: Should we handle unsubcription? ? Check if provider built multiple times
     jotaiStore.sub(sessionAtom, () => {
         const newWallet = getAuthenticatedWallet();
         // If the session hasn't changed, do nothing
@@ -96,7 +89,7 @@ export function getSmartAccountProvider<
         smartAccounts = {};
         currentSmartAccountClient = undefined;
         // And tell that it has changed
-        onAccountChanged();
+        onAccountChanged(newWallet);
     });
 
     return {
@@ -104,6 +97,7 @@ export function getSmartAccountProvider<
          * Check if the user is authorized
          */
         isAuthorized: () => !!currentWebAuthNWallet,
+
         /**
          * Access the current smart account
          */
@@ -129,18 +123,6 @@ export function getSmartAccountProvider<
                 chainId,
                 wallet: currentWebAuthNWallet,
             });
-
-            // Check if the address match
-            if (
-                currentSmartAccountClient?.account &&
-                !isAddressEqual(
-                    currentSmartAccountClient.account.address,
-                    targetSmartAccount.account.address
-                )
-            ) {
-                // If not, we need to cleanup the old one
-                currentSmartAccountClient = undefined;
-            }
 
             // Save the new one
             smartAccounts[chainId] = targetSmartAccount;

@@ -46,10 +46,14 @@ export function SetupRecovery() {
     return (
         <>
             <p className={styles.setupRecovery__disclaimer}>
-                <TriangleAlert /> Lorem ipsum dolor sit amet, consectetur
-                <br />
-                adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
-                dolore magna aliqua.
+                <TriangleAlert /> Warning
+                <br />- We do not store any information related to your wallet
+                recovery.
+                <br />- You are solely responsible for keeping your recovery
+                file and password secure and private.
+                <br />- The recovery file can be generated now, but the actual
+                recovery process will only be available one week after the file
+                is created to prevent malicious usage.
             </p>
             <Accordion
                 type={"single"}
