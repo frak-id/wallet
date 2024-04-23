@@ -11,7 +11,7 @@ export function Navigation() {
                     <Wallet />
                 </NavigationItem>
                 {isRunningInProd ? null : (
-                    <NavigationItem url={"/unlock"}>
+                    <NavigationItem url={"/nfts"}>
                         <RectangleVertical />
                     </NavigationItem>
                 )}

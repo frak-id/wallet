@@ -3,7 +3,7 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { frakChainPocClient } from "@/context/common/blockchain/provider";
-import { isRunningLocally } from "@/context/common/env";
+import { isRunningInDev, isRunningLocally } from "@/context/common/env";
 import { unstable_cache } from "next/cache";
 import { readContract } from "viem/actions";
 
@@ -12,6 +12,10 @@ function replaceMetadataUrlWithLocal(metadataUrl: string) {
         .replace("https", "http")
         .replace("nexus.frak.id", "localhost:3000")
         .replace("nexus-dev.frak.id", "localhost:3000");
+}
+
+function replaceMetadataUrlWithDev(metadataUrl: string) {
+    return metadataUrl.replace("nexus.frak.id", "nexus-dev.frak.id");
 }
 
 /**
@@ -31,8 +35,11 @@ async function _getNftMetadata({
         args: [tokenId],
     });
 
-    if (isRunningLocally && metadataUrl.indexOf("frak.id") >= 0) {
+    if (isRunningLocally) {
         metadataUrl = replaceMetadataUrlWithLocal(metadataUrl);
+    }
+    if (isRunningInDev) {
+        metadataUrl = replaceMetadataUrlWithDev(metadataUrl);
     }
 
     // Query it and return it
@@ -55,6 +62,14 @@ async function _getNftMetadata({
         result.images.dark = replaceMetadataUrlWithLocal(result.images.dark);
         result.images.light = replaceMetadataUrlWithLocal(result.images.light);
     }
+
+    // If we are in dev, replace with dev url
+    if (isRunningInDev) {
+        result.image = replaceMetadataUrlWithDev(result.image);
+        result.images.dark = replaceMetadataUrlWithDev(result.images.dark);
+        result.images.light = replaceMetadataUrlWithDev(result.images.light);
+    }
+
     return result;
 }
 
