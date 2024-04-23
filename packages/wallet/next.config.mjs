@@ -14,17 +14,19 @@ const wantedFromConfig = [
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
+const isDistant = ["prod", "dev"].includes(Config.STAGE);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     env: {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
-        IS_LOCAL: (!["prod", "dev"].includes(Config.STAGE)).toString(),
+        IS_LOCAL: !isDistant,
         APP_URL: Config.NEXUS_WALLET_URL,
     },
     transpilePackages: ["lucide-react"],
     compiler: {
-        removeConsole: Config.STAGE === "prod",
+        removeConsole: isDistant,
     },
     output: "standalone",
 };

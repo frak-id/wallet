@@ -100,8 +100,7 @@ export function smartAccountConnector<
             );
         },
         async isAuthorized() {
-            const provider: Provider = await this.getProvider();
-            return provider.isAuthorized();
+            return true;
         },
         async getClient({ chainId }: { chainId: number }) {
             const provider: Provider = await this.getProvider();
@@ -122,12 +121,12 @@ export function smartAccountConnector<
                         });
                         // When the account change to no wallet, emit the disconnect event
                         if (!wallet) {
-                            config.emitter.emit("disconnect");
+                            config.emitter.emit("change", {});
                             return;
                         }
 
                         // When the account change to a wallet, emit the connect event
-                        config.emitter.emit("connect", {
+                        config.emitter.emit("change", {
                             accounts: [wallet.address],
                             chainId: config.chains[0].id,
                         });
@@ -143,7 +142,6 @@ export function smartAccountConnector<
             // Not relevant -> TODO: But are we sure about that?
         },
         onDisconnect() {
-            console.log("On disconnect");
             config.emitter.emit("disconnect");
         },
     }));

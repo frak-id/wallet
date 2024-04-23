@@ -30,12 +30,6 @@ export function useEnforceWagmiConnection() {
     const { connect, isPending } = useConnect();
 
     useEffect(() => {
-        console.log("Checking for manual connection to nexus connector", {
-            status: state.status,
-            current: state.current,
-            isPending,
-            nexusConnector,
-        });
         // If we are not disconnected, early exit
         if (
             state.status !== "disconnected" &&
