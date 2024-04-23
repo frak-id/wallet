@@ -18,7 +18,8 @@ const envFromSstConfig = pick(Config, wantedFromConfig);
 const nextConfig = {
     env: {
         ...envFromSstConfig,
-        IS_LOCAL: (Config.STAGE !== "prod").toString(),
+        STAGE: Config.STAGE,
+        IS_LOCAL: (!["prod", "dev"].includes(Config.STAGE)).toString(),
         APP_URL: Config.FRAK_WALLET_URL,
     },
     transpilePackages: ["lucide-react"],

@@ -2,6 +2,7 @@ import {
     getAlchemyTransport,
     getAlchemyTransportNoBatch,
 } from "@/context/common/blockchain/alchemy-transport";
+import { isRunningInProd } from "@/context/common/env";
 import { memo } from "radash";
 import { type Chain, createClient, extractChain } from "viem";
 import {
@@ -14,29 +15,21 @@ import {
 } from "viem/chains";
 
 /**
- * All the testnet's chains
- */
-export const testnetChains = [
-    // Testnet's
-    arbitrumSepolia,
-    optimismSepolia,
-    baseSepolia,
-] as const;
-
-/**
- * All the mainnet's chains
- */
-export const mainnetChains = [
-    // Mainnet's
-    base,
-    polygon,
-    mainnet,
-] as const;
-
-/**
  * All the available chains
  */
-export const availableChains = [...testnetChains, ...mainnetChains] as const;
+export const availableChains = isRunningInProd
+    ? ([
+          // Mainnet's
+          base,
+          polygon,
+          mainnet,
+      ] as const)
+    : ([
+          // Testnet's
+          arbitrumSepolia,
+          optimismSepolia,
+          baseSepolia,
+      ] as const);
 
 export type AvailableChainIds = (typeof availableChains)[number]["id"];
 
