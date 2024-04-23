@@ -15,7 +15,11 @@ export function useRecoverySetupStatus({ chainId }: { chainId: number }) {
         queryFn: async () => {
             if (!address) return null;
             // Fetch the recovery options
-            return getCurrentRecoveryOption({ wallet: address, chainId });
+            const options = await getCurrentRecoveryOption({
+                wallet: address,
+                chainId,
+            });
+            return options ?? null;
         },
     });
     return {

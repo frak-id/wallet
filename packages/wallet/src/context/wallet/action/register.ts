@@ -1,5 +1,6 @@
 "use server";
 
+import { triggerFrkAirdrop } from "@/context/mock/action/airdropFrk";
 import { setSession } from "@/context/session/action/session";
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
 import {
@@ -11,6 +12,7 @@ import { formatWallet } from "@/context/wallet/utils/walletFormatter";
 import { bufferToBase64URLString } from "@simplewebauthn/browser";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
+import { guard } from "radash";
 import type { Address } from "viem";
 
 /**
@@ -89,12 +91,20 @@ export async function validateRegistration({
         transports: registrationResponse.response.transports,
     });
 
-    // Add it to the session
+    // Add it to the session if wanted
     if (setCookieSession) {
         await setSession({
             wallet,
         });
     }
+
+    // Trigger a frk airdrop
+    await guard(() =>
+        triggerFrkAirdrop({
+            user: wallet.address,
+            amount: "100",
+        })
+    );
 
     return {
         wallet,

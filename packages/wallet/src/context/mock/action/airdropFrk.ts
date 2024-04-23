@@ -4,6 +4,7 @@ import { addresses } from "@/context/common/blockchain/addresses";
 import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { frakChainPocClient } from "@/context/common/blockchain/provider";
 import { CachesTags } from "@/context/common/caching";
+import { isRunningInProd } from "@/context/common/env";
 import { revalidateTag } from "next/cache";
 import { type Address, type Hex, encodeFunctionData, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -19,7 +20,13 @@ export async function triggerFrkAirdrop({
     user,
     amount,
 }: { user: Address; amount: string }) {
-    /// TODO: Can we use SST Config. here? To prevent replication in the local env
+    // If in prod don't airdrop frk
+    if (isRunningInProd) {
+        console.log("No token to airdrop in prod");
+        return null;
+    }
+
+    // Get the airdropper private key
     const airdropperPrivateKey = process.env.AIRDROP_PRIVATE_KEY;
     if (!airdropperPrivateKey) {
         throw new Error("Missing AIRDROP_PRIVATE_KEY env variable");
@@ -49,5 +56,5 @@ export async function triggerFrkAirdrop({
     // Invalidate user balance cache
     revalidateTag(CachesTags.WALLET_ERC20_BALANCE);
 
-    return { txHash };
+    return txHash;
 }

@@ -21,7 +21,7 @@ const nextConfig = {
     env: {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
-        IS_LOCAL: !isDistant,
+        IS_LOCAL: (!isDistant).toString(),
         APP_URL: Config.NEXUS_WALLET_URL,
     },
     transpilePackages: ["lucide-react"],

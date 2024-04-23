@@ -3,7 +3,6 @@ import { validateAuthentication } from "@/context/wallet/action/authenticate";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import {
     base64URLStringToBuffer,
     startAuthentication,
@@ -16,14 +15,11 @@ import { useSetAtom } from "jotai";
  * Hook that handle the registration process
  */
 export function useLogin() {
-    // Setter for the session
-    const setSession = useSetAtom(sessionAtom);
-
     // Setter for the last authentication
     const addLastAuthentication = useSetAtom(addLastAuthenticationAtom);
 
-    // Get some FRK
-    const { airdropFrk } = useAirdropFrk();
+    // Setter for the session
+    const setSession = useSetAtom(sessionAtom);
 
     // The mutation that will be used to perform the registration process
     const {
@@ -72,9 +68,6 @@ export function useLogin() {
             await addLastAuthentication({
                 wallet,
             });
-
-            // Trigger the frk airdrop without waiting for the tx hash
-            await airdropFrk({ wallet: wallet.address, waitForReceipt: false });
 
             // Set the session
             setSession({ wallet });

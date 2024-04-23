@@ -22,15 +22,15 @@ export function useAirdropFrk() {
             }: { wallet: Address; waitForReceipt: boolean }) => {
                 // If in prod don't airdrop frk
                 if (isRunningInProd) {
+                    console.log("Not airdropping FRK in prod");
                     return null;
                 }
 
                 // Trigger the airdrop
-                const { txHash } =
-                    (await triggerFrkAirdrop({
-                        user: wallet,
-                        amount: "100",
-                    })) ?? {};
+                const txHash = await triggerFrkAirdrop({
+                    user: wallet,
+                    amount: "100",
+                });
                 // Wait for the tx receipt
                 if (waitForReceipt && viemClient && txHash) {
                     await waitForTransactionReceipt(viemClient, {
