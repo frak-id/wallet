@@ -3,7 +3,6 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { RecoverWallet } from "@/module/recovery/component/Recover";
 import { BetaOptions } from "@/module/settings/component/BetaOptions";
 import { RecoveryLink } from "@/module/settings/component/Recovery";
 import { SwitchChain } from "@/module/settings/component/SwitchChain";
@@ -22,8 +21,6 @@ export function Settings() {
             <SwitchChain />
             <BetaOptions />
             <SessionsConnected />
-
-            <RecoverWallet />
         </>
     );
 }
