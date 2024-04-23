@@ -19,6 +19,7 @@ const nextConfig = {
     env: {
         ...envFromSstConfig,
         IS_LOCAL: (Config.STAGE !== "prod").toString(),
+        APP_URL: Config.FRAK_WALLET_URL,
     },
     transpilePackages: ["lucide-react"],
     compiler: {

@@ -1,8 +1,8 @@
 {
-    "name": "Frak Wallet",
-    "short_name": "Frak Wallet",
-    "description": "POC showcasing ERC-4337 with WebAuthN inside the frak ecosystem.",
-    "version": "0.0.1",
+    "name": "Nexus Wallet by Frak",
+    "short_name": "Nexus Wallet",
+    "description": "The simple and cross-platform wallet to centralise your contents.",
+    "version": "0.0.6",
     "icons": [
         {
             "src": "/favicons/icon-192.png",

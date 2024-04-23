@@ -1,3 +1,4 @@
+import { appUrl, isRunningLocally } from "@/context/common/env";
 import type { P256Signature, WebAuthNSignature } from "@/types/WebAuthN";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
@@ -10,12 +11,9 @@ import { polygon, polygonMumbai } from "viem/chains";
 /**
  * The RP ID for the webauthn
  */
-export const rpName = "Frak Wallet [POC]";
-export const rpId = process.env.IS_LOCAL === "true" ? "localhost" : "frak.id";
-export const rpOrigin =
-    process.env.IS_LOCAL === "true"
-        ? "http://localhost:3000"
-        : "https://poc-wallet.frak.id";
+export const rpName = "Nexus by Frak";
+export const rpId = isRunningLocally ? "localhost" : "frak.id";
+export const rpOrigin = appUrl;
 
 /**
  * The default user name

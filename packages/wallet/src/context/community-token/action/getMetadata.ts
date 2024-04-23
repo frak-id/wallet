@@ -3,13 +3,15 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
+import { isRunningLocally } from "@/context/common/env";
 import { unstable_cache } from "next/cache";
 import { readContract } from "viem/actions";
 
 function replaceMetadataUrlWithLocal(metadataUrl: string) {
     return metadataUrl
         .replace("https", "http")
-        .replace("poc-wallet.frak.id", "localhost:3000");
+        .replace("nexus.frak.id", "localhost:3000")
+        .replace("nexus-dev.frak.id", "localhost:3000");
 }
 
 /**
@@ -29,10 +31,7 @@ async function _getNftMetadata({
         args: [tokenId],
     });
 
-    if (
-        process.env.IS_LOCAL === "true" &&
-        metadataUrl.indexOf("poc-wallet.frak.id") >= 0
-    ) {
+    if (isRunningLocally && metadataUrl.indexOf("frak.id") >= 0) {
         metadataUrl = replaceMetadataUrlWithLocal(metadataUrl);
     }
 
@@ -51,7 +50,7 @@ async function _getNftMetadata({
     };
 
     // Map the image url if local
-    if (process.env.IS_LOCAL === "true") {
+    if (isRunningLocally) {
         result.image = replaceMetadataUrlWithLocal(result.image);
         result.images.dark = replaceMetadataUrlWithLocal(result.images.dark);
         result.images.light = replaceMetadataUrlWithLocal(result.images.light);

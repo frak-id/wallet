@@ -1,3 +1,4 @@
+import { appUrl } from "@/context/common/env";
 import { type NextRequest, NextResponse } from "next/server";
 
 type ContentNames = "le-monde" | "equipe" | "wired";
@@ -9,10 +10,10 @@ const contentIdToName: Record<number, ContentNames> = {
 };
 
 const getImages = (contentName: ContentNames) => ({
-    image: `https://poc-wallet.frak.id/images/nft/${contentName}-dark.webp`,
+    image: `${appUrl}/images/nft/${contentName}-dark.webp`,
     images: {
-        dark: `https://poc-wallet.frak.id/images/nft/${contentName}-dark.webp`,
-        light: `https://poc-wallet.frak.id/images/nft/${contentName}-light.webp`,
+        dark: `${appUrl}/images/nft/${contentName}-dark.webp`,
+        light: `${appUrl}/images/nft/${contentName}-light.webp`,
     },
 });
 

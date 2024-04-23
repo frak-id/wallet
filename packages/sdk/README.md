@@ -1,6 +1,6 @@
 # Nexus Wallet SDK
 
-This SDK help any dApps, or gated content provider, use the [Nexus Wallet](https://poc-wallet.frak.id/) as a regular wallet, with smoother UX for your end-users (pay for his gas fees, check the paywall options, track his consumption etc.)
+This SDK help any dApps, or gated content provider, use the [Nexus Wallet](https://nexus.frak.id/) as a regular wallet, with smoother UX for your end-users (pay for his gas fees, check the paywall options, track his consumption etc.)
 
 Checkout our documentation for more informations about the usage:
  - [React client usage](https://docs.frak.id/wallet-sdk/how-to/client-react)
@@ -29,7 +29,7 @@ import type { NexusClient, NexusWalletSdkConfig } from "@frak-labs/nexus-sdk/cor
 // Create the config for the Nexus Wallet SDK
 export const nexusConfig: NexusWalletSdkConfig = {
     // The current url for the wallet sdk
-    walletUrl: "https://poc-wallet.frak.id",
+    walletUrl: "https://nexus-dev.frak.id",
     // The content id on which this sdk will be used
     contentId: "0xdeadbeef",
     // The content title, this will be displayed to the user during a few registration steps

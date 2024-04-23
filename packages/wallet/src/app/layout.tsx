@@ -17,9 +17,10 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-    title: "Frak Wallet",
+    title: "Nexus Wallet by Frak",
+    applicationName: "Nexus Wallet",
     description:
-        "POC showcasing ERC-4337 with WebAuthN inside the frak ecosystem.",
+        "The simple and cross-platform wallet to centralise your contents.",
     authors: [
         { name: "Frak labs", url: "https://frak.id/" },
         { name: "Rodolphe Stoclin", url: "https://github.com/srod" },
@@ -37,7 +38,11 @@ export const metadata: Metadata = {
             },
         ],
     },
+    creator: "Frak labs",
+    publisher: "Frak labs",
     manifest: "/manifest.json",
+    keywords: ["wallet", "community", "frak", "blockchain", "nexus"],
+    // TODO: Twitter, openGraph, appleWebApp?
 };
 
 export const viewport: Viewport = {
