@@ -1,11 +1,8 @@
-import { addresses } from "@/context/common/blockchain/addresses";
-import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { isCommunityTokenForContentEnabled } from "@/context/community-token/action/getCommunityToken";
+import { isCommunityTokenEnabledForWallet } from "@/context/community-token/action/getCommunityTokensForWallet";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { readContract } from "viem/actions";
-import { arbitrumSepolia } from "viem/chains";
-import { useAccount, useClient } from "wagmi";
+import { useAccount } from "wagmi";
 
 /**
  * Hook used to fetch community token for a content
@@ -14,7 +11,6 @@ export function useIsCommunityTokenMintAvailable({
     contentId,
 }: { contentId: number }) {
     const { address } = useAccount();
-    const viemClient = useClient({ chainId: arbitrumSepolia.id });
 
     return useQuery({
         queryKey: [
@@ -22,10 +18,9 @@ export function useIsCommunityTokenMintAvailable({
             "is-mint-available",
             contentId,
             address ?? "no-address",
-            viemClient?.uid ?? "no-client",
         ],
         queryFn: async () => {
-            if (Number.isNaN(contentId) || !address || !viemClient) {
+            if (Number.isNaN(contentId) || !address) {
                 return false;
             }
             // Check if that's enabled for the content
@@ -37,15 +32,12 @@ export function useIsCommunityTokenMintAvailable({
             }
 
             // Check if that's enabled for the wallet
-            const communityTokenBalance = await readContract(viemClient, {
-                address: addresses.communityToken,
-                abi: communityTokenAbi,
-                functionName: "balanceOf",
-                args: [address, BigInt(contentId)],
+            return isCommunityTokenEnabledForWallet({
+                contentId,
+                wallet: address,
             });
-            return communityTokenBalance === 0n;
         },
-        enabled: !!address && !!viemClient,
+        enabled: !!address,
         placeholderData: false,
     });
 }

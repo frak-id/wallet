@@ -1,5 +1,6 @@
 "use client";
 
+import { isRunningInProd } from "@/context/common/env";
 import {
     Accordion,
     AccordionContent,
@@ -9,16 +10,18 @@ import {
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
-import {
-    isMainnetEnableAtom,
-    isWalletConnectEnableAtom,
-} from "@/module/settings/atoms/betaOptions";
+import { isWalletConnectEnableAtom } from "@/module/settings/atoms/betaOptions";
 import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
 import { useAtom } from "jotai";
 import { FlaskConical, Square, SquareCheck } from "lucide-react";
 import styles from "./index.module.css";
 
 export function BetaOptions() {
+    // If on prod, we can't enable beta features
+    if (isRunningInProd) {
+        return null;
+    }
+
     return (
         <>
             <Panel size={"small"}>
@@ -49,9 +52,6 @@ function BetaOptionsList() {
     return (
         <ul>
             <li>
-                <MainnetToggle />
-            </li>
-            <li>
                 <WalletConnectToggle />
             </li>
         </ul>
@@ -65,18 +65,6 @@ function WalletConnectToggle() {
             <Row>
                 {isEnable ? <SquareCheck /> : <Square />}
                 Wallet Connect
-            </Row>
-        </Button>
-    );
-}
-
-function MainnetToggle() {
-    const [isEnable, toggle] = useAtom(isMainnetEnableAtom);
-    return (
-        <Button onClick={toggle} variant={"outlined"}>
-            <Row>
-                {isEnable ? <SquareCheck /> : <Square />}
-                Mainnet
             </Row>
         </Button>
     );

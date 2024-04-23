@@ -1,5 +1,8 @@
+import {
+    getBundlerClient,
+    getPaymasterClient,
+} from "@/context/common/blockchain/aa-provider";
 import { useMemo } from "react";
-import { http, createClient } from "viem";
 import { useClient } from "wagmi";
 
 /**
@@ -22,31 +25,11 @@ export function useAAClients({ chainId }: { chainId?: number } = {}) {
 
         const chain = viemClient.chain;
 
-        // Build the pimlico bundler transport and client
-        const bundlerTransport = http(
-            `https://api.pimlico.io/v1/${chain.id}/rpc?apikey=${process.env.PIMLICO_API_KEY}`
-        );
-        const bundlerClient = createClient({
-            chain,
-            transport: bundlerTransport,
-        });
+        // Get the clients
+        const { bundlerClient, bundlerTransport } = getBundlerClient(chain);
+        const paymasterClient = getPaymasterClient(chain);
 
-        // If the chain isn't a testnet, exit without paymaster as default
-        if (chain.testnet !== true) {
-            return {
-                bundlerTransport,
-                bundlerClient,
-            };
-        }
-
-        // Build the pimlico paymaster client
-        const paymasterClient = createClient({
-            chain,
-            transport: http(
-                `https://api.pimlico.io/v2/${chain.id}/rpc?apikey=${process.env.PIMLICO_API_KEY}`
-            ),
-        });
-
+        // Return them
         return {
             bundlerTransport,
             bundlerClient,

@@ -7,13 +7,10 @@ export const getMongoDb = DI.registerAndExposeGetter({
     isAsync: true,
     getter: async () => {
         // Get the mongo client
-        // TODO: Should use Config.MONGODB_FRAK_POC_URI instead, but next isn't happy about it
-        const client = new MongoClient(
-            process.env.MONGODB_FRAK_POC_URI as string
-        );
+        const client = new MongoClient(process.env.MONGODB_NEXUS_URI as string);
         // Connect to the database
         await client.connect();
         // and then connect to the poc database
-        return client.db("poc");
+        return client.db("nexus");
     },
 });

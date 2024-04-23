@@ -1,15 +1,16 @@
+import { frakChainId } from "@/context/common/blockchain/provider";
+import { isRunningInProd } from "@/context/common/env";
 import { triggerFrkAirdrop } from "@/context/mock/action/airdropFrk";
 import { useMutation } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
-import { arbitrumSepolia } from "viem/chains";
 import { useClient } from "wagmi";
 
 /**
  * Hook that handle the airdrop frk
  */
 export function useAirdropFrk() {
-    const viemClient = useClient({ chainId: arbitrumSepolia.id });
+    const viemClient = useClient({ chainId: frakChainId });
 
     // Airdrop the FRK and wait for the receipt if needed
     const { isPending: isAirdroppingFrk, mutateAsync: airdropFrk } =
@@ -19,6 +20,11 @@ export function useAirdropFrk() {
                 wallet,
                 waitForReceipt,
             }: { wallet: Address; waitForReceipt: boolean }) => {
+                // If in prod don't airdrop frk
+                if (isRunningInProd) {
+                    return null;
+                }
+
                 // Trigger the airdrop
                 const { txHash } =
                     (await triggerFrkAirdrop({

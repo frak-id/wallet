@@ -1,6 +1,7 @@
 "use client";
 
 import { DI } from "@/context/common/di";
+import { appUrl } from "@/context/common/env";
 import { Core } from "@walletconnect/core";
 import { Web3Wallet } from "@walletconnect/web3wallet";
 
@@ -25,8 +26,9 @@ export const getWalletConnectWallet = DI.registerAndExposeGetter({
             metadata: {
                 name: "Nexus Wallet - Frak",
                 description: "Nexus wallet by Frak.",
-                url: "poc-wallet.frak.id",
-                icons: ["https://poc-wallet.frak.id/favicons/icon.svg"],
+                // App url without https:// and trailing slash
+                url: "nexus.frak.id",
+                icons: [`${appUrl}/favicons/icon.svg`],
             },
         }),
 });

@@ -2,41 +2,36 @@ import {
     getAlchemyTransport,
     getAlchemyTransportNoBatch,
 } from "@/context/common/blockchain/alchemy-transport";
+import { isRunningInProd } from "@/context/common/env";
 import { memo } from "radash";
 import { type Chain, createClient, extractChain } from "viem";
 import {
+    arbitrum,
     arbitrumSepolia,
     base,
     baseSepolia,
-    mainnet,
+    optimism,
     optimismSepolia,
     polygon,
 } from "viem/chains";
 
 /**
- * All the testnet's chains
- */
-export const testnetChains = [
-    // Testnet's
-    arbitrumSepolia,
-    optimismSepolia,
-    baseSepolia,
-] as const;
-
-/**
- * All the mainnet's chains
- */
-export const mainnetChains = [
-    // Mainnet's
-    base,
-    polygon,
-    mainnet,
-] as const;
-
-/**
  * All the available chains
  */
-export const availableChains = [...testnetChains, ...mainnetChains] as const;
+export const availableChains = isRunningInProd
+    ? ([
+          // Mainnet's
+          arbitrum,
+          base,
+          optimism,
+          polygon,
+      ] as const)
+    : ([
+          // Testnet's
+          arbitrumSepolia,
+          optimismSepolia,
+          baseSepolia,
+      ] as const);
 
 export type AvailableChainIds = (typeof availableChains)[number]["id"];
 
@@ -80,10 +75,15 @@ export function getViemClientFromChainId({ chainId }: { chainId: number }) {
 }
 
 /**
- * Directly expose the arbitrum sepolia viem client, since the paywall part is based on that
+ * The chain id for the frak related apps
  */
-export const arbSepoliaPocClient = getViemClientFromChainId({
-    chainId: arbitrumSepolia.id,
+export const frakChainId = isRunningInProd ? arbitrum.id : arbitrumSepolia.id;
+
+/**
+ * Directly expose the frak chain client, since the paywall part is based on that
+ */
+export const frakChainPocClient = getViemClientFromChainId({
+    chainId: frakChainId,
 });
 
 /**

@@ -2,7 +2,7 @@
 
 import { addresses } from "@/context/common/blockchain/addresses";
 import { paywallTokenAbi } from "@/context/common/blockchain/poc-abi";
-import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
+import { frakChainPocClient } from "@/context/common/blockchain/provider";
 import { CachesTags } from "@/context/common/caching";
 import { revalidateTag } from "next/cache";
 import { type Address, type Hex, encodeFunctionData, parseEther } from "viem";
@@ -30,7 +30,7 @@ export async function triggerFrkAirdrop({
 
     // Prepare the tx
     const preparationResult = await prepareTransactionRequest(
-        arbSepoliaPocClient,
+        frakChainPocClient,
         {
             account: airdropperAccount,
             chain: arbitrumSepolia,
@@ -44,10 +44,7 @@ export async function triggerFrkAirdrop({
     );
 
     // Send the tx
-    const txHash = await sendTransaction(
-        arbSepoliaPocClient,
-        preparationResult
-    );
+    const txHash = await sendTransaction(frakChainPocClient, preparationResult);
 
     // Invalidate user balance cache
     revalidateTag(CachesTags.WALLET_ERC20_BALANCE);

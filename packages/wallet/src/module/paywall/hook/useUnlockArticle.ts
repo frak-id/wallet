@@ -4,6 +4,7 @@ import {
     paywallAbi,
     paywallTokenAbi,
 } from "@/context/common/blockchain/poc-abi";
+import { frakChainId } from "@/context/common/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
@@ -26,7 +27,6 @@ import { useCallback, useEffect, useMemo } from "react";
 import { type Hex, encodeFunctionData, parseEther } from "viem";
 import type { Address } from "viem";
 import { readContract } from "viem/actions";
-import { arbitrumSepolia } from "viem/chains";
 import { useClient, useConnectorClient } from "wagmi";
 
 /**
@@ -64,7 +64,7 @@ export function useUnlockArticle({
     /**
      * Get our viem client
      */
-    const viemClient = useClient({ chainId: arbitrumSepolia.id });
+    const viemClient = useClient({ chainId: frakChainId });
 
     // Set paywall error
     const setPaywallError = useSetAtom(setPaywallErrorAtom);

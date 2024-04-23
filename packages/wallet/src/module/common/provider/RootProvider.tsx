@@ -1,8 +1,12 @@
 "use client";
 
+import {
+    availableChains,
+    getTransport,
+} from "@/context/common/blockchain/provider";
+import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { jotaiStore } from "@/module/common/atoms/store";
-import { wagmiConfigAtom } from "@/module/common/atoms/wagmi";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import type { Session } from "@/types/Session";
@@ -11,10 +15,11 @@ import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
-import { Provider, useAtomValue } from "jotai/index";
+import { Provider } from "jotai/index";
 import { useHydrateAtoms } from "jotai/utils";
-import type { PropsWithChildren } from "react";
-import { WagmiProvider } from "wagmi";
+import { type PropsWithChildren, useMemo } from "react";
+import { createClient } from "viem";
+import { WagmiProvider, createConfig } from "wagmi";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -76,7 +81,25 @@ export function RootProvider({
 }
 
 function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
-    const config = useAtomValue(wagmiConfigAtom);
+    const config = useMemo(
+        () =>
+            createConfig({
+                chains: availableChains,
+                connectors: [smartAccountConnector()],
+                client: ({ chain }) =>
+                    createClient({
+                        chain,
+                        transport: getTransport({ chain }),
+                        cacheTime: 60_000,
+                        batch: {
+                            multicall: {
+                                wait: 50,
+                            },
+                        },
+                    }),
+            }),
+        []
+    );
     return (
         <WagmiProvider config={config}>
             <EnforceWagmiConnection />

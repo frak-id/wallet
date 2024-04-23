@@ -4,10 +4,12 @@ import styles from "./index.module.css";
 
 type NavigationProps = {
     url: string;
+    disabled?: boolean;
 };
 
 export function NavigationItem({
     children,
+    disabled = false,
     url,
 }: PropsWithChildren<NavigationProps>) {
     const router = useRouter();
@@ -22,6 +24,7 @@ export function NavigationItem({
                 type={"button"}
                 className={`${styles.navigation__button} ${activeClassName}`}
                 onClick={() => router.push(url)}
+                disabled={disabled}
             >
                 {children}
             </button>

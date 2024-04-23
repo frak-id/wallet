@@ -2,7 +2,7 @@
 
 import { addresses } from "@/context/common/blockchain/addresses";
 import { paywallAbi } from "@/context/common/blockchain/poc-abi";
-import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
+import { frakChainPocClient } from "@/context/common/blockchain/provider";
 import type { Address, Hex } from "viem";
 import { readContract } from "viem/actions";
 
@@ -23,7 +23,7 @@ export async function getUnlockStatusOnArticle({
 }) {
     // Get the status
     const [isAllowed, allowedUntilInSec] = await readContract(
-        arbSepoliaPocClient,
+        frakChainPocClient,
         {
             address: addresses.paywall,
             abi: paywallAbi,

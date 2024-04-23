@@ -2,6 +2,7 @@ import type { StackContext } from "sst/constructs";
 import { use } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
+import { isProdStack } from "./utils";
 
 /**
  * Define the wallet webapp SST stack
@@ -12,28 +13,29 @@ export function WalletAppStack({ stack }: StackContext) {
     // The configs required to run the app
     const {
         sessionEncryptionKey,
-        mongoUri,
+        mongoNexusUri,
         alchemyApiKeys,
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,
         walletconnectProjectId,
+        frakWalletUrl,
     } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
-        mongoUri,
+        mongoNexusUri,
         alchemyApiKeys,
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,
         walletconnectProjectId,
+        frakWalletUrl,
     ];
 
     // Base domain for our whole app
-    const subDomain =
-        stack.stage === "prod"
-            ? "poc-wallet"
-            : `poc-wallet-${stack.stage.toLowerCase()}`;
+    const subDomain = isProdStack(stack)
+        ? "nexus"
+        : `nexus-${stack.stage.toLowerCase()}`;
 
     // Declare the Next.js site
     const site = new NextjsSite(stack, "wallet", {

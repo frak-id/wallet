@@ -2,6 +2,7 @@ import { use } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
+import { isDevStack, isProdStack } from "./utils";
 
 /**
  * Define the example webapp SST stack
@@ -9,6 +10,11 @@ import { ConfigStack } from "./Config";
  * @constructor
  */
 export function ExampleAppStack({ stack }: StackContext) {
+    // If we are in prod don't deploy the example app
+    if (isProdStack(stack)) {
+        return;
+    }
+
     // The configs required to run the app
     const { sessionEncryptionKey, mongoUri, frakWalletUrl, adminPassword } =
         use(ConfigStack);
@@ -20,10 +26,9 @@ export function ExampleAppStack({ stack }: StackContext) {
     ];
 
     // Base domain for our whole app
-    const subDomain =
-        stack.stage === "prod"
-            ? "news-example"
-            : `news-example-${stack.stage.toLowerCase()}`;
+    const subDomain = isDevStack(stack)
+        ? "news-example"
+        : `news-example-${stack.stage.toLowerCase()}`;
 
     // Declare the Next.js site
     const site = new NextjsSite(stack, "example", {

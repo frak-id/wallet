@@ -1,11 +1,12 @@
 "use client";
 
+import { frakChainId } from "@/context/common/blockchain/provider";
+import { isRunningInProd } from "@/context/common/env";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
 import { Landmark } from "lucide-react";
-import { arbitrumSepolia } from "viem/chains";
 import { useAccount, useChainId } from "wagmi";
 
 /**
@@ -16,8 +17,13 @@ export function GetFrk() {
     const { isAirdroppingFrk, airdropFrk } = useAirdropFrk();
     const chainId = useChainId();
 
+    // If on prod, don't expose the airdrop option
+    if (isRunningInProd) {
+        return null;
+    }
+
     // If we are not on arbitrum sepolia, don't display FRK airdrop option
-    if (chainId !== arbitrumSepolia.id) {
+    if (chainId !== frakChainId) {
         return null;
     }
 

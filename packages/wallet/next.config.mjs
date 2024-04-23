@@ -8,7 +8,7 @@ const wantedFromConfig = [
     "PIMLICO_API_KEY",
     "WALLETCONNECT_PROJECT_ID",
     // TODO: Shouldn't be here, but Next is crying all over the place when using SST.Config, to fix
-    "MONGODB_FRAK_POC_URI",
+    "MONGODB_NEXUS_URI",
     "SESSION_ENCRYPTION_KEY",
     "AIRDROP_PRIVATE_KEY",
 ];
@@ -18,7 +18,9 @@ const envFromSstConfig = pick(Config, wantedFromConfig);
 const nextConfig = {
     env: {
         ...envFromSstConfig,
-        IS_LOCAL: (Config.STAGE !== "prod").toString(),
+        STAGE: Config.STAGE,
+        IS_LOCAL: (!["prod", "dev"].includes(Config.STAGE)).toString(),
+        APP_URL: Config.FRAK_WALLET_URL,
     },
     transpilePackages: ["lucide-react"],
     compiler: {
