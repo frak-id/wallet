@@ -20,7 +20,7 @@ export function LoginList() {
                 <ul>
                     {previousAuthenticators?.map((auth) => (
                         <LoginItem
-                            key={`${auth.username}-${auth.wallet}`}
+                            key={`${auth.wallet}`}
                             lastAuthentication={auth}
                         />
                     ))}

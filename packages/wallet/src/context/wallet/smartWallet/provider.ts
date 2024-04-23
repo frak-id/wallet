@@ -8,7 +8,7 @@ import {
     availableChains,
 } from "@/context/common/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/sign";
-import { webAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
+import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { jotaiStore } from "@/module/common/atoms/store";
@@ -208,8 +208,7 @@ async function buildSmartAccount<
     });
 
     // Get the smart wallet client
-    const smartAccount = await webAuthNSmartAccount(viemClient, {
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
+    const smartAccount = await nexusSmartAccount(viemClient, {
         authenticatorId: wallet.authenticatorId,
         signerPubKey: wallet.publicKey,
         signatureProvider: async (message) => {
@@ -225,6 +224,7 @@ async function buildSmartAccount<
             // Perform the verification of the signature
             return parseWebAuthNAuthentication(authenticationResponse);
         },
+        preDeterminedAccountAddress: wallet.address,
     });
 
     // Get the bundler and paymaster clients

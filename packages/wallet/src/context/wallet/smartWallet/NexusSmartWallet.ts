@@ -1,17 +1,19 @@
-import {
-    KernelExecuteAbi,
-    KernelInitAbi,
-} from "@/context/wallet/abi/KernelAccountAbi";
+import { kernelAddresses } from "@/context/common/blockchain/addresses";
+import { KernelExecuteAbi } from "@/context/wallet/abi/KernelAccountAbi";
 import {
     type AccountMetadata,
     fetchAccountMetadata,
     wrapMessageForSignature,
 } from "@/context/wallet/smartWallet/signature";
+import {
+    getAccountAddress,
+    getAccountInitCode,
+} from "@/context/wallet/smartWallet/utils";
 import { isRip7212ChainSupported } from "@/context/wallet/smartWallet/webAuthN";
 import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
 import {
+    ENTRYPOINT_ADDRESS_V06,
     getAccountNonce,
-    getSenderAddress,
     getUserOperationHash,
     isSmartAccountDeployed,
 } from "permissionless";
@@ -27,203 +29,74 @@ import {
     type Client,
     type Hex,
     type Transport,
+    boolToHex,
     concatHex,
-    encodeAbiParameters,
     encodeFunctionData,
     hashMessage,
     hashTypedData,
+    isAddressEqual,
+    keccak256,
     maxUint256,
+    numberToHex,
+    pad,
+    size,
+    toHex,
 } from "viem";
 
-export type KernelWebAuthNSmartAccount<
-    entryPoint extends
-        ENTRYPOINT_ADDRESS_V06_TYPE = ENTRYPOINT_ADDRESS_V06_TYPE,
+export type NexusSmartAccount<
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
-> = SmartAccount<entryPoint, "kernelWebAuthNSmartAccount", transport, chain>;
+> = SmartAccount<
+    ENTRYPOINT_ADDRESS_V06_TYPE,
+    "nexusSmartAccount",
+    transport,
+    chain
+>;
 
 /**
- * The account creation ABI for a kernel smart account (from the KernelFactory)
+ * Format the given signature
  */
-const createAccountAbi = [
-    {
-        inputs: [
-            {
-                internalType: "address",
-                name: "_implementation",
-                type: "address",
-            },
-            {
-                internalType: "bytes",
-                name: "_data",
-                type: "bytes",
-            },
-            {
-                internalType: "uint256",
-                name: "_index",
-                type: "uint256",
-            },
-        ],
-        name: "createAccount",
-        outputs: [
-            {
-                internalType: "address",
-                name: "proxy",
-                type: "address",
-            },
-        ],
-        stateMutability: "payable",
-        type: "function",
-    },
-] as const;
-
-/**
- * Default addresses for kernel smart account
- */
-const KERNEL_ADDRESSES: {
-    WEB_AUTHN_VALIDATOR: Address;
-    ACCOUNT_V4_LOGIC: Address;
-    FACTORY: Address;
-    ENDTRYPOINT_V0_6: ENTRYPOINT_ADDRESS_V06_TYPE;
-} = {
-    // Validators
-    WEB_AUTHN_VALIDATOR: "0x42085b533b27B9AfDAF3864a38c72eF853943DAB",
-    // Kernel stuff
-    ACCOUNT_V4_LOGIC: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
-    FACTORY: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",
-    // ERC-4337 stuff
-    ENDTRYPOINT_V0_6: "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
-};
-
-/**
- * Represent the layout of the calldata used for a webauthn signature
- */
-const webAuthNValidatorEnablingLayout = [
-    { name: "authenticatorId", type: "string" },
-    { name: "x", type: "uint256" },
-    { name: "y", type: "uint256" },
-] as const;
-
-/**
- * Get the account initialization code for a kernel smart account
- * @param authenticatorId
- * @param signerPubKey
- * @param index
- * @param accountLogicAddress
- * @param webAuthNValidatorAddress
- */
-const getAccountInitCode = async ({
-    authenticatorId,
-    signerPubKey,
-    index,
-    accountLogicAddress,
-    webAuthNValidatorAddress,
+function formatSignature({
+    isRip7212Supported,
+    authenticatorIdHash,
+    challengeOffset,
+    rs,
+    authenticatorData,
+    clientData,
 }: {
-    authenticatorId: string;
-    signerPubKey: P256PubKey;
-    index: bigint;
-    accountLogicAddress: Address;
-    webAuthNValidatorAddress: Address;
-}): Promise<Hex> => {
-    if (!signerPubKey) throw new Error("Owner account not found");
-
-    const encodedPublicKey = encodeAbiParameters(
-        webAuthNValidatorEnablingLayout,
-        [authenticatorId, BigInt(signerPubKey.x), BigInt(signerPubKey.y)]
-    );
-
-    // Build the account initialization data
-    const initialisationData = encodeFunctionData({
-        abi: KernelInitAbi,
-        functionName: "initialize",
-        args: [webAuthNValidatorAddress, encodedPublicKey],
-    });
-
-    // Build the account init code
-    return encodeFunctionData({
-        abi: createAccountAbi,
-        functionName: "createAccount",
-        args: [accountLogicAddress, initialisationData, index],
-    }) as Hex;
-};
-
-/**
- * Check the validity of an existing account address, or fetch the pre-deterministic account address for a kernel smart wallet
- * @param client
- * @param signerPubKey
- * @param entryPoint
- * @param factoryAddress
- * @param webAuthNValidatorAddress
- * @param initCodeProvider
- * @param deployedAccountAddress
- */
-const getAccountAddress = async <
-    TEntryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
-    TTransport extends Transport = Transport,
-    TChain extends Chain = Chain,
->({
-    client,
-    signerPubKey,
-    entryPoint,
-    factoryAddress,
-    initCodeProvider,
-    webAuthNValidatorAddress,
-    deployedAccountAddress,
-}: {
-    client: Client<TTransport, TChain>;
-    signerPubKey: P256PubKey;
-    initCodeProvider: () => Promise<Hex>;
-    entryPoint: TEntryPoint;
-    factoryAddress: Address;
-    webAuthNValidatorAddress: Address;
-    deployedAccountAddress?: Address;
-}): Promise<Address> => {
-    // If we got an already deployed account, ensure it's well deployed, and the validator & signer are correct
-    if (deployedAccountAddress !== undefined) {
-        // TODO: Check the pub key match
-        console.log(
-            "TODO: Check the pub key match",
-            signerPubKey,
-            webAuthNValidatorAddress
-        );
-        // If ok, return the address
-        return deployedAccountAddress;
-    }
-
-    // Find the init code for this account
-    const initCode = await initCodeProvider();
-
-    // Get the sender address based on the init code
-    return getSenderAddress(client, {
-        initCode: concatHex([factoryAddress, initCode]),
-        entryPoint,
-    });
-};
-
-/**
- * Represent the layout of the calldata used for a webauthn signature
- */
-const webAuthNSignatureLayoutParam = [
-    { name: "useOnChainP256Verifier", type: "bool" },
-    { name: "authenticatorData", type: "bytes" },
-    { name: "clientData", type: "bytes" },
-    { name: "challengeOffset", type: "uint256" },
-    { name: "rs", type: "uint256[2]" },
-] as const;
+    isRip7212Supported: boolean;
+    authenticatorIdHash: Hex;
+    challengeOffset: bigint;
+    rs: [bigint, bigint];
+    authenticatorData: Hex;
+    clientData: Hex;
+}) {
+    return concatHex([
+        // Metadata stuff
+        pad(boolToHex(isRip7212Supported), { size: 1 }),
+        pad(authenticatorIdHash, { size: 32 }),
+        // Signature info
+        numberToHex(challengeOffset, { size: 32, signed: false }),
+        numberToHex(rs[0], { size: 32, signed: false }),
+        numberToHex(rs[1], { size: 32, signed: false }),
+        // The length of each bytes array (uint24 so 3 bytes)
+        numberToHex(size(authenticatorData), { size: 3, signed: false }),
+        numberToHex(size(clientData), { size: 3, signed: false }),
+        // Then the bytes values
+        authenticatorData,
+        clientData,
+    ]);
+}
 
 /**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
  * @param client
- * @param privateKey
- * @param entryPoint
- * @param index
- * @param factoryAddress
- * @param accountLogicAddress
- * @param webAuthNValidatorAddress
+ * @param authenticatorId
+ * @param signerPubKey
+ * @param signatureProvider
  * @param deployedAccountAddress
  */
-export async function webAuthNSmartAccount<
-    TEntryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
+export async function nexusSmartAccount<
     TTransport extends Transport = Transport,
     TChain extends Chain = Chain,
 >(
@@ -232,46 +105,34 @@ export async function webAuthNSmartAccount<
         authenticatorId,
         signerPubKey,
         signatureProvider,
-        entryPoint,
-        index = 0n,
-        factoryAddress = KERNEL_ADDRESSES.FACTORY,
-        accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_V4_LOGIC,
-        webAuthNValidatorAddress = KERNEL_ADDRESSES.WEB_AUTHN_VALIDATOR,
-        deployedAccountAddress,
+        preDeterminedAccountAddress,
     }: {
         authenticatorId: string;
         signerPubKey: P256PubKey;
         signatureProvider: (message: Hex) => Promise<WebAuthNSignature>;
-        entryPoint: TEntryPoint;
-        index?: bigint;
-        factoryAddress?: Address;
-        accountLogicAddress?: Address;
-        webAuthNValidatorAddress?: Address;
-        deployedAccountAddress?: Address;
+        preDeterminedAccountAddress?: Address;
     }
-): Promise<KernelWebAuthNSmartAccount<TEntryPoint, TTransport, TChain>> {
+): Promise<NexusSmartAccount<TTransport, TChain>> {
+    const authenticatorIdHash = keccak256(toHex(authenticatorId));
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
         getAccountInitCode({
-            authenticatorId,
+            authenticatorIdHash,
             signerPubKey,
-            index,
-            accountLogicAddress,
-            webAuthNValidatorAddress,
         });
 
     // Fetch account address and chain id
     const accountAddress = await getAccountAddress({
         client,
-        entryPoint,
-        factoryAddress,
-        signerPubKey,
-        webAuthNValidatorAddress,
         initCodeProvider: generateInitCode,
-        deployedAccountAddress,
     });
 
     if (!accountAddress) throw new Error("Account address not found");
+
+    // Check if we can handle account creation or not
+    const canCreateAccount = preDeterminedAccountAddress
+        ? isAddressEqual(accountAddress, preDeterminedAccountAddress)
+        : true;
 
     // Helper to check if the smart account is already deployed (with caching)
     let smartAccountDeployed = false;
@@ -301,13 +162,14 @@ export async function webAuthNSmartAccount<
             await signatureProvider(hash);
 
         // Encode the signature with the web auth n validator info
-        return encodeAbiParameters(webAuthNSignatureLayoutParam, [
-            !isRip7212Supported,
+        return formatSignature({
+            isRip7212Supported,
+            authenticatorIdHash,
+            rs: [BigInt(signature.r), BigInt(signature.s)],
+            challengeOffset,
             authenticatorData,
             clientData,
-            challengeOffset,
-            [BigInt(signature.r), BigInt(signature.s)],
-        ]);
+        });
     };
 
     // Build the smart account itself
@@ -315,8 +177,8 @@ export async function webAuthNSmartAccount<
         address: accountAddress,
 
         client: client,
-        entryPoint: entryPoint,
-        source: "kernelWebAuthNSmartAccount",
+        entryPoint: ENTRYPOINT_ADDRESS_V06,
+        source: "nexusSmartAccount",
 
         /**
          * Get the smart account nonce
@@ -324,7 +186,7 @@ export async function webAuthNSmartAccount<
         async getNonce() {
             return getAccountNonce(client, {
                 sender: accountAddress,
-                entryPoint: entryPoint,
+                entryPoint: ENTRYPOINT_ADDRESS_V06,
             });
         },
 
@@ -333,7 +195,8 @@ export async function webAuthNSmartAccount<
          */
         async getFactory() {
             if (await isKernelAccountDeployed()) return undefined;
-            return factoryAddress;
+            if (!canCreateAccount) return undefined;
+            return kernelAddresses.factory;
         },
 
         /**
@@ -341,6 +204,7 @@ export async function webAuthNSmartAccount<
          */
         async getFactoryData() {
             if (await isKernelAccountDeployed()) return undefined;
+            if (!canCreateAccount) return undefined;
             return generateInitCode();
         },
 
@@ -349,7 +213,12 @@ export async function webAuthNSmartAccount<
          */
         async getInitCode() {
             if (await isKernelAccountDeployed()) return "0x";
-            return concatHex([factoryAddress, await generateInitCode()]);
+            if (!canCreateAccount) {
+                throw new Error(
+                    "Cannot create account with mismatching pre-determined address"
+                );
+            }
+            return concatHex([kernelAddresses.factory, generateInitCode()]);
         },
 
         /**
@@ -362,7 +231,7 @@ export async function webAuthNSmartAccount<
                     ...userOperation,
                     signature: "0x",
                 },
-                entryPoint: entryPoint,
+                entryPoint: ENTRYPOINT_ADDRESS_V06,
                 chainId: client.chain.id,
             });
             const encodedSignature = await signHash(hash);
@@ -460,14 +329,14 @@ export async function webAuthNSmartAccount<
                 ) - 1n;
 
             // Generate a template signature for the webauthn validator
-            const sig = encodeAbiParameters(webAuthNSignatureLayoutParam, [
-                true,
-                // Random 120 byte
-                `0x${maxUint256.toString(16).repeat(2)}`,
-                `0x${maxUint256.toString(16).repeat(6)}`,
-                maxUint256,
-                [maxCurveValue, maxCurveValue],
-            ]);
+            const sig = formatSignature({
+                isRip7212Supported,
+                authenticatorIdHash,
+                challengeOffset: maxUint256,
+                rs: [maxCurveValue, maxCurveValue],
+                authenticatorData: `0x${maxUint256.toString(16).repeat(6)}`,
+                clientData: `0x${maxUint256.toString(16).repeat(6)}`,
+            });
 
             // return the coded signature
             return concatHex(["0x00000000", sig]);

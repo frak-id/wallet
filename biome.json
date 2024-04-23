@@ -29,10 +29,8 @@
                         "maxAllowedComplexity": 16
                     }
                 },
+                "noUselessTernary": "error",
                 "useSimplifiedLogicExpression": "error"
-            },
-            "nursery": {
-                "noUselessTernary": "error"
             },
             "correctness": {
                 "useHookAtTopLevel": "error",

@@ -16,8 +16,8 @@ export type ExtractedParametersFromRpc<
                       : string;
               } & (TRpcSchema[K] extends TRpcSchema[number]
                   ? TRpcSchema[K]["Parameters"] extends undefined
-                        ? { params?: never }
-                        : { params: TRpcSchema[K]["Parameters"] }
+                      ? { params?: never }
+                      : { params: TRpcSchema[K]["Parameters"] }
                   : never)
           >;
       }[number]

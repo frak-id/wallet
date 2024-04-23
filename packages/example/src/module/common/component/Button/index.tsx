@@ -28,8 +28,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     fontSize?: "small" | "normal" | "big";
     size?: "none" | "small" | "normal" | "big";
     isLoading?: boolean;
-    LeftIcon?: ComponentType<{ className: string }>;
-    RightIcon?: ComponentType<{ className: string }>;
+    LeftIcon?: ComponentType<{ className?: string }>;
+    RightIcon?: ComponentType<{ className?: string }>;
     asChild?: boolean;
     children: string | ReactNode;
 }

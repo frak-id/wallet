@@ -10,7 +10,6 @@ import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
 
 /**
  * Validate a wallet authentication
- * @param username
  * @param expectedChallenge
  * @param authenticationResponse
  */
@@ -18,7 +17,6 @@ export async function validateAuthentication({
     expectedChallenge,
     authenticationResponse,
 }: {
-    username?: string;
     expectedChallenge: string;
     authenticationResponse: AuthenticationResponseJSON;
 }) {
@@ -61,16 +59,15 @@ export async function validateAuthentication({
     const wallet = await formatWallet({
         authenticatorId: authenticator._id,
         publicKey: authenticator.publicKey,
+        previousWallet: authenticator.smartWalletAddress,
     });
 
     // Add it to the session
     await setSession({
-        username: authenticator.username,
         wallet,
     });
 
     return {
-        username: authenticator.username,
         wallet,
     };
 }

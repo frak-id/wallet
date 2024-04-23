@@ -1,4 +1,4 @@
-import type { KernelWebAuthNSmartAccount } from "@/context/wallet/smartWallet/WebAuthNSmartWallet";
+import type { NexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
 import { useMemo } from "react";
 import { useConnectorClient } from "wagmi";
 
@@ -10,7 +10,7 @@ export function useSmartWallet({ chainId }: { chainId?: number } = {}) {
     const { data: connector } = useConnectorClient({ chainId });
 
     return useMemo(
-        () => connector?.account as KernelWebAuthNSmartAccount | undefined,
+        () => connector?.account as NexusSmartAccount | undefined,
         [connector?.account]
     );
 }

@@ -6,7 +6,6 @@ import type { Address } from "viem";
  */
 export type PreviousAuthenticatorModel = {
     wallet: Address;
-    username: string;
     authenticatorId: string;
     transports?: AuthenticatorTransportFuture[];
 };

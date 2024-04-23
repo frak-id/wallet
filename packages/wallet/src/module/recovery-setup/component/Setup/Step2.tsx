@@ -1,0 +1,71 @@
+import { sessionAtom } from "@/module/common/atoms/session";
+import { AccordionRecoveryItem } from "@/module/recovery-setup/component/AccordionItem";
+import { getStatusCurrentStep } from "@/module/recovery-setup/component/Setup";
+import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
+import {
+    recoveryOptionsAtom,
+    recoveryPasswordAtom,
+    recoveryStepAtom,
+} from "@/module/settings/atoms/recovery";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useEffect } from "react";
+
+const ACTUAL_STEP = 2;
+
+export function Step2() {
+    // Get or set the current step
+    const [step, setStep] = useAtom(recoveryStepAtom);
+
+    // Get the password
+    const password = useAtomValue(recoveryPasswordAtom);
+
+    // Get the current session
+    const session = useAtomValue(sessionAtom);
+
+    // Set the recovery options
+    const setRecoveryOptions = useSetAtom(recoveryOptionsAtom);
+
+    // Generate recovery options
+    const { generateRecoveryOptionsAsync } = useGenerateRecoveryOptions();
+
+    useEffect(() => {
+        if (step !== ACTUAL_STEP || !session?.wallet || !password) return;
+
+        // Generate recovery data
+        // and mark the step as completed
+        const recoveryOptions = generateRecoveryOptionsAsync({
+            wallet: session.wallet,
+            pass: password,
+        });
+        recoveryOptions.then((resRecoveryOptions) => {
+            setRecoveryOptions(resRecoveryOptions);
+
+            // Delay the next step, otherwise it will be too fast
+            setTimeout(() => {
+                setStep(ACTUAL_STEP + 1);
+            }, 2000);
+        });
+    }, [
+        generateRecoveryOptionsAsync,
+        session?.wallet,
+        password,
+        step,
+        setRecoveryOptions,
+        setStep,
+    ]);
+
+    return (
+        <>
+            <AccordionRecoveryItem
+                item={`step-${ACTUAL_STEP}`}
+                trigger={<span>{ACTUAL_STEP}. Generate recovery data</span>}
+                status={getStatusCurrentStep(ACTUAL_STEP, step)}
+            >
+                <p>
+                    Generating recovery data
+                    <span className={"dotsLoading"}>...</span>
+                </p>
+            </AccordionRecoveryItem>
+        </>
+    );
+}

@@ -22,13 +22,13 @@
     "humanize-duration": "^3.32.0",
     "iron-session": "^8.0.1",
     "mongodb": "^6.5.0",
-    "next": "14.2.0",
+    "next": "14.2.1",
     "radash": "^12.1.0",
     "raw-loader": "^4.0.2",
     "react": "^18",
     "react-dom": "^18",
     "react-loading-skeleton": "^3.4.0",
-    "viem": "^2.9.16"
+    "viem": "^2.9.17"
   },
   "devDependencies": {
     "@types/humanize-duration": "^3.27.4",

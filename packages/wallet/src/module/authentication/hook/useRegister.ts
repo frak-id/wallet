@@ -53,16 +53,14 @@ export function useRegister() {
                 await startRegistration(registrationOptions);
 
             // Verify it
-            const { username: registeredUsername, wallet } =
-                await validateRegistration({
-                    expectedChallenge: registrationOptions.challenge,
-                    registrationResponse,
-                    userAgent: navigator.userAgent,
-                });
+            const { wallet } = await validateRegistration({
+                expectedChallenge: registrationOptions.challenge,
+                registrationResponse,
+                userAgent: navigator.userAgent,
+            });
 
             // Save this to the last authenticator
             await addLastAuthentication({
-                username: registeredUsername,
                 wallet,
                 transports: registrationResponse.response.transports,
             });
@@ -72,7 +70,6 @@ export function useRegister() {
 
             // Set the session
             setSession({
-                username: registeredUsername,
                 wallet,
             });
         },
