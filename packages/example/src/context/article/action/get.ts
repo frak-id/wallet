@@ -2,6 +2,7 @@
 
 import type { ArticleDocument } from "@/context/article/dto/ArticleDocument";
 import { getArticleRepository } from "@/context/article/repository/ArticleRepository";
+import { isRunningLocally } from "@/context/common/env";
 import type { Article } from "@/type/Article";
 import { unstable_cache } from "next/cache";
 import type { Hex } from "viem";
@@ -48,14 +49,12 @@ export const getArticle = unstable_cache(_getArticle, ["get-article"], {
  * Get all the articles
  */
 async function _getAllArticles() {
-    const isLocal = process.env.IS_LOCAL === "true";
-
     const articleRepository = await getArticleRepository();
     const allDocuments = await articleRepository.getAll();
 
     // Filter the articles documents to get the one matching our current env
     const filteredDocuments = allDocuments.filter((document) => {
-        return isLocal
+        return isRunningLocally
             ? document.title.includes("[DEV]")
             : !document.title.includes("[DEV]");
     });

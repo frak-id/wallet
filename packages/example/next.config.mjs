@@ -12,13 +12,12 @@ const wantedFromConfig = [
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
 const isDistant = ["dev", "prod"].includes(Config.STAGE);
-const isLocal = !isDistant;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     env: {
         ...envFromSstConfig,
-        IS_LOCAL: isLocal.toString(),
+        STAGE: Config.STAGE,
     },
     transpilePackages: ["lucide-react"],
     compiler: {

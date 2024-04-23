@@ -1,6 +1,7 @@
 "use client";
 
 import { createArticle } from "@/context/article/action/create";
+import { isRunningLocally } from "@/context/common/env";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -25,7 +26,7 @@ export function ArticleCreation() {
                 id,
                 provider,
                 origin: window.location.origin,
-                isLocal: process.env.IS_LOCAL === "true",
+                isLocal: isRunningLocally,
             });
             setId(0);
         },
