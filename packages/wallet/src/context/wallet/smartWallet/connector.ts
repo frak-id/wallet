@@ -83,10 +83,17 @@ export function smartAccountConnector<
          */
         async getAccounts() {
             const provider: Provider = await this.getProvider();
-            if (!provider.currentSmartAccountClient) {
+            if (provider.currentSmartAccountClient) {
+                return [provider.currentSmartAccountClient.account.address];
+            }
+            // Otherwise, get the account for the default chain (could be the case just after the login)
+            const smartAccountClient = await provider.getSmartAccountClient(
+                config.chains[0].id
+            );
+            if (!smartAccountClient) {
                 return [];
             }
-            return [provider.currentSmartAccountClient.account.address];
+            return [smartAccountClient.account.address];
         },
 
         /**
