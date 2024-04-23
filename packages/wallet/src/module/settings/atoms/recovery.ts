@@ -8,6 +8,11 @@ import type { Hex } from "viem";
 export const recoveryStepAtom = atom<number>(1);
 
 /**
+ * Atom to keep track of the done recovery steps
+ */
+export const recoveryDoneStepAtom = atom<number>(0);
+
+/**
  * Atom to store the recovery password
  */
 export const recoveryPasswordAtom = atom<string | undefined>(undefined);
