@@ -1,7 +1,6 @@
 "use client";
 
 import { Accordion } from "@/module/common/component/Accordion";
-import styles from "@/module/recovery-setup/component/AccordionItem/index.module.css";
 import { Step1 } from "@/module/recovery-setup/component/Setup/Step1";
 import { Step2 } from "@/module/recovery-setup/component/Setup/Step2";
 import { Step3 } from "@/module/recovery-setup/component/Setup/Step3";
@@ -13,7 +12,9 @@ import {
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import { useAtom, useSetAtom } from "jotai";
+import { TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
+import styles from "./index.module.css";
 
 const MAX_STEPS = 5;
 
@@ -43,18 +44,25 @@ export function SetupRecovery() {
     }, [step, setStep, setDoneStep, setPasswordAtom, setOptionsAtom]);
 
     return (
-        <Accordion
-            type={"single"}
-            collapsible
-            className={styles.accordion}
-            value={item}
-            onValueChange={(value) => setItem(value)}
-        >
-            <Step1 />
-            <Step2 />
-            <Step3 />
-            <Step4 />
-        </Accordion>
+        <>
+            <p className={styles.setupRecovery__disclaimer}>
+                <TriangleAlert /> Lorem ipsum dolor sit amet, consectetur
+                <br />
+                adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
+                dolore magna aliqua.
+            </p>
+            <Accordion
+                type={"single"}
+                collapsible
+                value={item}
+                onValueChange={(value) => setItem(value)}
+            >
+                <Step1 />
+                <Step2 />
+                <Step3 />
+                <Step4 />
+            </Accordion>
+        </>
     );
 }
 
