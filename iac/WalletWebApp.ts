@@ -13,7 +13,7 @@ export function WalletAppStack({ stack }: StackContext) {
     // The configs required to run the app
     const {
         sessionEncryptionKey,
-        mongoUri,
+        mongoNexusUri,
         alchemyApiKeys,
         pimlicoApiKey,
         zeroDevApiKey,
@@ -23,7 +23,7 @@ export function WalletAppStack({ stack }: StackContext) {
     } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
-        mongoUri,
+        mongoNexusUri,
         alchemyApiKeys,
         pimlicoApiKey,
         zeroDevApiKey,
