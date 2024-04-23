@@ -1,9 +1,9 @@
 import { addresses } from "@/context/common/blockchain/addresses";
+import { frakChainId } from "@/context/common/blockchain/provider";
 import { getErc20Balance } from "@/context/tokens/action/getBalance";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { type Address, formatEther } from "viem";
-import { arbitrumSepolia } from "viem/chains";
 
 export function useFrkBalance({ wallet }: { wallet?: Address }) {
     /**
@@ -18,7 +18,7 @@ export function useFrkBalance({ wallet }: { wallet?: Address }) {
 
             return getErc20Balance({
                 wallet,
-                chainId: arbitrumSepolia.id,
+                chainId: frakChainId,
                 token: addresses.paywallToken,
             });
         },

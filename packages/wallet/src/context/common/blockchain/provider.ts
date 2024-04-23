@@ -6,10 +6,11 @@ import { isRunningInProd } from "@/context/common/env";
 import { memo } from "radash";
 import { type Chain, createClient, extractChain } from "viem";
 import {
+    arbitrum,
     arbitrumSepolia,
     base,
     baseSepolia,
-    mainnet,
+    optimism,
     optimismSepolia,
     polygon,
 } from "viem/chains";
@@ -20,9 +21,10 @@ import {
 export const availableChains = isRunningInProd
     ? ([
           // Mainnet's
+          arbitrum,
           base,
+          optimism,
           polygon,
-          mainnet,
       ] as const)
     : ([
           // Testnet's
@@ -73,10 +75,15 @@ export function getViemClientFromChainId({ chainId }: { chainId: number }) {
 }
 
 /**
- * Directly expose the arbitrum sepolia viem client, since the paywall part is based on that
+ * The chain id for the frak related apps
  */
-export const arbSepoliaPocClient = getViemClientFromChainId({
-    chainId: arbitrumSepolia.id,
+export const frakChainId = isRunningInProd ? arbitrum.id : arbitrumSepolia.id;
+
+/**
+ * Directly expose the frak chain client, since the paywall part is based on that
+ */
+export const frakChainPocClient = getViemClientFromChainId({
+    chainId: frakChainId,
 });
 
 /**

@@ -2,7 +2,7 @@
 
 import { addresses } from "@/context/common/blockchain/addresses";
 import { paywallAbi } from "@/context/common/blockchain/poc-abi";
-import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
+import { frakChainPocClient } from "@/context/common/blockchain/provider";
 import { getErc20Balance } from "@/context/tokens/action/getBalance";
 import type { ArticlePrice, ArticlePriceForUser } from "@/types/Price";
 import { unstable_cache } from "next/cache";
@@ -17,7 +17,7 @@ async function _getArticlePrices({
     contentId,
 }: { contentId: Hex }): Promise<ArticlePrice[]> {
     // Read all the prices from the blockchain
-    const prices = await readContract(arbSepoliaPocClient, {
+    const prices = await readContract(frakChainPocClient, {
         address: addresses.paywall,
         abi: paywallAbi,
         functionName: "getContentPrices",
@@ -68,7 +68,7 @@ async function _getArticlePricesForUser({
     }
 
     // Check if the user already unlocked an article
-    const [isAllowed] = await readContract(arbSepoliaPocClient, {
+    const [isAllowed] = await readContract(frakChainPocClient, {
         address: addresses.paywall,
         abi: paywallAbi,
         functionName: "isReadAllowed",
@@ -85,7 +85,7 @@ async function _getArticlePricesForUser({
     const userBalance = await getErc20Balance({
         token: addresses.paywallToken,
         wallet: address,
-        chainId: arbSepoliaPocClient.chain.id,
+        chainId: frakChainPocClient.chain.id,
     });
 
     // Map the prices with the user balance (to check if enabled or not)

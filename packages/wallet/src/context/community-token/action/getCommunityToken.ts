@@ -2,7 +2,7 @@
 
 import { addresses } from "@/context/common/blockchain/addresses";
 import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
-import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
+import { frakChainPocClient } from "@/context/common/blockchain/provider";
 import { unstable_cache } from "next/cache";
 import { readContract } from "viem/actions";
 
@@ -13,7 +13,7 @@ import { readContract } from "viem/actions";
 async function _isCommunityTokenForContentEnabled({
     contentId,
 }: { contentId: number }) {
-    return await readContract(arbSepoliaPocClient, {
+    return await readContract(frakChainPocClient, {
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "isEnabled",

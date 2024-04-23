@@ -3,7 +3,7 @@
 import { addresses } from "@/context/common/blockchain/addresses";
 import { erc6909Transfer } from "@/context/common/blockchain/event-abi";
 import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
-import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
+import { frakChainPocClient } from "@/context/common/blockchain/provider";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { unstable_cache } from "next/cache";
 import { unique } from "radash";
@@ -17,7 +17,7 @@ import { getLogs, multicall, readContract } from "viem/actions";
 async function _isCommunityTokenForContentEnabled({
     contentId,
 }: { contentId: number }) {
-    return await readContract(arbSepoliaPocClient, {
+    return await readContract(frakChainPocClient, {
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "isEnabled",
@@ -50,7 +50,7 @@ async function _isCommunityTokenEnabledForWallet({
     }
 
     // Check if that's enabled for the wallet
-    const communityTokenBalance = await readContract(arbSepoliaPocClient, {
+    const communityTokenBalance = await readContract(frakChainPocClient, {
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "balanceOf",
@@ -77,7 +77,7 @@ export async function getCommunityTokensForWallet({
     wallet,
 }: { wallet: Address }): Promise<CommunityTokenBalance[]> {
     // Get all the transfer to logs
-    const transferToLogs = await getLogs(arbSepoliaPocClient, {
+    const transferToLogs = await getLogs(frakChainPocClient, {
         address: addresses.communityToken,
         event: erc6909Transfer,
         args: { to: wallet },
@@ -89,7 +89,7 @@ export async function getCommunityTokensForWallet({
     const tokenIds = unique(transferToLogs.map((log) => log.args.id));
 
     // Then, for each logs, check if the user has a balance of this token
-    const balances = await multicall(arbSepoliaPocClient, {
+    const balances = await multicall(frakChainPocClient, {
         allowFailure: false,
         contracts: tokenIds.map(
             (id) =>

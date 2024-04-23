@@ -1,4 +1,4 @@
-import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
+import { frakChainPocClient } from "@/context/common/blockchain/provider";
 import {
     getAccountAddress,
     getAccountInitCode,
@@ -50,7 +50,7 @@ async function predicateSmartWalletAddress({
 }) {
     const authenticatorIdHash = keccak256(toHex(authenticatorId));
     return getAccountAddress({
-        client: arbSepoliaPocClient,
+        client: frakChainPocClient,
         initCodeProvider: () =>
             getAccountInitCode({
                 authenticatorIdHash,

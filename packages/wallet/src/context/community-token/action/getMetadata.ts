@@ -2,7 +2,7 @@
 
 import { addresses } from "@/context/common/blockchain/addresses";
 import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
-import { arbSepoliaPocClient } from "@/context/common/blockchain/provider";
+import { frakChainPocClient } from "@/context/common/blockchain/provider";
 import { isRunningLocally } from "@/context/common/env";
 import { unstable_cache } from "next/cache";
 import { readContract } from "viem/actions";
@@ -24,7 +24,7 @@ async function _getNftMetadata({
     tokenId: bigint;
 }) {
     // Get the metadata url
-    let metadataUrl = await readContract(arbSepoliaPocClient, {
+    let metadataUrl = await readContract(frakChainPocClient, {
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "tokenURI",

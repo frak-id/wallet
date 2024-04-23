@@ -1,5 +1,6 @@
 "use client";
 
+import { frakChainId } from "@/context/common/blockchain/provider";
 import { EnforceChain } from "@/module/chain/component/EnforceChain";
 import { isPaywallRedirectingAtom } from "@/module/paywall/atoms/paywall";
 import { paywallContextAtom } from "@/module/paywall/atoms/paywallContext";
@@ -7,7 +8,6 @@ import { PaywallUnlock } from "@/module/paywall/component/Unlock";
 import { useAtomValue } from "jotai/index";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { arbitrumSepolia } from "viem/chains";
 
 export default function UnlockPage() {
     const router = useRouter();
@@ -26,7 +26,7 @@ export default function UnlockPage() {
     }
 
     return (
-        <EnforceChain targetChainId={arbitrumSepolia.id} silentSwitch={true}>
+        <EnforceChain targetChainId={frakChainId} silentSwitch={true}>
             <PaywallUnlock context={paywallContext} />
         </EnforceChain>
     );

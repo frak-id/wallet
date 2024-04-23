@@ -1,3 +1,4 @@
+import { frakChainId } from "@/context/common/blockchain/provider";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useAAClients } from "@/module/common/hook/useAAClients";
@@ -22,7 +23,6 @@ import { useAtomValue } from "jotai/index";
 import { waitForUserOperationReceipt } from "permissionless";
 import { useCallback, useEffect } from "react";
 import { waitForTransactionReceipt } from "viem/actions";
-import { arbitrumSepolia } from "viem/chains";
 
 type OnListenToArticleUnlockStatus = IFrameRequestResolver<
     Extract<
@@ -37,7 +37,7 @@ type OnListenToArticleUnlockStatus = IFrameRequestResolver<
 export function useArticleUnlockStatusListener() {
     // Fetch the AA transports
     const { viemClient, bundlerClient } = useAAClients({
-        chainId: arbitrumSepolia.id,
+        chainId: frakChainId,
     });
 
     /**
