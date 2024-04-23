@@ -1,5 +1,6 @@
 import { Config } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
+import { getWalletUrl } from "./utils";
 
 /**
  * Define the app wide configs
@@ -23,11 +24,8 @@ export function ConfigStack({ stack }: StackContext) {
         "WALLETCONNECT_PROJECT_ID"
     );
 
-    const frakWalletUrl = new Config.Parameter(stack, "FRAK_WALLET_URL", {
-        value:
-            stack.stage === "prod"
-                ? "https://nexus.frak.id"
-                : "http://localhost:3000",
+    const nexusUrl = new Config.Parameter(stack, "NEXUS_WALLET_URL", {
+        value: getWalletUrl(stack),
     });
 
     return {
@@ -39,7 +37,7 @@ export function ConfigStack({ stack }: StackContext) {
         zeroDevApiKey,
         airdropPrivateKey,
         adminPassword,
-        frakWalletUrl,
+        nexusUrl,
         walletconnectProjectId,
     };
 }
