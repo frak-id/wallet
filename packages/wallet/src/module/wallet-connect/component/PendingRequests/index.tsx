@@ -4,6 +4,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/module/common/component/Accordion";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
@@ -14,7 +15,6 @@ import {
 } from "@/module/wallet-connect/atoms/events";
 import styles from "@/module/wallet-connect/component/PendingRequests/index.module.css";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
-import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
 import { useSetAtom } from "jotai";
 import { useAtomValue } from "jotai/index";
 import { ChevronRight, Clock } from "lucide-react";

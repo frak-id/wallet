@@ -8,6 +8,8 @@ import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
 import { useAtom, useAtomValue } from "jotai/index";
+import { CloudUpload } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import styles from "./index.module.css";
@@ -43,7 +45,17 @@ export function Login() {
     return (
         <>
             <Back href={"/register"}>Account creation</Back>
-            <Grid className={styles.login__grid} footer={<LoginList />}>
+            <Grid
+                className={styles.login__grid}
+                footer={
+                    <>
+                        <Link href={"/recovery"} className={styles.login__link}>
+                            <CloudUpload /> Recover wallet from file
+                        </Link>
+                        <LoginList />
+                    </>
+                }
+            >
                 <AuthFingerprint action={triggerAction} disabled={disabled}>
                     Recover your <strong>NEXUS</strong>
                 </AuthFingerprint>

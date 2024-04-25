@@ -1,0 +1,19 @@
+.step1__uploader {
+    border-color: var(--frak-color-white) !important;
+}
+
+.step1__uploader span {
+    color: var(--frak-color-white) !important;
+}
+
+.step1__uploader svg {
+    display: none;
+}
+
+.step1__uploader > input + div {
+    background: var(--frak-color-tangaroa) !important;
+    top: -2px;
+    right: -2px;
+    left: -2px;
+    bottom: -2px;
+}

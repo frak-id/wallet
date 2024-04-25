@@ -1,0 +1,13 @@
+.step5__buttonAll {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+    text-decoration: underline;
+}
+
+.step5__button {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 10px;
+}

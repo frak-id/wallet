@@ -1,12 +1,10 @@
-import { AccordionRecoveryItem } from "@/module/recovery-setup/component/AccordionItem";
-import { getStatusCurrentStep } from "@/module/recovery-setup/component/Setup";
+import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { ButtonSetupChain } from "@/module/recovery-setup/component/Setup/ButtonSetupChain";
 import {
     recoveryDoneStepAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { useAtom } from "jotai";
-import { useAtomValue } from "jotai/index";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useConfig } from "wagmi";
 import styles from "./Step4.module.css";
@@ -14,8 +12,8 @@ import styles from "./Step4.module.css";
 const ACTUAL_STEP = 4;
 
 export function Step4() {
-    // Get or set the current step
-    const [step, setStep] = useAtom(recoveryStepAtom);
+    // Set the current step
+    const setStep = useSetAtom(recoveryStepAtom);
 
     // Get the done steps
     const doneSteps = useAtomValue(recoveryDoneStepAtom);
@@ -30,9 +28,8 @@ export function Step4() {
 
     return (
         <AccordionRecoveryItem
-            item={`step-${ACTUAL_STEP}`}
-            trigger={<span>{ACTUAL_STEP}. Enable recovery on-chain</span>}
-            status={getStatusCurrentStep(ACTUAL_STEP, step)}
+            actualStep={ACTUAL_STEP}
+            title={"Enable recovery on-chain"}
         >
             {chains.map((chain) => (
                 <ButtonSetupChain

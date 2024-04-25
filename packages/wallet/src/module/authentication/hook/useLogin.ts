@@ -71,6 +71,8 @@ export function useLogin() {
 
             // Set the session
             setSession({ wallet });
+
+            return { wallet };
         },
     });
 

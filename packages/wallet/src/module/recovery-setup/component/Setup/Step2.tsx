@@ -1,6 +1,5 @@
 import { sessionAtom } from "@/module/common/atoms/session";
-import { AccordionRecoveryItem } from "@/module/recovery-setup/component/AccordionItem";
-import { getStatusCurrentStep } from "@/module/recovery-setup/component/Setup";
+import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
 import {
     recoveryOptionsAtom,
@@ -57,9 +56,8 @@ export function Step2() {
     return (
         <>
             <AccordionRecoveryItem
-                item={`step-${ACTUAL_STEP}`}
-                trigger={<span>{ACTUAL_STEP}. Generate recovery data</span>}
-                status={getStatusCurrentStep(ACTUAL_STEP, step)}
+                actualStep={ACTUAL_STEP}
+                title={"Generate recovery data"}
             >
                 <p>
                     Generating recovery data
