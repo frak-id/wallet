@@ -58,6 +58,27 @@ const webAuthNValidatorEnablingLayout = [
 ] as const;
 
 /**
+ * Build the validator enable data
+ * @param authenticatorIdHash
+ * @param signerPubKey
+ */
+export function getValidatorEnableData({
+    authenticatorIdHash,
+    signerPubKey,
+}: {
+    authenticatorIdHash: Hex;
+    signerPubKey: P256PubKey;
+}): Hex {
+    if (!signerPubKey) throw new Error("Owner account not found");
+
+    return encodeAbiParameters(webAuthNValidatorEnablingLayout, [
+        authenticatorIdHash,
+        BigInt(signerPubKey.x),
+        BigInt(signerPubKey.y),
+    ]);
+}
+
+/**
  * Get the account initialization code for a kernel smart account
  * @param authenticatorId
  * @param signerPubKey
@@ -69,12 +90,10 @@ export function getAccountInitCode({
     authenticatorIdHash: Hex;
     signerPubKey: P256PubKey;
 }): Hex {
-    if (!signerPubKey) throw new Error("Owner account not found");
-
-    const encodedPublicKey = encodeAbiParameters(
-        webAuthNValidatorEnablingLayout,
-        [authenticatorIdHash, BigInt(signerPubKey.x), BigInt(signerPubKey.y)]
-    );
+    const encodedPublicKey = getValidatorEnableData({
+        authenticatorIdHash,
+        signerPubKey,
+    });
 
     // Build the account initialization data
     const initialisationData = encodeFunctionData({

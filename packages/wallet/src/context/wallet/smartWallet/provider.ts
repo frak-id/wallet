@@ -8,14 +8,15 @@ import {
     availableChains,
 } from "@/context/common/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/sign";
-import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
+import { toNexusValidator } from "@/context/wallet/smartWallet/toNexusValidator";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { jotaiStore } from "@/module/common/atoms/store";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { startAuthentication } from "@simplewebauthn/browser";
+import { createKernelAccount } from "@zerodev/sdk";
 import {
-    ENTRYPOINT_ADDRESS_V06,
+    ENTRYPOINT_ADDRESS_V07,
     type SmartAccountClient,
     createSmartAccountClient,
 } from "permissionless";
@@ -189,8 +190,8 @@ async function buildSmartAccount<
         },
     });
 
-    // Get the smart wallet client
-    const smartAccount = await nexusSmartAccount(viemClient, {
+    // Build our validator
+    const sudoValidator = await toNexusValidator(viemClient, {
         authenticatorId: wallet.authenticatorId,
         signerPubKey: wallet.publicKey,
         signatureProvider: async (message) => {
@@ -206,7 +207,16 @@ async function buildSmartAccount<
             // Perform the verification of the signature
             return parseWebAuthNAuthentication(authenticationResponse);
         },
-        preDeterminedAccountAddress: wallet.address,
+        entryPoint: ENTRYPOINT_ADDRESS_V07,
+    });
+
+    // Get the smart wallet client
+    const smartAccount = await createKernelAccount(viemClient, {
+        entryPoint: ENTRYPOINT_ADDRESS_V07,
+        plugins: {
+            sudo: sudoValidator,
+        },
+        // preDeterminedAccountAddress: wallet.address,
     });
 
     // Get the bundler and paymaster clients
@@ -216,7 +226,7 @@ async function buildSmartAccount<
     // Build the smart wallet client
     const client = createSmartAccountClient({
         account: smartAccount,
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
+        entryPoint: ENTRYPOINT_ADDRESS_V07,
         chain: viemClient.chain,
         bundlerTransport,
         // Only add a middleware if the paymaster client is available

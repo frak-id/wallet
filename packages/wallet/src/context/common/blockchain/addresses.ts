@@ -12,6 +12,10 @@ export const addresses = {
  * The kernel related addresses
  */
 export const kernelAddresses = {
+    v3: {
+        // Validators
+        multiWebAuthnValidator: "0x93228CA325349FC7d8C397bECc0515e370aa4555",
+    },
     // Recovery
     multiWebAuthnRecovery: "0x67236B8AAF4B32d2D3269e088B1d43aef7736ab9",
     // Validators

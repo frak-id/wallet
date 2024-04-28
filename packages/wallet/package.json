@@ -35,6 +35,7 @@
     "@walletconnect/core": "^2.12.2",
     "@walletconnect/utils": "^2.12.2",
     "@walletconnect/web3wallet": "^1.11.2",
+    "@zerodev/sdk": "^5.2.10",
     "dexie": "^4.0.4",
     "dexie-react-hooks": "^1.1.7",
     "humanize-duration": "^3.32.0",
