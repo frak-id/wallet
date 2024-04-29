@@ -1,13 +1,17 @@
-.step5__buttonAll {
+.step5__pushPasskey {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 2px solid var(--frak-color-grayText);
+}
+
+.step5__buttonPush {
     display: flex;
     align-items: center;
     gap: 5px;
-    margin-bottom: 10px;
-    text-decoration: underline;
+    margin: 0 auto;
 }
 
-.step5__button {
-    width: 100%;
-    text-align: left;
-    margin-bottom: 10px;
+.step5__buttonPush:disabled {
+    color: var(--frak-color-grayText);
+    cursor: not-allowed;
 }

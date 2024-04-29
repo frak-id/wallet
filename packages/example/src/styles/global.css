@@ -24,6 +24,7 @@ ul {
 }
 
 .dotsLoading {
+    font-family: Arial, sans-serif;
     display: inline-block;
     clip-path: inset(0 3ch 0 0);
     animation: l 1s steps(4) infinite;

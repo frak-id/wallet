@@ -135,7 +135,8 @@ export async function nexusSmartAccount<
         : true;
 
     // The account address to use
-    const accountAddress = preDeterminedAccountAddress ?? computedAccountAddress;
+    const accountAddress =
+        preDeterminedAccountAddress ?? computedAccountAddress;
 
     // Helper to check if the smart account is already deployed (with caching)
     let smartAccountDeployed = false;

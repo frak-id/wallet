@@ -1,17 +1,18 @@
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
-import { ButtonRecoverForChain } from "@/module/recovery/component/Recover/ButtonRecoverForChain";
+import { RecoverChainStatus } from "@/module/recovery/component/Recover/RecoverChainStatus";
 import { useAvailableChainsForRecovery } from "@/module/recovery/hook/useAvailableChainsForRecovery";
 import {
     recoveryDoneStepAtom,
+    recoveryExecuteOnChainInProgressAtom,
     recoveryFileContentAtom,
     recoveryGuardianAccountAtom,
     recoveryNewWalletAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import type { RecoveryFileContent } from "@/types/Recovery";
-import { useAtomValue, useSetAtom } from "jotai";
-import { ArrowUp } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { SendHorizontal } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import styles from "./Step5.module.css";
 
 const ACTUAL_STEP = 5;
@@ -23,7 +24,7 @@ export function Step5() {
     return (
         <AccordionRecoveryItem
             actualStep={ACTUAL_STEP}
-            title={"Enable recovery on-chain"}
+            title={"Execute recovery"}
         >
             {recoveryFileContent && (
                 <TriggerRecovery recoveryFileContent={recoveryFileContent} />
@@ -35,11 +36,13 @@ export function Step5() {
 function TriggerRecovery({
     recoveryFileContent,
 }: { recoveryFileContent: RecoveryFileContent }) {
-    // Buttons ref to trigger the recovery
-    const buttonsRef = useRef<Array<HTMLButtonElement | null>>([]);
-
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
+
+    // Set the execute on chain in progress
+    const [executeOnChainInProgress, setExecuteOnChainInProgress] = useAtom(
+        recoveryExecuteOnChainInProgressAtom
+    );
 
     // Set the guardian account
     const guardianAccount = useAtomValue(recoveryGuardianAccountAtom);
@@ -74,7 +77,7 @@ function TriggerRecovery({
         if (doneSteps === availableChainsToRecover?.length) {
             setTimeout(() => {
                 setStep(ACTUAL_STEP + 1);
-            }, 500);
+            }, 2000);
         }
     }, [doneSteps, setStep, availableChainsToRecover?.length]);
 
@@ -97,26 +100,9 @@ function TriggerRecovery({
                 <p>No available chains for recovery</p>
             )}
 
-            {availableChains && availableChains.length > 0 && (
-                <button
-                    type={"button"}
-                    className={`button ${styles.step5__buttonAll}`}
-                    onClick={() => {
-                        for (const el of buttonsRef.current) {
-                            el?.click();
-                        }
-                    }}
-                >
-                    <ArrowUp /> Recover all chains
-                </button>
-            )}
-
             {availableChains?.map(
-                ({ chainId, available, alreadyRecovered }, index) => (
-                    <ButtonRecoverForChain
-                        ref={(element: HTMLButtonElement) => {
-                            buttonsRef.current[index] = element;
-                        }}
+                ({ chainId, available, alreadyRecovered }) => (
+                    <RecoverChainStatus
                         key={chainId}
                         recoveryFileContent={recoveryFileContent}
                         guardianAccount={guardianAccount}
@@ -124,10 +110,25 @@ function TriggerRecovery({
                         available={available}
                         alreadyRecovered={alreadyRecovered}
                         targetWallet={newWallet}
-                        className={styles.step5__button}
                     />
                 )
             )}
+
+            {availableChainsToRecover &&
+                availableChainsToRecover.length > 0 && (
+                    <p className={styles.step5__pushPasskey}>
+                        <button
+                            type={"button"}
+                            className={`button ${styles.step5__buttonPush}`}
+                            disabled={executeOnChainInProgress > 0}
+                            onClick={() =>
+                                setExecuteOnChainInProgress((prev) => prev + 1)
+                            }
+                        >
+                            Push new passkey on-chain <SendHorizontal />
+                        </button>
+                    </p>
+                )}
         </>
     );
 }

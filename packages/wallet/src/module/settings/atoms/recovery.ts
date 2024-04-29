@@ -47,6 +47,11 @@ export const recoveryGuardianAccountAtom = atom<LocalAccount<string> | null>(
 export const recoveryNewWalletAtom = atom<WebAuthNWallet | null>(null);
 
 /**
+ * Atom to keep track of the execute on chain in progress
+ */
+export const recoveryExecuteOnChainInProgressAtom = atom<number>(0);
+
+/**
  * Atom to reset the recovery
  */
 export const recoveryResetAtom = atom(null, (_get, set) => {
@@ -57,4 +62,5 @@ export const recoveryResetAtom = atom(null, (_get, set) => {
     set(recoveryFileContentAtom, null);
     set(recoveryGuardianAccountAtom, null);
     set(recoveryNewWalletAtom, null);
+    set(recoveryExecuteOnChainInProgressAtom, 0);
 });
