@@ -1,12 +1,14 @@
 import { getArticlePricesForUser } from "@/context/paywall/action/getPrices";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
+import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
 import { useAtomValue } from "jotai";
 import { useCallback } from "react";
+import { toHex } from "viem";
 
 type OnGetArticleUnlockOptions = IFrameRequestResolver<
     Extract<
@@ -21,6 +23,13 @@ type OnGetArticleUnlockOptions = IFrameRequestResolver<
 export function useGetArticleUnlockOptionsListener() {
     // Fetch the current user session
     const session = useAtomValue(sessionAtom);
+
+    /**
+     * Listen to the current session FRK balance if needed
+     */
+    const { rawBalance, refreshBalance } = useFrkBalance({
+        wallet: session?.wallet?.address,
+    });
 
     /**
      * The function that will be called when the unlock options for an article is requested
@@ -46,10 +55,16 @@ export function useGetArticleUnlockOptionsListener() {
                 address: session?.wallet?.address ?? undefined,
             });
 
+            // Fetch the balance if not already here
+            const balance = rawBalance ?? (await refreshBalance()).data;
+
             // Send the prices
-            await emitter({ prices: prices });
+            await emitter({
+                prices: prices,
+                frkBalanceAsHex: balance ? toHex(BigInt(balance)) : undefined,
+            });
         },
-        [session?.wallet?.address]
+        [session?.wallet?.address, rawBalance, refreshBalance]
     );
 
     return { onGetArticleUnlockOptions };
