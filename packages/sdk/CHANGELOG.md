@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.8
+
+### Patch Changes
+
+- [`8d4783b`](https://github.com/frak-id/wallet/commit/8d4783b0ba0143a720bfd765711932fa634f5ce4) Thanks [@KONFeature](https://github.com/KONFeature)! - Move `contentId` away from global config in favor of per hook specification
+
 ## 0.0.7
 
 ### Patch Changes
