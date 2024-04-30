@@ -27,11 +27,13 @@ export function ReadArticle({
     // The unlock options for the article
     const { data: unlockOptions } = useArticleUnlockOptions({
         articleId: article.id as Hex,
+        contentId: article.contentId as Hex,
     });
 
     // The unlock status
     const { data: articleUnlockStatus } = useArticleUnlockStatus({
         articleId: article.id as Hex,
+        contentId: article.contentId as Hex,
     });
 
     // The user status
@@ -57,6 +59,7 @@ export function ReadArticle({
         <>
             {injecting > 0 && !isFree && (
                 <InjectUnlockComponent
+                    balanceHex={unlockOptions?.frkBalanceAsHex}
                     prices={unlockOptions?.prices ?? []}
                     unlockStatus={articleUnlockStatus}
                     walletStatus={walletStatus}

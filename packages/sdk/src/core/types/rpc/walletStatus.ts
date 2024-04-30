@@ -1,4 +1,4 @@
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 
 export type WalletStatusReturnType = Readonly<
     WalletConnected | WalletNotConnected
@@ -7,8 +7,6 @@ export type WalletStatusReturnType = Readonly<
 export type WalletConnected = {
     key: "connected";
     wallet: Address;
-    // The frk balance in wei
-    frkBalanceAsHex: Hex;
 };
 
 export type WalletNotConnected = {

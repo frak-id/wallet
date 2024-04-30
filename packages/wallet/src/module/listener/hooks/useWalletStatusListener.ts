@@ -1,7 +1,6 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { walletListenerEmitterAtom } from "@/module/listener/atoms/walletListener";
-import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import type { Session } from "@/types/Session";
 import type {
     ExtractedParametersFromRpc,
@@ -11,7 +10,6 @@ import type {
 import { useAtom } from "jotai";
 import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect } from "react";
-import { toHex } from "viem";
 
 type OnListenToWallet = IFrameRequestResolver<
     Extract<
@@ -35,25 +33,16 @@ export function useWalletStatusListener() {
     const session = useAtomValue(sessionAtom);
 
     /**
-     * Listen to the current session FRK balance if needed
-     */
-    const { rawBalance: walletFrkBalance, refreshBalance } = useFrkBalance({
-        wallet: session?.wallet?.address,
-    });
-
-    /**
      * The function that will be called when a wallet status is requested
      * @param _
      * @param emitter
      */
     const onWalletListenRequest: OnListenToWallet = useCallback(
         async (_, emitter) => {
-            // Trigger a balance refresh
-            refreshBalance();
             // Save our emitter, this will trigger session and balance fetching
             setListener({ emitter });
         },
-        [refreshBalance, setListener]
+        [setListener]
     );
 
     /**
@@ -64,16 +53,15 @@ export function useWalletStatusListener() {
         if (!listener) return;
 
         // Build the wallet status and emit it
-        const walletStatus = buildWalletStatus(session, walletFrkBalance);
+        const walletStatus = buildWalletStatus(session);
         listener.emitter(walletStatus);
-    }, [listener, session, walletFrkBalance]);
+    }, [listener, session]);
 
     /**
      * Build the wallet status
      */
     function buildWalletStatus(
-        session?: Session | null,
-        walletFrkBalance?: bigint
+        session?: Session | null
     ): WalletStatusReturnType {
         const wallet = session?.wallet?.address;
 
@@ -88,9 +76,6 @@ export function useWalletStatusListener() {
         return {
             key: "connected",
             wallet,
-            frkBalanceAsHex: toHex(
-                walletFrkBalance ? BigInt(walletFrkBalance) : 0n
-            ),
         };
     }
 

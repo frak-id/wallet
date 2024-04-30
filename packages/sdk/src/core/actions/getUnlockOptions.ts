@@ -6,19 +6,21 @@ import type { NexusClient } from "../types/client";
  */
 export type GetUnlockOptionsParams = {
     articleId: Hex;
+    contentId: Hex;
 };
 
 /**
  * Function used to fetch the unlock option for the given client
  * @param client
  * @param articleId
+ * @param contentId
  */
 export function getArticleUnlockOptions(
     client: NexusClient,
-    { articleId }: GetUnlockOptionsParams
+    { articleId, contentId }: GetUnlockOptionsParams
 ) {
     return client.request({
         method: "frak_getArticleUnlockOptions",
-        params: [client.config.contentId, articleId],
+        params: [contentId, articleId],
     });
 }

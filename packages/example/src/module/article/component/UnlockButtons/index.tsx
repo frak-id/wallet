@@ -19,11 +19,13 @@ import { formatEther } from "viem";
 export const cssRaw = css;
 
 export function UnlockButtons({
+    balanceHex,
     prices,
     unlockStatus,
     walletStatus,
     article,
 }: {
+    balanceHex?: Hex;
     prices: UnlockOptionsReturnType["prices"];
     unlockStatus: ArticleUnlockStatusQueryReturnType | undefined | null;
     walletStatus: WalletStatusQueryReturnType | undefined;
@@ -39,8 +41,8 @@ export function UnlockButtons({
     const isInProgress = isLoading || unlockStatus?.status === "in-progress";
 
     const balance =
-        walletStatus?.key === "connected" && walletStatus?.frkBalanceAsHex
-            ? formatEther(BigInt(walletStatus.frkBalanceAsHex))
+        walletStatus?.key === "connected" && balanceHex
+            ? formatEther(BigInt(balanceHex))
             : undefined;
 
     const { data: unlockUrl } = useUnlockRedirectUrl({ article, articlePrice });
@@ -102,6 +104,7 @@ export function UnlockButtons({
                             {isLocked && (
                                 <LockedWalletStatusInfo
                                     walletStatus={walletStatus}
+                                    balanceHex={balanceHex}
                                 />
                             )}
                             {unlockStatus?.key === "valid" && (
@@ -152,11 +155,13 @@ export function UnlockButtons({
 /**
  * Small component for the wallet status text
  * @param walletStatus
+ * @param balanceHex
  * @constructor
  */
 function LockedWalletStatusInfo({
     walletStatus,
-}: { walletStatus: WalletStatusQueryReturnType | undefined }) {
+    balanceHex,
+}: { walletStatus?: WalletStatusQueryReturnType; balanceHex?: Hex }) {
     if (!walletStatus || walletStatus.key === "waiting-response") {
         return <>Fetching your current wallet...</>;
     }
@@ -171,7 +176,9 @@ function LockedWalletStatusInfo({
         <>
             You are logged in with {formatHash(walletStatus?.wallet)}
             <br />
-            You have {formatEther(BigInt(walletStatus.frkBalanceAsHex))} pFRK
+            {balanceHex === undefined
+                ? "Fetching your balance..."
+                : `You have ${formatEther(BigInt(balanceHex))} pFRK`}
         </>
     );
 }
@@ -201,6 +208,8 @@ const useUnlockRedirectUrl = ({
                 articleUrl: `${window.location.origin}/article?id=${article.id}`,
                 redirectUrl: `${window.location.origin}/article?id=${article.id}`,
                 provider: article.provider,
+                contentId: article.contentId as Hex,
+                contentTitle: "Demo article",
             });
         },
         enabled: !!article && !!articlePrice,

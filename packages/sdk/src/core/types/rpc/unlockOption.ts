@@ -4,6 +4,10 @@ import type { Hex } from "viem";
  * The response to the get unlock options response
  */
 export type UnlockOptionsReturnType = Readonly<{
+    // The current user frk balance in wei
+    frkBalanceAsHex?: Hex;
+
+    // The prices to unlock the article
     prices: {
         // The price index
         index: number;

@@ -9,10 +9,7 @@ import {
     redirectRequestKeyProvider,
 } from "../utils/compression/redirectKeyProvider";
 
-export type GetStartUnlockUrlParams = Omit<
-    StartArticleUnlockParams,
-    "contentId" | "contentTitle"
->;
+export type GetStartUnlockUrlParams = StartArticleUnlockParams;
 
 /**
  * Function used to build the unlock URL for a given article
@@ -27,11 +24,7 @@ export async function getStartArticleUnlockUrl(
     const { compressed, compressedHash } = await hashAndCompressData(
         {
             method: "frak_startArticleUnlock",
-            params: {
-                ...params,
-                contentId: config.contentId,
-                contentTitle: config.contentTitle,
-            },
+            params: params,
         },
         redirectRequestKeyProvider
     );

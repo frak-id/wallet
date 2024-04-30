@@ -8,6 +8,7 @@ import type {
 } from "@frak-labs/nexus-sdk/react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import type { Hex } from "viem";
 import { cssRaw } from "../UnlockButtons";
 
 const selectorsLeMonde = {
@@ -63,10 +64,12 @@ function findSelector(
 
 export function InjectUnlockComponent({
     prices,
+    balanceHex,
     unlockStatus,
     walletStatus,
     article,
 }: {
+    balanceHex: Hex | undefined;
     prices: UnlockOptionsReturnType["prices"];
     unlockStatus: ArticleUnlockStatusQueryReturnType | undefined | null;
     walletStatus: WalletStatusQueryReturnType | undefined;
@@ -148,6 +151,7 @@ export function InjectUnlockComponent({
                 {createPortal(
                     <UnlockButtons
                         prices={prices}
+                        balanceHex={balanceHex}
                         unlockStatus={unlockStatus}
                         walletStatus={walletStatus}
                         article={article}

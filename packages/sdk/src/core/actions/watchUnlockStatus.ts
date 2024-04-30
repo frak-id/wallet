@@ -7,23 +7,25 @@ import type { ArticleUnlockStatusReturnType } from "../types/rpc/unlockStatus";
  */
 export type WatchUnlockStatusParams = {
     articleId: Hex;
+    contentId: Hex;
 };
 
 /**
  * Function used to watch a current article unlock status
  * @param client
  * @param articleId
+ * @param contentId
  * @param callback
  */
 export function watchUnlockStatus(
     client: NexusClient,
-    { articleId }: WatchUnlockStatusParams,
+    { articleId, contentId }: WatchUnlockStatusParams,
     callback: (status: ArticleUnlockStatusReturnType) => void
 ) {
     return client.listenerRequest(
         {
             method: "frak_listenToArticleUnlockStatus",
-            params: [client.config.contentId, articleId],
+            params: [contentId, articleId],
         },
         callback
     );
