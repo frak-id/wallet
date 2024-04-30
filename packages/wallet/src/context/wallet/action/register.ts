@@ -70,17 +70,14 @@ export async function validateRegistration({
         credentialBackedUp,
     } = verification.registrationInfo;
 
-    // Create the authenticator for this user
-    const id = bufferToBase64URLString(credentialID);
-
     // Format the wallet
     const wallet = await formatWallet({
-        authenticatorId: id,
+        authenticatorId: credentialID,
         publicKey,
         previousWallet,
     });
     await authenticatorRepository.createAuthenticator({
-        _id: id,
+        _id: credentialID,
         smartWalletAddress: wallet.address,
         userAgent,
         credentialPublicKey: bufferToBase64URLString(credentialPublicKey),

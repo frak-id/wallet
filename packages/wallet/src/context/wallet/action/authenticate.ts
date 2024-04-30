@@ -39,9 +39,7 @@ export async function validateAuthentication({
         expectedRPID: rpId,
         authenticator: {
             counter: authenticator.counter,
-            credentialID: new Uint8Array(
-                base64URLStringToBuffer(authenticator._id)
-            ),
+            credentialID: authenticator._id,
             credentialPublicKey: new Uint8Array(
                 base64URLStringToBuffer(authenticator.credentialPublicKey)
             ),
