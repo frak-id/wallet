@@ -17,7 +17,10 @@ export type ArticleUnlockStatusQueryReturnType =
 /**
  * Hooks used to listen to the current article unlock status
  */
-export function useArticleUnlockStatus({ articleId }: WatchUnlockStatusParams) {
+export function useArticleUnlockStatus({
+    articleId,
+    contentId,
+}: WatchUnlockStatusParams) {
     const queryClient = useQueryClient();
     const client = useNexusClient();
 
@@ -27,31 +30,43 @@ export function useArticleUnlockStatus({ articleId }: WatchUnlockStatusParams) {
     const newStatusUpdated = useCallback(
         (event: ArticleUnlockStatusReturnType) => {
             queryClient.setQueryData(
-                ["articleUnlockStatusListener", articleId ?? "no-article-id"],
+                [
+                    "articleUnlockStatusListener",
+                    articleId ?? "no-article-id",
+                    contentId ?? "no-contentId-id",
+                ],
                 event
             );
         },
-        [articleId, queryClient]
+        [articleId, contentId, queryClient]
     );
 
     /**
      * Setup the query listener
      */
     return useQuery<ArticleUnlockStatusQueryReturnType | null>({
-        queryKey: ["articleUnlockStatusListener", articleId ?? "no-article-id"],
+        queryKey: [
+            "articleUnlockStatusListener",
+            articleId ?? "no-article-id",
+            contentId ?? "no-contentId-id",
+        ],
         gcTime: 0,
         queryFn: async () => {
-            if (!articleId) {
+            if (!(articleId && contentId)) {
                 return null;
             }
             // Setup the listener
-            await watchUnlockStatus(client, { articleId }, newStatusUpdated);
+            await watchUnlockStatus(
+                client,
+                { articleId, contentId },
+                newStatusUpdated
+            );
             // Wait for the first response
             return {
                 status: "waiting-response",
                 key: "waiting-response",
             };
         },
-        enabled: !!articleId,
+        enabled: !!articleId && !!contentId,
     });
 }

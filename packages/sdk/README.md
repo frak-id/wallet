@@ -30,10 +30,11 @@ import type { NexusClient, NexusWalletSdkConfig } from "@frak-labs/nexus-sdk/cor
 export const nexusConfig: NexusWalletSdkConfig = {
     // The current url for the wallet sdk
     walletUrl: "https://nexus-dev.frak.id",
-    // The content id on which this sdk will be used
-    contentId: "0xdeadbeef",
-    // The content title, this will be displayed to the user during a few registration steps
-    contentTitle: "My dApp content title"
+    // The name of your dapp
+    metadata: {
+        // Your app name
+        name: string,
+    },
 }
 
 // Create the iFrame and the associated NexusClient

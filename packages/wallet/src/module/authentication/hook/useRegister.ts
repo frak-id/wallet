@@ -41,7 +41,7 @@ export function useRegister() {
 
             // Get the registration options
             const registrationOptions = await getRegisterOptions({
-                excludeCredentials
+                excludeCredentials,
             });
 
             // Start the registration
