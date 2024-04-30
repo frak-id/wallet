@@ -4,6 +4,7 @@ import { usePerformRecoveryOnChain } from "@/module/recovery/hook/usePerformReco
 import {
     recoveryDoneStepAtom,
     recoveryExecuteOnChainInProgressAtom,
+    recoveryTriggerExecuteOnChainAtom,
 } from "@/module/settings/atoms/recovery";
 import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
 import type { RecoveryFileContent } from "@/types/Recovery";
@@ -33,7 +34,12 @@ export function RecoverChainStatus({
     targetWallet,
 }: RecoverChainStatusProps) {
     // Get in progress current count
-    const executeOnChainInProgress = useAtomValue(
+    const triggerExecuteOnChain = useAtomValue(
+        recoveryTriggerExecuteOnChainAtom
+    );
+
+    // Set the in progress array
+    const setExecuteOnChainInProgress = useSetAtom(
         recoveryExecuteOnChainInProgressAtom
     );
 
@@ -50,18 +56,27 @@ export function RecoverChainStatus({
 
     const doRecover = useCallback(async () => {
         // Perform the recovery
-        const txHash = await performRecoveryAsync({
-            file: recoveryFileContent,
-            recoveryAccount: guardianAccount,
-            newWallet: targetWallet,
-        });
-        txHash && setDoneSteps((count) => count + 1);
+        try {
+            // Add to the in progress array
+            setExecuteOnChainInProgress((prev) => [...prev, true]);
+            const txHash = await performRecoveryAsync({
+                file: recoveryFileContent,
+                recoveryAccount: guardianAccount,
+                newWallet: targetWallet,
+            });
+            txHash && setDoneSteps((count) => count + 1);
+        } catch (error) {
+            console.error(error);
+            // Remove from the in progress array, to be able to retry
+            setExecuteOnChainInProgress((prev) => prev.slice(0, -1));
+        }
     }, [
         performRecoveryAsync,
         recoveryFileContent,
         guardianAccount,
         targetWallet,
         setDoneSteps,
+        setExecuteOnChainInProgress,
     ]);
 
     const currentStatus = useMemo(() => {
@@ -104,7 +119,7 @@ export function RecoverChainStatus({
 
     useEffect(() => {
         if (
-            executeOnChainInProgress === 0 ||
+            triggerExecuteOnChain === 0 ||
             alreadyRecovered ||
             isSuccess ||
             isPending
@@ -112,7 +127,7 @@ export function RecoverChainStatus({
             return;
         doRecover();
     }, [
-        executeOnChainInProgress,
+        triggerExecuteOnChain,
         doRecover,
         alreadyRecovered,
         isSuccess,

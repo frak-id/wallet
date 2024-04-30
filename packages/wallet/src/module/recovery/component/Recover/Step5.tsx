@@ -8,9 +8,10 @@ import {
     recoveryGuardianAccountAtom,
     recoveryNewWalletAtom,
     recoveryStepAtom,
+    recoveryTriggerExecuteOnChainAtom,
 } from "@/module/settings/atoms/recovery";
 import type { RecoveryFileContent } from "@/types/Recovery";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { SendHorizontal } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import styles from "./Step5.module.css";
@@ -39,8 +40,13 @@ function TriggerRecovery({
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
 
-    // Set the execute on chain in progress
-    const [executeOnChainInProgress, setExecuteOnChainInProgress] = useAtom(
+    // Trigger the execute on chain
+    const setTriggerExecuteOnChain = useSetAtom(
+        recoveryTriggerExecuteOnChainAtom
+    );
+
+    // Get the execute on chain in progress
+    const executeOnChainInProgress = useAtomValue(
         recoveryExecuteOnChainInProgressAtom
     );
 
@@ -120,9 +126,12 @@ function TriggerRecovery({
                         <button
                             type={"button"}
                             className={`button ${styles.step5__buttonPush}`}
-                            disabled={executeOnChainInProgress > 0}
+                            disabled={
+                                executeOnChainInProgress.length ===
+                                availableChainsToRecover.length
+                            }
                             onClick={() =>
-                                setExecuteOnChainInProgress((prev) => prev + 1)
+                                setTriggerExecuteOnChain((prev) => prev + 1)
                             }
                         >
                             Push new passkey on-chain <SendHorizontal />
