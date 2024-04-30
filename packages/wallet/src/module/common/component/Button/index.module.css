@@ -1,0 +1,95 @@
+.button {
+    box-sizing: border-box;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--frak-color-white);
+    outline: none;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+}
+
+.button > svg {
+    vertical-align: middle;
+}
+
+.button:disabled {
+    background-color: var(--frak-button-disabled-background-color);
+    color: var(--frak-button-disabled-text-color);
+    cursor: not-allowed;
+}
+
+.size--none {
+    padding: 0;
+}
+
+.size--small, .frak-size--small {
+    padding: 6px 10px;
+}
+
+.size--normal {
+    padding: 6px 15px;
+}
+
+.size--big, .frak-size--big {
+    padding: 6px 22px;
+}
+
+.leftIcon {
+    margin-right: 8px;
+}
+
+.rightIcon {
+    margin-left: 8px;
+}
+
+.primary, .frak-primary {
+    background: var(--frak-button-primary-background-color);
+    border: 1px solid var(--frak-button-primary-border-color);
+}
+
+.outlined {
+    background: none;
+    border: 1px solid var(--frak-button-outlined-border-color);
+}
+
+.empty {
+    background: none;
+    border: 1px solid transparent;
+}
+
+.submit {
+    background: var(--frak-button-submit-background-color);
+    border: 1px solid var(--frak-button-submit-border-color);
+}
+
+.danger {
+    background: var(--frak-button-danger-background-color);
+    border: 1px solid var(--frak-button-danger-border-color);
+}
+
+.fontNormal {
+    font-weight: 400;
+}
+
+.fontBold {
+    font-weight: 700;
+}
+
+.loader {
+    margin-right: 10px;
+    margin-bottom: 2px;
+}
+
+.fontSize--small {
+    font-size: 12px;
+}
+
+.fontSize--normal {
+    font-size: 14px;
+}
+
+.fontSize--big {
+    font-size: 16px;
+}

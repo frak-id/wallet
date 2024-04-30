@@ -2,7 +2,6 @@
 
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
-import { base64URLStringToBuffer } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import type { Hex } from "viem";
 
@@ -29,8 +28,7 @@ export async function getSignOptions({
         rpID: rpId,
         allowCredentials: [
             {
-                id: base64URLStringToBuffer(authenticator._id),
-                type: "public-key",
+                id: authenticator._id,
                 transports: authenticator.transports,
             },
         ],

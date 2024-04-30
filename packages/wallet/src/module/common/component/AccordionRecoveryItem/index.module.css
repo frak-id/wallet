@@ -1,4 +1,4 @@
-.accordion__trigger {
+.accordionRecoveryItem__trigger {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -8,20 +8,20 @@
     font-size: 14px;
 }
 
-.accordion__trigger:disabled {
+.accordionRecoveryItem__trigger:disabled {
     color: var(--frak-color-grayText);
     cursor: not-allowed;
 }
 
-.accordion__trigger > span {
+.accordionRecoveryItem__trigger > span {
     margin-right: auto;
 }
 
-.accordion__trigger > svg {
+.accordionRecoveryItem__trigger > svg {
     margin: 0;
 }
 
 
-.accordion__content > div {
+.accordionRecoveryItem__content > div {
     margin-top: 20px;
 }

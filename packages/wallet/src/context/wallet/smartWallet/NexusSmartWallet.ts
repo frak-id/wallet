@@ -122,17 +122,21 @@ export async function nexusSmartAccount<
         });
 
     // Fetch account address and chain id
-    const accountAddress = await getAccountAddress({
+    const computedAccountAddress = await getAccountAddress({
         client,
         initCodeProvider: generateInitCode,
     });
 
-    if (!accountAddress) throw new Error("Account address not found");
+    if (!computedAccountAddress) throw new Error("Account address not found");
 
     // Check if we can handle account creation or not
     const canCreateAccount = preDeterminedAccountAddress
-        ? isAddressEqual(accountAddress, preDeterminedAccountAddress)
+        ? isAddressEqual(computedAccountAddress, preDeterminedAccountAddress)
         : true;
+
+    // The account address to use
+    const accountAddress =
+        preDeterminedAccountAddress ?? computedAccountAddress;
 
     // Helper to check if the smart account is already deployed (with caching)
     let smartAccountDeployed = false;

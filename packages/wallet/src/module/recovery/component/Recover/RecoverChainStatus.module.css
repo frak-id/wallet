@@ -1,0 +1,17 @@
+.recoverChainStatus__success {
+    color: var(--frak-color-green);
+}
+
+.recoverChainStatus__pending {
+    color: var(--frak-color-grayText);
+}
+
+.recoverChainStatus__error {
+    color: var(--frak-color-red);
+}
+
+.recoverChainStatus__link {
+    color: inherit;
+    display: inline;
+    text-decoration: none;
+}

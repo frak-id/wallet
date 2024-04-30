@@ -1,8 +1,8 @@
-.step1__input {
+.password__input {
     margin: 10px 0;
 }
 
-.step1__error {
+.password__error {
     display: block;
     padding-bottom: 5px;
     color: var(--frak-color-red);

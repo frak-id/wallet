@@ -18,7 +18,6 @@ export function useAvailableChainsForRecovery({
         ],
         gcTime: 0,
         enabled: !!file.initialWallet.address,
-        placeholderData: [],
         queryFn: async () =>
             getChainsAvailableForRecovery({
                 wallet: file.initialWallet.address,

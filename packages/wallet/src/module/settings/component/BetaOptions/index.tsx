@@ -7,11 +7,11 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/module/common/component/Accordion";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { isWalletConnectEnableAtom } from "@/module/settings/atoms/betaOptions";
-import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
 import { useAtom } from "jotai";
 import { FlaskConical, Square, SquareCheck } from "lucide-react";
 import styles from "./index.module.css";

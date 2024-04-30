@@ -1,11 +1,10 @@
+import { Button } from "@/module/common/component/Button";
 import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
 import {
     recoveryDoneStepAtom,
     recoveryOptionsAtom,
 } from "@/module/settings/atoms/recovery";
-import { Button } from "@frak-labs/nexus-example/src/module/common/component/Button";
-import { useSetAtom } from "jotai";
-import { useAtomValue } from "jotai/index";
+import { useAtomValue, useSetAtom } from "jotai";
 import { Check, X } from "lucide-react";
 import type { Chain } from "viem";
 
@@ -37,6 +36,7 @@ export function ButtonSetupChain({
                     setDoneSteps((count) => count + 1);
                 }}
                 LeftIcon={isSuccess ? Check : isError ? X : undefined}
+                fontSize={"normal"}
                 className={className}
             >
                 Setup recovery for {chain.name}

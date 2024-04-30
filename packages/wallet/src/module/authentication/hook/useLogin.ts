@@ -3,10 +3,7 @@ import { validateAuthentication } from "@/context/wallet/action/authenticate";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { sessionAtom } from "@/module/common/atoms/session";
-import {
-    base64URLStringToBuffer,
-    startAuthentication,
-} from "@simplewebauthn/browser";
+import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
@@ -37,10 +34,7 @@ export function useLogin() {
             const allowCredentials = lastAuthentication
                 ? [
                       {
-                          id: base64URLStringToBuffer(
-                              lastAuthentication.authenticatorId
-                          ),
-                          type: "public-key",
+                          id: lastAuthentication.authenticatorId,
                           transports: lastAuthentication.transports,
                       } as const,
                   ]
@@ -71,6 +65,8 @@ export function useLogin() {
 
             // Set the session
             setSession({ wallet });
+
+            return { wallet };
         },
     });
 
