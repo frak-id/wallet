@@ -21,6 +21,38 @@ export const setExecutionAbi = {
 } as const;
 
 /**
+ * Abi used to install validations on a kernel smart account
+ */
+export const installValidationAbi = {
+    type: "function",
+    name: "installValidations",
+    inputs: [
+        { name: "vIds", type: "bytes21[]", internalType: "ValidationId[]" },
+        {
+            name: "configs",
+            type: "tuple[]",
+            internalType: "struct ValidationManager.ValidationConfig[]",
+            components: [
+                { name: "nonce", type: "uint32", internalType: "uint32" },
+                {
+                    name: "hook",
+                    type: "address",
+                    internalType: "contract IHook",
+                },
+            ],
+        },
+        {
+            name: "validationData",
+            type: "bytes[]",
+            internalType: "bytes[]",
+        },
+        { name: "hookData", type: "bytes[]", internalType: "bytes[]" },
+    ],
+    outputs: [],
+    stateMutability: "payable",
+};
+
+/**
  * Abi used to get the execution details
  */
 export const getExecutionAbi = {

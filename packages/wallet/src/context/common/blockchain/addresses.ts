@@ -15,6 +15,12 @@ export const kernelAddresses = {
     v3: {
         // Validators
         multiWebAuthnValidator: "0x93228CA325349FC7d8C397bECc0515e370aa4555",
+        // Recovery policy
+        recoveryPolicy: "0xD0b868A455d39be41f6f4bEb1efe3912966e8233",
+        // Recovery action
+        recoveryAction: "0x518B5EFB2A2A3c1D408b8aE60A2Ba8D6d264D7BA",
+        // Ecdsa signer for the recovery policy
+        ecdsaSigner: "0x6A6F069E2a08c2468e7724Ab3250CdBFBA14D4FF",
     },
     // Recovery
     multiWebAuthnRecovery: "0x67236B8AAF4B32d2D3269e088B1d43aef7736ab9",
