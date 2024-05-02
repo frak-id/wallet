@@ -5,6 +5,7 @@ import type { Article } from "@/type/Article";
 import {
     useArticleUnlockOptions,
     useArticleUnlockStatus,
+    useNexusReferral,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
 import { useEffect, useState } from "react";
@@ -23,6 +24,9 @@ export function ReadArticle({
 
     // The iframe reference
     const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
+
+    // The nexus referral
+    useNexusReferral();
 
     // The unlock options for the article
     const { data: unlockOptions } = useArticleUnlockOptions({
