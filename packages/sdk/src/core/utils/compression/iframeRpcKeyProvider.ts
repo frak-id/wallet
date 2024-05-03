@@ -1,12 +1,13 @@
-import type { KeyProvider } from "../../types/compression";
-import type { IFrameRpcSchema } from "../../types/rpc";
-import type { UnlockOptionsReturnType } from "../../types/rpc/unlockOption";
-import type { ArticleUnlockStatusReturnType } from "../../types/rpc/unlockStatus";
-import type { WalletStatusReturnType } from "../../types/rpc/walletStatus";
 import type {
+    ArticleUnlockStatusReturnType,
     ExtractedParametersFromRpc,
     ExtractedReturnTypeFromRpc,
-} from "../../types/transport";
+    IFrameRpcSchema,
+    KeyProvider,
+    SetUserReferredReturnType,
+    UnlockOptionsReturnType,
+    WalletStatusReturnType,
+} from "../../types";
 
 /**
  * Get the right request key provider for the given args
@@ -28,6 +29,11 @@ export const iFrameRequestKeyProvider: KeyProvider<
     // Article unlock status key
     if (args.method === "frak_listenToArticleUnlockStatus") {
         return ["article-unlock-status", args.params[0], args.params[1]];
+    }
+
+    // Referred user key
+    if (args.method === "frak_listenToSetUserReferred") {
+        return ["user-referred", args.params[0], args.params[1]];
     }
 
     // Not found
@@ -84,6 +90,14 @@ export function getIFrameResponseKeyProvider<
             response.key === "valid"
                 ? response.allowedUntil.toString(16)
                 : "deadbeef",
+        ]) as RpcResponseKeyProvider<TParameters>;
+    }
+
+    // Referred user key
+    if (param.method === "frak_listenToSetUserReferred") {
+        return ((response: SetUserReferredReturnType) => [
+            "user-referred",
+            response.key,
         ]) as RpcResponseKeyProvider<TParameters>;
     }
 

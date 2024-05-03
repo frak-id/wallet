@@ -3,6 +3,7 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
 import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
+import { useSetUserReferredListener } from "@/module/listener/hooks/useSetUserReferredListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
 import { useEffect, useState } from "react";
 
@@ -26,6 +27,9 @@ export function ListenerUI() {
     const { onArticleUnlockStatusListenerRequest } =
         useArticleUnlockStatusListener();
 
+    // Hook used when a user referred is requested
+    const { onUserReferredListenRequest } = useSetUserReferredListener();
+
     // Create the resolver
     useEffect(() => {
         const newResolver = createIFrameRequestResolver({
@@ -46,6 +50,11 @@ export function ListenerUI() {
              * @param emitter
              */
             frak_getArticleUnlockOptions: onGetArticleUnlockOptions,
+
+            /**
+             * Listen request on the user referred
+             */
+            frak_listenToSetUserReferred: onUserReferredListenRequest,
         });
 
         // Set our new resolver
@@ -59,6 +68,7 @@ export function ListenerUI() {
         onWalletListenRequest,
         onGetArticleUnlockOptions,
         onArticleUnlockStatusListenerRequest,
+        onUserReferredListenRequest,
     ]);
 
     /**

@@ -1,4 +1,5 @@
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
+import type { SetUserReferredReturnType } from "./rpc/setUserReferred";
 import type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
@@ -34,6 +35,14 @@ export type IFrameRpcSchema = [
         Method: "frak_listenToArticleUnlockStatus";
         Parameters: [contentId: Hex, articleId: Hex];
         ReturnType: ArticleUnlockStatusReturnType;
+    },
+    /**
+     * Method used to set the referred user
+     */
+    {
+        Method: "frak_listenToSetUserReferred";
+        Parameters: [contentId: Hex, walletAddress: Address];
+        ReturnType: SetUserReferredReturnType;
     },
 ];
 

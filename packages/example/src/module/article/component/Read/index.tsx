@@ -26,7 +26,9 @@ export function ReadArticle({
     const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
     // The nexus referral
-    useNexusReferral();
+    useNexusReferral({
+        contentId: article.contentId as Hex,
+    });
 
     // The unlock options for the article
     const { data: unlockOptions } = useArticleUnlockOptions({
