@@ -1,22 +1,22 @@
 "use client";
 
-import {setUserReferred} from "@/context/referral/action/userReferred";
-import {setUserReferredOnContent} from "@/context/referral/action/userReferredOnContent";
-import {postAuthRedirectAtom} from "@/module/authentication/atoms/redirection";
-import {LoginList} from "@/module/authentication/component/LoginList";
-import {useLogin} from "@/module/authentication/hook/useLogin";
-import {AuthFingerprint} from "@/module/common/component/AuthFingerprint";
-import {Back} from "@/module/common/component/Back";
-import {Grid} from "@/module/common/component/Grid";
-import {referralHistoryAtom} from "@/module/listener/atoms/referralHistory";
-import {hasPaywallContextAtom} from "@/module/paywall/atoms/paywall";
-import type {WebAuthNWallet} from "@/types/WebAuthN";
-import {useAtom, useAtomValue} from "jotai/index";
-import {CloudUpload} from "lucide-react";
+import { setUserReferred } from "@/context/referral/action/userReferred";
+import { setUserReferredOnContent } from "@/context/referral/action/userReferredOnContent";
+import { postAuthRedirectAtom } from "@/module/authentication/atoms/redirection";
+import { LoginList } from "@/module/authentication/component/LoginList";
+import { useLogin } from "@/module/authentication/hook/useLogin";
+import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
+import { Back } from "@/module/common/component/Back";
+import { Grid } from "@/module/common/component/Grid";
+import { referralHistoryAtom } from "@/module/listener/atoms/referralHistory";
+import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
+import { useAtom, useAtomValue } from "jotai/index";
+import { CloudUpload } from "lucide-react";
 import Link from "next/link";
-import {useRouter} from "next/navigation";
-import {useCallback, useState, useTransition} from "react";
-import type {Hex} from "viem";
+import { useRouter } from "next/navigation";
+import { useCallback, useState, useTransition } from "react";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**
@@ -25,7 +25,7 @@ import styles from "./index.module.css";
  * @constructor
  */
 export function Login() {
-    const {login} = useLogin();
+    const { login } = useLogin();
     const hasPaywallContext = useAtomValue(hasPaywallContextAtom);
     const router = useRouter();
     const [, startTransition] = useTransition();
@@ -38,7 +38,7 @@ export function Login() {
     const [referralHistory, setReferralHistory] = useAtom(referralHistoryAtom);
 
     const triggerRegister = useCallback(async () => {
-        const {wallet} = await login({});
+        const { wallet } = await login({});
         return wallet;
     }, [login]);
 
@@ -80,9 +80,9 @@ export function Login() {
                 footer={
                     <>
                         <Link href={"/recovery"} className={styles.login__link}>
-                            <CloudUpload/> Recover wallet from file
+                            <CloudUpload /> Recover wallet from file
                         </Link>
-                        <LoginList/>
+                        <LoginList />
                     </>
                 }
             >

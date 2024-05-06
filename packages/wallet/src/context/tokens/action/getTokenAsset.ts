@@ -8,7 +8,7 @@ import {
     getTokenMetadata,
 } from "@/context/common/blockchain/viemActions/getTokenMetadata";
 import { CachesTags } from "@/context/common/caching";
-import { unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { parallel } from "radash";
 import { formatUnits } from "viem";
 import type { Address } from "viem";
@@ -77,6 +77,14 @@ export const getUserErc20Tokens = unstable_cache(
         revalidate: 120,
     }
 );
+
+/**
+ * Invalidate the user erc20 tokens
+ */
+export async function invalidateUserErc20Tokens() {
+    revalidateTag(CachesTags.WALLET_ERC20_ASSETS);
+    revalidateTag(CachesTags.WALLET_ERC20_BALANCE);
+}
 
 /**
  * Get the metadata of a token, cached version

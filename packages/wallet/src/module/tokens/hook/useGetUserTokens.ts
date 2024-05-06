@@ -1,7 +1,11 @@
 "use client";
 
-import { getUserErc20Tokens } from "@/context/tokens/action/getTokenAsset";
-import { useQuery } from "@tanstack/react-query";
+import {
+    getUserErc20Tokens,
+    invalidateUserErc20Tokens,
+} from "@/context/tokens/action/getTokenAsset";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { useAccount, useChainId } from "wagmi";
 
 export function useGetUserTokens() {
@@ -32,4 +36,19 @@ export function useGetUserTokens() {
         isLoading,
         refetch,
     };
+}
+
+export function useInvalidateUserTokens() {
+    const queryClient = useQueryClient();
+
+    return useCallback(async () => {
+        // Invalidate the user tokens server side
+        await invalidateUserErc20Tokens();
+
+        // Invalidate the user tokens client side
+        await queryClient.invalidateQueries({
+            queryKey: ["getUserTokens"],
+            exact: false,
+        });
+    }, [queryClient]);
 }
