@@ -63,6 +63,8 @@ export function useRegister() {
 
             // Set the session
             setSession({ wallet });
+
+            return { wallet };
         },
     });
 
