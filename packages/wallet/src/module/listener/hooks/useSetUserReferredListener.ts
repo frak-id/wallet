@@ -1,11 +1,12 @@
 import { setUserReferredOnContent } from "@/context/referral/action/userReferredOnContent";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
+import { referralHistoryAtom } from "@/module/listener/atoms/referralHistory";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
 
 type OnListenToUserReferred = IFrameRequestResolver<
@@ -25,6 +26,11 @@ export function useSetUserReferredListener() {
     const session = useAtomValue(sessionAtom);
 
     /**
+     * Set the referral history atom
+     */
+    const setReferralHistoryAtom = useSetAtom(referralHistoryAtom);
+
+    /**
      * The function that will be called when a user referred is requested
      * @param request
      * @param emitter
@@ -36,22 +42,40 @@ export function useSetUserReferredListener() {
             const walletAddress = request.params[1];
 
             // If no contentId or articleId, return
-            if (!(contentId && walletAddress && session?.wallet?.address)) {
+            if (!(contentId && walletAddress)) {
                 return;
             }
 
-            await setUserReferredOnContent({
-                user: session?.wallet?.address,
-                referrer: walletAddress,
-                contentId,
-            });
+            // If user is connected, set the user referred
+            if (session?.wallet?.address) {
+                await setUserReferredOnContent({
+                    user: session?.wallet?.address,
+                    referrer: walletAddress,
+                    contentId,
+                });
+                // Send the response
+                await emitter({
+                    key: "referred-successful",
+                });
+            }
 
-            // Send the response
-            await emitter({
-                key: "connected",
-            });
+            // If user is not connected, set the referral history in local storage
+            if (!session?.wallet?.address) {
+                setReferralHistoryAtom((prev) => ({
+                    ...prev,
+                    contents: {
+                        ...prev.contents,
+                        [contentId]: walletAddress,
+                    },
+                    lastReferrer: walletAddress,
+                }));
+                // Send the response
+                await emitter({
+                    key: "referred-history",
+                });
+            }
         },
-        [session?.wallet?.address]
+        [session?.wallet?.address, setReferralHistoryAtom]
     );
 
     return {

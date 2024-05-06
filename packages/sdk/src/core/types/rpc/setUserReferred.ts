@@ -13,7 +13,9 @@ export type SetUserReferredParams = Readonly<{
 export type SetUserReferredReturnType =
     | UserConnected
     | UserNotConnected
-    | UserIsSameWallet;
+    | UserIsSameWallet
+    | UserReferredSuccessful
+    | UserReferredHistory;
 
 type UserConnected = {
     key: "connected";
@@ -25,4 +27,12 @@ type UserNotConnected = {
 
 type UserIsSameWallet = {
     key: "same-wallet";
+};
+
+type UserReferredSuccessful = {
+    key: "referred-successful";
+};
+
+type UserReferredHistory = {
+    key: "referred-history";
 };

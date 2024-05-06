@@ -37,16 +37,18 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
     );
 
     useEffect(() => {
-        if (!href || walletStatus?.key !== "connected") return;
+        if (!href) return;
 
         const url = new URL(href);
         const context = url.searchParams.get("nexusContext");
 
-        if (!context) {
+        // If user is connected, set the context in the url
+        if (!context && walletStatus?.key === "connected") {
             url.searchParams.set("nexusContext", walletStatus?.wallet);
             window.history.replaceState(null, "", url.toString());
         }
 
+        // If context is set, set the wallet address
         if (context) {
             setWalletAddress(context as Address);
         }

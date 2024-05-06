@@ -1,4 +1,5 @@
 import { InjectBannerComponent } from "@/module/article/component/Read/InjectBannerComponent";
+import { InjectPopupComponent } from "@/module/article/component/Read/InjectPopupComponent";
 import { InjectUnlockComponent } from "@/module/article/component/Read/InjectUnlockComponent";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import type { Article } from "@/type/Article";
@@ -26,7 +27,7 @@ export function ReadArticle({
     const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
     // The nexus referral
-    useNexusReferral({
+    const { data: referral } = useNexusReferral({
         contentId: article.contentId as Hex,
     });
 
@@ -77,6 +78,9 @@ export function ReadArticle({
                 walletStatus?.key === "not-connected" && (
                     <InjectBannerComponent article={article} />
                 )}
+            {injecting > 0 && referral?.key === "referred-history" && (
+                <InjectPopupComponent article={article} />
+            )}
             {articleUnlockStatus &&
             articleUnlockStatus?.key !== "waiting-response" ? (
                 <iframe
