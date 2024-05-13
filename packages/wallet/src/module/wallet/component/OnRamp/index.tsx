@@ -1,40 +1,20 @@
 "use client";
-
-import {
-    getTransport,
-    mainnetChains,
-} from "@/context/common/blockchain/provider";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { isMainnetEnableAtom } from "@/module/settings/atoms/betaOptions";
 import { AarcProvider, useAarc } from "@aarc-xyz/deposit-widget";
 import Coinbase from "@aarc-xyz/deposit-widget-coinbase";
 import Transak from "@aarc-xyz/deposit-widget-transak";
 import "@aarc-xyz/deposit-widget/dist/style.css";
-import { useAtomValue } from "jotai";
 import { CreditCard } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
-import { createClient } from "viem";
-import {
-    WagmiProvider,
-    createConfig,
-    createStorage,
-    noopStorage,
-    useAccount,
-    useChainId,
-} from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 
 /**
  * Our onramping widget
  * @constructor
  */
 export function OnRampWidget() {
-    const isMainnetEnabled = useAtomValue(isMainnetEnableAtom);
-    if (!isMainnetEnabled) {
-        return null;
-    }
-
     return (
         <Panel variant={"empty"} size={"none"}>
             <AarcProviderComponent>
@@ -80,40 +60,10 @@ function AarcProviderComponent({ children }: PropsWithChildren) {
         };
     }, [chainId, address]);
 
-    const customWagmiConfig = useMemo(
-        () =>
-            createConfig({
-                chains: mainnetChains,
-                storage: createStorage({
-                    storage:
-                        typeof window !== "undefined" && window.localStorage
-                            ? window.localStorage
-                            : noopStorage,
-                    key: "aarc-wagmi-config",
-                }),
-                client: ({ chain }) =>
-                    createClient({
-                        chain,
-                        transport: getTransport({ chain }),
-                        cacheTime: 60_000,
-                        batch: {
-                            multicall: {
-                                wait: 50,
-                            },
-                        },
-                    }),
-            }),
-        []
-    );
-
     // If no config yet, return a loading indicator
     if (!aarcConfig) return <h2>Loading</h2>;
 
-    return (
-        <WagmiProvider config={customWagmiConfig}>
-            <AarcProvider config={aarcConfig}>{children}</AarcProvider>
-        </WagmiProvider>
-    );
+    return <AarcProvider config={aarcConfig}>{children}</AarcProvider>;
 }
 
 function DepositCryptoBtn() {

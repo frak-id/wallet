@@ -11,6 +11,9 @@ const wantedFromConfig = [
     "MONGODB_NEXUS_URI",
     "SESSION_ENCRYPTION_KEY",
     "AIRDROP_PRIVATE_KEY",
+    // Aarc onramping
+    "TRANSAK_API_KEY",
+    "AARC_API_KEY",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 

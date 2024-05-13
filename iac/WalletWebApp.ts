@@ -20,6 +20,8 @@ export function WalletAppStack({ stack }: StackContext) {
         airdropPrivateKey,
         walletconnectProjectId,
         nexusUrl,
+        aarcApiKey,
+        transakApiKey,
     } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
@@ -30,6 +32,8 @@ export function WalletAppStack({ stack }: StackContext) {
         airdropPrivateKey,
         walletconnectProjectId,
         nexusUrl,
+        aarcApiKey,
+        transakApiKey,
     ];
 
     // Base domain for our whole app

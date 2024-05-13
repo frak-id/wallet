@@ -23,6 +23,8 @@ export function ConfigStack({ stack }: StackContext) {
         stack,
         "WALLETCONNECT_PROJECT_ID"
     );
+    const aarcApiKey = new Config.Secret(stack, "AARC_API_KEY");
+    const transakApiKey = new Config.Secret(stack, "TRANSAK_API_KEY");
 
     const nexusUrl = new Config.Parameter(stack, "NEXUS_WALLET_URL", {
         value: getWalletUrl(stack),
@@ -39,5 +41,7 @@ export function ConfigStack({ stack }: StackContext) {
         adminPassword,
         nexusUrl,
         walletconnectProjectId,
+        aarcApiKey,
+        transakApiKey,
     };
 }

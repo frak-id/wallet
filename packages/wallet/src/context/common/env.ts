@@ -13,7 +13,8 @@ export const isRunningLocally = !["dev", "prod"].includes(
 /**
  * Check if we are running in production
  */
-export const isRunningInProd = process.env.STAGE === "prod";
+// export const isRunningInProd = process.env.STAGE === "prod";
+export const isRunningInProd = true;
 
 /**
  * Check if we are running in production
