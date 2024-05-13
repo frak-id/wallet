@@ -32,8 +32,19 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
                 ["setUserReferredQueryReturnTypeListener"],
                 event
             );
+
+            // In case the user is referred successfully, remove the context from the url
+            if (
+                event.key === "referred-successful" ||
+                event.key === "referred-history"
+            ) {
+                if (!href) return;
+                const url = new URL(href);
+                url.searchParams.delete("nexusContext");
+                window.history.replaceState(null, "", url.toString());
+            }
         },
-        [queryClient]
+        [queryClient, href]
     );
 
     useEffect(() => {
