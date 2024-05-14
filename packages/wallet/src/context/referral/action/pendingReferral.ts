@@ -21,7 +21,7 @@ export async function getPendingWalletReferralReward({
         args: [user],
     });
     if (!pendingAmount) {
-        return undefined;
+        return null;
     }
     return {
         rFrkPendingRaw: pendingAmount,

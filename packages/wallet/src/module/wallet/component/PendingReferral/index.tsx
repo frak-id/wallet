@@ -6,9 +6,9 @@ import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useInvalidateUserTokens } from "@/module/tokens/hook/useGetUserTokens";
+import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { CircleDollarSign } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useWriteContract } from "wagmi";
 import styles from "./index.module.css";
 
@@ -22,37 +22,30 @@ export function PendingReferral() {
     // Get the user wallet address
     const address = session?.wallet?.address;
 
-    const [pendingReward, setPendingReward] = useState<{
-        rFrkPendingRaw: bigint;
-        rFrkPendingFormatted: string;
-    }>();
-
-    useEffect(() => {
-        if (!address) return;
-
-        // Fetch the pending reward
-        getPendingWalletReferralReward({ user: address }).then(
-            setPendingReward
-        );
-    }, [address]);
+    // Fetch the pending reward
+    const { data: pendingReward, refetch: refetchPendingReward } = useQuery({
+        queryKey: ["getPendingWalletReferralReward"],
+        queryFn: async () => {
+            if (!address) return null;
+            return await getPendingWalletReferralReward({
+                user: address,
+            });
+        },
+        enabled: !!address,
+    });
 
     // Get the write contract function
-    const { writeContractAsync, isPending, isSuccess } = useWriteContract();
+    const { writeContractAsync, isPending, isSuccess } = useWriteContract({
+        mutation: {
+            onSuccess: async () => {
+                // Invalidate the user tokens
+                await invalidateUserTokens();
 
-    useEffect(() => {
-        if (!isSuccess) return;
-
-        async function success() {
-            await invalidateUserTokens();
-            if (!address) return;
-            // Fetch the pending reward
-            getPendingWalletReferralReward({ user: address }).then(
-                setPendingReward
-            );
-        }
-
-        success();
-    }, [isSuccess, address, invalidateUserTokens]);
+                // Refetch the pending reward
+                await refetchPendingReward();
+            },
+        },
+    });
 
     return pendingReward?.rFrkPendingRaw ? (
         <Panel size={"small"}>
