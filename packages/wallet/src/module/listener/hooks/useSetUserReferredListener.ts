@@ -8,6 +8,7 @@ import type {
 } from "@frak-labs/nexus-sdk/core";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
+import { isAddressEqual } from "viem";
 
 type OnListenToUserReferred = IFrameRequestResolver<
     Extract<
@@ -46,20 +47,7 @@ export function useSetUserReferredListener() {
                 return;
             }
 
-            // If user is connected, set the user referred
-            if (session?.wallet?.address) {
-                await setUserReferredOnContent({
-                    user: session?.wallet?.address,
-                    referrer: walletAddress,
-                    contentId,
-                });
-                // Send the response
-                await emitter({
-                    key: "referred-successful",
-                });
-            }
-
-            // If user is not connected, set the referral history in local storage
+            // If no current wallet present
             if (!session?.wallet?.address) {
                 setReferralHistoryAtom((prev) => ({
                     ...prev,
@@ -73,7 +61,29 @@ export function useSetUserReferredListener() {
                 await emitter({
                     key: "referred-history",
                 });
+                // And exit
+                return;
             }
+
+            // If the referrer is the same as the current wallet address, do nothing
+            if (isAddressEqual(session.wallet.address, walletAddress)) {
+                // Send the response
+                await emitter({
+                    key: "same-wallet",
+                });
+                return;
+            }
+
+            // Otherwise, just set the user referred on content
+            await setUserReferredOnContent({
+                user: session.wallet.address,
+                referrer: walletAddress,
+                contentId,
+            });
+            // Send the response
+            await emitter({
+                key: "referred-successful",
+            });
         },
         [session?.wallet?.address, setReferralHistoryAtom]
     );

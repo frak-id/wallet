@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import type {
     SetUserReferredParams,
     SetUserReferredReturnType,
@@ -14,6 +14,9 @@ export type SetUserReferredQueryReturnType =
     | SetUserReferredReturnType
     | {
           key: "waiting-response";
+      }
+    | {
+          key: "no-referrer";
       };
 
 /**
@@ -69,14 +72,17 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
         gcTime: 0,
         queryKey: ["setUserReferredQueryReturnTypeListener"],
         queryFn: async () => {
-            if (!(contentId && walletAddress))
-                return { key: "waiting-response" };
+            if (!(contentId && walletAddress)) {
+                return { key: "no-referrer" };
+            }
 
             if (
                 walletStatus?.key === "connected" &&
-                walletStatus?.wallet === walletAddress
-            )
+                walletStatus?.wallet &&
+                isAddressEqual(walletStatus?.wallet, walletAddress)
+            ) {
                 return { key: "same-wallet" };
+            }
 
             // Setup the listener
             await setUserReferred(
