@@ -15,8 +15,17 @@ export async function isReferralPossible({
     referrer,
     tree,
 }: { user: Address; referrer: Address; tree: Hex }) {
-    // Ensure the referrer is not the user
-    if (isAddressEqual(user, referrer)) {
+    // Ensure we got everything
+    if (!(user && referrer)) {
+        return false;
+    }
+
+    // Ensure the referrer is not the user, and none address is the zero one
+    if (
+        isAddressEqual(user, referrer) ||
+        isAddressEqual(referrer, zeroAddress) ||
+        isAddressEqual(user, zeroAddress)
+    ) {
         return false;
     }
 

@@ -1,5 +1,6 @@
+import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
-import type { Address, Hex } from "viem";
+import { type Address, type Hex, zeroAddress } from "viem";
 
 type ContentId = Hex;
 type ReferralHistory = {
@@ -14,6 +15,27 @@ export const referralHistoryAtom = atomWithStorage<ReferralHistory>(
     "referralHistory",
     {
         contents: {},
-        lastReferrer: "0x00",
+        lastReferrer: zeroAddress,
+    }
+);
+
+/**
+ * Add a referrer to the history atom
+ */
+export const addReferrerToHistoryAtom = atom(
+    null,
+    (
+        _get,
+        set,
+        { referrer, contentId }: { referrer: Address; contentId: Hex }
+    ) => {
+        set(referralHistoryAtom, (prev) => ({
+            ...prev,
+            contents: {
+                ...prev.contents,
+                [contentId]: referrer,
+            },
+            lastReferrer: referrer,
+        }));
     }
 );

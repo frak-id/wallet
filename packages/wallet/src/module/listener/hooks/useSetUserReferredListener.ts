@@ -1,7 +1,7 @@
 import { setUserReferredOnContent } from "@/context/referral/action/userReferredOnContent";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { referralHistoryAtom } from "@/module/listener/atoms/referralHistory";
+import { addReferrerToHistoryAtom } from "@/module/listener/atoms/referralHistory";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
@@ -29,7 +29,7 @@ export function useSetUserReferredListener() {
     /**
      * Set the referral history atom
      */
-    const setReferralHistoryAtom = useSetAtom(referralHistoryAtom);
+    const addReferrerToHistory = useSetAtom(addReferrerToHistoryAtom);
 
     /**
      * The function that will be called when a user referred is requested
@@ -40,23 +40,20 @@ export function useSetUserReferredListener() {
         async (request, emitter) => {
             // Extract the contentId and walletAddress
             const contentId = request.params[0];
-            const walletAddress = request.params[1];
+            const referrerAddress = request.params[1];
+            const userAddress = session?.wallet?.address;
 
             // If no contentId or articleId, return
-            if (!(contentId && walletAddress)) {
+            if (!(contentId && referrerAddress)) {
                 return;
             }
 
             // If no current wallet present
-            if (!session?.wallet?.address) {
-                setReferralHistoryAtom((prev) => ({
-                    ...prev,
-                    contents: {
-                        ...prev.contents,
-                        [contentId]: walletAddress,
-                    },
-                    lastReferrer: walletAddress,
-                }));
+            if (!userAddress) {
+                addReferrerToHistory({
+                    referrer: referrerAddress,
+                    contentId,
+                });
                 // Send the response
                 await emitter({
                     key: "referred-history",
@@ -66,7 +63,7 @@ export function useSetUserReferredListener() {
             }
 
             // If the referrer is the same as the current wallet address, do nothing
-            if (isAddressEqual(session.wallet.address, walletAddress)) {
+            if (isAddressEqual(userAddress, referrerAddress)) {
                 // Send the response
                 await emitter({
                     key: "same-wallet",
@@ -76,8 +73,8 @@ export function useSetUserReferredListener() {
 
             // Otherwise, just set the user referred on content
             await setUserReferredOnContent({
-                user: session.wallet.address,
-                referrer: walletAddress,
+                user: userAddress,
+                referrer: referrerAddress,
                 contentId,
             });
             // Send the response
@@ -85,7 +82,7 @@ export function useSetUserReferredListener() {
                 key: "referred-successful",
             });
         },
-        [session?.wallet?.address, setReferralHistoryAtom]
+        [session?.wallet?.address, addReferrerToHistory]
     );
 
     return {
