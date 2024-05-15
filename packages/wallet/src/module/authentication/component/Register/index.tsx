@@ -1,52 +1,32 @@
 "use client";
 
-import { setUserReferred } from "@/context/referral/action/userReferred";
-import { setUserReferredOnContent } from "@/context/referral/action/userReferredOnContent";
 import { postAuthRedirectAtom } from "@/module/authentication/atoms/redirection";
+import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { useRegister } from "@/module/authentication/hook/useRegister";
-import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { referralHistoryAtom } from "@/module/listener/atoms/referralHistory";
-import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { useAtom, useAtomValue } from "jotai";
+import { useSetAtom } from "jotai";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useState,
-    useTransition,
-} from "react";
-import type { Hex } from "viem";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./index.module.css";
 
 export function Register() {
-    const hasPaywallContext = useAtomValue(hasPaywallContextAtom);
     const router = useRouter();
-    const [, startTransition] = useTransition();
     const { register, error, isRegisterInProgress } = useRegister();
     const [disabled, setDisabled] = useState(false);
-
-    /**
-     * Referral history atom
-     */
-    const [referralHistory, setReferralHistory] = useAtom(referralHistoryAtom);
 
     /**
      * Get the redirectUrl from the URL and set it in storage if needed
      */
     const searchParams = useSearchParams();
-    const [redirectUrl, setRedirectUrl] = useAtom(postAuthRedirectAtom);
+    const redirectUrl = searchParams.get("redirectUrl");
+    const setRedirectUrl = useSetAtom(postAuthRedirectAtom);
     useEffect(() => {
-        const redirectUrl = searchParams.get("redirectUrl");
-        if (redirectUrl) {
-            setRedirectUrl(redirectUrl);
-        }
-    }, [searchParams.get, setRedirectUrl]);
+        if (!redirectUrl) return;
+        setRedirectUrl(redirectUrl);
+    }, [redirectUrl, setRedirectUrl]);
 
     /**
      * Boolean used to know if the error is about a previously used authenticator
@@ -101,36 +81,6 @@ export function Register() {
         return wallet;
     }, [register]);
 
-    const triggerReferral = useCallback(
-        async (wallet: WebAuthNWallet) => {
-            if (!referralHistory) return;
-
-            // Set the user referred
-            await setUserReferred({
-                user: wallet.address,
-                referrer: referralHistory.lastReferrer,
-            });
-
-            // Set the user referred on each content
-            for (const contentId of Object.keys(referralHistory.contents)) {
-                const walletAddress =
-                    referralHistory.contents[contentId as Hex];
-                await setUserReferredOnContent({
-                    user: wallet.address,
-                    referrer: walletAddress,
-                    contentId: contentId as Hex,
-                });
-            }
-
-            // Reset referral history
-            setReferralHistory({
-                contents: {},
-                lastReferrer: "0x00",
-            });
-        },
-        [referralHistory, setReferralHistory]
-    );
-
     useEffect(() => {
         if (!error) return;
 
@@ -161,27 +111,12 @@ export function Register() {
                 </>
             }
         >
-            <AuthFingerprint
-                action={async () => {
-                    setDisabled(true);
-                    const wallet = await triggerRegister();
-                    await triggerReferral(wallet);
-                    startTransition(() => {
-                        if (redirectUrl) {
-                            setRedirectUrl(null);
-                            window.location.href =
-                                decodeURIComponent(redirectUrl);
-                            return;
-                        }
-
-                        router.push(hasPaywallContext ? "/unlock" : "/wallet");
-                        setDisabled(false);
-                    });
-                }}
+            <ButtonAuth
+                trigger={triggerRegister}
                 disabled={disabled || isPreviouslyUsedAuthenticatorError}
             >
                 {message}
-            </AuthFingerprint>
+            </ButtonAuth>
         </Grid>
     );
 }
