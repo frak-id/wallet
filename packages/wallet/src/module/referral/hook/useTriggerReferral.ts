@@ -1,10 +1,10 @@
-import {setUserReferred} from "@/context/referral/action/userReferred";
-import {setUserReferredOnContent} from "@/context/referral/action/userReferredOnContent";
-import {referralHistoryAtom} from "@/module/listener/atoms/referralHistory";
-import type {WebAuthNWallet} from "@/types/WebAuthN";
-import {useAtom} from "jotai";
-import {useCallback} from "react";
-import type {Hex} from "viem";
+import { setUserReferred } from "@/context/referral/action/userReferred";
+import { setUserReferredOnContent } from "@/context/referral/action/userReferredOnContent";
+import { referralHistoryAtom } from "@/module/listener/atoms/referralHistory";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
+import { useAtom } from "jotai";
+import { useCallback } from "react";
+import type { Hex } from "viem";
 
 /**
  * Small hook used to perform redirection in the paywall context
@@ -48,5 +48,5 @@ export function useTriggerReferral() {
         [referralHistory, setReferralHistory]
     );
 
-    return {triggerReferral};
+    return { triggerReferral };
 }

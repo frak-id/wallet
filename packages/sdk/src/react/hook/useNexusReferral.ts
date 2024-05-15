@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
-import { type Address, isAddressEqual } from "viem";
+import { isAddressEqual } from "viem";
+import type { Address } from "viem";
 import type {
     SetUserReferredParams,
     SetUserReferredReturnType,
@@ -27,7 +28,7 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
     const queryClient = useQueryClient();
     const client = useNexusClient();
     const { data: walletStatus } = useWalletStatus();
-    const [walletAddress, setWalletAddress] = useState<Address>();
+    const [referrerAddress, setReferrerAddress] = useState<Address>();
 
     const newStatusUpdated = useCallback(
         (event: SetUserReferredReturnType) => {
@@ -36,18 +37,28 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
                 event
             );
 
-            // In case the user is referred successfully, remove the context from the url
+            // In case the user is referred successfully
             if (
                 event.key === "referred-successful" ||
                 event.key === "referred-history"
             ) {
                 if (!href) return;
                 const url = new URL(href);
-                url.searchParams.delete("nexusContext");
+
+                // If user is connected, set the context in the url
+                if (walletStatus?.key === "connected") {
+                    url.searchParams.set("nexusContext", walletStatus?.wallet);
+                }
+
+                // If user is not connected, remove the context from the url
+                if (walletStatus?.key === "not-connected") {
+                    url.searchParams.delete("nexusContext");
+                }
+
                 window.history.replaceState(null, "", url.toString());
             }
         },
-        [queryClient, href]
+        [queryClient, href, walletStatus]
     );
 
     useEffect(() => {
@@ -62,9 +73,9 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
             window.history.replaceState(null, "", url.toString());
         }
 
-        // If context is set, set the wallet address
+        // If context is set, set the referrer address
         if (context) {
-            setWalletAddress(context as Address);
+            setReferrerAddress(context as Address);
         }
     }, [href, walletStatus]);
 
@@ -72,14 +83,14 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
         gcTime: 0,
         queryKey: ["setUserReferredQueryReturnTypeListener"],
         queryFn: async () => {
-            if (!(contentId && walletAddress)) {
+            if (!(contentId && referrerAddress)) {
                 return { key: "no-referrer" };
             }
 
             if (
                 walletStatus?.key === "connected" &&
                 walletStatus?.wallet &&
-                isAddressEqual(walletStatus?.wallet, walletAddress)
+                isAddressEqual(walletStatus?.wallet, referrerAddress)
             ) {
                 return { key: "same-wallet" };
             }
@@ -87,13 +98,17 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
             // Setup the listener
             await setUserReferred(
                 client,
-                { contentId, walletAddress },
+                { contentId, walletAddress: referrerAddress },
                 newStatusUpdated
             );
 
             // Wait for the first response
             return { key: "waiting-response" };
         },
-        enabled: !!contentId && !!walletAddress,
+        enabled:
+            !!contentId &&
+            !!referrerAddress &&
+            walletStatus?.key !== undefined &&
+            walletStatus?.key !== "waiting-response",
     });
 }
