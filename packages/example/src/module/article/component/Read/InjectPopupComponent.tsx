@@ -1,11 +1,11 @@
-import { Banner } from "@/module/article/component/Banner";
+import { Popup } from "@/module/article/component/Popup";
 import { cssRaw as cssRawButton } from "@/module/common/component/Button";
 import type { Article } from "@/type/Article";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { cssRaw } from "../Banner";
+import { cssRaw } from "../Popup";
 
-export function InjectBannerComponent({
+export function InjectPopupComponent({
     article,
 }: {
     article: Article;
@@ -20,7 +20,7 @@ export function InjectBannerComponent({
     const articleIframeDocument = articleIframe?.contentWindow?.document;
 
     useEffect(() => {
-        const containerName = "frak-banner";
+        const containerName = "frak-popup";
         let containerRoot =
             articleIframeDocument?.getElementById(containerName);
 
@@ -56,7 +56,7 @@ export function InjectBannerComponent({
     return (
         containerRoot && (
             <>
-                {createPortal(<Banner article={article} />, containerRoot)}
+                {createPortal(<Popup article={article} />, containerRoot)}
                 {/* Inject the styles into the iframe */}
                 {createPortal(
                     <style>

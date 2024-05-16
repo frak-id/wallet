@@ -172,5 +172,19 @@ export function getIframeRequestKeyProvider(
         ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
     }
 
+    // Referred user key
+    if (event.topic === "frak_listenToSetUserReferred") {
+        return ((
+            request: Extract<
+                ExtractedParametersFromRpc<IFrameRpcSchema>,
+                { method: "frak_listenToSetUserReferred" }
+            >
+        ) => [
+            "user-referred",
+            request.params[0],
+            request.params[1],
+        ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
+    }
+
     throw new Error(`No key provider found for the event ${event}`);
 }

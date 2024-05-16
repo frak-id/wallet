@@ -6,6 +6,10 @@ export type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
 } from "./rpc/startUnlock";
+export type {
+    SetUserReferredParams,
+    SetUserReferredReturnType,
+} from "./rpc/setUserReferred";
 export type { IFrameRpcSchema, RedirectRpcSchema } from "./rpc";
 // Client related
 export type { NexusClient } from "./client";

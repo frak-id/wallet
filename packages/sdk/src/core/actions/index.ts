@@ -7,3 +7,4 @@ export {
     getStartArticleUnlockUrl,
     decodeStartUnlockReturn,
 } from "./startUnlock";
+export { setUserReferred } from "./setUserReferred";

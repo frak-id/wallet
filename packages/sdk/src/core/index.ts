@@ -22,6 +22,8 @@ export type {
     RedirectRpcSchema,
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
+    SetUserReferredParams,
+    SetUserReferredReturnType,
     // Client
     NexusClient,
     // Transport

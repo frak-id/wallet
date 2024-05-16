@@ -6,6 +6,8 @@ export const addresses = {
     paywallToken: "0x9584A61F70cC4BEF5b8B5f588A1d35740f0C7ae2",
     paywall: "0x9218521020EF26924B77188f4ddE0d0f7C405f21",
     communityToken: "0xf98BA1b2fc7C55A01Efa6C8872Bcee85c6eC54e7",
+    referralToken: "0x1Eca7AA9ABF2e53E773B4523B6Dc103002d22e7D",
+    nexusDiscoverCampaign: "0x8a37d1B3a17559F2BC4e6613834b1F13d0A623aC",
 } as const;
 
 /**
