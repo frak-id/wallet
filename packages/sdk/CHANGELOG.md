@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.9
+
+### Patch Changes
+
+- [#15](https://github.com/frak-id/wallet/pull/15) [`8deee63`](https://github.com/frak-id/wallet/commit/8deee631ca182dc85dd29f157ae27350f7809c94) Thanks [@srod](https://github.com/srod)! - Add referral workflow
+
 ## 0.0.8
 
 ### Patch Changes
