@@ -160,3 +160,8 @@ sup {
 .scrollbars::-webkit-scrollbar-track { /* Background */
     background: var(--scrollbar-background);
 }
+
+/* nextjs-toploader */
+#nprogress .bar {
+    background: var(--frak-color-gradient) !important;
+}
