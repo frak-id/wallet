@@ -60,7 +60,8 @@
     "format:check": "biome check .",
     "format": "biome check --apply .",
     "clean": "rimraf dist",
-    "build": "tsup --splitting"
+    "build": "tsup --splitting",
+    "build:watch": "tsup --watch --splitting --format esm"
   },
   "peerDependencies": {
     "viem": "^2.x",
