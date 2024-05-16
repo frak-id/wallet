@@ -45,6 +45,7 @@
     "mongodb": "^6.5.0",
     "next": "14.2.3",
     "next-qrcode": "^2.5.1",
+    "nextjs-toploader": "^1.6.12",
     "normalize.css": "^8.0.1",
     "permissionless": "0.1.16",
     "radash": "^12.1.0",
@@ -63,8 +64,10 @@
   },
   "devDependencies": {
     "@simplewebauthn/types": "^10.0.0",
+    "@types/dom-view-transitions": "^1.0.4",
     "@types/humanize-duration": "^3.27.4",
     "@types/node": "^20",
+    "@types/nprogress": "^0.2.3",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-slick": "^0.23.13",
