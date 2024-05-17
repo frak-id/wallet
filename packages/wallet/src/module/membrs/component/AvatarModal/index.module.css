@@ -1,0 +1,15 @@
+.avatarModal__upload {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    cursor: pointer;
+}
+
+.avatarModal__editor {
+    margin: 10px 0;
+    text-align: center;
+}
+
+.avatarModal__button {
+    margin-top: 20px;
+}
