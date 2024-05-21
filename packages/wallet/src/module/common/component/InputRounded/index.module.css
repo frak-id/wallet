@@ -1,0 +1,17 @@
+.inputRoundedWrapper {
+    border: 1px solid rgba(129, 140, 156, .4);
+    border-radius: 12px;
+    width: 100%;
+}
+
+.inputRounded {
+    font-size: 14px !important;
+}
+
+.transparent {
+    background: none !important;
+}
+
+.input--transparent {
+    color: #3F5279 !important;
+}

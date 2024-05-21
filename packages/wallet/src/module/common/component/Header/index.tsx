@@ -17,10 +17,22 @@ export function Header({
                 <Link href={"/wallet"} className={styles.header__logo}>
                     <LogoFrak />
                 </Link>
-                <h1 className={styles.header__title}>
-                    <Nexus />
-                </h1>
-                {authenticated && <HeaderWallet />}
+                <>
+                    <h1 className={styles.header__title}>
+                        <Nexus />
+                    </h1>
+                    {authenticated && <HeaderWallet />}
+                </>
+                {authenticated && (
+                    <Link href={"/settings"} className={styles.header__profile}>
+                        <img
+                            src={"/images/avatar.png"}
+                            alt={"avatar"}
+                            width={36}
+                            height={36}
+                        />
+                    </Link>
+                )}
             </header>
             {navigation && <Navigation />}
         </>

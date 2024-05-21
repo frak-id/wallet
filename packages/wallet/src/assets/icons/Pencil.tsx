@@ -5,25 +5,26 @@ export const Pencil = (props: SVGProps<SVGSVGElement>) => {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="25"
+            width="18"
+            height="17"
+            viewBox="0 0 18 17"
             fill="none"
-            viewBox="0 0 24 25"
             {...rest}
         >
             <title>Edit</title>
             <g clipPath="url(#clip0_8318_453)">
                 <path
                     fill={color ?? "#fff"}
-                    d="M7.127 23.49L0 24.93 1.438 17.8l5.689 5.69zm1.414-1.413L19.769 10.85l-5.69-5.692L2.852 16.387l5.689 5.69zM18.309.927l-2.816 2.817 5.691 5.691L24 6.617 18.309.928z"
+                    d="M5.54829 15.9814L0.5 17L1.51858 11.951L5.54829 15.9814ZM6.54988 14.9798L14.503 7.02879L10.4726 2.99696L2.52017 10.9494L6.54988 14.9798ZM13.4689 0L11.4742 1.99537L15.5053 6.0265L17.5 4.02971L13.4689 0Z"
                 />
             </g>
             <defs>
                 <clipPath id="clip0_8318_453">
-                    <path
+                    <rect
+                        width="17"
+                        height="17"
                         fill={color ?? "#fff"}
-                        d="M0 0H24V24H0z"
-                        transform="translate(0 .928)"
+                        transform="translate(0.5)"
                     />
                 </clipPath>
             </defs>
