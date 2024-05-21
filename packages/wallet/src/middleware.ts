@@ -9,6 +9,8 @@ const RESTRICTED_ROUTES = [
     "/tokens",
     "/unlock",
     "/wallet",
+    "/nfts",
+    "/membrs",
 ];
 
 /**
@@ -24,6 +26,11 @@ export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
     const session = await getSession();
 
+    // Check if pathname starts with any of the RESTRICTED_ROUTES
+    const isRestricted = RESTRICTED_ROUTES.some((route) =>
+        pathname.startsWith(route)
+    );
+
     /**
      * Redirect to wallet if the user is authenticated
      */
@@ -34,7 +41,7 @@ export async function middleware(req: NextRequest) {
     /**
      * Redirect to register if the user is not authenticated
      */
-    if (RESTRICTED_ROUTES.includes(pathname) && !session) {
+    if (isRestricted && !session) {
         return NextResponse.redirect(new URL("/register", req.url));
     }
 

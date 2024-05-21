@@ -31,3 +31,11 @@
     display: flex;
     margin: 0;
 }
+
+.header__profile {
+    display: inline-flex;
+    position: absolute;
+    margin-top: -18px;
+    top: 50%;
+    right: 12px;
+}

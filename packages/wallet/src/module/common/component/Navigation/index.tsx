@@ -1,6 +1,7 @@
+import { Community } from "@/assets/icons/Community";
 import { isRunningInProd } from "@/context/common/env";
 import { NavigationItem } from "@/module/common/component/NavigationItem";
-import { History, RectangleVertical, Settings, Wallet } from "lucide-react";
+import { History, RectangleVertical, Wallet } from "lucide-react";
 import styles from "./index.module.css";
 
 export function Navigation() {
@@ -15,11 +16,11 @@ export function Navigation() {
                         <RectangleVertical />
                     </NavigationItem>
                 )}
+                <NavigationItem url={"/membrs/profile"}>
+                    <Community />
+                </NavigationItem>
                 <NavigationItem url={"/history"}>
                     <History />
-                </NavigationItem>
-                <NavigationItem url={"/settings"}>
-                    <Settings />
                 </NavigationItem>
             </ul>
         </nav>

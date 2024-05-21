@@ -1,0 +1,18 @@
+.profile__title {
+    justify-content: center;
+}
+
+.profile__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 30px 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12px;
+}
+
+.profile__edit {
+    margin: 0 auto;
+    max-width: 240px;
+    text-align: center;
+}
