@@ -2,6 +2,7 @@
 
 import type { Article } from "@/type/Article";
 import Link from "next/link";
+import { useMemo } from "react";
 import ReactDOM from "react-dom";
 import styles from "./index.module.css";
 
@@ -20,9 +21,14 @@ export function ArticleItem({
             fetchPriority: "high",
         });
     }
+
+    const url = useMemo(() => {
+        return `${article.link}&isFree=${index === 0 ? 1 : 0}`;
+    }, [article.link, index]);
+
     return (
         <li>
-            <Link href={article.link} className={styles.articleItem}>
+            <Link href={url} className={styles.articleItem}>
                 <img
                     src={imageMobile(imageAsWebP(article.imageUrl))}
                     srcSet={`
