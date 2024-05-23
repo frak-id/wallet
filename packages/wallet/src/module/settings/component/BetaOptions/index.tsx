@@ -11,7 +11,10 @@ import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
-import { isWalletConnectEnableAtom } from "@/module/settings/atoms/betaOptions";
+import {
+    isConvertToEuroEnableAtom,
+    isWalletConnectEnableAtom,
+} from "@/module/settings/atoms/betaOptions";
 import { useAtom } from "jotai";
 import { FlaskConical, Square, SquareCheck } from "lucide-react";
 import styles from "./index.module.css";
@@ -53,6 +56,7 @@ function BetaOptionsList() {
         <ul>
             <li>
                 <WalletConnectToggle />
+                <ConvertToEuroToggle />
             </li>
         </ul>
     );
@@ -65,6 +69,18 @@ function WalletConnectToggle() {
             <Row>
                 {isEnable ? <SquareCheck /> : <Square />}
                 Wallet Connect
+            </Row>
+        </Button>
+    );
+}
+
+function ConvertToEuroToggle() {
+    const [isEnable, toggle] = useAtom(isConvertToEuroEnableAtom);
+    return (
+        <Button onClick={toggle} variant={"outlined"}>
+            <Row>
+                {isEnable ? <SquareCheck /> : <Square />}
+                Convert to Euro
             </Row>
         </Button>
     );
