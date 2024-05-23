@@ -4,6 +4,7 @@ import styles from "./index.module.css";
 export function Slider({
     label,
     defaultValue,
+    value,
     min,
     max,
     step,
@@ -12,6 +13,7 @@ export function Slider({
 }: {
     label: string;
     defaultValue?: number[];
+    value?: number[];
     min: number;
     max: number;
     step: number;
@@ -22,6 +24,7 @@ export function Slider({
         <SliderPrimitive.Root
             className={styles.slider__root}
             defaultValue={defaultValue}
+            value={value}
             min={min}
             max={max}
             step={step}

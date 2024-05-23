@@ -4,7 +4,7 @@ import { WalletConnectModal } from "@/module/wallet-connect/component/ModalReque
 import { WalletConnectProvider } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import type { ReactNode } from "react";
 
-export default async function RestrictedLayout({
+export default function RestrictedLayout({
     children,
 }: Readonly<{
     children: ReactNode;

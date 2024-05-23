@@ -4,6 +4,8 @@ import { Nexus } from "@/assets/icons/Nexus";
 import { HeaderWallet } from "@/module/common/component/HeaderWallet";
 import { Navigation } from "@/module/common/component/Navigation";
 import { LogoFrak } from "@frak-labs/shared/module/asset/icons/LogoFrak";
+import { userAtom } from "@/module/membrs/atoms/user";
+import { useAtomValue } from "jotai";
 import Link from "next/link";
 import styles from "./index.module.css";
 
@@ -11,6 +13,9 @@ export function Header({
     navigation = true,
     authenticated = false,
 }: { navigation?: boolean; authenticated?: boolean }) {
+    // Get the user from the atom
+    const user = useAtomValue(userAtom);
+
     return (
         <>
             <header className={styles.header}>
@@ -26,7 +31,7 @@ export function Header({
                 {authenticated && (
                     <Link href={"/settings"} className={styles.header__profile}>
                         <img
-                            src={"/images/avatar.png"}
+                            src={user?.photo ?? "/images/avatar.png"}
                             alt={"avatar"}
                             width={36}
                             height={36}

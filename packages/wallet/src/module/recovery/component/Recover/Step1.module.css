@@ -1,4 +1,6 @@
 .step1__uploader {
+    min-width: initial !important;
+    max-width: initial !important;
     border-color: var(--frak-color-white) !important;
 }
 
@@ -8,6 +10,10 @@
 
 .step1__uploader svg {
     display: none;
+}
+
+.step1__uploader > input {
+    width: 100%;
 }
 
 .step1__uploader > input + div {

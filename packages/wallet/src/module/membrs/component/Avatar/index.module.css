@@ -1,4 +1,8 @@
 .avatar {
     position: relative;
     display: inline-flex;
+
+    & > img {;
+        border-radius: 50%;
+    }
 }
