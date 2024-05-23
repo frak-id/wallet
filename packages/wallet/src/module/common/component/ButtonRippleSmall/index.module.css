@@ -1,6 +1,6 @@
 .buttonRippleSmall {
-    margin: 0 auto;
-    padding-left: 40px;
-    padding-right: 40px;
-    width: auto;
+    margin: 0 auto !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+    width: auto !important;
 }

@@ -1,0 +1,25 @@
+.avatarCamera__button {
+    margin-top: 20px !important;
+}
+
+.avatarCamera__video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.avatarCamera__webcam {
+    max-width: 47rem;
+    max-height: 80%;
+    margin: 0 auto;
+}

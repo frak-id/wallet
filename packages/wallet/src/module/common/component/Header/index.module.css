@@ -38,4 +38,8 @@
     margin-top: -18px;
     top: 50%;
     right: 12px;
+
+    & > img {
+        border-radius: 50%;
+    }
 }

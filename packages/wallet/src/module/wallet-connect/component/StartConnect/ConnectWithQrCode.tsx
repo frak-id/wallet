@@ -1,4 +1,5 @@
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
+import { isConnectedVideoDevices } from "@/module/common/utils/isConnectedVideoDevices";
 import { useWalletConnectToDapp } from "@/module/wallet-connect/hook/useWalletConnectToDapp";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
@@ -7,14 +8,6 @@ import styles from "./index.module.css";
 const ReactQrReader = dynamic(() => import("react-qr-reader-es6"), {
     ssr: false,
 });
-
-async function isConnectedVideoDevices() {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const videosDevices = devices.filter(
-        (device) => device.kind === "videoinput"
-    );
-    return videosDevices.length > 0;
-}
 
 export function ConnectWithQrCode() {
     const { onConnect, status, error } = useWalletConnectToDapp();

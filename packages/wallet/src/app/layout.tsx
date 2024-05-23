@@ -1,3 +1,4 @@
+import { getUser } from "@/context/membrs/action/user";
 import { getSession } from "@/context/session/action/session";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
@@ -56,12 +57,23 @@ export default async function RootLayout({
     // Check if a user is logged in or not
     const session = await getSession();
 
+    // Get the user from the session
+    const user = await getUser({ id: session?.wallet.address });
+
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`scrollbars ${sora.className}`}>
                 <NextTopLoader showSpinner={false} />
-                <RootProvider session={session}>{children}</RootProvider>
-                <Script id="theme" strategy="afterInteractive">
+                <div className={"desktop scrollbars"}>
+                    <main className={styles.main}>
+                        <div className={styles.inner}>
+                            <RootProvider session={session} user={user}>
+                                <ClientOnly>{children}</ClientOnly>
+                            </RootProvider>
+                        </div>
+                    </main>
+                </div>
+                <Script id="theme" strategy="beforeInteractive">
                     {`
                     function setTheme(newTheme) {
                         document.querySelector(":root").dataset.theme = newTheme;
