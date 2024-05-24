@@ -16,7 +16,7 @@ export function Navigation() {
                         <RectangleVertical />
                     </NavigationItem>
                 )}
-                <NavigationItem url={"/membrs/profile"}>
+                <NavigationItem url={"/membrs"}>
                     <Community />
                 </NavigationItem>
                 <NavigationItem url={"/history"}>
