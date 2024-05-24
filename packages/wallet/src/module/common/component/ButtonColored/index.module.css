@@ -1,0 +1,12 @@
+.buttonRippleSmall {
+    background: rgba(245, 245, 245, 0.1) !important;
+    border-radius: 20px !important;
+    border-image: url("data:image/svg+xml,%3csvg width='100' height='100' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3e %3crect x='0.5' y='0.5' width='99' height='99' rx='19.5' stroke='url(%23paint0_linear_9779_12692)'/%3e %3cdefs%3e %3clinearGradient id='paint0_linear_9779_12692' x1='4.65935' y1='83.0898' x2='101.921' y2='15.3103' gradientUnits='userSpaceOnUse'%3e %3cstop offset='0.02' stop-color='%238B5EB3'/%3e %3cstop offset='0.04' stop-color='%23B155B3'/%3e %3cstop offset='0.09' stop-color='%23B13FB3'/%3e %3cstop offset='0.14' stop-color='%23B12FB3'/%3e %3cstop offset='0.21' stop-color='%23B125B3'/%3e %3cstop offset='0.29' stop-color='%23B123B3'/%3e %3cstop offset='0.42' stop-color='%236E5CCA'/%3e %3cstop offset='0.55' stop-color='%23338EDE'/%3e %3cstop offset='0.65' stop-color='%230FAEEB'/%3e %3cstop offset='0.7' stop-color='%2302BAF0'/%3e %3cstop offset='0.9' stop-color='%2302E6D5'/%3e %3c/linearGradient%3e %3c/defs%3e %3c/svg%3e") 20 / 20px stretch;
+    box-shadow: none !important;
+    color: var(--frak-color-white) !important;
+    font-size: 16px !important;
+}
+
+.buttonRippleSmall:hover {
+    box-shadow: none !important;
+}

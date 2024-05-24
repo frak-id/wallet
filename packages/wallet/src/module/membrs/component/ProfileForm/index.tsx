@@ -3,11 +3,11 @@ import { saveUser } from "@/context/membrs/action/user";
 import { ButtonRippleSmall } from "@/module/common/component/ButtonRippleSmall";
 import { InputRounded } from "@/module/common/component/InputRounded";
 import { uploadProfilePhotoAtom } from "@/module/membrs/atoms/uploadProfilePhoto";
-import { userAtom } from "@/module/membrs/atoms/user";
+import { userAtom, userSetupLaterAtom } from "@/module/membrs/atoms/user";
 import { useCopyAddress } from "@/module/wallet/hook/useCopyAddress";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { Copy } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useConnectorClient } from "wagmi";
@@ -19,6 +19,7 @@ type FormInput = {
 };
 
 export function ProfileForm() {
+    const router = useRouter();
     const { data: connectorClient } = useConnectorClient();
     const [disabled, setDisabled] = useState(true);
     const [error, setError] = useState<string>();
@@ -26,6 +27,9 @@ export function ProfileForm() {
 
     // Get the user from the atom
     const [user, setUser] = useAtom(userAtom);
+
+    // User choose to setup his profile later
+    const setUserSetupLater = useSetAtom(userSetupLaterAtom);
 
     // Get the profile photo from the avatar upload
     const [profilePhoto, setProfilePhoto] = useAtom(uploadProfilePhotoAtom);
@@ -140,11 +144,20 @@ export function ProfileForm() {
                 </ButtonRippleSmall>
             </p>
             {error && <p className={"error"}>{error}</p>}
-            <p>
-                <Link href={"/"} className={styles.profileForm__link}>
-                    later
-                </Link>
-            </p>
+            {!user && (
+                <p>
+                    <button
+                        type={"button"}
+                        onClick={() => {
+                            setUserSetupLater(true);
+                            router.push("/membrs");
+                        }}
+                        className={`button ${styles.profileForm__link}`}
+                    >
+                        later
+                    </button>
+                </p>
+            )}
         </form>
     );
 }

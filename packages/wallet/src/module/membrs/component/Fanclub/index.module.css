@@ -1,0 +1,12 @@
+.fanClub__introduction {
+    justify-content: center;
+    font-size: 29px;
+    line-height: 36px;
+    margin-bottom: 110px;
+}
+
+.fanClub__buttonText {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
