@@ -1,5 +1,5 @@
 import { use } from "sst/constructs";
-import type { StackContext } from "sst/constructs";
+import type { StackContext, NextjsSiteProps } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
 import { isDevStack, isProdStack } from "./utils";
@@ -25,14 +25,9 @@ export function ExampleAppStack({ stack }: StackContext) {
         ? "news-example"
         : `news-example-${stack.stage.toLowerCase()}`;
 
-    // Declare the Next.js site
-    const site = new NextjsSite(stack, "example", {
+    // Config for the webapp deployment
+    const ssrConfig: Partial<NextjsSiteProps> = {
         path: "packages/example",
-        // Set the custom domain
-        customDomain: {
-            domainName: `${subDomain}.frak.id`.toLowerCase(),
-            hostedZone: "frak.id",
-        },
         // Bind to the configs
         bind: configs,
         // Set to combined logging to prevent SSR huuuge cost
@@ -57,9 +52,32 @@ export function ExampleAppStack({ stack }: StackContext) {
                 },
             ],
         },
+    };
+
+    // Declare the next js site on news-example.frak.id
+    const exampleSite = new NextjsSite(stack, "example", {
+        // Set the custom domain
+        customDomain: {
+            domainName: `${subDomain}.frak.id`.toLowerCase(),
+            hostedZone: "frak.id",
+        },
+        // Add the config
+        ...ssrConfig,
+    });
+
+    // Declare the next js site on news-example.frak.id
+    const newsSite = new NextjsSite(stack, "newsSite", {
+        // Set the custom domain
+        customDomain: {
+            domainName: "news-paper.xyz",
+            hostedZone: "news-paper.xyz",
+        },
+        // Add the config
+        ...ssrConfig,
     });
 
     stack.addOutputs({
-        SiteUrl: site.url,
+        ExampleSiteUrl: exampleSite.url,
+        NewsSiteUrl: newsSite.url,
     });
 }
