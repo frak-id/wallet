@@ -5,6 +5,7 @@ import { formatSecondDuration } from "@/context/common/duration";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
+import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import { AlertDialogArticle } from "@/module/history/component/AlertDialogArticle";
 import { DrawerArticle } from "@/module/history/component/DrawerArticle";
 import type { ArticleUnlockWithFrontData } from "@/types/HistoryItem";
@@ -18,6 +19,9 @@ type ArticleUnlockProps = {
 };
 
 export function ArticleUnlock({ article }: ArticleUnlockProps) {
+    // Convert the paid amount to euro
+    const { convertToEuro } = useConvertToEuro();
+
     // Check if the screen is desktop or mobile
     const isDesktop = useMediaQuery("(min-width : 600px)");
 
@@ -128,7 +132,7 @@ export function ArticleUnlock({ article }: ArticleUnlockProps) {
                     <PolygonLink hash={article.articleId} icon={false} />
                 </Row>*/}
                 <Row>
-                    Unlocked for {article.paidAmount} FRK at{" "}
+                    Unlocked for {convertToEuro(article.paidAmount, "FRK")} at{" "}
                     {new Date(article.txDate).toLocaleString()}
                 </Row>
                 {article.remainingTimeFormatted && (

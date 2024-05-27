@@ -1,14 +1,22 @@
 import { formatFrk } from "@/context/wallet/utils/frkFormatter";
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
+import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import styles from "@/module/paywall/component/Unlock/index.module.css";
 import { useMemo } from "react";
 import { formatEther } from "viem";
 
 export function InformationBalance({ balance }: { balance: string }) {
+    // Get the balance in euro
+    const { convertToEuro, isEnabled } = useConvertToEuro();
+
     return (
         <p className={styles.unlock__row}>
             <span>Current balance</span>
-            <span>{formatFrk(Number(balance))}</span>
+            <span>
+                {isEnabled
+                    ? convertToEuro(balance)
+                    : formatFrk(Number(balance))}
+            </span>
         </p>
     );
 }
@@ -18,6 +26,9 @@ export function InformationUnlockPriceOrExpiration({
     alreadyUnlockedExpiration,
 }: { price: string; alreadyUnlockedExpiration?: string }) {
     const formattedPrice = useMemo(() => formatEther(BigInt(price)), [price]);
+
+    // Get the price in euro
+    const { convertToEuro } = useConvertToEuro();
 
     // If already unlocked, directly exit with expiration date
     if (alreadyUnlockedExpiration) {
@@ -33,7 +44,7 @@ export function InformationUnlockPriceOrExpiration({
     return (
         <p className={styles.unlock__row}>
             <span>Unlock price</span>
-            <span>{formattedPrice} pFRK</span>
+            <span>{convertToEuro(formattedPrice, "pFRK")}</span>
         </p>
     );
 }

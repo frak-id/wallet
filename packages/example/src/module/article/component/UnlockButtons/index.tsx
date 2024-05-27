@@ -2,6 +2,7 @@ import css from "!!raw-loader!./index.module.css";
 import { FrakLogo } from "@/assets/icons/FrakLogo";
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
+import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import type { Article } from "@/type/Article";
 import { getStartArticleUnlockUrl } from "@frak-labs/nexus-sdk/actions";
 import type { UnlockOptionsReturnType } from "@frak-labs/nexus-sdk/core";
@@ -176,11 +177,24 @@ function LockedWalletStatusInfo({
         <>
             You are logged in with {formatHash(walletStatus?.wallet)}
             <br />
-            {balanceHex === undefined
-                ? "Fetching your balance..."
-                : `You have ${formatEther(BigInt(balanceHex))} pFRK`}
+            <AmountFormatted balanceHex={balanceHex} />
         </>
     );
+}
+
+function AmountFormatted({ balanceHex }: { balanceHex?: Hex | undefined }) {
+    // Get the balance in euro
+    const { convertToEuro, isEnabled } = useConvertToEuro();
+
+    if (balanceHex === undefined) {
+        return <>Fetching your balance...</>;
+    }
+
+    const amount = isEnabled
+        ? convertToEuro(formatEther(BigInt(balanceHex)))
+        : `${formatEther(BigInt(balanceHex))} pFRK`;
+
+    return <>{`You have ${amount}`}</>;
 }
 
 const useUnlockRedirectUrl = ({

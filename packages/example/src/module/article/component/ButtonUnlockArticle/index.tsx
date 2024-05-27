@@ -1,5 +1,6 @@
 import { formatSecondDuration } from "@/module/article/utils/duration";
 import { Button } from "@/module/common/component/Button";
+import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import type { Article } from "@/type/Article";
 import type { PaidArticleUnlockPrice } from "@frak-labs/nexus-sdk/core";
 import { formatEther } from "viem";
@@ -15,6 +16,9 @@ export function ButtonUnlockArticle({
     disabled?: boolean;
     provider: Article["provider"];
 }) {
+    // Get the price in euro
+    const { convertToEuro } = useConvertToEuro();
+
     return (
         <Button
             variant={provider}
@@ -29,7 +33,7 @@ export function ButtonUnlockArticle({
                         : formatSecondDuration(price?.unlockDurationInSec)}
                 </strong>
                 <br />
-                {formatEther(BigInt(price.frkAmount))} FRK
+                {convertToEuro(formatEther(BigInt(price.frkAmount)), "FRK")}
             </span>
         </Button>
     );
