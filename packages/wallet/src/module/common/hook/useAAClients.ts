@@ -1,7 +1,4 @@
-import {
-    getBundlerClient,
-    getPaymasterClient,
-} from "@/context/common/blockchain/aa-provider";
+import { getBundlerClient } from "@/context/common/blockchain/aa-provider";
 import { useMemo } from "react";
 import { useClient } from "wagmi";
 
@@ -18,7 +15,7 @@ export function useAAClients({ chainId }: { chainId?: number } = {}) {
      * Memo building the AA related clients (bundler and paymasters)
      * TODO: Switch to query for caching of this stuff?
      */
-    const { bundlerTransport, bundlerClient, paymasterClient } = useMemo(() => {
+    const { bundlerTransport, bundlerClient } = useMemo(() => {
         if (!viemClient) {
             return {};
         }
@@ -27,13 +24,11 @@ export function useAAClients({ chainId }: { chainId?: number } = {}) {
 
         // Get the clients
         const { bundlerClient, bundlerTransport } = getBundlerClient(chain);
-        const paymasterClient = getPaymasterClient(chain);
 
         // Return them
         return {
             bundlerTransport,
             bundlerClient,
-            paymasterClient,
         };
     }, [viemClient]);
 
@@ -42,8 +37,7 @@ export function useAAClients({ chainId }: { chainId?: number } = {}) {
             viemClient,
             bundlerTransport,
             bundlerClient,
-            paymasterClient,
         }),
-        [viemClient, bundlerTransport, bundlerClient, paymasterClient]
+        [viemClient, bundlerTransport, bundlerClient]
     );
 }

@@ -220,12 +220,10 @@ async function buildSmartAccount<
         chain: viemClient.chain,
         bundlerTransport,
         // Only add a middleware if the paymaster client is available
-        middleware: paymasterClient
-            ? {
-                  sponsorUserOperation: (args) =>
-                      sponsorUserOperation(paymasterClient, args),
-              }
-            : {},
+        middleware: {
+            sponsorUserOperation: (args) =>
+                sponsorUserOperation(paymasterClient, args),
+        },
     }) as unknown as Client;
 
     // Override the estimate gas method

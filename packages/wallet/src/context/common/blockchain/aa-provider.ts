@@ -20,21 +20,15 @@ export const getBundlerClient = memo(
     { key: (chain: Chain) => `bundler-client-${chain.id}` }
 );
 
+// Build the paymaster client for the given chain
 export const getPaymasterClient = memo(
-    (chain: Chain) => {
-        // If the chain isn't a testnet, exit without paymaster as default
-        if (chain.testnet !== true) {
-            return undefined;
-        }
-
-        // Build the paymaster client
-        return createClient({
+    (chain: Chain) =>
+        createClient({
             chain,
             transport: http(
                 `https://api.pimlico.io/v2/${chain.id}/rpc?apikey=${process.env.PIMLICO_API_KEY}`
             ),
-        });
-    },
+        }),
     { key: (chain: Chain) => `paymaster-client-${chain.id}` }
 );
 

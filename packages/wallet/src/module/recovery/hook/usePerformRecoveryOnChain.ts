@@ -65,12 +65,10 @@ export function usePerformRecoveryOnChain(chainId: number) {
                 chain: client.chain,
                 bundlerTransport,
                 // Only add a middleware if the paymaster client is available
-                middleware: paymasterClient
-                    ? {
-                          sponsorUserOperation: (args) =>
-                              sponsorUserOperation(paymasterClient, args),
-                      }
-                    : {},
+                middleware: {
+                    sponsorUserOperation: (args) =>
+                        sponsorUserOperation(paymasterClient, args),
+                },
             });
 
             // Build the function data
