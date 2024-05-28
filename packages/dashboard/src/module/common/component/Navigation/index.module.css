@@ -1,0 +1,21 @@
+.navigation {
+    position: fixed;
+    left: 0;
+    top: 72px;
+    width: 256px;
+    height: calc(100dvh - 72px);
+    padding: 15px 28px 12px 10px;
+    background: var(--frak-navigation-background-color);
+    backdrop-filter: blur(10px);
+}
+
+.navigation__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+}
+
+.navigation__itemToBottom {
+    margin-top: auto;
+}

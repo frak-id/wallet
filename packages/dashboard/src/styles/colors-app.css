@@ -1,0 +1,16 @@
+:root {
+    --frak-text-color: var(--frak-color-white);
+    --frak-link-color: var(--frak-color-white);
+    --frak-background-color: var(--frak-color-dark);
+    --frak-contrast-background-color: var(--frak-color-blue-zodiac-darker);
+    --frak-panel-background-color: var(--frak-color-tangaroa);
+    --frak-panel-outlined-border-color: var(--frak-color-blue-zodiac-darker);
+    --frak-panel-shadow-color: var(--frak-shadow-color);
+    --frak-panel-border-color: rgba(129, 140, 156, .2);
+    --frak-header-background-color: var(--frak-color-blur);
+    --frak-navigation-background-color: var(--frak-color-blur);
+    --frak-navigation-profile-separator-color: var(--frak-color-white);
+    --frak-navigation-item-color: var(--frak-color-white);
+    --frak-navigation-item-hover-color: rgba(0, 20, 50, 1);
+    --frak-navigation-item-hover-background-color: rgba(245, 245, 245, 0.5);
+}

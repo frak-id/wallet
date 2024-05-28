@@ -1,5 +1,8 @@
 <component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
+    <PostCssCodeStyleSettings>
+      <option name="COMMENTS_INLINE_STYLE" value="false" />
+    </PostCssCodeStyleSettings>
     <TypeScriptCodeStyleSettings version="0">
       <option name="USE_IMPORT_TYPE" value="ALWAYS" />
     </TypeScriptCodeStyleSettings>

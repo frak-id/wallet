@@ -1,0 +1,33 @@
+{
+  "name": "@frak-labs/nexus-dashboard",
+  "version": "0.0.1",
+  "description": "The simple and cross-platform wallet to centralise your contents.",
+  "private": true,
+  "type": "module",
+  "license": "GNU GPL 3.0",
+  "scripts": {
+    "dev": "sst bind PORT=3002 next dev --turbo",
+    "build": "sst bind next build --experimental-turbo",
+    "start": "sst bind next start",
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --apply .",
+    "typecheck": "tsc --noEmit",
+    "deploy": "sst deploy --stage prod"
+  },
+  "dependencies": {
+    "lucide-react": "^0.373.0",
+    "next": "14.2.3",
+    "normalize.css": "^8.0.1",
+    "radash": "^12.1.0",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "sst": "2.41.4",
+    "typescript": "^5"
+  }
+}

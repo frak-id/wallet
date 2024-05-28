@@ -1,0 +1,19 @@
+.navigationItem__button {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 52px;
+    padding: 0 0 0 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--frak-navigation-item-color);
+    transition: background 0.3s, color 0.3s;
+}
+
+.navigationItem__button:hover, .navigationItem__button--active{
+    background: var(--frak-navigation-item-hover-background-color);
+    color: var(--frak-navigation-item-hover-color);
+}

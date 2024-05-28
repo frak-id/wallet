@@ -1,0 +1,55 @@
+:root {
+    --frak-color-accent: #00baf1;
+    --frak-color-accent-transition: rgba(246, 55, 237, 0);
+    --frak-color-green: #00e617;
+    --frak-color-gray: #03193a;
+    --frak-color-grayText: #818c9c;
+    --frak-color-black: #000;
+    --frak-color-white: #fff;
+    --frak-color-red: #ff0000;
+    --frak-color-red-34: #65253b;
+    --frak-color-dark: #001432;
+    --frak-color-light: #dcdcdc;
+    --frak-color-gray-input: #9b9b9b;
+    --frak-color-blue-frak: #03193a;
+    --frak-color-green-frak: #00e6d4;
+    --frak-color-blue-light-frak: #00baf1;
+    --frak-color-blue-background: #001432;
+    --frak-color-tundora: #474747;
+    --frak-color-mine-shaft: #1f1f1f;
+    --frak-color-mine-shaft-lighter: #333333;
+    --frak-color-blue-charcoal: #000b1c;
+    --frak-color-bright-turquoise: #02e6d5;
+    --frak-color-bright-turquoise-20: #184b67;
+    --frak-color-turquoise-20: #213937;
+    --frak-color-blumine: #1b697e;
+    --frak-color-silver-chalice: #adadad;
+    --frak-color-blue-zodiac: #123365;
+    --frak-color-blue-zodiac-darker: #12244b;
+    --frak-color-chartreuse-yellow: #ebff00;
+    --frak-color-corn: #e4a400;
+    --frak-color-alto: #d9d9d9;
+    --frak-color-regent-gray-34: rgba(129, 140, 156, 0.34);
+    --frak-color-flush-orange: #ff7a00;
+    --frak-color-east-bay: #3F5279;
+    --frak-color-mystic: #E2EBEF;
+    --frak-color-mystic2: #EBF0F2;
+    --frak-color-tangaroa: #041A3B;
+    --frak-background-image-dark: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUxOSIgaGVpZ2h0PSIxMDg3IiB2aWV3Qm94PSIwIDAgMTUxOSAxMDg3IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTUxOSIgaGVpZ2h0PSIxMDg3IiBmaWxsPSJ1cmwoI3BhaW50MF9yYWRpYWxfOTg2MF8yNjc0KSIvPgo8ZGVmcz4KPHJhZGlhbEdyYWRpZW50IGlkPSJwYWludDBfcmFkaWFsXzk4NjBfMjY3NCIgY3g9IjAiIGN5PSIwIiByPSIxIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgZ3JhZGllbnRUcmFuc2Zvcm09InRyYW5zbGF0ZSgzOTAuMzQ4IDQ5Mi4xMjQpIHJvdGF0ZSgyMC4yODMxKSBzY2FsZSgxNDQ0LjMgNDI3LjYzNykiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMTk0MzgwIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzAzMTkzQSIvPgo8L3JhZGlhbEdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo=");
+    --frak-shadow-color: #00000040;
+    --frak-color-gradient: linear-gradient(
+            55deg,
+            #8b5eb3 11.39%,
+            #b155b3 13.1%,
+            #b13fb3 17.35%,
+            #b12fb3 21.61%,
+            #b125b3 27.57%,
+            #b123b3 34.39%,
+            #6e5cca 45.46%,
+            #338ede 56.53%,
+            #0faeeb 65.04%,
+            #02baf0 69.3%,
+            #02e6d5 86.33%
+    );
+    --frak-color-blur: rgba(245, 245, 245, 0.1);
+}
