@@ -8,3 +8,10 @@
     display: flex;
     gap: 40px;
 }
+
+.navigationTopItem__button {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    cursor: pointer;
+}

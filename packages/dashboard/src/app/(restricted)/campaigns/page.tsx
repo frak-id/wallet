@@ -1,9 +1,11 @@
-import { Title } from "@/module/common/component/Title";
+import { Filters } from "@/module/common/component/Filters";
+import { Head } from "@/module/common/component/Head";
 
 export default function CampaignsPage() {
     return (
         <>
-            <Title>Campaigns</Title>
+            <Head />
+            <Filters />
         </>
     );
 }

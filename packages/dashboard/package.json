@@ -16,6 +16,7 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.0.2",
     "lucide-react": "^0.373.0",
     "next": "14.2.3",
     "normalize.css": "^8.0.1",

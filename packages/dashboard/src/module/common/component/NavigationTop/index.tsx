@@ -1,9 +1,12 @@
+"use client";
+
 import { Calendar } from "@/assets/icons/Calendar";
 import { Envelope } from "@/assets/icons/Envelope";
 import { Notification } from "@/assets/icons/Notification";
 import { Search } from "@/assets/icons/Search";
 import { NavigationProfile } from "@/module/common/component/NavigationProfile";
-import { NavigationTopItem } from "@/module/common/component/NavigationTopItem";
+import { useRouter } from "next/navigation";
+import type { PropsWithChildren } from "react";
 import styles from "./index.module.css";
 
 export function NavigationTop() {
@@ -27,5 +30,28 @@ export function NavigationTop() {
             </nav>
             <NavigationProfile />
         </div>
+    );
+}
+
+type NavigationTopItemProps = {
+    url: string;
+};
+
+function NavigationTopItem({
+    children,
+    url,
+}: PropsWithChildren<NavigationTopItemProps>) {
+    const router = useRouter();
+
+    return (
+        <li>
+            <button
+                type={"button"}
+                className={`${styles.navigationTopItem__button}`}
+                onClick={() => router.push(url)}
+            >
+                {children}
+            </button>
+        </li>
     );
 }

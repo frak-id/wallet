@@ -1,15 +1,7 @@
+import { Fonts } from "@/module/common/component/Fonts";
 import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
-
-const inter = Inter({
-    subsets: ["latin"],
-    variable: "--font-family",
-    fallback: ["--font-family-sans"],
-    weight: ["500", "600"],
-    display: "swap",
-});
 
 export const metadata: Metadata = {
     title: "Nexus Dashboard by Frak",
@@ -51,7 +43,8 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`${inter.className}`}>{children}</body>
+            <Fonts />
+            <body>{children}</body>
         </html>
     );
 }

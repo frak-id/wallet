@@ -13,4 +13,13 @@
     --frak-navigation-item-color: var(--frak-color-white);
     --frak-navigation-item-hover-color: rgba(0, 20, 50, 1);
     --frak-navigation-item-hover-background-color: rgba(245, 245, 245, 0.5);
+    --frak-button-color: var(--frak-color-white);
+    --frak-button-primary-background-color: rgba(245, 245, 245, 0.37);
+    --frak-button-secondary-background-color: var(--frak-color-white);
+    --frak-button-secondary-border-color: var(--frak-color-mischka);
+    --frak-button-secondary-color: var(--frak-color-tuna);
+    --frak-input-background-color: var(--frak-color-white);
+    --frak-input-border-color: var(--frak-color-mischka);
+    --frak-input-text-color: var(--frak-color-regent-gray);
+    --frak-input-placeholder-color: var(--frak-color-regent-gray);
 }

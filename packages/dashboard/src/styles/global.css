@@ -6,6 +6,7 @@
 }
 
 html {
+    font-family: var(--font-family);
     font-style: normal;
     font-weight: 500;
     font-size: 16px;
@@ -30,6 +31,7 @@ ul {
 
 a {
     color: var(--frak-link-color);
+    text-decoration: none;
 }
 
 sub,
