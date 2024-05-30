@@ -1,11 +1,17 @@
 "use client";
 
+import { Badge } from "@/module/common/component/Badge";
+import { Checkbox } from "@/module/common/component/Checkbox";
+import { Switch } from "@/module/common/component/Switch";
 import { Table } from "@/module/common/component/Table";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { usePrevious } from "@uidotdev/usehooks";
+import { Eye, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import useSessionStorageState from "use-session-storage-state";
+import styles from "./index.module.css";
 
 type TableData = {
     _id: string;
@@ -123,10 +129,6 @@ const mockMetas: TableMetas = {
 
 const columnHelper = createColumnHelper<TableData>();
 
-function getPage(currentValue: number, page: number) {
-    return currentValue + 1 + (page - 1) * 10;
-}
-
 const initialFilteringState = { page: 1 };
 
 export function TableCampaigns() {
@@ -154,19 +156,30 @@ export function TableCampaigns() {
         () =>
             [
                 columnHelper.display({
-                    header: "#",
-                    cell: (props) =>
-                        `#${getPage(
-                            Number(props.cell.row.id),
-                            filtering.page
-                        )}`,
+                    id: "checkbox",
+                    header: () => <Checkbox />,
+                    cell: () => <Checkbox />,
+                }),
+                columnHelper.accessor("enabled", {
+                    header: "On/Off",
+                    cell: ({ getValue }) => {
+                        return (
+                            <Switch
+                                checked={getValue()}
+                                onCheckedChange={(value) => console.log(value)}
+                            />
+                        );
+                    },
                 }),
                 columnHelper.accessor("title", {
-                    cell: (props) => <>{props.getValue()}</>,
+                    cell: (props) => <Link href={"#"}>{props.getValue()}</Link>,
                     header: () => "Campaign",
                 }),
                 columnHelper.accessor("status", {
                     header: () => "Status",
+                    cell: (props) => (
+                        <Badge variant={"secondary"}>{props.getValue()}</Badge>
+                    ),
                 }),
                 columnHelper.accessor("date", {
                     header: () => "Date",
@@ -176,14 +189,22 @@ export function TableCampaigns() {
                 }),
                 columnHelper.display({
                     header: "Action",
-                    cell: (props) =>
-                        `#${getPage(
-                            Number(props.cell.row.id),
-                            filtering.page
-                        )}`,
+                    cell: () => (
+                        <div className={styles.table__actions}>
+                            <button type={"button"}>
+                                <Eye size={20} absoluteStrokeWidth={true} />
+                            </button>
+                            <button type={"button"}>
+                                <Pencil size={20} absoluteStrokeWidth={true} />
+                            </button>
+                            <button type={"button"}>
+                                <Trash2 size={20} absoluteStrokeWidth={true} />
+                            </button>
+                        </div>
+                    ),
                 }),
             ] as ColumnDef<TableData>[],
-        [filtering.page]
+        []
     );
 
     return (

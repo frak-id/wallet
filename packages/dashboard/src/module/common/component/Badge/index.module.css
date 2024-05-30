@@ -1,0 +1,28 @@
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-weight: 600;
+    line-height: 20px;
+}
+
+.primary {
+    background-color: #E8F8FD;
+    color: #13B2E4;
+}
+
+.secondary {
+    background-color: #F0F1F3;
+    color: #667085;
+}
+
+.success {
+    background-color: #E7F4EE;
+    color: #0D894F;
+}
+
+.danger {
+    background-color: #FEEDEC;
+    color: #F04438;
+}

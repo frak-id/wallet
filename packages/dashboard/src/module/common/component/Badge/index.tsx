@@ -1,0 +1,35 @@
+import { type VariantProps, cva } from "class-variance-authority";
+import type { HTMLAttributes } from "react";
+import styles from "./index.module.css";
+
+const badgeVariants = cva(styles.badge, {
+    variants: {
+        variant: {
+            primary: styles.primary,
+            secondary: styles.secondary,
+            success: styles.success,
+            danger: styles.danger,
+        },
+    },
+    defaultVariants: {
+        variant: "primary",
+    },
+});
+
+export interface BadgeProps
+    extends HTMLAttributes<HTMLDivElement>,
+        VariantProps<typeof badgeVariants> {}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+    return (
+        <div
+            className={`${badgeVariants({
+                variant,
+            })} ${className}`}
+            {...props}
+        />
+    );
+}
+Badge.displayName = "Badge";
+
+export { Badge, badgeVariants };

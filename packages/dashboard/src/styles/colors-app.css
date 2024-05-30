@@ -26,6 +26,7 @@
     --frak-table-text-color: var(--frak-color-pale-sky);
     --frak-table-border-color: var(--frak-color-mischka);
     --frak-table-heading-text-color: var(--frak-color-tuna);
+    --frak-table-heading-background-color: var(--frak-color-whisper);
     --frak-table-row-border-color: var(--frak-color-athens-gray);
     --frak-pagination-border-color: var(--frak-color-athens-gray);
 }

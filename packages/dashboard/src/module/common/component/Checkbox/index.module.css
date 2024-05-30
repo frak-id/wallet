@@ -1,0 +1,19 @@
+.checkbox {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #858D9D;
+    border-radius: 6px;
+    background-color: var(--frak-color-white);
+}
+
+.checkbox:hover {
+    cursor: pointer;
+}
+
+.checkbox__indicator {
+    display: flex;
+}
