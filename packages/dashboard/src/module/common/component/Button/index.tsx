@@ -1,36 +1,49 @@
 import { Loader } from "@/assets/icons/Loader";
 import { Slot } from "@radix-ui/react-slot";
+import { type VariantProps, cva } from "class-variance-authority";
 import { cloneElement, forwardRef, isValidElement } from "react";
 import type { ButtonHTMLAttributes, ReactElement, ReactNode } from "react";
 import styles from "./index.module.css";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?:
-        | "primary"
-        | "secondary"
-        | "outlined"
-        | "empty"
-        | "submit"
-        | "danger";
-    fontNormal?: boolean;
-    fontBold?: boolean;
-    fontSize?: "small" | "normal" | "big";
-    size?: "none" | "small" | "normal" | "big";
+export interface ButtonProps
+    extends ButtonHTMLAttributes<HTMLButtonElement>,
+        VariantProps<typeof buttonVariants> {
     isLoading?: boolean;
     leftIcon?: ReactNode;
     rightIcon?: ReactNode;
     asChild?: boolean;
-    children: string | ReactNode;
+    children?: string | ReactNode;
 }
+
+export const buttonVariants = cva(styles.button, {
+    variants: {
+        variant: {
+            primary: styles.primary,
+            secondary: styles.secondary,
+            outline: styles.outline,
+            ghost: styles.ghost,
+            submit: styles.submit,
+            danger: styles.danger,
+        },
+        size: {
+            none: styles["size--none"],
+            small: styles["size--small"],
+            medium: styles["size--medium"],
+            big: styles["size--big"],
+            icon: styles["size--icon"],
+        },
+    },
+    defaultVariants: {
+        variant: "primary",
+        size: "medium",
+    },
+});
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     (
         {
             variant,
             className = "",
-            fontNormal,
-            fontBold,
-            fontSize,
             size,
             isLoading,
             leftIcon,
@@ -41,19 +54,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         },
         ref
     ) => {
-        const variantClass = variant ? styles[variant] : styles.primary;
-        const sizeClass = size
-            ? styles[`size--${size}`]
-            : styles["size--normal"];
-        const fontSizeClass = fontSize
-            ? styles[`fontSize--${fontSize}`]
-            : styles["fontSize--normal"];
-        const allClassNames = `${styles.button} ${variantClass} ${sizeClass} ${
-            fontNormal ? styles.fontNormal : ""
-        } ${fontBold ? styles.fontBold : ""} ${fontSizeClass} ${className}`;
         const Comp = asChild ? Slot : "button";
         return (
-            <Comp className={`${allClassNames}`} ref={ref} {...props}>
+            <Comp
+                className={buttonVariants({ variant, size, className })}
+                ref={ref}
+                {...props}
+            >
                 <>
                     {isLoading && <Loader className={styles.loader} />}
                     {leftIcon && isValidElement(leftIcon)
@@ -66,7 +73,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                         ? cloneElement(
                               children as ReactElement<{ className?: string }>,
                               {
-                                  className: allClassNames,
+                                  className: buttonVariants({
+                                      variant,
+                                      size,
+                                      className,
+                                  }),
                               }
                           )
                         : children}

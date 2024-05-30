@@ -1,0 +1,32 @@
+.tableWrapper {
+    background-color: var(--frak-table-background-color);
+    border-radius: 8px;
+    overflow-x: auto;
+    color: var(--frak-table-text-color);
+    border: 1px solid var(--frak-table-border-color);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+button.table__button {
+    all: unset;
+    cursor: pointer;
+}
+
+.table > thead > tr > th {
+    padding: 16px;
+    background: var(--frak-color-whisper);
+    text-align: left;
+    white-space: nowrap;
+    color: var(--frak-table-heading-text-color);
+    font-weight: 500;
+}
+
+.table > tbody > tr > td {
+    padding: 16px;
+    text-align: left;
+    border-top: 1px solid var(--frak-table-row-border-color);
+}

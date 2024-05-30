@@ -22,4 +22,10 @@
     --frak-input-border-color: var(--frak-color-mischka);
     --frak-input-text-color: var(--frak-color-regent-gray);
     --frak-input-placeholder-color: var(--frak-color-regent-gray);
+    --frak-table-background-color: var(--frak-color-white);
+    --frak-table-text-color: var(--frak-color-pale-sky);
+    --frak-table-border-color: var(--frak-color-mischka);
+    --frak-table-heading-text-color: var(--frak-color-tuna);
+    --frak-table-row-border-color: var(--frak-color-athens-gray);
+    --frak-pagination-border-color: var(--frak-color-athens-gray);
 }

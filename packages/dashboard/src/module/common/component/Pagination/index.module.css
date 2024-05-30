@@ -1,0 +1,30 @@
+.pagination {
+    display: flex;
+    justify-content: center;
+}
+
+.pagination__content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.pagination__link {
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: #DEDEFA;
+    color: #5C59E8;
+}
+
+.pagination__link--active {
+    background-color: #5C59E8;
+    color: var(--frak-color-white);
+}
+
+.pagination__more {
+    display: flex;
+    align-items: flex-end;
+    border-radius: 8px;
+}
