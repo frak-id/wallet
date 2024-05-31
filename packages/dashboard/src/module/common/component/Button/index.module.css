@@ -52,7 +52,8 @@
 
 .outline {
     background: none;
-    /*border: 1px solid var(--frak-button-outlined-border-color);*/
+    border: 1px solid var(--frak-button-outline-border-color);
+    color: var(--frak-button-outline-color);
 }
 
 .ghost {

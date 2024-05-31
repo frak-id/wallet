@@ -5,7 +5,7 @@
     justify-content: center;
     width: 20px;
     height: 20px;
-    border: 2px solid #858D9D;
+    border: 2px solid var(--frak-color-regent-gray);
     border-radius: 6px;
     background-color: var(--frak-color-white);
 }

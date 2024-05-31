@@ -1,5 +1,5 @@
 import { Button } from "@/module/common/component/Button";
-import { InputSearch } from "@/module/common/component/InputSearch";
+import { InputSearch } from "@/module/forms/InputSearch";
 import { Calendar, SlidersHorizontal } from "lucide-react";
 import styles from "./index.module.css";
 

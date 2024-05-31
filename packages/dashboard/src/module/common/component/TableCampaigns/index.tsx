@@ -1,9 +1,9 @@
 "use client";
 
 import { Badge } from "@/module/common/component/Badge";
-import { Checkbox } from "@/module/common/component/Checkbox";
-import { Switch } from "@/module/common/component/Switch";
 import { Table } from "@/module/common/component/Table";
+import { Checkbox } from "@/module/forms/Checkbox";
+import { Switch } from "@/module/forms/Switch";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { usePrevious } from "@uidotdev/usehooks";

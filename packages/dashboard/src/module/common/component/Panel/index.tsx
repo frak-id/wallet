@@ -1,36 +1,30 @@
-import { Slot } from "@radix-ui/react-slot";
+import { Title } from "@/module/common/component/Title";
+import { BadgeCheck } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import styles from "./index.module.css";
 
 type PanelProps = {
-    variant?: "primary" | "secondary" | "outlined" | "empty";
-    size?: "none" | "small" | "normal" | "big";
-    withShadow?: boolean;
-    asChild?: boolean;
+    title?: string;
     className?: string;
-    cover?: string;
 };
 
 export function Panel({
-    variant,
-    size,
-    withShadow,
-    asChild = false,
+    title,
     className = "",
-    cover,
     children,
 }: PropsWithChildren<PanelProps>) {
-    const variantClass = variant ? styles[variant] : styles.primary;
-    const sizeClass = size ? styles[`size--${size}`] : styles["size--normal"];
-    const shadowClass = withShadow ? styles.shadow : "";
-    const stylesInline = cover ? { backgroundImage: `url(${cover})` } : {};
-    const Comp = asChild ? Slot : "div";
     return (
-        <Comp
-            className={`${styles.panel} ${className} ${variantClass} ${sizeClass} ${shadowClass}`}
-            style={stylesInline}
-        >
+        <div className={`${styles.panel} ${className}`}>
+            {title && (
+                <Title
+                    icon={<BadgeCheck color={"#0DDB84"} />}
+                    size={"small"}
+                    className={styles.panel__title}
+                >
+                    {title}
+                </Title>
+            )}
             {children}
-        </Comp>
+        </div>
     );
 }

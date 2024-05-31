@@ -1,4 +1,4 @@
-import { Input } from "@/module/common/component/Input";
+import { Input } from "@/module/forms/Input";
 import { Search } from "lucide-react";
 import { forwardRef } from "react";
 import type { ChangeEvent, InputHTMLAttributes, ReactNode } from "react";

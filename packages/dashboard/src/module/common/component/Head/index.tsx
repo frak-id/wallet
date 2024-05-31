@@ -1,19 +1,22 @@
-import { Breadcrumb } from "@/module/common/component/Breadcrumb";
-import { Button } from "@/module/common/component/Button";
-import { Title } from "@/module/common/component/Title";
-import { Plus } from "lucide-react";
+import { Title, type TitleProps } from "@/module/common/component/Title";
+import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
-export function Head() {
+type HeadProps = {
+    title?: { content: string; size?: TitleProps["size"] };
+    leftSection?: ReactNode;
+    rightSection?: ReactNode;
+};
+
+export function Head({ title, leftSection, rightSection }: HeadProps) {
+    const { content, size } = title ?? {};
     return (
         <div className={styles.head}>
             <div className={styles.head__left}>
-                <Title>Campaigns</Title>
-                <Breadcrumb />
+                {title && <Title size={size ?? "medium"}>{content}</Title>}
+                {leftSection}
             </div>
-            <div>
-                <Button leftIcon={<Plus size={20} />}>Create Campaign</Button>
-            </div>
+            {rightSection && <div>{rightSection}</div>}
         </div>
     );
 }

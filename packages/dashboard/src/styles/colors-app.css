@@ -3,10 +3,10 @@
     --frak-link-color: var(--frak-color-white);
     --frak-background-color: var(--frak-color-dark);
     --frak-contrast-background-color: var(--frak-color-blue-zodiac-darker);
-    --frak-panel-background-color: var(--frak-color-tangaroa);
-    --frak-panel-outlined-border-color: var(--frak-color-blue-zodiac-darker);
-    --frak-panel-shadow-color: var(--frak-shadow-color);
-    --frak-panel-border-color: rgba(129, 140, 156, .2);
+    --frak-panel-text-color: var(--frak-color-tuna);
+    --frak-panel-title-color: var(--frak-color-shark);
+    --frak-panel-background-color: var(--frak-color-white);
+    --frak-panel-border-color: var(--frak-color-mischka);
     --frak-header-background-color: var(--frak-color-blur);
     --frak-navigation-background-color: var(--frak-color-blur);
     --frak-navigation-profile-separator-color: var(--frak-color-white);
@@ -18,6 +18,8 @@
     --frak-button-secondary-background-color: var(--frak-color-white);
     --frak-button-secondary-border-color: var(--frak-color-mischka);
     --frak-button-secondary-color: var(--frak-color-tuna);
+    --frak-button-outline-color: var(--frak-color-regent-gray);
+    --frak-button-outline-border-color: var(--frak-color-regent-gray);
     --frak-input-background-color: var(--frak-color-white);
     --frak-input-border-color: var(--frak-color-mischka);
     --frak-input-text-color: var(--frak-color-regent-gray);
