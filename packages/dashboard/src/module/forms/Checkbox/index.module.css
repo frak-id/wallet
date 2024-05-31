@@ -3,11 +3,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border: 2px solid var(--frak-color-regent-gray);
     border-radius: 6px;
     background-color: var(--frak-color-white);
+}
+
+.checkbox[data-state="checked"] {
+    border: 2px solid #5C59E8;
+    background-color: #5C59E8;
+    color: var(--frak-color-white);
 }
 
 .checkbox:hover {

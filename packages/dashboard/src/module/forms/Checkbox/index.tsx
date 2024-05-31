@@ -17,7 +17,7 @@ export const Checkbox = forwardRef<
             {...props}
         >
             <CheckboxPrimitive.Indicator className={styles.checkbox__indicator}>
-                <Check size={16} />
+                <Check size={17} />
             </CheckboxPrimitive.Indicator>
         </CheckboxPrimitive.Root>
     );

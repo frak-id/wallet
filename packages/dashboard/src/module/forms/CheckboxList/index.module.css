@@ -1,0 +1,23 @@
+.checkboxWrapper {
+    display: inline-flex;
+    flex-direction: column;
+    width: 50%;
+}
+
+.checkbox {
+    display: inline-flex;
+    gap: 8px;
+    border-radius: 4px;
+    padding: 7px;
+}
+
+.checkbox__label {
+    color: #667085;
+    line-height: 20px;
+}
+
+.checkbox__information {
+    display: block;
+    font-size: 12px;
+    line-height: 18px;
+}
