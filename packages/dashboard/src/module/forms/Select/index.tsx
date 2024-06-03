@@ -23,7 +23,7 @@ const SelectTrigger = forwardRef<
     >
         {children}
         <SelectPrimitive.Icon asChild>
-            <ChevronDown className={styles.select__icon} />
+            <ChevronDown size={20} className={styles.select__icon} />
         </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
 ));

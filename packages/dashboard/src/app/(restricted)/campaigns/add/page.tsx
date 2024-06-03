@@ -1,3 +1,4 @@
+import { Territory } from "@/module/campaigns/component/Territory";
 import { Button } from "@/module/common/component/Button";
 import { Column } from "@/module/common/component/Column";
 import { Head } from "@/module/common/component/Head";
@@ -82,7 +83,7 @@ export default function CampaignsAddPage() {
                         </Select>
                     </p>
                     <p>
-                        <Input placeholder={"25,00 €"} />
+                        <Input placeholder={"25,00 €"} rightSection={"EUR"} />
                     </p>
                 </Row>
                 <p>
@@ -90,12 +91,7 @@ export default function CampaignsAddPage() {
                     spend is €31.25 and your maximum weekly spend is €175.
                 </p>
             </Panel>
-            <Panel title="Territory">
-                <p>
-                    Choose a or several countries where your campaign will be
-                    displayed.
-                </p>
-            </Panel>
+            <Territory />
         </FormLayout>
     );
 }

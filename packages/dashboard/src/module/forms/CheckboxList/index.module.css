@@ -8,11 +8,11 @@
     display: inline-flex;
     gap: 8px;
     border-radius: 4px;
-    padding: 7px;
+    padding: 7px 0;
 }
 
 .checkbox__label {
-    color: #667085;
+    color: var(--frak-checkbox-label-text-color);
     line-height: 20px;
 }
 

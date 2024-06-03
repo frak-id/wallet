@@ -14,21 +14,31 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
     onChangeValue?: (value: string | undefined) => void;
     leftSection?: string | ReactNode;
+    rightSection?: string | ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
-        { type, className = "", classNameWrapper = "", leftSection, ...props },
+        {
+            type,
+            className = "",
+            classNameWrapper = "",
+            leftSection,
+            rightSection,
+            ...props
+        },
         ref
     ) => {
         return (
             <span className={`${styles.inputWrapper} ${classNameWrapper}`}>
-                {leftSection && isValidElement(leftSection)
-                    ? cloneElement(
-                          leftSection as ReactElement<{ className?: string }>,
-                          { className: styles.leftSection }
-                      )
-                    : leftSection}
+                {leftSection && isValidElement(leftSection) ? (
+                    cloneElement(
+                        leftSection as ReactElement<{ className?: string }>,
+                        { className: styles.leftSection }
+                    )
+                ) : (
+                    <span className={styles.leftSection}>{leftSection}</span>
+                )}
                 <input
                     type={type}
                     className={`${className} ${styles.input} ${
@@ -37,6 +47,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     ref={ref}
                     {...props}
                 />
+                {rightSection && isValidElement(rightSection) ? (
+                    cloneElement(
+                        rightSection as ReactElement<{ className?: string }>,
+                        { className: styles.rightSection }
+                    )
+                ) : (
+                    <span className={styles.rightSection}>{rightSection}</span>
+                )}
             </span>
         );
     }

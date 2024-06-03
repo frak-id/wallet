@@ -2,9 +2,9 @@
     all: unset;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     border-radius: 8px;
-    padding: 0 15px;
+    padding: 0 10px;
     height: 40px;
     gap: 5px;
     background-color: white;

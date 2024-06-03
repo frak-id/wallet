@@ -24,6 +24,7 @@
     --frak-input-border-color: var(--frak-color-mischka);
     --frak-input-text-color: var(--frak-color-regent-gray);
     --frak-input-placeholder-color: var(--frak-color-regent-gray);
+    --frak-input-rightSection-text-color: var(--frak-color-pale-sky);
     --frak-table-background-color: var(--frak-color-white);
     --frak-table-text-color: var(--frak-color-pale-sky);
     --frak-table-border-color: var(--frak-color-mischka);
@@ -31,4 +32,15 @@
     --frak-table-heading-background-color: var(--frak-color-whisper);
     --frak-table-row-border-color: var(--frak-color-athens-gray);
     --frak-pagination-border-color: var(--frak-color-athens-gray);
+    --frak-separator-background-color: var(--frak-color-mischka);
+    --frak-multiselect-trigger-border-color: var(--frak-color-mischka);
+    --frak-multiselect-trigger-background-color: var(--frak-color-white);
+    --frak-multiselect-checks-background-color: var(--frak-color-white);
+    --frak-multiselect-checks-border-color: var(--frak-color-regent-gray);
+    --frak-multiselect-checks-selected-text-color: var(--frak-color-white);
+    --frak-multiselect-checks-selected-border-color: var(--frak-color-royal-blue);
+    --frak-multiselect-checks-selected-background-color: var(--frak-color-royal-blue);
+    --frak-checkbox-label-text-color: var(--frak-color-pale-sky);
+    --frak-popover-text-color: var(--frak-color-tuna);
+    --frak-popover-background-color: var(--frak-color-white);
 }

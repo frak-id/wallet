@@ -9,6 +9,7 @@ const badgeVariants = cva(styles.badge, {
             secondary: styles.secondary,
             success: styles.success,
             danger: styles.danger,
+            information: styles.information,
         },
     },
     defaultVariants: {

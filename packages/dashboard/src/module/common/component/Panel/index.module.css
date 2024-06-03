@@ -5,6 +5,7 @@
     background: var(--frak-panel-background-color);
     box-shadow: 0 2px 2px 0 #1018281A;
     color: var(--frak-panel-text-color);
+    font-weight: 400;
 }
 
 .panel + .panel {

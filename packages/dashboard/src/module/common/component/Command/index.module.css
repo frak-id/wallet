@@ -1,0 +1,54 @@
+.command {
+    display: flex;
+    flex-direction: column;
+    width: var(--radix-popper-anchor-width);
+    height: 100%;
+    overflow: hidden;
+}
+
+.command__dialog {
+}
+
+.command__inputWrapper {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+}
+
+.command__input {
+    all: unset;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    width: 100%;
+    line-height: 20px;
+    color: var(--frak-input-text-color);
+    font-weight: 400;
+}
+
+.command__list {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 300px;
+}
+
+.command__empty {
+    padding: 24px 0;
+    text-align: center;
+}
+
+.command__group {
+    overflow: hidden;
+}
+
+.command__separator {
+    height: 1px;
+    background-color: var(--frak-separator-background-color);
+}
+
+.command__item {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding: 6px 8px;
+    cursor: pointer;
+}
