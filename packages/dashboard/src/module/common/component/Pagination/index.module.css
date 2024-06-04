@@ -14,12 +14,12 @@
     justify-content: center;
     width: 32px;
     height: 32px;
-    background-color: #DEDEFA;
-    color: #5C59E8;
+    background-color: var(--frak-color-moon-raker);
+    color: var(--frak-color-royal-blue);
 }
 
 .pagination__link--active {
-    background-color: #5C59E8;
+    background-color: var(--frak-color-royal-blue);
     color: var(--frak-color-white);
 }
 

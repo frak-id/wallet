@@ -24,6 +24,8 @@ export const buttonVariants = cva(styles.button, {
             ghost: styles.ghost,
             submit: styles.submit,
             danger: styles.danger,
+            information: styles.information,
+            informationOutline: styles.informationOutline,
         },
         size: {
             none: styles["size--none"],

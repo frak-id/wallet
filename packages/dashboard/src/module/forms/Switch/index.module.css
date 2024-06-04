@@ -10,7 +10,7 @@
 }
 
 .switch[data-state='checked'] {
-    background-color: #5C59E8;
+    background-color: var(--frak-color-royal-blue);
 }
 
 .switchThumb {

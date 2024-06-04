@@ -5,6 +5,7 @@ import { Column } from "@/module/common/component/Column";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
+import { Actions } from "@/module/forms/Actions";
 import { CheckboxList } from "@/module/forms/CheckboxList";
 import { FormLayout } from "@/module/forms/FormLayout";
 import { Input } from "@/module/forms/Input";
@@ -94,6 +95,7 @@ export default function CampaignsAddPage() {
             </Panel>
             <Territory />
             <Schedule />
+            <Actions />
         </FormLayout>
     );
 }

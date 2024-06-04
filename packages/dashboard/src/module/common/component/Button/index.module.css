@@ -63,12 +63,22 @@
 
 .submit {
     background: var(--frak-button-submit-background-color);
-    /*border: 1px solid var(--frak-button-submit-border-color);*/
 }
 
 .danger {
     background: var(--frak-button-danger-background-color);
-    /*border: 1px solid var(--frak-button-danger-border-color);*/
+}
+
+.information {
+    background-color: var(--frak-button-information-background-color);
+    color: var(--frak-button-information-text-color);
+    border: 1px solid transparent;
+}
+
+.informationOutline {
+    background-color: var(--frak-button-informationOutline-background-color);
+    color: var(--frak-button-information-text-color);
+    border: 1px solid var(--frak-button-informationOutline-border-color);
 }
 
 .fontNormal {

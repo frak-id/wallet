@@ -28,6 +28,6 @@
 }
 
 .information {
-    background-color: #DEDEFA;
-    color: #5C59E8;
+    background-color: var(--frak-color-moon-raker);
+    color: var(--frak-color-royal-blue);
 }

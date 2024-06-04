@@ -1,6 +1,5 @@
 .panel {
     padding: 24px;
-    border-radius: 8px;
     border: 1px solid var(--frak-panel-border-color);
     background: var(--frak-panel-background-color);
     box-shadow: 0 2px 2px 0 #1018281A;
@@ -15,4 +14,12 @@
 .panel__title {
     margin-bottom: 14px;
     color: var(--frak-panel-title-color);
+}
+
+.primary {
+    border-radius: 8px;
+}
+
+.secondary {
+    border-radius: 0;
 }

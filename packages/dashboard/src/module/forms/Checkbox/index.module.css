@@ -11,8 +11,8 @@
 }
 
 .checkbox[data-state="checked"] {
-    border: 2px solid #5C59E8;
-    background-color: #5C59E8;
+    border: 2px solid var(--frak-color-royal-blue);
+    background-color: var(--frak-color-royal-blue);
     color: var(--frak-color-white);
 }
 
