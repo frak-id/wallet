@@ -1,9 +1,9 @@
-import { addresses } from "@/context/common/blockchain/addresses";
 import {
     communityTokenAbi,
     paywallAbi,
     paywallTokenAbi,
-} from "@/context/common/blockchain/poc-abi";
+} from "@/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@/context/common/blockchain/addresses";
 import { frakChainId } from "@/context/common/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";

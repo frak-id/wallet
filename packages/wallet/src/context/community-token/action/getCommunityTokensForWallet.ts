@@ -1,8 +1,8 @@
 "use server";
 
+import { erc6909Transfer } from "@/context/blockchain/abis/event-abi";
+import { communityTokenAbi } from "@/context/blockchain/abis/frak-gating-abis";
 import { addresses } from "@/context/common/blockchain/addresses";
-import { erc6909Transfer } from "@/context/common/blockchain/event-abi";
-import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
 import { frakChainPocClient } from "@/context/common/blockchain/provider";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { unstable_cache } from "next/cache";
