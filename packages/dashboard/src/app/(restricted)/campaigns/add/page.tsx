@@ -1,3 +1,4 @@
+import { Schedule } from "@/module/campaigns/component/Schedule";
 import { Territory } from "@/module/campaigns/component/Territory";
 import { Button } from "@/module/common/component/Button";
 import { Column } from "@/module/common/component/Column";
@@ -92,6 +93,7 @@ export default function CampaignsAddPage() {
                 </p>
             </Panel>
             <Territory />
+            <Schedule />
         </FormLayout>
     );
 }

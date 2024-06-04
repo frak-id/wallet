@@ -4,18 +4,6 @@
     width: 50%;
 }
 
-.checkbox {
-    display: inline-flex;
-    gap: 8px;
-    border-radius: 4px;
-    padding: 7px 0;
-}
-
-.checkbox__label {
-    color: var(--frak-checkbox-label-text-color);
-    line-height: 20px;
-}
-
 .checkbox__information {
     display: block;
     font-size: 12px;

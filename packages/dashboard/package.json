@@ -30,11 +30,13 @@
     "class-variance-authority": "^0.7.0",
     "cmdk": "^1.0.0",
     "countries-list": "^3.1.0",
+    "date-fns": "^3.6.0",
     "lucide-react": "^0.373.0",
     "next": "14.2.3",
     "normalize.css": "^8.0.1",
     "radash": "^12.1.0",
     "react": "^18",
+    "react-day-picker": "^8.10.1",
     "react-dom": "^18",
     "use-session-storage-state": "^18.2.0"
   },

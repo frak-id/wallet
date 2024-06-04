@@ -193,7 +193,7 @@ function SelectedValues({
                         >
                             {option?.name}
                             <X
-                                size={16}
+                                size={14}
                                 onClick={(event) => {
                                     event.stopPropagation();
                                     toggleOption(value);
