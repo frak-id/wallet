@@ -27,19 +27,3 @@
 .checkbox__indicator {
     display: flex;
 }
-
-.checkboxWithLabel {
-    display: inline-flex;
-    gap: 8px;
-    border-radius: 4px;
-}
-
-.checkboxWithLabel+.checkboxWithLabel {
-    margin-top: 7px;
-}
-
-.checkboxWithLabel__label {
-    color: var(--frak-checkbox-label-text-color);
-    line-height: 20px;
-    font-weight: 500;
-}

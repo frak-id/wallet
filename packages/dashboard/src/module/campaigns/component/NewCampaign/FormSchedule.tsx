@@ -9,7 +9,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
-import { CheckboxWithLabel } from "@/module/forms/Checkbox";
+import { Checkbox } from "@/module/forms/Checkbox";
 import {
     FormControl,
     FormDescription,
@@ -94,12 +94,18 @@ export function FormSchedule(form: UseFormReturn<FormCampaignsNew>) {
                 name="dateEnd"
                 render={({ field }) => (
                     <div className={styles.formSchedule__endDate}>
-                        <FormLabel>End date</FormLabel>
-                        <CheckboxWithLabel
-                            label={<>Create an end date</>}
-                            id="end-date"
-                            onCheckedChange={setIsEndDate}
-                        />
+                        <FormItem variant={"checkbox"}>
+                            <Checkbox
+                                onCheckedChange={setIsEndDate}
+                                id={"is-end-date"}
+                            />
+                            <FormLabel
+                                variant={"checkbox"}
+                                htmlFor={"is-end-date"}
+                            >
+                                Create an end date
+                            </FormLabel>
+                        </FormItem>
                         {isEndDate === true && (
                             <FormItem>
                                 <Popover>
