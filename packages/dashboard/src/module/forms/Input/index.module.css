@@ -7,6 +7,7 @@
     overflow: hidden;
     background-color: var(--frak-input-background-color);
     color: var(--frak-input-text-color);
+    transition: border-color 0.2s;
 }
 
 .input {
@@ -17,6 +18,10 @@
     line-height: 20px;
     color: var(--frak-input-text-color);
     font-weight: 400;
+}
+
+.inputWrapper:has(.input:focus) {
+    box-shadow: 0 0 0 1px var(--frak-focus-border-color);
 }
 
 .input::placeholder {

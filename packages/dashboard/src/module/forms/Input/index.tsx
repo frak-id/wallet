@@ -1,18 +1,9 @@
 import { cloneElement, forwardRef, isValidElement } from "react";
-import type {
-    ChangeEvent,
-    InputHTMLAttributes,
-    ReactElement,
-    ReactNode,
-} from "react";
+import type { InputHTMLAttributes, ReactElement, ReactNode } from "react";
 import styles from "./index.module.css";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     classNameWrapper?: string;
-    defaultValue?: string;
-    value?: string;
-    onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
-    onChangeValue?: (value: string | undefined) => void;
     leftSection?: string | ReactNode;
     rightSection?: string | ReactNode;
 }

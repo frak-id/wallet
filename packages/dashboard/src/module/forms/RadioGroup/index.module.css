@@ -13,6 +13,10 @@
     border: 2px solid #94979F;
     cursor: pointer;
 
+    &:focus {
+        box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+    }
+
     &:has(.radioGroup__indicator) {
         background: #94979F;
     }

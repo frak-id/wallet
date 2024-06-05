@@ -19,7 +19,7 @@ export default function CampaignsPage() {
                 rightSection={
                     <Button
                         leftIcon={<Plus size={20} />}
-                        onClick={() => router.push("/campaigns/add")}
+                        onClick={() => router.push("/campaigns/new")}
                     >
                         Create Campaign
                     </Button>

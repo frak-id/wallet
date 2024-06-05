@@ -7,6 +7,10 @@
     display: flex;
     align-items: center;
     border-radius: 8px;
+
+    &:focus {
+        box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+    }
 }
 
 .button:disabled {

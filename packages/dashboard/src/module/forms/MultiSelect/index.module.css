@@ -12,6 +12,10 @@
     background-color: var(--frak-multiselect-trigger-background-color);
     border: 1px solid var(--frak-multiselect-trigger-border-color);
     cursor: pointer;
+
+    &:focus {
+        box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+    }
 }
 
 .multiSelect__triggerInner {

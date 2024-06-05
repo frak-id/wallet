@@ -24,7 +24,7 @@
     --frak-button-information-text-color: var(--frak-color-royal-blue);
     --frak-button-informationOutline-background-color: var(--frak-color-white);
     --frak-button-informationOutline-border-color: var(--frak-color-royal-blue);
-    --frak-input-background-color: var(--frak-color-white);
+    --frak-input-background-color: var(--frak-color-whisper);
     --frak-input-border-color: var(--frak-color-mischka);
     --frak-input-text-color: var(--frak-color-regent-gray);
     --frak-input-placeholder-color: var(--frak-color-regent-gray);
@@ -47,4 +47,5 @@
     --frak-checkbox-label-text-color: var(--frak-color-pale-sky);
     --frak-popover-text-color: var(--frak-color-tuna);
     --frak-popover-background-color: var(--frak-color-white);
+    --frak-focus-border-color: var(--frak-color-royal-blue);
 }

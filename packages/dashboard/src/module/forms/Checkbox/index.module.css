@@ -8,6 +8,10 @@
     border: 2px solid var(--frak-color-regent-gray);
     border-radius: 6px;
     background-color: var(--frak-color-white);
+
+    &:focus {
+        box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+    }
 }
 
 .checkbox[data-state="checked"] {
@@ -28,7 +32,10 @@
     display: inline-flex;
     gap: 8px;
     border-radius: 4px;
-    padding: 7px 0;
+}
+
+.checkboxWithLabel+.checkboxWithLabel {
+    margin-top: 7px;
 }
 
 .checkboxWithLabel__label {

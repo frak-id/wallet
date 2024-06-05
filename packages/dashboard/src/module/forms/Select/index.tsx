@@ -15,7 +15,7 @@ const SelectValue = SelectPrimitive.Value;
 const SelectTrigger = forwardRef<
     ElementRef<typeof SelectPrimitive.Trigger>,
     ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+>(({ className = "", children, ...props }, ref) => (
     <SelectPrimitive.Trigger
         ref={ref}
         className={`${styles.select__trigger} ${className}`}
@@ -32,7 +32,7 @@ SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 const SelectScrollUpButton = forwardRef<
     ElementRef<typeof SelectPrimitive.ScrollUpButton>,
     ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
->(({ className, ...props }, ref) => (
+>(({ className = "", ...props }, ref) => (
     <SelectPrimitive.ScrollUpButton
         ref={ref}
         className={`${styles.select__scrollButton} ${className}`}
@@ -46,7 +46,7 @@ SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName;
 const SelectScrollDownButton = forwardRef<
     ElementRef<typeof SelectPrimitive.ScrollDownButton>,
     ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>
->(({ className, ...props }, ref) => (
+>(({ className = "", ...props }, ref) => (
     <SelectPrimitive.ScrollDownButton
         ref={ref}
         className={`${styles.select__scrollButton} ${className}`}
@@ -61,7 +61,7 @@ SelectScrollDownButton.displayName =
 const SelectContent = forwardRef<
     ElementRef<typeof SelectPrimitive.Content>,
     ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => (
+>(({ className = "", children, position = "popper", ...props }, ref) => (
     <SelectPrimitive.Portal>
         <SelectPrimitive.Content
             ref={ref}
@@ -94,7 +94,7 @@ SelectLabel.displayName = SelectPrimitive.Label.displayName;
 const SelectItem = forwardRef<
     ElementRef<typeof SelectPrimitive.Item>,
     ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+>(({ className = "", children, ...props }, ref) => (
     <SelectPrimitive.Item
         ref={ref}
         className={`${styles.select__item} ${className}`}
@@ -114,7 +114,7 @@ SelectItem.displayName = SelectPrimitive.Item.displayName;
 const SelectSeparator = forwardRef<
     ElementRef<typeof SelectPrimitive.Separator>,
     ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
->(({ className, ...props }, ref) => (
+>(({ className = "", ...props }, ref) => (
     <SelectPrimitive.Separator
         ref={ref}
         className={`${styles.select__separator} ${className}`}

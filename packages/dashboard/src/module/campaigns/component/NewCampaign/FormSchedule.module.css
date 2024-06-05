@@ -1,0 +1,15 @@
+.datePicker__trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--frak-color-mischka);
+    color: var(--frak-color-tuna);
+
+    &:focus {
+        box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+    }
+}
+
+.formSchedule__endDate {
+    margin-top: 14px;
+}
