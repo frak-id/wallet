@@ -1,7 +1,7 @@
 import {
     getBundlerClient,
     getPaymasterClient,
-} from "@/context/common/blockchain/aa-provider";
+} from "@/context/blockchain/aa-provider";
 import { doAddPassKeyFnAbi } from "@/context/recover/utils/abi";
 import { recoverySmartAccount } from "@/context/wallet/smartWallet/RecoverySmartWallet";
 import type { RecoveryFileContent } from "@/types/Recovery";

@@ -1,7 +1,7 @@
 "use server";
 
-import { addresses } from "@/context/common/blockchain/addresses";
-import { frakChainPocClient } from "@/context/common/blockchain/provider";
+import { addresses } from "@/context/blockchain/addresses";
+import { frakChainPocClient } from "@/context/blockchain/provider";
 import { nexusDiscoverCampaignAbi } from "@/context/referral/abi/campaign-abis";
 import { isReferralPossible } from "@/context/referral/utils/isReferralPossible";
 import { tryit } from "radash";

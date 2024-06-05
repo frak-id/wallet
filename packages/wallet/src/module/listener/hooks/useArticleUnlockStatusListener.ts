@@ -1,4 +1,4 @@
-import { frakChainId } from "@/context/common/blockchain/provider";
+import { frakChainId } from "@/context/blockchain/provider";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useAAClients } from "@/module/common/hook/useAAClients";

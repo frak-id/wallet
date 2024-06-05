@@ -1,5 +1,5 @@
-import { availableChains } from "@/context/common/blockchain/provider";
-import type { AvailableChainIds } from "@/context/common/blockchain/provider";
+import { availableChains } from "@/context/blockchain/provider";
+import type { AvailableChainIds } from "@/context/blockchain/provider";
 import { usePerformRecoveryOnChain } from "@/module/recovery/hook/usePerformRecoveryOnChain";
 import {
     recoveryDoneStepAtom,

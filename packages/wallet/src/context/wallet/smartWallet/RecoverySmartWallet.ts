@@ -1,4 +1,4 @@
-import { kernelAddresses } from "@/context/common/blockchain/addresses";
+import { kernelAddresses } from "@/context/blockchain/addresses";
 import { getAccountInitCode } from "@/context/wallet/smartWallet/utils";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import {

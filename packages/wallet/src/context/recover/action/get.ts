@@ -1,11 +1,11 @@
 "use server";
 
-import { kernelAddresses } from "@/context/common/blockchain/addresses";
+import { kernelAddresses } from "@/context/blockchain/addresses";
 import {
     type AvailableChainIds,
     availableChains,
     getViemClientFromChainId,
-} from "@/context/common/blockchain/provider";
+} from "@/context/blockchain/provider";
 import {
     doAddPassKeyFnAbi,
     ecdsaValidatorStorageAbi,

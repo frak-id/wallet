@@ -1,12 +1,12 @@
 "use server";
 
-import { getAlchemyClientNoBatch } from "@/context/common/blockchain/provider";
-import type { GetTokenMetadataResponse } from "@/context/common/blockchain/viemActions/AlchemyTypes";
-import { getTokenBalances } from "@/context/common/blockchain/viemActions/getTokenBalances";
+import { getAlchemyClientNoBatch } from "@/context/blockchain/provider";
+import type { GetTokenMetadataResponse } from "@/context/blockchain/viemActions/AlchemyTypes";
+import { getTokenBalances } from "@/context/blockchain/viemActions/getTokenBalances";
 import {
     type GetTokenMetadataParams,
     getTokenMetadata,
-} from "@/context/common/blockchain/viemActions/getTokenMetadata";
+} from "@/context/blockchain/viemActions/getTokenMetadata";
 import { CachesTags } from "@/context/common/caching";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { parallel } from "radash";

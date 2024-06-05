@@ -4,8 +4,8 @@ import {
     frkTransferEvent,
     paidItemUnlockedEventAbi,
 } from "@/context/blockchain/abis/event-abi";
-import { addresses } from "@/context/common/blockchain/addresses";
-import { getViemClientFromChainId } from "@/context/common/blockchain/provider";
+import { addresses } from "@/context/blockchain/addresses";
+import { getViemClientFromChainId } from "@/context/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import type {
     ArticleUnlock,

@@ -1,4 +1,4 @@
-import { addresses } from "@/context/common/blockchain/addresses";
+import { addresses } from "@/context/blockchain/addresses";
 import { nexusDiscoverCampaignAbi } from "@/context/referral/abi/campaign-abis";
 import { getPendingWalletReferralReward } from "@/context/referral/action/pendingReferral";
 import { sessionAtom } from "@/module/common/atoms/session";

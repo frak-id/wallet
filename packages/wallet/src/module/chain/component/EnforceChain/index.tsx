@@ -1,7 +1,7 @@
 import {
     type AvailableChainIds,
     availableChains,
-} from "@/context/common/blockchain/provider";
+} from "@/context/blockchain/provider";
 import { useSwitchConfigChain } from "@/module/chain/hook/useSwitchConfigChain";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";

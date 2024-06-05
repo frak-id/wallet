@@ -1,4 +1,4 @@
-import { frakChainPocClient } from "@/context/common/blockchain/provider";
+import { frakChainPocClient } from "@/context/blockchain/provider";
 import {
     getAccountAddress,
     getAccountInitCode,

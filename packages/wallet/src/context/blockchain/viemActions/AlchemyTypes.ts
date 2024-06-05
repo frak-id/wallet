@@ -12,7 +12,7 @@ export type AlchemyRpcSchema = [
     {
         Method: "alchemy_getTokenMetadata";
         Parameters: [address: Address];
-        ReturnType: GetTokenBalancesRawResponse;
+        ReturnType: GetTokenMetadataResponse;
     },
 ];
 

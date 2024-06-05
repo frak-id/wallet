@@ -1,4 +1,4 @@
-import { availableChains } from "@/context/common/blockchain/provider";
+import { availableChains } from "@/context/blockchain/provider";
 import type { ProposalTypes } from "@walletconnect/types";
 import { buildApprovedNamespaces } from "@walletconnect/utils";
 

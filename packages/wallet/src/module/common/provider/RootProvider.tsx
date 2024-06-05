@@ -1,9 +1,6 @@
 "use client";
 
-import {
-    availableChains,
-    getTransport,
-} from "@/context/common/blockchain/provider";
+import { availableChains, getTransport } from "@/context/blockchain/provider";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { jotaiStore } from "@/module/common/atoms/store";

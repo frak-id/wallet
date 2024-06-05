@@ -1,4 +1,4 @@
-import type { AvailableChainIds } from "@/context/common/blockchain/provider";
+import type { AvailableChainIds } from "@/context/blockchain/provider";
 import { http, type Chain } from "viem";
 
 /**

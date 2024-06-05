@@ -1,5 +1,5 @@
-import { addresses } from "@/context/common/blockchain/addresses";
-import { frakChainId } from "@/context/common/blockchain/provider";
+import { addresses } from "@/context/blockchain/addresses";
+import { frakChainId } from "@/context/blockchain/provider";
 import { getErc20Balance } from "@/context/tokens/action/getBalance";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";

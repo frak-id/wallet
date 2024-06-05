@@ -1,7 +1,7 @@
 import {
     getAlchemyTransport,
     getAlchemyTransportNoBatch,
-} from "@/context/common/blockchain/alchemy-transport";
+} from "@/context/blockchain/alchemy-transport";
 import { isRunningInProd } from "@/context/common/env";
 import { memo } from "radash";
 import { type Chain, createClient, extractChain } from "viem";

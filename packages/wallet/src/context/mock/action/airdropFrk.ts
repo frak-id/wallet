@@ -1,8 +1,8 @@
 "use server";
 
 import { paywallTokenAbi } from "@/context/blockchain/abis/frak-gating-abis";
-import { addresses } from "@/context/common/blockchain/addresses";
-import { frakChainPocClient } from "@/context/common/blockchain/provider";
+import { addresses } from "@/context/blockchain/addresses";
+import { frakChainPocClient } from "@/context/blockchain/provider";
 import { CachesTags } from "@/context/common/caching";
 import { isRunningInProd } from "@/context/common/env";
 import { revalidateTag } from "next/cache";

@@ -1,4 +1,4 @@
-import { kernelAddresses } from "@/context/common/blockchain/addresses";
+import { kernelAddresses } from "@/context/blockchain/addresses";
 import { KernelInitAbi } from "@/context/wallet/abi/kernel-account-abis";
 import type { P256PubKey } from "@/types/WebAuthN";
 import { ENTRYPOINT_ADDRESS_V06, getSenderAddress } from "permissionless";

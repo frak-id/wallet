@@ -2,8 +2,8 @@
 
 import { erc6909Transfer } from "@/context/blockchain/abis/event-abi";
 import { communityTokenAbi } from "@/context/blockchain/abis/frak-gating-abis";
-import { addresses } from "@/context/common/blockchain/addresses";
-import { frakChainPocClient } from "@/context/common/blockchain/provider";
+import { addresses } from "@/context/blockchain/addresses";
+import { frakChainPocClient } from "@/context/blockchain/provider";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { unstable_cache } from "next/cache";
 import { unique } from "radash";
