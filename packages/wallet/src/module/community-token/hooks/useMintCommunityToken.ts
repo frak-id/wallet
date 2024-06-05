@@ -10,7 +10,7 @@ import { useAccount, useWriteContract } from "wagmi";
 export function useMintCommunityToken({
     contentId,
 }: {
-    contentId?: number;
+    contentId?: bigint;
 }) {
     // Get the write contract function
     const { writeContractAsync } = useWriteContract();
@@ -37,7 +37,7 @@ export function useMintCommunityToken({
                 address: addresses.communityToken,
                 abi: communityTokenAbi,
                 functionName: "mint",
-                args: [address, BigInt(contentId)],
+                args: [address, contentId],
             });
 
             // Invalidate the community token availability

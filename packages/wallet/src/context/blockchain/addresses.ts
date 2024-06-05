@@ -8,7 +8,7 @@ export const addresses = {
     // Gating
     paywallToken: "0x9584A61F70cC4BEF5b8B5f588A1d35740f0C7ae2",
     paywall: "0x6a958DfCc9f00d00DE8Bf756D3d8A567368fdDD5",
-    communityToken: "0xf98BA1b2fc7C55A01Efa6C8872Bcee85c6eC54e7",
+    communityToken: "0x101c5EFd61D4fE9F1f2994bFEd732c32F82B80b2",
     // Interactions
     contentInteractionManager: "0x34a6B1eAafEdf93A6B8658B7EA3035738929b159",
     // Old, todo: to be delete

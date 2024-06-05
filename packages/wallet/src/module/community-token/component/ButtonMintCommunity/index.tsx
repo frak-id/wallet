@@ -7,7 +7,7 @@ export function ButtonMintCommunity({
     name,
     image,
     contentId,
-}: { name: string; image: string; contentId: number }) {
+}: { name: string; image: string; contentId: bigint }) {
     const { data: isMintAvailable, isLoading } =
         useIsCommunityTokenMintAvailable({
             contentId,

@@ -16,12 +16,12 @@ import { getLogs, multicall, readContract } from "viem/actions";
  */
 async function _isCommunityTokenForContentEnabled({
     contentId,
-}: { contentId: number }) {
+}: { contentId: bigint }) {
     return await readContract(frakChainPocClient, {
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "isEnabled",
-        args: [BigInt(contentId)],
+        args: [contentId],
     });
 }
 
@@ -42,7 +42,7 @@ export const isCommunityTokenForContentEnabled = unstable_cache(
 async function _isCommunityTokenEnabledForWallet({
     contentId,
     wallet,
-}: { contentId: number; wallet: Address }) {
+}: { contentId: bigint; wallet: Address }) {
     // Check if that's enabled for the content
     const isEnabled = await isCommunityTokenForContentEnabled({ contentId });
     if (!isEnabled) {
@@ -54,7 +54,7 @@ async function _isCommunityTokenEnabledForWallet({
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "balanceOf",
-        args: [wallet, BigInt(contentId)],
+        args: [wallet, contentId],
     });
     return communityTokenBalance === 0n;
 }

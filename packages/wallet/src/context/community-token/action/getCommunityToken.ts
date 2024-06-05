@@ -12,12 +12,12 @@ import { readContract } from "viem/actions";
  */
 async function _isCommunityTokenForContentEnabled({
     contentId,
-}: { contentId: number }) {
+}: { contentId: bigint }) {
     return await readContract(frakChainPocClient, {
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "isEnabled",
-        args: [BigInt(contentId)],
+        args: [contentId],
     });
 }
 

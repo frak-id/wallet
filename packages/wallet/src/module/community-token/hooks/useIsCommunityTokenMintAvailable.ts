@@ -9,7 +9,7 @@ import { useAccount } from "wagmi";
  */
 export function useIsCommunityTokenMintAvailable({
     contentId,
-}: { contentId: number }) {
+}: { contentId: bigint }) {
     const { address } = useAccount();
 
     return useQuery({
