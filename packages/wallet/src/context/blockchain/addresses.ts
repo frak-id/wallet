@@ -10,7 +10,7 @@ export const addresses = {
     paywall: "0x6a958DfCc9f00d00DE8Bf756D3d8A567368fdDD5",
     communityToken: "0x101c5EFd61D4fE9F1f2994bFEd732c32F82B80b2",
     // Interactions
-    contentInteractionManager: "0x34a6B1eAafEdf93A6B8658B7EA3035738929b159",
+    contentInteractionManager: "0xfB31dA57Aa2BDb0220d8e189E0a08b0cc55Ee186",
     // Old, todo: to be delete
     referralToken: "0x1Eca7AA9ABF2e53E773B4523B6Dc103002d22e7D",
     nexusDiscoverCampaign: "0x8a37d1B3a17559F2BC4e6613834b1F13d0A623aC",
@@ -25,6 +25,7 @@ export const kernelAddresses = {
     // Validators
     multiWebAuthnValidator: "0xD546c4Ba2e8e5e5c961C36e6Db0460Be03425808",
     ecdsaValidator: "0xd9AB5096a832b9ce79914329DAEE236f8Eea0390",
+    interactionSessionValidator: "0xEcc0b6F1Bd630c17C35F266BaAA1f96AD89D9FBa",
     // Kernel stuff
     accountLogic: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
     factory: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",

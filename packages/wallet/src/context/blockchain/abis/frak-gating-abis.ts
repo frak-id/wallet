@@ -11,6 +11,7 @@ export const communityTokenAbi = [
                 internalType: "contract ContentRegistry",
                 type: "address",
             },
+            { name: "_baseUrl", internalType: "string", type: "string" },
         ],
         stateMutability: "nonpayable",
     },
