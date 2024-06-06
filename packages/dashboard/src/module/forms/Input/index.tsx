@@ -1,3 +1,4 @@
+import { cx } from "class-variance-authority";
 import { cloneElement, forwardRef, isValidElement } from "react";
 import type { InputHTMLAttributes, ReactElement, ReactNode } from "react";
 import styles from "./index.module.css";
@@ -32,9 +33,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 )}
                 <input
                     type={type}
-                    className={`${className} ${styles.input} ${
-                        leftSection ? styles.withLeftSection : ""
-                    }`}
+                    className={cx(
+                        styles.input,
+                        className,
+                        leftSection && styles.withLeftSection
+                    )}
                     ref={ref}
                     {...props}
                 />

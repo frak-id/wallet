@@ -113,6 +113,10 @@ export const formLabelVariants = cva(styles.form__label, {
         variant: {
             radio: styles.form__radioWithLabel,
             checkbox: styles.form__checkboxWithLabel,
+            light: styles["form__label--light"],
+        },
+        selected: {
+            true: styles["form__label--selected"],
         },
     },
 });
@@ -120,7 +124,7 @@ export const formLabelVariants = cva(styles.form__label, {
 const FormLabel = forwardRef<
     ElementRef<typeof LabelPrimitive.Root>,
     FormLabelProps
->(({ variant, className, ...props }, ref) => {
+>(({ variant, selected, className, ...props }, ref) => {
     const { error, formItemId } = useFormField();
     const classNameError = error ? styles.form__error : "";
 
@@ -129,6 +133,7 @@ const FormLabel = forwardRef<
             ref={ref}
             className={`${formLabelVariants({
                 variant,
+                selected,
                 className,
             })} ${classNameError}`}
             htmlFor={formItemId}

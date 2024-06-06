@@ -8,6 +8,15 @@
     color: var(--frak-color-trout);
 }
 
+.form__label--light {
+    font-weight: 500;
+    color: var(--frak-color-grayText);
+}
+
+.form__label--selected {
+    color: var(--frak-color-royal-blue) !important;
+}
+
 .form__description {
     padding-bottom: 10px;
     font-size: 16px;
@@ -34,7 +43,7 @@
 }
 
 .form__checkbox {
-    display: inline-flex;
+    display: flex;
     gap: 8px;
     border-radius: 4px;
 }

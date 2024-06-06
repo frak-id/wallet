@@ -101,6 +101,7 @@ export function FormSchedule(form: UseFormReturn<FormCampaignsNew>) {
                             />
                             <FormLabel
                                 variant={"checkbox"}
+                                selected={isEndDate === true}
                                 htmlFor={"is-end-date"}
                             >
                                 Create an end date

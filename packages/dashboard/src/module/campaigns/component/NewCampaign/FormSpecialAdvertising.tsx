@@ -110,7 +110,12 @@ export function FormSpecialAdvertising(form: UseFormReturn<FormCampaignsNew>) {
                                                 {...field}
                                             />
                                         </FormControl>
-                                        <FormLabel variant={"checkbox"}>
+                                        <FormLabel
+                                            variant={"checkbox"}
+                                            selected={field.value?.includes(
+                                                item.id
+                                            )}
+                                        >
                                             {item.label}
                                         </FormLabel>
                                     </FormItem>

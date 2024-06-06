@@ -35,6 +35,11 @@ export function NewCampaign() {
             order: "",
             goal: "",
             advertising: [],
+            budget: "",
+            budgetAmount: 0,
+            territory: [],
+            dateStart: new Date(),
+            dateEnd: new Date(),
         },
     });
 

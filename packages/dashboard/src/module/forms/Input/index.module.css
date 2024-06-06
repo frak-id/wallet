@@ -36,6 +36,10 @@
     color: var(--frak-input-placeholder-color);
 }
 
+.input:disabled {
+    cursor: not-allowed;
+}
+
 .input[data-invalid="true"] {
     border-color: #818c9c;
     color: #adadad;

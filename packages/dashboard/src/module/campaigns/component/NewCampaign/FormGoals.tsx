@@ -55,6 +55,7 @@ export function FormGoals(form: UseFormReturn<FormCampaignsNew>) {
                             <FormDescription title={"Type of order"} />
                             <FormControl>
                                 <Select
+                                    name={field.name}
                                     onValueChange={field.onChange}
                                     defaultValue={field.value}
                                 >
