@@ -1,5 +1,6 @@
 "use client";
 
+import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
 import { FormBudget } from "@/module/campaigns/component/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/NewCampaign/FormGoals";
 import { FormSchedule } from "@/module/campaigns/component/NewCampaign/FormSchedule";
@@ -10,6 +11,7 @@ import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
+import { useSetAtom } from "jotai/index";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -28,6 +30,7 @@ export type FormCampaignsNew = {
 
 export function NewCampaign() {
     const router = useRouter();
+    const setStep = useSetAtom(campaignStepAtom);
 
     const form = useForm<FormCampaignsNew>({
         defaultValues: {
@@ -45,6 +48,7 @@ export function NewCampaign() {
 
     function onSubmit(values: FormCampaignsNew) {
         console.log(values);
+        setStep((prev) => prev + 1);
     }
 
     return (
@@ -69,7 +73,7 @@ export function NewCampaign() {
                     <FormBudget {...form} />
                     <FormTerritory {...form} />
                     <FormSchedule {...form} />
-                    <Actions />
+                    <Actions {...form} />
                 </form>
             </Form>
         </FormLayout>

@@ -1,10 +1,12 @@
 "use client";
 
+import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
 import { FormObjectives } from "@/module/campaigns/component/MetricsCampaign/FormObjectives";
 import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
+import { useSetAtom } from "jotai";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -20,6 +22,7 @@ export type FormCampaignsMetrics = {
 
 export function MetricsCampaign() {
     const router = useRouter();
+    const setStep = useSetAtom(campaignStepAtom);
 
     const form = useForm<FormCampaignsMetrics>({
         defaultValues: {
@@ -34,6 +37,7 @@ export function MetricsCampaign() {
 
     function onSubmit(values: FormCampaignsMetrics) {
         console.log(values);
+        setStep((prev) => prev + 1);
     }
 
     return (
@@ -53,7 +57,7 @@ export function MetricsCampaign() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormObjectives {...form} />
-                    <Actions />
+                    <Actions {...form} />
                 </form>
             </Form>
         </FormLayout>

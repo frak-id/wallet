@@ -67,6 +67,9 @@
 
 .submit {
     background: var(--frak-button-submit-background-color);
+    border: 1px solid transparent;
+    color: var(--frak-button-submit-text-color);
+    font-weight: 600;
 }
 
 .danger {
