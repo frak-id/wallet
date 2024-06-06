@@ -78,7 +78,7 @@ export interface FormItemProps
     extends HTMLAttributes<HTMLDivElement>,
         VariantProps<typeof formItemVariants> {}
 
-export const formItemVariants = cva("", {
+export const formItemVariants = cva(styles.form__item, {
     variants: {
         variant: {
             radio: styles.form__radio,

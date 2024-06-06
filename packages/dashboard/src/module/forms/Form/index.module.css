@@ -1,3 +1,7 @@
+.form__item {
+    margin-bottom: 10px;
+}
+
 .form__layout {
     max-width: 850px;
 }
@@ -48,7 +52,7 @@
     border-radius: 4px;
 }
 
-.form__checkbox+.form__checkbox {
+.form__checkbox + .form__checkbox {
     margin-top: 7px;
 }
 

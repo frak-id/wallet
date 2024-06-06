@@ -22,6 +22,7 @@ export function FormFromTo<TFormValues extends FieldValues>({
     from,
     to,
     form,
+    defaultChecked,
 }: {
     id: string;
     label: string;
@@ -40,15 +41,20 @@ export function FormFromTo<TFormValues extends FieldValues>({
         rules?: RegisterOptions;
     };
     form: UseFormReturn<TFormValues>;
+    defaultChecked?: boolean;
 }) {
     const [checked, setIsChecked] = useState<boolean | "indeterminate">(
-        "indeterminate"
+        defaultChecked ?? "indeterminate"
     );
 
     return (
         <>
             <FormItem variant={"checkbox"}>
-                <Checkbox onCheckedChange={setIsChecked} id={id} />
+                <Checkbox
+                    onCheckedChange={setIsChecked}
+                    checked={checked === true}
+                    id={id}
+                />
                 <FormLabel
                     variant={"checkbox"}
                     selected={checked === true}

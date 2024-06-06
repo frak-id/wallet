@@ -70,7 +70,6 @@ export function FormSpecialAdvertising(form: UseFormReturn<FormCampaignsNew>) {
             <FormField
                 control={form.control}
                 name="advertising"
-                rules={{ required: "Select a special advertising categories" }}
                 render={() => (
                     <FormItem>
                         <FormDescription>

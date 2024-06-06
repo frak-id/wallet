@@ -1,6 +1,6 @@
 "use client";
 
-import { FormObjectives } from "@/module/campaigns/component/MetricsCampaign/FormObjectives";
+import { FormCheck } from "@/module/campaigns/component/ValidationCampaign/FormCheck";
 import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
@@ -9,37 +9,47 @@ import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
-export type FormCampaignsMetrics = {
-    clicFrom: number;
-    clicTo: number;
+export type FormCampaignsValidation = {
+    title: string;
+    order: string;
+    goal: string;
+    advertising: string[];
+    budget: string;
+    budgetAmount: number;
     registrationFrom: number;
     registrationTo: number;
     purchaseFrom: number;
     purchaseTo: number;
+    promotedContent: string[];
 };
 
-export function MetricsCampaign() {
+export function ValidationCampaign() {
     const router = useRouter();
 
-    const form = useForm<FormCampaignsMetrics>({
+    const form = useForm<FormCampaignsValidation>({
         defaultValues: {
-            clicFrom: 0,
-            clicTo: 0,
-            registrationFrom: 0,
-            registrationTo: 0,
-            purchaseFrom: 0,
-            purchaseTo: 0,
+            title: "My new campaign",
+            order: "Auction",
+            goal: "Awareness",
+            advertising: [],
+            budget: "daily",
+            budgetAmount: 100,
+            registrationFrom: 1.2,
+            registrationTo: 4.2,
+            purchaseFrom: 2,
+            purchaseTo: 8,
+            promotedContent: [],
         },
     });
 
-    function onSubmit(values: FormCampaignsMetrics) {
+    function onSubmit(values: FormCampaignsValidation) {
         console.log(values);
     }
 
     return (
         <FormLayout>
             <Head
-                title={{ content: "Campaign Metrics", size: "small" }}
+                title={{ content: "Campaign Validation", size: "small" }}
                 rightSection={
                     <Button
                         variant={"outline"}
@@ -52,7 +62,7 @@ export function MetricsCampaign() {
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormObjectives {...form} />
+                    <FormCheck {...form} />
                     <Actions />
                 </form>
             </Form>
