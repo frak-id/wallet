@@ -11,6 +11,7 @@ const wantedFromConfig = [
     "MONGODB_NEXUS_URI",
     "SESSION_ENCRYPTION_KEY",
     "AIRDROP_PRIVATE_KEY",
+    "INTERACTION_VALIDATOR_PRIVATE_KEY",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 

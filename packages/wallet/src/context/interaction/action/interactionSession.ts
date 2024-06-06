@@ -2,6 +2,7 @@
 
 import { kernelAddresses } from "@/context/blockchain/addresses";
 import { frakChainPocClient } from "@/context/blockchain/provider";
+import { setExecutionAbi } from "@/context/recover/utils/abi";
 import { interactionSessionValidatorAbi } from "@/context/wallet/abi/kernel-v2-abis";
 import {
     type Address,
@@ -9,10 +10,56 @@ import {
     encodeAbiParameters,
     encodeFunctionData,
     isAddressEqual,
+    toFunctionSelector,
     zeroAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { readContract } from "viem/actions";
+
+// Get the recovery selector
+const sendInteractionSelector = toFunctionSelector({
+    type: "function",
+    inputs: [
+        {
+            name: "_interaction",
+            internalType: "struct Interaction",
+            type: "tuple",
+            components: [
+                {
+                    name: "contentId",
+                    internalType: "uint256",
+                    type: "uint256",
+                },
+                { name: "data", internalType: "bytes", type: "bytes" },
+            ],
+        },
+    ],
+    name: "sendInteraction",
+    outputs: [],
+    stateMutability: "nonpayable",
+});
+// Get the recovery selector
+const sendInteractionsSelector = toFunctionSelector({
+    type: "function",
+    inputs: [
+        {
+            name: "_interactions",
+            internalType: "struct Interaction[]",
+            type: "tuple[]",
+            components: [
+                {
+                    name: "contentId",
+                    internalType: "uint256",
+                    type: "uint256",
+                },
+                { name: "data", internalType: "bytes", type: "bytes" },
+            ],
+        },
+    ],
+    name: "sendInteractions",
+    outputs: [],
+    stateMutability: "nonpayable",
+});
 
 /**
  * Get the current session status
@@ -60,7 +107,7 @@ export async function getSessionStatus({
  */
 export async function getSessionEnableData({
     sessionEnd,
-}: { sessionEnd: Date }): Promise<Hex> {
+}: { sessionEnd: Date }): Promise<Hex[]> {
     // So this shouldn't be the airdropper private key
     // todo: Only temporary for testing purposes, will be reinforced
     const sessionPrivateKey = process.env.AIRDROP_PRIVATE_KEY;
@@ -87,10 +134,28 @@ export async function getSessionEnableData({
         sessionAccount.address,
     ]);
 
-    // Encode the init function call
-    return encodeFunctionData({
-        abi: interactionSessionValidatorAbi,
-        functionName: "enable",
-        args: [enableData],
-    });
+    const enableTxForSelector = (selector: Hex) =>
+        encodeFunctionData({
+            abi: [setExecutionAbi],
+            functionName: "setExecution",
+            args: [
+                // The passkey addition method
+                selector,
+                // The interaction action address
+                kernelAddresses.interactionAction,
+                // The address of the interaction session validator
+                kernelAddresses.interactionSessionValidator,
+                // Valid until timestamps, in seconds
+                0,
+                // Valid after timestamp, in seconds
+                0,
+                // Data used to enable our session validator
+                enableData,
+            ],
+        });
+    // Return the txs data
+    return [
+        enableTxForSelector(sendInteractionSelector),
+        enableTxForSelector(sendInteractionsSelector),
+    ];
 }

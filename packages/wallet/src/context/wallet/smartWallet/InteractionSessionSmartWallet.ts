@@ -1,5 +1,4 @@
 import { kernelAddresses } from "@/context/blockchain/addresses";
-import { KernelExecuteAbi } from "@/context/wallet/abi/kernel-account-abis";
 import {
     ENTRYPOINT_ADDRESS_V06,
     getAccountNonce,
@@ -15,12 +14,10 @@ import {
     type Address,
     type Chain,
     type Client,
-    type Hex,
     type LocalAccount,
     type Transport,
     concatHex,
-    encodeFunctionData,
-    pad,
+    isAddressEqual,
 } from "viem";
 import { signTypedData } from "viem/actions";
 
@@ -32,18 +29,7 @@ export type NexusRecoverySmartAccount<
     "nexusInteractionSignerSmartAccount",
     transport,
     chain
-> & {
-    /**
-     * Method to set the current context
-     * @param contentId
-     */
-    setContentContext: (contentId: Hex) => void;
-    /**
-     * Method to clear the content context
-     * @param contentId
-     */
-    clearContentContext: () => void;
-};
+>;
 
 /**
  * Build a kernel smart account for an interaction signer
@@ -67,11 +53,8 @@ export function interactionSessionSmartAccount<
 ): NexusRecoverySmartAccount<TTransport, TChain> {
     if (!wallet) throw new Error("Account address not found");
 
-    // The current content id
-    let currentContentId: Hex | undefined;
-
     // Build the smart account itself
-    const smartAccount = toSmartAccount({
+    return toSmartAccount({
         address: wallet,
 
         client: client,
@@ -135,13 +118,11 @@ export function interactionSessionSmartAccount<
                 },
                 types: {
                     ValidateInteractionOp: [
-                        { name: "contentId", type: "uint256" },
                         { name: "userOpHash", type: "bytes32" },
                     ],
                 },
                 primaryType: "ValidateInteractionOp",
                 message: {
-                    contentId: BigInt(currentContentId || pad("0x")),
                     userOpHash: userOpHash,
                 },
             });
@@ -149,8 +130,6 @@ export function interactionSessionSmartAccount<
             // Use it as a plugin, since should be enabled during recovery phase
             return concatHex([
                 "0x00000001",
-                // Current content id or 32 bytes of 0 instead
-                currentContentId || pad("0x"),
                 // The EIP-712 signature
                 signature,
             ]);
@@ -196,25 +175,18 @@ export function interactionSessionSmartAccount<
          */
         async encodeCallData(_tx) {
             if (Array.isArray(_tx)) {
-                // Encode a batched call
-                return encodeFunctionData({
-                    abi: KernelExecuteAbi,
-                    functionName: "executeBatch",
-                    args: [
-                        _tx.map((tx) => ({
-                            to: tx.to,
-                            value: tx.value,
-                            data: tx.data,
-                        })),
-                    ],
-                });
+                throw new Error(
+                    "Recovery account doesn't support batched transactions"
+                );
             }
-            // Encode a simple call
-            return encodeFunctionData({
-                abi: KernelExecuteAbi,
-                functionName: "execute",
-                args: [_tx.to, _tx.value, _tx.data, 0],
-            });
+
+            if (!isAddressEqual(_tx.to, wallet)) {
+                throw new Error(
+                    "Interaction account doesn't support transactions to other addresses"
+                );
+            }
+
+            return _tx.data;
         },
 
         /**
@@ -226,22 +198,9 @@ export function interactionSessionSmartAccount<
             return concatHex([
                 // Mode plugin
                 "0x00000001",
-                // Dummy content id
-                "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 // Dummy signature
                 dummySig,
             ]);
         },
     });
-
-    // Return the smart account, and the context helper methods
-    return {
-        ...smartAccount,
-        setContentContext(contentId) {
-            currentContentId = contentId;
-        },
-        clearContentContext() {
-            currentContentId = undefined;
-        },
-    };
 }

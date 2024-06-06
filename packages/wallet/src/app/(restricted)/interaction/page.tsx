@@ -1,5 +1,4 @@
 "use client";
-import { kernelAddresses } from "@/context/blockchain/addresses";
 import {
     getSessionEnableData,
     getSessionStatus,
@@ -7,13 +6,13 @@ import {
 import { pushInteraction } from "@/context/interaction/action/pushInteraction";
 import { Button } from "@/module/common/component/Button";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import type { Hex } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";
 
 export default function InteractionPage() {
     const { address } = useAccount();
 
-    const { data: sessionStatus, error: sessionError } = useQuery({
+    const { data: sessionStatus } = useQuery({
         queryKey: ["interactionSession", "status", address],
         queryFn: async () => {
             if (!address) {
@@ -24,16 +23,47 @@ export default function InteractionPage() {
         enabled: !!address,
     });
 
-    useEffect(() => {
-        console.log("Session stuff", { sessionStatus, sessionError });
-    }, [sessionStatus, sessionError]);
+    return (
+        <div>
+            <h1>Interaction</h1>
+            <p>Address: {address}</p>
+            <br />
+            <br />
 
-    const {
-        sendTransactionAsync,
-        data: setupSessionData,
-        error: setupSessionError,
-    } = useSendTransaction();
-    const { data: sessionSetupTx, error: sessionSetupError } = useQuery({
+            <StatusWidget status={sessionStatus} />
+
+            {!sessionStatus ? <CreateSession /> : <></>}
+
+            <PushInteractionButton />
+        </div>
+    );
+}
+
+function StatusWidget({
+    status,
+}: { status?: { sessionStart: Date; sessionEnd: Date } | null }) {
+    return (
+        <>
+            <h2>Session status</h2>
+            {status ? (
+                <div>
+                    <p>Session start: {status.sessionStart.toString()}</p>
+                    <p>Session end: {status.sessionEnd.toString()}</p>
+                </div>
+            ) : (
+                "No session"
+            )}
+            <br />
+            <br />
+        </>
+    );
+}
+
+function CreateSession() {
+    const { address } = useAccount();
+    const { sendTransactionAsync } = useSendTransaction();
+
+    const { data: sessionSetupTxs } = useQuery({
         queryKey: ["interactionSession", "setup", address],
         queryFn: async () => {
             // Get timestamp in a week
@@ -43,65 +73,44 @@ export default function InteractionPage() {
             return getSessionEnableData({ sessionEnd });
         },
     });
-    useEffect(() => {
-        console.log("Session setup stuff", {
-            sessionSetupTx,
-            sessionSetupError,
-            setupSessionData,
-            setupSessionError,
-        });
-    }, [
-        sessionSetupTx,
-        sessionSetupError,
-        setupSessionData,
-        setupSessionError,
-    ]);
 
     return (
-        <div>
-            <h1>Interaction</h1>
-            <p>Address: {address}</p>
-            <br />
-            <br />
-
-            <h2>Session status</h2>
-            {sessionStatus ? (
-                <div>
-                    <p>
-                        Session start: {sessionStatus.sessionStart.toString()}
-                    </p>
-                    <p>Session end: {sessionStatus.sessionEnd.toString()}</p>
-                </div>
-            ) : (
-                "No session"
-            )}
-            <br />
-            <br />
-
+        <>
             <h2>Session setup</h2>
-            {sessionSetupTx ? (
+            {sessionSetupTxs ? (
                 <div>
-                    <p>Session setup tx: {sessionSetupTx}</p>
+                    <p>Session setup tx: {sessionSetupTxs}</p>
                 </div>
             ) : (
                 "No session setup"
             )}
             <Button
-                onClick={() => {
-                    if (!(address && sessionSetupTx)) {
+                onClick={async () => {
+                    if (!(address && sessionSetupTxs)) {
                         return;
                     }
-                    return sendTransactionAsync({
-                        to: kernelAddresses.interactionSessionValidator,
-                        data: sessionSetupTx,
-                    });
+                    // todo: Should be execute batch here mf
+                    for (const sessionSetupTx of sessionSetupTxs) {
+                        await sendTransactionAsync({
+                            to: address,
+                            data: sessionSetupTx as Hex,
+                        });
+                    }
                 }}
             >
                 Setup session
             </Button>
             <br />
             <br />
+        </>
+    );
+}
 
+function PushInteractionButton() {
+    const { address } = useAccount();
+
+    return (
+        <>
             <h2>Interaction</h2>
             <Button
                 onClick={async () => {
@@ -113,20 +122,6 @@ export default function InteractionPage() {
             >
                 Push interaction
             </Button>
-        </div>
+        </>
     );
 }
-
-//
-// 0x0c959556
-// 0000000000000000000000000000000000000000000000000000000000000020
-// 0000000000000000000000000000000000000000000000000000000000000060
-// 000000000000000000000000000000000000000000000000000000006660f2fb
-// 0000000000000000000000000000000000000000000000000000000000000000
-// 00000000000000000000000035f3e191523c8701ad315551dcbdcc5708efd7ec
-// 0x0c959556
-// 0000000000000000000000000000000000000000000000000000000000000020
-// 0000000000000000000000000000000000000000000000000000000000000060
-// 0000000000000000000000000000000000000000000000000000000000000000
-// 000000000000000000000000000000000000000000000000000000006660f3f8
-// 00000000000000000000000035f3e191523c8701ad315551dcbdcc5708efd7ec

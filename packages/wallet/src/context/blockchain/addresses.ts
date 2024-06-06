@@ -25,7 +25,9 @@ export const kernelAddresses = {
     // Validators
     multiWebAuthnValidator: "0xD546c4Ba2e8e5e5c961C36e6Db0460Be03425808",
     ecdsaValidator: "0xd9AB5096a832b9ce79914329DAEE236f8Eea0390",
-    interactionSessionValidator: "0xEcc0b6F1Bd630c17C35F266BaAA1f96AD89D9FBa",
+    // Interactions
+    interactionSessionValidator: "0x4794D967Bcd1A07EBd1c6dC4A44210Bb27ca7f50",
+    interactionAction: "0x28D88B3B725B571F967CD4fFC9DbFDdA9Abe54a6",
     // Kernel stuff
     accountLogic: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
     factory: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",
