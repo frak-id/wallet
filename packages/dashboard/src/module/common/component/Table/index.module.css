@@ -45,10 +45,11 @@ button.table__button:has(span) {
     padding: 0;
 }
 
-.table > tbody > tr > td {
+.table > tbody > tr > td, .table > tfoot > tr > th {
     padding: 18px 22px;
     text-align: left;
     border-top: 1px solid var(--frak-table-row-border-color);
+    font-weight: 500;
 }
 
 .table a {

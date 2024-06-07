@@ -4,11 +4,11 @@ import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Button } from "@/module/common/component/Button";
 import { Filters } from "@/module/common/component/Filters";
 import { Head } from "@/module/common/component/Head";
-import { TableCampaigns } from "@/module/common/component/TableCampaigns";
+import { TablePerformance } from "@/module/common/component/TablePerformance";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function CampaignsListPage() {
+export default function CampaignsPerformancePage() {
     const router = useRouter();
 
     return (
@@ -26,7 +26,7 @@ export default function CampaignsListPage() {
                 }
             />
             <Filters />
-            <TableCampaigns />
+            <TablePerformance />
         </>
     );
 }

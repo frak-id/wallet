@@ -1,0 +1,11 @@
+.table__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    & > button {
+        all: unset;
+        cursor: pointer;
+        display: flex;
+    }
+}
