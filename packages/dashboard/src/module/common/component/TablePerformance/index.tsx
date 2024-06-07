@@ -1,6 +1,7 @@
 "use client";
 
 import { Table } from "@/module/common/component/Table";
+import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -247,7 +248,22 @@ export function TablePerformance() {
                     footer: ({ table }) => sumRows(table, "share"),
                 }),
                 columnHelper.accessor("coverage", {
-                    header: () => "Couverture",
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>Couverture</strong>
+                                    <br /> Le nombre d’utilisateurs uniques qui
+                                    ont vu votre contenu au moins une fois. La
+                                    couverture est différente des impressions,
+                                    qui peuvent inclure plusieurs vues de votre
+                                    contenu par les mêmes utilisateurs.
+                                </>
+                            }
+                        >
+                            <span>Couverture</span>
+                        </TooltipTable>
+                    ),
                     footer: ({ table }) => sumRows(table, "coverage"),
                 }),
                 columnHelper.accessor("print", {

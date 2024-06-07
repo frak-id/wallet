@@ -2,7 +2,6 @@
 
 import { Badge } from "@/module/common/component/Badge";
 import { Table } from "@/module/common/component/Table";
-import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { Checkbox } from "@/module/forms/Checkbox";
 import { Switch } from "@/module/forms/Switch";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -173,28 +172,15 @@ export function TableCampaigns() {
                     },
                 }),
                 columnHelper.accessor("title", {
-                    cell: (props) => <Link href={"#"}>{props.getValue()}</Link>,
-                    header: () => (
-                        <TooltipTable
-                            content={
-                                <>
-                                    <strong>Couverture</strong>
-                                    <br /> Le nombre d’utilisateurs uniques qui
-                                    ont vu votre contenu au moins une fois. La
-                                    couverture est différente des impressions,
-                                    qui peuvent inclure plusieurs vues de votre
-                                    contenu par les mêmes utilisateurs.
-                                </>
-                            }
-                        >
-                            <span>Campaign</span>
-                        </TooltipTable>
+                    header: () => "Campaign",
+                    cell: ({ getValue }) => (
+                        <Link href={"#"}>{getValue()}</Link>
                     ),
                 }),
                 columnHelper.accessor("status", {
                     header: () => "Status",
-                    cell: (props) => (
-                        <Badge variant={"secondary"}>{props.getValue()}</Badge>
+                    cell: ({ getValue }) => (
+                        <Badge variant={"secondary"}>{getValue()}</Badge>
                     ),
                 }),
                 columnHelper.accessor("date", {

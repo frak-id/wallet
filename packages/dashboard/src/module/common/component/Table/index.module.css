@@ -15,7 +15,8 @@
 button.table__button {
     all: unset;
     box-sizing: border-box;
-    display: inline-block;
+    display: flex;
+    align-items: center;
     cursor: pointer;
     width: 100%;
     padding: 18px 22px;
@@ -29,6 +30,10 @@ button.table__button {
 
 button.table__button:has(span) {
     padding: 0;
+}
+
+.table__filterIcon {
+    margin-left: auto;
 }
 
 .table > thead > tr > th {

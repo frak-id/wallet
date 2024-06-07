@@ -7,6 +7,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import useSessionStorageState from "use-session-storage-state";
@@ -121,14 +122,20 @@ export function Table<TData extends object, TMetas extends Metas>({
 
     type TagProps = {
         canSort: boolean;
+        field: string;
         children: ReactNode;
     };
 
-    function Sorting({ canSort, children, ...props }: TagProps) {
+    function Sorting({ canSort, field, children, ...props }: TagProps) {
         const Tag = canSort ? "button" : "span";
+        const Icon =
+            filtering?.field === field && filtering?.order === "asc"
+                ? ChevronUp
+                : ChevronDown;
         return (
             <Tag className={styles.table__button} {...props}>
                 {children}
+                {canSort && <Icon className={styles.table__filterIcon} />}
             </Tag>
         );
     }
@@ -146,6 +153,7 @@ export function Table<TData extends object, TMetas extends Metas>({
                                             <Sorting
                                                 canSort={header.column.getCanSort()}
                                                 {...{
+                                                    field: header.column.id,
                                                     onClick: () => {
                                                         header.column.getCanSort() &&
                                                             handleSortingChange(
