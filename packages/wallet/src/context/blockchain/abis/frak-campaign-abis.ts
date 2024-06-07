@@ -153,7 +153,7 @@ export const interactionCampaignAbi = [
             {
                 name: "_contentType",
                 internalType: "ContentTypes",
-                type: "bytes32",
+                type: "uint256",
             },
         ],
         name: "supportContentType",
@@ -500,7 +500,7 @@ export const referralCampaignAbi = [
             {
                 name: "_contentType",
                 internalType: "ContentTypes",
-                type: "bytes32",
+                type: "uint256",
             },
         ],
         name: "supportContentType",

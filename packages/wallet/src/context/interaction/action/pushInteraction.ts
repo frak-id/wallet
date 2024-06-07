@@ -5,13 +5,13 @@ import {
     getPaymasterClient,
 } from "@/context/blockchain/aa-provider";
 import {
-    contentInteractionAbi,
+    contentInteractionDiamondAbi,
     contentInteractionManagerAbi,
-    pressInteractionAbi,
 } from "@/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@/context/blockchain/addresses";
 import { contentIds } from "@/context/blockchain/contentIds";
 import { frakChainPocClient } from "@/context/blockchain/provider";
+import { PressInteraction } from "@/context/interaction/utils/pressInteraction";
 import { contentInteractionActionAbi } from "@/context/wallet/abi/kernel-v2-abis";
 import { interactionSessionSmartAccount } from "@/context/wallet/smartWallet/InteractionSessionSmartWallet";
 import {
@@ -22,7 +22,6 @@ import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import {
     type Address,
     type Hex,
-    encodeAbiParameters,
     encodeFunctionData,
     keccak256,
     pad,
@@ -66,7 +65,6 @@ export async function pushInteraction({ wallet }: { wallet: Address }) {
     });
 
     const contentId = contentIds.frak;
-    const articleId = pad("0x");
 
     // Get an interaction manager
     const interactionContract = await readContract(frakChainPocClient, {
@@ -76,21 +74,24 @@ export async function pushInteraction({ wallet }: { wallet: Address }) {
         args: [contentId],
     });
 
+    // Build the interaction data
+    const { facetData, interactionData } = PressInteraction.buildReadArticle({
+        articleId: pad("0x"),
+    });
+
     // Get the signature
-    const referrer: Address = "0xF002C28AEEa942B72f5bAAd95748F78104f91fc6";
-    const signature = await _getArticleOpenSignature({
+    const signature = await _getValidationSignature({
         user: wallet,
-        referrer,
-        articleId,
+        facetData,
         contentId,
         interactionContract,
     });
 
     // Build the interaction data
     const interactionTx = encodeFunctionData({
-        abi: pressInteractionAbi,
-        functionName: "articleOpened",
-        args: [articleId, referrer, signature],
+        abi: contentInteractionDiamondAbi,
+        functionName: "handleInteraction",
+        args: [interactionData, signature],
     });
 
     // Wrap the call
@@ -109,42 +110,25 @@ export async function pushInteraction({ wallet }: { wallet: Address }) {
     console.log("interaction pushed", { txHash });
 }
 
-async function _getArticleOpenSignature({
-    user,
-    referrer,
-    articleId,
+async function _getValidationSignature({
+    facetData,
     contentId,
+    user,
     interactionContract,
 }: {
+    facetData: Hex;
     user: Address;
-    referrer: Address;
-    articleId: Hex;
     contentId: bigint;
     interactionContract: Address;
 }): Promise<Hex> {
-    // Build the read article interaction data
-    const interactionData = keccak256(
-        encodeAbiParameters(
-            [
-                { name: "interactionHash", type: "bytes32" },
-                { name: "articleId", type: "bytes32" },
-                { name: "referrer", type: "address" },
-            ],
-            [
-                "0xc0a24ffb7afa254ad3052f8f1da6e4268b30580018115d9c10b63352b0004b2d",
-                articleId,
-                referrer,
-            ]
-        )
-    );
-    console.log("interaction data", { interactionData });
+    const interactionHash = keccak256(facetData);
 
     // Get the current interaction nonce
     const nonce = await readContract(frakChainPocClient, {
         address: interactionContract,
-        abi: contentInteractionAbi,
+        abi: contentInteractionDiamondAbi,
         functionName: "getNonceForInteraction",
-        args: [interactionData, user],
+        args: [interactionHash, user],
     });
 
     // Sign this interaction data
@@ -173,7 +157,7 @@ async function _getArticleOpenSignature({
         primaryType: "ValidateInteraction",
         message: {
             contentId,
-            interactionData,
+            interactionData: interactionHash,
             user,
             nonce,
         },
