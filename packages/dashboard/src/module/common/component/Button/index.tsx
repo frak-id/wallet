@@ -1,8 +1,9 @@
 import { Loader } from "@/assets/icons/Loader";
+import { mergeElement } from "@/module/common/utils/mergeElement";
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
-import { cloneElement, forwardRef, isValidElement } from "react";
-import type { ButtonHTMLAttributes, ReactElement, ReactNode } from "react";
+import { forwardRef } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import styles from "./index.module.css";
 
 export interface ButtonProps
@@ -67,30 +68,21 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             >
                 <>
                     {isLoading && <Loader className={styles.loader} />}
-                    {leftIcon && isValidElement(leftIcon)
-                        ? cloneElement(
-                              leftIcon as ReactElement<{ className?: string }>,
-                              { className: styles.leftIcon }
-                          )
-                        : leftIcon}
-                    {asChild && isValidElement(children)
-                        ? cloneElement(
-                              children as ReactElement<{ className?: string }>,
-                              {
-                                  className: buttonVariants({
-                                      variant,
-                                      size,
-                                      className,
-                                  }),
-                              }
-                          )
+                    {leftIcon &&
+                        mergeElement(leftIcon, { className: styles.leftIcon })}
+                    {asChild
+                        ? mergeElement(children, {
+                              className: buttonVariants({
+                                  variant,
+                                  size,
+                                  className,
+                              }),
+                          })
                         : children}
-                    {rightIcon && isValidElement(rightIcon)
-                        ? cloneElement(
-                              rightIcon as ReactElement<{ className?: string }>,
-                              { className: styles.leftIcon }
-                          )
-                        : rightIcon}
+                    {rightIcon &&
+                        mergeElement(rightIcon, {
+                            className: styles.rightIcon,
+                        })}
                 </>
             </Comp>
         );

@@ -14,6 +14,10 @@
     flex-direction: column;
     gap: 10px;
     height: 100%;
+
+    & ul {
+        margin: 10px 0 0 36px;
+    }
 }
 
 .navigation__itemToBottom {
@@ -38,4 +42,9 @@
 .navigationItem__button:hover, .navigationItem__button--active{
     background: var(--frak-navigation-item-hover-background-color);
     color: var(--frak-navigation-item-hover-color);
+}
+
+.navigationItem__rightSection {
+    margin-right: 5px;
+    margin-left: auto;
 }

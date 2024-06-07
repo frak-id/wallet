@@ -1,6 +1,7 @@
+import { mergeElement } from "@/module/common/utils/mergeElement";
 import { cx } from "class-variance-authority";
-import { cloneElement, forwardRef, isValidElement } from "react";
-import type { InputHTMLAttributes, ReactElement, ReactNode } from "react";
+import { forwardRef, isValidElement } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 import styles from "./index.module.css";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -24,10 +25,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         return (
             <span className={`${styles.inputWrapper} ${classNameWrapper}`}>
                 {leftSection && isValidElement(leftSection) ? (
-                    cloneElement(
-                        leftSection as ReactElement<{ className?: string }>,
-                        { className: styles.leftSection }
-                    )
+                    mergeElement(leftSection, { className: styles.leftSection })
                 ) : (
                     <span className={styles.leftSection}>{leftSection}</span>
                 )}
@@ -42,10 +40,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     {...props}
                 />
                 {rightSection && isValidElement(rightSection) ? (
-                    cloneElement(
-                        rightSection as ReactElement<{ className?: string }>,
-                        { className: styles.rightSection }
-                    )
+                    mergeElement(rightSection, {
+                        className: styles.rightSection,
+                    })
                 ) : (
                     <span className={styles.rightSection}>{rightSection}</span>
                 )}
