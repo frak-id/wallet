@@ -14,16 +14,35 @@
 
 button.table__button {
     all: unset;
+    box-sizing: border-box;
+    display: inline-block;
     cursor: pointer;
+    width: 100%;
+    padding: 18px 22px;
+
+    & > span {
+        display: inline-block;
+        width: 100%;
+        padding: 18px 22px;
+    }
+}
+
+button.table__button:has(span) {
+    padding: 0;
 }
 
 .table > thead > tr > th {
+    position: relative;
     padding: 18px 22px;
     background: var(--frak-table-heading-background-color);
     text-align: left;
     white-space: nowrap;
     color: var(--frak-table-heading-text-color);
     font-weight: 500;
+}
+
+.table > thead > tr > th:has(button.table__button) {
+    padding: 0;
 }
 
 .table > tbody > tr > td {
