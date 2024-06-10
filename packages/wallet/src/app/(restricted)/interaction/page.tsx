@@ -1,9 +1,11 @@
 "use client";
+import { contentIds } from "@/context/blockchain/contentIds";
 import {
     getSessionEnableData,
     getSessionStatus,
 } from "@/context/interaction/action/interactionSession";
 import { pushInteraction } from "@/context/interaction/action/pushInteraction";
+import { PressInteraction } from "@/context/interaction/utils/pressInteraction";
 import { Button } from "@/module/common/component/Button";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
@@ -117,7 +119,13 @@ function PushInteractionButton() {
                     if (!address) {
                         return;
                     }
-                    await pushInteraction({ wallet: address });
+                    await pushInteraction({
+                        wallet: address,
+                        contentId: contentIds.equipe,
+                        interaction: PressInteraction.buildReadArticle({
+                            articleId: "0x00",
+                        }),
+                    });
                 }}
             >
                 Push interaction

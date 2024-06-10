@@ -4,35 +4,38 @@ import {
     getBundlerClient,
     getPaymasterClient,
 } from "@/context/blockchain/aa-provider";
-import {
-    contentInteractionDiamondAbi,
-    contentInteractionManagerAbi,
-} from "@/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@/context/blockchain/addresses";
-import { contentIds } from "@/context/blockchain/contentIds";
+import { contentInteractionDiamondAbi } from "@/context/blockchain/abis/frak-interaction-abis";
 import { frakChainPocClient } from "@/context/blockchain/provider";
-import { PressInteraction } from "@/context/interaction/utils/pressInteraction";
+import { getInteractionContract } from "@/context/interaction/action/interactionContracts";
+import { getSessionStatus } from "@/context/interaction/action/interactionSession";
 import { contentInteractionActionAbi } from "@/context/wallet/abi/kernel-v2-abis";
 import { interactionSessionSmartAccount } from "@/context/wallet/smartWallet/InteractionSessionSmartWallet";
+import type { BuiltInteraction } from "@/types/Interaction";
 import {
     ENTRYPOINT_ADDRESS_V06,
     createSmartAccountClient,
 } from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
-import {
-    type Address,
-    type Hex,
-    encodeFunctionData,
-    keccak256,
-    pad,
-} from "viem";
+import { type Address, type Hex, encodeFunctionData, keccak256 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { readContract, signTypedData } from "viem/actions";
 
 /**
  * Try to push an interaction for the given wallet via an interaction
  */
-export async function pushInteraction({ wallet }: { wallet: Address }) {
+export async function pushInteraction({
+    wallet,
+    contentId,
+    interaction,
+}: { wallet: Address; contentId: bigint; interaction: BuiltInteraction }) {
+    // Check if the user has a valid session
+    const currentSession = await getSessionStatus({
+        wallet,
+    });
+    if (!currentSession) {
+        throw new Error("No session available for this user");
+    }
+
     // Get our session private account
     const sessionPrivateKey = process.env.AIRDROP_PRIVATE_KEY;
     if (!sessionPrivateKey) {
@@ -63,35 +66,26 @@ export async function pushInteraction({ wallet }: { wallet: Address }) {
                 sponsorUserOperation(paymasterClient, args),
         },
     });
-
-    const contentId = contentIds.frak;
-
     // Get an interaction manager
-    const interactionContract = await readContract(frakChainPocClient, {
-        address: addresses.contentInteractionManager,
-        abi: contentInteractionManagerAbi,
-        functionName: "getInteractionContract",
-        args: [contentId],
-    });
-
-    // Build the interaction data
-    const { facetData, interactionData } = PressInteraction.buildReadArticle({
-        articleId: pad("0x"),
-    });
+    const interactionContract = await getInteractionContract({ contentId });
 
     // Get the signature
     const signature = await _getValidationSignature({
         user: wallet,
-        facetData,
+        facetData: interaction.facetData,
         contentId,
         interactionContract,
+    });
+    console.log("Data for tx", {
+        interaction,
+        signature,
     });
 
     // Build the interaction data
     const interactionTx = encodeFunctionData({
         abi: contentInteractionDiamondAbi,
         functionName: "handleInteraction",
-        args: [interactionData, signature],
+        args: [interaction.interactionData, signature],
     });
 
     // Wrap the call

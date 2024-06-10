@@ -1,4 +1,5 @@
-import { setUserReferredOnContent } from "@/context/referral/action/userReferredOnContent";
+import { pushInteraction } from "@/context/interaction/action/pushInteraction";
+import { PressInteraction } from "@/context/interaction/utils/pressInteraction";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { addReferrerToHistoryAtom } from "@/module/listener/atoms/referralHistory";
@@ -72,10 +73,12 @@ export function useSetUserReferredListener() {
             }
 
             // Otherwise, just set the user referred on content
-            await setUserReferredOnContent({
-                user: userAddress,
-                referrer: referrerAddress,
-                contentId,
+            await pushInteraction({
+                wallet: userAddress,
+                contentId: BigInt(contentId),
+                interaction: PressInteraction.buildReferred({
+                    referrer: referrerAddress,
+                }),
             });
             // Send the response
             await emitter({

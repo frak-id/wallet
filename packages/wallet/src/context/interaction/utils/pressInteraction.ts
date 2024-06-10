@@ -1,3 +1,4 @@
+import type { BuiltInteraction } from "@/types/Interaction";
 import { type Address, type Hex, concatHex, pad } from "viem";
 
 // Denominator for the press content type
@@ -9,11 +10,6 @@ const ActionSelectors = {
     ReadArticle: "0xd5bd0fbe",
     Referred: "0x3d1508ad",
 } as const;
-
-type BuiltInteraction = {
-    facetData: Hex;
-    interactionData: Hex;
-};
 
 // Build a press article interaction
 function buildOpenArticle({ articleId }: { articleId: Hex }): BuiltInteraction {
@@ -45,7 +41,7 @@ function buildReadArticle({ articleId }: { articleId: Hex }): BuiltInteraction {
 function buildReferred({ referrer }: { referrer: Address }): BuiltInteraction {
     const facetData = concatHex([
         ActionSelectors.Referred,
-        pad(referrer, { size: 20 }),
+        pad(referrer, { size: 32 }),
     ]);
     const interactionData = concatHex([PressTypeSelector, facetData]);
     return {

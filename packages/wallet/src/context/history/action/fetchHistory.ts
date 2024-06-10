@@ -86,7 +86,7 @@ async function _fetchWalletHistory({
     // Get the frk received or sent events for a user
     function getFrkEvents(args: { to?: Address; from?: Address }) {
         return getLogs(viemClient, {
-            address: [addresses.paywallToken, addresses.referralToken],
+            address: addresses.paywallToken,
             event: frkTransferEvent,
             args,
             strict: true,

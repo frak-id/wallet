@@ -11,9 +11,6 @@ export const addresses = {
     communityToken: "0x932145A69BaF498D7F87D06db2E6c7963BF86E85",
     // Interactions
     contentInteractionManager: "0x71a54b7Edb803b0FB6c7A930794BcA13587Af21b",
-    // Old, todo: to be delete
-    referralToken: "0x1Eca7AA9ABF2e53E773B4523B6Dc103002d22e7D",
-    nexusDiscoverCampaign: "0x8a37d1B3a17559F2BC4e6613834b1F13d0A623aC",
 } as const;
 
 /**
