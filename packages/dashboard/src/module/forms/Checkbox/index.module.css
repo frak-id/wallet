@@ -9,7 +9,7 @@
     border-radius: 6px;
     background-color: var(--frak-color-white);
 
-    &:focus {
+    &:focus-visible {
         box-shadow: 0 0 0 1px var(--frak-focus-border-color);
     }
 }

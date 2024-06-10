@@ -73,7 +73,7 @@ export function NewCampaign() {
                     <FormBudget {...form} />
                     <FormTerritory {...form} />
                     <FormSchedule {...form} />
-                    <Actions {...form} />
+                    <Actions />
                 </form>
             </Form>
         </FormLayout>

@@ -90,6 +90,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
             <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                 <PopoverTrigger asChild>
                     <Button
+                        variant={"trigger"}
                         ref={ref}
                         {...props}
                         onClick={handleTogglePopover}
@@ -104,7 +105,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                             />
                         ) : (
                             <div className={styles.multiSelect__triggerInner}>
-                                {placeholder}
+                                <span>{placeholder}</span>
                                 <ChevronDown size={20} />
                             </div>
                         )}

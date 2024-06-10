@@ -18,7 +18,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import { format } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
@@ -78,7 +78,12 @@ export function FormSchedule(form: UseFormReturn<FormCampaignsNew>) {
                                             form.setValue("dateEnd", value);
                                             field.onChange(value);
                                         }}
-                                        disabled={(date) => date < new Date()}
+                                        disabled={(date) =>
+                                            isBefore(
+                                                date,
+                                                startOfDay(new Date())
+                                            )
+                                        }
                                         initialFocus
                                     />
                                 </PopoverContent>
@@ -133,7 +138,10 @@ export function FormSchedule(form: UseFormReturn<FormCampaignsNew>) {
                                             selected={field.value}
                                             onSelect={field.onChange}
                                             disabled={(date) =>
-                                                date < new Date() ||
+                                                isBefore(
+                                                    date,
+                                                    startOfDay(new Date())
+                                                ) ||
                                                 date <
                                                     form.getValues("dateStart")
                                             }

@@ -57,7 +57,7 @@ export function MetricsCampaign() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormObjectives {...form} />
-                    <Actions {...form} />
+                    <Actions />
                 </form>
             </Form>
         </FormLayout>

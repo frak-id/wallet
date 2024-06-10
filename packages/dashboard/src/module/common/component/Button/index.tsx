@@ -27,6 +27,7 @@ export const buttonVariants = cva(styles.button, {
             danger: styles.danger,
             information: styles.information,
             informationOutline: styles.informationOutline,
+            trigger: styles.trigger,
         },
         size: {
             none: styles["size--none"],

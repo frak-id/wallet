@@ -8,7 +8,7 @@
     align-items: center;
     border-radius: 8px;
 
-    &:focus {
+    &:focus-visible {
         box-shadow: 0 0 0 1px var(--frak-focus-border-color);
     }
 }
@@ -86,6 +86,11 @@
     background-color: var(--frak-button-informationOutline-background-color);
     color: var(--frak-button-information-text-color);
     border: 1px solid var(--frak-button-informationOutline-border-color);
+}
+
+.trigger {
+    background-color: var(--frak-multiselect-trigger-background-color);
+    border: 1px solid var(--frak-multiselect-trigger-border-color);
 }
 
 .fontNormal {

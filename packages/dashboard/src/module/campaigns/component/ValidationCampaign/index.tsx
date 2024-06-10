@@ -72,7 +72,7 @@ export function ValidationCampaign() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormCheck {...form} />
-                    <Actions {...form} />
+                    <Actions />
                 </form>
             </Form>
         </FormLayout>

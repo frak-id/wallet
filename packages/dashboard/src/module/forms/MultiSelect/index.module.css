@@ -1,21 +1,10 @@
 .multiSelect__trigger {
-    all: unset;
-    box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: space-between;
-    border-radius: 8px;
-    padding: 6px 10px;
     width: 50%;
     min-height: 40px;
     gap: 5px;
-    background-color: var(--frak-multiselect-trigger-background-color);
-    border: 1px solid var(--frak-multiselect-trigger-border-color);
-    cursor: pointer;
-
-    &:focus {
-        box-shadow: 0 0 0 1px var(--frak-focus-border-color);
-    }
 }
 
 .multiSelect__triggerInner {
@@ -23,6 +12,16 @@
     align-items: flex-start;
     justify-content: space-between;
     width: 100%;
+
+    & > span {
+        display: flex;
+        align-items: center;
+        height: 26px;
+    }
+
+    & > svg {
+        margin-top: 2px;
+    }
 }
 
 .multiSelect__actions {

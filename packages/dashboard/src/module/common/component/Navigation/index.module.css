@@ -36,10 +36,10 @@
     border-radius: 5px;
     cursor: pointer;
     color: var(--frak-navigation-item-color);
-    transition: background 0.3s, color 0.3s;
+    transition: background .15s, color .15s cubic-bezier(.4, 0, .2, 1);
 }
 
-.navigationItem__button:hover, .navigationItem__button--active{
+.navigationItem__button:hover, .navigationItem__button--active {
     background: var(--frak-navigation-item-hover-background-color);
     color: var(--frak-navigation-item-hover-color);
 }

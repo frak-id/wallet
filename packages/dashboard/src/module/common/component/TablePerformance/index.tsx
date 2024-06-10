@@ -198,11 +198,12 @@ const columnHelper = createColumnHelper<TableData>();
 
 const initialFilteringState = { page: 1 };
 
-function sumRows(table: TableReact<TableData>, column: string) {
+function sumRows(table: TableReact<TableData>, column: keyof TableData) {
     const total = table
         .getFilteredRowModel()
         .rows.reduce(
-            (sum, row) => computeWithPrecision(sum, row.original[column], "+"),
+            (sum, row) =>
+                computeWithPrecision(sum, row.original[column] as number, "+"),
             0
         );
     return <span>{total}</span>;
