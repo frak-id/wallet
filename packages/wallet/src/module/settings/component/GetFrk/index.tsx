@@ -1,6 +1,6 @@
 "use client";
 
-import { frakChainId } from "@/context/common/blockchain/provider";
+import { frakChainId } from "@/context/blockchain/provider";
 import { isRunningInProd } from "@/context/common/env";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";

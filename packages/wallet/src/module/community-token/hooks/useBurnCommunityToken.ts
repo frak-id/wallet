@@ -1,5 +1,5 @@
-import { addresses } from "@/context/common/blockchain/addresses";
-import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
+import { communityTokenAbi } from "@/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@/context/blockchain/addresses";
 import { useInvalidateCommunityTokenAvailability } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import { useMutation } from "@tanstack/react-query";
 import { useWriteContract } from "wagmi";

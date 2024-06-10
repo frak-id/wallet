@@ -1,5 +1,5 @@
-import { addresses } from "@/context/common/blockchain/addresses";
-import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
+import { communityTokenAbi } from "@/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@/context/blockchain/addresses";
 import { useInvalidateCommunityTokenAvailability } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import { useMutation } from "@tanstack/react-query";
 import { useAccount, useWriteContract } from "wagmi";
@@ -10,7 +10,7 @@ import { useAccount, useWriteContract } from "wagmi";
 export function useMintCommunityToken({
     contentId,
 }: {
-    contentId?: number;
+    contentId?: bigint;
 }) {
     // Get the write contract function
     const { writeContractAsync } = useWriteContract();
@@ -37,7 +37,7 @@ export function useMintCommunityToken({
                 address: addresses.communityToken,
                 abi: communityTokenAbi,
                 functionName: "mint",
-                args: [address, BigInt(contentId)],
+                args: [address, contentId],
             });
 
             // Invalidate the community token availability

@@ -1,10 +1,10 @@
-import { addresses } from "@/context/common/blockchain/addresses";
 import {
     communityTokenAbi,
     paywallAbi,
     paywallTokenAbi,
-} from "@/context/common/blockchain/poc-abi";
-import { frakChainId } from "@/context/common/blockchain/provider";
+} from "@/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@/context/blockchain/addresses";
+import { frakChainId } from "@/context/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";

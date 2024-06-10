@@ -4,7 +4,7 @@ import { ArticlesList } from "@/module/article/component/ArticlesList";
 
 export default function AdminPage() {
     return (
-        <div>
+        <div style={{ maxWidth: 600, margin: "auto" }}>
             <AdminGate>
                 <h1>Admin Page</h1>
                 <h2>List of all the articles</h2>

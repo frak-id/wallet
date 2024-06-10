@@ -1,6 +1,6 @@
 "use server";
 
-import { kernelAddresses } from "@/context/common/blockchain/addresses";
+import { kernelAddresses } from "@/context/blockchain/addresses";
 import { isRunningInProd } from "@/context/common/env";
 import {
     doAddPassKeyFnAbi,

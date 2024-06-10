@@ -1,4 +1,4 @@
-import { addresses } from "@/context/common/blockchain/addresses";
+import { addresses } from "@/context/blockchain/addresses";
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 
 export function getFrkToken({ tokens }: { tokens: GetUserErc20Token[] }) {

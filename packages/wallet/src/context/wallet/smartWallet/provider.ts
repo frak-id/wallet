@@ -1,12 +1,12 @@
 import {
     getBundlerClient,
     getPaymasterClient,
-} from "@/context/common/blockchain/aa-provider";
-import { getAlchemyTransport } from "@/context/common/blockchain/alchemy-transport";
+} from "@/context/blockchain/aa-provider";
+import { getAlchemyTransport } from "@/context/blockchain/alchemy-transport";
 import {
     type AvailableChainIds,
     availableChains,
-} from "@/context/common/blockchain/provider";
+} from "@/context/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/sign";
 import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";

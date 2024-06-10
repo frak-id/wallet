@@ -18,6 +18,7 @@ export function WalletAppStack({ stack }: StackContext) {
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,
+        interactionValidatorPrivateKey,
         walletconnectProjectId,
         nexusUrl,
     } = use(ConfigStack);
@@ -28,6 +29,7 @@ export function WalletAppStack({ stack }: StackContext) {
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,
+        interactionValidatorPrivateKey,
         walletconnectProjectId,
         nexusUrl,
     ];

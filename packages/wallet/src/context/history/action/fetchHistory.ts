@@ -1,11 +1,11 @@
 "use server";
 
-import { addresses } from "@/context/common/blockchain/addresses";
 import {
     frkTransferEvent,
     paidItemUnlockedEventAbi,
-} from "@/context/common/blockchain/event-abi";
-import { getViemClientFromChainId } from "@/context/common/blockchain/provider";
+} from "@/context/blockchain/abis/event-abi";
+import { addresses } from "@/context/blockchain/addresses";
+import { getViemClientFromChainId } from "@/context/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import type {
     ArticleUnlock,
@@ -86,7 +86,7 @@ async function _fetchWalletHistory({
     // Get the frk received or sent events for a user
     function getFrkEvents(args: { to?: Address; from?: Address }) {
         return getLogs(viemClient, {
-            address: [addresses.paywallToken, addresses.referralToken],
+            address: addresses.paywallToken,
             event: frkTransferEvent,
             args,
             strict: true,

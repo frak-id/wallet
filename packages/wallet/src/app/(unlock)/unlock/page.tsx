@@ -1,6 +1,6 @@
 "use client";
 
-import { frakChainId } from "@/context/common/blockchain/provider";
+import { frakChainId } from "@/context/blockchain/provider";
 import { EnforceChain } from "@/module/chain/component/EnforceChain";
 import { isPaywallRedirectingAtom } from "@/module/paywall/atoms/paywall";
 import { paywallContextAtom } from "@/module/paywall/atoms/paywallContext";

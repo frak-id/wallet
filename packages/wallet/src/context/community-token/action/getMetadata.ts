@@ -1,8 +1,8 @@
 "use server";
 
-import { addresses } from "@/context/common/blockchain/addresses";
-import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
-import { frakChainPocClient } from "@/context/common/blockchain/provider";
+import { communityTokenAbi } from "@/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@/context/blockchain/addresses";
+import { frakChainPocClient } from "@/context/blockchain/provider";
 import { isRunningInDev, isRunningLocally } from "@/context/common/env";
 import { unstable_cache } from "next/cache";
 import { readContract } from "viem/actions";

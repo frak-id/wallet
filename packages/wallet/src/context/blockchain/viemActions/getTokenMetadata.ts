@@ -1,7 +1,7 @@
 import type {
     AlchemyRpcSchema,
     GetTokenMetadataResponse,
-} from "@/context/common/blockchain/viemActions/AlchemyTypes";
+} from "@/context/blockchain/viemActions/AlchemyTypes";
 import type { Account, Address, Chain, Client, Transport } from "viem";
 
 /**

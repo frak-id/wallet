@@ -1,5 +1,5 @@
 import { use } from "sst/constructs";
-import type { StackContext, NextjsSiteProps } from "sst/constructs";
+import type { NextjsSiteProps, StackContext } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
 import { isDevStack, isProdStack } from "./utils";

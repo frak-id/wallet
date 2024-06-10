@@ -18,6 +18,10 @@ export function ConfigStack({ stack }: StackContext) {
     const pimlicoApiKey = new Config.Secret(stack, "PIMLICO_API_KEY");
     const zeroDevApiKey = new Config.Secret(stack, "ZERODEV_API_KEY");
     const airdropPrivateKey = new Config.Secret(stack, "AIRDROP_PRIVATE_KEY");
+    const interactionValidatorPrivateKey = new Config.Secret(
+        stack,
+        "INTERACTION_VALIDATOR_PRIVATE_KEY"
+    );
     const adminPassword = new Config.Secret(stack, "ADMIN_PASSWORD");
     const walletconnectProjectId = new Config.Secret(
         stack,
@@ -36,6 +40,7 @@ export function ConfigStack({ stack }: StackContext) {
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,
+        interactionValidatorPrivateKey,
         adminPassword,
         nexusUrl,
         walletconnectProjectId,

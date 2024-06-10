@@ -1,6 +1,6 @@
 "use server";
 
-import { getViemClientFromChainId } from "@/context/common/blockchain/provider";
+import { getViemClientFromChainId } from "@/context/blockchain/provider";
 import { CachesTags } from "@/context/common/caching";
 import { unstable_cache } from "next/cache";
 import { erc20Abi } from "viem";

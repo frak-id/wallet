@@ -1,8 +1,8 @@
 "use server";
 
-import { addresses } from "@/context/common/blockchain/addresses";
-import { communityTokenAbi } from "@/context/common/blockchain/poc-abi";
-import { frakChainPocClient } from "@/context/common/blockchain/provider";
+import { communityTokenAbi } from "@/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@/context/blockchain/addresses";
+import { frakChainPocClient } from "@/context/blockchain/provider";
 import { unstable_cache } from "next/cache";
 import { readContract } from "viem/actions";
 
@@ -12,12 +12,12 @@ import { readContract } from "viem/actions";
  */
 async function _isCommunityTokenForContentEnabled({
     contentId,
-}: { contentId: number }) {
+}: { contentId: bigint }) {
     return await readContract(frakChainPocClient, {
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "isEnabled",
-        args: [BigInt(contentId)],
+        args: [contentId],
     });
 }
 

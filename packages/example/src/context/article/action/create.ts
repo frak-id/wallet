@@ -4,7 +4,10 @@ import { randomBytes } from "node:crypto";
 import { onlyAdmin } from "@/context/admin/action/authenticate";
 import { getArticleRepository } from "@/context/article/repository/ArticleRepository";
 import { getContentRepository } from "@/context/article/repository/ContentRepository";
-import { contentId } from "@/context/common/config";
+import {
+    type PressProvider,
+    providerToContentId,
+} from "@/context/common/config";
 import { revalidateTag } from "next/cache";
 import { keccak256 } from "viem";
 
@@ -75,12 +78,16 @@ export async function createArticle({
     isLocal,
 }: {
     id: number;
-    provider: "le-monde" | "wired" | "l-equipe";
+    provider: PressProvider;
     origin: string;
     isLocal: boolean;
 }) {
     // Lock this function to admin only
     await onlyAdmin();
+
+    // Get the right content id depending on the provider
+    const contentId = providerToContentId[provider];
+
     // Insert the test content
     const contentRepository = await getContentRepository();
     const content = await contentRepository.getById(contentId);

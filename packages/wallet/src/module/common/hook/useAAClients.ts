@@ -1,4 +1,4 @@
-import { getBundlerClient } from "@/context/common/blockchain/aa-provider";
+import { getBundlerClient } from "@/context/blockchain/aa-provider";
 import { useMemo } from "react";
 import { useClient } from "wagmi";
 

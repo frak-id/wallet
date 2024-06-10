@@ -1,17 +1,17 @@
 "use server";
 
-import { kernelAddresses } from "@/context/common/blockchain/addresses";
+import { kernelAddresses } from "@/context/blockchain/addresses";
 import {
     type AvailableChainIds,
     availableChains,
     getViemClientFromChainId,
-} from "@/context/common/blockchain/provider";
+} from "@/context/blockchain/provider";
 import {
     doAddPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
     getExecutionAbi,
 } from "@/context/recover/utils/abi";
-import { multiWebAuthNValidatorV2Abi } from "@/context/wallet/abi/kernel-v2-abi";
+import { multiWebAuthNValidatorV2Abi } from "@/context/wallet/abi/kernel-v2-abis";
 import type { CurrentRecovery } from "@/types/Recovery";
 import { map, tryit } from "radash";
 import {

@@ -1,5 +1,6 @@
-import { setUserReferred } from "@/context/referral/action/userReferred";
-import { setUserReferredOnContent } from "@/context/referral/action/userReferredOnContent";
+import { contentIds } from "@/context/blockchain/contentIds";
+import { pushInteraction } from "@/context/interaction/action/pushInteraction";
+import { PressInteraction } from "@/context/interaction/utils/pressInteraction";
 import { referralHistoryAtom } from "@/module/listener/atoms/referralHistory";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { useAtom } from "jotai";
@@ -26,9 +27,12 @@ export function useTriggerReferral() {
      */
     const referralFromFrak = useCallback(
         async (wallet: WebAuthNWallet) =>
-            await setUserReferred({
-                user: wallet.address,
-                referrer: FRAK_WALLET_GOVERNANCE,
+            await pushInteraction({
+                wallet: wallet.address,
+                contentId: contentIds.frak,
+                interaction: PressInteraction.buildReferred({
+                    referrer: FRAK_WALLET_GOVERNANCE,
+                }),
             }),
         []
     );
@@ -39,19 +43,24 @@ export function useTriggerReferral() {
     const referralFromUser = useCallback(
         async (wallet: WebAuthNWallet) => {
             // Set the user referred
-            await setUserReferred({
-                user: wallet.address,
-                referrer: referralHistory.lastReferrer,
+            await pushInteraction({
+                wallet: wallet.address,
+                contentId: contentIds.frak,
+                interaction: PressInteraction.buildReferred({
+                    referrer: referralHistory.lastReferrer,
+                }),
             });
 
             // Set the user referred on each content
             for (const contentId of Object.keys(referralHistory.contents)) {
                 const walletAddress =
                     referralHistory.contents[contentId as Hex];
-                await setUserReferredOnContent({
-                    user: wallet.address,
-                    referrer: walletAddress,
-                    contentId: contentId as Hex,
+                await pushInteraction({
+                    wallet: wallet.address,
+                    contentId: BigInt(contentId),
+                    interaction: PressInteraction.buildReferred({
+                        referrer: walletAddress,
+                    }),
                 });
             }
         },

@@ -3,7 +3,7 @@
 import {
     type AvailableChainIds,
     availableChains,
-} from "@/context/common/blockchain/provider";
+} from "@/context/blockchain/provider";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
 import { useMemo } from "react";
 import { extractChain } from "viem";

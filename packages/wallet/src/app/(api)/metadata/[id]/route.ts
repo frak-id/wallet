@@ -1,13 +1,9 @@
+import { contentIds } from "@/context/blockchain/contentIds";
 import { appUrl } from "@/context/common/env";
 import { type NextRequest, NextResponse } from "next/server";
+import { toHex } from "viem";
 
-type ContentNames = "le-monde" | "equipe" | "wired";
-
-const contentIdToName: Record<number, ContentNames> = {
-    0: "le-monde",
-    1: "equipe",
-    2: "wired",
-};
+type ContentNames = "le-monde" | "equipe" | "wired" | "frak";
 
 const getImages = (contentName: ContentNames) => ({
     image: `${appUrl}/images/nft/${contentName}-dark.webp`,
@@ -27,18 +23,25 @@ export function GET(
     _request: NextRequest,
     { params }: { params: { id: string } }
 ) {
-    const normalisedId = Number.parseInt(params.id.replace(".json", ""));
+    const normalisedId = BigInt(params.id.replace(".json", ""));
 
-    // Get the content name
-    const contentName = contentIdToName[normalisedId];
+    // Check if the content id is in the list
+    for (const contentKey of Object.keys(contentIds)) {
+        const contentId = contentIds[contentKey];
+        if (contentId !== normalisedId) {
+            continue;
+        }
 
-    // TODO: Define the metadata structure we need and we want
-    return NextResponse.json({
-        name: `${contentName} Community NFT`,
-        description: "Super token description",
-        ...getImages(contentName),
-        // Content related
-        contentId: normalisedId,
-        contentType: "news",
-    });
+        return NextResponse.json({
+            name: `${contentKey} Community NFT`,
+            description: "Super token description",
+            ...getImages(contentKey as ContentNames),
+            // Content related
+            contentId: toHex(normalisedId),
+            contentType: "press",
+        });
+    }
+
+    // Otherwise, return an error
+    return NextResponse.error();
 }

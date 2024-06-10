@@ -1,53 +1,105 @@
-import { addresses } from "@/context/common/blockchain/addresses";
-import { nexusDiscoverCampaignAbi } from "@/context/referral/abi/campaign-abis";
-import { getPendingWalletReferralReward } from "@/context/referral/action/pendingReferral";
-import { sessionAtom } from "@/module/common/atoms/session";
+import { frakChainId } from "@/context/blockchain/provider";
+import { getPendingReferralReward } from "@/context/interaction/action/pendingReferral";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { useAAClients } from "@/module/common/hook/useAAClients";
 import { useInvalidateUserTokens } from "@/module/tokens/hook/useGetUserTokens";
-import { useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
-import { useWriteContract } from "wagmi";
+import {
+    type SmartAccountClient,
+    getUserOperationReceipt,
+} from "permissionless";
+import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
+import { useMemo } from "react";
+import { useConnectorClient } from "wagmi";
 import styles from "./index.module.css";
 
 export function PendingReferral() {
     // Invalidate the user tokens
     const invalidateUserTokens = useInvalidateUserTokens();
-
-    // Fetch the current user session
-    const session = useAtomValue(sessionAtom);
+    /**
+     * Get our current smart wallet client
+     */
+    const { data: connectorClient } = useConnectorClient();
 
     // Get the user wallet address
-    const address = session?.wallet?.address;
+    const address = useMemo(
+        () => connectorClient?.account?.address,
+        [connectorClient]
+    );
+
+    // Fetch the AA transports
+    const { bundlerClient } = useAAClients({
+        chainId: frakChainId,
+    });
 
     // Fetch the pending reward
     const { data: pendingReward, refetch: refetchPendingReward } = useQuery({
-        queryKey: ["getPendingWalletReferralReward"],
+        queryKey: ["referral", "pending-reward", address],
         queryFn: async () => {
             if (!address) return null;
-            return await getPendingWalletReferralReward({
+            return await getPendingReferralReward({
                 user: address,
             });
         },
         enabled: !!address,
     });
 
-    // Get the write contract function
-    const { writeContractAsync, isPending, isSuccess } = useWriteContract({
-        mutation: {
-            onSuccess: async () => {
-                // Invalidate the user tokens
-                await invalidateUserTokens();
+    // Mutation to send the claim txs
+    const {
+        mutateAsync: sendClaimTxs,
+        isPending,
+        isSuccess,
+    } = useMutation({
+        mutationKey: ["referral", "claim-reward", address],
+        mutationFn: async () => {
+            const nexusWallet =
+                connectorClient as SmartAccountClient<ENTRYPOINT_ADDRESS_V06_TYPE>;
+            if (
+                !(
+                    nexusWallet.account &&
+                    pendingReward?.perContracts &&
+                    bundlerClient
+                )
+            )
+                return;
 
-                // Refetch the pending reward
-                await refetchPendingReward();
-            },
+            // For each pending rewards, launch a tx
+            const txs = await nexusWallet.account.encodeCallData(
+                pendingReward.perContracts.map((contract) => ({
+                    to: contract.address,
+                    data: contract.claimTx,
+                    value: 0n,
+                }))
+            );
+
+            // Send the user op
+            const userOpHash = await nexusWallet.sendUserOperation({
+                userOperation: {
+                    callData: txs,
+                },
+                account: nexusWallet.account,
+            });
+
+            // Wait for it
+            const userOpReceipt = await getUserOperationReceipt(bundlerClient, {
+                hash: userOpHash,
+            });
+            console.log("UserOp receipt", userOpReceipt);
+
+            // Invalidate the user tokens
+            await invalidateUserTokens();
+
+            // Refetch the pending reward
+            await refetchPendingReward();
+
+            return userOpReceipt?.receipt?.transactionHash;
         },
     });
 
-    return pendingReward?.rFrkPendingRaw ? (
+    return pendingReward?.pFrkPendingRaw ? (
         <Panel size={"small"}>
             <Title icon={<CircleDollarSign width={32} height={32} />}>
                 Pending referral reward
@@ -60,7 +112,7 @@ export function PendingReferral() {
             {!isSuccess && (
                 <>
                     <p>
-                        You got {pendingReward?.rFrkPendingFormatted} rFRK
+                        You got {pendingReward?.pFrkPendingFormatted} pFRK
                         pending thanks to your referral activities!
                     </p>
                     <ButtonRipple
@@ -69,12 +121,7 @@ export function PendingReferral() {
                         isLoading={isPending}
                         disabled={isPending || isSuccess}
                         onClick={async () => {
-                            // Launch the transaction
-                            await writeContractAsync({
-                                abi: nexusDiscoverCampaignAbi,
-                                address: addresses.nexusDiscoverCampaign,
-                                functionName: "pullReward",
-                            });
+                            await sendClaimTxs();
                         }}
                     >
                         Claim
