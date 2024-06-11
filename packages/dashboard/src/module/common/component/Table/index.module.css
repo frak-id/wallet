@@ -34,6 +34,7 @@ button.table__button:has(span) {
 
 .table__filterIcon {
     margin-left: auto;
+    color: var(--frak-color-regent-gray);
 }
 
 .table > thead > tr > th {

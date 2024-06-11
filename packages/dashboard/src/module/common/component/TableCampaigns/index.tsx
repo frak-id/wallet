@@ -32,7 +32,7 @@ const mockData: TableData[] = [
     {
         _id: "1",
         title: "Campaign 1",
-        status: "Active",
+        status: "Running",
         date: "2021-09-01",
         budget: 1000,
         enabled: true,
@@ -40,7 +40,7 @@ const mockData: TableData[] = [
     {
         _id: "2",
         title: "Campaign 2",
-        status: "Inactive",
+        status: "Stopped",
         date: "2021-10-15",
         budget: 1500,
         enabled: false,
@@ -48,7 +48,7 @@ const mockData: TableData[] = [
     {
         _id: "3",
         title: "Campaign 3",
-        status: "Active",
+        status: "Running",
         date: "2021-11-05",
         budget: 2000,
         enabled: true,
@@ -56,7 +56,7 @@ const mockData: TableData[] = [
     {
         _id: "4",
         title: "Campaign 4",
-        status: "Completed",
+        status: "Draft",
         date: "2021-12-01",
         budget: 2500,
         enabled: false,
@@ -64,7 +64,7 @@ const mockData: TableData[] = [
     {
         _id: "5",
         title: "Campaign 5",
-        status: "Active",
+        status: "Running",
         date: "2022-01-10",
         budget: 1200,
         enabled: true,
@@ -72,7 +72,7 @@ const mockData: TableData[] = [
     {
         _id: "6",
         title: "Campaign 6",
-        status: "Inactive",
+        status: "Stopped",
         date: "2022-02-20",
         budget: 3000,
         enabled: false,
@@ -80,7 +80,7 @@ const mockData: TableData[] = [
     {
         _id: "7",
         title: "Campaign 7",
-        status: "Completed",
+        status: "Draft",
         date: "2022-03-15",
         budget: 1800,
         enabled: false,
@@ -88,7 +88,7 @@ const mockData: TableData[] = [
     {
         _id: "8",
         title: "Campaign 8",
-        status: "Active",
+        status: "Running",
         date: "2022-04-05",
         budget: 2200,
         enabled: true,
@@ -96,7 +96,7 @@ const mockData: TableData[] = [
     {
         _id: "9",
         title: "Campaign 9",
-        status: "Inactive",
+        status: "Stopped",
         date: "2022-05-25",
         budget: 1600,
         enabled: false,
@@ -104,7 +104,7 @@ const mockData: TableData[] = [
     {
         _id: "10",
         title: "Campaign 10",
-        status: "Completed",
+        status: "Draft",
         date: "2022-06-30",
         budget: 2700,
         enabled: false,

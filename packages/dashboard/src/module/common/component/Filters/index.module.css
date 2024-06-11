@@ -17,3 +17,8 @@
 .filters__search {
     max-width: 320px;
 }
+
+.filters__datePickerTrigger {
+    gap: 8px;
+    line-height: 20px;
+}
