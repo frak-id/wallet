@@ -15,6 +15,7 @@ import type {
     RegisterOptions,
     UseFormReturn,
 } from "react-hook-form";
+import styles from "./FormFromTo.module.css";
 
 export function FormFromTo<TFormValues extends FieldValues>({
     id,
@@ -63,7 +64,7 @@ export function FormFromTo<TFormValues extends FieldValues>({
                     {label}
                 </FormLabel>
             </FormItem>
-            <Row>
+            <Row className={styles.formFromTo__row}>
                 <FormField
                     control={form.control}
                     name={from.name}
