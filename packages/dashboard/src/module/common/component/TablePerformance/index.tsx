@@ -1,15 +1,19 @@
-"use client";
-
-import { Table } from "@/module/common/component/Table";
+import type { ReactTableProps } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Table as TableReact } from "@tanstack/react-table";
 import { usePrevious } from "@uidotdev/usehooks";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import useSessionStorageState from "use-session-storage-state";
+
+const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
+    () => import("@/module/common/component/Table").then((mod) => mod.Table),
+    { ssr: false }
+);
 
 type TableData = {
     _id: string;
@@ -299,7 +303,7 @@ export function TablePerformance() {
         <>
             {
                 mockData && mockMetas ? (
-                    <Table<TableData, TableMetas>
+                    <Table
                         data={mockData}
                         metas={mockMetas}
                         columns={columns}

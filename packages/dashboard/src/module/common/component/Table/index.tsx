@@ -8,18 +8,18 @@ import {
 } from "@tanstack/react-table";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import useSessionStorageState from "use-session-storage-state";
 import styles from "./index.module.css";
 
-export type TableFiltering = {
+type TableFiltering = {
     page: number;
     field?: string;
     order?: string;
 };
 
-interface ReactTableProps<TData, TMetas> {
+export type ReactTableProps<TData, TMetas> = {
     data: TData[];
     metas?: TMetas;
     columns: ColumnDef<TData>[];
@@ -30,7 +30,7 @@ interface ReactTableProps<TData, TMetas> {
     filtering?: TableFiltering;
     setFiltering?: Dispatch<SetStateAction<TableFiltering>>;
     limit?: number;
-}
+};
 
 type Metas = {
     page: number;
@@ -140,6 +140,16 @@ export function Table<TData extends object, TMetas extends Metas>({
         );
     }
 
+    const rowModel = table.getRowModel();
+    const footerGroups = table.getFooterGroups();
+    const hasFooters = useMemo(() => {
+        return footerGroups.some((group) =>
+            group.headers.some((header) =>
+                Boolean(header.column.columnDef.footer)
+            )
+        );
+    }, [footerGroups]);
+
     return (
         <>
             <div className={`${styles.tableWrapper} ${classNameWrapper}`}>
@@ -175,15 +185,14 @@ export function Table<TData extends object, TMetas extends Metas>({
                         ))}
                     </thead>
                     <tbody>
-                        {table.getRowModel().rows.length === 0 && (
+                        {rowModel.rows.length === 0 ? (
                             <tr>
                                 <td colSpan={table.options.columns.length}>
                                     No results
                                 </td>
                             </tr>
-                        )}
-                        {table.getRowModel().rows.map((row) => {
-                            return (
+                        ) : (
+                            rowModel.rows.map((row) => (
                                 <tr key={row.id}>
                                     {row.getVisibleCells().map((cell) => (
                                         <td key={cell.id}>
@@ -194,26 +203,28 @@ export function Table<TData extends object, TMetas extends Metas>({
                                         </td>
                                     ))}
                                 </tr>
-                            );
-                        })}
+                            ))
+                        )}
                     </tbody>
-                    <tfoot>
-                        {table.getFooterGroups().map((footerGroup) => (
-                            <tr key={footerGroup.id}>
-                                {footerGroup.headers.map((header) => (
-                                    <th key={header.id}>
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                  header.column.columnDef
-                                                      .footer,
-                                                  header.getContext()
-                                              )}
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                    </tfoot>
+                    {hasFooters && (
+                        <tfoot>
+                            {footerGroups.map((footerGroup) => (
+                                <tr key={footerGroup.id}>
+                                    {footerGroup.headers.map((header) => (
+                                        <th key={header.id}>
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(
+                                                      header.column.columnDef
+                                                          .footer,
+                                                      header.getContext()
+                                                  )}
+                                        </th>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tfoot>
+                    )}
                 </table>
                 {pagination && (
                     <TablePagination

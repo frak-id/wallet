@@ -1,17 +1,23 @@
-"use client";
-
 import { Badge } from "@/module/common/component/Badge";
-import { Table } from "@/module/common/component/Table";
+import type { ReactTableProps } from "@/module/common/component/Table";
+import { formatDate } from "@/module/common/utils/formatDate";
+import { formatPrice } from "@/module/common/utils/formatPrice";
 import { Checkbox } from "@/module/forms/Checkbox";
 import { Switch } from "@/module/forms/Switch";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { usePrevious } from "@uidotdev/usehooks";
 import { Eye, Pencil, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import useSessionStorageState from "use-session-storage-state";
 import styles from "./index.module.css";
+
+const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
+    () => import("@/module/common/component/Table").then((mod) => mod.Table),
+    { ssr: false }
+);
 
 type TableData = {
     _id: string;
@@ -157,8 +163,35 @@ export function TableCampaigns() {
             [
                 columnHelper.display({
                     id: "checkbox",
-                    header: () => <Checkbox />,
-                    cell: () => <Checkbox />,
+                    header: ({ table }) => (
+                        <Checkbox
+                            {...{
+                                checked: table.getIsSomeRowsSelected()
+                                    ? "indeterminate"
+                                    : table.getIsAllPageRowsSelected(),
+                                onCheckedChange: (checked) => {
+                                    if (checked !== "indeterminate") {
+                                        table.toggleAllPageRowsSelected(
+                                            checked
+                                        );
+                                    }
+                                },
+                            }}
+                        />
+                    ),
+                    cell: ({ row }) => (
+                        <Checkbox
+                            {...{
+                                checked: row.getIsSelected() ?? "indeterminate",
+                                disabled: !row.getCanSelect(),
+                                onCheckedChange: (checked) => {
+                                    if (checked !== "indeterminate") {
+                                        row.toggleSelected(checked);
+                                    }
+                                },
+                            }}
+                        />
+                    ),
                 }),
                 columnHelper.accessor("enabled", {
                     header: "On/Off",
@@ -185,9 +218,11 @@ export function TableCampaigns() {
                 }),
                 columnHelper.accessor("date", {
                     header: () => "Date",
+                    cell: ({ getValue }) => formatDate(new Date(getValue())),
                 }),
                 columnHelper.accessor("budget", {
                     header: () => "Budget",
+                    cell: ({ getValue }) => formatPrice(getValue()),
                 }),
                 columnHelper.display({
                     header: "Action",
@@ -213,7 +248,7 @@ export function TableCampaigns() {
         <>
             {
                 mockData && mockMetas ? (
-                    <Table<TableData, TableMetas>
+                    <Table
                         data={mockData}
                         metas={mockMetas}
                         columns={columns}
