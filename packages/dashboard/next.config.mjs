@@ -9,6 +9,20 @@ const isDistant = ["prod", "dev"].includes(Config.STAGE);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    async redirects() {
+        return [
+            {
+                source: "/",
+                destination: "/dashboard",
+                permanent: true,
+            },
+            {
+                source: "/campaigns",
+                destination: "/campaigns/list",
+                permanent: true,
+            },
+        ];
+    },
     env: {
         ...envFromSstConfig,
         STAGE: Config.STAGE,

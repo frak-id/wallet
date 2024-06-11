@@ -7,7 +7,7 @@ export function Header() {
     return (
         <>
             <header className={styles.header}>
-                <Link href={"/"} className={styles.header__logo}>
+                <Link href={"/dashboard"} className={styles.header__logo}>
                     <LogoFrak />
                 </Link>
                 <NavigationTop />
