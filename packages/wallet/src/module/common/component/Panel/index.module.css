@@ -23,6 +23,11 @@
     background: none;
 }
 
+.invisible {
+    background: none;
+    border-color: transparent;
+}
+
 .size--none {
     padding: 0;
 }

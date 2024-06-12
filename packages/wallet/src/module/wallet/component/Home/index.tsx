@@ -6,10 +6,12 @@ import { PendingWalletConnectRequests } from "@/module/wallet-connect/component/
 import { CreateWalletConnectConnection } from "@/module/wallet-connect/component/StartConnect";
 import { InstallApp } from "@/module/wallet/component/InstallApp";
 import { PendingReferral } from "@/module/wallet/component/PendingReferral";
+import { ToggleSession } from "@/module/wallet/component/ToggleSession";
 
 export function WalletHomePage() {
     return (
         <Grid>
+            <ToggleSession />
             <InstallApp />
             <PendingWalletConnectRequests />
             <Tokens />

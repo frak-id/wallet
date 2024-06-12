@@ -1,0 +1,47 @@
+.toggleSession {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sessionClosed {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: radial-gradient(89.19% 46.06% at 25.7% 45.27%, #FFFFFF 0%, #D9B6D4 100%);
+    color: var(--frak-color-dark);
+    font-size: 13px;
+}
+
+.sessionClosed__warning {
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiOne Mozilla", "Twemoji Mozilla", "Noto Emoji", "Segoe UI Symbol", EmojiSymbols, emoji;
+}
+
+.sessionClosed__close {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: auto;
+    background: #818C9C66;
+    color: #707781;
+    cursor: pointer;
+}
+
+.sessionClosed__iconInfo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    border: 1px solid #818C9C;
+    border-radius: 50%;
+    color: var(--frak-color-grayText);
+    font-size: 10px;
+    cursor: default;
+}
