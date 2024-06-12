@@ -1,4 +1,4 @@
-import { contentIds } from "@/context/blockchain/contentIds";
+import { type ContentKey, contentIds } from "@/context/blockchain/contentIds";
 import { appUrl } from "@/context/common/env";
 import { type NextRequest, NextResponse } from "next/server";
 import { toHex } from "viem";
@@ -27,7 +27,7 @@ export function GET(
 
     // Check if the content id is in the list
     for (const contentKey of Object.keys(contentIds)) {
-        const contentId = contentIds[contentKey];
+        const contentId = contentIds[contentKey as ContentKey];
         if (contentId !== normalisedId) {
             continue;
         }
