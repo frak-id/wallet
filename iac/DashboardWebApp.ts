@@ -1,5 +1,6 @@
-import type { StackContext } from "sst/constructs";
+import { type StackContext, use } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
+import { ConfigStack } from "./Config";
 import { isProdStack } from "./utils";
 
 /**
@@ -8,6 +9,10 @@ import { isProdStack } from "./utils";
  * @constructor
  */
 export function DashboardWebApp({ stack }: StackContext) {
+    // The configs required to run the app
+    const { alchemyApiKeys, nexusUrl } = use(ConfigStack);
+    const configs = [alchemyApiKeys, nexusUrl];
+
     // Base domain for our whole app
     const subDomain = isProdStack(stack)
         ? "business"
@@ -21,6 +26,8 @@ export function DashboardWebApp({ stack }: StackContext) {
             domainName: `${subDomain}.frak.id`.toLowerCase(),
             hostedZone: "frak.id",
         },
+        // Bind to the configs
+        bind: configs,
         // Set to combined logging to prevent SSR huuuge cost
         logging: "combined",
         openNextVersion: "2.3.8",
