@@ -1,4 +1,5 @@
 import {
+    type CSSProperties,
     Fragment,
     type ReactNode,
     createContext,
@@ -28,14 +29,30 @@ export type NexusIFrameClientProps = {
 };
 
 /**
+ * Default style for the iframe
+ */
+const defaultIframeStyle: CSSProperties = {
+    width: "0",
+    height: "0",
+    border: "0",
+    position: "absolute",
+    top: "-1000px",
+    left: "-1000px",
+};
+
+/**
  * IFrame client provider for the Nexus Wallet SDK
  *  - Automatically set the config provider
  * @param parameters
  * @constructor
  */
 export function NexusIFrameClientProvider({
+    style,
     children,
-}: { children?: ReactNode }) {
+}: {
+    style?: CSSProperties;
+    children?: ReactNode;
+}) {
     const config = useNexusConfig();
 
     // Using a state for the iframe client since using directly a client built inside the ref cause re-render loop
@@ -56,14 +73,7 @@ export function NexusIFrameClientProvider({
         id: "nexus-wallet",
         name: "nexus-wallet",
         src: `${config.walletUrl}/listener`,
-        style: {
-            width: "0",
-            height: "0",
-            border: "0",
-            position: "absolute",
-            top: "-1000px",
-            left: "-1000px",
-        },
+        style: style ?? defaultIframeStyle,
         ref: (iframe: HTMLIFrameElement) => {
             if (!iframe) {
                 // Remove the client
