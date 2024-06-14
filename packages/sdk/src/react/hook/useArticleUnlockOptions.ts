@@ -17,6 +17,8 @@ export function useArticleUnlockOptions({
     return useQuery({
         queryKey: ["articleUnlockOptions", articleId ?? "no-article-id"],
         queryFn: async () => {
+            if (!client) return;
+
             if (!(articleId && contentId)) {
                 throw new Error("No article id provided");
             }
@@ -26,7 +28,7 @@ export function useArticleUnlockOptions({
                 contentId,
             });
         },
-        enabled: !!articleId && !!contentId,
+        enabled: !!client && !!articleId && !!contentId,
         gcTime: 0,
     });
 }

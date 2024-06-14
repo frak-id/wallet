@@ -83,6 +83,10 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
         gcTime: 0,
         queryKey: ["setUserReferredQueryReturnTypeListener"],
         queryFn: async () => {
+            if (!client) {
+                return { key: "waiting-response" };
+            }
+
             if (!(contentId && referrerAddress)) {
                 return { key: "no-referrer" };
             }
@@ -106,6 +110,7 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
             return { key: "waiting-response" };
         },
         enabled:
+            !!client &&
             !!contentId &&
             !!referrerAddress &&
             walletStatus?.key !== undefined &&

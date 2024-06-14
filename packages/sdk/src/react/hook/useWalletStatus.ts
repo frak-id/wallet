@@ -34,10 +34,14 @@ export function useWalletStatus() {
         gcTime: 0,
         queryKey: ["walletStatusListener"],
         queryFn: async () => {
+            if (!client) {
+                return { key: "waiting-response" };
+            }
             // Setup the listener
             await watchWalletStatus(client, newStatusUpdated);
             // Wait for the first response
             return { key: "waiting-response" };
         },
+        enabled: !!client,
     });
 }

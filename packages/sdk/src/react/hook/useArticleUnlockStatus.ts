@@ -52,6 +52,12 @@ export function useArticleUnlockStatus({
         ],
         gcTime: 0,
         queryFn: async () => {
+            if (!client) {
+                return {
+                    status: "waiting-response",
+                    key: "waiting-response",
+                };
+            }
             if (!(articleId && contentId)) {
                 return null;
             }
@@ -67,6 +73,6 @@ export function useArticleUnlockStatus({
                 key: "waiting-response",
             };
         },
-        enabled: !!articleId && !!contentId,
+        enabled: !!client && !!articleId && !!contentId,
     });
 }
