@@ -1,0 +1,67 @@
+.form__item {
+    margin-bottom: 10px;
+}
+
+.form__layout {
+    max-width: 850px;
+}
+
+.form__label {
+    padding-bottom: 4px;
+    font-weight: 700;
+    color: var(--frak-color-trout);
+}
+
+.form__label--light {
+    font-weight: 500;
+    color: var(--frak-color-grayText);
+}
+
+.form__label--selected {
+    color: var(--frak-color-royal-blue) !important;
+}
+
+.form__description {
+    padding-bottom: 10px;
+    font-size: 16px;
+}
+
+.form__title {
+    font-size: 16px;
+}
+
+.form__radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 4px;
+    padding: 7px;
+}
+
+.form__radio:has(button[data-state="checked"]) {
+    background: #818C9C24;
+}
+
+.form__radioWithLabel {
+    padding-bottom: 0;
+}
+
+.form__checkbox {
+    display: flex;
+    gap: 8px;
+    border-radius: 4px;
+}
+
+.form__checkbox + .form__checkbox {
+    margin-top: 7px;
+}
+
+.form__checkboxWithLabel {
+    color: var(--frak-checkbox-label-text-color);
+    line-height: 20px;
+    font-weight: 500;
+}
+
+.form__error {
+    color: var(--frak-color-red) !important;
+}

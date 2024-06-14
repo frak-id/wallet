@@ -1,0 +1,90 @@
+.multiSelect__trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 50%;
+    min-height: 40px;
+    gap: 5px;
+}
+
+.multiSelect__triggerInner {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+
+    & > span {
+        display: flex;
+        align-items: center;
+        height: 26px;
+    }
+
+    & > svg {
+        margin-top: 2px;
+    }
+}
+
+.multiSelect__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+.multiSelect__triggerSeparator {
+    margin: 0 5px;
+    min-height: 20px;
+}
+
+.multiSelect__triggerBadges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.multiSelect__badge {
+    display: inline-flex;
+    gap: 3px;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.multiSelect__separator {
+    min-height: 24px;
+}
+
+.multiSelect__button {
+    flex: 1;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.multiSelect__checks {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--frak-multiselect-checks-border-color);
+    border-radius: 6px;
+    background-color: var(--frak-multiselect-checks-background-color);
+}
+
+.multiSelect__checks--selected {
+    border: 2px solid var(--frak-multiselect-checks-selected-border-color);
+    background-color: var(--frak-multiselect-checks-selected-background-color);
+    color: var(--frak-multiselect-checks-selected-text-color);
+}
+
+.multiSelect__checks--notSelected {
+    background: none;
+    opacity: 0.5;
+
+    & svg {
+        visibility: hidden;
+    }
+}

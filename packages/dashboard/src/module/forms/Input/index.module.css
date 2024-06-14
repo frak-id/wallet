@@ -1,0 +1,76 @@
+.inputWrapper {
+    position: relative;
+    display: flex;
+    width: 100%;
+    border: 1px solid var(--frak-input-border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--frak-input-background-color);
+    color: var(--frak-input-text-color);
+    transition: border-color 0.2s;
+}
+
+.input {
+    all: unset;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    width: 100%;
+    line-height: 20px;
+    color: var(--frak-input-text-color);
+    font-weight: 400;
+}
+
+.inputWrapper:has(.input:focus) {
+    box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+}
+
+.input::placeholder {
+    /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: var(--frak-input-placeholder-color);
+    opacity: 1;
+    /* Firefox */
+}
+
+.input::-ms-input-placeholder {
+    /* Microsoft Edge */
+    color: var(--frak-input-placeholder-color);
+}
+
+.input:disabled {
+    cursor: not-allowed;
+}
+
+.input[data-invalid="true"] {
+    border-color: #818c9c;
+    color: #adadad;
+}
+
+.input::-webkit-outer-spin-button,
+.input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.input.withLeftSection {
+    padding-left: 40px;
+}
+
+.leftSection {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 12px;
+}
+
+.rightSection {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 12px;
+    font-weight: 400;
+    color: var(--frak-input-rightSection-text-color);
+}

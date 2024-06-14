@@ -1,0 +1,102 @@
+.root {
+    padding: 12px;
+}
+
+.months {
+    display: flex;
+    flex-direction: column;
+}
+
+.caption {
+    display: flex;
+    position: relative;
+    padding-top: 4px;
+    justify-content: center;
+    align-items: center;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+}
+
+.navButton {
+    all: unset;
+    display: flex;
+    opacity: 0.5;
+    cursor: pointer;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+.navButtonPrevious {
+    position: absolute;
+    left: 4px;
+}
+
+.navButtonNext {
+    position: absolute;
+    right: 4px;
+}
+
+.table {
+    margin-top: 16px;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.headRow {
+    display: flex;
+}
+
+.headCell {
+    font-weight: 400;
+    width: 36px;
+}
+
+.tbody {
+    margin-top: 4px;
+}
+
+.row {
+    display: flex;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.cell {
+    position: relative;
+    padding: 0;
+    line-height: 20px;
+    width: 36px;
+    height: 36px;
+}
+
+.day {
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+
+    &:hover {
+        background-color: var(--frak-color-mischka);
+    }
+}
+
+.daySelected {
+    background-color: var(--frak-color-mischka);
+}
+
+.dayToday {
+    background-color: var(--frak-color-moon-raker);
+}
+
+.dayOutside {
+    opacity: 0.5;
+}
+
+.dayDisabled {
+    opacity: 0.5;
+}

@@ -1,0 +1,7 @@
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 14px;
+    width: fit-content;
+}

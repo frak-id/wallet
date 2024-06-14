@@ -1,5 +1,6 @@
 import type { SSTConfig } from "sst";
 import { ConfigStack } from "./iac/Config";
+import { DashboardWebApp } from "./iac/DashboardWebApp";
 import { ExampleAppStack } from "./iac/ExampleWebApp";
 import { WalletAppStack } from "./iac/WalletWebApp";
 
@@ -44,5 +45,6 @@ export default {
         app.stack(ConfigStack);
         app.stack(WalletAppStack);
         app.stack(ExampleAppStack);
+        app.stack(DashboardWebApp);
     },
 } satisfies SSTConfig;

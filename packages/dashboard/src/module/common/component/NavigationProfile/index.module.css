@@ -1,0 +1,30 @@
+.navigationProfile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    &::before {
+        content: '';
+        width: 1px;
+        height: 40px;
+        background: var(--frak-navigation-profile-separator-color);
+    }
+}
+
+.navigationProfile__avatar {
+    display: block;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: white;
+}
+
+.navigationProfile__infos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    & > span:last-child {
+        font-size: 12px;
+    }
+}

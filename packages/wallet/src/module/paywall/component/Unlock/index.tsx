@@ -58,7 +58,7 @@ export function PaywallUnlock({ context }: { context: PaywallContext }) {
      * Check if the user can join the paywall or not
      */
     const { data: isJoinCommunityAvailable } = useIsCommunityTokenMintAvailable(
-        { contentId: Number(BigInt(context.contentId)) }
+        { contentId: BigInt(context.contentId) }
     );
 
     useEffect(() => {

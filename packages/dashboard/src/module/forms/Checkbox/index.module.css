@@ -1,0 +1,29 @@
+.checkbox {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--frak-color-regent-gray);
+    border-radius: 6px;
+    background-color: var(--frak-color-white);
+
+    &:focus-visible {
+        box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+    }
+}
+
+.checkbox[data-state="checked"] {
+    border: 2px solid var(--frak-color-royal-blue);
+    background-color: var(--frak-color-royal-blue);
+    color: var(--frak-color-white);
+}
+
+.checkbox:hover {
+    cursor: pointer;
+}
+
+.checkbox__indicator {
+    display: flex;
+}

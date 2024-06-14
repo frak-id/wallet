@@ -1,0 +1,6 @@
+.row {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    margin-bottom: 14px;
+}

@@ -1,0 +1,63 @@
+.tableWrapper {
+    background-color: var(--frak-table-background-color);
+    border-radius: 8px;
+    overflow-x: auto;
+    color: var(--frak-table-text-color);
+    border: 1px solid var(--frak-table-border-color);
+    box-shadow: 0 2px 2px 0 #1018281A;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+button.table__button {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    width: 100%;
+    padding: 18px 22px;
+
+    & > span {
+        display: inline-block;
+        width: 100%;
+        padding: 18px 22px;
+    }
+}
+
+button.table__button:has(span) {
+    padding: 0;
+}
+
+.table__filterIcon {
+    margin-left: auto;
+    color: var(--frak-color-regent-gray);
+}
+
+.table > thead > tr > th {
+    position: relative;
+    padding: 18px 22px;
+    background: var(--frak-table-heading-background-color);
+    text-align: left;
+    white-space: nowrap;
+    color: var(--frak-table-heading-text-color);
+    font-weight: 500;
+}
+
+.table > thead > tr > th:has(button.table__button) {
+    padding: 0;
+}
+
+.table > tbody > tr > td, .table > tfoot > tr > th {
+    padding: 18px 22px;
+    text-align: left;
+    border-top: 1px solid var(--frak-table-row-border-color);
+    font-weight: 500;
+}
+
+.table a {
+    color: #0E51E3;
+}
