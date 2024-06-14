@@ -1,6 +1,8 @@
 "use client";
 
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { AlertDialog } from "@/module/common/component/AlertDialog";
+import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
 import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
 import { useSetUserReferredListener } from "@/module/listener/hooks/useSetUserReferredListener";
@@ -90,5 +92,38 @@ export function ListenerUI() {
         onArticleUnlockStatusListenerRequest,
     ]);
 
-    return <h1>Listener</h1>;
+    useEffect(() => {
+        const rootElement = document.querySelector(":root") as HTMLElement;
+        if (rootElement) {
+            rootElement.dataset.listener = "true";
+        }
+
+        return () => {
+            rootElement.dataset.listener = "false";
+        };
+    }, []);
+
+    return (
+        <AlertDialog
+            defaultOpen={true}
+            text={
+                <>
+                    <p>Are you sure you want to do something?</p>
+                    <ButtonRipple
+                        onClick={() => {
+                            window.parent.postMessage(
+                                {
+                                    action: "close",
+                                },
+                                "http://localhost:3002"
+                            );
+                        }}
+                    >
+                        Yes
+                    </ButtonRipple>
+                    <ButtonRipple>No</ButtonRipple>
+                </>
+            }
+        />
+    );
 }

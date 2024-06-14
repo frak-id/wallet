@@ -78,3 +78,20 @@ sup {
     white-space: nowrap;
     border-width: 0;
 }
+
+#nexus-wallet {
+    width: 0;
+    height: 0;
+    border: 0;
+    position: fixed;
+    top: -1000px;
+    left: -1000px;
+    z-index: 1000;
+}
+
+#nexus-wallet.visible {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
