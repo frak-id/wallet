@@ -1,5 +1,4 @@
 import { getSession } from "@/context/session/action/session";
-import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
@@ -7,7 +6,6 @@ import { Sora } from "next/font/google";
 import Script from "next/script";
 import NextTopLoader from "nextjs-toploader";
 import type { ReactNode } from "react";
-import styles from "./layout.module.css";
 
 const sora = Sora({
     subsets: ["latin"],
@@ -62,16 +60,8 @@ export default async function RootLayout({
         <html lang="en" suppressHydrationWarning>
             <body className={`scrollbars ${sora.className}`}>
                 <NextTopLoader showSpinner={false} />
-                <div className={"desktop scrollbars"}>
-                    <main className={styles.main}>
-                        <div className={styles.inner}>
-                            <RootProvider session={session}>
-                                <ClientOnly>{children}</ClientOnly>
-                            </RootProvider>
-                        </div>
-                    </main>
-                </div>
-                <Script id="theme" strategy="beforeInteractive">
+                <RootProvider session={session}>{children}</RootProvider>
+                <Script id="theme" strategy="afterInteractive">
                     {`
                     function setTheme(newTheme) {
                         document.querySelector(":root").dataset.theme = newTheme;
