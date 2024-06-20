@@ -7,46 +7,69 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import { Input } from "@/module/forms/Input";
-import { useState } from "react";
+import { InputNumber } from "@/module/forms/InputNumber";
+import { useEffect, useState } from "react";
 import type {
+    FieldPath,
     FieldValues,
-    Path,
+    PathValue,
     RegisterOptions,
     UseFormReturn,
 } from "react-hook-form";
 import styles from "./FormFromTo.module.css";
 
-export function FormFromTo<TFormValues extends FieldValues>({
-    id,
-    label,
-    from,
-    to,
-    form,
-    defaultChecked,
-}: {
+type FormFromToProps<
+    TFieldValues extends FieldValues = FieldValues,
+    TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+> = {
     id: string;
     label: string;
     from: {
-        name: Path<TFormValues>;
+        name: TName;
         label: string;
         placeholder: string;
         rightSection: string;
         rules?: RegisterOptions;
     };
     to: {
-        name: Path<TFormValues>;
+        name: TName;
         label: string;
         placeholder: string;
         rightSection: string;
         rules?: RegisterOptions;
     };
-    form: UseFormReturn<TFormValues>;
-    defaultChecked?: boolean;
-}) {
+    form: UseFormReturn<TFieldValues>;
+    hideIfAllZero?: boolean;
+};
+
+export function FormFromTo<
+    TFieldValues extends FieldValues = FieldValues,
+    TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>({
+    id,
+    label,
+    from,
+    to,
+    form,
+    hideIfAllZero,
+}: FormFromToProps<TFieldValues, TName>) {
+    type FieldValue = PathValue<TFieldValues, TName>;
+
+    const values = form.getValues([from.name, to.name]);
+    const isAllZero = values.every((value) => value === 0);
+
     const [checked, setIsChecked] = useState<boolean | "indeterminate">(
-        defaultChecked ?? "indeterminate"
+        !isAllZero ?? "indeterminate"
     );
+
+    useEffect(() => {
+        if (!checked) {
+            form.setValue<TName>(from.name, 0 as FieldValue);
+            form.setValue<TName>(to.name, 0 as FieldValue);
+        }
+    }, [checked, form, from.name, to.name]);
+
+    if (hideIfAllZero && isAllZero) return null;
 
     return (
         <>
@@ -76,8 +99,7 @@ export function FormFromTo<TFormValues extends FieldValues>({
                             </FormLabel>
                             <FormMessage />
                             <FormControl>
-                                <Input
-                                    type={"number"}
+                                <InputNumber
                                     placeholder={from.placeholder}
                                     rightSection={from.rightSection}
                                     disabled={checked !== true}
@@ -96,8 +118,7 @@ export function FormFromTo<TFormValues extends FieldValues>({
                             <FormLabel variant={"light"}>{to.label}</FormLabel>
                             <FormMessage />
                             <FormControl>
-                                <Input
-                                    type={"number"}
+                                <InputNumber
                                     placeholder={to.placeholder}
                                     rightSection={to.rightSection}
                                     disabled={checked !== true}

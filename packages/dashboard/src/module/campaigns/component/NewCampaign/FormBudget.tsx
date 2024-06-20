@@ -1,4 +1,3 @@
-import type { FormCampaignsNew } from "@/module/campaigns/component/NewCampaign";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -17,9 +16,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/module/forms/Select";
+import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
 
-export function FormBudget(form: UseFormReturn<FormCampaignsNew>) {
+export function FormBudget(form: UseFormReturn<Campaign>) {
     return (
         <Panel title="Budget">
             <FormDescription>
@@ -31,7 +31,7 @@ export function FormBudget(form: UseFormReturn<FormCampaignsNew>) {
             <Row>
                 <FormField
                     control={form.control}
-                    name="budget"
+                    name="budget.type"
                     rules={{ required: "Select a budget" }}
                     render={({ field }) => (
                         <FormItem>
@@ -60,7 +60,7 @@ export function FormBudget(form: UseFormReturn<FormCampaignsNew>) {
                 />
                 <FormField
                     control={form.control}
-                    name="budgetAmount"
+                    name="budget.maxEuroDaily"
                     rules={{ required: "Select an amount" }}
                     render={({ field }) => (
                         <FormItem>

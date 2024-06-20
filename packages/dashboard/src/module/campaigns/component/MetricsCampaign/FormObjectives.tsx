@@ -1,15 +1,10 @@
 import { FormFromTo } from "@/module/campaigns/component/MetricsCampaign/FormFromTo";
-import type { FormCampaignsMetrics } from "@/module/campaigns/component/MetricsCampaign/index";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
+import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
 
-// const rules = {
-//     required: "Select an amount",
-//     validate: (value: number) => value > 0,
-// };
-
-export function FormObjectives(form: UseFormReturn<FormCampaignsMetrics>) {
+export function FormObjectives(form: UseFormReturn<Campaign["rewards"]>) {
     return (
         <Panel title="Enter your objectives">
             <FormDescription>
@@ -18,22 +13,20 @@ export function FormObjectives(form: UseFormReturn<FormCampaignsMetrics>) {
                 country to country.
             </FormDescription>
             <FormFromTo
-                id={"clic"}
-                label={"Clic"}
+                id={"click"}
+                label={"Click"}
                 form={form}
                 from={{
-                    name: "clicFrom",
+                    name: "click.from",
                     label: "From",
                     placeholder: "25,00 €",
                     rightSection: "EUR",
-                    // rules,
                 }}
                 to={{
-                    name: "clicTo",
+                    name: "click.to",
                     label: "To",
                     placeholder: "25,00 €",
                     rightSection: "EUR",
-                    // rules,
                 }}
             />
             <FormFromTo
@@ -41,18 +34,16 @@ export function FormObjectives(form: UseFormReturn<FormCampaignsMetrics>) {
                 label={"Registration"}
                 form={form}
                 from={{
-                    name: "registrationFrom",
+                    name: "registration.from",
                     label: "From",
                     placeholder: "25,00 €",
                     rightSection: "EUR",
-                    // rules,
                 }}
                 to={{
-                    name: "registrationTo",
+                    name: "registration.to",
                     label: "To",
                     placeholder: "25,00 €",
                     rightSection: "EUR",
-                    // rules,
                 }}
             />
             <FormFromTo
@@ -60,18 +51,16 @@ export function FormObjectives(form: UseFormReturn<FormCampaignsMetrics>) {
                 label={"Purchase"}
                 form={form}
                 from={{
-                    name: "purchaseFrom",
+                    name: "purchase.from",
                     label: "From",
                     placeholder: "25,00 €",
                     rightSection: "EUR",
-                    // rules,
                 }}
                 to={{
-                    name: "purchaseTo",
+                    name: "purchase.to",
                     label: "To",
                     placeholder: "25,00 €",
                     rightSection: "EUR",
-                    // rules,
                 }}
             />
         </Panel>

@@ -1,4 +1,3 @@
-import type { FormCampaignsNew } from "@/module/campaigns/component/NewCampaign";
 import { Panel } from "@/module/common/component/Panel";
 import { Checkbox } from "@/module/forms/Checkbox";
 import {
@@ -9,6 +8,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./FormSpecialAdvertising.module.css";
 
@@ -64,12 +64,12 @@ const itemsSpecialAdvertising = [
     },
 ] as const;
 
-export function FormSpecialAdvertising(form: UseFormReturn<FormCampaignsNew>) {
+export function FormSpecialAdvertising(form: UseFormReturn<Campaign>) {
     return (
         <Panel title="Special advertising categories">
             <FormField
                 control={form.control}
-                name="advertising"
+                name="specialCategories"
                 render={() => (
                     <FormItem>
                         <FormDescription>
@@ -81,7 +81,7 @@ export function FormSpecialAdvertising(form: UseFormReturn<FormCampaignsNew>) {
                             <FormField
                                 key={item.id}
                                 control={form.control}
-                                name="advertising"
+                                name="specialCategories"
                                 render={({ field }) => (
                                     <FormItem
                                         variant={"checkbox"}

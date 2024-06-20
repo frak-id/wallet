@@ -1,6 +1,5 @@
 "use client";
 
-import type { FormCampaignsNew } from "@/module/campaigns/component/NewCampaign";
 import { Button } from "@/module/common/component/Button";
 import { Calendar } from "@/module/common/component/Calendar";
 import { Panel } from "@/module/common/component/Panel";
@@ -18,13 +17,14 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import type { Campaign } from "@/types/Campaign";
 import { format, isBefore, startOfDay } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./FormSchedule.module.css";
 
-export function FormSchedule(form: UseFormReturn<FormCampaignsNew>) {
+export function FormSchedule(form: UseFormReturn<Campaign>) {
     const [isEndDate, setIsEndDate] = useState<boolean | "indeterminate">(
         "indeterminate"
     );
@@ -44,7 +44,7 @@ export function FormSchedule(form: UseFormReturn<FormCampaignsNew>) {
 
             <FormField
                 control={form.control}
-                name="dateStart"
+                name="scheduled.dateStart"
                 rules={{ required: "Select a start date" }}
                 render={({ field }) => {
                     const { value, ...rest } = field;
@@ -75,7 +75,10 @@ export function FormSchedule(form: UseFormReturn<FormCampaignsNew>) {
                                         selected={field.value}
                                         onSelect={(value) => {
                                             if (!value) return;
-                                            form.setValue("dateEnd", value);
+                                            form.setValue(
+                                                "scheduled.dateEnd",
+                                                value
+                                            );
                                             field.onChange(value);
                                         }}
                                         disabled={(date) =>
@@ -96,7 +99,7 @@ export function FormSchedule(form: UseFormReturn<FormCampaignsNew>) {
 
             <FormField
                 control={form.control}
-                name="dateEnd"
+                name="scheduled.dateEnd"
                 render={({ field }) => (
                     <div className={styles.formSchedule__endDate}>
                         <FormItem variant={"checkbox"}>
@@ -143,7 +146,9 @@ export function FormSchedule(form: UseFormReturn<FormCampaignsNew>) {
                                                     startOfDay(new Date())
                                                 ) ||
                                                 date <
-                                                    form.getValues("dateStart")
+                                                    form.getValues(
+                                                        "scheduled.dateStart"
+                                                    )
                                             }
                                             initialFocus
                                         />

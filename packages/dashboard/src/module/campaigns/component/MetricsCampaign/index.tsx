@@ -1,42 +1,30 @@
 "use client";
 
+import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
 import { FormObjectives } from "@/module/campaigns/component/MetricsCampaign/FormObjectives";
 import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
-import { useSetAtom } from "jotai";
+import type { Campaign } from "@/types/Campaign";
+import { useAtom, useSetAtom } from "jotai";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
-export type FormCampaignsMetrics = {
-    clicFrom: number;
-    clicTo: number;
-    registrationFrom: number;
-    registrationTo: number;
-    purchaseFrom: number;
-    purchaseTo: number;
-};
-
 export function MetricsCampaign() {
     const router = useRouter();
     const setStep = useSetAtom(campaignStepAtom);
+    const [campaign, setCampaign] = useAtom(campaignAtom);
 
-    const form = useForm<FormCampaignsMetrics>({
-        defaultValues: {
-            clicFrom: 0,
-            clicTo: 0,
-            registrationFrom: 0,
-            registrationTo: 0,
-            purchaseFrom: 0,
-            purchaseTo: 0,
-        },
+    const form = useForm<Campaign["rewards"]>({
+        defaultValues: campaign.rewards,
     });
 
-    function onSubmit(values: FormCampaignsMetrics) {
+    function onSubmit(values: Campaign["rewards"]) {
         console.log(values);
+        setCampaign({ ...campaign, rewards: values });
         setStep((prev) => prev + 1);
     }
 

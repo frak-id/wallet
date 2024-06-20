@@ -1,14 +1,14 @@
 import { FormBudget } from "@/module/campaigns/component/ValidationCampaign/FormBudget";
 import { FormObjectives } from "@/module/campaigns/component/ValidationCampaign/FormObjectives";
 import { FormPromotedContent } from "@/module/campaigns/component/ValidationCampaign/FormPromotedContent";
-import type { FormCampaignsValidation } from "@/module/campaigns/component/ValidationCampaign/index";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
+import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
 
-export function FormCheck(form: UseFormReturn<FormCampaignsValidation>) {
-    const advertising = form.getValues("advertising");
+export function FormCheck(form: UseFormReturn<Campaign>) {
+    const advertising = form.getValues("specialCategories");
     return (
         <Panel title="Check your campaign">
             <FormItem>
@@ -32,7 +32,7 @@ export function FormCheck(form: UseFormReturn<FormCampaignsValidation>) {
             </FormItem>
             <FormItem>
                 <FormDescription title={"Campaign goal"} />
-                <Input disabled={true} {...form.control.register("goal")} />
+                <Input disabled={true} {...form.control.register("type")} />
             </FormItem>
             <FormBudget {...form} />
             <FormObjectives {...form} />
