@@ -1,7 +1,7 @@
 "use server";
 
-import { indexerClient } from "@/context/indexer/client";
-import { gql } from "urql";
+import { getClient } from "@/context/indexer/client";
+import { gql } from "@urql/core";
 import type { Address } from "viem";
 
 /**
@@ -50,10 +50,9 @@ type GetContentsResult = {
  */
 export async function getContents({ wallet }: { wallet: Address }) {
     // Get our indexer result
-    const result = await indexerClient
+    const result = await getClient()
         .query<QueryResult>(QUERY, { wallet: wallet })
         .toPromise();
-
     // Map it to the form: { owner: [contents], operator: [contents] }
     return (
         result.data?.contentAdministrators.items.reduce(

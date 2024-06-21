@@ -1,6 +1,11 @@
-import { Client, cacheExchange, fetchExchange } from "urql";
+import { cacheExchange, createClient, fetchExchange } from "@urql/core";
+import { registerUrql } from "@urql/next/rsc";
 
-export const indexerClient = new Client({
-    url: "https://indexer.frak.id/",
-    exchanges: [cacheExchange, fetchExchange],
-});
+const makeClient = () => {
+    return createClient({
+        url: "https://indexer.frak.id/",
+        exchanges: [cacheExchange, fetchExchange],
+    });
+};
+
+export const { getClient } = registerUrql(makeClient);
