@@ -103,9 +103,16 @@ export function ListenerUI() {
         };
     }, []);
 
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    useEffect(() => {
+        setIsDialogOpen(true);
+    }, []);
+
     return (
         <AlertDialog
-            defaultOpen={true}
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
             text={
                 <>
                     <p>Are you sure you want to do something?</p>
