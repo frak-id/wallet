@@ -1,5 +1,6 @@
 import type {
     ArticleUnlockStatusReturnType,
+    DashboardActionReturnType,
     ExtractedParametersFromRpc,
     ExtractedReturnTypeFromRpc,
     IFrameRpcSchema,
@@ -34,6 +35,10 @@ export const iFrameRequestKeyProvider: KeyProvider<
     // Referred user key
     if (args.method === "frak_listenToSetUserReferred") {
         return ["user-referred", args.params[0], args.params[1]];
+    }
+
+    if (args.method === "frak_listenToDashboardAction") {
+        return ["dashboard-action", args.params[0]];
     }
 
     // Not found
@@ -97,6 +102,13 @@ export function getIFrameResponseKeyProvider<
     if (param.method === "frak_listenToSetUserReferred") {
         return ((response: SetUserReferredReturnType) => [
             "user-referred",
+            response.key,
+        ]) as RpcResponseKeyProvider<TParameters>;
+    }
+
+    if (param.method === "frak_listenToDashboardAction") {
+        return ((response: DashboardActionReturnType) => [
+            "dashboard-action",
             response.key,
         ]) as RpcResponseKeyProvider<TParameters>;
     }

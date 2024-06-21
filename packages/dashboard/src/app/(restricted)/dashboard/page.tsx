@@ -1,30 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import type { DashboardActionReturnType } from "@frak-labs/nexus-sdk/core";
+import { useDashboardAction } from "@frak-labs/nexus-sdk/react";
 
 export default function RestrictedPage() {
-    function msgHandler(event: MessageEvent) {
-        if (!event.origin) {
-            return;
-        }
-        // Check that the origin match the wallet
-        if (
-            new URL(event.origin).origin.toLowerCase() !==
-            new URL(process.env.NEXUS_WALLET_URL as string).origin.toLowerCase()
-        ) {
-            return;
-        }
-        // On action close, close the iframe
-        if (event.data?.action === "close") {
+    function callbackResponse({ key }: DashboardActionReturnType) {
+        console.log("callbackResponse", key);
+        if (key === "action-successful") {
             document
                 .querySelector("#nexus-wallet")
                 ?.classList.remove("visible");
         }
     }
 
-    useEffect(() => {
-        window.addEventListener("message", msgHandler);
-    }, [msgHandler]);
+    const { mutate: launchAction } = useDashboardAction({
+        action: "open",
+        callback: callbackResponse,
+    });
 
     return (
         <>
@@ -34,6 +26,7 @@ export default function RestrictedPage() {
                     type={"button"}
                     className={"button"}
                     onClick={() => {
+                        launchAction();
                         document
                             .querySelector("#nexus-wallet")
                             ?.classList.add("visible");

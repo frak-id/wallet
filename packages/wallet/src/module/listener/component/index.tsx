@@ -4,6 +4,7 @@ import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestRe
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
+import { useDashboardActionListener } from "@/module/listener/hooks/useDashboardActionListener";
 import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
 import { useSetUserReferredListener } from "@/module/listener/hooks/useSetUserReferredListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
@@ -32,6 +33,14 @@ export function ListenerUI() {
     // Hook used when a user referred is requested
     const { onUserReferredListenRequest } = useSetUserReferredListener();
 
+    // Hook used when a dashboard action is requested
+    const {
+        onDashboardActionListenRequest,
+        isDialogOpen,
+        doSomething,
+        doNothing,
+    } = useDashboardActionListener();
+
     // Create the resolver
     useEffect(() => {
         const newResolver = createIFrameRequestResolver({
@@ -57,6 +66,11 @@ export function ListenerUI() {
              * Listen request on the user referred
              */
             frak_listenToSetUserReferred: onUserReferredListenRequest,
+
+            /**
+             * Listen request for the dashboard action
+             */
+            frak_listenToDashboardAction: onDashboardActionListenRequest,
         });
 
         // Set our new resolver
@@ -71,6 +85,7 @@ export function ListenerUI() {
         onGetArticleUnlockOptions,
         onArticleUnlockStatusListenerRequest,
         onUserReferredListenRequest,
+        onDashboardActionListenRequest,
     ]);
 
     /**
@@ -103,32 +118,16 @@ export function ListenerUI() {
         };
     }, []);
 
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-    useEffect(() => {
-        setIsDialogOpen(true);
-    }, []);
-
     return (
         <AlertDialog
             open={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
             text={
                 <>
                     <p>Are you sure you want to do something?</p>
-                    <ButtonRipple
-                        onClick={() => {
-                            window.parent.postMessage(
-                                {
-                                    action: "close",
-                                },
-                                "http://localhost:3002"
-                            );
-                        }}
-                    >
+                    <ButtonRipple onClick={() => doSomething()}>
                         Yes
                     </ButtonRipple>
-                    <ButtonRipple>No</ButtonRipple>
+                    <ButtonRipple onClick={() => doNothing()}>No</ButtonRipple>
                 </>
             }
         />

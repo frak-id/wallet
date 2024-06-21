@@ -10,6 +10,10 @@ export type {
     SetUserReferredParams,
     SetUserReferredReturnType,
 } from "./rpc/setUserReferred";
+export type {
+    DashboardActionParams,
+    DashboardActionReturnType,
+} from "./rpc/dashboardAction";
 export type { IFrameRpcSchema, RedirectRpcSchema } from "./rpc";
 // Client related
 export type { NexusClient } from "./client";

@@ -24,6 +24,8 @@ export type {
     StartArticleUnlockReturnType,
     SetUserReferredParams,
     SetUserReferredReturnType,
+    DashboardActionParams,
+    DashboardActionReturnType,
     // Client
     NexusClient,
     // Transport

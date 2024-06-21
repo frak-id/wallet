@@ -1,4 +1,5 @@
 import type { Address, Hex } from "viem";
+import type { DashboardActionReturnType } from "./rpc/dashboardAction";
 import type { SetUserReferredReturnType } from "./rpc/setUserReferred";
 import type {
     StartArticleUnlockParams,
@@ -43,6 +44,11 @@ export type IFrameRpcSchema = [
         Method: "frak_listenToSetUserReferred";
         Parameters: [contentId: Hex, walletAddress: Address];
         ReturnType: SetUserReferredReturnType;
+    },
+    {
+        Method: "frak_listenToDashboardAction";
+        Parameters: [action: string];
+        ReturnType: DashboardActionReturnType;
     },
 ];
 
