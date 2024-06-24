@@ -14,7 +14,7 @@ export function WalletAppStack({ stack }: StackContext) {
     const {
         sessionEncryptionKey,
         mongoNexusUri,
-        alchemyApiKeys,
+        alchemyApiKey,
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,
@@ -25,7 +25,7 @@ export function WalletAppStack({ stack }: StackContext) {
     const configs = [
         sessionEncryptionKey,
         mongoNexusUri,
-        alchemyApiKeys,
+        alchemyApiKey,
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,
