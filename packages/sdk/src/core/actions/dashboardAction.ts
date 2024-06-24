@@ -8,17 +8,18 @@ import type {
  * Function used to watch a dashboard action
  * @param client
  * @param action
+ * @param params
  * @param callback
  */
 export function dashboardAction(
     client: NexusClient,
-    { action }: DashboardActionParams,
+    { action, params }: DashboardActionParams,
     callback: (status: DashboardActionReturnType) => void
 ) {
     return client.listenerRequest(
         {
             method: "frak_listenToDashboardAction",
-            params: [action],
+            params: [action, params],
         },
         callback
     );

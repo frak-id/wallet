@@ -192,9 +192,11 @@ export function getIframeRequestKeyProvider(
                 ExtractedParametersFromRpc<IFrameRpcSchema>,
                 { method: "frak_listenToDashboardAction" }
             >
-        ) => ["dashboard-action", request.params[0]]) as KeyProvider<
-            ExtractedParametersFromRpc<IFrameRpcSchema>
-        >;
+        ) => [
+            "dashboard-action",
+            request.params[0],
+            request.params[1],
+        ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
     }
 
     throw new Error(`No key provider found for the event ${event}`);

@@ -38,7 +38,7 @@ export const iFrameRequestKeyProvider: KeyProvider<
     }
 
     if (args.method === "frak_listenToDashboardAction") {
-        return ["dashboard-action", args.params[0]];
+        return ["dashboard-action", args.params[0], args.params[1]];
     }
 
     // Not found
@@ -110,6 +110,7 @@ export function getIFrameResponseKeyProvider<
         return ((response: DashboardActionReturnType) => [
             "dashboard-action",
             response.key,
+            response.value,
         ]) as RpcResponseKeyProvider<TParameters>;
     }
 

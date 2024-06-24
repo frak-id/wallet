@@ -28,7 +28,10 @@ export function useDashboardActionListener() {
     );
 
     const doSomething = useCallback(() => {
-        listenerParam?.emitter({ key: "action-successful" });
+        listenerParam?.emitter({
+            key: "action-successful",
+            value: "something",
+        });
     }, [listenerParam?.emitter]);
 
     const doNothing = useCallback(() => {
@@ -43,8 +46,9 @@ export function useDashboardActionListener() {
     const onDashboardActionListenRequest: OnListenToDashboardAction =
         useCallback(
             async (request, emitter) => {
-                // Extract the contentId and walletAddress
+                // Extract the action and params
                 const action = request.params[0];
+                const params = request.params[1];
 
                 // If no action present
                 if (!action) {
@@ -60,10 +64,12 @@ export function useDashboardActionListener() {
                 // Otherwise, save emitter and params
                 setListenerParam({
                     action,
+                    params,
                     emitter,
                 });
 
-                // Open the dialog
+                // Do something with the action
+                // Open the dialog if the action is open
                 setIsDialogOpen(action === "open");
             },
             [setListenerParam]

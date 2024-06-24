@@ -3,6 +3,7 @@
  */
 export type DashboardActionParams = Readonly<{
     action: string;
+    params: string;
 }>;
 
 /**
@@ -14,8 +15,10 @@ export type DashboardActionReturnType =
 
 type DashboardActionMissingAction = {
     key: "no-action";
+    value?: never;
 };
 
 type DashboardActionSuccessful = {
     key: "action-successful";
+    value?: string;
 };

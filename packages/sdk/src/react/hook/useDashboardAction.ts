@@ -15,12 +15,17 @@ type DashboardActionHookParams = DashboardActionParams & {
  */
 export function useDashboardAction({
     action,
+    params,
     callback,
 }: DashboardActionHookParams) {
     const client = useNexusClient();
 
     return useMutation({
-        mutationKey: ["dashboardActionMutationReturnTypeListener", action],
+        mutationKey: [
+            "dashboardActionMutationReturnTypeListener",
+            action,
+            params,
+        ],
         mutationFn: async () => {
             if (!action) {
                 return { key: "no-action" };
@@ -31,7 +36,7 @@ export function useDashboardAction({
             }
 
             // Setup the listener
-            return await dashboardAction(client, { action }, callback);
+            return await dashboardAction(client, { action, params }, callback);
         },
     });
 }

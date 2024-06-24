@@ -47,7 +47,7 @@ export type IFrameRpcSchema = [
     },
     {
         Method: "frak_listenToDashboardAction";
-        Parameters: [action: string];
+        Parameters: [action: string, params: string];
         ReturnType: DashboardActionReturnType;
     },
 ];

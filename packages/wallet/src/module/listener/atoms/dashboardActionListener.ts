@@ -3,6 +3,7 @@ import { atom } from "jotai";
 
 type DashboardActionListenerParam = {
     action: string;
+    params: string;
     emitter: (response: DashboardActionReturnType) => Promise<void>;
 };
 

@@ -5,7 +5,7 @@ import type {
 import { useDashboardAction } from "@frak-labs/nexus-sdk/react";
 import { useCallback, useEffect, useState } from "react";
 
-export function useWallet({ action }: DashboardActionParams) {
+export function useWallet({ action, params }: DashboardActionParams) {
     /**
      * The data returned from the wallet
      */
@@ -33,8 +33,9 @@ export function useWallet({ action }: DashboardActionParams) {
 
     const { mutate: launchAction, isPending } = useDashboardAction({
         action,
-        callback: ({ key }) => {
-            setData({ key });
+        params,
+        callback: (data) => {
+            setData(data);
 
             // Close modal
             toggleIframeVisibility(false);
