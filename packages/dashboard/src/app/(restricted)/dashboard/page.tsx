@@ -1,40 +1,20 @@
 "use client";
 
-import type { DashboardActionReturnType } from "@frak-labs/nexus-sdk/core";
-import { useDashboardAction } from "@frak-labs/nexus-sdk/react";
+import { Button } from "@/module/common/component/Button";
+import { useWallet } from "@/module/common/hook/useWallet";
 
 export default function RestrictedPage() {
-    function callbackResponse({ key }: DashboardActionReturnType) {
-        console.log("callbackResponse", key);
-        if (key === "action-successful") {
-            document
-                .querySelector("#nexus-wallet")
-                ?.classList.remove("visible");
-        }
-    }
-
-    const { mutate: launchAction } = useDashboardAction({
-        action: "open",
-        callback: callbackResponse,
-    });
+    const { data, launch: doOpen } = useWallet({ action: "open" });
 
     return (
         <>
             <p>dashboard</p>
             <p>
-                <button
-                    type={"button"}
-                    className={"button"}
-                    onClick={() => {
-                        launchAction();
-                        document
-                            .querySelector("#nexus-wallet")
-                            ?.classList.add("visible");
-                    }}
-                >
+                <Button onClick={() => doOpen()}>
                     open iframe interaction
-                </button>
+                </Button>
             </p>
+            {data && <p>response key: {data.key}</p>}
         </>
     );
 }
