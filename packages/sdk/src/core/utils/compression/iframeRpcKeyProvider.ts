@@ -1,5 +1,6 @@
 import type {
     ArticleUnlockStatusReturnType,
+    AuthenticateReturnType,
     DashboardActionReturnType,
     ExtractedParametersFromRpc,
     ExtractedReturnTypeFromRpc,
@@ -42,6 +43,12 @@ export const iFrameRequestKeyProvider: KeyProvider<
     if (args.method === "frak_sendTransaction") {
         // Key is the whole transaction object
         return ["send-transaction", JSON.stringify(args.params[0])];
+    }
+
+    // Siwe authentication
+    if (args.method === "frak_siweAuthenticate") {
+        // Key is the nonce + statement
+        return ["siwe-authentication", args.params[0], args.params[1]];
     }
 
     if (args.method === "frak_listenToDashboardAction") {
@@ -119,6 +126,15 @@ export function getIFrameResponseKeyProvider<
             "send-transaction",
             response.key,
             response.key === "success" ? response.hash : "0xdeadbeef",
+        ]) as RpcResponseKeyProvider<TParameters>;
+    }
+
+    // Siwe authentication
+    if (param.method === "frak_siweAuthenticate") {
+        return ((response: AuthenticateReturnType) => [
+            "siwe-authentication",
+            response.key,
+            response.key === "success" ? response.signature : "0xdeadbeef",
         ]) as RpcResponseKeyProvider<TParameters>;
     }
 

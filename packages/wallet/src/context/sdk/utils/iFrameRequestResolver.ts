@@ -199,6 +199,20 @@ export function getIframeRequestKeyProvider(
         ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
     }
 
+    // Siwe authentication
+    if (event.topic === "frak_siweAuthenticate") {
+        return ((
+            request: Extract<
+                ExtractedParametersFromRpc<IFrameRpcSchema>,
+                { method: "frak_siweAuthenticate" }
+            >
+        ) => [
+            "siwe-authentication",
+            request.params[0],
+            request.params[1],
+        ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
+    }
+
     if (event.topic === "frak_listenToDashboardAction") {
         return ((
             request: Extract<

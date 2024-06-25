@@ -8,3 +8,4 @@ export type { ArticleUnlockStatusQueryReturnType } from "./useArticleUnlockStatu
 export { useNexusReferral } from "./useNexusReferral";
 export { useDashboardAction } from "./useDashboardAction";
 export { useSendTransactionAction } from "./useSendTransaction";
+export { useSiweAuthenticate } from "./useSiweAuthenticate";

@@ -11,6 +11,11 @@ export type {
     SetUserReferredReturnType,
 } from "./rpc/setUserReferred";
 export type {
+    AuthenticateRpcParamsType,
+    AuthenticateActionParamsType,
+    AuthenticateReturnType,
+} from "./rpc/authenticate";
+export type {
     DashboardActionParams,
     DashboardActionReturnType,
 } from "./rpc/dashboardAction";

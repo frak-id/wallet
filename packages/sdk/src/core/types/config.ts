@@ -9,4 +9,6 @@ export type NexusWalletSdkConfig = Readonly<{
         // Your app name
         name: string;
     };
+    // Your domain (will be retrieved automatically if not provided)
+    domain: string;
 }>;
