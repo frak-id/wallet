@@ -28,6 +28,9 @@ export type {
     DashboardActionReturnType,
     SendTransactionActionParamsType,
     SendTransactionReturnType,
+    AuthenticateReturnType,
+    AuthenticateActionParamsType,
+    AuthenticateRpcParamsType,
     // Client
     NexusClient,
     // Transport
