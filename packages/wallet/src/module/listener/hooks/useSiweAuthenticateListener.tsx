@@ -1,17 +1,16 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { iFrameToggleVisibility } from "@/context/sdk/utils/iFrameToggleVisibility";
-import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { siweAuthenticateAtom } from "@/module/listener/atoms/siweAuthenticate";
+import { SiweLoginModal } from "@/module/listener/component/Authenticate/Login";
+import { SiweAuthenticateModal } from "@/module/listener/component/Authenticate/SiweAuthenticate";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
 import { useAtom } from "jotai";
 import { useCallback, useMemo, useState } from "react";
-import type { Hex } from "viem";
-import { type SiweMessage, createSiweMessage } from "viem/siwe";
-import { useAccount, useSignMessage } from "wagmi";
+import type { SiweMessage } from "viem/siwe";
+import { useAccount } from "wagmi";
 
 type OnAuthenticateRequest = IFrameRequestResolver<
     Extract<
@@ -106,14 +105,40 @@ export function useSiweAuthenticateListener() {
             return null;
         }
 
-        if (step.key === "login") {
-            // todo
+        // Build regular actions
+        const onDiscard = () => {
+            listenerParam.emitter({
+                key: "aborted",
+            });
             closeDialog();
-            return null;
+        };
+        const onError = (reason?: string) => {
+            listenerParam.emitter({
+                key: "error",
+                reason,
+            });
+            closeDialog();
+        };
+
+        // If not logged in, show the login modal
+        if (step.key === "login") {
+            return (
+                <SiweLoginModal
+                    isOpen={isDialogOpen}
+                    onSuccess={() => {
+                        // todo: tmp component telling we are waiting for the login propagation??
+                        // todo: The step should be refreshed automatically
+                        // todo: But we can have the required info here, maybe force refresh the step here?
+                    }}
+                    onError={onError}
+                    onDiscard={onDiscard}
+                />
+            );
         }
 
+        // If already logged in, show the SIWE modal
         return (
-            <PerformSiweSignatureComponent
+            <SiweAuthenticateModal
                 context={listenerParam.context}
                 siweMessage={step.siweMessage}
                 isOpen={isDialogOpen}
@@ -125,19 +150,8 @@ export function useSiweAuthenticateListener() {
                     });
                     closeDialog();
                 }}
-                onError={(reason) => {
-                    listenerParam.emitter({
-                        key: "error",
-                        reason,
-                    });
-                    closeDialog();
-                }}
-                onDiscard={() => {
-                    listenerParam.emitter({
-                        key: "aborted",
-                    });
-                    closeDialog();
-                }}
+                onError={onError}
+                onDiscard={onDiscard}
             />
         );
     }, [listenerParam, isDialogOpen, closeDialog, step]);
@@ -146,70 +160,4 @@ export function useSiweAuthenticateListener() {
         onSiweAuthenticateRequest,
         component,
     };
-}
-
-/**
- * Component that will be displayed when sending a transaction
- * todo: Should reuse some stuff from the wallet connect modal here (in term of presentation, tx infos etc)
- * @constructor
- */
-function PerformSiweSignatureComponent({
-    siweMessage,
-    context,
-    isOpen,
-    onSuccess,
-    onError,
-    onDiscard,
-}: {
-    siweMessage: SiweMessage;
-    context?: string;
-    isOpen: boolean;
-    onSuccess: (signature: Hex) => void;
-    onError: (reason?: string) => void;
-    onDiscard: () => void;
-}) {
-    const { signMessage, isPending } = useSignMessage({
-        mutation: {
-            // Link success and error hooks
-            onSuccess: onSuccess,
-            onError: (error) => {
-                onError(error.message);
-            },
-        },
-    });
-
-    return (
-        <AlertDialog
-            open={isOpen}
-            text={
-                <>
-                    <h2>Validate authentication</h2>
-
-                    {/*todo: some siwe info*/}
-                    <p>{siweMessage.statement}</p>
-                    <p>Domain: {siweMessage.domain}</p>
-                    <p>Uri: {siweMessage.uri}</p>
-
-                    {context && <p>{context}</p>}
-
-                    <ButtonRipple
-                        disabled={isPending}
-                        onClick={() => {
-                            signMessage({
-                                message: createSiweMessage(siweMessage),
-                            });
-                        }}
-                    >
-                        Validate authentication
-                    </ButtonRipple>
-                    <ButtonRipple
-                        disabled={isPending}
-                        onClick={() => onDiscard()}
-                    >
-                        Discard authentication
-                    </ButtonRipple>
-                </>
-            }
-        />
-    );
 }
