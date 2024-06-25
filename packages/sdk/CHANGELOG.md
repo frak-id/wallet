@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.10
+
+### Patch Changes
+
+- [`30e3863`](https://github.com/frak-id/wallet/commit/30e3863dfdbfa80d319d988226b64d73c668a7bf) Thanks [@KONFeature](https://github.com/KONFeature)! - Add `frak_sendTransaction` rpc action on the wallet. Only callable from dapp inside the `frak.id` domain for now.
+
 ## 0.0.9
 
 ### Patch Changes
