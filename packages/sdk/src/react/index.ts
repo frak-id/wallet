@@ -20,6 +20,7 @@ export {
     useNexusReferral,
     useDashboardAction,
     useSendTransactionAction,
+    useSiweAuthenticate,
 } from "./hook";
 export type {
     WalletStatusQueryReturnType,

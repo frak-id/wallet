@@ -48,7 +48,7 @@ export const iFrameRequestKeyProvider: KeyProvider<
     // Siwe authentication
     if (args.method === "frak_siweAuthenticate") {
         // Key is the nonce + statement
-        return ["siwe-authentication", args.params[0], args.params[1]];
+        return ["siwe-authentication", JSON.stringify(args.params[0])];
     }
 
     if (args.method === "frak_listenToDashboardAction") {

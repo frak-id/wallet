@@ -5,20 +5,17 @@ import type { SiweMessage } from "viem/siwe";
  * Parameters of the send transaction rpc request
  */
 export type AuthenticateRpcParamsType = [
-    nonce: string,
-    statement: string,
-    domain: string,
-    requestId?: string,
+    request: SiweAuthenticationParams,
     context?: string,
 ];
+
+export type SiweAuthenticationParams = Omit<SiweMessage, "address" | "chainId">;
 
 /**
  * Same stuff but in an object format for better readability
  */
 export type AuthenticateActionParamsType = Readonly<{
-    nonce?: string;
-    statement?: string;
-    requestId?: string;
+    siwe: Partial<SiweAuthenticationParams>;
     context?: string;
 }>;
 

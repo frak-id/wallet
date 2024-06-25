@@ -1,7 +1,5 @@
-import { frakChainPocClient } from "@/context/blockchain/provider";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { iFrameToggleVisibility } from "@/context/sdk/utils/iFrameToggleVisibility";
-import { sessionAtom } from "@/module/common/atoms/session";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { siweAuthenticateAtom } from "@/module/listener/atoms/siweAuthenticate";
@@ -10,11 +8,10 @@ import type {
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
 import { useAtom } from "jotai";
-import { useAtomValue } from "jotai/index";
 import { useCallback, useMemo, useState } from "react";
 import type { Hex } from "viem";
-import type { SiweMessage } from "viem/siwe";
-import { useSignMessage } from "wagmi";
+import { type SiweMessage, createSiweMessage } from "viem/siwe";
+import { useAccount, useSignMessage } from "wagmi";
 
 type OnAuthenticateRequest = IFrameRequestResolver<
     Extract<
@@ -30,10 +27,6 @@ type OnAuthenticateRequest = IFrameRequestResolver<
  *  2. Then perform the SIWE authentication
  */
 export function useSiweAuthenticateListener() {
-    // Fetch the current user session
-    // todo: If not logged in, first step
-    const session = useAtomValue(sessionAtom);
-
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     /**
@@ -49,14 +42,11 @@ export function useSiweAuthenticateListener() {
     const onSiweAuthenticateRequest: OnAuthenticateRequest = useCallback(
         async (request, emitter) => {
             // Extract the params
-            const nonce = request.params[0];
-            const statement = request.params[1];
-            const domain = request.params[2];
-            const requestId = request.params[3];
-            const context = request.params[4];
+            const siweMessage = request.params[0];
+            const context = request.params[1];
 
             // If a field is missing, exit
-            if (!(nonce && statement && domain)) {
+            if (!siweMessage) {
                 setListenerParam(null);
                 setIsDialogOpen(false);
                 // And exit
@@ -64,16 +54,6 @@ export function useSiweAuthenticateListener() {
             }
 
             // Build the msg to sign and set it
-            const siweMessage: SiweMessage = {
-                address: "0x",
-                chainId: frakChainPocClient.chain.id,
-                nonce,
-                statement,
-                uri: `https://${domain}`,
-                domain,
-                version: "1",
-                requestId,
-            };
             setListenerParam({
                 siweMessage,
                 context,
@@ -94,23 +74,54 @@ export function useSiweAuthenticateListener() {
         iFrameToggleVisibility(false);
     }, []);
 
+    const { address, chainId } = useAccount();
+
+    /**
+     * Compute the current step
+     */
+    const step = useMemo(() => {
+        if (!listenerParam) {
+            return null;
+        }
+
+        // If logged in, return the siwe step
+        if (address && chainId) {
+            const siweMessage: SiweMessage = {
+                ...listenerParam.siweMessage,
+                address,
+                chainId,
+            };
+            return { key: "siwe", siweMessage } as const;
+        }
+
+        // If not logged in, return the siwe step
+        return { key: "login" } as const;
+    }, [listenerParam, address, chainId]);
+
     /**
      * Build the send transaction component
      */
     const component = useMemo(() => {
-        if (!listenerParam) {
+        if (!(step && listenerParam)) {
+            return null;
+        }
+
+        if (step.key === "login") {
+            // todo
+            closeDialog();
             return null;
         }
 
         return (
             <PerformSiweSignatureComponent
                 context={listenerParam.context}
+                siweMessage={step.siweMessage}
                 isOpen={isDialogOpen}
                 onSuccess={(signature) => {
                     listenerParam.emitter({
                         key: "success",
                         signature,
-                        message: listenerParam?.siweMessage,
+                        message: step.siweMessage,
                     });
                     closeDialog();
                 }}
@@ -129,7 +140,7 @@ export function useSiweAuthenticateListener() {
                 }}
             />
         );
-    }, [listenerParam, isDialogOpen, closeDialog]);
+    }, [listenerParam, isDialogOpen, closeDialog, step]);
 
     return {
         onSiweAuthenticateRequest,
@@ -144,12 +155,14 @@ export function useSiweAuthenticateListener() {
  */
 function PerformSiweSignatureComponent({
     siweMessage,
+    context,
     isOpen,
     onSuccess,
     onError,
     onDiscard,
 }: {
-    siweMessage: string;
+    siweMessage: SiweMessage;
+    context?: string;
     isOpen: boolean;
     onSuccess: (signature: Hex) => void;
     onError: (reason?: string) => void;
@@ -172,10 +185,19 @@ function PerformSiweSignatureComponent({
                 <>
                     <h2>Validate authentication</h2>
 
+                    {/*todo: some siwe info*/}
+                    <p>{siweMessage.statement}</p>
+                    <p>Domain: {siweMessage.domain}</p>
+                    <p>Uri: {siweMessage.uri}</p>
+
+                    {context && <p>{context}</p>}
+
                     <ButtonRipple
                         disabled={isPending}
                         onClick={() => {
-                            signMessage({ message: siweMessage });
+                            signMessage({
+                                message: createSiweMessage(siweMessage),
+                            });
                         }}
                     >
                         Validate authentication

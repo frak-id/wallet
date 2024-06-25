@@ -208,8 +208,7 @@ export function getIframeRequestKeyProvider(
             >
         ) => [
             "siwe-authentication",
-            request.params[0],
-            request.params[1],
+            JSON.stringify(request.params[0]),
         ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
     }
 

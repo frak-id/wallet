@@ -31,6 +31,7 @@ export type {
     AuthenticateReturnType,
     AuthenticateActionParamsType,
     AuthenticateRpcParamsType,
+    SiweAuthenticationParams,
     // Client
     NexusClient,
     // Transport

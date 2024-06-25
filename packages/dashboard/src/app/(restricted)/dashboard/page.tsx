@@ -4,18 +4,34 @@ import { contentInteractionManagerAbi } from "@/context/blockchain/abis/frak-int
 import { addresses } from "@/context/blockchain/addresses";
 import { Button } from "@/module/common/component/Button";
 import { useWallet } from "@/module/common/hook/useWallet";
+import type { SendTransactionReturnType } from "@frak-labs/nexus-sdk/core";
+import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import { useSiweAuthenticate } from "@frak-labs/nexus-sdk/react";
+import { useEffect, useState } from "react";
 import { encodeFunctionData } from "viem";
 
 export default function RestrictedPage() {
-    const {
-        data,
-        launch: doOpen,
-        sendTxData,
-        sendTx,
-    } = useWallet({
+    const { data, launch: doOpen } = useWallet({
         action: "open",
         params: "something",
     });
+
+    const [sendTxData, setSendTxData] =
+        useState<SendTransactionReturnType | null>(null);
+    const { mutate: sendTx } = useSendTransactionAction({
+        callback: setSendTxData,
+    });
+
+    const {
+        mutate: authenticate,
+        error,
+        status,
+        data: authResult,
+    } = useSiweAuthenticate();
+
+    useEffect(() => {
+        console.log("Siwe auth result", { status, error, authResult });
+    }, [error, status, authResult]);
 
     return (
         <>
@@ -29,6 +45,27 @@ export default function RestrictedPage() {
                 {data?.key && <p>response key: {data.key}</p>}
                 {data?.value && <p>response value: {data.value}</p>}
             </div>
+
+            <div>
+                <h1>Authentication</h1>
+                <p>
+                    <Button
+                        onClick={() =>
+                            authenticate({
+                                context: "Test authentication",
+                                siwe: {},
+                            })
+                        }
+                    >
+                        Authenticate via iframe
+                    </Button>
+                </p>
+                {authResult?.key && <p>sendTx key: {authResult.key}</p>}
+                {authResult && (
+                    <p>Full response: {JSON.stringify(authResult)}</p>
+                )}
+            </div>
+
             <div>
                 <h1>Send tx interaction</h1>
                 <p>

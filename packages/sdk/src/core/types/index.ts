@@ -14,6 +14,7 @@ export type {
     AuthenticateRpcParamsType,
     AuthenticateActionParamsType,
     AuthenticateReturnType,
+    SiweAuthenticationParams,
 } from "./rpc/authenticate";
 export type {
     DashboardActionParams,
