@@ -15,7 +15,11 @@ export function useArticleUnlockOptions({
     const client = useNexusClient();
 
     return useQuery({
-        queryKey: ["articleUnlockOptions", articleId ?? "no-article-id"],
+        queryKey: [
+            "nexus-sdk",
+            "article-unlock-options",
+            articleId ?? "no-article-id",
+        ],
         queryFn: async () => {
             if (!client) return;
 

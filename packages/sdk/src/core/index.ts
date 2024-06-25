@@ -26,6 +26,8 @@ export type {
     SetUserReferredReturnType,
     DashboardActionParams,
     DashboardActionReturnType,
+    SendTransactionActionParamsType,
+    SendTransactionReturnType,
     // Client
     NexusClient,
     // Transport

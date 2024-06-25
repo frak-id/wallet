@@ -5,6 +5,7 @@ import type {
     ExtractedReturnTypeFromRpc,
     IFrameRpcSchema,
     KeyProvider,
+    SendTransactionReturnType,
     SetUserReferredReturnType,
     UnlockOptionsReturnType,
     WalletStatusReturnType,
@@ -35,6 +36,12 @@ export const iFrameRequestKeyProvider: KeyProvider<
     // Referred user key
     if (args.method === "frak_listenToSetUserReferred") {
         return ["user-referred", args.params[0], args.params[1]];
+    }
+
+    // Send transaction
+    if (args.method === "frak_sendTransaction") {
+        // Key is the whole transaction object
+        return ["send-transaction", JSON.stringify(args.params[0])];
     }
 
     if (args.method === "frak_listenToDashboardAction") {
@@ -103,6 +110,15 @@ export function getIFrameResponseKeyProvider<
         return ((response: SetUserReferredReturnType) => [
             "user-referred",
             response.key,
+        ]) as RpcResponseKeyProvider<TParameters>;
+    }
+
+    // Send transaction
+    if (param.method === "frak_sendTransaction") {
+        return ((response: SendTransactionReturnType) => [
+            "send-transaction",
+            response.key,
+            response.key === "success" ? response.hash : "0xdeadbeef",
         ]) as RpcResponseKeyProvider<TParameters>;
     }
 

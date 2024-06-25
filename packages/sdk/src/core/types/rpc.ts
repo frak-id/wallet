@@ -1,5 +1,9 @@
 import type { Address, Hex } from "viem";
 import type { DashboardActionReturnType } from "./rpc/dashboardAction";
+import type {
+    SendTransactionReturnType,
+    SendTransactionRpcParamsType,
+} from "./rpc/sendTransaction";
 import type { SetUserReferredReturnType } from "./rpc/setUserReferred";
 import type {
     StartArticleUnlockParams,
@@ -45,6 +49,17 @@ export type IFrameRpcSchema = [
         Parameters: [contentId: Hex, walletAddress: Address];
         ReturnType: SetUserReferredReturnType;
     },
+    /**
+     * Method to ask the user to send a transaction
+     */
+    {
+        Method: "frak_sendTransaction";
+        Parameters: SendTransactionRpcParamsType;
+        ReturnType: SendTransactionReturnType;
+    },
+    /**
+     * Global method for the dashboard actions
+     */
     {
         Method: "frak_listenToDashboardAction";
         Parameters: [action: string, params: string];

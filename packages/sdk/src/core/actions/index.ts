@@ -9,3 +9,4 @@ export {
 } from "./startUnlock";
 export { setUserReferred } from "./setUserReferred";
 export { dashboardAction } from "./dashboardAction";
+export { sendTransactionAction } from "./sendTransactionAction";

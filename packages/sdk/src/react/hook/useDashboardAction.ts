@@ -22,7 +22,8 @@ export function useDashboardAction({
 
     return useMutation({
         mutationKey: [
-            "dashboardActionMutationReturnTypeListener",
+            "nexus-sdk",
+            "dashboard-actions-listener",
             action,
             params,
         ],

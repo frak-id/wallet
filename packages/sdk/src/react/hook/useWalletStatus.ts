@@ -22,7 +22,10 @@ export function useWalletStatus() {
      */
     const newStatusUpdated = useCallback(
         (event: WalletStatusReturnType) => {
-            queryClient.setQueryData(["walletStatusListener"], event);
+            queryClient.setQueryData(
+                ["nexus-sdk", "wallet-status-listener"],
+                event
+            );
         },
         [queryClient]
     );
@@ -32,7 +35,7 @@ export function useWalletStatus() {
      */
     return useQuery<WalletStatusQueryReturnType>({
         gcTime: 0,
-        queryKey: ["walletStatusListener"],
+        queryKey: ["nexus-sdk", "wallet-status-listener"],
         queryFn: async () => {
             if (!client) {
                 return { key: "waiting-response" };

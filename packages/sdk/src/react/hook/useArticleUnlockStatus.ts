@@ -31,7 +31,8 @@ export function useArticleUnlockStatus({
         (event: ArticleUnlockStatusReturnType) => {
             queryClient.setQueryData(
                 [
-                    "articleUnlockStatusListener",
+                    "nexus-sdk",
+                    "article-unlock-status",
                     articleId ?? "no-article-id",
                     contentId ?? "no-contentId-id",
                 ],
@@ -46,7 +47,8 @@ export function useArticleUnlockStatus({
      */
     return useQuery<ArticleUnlockStatusQueryReturnType | null>({
         queryKey: [
-            "articleUnlockStatusListener",
+            "nexus-sdk",
+            "article-unlock-status",
             articleId ?? "no-article-id",
             contentId ?? "no-contentId-id",
         ],

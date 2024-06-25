@@ -1,8 +1,13 @@
 import type {
     DashboardActionParams,
     DashboardActionReturnType,
+    SendTransactionReturnType,
 } from "@frak-labs/nexus-sdk/core";
-import { useDashboardAction } from "@frak-labs/nexus-sdk/react";
+import type { SendTransactionActionParamsType } from "@frak-labs/nexus-sdk/dist/core";
+import {
+    useDashboardAction,
+    useSendTransactionAction,
+} from "@frak-labs/nexus-sdk/react";
 import { useCallback, useEffect, useState } from "react";
 
 export function useWallet({ action, params }: DashboardActionParams) {
@@ -10,6 +15,8 @@ export function useWallet({ action, params }: DashboardActionParams) {
      * The data returned from the wallet
      */
     const [data, setData] = useState<DashboardActionReturnType | null>(null);
+    const [sendTxData, setSendTxData] =
+        useState<SendTransactionReturnType | null>(null);
 
     /**
      * The Nexus iframe
@@ -42,6 +49,24 @@ export function useWallet({ action, params }: DashboardActionParams) {
         },
     });
 
+    const {
+        mutate: sendTxAction,
+        error,
+        status,
+    } = useSendTransactionAction({
+        callback: (data) => {
+            setSendTxData(data);
+
+            if (data.key !== "sending") {
+                // Close modal
+                toggleIframeVisibility(false);
+            }
+        },
+    });
+    useEffect(() => {
+        console.log("sendTxAction", { error, status });
+    }, [error, status]);
+
     const launch = useCallback(() => {
         // Open modal
         toggleIframeVisibility(true);
@@ -49,5 +74,15 @@ export function useWallet({ action, params }: DashboardActionParams) {
         launchAction();
     }, [launchAction, toggleIframeVisibility]);
 
-    return { data, launch, isPending };
+    const sendTx = useCallback(
+        (params: SendTransactionActionParamsType) => {
+            // Open modal
+            toggleIframeVisibility(true);
+
+            sendTxAction(params);
+        },
+        [sendTxAction, toggleIframeVisibility]
+    );
+
+    return { data, launch, isPending, sendTx, sendTxData };
 }

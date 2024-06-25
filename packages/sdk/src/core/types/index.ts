@@ -14,6 +14,10 @@ export type {
     DashboardActionParams,
     DashboardActionReturnType,
 } from "./rpc/dashboardAction";
+export type {
+    SendTransactionActionParamsType,
+    SendTransactionReturnType,
+} from "./rpc/sendTransaction";
 export type { IFrameRpcSchema, RedirectRpcSchema } from "./rpc";
 // Client related
 export type { NexusClient } from "./client";
