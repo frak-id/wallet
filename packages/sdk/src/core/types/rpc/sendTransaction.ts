@@ -35,7 +35,7 @@ type SendTransactionSuccess = Readonly<{
     hash: Hex;
 }>;
 type SendTransactionPending = Readonly<{
-    key: "building" | "sending";
+    key: "sending";
 }>;
 type SendTransactionError = Readonly<{
     key: "error" | "aborted";

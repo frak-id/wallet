@@ -1,12 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import { sendTransactionAction } from "../../core/actions";
 import type {
     SendTransactionActionParamsType,
     SendTransactionReturnType,
 } from "../../core";
+import { sendTransactionAction } from "../../core/actions";
 import { useNexusClient } from "./useNexusClient";
 
-type SendTransactionActionHookParams = SendTransactionActionParamsType & {
+type SendTransactionActionHookParams = {
     callback: (data: SendTransactionReturnType) => void;
 };
 
@@ -14,30 +14,19 @@ type SendTransactionActionHookParams = SendTransactionActionParamsType & {
  * Trigger a dashboard action to the wallet
  */
 export function useSendTransactionAction({
-    tx,
-    context,
     callback,
 }: SendTransactionActionHookParams) {
     const client = useNexusClient();
 
     return useMutation({
-        mutationKey: [
-            "nexus-sdk",
-            "send-transaction",
-            JSON.stringify(tx),
-            context ?? "no-context",
-        ],
-        mutationFn: async () => {
+        mutationKey: ["nexus-sdk", "send-transaction"],
+        mutationFn: async (params: SendTransactionActionParamsType) => {
             if (!client) {
                 throw new Error("No client available");
             }
 
             // Setup the listener
-            return await sendTransactionAction(
-                client,
-                { tx, context },
-                callback
-            );
+            return await sendTransactionAction(client, params, callback);
         },
     });
 }

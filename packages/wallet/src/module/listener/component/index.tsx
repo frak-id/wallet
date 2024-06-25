@@ -6,6 +6,7 @@ import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
 import { useDashboardActionListener } from "@/module/listener/hooks/useDashboardActionListener";
 import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
+import { useSendTransactionListener } from "@/module/listener/hooks/useSendTransactionListener";
 import { useSetUserReferredListener } from "@/module/listener/hooks/useSetUserReferredListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
 import { useEffect, useState } from "react";
@@ -41,6 +42,10 @@ export function ListenerUI() {
         doNothing,
     } = useDashboardActionListener();
 
+    // Hook used when a dashboard action is requested
+    const { onSendTransactionRequest, component: sendTxComponent } =
+        useSendTransactionListener();
+
     // Create the resolver
     useEffect(() => {
         const newResolver = createIFrameRequestResolver({
@@ -71,6 +76,11 @@ export function ListenerUI() {
              * Listen request for the dashboard action
              */
             frak_listenToDashboardAction: onDashboardActionListenRequest,
+
+            /**
+             * Listen request for the dashboard action
+             */
+            frak_sendTransaction: onSendTransactionRequest,
         });
 
         // Set our new resolver
@@ -86,6 +96,7 @@ export function ListenerUI() {
         onArticleUnlockStatusListenerRequest,
         onUserReferredListenRequest,
         onDashboardActionListenRequest,
+        onSendTransactionRequest,
     ]);
 
     /**
@@ -119,17 +130,27 @@ export function ListenerUI() {
     }, []);
 
     return (
-        <AlertDialog
-            open={isDialogOpen}
-            text={
-                <>
-                    <p>Are you sure you want to do something?</p>
-                    <ButtonRipple onClick={() => doSomething()}>
-                        Yes
-                    </ButtonRipple>
-                    <ButtonRipple onClick={() => doNothing()}>No</ButtonRipple>
-                </>
-            }
-        />
+        <>
+            {/*
+                Send tx component if needed
+                todo: Should we got with a more generic approach? Like alert dialog component, with hook returning inner components?
+            */}
+            {sendTxComponent}
+            {/*Alert dialog for the dashboard action*/}
+            <AlertDialog
+                open={isDialogOpen}
+                text={
+                    <>
+                        <p>Are you sure you want to do something?</p>
+                        <ButtonRipple onClick={() => doSomething()}>
+                            Yes
+                        </ButtonRipple>
+                        <ButtonRipple onClick={() => doNothing()}>
+                            No
+                        </ButtonRipple>
+                    </>
+                }
+            />
+        </>
     );
 }

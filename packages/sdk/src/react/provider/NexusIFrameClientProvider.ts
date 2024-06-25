@@ -74,6 +74,7 @@ export function NexusIFrameClientProvider({
         name: "nexus-wallet",
         src: `${config.walletUrl}/listener`,
         style: style ?? defaultIframeStyle,
+        allow: "publickey-credentials-get *",
         ref: (iframe: HTMLIFrameElement) => {
             if (!iframe) {
                 // Remove the client
