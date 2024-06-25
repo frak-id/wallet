@@ -1,4 +1,3 @@
-import type { FormCampaignsValidation } from "@/module/campaigns/component/ValidationCampaign/index";
 import { Badge } from "@/module/common/component/Badge";
 import { Checkbox } from "@/module/forms/Checkbox";
 import {
@@ -9,6 +8,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import type { Campaign } from "@/types/Campaign";
 import { X } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./FormPromotedContent.module.css";
@@ -32,13 +32,11 @@ const itemsSpecialAdvertising = [
     },
 ] as const;
 
-export function FormPromotedContent(
-    form: UseFormReturn<FormCampaignsValidation>
-) {
+export function FormPromotedContent(form: UseFormReturn<Campaign>) {
     return (
         <FormField
             control={form.control}
-            name="promotedContent"
+            name="promotedContents"
             render={() => (
                 <FormItem>
                     <FormDescription title={"Promoted Content"}>
@@ -48,7 +46,7 @@ export function FormPromotedContent(
                         <FormField
                             key={item.id}
                             control={form.control}
-                            name="promotedContent"
+                            name="promotedContents"
                             render={({ field }) => (
                                 <FormItem variant={"checkbox"} key={item.id}>
                                     <FormControl>

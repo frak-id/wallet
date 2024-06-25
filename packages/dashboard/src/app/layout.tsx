@@ -1,7 +1,9 @@
 import { Fonts } from "@/module/common/component/Fonts";
+import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import "../polyfill/bigint-serialization";
 
 export const metadata: Metadata = {
     title: "Nexus Dashboard by Frak",
@@ -44,7 +46,9 @@ export default function RootLayout({
     return (
         <html lang="en">
             <Fonts />
-            <body>{children}</body>
+            <body>
+                <RootProvider>{children}</RootProvider>
+            </body>
         </html>
     );
 }

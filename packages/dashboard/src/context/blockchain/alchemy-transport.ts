@@ -1,13 +1,6 @@
 import { http, type Chain } from "viem";
 
 /**
- * Type for our alchemy api keys
- */
-type AlchemyApiKeys = {
-    [chainId: number]: string;
-};
-
-/**
  * Get the alchemy http transport
  * @param chainId
  */
@@ -36,6 +29,11 @@ export function getAlchemyTransport({ chain }: { chain: Chain }) {
  * @param version
  */
 function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
+    // Ensure we got an api key
+    if (!process.env.ALCHEMY_API_KEY) {
+        return undefined;
+    }
+
     // Get the network name
     let networkName: string;
     if (chain.id === 421614) {
@@ -45,15 +43,7 @@ function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
     } else {
         return undefined;
     }
-    // Extract the api keys and parse them
-    const alchemyApiKeys = JSON.parse(
-        process.env.ALCHEMY_API_KEYS ?? "{}"
-    ) as AlchemyApiKeys;
-    const apiKey = alchemyApiKeys[chain.id];
-    if (!apiKey) {
-        return undefined;
-    }
 
     // Build the alchemy rpc url depending on the chain
-    return `https://${networkName}.g.alchemy.com/v2/${apiKey}`;
+    return `https://${networkName}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 }

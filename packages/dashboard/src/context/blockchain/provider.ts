@@ -16,9 +16,3 @@ export const viemClient = createClient({
     transport: getAlchemyTransport({ chain: currentChain }),
     cacheTime: 60_000,
 });
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore: Unreachable code error
-BigInt.prototype.toJSON = function (): string {
-    return this.toString();
-};

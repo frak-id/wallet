@@ -9,7 +9,7 @@ import type {
 import { setUserReferred } from "../../core/actions";
 import { useNexusClient } from "./useNexusClient";
 import { useWalletStatus } from "./useWalletStatus";
-import { useWindowLocation } from "./useWindowLocation";
+import { useWindowLocation } from "./utils/useWindowLocation";
 
 export type SetUserReferredQueryReturnType =
     | SetUserReferredReturnType
@@ -33,7 +33,7 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
     const newStatusUpdated = useCallback(
         (event: SetUserReferredReturnType) => {
             queryClient.setQueryData(
-                ["setUserReferredQueryReturnTypeListener"],
+                ["nexus-sdk", "user-referred", contentId ?? "no-content-id"],
                 event
             );
 
@@ -58,7 +58,7 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
                 window.history.replaceState(null, "", url.toString());
             }
         },
-        [queryClient, href, walletStatus]
+        [queryClient, href, walletStatus, contentId]
     );
 
     useEffect(() => {
@@ -81,8 +81,12 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
 
     return useQuery<SetUserReferredQueryReturnType>({
         gcTime: 0,
-        queryKey: ["setUserReferredQueryReturnTypeListener"],
+        queryKey: ["nexus-sdk", "user-referred", contentId ?? "no-content-id"],
         queryFn: async () => {
+            if (!client) {
+                return { key: "waiting-response" };
+            }
+
             if (!(contentId && referrerAddress)) {
                 return { key: "no-referrer" };
             }
@@ -106,6 +110,7 @@ export function useNexusReferral({ contentId }: SetUserReferredParams) {
             return { key: "waiting-response" };
         },
         enabled:
+            !!client &&
             !!contentId &&
             !!referrerAddress &&
             walletStatus?.key !== undefined &&

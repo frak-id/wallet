@@ -3,7 +3,7 @@ import { Config } from "sst/node/config";
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
-    "ALCHEMY_API_KEYS",
+    "ALCHEMY_API_KEY",
     "ZERODEV_API_KEY",
     "PIMLICO_API_KEY",
     "WALLETCONNECT_PROJECT_ID",

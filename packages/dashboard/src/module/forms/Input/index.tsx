@@ -34,7 +34,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     className={cx(
                         styles.input,
                         className,
-                        leftSection && styles.withLeftSection
+                        leftSection ? styles.withLeftSection : undefined
                     )}
                     ref={ref}
                     {...props}

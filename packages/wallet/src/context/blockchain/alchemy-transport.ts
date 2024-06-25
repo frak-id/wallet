@@ -2,13 +2,6 @@ import type { AvailableChainIds } from "@/context/blockchain/provider";
 import { http, type Chain } from "viem";
 
 /**
- * Type for our alchemy api keys
- */
-type AlchemyApiKeys = {
-    [chainId: number]: string;
-};
-
-/**
  * The alchemy network names, used to rebuild the rpc urls
  * From: https://github.com/alchemyplatform/alchemy-sdk-js/blob/fddd65fff4bd7367469ccb44a0900aa1dcc0cc62/src/types/types.ts#L81
  */
@@ -73,38 +66,13 @@ export function getAlchemyTransportNoBatch({ chain }: { chain: Chain }) {
  * @param version
  */
 export function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
-    // Extract the api keys and parse them
-    const alchemyApiKeys = JSON.parse(
-        process.env.ALCHEMY_API_KEYS ?? "{}"
-    ) as AlchemyApiKeys;
-    const apiKey = alchemyApiKeys[chain.id];
-    if (!apiKey) {
+    // Ensure we got an api key
+    if (!process.env.ALCHEMY_API_KEY) {
         return undefined;
     }
 
     // Build the alchemy rpc url depending on the chain
     return `https://${
         AlchemyNetworkName[chain.id as AvailableChainIds]
-    }.g.alchemy.com/v2/${apiKey}`;
-}
-
-/**
- * Get the alchemy rpc url for the given chain
- * @param chain
- * @param version
- */
-export function getAlchemyNftUrl({ chain }: { chain: Chain }) {
-    // Extract the api keys and parse them
-    const alchemyApiKeys = JSON.parse(
-        process.env.ALCHEMY_API_KEYS ?? "{}"
-    ) as AlchemyApiKeys;
-    const apiKey = alchemyApiKeys[chain.id];
-    if (!apiKey) {
-        return undefined;
-    }
-
-    // Build the alchemy rpc url depending on the chain
-    return `https://${
-        AlchemyNetworkName[chain.id as AvailableChainIds]
-    }.g.alchemy.com/nft/v3/${apiKey}`;
+    }.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 }

@@ -18,6 +18,8 @@ export {
     useWalletStatus,
     useArticleUnlockStatus,
     useNexusReferral,
+    useDashboardAction,
+    useSendTransactionAction,
 } from "./hook";
 export type {
     WalletStatusQueryReturnType,

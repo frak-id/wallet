@@ -1,4 +1,3 @@
-import type { FormCampaignsNew } from "@/module/campaigns/component/NewCampaign";
 import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
 import {
@@ -17,6 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/module/forms/Select";
+import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
 
 const itemsGoals = [
@@ -42,7 +42,7 @@ const itemsGoals = [
     },
 ] as const;
 
-export function FormGoals(form: UseFormReturn<FormCampaignsNew>) {
+export function FormGoals(form: UseFormReturn<Campaign>) {
     return (
         <Panel title="Goals">
             <Column>
@@ -80,7 +80,7 @@ export function FormGoals(form: UseFormReturn<FormCampaignsNew>) {
             <Column>
                 <FormField
                     control={form.control}
-                    name="goal"
+                    name="type"
                     rules={{ required: "Select a goal" }}
                     render={({ field }) => (
                         <FormItem>

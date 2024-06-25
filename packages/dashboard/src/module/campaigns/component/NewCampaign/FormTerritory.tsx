@@ -1,6 +1,5 @@
 "use client";
 
-import type { FormCampaignsNew } from "@/module/campaigns/component/NewCampaign";
 import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
@@ -11,15 +10,16 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { MultiSelect } from "@/module/forms/MultiSelect";
+import type { Campaign } from "@/types/Campaign";
 import { getCountryDataList } from "countries-list";
 import type { UseFormReturn } from "react-hook-form";
 
-export function FormTerritory(form: UseFormReturn<FormCampaignsNew>) {
+export function FormTerritory(form: UseFormReturn<Campaign>) {
     return (
         <Panel title="Territory">
             <FormField
                 control={form.control}
-                name="territory"
+                name="territories"
                 rules={{ required: "Select a country" }}
                 render={({ field }) => (
                     <FormItem>

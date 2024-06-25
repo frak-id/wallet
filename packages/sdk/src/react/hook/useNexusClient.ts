@@ -7,7 +7,8 @@ import { NexusIFrameClientContext } from "../provider";
 export function useNexusClient() {
     const client = useContext(NexusIFrameClientContext);
     if (!client) {
-        throw new Error("NexusIFrameClientProvider is not found");
+        console.error("NexusIFrameClientProvider is not found");
+        return;
     }
     return client;
 }

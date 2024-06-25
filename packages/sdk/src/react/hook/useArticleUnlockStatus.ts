@@ -31,7 +31,8 @@ export function useArticleUnlockStatus({
         (event: ArticleUnlockStatusReturnType) => {
             queryClient.setQueryData(
                 [
-                    "articleUnlockStatusListener",
+                    "nexus-sdk",
+                    "article-unlock-status",
                     articleId ?? "no-article-id",
                     contentId ?? "no-contentId-id",
                 ],
@@ -46,12 +47,19 @@ export function useArticleUnlockStatus({
      */
     return useQuery<ArticleUnlockStatusQueryReturnType | null>({
         queryKey: [
-            "articleUnlockStatusListener",
+            "nexus-sdk",
+            "article-unlock-status",
             articleId ?? "no-article-id",
             contentId ?? "no-contentId-id",
         ],
         gcTime: 0,
         queryFn: async () => {
+            if (!client) {
+                return {
+                    status: "waiting-response",
+                    key: "waiting-response",
+                };
+            }
             if (!(articleId && contentId)) {
                 return null;
             }
@@ -67,6 +75,6 @@ export function useArticleUnlockStatus({
                 key: "waiting-response",
             };
         },
-        enabled: !!articleId && !!contentId,
+        enabled: !!client && !!articleId && !!contentId,
     });
 }

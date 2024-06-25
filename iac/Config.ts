@@ -14,7 +14,7 @@ export function ConfigStack({ stack }: StackContext) {
     );
     const mongoUri = new Config.Secret(stack, "MONGODB_FRAK_POC_URI");
     const mongoNexusUri = new Config.Secret(stack, "MONGODB_NEXUS_URI");
-    const alchemyApiKeys = new Config.Secret(stack, "ALCHEMY_API_KEYS");
+    const alchemyApiKey = new Config.Secret(stack, "ALCHEMY_API_KEY");
     const pimlicoApiKey = new Config.Secret(stack, "PIMLICO_API_KEY");
     const zeroDevApiKey = new Config.Secret(stack, "ZERODEV_API_KEY");
     const airdropPrivateKey = new Config.Secret(stack, "AIRDROP_PRIVATE_KEY");
@@ -36,7 +36,7 @@ export function ConfigStack({ stack }: StackContext) {
         sessionEncryptionKey,
         mongoUri,
         mongoNexusUri,
-        alchemyApiKeys,
+        alchemyApiKey,
         pimlicoApiKey,
         zeroDevApiKey,
         airdropPrivateKey,

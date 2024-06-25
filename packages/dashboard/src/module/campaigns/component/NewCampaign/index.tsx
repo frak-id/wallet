@@ -1,6 +1,13 @@
 "use client";
 
-import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
+import {
+    campaignAtom,
+    campaignResetAtom,
+} from "@/module/campaigns/atoms/campaign";
+import {
+    campaignStepAtom,
+    campaignSuccessAtom,
+} from "@/module/campaigns/atoms/steps";
 import { FormBudget } from "@/module/campaigns/component/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/NewCampaign/FormGoals";
 import { FormSchedule } from "@/module/campaigns/component/NewCampaign/FormSchedule";
@@ -11,43 +18,43 @@ import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
-import { useSetAtom } from "jotai/index";
+import type { Campaign } from "@/types/Campaign";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-
-export type FormCampaignsNew = {
-    title: string;
-    order: string;
-    goal: string;
-    advertising: string[];
-    budget: string;
-    budgetAmount: number;
-    territory: string[];
-    dateStart: Date;
-    dateEnd: Date;
-};
 
 export function NewCampaign() {
     const router = useRouter();
     const setStep = useSetAtom(campaignStepAtom);
+    const campaignSuccess = useAtomValue(campaignSuccessAtom);
+    const [campaign, setCampaign] = useAtom(campaignAtom);
+    const campaignReset = useSetAtom(campaignResetAtom);
 
-    const form = useForm<FormCampaignsNew>({
-        defaultValues: {
-            title: "",
-            order: "",
-            goal: "",
-            advertising: [],
-            budget: "",
-            budgetAmount: 0,
-            territory: [],
-            dateStart: new Date(),
-            dateEnd: new Date(),
-        },
+    /**
+     * Reset campaign atom when campaign was in success
+     */
+    useEffect(() => {
+        if (campaignSuccess) {
+            campaignReset();
+        }
+    }, [campaignSuccess, campaignReset]);
+
+    const form = useForm<Campaign>({
+        defaultValues: campaign,
     });
 
-    function onSubmit(values: FormCampaignsNew) {
+    /**
+     * Populate the form with campaign atom
+     */
+    useEffect(() => {
+        form.reset(campaign);
+    }, [campaign, form.reset]);
+
+    function onSubmit(values: Campaign) {
         console.log(values);
+        setCampaign(values);
         setStep((prev) => prev + 1);
     }
 
