@@ -114,5 +114,5 @@ export type IFrameRpcEvent = {
 };
 
 type IFrameLifecycleEvent = {
-    lifecycle: "connected";
+    lifecycle: "connected" | "show" | "hide";
 };

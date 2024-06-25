@@ -63,6 +63,11 @@ export function createIFrameMessageHandler({
     // Create our deferred promise
     const isConnected = new Deferred<boolean>();
 
+    // Function to toggle the iframe visibility
+    const toggleIframeVisibility = (visibility: boolean) => {
+        iframe?.classList.toggle("visible", visibility);
+    };
+
     // Create the function that will handle incoming iframe messages
     const msgHandler = async (event: MessageEvent<IFrameEvent>) => {
         if (!event.origin) {
@@ -78,8 +83,16 @@ export function createIFrameMessageHandler({
 
         // Check if that's a lifecycle event
         if ("lifecycle" in event.data) {
-            // Mark it as connected only if the event is 'connected'
-            isConnected.resolve(event.data.lifecycle === "connected");
+            switch (event.data.lifecycle) {
+                case "connected":
+                    // Mark it as connected only if the event is 'connected'
+                    isConnected.resolve(true);
+                    break;
+                case "show":
+                case "hide":
+                    toggleIframeVisibility(event.data.lifecycle === "show");
+                    break;
+            }
             return;
         }
 

@@ -1,4 +1,5 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { iFrameToggleVisibility } from "@/context/sdk/utils/iFrameToggleVisibility";
 import { dashboardActionListenerAtom } from "@/module/listener/atoms/dashboardActionListener";
 import type {
     ExtractedParametersFromRpc,
@@ -32,10 +33,12 @@ export function useDashboardActionListener() {
             key: "action-successful",
             value: "something",
         });
+        iFrameToggleVisibility(false);
     }, [listenerParam?.emitter]);
 
     const doNothing = useCallback(() => {
         listenerParam?.emitter({ key: "no-action" });
+        iFrameToggleVisibility(false);
     }, [listenerParam?.emitter]);
 
     /**
@@ -68,9 +71,12 @@ export function useDashboardActionListener() {
                     emitter,
                 });
 
+                // Show the iframe
+                iFrameToggleVisibility(true);
+
                 // Do something with the action
                 // Open the dialog if the action is open
-                setIsDialogOpen(action === "open");
+                setIsDialogOpen(true);
             },
             [setListenerParam]
         );

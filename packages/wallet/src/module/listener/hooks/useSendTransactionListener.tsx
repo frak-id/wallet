@@ -1,4 +1,5 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { iFrameToggleVisibility } from "@/context/sdk/utils/iFrameToggleVisibility";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import {
@@ -68,11 +69,19 @@ export function useSendTransactionListener() {
                 emitter,
             });
 
+            // Show the iframe
+            iFrameToggleVisibility(true);
+
             // Tell that the dialog is open
             setIsDialogOpen(true);
         },
         [setListenerParam]
     );
+
+    const closeDialog = useCallback(() => {
+        setIsDialogOpen(false);
+        iFrameToggleVisibility(false);
+    }, []);
 
     /**
      * Build the send transaction component
@@ -92,7 +101,7 @@ export function useSendTransactionListener() {
                         key: "success",
                         hash,
                     });
-                    setIsDialogOpen(false);
+                    closeDialog();
                 }}
                 onPending={() => {
                     listenerParam.emitter({
@@ -104,17 +113,17 @@ export function useSendTransactionListener() {
                         key: "error",
                         reason,
                     });
-                    setIsDialogOpen(false);
+                    closeDialog();
                 }}
                 onDiscard={() => {
                     listenerParam.emitter({
                         key: "aborted",
                     });
-                    setIsDialogOpen(false);
+                    closeDialog();
                 }}
             />
         );
-    }, [listenerParam, isDialogOpen]);
+    }, [listenerParam, isDialogOpen, closeDialog]);
 
     return {
         onSendTransactionRequest,
