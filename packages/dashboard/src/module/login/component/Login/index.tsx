@@ -19,10 +19,7 @@ export function Login() {
                 }
 
                 // Register the session
-                await setSession({
-                    siwe: data.message,
-                    signature: data.signature,
-                });
+                await setSession(data);
 
                 // Redirect to /dashboard
                 startTransition(() => {

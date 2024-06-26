@@ -134,11 +134,11 @@ export function useSiweAuthenticateListener() {
                 context={listenerParam.context}
                 siweMessage={step.siweMessage}
                 isOpen={isDialogOpen}
-                onSuccess={(signature) => {
+                onSuccess={(signature, message) => {
                     listenerParam.emitter({
                         key: "success",
                         signature,
-                        message: step.siweMessage,
+                        message,
                     });
                     closeDialog();
                 }}

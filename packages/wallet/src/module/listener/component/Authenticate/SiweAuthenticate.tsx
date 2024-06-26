@@ -1,5 +1,6 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { ButtonRipple } from "@/module/common/component/ButtonRipple";
+import { useMemo } from "react";
 import type { Hex } from "viem";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useSignMessage } from "wagmi";
@@ -25,14 +26,19 @@ export function SiweAuthenticateModal({
     siweMessage: SiweMessage;
     context?: string;
     isOpen: boolean;
-    onSuccess: (signature: Hex) => void;
+    onSuccess: (signature: Hex, message: string) => void;
     onError: (reason?: string) => void;
     onDiscard: () => void;
 }) {
+    const message = useMemo(
+        () => createSiweMessage(siweMessage),
+        [siweMessage]
+    );
+
     const { signMessage, isPending } = useSignMessage({
         mutation: {
             // Link success and error hooks
-            onSuccess: onSuccess,
+            onSuccess: (signature) => onSuccess(signature, message),
             onError: (error) => {
                 onError(error.message);
             },
@@ -57,7 +63,7 @@ export function SiweAuthenticateModal({
                         disabled={isPending}
                         onClick={() => {
                             signMessage({
-                                message: createSiweMessage(siweMessage),
+                                message,
                             });
                         }}
                     >

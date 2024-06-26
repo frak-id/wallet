@@ -27,7 +27,7 @@ export type AuthenticateReturnType = AuthenticateSuccess | AuthenticateError;
 type AuthenticateSuccess = Readonly<{
     key: "success";
     signature: Hex;
-    message: SiweMessage;
+    message: string;
 }>;
 type AuthenticateError = Readonly<{
     key: "error" | "aborted";

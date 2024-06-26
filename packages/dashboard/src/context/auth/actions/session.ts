@@ -4,11 +4,11 @@ import { viemClient } from "@/context/blockchain/provider";
 import type { AuthSession, AuthSessionClient } from "@/types/AuthSession";
 import { getIronSession } from "iron-session";
 import type { SessionOptions } from "iron-session";
-import { cookies } from "next/headers";
-import type { Hex } from "viem";
+import { cookies, headers } from "next/headers";
+import { type Hex, keccak256, toHex } from "viem";
 import {
-    type SiweMessage,
-    createSiweMessage,
+    parseSiweMessage,
+    validateSiweMessage,
     verifySiweMessage,
 } from "viem/siwe";
 
@@ -36,34 +36,47 @@ async function getFullSession() {
  * @param wallet
  */
 export async function setSession({
-    siwe,
+    message,
     signature,
-}: { siwe: SiweMessage; signature: Hex }) {
-    // todo: Ensure that the domain of the siwe message is valid
+}: { message: string; signature: Hex }) {
+    // Parse the siwe message
+    const siweMessage = parseSiweMessage(message);
+    if (!siweMessage?.address) {
+        throw new Error("Invalid siwe message");
+    }
+
+    // Ensure the siwe message is valid
+    const isValid = validateSiweMessage({
+        message: siweMessage,
+        domain: headers().get("host") ?? "",
+    });
+    if (!isValid) {
+        console.error("Invalid SIWE message", { siweMessage });
+        throw new Error("Invalid siwe message");
+    }
 
     // Ensure the siwe message match the given signature
-    const message = createSiweMessage(siwe);
     const isValidSignature = await verifySiweMessage(viemClient, {
         message,
         signature,
     });
     if (!isValidSignature) {
-        console.log("Invalid signature", { siwe, signature, message });
-        // todo: sig verification fail, to fix
-        // throw new Error("Invalid signature");
+        console.error("Invalid SIWE signature", {
+            signature,
+            message,
+            formattedHash: keccak256(toHex(message)),
+        });
+        throw new Error("Invalid signature");
     }
 
+    // Build the session and save it
     const session = await getFullSession();
-
-    session.wallet = siwe.address;
+    session.wallet = siweMessage.address;
     session.siwe = {
-        message: siwe,
+        message: message,
         signature,
     };
-
     await session.save();
-
-    // Return the client session
 }
 
 /**
