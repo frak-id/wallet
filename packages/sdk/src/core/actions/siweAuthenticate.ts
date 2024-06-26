@@ -16,15 +16,15 @@ export function siweAuthenticate(
     { siwe, context }: AuthenticateActionParamsType
 ) {
     const realStatement =
-        siwe.statement ??
+        siwe?.statement ??
         `I confirm that I want to use my Nexus wallet on: ${client.config.metadata.name}`;
 
     const builtSiwe: SiweAuthenticationParams = {
         ...siwe,
         statement: realStatement,
-        nonce: siwe.nonce ?? generateSiweNonce(),
-        uri: siwe.uri ?? `https://${client.config.domain}`,
-        version: siwe.version ?? "1",
+        nonce: siwe?.nonce ?? generateSiweNonce(),
+        uri: siwe?.uri ?? `https://${client.config.domain}`,
+        version: siwe?.version ?? "1",
         domain: client.config.domain,
     };
 

@@ -2,7 +2,11 @@ import { pick } from "radash";
 import { Config } from "sst/node/config";
 
 // Secret env variable from SST we want in the frontend
-const wantedFromConfig = ["ALCHEMY_API_KEY", "NEXUS_WALLET_URL"];
+const wantedFromConfig = [
+    "ALCHEMY_API_KEY",
+    "NEXUS_WALLET_URL",
+    "SESSION_ENCRYPTION_KEY",
+];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
 const isDistant = ["prod", "dev"].includes(Config.STAGE);

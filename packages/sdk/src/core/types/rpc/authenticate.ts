@@ -15,7 +15,7 @@ export type SiweAuthenticationParams = Omit<SiweMessage, "address" | "chainId">;
  * Same stuff but in an object format for better readability
  */
 export type AuthenticateActionParamsType = Readonly<{
-    siwe: Partial<SiweAuthenticationParams>;
+    siwe?: Partial<SiweAuthenticationParams>;
     context?: string;
 }>;
 

@@ -31,7 +31,9 @@ export function NexusConfigProvider(
                 ...config,
                 domain:
                     config.domain ??
-                    window?.location?.hostname ??
+                    (typeof window !== "undefined"
+                        ? window?.location?.hostname
+                        : undefined) ??
                     "not-found.com",
             },
         },

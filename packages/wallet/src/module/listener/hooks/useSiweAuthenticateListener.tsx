@@ -44,14 +44,6 @@ export function useSiweAuthenticateListener() {
             const siweMessage = request.params[0];
             const context = request.params[1];
 
-            // If a field is missing, exit
-            if (!siweMessage) {
-                setListenerParam(null);
-                setIsDialogOpen(false);
-                // And exit
-                return;
-            }
-
             // Build the msg to sign and set it
             setListenerParam({
                 siweMessage,

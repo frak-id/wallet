@@ -1,7 +1,6 @@
 "use client";
 
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
-import { AuthProvider } from "@/module/common/provider/AuthProvider";
 import {
     NexusConfigProvider,
     NexusIFrameClientProvider,
@@ -55,8 +54,8 @@ export function RootProvider({ children }: PropsWithChildren) {
         >
             <NexusConfigProvider config={frakWalletSdkConfig}>
                 <NexusIFrameClientProvider style={{}}>
-                    <AuthProvider>{children}</AuthProvider>
                     <ReactQueryDevtools initialIsOpen={false} />
+                    {children}
                 </NexusIFrameClientProvider>
             </NexusConfigProvider>
         </PersistQueryClientProvider>
