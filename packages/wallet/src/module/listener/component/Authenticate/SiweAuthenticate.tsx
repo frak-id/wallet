@@ -1,5 +1,5 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
+import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
@@ -48,34 +48,33 @@ export function SiweAuthenticateModal({
     return (
         <AlertDialog
             open={isOpen}
+            onOpenChange={(open) => {
+                if (!open) {
+                    onDiscard();
+                }
+            }}
+            title={"Nexus Wallet - Authentication"}
             text={
                 <>
-                    <h2>Validate authentication</h2>
+                    {context && <p>{context}</p>}
 
-                    {/*todo: some siwe info*/}
+                    {/*todo: some nice and formatted siwe info*/}
                     <p>{siweMessage.statement}</p>
                     <p>Domain: {siweMessage.domain}</p>
                     <p>Uri: {siweMessage.uri}</p>
-
-                    {context && <p>{context}</p>}
-
-                    <ButtonRipple
-                        disabled={isPending}
-                        onClick={() => {
-                            signMessage({
-                                message,
-                            });
-                        }}
-                    >
-                        Validate authentication
-                    </ButtonRipple>
-                    <ButtonRipple
-                        disabled={isPending}
-                        onClick={() => onDiscard()}
-                    >
-                        Discard authentication
-                    </ButtonRipple>
                 </>
+            }
+            action={
+                <AuthFingerprint
+                    disabled={isPending}
+                    action={() => {
+                        signMessage({
+                            message,
+                        });
+                    }}
+                >
+                    Validate authentication
+                </AuthFingerprint>
             }
         />
     );
