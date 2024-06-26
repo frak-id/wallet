@@ -1,14 +1,14 @@
 import css from "!!raw-loader!./index.module.css";
 import { FrakLogo } from "@/assets/icons/FrakLogo";
-import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
 import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import type { Article } from "@/type/Article";
 import { getStartArticleUnlockUrl } from "@frak-labs/nexus-sdk/actions";
 import type { UnlockOptionsReturnType } from "@frak-labs/nexus-sdk/core";
-import type {
-    ArticleUnlockStatusQueryReturnType,
-    WalletStatusQueryReturnType,
+import {
+    type ArticleUnlockStatusQueryReturnType,
+    type WalletStatusQueryReturnType,
+    useNexusConfig,
 } from "@frak-labs/nexus-sdk/react";
 import { formatHash } from "@frak-labs/nexus-wallet/src/context/wallet/utils/hashFormatter";
 import type { ArticlePriceForUser } from "@frak-labs/nexus-wallet/src/types/Price";
@@ -200,8 +200,10 @@ function AmountFormatted({ balanceHex }: { balanceHex?: Hex | undefined }) {
 const useUnlockRedirectUrl = ({
     article,
     articlePrice,
-}: { article?: Article; articlePrice?: ArticlePriceForUser }) =>
-    useQuery({
+}: { article?: Article; articlePrice?: ArticlePriceForUser }) => {
+    const config = useNexusConfig();
+
+    return useQuery({
         queryKey: [
             "getEncodedUnlockData",
             article?.id,
@@ -210,7 +212,7 @@ const useUnlockRedirectUrl = ({
         queryFn: async () => {
             if (!(article && articlePrice)) return;
 
-            return getStartArticleUnlockUrl(frakWalletSdkConfig, {
+            return getStartArticleUnlockUrl(config, {
                 articleId: article.id as Hex,
                 articleTitle: article.title,
                 imageUrl: article.imageUrl,
@@ -228,3 +230,4 @@ const useUnlockRedirectUrl = ({
         },
         enabled: !!article && !!articlePrice,
     });
+};
