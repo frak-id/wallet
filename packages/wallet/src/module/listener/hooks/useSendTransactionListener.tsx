@@ -33,7 +33,7 @@ export function useSendTransactionListener() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     /**
-     * The current dashboard action listener param
+     The current listener param
      */
     const [listenerParam, setListenerParam] = useAtom(
         sendTransactionListenerAtom

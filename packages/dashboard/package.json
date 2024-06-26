@@ -38,6 +38,7 @@
     "cmdk": "^1.0.0",
     "countries-list": "^3.1.0",
     "date-fns": "^3.6.0",
+    "iron-session": "^8.0.2",
     "jotai": "^2.8.3",
     "lucide-react": "^0.373.0",
     "next": "14.2.3",
@@ -49,7 +50,7 @@
     "react-hook-form": "^7.51.5",
     "urql": "^4.1.0",
     "use-session-storage-state": "^18.2.0",
-    "viem": "^2.9.26"
+    "viem": "^2.16.2"
   },
   "devDependencies": {
     "@types/node": "^20",

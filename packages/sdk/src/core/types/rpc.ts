@@ -1,5 +1,8 @@
 import type { Address, Hex } from "viem";
-import type { DashboardActionReturnType } from "./rpc/dashboardAction";
+import type {
+    AuthenticateReturnType,
+    AuthenticateRpcParamsType,
+} from "./rpc/authenticate";
 import type {
     SendTransactionReturnType,
     SendTransactionRpcParamsType,
@@ -58,12 +61,12 @@ export type IFrameRpcSchema = [
         ReturnType: SendTransactionReturnType;
     },
     /**
-     * Global method for the dashboard actions
+     * Method to ask the user for a strong authentication
      */
     {
-        Method: "frak_listenToDashboardAction";
-        Parameters: [action: string, params: string];
-        ReturnType: DashboardActionReturnType;
+        Method: "frak_siweAuthenticate";
+        Parameters: AuthenticateRpcParamsType;
+        ReturnType: AuthenticateReturnType;
     },
 ];
 

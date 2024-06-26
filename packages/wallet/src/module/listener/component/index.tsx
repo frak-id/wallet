@@ -1,13 +1,11 @@
 "use client";
 
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
-import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
-import { useDashboardActionListener } from "@/module/listener/hooks/useDashboardActionListener";
 import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
 import { useSendTransactionListener } from "@/module/listener/hooks/useSendTransactionListener";
 import { useSetUserReferredListener } from "@/module/listener/hooks/useSetUserReferredListener";
+import { useSiweAuthenticateListener } from "@/module/listener/hooks/useSiweAuthenticateListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
 import { useEffect, useState } from "react";
 
@@ -24,10 +22,10 @@ export function ListenerUI() {
     // Hook used when a wallet status is requested
     const { onWalletListenRequest } = useWalletStatusListener();
 
-    // Hook used when a wallet status is requested
+    // Hook a website want to fetch the unlock options for an article
     const { onGetArticleUnlockOptions } = useGetArticleUnlockOptionsListener();
 
-    // Hook used when a wallet status is requested
+    // Hook to listen for the gating unlock status of an article
     const { onArticleUnlockStatusListenerRequest } =
         useArticleUnlockStatusListener();
 
@@ -35,16 +33,12 @@ export function ListenerUI() {
     const { onUserReferredListenRequest } = useSetUserReferredListener();
 
     // Hook used when a dashboard action is requested
-    const {
-        onDashboardActionListenRequest,
-        isDialogOpen,
-        doSomething,
-        doNothing,
-    } = useDashboardActionListener();
-
-    // Hook used when a dashboard action is requested
     const { onSendTransactionRequest, component: sendTxComponent } =
         useSendTransactionListener();
+
+    // Hook used when a dashboard action is requested
+    const { onSiweAuthenticateRequest, component: siweAuthenticateComponent } =
+        useSiweAuthenticateListener();
 
     // Create the resolver
     useEffect(() => {
@@ -75,12 +69,12 @@ export function ListenerUI() {
             /**
              * Listen request for the dashboard action
              */
-            frak_listenToDashboardAction: onDashboardActionListenRequest,
+            frak_sendTransaction: onSendTransactionRequest,
 
             /**
-             * Listen request for the dashboard action
+             * Listen request for the authentication request
              */
-            frak_sendTransaction: onSendTransactionRequest,
+            frak_siweAuthenticate: onSiweAuthenticateRequest,
         });
 
         // Set our new resolver
@@ -95,8 +89,8 @@ export function ListenerUI() {
         onGetArticleUnlockOptions,
         onArticleUnlockStatusListenerRequest,
         onUserReferredListenRequest,
-        onDashboardActionListenRequest,
         onSendTransactionRequest,
+        onSiweAuthenticateRequest,
     ]);
 
     /**
@@ -136,21 +130,7 @@ export function ListenerUI() {
                 todo: Should we got with a more generic approach? Like alert dialog component, with hook returning inner components?
             */}
             {sendTxComponent}
-            {/*Alert dialog for the dashboard action*/}
-            <AlertDialog
-                open={isDialogOpen}
-                text={
-                    <>
-                        <p>Are you sure you want to do something?</p>
-                        <ButtonRipple onClick={() => doSomething()}>
-                            Yes
-                        </ButtonRipple>
-                        <ButtonRipple onClick={() => doNothing()}>
-                            No
-                        </ButtonRipple>
-                    </>
-                }
-            />
+            {siweAuthenticateComponent}
         </>
     );
 }

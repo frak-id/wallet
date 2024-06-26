@@ -6,5 +6,5 @@ export type { WalletStatusQueryReturnType } from "./useWalletStatus";
 export { useArticleUnlockStatus } from "./useArticleUnlockStatus";
 export type { ArticleUnlockStatusQueryReturnType } from "./useArticleUnlockStatus";
 export { useNexusReferral } from "./useNexusReferral";
-export { useDashboardAction } from "./useDashboardAction";
 export { useSendTransactionAction } from "./useSendTransaction";
+export { useSiweAuthenticate } from "./useSiweAuthenticate";
