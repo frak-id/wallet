@@ -16,9 +16,14 @@ export function ExampleAppStack({ stack }: StackContext) {
     }
 
     // The configs required to run the app
-    const { sessionEncryptionKey, mongoUri, nexusUrl, adminPassword } =
+    const { sessionEncryptionKey, mongoExampleUri, nexusUrl, adminPassword } =
         use(ConfigStack);
-    const configs = [sessionEncryptionKey, mongoUri, nexusUrl, adminPassword];
+    const configs = [
+        sessionEncryptionKey,
+        mongoExampleUri,
+        nexusUrl,
+        adminPassword,
+    ];
 
     // Base domain for our whole app
     const subDomain = isDevStack(stack)
