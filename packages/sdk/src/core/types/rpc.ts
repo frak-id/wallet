@@ -3,7 +3,6 @@ import type {
     AuthenticateReturnType,
     AuthenticateRpcParamsType,
 } from "./rpc/authenticate";
-import type { DashboardActionReturnType } from "./rpc/dashboardAction";
 import type {
     SendTransactionReturnType,
     SendTransactionRpcParamsType,
@@ -68,14 +67,6 @@ export type IFrameRpcSchema = [
         Method: "frak_siweAuthenticate";
         Parameters: AuthenticateRpcParamsType;
         ReturnType: AuthenticateReturnType;
-    },
-    /**
-     * Global method for the dashboard actions
-     */
-    {
-        Method: "frak_listenToDashboardAction";
-        Parameters: [action: string, params: string];
-        ReturnType: DashboardActionReturnType;
     },
 ];
 

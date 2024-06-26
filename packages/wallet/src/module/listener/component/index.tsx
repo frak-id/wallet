@@ -1,10 +1,7 @@
 "use client";
 
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
-import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
-import { useDashboardActionListener } from "@/module/listener/hooks/useDashboardActionListener";
 import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
 import { useSendTransactionListener } from "@/module/listener/hooks/useSendTransactionListener";
 import { useSetUserReferredListener } from "@/module/listener/hooks/useSetUserReferredListener";
@@ -34,14 +31,6 @@ export function ListenerUI() {
 
     // Hook used when a user referred is requested
     const { onUserReferredListenRequest } = useSetUserReferredListener();
-
-    // Hook used when a dashboard action is requested
-    const {
-        onDashboardActionListenRequest,
-        isDialogOpen,
-        doSomething,
-        doNothing,
-    } = useDashboardActionListener();
 
     // Hook used when a dashboard action is requested
     const { onSendTransactionRequest, component: sendTxComponent } =
@@ -80,11 +69,6 @@ export function ListenerUI() {
             /**
              * Listen request for the dashboard action
              */
-            frak_listenToDashboardAction: onDashboardActionListenRequest,
-
-            /**
-             * Listen request for the dashboard action
-             */
             frak_sendTransaction: onSendTransactionRequest,
 
             /**
@@ -105,7 +89,6 @@ export function ListenerUI() {
         onGetArticleUnlockOptions,
         onArticleUnlockStatusListenerRequest,
         onUserReferredListenRequest,
-        onDashboardActionListenRequest,
         onSendTransactionRequest,
         onSiweAuthenticateRequest,
     ]);
@@ -148,21 +131,6 @@ export function ListenerUI() {
             */}
             {sendTxComponent}
             {siweAuthenticateComponent}
-            {/*Alert dialog for the dashboard action*/}
-            <AlertDialog
-                open={isDialogOpen}
-                text={
-                    <>
-                        <p>Are you sure you want to do something?</p>
-                        <ButtonRipple onClick={() => doSomething()}>
-                            Yes
-                        </ButtonRipple>
-                        <ButtonRipple onClick={() => doNothing()}>
-                            No
-                        </ButtonRipple>
-                    </>
-                }
-            />
         </>
     );
 }

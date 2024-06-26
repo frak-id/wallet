@@ -81,6 +81,8 @@ export async function getSession(): Promise<AuthSessionClient | null> {
     const session = await getFullSession();
     if (!session.wallet) return null;
 
+    // todo: siwe check every 2 hours??
+
     return {
         wallet: session.wallet,
     };

@@ -17,10 +17,6 @@ export type {
     SiweAuthenticationParams,
 } from "./rpc/authenticate";
 export type {
-    DashboardActionParams,
-    DashboardActionReturnType,
-} from "./rpc/dashboardAction";
-export type {
     SendTransactionActionParamsType,
     SendTransactionReturnType,
 } from "./rpc/sendTransaction";

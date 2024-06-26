@@ -132,98 +132,82 @@ export function createIFrameRequestResolver(
 export function getIframeRequestKeyProvider(
     event: IFrameRpcEvent
 ): KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>> {
-    // Unlock options key
-    if (event.topic === "frak_getArticleUnlockOptions") {
-        return ((
-            request: Extract<
-                ExtractedParametersFromRpc<IFrameRpcSchema>,
-                { method: "frak_getArticleUnlockOptions" }
-            >
-        ) => [
-            "get-price",
-            request.params[0],
-            request.params[1],
-        ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-    }
+    switch (event.topic) {
+        // Article unlock options
+        case "frak_getArticleUnlockOptions":
+            return ((
+                request: Extract<
+                    ExtractedParametersFromRpc<IFrameRpcSchema>,
+                    { method: "frak_getArticleUnlockOptions" }
+                >
+            ) => [
+                "get-price",
+                request.params[0],
+                request.params[1],
+            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
 
-    // Wallet status key
-    if (event.topic === "frak_listenToWalletStatus") {
-        return ((
-            _: Extract<
-                ExtractedParametersFromRpc<IFrameRpcSchema>,
-                { method: "frak_listenToWalletStatus" }
-            >
-        ) => ["wallet-status"]) as KeyProvider<
-            ExtractedParametersFromRpc<IFrameRpcSchema>
-        >;
-    }
+        // Wallet status
+        case "frak_listenToWalletStatus":
+            return ((
+                _: Extract<
+                    ExtractedParametersFromRpc<IFrameRpcSchema>,
+                    { method: "frak_listenToWalletStatus" }
+                >
+            ) => ["wallet-status"]) as KeyProvider<
+                ExtractedParametersFromRpc<IFrameRpcSchema>
+            >;
 
-    // Article unlock status key
-    if (event.topic === "frak_listenToArticleUnlockStatus") {
-        return ((
-            request: Extract<
-                ExtractedParametersFromRpc<IFrameRpcSchema>,
-                { method: "frak_listenToArticleUnlockStatus" }
-            >
-        ) => [
-            "article-unlock-status",
-            request.params[0],
-            request.params[1],
-        ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-    }
+        // Article unlock status
+        case "frak_listenToArticleUnlockStatus":
+            return ((
+                request: Extract<
+                    ExtractedParametersFromRpc<IFrameRpcSchema>,
+                    { method: "frak_listenToArticleUnlockStatus" }
+                >
+            ) => [
+                "article-unlock-status",
+                request.params[0],
+                request.params[1],
+            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
 
-    // Referred user key
-    if (event.topic === "frak_listenToSetUserReferred") {
-        return ((
-            request: Extract<
-                ExtractedParametersFromRpc<IFrameRpcSchema>,
-                { method: "frak_listenToSetUserReferred" }
-            >
-        ) => [
-            "user-referred",
-            request.params[0],
-            request.params[1],
-        ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-    }
+        // Referred user
+        case "frak_listenToSetUserReferred":
+            return ((
+                request: Extract<
+                    ExtractedParametersFromRpc<IFrameRpcSchema>,
+                    { method: "frak_listenToSetUserReferred" }
+                >
+            ) => [
+                "user-referred",
+                request.params[0],
+                request.params[1],
+            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
 
-    // Send transaction key
-    if (event.topic === "frak_sendTransaction") {
-        return ((
-            request: Extract<
-                ExtractedParametersFromRpc<IFrameRpcSchema>,
-                { method: "frak_sendTransaction" }
-            >
-        ) => [
-            "send-transaction",
-            JSON.stringify(request.params[0]),
-        ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-    }
+        // Send transaction
+        case "frak_sendTransaction":
+            return ((
+                request: Extract<
+                    ExtractedParametersFromRpc<IFrameRpcSchema>,
+                    { method: "frak_sendTransaction" }
+                >
+            ) => [
+                "send-transaction",
+                JSON.stringify(request.params[0]),
+            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
 
-    // Siwe authentication
-    if (event.topic === "frak_siweAuthenticate") {
-        return ((
-            request: Extract<
-                ExtractedParametersFromRpc<IFrameRpcSchema>,
-                { method: "frak_siweAuthenticate" }
-            >
-        ) => [
-            "siwe-authentication",
-            JSON.stringify(request.params[0]),
-        ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-    }
+        // Siwe authentication
+        case "frak_siweAuthenticate":
+            return ((
+                request: Extract<
+                    ExtractedParametersFromRpc<IFrameRpcSchema>,
+                    { method: "frak_siweAuthenticate" }
+                >
+            ) => [
+                "siwe-authentication",
+                JSON.stringify(request.params[0]),
+            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
 
-    if (event.topic === "frak_listenToDashboardAction") {
-        return ((
-            request: Extract<
-                ExtractedParametersFromRpc<IFrameRpcSchema>,
-                { method: "frak_listenToDashboardAction" }
-            >
-        ) => [
-            "dashboard-action",
-            request.params[0],
-            request.params[1],
-        ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
+        default:
+            throw new Error(`No key provider found for the event ${event}`);
     }
-
-    throw new Error(`No key provider found for the event ${event}`);
 }

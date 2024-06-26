@@ -24,8 +24,6 @@ export type {
     StartArticleUnlockReturnType,
     SetUserReferredParams,
     SetUserReferredReturnType,
-    DashboardActionParams,
-    DashboardActionReturnType,
     SendTransactionActionParamsType,
     SendTransactionReturnType,
     AuthenticateReturnType,

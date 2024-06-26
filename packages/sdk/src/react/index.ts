@@ -18,7 +18,6 @@ export {
     useWalletStatus,
     useArticleUnlockStatus,
     useNexusReferral,
-    useDashboardAction,
     useSendTransactionAction,
     useSiweAuthenticate,
 } from "./hook";
