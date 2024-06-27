@@ -1,13 +1,11 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
-import { iFrameToggleVisibility } from "@/context/sdk/utils/iFrameToggleVisibility";
-import { sendTransactionListenerAtom } from "@/module/listener/atoms/sendTransactionListener";
-import { SendTransactionComponent } from "@/module/listener/component/SendTx";
+import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
-import { useAtom } from "jotai";
-import { useCallback, useMemo, useState } from "react";
+import { useSetAtom } from "jotai";
+import { useCallback } from "react";
 
 type OnSendTransactionRequest = IFrameRequestResolver<
     Extract<
@@ -24,14 +22,8 @@ type OnSendTransactionRequest = IFrameRequestResolver<
  * todo: The component use inside the "receiveAction" should be the same as the one used inside each AlertDialog here
  */
 export function useSendTransactionListener() {
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const setDisplayedRequest = useSetAtom(modalDisplayedRequestAtom);
 
-    /**
-     The current listener param
-     */
-    const [listenerParam, setListenerParam] = useAtom(
-        sendTransactionListenerAtom
-    );
     /**
      * The function that will be called when a dashboard action is requested
      * @param request
@@ -45,73 +37,24 @@ export function useSendTransactionListener() {
 
             // If no action present
             if (!tx) {
-                setListenerParam(null);
-                setIsDialogOpen(false);
-                // And exit
+                // Exit
                 return;
             }
 
-            // Otherwise, save emitter and params
-            setListenerParam({
-                tx,
-                context,
-                emitter,
+            // Otherwise, send emitter to the dialog
+            setDisplayedRequest({
+                type: "transaction",
+                listener: {
+                    tx,
+                    context,
+                    emitter,
+                },
             });
-
-            // Show the iframe
-            iFrameToggleVisibility(true);
-
-            // Tell that the dialog is open
-            setIsDialogOpen(true);
         },
-        [setListenerParam]
+        [setDisplayedRequest]
     );
-
-    const closeDialog = useCallback(() => {
-        setIsDialogOpen(false);
-        iFrameToggleVisibility(false);
-    }, []);
-
-    /**
-     * Build the send transaction component
-     */
-    const component = useMemo(() => {
-        if (!listenerParam) {
-            return null;
-        }
-
-        return (
-            <SendTransactionComponent
-                tx={listenerParam.tx}
-                context={listenerParam.context}
-                isOpen={isDialogOpen}
-                onSuccess={(hash) => {
-                    listenerParam.emitter({
-                        key: "success",
-                        hash,
-                    });
-                    closeDialog();
-                }}
-                onError={(reason) => {
-                    listenerParam.emitter({
-                        key: "error",
-                        reason,
-                    });
-                    closeDialog();
-                }}
-                onDiscard={() => {
-                    listenerParam.emitter({
-                        key: "aborted",
-                    });
-                    closeDialog();
-                }}
-            />
-        );
-    }, [listenerParam, isDialogOpen, closeDialog]);
 
     return {
         onSendTransactionRequest,
-        isDialogOpen,
-        component,
     };
 }

@@ -1,5 +1,8 @@
-import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
+import { ListenerModalHeader } from "@/module/listener/component/Modal";
+import styles from "@/module/listener/component/Modal/index.module.css";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
@@ -7,35 +10,29 @@ import { useSignMessage } from "wagmi";
 
 /**
  * Modal used to perform a siwe signature
- * @param siweMessage
  * @param context
- * @param isOpen
+ * @param siweMessage
  * @param onSuccess
  * @param onError
- * @param onDiscard
  * @constructor
  */
-export function SiweAuthenticateModal({
-    siweMessage,
+export function SiweAuthenticate({
     context,
-    isOpen,
+    siweMessage,
     onSuccess,
     onError,
-    onDiscard,
 }: {
-    siweMessage: SiweMessage;
     context?: string;
-    isOpen: boolean;
+    siweMessage: SiweMessage;
     onSuccess: (signature: Hex, message: string) => void;
     onError: (reason?: string) => void;
-    onDiscard: () => void;
 }) {
     const message = useMemo(
         () => createSiweMessage(siweMessage),
         [siweMessage]
     );
 
-    const { signMessage, isPending } = useSignMessage({
+    const { signMessage, isPending, isError, error } = useSignMessage({
         mutation: {
             // Link success and error hooks
             onSuccess: (signature) => onSuccess(signature, message),
@@ -46,36 +43,38 @@ export function SiweAuthenticateModal({
     });
 
     return (
-        <AlertDialog
-            open={isOpen}
-            onOpenChange={(open) => {
-                if (!open) {
-                    onDiscard();
-                }
-            }}
-            title={"Nexus Wallet - Authentication"}
-            text={
-                <>
-                    {context && <p>{context}</p>}
+        <>
+            <ListenerModalHeader title={"Nexus Wallet - Authentication"} />
+            <Panel size={"normal"}>
+                <Title>Welcome to your dashboard</Title>
+                <br />
+                {context && <p>{context}</p>}
+                <p>You need to authenticate to proceed.</p>
+                <p>{siweMessage.statement}</p>
+                <p>Domain: {siweMessage.domain}</p>
+                <p>Uri: {siweMessage.uri}</p>
+                <p>
+                    Need help? Contact us at{" "}
+                    <a href="mailto:hello@frak.id">hello@frak.id</a>
+                </p>
+            </Panel>
+            <AuthFingerprint
+                className={styles.modalListener__action}
+                disabled={isPending}
+                action={() => {
+                    signMessage({
+                        message,
+                    });
+                }}
+            >
+                Validate authentication
+            </AuthFingerprint>
 
-                    {/*todo: some nice and formatted siwe info*/}
-                    <p>{siweMessage.statement}</p>
-                    <p>Domain: {siweMessage.domain}</p>
-                    <p>Uri: {siweMessage.uri}</p>
-                </>
-            }
-            action={
-                <AuthFingerprint
-                    disabled={isPending}
-                    action={() => {
-                        signMessage({
-                            message,
-                        });
-                    }}
-                >
-                    Validate authentication
-                </AuthFingerprint>
-            }
-        />
+            {isError && error && (
+                <p className={`error ${styles.modalListener__error}`}>
+                    {error.message}
+                </p>
+            )}
+        </>
     );
 }

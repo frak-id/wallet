@@ -1,0 +1,25 @@
+.modalListener__header {
+    margin-bottom: 20px;
+}
+
+.modalListener__title {
+    margin: 0;
+    font-size: 16px;
+}
+
+.modalListener__link {
+    text-decoration: none;
+}
+
+.modalListener__error {
+    text-align: center;
+}
+
+.modalListener__action {
+    margin-top: 20px;
+}
+
+.modalListener__success {
+    text-align: center;
+    color: var(--frak-color-green);
+}

@@ -29,7 +29,7 @@ export function Login() {
             <ButtonRipple
                 onClick={() =>
                     authenticate({
-                        context: "Test authentication",
+                        context: "Authentication",
                     })
                 }
             >
