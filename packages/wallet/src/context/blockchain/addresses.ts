@@ -10,7 +10,8 @@ export const addresses = {
     paywall: "0x99F44C46fb00b94f5Cff57cbbF3d57303469E884",
     communityToken: "0x932145A69BaF498D7F87D06db2E6c7963BF86E85",
     // Interactions
-    contentInteractionManager: "0x71a54b7Edb803b0FB6c7A930794BcA13587Af21b",
+    contentInteractionManager: "0x76091A17B9f0C53Ea826E04bD5E586C143AFC30e",
+    mUsdToken: "0x56039fa1a804F614eBD714139F29a3ff4DB57ad6",
 } as const;
 
 /**

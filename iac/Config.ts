@@ -17,7 +17,6 @@ export function ConfigStack({ stack }: StackContext) {
     const mongoBusinessUri = new Config.Secret(stack, "MONGODB_BUSINESS_URI");
     const alchemyApiKey = new Config.Secret(stack, "ALCHEMY_API_KEY");
     const pimlicoApiKey = new Config.Secret(stack, "PIMLICO_API_KEY");
-    const zeroDevApiKey = new Config.Secret(stack, "ZERODEV_API_KEY");
     const airdropPrivateKey = new Config.Secret(stack, "AIRDROP_PRIVATE_KEY");
     const interactionValidatorPrivateKey = new Config.Secret(
         stack,
@@ -40,7 +39,6 @@ export function ConfigStack({ stack }: StackContext) {
         mongoBusinessUri,
         alchemyApiKey,
         pimlicoApiKey,
-        zeroDevApiKey,
         airdropPrivateKey,
         interactionValidatorPrivateKey,
         adminPassword,

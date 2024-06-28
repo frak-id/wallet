@@ -5,7 +5,7 @@ import { getMongoDb } from "@/context/common/mongoDb";
 import { DI } from "@frak-labs/nexus-wallet/src/context/common/di";
 import type { Collection } from "mongodb";
 
-export class CampaignRepository {
+class CampaignRepository {
     constructor(private readonly collection: Collection<CampaignDocument>) {}
 
     /**

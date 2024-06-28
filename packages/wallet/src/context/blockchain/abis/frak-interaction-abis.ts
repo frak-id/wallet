@@ -59,6 +59,20 @@ export const contentInteractionDiamondAbi = [
         type: "function",
         inputs: [
             {
+                name: "_contentTypeDenominator",
+                internalType: "uint8",
+                type: "uint8",
+            },
+            { name: "_call", internalType: "bytes", type: "bytes" },
+        ],
+        name: "delegateToFacet",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            {
                 name: "_contentTypes",
                 internalType: "ContentTypes",
                 type: "uint256",
@@ -288,6 +302,32 @@ export const contentInteractionDiamondAbi = [
         anonymous: false,
         inputs: [
             {
+                name: "campaign",
+                internalType: "contract InteractionCampaign",
+                type: "address",
+                indexed: false,
+            },
+        ],
+        name: "CampaignAttached",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "campaign",
+                internalType: "contract InteractionCampaign",
+                type: "address",
+                indexed: false,
+            },
+        ],
+        name: "CampaignDetached",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
                 name: "version",
                 internalType: "uint64",
                 type: "uint64",
@@ -397,6 +437,16 @@ export const contentInteractionManagerAbi = [
         type: "function",
         inputs: [
             { name: "_contentId", internalType: "uint256", type: "uint256" },
+            { name: "_operator", internalType: "address", type: "address" },
+        ],
+        name: "addOperator",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "_contentId", internalType: "uint256", type: "uint256" },
             {
                 name: "_campaign",
                 internalType: "contract InteractionCampaign",
@@ -430,6 +480,33 @@ export const contentInteractionManagerAbi = [
         ],
         name: "deleteInteractionContract",
         outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "_contentId", internalType: "uint256", type: "uint256" },
+            { name: "_operator", internalType: "address", type: "address" },
+        ],
+        name: "deleteOperator",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "_contentId", internalType: "uint256", type: "uint256" },
+            {
+                name: "_campaignIdentifier",
+                internalType: "bytes4",
+                type: "bytes4",
+            },
+            { name: "_initData", internalType: "bytes", type: "bytes" },
+        ],
+        name: "deployCampaign",
+        outputs: [
+            { name: "campaign", internalType: "address", type: "address" },
+        ],
         stateMutability: "nonpayable",
     },
     {
@@ -506,13 +583,28 @@ export const contentInteractionManagerAbi = [
             { name: "_owner", internalType: "address", type: "address" },
             {
                 name: "_facetsFactory",
-                internalType: "contract InteractionFacetsFactory",
+                internalType: "contract IFacetsFactory",
+                type: "address",
+            },
+            {
+                name: "_campaignFactory",
+                internalType: "contract ICampaignFactory",
                 type: "address",
             },
         ],
         name: "init",
         outputs: [],
         stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "_contentId", internalType: "uint256", type: "uint256" },
+            { name: "_user", internalType: "address", type: "address" },
+        ],
+        name: "isAllowedOnContent",
+        outputs: [{ name: "isAllowed", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
     },
     {
         type: "function",
@@ -588,8 +680,21 @@ export const contentInteractionManagerAbi = [
         type: "function",
         inputs: [
             {
+                name: "_campaignFactory",
+                internalType: "contract ICampaignFactory",
+                type: "address",
+            },
+        ],
+        name: "updateCampaignFactory",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            {
                 name: "_facetsFactory",
-                internalType: "contract InteractionFacetsFactory",
+                internalType: "contract IFacetsFactory",
                 type: "address",
             },
         ],
@@ -637,16 +742,16 @@ export const contentInteractionManagerAbi = [
                 name: "contentId",
                 internalType: "uint256",
                 type: "uint256",
-                indexed: false,
+                indexed: true,
             },
             {
-                name: "campaign",
+                name: "operator",
                 internalType: "address",
                 type: "address",
                 indexed: false,
             },
         ],
-        name: "CampaignAttached",
+        name: "ContentOperatorAdded",
     },
     {
         type: "event",
@@ -656,16 +761,16 @@ export const contentInteractionManagerAbi = [
                 name: "contentId",
                 internalType: "uint256",
                 type: "uint256",
-                indexed: false,
+                indexed: true,
             },
             {
-                name: "campaigns",
-                internalType: "contract InteractionCampaign[]",
-                type: "address[]",
+                name: "operator",
+                internalType: "address",
+                type: "address",
                 indexed: false,
             },
         ],
-        name: "CampaignsDetached",
+        name: "ContentOperatorRemoved",
     },
     {
         type: "event",
@@ -689,6 +794,12 @@ export const contentInteractionManagerAbi = [
                 internalType: "uint256",
                 type: "uint256",
                 indexed: true,
+            },
+            {
+                name: "interactionContract",
+                internalType: "contract ContentInteractionDiamond",
+                type: "address",
+                indexed: false,
             },
         ],
         name: "InteractionContractDeleted",
@@ -720,7 +831,13 @@ export const contentInteractionManagerAbi = [
                 name: "contentId",
                 internalType: "uint256",
                 type: "uint256",
-                indexed: true,
+                indexed: false,
+            },
+            {
+                name: "interactionContract",
+                internalType: "contract ContentInteractionDiamond",
+                type: "address",
+                indexed: false,
             },
         ],
         name: "InteractionContractUpdated",
@@ -832,6 +949,315 @@ export const contentInteractionManagerAbi = [
     { type: "error", inputs: [], name: "Unauthorized" },
     { type: "error", inputs: [], name: "UnauthorizedCallContext" },
     { type: "error", inputs: [], name: "UpgradeFailed" },
+] as const;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DappInteractionFacet
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const dappInteractionFacetAbi = [
+    { type: "constructor", inputs: [], stateMutability: "nonpayable" },
+    { type: "fallback", stateMutability: "nonpayable" },
+    {
+        type: "function",
+        inputs: [],
+        name: "cancelOwnershipHandover",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "pendingOwner", internalType: "address", type: "address" },
+        ],
+        name: "completeOwnershipHandover",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [],
+        name: "contentTypeDenominator",
+        outputs: [{ name: "", internalType: "uint8", type: "uint8" }],
+        stateMutability: "pure",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "id", internalType: "bytes4", type: "bytes4" }],
+        name: "deleteContentContract",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "user", internalType: "address", type: "address" },
+            { name: "roles", internalType: "uint256", type: "uint256" },
+        ],
+        name: "grantRoles",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "user", internalType: "address", type: "address" },
+            { name: "roles", internalType: "uint256", type: "uint256" },
+        ],
+        name: "hasAllRoles",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "user", internalType: "address", type: "address" },
+            { name: "roles", internalType: "uint256", type: "uint256" },
+        ],
+        name: "hasAnyRole",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [],
+        name: "owner",
+        outputs: [{ name: "result", internalType: "address", type: "address" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "pendingOwner", internalType: "address", type: "address" },
+        ],
+        name: "ownershipHandoverExpiresAt",
+        outputs: [{ name: "result", internalType: "uint256", type: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [],
+        name: "renounceOwnership",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "roles", internalType: "uint256", type: "uint256" }],
+        name: "renounceRoles",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [],
+        name: "requestOwnershipHandover",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "user", internalType: "address", type: "address" },
+            { name: "roles", internalType: "uint256", type: "uint256" },
+        ],
+        name: "revokeRoles",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "user", internalType: "address", type: "address" }],
+        name: "rolesOf",
+        outputs: [{ name: "roles", internalType: "uint256", type: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            {
+                name: "_contractAddress",
+                internalType: "address",
+                type: "address",
+            },
+            {
+                name: "_storageCheckSelector",
+                internalType: "bytes4",
+                type: "bytes4",
+            },
+        ],
+        name: "setContentContract",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "newOwner", internalType: "address", type: "address" },
+        ],
+        name: "transferOwnership",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "smartContract",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "value",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: false,
+            },
+        ],
+        name: "CallableStorageUpdated",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "id",
+                internalType: "bytes4",
+                type: "bytes4",
+                indexed: true,
+            },
+            {
+                name: "contractAddress",
+                internalType: "address",
+                type: "address",
+                indexed: false,
+            },
+            {
+                name: "fnSelector",
+                internalType: "bytes4",
+                type: "bytes4",
+                indexed: false,
+            },
+        ],
+        name: "ContractRegistered",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "id",
+                internalType: "bytes4",
+                type: "bytes4",
+                indexed: true,
+            },
+        ],
+        name: "ContractUnRegistered",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "pendingOwner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+        ],
+        name: "OwnershipHandoverCanceled",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "pendingOwner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+        ],
+        name: "OwnershipHandoverRequested",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "oldOwner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "newOwner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+        ],
+        name: "OwnershipTransferred",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "smartContract",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "slot",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: false,
+            },
+            {
+                name: "value",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: false,
+            },
+        ],
+        name: "ProofStorageUpdated",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "user",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "roles",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: true,
+            },
+        ],
+        name: "RolesUpdated",
+    },
+    { type: "error", inputs: [], name: "AlreadyInitialized" },
+    { type: "error", inputs: [], name: "CallFailed" },
+    { type: "error", inputs: [], name: "CallVerificationFailed" },
+    {
+        type: "error",
+        inputs: [{ name: "index", internalType: "uint256", type: "uint256" }],
+        name: "InvalidProof",
+    },
+    { type: "error", inputs: [], name: "NewOwnerIsZeroAddress" },
+    { type: "error", inputs: [], name: "NoHandoverRequest" },
+    { type: "error", inputs: [], name: "Unauthorized" },
+    { type: "error", inputs: [], name: "UnknownContract" },
+    { type: "error", inputs: [], name: "UnknownInteraction" },
 ] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
