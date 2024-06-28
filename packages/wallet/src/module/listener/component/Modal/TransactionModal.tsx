@@ -1,5 +1,5 @@
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
-import { Panel } from "@/module/common/component/Panel";
+import { TextData } from "@/module/common/component/TextData";
 import { Title } from "@/module/common/component/Title";
 import { ListenerModalHeader } from "@/module/listener/component/Modal";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
@@ -64,13 +64,13 @@ export function TransactionModal({
 
     return (
         <>
-            <ListenerModalHeader title={"TRANSACTION"} />
-
-            <Panel size={"normal"}>
-                <Title>You need to confirm this transaction</Title>
-                <br />
+            <ListenerModalHeader title={"Transaction"} />
+            <Title className={styles.modalListener__subTitle}>
+                You need to confirm this transaction
+            </Title>
+            <TextData>
                 <TxDetails tx={listener.tx} context={listener.context} />
-            </Panel>
+            </TextData>
 
             <AuthFingerprint
                 className={styles.modalListener__action}
@@ -119,7 +119,7 @@ function TxDetails({
     }, [tx]);
 
     return (
-        <div className={styles.modalWc__message}>
+        <div>
             {context ? <p>{context}</p> : null}
             {txs.map((tx, index) => (
                 <div key={`${index}-${tx.to}`}>

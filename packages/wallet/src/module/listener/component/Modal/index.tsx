@@ -127,3 +127,12 @@ export function ListenerModalHeader({
         </header>
     );
 }
+
+export function HelpModal() {
+    return (
+        <p className={styles.modalListener__help}>
+            Need help? Contact us at{" "}
+            <a href="mailto:hello@frak.id">hello@frak.id</a>
+        </p>
+    );
+}

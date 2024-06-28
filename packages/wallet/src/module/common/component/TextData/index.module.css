@@ -1,0 +1,8 @@
+.textData {
+    padding: 7px;
+    background: #000B1C;
+    border: 1px solid #818C9C;
+    border-radius: 8px;
+    font-size: 12px;
+    overflow: auto;
+}

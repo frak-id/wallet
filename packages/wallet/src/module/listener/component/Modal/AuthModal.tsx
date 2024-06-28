@@ -1,10 +1,12 @@
 import { Login } from "@/module/listener/component/Authenticate/Login";
 import { SiweAuthenticate } from "@/module/listener/component/Authenticate/SiweAuthenticate";
+import { ListenerModalHeader } from "@/module/listener/component/Modal/index";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 import type { SiweMessage } from "viem/siwe";
 import { useAccount } from "wagmi";
+import styles from "./index.module.css";
 
 export function AuthModal({
     args: { listener },
@@ -82,5 +84,36 @@ export function AuthModal({
         return null;
     }
 
-    return component;
+    return (
+        <>
+            <ListenerModalHeader title={"Nexus Wallet"} />
+            <Steps>
+                <StepItem isActive={step.key === "login"}>Login</StepItem>
+                <StepItem isActive={step.key === "siwe"}>
+                    Authentication
+                </StepItem>
+            </Steps>
+            {component}
+        </>
+    );
+}
+
+function Steps({ children }) {
+    return <div className={styles.modalListener__steps}>{children}</div>;
+}
+
+function StepItem({ isActive, children }) {
+    return (
+        <div
+            className={`${styles.modalListener__stepItem} ${isActiveStep(
+                isActive
+            )}`}
+        >
+            {children}
+        </div>
+    );
+}
+
+function isActiveStep(isActive) {
+    return isActive ? styles["modalListener__stepItem--active"] : "";
 }

@@ -1,8 +1,7 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import { ListenerModalHeader } from "@/module/listener/component/Modal";
+import { HelpModal } from "@/module/listener/component/Modal";
 import styles from "@/module/listener/component/Modal/index.module.css";
 
 /**
@@ -19,10 +18,7 @@ export function Login({
 
     return (
         <>
-            <ListenerModalHeader title={"Nexus Wallet - Login"} />
             <Panel size={"normal"}>
-                <Title>Welcome to your dashboard</Title>
-                <br />
                 <p>
                     Please connect your{" "}
                     <a href={process.env.APP_URL}>Nexus wallet</a> to access
@@ -33,11 +29,8 @@ export function Login({
                     from a file, please go to{" "}
                     <a href={process.env.APP_URL}>https://nexus.frak.id/</a>
                 </p>
-                <p>
-                    Need help? Contact us at{" "}
-                    <a href="mailto:hello@frak.id">hello@frak.id</a>
-                </p>
             </Panel>
+            <HelpModal />
             <AuthFingerprint
                 className={styles.modalListener__action}
                 disabled={isLoading}
@@ -50,7 +43,9 @@ export function Login({
                             onError(error.message);
                         });
                 }}
-            />
+            >
+                Login
+            </AuthFingerprint>
 
             {isSuccess && (
                 <p className={styles.modalListener__success}>

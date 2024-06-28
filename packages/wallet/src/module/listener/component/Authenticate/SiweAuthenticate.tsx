@@ -1,7 +1,6 @@
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import { ListenerModalHeader } from "@/module/listener/component/Modal";
+import { TextData } from "@/module/common/component/TextData";
+import { HelpModal } from "@/module/listener/component/Modal";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { useMemo } from "react";
 import type { Hex } from "viem";
@@ -44,20 +43,13 @@ export function SiweAuthenticate({
 
     return (
         <>
-            <ListenerModalHeader title={"Nexus Wallet - Authentication"} />
-            <Panel size={"normal"}>
-                <Title>Welcome to your dashboard</Title>
-                <br />
+            <TextData>
                 {context && <p>{context}</p>}
-                <p>You need to authenticate to proceed.</p>
                 <p>{siweMessage.statement}</p>
                 <p>Domain: {siweMessage.domain}</p>
                 <p>Uri: {siweMessage.uri}</p>
-                <p>
-                    Need help? Contact us at{" "}
-                    <a href="mailto:hello@frak.id">hello@frak.id</a>
-                </p>
-            </Panel>
+            </TextData>
+            <HelpModal />
             <AuthFingerprint
                 className={styles.modalListener__action}
                 disabled={isPending}
