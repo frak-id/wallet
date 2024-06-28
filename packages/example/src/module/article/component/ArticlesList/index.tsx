@@ -3,6 +3,7 @@
 import { getAllArticles } from "@/context/article/action/get";
 import { ArticleItem } from "@/module/article/component/ArticleItem";
 import { Skeleton } from "@/module/common/component/Skeleton";
+import { useSiweAuthenticate } from "@frak-labs/nexus-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 
 export function ArticlesList() {
@@ -31,6 +32,39 @@ export function ArticlesList() {
                     ))}
                 </ul>
             )}
+            <TestAuth />
         </div>
+    );
+}
+
+function TestAuth() {
+    const { mutate: authenticate } = useSiweAuthenticate({
+        mutations: {
+            onSuccess: (data, variables, context) => {
+                console.log("Cross domain success", {
+                    data,
+                    variables,
+                    context,
+                });
+            },
+            onError: (error, variables, context) => {
+                console.error("Cross domain error", {
+                    error,
+                    variables,
+                    context,
+                });
+            },
+        },
+    });
+
+    return (
+        <button
+            type={"button"}
+            onClick={() => {
+                authenticate({});
+            }}
+        >
+            Test Cross Domain Auth
+        </button>
     );
 }

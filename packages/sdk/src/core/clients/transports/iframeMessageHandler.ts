@@ -1,5 +1,6 @@
 import type { IFrameEvent } from "../../types/transport";
 import { Deferred } from "../../utils/Deferred";
+import { changeIframeVisibility } from "../../utils/iframeHelper";
 import type { IFrameChannelManager } from "./iframeChannelManager";
 
 /**
@@ -63,11 +64,6 @@ export function createIFrameMessageHandler({
     // Create our deferred promise
     const isConnected = new Deferred<boolean>();
 
-    // Function to toggle the iframe visibility
-    const toggleIframeVisibility = (visibility: boolean) => {
-        iframe?.classList.toggle("visible", visibility);
-    };
-
     // Create the function that will handle incoming iframe messages
     const msgHandler = async (event: MessageEvent<IFrameEvent>) => {
         if (!event.origin) {
@@ -90,7 +86,10 @@ export function createIFrameMessageHandler({
                     break;
                 case "show":
                 case "hide":
-                    toggleIframeVisibility(event.data.lifecycle === "show");
+                    changeIframeVisibility({
+                        iframe,
+                        isVisible: event.data.lifecycle === "show",
+                    });
                     break;
             }
             return;
