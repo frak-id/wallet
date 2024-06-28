@@ -11,10 +11,6 @@
     margin-bottom: 10px;
 }
 
-.modalListener__link {
-    text-decoration: none;
-}
-
 .modalListener__error {
     text-align: center;
 }
@@ -57,4 +53,8 @@
     margin-top: 20px;
     font-size: 12px;
     color: #818C9C;
+}
+
+.modalListener__context {
+    margin-bottom: 10px;
 }

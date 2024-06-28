@@ -26,6 +26,7 @@ export type {
     SetUserReferredReturnType,
     SendTransactionActionParamsType,
     SendTransactionReturnType,
+    SendTransactionTxType,
     AuthenticateReturnType,
     AuthenticateActionParamsType,
     AuthenticateRpcParamsType,

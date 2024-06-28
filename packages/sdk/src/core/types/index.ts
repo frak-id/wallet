@@ -19,6 +19,7 @@ export type {
 export type {
     SendTransactionActionParamsType,
     SendTransactionReturnType,
+    SendTransactionTxType,
 } from "./rpc/sendTransaction";
 export { FrakRpcError } from "./rpc/error";
 export type { IFrameRpcSchema, RedirectRpcSchema } from "./rpc";

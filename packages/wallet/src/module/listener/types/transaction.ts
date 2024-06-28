@@ -3,8 +3,6 @@ import type {
     SendTransactionReturnType,
 } from "@frak-labs/nexus-sdk/core";
 
-export type SendTransactionListenerParam = {
-    tx: SendTransactionActionParamsType["tx"];
-    context: SendTransactionActionParamsType["context"];
+export type SendTransactionListenerParam = SendTransactionActionParamsType & {
     emitter: (response: SendTransactionReturnType) => Promise<void>;
 };

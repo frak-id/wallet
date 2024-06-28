@@ -2,11 +2,10 @@ import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { TextData } from "@/module/common/component/TextData";
 import { Title } from "@/module/common/component/Title";
 import { ListenerModalHeader } from "@/module/listener/component/Modal";
+import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
-import type { SendTransactionListenerParam } from "@/module/listener/types/transaction";
-import { WalletAddress } from "@/module/wallet/component/WalletAddress";
-import { useEffect, useMemo } from "react";
-import { type Hex, formatEther } from "viem";
+import { useEffect } from "react";
+import type { Hex } from "viem";
 import { useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
 
@@ -57,6 +56,7 @@ export function TransactionModal({
     }, [onPending, status]);
 
     const tx = listener?.tx;
+    const txs = Array.isArray(tx) ? tx : [tx];
 
     if (!listener) {
         return null;
@@ -69,24 +69,28 @@ export function TransactionModal({
                 You need to confirm this transaction
             </Title>
             <TextData>
-                <TxDetails tx={listener.tx} context={listener.context} />
+                {listener.context ? (
+                    <p className={styles.modalListener__context}>
+                        {listener.context}
+                    </p>
+                ) : null}
+                <AccordionTransactions txs={txs} />
             </TextData>
 
             <AuthFingerprint
                 className={styles.modalListener__action}
                 disabled={isPending}
                 action={() => {
-                    if (!tx) return;
+                    if (!txs.length) return;
                     // TODO: Should bundle the tx if it's an array
-                    const toExecute = Array.isArray(tx) ? tx : [tx];
                     sendTransaction({
-                        to: toExecute[0].to,
-                        data: toExecute[0].data,
-                        value: BigInt(toExecute[0].value),
+                        to: txs[0].to,
+                        data: txs[0].data,
+                        value: BigInt(txs[0].value),
                     });
                 }}
             >
-                Send transaction{Array.isArray(tx) ? "s" : ""}
+                Send transaction{txs.length > 1 ? "s" : ""}
             </AuthFingerprint>
 
             {isError && (
@@ -95,47 +99,5 @@ export function TransactionModal({
                 </p>
             )}
         </>
-    );
-}
-
-/**
- * todo: Better UI
- *  - Show in collapsing code block if multiple txs
- *  - Need to show to and then data if not 0 and value if not 0
- * @param tx
- * @param context
- * @constructor
- */
-function TxDetails({
-    tx,
-    context,
-}: Pick<SendTransactionListenerParam, "tx" | "context">) {
-    // Tx in the array format
-    const txs = useMemo(() => {
-        if (Array.isArray(tx)) {
-            return tx;
-        }
-        return [tx];
-    }, [tx]);
-
-    return (
-        <div>
-            {context ? <p>{context}</p> : null}
-            {txs.map((tx, index) => (
-                <div key={`${index}-${tx.to}`}>
-                    <p>
-                        To: <WalletAddress wallet={tx.to} />
-                    </p>
-
-                    {BigInt(tx.value) > 0n ? (
-                        <p>Amount: ${formatEther(BigInt(tx.value))}</p>
-                    ) : null}
-
-                    {BigInt(tx.data.length) > 0n ? (
-                        <p>Data: {tx.data}</p>
-                    ) : null}
-                </div>
-            ))}
-        </div>
     );
 }
