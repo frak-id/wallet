@@ -1,5 +1,6 @@
 import { getUser } from "@/context/membrs/action/user";
 import { getSession } from "@/context/session/action/session";
+import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
@@ -64,15 +65,9 @@ export default async function RootLayout({
         <html lang="en" suppressHydrationWarning>
             <body className={`scrollbars ${sora.className}`}>
                 <NextTopLoader showSpinner={false} />
-                <div className={"desktop scrollbars"}>
-                    <main className={styles.main}>
-                        <div className={styles.inner}>
-                            <RootProvider session={session} user={user}>
-                                <ClientOnly>{children}</ClientOnly>
-                            </RootProvider>
-                        </div>
-                    </main>
-                </div>
+                <RootProvider session={session} user={user}>
+                    <ClientOnly>{children}</ClientOnly>
+                </RootProvider>
                 <Script id="theme" strategy="beforeInteractive">
                     {`
                     function setTheme(newTheme) {
