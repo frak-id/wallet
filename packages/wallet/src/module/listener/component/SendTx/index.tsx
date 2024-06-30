@@ -2,7 +2,7 @@ import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import type { SendTransactionListenerParam } from "@/module/listener/atoms/sendTransactionListener";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { type Hex, formatEther } from "viem";
 import { useSendTransaction } from "wagmi";
 
@@ -20,16 +20,14 @@ export function SendTransactionComponent({
     isOpen,
     onSuccess,
     onError,
-    onPending,
     onDiscard,
 }: Pick<SendTransactionListenerParam, "tx" | "context"> & {
     isOpen: boolean;
     onSuccess: (hash: Hex) => void;
-    onPending: () => void;
     onError: (reason?: string) => void;
     onDiscard: () => void;
 }) {
-    const { sendTransaction, status, isPending } = useSendTransaction({
+    const { sendTransaction, isPending } = useSendTransaction({
         mutation: {
             // Link success and error hooks
             onSuccess: onSuccess,
@@ -38,13 +36,6 @@ export function SendTransactionComponent({
             },
         },
     });
-
-    // Emit the pending state
-    useEffect(() => {
-        if (status === "pending") {
-            onPending();
-        }
-    }, [onPending, status]);
 
     return (
         <AlertDialog

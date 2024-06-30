@@ -47,3 +47,4 @@ export type {
     CompressedData,
     HashProtectedData,
 } from "./types";
+export { FrakRpcError } from "./types";

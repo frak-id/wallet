@@ -1,8 +1,4 @@
-import type {
-    NexusClient,
-    SendTransactionActionParamsType,
-    SendTransactionReturnType,
-} from "../types";
+import type { NexusClient, SendTransactionActionParamsType } from "../types";
 
 /**
  * Function used to watch a dashboard action
@@ -13,14 +9,10 @@ import type {
  */
 export function sendTransactionAction(
     client: NexusClient,
-    { tx, context }: SendTransactionActionParamsType,
-    callback: (status: SendTransactionReturnType) => void
+    { tx, context }: SendTransactionActionParamsType
 ) {
-    return client.listenerRequest(
-        {
-            method: "frak_sendTransaction",
-            params: [tx, context],
-        },
-        callback
-    );
+    return client.request({
+        method: "frak_sendTransaction",
+        params: [tx, context],
+    });
 }

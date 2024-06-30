@@ -27,15 +27,11 @@ export type SendTransactionTxType = Readonly<{
  */
 export type SendTransactionReturnType =
     | SendTransactionSuccess
-    | SendTransactionPending
     | SendTransactionError;
 
 type SendTransactionSuccess = Readonly<{
     key: "success";
     hash: Hex;
-}>;
-type SendTransactionPending = Readonly<{
-    key: "sending";
 }>;
 type SendTransactionError = Readonly<{
     key: "error" | "aborted";

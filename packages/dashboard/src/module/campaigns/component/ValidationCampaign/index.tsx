@@ -1,6 +1,4 @@
 "use client";
-
-import { contentInteractionManagerAbi } from "@/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@/context/blockchain/addresses";
 import { saveCampaign } from "@/context/campaigns/action/createCampaign";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
@@ -17,20 +15,14 @@ import { useAtom, useSetAtom } from "jotai";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { encodeFunctionData } from "viem";
 
 export function ValidationCampaign() {
     const router = useRouter();
     const setStep = useSetAtom(campaignStepAtom);
     const [campaign, setCampaign] = useAtom(campaignAtom);
 
-    // todo: Should expose a more proper hook (pending not returning, error wrapped in Nexus error and finishing with success state)
-    const { mutateAsync: sendTransaction } = useSendTransactionAction({
-        callback: (data) => {
-            // todo: Handle tx properly (error, pending and stuff)
-            console.log("Sending tx data", data);
-        },
-    });
+    // Hook used to send transaction via the nexus wallet
+    const { mutateAsync: sendTransaction } = useSendTransactionAction();
 
     const { mutate: createCampaign } = useMutation({
         mutationKey: ["campaign", "create"],
@@ -40,23 +32,20 @@ export function ValidationCampaign() {
             setCampaign(campaign);
 
             // Save it in the database
-            await saveCampaign(campaign);
+            const createCampaignTx = await saveCampaign(campaign);
 
             // Send the campaign creation transaction
-            await sendTransaction({
+            const result = await sendTransaction({
                 context: `Create campaign ${campaign.title}`,
                 tx: {
                     to: addresses.contentInteractionManager,
                     value: "0x00",
-                    data: encodeFunctionData({
-                        abi: contentInteractionManagerAbi,
-                        functionName: "getInteractionContract",
-                        args: [
-                            106219508196454080375526586478153583586194937194493887259467424694676997453395n,
-                        ],
-                    }),
+                    data: createCampaignTx,
                 },
             });
+            if (result.key !== "success") {
+                console.error("Error while sending transaction", result);
+            }
 
             // Once all good, back to previous state
             setStep((prev) => prev + 1);
@@ -82,7 +71,11 @@ export function ValidationCampaign() {
                 }
             />
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(createCampaign)}>
+                <form
+                    onSubmit={form.handleSubmit((campaign) =>
+                        createCampaign(campaign)
+                    )}
+                >
                     <FormCheck {...form} />
                     <Actions />
                 </form>

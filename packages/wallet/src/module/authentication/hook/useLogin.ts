@@ -45,6 +45,8 @@ export function useLogin() {
                 rpID: rpId,
                 userVerification: "required",
                 allowCredentials,
+                // timeout in ms (3min, can be useful for mobile phone linking)
+                timeout: 180_000,
             });
 
             // Start the authentication

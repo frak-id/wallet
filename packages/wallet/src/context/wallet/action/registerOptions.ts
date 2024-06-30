@@ -47,7 +47,8 @@ export async function getRegisterOptions({
         userID: fromHex(userId, "bytes"),
         userName: username,
         userDisplayName: username,
-        timeout: 120_000,
+        // timeout in ms (3min, can be useful for mobile phone linking)
+        timeout: 180_000,
         attestationType: "direct",
         authenticatorSelection: {
             requireResidentKey: true,

@@ -34,5 +34,7 @@ export async function getSignOptions({
         ],
         userVerification: "required",
         challenge: Buffer.from(toSign.slice(2), "hex"),
+        // timeout in ms (3min, can be useful for mobile phone linking)
+        timeout: 180_000,
     });
 }

@@ -20,6 +20,7 @@ export type {
     SendTransactionActionParamsType,
     SendTransactionReturnType,
 } from "./rpc/sendTransaction";
+export { FrakRpcError } from "./rpc/error";
 export type { IFrameRpcSchema, RedirectRpcSchema } from "./rpc";
 // Client related
 export type { NexusClient } from "./client";
