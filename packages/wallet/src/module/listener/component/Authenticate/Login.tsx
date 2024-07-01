@@ -1,63 +1,63 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
-import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
+import { Panel } from "@/module/common/component/Panel";
+import { HelpModal } from "@/module/listener/component/Modal";
+import styles from "@/module/listener/component/Modal/index.module.css";
 
 /**
  * Modal used to perform a login before a siwe signature
- * @param siweMessage
- * @param isOpen
  * @param onSuccess
  * @param onError
- * @param onDiscard
  * @constructor
  */
-export function SiweLoginModal({
-    isOpen,
+export function Login({
     onSuccess,
     onError,
-    onDiscard,
-}: {
-    isOpen: boolean;
-    onSuccess: () => void;
-    onError: (reason?: string) => void;
-    onDiscard: () => void;
-}) {
-    const { login, isLoading } = useLogin();
+}: { onSuccess: () => void; onError: (reason?: string) => void }) {
+    const { login, isSuccess, isLoading, isError, error } = useLogin();
 
     return (
-        <AlertDialog
-            open={isOpen}
-            onOpenChange={(open) => {
-                if (!open) {
-                    onDiscard();
-                }
-            }}
-            title={"Nexus Wallet - Login"}
-            text={
-                <>
-                    {/*todo: proper redir infos and UI*/}
-                    <p>
-                        If you want to create an account, or to recover your
-                        wallet from a file, please go to https://nexus.frak.id/
-                    </p>
-                </>
-            }
-            action={
-                <AuthFingerprint
-                    disabled={isLoading}
-                    action={() => {
-                        login({})
-                            .then(() => {
-                                onSuccess();
-                            })
-                            .catch((error) => {
-                                onError(error.message);
-                            });
-                    }}
-                >
-                    Login
-                </AuthFingerprint>
-            }
-        />
+        <>
+            <Panel size={"normal"}>
+                <p>
+                    Please connect your{" "}
+                    <a href={process.env.APP_URL}>Nexus wallet</a> to access
+                    your personalized dashboard.
+                </p>
+                <p>
+                    If you want to create an account, or to recover your wallet
+                    from a file, please go to{" "}
+                    <a href={process.env.APP_URL}>https://nexus.frak.id/</a>
+                </p>
+            </Panel>
+            <HelpModal />
+            <AuthFingerprint
+                className={styles.modalListener__action}
+                disabled={isLoading}
+                action={() => {
+                    login({})
+                        .then(() => {
+                            onSuccess();
+                        })
+                        .catch((error) => {
+                            onError(error.message);
+                        });
+                }}
+            >
+                Login
+            </AuthFingerprint>
+
+            {isSuccess && (
+                <p className={styles.modalListener__success}>
+                    Connection successful
+                </p>
+            )}
+
+            {isError && error && (
+                <p className={`error ${styles.modalListener__error}`}>
+                    {error.message}
+                </p>
+            )}
+        </>
     );
 }

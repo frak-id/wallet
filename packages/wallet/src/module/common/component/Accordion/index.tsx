@@ -35,7 +35,7 @@ const AccordionTrigger = forwardRef<
                 {...props}
             >
                 {children}
-                <ChevronDown className={styles.accordion__chevron} />
+                <ChevronDown size={16} className={styles.accordion__chevron} />
             </AccordionPrimitive.Trigger>
         </h2>
     </AccordionPrimitive.Header>

@@ -1,6 +1,7 @@
 "use client";
 
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { ListenerModal } from "@/module/listener/component/Modal";
 import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
 import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
 import { useSendTransactionListener } from "@/module/listener/hooks/useSendTransactionListener";
@@ -33,12 +34,10 @@ export function ListenerUI() {
     const { onUserReferredListenRequest } = useSetUserReferredListener();
 
     // Hook used when a dashboard action is requested
-    const { onSendTransactionRequest, component: sendTxComponent } =
-        useSendTransactionListener();
+    const { onSendTransactionRequest } = useSendTransactionListener();
 
     // Hook used when a dashboard action is requested
-    const { onSiweAuthenticateRequest, component: siweAuthenticateComponent } =
-        useSiweAuthenticateListener();
+    const { onSiweAuthenticateRequest } = useSiweAuthenticateListener();
 
     // Create the resolver
     useEffect(() => {
@@ -67,12 +66,12 @@ export function ListenerUI() {
             frak_listenToSetUserReferred: onUserReferredListenRequest,
 
             /**
-             * Listen request for the dashboard action
+             * Listen request for the transaction request
              */
             frak_sendTransaction: onSendTransactionRequest,
 
             /**
-             * Listen request for the authentication request
+             * Listen request for the auth request
              */
             frak_siweAuthenticate: onSiweAuthenticateRequest,
         });
@@ -112,6 +111,9 @@ export function ListenerUI() {
         onArticleUnlockStatusListenerRequest,
     ]);
 
+    /**
+     * Add a data attribute to the root element to style the layout
+     */
     useEffect(() => {
         const rootElement = document.querySelector(":root") as HTMLElement;
         if (rootElement) {
@@ -123,14 +125,5 @@ export function ListenerUI() {
         };
     }, []);
 
-    return (
-        <>
-            {/*
-                Send tx component if needed
-                todo: Should we got with a more generic approach? Like alert dialog component, with hook returning inner components?
-            */}
-            {sendTxComponent}
-            {siweAuthenticateComponent}
-        </>
-    );
+    return <ListenerModal />;
 }
