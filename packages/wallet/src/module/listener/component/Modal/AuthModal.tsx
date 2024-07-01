@@ -2,7 +2,7 @@ import { Login } from "@/module/listener/component/Authenticate/Login";
 import { SiweAuthenticate } from "@/module/listener/component/Authenticate/SiweAuthenticate";
 import { ListenerModalHeader } from "@/module/listener/component/Modal/index";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
-import { useMemo } from "react";
+import { type PropsWithChildren, useMemo } from "react";
 import type { Hex } from "viem";
 import type { SiweMessage } from "viem/siwe";
 import { useAccount } from "wagmi";
@@ -98,11 +98,14 @@ export function AuthModal({
     );
 }
 
-function Steps({ children }) {
+function Steps({ children }: PropsWithChildren) {
     return <div className={styles.modalListener__steps}>{children}</div>;
 }
 
-function StepItem({ isActive, children }) {
+function StepItem({
+    isActive,
+    children,
+}: PropsWithChildren<{ isActive: boolean }>) {
     return (
         <div
             className={`${styles.modalListener__stepItem} ${isActiveStep(
@@ -114,6 +117,6 @@ function StepItem({ isActive, children }) {
     );
 }
 
-function isActiveStep(isActive) {
+function isActiveStep(isActive: boolean) {
     return isActive ? styles["modalListener__stepItem--active"] : "";
 }
