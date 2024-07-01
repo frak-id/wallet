@@ -3,6 +3,7 @@ import { deleteSession } from "@/context/auth/actions/session";
 import { contentInteractionManagerAbi } from "@/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@/context/blockchain/addresses";
 import { Button } from "@/module/common/component/Button";
+import { MyContents } from "@/module/dashboard/component/Contents";
 import type { SendTransactionReturnType } from "@frak-labs/nexus-sdk/core";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,8 @@ export default function DashboardPage() {
 
     return (
         <>
+            <MyContents />
+
             <div>
                 <h1>Send tx interaction</h1>
                 <p>

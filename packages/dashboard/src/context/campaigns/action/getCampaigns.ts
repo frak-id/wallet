@@ -44,8 +44,8 @@ export async function getCurrentCampaigns({
         functionName: "getCampaigns",
     });
 
-    // For each campaigns, check their types
-    const compainsNameAndVersion = await multicall(viemClient, {
+    // For each campaign, check their types
+    const campaignNameAndVersion = await multicall(viemClient, {
         contracts: campaigns.map(
             (campaign) =>
                 ({
@@ -60,7 +60,7 @@ export async function getCurrentCampaigns({
     // Return all of that data mapped (address -> name and version)
     return campaigns.map((address, index) => ({
         address,
-        name: compainsNameAndVersion[index][0],
-        version: compainsNameAndVersion[index][1],
+        name: campaignNameAndVersion[index][0],
+        version: campaignNameAndVersion[index][1],
     }));
 }

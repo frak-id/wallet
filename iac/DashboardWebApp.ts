@@ -10,8 +10,14 @@ import { isProdStack } from "./utils";
  */
 export function DashboardWebApp({ stack }: StackContext) {
     // The configs required to run the app
-    const { alchemyApiKey, nexusUrl, sessionEncryptionKey } = use(ConfigStack);
-    const configs = [alchemyApiKey, nexusUrl, sessionEncryptionKey];
+    const { alchemyApiKey, nexusUrl, sessionEncryptionKey, mongoBusinessUri } =
+        use(ConfigStack);
+    const configs = [
+        alchemyApiKey,
+        nexusUrl,
+        sessionEncryptionKey,
+        mongoBusinessUri,
+    ];
 
     // Base domain for our whole app
     const subDomain = isProdStack(stack)

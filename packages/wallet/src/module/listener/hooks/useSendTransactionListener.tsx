@@ -43,11 +43,6 @@ export function useSendTransactionListener() {
             const tx = request.params[0];
             const context = request.params[1];
 
-            console.log("Received a transaction request", {
-                tx,
-                context,
-            });
-
             // If no action present
             if (!tx) {
                 setListenerParam(null);
@@ -96,11 +91,6 @@ export function useSendTransactionListener() {
                         hash,
                     });
                     closeDialog();
-                }}
-                onPending={() => {
-                    listenerParam.emitter({
-                        key: "sending",
-                    });
                 }}
                 onError={(reason) => {
                     listenerParam.emitter({

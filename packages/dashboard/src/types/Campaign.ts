@@ -1,4 +1,5 @@
 import type { TCountryCode } from "countries-list";
+import type { Hex } from "viem";
 
 type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
 
@@ -9,6 +10,7 @@ type ContentType = "text" | "video" | "product" | "others";
 export type Campaign = {
     title: string;
     order: string;
+    contentId: Hex;
     type: Goal | "";
     specialCategories: SpecialCategory[];
     budget: {
@@ -16,7 +18,7 @@ export type Campaign = {
         maxEuroDaily: number;
     };
     territories: TCountryCode[];
-    scheduled: {
+    scheduled?: {
         dateStart: Date;
         dateEnd: Date;
     };

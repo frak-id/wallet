@@ -6,6 +6,7 @@ const wantedFromConfig = [
     "ALCHEMY_API_KEY",
     "NEXUS_WALLET_URL",
     "SESSION_ENCRYPTION_KEY",
+    "MONGODB_BUSINESS_URI",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 

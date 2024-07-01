@@ -1,5 +1,6 @@
 "use server";
 
+import { getSafeSession } from "@/context/auth/actions/session";
 import { getClient } from "@/context/indexer/client";
 import { gql } from "@urql/core";
 import type { Address } from "viem";
@@ -47,6 +48,7 @@ type GetContentsResult = {
 
 /**
  * Get all the user contents
+ * todo: should have a caching layer
  */
 export async function getContents({ wallet }: { wallet: Address }) {
     // Get our indexer result
@@ -78,4 +80,12 @@ export async function getContents({ wallet }: { wallet: Address }) {
             { owner: [], operator: [] }
         ) ?? { owner: [], operator: [] }
     );
+}
+
+/**
+ * Get the contents for the current user
+ */
+export async function getMyContents() {
+    const session = await getSafeSession();
+    return getContents({ wallet: session.wallet });
 }

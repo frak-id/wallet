@@ -13,11 +13,6 @@ export function Login() {
     const { mutate: authenticate } = useSiweAuthenticate({
         mutations: {
             onSuccess: async (data) => {
-                // If not a success response, exit
-                if (data.key !== "success") {
-                    return;
-                }
-
                 // Register the session
                 await setSession(data);
 

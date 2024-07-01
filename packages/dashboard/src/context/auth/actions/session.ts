@@ -100,3 +100,11 @@ export async function getSession(): Promise<AuthSessionClient | null> {
         wallet: session.wallet,
     };
 }
+
+export async function getSafeSession() {
+    const session = await getSession();
+    if (!session) {
+        throw new Error("No current session found");
+    }
+    return session;
+}
