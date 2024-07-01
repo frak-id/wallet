@@ -53,7 +53,7 @@ export function RootProvider({ children }: PropsWithChildren) {
             persistOptions={persistOptions}
         >
             <NexusConfigProvider config={frakWalletSdkConfig}>
-                <NexusIFrameClientProvider style={{}}>
+                <NexusIFrameClientProvider>
                     <ReactQueryDevtools initialIsOpen={false} />
                     {children}
                 </NexusIFrameClientProvider>

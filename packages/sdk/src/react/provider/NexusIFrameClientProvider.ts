@@ -35,6 +35,7 @@ const defaultIframeStyle: CSSProperties = {
     height: "0",
     border: "0",
     position: "absolute",
+    zIndex: 1000,
     top: "-1000px",
     left: "-1000px",
 };

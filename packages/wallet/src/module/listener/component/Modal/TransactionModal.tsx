@@ -4,7 +4,6 @@ import { Title } from "@/module/common/component/Title";
 import { ListenerModalHeader } from "@/module/listener/component/Modal";
 import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
-import { useEffect } from "react";
 import type { Hex } from "viem";
 import { useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
@@ -31,29 +30,15 @@ export function TransactionModal({
         });
     };
 
-    const onPending = () => {
-        listener?.emitter({
-            key: "sending",
-        });
-    };
-
-    const { sendTransaction, status, isPending, isError, error } =
-        useSendTransaction({
-            mutation: {
-                // Link success and error hooks
-                onSuccess: onSuccess,
-                onError: (error) => {
-                    onError(error.message);
-                },
+    const { sendTransaction, isPending, isError, error } = useSendTransaction({
+        mutation: {
+            // Link success and error hooks
+            onSuccess: onSuccess,
+            onError: (error) => {
+                onError(error.message);
             },
-        });
-
-    // Emit the pending state
-    useEffect(() => {
-        if (status === "pending") {
-            onPending();
-        }
-    }, [onPending, status]);
+        },
+    });
 
     const tx = listener?.tx;
     const txs = Array.isArray(tx) ? tx : [tx];
