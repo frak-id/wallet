@@ -1,15 +1,9 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
-import {
-    contentInteractionDiamondAbi,
-    contentInteractionManagerAbi,
-} from "@/context/blockchain/abis/frak-interaction-abis";
+import { contentInteractionManagerAbi } from "@/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@/context/blockchain/addresses";
-import type {
-    CampaignDocument,
-    CampaignState,
-} from "@/context/campaigns/dto/CampaignDocument";
+import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
     referralCampaignId,
@@ -18,8 +12,16 @@ import {
 import type { Campaign } from "@/types/Campaign";
 import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import type { ObjectId } from "mongodb";
-import { encodeAbiParameters, encodeFunctionData, parseEther } from "viem";
-import { readContract } from "viem/actions";
+import { first } from "radash";
+import {
+    type Hex,
+    encodeAbiParameters,
+    encodeFunctionData,
+    parseAbi,
+    parseEther,
+    parseEventLogs,
+} from "viem";
+import { getTransactionReceipt } from "viem/actions";
 
 /**
  * Function to create a new campaign
@@ -52,20 +54,6 @@ export async function saveCampaign(campaign: Campaign) {
     const repository = await getCampaignRepository();
     const id = await repository.create(campaignDocument);
 
-    // Get the referral tree for this content (and thus ensure interaction contract is deployed)
-    const interactionContract = await readContract(frakChainPocClient, {
-        abi: contentInteractionManagerAbi,
-        address: addresses.contentInteractionManager,
-        functionName: "getInteractionContract",
-        args: [BigInt(campaign.contentId)],
-    });
-    const referralTree = await readContract(frakChainPocClient, {
-        abi: contentInteractionDiamondAbi,
-        address: interactionContract,
-        functionName: "getReferralTree",
-        args: [],
-    });
-
     // Compute the initial reward for a referral (avg between min and max)
     const initialReward = Math.floor((clickRewards.from + clickRewards.to) / 2);
 
@@ -88,7 +76,6 @@ export async function saveCampaign(campaign: Campaign) {
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
         addresses.paywallToken,
-        referralTree,
         parseEther(initialReward.toString()), // initial reward
         5_000n, // user reward percent (on 1/10_000 so 50%), todo: should be campaign param
         BigInt(capPeriod),
@@ -115,13 +102,41 @@ export async function saveCampaign(campaign: Campaign) {
 /**
  * Action used to update the campaign state
  * @param campaignId
- * @param state
+ * @param txHash
  */
-export async function updateCampaignState(
-    campaignId: ObjectId,
-    state: CampaignState
-) {
-    // Insert it
+export async function updateCampaignState({
+    campaignId,
+    txHash,
+}: { campaignId: ObjectId; txHash?: Hex }) {
     const repository = await getCampaignRepository();
-    await repository.updateState(campaignId, state);
+
+    // If no tx hash, just insert it with creation failed status
+    if (!txHash) {
+        await repository.updateState(campaignId, {
+            key: "creationFailed",
+        });
+        return;
+    }
+
+    // Otherwise, find the deployed address in the logs of the transaction
+    const receipt = await getTransactionReceipt(frakChainPocClient, {
+        hash: txHash,
+    });
+    const parsedLogs = parseEventLogs({
+        abi: parseAbi(["event CampaignCreated(address campaign)"]),
+        eventName: "CampaignCreated",
+        logs: receipt.logs,
+        strict: true,
+    });
+    const address = first(parsedLogs)?.args?.campaign;
+    if (!address) {
+        console.error("No address found in the logs", receipt.logs);
+    }
+
+    // Insert it
+    await repository.updateState(campaignId, {
+        key: "created",
+        txHash,
+        address: address ?? "0xdeadbeef",
+    });
 }

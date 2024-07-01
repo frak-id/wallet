@@ -2,11 +2,13 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { interactionCampaignAbi } from "@/context/blockchain/abis/frak-campaign-abis";
+import { campaignRoles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import { getClient } from "@/context/indexer/client";
-import type { Campaign } from "@/types/Campaign";
+import type { CampaignWithState } from "@/types/Campaign";
 import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { gql } from "@urql/core";
+import { all } from "radash";
 import { type Address, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 
@@ -62,7 +64,7 @@ type QueryResult = {
 /**
  * Get the current user campaigns
  */
-export async function getMyCampaigns(): Promise<Campaign[]> {
+export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     const session = await getSafeSession();
 
     // Get our indexer result
@@ -85,25 +87,40 @@ export async function getMyCampaigns(): Promise<Campaign[]> {
     });
 
     // Find each state for each campaigns
-    const isActiveArr = await multicall(frakChainPocClient, {
-        contracts: blockchainCampaigns.map(
-            (campaign) =>
-                ({
-                    abi: interactionCampaignAbi,
-                    address: campaign.id as Address,
-                    functionName: "isActive",
-                    args: [],
-                }) as const
-        ),
-        allowFailure: false,
+    const { isActives, canEdits } = await all({
+        // Check if the campaign is active
+        isActives: multicall(frakChainPocClient, {
+            contracts: blockchainCampaigns.map(
+                (campaign) =>
+                    ({
+                        abi: interactionCampaignAbi,
+                        address: campaign.id,
+                        functionName: "isActive",
+                        args: [],
+                    }) as const
+            ),
+            allowFailure: false,
+        }),
+        // Check if the campaign can be edited
+        canEdits: multicall(frakChainPocClient, {
+            contracts: blockchainCampaigns.map(
+                (campaign) =>
+                    ({
+                        abi: interactionCampaignAbi,
+                        address: campaign.id,
+                        functionName: "hasAnyRole",
+                        args: [session.wallet, campaignRoles.manager],
+                    }) as const
+            ),
+            allowFailure: false,
+        }),
     });
 
     // Map all of that to campaign with state object
     return campaignDocuments.map((campaign) => {
-        // todo: How to get the campaign address????
         const state = campaign.state;
         if (state.key !== "created") {
-            return campaign;
+            return campaign as CampaignWithState;
         }
 
         // Find the blockchain campaign index
@@ -111,14 +128,12 @@ export async function getMyCampaigns(): Promise<Campaign[]> {
             isAddressEqual(item.id, state.address)
         );
 
-        // Find the activation status
-        const isActive = isActiveArr[blockchainCampaignIndex];
-
         return {
             ...campaign,
             state: {
                 ...state,
-                isActive,
+                isActive: isActives[blockchainCampaignIndex],
+                canEdit: canEdits[blockchainCampaignIndex],
             },
         };
     });

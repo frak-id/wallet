@@ -7,6 +7,9 @@ type SpecialCategory = "credit" | "jobs" | "housing" | "social";
 
 type ContentType = "text" | "video" | "product" | "others";
 
+/**
+ * Direct campaign type
+ */
 export type Campaign = {
     title: string;
     order: string;
@@ -30,6 +33,9 @@ export type Campaign = {
     promotedContents: ContentType[];
 };
 
+/**
+ * Campaign with a state
+ */
 export type CampaignState =
     | {
           key: "draft";
@@ -40,6 +46,7 @@ export type CampaignState =
     | {
           key: "created";
           isActive: boolean;
+          canEdit: boolean;
           address: Address;
       };
 
