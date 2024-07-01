@@ -1,5 +1,5 @@
 import type { TCountryCode } from "countries-list";
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 
 type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
 
@@ -28,4 +28,21 @@ export type Campaign = {
         purchase: { from: number; to: number };
     };
     promotedContents: ContentType[];
+};
+
+export type CampaignState =
+    | {
+          key: "draft";
+      }
+    | {
+          key: "creationFailed";
+      }
+    | {
+          key: "created";
+          isActive: boolean;
+          address: Address;
+      };
+
+export type CampaignWithState = Campaign & {
+    state: CampaignState;
 };

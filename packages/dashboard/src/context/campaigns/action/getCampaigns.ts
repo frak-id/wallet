@@ -1,11 +1,14 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import { interactionCampaignAbi } from "@/context/blockchain/abis/frak-campaign-abis";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import { getClient } from "@/context/indexer/client";
 import type { Campaign } from "@/types/Campaign";
+import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { gql } from "@urql/core";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
+import { multicall } from "viem/actions";
 
 /**
  * Get the content for a given administrator query
@@ -43,7 +46,7 @@ type QueryResult = {
                 id: string;
                 campaigns: {
                     items: {
-                        id: string;
+                        id: Address;
                         attached: boolean;
                         detachTimestamp: string;
                         attachTimestamp: string;
@@ -74,10 +77,49 @@ export async function getMyCampaigns(): Promise<Campaign[]> {
         );
     if (!blockchainCampaigns) return [];
 
+    // Find the campaigns in the database
     const repository = await getCampaignRepository();
-    // todo: also add the attachmend state on the blockchain side?
-    // todo: Maybe link with another query returning some more infos about the campaign?
-    return await repository.findByAddresses(
-        blockchainCampaigns.map((campaign) => campaign.id as Address)
-    );
+    const campaignDocuments = await repository.findByAddressesOrCreator({
+        addresses: blockchainCampaigns.map((campaign) => campaign.id),
+        creator: session.wallet,
+    });
+
+    // Find each state for each campaigns
+    const isActiveArr = await multicall(frakChainPocClient, {
+        contracts: blockchainCampaigns.map(
+            (campaign) =>
+                ({
+                    abi: interactionCampaignAbi,
+                    address: campaign.id as Address,
+                    functionName: "isActive",
+                    args: [],
+                }) as const
+        ),
+        allowFailure: false,
+    });
+
+    // Map all of that to campaign with state object
+    return campaignDocuments.map((campaign) => {
+        // todo: How to get the campaign address????
+        const state = campaign.state;
+        if (state.key !== "created") {
+            return campaign;
+        }
+
+        // Find the blockchain campaign index
+        const blockchainCampaignIndex = blockchainCampaigns.findIndex((item) =>
+            isAddressEqual(item.id, state.address)
+        );
+
+        // Find the activation status
+        const isActive = isActiveArr[blockchainCampaignIndex];
+
+        return {
+            ...campaign,
+            state: {
+                ...state,
+                isActive,
+            },
+        };
+    });
 }

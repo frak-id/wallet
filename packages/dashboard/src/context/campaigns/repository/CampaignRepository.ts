@@ -36,9 +36,17 @@ class CampaignRepository {
     /**
      * Find all the deployed campaigns by address
      * @param addresses
+     * @param creator
      */
-    public async findByAddresses(addresses: Address[]) {
-        return this.collection.find({ address: { $in: addresses } }).toArray();
+    public async findByAddressesOrCreator({
+        addresses,
+        creator,
+    }: { addresses: Address[]; creator: Address }) {
+        return this.collection
+            .find({
+                $or: [{ "state.address": { $in: addresses } }, { creator }],
+            })
+            .toArray();
     }
 }
 
