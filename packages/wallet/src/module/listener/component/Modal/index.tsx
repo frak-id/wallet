@@ -64,12 +64,7 @@ function ListenerModalDialog({
         setIsOpen(false);
         iFrameToggleVisibility(false);
         setCurrentRequest(undefined);
-
-        // Send the aborted event
-        currentRequest.listener.emitter({
-            key: "aborted",
-        });
-    }, [setCurrentRequest, currentRequest.listener.emitter]);
+    }, [setCurrentRequest]);
 
     /**
      * Action when a modal is closed
