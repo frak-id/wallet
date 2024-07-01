@@ -23,9 +23,9 @@ export type Campaign = {
         dateEnd: Date;
     };
     rewards: {
-        click?: { from: number; to: number };
-        registration?: { from: number; to: number };
-        purchase?: { from: number; to: number };
+        click: { from: number; to: number };
+        registration: { from: number; to: number };
+        purchase: { from: number; to: number };
     };
     promotedContents: ContentType[];
 };

@@ -1,6 +1,9 @@
 "use client";
 import { addresses } from "@/context/blockchain/addresses";
-import { saveCampaign } from "@/context/campaigns/action/createCampaign";
+import {
+    saveCampaign,
+    updateCampaignState,
+} from "@/context/campaigns/action/createCampaign";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
 import { FormCheck } from "@/module/campaigns/component/ValidationCampaign/FormCheck";
@@ -14,6 +17,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { tryit } from "radash";
 import { useForm } from "react-hook-form";
 
 export function ValidationCampaign() {
@@ -32,20 +36,30 @@ export function ValidationCampaign() {
             setCampaign(campaign);
 
             // Save it in the database
-            const createCampaignTx = await saveCampaign(campaign);
+            const { id, creationData } = await saveCampaign(campaign);
 
             // Send the campaign creation transaction
-            const result = await sendTransaction({
-                context: `Create campaign ${campaign.title}`,
-                tx: {
-                    to: addresses.contentInteractionManager,
-                    value: "0x00",
-                    data: createCampaignTx,
-                },
-            });
-            if (result.key !== "success") {
-                console.error("Error while sending transaction", result);
+            const [, result] = await tryit(() =>
+                sendTransaction({
+                    context: `Create campaign ${campaign.title}`,
+                    tx: {
+                        to: addresses.contentInteractionManager,
+                        value: "0x00",
+                        data: creationData,
+                    },
+                })
+            )();
+            if (!result) {
+                await updateCampaignState(id, { key: "failed" });
+                // todo: retry stuff or smth like that here?
+                return;
             }
+
+            // Update the state
+            await updateCampaignState(id, {
+                key: "created",
+                txHash: result.hash,
+            });
 
             // Once all good, back to previous state
             setStep((prev) => prev + 1);

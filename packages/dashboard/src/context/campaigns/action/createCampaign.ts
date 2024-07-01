@@ -6,7 +6,10 @@ import {
     contentInteractionManagerAbi,
 } from "@/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@/context/blockchain/addresses";
-import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
+import type {
+    CampaignDocument,
+    CampaignState,
+} from "@/context/campaigns/dto/CampaignDocument";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
     referralCampaignId,
@@ -14,6 +17,7 @@ import {
 } from "@/context/campaigns/utils/constants";
 import type { Campaign } from "@/types/Campaign";
 import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
+import type { ObjectId } from "mongodb";
 import { encodeAbiParameters, encodeFunctionData, parseEther } from "viem";
 import { readContract } from "viem/actions";
 
@@ -24,8 +28,15 @@ import { readContract } from "viem/actions";
 export async function saveCampaign(campaign: Campaign) {
     const currentSession = await getSafeSession();
 
-    if (!campaign.rewards.click) {
+    const clickRewards = campaign?.rewards?.click;
+    if (!clickRewards) {
         throw new Error("Click reward is required");
+    }
+    if (clickRewards.from > clickRewards.to) {
+        throw new Error("Click reward from must be lower than to");
+    }
+    if (clickRewards.from < 0) {
+        throw new Error("Click reward from must be positive");
     }
 
     /// Build our campaign document
@@ -39,7 +50,7 @@ export async function saveCampaign(campaign: Campaign) {
 
     // Insert it
     const repository = await getCampaignRepository();
-    await repository.create(campaignDocument);
+    const id = await repository.create(campaignDocument);
 
     // Get the referral tree for this content (and thus ensure interaction contract is deployed)
     const interactionContract = await readContract(frakChainPocClient, {
@@ -56,9 +67,7 @@ export async function saveCampaign(campaign: Campaign) {
     });
 
     // Compute the initial reward for a referral (avg between min and max)
-    const initialReward = Math.floor(
-        (campaign.rewards.click.from + campaign.rewards.click.to) / 2
-    );
+    const initialReward = Math.floor((clickRewards.from + clickRewards.to) / 2);
 
     // Compute the cap period
     let capPeriod = 0;
@@ -76,12 +85,12 @@ export async function saveCampaign(campaign: Campaign) {
         end = campaign.scheduled.dateEnd.getTime() / 1000;
     }
 
-    // TODO: Build the tx to be sent by the creator to create the given campaign
+    // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
         addresses.paywallToken,
         referralTree,
         parseEther(initialReward.toString()), // initial reward
-        5_000n, // user reward percent (on 1/10_000 so 50%)
+        5_000n, // user reward percent (on 1/10_000 so 50%), todo: should be campaign param
         BigInt(capPeriod),
         campaign.budget.maxEuroDaily
             ? parseEther(campaign.budget.maxEuroDaily.toString())
@@ -91,7 +100,7 @@ export async function saveCampaign(campaign: Campaign) {
     ]);
 
     // Return the encoded calldata to deploy and attach this campaign
-    return encodeFunctionData({
+    const creationData = encodeFunctionData({
         abi: contentInteractionManagerAbi,
         functionName: "deployCampaign",
         args: [
@@ -100,4 +109,19 @@ export async function saveCampaign(campaign: Campaign) {
             campaignInitData,
         ],
     });
+    return { id, creationData };
+}
+
+/**
+ * Action used to update the campaign state
+ * @param campaignId
+ * @param state
+ */
+export async function updateCampaignState(
+    campaignId: ObjectId,
+    state: CampaignState
+) {
+    // Insert it
+    const repository = await getCampaignRepository();
+    await repository.updateState(campaignId, state);
 }

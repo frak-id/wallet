@@ -1,6 +1,6 @@
 import type { Campaign } from "@/types/Campaign";
 import type { ObjectId } from "mongodb";
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 
 export type CampaignDocument = Campaign & {
     _id?: ObjectId;
@@ -10,11 +10,14 @@ export type CampaignDocument = Campaign & {
     state: CampaignState;
 };
 
-type CampaignState =
+export type CampaignState =
     | {
           key: "draft";
       }
     | {
+          key: "failed";
+      }
+    | {
           key: "created";
-          address: Address;
+          txHash: Hex;
       };

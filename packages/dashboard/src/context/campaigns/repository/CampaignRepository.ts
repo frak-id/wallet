@@ -1,9 +1,12 @@
 "use server";
 
-import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
+import type {
+    CampaignDocument,
+    CampaignState,
+} from "@/context/campaigns/dto/CampaignDocument";
 import { getMongoDb } from "@/context/common/mongoDb";
 import { DI } from "@frak-labs/nexus-wallet/src/context/common/di";
-import type { Collection } from "mongodb";
+import type { Collection, ObjectId } from "mongodb";
 
 class CampaignRepository {
     constructor(private readonly collection: Collection<CampaignDocument>) {}
@@ -13,7 +16,20 @@ class CampaignRepository {
      * @param campaign
      */
     public async create(campaign: CampaignDocument) {
-        await this.collection.insertOne(campaign);
+        const insertResult = await this.collection.insertOne(campaign);
+        if (!insertResult.acknowledged) {
+            throw new Error("Failed to insert campaign");
+        }
+        return insertResult.insertedId;
+    }
+
+    /**
+     * Create a new campaign
+     * @param id
+     * @param state
+     */
+    public async updateState(id: ObjectId, state: CampaignState) {
+        await this.collection.updateOne({ _id: id }, { $set: { state } });
     }
 }
 
