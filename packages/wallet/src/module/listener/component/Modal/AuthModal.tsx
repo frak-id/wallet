@@ -1,12 +1,34 @@
 import { Login } from "@/module/listener/component/Authenticate/Login";
 import { SiweAuthenticate } from "@/module/listener/component/Authenticate/SiweAuthenticate";
 import { ListenerModalHeader } from "@/module/listener/component/Modal/index";
+import type { SiweAuthenticateListenerParam } from "@/module/listener/types/auth";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
 import { type PropsWithChildren, useMemo } from "react";
 import type { Hex } from "viem";
 import type { SiweMessage } from "viem/siwe";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
+
+function onError(listener: SiweAuthenticateListenerParam, reason?: string) {
+    listener.emitter({
+        key: "error",
+        reason,
+    });
+}
+
+function onSuccessAuth(
+    listener: SiweAuthenticateListenerParam,
+    signature: Hex,
+    message: string,
+    onHandle: () => void
+) {
+    listener.emitter({
+        key: "success",
+        signature,
+        message,
+    });
+    onHandle();
+}
 
 export function AuthModal({
     args: { listener },
@@ -39,26 +61,10 @@ export function AuthModal({
         return { key: "login" } as const;
     }, [listener, address, chainId]);
 
-    const onError = (reason?: string) => {
-        listener.emitter({
-            key: "error",
-            reason,
-        });
-    };
-
     const onSuccessLogin = () => {
         // todo: tmp component telling we are waiting for the login propagation??
         // todo: The step should be refreshed automatically
         // todo: But we can have the required info here, maybe force refresh the step here?
-    };
-
-    const onSuccessAuth = (signature: Hex, message: string) => {
-        listener.emitter({
-            key: "success",
-            signature,
-            message,
-        });
-        onHandle();
     };
 
     /**
@@ -67,18 +73,25 @@ export function AuthModal({
     const component = useMemo(() => {
         // If not logged in, show the login modal
         if (step?.key === "login") {
-            return <Login onSuccess={onSuccessLogin} onError={onError} />;
+            return (
+                <Login
+                    onSuccess={onSuccessLogin}
+                    onError={(err) => onError(listener, err)}
+                />
+            );
         }
 
         return step?.siweMessage ? (
             <SiweAuthenticate
                 context={listener.context}
                 siweMessage={step.siweMessage}
-                onSuccess={onSuccessAuth}
-                onError={onError}
+                onSuccess={(signature, message) =>
+                    onSuccessAuth(listener, signature, message, onHandle)
+                }
+                onError={(err) => onError(listener, err)}
             />
         ) : null;
-    }, [step, onError, listener.context, onSuccessAuth]);
+    }, [step, onHandle, listener]);
 
     if (!(step && listener)) {
         return null;

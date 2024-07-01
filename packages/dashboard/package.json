@@ -11,7 +11,7 @@
     "start": "sst bind next start",
     "lint": "biome lint .",
     "format:check": "biome check .",
-    "format": "biome check --apply .",
+    "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "deploy": "sst deploy --stage prod"
   },

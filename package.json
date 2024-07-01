@@ -9,7 +9,7 @@
     "dev": "sst dev",
     "lint": "biome lint .",
     "format:check": "biome check .",
-    "format": "biome check --apply .",
+    "format": "biome check --write .",
     "deploy": "sst deploy --stage dev",
     "deploy:prod": "sst deploy --stage prod",
     "build": "sst build --stage prod",

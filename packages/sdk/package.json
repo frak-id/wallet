@@ -58,7 +58,7 @@
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
-    "format": "biome check --apply .",
+    "format": "biome check --write .",
     "clean": "rimraf dist",
     "build": "tsup --splitting",
     "build:watch": "tsup --watch --splitting --format esm"
