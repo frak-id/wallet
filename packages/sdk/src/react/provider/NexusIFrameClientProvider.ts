@@ -4,7 +4,6 @@ import {
     type ReactNode,
     createContext,
     createElement,
-    useMemo,
     useState,
 } from "react";
 import {
@@ -55,18 +54,8 @@ export function NexusIFrameClientProvider({
 }) {
     const config = useNexusConfig();
 
-    // Using a state for the iframe client since using directly a client built inside the ref cause re-render loop
-    const [iframeElem, setIframeElem] = useState<HTMLIFrameElement | undefined>(
-        undefined
-    );
-
-    const client = useMemo(
-        () =>
-            iframeElem
-                ? createIFrameNexusClient({ iframe: iframeElem, config })
-                : undefined,
-        [iframeElem, config]
-    );
+    // Using a state for the client since using directly a client built inside the ref cause re-render loop
+    const [client, setClient] = useState<NexusClient | undefined>(undefined);
 
     // Create the iframe that will be used to communicate with the wallet
     const iFrame = createElement("iframe", {
@@ -76,14 +65,15 @@ export function NexusIFrameClientProvider({
         style: style ?? defaultIframeStyle,
         allow: "publickey-credentials-get *",
         ref: (iframe: HTMLIFrameElement) => {
-            if (!iframe) {
-                // Remove the client
-                setIframeElem(undefined);
+            if (!iframe || client) {
                 return;
             }
-
-            // Add the client
-            setIframeElem(iframe);
+            setClient(
+                createIFrameNexusClient({
+                    iframe,
+                    config,
+                })
+            );
         },
     });
 
