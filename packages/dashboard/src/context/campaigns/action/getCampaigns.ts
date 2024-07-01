@@ -50,7 +50,7 @@ type QueryResult = {
                     items: {
                         id: Address;
                         attached: boolean;
-                        detachTimestamp: string;
+                        detachTimestamp: string | null;
                         attachTimestamp: string;
                         name: string;
                         version: string;
@@ -127,11 +127,19 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
         const blockchainCampaignIndex = blockchainCampaigns.findIndex((item) =>
             isAddressEqual(item.id, state.address)
         );
+        const blockchainCampaign = blockchainCampaigns[blockchainCampaignIndex];
 
         return {
             ...campaign,
             state: {
                 ...state,
+                interactionLink: {
+                    isAttached: blockchainCampaign.attached,
+                    attachTimestamp: blockchainCampaign.attachTimestamp,
+                    detachTimestamp:
+                        blockchainCampaign.detachTimestamp ?? undefined,
+                },
+                isAttached: blockchainCampaign.attached,
                 isActive: isActives[blockchainCampaignIndex],
                 canEdit: canEdits[blockchainCampaignIndex],
             },
