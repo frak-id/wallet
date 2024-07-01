@@ -44,7 +44,7 @@
     "jotai": "^2.8.4",
     "jotai-effect": "^1.0.0",
     "lucide-react": "^0.399.0",
-    "mongodb": "^6.5.0",
+    "mongodb": "^6.8.0",
     "next": "14.2.4",
     "next-qrcode": "^2.5.1",
     "nextjs-toploader": "^1.6.12",
@@ -73,7 +73,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-slick": "^0.23.13",
-    "pino-pretty": "^11.0.0",
+    "pino-pretty": "^11.2.1",
     "sst": "2.41.4",
     "typescript": "^5"
   }

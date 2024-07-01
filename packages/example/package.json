@@ -21,7 +21,7 @@
     "@tanstack/store": "^0.5.3",
     "humanize-duration": "^3.32.1",
     "iron-session": "^8.0.2",
-    "mongodb": "^6.5.0",
+    "mongodb": "^6.8.0",
     "next": "14.2.4",
     "radash": "^12.1.0",
     "raw-loader": "^4.0.2",
