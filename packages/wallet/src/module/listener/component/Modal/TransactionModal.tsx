@@ -1,7 +1,6 @@
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { TextData } from "@/module/common/component/TextData";
 import { Title } from "@/module/common/component/Title";
-import { ListenerModalHeader } from "@/module/listener/component/Modal";
 import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
 import type { Hex } from "viem";
@@ -49,7 +48,6 @@ export function TransactionModal({
 
     return (
         <>
-            <ListenerModalHeader title={"Transaction"} />
             <Title className={styles.modalListener__subTitle}>
                 You need to confirm this transaction
             </Title>

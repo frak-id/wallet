@@ -7,13 +7,7 @@ import { AuthModal } from "@/module/listener/component/Modal/AuthModal";
 import { TransactionModal } from "@/module/listener/component/Modal/TransactionModal";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
 import { useAtomValue, useSetAtom } from "jotai/index";
-import {
-    type PropsWithChildren,
-    useCallback,
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./index.module.css";
 
 /**
@@ -79,22 +73,38 @@ function ListenerModalDialog({
     const component = useMemo(() => {
         // Handle an auth modal
         if (currentRequest.type === "auth") {
-            return <AuthModal args={currentRequest} onHandle={onHandle} />;
+            return {
+                title: "Nexus Wallet",
+                content: (
+                    <AuthModal args={currentRequest} onHandle={onHandle} />
+                ),
+            };
         }
 
         // Handle a request modal
         if (currentRequest.type === "transaction") {
-            return (
-                <TransactionModal args={currentRequest} onHandle={onHandle} />
-            );
+            return {
+                title: "Transaction",
+                content: (
+                    <TransactionModal
+                        args={currentRequest}
+                        onHandle={onHandle}
+                    />
+                ),
+            };
         }
 
-        return <>Can't handle type {currentRequest} yet</>;
+        return {
+            title: "Error",
+            content: <>Can't handle type {currentRequest} yet</>,
+        };
     }, [currentRequest, onHandle]);
 
     return (
         <AlertDialog
-            text={component}
+            classNameTitle={styles.modalListener__title}
+            title={component.title}
+            text={component.content}
             open={isOpen}
             onOpenChange={(value) => {
                 if (!value) {
@@ -102,24 +112,6 @@ function ListenerModalDialog({
                 }
             }}
         />
-    );
-}
-
-/**
- * Header for a listener modal
- * @constructor
- */
-export function ListenerModalHeader({
-    title,
-    children,
-}: PropsWithChildren<{
-    title: string;
-}>) {
-    return (
-        <header className={styles.modalListener__header}>
-            <h1 className={styles.modalListener__title}>{title}</h1>
-            {children}
-        </header>
     );
 }
 

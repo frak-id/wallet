@@ -3,8 +3,9 @@
 }
 
 .modalListener__title {
-    margin: 0;
     font-size: 16px;
+    text-align: left;
+    font-weight: 700;
 }
 
 .modalListener__subTitle {

@@ -1,6 +1,5 @@
 import { Login } from "@/module/listener/component/Authenticate/Login";
 import { SiweAuthenticate } from "@/module/listener/component/Authenticate/SiweAuthenticate";
-import { ListenerModalHeader } from "@/module/listener/component/Modal/index";
 import type { SiweAuthenticateListenerParam } from "@/module/listener/types/auth";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
 import { type PropsWithChildren, useMemo } from "react";
@@ -99,7 +98,6 @@ export function AuthModal({
 
     return (
         <>
-            <ListenerModalHeader title={"Nexus Wallet"} />
             <Steps>
                 <StepItem isActive={step.key === "login"}>Login</StepItem>
                 <StepItem isActive={step.key === "siwe"}>
