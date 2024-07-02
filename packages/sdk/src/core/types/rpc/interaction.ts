@@ -6,11 +6,20 @@ export type PreparedInteraction = Readonly<{
 }>;
 
 /**
+ * Parameters of an interaction handling request
+ */
+export type SendInteractionParamsType = {
+    contentId: Hex;
+    interaction: PreparedInteraction;
+    validation?: Hex;
+};
+
+/**
  * Parameters of an interaction handling rpc request
  */
 export type SendInteractionRpcParamsType = [
     contentId: Hex,
-    request: PreparedInteraction,
+    interaction: PreparedInteraction,
     validation?: Hex,
 ];
 /**

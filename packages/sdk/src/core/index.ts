@@ -32,6 +32,7 @@ export type {
     AuthenticateRpcParamsType,
     SiweAuthenticationParams,
     PreparedInteraction,
+    SendInteractionParamsType,
     SendInteractionRpcParamsType,
     SendInteractionReturnType,
     // Client

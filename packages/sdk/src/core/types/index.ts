@@ -23,6 +23,7 @@ export type {
 } from "./rpc/sendTransaction";
 export type {
     PreparedInteraction,
+    SendInteractionParamsType,
     SendInteractionRpcParamsType,
     SendInteractionReturnType,
 } from "./rpc/interaction";

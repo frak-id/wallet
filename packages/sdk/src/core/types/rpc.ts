@@ -73,7 +73,7 @@ export type IFrameRpcSchema = [
         ReturnType: AuthenticateReturnType;
     },
     /**
-     * Method to ask the user for a strong authentication
+     * Method to transmit a user interaction
      */
     {
         Method: "frak_sendInteraction";
