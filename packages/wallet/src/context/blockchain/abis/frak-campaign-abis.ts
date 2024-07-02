@@ -22,13 +22,13 @@ export const campaignFactoryAbi = [
     {
         type: "function",
         inputs: [
-            { name: "_identifier", internalType: "bytes4", type: "bytes4" },
-            { name: "_owner", internalType: "address", type: "address" },
             {
-                name: "_contentInteractionManager",
-                internalType: "address",
+                name: "_interaction",
+                internalType: "contract ContentInteractionDiamond",
                 type: "address",
             },
+            { name: "_owner", internalType: "address", type: "address" },
+            { name: "_identifier", internalType: "bytes4", type: "bytes4" },
             { name: "_initData", internalType: "bytes", type: "bytes" },
         ],
         name: "createCampaign",
@@ -64,19 +64,6 @@ export const campaignFactoryAbi = [
 export const interactionCampaignAbi = [
     {
         type: "function",
-        inputs: [
-            {
-                name: "_interactionContract",
-                internalType: "address",
-                type: "address",
-            },
-        ],
-        name: "allowInteractionContract",
-        outputs: [],
-        stateMutability: "nonpayable",
-    },
-    {
-        type: "function",
         inputs: [],
         name: "cancelOwnershipHandover",
         outputs: [],
@@ -103,7 +90,7 @@ export const interactionCampaignAbi = [
         inputs: [],
         name: "getMetadata",
         outputs: [
-            { name: "name", internalType: "string", type: "string" },
+            { name: "_type", internalType: "string", type: "string" },
             { name: "version", internalType: "string", type: "string" },
         ],
         stateMutability: "pure",
@@ -313,11 +300,6 @@ export const referralCampaignAbi = [
                 components: [
                     { name: "token", internalType: "address", type: "address" },
                     {
-                        name: "referralTree",
-                        internalType: "bytes32",
-                        type: "bytes32",
-                    },
-                    {
                         name: "initialReward",
                         internalType: "uint256",
                         type: "uint256",
@@ -357,24 +339,11 @@ export const referralCampaignAbi = [
                 type: "address",
             },
             {
-                name: "_contentInterationManager",
-                internalType: "address",
+                name: "_interaction",
+                internalType: "contract ContentInteractionDiamond",
                 type: "address",
             },
         ],
-        stateMutability: "nonpayable",
-    },
-    {
-        type: "function",
-        inputs: [
-            {
-                name: "_interactionContract",
-                internalType: "address",
-                type: "address",
-            },
-        ],
-        name: "allowInteractionContract",
-        outputs: [],
         stateMutability: "nonpayable",
     },
     {
@@ -417,9 +386,51 @@ export const referralCampaignAbi = [
     {
         type: "function",
         inputs: [],
+        name: "getConfig",
+        outputs: [
+            {
+                name: "",
+                internalType: "struct ReferralCampaign.CampaignConfig",
+                type: "tuple",
+                components: [
+                    { name: "token", internalType: "address", type: "address" },
+                    {
+                        name: "initialReward",
+                        internalType: "uint256",
+                        type: "uint256",
+                    },
+                    {
+                        name: "userRewardPercent",
+                        internalType: "uint256",
+                        type: "uint256",
+                    },
+                    {
+                        name: "distributionCapPeriod",
+                        internalType: "uint256",
+                        type: "uint256",
+                    },
+                    {
+                        name: "distributionCap",
+                        internalType: "uint256",
+                        type: "uint256",
+                    },
+                    {
+                        name: "startDate",
+                        internalType: "uint48",
+                        type: "uint48",
+                    },
+                    { name: "endDate", internalType: "uint48", type: "uint48" },
+                ],
+            },
+        ],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [],
         name: "getMetadata",
         outputs: [
-            { name: "name", internalType: "string", type: "string" },
+            { name: "_type", internalType: "string", type: "string" },
             { name: "version", internalType: "string", type: "string" },
         ],
         stateMutability: "pure",

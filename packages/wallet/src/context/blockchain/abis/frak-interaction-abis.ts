@@ -13,12 +13,12 @@ export const contentInteractionDiamondAbi = [
                 type: "address",
             },
             {
-                name: "_interactionMananger",
+                name: "_interactionManager",
                 internalType: "address",
                 type: "address",
             },
             {
-                name: "_interactionManangerOwner",
+                name: "_interactionManagerOwner",
                 internalType: "address",
                 type: "address",
             },
@@ -440,20 +440,6 @@ export const contentInteractionManagerAbi = [
             { name: "_operator", internalType: "address", type: "address" },
         ],
         name: "addOperator",
-        outputs: [],
-        stateMutability: "nonpayable",
-    },
-    {
-        type: "function",
-        inputs: [
-            { name: "_contentId", internalType: "uint256", type: "uint256" },
-            {
-                name: "_campaign",
-                internalType: "contract InteractionCampaign",
-                type: "address",
-            },
-        ],
-        name: "attachCampaign",
         outputs: [],
         stateMutability: "nonpayable",
     },

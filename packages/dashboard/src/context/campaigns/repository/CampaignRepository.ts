@@ -7,6 +7,7 @@ import type {
 import { getMongoDb } from "@/context/common/mongoDb";
 import { DI } from "@frak-labs/nexus-wallet/src/context/common/di";
 import type { Collection, ObjectId } from "mongodb";
+import type { Address } from "viem";
 
 class CampaignRepository {
     constructor(private readonly collection: Collection<CampaignDocument>) {}
@@ -30,6 +31,22 @@ class CampaignRepository {
      */
     public async updateState(id: ObjectId, state: CampaignState) {
         await this.collection.updateOne({ _id: id }, { $set: { state } });
+    }
+
+    /**
+     * Find all the deployed campaigns by address
+     * @param addresses
+     * @param creator
+     */
+    public async findByAddressesOrCreator({
+        addresses,
+        creator,
+    }: { addresses: Address[]; creator: Address }) {
+        return this.collection
+            .find({
+                $or: [{ "state.address": { $in: addresses } }, { creator }],
+            })
+            .toArray();
     }
 }
 

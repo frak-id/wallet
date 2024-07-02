@@ -15,9 +15,10 @@ export type CampaignState =
           key: "draft";
       }
     | {
-          key: "failed";
+          key: "creationFailed";
       }
     | {
           key: "created";
           txHash: Hex;
+          address: Address;
       };

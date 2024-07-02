@@ -153,6 +153,7 @@ export async function getSessionEnableData({
                 enableData,
             ],
         });
+
     // Return the txs data
     return [
         enableTxForSelector(sendInteractionSelector),

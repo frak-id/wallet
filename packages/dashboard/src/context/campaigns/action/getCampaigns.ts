@@ -1,66 +1,148 @@
 "use server";
 
+import { getSafeSession } from "@/context/auth/actions/session";
 import { interactionCampaignAbi } from "@/context/blockchain/abis/frak-campaign-abis";
-import {
-    contentInteractionDiamondAbi,
-    contentInteractionManagerAbi,
-} from "@/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@/context/blockchain/addresses";
-import { viemClient } from "@/context/blockchain/provider";
-import type { Address } from "viem";
-import { multicall, readContract } from "viem/actions";
+import { campaignRoles } from "@/context/blockchain/roles";
+import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { getClient } from "@/context/indexer/client";
+import type { CampaignWithState } from "@/types/Campaign";
+import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
+import { gql } from "@urql/core";
+import { all } from "radash";
+import { type Address, isAddressEqual } from "viem";
+import { multicall } from "viem/actions";
 
 /**
- * Get all the interaction contracts address for the given content ids
- * todo: Should be cached for at least 12hr
- * @param contentIds
+ * Get the content for a given administrator query
  */
-async function getInteractionContract({ contentId }: { contentId: bigint }) {
-    return readContract(viemClient, {
-        address: addresses.contentInteractionManager,
-        abi: contentInteractionManagerAbi,
-        functionName: "getInteractionContract",
-        args: [contentId],
-    });
-}
+const QUERY = gql(`
+query GetCampaignForContents($wallet: String!) {
+  contentAdministrators(
+    limit: 10
+    where: {user: $wallet}
+  ) {
+    items {
+      isOwner
+      content {
+        id
+        campaigns {
+          items {
+            id
+            attached
+            detachTimestamp
+            attachTimestamp
+            name
+            version
+          }
+        }
+      }
+    }
+  }
+ }
+`);
+
+type QueryResult = {
+    contentAdministrators: {
+        items: {
+            content: {
+                id: string;
+                campaigns: {
+                    items: {
+                        id: Address;
+                        attached: boolean;
+                        detachTimestamp: string | null;
+                        attachTimestamp: string;
+                        name: string;
+                        version: string;
+                    }[];
+                };
+            };
+        }[];
+    };
+};
 
 /**
- * Get all the interaction contracts address for the given content ids
- * todo: Should be cached for 15min
- * @param contentIds
+ * Get the current user campaigns
  */
-export async function getCurrentCampaigns({
-    contentId,
-}: { contentId: bigint }): Promise<
-    { address: Address; name: string; version: string }[]
-> {
-    // Fetch the interaction contract
-    const interactionContract = await getInteractionContract({ contentId });
+export async function getMyCampaigns(): Promise<CampaignWithState[]> {
+    const session = await getSafeSession();
 
-    // Fetch all campaigns
-    const campaigns = await readContract(viemClient, {
-        address: interactionContract,
-        abi: contentInteractionDiamondAbi,
-        functionName: "getCampaigns",
+    // Get our indexer result
+    const result = await getClient()
+        .query<QueryResult>(QUERY, { wallet: session.wallet })
+        .toPromise();
+
+    // Extract each campaigns and find them in the mongo database
+    const blockchainCampaigns =
+        result.data?.contentAdministrators.items.flatMap(
+            (item) => item.content.campaigns.items
+        );
+    if (!blockchainCampaigns) return [];
+
+    // Find the campaigns in the database
+    const repository = await getCampaignRepository();
+    const campaignDocuments = await repository.findByAddressesOrCreator({
+        addresses: blockchainCampaigns.map((campaign) => campaign.id),
+        creator: session.wallet,
     });
 
-    // For each campaign, check their types
-    const campaignNameAndVersion = await multicall(viemClient, {
-        contracts: campaigns.map(
-            (campaign) =>
-                ({
-                    address: campaign,
-                    abi: interactionCampaignAbi,
-                    functionName: "getMetadata",
-                }) as const
-        ),
-        allowFailure: false,
+    // Find each state for each campaigns
+    const { isActives, canEdits } = await all({
+        // Check if the campaign is active
+        isActives: multicall(frakChainPocClient, {
+            contracts: blockchainCampaigns.map(
+                (campaign) =>
+                    ({
+                        abi: interactionCampaignAbi,
+                        address: campaign.id,
+                        functionName: "isActive",
+                        args: [],
+                    }) as const
+            ),
+            allowFailure: false,
+        }),
+        // Check if the campaign can be edited
+        canEdits: multicall(frakChainPocClient, {
+            contracts: blockchainCampaigns.map(
+                (campaign) =>
+                    ({
+                        abi: interactionCampaignAbi,
+                        address: campaign.id,
+                        functionName: "hasAnyRole",
+                        args: [session.wallet, campaignRoles.manager],
+                    }) as const
+            ),
+            allowFailure: false,
+        }),
     });
 
-    // Return all of that data mapped (address -> name and version)
-    return campaigns.map((address, index) => ({
-        address,
-        name: campaignNameAndVersion[index][0],
-        version: campaignNameAndVersion[index][1],
-    }));
+    // Map all of that to campaign with state object
+    return campaignDocuments.map((campaign) => {
+        const state = campaign.state;
+        if (state.key !== "created") {
+            return campaign as CampaignWithState;
+        }
+
+        // Find the blockchain campaign index
+        const blockchainCampaignIndex = blockchainCampaigns.findIndex((item) =>
+            isAddressEqual(item.id, state.address)
+        );
+        const blockchainCampaign = blockchainCampaigns[blockchainCampaignIndex];
+
+        return {
+            ...campaign,
+            state: {
+                ...state,
+                interactionLink: {
+                    isAttached: blockchainCampaign.attached,
+                    attachTimestamp: blockchainCampaign.attachTimestamp,
+                    detachTimestamp:
+                        blockchainCampaign.detachTimestamp ?? undefined,
+                },
+                isAttached: blockchainCampaign.attached,
+                isActive: isActives[blockchainCampaignIndex],
+                canEdit: canEdits[blockchainCampaignIndex],
+            },
+        };
+    });
 }

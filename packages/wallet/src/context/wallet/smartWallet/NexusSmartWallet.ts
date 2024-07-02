@@ -8,8 +8,10 @@ import {
 import {
     getAccountAddress,
     getAccountInitCode,
+    isAlreadyFormattedCall,
 } from "@/context/wallet/smartWallet/utils";
 import { isRip7212ChainSupported } from "@/context/wallet/smartWallet/webAuthN";
+import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
 import {
     ENTRYPOINT_ADDRESS_V06,
@@ -302,18 +304,19 @@ export async function nexusSmartAccount<
         async encodeCallData(_tx) {
             if (Array.isArray(_tx)) {
                 // Encode a batched call
-                return encodeFunctionData({
-                    abi: KernelExecuteAbi,
-                    functionName: "executeBatch",
-                    args: [
-                        _tx.map((tx) => ({
-                            to: tx.to,
-                            value: tx.value,
-                            data: tx.data,
-                        })),
-                    ],
-                });
+                return encodeWalletMulticall(_tx);
             }
+            // If the target is the current smart wallet, don't sur-encode it
+            if (
+                isAlreadyFormattedCall({
+                    wallet: accountAddress,
+                    to: _tx.to,
+                    data: _tx.data,
+                })
+            ) {
+                return _tx.data;
+            }
+
             // Encode a simple call
             return encodeFunctionData({
                 abi: KernelExecuteAbi,

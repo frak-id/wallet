@@ -49,17 +49,7 @@ export function ValidationCampaign() {
                     },
                 })
             )();
-            if (!result) {
-                await updateCampaignState(id, { key: "failed" });
-                // todo: retry stuff or smth like that here?
-                return;
-            }
-
-            // Update the state
-            await updateCampaignState(id, {
-                key: "created",
-                txHash: result.hash,
-            });
+            await updateCampaignState({ campaignId: id, txHash: result?.hash });
 
             // Once all good, back to previous state
             setStep((prev) => prev + 1);

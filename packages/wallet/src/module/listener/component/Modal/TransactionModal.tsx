@@ -1,10 +1,12 @@
+import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { TextData } from "@/module/common/component/TextData";
 import { Title } from "@/module/common/component/Title";
 import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
 import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
+import { useMemo } from "react";
 import type { Hex } from "viem";
-import { useSendTransaction } from "wagmi";
+import { useAccount, useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
 
 export function TransactionModal({
@@ -29,6 +31,8 @@ export function TransactionModal({
         });
     };
 
+    const { address } = useAccount();
+
     const { sendTransaction, isPending, isError, error } = useSendTransaction({
         mutation: {
             // Link success and error hooks
@@ -40,7 +44,29 @@ export function TransactionModal({
     });
 
     const tx = listener?.tx;
-    const txs = Array.isArray(tx) ? tx : [tx];
+    const { txs, sendTx: toSendTx } = useMemo(() => {
+        // Case of a single tx
+        if (!Array.isArray(tx))
+            return { txs: [tx], sendTx: { ...tx, value: BigInt(tx.value) } };
+
+        if (!address) throw new Error("No address present");
+
+        // Othersiwse, prepare a batch call
+        return {
+            txs: tx,
+            sendTx: {
+                to: address,
+                value: 0n,
+                data: encodeWalletMulticall(
+                    tx.map((tx) => ({
+                        to: tx.to,
+                        data: tx.data,
+                        value: BigInt(tx.value),
+                    }))
+                ),
+            },
+        };
+    }, [tx, address]);
 
     if (!listener) {
         return null;
@@ -64,13 +90,8 @@ export function TransactionModal({
                 className={styles.modalListener__action}
                 disabled={isPending}
                 action={() => {
-                    if (!txs.length) return;
-                    // TODO: Should bundle the tx if it's an array
-                    sendTransaction({
-                        to: txs[0].to,
-                        data: txs[0].data,
-                        value: BigInt(txs[0].value),
-                    });
+                    if (!toSendTx) return;
+                    sendTransaction(toSendTx);
                 }}
             >
                 Send transaction{txs.length > 1 ? "s" : ""}
