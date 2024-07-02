@@ -11,11 +11,8 @@ import { useState } from "react";
 import { encodeFunctionData } from "viem";
 
 export default function DashboardPage() {
-    const [sendTxData, setSendTxData] =
-        useState<SendTransactionReturnType | null>(null);
-    const { mutate: sendTx } = useSendTransactionAction({
-        callback: setSendTxData,
-    });
+    const [sendTxData] = useState<SendTransactionReturnType | null>(null);
+    const { mutate: sendTx } = useSendTransactionAction();
 
     const router = useRouter();
 
