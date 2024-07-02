@@ -47,7 +47,7 @@ export function WalletAppStack({ stack }: StackContext) {
         },
         // Bind to the configs
         bind: configs,
-        openNextVersion: "3.0.6",
+        openNextVersion: "2.3.9",
         // Number of server side instance to keep warm
         warm: 20,
     });
