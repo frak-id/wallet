@@ -1,5 +1,4 @@
 "use client";
-import { addresses } from "@/context/blockchain/addresses";
 import {
     saveCampaign,
     updateCampaignState,
@@ -13,6 +12,7 @@ import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
 import { X } from "lucide-react";

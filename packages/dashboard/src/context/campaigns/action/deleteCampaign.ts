@@ -1,7 +1,7 @@
 "use server";
 
-import { contentInteractionManagerAbi } from "@/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@/context/blockchain/addresses";
+import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { type Address, encodeFunctionData } from "viem";
 
 /**

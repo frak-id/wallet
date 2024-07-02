@@ -1,11 +1,11 @@
 "use server";
 
+import { frakChainPocClient } from "@/context/blockchain/provider";
 import {
     contentInteractionDiamondAbi,
     contentInteractionManagerAbi,
-} from "@/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@/context/blockchain/addresses";
-import { frakChainPocClient } from "@/context/blockchain/provider";
+} from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { parallel } from "radash";
 import type { Address } from "viem";
 import { multicall, readContract } from "viem/actions";

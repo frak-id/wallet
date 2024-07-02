@@ -1,9 +1,5 @@
-import {
-    communityTokenAbi,
-    paywallAbi,
-    paywallTokenAbi,
-} from "@/context/blockchain/abis/frak-gating-abis";
-import { addresses } from "@/context/blockchain/addresses";
+"use client";
+
 import { frakChainId } from "@/context/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
@@ -19,12 +15,17 @@ import { paywallUnlockUiStateAtom } from "@/module/paywall/atoms/unlockUiState";
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import type { UnlockSuccessData } from "@/types/Unlock";
+import {
+    communityTokenAbi,
+    paywallAbi,
+} from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
 import type { SmartAccountClient } from "permissionless";
 import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
 import { useCallback, useEffect, useMemo } from "react";
-import { type Hex, encodeFunctionData, parseEther } from "viem";
+import { type Hex, encodeFunctionData, erc20Abi, parseEther } from "viem";
 import type { Address } from "viem";
 import { readContract } from "viem/actions";
 import { useClient, useConnectorClient } from "wagmi";
@@ -233,7 +234,7 @@ export function useUnlockArticle({
             // Check the user allowance to the paywall contract
             const allowance = await readContract(viemClient, {
                 address: addresses.paywallToken,
-                abi: paywallTokenAbi,
+                abi: erc20Abi,
                 functionName: "allowance",
                 args: [walletAddress, addresses.paywall],
             });
@@ -241,7 +242,7 @@ export function useUnlockArticle({
             // If the allowance isn't enough, we need to approve the paywall contract
             if (weiPrice > allowance) {
                 const allowanceFnCall = encodeFunctionData({
-                    abi: paywallTokenAbi,
+                    abi: erc20Abi,
                     functionName: "approve",
                     args: [addresses.paywall, weiPrice * 10n],
                 });

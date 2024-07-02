@@ -1,8 +1,6 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
-import { contentInteractionManagerAbi } from "@/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@/context/blockchain/addresses";
 import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
@@ -11,6 +9,8 @@ import {
 } from "@/context/campaigns/utils/constants";
 import type { Campaign } from "@/types/Campaign";
 import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
+import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import type { ObjectId } from "mongodb";
 import { first } from "radash";
 import {

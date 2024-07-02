@@ -4,7 +4,6 @@ import {
     frkTransferEvent,
     paidItemUnlockedEventAbi,
 } from "@/context/blockchain/abis/event-abi";
-import { addresses } from "@/context/blockchain/addresses";
 import { getViemClientFromChainId } from "@/context/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import type {
@@ -13,6 +12,7 @@ import type {
     FrkSent,
     HistoryItem,
 } from "@/types/HistoryItem";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { unstable_cache } from "next/cache";
 import { parallel, sort } from "radash";
 import { type Address, formatEther, toHex } from "viem";

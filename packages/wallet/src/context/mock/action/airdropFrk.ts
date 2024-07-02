@@ -1,10 +1,10 @@
 "use server";
 
-import { paywallTokenAbi } from "@/context/blockchain/abis/frak-gating-abis";
-import { addresses } from "@/context/blockchain/addresses";
 import { frakChainPocClient } from "@/context/blockchain/provider";
 import { CachesTags } from "@/context/common/caching";
 import { isRunningInProd } from "@/context/common/env";
+import { paywallTokenAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { revalidateTag } from "next/cache";
 import { type Address, type Hex, encodeFunctionData, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";

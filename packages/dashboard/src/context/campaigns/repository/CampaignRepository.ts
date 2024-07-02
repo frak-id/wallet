@@ -5,7 +5,7 @@ import type {
     CampaignState,
 } from "@/context/campaigns/dto/CampaignDocument";
 import { getMongoDb } from "@/context/common/mongoDb";
-import { DI } from "@frak-labs/nexus-wallet/src/context/common/di";
+import { DI } from "@frak-labs/shared/context/utils/di";
 import type { Collection, ObjectId } from "mongodb";
 import type { Address } from "viem";
 

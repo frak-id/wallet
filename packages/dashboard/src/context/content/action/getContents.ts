@@ -11,7 +11,6 @@ import type { Address } from "viem";
 const QUERY = gql(`
 query GetContentFromAdministrator($wallet: String!) {
   contentAdministrators(
-    limit: 10
     where: {user: $wallet}
   ) {
     items {

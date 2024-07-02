@@ -4,13 +4,13 @@ import {
     getBundlerClient,
     getPaymasterClient,
 } from "@/context/blockchain/aa-provider";
-import { contentInteractionDiamondAbi } from "@/context/blockchain/abis/frak-interaction-abis";
 import { frakChainPocClient } from "@/context/blockchain/provider";
 import { getInteractionContract } from "@/context/interaction/action/interactionContracts";
 import { getSessionStatus } from "@/context/interaction/action/interactionSession";
 import { contentInteractionActionAbi } from "@/context/wallet/abi/kernel-v2-abis";
 import { interactionSessionSmartAccount } from "@/context/wallet/smartWallet/InteractionSessionSmartWallet";
 import type { BuiltInteraction } from "@/types/Interaction";
+import { contentInteractionDiamondAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import {
     ENTRYPOINT_ADDRESS_V06,
     createSmartAccountClient,

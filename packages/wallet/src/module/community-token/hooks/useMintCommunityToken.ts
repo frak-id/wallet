@@ -1,6 +1,8 @@
-import { communityTokenAbi } from "@/context/blockchain/abis/frak-gating-abis";
-import { addresses } from "@/context/blockchain/addresses";
+"use client";
+
 import { useInvalidateCommunityTokenAvailability } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
+import { communityTokenAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
 import { useAccount, useWriteContract } from "wagmi";
 

@@ -1,10 +1,10 @@
 "use server";
 
-import { paywallAbi } from "@/context/blockchain/abis/frak-gating-abis";
-import { addresses } from "@/context/blockchain/addresses";
 import { frakChainPocClient } from "@/context/blockchain/provider";
 import { getErc20Balance } from "@/context/tokens/action/getBalance";
 import type { ArticlePrice, ArticlePriceForUser } from "@/types/Price";
+import { paywallAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { unstable_cache } from "next/cache";
 import { type Hex, toHex } from "viem";
 import { readContract } from "viem/actions";

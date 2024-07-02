@@ -1,10 +1,9 @@
 "use server";
 
-import { referralCampaignAbi } from "@/context/blockchain/abis/frak-campaign-abis";
-import { addresses } from "@/context/blockchain/addresses";
 import { contentIds } from "@/context/blockchain/contentIds";
 import { frakChainPocClient } from "@/context/blockchain/provider";
 import { getCampaignContracts } from "@/context/interaction/action/interactionContracts";
+import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { sift } from "radash";
 import { type Address, encodeFunctionData, formatEther } from "viem";
 import { multicall } from "viem/actions";
@@ -57,7 +56,7 @@ export async function getPendingReferralReward({ user }: { user: Address }) {
                 claimTx: encodeFunctionData({
                     abi: referralCampaignAbi,
                     functionName: "pullReward",
-                    args: [addresses.paywallToken],
+                    args: [user],
                 }),
             };
         }

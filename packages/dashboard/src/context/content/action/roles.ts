@@ -1,8 +1,8 @@
 "use server";
 
-import { contentRegistryAbi } from "@/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@/context/blockchain/addresses";
 import { viemClient } from "@/context/blockchain/provider";
+import { contentRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import type { Address } from "viem";
 import { readContract } from "viem/actions";
 

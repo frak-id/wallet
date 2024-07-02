@@ -1,6 +1,6 @@
-import { addresses } from "@/context/blockchain/addresses";
 import { frakChainId } from "@/context/blockchain/provider";
 import { getErc20Balance } from "@/context/tokens/action/getBalance";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { type Address, formatEther } from "viem";

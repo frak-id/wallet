@@ -1,5 +1,5 @@
-import { DI } from "@/context/common/di";
 import { isRunningInProd } from "@/context/common/env";
+import { DI } from "@frak-labs/shared/context/utils/di";
 import { MongoClient } from "mongodb";
 
 // Get the mongo db client

@@ -1,7 +1,7 @@
 "use client";
 
-import { DI } from "@/context/common/di";
 import { appUrl } from "@/context/common/env";
+import { DI } from "@frak-labs/shared/context/utils/di";
 import { Core } from "@walletconnect/core";
 import { Web3Wallet } from "@walletconnect/web3wallet";
 

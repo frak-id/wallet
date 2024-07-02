@@ -1,12 +1,12 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
-import { interactionCampaignAbi } from "@/context/blockchain/abis/frak-campaign-abis";
 import { campaignRoles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import { getClient } from "@/context/indexer/client";
 import type { CampaignWithState } from "@/types/Campaign";
 import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
+import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { gql } from "@urql/core";
 import { all } from "radash";
 import { type Address, isAddressEqual } from "viem";
@@ -16,9 +16,8 @@ import { multicall } from "viem/actions";
  * Get the content for a given administrator query
  */
 const QUERY = gql(`
-query GetCampaignForContents($wallet: String!) {
+query GetCampaignForUser($wallet: String!) {
   contentAdministrators(
-    limit: 10
     where: {user: $wallet}
   ) {
     items {

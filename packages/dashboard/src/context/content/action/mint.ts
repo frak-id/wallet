@@ -4,7 +4,7 @@ import * as dns from "node:dns";
 import { promisify } from "node:util";
 import { getSafeSession } from "@/context/auth/actions/session";
 import { flat } from "radash";
-import { type Address, keccak256, toHex } from "viem";
+import { type Address, concatHex, keccak256, toHex } from "viem";
 
 /**
  * Mint a new content for the given user
@@ -40,6 +40,6 @@ export async function getDnsTxtString({
     wallet,
 }: { domain: string; wallet?: Address }) {
     const safeWallet = wallet ?? (await getSafeSession()).wallet;
-    const hash = keccak256([toHex(domain), toHex(safeWallet)]);
+    const hash = keccak256(concatHex([toHex(domain), toHex(safeWallet)]));
     return `frak-business hash=${hash}`;
 }

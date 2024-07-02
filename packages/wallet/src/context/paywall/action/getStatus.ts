@@ -1,8 +1,8 @@
 "use server";
 
-import { paywallAbi } from "@/context/blockchain/abis/frak-gating-abis";
-import { addresses } from "@/context/blockchain/addresses";
 import { frakChainPocClient } from "@/context/blockchain/provider";
+import { paywallAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import type { Address, Hex } from "viem";
 import { readContract } from "viem/actions";
 
