@@ -1,5 +1,15 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.10
+
+### Patch Changes
+
+- [`30e3863`](https://github.com/frak-id/wallet/commit/30e3863dfdbfa80d319d988226b64d73c668a7bf) Thanks [@KONFeature](https://github.com/KONFeature)! - Add `frak_sendTransaction` rpc action on the wallet. Only callable from dapp inside the `frak.id` domain for now.
+
+- [`e3d003f`](https://github.com/frak-id/wallet/commit/e3d003f046b5215c83711af7758da76002216617) Thanks [@KONFeature](https://github.com/KONFeature)! - Adding `domain` field in the nexus config (auto filled when using the react component `NexusConfigProvider`)
+
+- [`e3d003f`](https://github.com/frak-id/wallet/commit/e3d003f046b5215c83711af7758da76002216617) Thanks [@KONFeature](https://github.com/KONFeature)! - Added the `siweAuthenticate` method (with the react hook) to craft strong authentication with the nexus wallet
+
 ## 0.0.9
 
 ### Patch Changes
