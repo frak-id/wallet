@@ -47,8 +47,6 @@ export function WalletAppStack({ stack }: StackContext) {
         },
         // Bind to the configs
         bind: configs,
-        // Set to combined logging to prevent SSR huuuge cost
-        logging: "combined",
         openNextVersion: "3.0.6",
         // Number of server side instance to keep warm
         warm: 20,
