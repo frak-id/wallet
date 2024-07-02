@@ -78,12 +78,14 @@ export function AlertDialog({
                             </button>
                         </AlertDialogPrimitive.Cancel>
                     )}
-                    {title && (
+                    {title ? (
                         <AlertDialogPrimitive.Title
                             className={`${styles.alertDialog__title} ${classNameTitle}`}
                         >
                             {title}
                         </AlertDialogPrimitive.Title>
+                    ) : (
+                        <AlertDialogPrimitive.Title />
                     )}
                     {description ? (
                         <AlertDialogPrimitive.Description>
