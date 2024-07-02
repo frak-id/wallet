@@ -1,0 +1,18 @@
+{
+  "name": "@frak-labs/component",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "GNU GPL 3.0",
+  "dependencies": {
+    "@frak-labs/asset": "workspace:*",
+    "@radix-ui/react-slot": "^1.1.0",
+    "class-variance-authority": "^0.7.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "react": "^18",
+    "typescript": "^5"
+  }
+}
