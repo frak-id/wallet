@@ -7,7 +7,7 @@
   "license": "GNU GPL 3.0",
   "scripts": {
     "dev": "sst bind next dev --turbo",
-    "build": "sst bind next build --experimental-turbo",
+    "build": "sst bind next build",
     "start": "sst bind next start",
     "lint": "biome lint .",
     "format:check": "biome check .",

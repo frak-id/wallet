@@ -2,6 +2,7 @@ import { InjectBannerComponent } from "@/module/article/component/Read/InjectBan
 import { InjectPopupComponent } from "@/module/article/component/Read/InjectPopupComponent";
 import { InjectUnlockComponent } from "@/module/article/component/Read/InjectUnlockComponent";
 import { Skeleton } from "@/module/common/component/Skeleton";
+import { fixLink } from "@/module/common/utils/link";
 import type { Article } from "@/type/Article";
 import {
     useArticleUnlockOptions,
@@ -88,7 +89,7 @@ export function ReadArticle({
                     id="frak-article-iframe"
                     title={"frak"}
                     className={styles.readArticle__iframe}
-                    src={`${lockedOrUnlocked()}`}
+                    src={`${fixLink(lockedOrUnlocked())}`}
                 />
             ) : (
                 <div style={{ margin: "16px" }}>

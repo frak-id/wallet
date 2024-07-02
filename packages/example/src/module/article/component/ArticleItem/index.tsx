@@ -1,5 +1,6 @@
 "use client";
 
+import { fixLink } from "@/module/common/utils/link";
 import type { Article } from "@/type/Article";
 import Link from "next/link";
 import { useMemo } from "react";
@@ -22,9 +23,10 @@ export function ArticleItem({
         });
     }
 
-    const url = useMemo(() => {
-        return `${article.link}&isFree=${index === 0 ? 1 : 0}`;
-    }, [article.link, index]);
+    const url = useMemo(
+        () => fixLink(`${article.link}&isFree=${index === 0 ? "1" : "0"}`),
+        [article.link, index]
+    );
 
     return (
         <li>
@@ -52,7 +54,7 @@ export function ArticleItem({
 }
 
 function imageAsWebP(imageUrl: string) {
-    return imageUrl.replace(".jpeg", ".webp");
+    return fixLink(imageUrl.replace(".jpeg", ".webp"));
 }
 
 function imageMobile(imageUrl: string) {

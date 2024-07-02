@@ -35,9 +35,9 @@ export function ExampleAppStack({ stack }: StackContext) {
         path: "packages/example",
         // Bind to the configs
         bind: configs,
-        openNextVersion: "2.3.9",
+        openNextVersion: "3.0.6",
         // Number of server side instance to keep warm
-        warm: 10,
+        warm: isProdStack(stack) ? 10 : 1,
         // Cache options
         assets: {
             fileOptions: [
@@ -68,8 +68,9 @@ export function ExampleAppStack({ stack }: StackContext) {
         ...ssrConfig,
     });
 
-    // Declare the next js site on news-example.frak.id
-    const newsSite = new NextjsSite(stack, "newsSite", {
+    // Declare the next js site on news-paper.xyz
+    // todo: Disabled for now since SST seems to struggle with multi site deployments
+    /*const newsSite = new NextjsSite(stack, "newsSite", {
         // Set the custom domain
         customDomain: {
             domainName: "news-paper.xyz",
@@ -77,10 +78,10 @@ export function ExampleAppStack({ stack }: StackContext) {
         },
         // Add the config
         ...ssrConfig,
-    });
+    });*/
 
     stack.addOutputs({
         ExampleSiteUrl: exampleSite.url,
-        NewsSiteUrl: newsSite.url,
+        //NewsSiteUrl: newsSite.url,
     });
 }
