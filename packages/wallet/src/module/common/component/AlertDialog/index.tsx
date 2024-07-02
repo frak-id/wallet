@@ -1,10 +1,11 @@
-import * as AlertDialogRadix from "@radix-ui/react-alert-dialog";
+import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
 type AlertDialogComponentProps = {
     title?: string;
+    description?: string;
     text?: ReactNode | string;
     button?: {
         label?: ReactNode | string;
@@ -21,10 +22,12 @@ type AlertDialogComponentProps = {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     classNameContent?: string;
+    classNameTitle?: string;
 };
 
 export function AlertDialog({
     title,
+    description,
     text,
     button: { label, className = "", disabled } = {},
     footer: { className: footerClassName = "", after: footerAfter } = {},
@@ -36,14 +39,15 @@ export function AlertDialog({
     open,
     onOpenChange,
     classNameContent = "",
+    classNameTitle = "",
 }: AlertDialogComponentProps) {
     return (
-        <AlertDialogRadix.Root
+        <AlertDialogPrimitive.Root
             defaultOpen={defaultOpen}
             open={open}
             onOpenChange={onOpenChange}
         >
-            <AlertDialogRadix.Trigger asChild>
+            <AlertDialogPrimitive.Trigger asChild>
                 {label && (
                     <button
                         type={"button"}
@@ -53,18 +57,18 @@ export function AlertDialog({
                         {label}
                     </button>
                 )}
-            </AlertDialogRadix.Trigger>
-            <AlertDialogRadix.Portal>
-                <AlertDialogRadix.Overlay
+            </AlertDialogPrimitive.Trigger>
+            <AlertDialogPrimitive.Portal>
+                <AlertDialogPrimitive.Overlay
                     className={styles.alertDialog__overlay}
                 />
-                <AlertDialogRadix.Content
+                <AlertDialogPrimitive.Content
                     className={`${styles.alertDialog__content} ${
                         showCloseButton ? styles.withCloseButton : ""
                     } ${classNameContent}`}
                 >
                     {showCloseButton && (
-                        <AlertDialogRadix.Cancel asChild>
+                        <AlertDialogPrimitive.Cancel asChild>
                             <button
                                 type={"button"}
                                 className={styles.alertDialog__close}
@@ -72,33 +76,39 @@ export function AlertDialog({
                             >
                                 <X />
                             </button>
-                        </AlertDialogRadix.Cancel>
+                        </AlertDialogPrimitive.Cancel>
                     )}
-                    {title && (
-                        <AlertDialogRadix.Title
-                            className={styles.alertDialog__title}
+                    {title ? (
+                        <AlertDialogPrimitive.Title
+                            className={`${styles.alertDialog__title} ${classNameTitle}`}
                         >
                             {title}
-                        </AlertDialogRadix.Title>
+                        </AlertDialogPrimitive.Title>
+                    ) : (
+                        <AlertDialogPrimitive.Title />
+                    )}
+                    {description ? (
+                        <AlertDialogPrimitive.Description>
+                            {description}
+                        </AlertDialogPrimitive.Description>
+                    ) : (
+                        <AlertDialogPrimitive.Description />
                     )}
                     {text && (
-                        <AlertDialogRadix.Description
-                            className={styles.alertDialog__description}
-                            asChild
-                        >
+                        <div className={styles.alertDialog__description}>
                             {text}
-                        </AlertDialogRadix.Description>
+                        </div>
                     )}
                     <div
                         className={`${styles.alertDialog__footer} ${footerClassName}`}
                     >
-                        <AlertDialogRadix.Cancel asChild>
+                        <AlertDialogPrimitive.Cancel asChild>
                             {cancel}
-                        </AlertDialogRadix.Cancel>
+                        </AlertDialogPrimitive.Cancel>
                         {actionClose && (
-                            <AlertDialogRadix.Action asChild>
+                            <AlertDialogPrimitive.Action asChild>
                                 {action}
-                            </AlertDialogRadix.Action>
+                            </AlertDialogPrimitive.Action>
                         )}
                         {!actionClose && action}
                     </div>
@@ -107,8 +117,8 @@ export function AlertDialog({
                             {footerAfter}
                         </div>
                     )}
-                </AlertDialogRadix.Content>
-            </AlertDialogRadix.Portal>
-        </AlertDialogRadix.Root>
+                </AlertDialogPrimitive.Content>
+            </AlertDialogPrimitive.Portal>
+        </AlertDialogPrimitive.Root>
     );
 }

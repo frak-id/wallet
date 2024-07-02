@@ -60,5 +60,5 @@ export async function getCampaignContracts({
     });
 
     // Flatten campaigns
-    return campaigns.flatMap((campaign) => campaign);
+    return campaigns.flat();
 }

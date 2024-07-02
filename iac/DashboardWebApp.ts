@@ -34,9 +34,7 @@ export function DashboardWebApp({ stack }: StackContext) {
         },
         // Bind to the configs
         bind: configs,
-        // Set to combined logging to prevent SSR huuuge cost
-        logging: "combined",
-        openNextVersion: "2.3.8",
+        openNextVersion: "2.3.9",
         // Number of server side instance to keep warm
         warm: 20,
     });

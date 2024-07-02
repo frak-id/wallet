@@ -1,7 +1,3 @@
-import {
-    getAlchemyTransport,
-    getAlchemyTransportNoBatch,
-} from "@/context/blockchain/alchemy-transport";
 import { isRunningInProd } from "@/context/common/env";
 import { memo } from "radash";
 import { type Chain, createClient, extractChain } from "viem";
@@ -14,6 +10,10 @@ import {
     optimismSepolia,
     polygon,
 } from "viem/chains";
+import {
+    getAlchemyTransport,
+    getAlchemyTransportNoBatch,
+} from "./alchemy-transport";
 
 /**
  * All the available chains

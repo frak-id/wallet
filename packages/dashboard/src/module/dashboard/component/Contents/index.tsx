@@ -8,7 +8,7 @@ import { ButtonRipple } from "@frak-labs/nexus-wallet/src/module/common/componen
 export function MyContents() {
     const { isEmpty, contents } = useMyContents();
 
-    if (isEmpty) {
+    if (isEmpty || !contents) {
         return <NoContents />;
     }
 

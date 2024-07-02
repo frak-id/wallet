@@ -58,7 +58,7 @@
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
-    "format": "biome check --apply .",
+    "format": "biome check --write .",
     "clean": "rimraf dist",
     "build": "tsup --splitting",
     "build:watch": "tsup --watch --splitting --format esm"
@@ -73,9 +73,9 @@
     "js-sha256": "^0.11.0"
   },
   "devDependencies": {
-    "@tanstack/react-query": ">=5.32.0",
+    "@tanstack/react-query": ">=5.49.2",
     "@types/node": "^20",
-    "tsup": "^8.0.2",
+    "tsup": "^8.1.0",
     "typescript": "^5"
   }
 }

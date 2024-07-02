@@ -29,14 +29,20 @@ type FormFromToProps<
         label: string;
         placeholder: string;
         rightSection: string;
-        rules?: RegisterOptions;
+        rules?: Omit<
+            RegisterOptions<TFieldValues, TName>,
+            "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
+        >;
     };
     to: {
         name: TName;
         label: string;
         placeholder: string;
         rightSection: string;
-        rules?: RegisterOptions;
+        rules?: Omit<
+            RegisterOptions<TFieldValues, TName>,
+            "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
+        >;
     };
     form: UseFormReturn<TFieldValues>;
     hideIfAllZero?: boolean;

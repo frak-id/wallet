@@ -1,5 +1,5 @@
-import type { AvailableChainIds } from "@/context/blockchain/provider";
 import { http, type Chain } from "viem";
+import type { AvailableChainIds } from "./provider";
 
 /**
  * The alchemy network names, used to rebuild the rpc urls
