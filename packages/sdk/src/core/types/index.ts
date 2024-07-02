@@ -21,6 +21,11 @@ export type {
     SendTransactionReturnType,
     SendTransactionTxType,
 } from "./rpc/sendTransaction";
+export type {
+    PreparedInteraction,
+    SendInteractionRpcParamsType,
+    SendInteractionReturnType,
+} from "./rpc/interaction";
 export { FrakRpcError } from "./rpc/error";
 export type { IFrameRpcSchema, RedirectRpcSchema } from "./rpc";
 // Client related

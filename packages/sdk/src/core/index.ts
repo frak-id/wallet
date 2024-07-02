@@ -31,6 +31,9 @@ export type {
     AuthenticateActionParamsType,
     AuthenticateRpcParamsType,
     SiweAuthenticationParams,
+    PreparedInteraction,
+    SendInteractionRpcParamsType,
+    SendInteractionReturnType,
     // Client
     NexusClient,
     // Transport

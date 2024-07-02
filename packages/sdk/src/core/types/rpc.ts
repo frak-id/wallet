@@ -4,6 +4,10 @@ import type {
     AuthenticateRpcParamsType,
 } from "./rpc/authenticate";
 import type {
+    SendInteractionReturnType,
+    SendInteractionRpcParamsType,
+} from "./rpc/interaction";
+import type {
     SendTransactionReturnType,
     SendTransactionRpcParamsType,
 } from "./rpc/sendTransaction";
@@ -67,6 +71,14 @@ export type IFrameRpcSchema = [
         Method: "frak_siweAuthenticate";
         Parameters: AuthenticateRpcParamsType;
         ReturnType: AuthenticateReturnType;
+    },
+    /**
+     * Method to ask the user for a strong authentication
+     */
+    {
+        Method: "frak_sendInteraction";
+        Parameters: SendInteractionRpcParamsType;
+        ReturnType: SendInteractionReturnType;
     },
 ];
 

@@ -57,7 +57,7 @@ export function ExampleAppStack({ stack }: StackContext) {
         },
     };
 
-    // Declare the next js site on news-example.frak.id
+    // Declare the next-js site on news-example.frak.id
     const exampleSite = new NextjsSite(stack, "example", {
         // Set the custom domain
         customDomain: {
