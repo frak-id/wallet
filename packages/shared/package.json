@@ -1,11 +1,10 @@
 {
-  "name": "@frak-labs/component",
+  "name": "@frak-labs/shared",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "license": "GNU GPL 3.0",
   "dependencies": {
-    "@frak-labs/asset": "workspace:*",
     "@radix-ui/react-slot": "^1.1.0",
     "class-variance-authority": "^0.7.0",
     "next": "14.2.4"

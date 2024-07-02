@@ -1,5 +1,5 @@
-import { mergeElement } from "@/utils/mergeElement";
-import { Loader } from "@frak-labs/asset/icons/Loader";
+import { Loader } from "@/module/asset/icons/Loader";
+import { mergeElement } from "@/module/utils/mergeElement";
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import { forwardRef } from "react";
