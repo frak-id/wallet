@@ -1,4 +1,3 @@
-import { Loader } from "@/assets/icons/Loader";
 import {
     getSessionEnableData,
     getSessionStatus,
@@ -7,6 +6,7 @@ import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { Panel } from "@/module/common/component/Panel";
 import { Switch } from "@/module/common/component/Switch";
 import { Tooltip } from "@/module/common/component/Tooltip";
+import { Loader } from "@frak-labs/shared/module/asset/icons/Loader";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";

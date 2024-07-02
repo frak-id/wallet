@@ -1,9 +1,9 @@
 "use client";
 
-import { LogoFrak } from "@/assets/icons/LogoFrak";
 import { Nexus } from "@/assets/icons/Nexus";
 import { HeaderWallet } from "@/module/common/component/HeaderWallet";
 import { Navigation } from "@/module/common/component/Navigation";
+import { LogoFrak } from "@frak-labs/shared/module/asset/icons/LogoFrak";
 import Link from "next/link";
 import styles from "./index.module.css";
 

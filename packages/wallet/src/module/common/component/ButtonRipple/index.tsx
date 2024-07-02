@@ -1,4 +1,4 @@
-import { Loader } from "@/assets/icons/Loader";
+import { Loader } from "@frak-labs/shared/module/asset/icons/Loader";
 import type { MouseEvent } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";

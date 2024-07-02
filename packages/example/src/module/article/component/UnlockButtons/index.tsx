@@ -1,5 +1,4 @@
 import css from "!!raw-loader!./index.module.css";
-import { FrakLogo } from "@/assets/icons/FrakLogo";
 import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
 import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import type { Article } from "@/type/Article";
@@ -12,6 +11,7 @@ import {
 } from "@frak-labs/nexus-sdk/react";
 import { formatHash } from "@frak-labs/nexus-wallet/src/context/wallet/utils/hashFormatter";
 import type { ArticlePriceForUser } from "@frak-labs/nexus-wallet/src/types/Price";
+import { LogoFrak } from "@frak-labs/shared/module/asset/icons/LogoFrak";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
@@ -90,7 +90,7 @@ export function UnlockButtons({
     return (
         <div className={`unlockButtons unlockButtons--${article.provider}`}>
             <div className={`unlockButtons__header ${stylesHeader}`}>
-                <FrakLogo className={"unlockButtons__logo"} />
+                <LogoFrak sizes={20} className={"unlockButtons__logo"} />
                 {unlockStatus?.key === "valid" ? "Unlocked" : "Unlock"} with
                 Frak
             </div>

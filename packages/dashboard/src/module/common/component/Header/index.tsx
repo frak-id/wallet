@@ -1,5 +1,5 @@
-import { LogoFrak } from "@/assets/icons/LogoFrak";
 import { NavigationTop } from "@/module/common/component/NavigationTop";
+import { LogoFrak } from "@frak-labs/shared/module/asset/icons/LogoFrak";
 import Link from "next/link";
 import styles from "./index.module.css";
 

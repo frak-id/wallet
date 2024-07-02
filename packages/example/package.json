@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@frak-labs/nexus-sdk": "workspace:*",
+    "@frak-labs/shared": "workspace:*",
     "@radix-ui/react-slot": "^1.1.0",
     "@tanstack/react-query": "^5.49.2",
     "@tanstack/store": "^0.5.3",
