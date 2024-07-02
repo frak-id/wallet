@@ -10,7 +10,7 @@ const initialValues: Campaign = {
     title: "",
     order: "",
     type: "",
-    contentId: "0x",
+    contentId: "",
     specialCategories: [],
     budget: {
         type: "",

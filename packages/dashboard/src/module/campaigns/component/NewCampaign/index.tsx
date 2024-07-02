@@ -10,6 +10,7 @@ import {
 } from "@/module/campaigns/atoms/steps";
 import { FormBudget } from "@/module/campaigns/component/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/NewCampaign/FormGoals";
+import { FormProduct } from "@/module/campaigns/component/NewCampaign/FormProduct";
 import { FormSchedule } from "@/module/campaigns/component/NewCampaign/FormSchedule";
 import { FormSpecialAdvertising } from "@/module/campaigns/component/NewCampaign/FormSpecialAdvertising";
 import { FormTerritory } from "@/module/campaigns/component/NewCampaign/FormTerritory";
@@ -75,6 +76,7 @@ export function NewCampaign() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormTitle {...form} />
+                    <FormProduct {...form} />
                     <FormGoals {...form} />
                     <FormSpecialAdvertising {...form} />
                     <FormBudget {...form} />

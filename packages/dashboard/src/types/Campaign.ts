@@ -13,7 +13,7 @@ type ContentType = "text" | "video" | "product" | "others";
 export type Campaign = {
     title: string;
     order: string;
-    contentId: Hex;
+    contentId: Hex | "";
     type: Goal | "";
     specialCategories: SpecialCategory[];
     budget: {
