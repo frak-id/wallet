@@ -3,13 +3,13 @@ import {
     getSessionEnableData,
     getSessionStatus,
 } from "@/context/interaction/action/interactionSession";
+import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { Panel } from "@/module/common/component/Panel";
 import { Switch } from "@/module/common/component/Switch";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { Hex } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
 
@@ -55,12 +55,16 @@ export function ToggleSession() {
                         onCheckedChange={async (checked) => {
                             // Add session
                             if (checked && address && sessionSetupTxs) {
-                                for (const sessionSetupTx of sessionSetupTxs) {
-                                    await sendTransactionAsync({
+                                const txData = encodeWalletMulticall(
+                                    sessionSetupTxs.map((tx) => ({
                                         to: address,
-                                        data: sessionSetupTx as Hex,
-                                    });
-                                }
+                                        data: tx,
+                                    }))
+                                );
+                                await sendTransactionAsync({
+                                    to: address,
+                                    data: txData,
+                                });
                             }
 
                             // Remove session

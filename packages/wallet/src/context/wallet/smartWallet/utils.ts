@@ -1,5 +1,8 @@
 import { kernelAddresses } from "@/context/blockchain/addresses";
-import { KernelInitAbi } from "@/context/wallet/abi/kernel-account-abis";
+import {
+    KernelExecuteAbi,
+    KernelInitAbi,
+} from "@/context/wallet/abi/kernel-account-abis";
 import type { P256PubKey } from "@/types/WebAuthN";
 import { ENTRYPOINT_ADDRESS_V06, getSenderAddress } from "permissionless";
 import {
@@ -11,7 +14,11 @@ import {
     concatHex,
     encodeAbiParameters,
     encodeFunctionData,
+    isAddressEqual,
+    slice,
+    toFunctionSelector,
 } from "viem";
+import { formatAbiItem } from "viem/utils";
 
 /**
  * The account creation ABI for a kernel smart account (from the KernelFactory)
@@ -116,3 +123,27 @@ export const getAccountAddress = async <
         entryPoint: ENTRYPOINT_ADDRESS_V06,
     });
 };
+
+/**
+ * Check if the given calldata is already formatted as a call to the wallet
+ * @param wallet
+ * @param to
+ * @param data
+ */
+export function isAlreadyFormattedCall({
+    wallet,
+    to,
+    data,
+}: { wallet: Address; to: Address; data: Hex }) {
+    if (!isAddressEqual(to, wallet)) {
+        return false;
+    }
+
+    const signature = slice(data, 0, 4);
+    return KernelExecuteAbi.some((x) => {
+        return (
+            x.type === "function" &&
+            signature === toFunctionSelector(formatAbiItem(x))
+        );
+    });
+}
