@@ -82,6 +82,14 @@ export function FormSpecialAdvertising(form: UseFormReturn<Campaign>) {
                                 key={item.id}
                                 control={form.control}
                                 name="specialCategories"
+                                rules={{
+                                    validate: {
+                                        required: (value) =>
+                                            value.length === 0
+                                                ? undefined
+                                                : "Special advertising categories are not supported for now",
+                                    },
+                                }}
                                 render={({ field }) => (
                                     <FormItem
                                         variant={"checkbox"}
