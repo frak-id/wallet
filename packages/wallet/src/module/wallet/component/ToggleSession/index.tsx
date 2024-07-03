@@ -19,7 +19,7 @@ export function ToggleSession() {
 
     const { data: sessionStatus, isPending: sessionStatusIsPending } = useQuery(
         {
-            queryKey: ["interactionSession", "status", address],
+            queryKey: ["interactions", "session-status", address],
             queryFn: async () => {
                 if (!address) {
                     return null;
@@ -31,7 +31,7 @@ export function ToggleSession() {
     );
 
     const { data: sessionSetupTxs } = useQuery({
-        queryKey: ["interactionSession", "setup", address],
+        queryKey: ["interactions", "session-setup", address],
         queryFn: async () => {
             // Get timestamp in a week
             const sessionEnd = new Date();
@@ -44,6 +44,8 @@ export function ToggleSession() {
     if (sessionStatusIsPending) {
         return null;
     }
+
+    // todo: consume pending interactions post session creation
 
     return (
         <>

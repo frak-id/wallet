@@ -1,11 +1,12 @@
 import { pushInteraction } from "@/context/interaction/action/pushInteraction";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
+import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
 
 type OnInteractionRequest = IFrameRequestResolver<
@@ -23,6 +24,11 @@ export function useSendInteractionListener() {
      * Get the current user session
      */
     const session = useAtomValue(sessionAtom);
+
+    /**
+     * Add the pending interaction to the list
+     */
+    const addPendingInteraction = useSetAtom(addPendingInteractionAtom);
 
     /**
      * The function that will be called when a user referred is requested
@@ -45,7 +51,12 @@ export function useSendInteractionListener() {
             // If no current wallet present
             if (!userAddress) {
                 console.error("No wallet address present");
-                // todo: add to an interaction storage queue
+                // add to an interaction storage queue
+                addPendingInteraction({
+                    contentId,
+                    interaction,
+                    signature,
+                });
                 // Send the response
                 await emitter({
                     key: "error",
@@ -67,7 +78,7 @@ export function useSendInteractionListener() {
                 hash: txHash,
             });
         },
-        [session?.wallet?.address]
+        [session?.wallet?.address, addPendingInteraction]
     );
 
     return {
