@@ -1,14 +1,16 @@
-import { Popup } from "@/module/article/component/Popup";
+import { ReferralPopup } from "@/module/article/component/Popup";
 import { cssRaw as cssRawButton } from "@/module/common/component/Button";
 import type { Article } from "@/type/Article";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cssRaw } from "../Popup";
 
-export function InjectPopupComponent({
+export function InjectReferralPopupComponent({
     article,
+    referralState,
 }: {
     article: Article;
+    referralState: string;
 }) {
     const [containerRoot, setContainerRoot] = useState<Element | undefined>();
 
@@ -43,6 +45,13 @@ export function InjectPopupComponent({
     }, [articleIframeDocument]);
 
     if (
+        !(referralState && ["no-wallet", "no-session"].includes(referralState))
+    ) {
+        console.log(`Not showing referral popup, state: ${referralState}`);
+        return null;
+    }
+
+    if (
         !(
             articleIframe &&
             articleIframeDocument &&
@@ -56,7 +65,10 @@ export function InjectPopupComponent({
     return (
         containerRoot && (
             <>
-                {createPortal(<Popup article={article} />, containerRoot)}
+                {createPortal(
+                    <ReferralPopup article={article} state={referralState} />,
+                    containerRoot
+                )}
                 {/* Inject the styles into the iframe */}
                 {createPortal(
                     <style>

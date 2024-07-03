@@ -23,6 +23,16 @@ export async function sendInteraction(
     });
 
     switch (result.key) {
+        case "not-connected":
+            throw new FrakRpcError(
+                RpcErrorCodes.walletNotConnected,
+                "User not connected"
+            );
+        case "no-session":
+            throw new FrakRpcError(
+                RpcErrorCodes.noInteractionSession,
+                "User doesn't have an interaction session"
+            );
         case "error":
             throw new FrakRpcError(
                 RpcErrorCodes.serverError,

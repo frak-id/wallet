@@ -170,19 +170,6 @@ export function getIframeRequestKeyProvider(
                 request.params[1],
             ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
 
-        // Referred user
-        case "frak_listenToSetUserReferred":
-            return ((
-                request: Extract<
-                    ExtractedParametersFromRpc<IFrameRpcSchema>,
-                    { method: "frak_listenToSetUserReferred" }
-                >
-            ) => [
-                "user-referred",
-                request.params[0],
-                request.params[1],
-            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-
         // Send transaction
         case "frak_sendTransaction":
             return ((
