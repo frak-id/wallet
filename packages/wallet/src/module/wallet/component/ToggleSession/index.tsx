@@ -1,26 +1,22 @@
-import {
-    getSessionEnableData,
-    getSessionStatus,
-} from "@/context/interaction/action/interactionSession";
-import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
+import { getSessionStatus } from "@/context/interaction/action/interactionSession";
 import { Panel } from "@/module/common/component/Panel";
 import { Switch } from "@/module/common/component/Switch";
 import { Tooltip } from "@/module/common/component/Tooltip";
-import { useConsumePendingInteractions } from "@/module/wallet/hook/useConsumePendingInteractions";
+import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
+import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import { Loader } from "@frak-labs/shared/module/asset/icons/Loader";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAccount, useSendTransaction } from "wagmi";
+import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
 export function ToggleSession() {
     const { address } = useAccount();
-    const { sendTransactionAsync, isPending } = useSendTransaction();
 
     const { data: sessionStatus, isPending: sessionStatusIsPending } = useQuery(
         {
-            queryKey: ["interactions", "session-status", address],
+            queryKey: ["interactions", "session-status"],
             queryFn: async () => {
                 if (!address) {
                     return null;
@@ -31,19 +27,11 @@ export function ToggleSession() {
         }
     );
 
-    const { data: sessionSetupTxs } = useQuery({
-        queryKey: ["interactions", "session-setup", address],
-        queryFn: async () => {
-            // Get timestamp in a week
-            const sessionEnd = new Date();
-            sessionEnd.setDate(sessionEnd.getDate() + 7);
+    const { mutate: openSession, isPending: isOpeningSession } =
+        useOpenSession();
 
-            return getSessionEnableData({ sessionEnd });
-        },
-    });
-
-    const { mutateAsync: consumePendingInteractions } =
-        useConsumePendingInteractions();
+    const { mutate: closeSession, isPending: isClosingSession } =
+        useCloseSession();
 
     if (sessionStatusIsPending) {
         return null;
@@ -56,35 +44,24 @@ export function ToggleSession() {
                 <div className={styles.toggleSession}>
                     <Switch
                         checked={!!sessionStatus}
-                        onCheckedChange={async (checked) => {
-                            // Add session
-                            if (checked && address && sessionSetupTxs) {
-                                const txData = encodeWalletMulticall(
-                                    sessionSetupTxs.map((tx) => ({
-                                        to: address,
-                                        data: tx,
-                                    }))
-                                );
-                                await sendTransactionAsync({
-                                    to: address,
-                                    data: txData,
-                                });
-
-                                // When each sessions are opened, consume pending interactions
-                                await consumePendingInteractions();
+                        onCheckedChange={(checked) => {
+                            // If checked, open the session
+                            if (checked) {
+                                openSession();
+                                return;
                             }
 
-                            // Remove session
-                            if (!checked) {
-                                // TODO disable session
-                            }
+                            // Otherwise, close the session
+                            closeSession();
                         }}
                     />{" "}
                     {sessionStatus
                         ? "Your session is open. You can be rewarded"
                         : "Open a session to get reward"}{" "}
                     <SessionTooltip sessionStatus={sessionStatus} />
-                    {isPending && <Loader className={styles.loader} />}
+                    {(isOpeningSession || isClosingSession) && (
+                        <Loader className={styles.loader} />
+                    )}
                 </div>
             </Panel>
         </>

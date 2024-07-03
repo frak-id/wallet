@@ -34,13 +34,14 @@ export function useConsumePendingInteractions() {
                 wallet: address,
                 toPush: interactions,
             });
-            console.log(
-                "Submitted the pending interactions on txHash: ",
-                txHash
-            );
 
             // Clean the pending interactions
             cleanPendingInteractions();
+
+            return {
+                txHash,
+                submittedInteractions: interactions.length,
+            };
         },
     });
 }

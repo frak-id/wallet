@@ -140,6 +140,7 @@ async function _prepareInteraction({
     contentId: bigint;
     data: Hex;
 }> {
+    // todo: Should simulate the interaction to ensure it will pass
     const contentId = BigInt(toPush.contentId);
 
     // Get an interaction manager
