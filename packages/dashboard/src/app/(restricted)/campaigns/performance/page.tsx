@@ -1,10 +1,10 @@
 "use client";
 
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
-import { Button } from "@/module/common/component/Button";
 import { Filters } from "@/module/common/component/Filters";
 import { Head } from "@/module/common/component/Head";
 import { TablePerformance } from "@/module/common/component/TablePerformance";
+import { Button } from "@module/component/Button";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 

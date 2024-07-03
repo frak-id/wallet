@@ -1,9 +1,9 @@
-import { Button } from "@/module/common/component/Button";
 import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
 import {
     recoveryDoneStepAtom,
     recoveryOptionsAtom,
 } from "@/module/settings/atoms/recovery";
+import { Button } from "@module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Check, X } from "lucide-react";
 import type { Chain } from "viem";
@@ -35,8 +35,7 @@ export function ButtonSetupChain({
                     });
                     setDoneSteps((count) => count + 1);
                 }}
-                LeftIcon={isSuccess ? Check : isError ? X : undefined}
-                fontSize={"normal"}
+                leftIcon={isSuccess ? <Check /> : isError ? <X /> : undefined}
                 className={className}
             >
                 Setup recovery for {chain.name}

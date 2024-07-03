@@ -3,11 +3,11 @@
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
 import { FormObjectives } from "@/module/campaigns/component/MetricsCampaign/FormObjectives";
-import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
+import { Button } from "@module/component/Button";
 import { useAtom, useSetAtom } from "jotai";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -1,5 +1,4 @@
 import { Badge } from "@/module/common/component/Badge";
-import { Button } from "@/module/common/component/Button";
 import {
     Command,
     CommandEmpty,
@@ -15,6 +14,7 @@ import {
     PopoverTrigger,
 } from "@/module/common/component/Popover";
 import { Separator } from "@/module/common/component/Separator";
+import { Button } from "@module/component/Button";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
 import { forwardRef, useEffect, useState } from "react";
 import type { ButtonHTMLAttributes, KeyboardEvent } from "react";

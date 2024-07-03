@@ -6,7 +6,7 @@ import {
 } from "@/context/interaction/action/interactionSession";
 import { pushInteraction } from "@/context/interaction/action/pushInteraction";
 import { PressInteraction } from "@/context/interaction/utils/pressInteraction";
-import { Button } from "@/module/common/component/Button";
+import { Button } from "@module/component/Button";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";

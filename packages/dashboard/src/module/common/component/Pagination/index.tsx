@@ -1,4 +1,4 @@
-import { Button } from "@/module/common/component/Button";
+import { Button } from "@module/component/Button";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { type ComponentProps, type ReactNode, forwardRef } from "react";
 import styles from "./index.module.css";

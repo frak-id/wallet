@@ -15,11 +15,11 @@ import { FormSchedule } from "@/module/campaigns/component/NewCampaign/FormSched
 import { FormSpecialAdvertising } from "@/module/campaigns/component/NewCampaign/FormSpecialAdvertising";
 import { FormTerritory } from "@/module/campaigns/component/NewCampaign/FormTerritory";
 import { FormTitle } from "@/module/campaigns/component/NewCampaign/FormTitle";
-import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
+import { Button } from "@module/component/Button";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -1,11 +1,11 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
-import { Button } from "@/module/common/component/Button";
 import {
     recoveryFileContentAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
+import { Button } from "@module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
@@ -77,7 +77,6 @@ export function Step2() {
             </p>
             <p>
                 <Button
-                    fontSize={"normal"}
                     className={styles.step2__button}
                     disabled={isLoading}
                     isLoading={isLoading}

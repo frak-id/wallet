@@ -7,7 +7,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/module/common/component/Accordion";
-import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
@@ -15,6 +14,7 @@ import {
     isConvertToEuroEnableAtom,
     isWalletConnectEnableAtom,
 } from "@/module/settings/atoms/betaOptions";
+import { Button } from "@frak-labs/shared/module/component/Button";
 import { useAtom } from "jotai";
 import { FlaskConical, Square, SquareCheck } from "lucide-react";
 import styles from "./index.module.css";
@@ -65,7 +65,7 @@ function BetaOptionsList() {
 function WalletConnectToggle() {
     const [isEnable, toggle] = useAtom(isWalletConnectEnableAtom);
     return (
-        <Button onClick={toggle} variant={"outlined"}>
+        <Button onClick={toggle} variant={"ghost"}>
             <Row>
                 {isEnable ? <SquareCheck /> : <Square />}
                 Wallet Connect
@@ -77,7 +77,7 @@ function WalletConnectToggle() {
 function ConvertToEuroToggle() {
     const [isEnable, toggle] = useAtom(isConvertToEuroEnableAtom);
     return (
-        <Button onClick={toggle} variant={"outlined"}>
+        <Button onClick={toggle} variant={"ghost"}>
             <Row>
                 {isEnable ? <SquareCheck /> : <Square />}
                 Convert to Euro

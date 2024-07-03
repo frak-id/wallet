@@ -6,13 +6,13 @@ import {
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
 import { FormCheck } from "@/module/campaigns/component/ValidationCampaign/FormCheck";
-import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { Button } from "@module/component/Button";
 import { useMutation } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
 import { X } from "lucide-react";

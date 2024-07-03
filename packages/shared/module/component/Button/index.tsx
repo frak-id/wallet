@@ -1,5 +1,5 @@
-import { Loader } from "@/module/asset/icons/Loader";
-import { mergeElement } from "@/module/utils/mergeElement";
+import { Spinner } from "@module/component/Spinner";
+import { mergeElement } from "@module/utils/mergeElement";
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import { forwardRef } from "react";
@@ -68,7 +68,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 {...props}
             >
                 <>
-                    {isLoading && <Loader className={styles.loader} />}
+                    {isLoading && <Spinner className={styles.loader} />}
                     {leftIcon &&
                         mergeElement(leftIcon, { className: styles.leftIcon })}
                     {asChild

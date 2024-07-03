@@ -63,6 +63,7 @@
 .ghost {
     background: none;
     border: 1px solid transparent;
+    color: inherit;
 }
 
 .submit {
@@ -103,7 +104,6 @@
 
 .loader {
     margin-right: 10px;
-    margin-bottom: 2px;
 }
 
 .fontSize--small {

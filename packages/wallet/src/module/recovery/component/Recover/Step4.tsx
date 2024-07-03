@@ -1,11 +1,11 @@
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
-import { Button } from "@/module/common/component/Button";
 import { useCreateRecoveryPasskey } from "@/module/recovery/hook/useCreateRecoveryPasskey";
 import {
     recoveryFileContentAtom,
     recoveryNewWalletAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
+import { Button } from "@module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
 import styles from "./Step4.module.css";

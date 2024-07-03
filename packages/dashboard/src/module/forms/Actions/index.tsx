@@ -2,8 +2,8 @@ import {
     campaignStepAtom,
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
-import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
+import { Button } from "@module/component/Button";
 import { useAtom, useSetAtom } from "jotai";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";

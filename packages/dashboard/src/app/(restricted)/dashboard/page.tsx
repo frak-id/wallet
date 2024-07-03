@@ -1,12 +1,12 @@
 "use client";
 
 import { deleteSession } from "@/context/auth/actions/session";
-import { Button } from "@/module/common/component/Button";
 import { MyContents } from "@/module/dashboard/component/Contents";
 import type { SendTransactionReturnType } from "@frak-labs/nexus-sdk/core";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { Button } from "@module/component/Button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { encodeFunctionData } from "viem";
