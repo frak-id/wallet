@@ -1,3 +1,5 @@
+import { FrakRpcError } from "../../types";
+import { RpcErrorCodes } from "../../types/rpc/error";
 import type { IFrameEvent } from "../../types/transport";
 import { Deferred } from "../../utils/Deferred";
 import { changeIframeVisibility } from "../../utils/iframeHelper";
@@ -53,11 +55,17 @@ export function createIFrameMessageHandler({
 }: IFrameMessageHandlerParam): IFrameMessageHandler {
     // Ensure the window is valid
     if (typeof window === "undefined") {
-        throw new Error("iframe client should be used in the browser");
+        throw new FrakRpcError(
+            RpcErrorCodes.configError,
+            "iframe client should be used in the browser"
+        );
     }
     // Ensure the iframe is valid
     if (!iframe.contentWindow) {
-        throw new Error("The iframe does not have a content window");
+        throw new FrakRpcError(
+            RpcErrorCodes.configError,
+            "The iframe does not have a content window"
+        );
     }
     const contentWindow = iframe.contentWindow;
 

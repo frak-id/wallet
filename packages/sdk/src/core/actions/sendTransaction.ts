@@ -1,4 +1,10 @@
-import type { NexusClient, SendTransactionActionParamsType } from "../types";
+import {
+    FrakRpcError,
+    type NexusClient,
+    type SendTransactionActionParamsType,
+    type SendTransactionReturnType,
+} from "../types";
+import { RpcErrorCodes } from "../types/rpc/error";
 
 /**
  * Function used to send a user transaction
@@ -7,12 +13,28 @@ import type { NexusClient, SendTransactionActionParamsType } from "../types";
  * @param context
  * @param callback
  */
-export function sendTransaction(
+export async function sendTransaction(
     client: NexusClient,
     { tx, context }: SendTransactionActionParamsType
-) {
-    return client.request({
+): Promise<Extract<SendTransactionReturnType, { key: "success" }>> {
+    const result = await client.request({
         method: "frak_sendTransaction",
         params: [tx, context],
     });
+
+    switch (result.key) {
+        case "aborted":
+            throw new FrakRpcError(
+                RpcErrorCodes.clientAborted,
+                "The client has aborted the operation"
+            );
+        case "error":
+            throw new FrakRpcError(
+                RpcErrorCodes.serverError,
+                result.reason ??
+                    "An error occurred while sending the transaction"
+            );
+        case "success":
+            return result;
+    }
 }

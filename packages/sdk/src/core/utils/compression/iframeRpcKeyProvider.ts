@@ -1,15 +1,16 @@
 import type {
     ArticleUnlockStatusReturnType,
-    AuthenticateReturnType,
     ExtractedParametersFromRpc,
     ExtractedReturnTypeFromRpc,
     IFrameRpcSchema,
     KeyProvider,
     SendInteractionReturnType,
     SendTransactionReturnType,
+    SiweAuthenticateReturnType,
     UnlockOptionsReturnType,
     WalletStatusReturnType,
 } from "../../types";
+import { InternalError, MethodNotFoundError } from "../../types/rpc/error";
 
 /**
  * Get the right request key provider for the given args
@@ -18,6 +19,7 @@ import type {
 export const iFrameRequestKeyProvider: KeyProvider<
     ExtractedParametersFromRpc<IFrameRpcSchema>
 > = (args: ExtractedParametersFromRpc<IFrameRpcSchema>) => {
+    const method = args.method;
     switch (args.method) {
         // Unlock options key
         case "frak_getArticleUnlockOptions":
@@ -48,7 +50,7 @@ export const iFrameRequestKeyProvider: KeyProvider<
             return ["siwe-authentication", JSON.stringify(args.params[0])];
 
         default:
-            throw new Error(`No key provider found for the arguments ${args}`);
+            throw new MethodNotFoundError(`Method not found ${method}`, method);
     }
 };
 
@@ -121,12 +123,15 @@ export function getIFrameResponseKeyProvider<
 
         // Siwe authentication
         case "frak_siweAuthenticate":
-            return ((response: AuthenticateReturnType) => [
+            return ((response: SiweAuthenticateReturnType) => [
                 "siwe-authentication",
                 response.key,
                 response.key === "success" ? response.signature : "0xdeadbeef",
             ]) as RpcResponseKeyProvider<TParameters>;
+
         default:
-            throw new Error(`No key provider found for the request ${param}`);
+            throw new InternalError(
+                `No key provider found for the request ${param}`
+            );
     }
 }

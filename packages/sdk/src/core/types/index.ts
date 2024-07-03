@@ -7,9 +7,8 @@ export type {
     StartArticleUnlockReturnType,
 } from "./rpc/startUnlock";
 export type {
-    AuthenticateRpcParamsType,
-    AuthenticateActionParamsType,
-    AuthenticateReturnType,
+    SiweAuthenticateActionParamsType,
+    SiweAuthenticateReturnType,
     SiweAuthenticationParams,
 } from "./rpc/authenticate";
 export type {
@@ -22,7 +21,7 @@ export type {
     SendInteractionParamsType,
     SendInteractionReturnType,
 } from "./rpc/interaction";
-export { FrakRpcError } from "./rpc/error";
+export { FrakRpcError, RpcErrorCodes } from "./rpc/error";
 export type { IFrameRpcSchema, RedirectRpcSchema } from "./rpc";
 // Client related
 export type { NexusClient } from "./client";

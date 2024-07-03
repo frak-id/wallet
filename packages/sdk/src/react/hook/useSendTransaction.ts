@@ -1,10 +1,11 @@
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import {
+import type {
     FrakRpcError,
-    type SendTransactionActionParamsType,
-    type SendTransactionReturnType,
+    SendTransactionActionParamsType,
+    SendTransactionReturnType,
 } from "../../core";
 import { sendTransaction } from "../../core/actions";
+import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions = Omit<
@@ -33,17 +34,11 @@ export function useSendTransactionAction({
         mutationKey: ["nexus-sdk", "send-transaction"],
         mutationFn: async (params: SendTransactionActionParamsType) => {
             if (!client) {
-                throw new Error("No client available");
+                throw new ClientNotFound();
             }
 
-            // Setup the listener
-            const result = await sendTransaction(client, params);
-            if (result.key !== "success") {
-                throw new FrakRpcError("Error while sending transaction");
-            }
-
-            // Return our success result
-            return result;
+            // Send the transaction
+            return sendTransaction(client, params);
         },
     });
 }

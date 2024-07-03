@@ -1,5 +1,6 @@
 import { decompressFromBase64 } from "async-lz-string";
 import { sha256 } from "js-sha256";
+import { FrakRpcError, RpcErrorCodes } from "../../types";
 import type {
     CompressedData,
     HashProtectedData,
@@ -17,7 +18,10 @@ export async function decompressDataAndCheckHash<T>(
 ): Promise<HashProtectedData<T>> {
     // Ensure we got the required params first
     if (!(compressedData?.compressed && compressedData?.compressedHash)) {
-        throw new Error("Missing compressed data");
+        throw new FrakRpcError(
+            RpcErrorCodes.corruptedResponse,
+            "Missing compressed data"
+        );
     }
 
     // Decompress and parse the data
@@ -25,25 +29,37 @@ export async function decompressDataAndCheckHash<T>(
         compressedData.compressed
     );
     if (!parsedData) {
-        throw new Error(`Invalid compressed data: ${parsedData}`);
+        throw new FrakRpcError(
+            RpcErrorCodes.corruptedResponse,
+            "Invalid compressed data"
+        );
     }
 
     // Ensure the validation hash is present
     if (!parsedData?.validationHash) {
-        throw new Error("Missing validation hash");
+        throw new FrakRpcError(
+            RpcErrorCodes.corruptedResponse,
+            "Missing validation hash"
+        );
     }
 
     //  Then check the global compressed hash
     const expectedCompressedHash = sha256(compressedData.compressed);
     if (expectedCompressedHash !== compressedData.compressedHash) {
-        throw new Error("Invalid compressed hash");
+        throw new FrakRpcError(
+            RpcErrorCodes.corruptedResponse,
+            "Invalid compressed hash"
+        );
     }
 
     // And check the validation hash
     const keys = keyAccessor(parsedData);
     const expectedValidationHash = sha256(keys.join("_"));
     if (expectedValidationHash !== parsedData.validationHash) {
-        throw new Error("Invalid data validation hash");
+        throw new FrakRpcError(
+            RpcErrorCodes.corruptedResponse,
+            "Invalid data validation hash"
+        );
     }
 
     // If everything is fine, return the parsed data

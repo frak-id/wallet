@@ -1,10 +1,10 @@
 import type {
-    AuthenticateReturnType,
+    SiweAuthenticateReturnType,
     SiweAuthenticationParams,
 } from "@frak-labs/nexus-sdk/core";
 
 export type SiweAuthenticateListenerParam = {
     siweMessage: SiweAuthenticationParams;
     context?: string;
-    emitter: (response: AuthenticateReturnType) => Promise<void>;
+    emitter: (response: SiweAuthenticateReturnType) => Promise<void>;
 };

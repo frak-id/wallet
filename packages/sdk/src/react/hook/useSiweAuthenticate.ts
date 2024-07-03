@@ -1,17 +1,18 @@
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { siweAuthenticate } from "../../core/actions";
-import {
-    type AuthenticateActionParamsType,
-    type AuthenticateReturnType,
+import type {
     FrakRpcError,
+    SiweAuthenticateActionParamsType,
+    SiweAuthenticateReturnType,
 } from "../../core/types";
+import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions = Omit<
     UseMutationOptions<
-        Extract<AuthenticateReturnType, { key: "success" }>,
+        Extract<SiweAuthenticateReturnType, { key: "success" }>,
         FrakRpcError,
-        AuthenticateActionParamsType
+        SiweAuthenticateActionParamsType
     >,
     "mutationFn" | "mutationKey"
 >;
@@ -35,21 +36,13 @@ export function useSiweAuthenticate({
             "siwe-authenticate",
             client?.config.domain ?? "no-domain",
         ],
-        mutationFn: async (params: AuthenticateActionParamsType) => {
+        mutationFn: async (params: SiweAuthenticateActionParamsType) => {
             if (!client) {
-                throw new Error("No client available");
+                throw new ClientNotFound();
             }
 
             // Launch the authentication
-            const result = await siweAuthenticate(client, params);
-            if (result.key !== "success") {
-                throw new FrakRpcError(
-                    "Error while performing the SIWE authentication"
-                );
-            }
-
-            // Return our success result
-            return result;
+            return siweAuthenticate(client, params);
         },
     });
 }

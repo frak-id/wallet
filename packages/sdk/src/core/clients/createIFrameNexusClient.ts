@@ -1,6 +1,8 @@
+import { FrakRpcError } from "../types";
 import type { NexusClient } from "../types/client";
 import type { NexusWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
+import { RpcErrorCodes } from "../types/rpc/error";
 import type { ListenerRequestFn, RequestFn } from "../types/transport";
 import { Deferred } from "../utils/Deferred";
 import {
@@ -39,7 +41,10 @@ export function createIFrameNexusClient({
         // Ensure the iframe is init
         const isConnected = await messageHandler.isConnected;
         if (!isConnected) {
-            throw new Error("The iframe provider isn't connected yet");
+            throw new FrakRpcError(
+                RpcErrorCodes.clientNotConnected,
+                "The iframe provider isn't connected yet"
+            );
         }
 
         // Create the deferrable result
@@ -87,7 +92,10 @@ export function createIFrameNexusClient({
         // Ensure the iframe is init
         const isConnected = await messageHandler.isConnected;
         if (!isConnected) {
-            throw new Error("The iframe provider isn't connected yet");
+            throw new FrakRpcError(
+                RpcErrorCodes.clientNotConnected,
+                "The iframe provider isn't connected yet"
+            );
         }
 
         // Get the right key provider for the result

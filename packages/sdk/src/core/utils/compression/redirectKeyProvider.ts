@@ -1,6 +1,7 @@
 import type { StartArticleUnlockReturnType } from "../../types";
 import type { KeyProvider } from "../../types/compression";
 import type { RedirectRpcSchema } from "../../types/rpc";
+import { InternalError, MethodNotFoundError } from "../../types/rpc/error";
 import type { ExtractedParametersFromRpc } from "../../types/transport";
 
 /**
@@ -21,7 +22,10 @@ export const redirectRequestKeyProvider: KeyProvider<
     }
 
     // Not found
-    throw new Error(`No key provider found for the arguments ${args}`);
+    throw new MethodNotFoundError(
+        `Method not found ${args.method}`,
+        args.method
+    );
 };
 
 type RedirectRpcResponseKeyProvider<
@@ -47,5 +51,5 @@ export function getRedirectResponseResponseKeyProvider<
         ]) as RedirectRpcResponseKeyProvider<TMethod>;
     }
 
-    throw new Error(`No key provider found for the method ${method}`);
+    throw new InternalError(`No key provider found for the request ${method}`);
 }

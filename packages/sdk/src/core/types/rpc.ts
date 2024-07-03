@@ -1,7 +1,7 @@
 import type { Hex } from "viem";
 import type {
-    AuthenticateReturnType,
-    AuthenticateRpcParamsType,
+    SiweAuthenticateReturnType,
+    SiweAuthenticationParams,
 } from "./rpc/authenticate";
 import type {
     PreparedInteraction,
@@ -60,8 +60,8 @@ export type IFrameRpcSchema = [
      */
     {
         Method: "frak_siweAuthenticate";
-        Parameters: AuthenticateRpcParamsType;
-        ReturnType: AuthenticateReturnType;
+        Parameters: [request: SiweAuthenticationParams, context?: string];
+        ReturnType: SiweAuthenticateReturnType;
     },
     /**
      * Method to transmit a user interaction

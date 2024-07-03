@@ -1,8 +1,11 @@
 import { generateSiweNonce } from "viem/siwe";
-import type {
-    AuthenticateActionParamsType,
-    NexusClient,
-    SiweAuthenticationParams,
+import {
+    FrakRpcError,
+    type NexusClient,
+    RpcErrorCodes,
+    type SiweAuthenticateActionParamsType,
+    type SiweAuthenticateReturnType,
+    type SiweAuthenticationParams,
 } from "../types";
 
 /**
@@ -11,10 +14,10 @@ import type {
  * @param siwe
  * @param context
  */
-export function siweAuthenticate(
+export async function siweAuthenticate(
     client: NexusClient,
-    { siwe, context }: AuthenticateActionParamsType
-) {
+    { siwe, context }: SiweAuthenticateActionParamsType
+): Promise<Extract<SiweAuthenticateReturnType, { key: "success" }>> {
     const realStatement =
         siwe?.statement ??
         `I confirm that I want to use my Nexus wallet on: ${client.config.metadata.name}`;
@@ -28,8 +31,24 @@ export function siweAuthenticate(
         domain: client.config.domain,
     };
 
-    return client.request({
+    const result = await client.request({
         method: "frak_siweAuthenticate",
         params: [builtSiwe, context],
     });
+
+    switch (result.key) {
+        case "aborted":
+            throw new FrakRpcError(
+                RpcErrorCodes.clientAborted,
+                "The client has aborted the operation"
+            );
+        case "error":
+            throw new FrakRpcError(
+                RpcErrorCodes.serverError,
+                result.reason ??
+                    "An error occurred while performing the siwe authentication"
+            );
+        case "success":
+            return result;
+    }
 }

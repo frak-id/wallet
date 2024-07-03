@@ -1,5 +1,5 @@
 import type {
-    AuthenticateReturnType,
+    SiweAuthenticateReturnType,
     SiweAuthenticationParams,
 } from "@frak-labs/nexus-sdk/core";
 import { atom } from "jotai/index";
@@ -10,5 +10,5 @@ import { atom } from "jotai/index";
 export const siweAuthenticateAtom = atom<{
     siweMessage: SiweAuthenticationParams;
     context?: string;
-    emitter: (response: AuthenticateReturnType) => Promise<void>;
+    emitter: (response: SiweAuthenticateReturnType) => Promise<void>;
 } | null>(null);

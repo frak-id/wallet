@@ -25,9 +25,8 @@ export type {
     SendTransactionActionParamsType,
     SendTransactionReturnType,
     SendTransactionTxType,
-    AuthenticateReturnType,
-    AuthenticateActionParamsType,
-    AuthenticateRpcParamsType,
+    SiweAuthenticateReturnType,
+    SiweAuthenticateActionParamsType,
     SiweAuthenticationParams,
     PreparedInteraction,
     SendInteractionParamsType,
@@ -49,4 +48,4 @@ export type {
     CompressedData,
     HashProtectedData,
 } from "./types";
-export { FrakRpcError } from "./types";
+export { FrakRpcError, RpcErrorCodes } from "./types";
