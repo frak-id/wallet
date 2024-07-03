@@ -16,6 +16,7 @@ import {
     createSmartAccountClient,
 } from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
+import { parallel } from "radash";
 import {
     type Address,
     type Hex,
@@ -26,25 +27,72 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { readContract, signTypedData } from "viem/actions";
 
+type InteractionToPush = {
+    contentId: Hex;
+    interaction: PreparedInteraction;
+    submittedSignature?: Hex;
+};
+
 /**
  * Try to push an interaction for the given wallet via an interaction
  */
 export async function pushInteraction({
     wallet,
-    contentId,
-    interaction,
-    submittedSignature,
+    toPush,
 }: {
     wallet: Address;
-    contentId: bigint;
-    interaction: PreparedInteraction;
-    submittedSignature?: Hex;
+    toPush: InteractionToPush | InteractionToPush[];
 }) {
     // Check if the user has a valid session
-    const currentSession = await getSessionStatus({
-        wallet,
+    const walletClient = await _getSafeSessionWalletClient({ wallet });
+
+    // If we got a single interactions to push
+    if (!Array.isArray(toPush)) {
+        // Prepare it
+        const { contentId, data } = await _prepareInteraction({
+            wallet: walletClient.account.address,
+            toPush,
+        });
+
+        // Push it
+        return await walletClient.sendTransaction({
+            to: wallet,
+            data: encodeFunctionData({
+                abi: contentInteractionActionAbi,
+                functionName: "sendInteraction",
+                args: [{ contentId, data }],
+            }),
+        });
+    }
+
+    // In the case of multiple interactions
+    const interactions = await parallel(4, toPush, async (toPush) =>
+        _prepareInteraction({
+            wallet: walletClient.account.address,
+            toPush,
+        })
+    );
+
+    // Push it
+    return await walletClient.sendTransaction({
+        to: wallet,
+        data: encodeFunctionData({
+            abi: contentInteractionActionAbi,
+            functionName: "sendInteractions",
+            args: [interactions],
+        }),
     });
-    if (!currentSession) {
+}
+/**
+ * Get the safe session wallet client
+ */
+async function _getSafeSessionWalletClient({
+    wallet,
+}: {
+    wallet: Address;
+}) {
+    const sessionStatus = await getSessionStatus({ wallet });
+    if (!sessionStatus) {
         throw new Error("No session available for this user");
     }
 
@@ -55,19 +103,19 @@ export async function pushInteraction({
     }
     const sessionAccount = privateKeyToAccount(sessionPrivateKey as Hex);
 
+    // Get the bundler and paymaster clients
+    const chain = frakChainPocClient.chain;
+    const { bundlerTransport } = getBundlerClient(chain);
+    const paymasterClient = getPaymasterClient(chain);
+
     // Build the interaction smart wallet
     const smartAccount = interactionSessionSmartAccount(frakChainPocClient, {
         sessionAccount,
         wallet,
     });
 
-    // Get the bundler and paymaster clients
-    const chain = frakChainPocClient.chain;
-    const { bundlerTransport } = getBundlerClient(chain);
-    const paymasterClient = getPaymasterClient(chain);
-
     // Build the wrapper around smart account to ease the tx flow
-    const smartAccountClient = createSmartAccountClient({
+    return createSmartAccountClient({
         account: smartAccount,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
         chain,
@@ -78,22 +126,34 @@ export async function pushInteraction({
                 sponsorUserOperation(paymasterClient, args),
         },
     });
+}
+
+/**
+ * Prepare an interaction to be pushed
+ * @param wallet
+ * @param toPush
+ */
+async function _prepareInteraction({
+    wallet,
+    toPush,
+}: { wallet: Address; toPush: InteractionToPush }): Promise<{
+    contentId: bigint;
+    data: Hex;
+}> {
+    const contentId = BigInt(toPush.contentId);
+
     // Get an interaction manager
     const interactionContract = await getInteractionContract({ contentId });
 
     // Get the signature
     const signature =
-        submittedSignature ??
+        toPush.submittedSignature ??
         (await _getValidationSignature({
             user: wallet,
-            facetData: interaction.interactionData,
+            facetData: toPush.interaction.interactionData,
             contentId,
             interactionContract,
         }));
-    console.log("Data for tx", {
-        interaction,
-        signature,
-    });
 
     // Build the interaction data
     const interactionTx = encodeFunctionData({
@@ -101,26 +161,14 @@ export async function pushInteraction({
         functionName: "handleInteraction",
         args: [
             concatHex([
-                interaction.handlerTypeDenominator,
-                interaction.interactionData,
+                toPush.interaction.handlerTypeDenominator,
+                toPush.interaction.interactionData,
             ]),
             signature,
         ],
     });
 
-    // Wrap the call
-    const sendInteractionTx = encodeFunctionData({
-        abi: contentInteractionActionAbi,
-        functionName: "sendInteraction",
-        args: [{ contentId, data: interactionTx }],
-    });
-
-    // Push it
-    console.log("pushing interaction", { sendInteractionTx });
-    return await smartAccountClient.sendTransaction({
-        to: wallet,
-        data: sendInteractionTx,
-    });
+    return { contentId, data: interactionTx };
 }
 
 /**

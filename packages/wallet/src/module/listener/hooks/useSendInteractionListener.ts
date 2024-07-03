@@ -68,9 +68,11 @@ export function useSendInteractionListener() {
             // Otherwise, just set the user referred on content
             const txHash = await pushInteraction({
                 wallet: userAddress,
-                contentId: BigInt(contentId),
-                interaction,
-                submittedSignature: signature,
+                toPush: {
+                    contentId,
+                    interaction,
+                    submittedSignature: signature,
+                },
             });
             // Send the response
             await emitter({

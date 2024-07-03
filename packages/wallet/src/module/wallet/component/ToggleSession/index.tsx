@@ -6,6 +6,7 @@ import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { Panel } from "@/module/common/component/Panel";
 import { Switch } from "@/module/common/component/Switch";
 import { Tooltip } from "@/module/common/component/Tooltip";
+import { useConsumePendingInteractions } from "@/module/wallet/hook/useConsumePendingInteractions";
 import { Loader } from "@frak-labs/shared/module/asset/icons/Loader";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
@@ -41,11 +42,12 @@ export function ToggleSession() {
         },
     });
 
+    const { mutateAsync: consumePendingInteractions } =
+        useConsumePendingInteractions();
+
     if (sessionStatusIsPending) {
         return null;
     }
-
-    // todo: consume pending interactions post session creation
 
     return (
         <>
@@ -67,6 +69,9 @@ export function ToggleSession() {
                                     to: address,
                                     data: txData,
                                 });
+
+                                // When each sessions are opened, consume pending interactions
+                                await consumePendingInteractions();
                             }
 
                             // Remove session
