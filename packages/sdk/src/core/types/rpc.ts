@@ -1,13 +1,16 @@
-import type { Address, Hex } from "viem";
+import type { Hex } from "viem";
 import type {
     AuthenticateReturnType,
     AuthenticateRpcParamsType,
 } from "./rpc/authenticate";
 import type {
+    PreparedInteraction,
+    SendInteractionReturnType,
+} from "./rpc/interaction";
+import type {
     SendTransactionReturnType,
     SendTransactionRpcParamsType,
 } from "./rpc/sendTransaction";
-import type { SetUserReferredReturnType } from "./rpc/setUserReferred";
 import type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
@@ -45,14 +48,6 @@ export type IFrameRpcSchema = [
         ReturnType: ArticleUnlockStatusReturnType;
     },
     /**
-     * Method used to set the referred user
-     */
-    {
-        Method: "frak_listenToSetUserReferred";
-        Parameters: [contentId: Hex, walletAddress: Address];
-        ReturnType: SetUserReferredReturnType;
-    },
-    /**
      * Method to ask the user to send a transaction
      */
     {
@@ -67,6 +62,18 @@ export type IFrameRpcSchema = [
         Method: "frak_siweAuthenticate";
         Parameters: AuthenticateRpcParamsType;
         ReturnType: AuthenticateReturnType;
+    },
+    /**
+     * Method to transmit a user interaction
+     */
+    {
+        Method: "frak_sendInteraction";
+        Parameters: [
+            contentId: Hex,
+            interaction: PreparedInteraction,
+            signature?: Hex,
+        ];
+        ReturnType: SendInteractionReturnType;
     },
 ];
 

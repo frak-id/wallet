@@ -1,43 +1,44 @@
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import {
     FrakRpcError,
-    type SendTransactionActionParamsType,
-    type SendTransactionReturnType,
+    type SendInteractionParamsType,
+    type SendInteractionReturnType,
 } from "../../core";
-import { sendTransaction } from "../../core/actions";
+import { sendInteraction } from "../../core/actions";
 import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions = Omit<
     UseMutationOptions<
-        Extract<SendTransactionReturnType, { key: "success" }>,
+        Extract<SendInteractionReturnType, { key: "success" }>,
         FrakRpcError,
-        SendTransactionActionParamsType
+        SendInteractionParamsType
     >,
     "mutationFn" | "mutationKey"
 >;
 
-interface UseSendTransactionParams {
+interface UseSendInteractionParams {
     mutations?: MutationOptions;
 }
 
 /**
- * Trigger a dashboard action to the wallet
+ * Send a user interaction
  */
-export function useSendTransactionAction({
+export function useSendInteraction({
     mutations,
-}: UseSendTransactionParams = {}) {
+}: UseSendInteractionParams = {}) {
     const client = useNexusClient();
 
     return useMutation({
         ...mutations,
-        mutationKey: ["nexus-sdk", "send-transaction"],
-        mutationFn: async (params: SendTransactionActionParamsType) => {
+        mutationKey: ["nexus-sdk", "send-interaction"],
+        mutationFn: async (params: SendInteractionParamsType) => {
             if (!client) {
                 throw new Error("No client available");
             }
 
             // Setup the listener
-            const result = await sendTransaction(client, params);
+            const result = await sendInteraction(client, params);
+            // todo: more granular error handling
             if (result.key !== "success") {
                 throw new FrakRpcError("Error while sending transaction");
             }

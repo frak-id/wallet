@@ -17,9 +17,9 @@ export {
     useArticleUnlockOptions,
     useWalletStatus,
     useArticleUnlockStatus,
-    useNexusReferral,
     useSendTransactionAction,
     useSiweAuthenticate,
+    usePressReferralInteraction,
 } from "./hook";
 export type {
     WalletStatusQueryReturnType,

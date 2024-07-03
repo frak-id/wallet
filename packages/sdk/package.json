@@ -49,6 +49,11 @@
       "import": "./dist/core/actions/index.js",
       "default": "./dist/core/actions/index.cjs"
     },
+    "./interactions": {
+      "types": "./dist/core/interactions/index.d.ts",
+      "import": "./dist/core/interactions/index.js",
+      "default": "./dist/core/interactions/index.cjs"
+    },
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js",

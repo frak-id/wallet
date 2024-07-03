@@ -6,6 +6,7 @@ export default defineConfig({
         "src/index.ts",
         "src/core/index.ts",
         "src/core/actions/index.ts",
+        "src/core/interactions/index.ts",
         "src/react/index.ts",
     ],
     external: [

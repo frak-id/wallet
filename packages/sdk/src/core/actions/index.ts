@@ -7,6 +7,6 @@ export {
     getStartArticleUnlockUrl,
     decodeStartUnlockReturn,
 } from "./startUnlock";
-export { setUserReferred } from "./setUserReferred";
-export { sendTransactionAction } from "./sendTransactionAction";
+export { sendTransaction } from "./sendTransaction";
 export { siweAuthenticate } from "./siweAuthenticate";
+export { sendInteraction } from "./sendInteraction";

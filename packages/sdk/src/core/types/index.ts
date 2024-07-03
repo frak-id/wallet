@@ -7,10 +7,6 @@ export type {
     StartArticleUnlockReturnType,
 } from "./rpc/startUnlock";
 export type {
-    SetUserReferredParams,
-    SetUserReferredReturnType,
-} from "./rpc/setUserReferred";
-export type {
     AuthenticateRpcParamsType,
     AuthenticateActionParamsType,
     AuthenticateReturnType,
@@ -21,6 +17,11 @@ export type {
     SendTransactionReturnType,
     SendTransactionTxType,
 } from "./rpc/sendTransaction";
+export type {
+    PreparedInteraction,
+    SendInteractionParamsType,
+    SendInteractionReturnType,
+} from "./rpc/interaction";
 export { FrakRpcError } from "./rpc/error";
 export type { IFrameRpcSchema, RedirectRpcSchema } from "./rpc";
 // Client related

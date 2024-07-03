@@ -1,25 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMounted } from "./useMounted";
 
-export const useWindowLocation = (): {
+/**
+ * Returns the current window location and href
+ */
+export function useWindowLocation(): {
     location: Location | undefined;
     href: string | undefined;
-} => {
+} {
     const isMounted = useMounted();
     const [location, setLocation] = useState<Location | undefined>(
         isMounted ? window.location : undefined
-    );
-    const [href, setHref] = useState<string | undefined>(
-        isMounted ? window.location.href : undefined
     );
 
     useEffect(() => {
         if (!isMounted) return;
 
-        const setWindowLocation = () => {
+        // Method to the current window location
+        function setWindowLocation() {
             setLocation(window.location);
-            setHref(window.location.href);
-        };
+        }
 
         if (!location) {
             setWindowLocation();
@@ -32,5 +32,8 @@ export const useWindowLocation = (): {
         };
     }, [isMounted, location]);
 
+    // Derive the href from the location
+    const href = useMemo(() => location?.href, [location?.href]);
+
     return { location, href };
-};
+}

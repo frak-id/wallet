@@ -6,6 +6,7 @@ import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { Panel } from "@/module/common/component/Panel";
 import { Switch } from "@/module/common/component/Switch";
 import { Tooltip } from "@/module/common/component/Tooltip";
+import { useConsumePendingInteractions } from "@/module/wallet/hook/useConsumePendingInteractions";
 import { Loader } from "@frak-labs/shared/module/asset/icons/Loader";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
@@ -19,7 +20,7 @@ export function ToggleSession() {
 
     const { data: sessionStatus, isPending: sessionStatusIsPending } = useQuery(
         {
-            queryKey: ["interactionSession", "status", address],
+            queryKey: ["interactions", "session-status", address],
             queryFn: async () => {
                 if (!address) {
                     return null;
@@ -31,7 +32,7 @@ export function ToggleSession() {
     );
 
     const { data: sessionSetupTxs } = useQuery({
-        queryKey: ["interactionSession", "setup", address],
+        queryKey: ["interactions", "session-setup", address],
         queryFn: async () => {
             // Get timestamp in a week
             const sessionEnd = new Date();
@@ -40,6 +41,9 @@ export function ToggleSession() {
             return getSessionEnableData({ sessionEnd });
         },
     });
+
+    const { mutateAsync: consumePendingInteractions } =
+        useConsumePendingInteractions();
 
     if (sessionStatusIsPending) {
         return null;
@@ -65,6 +69,9 @@ export function ToggleSession() {
                                     to: address,
                                     data: txData,
                                 });
+
+                                // When each sessions are opened, consume pending interactions
+                                await consumePendingInteractions();
                             }
 
                             // Remove session
