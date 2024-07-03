@@ -1,5 +1,4 @@
 import { InjectBannerComponent } from "@/module/article/component/Read/InjectBannerComponent";
-import { InjectPopupComponent } from "@/module/article/component/Read/InjectPopupComponent";
 import { InjectUnlockComponent } from "@/module/article/component/Read/InjectUnlockComponent";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { fixLink } from "@/module/common/utils/link";
@@ -7,7 +6,7 @@ import type { Article } from "@/type/Article";
 import {
     useArticleUnlockOptions,
     useArticleUnlockStatus,
-    useNexusReferral,
+    usePressReferralInteraction,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
 import { useEffect, useState } from "react";
@@ -21,16 +20,14 @@ export function ReadArticle({
     article: Article;
     isFree: boolean;
 }) {
+    // The press referral interaction hook
+    usePressReferralInteraction({ contentId: article.contentId as Hex });
+
     // The injecting state for the unlock component
     const [injecting, setInjecting] = useState(0);
 
     // The iframe reference
     const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
-
-    // The nexus referral
-    const { data: referral } = useNexusReferral({
-        contentId: article.contentId as Hex,
-    });
 
     // The unlock options for the article
     const { data: unlockOptions } = useArticleUnlockOptions({
@@ -79,9 +76,8 @@ export function ReadArticle({
                 walletStatus?.key === "not-connected" && (
                     <InjectBannerComponent article={article} />
                 )}
-            {injecting > 0 && referral?.key === "referred-history" && (
-                <InjectPopupComponent article={article} />
-            )}
+            {/*todo: review logics behind that, maybe hook or smth like that*/}
+            {/*{injecting > 0 && <InjectPopupComponent article={article} />}*/}
             {articleUnlockStatus &&
             articleUnlockStatus?.key !== "waiting-response" ? (
                 <iframe

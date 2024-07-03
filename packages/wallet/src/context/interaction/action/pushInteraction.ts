@@ -9,14 +9,20 @@ import { getInteractionContract } from "@/context/interaction/action/interaction
 import { getSessionStatus } from "@/context/interaction/action/interactionSession";
 import { contentInteractionActionAbi } from "@/context/wallet/abi/kernel-v2-abis";
 import { interactionSessionSmartAccount } from "@/context/wallet/smartWallet/InteractionSessionSmartWallet";
-import type { BuiltInteraction } from "@/types/Interaction";
+import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
 import { contentInteractionDiamondAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import {
     ENTRYPOINT_ADDRESS_V06,
     createSmartAccountClient,
 } from "permissionless";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
-import { type Address, type Hex, encodeFunctionData, keccak256 } from "viem";
+import {
+    type Address,
+    type Hex,
+    concatHex,
+    encodeFunctionData,
+    keccak256,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { readContract, signTypedData } from "viem/actions";
 
@@ -27,7 +33,13 @@ export async function pushInteraction({
     wallet,
     contentId,
     interaction,
-}: { wallet: Address; contentId: bigint; interaction: BuiltInteraction }) {
+    submittedSignature,
+}: {
+    wallet: Address;
+    contentId: bigint;
+    interaction: PreparedInteraction;
+    submittedSignature?: Hex;
+}) {
     // Check if the user has a valid session
     const currentSession = await getSessionStatus({
         wallet,
@@ -70,12 +82,14 @@ export async function pushInteraction({
     const interactionContract = await getInteractionContract({ contentId });
 
     // Get the signature
-    const signature = await _getValidationSignature({
-        user: wallet,
-        facetData: interaction.facetData,
-        contentId,
-        interactionContract,
-    });
+    const signature =
+        submittedSignature ??
+        (await _getValidationSignature({
+            user: wallet,
+            facetData: interaction.interactionData,
+            contentId,
+            interactionContract,
+        }));
     console.log("Data for tx", {
         interaction,
         signature,
@@ -85,7 +99,13 @@ export async function pushInteraction({
     const interactionTx = encodeFunctionData({
         abi: contentInteractionDiamondAbi,
         functionName: "handleInteraction",
-        args: [interaction.interactionData, signature],
+        args: [
+            concatHex([
+                interaction.handlerTypeDenominator,
+                interaction.interactionData,
+            ]),
+            signature,
+        ],
     });
 
     // Wrap the call
@@ -97,13 +117,19 @@ export async function pushInteraction({
 
     // Push it
     console.log("pushing interaction", { sendInteractionTx });
-    const txHash = await smartAccountClient.sendTransaction({
+    return await smartAccountClient.sendTransaction({
         to: wallet,
         data: sendInteractionTx,
     });
-    console.log("interaction pushed", { txHash });
 }
 
+/**
+ * Generate an interaction validation
+ * @param facetData
+ * @param contentId
+ * @param user
+ * @param interactionContract
+ */
 async function _getValidationSignature({
     facetData,
     contentId,
@@ -115,6 +141,8 @@ async function _getValidationSignature({
     contentId: bigint;
     interactionContract: Address;
 }): Promise<Hex> {
+    // todo: Should ensure we can generate signature for the given `contentId`
+
     const interactionHash = keccak256(facetData);
 
     // Get the current interaction nonce

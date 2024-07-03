@@ -22,8 +22,6 @@ export type {
     RedirectRpcSchema,
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
-    SetUserReferredParams,
-    SetUserReferredReturnType,
     SendTransactionActionParamsType,
     SendTransactionReturnType,
     SendTransactionTxType,
@@ -33,7 +31,6 @@ export type {
     SiweAuthenticationParams,
     PreparedInteraction,
     SendInteractionParamsType,
-    SendInteractionRpcParamsType,
     SendInteractionReturnType,
     // Client
     NexusClient,

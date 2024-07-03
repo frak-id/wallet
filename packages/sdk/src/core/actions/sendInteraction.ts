@@ -9,10 +9,10 @@ import type { NexusClient, SendInteractionParamsType } from "../types";
  */
 export function sendInteraction(
     client: NexusClient,
-    { contentId, request, validation }: SendInteractionParamsType
+    { contentId, interaction, validation }: SendInteractionParamsType
 ) {
     return client.request({
         method: "frak_sendInteraction",
-        params: [contentId, request, validation],
+        params: [contentId, interaction, validation],
     });
 }

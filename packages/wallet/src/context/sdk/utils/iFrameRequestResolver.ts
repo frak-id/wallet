@@ -195,6 +195,19 @@ export function getIframeRequestKeyProvider(
                 JSON.stringify(request.params[0]),
             ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
 
+        // Send interaction
+        case "frak_sendInteraction":
+            return ((
+                request: Extract<
+                    ExtractedParametersFromRpc<IFrameRpcSchema>,
+                    { method: "frak_sendInteraction" }
+                >
+            ) => [
+                "send-interaction",
+                request.params[0],
+                JSON.stringify(request.params[1]),
+            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
+
         // Siwe authentication
         case "frak_siweAuthenticate":
             return ((

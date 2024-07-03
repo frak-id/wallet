@@ -5,8 +5,8 @@ import type {
     ExtractedReturnTypeFromRpc,
     IFrameRpcSchema,
     KeyProvider,
+    SendInteractionReturnType,
     SendTransactionReturnType,
-    SetUserReferredReturnType,
     UnlockOptionsReturnType,
     WalletStatusReturnType,
 } from "../../types";
@@ -31,13 +31,17 @@ export const iFrameRequestKeyProvider: KeyProvider<
         case "frak_listenToArticleUnlockStatus":
             return ["article-unlock-status", args.params[0], args.params[1]];
 
-        // Referred user key
-        case "frak_listenToSetUserReferred":
-            return ["user-referred", args.params[0], args.params[1]];
-
         // Send transaction
         case "frak_sendTransaction":
             return ["send-transaction", JSON.stringify(args.params[0])];
+
+        // Send interaction
+        case "frak_sendInteraction":
+            return [
+                "send-interaction",
+                args.params[0],
+                JSON.stringify(args.params[1]),
+            ];
 
         // Siwe authentication
         case "frak_siweAuthenticate":
@@ -99,17 +103,18 @@ export function getIFrameResponseKeyProvider<
                     : "deadbeef",
             ]) as RpcResponseKeyProvider<TParameters>;
 
-        // Referred user
-        case "frak_listenToSetUserReferred":
-            return ((response: SetUserReferredReturnType) => [
-                "user-referred",
-                response.key,
-            ]) as RpcResponseKeyProvider<TParameters>;
-
         // Send transaction
         case "frak_sendTransaction":
             return ((response: SendTransactionReturnType) => [
                 "send-transaction",
+                response.key,
+                response.key === "success" ? response.hash : "0xdeadbeef",
+            ]) as RpcResponseKeyProvider<TParameters>;
+
+        // Send interaction
+        case "frak_sendInteraction":
+            return ((response: SendInteractionReturnType) => [
+                "send-interaction",
                 response.key,
                 response.key === "success" ? response.hash : "0xdeadbeef",
             ]) as RpcResponseKeyProvider<TParameters>;

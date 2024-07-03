@@ -4,5 +4,6 @@ import type { Address } from "viem";
  * The type of the nexus context
  */
 export type NexusContext = Readonly<{
-    referrer: Address;
+    // Referrer address
+    r: Address;
 }>;

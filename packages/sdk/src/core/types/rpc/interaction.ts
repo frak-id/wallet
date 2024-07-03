@@ -15,14 +15,6 @@ export type SendInteractionParamsType = {
 };
 
 /**
- * Parameters of an interaction handling rpc request
- */
-export type SendInteractionRpcParamsType = [
-    contentId: Hex,
-    interaction: PreparedInteraction,
-    validation?: Hex,
-];
-/**
  * Return type of the send interaction rpc request
  */
 export type SendInteractionReturnType =
@@ -31,9 +23,9 @@ export type SendInteractionReturnType =
 
 type SendInteractionSuccess = Readonly<{
     key: "success";
-    transactionHash: Hex;
+    hash: Hex;
 }>;
 type SendInteractionError = Readonly<{
-    key: "error" | "no_session" | "invalid_signature";
+    key: "error";
     reason?: string;
 }>;

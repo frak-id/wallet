@@ -17,7 +17,6 @@ export {
     useArticleUnlockOptions,
     useWalletStatus,
     useArticleUnlockStatus,
-    useNexusReferral,
     useSendTransactionAction,
     useSiweAuthenticate,
     usePressReferralInteraction,

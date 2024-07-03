@@ -26,27 +26,33 @@ export function usePressReferralInteraction({ contentId }: { contentId: Hex }) {
         queryKey: [
             "nexus-sdk",
             "auto-press-referral-interaction",
-            nexusContext?.referrer ?? "no-referrer",
+            nexusContext?.r ?? "no-referrer",
             walletStatus?.key ?? "no-wallet-status",
         ],
         queryFn: async () => {
-            // If no context or no wallet connected, early exit
+            // If just no context but wallet present
+            if (!nexusContext && walletStatus?.key === "connected") {
+                await updateContextAsync({ r: walletStatus.wallet });
+                return null;
+            }
+
+            // todo: If no wallet connected, but context present, send it anyway to cache it on the wallet side
             if (!nexusContext || walletStatus?.key !== "connected") return null;
 
             // If context and wallet present, and same referrer address, early exit
-            if (isAddressEqual(nexusContext.referrer, walletStatus.wallet))
+            if (isAddressEqual(nexusContext.r, walletStatus.wallet))
                 return null;
 
             // Build the press referral interaction
             const interaction = PressInteractionEncoder.referred({
-                referrer: nexusContext.referrer,
+                referrer: nexusContext.r,
             });
 
-            // Send the interaction
+            // Send the interaction (todo: interpret the result and return it)
             await sendInteraction({ contentId, interaction });
 
             // Update the context with the current wallet as referrer
-            await updateContextAsync({ referrer: walletStatus.wallet });
+            await updateContextAsync({ r: walletStatus.wallet });
 
             return null;
         },
