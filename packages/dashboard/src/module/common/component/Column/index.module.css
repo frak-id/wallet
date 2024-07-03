@@ -5,3 +5,7 @@
     margin-bottom: 14px;
     width: fit-content;
 }
+
+.column--fullWidth {
+    width: 100%;
+}

@@ -1,6 +1,13 @@
 .row {
     display: flex;
-    align-items: flex-end;
     gap: 14px;
     margin-bottom: 14px;
+}
+
+.row--start {
+    align-items: flex-start;
+}
+
+.row--end {
+    align-items: flex-end;
 }
