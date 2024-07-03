@@ -1,7 +1,7 @@
 "use client";
 import { setSession } from "@/context/auth/actions/session";
 import { useSiweAuthenticate } from "@frak-labs/nexus-sdk/react";
-import { ButtonRipple } from "@frak-labs/nexus-wallet/src/module/common/component/ButtonRipple";
+import { Button } from "@module/component/Button";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import styles from "./index.module.css";
@@ -26,7 +26,7 @@ export function Login() {
 
     return (
         <div className={styles.notConnected}>
-            <ButtonRipple
+            <Button
                 onClick={() =>
                     authenticate({
                         context: "Authentication",
@@ -34,7 +34,7 @@ export function Login() {
                 }
             >
                 Connect to your Nexus
-            </ButtonRipple>
+            </Button>
         </div>
     );
 }

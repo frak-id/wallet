@@ -1,5 +1,5 @@
 import { useMyContents } from "@/module/dashboard/hooks/useMyContents";
-import { ButtonRipple } from "@frak-labs/nexus-wallet/src/module/common/component/ButtonRipple";
+import { Button } from "@module/component/Button";
 
 /**
  * Component to display all the current user content
@@ -27,7 +27,7 @@ function NoContents() {
     return (
         <div>
             You don't have any content yet.
-            <ButtonRipple>Register one</ButtonRipple>
+            <Button>Register one</Button>
         </div>
     );
 }
