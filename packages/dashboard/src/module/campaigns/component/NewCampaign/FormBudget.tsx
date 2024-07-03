@@ -50,8 +50,14 @@ export function FormBudget(form: UseFormReturn<Campaign>) {
                                     <SelectItem value="daily">
                                         Daily budget
                                     </SelectItem>
+                                    <SelectItem value="weekly">
+                                        Weekly budget
+                                    </SelectItem>
                                     <SelectItem value="monthly">
                                         Monthly budget
+                                    </SelectItem>
+                                    <SelectItem value="continuously">
+                                        Continuously budget
                                     </SelectItem>
                                 </SelectContent>
                             </Select>

@@ -2,10 +2,9 @@ import type { TCountryCode } from "countries-list";
 import type { Address, Hex } from "viem";
 
 type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
-
 type SpecialCategory = "credit" | "jobs" | "housing" | "social";
-
 type ContentType = "text" | "video" | "product" | "others";
+type Budget = "daily" | "weekly" | "monthly" | "continuously";
 
 /**
  * Direct campaign type
@@ -17,7 +16,7 @@ export type Campaign = {
     type: Goal | "";
     specialCategories: SpecialCategory[];
     budget: {
-        type: "daily" | "monthly" | "";
+        type: Budget | "";
         maxEuroDaily: number;
     };
     territories: TCountryCode[];
