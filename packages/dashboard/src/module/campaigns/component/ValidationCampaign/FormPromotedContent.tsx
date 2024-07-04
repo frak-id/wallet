@@ -1,4 +1,3 @@
-import { Badge } from "@/module/common/component/Badge";
 import { Checkbox } from "@/module/forms/Checkbox";
 import {
     FormControl,
@@ -9,9 +8,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { X } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
-import styles from "./FormPromotedContent.module.css";
 
 const itemsSpecialAdvertising = [
     {
@@ -84,17 +81,6 @@ export function FormPromotedContent(form: UseFormReturn<Campaign>) {
                         />
                     ))}
                     <FormMessage />
-                    <div className={styles.badges}>
-                        <Badge variant={"secondary"}>
-                            sport <X size={16} />
-                        </Badge>
-                        <Badge variant={"secondary"}>
-                            news <X size={16} />
-                        </Badge>
-                        <Badge variant={"secondary"}>
-                            fun <X size={16} />
-                        </Badge>
-                    </div>
                 </FormItem>
             )}
         />
