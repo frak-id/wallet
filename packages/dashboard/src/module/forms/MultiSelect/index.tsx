@@ -38,6 +38,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
             options,
             onValueChange,
             defaultValue = [],
+            value,
             placeholder = "Select options",
             asChild = false,
             className,
@@ -45,15 +46,18 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
         },
         ref
     ) => {
+        const localValue = value as string[];
         const [selectedValues, setSelectedValues] =
-            useState<string[]>(defaultValue);
+            useState<string[]>(localValue);
         const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
+        /**
+         * Sync value from props with selected values
+         */
         useEffect(() => {
-            if (defaultValue.length > 0) {
-                setSelectedValues(defaultValue);
-            }
-        }, [defaultValue]);
+            if (localValue.join(",") === selectedValues.join(",")) return;
+            setSelectedValues(localValue);
+        }, [localValue, selectedValues]);
 
         const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
             if (event.key === "Enter") {

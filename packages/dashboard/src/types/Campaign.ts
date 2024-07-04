@@ -59,5 +59,6 @@ export type CampaignState =
       };
 
 export type CampaignWithState = Campaign & {
+    _id: string;
     state: CampaignState;
 };

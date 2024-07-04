@@ -64,16 +64,19 @@ export function FormFromTo<
     const values = form.getValues([from.name, to.name]);
     const isAllZero = values.every((value) => value === 0);
 
-    const [checked, setIsChecked] = useState<boolean | "indeterminate">(
-        !isAllZero ?? "indeterminate"
-    );
+    const [checked, setIsChecked] = useState<boolean | "indeterminate">();
 
     useEffect(() => {
-        if (!checked) {
+        setIsChecked(!isAllZero ?? "indeterminate");
+    }, [isAllZero]);
+
+    function checkingCheckbox(value: boolean | "indeterminate") {
+        setIsChecked(value);
+        if (value === false) {
             form.setValue<TName>(from.name, 0 as FieldValue);
             form.setValue<TName>(to.name, 0 as FieldValue);
         }
-    }, [checked, form, from.name, to.name]);
+    }
 
     if (hideIfAllZero && isAllZero) return null;
 
@@ -81,7 +84,7 @@ export function FormFromTo<
         <>
             <FormItem variant={"checkbox"}>
                 <Checkbox
-                    onCheckedChange={setIsChecked}
+                    onCheckedChange={checkingCheckbox}
                     checked={checked === true}
                     id={id}
                 />

@@ -8,6 +8,7 @@ import {
     campaignStepAtom,
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
+import { ButtonCancel } from "@/module/campaigns/component/NewCampaign/ButtonCancel";
 import { FormBudget } from "@/module/campaigns/component/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/NewCampaign/FormGoals";
 import { FormProduct } from "@/module/campaigns/component/NewCampaign/FormProduct";
@@ -19,15 +20,11 @@ import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Button } from "@module/component/Button";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 export function NewCampaign() {
-    const router = useRouter();
     const setStep = useSetAtom(campaignStepAtom);
     const campaignSuccess = useAtomValue(campaignSuccessAtom);
     const [campaign, setCampaign] = useAtom(campaignAtom);
@@ -63,15 +60,7 @@ export function NewCampaign() {
         <FormLayout>
             <Head
                 title={{ content: "Create a new campaign", size: "small" }}
-                rightSection={
-                    <Button
-                        variant={"outline"}
-                        leftIcon={<X size={20} />}
-                        onClick={() => router.push("/campaigns")}
-                    >
-                        Cancel
-                    </Button>
-                }
+                rightSection={<ButtonCancel />}
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>

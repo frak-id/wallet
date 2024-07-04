@@ -12,7 +12,7 @@ import styles from "./index.module.css";
 
 const pages = ["/campaigns/new", "/campaigns/metrics", "/campaigns/validation"];
 
-export function Actions() {
+export function Actions({ isLoading = false }: { isLoading?: boolean }) {
     const router = useRouter();
     const [step, setStep] = useAtom(campaignStepAtom);
     const setSuccess = useSetAtom(campaignSuccessAtom);
@@ -45,7 +45,7 @@ export function Actions() {
                 )}
             </div>
             <div className={styles.action__right}>
-                {step > 1 && step < pages.length && (
+                {step > 1 && !success && (
                     <Button
                         variant={"informationOutline"}
                         onClick={() => setStep((prev) => prev - 1)}
@@ -53,16 +53,24 @@ export function Actions() {
                         Previous
                     </Button>
                 )}
-                <ButtonNext step={step} />
+                <ButtonNext step={step} isLoading={isLoading} />
             </div>
         </Panel>
     );
 }
 
-function ButtonNext({ step }: { step: number }) {
+function ButtonNext({
+    step,
+    isLoading = false,
+}: { step: number; isLoading: boolean }) {
     if (step > pages.length) return null;
     return step === pages.length ? (
-        <Button type={"submit"} variant={"submit"}>
+        <Button
+            type={"submit"}
+            variant={"submit"}
+            isLoading={isLoading}
+            disabled={isLoading}
+        >
             Publish
         </Button>
     ) : (

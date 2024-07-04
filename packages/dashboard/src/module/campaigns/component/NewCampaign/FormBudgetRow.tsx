@@ -27,7 +27,6 @@ export function FormBudgetRow(
             <FormField
                 control={form.control}
                 name="budget.type"
-                rules={{ required: "Select a budget" }}
                 render={({ field }) => (
                     <FormItem>
                         {isCheckCampaign ? (

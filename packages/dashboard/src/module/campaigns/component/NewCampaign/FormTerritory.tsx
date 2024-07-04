@@ -32,7 +32,6 @@ export function FormTerritory(form: UseFormReturn<Campaign>) {
                             <MultiSelect
                                 options={getCountryDataList()}
                                 onValueChange={field.onChange}
-                                defaultValue={field.value}
                                 placeholder="Select country"
                                 {...field}
                             />

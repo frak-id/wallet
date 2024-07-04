@@ -45,7 +45,6 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
             <FormField
                 control={form.control}
                 name="scheduled.dateStart"
-                rules={{ required: "Select a start date" }}
                 render={({ field }) => {
                     const { value, ...rest } = field;
                     return (
