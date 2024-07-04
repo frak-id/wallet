@@ -11,7 +11,7 @@ import type { Campaign } from "@/types/Campaign";
 import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
-import type { ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { first } from "radash";
 import {
     type Hex,
@@ -109,7 +109,8 @@ export async function saveCampaign(campaign: Campaign) {
             campaignInitData,
         ],
     });
-    return { id, creationData };
+
+    return { id: id.toHexString(), creationData };
 }
 
 /**
@@ -120,12 +121,13 @@ export async function saveCampaign(campaign: Campaign) {
 export async function updateCampaignState({
     campaignId,
     txHash,
-}: { campaignId: ObjectId; txHash?: Hex }) {
+}: { campaignId: string; txHash?: Hex }) {
+    const id = ObjectId.createFromHexString(campaignId);
     const repository = await getCampaignRepository();
 
-    // If no tx hash, just insert it with creation failed status
+    // If no tx hash, just insert it with creation failed status'
     if (!txHash) {
-        await repository.updateState(campaignId, {
+        await repository.updateState(id, {
             key: "creationFailed",
         });
         return;
@@ -144,12 +146,16 @@ export async function updateCampaignState({
     const address = first(parsedLogs)?.args?.campaign;
     if (!address) {
         console.error("No address found in the logs", receipt.logs);
+        await repository.updateState(id, {
+            key: "creationFailed",
+        });
+        return;
     }
 
-    // Insert it
-    await repository.updateState(campaignId, {
+    // Set the success state
+    await repository.updateState(id, {
         key: "created",
         txHash,
-        address: address ?? "0xdeadbeef",
+        address,
     });
 }

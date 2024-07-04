@@ -51,7 +51,7 @@ export function TransactionModal({
 
         if (!address) throw new Error("No address present");
 
-        // Othersiwse, prepare a batch call
+        // Otherwise, prepare a batch call
         return {
             txs: tx,
             sendTx: {

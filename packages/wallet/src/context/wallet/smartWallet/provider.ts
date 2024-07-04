@@ -6,6 +6,7 @@ import { getAlchemyTransport } from "@/context/blockchain/alchemy-transport";
 import {
     type AvailableChainIds,
     availableChains,
+    frakChainPocClient,
 } from "@/context/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/sign";
 import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
@@ -23,6 +24,7 @@ import type { SmartAccount } from "permissionless/accounts";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import type { EntryPoint } from "permissionless/types";
 import { type Chain, type Transport, createClient, extractChain } from "viem";
+import { estimateGas } from "viem/actions";
 
 /**
  * Get the current authenticated wallet
@@ -221,8 +223,19 @@ async function buildSmartAccount<
         bundlerTransport,
         // Only add a middleware if the paymaster client is available
         middleware: {
-            sponsorUserOperation: (args) =>
-                sponsorUserOperation(paymasterClient, args),
+            sponsorUserOperation: async (args) => {
+                // Perform a direct gas estimation of the call and update the user op
+                const estimation = await estimateGas(frakChainPocClient, {
+                    account: args.userOperation.sender,
+                    to: args.userOperation.sender,
+                    data: args.userOperation.callData,
+                });
+                // Use the estimation with 25% of error margin on the estimation
+                args.userOperation.callGasLimit = (estimation * 125n) / 100n;
+
+                // Send the sponsoring request
+                return sponsorUserOperation(paymasterClient, args);
+            },
         },
     }) as unknown as Client;
 
