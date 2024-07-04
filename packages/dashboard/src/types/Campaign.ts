@@ -1,10 +1,11 @@
 import type { TCountryCode } from "countries-list";
+import type { ObjectId } from "mongodb";
 import type { Address, Hex } from "viem";
 
 type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
 type SpecialCategory = "credit" | "jobs" | "housing" | "social";
 type ContentType = "text" | "video" | "product" | "others";
-type Budget = "daily" | "weekly" | "monthly" | "continuously";
+type Budget = "daily" | "weekly" | "monthly" | "global";
 
 /**
  * Direct campaign type
@@ -59,5 +60,6 @@ export type CampaignState =
       };
 
 export type CampaignWithState = Campaign & {
+    _id: ObjectId;
     state: CampaignState;
 };
