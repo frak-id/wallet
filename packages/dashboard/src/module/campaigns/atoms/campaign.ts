@@ -17,10 +17,6 @@ const initialValues: Campaign = {
         maxEuroDaily: 0,
     },
     territories: [],
-    scheduled: {
-        dateStart: new Date(),
-        dateEnd: new Date(),
-    },
     rewards: {
         click: { from: 0, to: 0 },
         registration: { from: 0, to: 0 },

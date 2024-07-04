@@ -1,5 +1,4 @@
 import type { TCountryCode } from "countries-list";
-import type { ObjectId } from "mongodb";
 import type { Address, Hex } from "viem";
 
 type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
@@ -23,7 +22,7 @@ export type Campaign = {
     territories: TCountryCode[];
     scheduled?: {
         dateStart: Date;
-        dateEnd: Date;
+        dateEnd?: Date;
     };
     rewards: {
         click: { from: number; to: number };
@@ -60,6 +59,5 @@ export type CampaignState =
       };
 
 export type CampaignWithState = Campaign & {
-    _id: ObjectId;
     state: CampaignState;
 };

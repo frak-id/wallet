@@ -17,6 +17,7 @@ import {
     type Hex,
     encodeAbiParameters,
     encodeFunctionData,
+    maxUint256,
     parseAbi,
     parseEther,
     parseEventLogs,
@@ -29,6 +30,10 @@ import { getTransactionReceipt } from "viem/actions";
  */
 export async function saveCampaign(campaign: Campaign) {
     const currentSession = await getSafeSession();
+
+    if (!campaign.contentId) {
+        throw new Error("Content ID is required");
+    }
 
     const clickRewards = campaign?.rewards?.click;
     if (!clickRewards) {
@@ -58,19 +63,27 @@ export async function saveCampaign(campaign: Campaign) {
     const initialReward = Math.floor((clickRewards.from + clickRewards.to) / 2);
 
     // Compute the cap period
-    let capPeriod = 0;
+    let capPeriod = 0n;
     if (campaign.budget.type === "daily") {
-        capPeriod = 24 * 60 * 60;
+        capPeriod = BigInt(24 * 60 * 60);
+    } else if (campaign.budget.type === "weekly") {
+        capPeriod = BigInt(7 * 24 * 60 * 60);
     } else if (campaign.budget.type === "monthly") {
-        capPeriod = 30 * 24 * 60 * 60;
+        capPeriod = BigInt(30 * 24 * 60 * 60);
+    } else if (campaign.budget.type === "global") {
+        capPeriod = maxUint256;
     }
 
     // The start and end period
     let start = 0;
     let end = 0;
-    if (campaign.scheduled) {
-        start = campaign.scheduled.dateStart.getTime() / 1000;
-        end = campaign.scheduled.dateEnd.getTime() / 1000;
+    if (campaign.scheduled?.dateStart) {
+        start = Math.floor(
+            new Date(campaign.scheduled.dateStart).getTime() / 1000
+        );
+    }
+    if (campaign.scheduled?.dateEnd) {
+        end = Math.floor(new Date(campaign.scheduled.dateEnd).getTime() / 1000);
     }
 
     // Build the tx to be sent by the creator to create the given campaign
@@ -78,7 +91,7 @@ export async function saveCampaign(campaign: Campaign) {
         addresses.paywallToken,
         parseEther(initialReward.toString()), // initial reward
         5_000n, // user reward percent (on 1/10_000 so 50%), todo: should be campaign param
-        BigInt(capPeriod),
+        capPeriod,
         campaign.budget.maxEuroDaily
             ? parseEther(campaign.budget.maxEuroDaily.toString())
             : 0n,

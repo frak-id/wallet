@@ -8,7 +8,7 @@ import type { CampaignWithState } from "@/types/Campaign";
 import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { gql } from "@urql/core";
-import { all } from "radash";
+import { all, omit } from "radash";
 import { type Address, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 
@@ -117,9 +117,10 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
 
     // Map all of that to campaign with state object
     return campaignDocuments.map((campaign) => {
+        const campaignNoId = omit(campaign, ["_id"]);
         const state = campaign.state;
         if (state.key !== "created") {
-            return campaign as CampaignWithState;
+            return campaignNoId as CampaignWithState;
         }
 
         // Find the blockchain campaign index
@@ -129,7 +130,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
         const blockchainCampaign = blockchainCampaigns[blockchainCampaignIndex];
 
         return {
-            ...campaign,
+            ...campaignNoId,
             state: {
                 ...state,
                 interactionLink: {
