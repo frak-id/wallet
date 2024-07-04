@@ -1,6 +1,7 @@
 "use client";
 
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
+import { State } from "@/module/common/component/State";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
@@ -15,11 +16,13 @@ import Link from "next/link";
 import { capitalize } from "radash";
 import { useEffect, useMemo } from "react";
 import useSessionStorageState from "use-session-storage-state";
-import { Badge } from "../Badge";
 import styles from "./index.module.css";
 
-const Table = dynamic<ReactTableProps<CampaignWithState, TableMetas>>(() =>
-    import("@/module/common/component/Table").then((mod) => mod.Table)
+const Table = dynamic<ReactTableProps<CampaignWithState, TableMetas>>(
+    () => import("@/module/common/component/Table").then((mod) => mod.Table),
+    {
+        loading: () => <Skeleton />,
+    }
 );
 
 type TableMetas = {
@@ -114,14 +117,10 @@ export function TableCampaigns() {
                         </Link>
                     ),
                 }),
-                columnHelper.accessor("state.key", {
+                columnHelper.accessor("state", {
                     enableSorting: false,
                     header: () => "Status",
-                    cell: ({ getValue }) => (
-                        <Badge variant={"secondary"}>
-                            {capitalize(getValue())}
-                        </Badge>
-                    ),
+                    cell: ({ getValue }) => <State state={getValue()} />,
                 }),
                 columnHelper.accessor("scheduled.dateStart", {
                     enableSorting: false,
@@ -164,7 +163,7 @@ export function TableCampaigns() {
         []
     );
 
-    if (isLoading) {
+    if (!data || isLoading) {
         return <Skeleton />;
     }
 

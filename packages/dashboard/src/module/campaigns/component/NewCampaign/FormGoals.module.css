@@ -1,5 +1,5 @@
 .formGoals__label {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 8px;
 }

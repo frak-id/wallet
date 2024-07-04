@@ -1,6 +1,7 @@
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
+import { Skeleton } from "@module/component/Skeleton";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Table as TableReact } from "@tanstack/react-table";
@@ -12,7 +13,9 @@ import useSessionStorageState from "use-session-storage-state";
 
 const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
     () => import("@/module/common/component/Table").then((mod) => mod.Table),
-    { ssr: false }
+    {
+        loading: () => <Skeleton />,
+    }
 );
 
 type TableData = {
@@ -301,19 +304,15 @@ export function TablePerformance() {
 
     return (
         <>
-            {
-                mockData && mockMetas ? (
-                    <Table
-                        data={mockData}
-                        metas={mockMetas}
-                        columns={columns}
-                        filtering={filtering}
-                        setFiltering={setFiltering}
-                    />
-                ) : null /*(
-                <Skeleton height={600} />
-            )*/
-            }
+            {mockData && mockMetas ? (
+                <Table
+                    data={mockData}
+                    metas={mockMetas}
+                    columns={columns}
+                    filtering={filtering}
+                    setFiltering={setFiltering}
+                />
+            ) : null}
         </>
     );
 }
