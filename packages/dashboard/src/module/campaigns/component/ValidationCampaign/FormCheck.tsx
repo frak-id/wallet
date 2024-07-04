@@ -1,4 +1,4 @@
-import { FormBudget } from "@/module/campaigns/component/ValidationCampaign/FormBudget";
+import { FormBudgetRow } from "@/module/campaigns/component/NewCampaign/FormBudgetRow";
 import { FormObjectives } from "@/module/campaigns/component/ValidationCampaign/FormObjectives";
 import { FormPromotedContent } from "@/module/campaigns/component/ValidationCampaign/FormPromotedContent";
 import { Panel } from "@/module/common/component/Panel";
@@ -34,7 +34,7 @@ export function FormCheck(form: UseFormReturn<Campaign>) {
                 <FormDescription title={"Campaign goal"} />
                 <Input disabled={true} {...form.control.register("type")} />
             </FormItem>
-            <FormBudget {...form} />
+            <FormBudgetRow {...form} isCheckCampaign={true} />
             <FormObjectives {...form} />
             <FormPromotedContent {...form} />
         </Panel>
