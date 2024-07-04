@@ -21,7 +21,6 @@ query GetCampaignForUser($wallet: String!) {
     where: {user: $wallet}
   ) {
     items {
-      isOwner
       content {
         id
         campaigns {
@@ -72,11 +71,12 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
         .toPromise();
 
     // Extract each campaigns and find them in the mongo database
-    const blockchainCampaigns =
-        result.data?.contentAdministrators.items.flatMap(
-            (item) => item.content.campaigns.items
-        );
-    if (!blockchainCampaigns) return [];
+    let blockchainCampaigns = result.data?.contentAdministrators.items.flatMap(
+        (item) => item.content.campaigns.items
+    );
+    if (!blockchainCampaigns) {
+        blockchainCampaigns = [];
+    }
 
     // Find the campaigns in the database
     const repository = await getCampaignRepository();
@@ -86,34 +86,40 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     });
 
     // Find each state for each campaigns
-    const { isActives, canEdits } = await all({
-        // Check if the campaign is active
-        isActives: multicall(frakChainPocClient, {
-            contracts: blockchainCampaigns.map(
-                (campaign) =>
-                    ({
-                        abi: interactionCampaignAbi,
-                        address: campaign.id,
-                        functionName: "isActive",
-                        args: [],
-                    }) as const
-            ),
-            allowFailure: false,
-        }),
-        // Check if the campaign can be edited
-        canEdits: multicall(frakChainPocClient, {
-            contracts: blockchainCampaigns.map(
-                (campaign) =>
-                    ({
-                        abi: interactionCampaignAbi,
-                        address: campaign.id,
-                        functionName: "hasAnyRole",
-                        args: [session.wallet, campaignRoles.manager],
-                    }) as const
-            ),
-            allowFailure: false,
-        }),
-    });
+    let isActives: boolean[] = [];
+    let canEdits: boolean[] = [];
+    if (blockchainCampaigns.length > 0) {
+        const { isActivesNew, canEditsNew } = await all({
+            // Check if the campaign is active
+            isActivesNew: multicall(frakChainPocClient, {
+                contracts: blockchainCampaigns.map(
+                    (campaign) =>
+                        ({
+                            abi: interactionCampaignAbi,
+                            address: campaign.id,
+                            functionName: "isActive",
+                            args: [],
+                        }) as const
+                ),
+                allowFailure: false,
+            }),
+            // Check if the campaign can be edited
+            canEditsNew: multicall(frakChainPocClient, {
+                contracts: blockchainCampaigns.map(
+                    (campaign) =>
+                        ({
+                            abi: interactionCampaignAbi,
+                            address: campaign.id,
+                            functionName: "hasAnyRole",
+                            args: [session.wallet, campaignRoles.manager],
+                        }) as const
+                ),
+                allowFailure: false,
+            }),
+        });
+        isActives = isActivesNew;
+        canEdits = canEditsNew;
+    }
 
     // Map all of that to campaign with state object
     return campaignDocuments.map((campaign) => {
@@ -127,6 +133,10 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
         const blockchainCampaignIndex = blockchainCampaigns.findIndex((item) =>
             isAddressEqual(item.id, state.address)
         );
+        if (blockchainCampaignIndex === -1) {
+            console.error("No blockchain campaign found for", state.address);
+            return campaignNoId as CampaignWithState;
+        }
         const blockchainCampaign = blockchainCampaigns[blockchainCampaignIndex];
 
         return {
