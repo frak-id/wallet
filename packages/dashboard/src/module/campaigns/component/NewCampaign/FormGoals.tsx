@@ -118,7 +118,7 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                                     onValueChange={field.onChange}
                                     defaultValue={field.value}
                                 >
-                                    <SelectTrigger {...field}>
+                                    <SelectTrigger length={"medium"} {...field}>
                                         <SelectValue placeholder="Select an order" />
                                     </SelectTrigger>
                                     <SelectContent>

@@ -9,6 +9,7 @@ export interface PanelProps
     extends HTMLAttributes<HTMLDivElement>,
         PropsWithChildren<VariantProps<typeof panelVariants>> {
     title?: string;
+    withBadge?: boolean;
     className?: string;
 }
 
@@ -17,6 +18,7 @@ export const panelVariants = cva(styles.panel, {
         variant: {
             primary: styles.primary,
             secondary: styles.secondary,
+            ghost: styles.ghost,
         },
     },
     defaultVariants: {
@@ -25,7 +27,10 @@ export const panelVariants = cva(styles.panel, {
 });
 
 export const Panel = forwardRef<HTMLDivElement, PanelProps>(
-    ({ variant, title, className = "", children, ...props }, ref) => {
+    (
+        { variant, title, withBadge, className = "", children, ...props },
+        ref
+    ) => {
         return (
             <div
                 ref={ref}
@@ -34,7 +39,7 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
             >
                 {title && (
                     <Title
-                        icon={<BadgeCheck color={"#0DDB84"} />}
+                        icon={withBadge && <BadgeCheck color={"#0DDB84"} />}
                         size={"small"}
                         className={styles.panel__title}
                     >

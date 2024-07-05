@@ -15,7 +15,7 @@ export default function CampaignsPerformancePage() {
         <>
             <Head
                 title={{ content: "Campaigns" }}
-                leftSection={<Breadcrumb />}
+                leftSection={<Breadcrumb current={"Campaign List"} />}
                 rightSection={
                     <Button
                         leftIcon={<Plus size={20} />}

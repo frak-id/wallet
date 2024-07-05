@@ -1,19 +1,33 @@
 import { mergeElement } from "@/module/common/utils/mergeElement";
-import { cx } from "class-variance-authority";
+import { cva, cx } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import { forwardRef, isValidElement } from "react";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import styles from "./index.module.css";
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps
+    extends InputHTMLAttributes<HTMLInputElement>,
+        VariantProps<typeof InputVariants> {
     classNameWrapper?: string;
     leftSection?: string | ReactNode;
     rightSection?: string | ReactNode;
 }
 
+export const InputVariants = cva(styles.inputWrapper, {
+    variants: {
+        length: {
+            small: styles["inputWrapper--small"],
+            medium: styles["inputWrapper--medium"],
+            big: styles["inputWrapper--big"],
+        },
+    },
+});
+
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
         {
             type,
+            length,
             className = "",
             classNameWrapper = "",
             leftSection,
@@ -23,7 +37,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         ref
     ) => {
         return (
-            <span className={`${styles.inputWrapper} ${classNameWrapper}`}>
+            <span
+                className={`${InputVariants({
+                    length,
+                })} ${classNameWrapper}`}
+            >
                 {leftSection && isValidElement(leftSection) ? (
                     mergeElement(leftSection, { className: styles.leftSection })
                 ) : (

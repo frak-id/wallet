@@ -39,7 +39,7 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
                             >
-                                <SelectTrigger {...field}>
+                                <SelectTrigger length={"medium"} {...field}>
                                     <SelectValue placeholder="Select a product" />
                                 </SelectTrigger>
                                 <SelectContent>

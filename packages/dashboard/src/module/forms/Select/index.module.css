@@ -1,5 +1,6 @@
 .select__trigger {
     all: unset;
+    box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: space-between;
@@ -14,6 +15,14 @@
     &:focus-visible {
         box-shadow: 0 0 0 1px var(--frak-focus-border-color);
     }
+}
+
+.select__trigger--medium {
+    width: 320px;
+}
+
+.select__trigger--big {
+    width: 100%;
 }
 
 /*.select__trigger[data-placeholder] {

@@ -40,7 +40,7 @@ export function FormBudgetRow(
                             defaultValue={field.value}
                         >
                             <FormControl>
-                                <SelectTrigger {...field}>
+                                <SelectTrigger length={"medium"} {...field}>
                                     <SelectValue placeholder="Select a budget" />
                                 </SelectTrigger>
                             </FormControl>
@@ -72,6 +72,7 @@ export function FormBudgetRow(
                         <FormControl>
                             <Input
                                 placeholder={"25,00 €"}
+                                length={"medium"}
                                 rightSection={"EUR"}
                                 {...field}
                             />

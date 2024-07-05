@@ -1,66 +1,140 @@
 "use client";
 
-import { deleteSession } from "@/context/auth/actions/session";
+import { AlertDialog } from "@/module/common/component/AlertDialog";
+import { Breadcrumb } from "@/module/common/component/Breadcrumb";
+import { Head } from "@/module/common/component/Head";
+import { Panel } from "@/module/common/component/Panel";
+import { Row } from "@/module/common/component/Row";
+import { ButtonProduct } from "@/module/dashboard/component/ButtonProduct";
 import { MyContents } from "@/module/dashboard/component/Contents";
-import type { SendTransactionReturnType } from "@frak-labs/nexus-sdk/core";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import { Button } from "@module/component/Button";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { encodeFunctionData } from "viem";
+import { BadgeCheck } from "lucide-react";
+import { useForm } from "react-hook-form";
+
+type ProductNew = {
+    name: string;
+    domain: string;
+};
 
 export default function DashboardPage() {
-    const [sendTxData] = useState<SendTransactionReturnType | null>(null);
-    const { mutate: sendTx } = useSendTransactionAction();
+    const form = useForm<ProductNew>({
+        defaultValues: {
+            name: "",
+            domain: "",
+        },
+    });
 
-    const router = useRouter();
+    function onSubmit(values: ProductNew) {
+        console.log(values);
+    }
 
     return (
         <>
+            <Head
+                title={{ content: "Dashboard" }}
+                leftSection={<Breadcrumb current={"Home"} />}
+            />
+
+            <Panel variant={"ghost"} title={"My Products"}>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <AlertDialog
+                            title={
+                                <>
+                                    <BadgeCheck color={"#0DDB84"} /> List a New
+                                    Product
+                                </>
+                            }
+                            description={
+                                "To list a new product, you must enter the domain name of the website where the SDK has been installed."
+                            }
+                            buttonElement={
+                                <ButtonProduct>
+                                    +<br />
+                                    List a Product
+                                </ButtonProduct>
+                            }
+                            showCloseButton={false}
+                            text={
+                                <>
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        rules={{
+                                            required: "Invalid product name",
+                                        }}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel weight={"medium"}>
+                                                    Enter a Product Name
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        length={"medium"}
+                                                        placeholder={
+                                                            "Product Name...."
+                                                        }
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="domain"
+                                        rules={{
+                                            required: "Invalid domain name",
+                                        }}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel weight={"medium"}>
+                                                    Enter your Domain Name
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Row>
+                                                        <Input
+                                                            length={"medium"}
+                                                            placeholder={
+                                                                "Domain Name...."
+                                                            }
+                                                            {...field}
+                                                        />
+                                                        <Button
+                                                            variant={"submit"}
+                                                        >
+                                                            Verify
+                                                        </Button>
+                                                    </Row>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </>
+                            }
+                            cancel={<Button variant={"outline"}>Cancel</Button>}
+                            action={
+                                <Button type={"submit"} variant={"information"}>
+                                    Next
+                                </Button>
+                            }
+                        />
+                    </form>
+                </Form>
+            </Panel>
+
             <MyContents />
-
-            <div>
-                <h1>Send tx interaction</h1>
-                <p>
-                    <Button
-                        onClick={() =>
-                            sendTx({
-                                context: "Test transaction",
-                                tx: {
-                                    to: addresses.contentInteractionManager,
-                                    value: "0x00",
-                                    data: encodeFunctionData({
-                                        abi: contentInteractionManagerAbi,
-                                        functionName: "getInteractionContract",
-                                        args: [
-                                            106219508196454080375526586478153583586194937194493887259467424694676997453395n,
-                                        ],
-                                    }),
-                                },
-                            })
-                        }
-                    >
-                        Send tx via iframe
-                    </Button>
-                </p>
-                {sendTxData && (
-                    <p>Full response: {JSON.stringify(sendTxData)}</p>
-                )}
-            </div>
-
-            <div>
-                <Button
-                    onClick={() => {
-                        deleteSession().then(() => {
-                            router.push("/login");
-                        });
-                    }}
-                >
-                    Logout
-                </Button>
-            </div>
         </>
     );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { forwardRef } from "react";
 import type { ComponentPropsWithoutRef, ElementRef } from "react";
@@ -12,13 +14,28 @@ const SelectGroup = SelectPrimitive.Group;
 
 const SelectValue = SelectPrimitive.Value;
 
+const SelectTriggerVariants = cva(styles.select__trigger, {
+    variants: {
+        length: {
+            medium: styles["select__trigger--medium"],
+            big: styles["select__trigger--big"],
+        },
+    },
+});
+
+interface SelectTriggerProps
+    extends ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>,
+        VariantProps<typeof SelectTriggerVariants> {}
+
 const SelectTrigger = forwardRef<
     ElementRef<typeof SelectPrimitive.Trigger>,
-    ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className = "", children, ...props }, ref) => (
+    SelectTriggerProps
+>(({ length, className = "", children, ...props }, ref) => (
     <SelectPrimitive.Trigger
         ref={ref}
-        className={`${styles.select__trigger} ${className}`}
+        className={`${SelectTriggerVariants({
+            length,
+        })} ${className}`}
         {...props}
     >
         {children}
