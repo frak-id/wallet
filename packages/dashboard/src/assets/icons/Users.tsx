@@ -9,7 +9,7 @@ export const Users = (props: SVGProps<SVGSVGElement>) => (
         viewBox="0 0 24 24"
         {...props}
     >
-        <title>Users</title>
+        <title>Members</title>
         <g fill="currentColor">
             <path
                 fillRule="evenodd"

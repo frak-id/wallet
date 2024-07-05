@@ -4,44 +4,60 @@ import { Cash } from "@/assets/icons/Cash";
 import { Gear } from "@/assets/icons/Gear";
 import { Home } from "@/assets/icons/Home";
 import { Info } from "@/assets/icons/Info";
+import { Laptop } from "@/assets/icons/Laptop";
 import { Message } from "@/assets/icons/Message";
 import { Users } from "@/assets/icons/Users";
 import { Wallet } from "@/assets/icons/Wallet";
 import { NavigationCampaigns } from "@/module/common/component/NavigationCampaigns";
 import { mergeElement } from "@/module/common/utils/mergeElement";
+import { useMediaQuery } from "@uidotdev/usehooks";
 import { cx } from "class-variance-authority";
 import { usePathname, useRouter } from "next/navigation";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 
 export function Navigation() {
+    const isMobile = useMediaQuery("(max-width : 768px)");
+
     return (
         <nav className={styles.navigation}>
             <ul className={styles.navigation__list}>
                 <NavigationItem url={"/dashboard"}>
-                    <Home /> Dashboard
+                    <NavigationLabel icon={<Home />}>Dashboard</NavigationLabel>
                 </NavigationItem>
-                <NavigationCampaigns />
+                {isMobile ? (
+                    <NavigationItem url={"/campaigns/list"}>
+                        <NavigationLabel icon={<Laptop />}>
+                            Campaigns
+                        </NavigationLabel>
+                    </NavigationItem>
+                ) : (
+                    <NavigationCampaigns />
+                )}
                 <NavigationItem url={"/members"}>
-                    <Users /> Members
+                    <NavigationLabel icon={<Users />}>Members</NavigationLabel>
                 </NavigationItem>
                 <NavigationItem url={"/revenue"}>
-                    <Cash /> Revenue
+                    <NavigationLabel icon={<Cash />}>Revenue</NavigationLabel>
                 </NavigationItem>
                 <NavigationItem url={"/messenger"}>
-                    <Message /> Messenger
+                    <NavigationLabel icon={<Message />}>
+                        Messenger
+                    </NavigationLabel>
                 </NavigationItem>
                 <NavigationItem
                     url={"/wallet"}
                     className={styles.navigation__itemToBottom}
                 >
-                    <Wallet /> Wallet
+                    <NavigationLabel icon={<Wallet />}>Wallet</NavigationLabel>
                 </NavigationItem>
                 <NavigationItem url={"/settings"}>
-                    <Gear /> Settings
+                    <NavigationLabel icon={<Gear />}>Settings</NavigationLabel>
                 </NavigationItem>
                 <NavigationItem url={"/help"}>
-                    <Info /> Help & FAQ
+                    <NavigationLabel icon={<Info />}>
+                        Help & FAQ
+                    </NavigationLabel>
                 </NavigationItem>
             </ul>
         </nav>
@@ -110,5 +126,17 @@ export function SubNavigationItem({
         <NavigationItem isSub={true} {...props}>
             {children}
         </NavigationItem>
+    );
+}
+
+function NavigationLabel({
+    icon,
+    children,
+}: PropsWithChildren<{ icon: ReactNode }>) {
+    return (
+        <>
+            {icon}
+            <span className={styles.navigationItem__label}>{children}</span>
+        </>
     );
 }

@@ -9,7 +9,7 @@ export const Gear = (props: SVGProps<SVGSVGElement>) => (
         viewBox="0 0 24 24"
         {...props}
     >
-        <title>Gear</title>
+        <title>Settings</title>
         <path
             fill="inherit"
             fillRule="evenodd"

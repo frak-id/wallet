@@ -9,7 +9,7 @@ export const Info = (props: SVGProps<SVGSVGElement>) => (
         viewBox="0 0 24 24"
         {...props}
     >
-        <title>Info</title>
+        <title>Help & FAQ</title>
         <path
             fill="currentColor"
             d="M13 7a1 1 0 11-2 0 1 1 0 012 0zM12 9a1 1 0 011 1v7a1 1 0 11-2 0v-7a1 1 0 011-1z"

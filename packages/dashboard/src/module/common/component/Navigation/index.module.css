@@ -48,3 +48,19 @@
     margin-right: 5px;
     margin-left: auto;
 }
+
+@media screen and (max-width: 768px) {
+    .navigation {
+        width: 48px;
+        padding: 15px 5px 12px 5px;
+    }
+
+    .navigationItem__button {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .navigationItem__label {
+        display: none;
+    }
+}
