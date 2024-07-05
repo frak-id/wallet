@@ -52,8 +52,6 @@ export type CampaignState =
           };
           // Active = can distribute rewards
           isActive: boolean;
-          // Current user can edit it?
-          canEdit: boolean;
           // Campaign deployed address
           address: Address;
       };
@@ -61,4 +59,8 @@ export type CampaignState =
 export type CampaignWithState = Campaign & {
     _id: string;
     state: CampaignState;
+    actions: {
+        canEdit: boolean;
+        canDelete: boolean;
+    };
 };

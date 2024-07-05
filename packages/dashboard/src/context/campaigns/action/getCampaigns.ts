@@ -123,30 +123,43 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
 
     // Map all of that to campaign with state object
     return campaignDocuments.map((campaign) => {
+        // Build the initial full campaign
+        const mappedCampaign = {
+            ...campaign,
+            _id: campaign._id.toHexString(),
+            actions: {
+                canEdit: isAddressEqual(campaign.creator, session.wallet),
+                canDelete: isAddressEqual(campaign.creator, session.wallet),
+            },
+        };
+
         const state = campaign.state;
         if (state.key !== "created") {
-            return {
-                ...campaign,
-                _id: campaign._id.toHexString(),
-            } as CampaignWithState;
+            // Update the mapped campaign to disallow edit if in state creationFailed
+            mappedCampaign.actions.canEdit = state.key !== "creationFailed";
+            // And return it
+            return mappedCampaign as CampaignWithState;
         }
 
         // Find the blockchain campaign index
         const blockchainCampaignIndex = blockchainCampaigns.findIndex((item) =>
             isAddressEqual(item.id, state.address)
         );
-        if (blockchainCampaignIndex === -1) {
-            console.error("No blockchain campaign found for", state.address);
-            return {
-                ...campaign,
-                _id: campaign._id.toHexString(),
-            } as CampaignWithState;
+        const blockchainCampaign =
+            blockchainCampaignIndex === -1
+                ? undefined
+                : blockchainCampaigns[blockchainCampaignIndex];
+        if (!blockchainCampaign) {
+            // Tell that the user can't edit it and return
+            return mappedCampaign as CampaignWithState;
         }
-        const blockchainCampaign = blockchainCampaigns[blockchainCampaignIndex];
 
+        // Update the edit state depending on it
+        mappedCampaign.actions.canEdit = canEdits[blockchainCampaignIndex];
+
+        // And return it
         return {
-            ...campaign,
-            _id: campaign._id.toHexString(),
+            ...mappedCampaign,
             state: {
                 ...state,
                 interactionLink: {
@@ -157,7 +170,6 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
                 },
                 isAttached: blockchainCampaign.attached,
                 isActive: isActives[blockchainCampaignIndex],
-                canEdit: canEdits[blockchainCampaignIndex],
             },
         };
     });
