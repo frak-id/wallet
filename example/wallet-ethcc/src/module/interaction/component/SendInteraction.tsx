@@ -7,7 +7,7 @@ import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
 import { BadgeCheck } from "lucide-react";
 import Link from "next/link";
-import {toHex} from "viem";
+import { toHex } from "viem";
 
 export function SendInteraction() {
     const {
@@ -15,7 +15,7 @@ export function SendInteraction() {
         data,
         error,
         status,
-        isPending
+        isPending,
     } = useSendInteraction();
 
     return (
@@ -34,7 +34,10 @@ export function SendInteraction() {
             <Button
                 onClick={() =>
                     sendInteraction({
-                        contentId: toHex(106219508196454080375526586478153583586194937194493887259467424694676997453395n),
+                        contentId:
+                            toHex(
+                                106219508196454080375526586478153583586194937194493887259467424694676997453395n
+                            ),
                         interaction: PressInteractionEncoder.openArticle({
                             articleId: "0xdeadbeef",
                         }),

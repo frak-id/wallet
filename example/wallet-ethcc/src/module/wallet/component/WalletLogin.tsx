@@ -9,7 +9,13 @@ import { useMemo } from "react";
 import { parseSiweMessage } from "viem/siwe";
 
 export function WalletLogin() {
-    const { mutate: authenticate, data, error, status, isPending } = useSiweAuthenticate();
+    const {
+        mutate: authenticate,
+        data,
+        error,
+        status,
+        isPending,
+    } = useSiweAuthenticate();
 
     return (
         <Panel variant={"primary"}>

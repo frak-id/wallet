@@ -11,7 +11,13 @@ import Link from "next/link";
 import { encodeFunctionData } from "viem";
 
 export function SendTransaction() {
-    const { mutate: sendTx, data, error, status, isPending } = useSendTransactionAction();
+    const {
+        mutate: sendTx,
+        data,
+        error,
+        status,
+        isPending,
+    } = useSendTransactionAction();
 
     return (
         <Panel variant={"primary"}>

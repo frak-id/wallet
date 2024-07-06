@@ -23,6 +23,7 @@ import {
 import type { SmartAccount } from "permissionless/accounts";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import type { EntryPoint } from "permissionless/types";
+import { tryit } from "radash";
 import { type Chain, type Transport, createClient, extractChain } from "viem";
 import { estimateGas } from "viem/actions";
 
@@ -225,11 +226,16 @@ async function buildSmartAccount<
         middleware: {
             sponsorUserOperation: async (args) => {
                 // Perform a direct gas estimation of the call and update the user op
-                const estimation = await estimateGas(frakChainPocClient, {
-                    account: args.userOperation.sender,
-                    to: args.userOperation.sender,
-                    data: args.userOperation.callData,
-                });
+                const [, estimation] = await tryit(() =>
+                    estimateGas(frakChainPocClient, {
+                        account: args.userOperation.sender,
+                        to: args.userOperation.sender,
+                        data: args.userOperation.callData,
+                    })
+                )();
+                if (!estimation) {
+                    return sponsorUserOperation(paymasterClient, args);
+                }
                 // Use the estimation with 25% of error margin on the estimation
                 args.userOperation.callGasLimit = (estimation * 125n) / 100n;
 
