@@ -82,8 +82,6 @@ export function ExampleAppStack({ stack }: StackContext) {
             domainName: "news-paper.xyz",
             hostedZone: "news-paper.xyz",
         },
-        // Add the config
-        ...ssrConfig,
     });
 
     stack.addOutputs({
