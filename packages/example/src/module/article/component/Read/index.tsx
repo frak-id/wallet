@@ -1,4 +1,5 @@
 import { InjectBannerComponent } from "@/module/article/component/Read/InjectBannerComponent";
+import { InjectReferralPopupComponent } from "@/module/article/component/Read/InjectReferralPopupComponent";
 import { InjectUnlockComponent } from "@/module/article/component/Read/InjectUnlockComponent";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { fixLink } from "@/module/common/utils/link";
@@ -21,7 +22,9 @@ export function ReadArticle({
     isFree: boolean;
 }) {
     // The press referral interaction hook
-    usePressReferralInteraction({ contentId: article.contentId as Hex });
+    const referralState = usePressReferralInteraction({
+        contentId: article.contentId as Hex,
+    });
 
     // The injecting state for the unlock component
     const [injecting, setInjecting] = useState(0);
@@ -76,8 +79,12 @@ export function ReadArticle({
                 walletStatus?.key === "not-connected" && (
                     <InjectBannerComponent article={article} />
                 )}
-            {/*todo: review logics behind that, maybe hook or smth like that*/}
-            {/*{injecting > 0 && <InjectPopupComponent article={article} />}*/}
+            {injecting > 0 && (
+                <InjectReferralPopupComponent
+                    article={article}
+                    referralState={referralState}
+                />
+            )}
             {articleUnlockStatus &&
             articleUnlockStatus?.key !== "waiting-response" ? (
                 <iframe

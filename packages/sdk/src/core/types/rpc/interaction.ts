@@ -26,6 +26,6 @@ type SendInteractionSuccess = Readonly<{
     hash: Hex;
 }>;
 type SendInteractionError = Readonly<{
-    key: "error";
+    key: "error" | "not-connected" | "no-session";
     reason?: string;
 }>;

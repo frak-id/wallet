@@ -7,6 +7,7 @@ import type {
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
 import { useAtomValue, useSetAtom } from "jotai";
+import { tryit } from "radash";
 import { useCallback } from "react";
 
 type OnInteractionRequest = IFrameRequestResolver<
@@ -50,7 +51,6 @@ export function useSendInteractionListener() {
 
             // If no current wallet present
             if (!userAddress) {
-                console.error("No wallet address present");
                 // add to an interaction storage queue
                 addPendingInteraction({
                     contentId,
@@ -59,21 +59,33 @@ export function useSendInteractionListener() {
                 });
                 // Send the response
                 await emitter({
-                    key: "error",
+                    key: "not-connected",
                 });
                 // And exit
                 return;
             }
 
             // Otherwise, just set the user referred on content
-            const txHash = await pushInteraction({
-                wallet: userAddress,
-                toPush: {
-                    contentId,
-                    interaction,
-                    submittedSignature: signature,
-                },
-            });
+            const [, txHash] = await tryit(() =>
+                pushInteraction({
+                    wallet: userAddress,
+                    toPush: {
+                        contentId,
+                        interaction,
+                        submittedSignature: signature,
+                    },
+                })
+            )();
+
+            if (!txHash) {
+                // todo: Check if the error is about no session or not
+                // Send the response
+                await emitter({
+                    key: "no-session",
+                });
+                return;
+            }
+
             // Send the response
             await emitter({
                 key: "success",

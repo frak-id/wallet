@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { type Hex, isAddressEqual } from "viem";
+import { FrakRpcError, RpcErrorCodes } from "../../../core";
 import { PressInteractionEncoder } from "../../../core/interactions";
 import { useSendInteraction } from "../useSendInteraction";
 import { useWalletStatus } from "../useWalletStatus";
@@ -21,7 +23,7 @@ export function usePressReferralInteraction({ contentId }: { contentId: Hex }) {
     const { mutateAsync: sendInteraction } = useSendInteraction();
 
     // Setup the query that will transmit the referral interaction
-    useQuery({
+    const { data, error, status } = useQuery({
         gcTime: 0,
         queryKey: [
             "nexus-sdk",
@@ -54,7 +56,58 @@ export function usePressReferralInteraction({ contentId }: { contentId: Hex }) {
             // Update the context with the current wallet as referrer
             await updateContextAsync({ r: walletStatus.wallet });
 
-            return null;
+            return { referrer: nexusContext.r };
         },
     });
+
+    // Map that to our final state
+    return useOutputStateMapper({ data, error, status });
+}
+
+/**
+ * Mapper for our output state
+ * @param data
+ * @param error
+ * @param status
+ */
+function useOutputStateMapper({
+    data,
+    error,
+    status,
+}: {
+    data?: unknown;
+    error?: Error | null;
+    status: "pending" | "success" | "error";
+}) {
+    const errorState = useMemo(() => {
+        if (!(error instanceof FrakRpcError)) return null;
+
+        switch (error.code) {
+            case RpcErrorCodes.walletNotConnected:
+                return "no-wallet";
+            case RpcErrorCodes.noInteractionSession:
+                return "no-session";
+            default:
+                return "error";
+        }
+    }, [error]);
+
+    // Map that to our final state
+    return useMemo(() => {
+        console.log("Computing state for", {
+            data,
+            errorState,
+            status,
+        });
+
+        // First simple status
+        switch (status) {
+            case "pending":
+                return "loading";
+            case "success":
+                return data === null ? "no-referral" : "referred";
+            case "error":
+                return errorState ?? "error";
+        }
+    }, [data, errorState, status]);
 }

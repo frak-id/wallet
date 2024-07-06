@@ -46,4 +46,6 @@ export const RpcErrorCodes = {
     configError: -32002,
     corruptedResponse: -32003,
     clientAborted: -32004,
+    walletNotConnected: -32005,
+    noInteractionSession: -32006,
 } as const;
