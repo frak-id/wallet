@@ -13,6 +13,10 @@
     flex-direction: column;
 }
 
+.inner p {
+    overflow: auto;
+}
+
 @media (min-width: 600px) {
     .main {
         min-height: 100%;
