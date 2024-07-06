@@ -69,8 +69,14 @@ export function ExampleAppStack({ stack }: StackContext) {
     });
 
     // Declare the next js site on news-paper.xyz
-    // todo: Disabled for now since SST seems to struggle with multi site deployments
-    /*const newsSite = new NextjsSite(stack, "newsSite", {
+    // Use it for the ETH-CC demo
+    const newsSite = new NextjsSite(stack, "walletExampleEthCC", {
+        path: "example/wallet-ethcc",
+        // Bind to the configs
+        bind: [nexusUrl],
+        openNextVersion: "3.0.6",
+        // Number of server side instance to keep warm
+        warm: 10,
         // Set the custom domain
         customDomain: {
             domainName: "news-paper.xyz",
@@ -78,10 +84,10 @@ export function ExampleAppStack({ stack }: StackContext) {
         },
         // Add the config
         ...ssrConfig,
-    });*/
+    });
 
     stack.addOutputs({
         ExampleSiteUrl: exampleSite.url,
-        //NewsSiteUrl: newsSite.url,
+        NewsSiteUrl: newsSite.url,
     });
 }
