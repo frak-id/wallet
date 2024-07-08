@@ -49,6 +49,32 @@ export type ExtractedMethodFromRpc<
     : unknown;
 
 /**
+ * Raw response that we will receive after an rpc request
+ */
+export type RpcResponse<
+    TRpcSchema extends RpcSchema | undefined = undefined,
+    TMethod extends
+        ExtractedParametersFromRpc<TRpcSchema>["method"] = ExtractedParametersFromRpc<TRpcSchema>["method"],
+> = TRpcSchema extends RpcSchema
+    ?
+          | {
+                result: Extract<
+                    TRpcSchema[number],
+                    { Method: TMethod }
+                >["ReturnType"];
+                error: never;
+            }
+          | {
+                result: never;
+                error: {
+                    code: number;
+                    message: string;
+                    data?: unknown;
+                };
+            }
+    : unknown;
+
+/**
  * Type used for a one shot request function
  */
 export type RequestFn<TRpcSchema extends RpcSchema | undefined = undefined> = <

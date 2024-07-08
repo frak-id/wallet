@@ -6,10 +6,6 @@ export {
     hashAndCompressData,
     decompressDataAndCheckHash,
     createIframe,
-    getIFrameResponseKeyProvider,
-    iFrameRequestKeyProvider,
-    getRedirectResponseResponseKeyProvider,
-    redirectRequestKeyProvider,
 } from "./utils";
 
 // Types

@@ -3,7 +3,6 @@ import { sha256 } from "js-sha256";
 import type {
     CompressedData,
     HashProtectedData,
-    KeyProvider,
 } from "../../types/compression";
 
 /*
@@ -17,15 +16,10 @@ import type {
 /**
  * Compress the given params, and add hash protection to (rapidly) prevent interception modification
  * @param data The params to encode
- * @param keyProvider The method used to access the keys
  */
-export async function hashAndCompressData<T>(
-    data: T,
-    keyProvider: KeyProvider<T>
-): Promise<CompressedData> {
+export async function hashAndCompressData<T>(data: T): Promise<CompressedData> {
     // Create a hash of the main params
-    const keys = keyProvider(data);
-    const validationHash = sha256(keys.join("_"));
+    const validationHash = sha256(JSON.stringify(data));
     const hashProtectedData: HashProtectedData<T> = {
         ...data,
         validationHash,

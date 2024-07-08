@@ -3,10 +3,7 @@
 import { Grid } from "@/module/common/component/Grid";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { setPaywallDataAtom } from "@/module/paywall/atoms/paywall";
-import {
-    decompressDataAndCheckHash,
-    redirectRequestKeyProvider,
-} from "@frak-labs/nexus-sdk/core";
+import { decompressDataAndCheckHash } from "@frak-labs/nexus-sdk/core";
 import type {
     ExtractedParametersFromRpc,
     RedirectRpcSchema,
@@ -49,13 +46,10 @@ export function PaywallEntryPoint() {
             // Parse the data
             const parsedUnlockData = await decompressDataAndCheckHash<
                 ExtractedParametersFromRpc<RedirectRpcSchema>
-            >(
-                {
-                    compressed: decodeURIComponent(params),
-                    compressedHash: decodeURIComponent(hash),
-                },
-                redirectRequestKeyProvider
-            );
+            >({
+                compressed: decodeURIComponent(params),
+                compressedHash: decodeURIComponent(hash),
+            });
             // Handle the new unlock request
             await setPaywallContext(parsedUnlockData.params);
 

@@ -9,10 +9,6 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "../utils/compression";
-import {
-    getIFrameResponseKeyProvider,
-    iFrameRequestKeyProvider,
-} from "../utils/compression/iframeRpcKeyProvider";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
 import { createIFrameMessageHandler } from "./transports/iframeMessageHandler";
 
@@ -50,16 +46,10 @@ export function createIFrameNexusClient({
         // Create the deferrable result
         const result = new Deferred<unknown>();
 
-        // Get the right key provider for the result
-        const resultCompressionKeyProvider = getIFrameResponseKeyProvider(args);
-
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
             // Decompress the message
-            const decompressed = await decompressDataAndCheckHash(
-                message.data,
-                resultCompressionKeyProvider
-            );
+            const decompressed = await decompressDataAndCheckHash(message.data);
             // Then resolve with the decompressed data
             result.resolve(decompressed);
             // Then close the channel
@@ -67,10 +57,7 @@ export function createIFrameNexusClient({
         });
 
         // Compress the message to send
-        const compressedMessage = await hashAndCompressData(
-            args,
-            iFrameRequestKeyProvider
-        );
+        const compressedMessage = await hashAndCompressData(args);
 
         // Send the message to the iframe
         messageHandler.sendEvent({
@@ -98,16 +85,10 @@ export function createIFrameNexusClient({
             );
         }
 
-        // Get the right key provider for the result
-        const resultCompressionKeyProvider = getIFrameResponseKeyProvider(args);
-
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
             // Decompress the message
-            const decompressed = await decompressDataAndCheckHash(
-                message.data,
-                resultCompressionKeyProvider
-            );
+            const decompressed = await decompressDataAndCheckHash(message.data);
             // And then call the callback
             // TODO: Fix the typing here as well
             // @ts-ignore
@@ -115,10 +96,7 @@ export function createIFrameNexusClient({
         });
 
         // Compress the message to send
-        const compressedMessage = await hashAndCompressData(
-            args,
-            iFrameRequestKeyProvider
-        );
+        const compressedMessage = await hashAndCompressData(args);
 
         // Send the message to the iframe
         messageHandler.sendEvent({

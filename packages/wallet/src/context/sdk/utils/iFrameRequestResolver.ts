@@ -3,9 +3,7 @@ import {
     type ExtractedReturnTypeFromRpc,
     type IFrameRpcEvent,
     type IFrameRpcSchema,
-    type KeyProvider,
     decompressDataAndCheckHash,
-    getIFrameResponseKeyProvider,
     hashAndCompressData,
 } from "@frak-labs/nexus-sdk/core";
 
@@ -68,19 +66,10 @@ export function createIFrameRequestResolver(
         if (!resolver) {
             return;
         }
-
-        // Get the right key provider for the given param
-        const responseKeyProvider = getIFrameResponseKeyProvider({
-            method: topic,
-        });
-
         // Build the emitter for this call
         const responseEmitter: IFrameResponseEmitter = async (result) => {
             // Hash and compress the results
-            const compressedResult = await hashAndCompressData(
-                result,
-                responseKeyProvider
-            );
+            const compressedResult = await hashAndCompressData(result);
 
             // Then post the message and a response
             message.source?.postMessage(
@@ -96,10 +85,7 @@ export function createIFrameRequestResolver(
         };
 
         // Decompress the data
-        const uncompressedData = await decompressDataAndCheckHash(
-            data,
-            getIframeRequestKeyProvider(message.data)
-        );
+        const uncompressedData = await decompressDataAndCheckHash(data);
 
         // Response to the requests
         // @ts-ignore
@@ -123,91 +109,4 @@ export function createIFrameRequestResolver(
         destroy,
         setReadyToHandleRequest,
     };
-}
-
-/**
- * Get the right response key provider for the given param
- * @param event
- */
-export function getIframeRequestKeyProvider(
-    event: IFrameRpcEvent
-): KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>> {
-    switch (event.topic) {
-        // Article unlock options
-        case "frak_getArticleUnlockOptions":
-            return ((
-                request: Extract<
-                    ExtractedParametersFromRpc<IFrameRpcSchema>,
-                    { method: "frak_getArticleUnlockOptions" }
-                >
-            ) => [
-                "get-price",
-                request.params[0],
-                request.params[1],
-            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-
-        // Wallet status
-        case "frak_listenToWalletStatus":
-            return ((
-                _: Extract<
-                    ExtractedParametersFromRpc<IFrameRpcSchema>,
-                    { method: "frak_listenToWalletStatus" }
-                >
-            ) => ["wallet-status"]) as KeyProvider<
-                ExtractedParametersFromRpc<IFrameRpcSchema>
-            >;
-
-        // Article unlock status
-        case "frak_listenToArticleUnlockStatus":
-            return ((
-                request: Extract<
-                    ExtractedParametersFromRpc<IFrameRpcSchema>,
-                    { method: "frak_listenToArticleUnlockStatus" }
-                >
-            ) => [
-                "article-unlock-status",
-                request.params[0],
-                request.params[1],
-            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-
-        // Send transaction
-        case "frak_sendTransaction":
-            return ((
-                request: Extract<
-                    ExtractedParametersFromRpc<IFrameRpcSchema>,
-                    { method: "frak_sendTransaction" }
-                >
-            ) => [
-                "send-transaction",
-                JSON.stringify(request.params[0]),
-            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-
-        // Send interaction
-        case "frak_sendInteraction":
-            return ((
-                request: Extract<
-                    ExtractedParametersFromRpc<IFrameRpcSchema>,
-                    { method: "frak_sendInteraction" }
-                >
-            ) => [
-                "send-interaction",
-                request.params[0],
-                JSON.stringify(request.params[1]),
-            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-
-        // Siwe authentication
-        case "frak_siweAuthenticate":
-            return ((
-                request: Extract<
-                    ExtractedParametersFromRpc<IFrameRpcSchema>,
-                    { method: "frak_siweAuthenticate" }
-                >
-            ) => [
-                "siwe-authentication",
-                JSON.stringify(request.params[0]),
-            ]) as KeyProvider<ExtractedParametersFromRpc<IFrameRpcSchema>>;
-
-        default:
-            throw new Error(`No key provider found for the event ${event}`);
-    }
 }

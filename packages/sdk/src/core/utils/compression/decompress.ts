@@ -4,17 +4,14 @@ import { FrakRpcError, RpcErrorCodes } from "../../types";
 import type {
     CompressedData,
     HashProtectedData,
-    KeyProvider,
 } from "../../types/compression";
 
 /**
  * Decompress the given string
  * @param compressedData The params to encode
- * @param keyAccessor The key accessor used to query the keys used for the validation hash
  */
 export async function decompressDataAndCheckHash<T>(
-    compressedData: CompressedData,
-    keyAccessor: KeyProvider<T>
+    compressedData: CompressedData
 ): Promise<HashProtectedData<T>> {
     // Ensure we got the required params first
     if (!(compressedData?.compressed && compressedData?.compressedHash)) {
@@ -53,8 +50,8 @@ export async function decompressDataAndCheckHash<T>(
     }
 
     // And check the validation hash
-    const keys = keyAccessor(parsedData);
-    const expectedValidationHash = sha256(keys.join("_"));
+    const { validationHash: _, ...rawResultData } = parsedData;
+    const expectedValidationHash = sha256(JSON.stringify(rawResultData));
     if (expectedValidationHash !== parsedData.validationHash) {
         throw new FrakRpcError(
             RpcErrorCodes.corruptedResponse,
