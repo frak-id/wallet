@@ -68,9 +68,7 @@ export function SendTransaction() {
 }
 
 // Display the authentication result well formatted
-function SendTxResult({
-    data,
-}: { data: Extract<SendTransactionReturnType, { key: "success" }> }) {
+function SendTxResult({ data }: { data: SendTransactionReturnType }) {
     return (
         <div>
             <h4>

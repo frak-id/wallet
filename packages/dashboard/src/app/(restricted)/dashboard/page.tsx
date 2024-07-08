@@ -45,7 +45,6 @@ export default function DashboardPage() {
                         Send tx via iframe
                     </Button>
                 </p>
-                {sendTxData?.key && <p>sendTx key: {sendTxData.key}</p>}
                 {sendTxData && (
                     <p>Full response: {JSON.stringify(sendTxData)}</p>
                 )}

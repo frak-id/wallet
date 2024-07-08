@@ -95,10 +95,7 @@ export function useSendInteractionListener() {
 
             // Send the response
             await emitter({
-                result: {
-                    key: "success",
-                    hash: txHash,
-                },
+                result: { hash: txHash },
             });
         },
         [session?.wallet?.address, addPendingInteraction]

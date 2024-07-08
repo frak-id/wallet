@@ -58,9 +58,7 @@ export function SendInteraction() {
 }
 
 // Display the authentication result well formatted
-function InteractionResult({
-    data,
-}: { data: Extract<SendInteractionReturnType, { key: "success" }> }) {
+function InteractionResult({ data }: { data: SendInteractionReturnType }) {
     return (
         <div>
             <h4>

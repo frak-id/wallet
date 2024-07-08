@@ -51,9 +51,7 @@ export function WalletLogin() {
 }
 
 // Display the authentication result well formatted
-function AuthenticationResult({
-    data,
-}: { data: Extract<SiweAuthenticateReturnType, { key: "success" }> }) {
+function AuthenticationResult({ data }: { data: SiweAuthenticateReturnType }) {
     const siweData = useMemo(() => {
         return parseSiweMessage(data.message);
     }, [data.message]);
