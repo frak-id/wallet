@@ -1,5 +1,5 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { X } from "lucide-react";
 import styles from "./index.module.css";
 

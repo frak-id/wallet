@@ -1,8 +1,8 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
-import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Panel } from "@/module/common/component/Panel";
 import { HelpModal } from "@/module/listener/component/Modal";
 import styles from "@/module/listener/component/Modal/index.module.css";
+import { AuthFingerprint } from "@module/component/AuthFingerprint";
 
 /**
  * Modal used to perform a login before a siwe signature

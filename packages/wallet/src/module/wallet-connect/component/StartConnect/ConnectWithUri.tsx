@@ -1,6 +1,6 @@
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Input } from "@/module/common/component/Input";
 import { useWalletConnectToDapp } from "@/module/wallet-connect/hook/useWalletConnectToDapp";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useState } from "react";
 
 export function ConnectionWithUri() {

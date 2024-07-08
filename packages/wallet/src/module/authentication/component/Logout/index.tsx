@@ -1,9 +1,9 @@
 "use client";
 
 import { deleteSession } from "@/context/session/action/session";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -1,10 +1,10 @@
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
-import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { TextData } from "@/module/common/component/TextData";
 import { Title } from "@/module/common/component/Title";
 import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
 import type { ModalEventRequestArgs } from "@/module/listener/types/ModalEvent";
 import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
+import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 import styles from "./index.module.css";

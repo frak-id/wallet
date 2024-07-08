@@ -1,7 +1,7 @@
 import { postAuthRedirectAtom } from "@/module/authentication/atoms/redirection";
-import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
+import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useAtom, useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";

@@ -1,9 +1,9 @@
-import { Fingerprint } from "@/assets/icons/Fingerprint";
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { formatHash } from "@/context/wallet/utils/hashFormatter";
 import { postAuthRedirectAtom } from "@/module/authentication/atoms/redirection";
 import { useLogin } from "@/module/authentication/hook/useLogin";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
+import { Fingerprint } from "@module/asset/icons/Fingerprint";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useAtom } from "jotai/index";
 import { SquareUser } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -3,9 +3,9 @@ import {
     availableChains,
 } from "@/context/blockchain/provider";
 import { useSwitchConfigChain } from "@/module/chain/hook/useSwitchConfigChain";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { TriangleAlertIcon } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import { extractChain } from "viem";

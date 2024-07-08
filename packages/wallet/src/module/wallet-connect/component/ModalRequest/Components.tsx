@@ -1,10 +1,10 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import { Panel } from "@/module/common/component/Panel";
 import styles from "@/module/wallet-connect/component/ModalRequest/index.module.css";
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useMutation } from "@tanstack/react-query";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import type { Verify } from "@walletconnect/types";

@@ -1,7 +1,6 @@
 "use client";
 
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
-import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { Back } from "@/module/common/component/Back";
 import { Checkbox } from "@/module/common/component/Checkbox";
 import { Grid } from "@/module/common/component/Grid";
@@ -30,6 +29,7 @@ import {
 import { usePaywallRedirection } from "@/module/paywall/hook/usePaywallRedirection";
 import { useUnlockArticle } from "@/module/paywall/hook/useUnlockArticle";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
+import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useAtom } from "jotai";
 import { useAtomValue, useSetAtom } from "jotai/index";
 import { BookText } from "lucide-react";

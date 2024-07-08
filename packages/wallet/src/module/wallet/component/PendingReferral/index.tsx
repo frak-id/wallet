@@ -1,10 +1,10 @@
 import { frakChainId } from "@/context/blockchain/provider";
 import { getPendingReferralReward } from "@/context/interaction/action/pendingReferral";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAAClients } from "@/module/common/hook/useAAClients";
 import { useInvalidateUserTokens } from "@/module/tokens/hook/useGetUserTokens";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import {

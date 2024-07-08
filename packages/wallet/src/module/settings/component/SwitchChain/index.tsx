@@ -1,11 +1,11 @@
 "use client";
 
 import { useSwitchConfigChain } from "@/module/chain/hook/useSwitchConfigChain";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import styles from "@/module/settings/component/Settings/index.module.css";
 import { AccordionChain } from "@/module/settings/component/SwitchChain/AccordionChain";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { Link } from "lucide-react";
 import { useMemo } from "react";
 import type { Chain } from "viem";
