@@ -96,6 +96,7 @@ html {
 body {
     font-size: 14px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
 }
 
 ul {

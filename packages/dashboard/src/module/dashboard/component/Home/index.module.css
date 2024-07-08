@@ -1,0 +1,15 @@
+.newProductForm__introduction {
+    margin-bottom: 14px;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.newProductForm__verify {
+    margin-bottom: 27px;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.newProductForm__fingerprint {
+    font-size: 16px;
+}

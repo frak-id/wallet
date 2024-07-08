@@ -56,6 +56,8 @@
 
 .alertDialog__description {
     margin-bottom: 14px;
+    font-size: 16px;
+    font-weight: 400;
 }
 
 .alertDialog__text {

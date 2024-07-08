@@ -198,8 +198,6 @@ const FormMessage = forwardRef<
     HTMLAttributes<HTMLParagraphElement>
 >(({ className = "", children, ...props }, ref) => {
     const { error, formMessageId } = useFormField();
-    // console.log("error", error);
-    // console.log("formMessageId", formMessageId);
     const body = error ? String(error?.message) : children;
 
     if (!body) {
