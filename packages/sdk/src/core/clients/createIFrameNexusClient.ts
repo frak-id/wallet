@@ -3,7 +3,11 @@ import type { NexusClient } from "../types/client";
 import type { NexusWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { RpcErrorCodes } from "../types/rpc/error";
-import type { ListenerRequestFn, RequestFn } from "../types/transport";
+import type {
+    ListenerRequestFn,
+    RequestFn,
+    RpcResponse,
+} from "../types/transport";
 import { Deferred } from "../utils/Deferred";
 import {
     decompressDataAndCheckHash,
@@ -33,7 +37,9 @@ export function createIFrameNexusClient({
     });
 
     // Build our request function
-    const request: RequestFn<IFrameRpcSchema> = async (args) => {
+    const request: RequestFn<IFrameRpcSchema> = async <TParameters, TResult>(
+        args: TParameters
+    ) => {
         // Ensure the iframe is init
         const isConnected = await messageHandler.isConnected;
         if (!isConnected) {
@@ -44,14 +50,27 @@ export function createIFrameNexusClient({
         }
 
         // Create the deferrable result
-        const result = new Deferred<unknown>();
+        const result = new Deferred<TResult>();
 
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
             // Decompress the message
-            const decompressed = await decompressDataAndCheckHash(message.data);
-            // Then resolve with the decompressed data
-            result.resolve(decompressed);
+            const decompressed = await decompressDataAndCheckHash<
+                RpcResponse<IFrameRpcSchema>
+            >(message.data);
+            // If it contains an error, reject it
+            if (decompressed.error) {
+                result.reject(
+                    new FrakRpcError(
+                        decompressed.error.code,
+                        decompressed.error.message,
+                        decompressed.error?.data
+                    )
+                );
+            } else {
+                // Otherwise, resolve with the right status
+                result.resolve(decompressed.result as TResult);
+            }
             // Then close the channel
             channelManager.removeChannel(channelId);
         });
@@ -62,13 +81,12 @@ export function createIFrameNexusClient({
         // Send the message to the iframe
         messageHandler.sendEvent({
             id: channelId,
+            // @ts-ignore, todo: idk why the fck it's needed
             topic: args.method,
             data: compressedMessage,
         });
 
-        // TODO: How to clean a proper typing onm the result?
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-        return result.promise as any;
+        return result.promise;
     };
 
     // Build our listener function
@@ -88,11 +106,18 @@ export function createIFrameNexusClient({
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
             // Decompress the message
-            const decompressed = await decompressDataAndCheckHash(message.data);
-            // And then call the callback
-            // TODO: Fix the typing here as well
-            // @ts-ignore
-            callback(decompressed);
+            console.log("Will try to decompress", { message, args });
+            const decompressed = await decompressDataAndCheckHash<
+                RpcResponse<IFrameRpcSchema>
+            >(message.data);
+            console.log("Decompressed listening data", { args, decompressed });
+            // Transmit the result if it's a success
+            if (decompressed.result) {
+                // @ts-ignore
+                callback(decompressed.result);
+            } else {
+                // todo: throw an error? Callback with an error?
+            }
         });
 
         // Compress the message to send

@@ -32,6 +32,7 @@ export type {
     ExtractedParametersFromRpc,
     ExtractedReturnTypeFromRpc,
     ExtractedMethodFromRpc,
+    RpcResponse,
 } from "./transport";
 export type { NexusWalletSdkConfig } from "./config";
 export type {

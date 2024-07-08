@@ -59,7 +59,9 @@ export function useSendInteractionListener() {
                 });
                 // Send the response
                 await emitter({
-                    key: "not-connected",
+                    result: {
+                        key: "not-connected",
+                    },
                 });
                 // And exit
                 return;
@@ -81,15 +83,19 @@ export function useSendInteractionListener() {
                 // todo: Check if the error is about no session or not
                 // Send the response
                 await emitter({
-                    key: "no-session",
+                    result: {
+                        key: "no-session",
+                    },
                 });
                 return;
             }
 
             // Send the response
             await emitter({
-                key: "success",
-                hash: txHash,
+                result: {
+                    key: "success",
+                    hash: txHash,
+                },
             });
         },
         [session?.wallet?.address, addPendingInteraction]

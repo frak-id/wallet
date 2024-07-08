@@ -30,6 +30,7 @@ export type {
     // Client
     NexusClient,
     // Transport
+    RpcResponse,
     IFrameTransport,
     IFrameRpcEvent,
     IFrameEvent,

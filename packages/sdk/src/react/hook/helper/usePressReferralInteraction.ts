@@ -94,12 +94,6 @@ function useOutputStateMapper({
 
     // Map that to our final state
     return useMemo(() => {
-        console.log("Computing state for", {
-            data,
-            errorState,
-            status,
-        });
-
         // First simple status
         switch (status) {
             case "pending":

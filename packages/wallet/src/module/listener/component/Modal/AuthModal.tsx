@@ -10,8 +10,10 @@ import styles from "./index.module.css";
 
 function onError(listener: SiweAuthenticateListenerParam, reason?: string) {
     listener.emitter({
-        key: "error",
-        reason,
+        result: {
+            key: "error",
+            reason,
+        },
     });
 }
 
@@ -22,9 +24,11 @@ function onSuccessAuth(
     onHandle: () => void
 ) {
     listener.emitter({
-        key: "success",
-        signature,
-        message,
+        result: {
+            key: "success",
+            signature,
+            message,
+        },
     });
     onHandle();
 }

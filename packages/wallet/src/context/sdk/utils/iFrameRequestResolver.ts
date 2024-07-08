@@ -1,8 +1,8 @@
 import {
     type ExtractedParametersFromRpc,
-    type ExtractedReturnTypeFromRpc,
     type IFrameRpcEvent,
     type IFrameRpcSchema,
+    type RpcResponse,
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/nexus-sdk/core";
@@ -14,7 +14,7 @@ export type IFrameResponseEmitter<
     TParameters extends
         ExtractedParametersFromRpc<IFrameRpcSchema> = ExtractedParametersFromRpc<IFrameRpcSchema>,
 > = (
-    result: ExtractedReturnTypeFromRpc<IFrameRpcSchema, TParameters>
+    result: RpcResponse<IFrameRpcSchema, TParameters["method"]>
 ) => Promise<void>;
 
 /**
@@ -45,7 +45,7 @@ export function createIFrameRequestResolver(
     resolversMap: IFrameRequestResolverMap
 ) {
     if (typeof window === "undefined") {
-        throw new Error("QueryProvider should be used in the browser");
+        throw new Error("IFrame resolver should be used in the browser");
     }
 
     // Listen to the window message

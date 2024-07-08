@@ -1,8 +1,11 @@
 import type {
+    IFrameRpcSchema,
+    RpcResponse,
     SendTransactionActionParamsType,
-    SendTransactionReturnType,
 } from "@frak-labs/nexus-sdk/core";
 
 export type SendTransactionListenerParam = SendTransactionActionParamsType & {
-    emitter: (response: SendTransactionReturnType) => Promise<void>;
+    emitter: (
+        response: RpcResponse<IFrameRpcSchema, "frak_sendTransaction">
+    ) => Promise<void>;
 };

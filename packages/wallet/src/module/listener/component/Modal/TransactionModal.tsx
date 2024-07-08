@@ -18,16 +18,20 @@ export function TransactionModal({
 }) {
     const onSuccess = (hash: Hex) => {
         listener?.emitter({
-            key: "success",
-            hash,
+            result: {
+                key: "success",
+                hash,
+            },
         });
         onHandle();
     };
 
     const onError = (reason?: string) => {
         listener?.emitter({
-            key: "error",
-            reason,
+            result: {
+                key: "error",
+                reason,
+            },
         });
     };
 
