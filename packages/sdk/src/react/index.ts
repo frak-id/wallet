@@ -18,6 +18,7 @@ export {
     useWalletStatus,
     useArticleUnlockStatus,
     useSendTransactionAction,
+    useSendInteraction,
     useSiweAuthenticate,
     usePressReferralInteraction,
 } from "./hook";

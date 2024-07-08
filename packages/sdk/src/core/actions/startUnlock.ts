@@ -4,10 +4,6 @@ import type {
     StartArticleUnlockReturnType,
 } from "../types";
 import { decompressDataAndCheckHash, hashAndCompressData } from "../utils";
-import {
-    getRedirectResponseResponseKeyProvider,
-    redirectRequestKeyProvider,
-} from "../utils/compression/redirectKeyProvider";
 
 export type GetStartUnlockUrlParams = StartArticleUnlockParams;
 
@@ -21,13 +17,10 @@ export async function getStartArticleUnlockUrl(
     params: GetStartUnlockUrlParams
 ) {
     // Compress our params
-    const { compressed, compressedHash } = await hashAndCompressData(
-        {
-            method: "frak_startArticleUnlock",
-            params: params,
-        },
-        redirectRequestKeyProvider
-    );
+    const { compressed, compressedHash } = await hashAndCompressData({
+        method: "frak_startArticleUnlock",
+        params: params,
+    });
 
     // Then build the URL
     const outputUrl = new URL(config.walletUrl);
@@ -44,16 +37,9 @@ export async function decodeStartUnlockReturn({
     result,
     hash,
 }: { result: string; hash: string }) {
-    const keyProvider = getRedirectResponseResponseKeyProvider(
-        "frak_startArticleUnlock"
-    );
-
     // Decompress the data
-    return decompressDataAndCheckHash<StartArticleUnlockReturnType>(
-        {
-            compressed: decodeURIComponent(result),
-            compressedHash: decodeURIComponent(hash),
-        },
-        keyProvider
-    );
+    return decompressDataAndCheckHash<StartArticleUnlockReturnType>({
+        compressed: decodeURIComponent(result),
+        compressedHash: decodeURIComponent(hash),
+    });
 }

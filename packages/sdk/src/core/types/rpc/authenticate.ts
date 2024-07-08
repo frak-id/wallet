@@ -17,16 +17,7 @@ export type SiweAuthenticateActionParamsType = Readonly<{
 /**
  * Return type of the send transaction rpc request
  */
-export type SiweAuthenticateReturnType =
-    | AuthenticateSuccess
-    | AuthenticateError;
-
-type AuthenticateSuccess = Readonly<{
-    key: "success";
+export type SiweAuthenticateReturnType = Readonly<{
     signature: Hex;
     message: string;
-}>;
-type AuthenticateError = Readonly<{
-    key: "error" | "aborted";
-    reason?: string;
 }>;

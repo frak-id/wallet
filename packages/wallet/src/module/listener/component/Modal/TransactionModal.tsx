@@ -3,47 +3,43 @@ import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { TextData } from "@/module/common/component/TextData";
 import { Title } from "@/module/common/component/Title";
 import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
-import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
+import type { ModalEventRequestArgs } from "@/module/listener/types/ModalEvent";
+import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
 import { useMemo } from "react";
-import type { Hex } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
 
 export function TransactionModal({
-    args: { listener },
+    args: { emitter, args },
     onHandle,
 }: {
-    args: Extract<modalEventRequestArgs, { type: "transaction" }>;
+    args: Extract<ModalEventRequestArgs, { type: "transaction" }>;
     onHandle: () => void;
 }) {
-    const onSuccess = (hash: Hex) => {
-        listener?.emitter({
-            key: "success",
-            hash,
-        });
-        onHandle();
-    };
-
-    const onError = (reason?: string) => {
-        listener?.emitter({
-            key: "error",
-            reason,
-        });
-    };
-
     const { address } = useAccount();
 
     const { sendTransaction, isPending, isError, error } = useSendTransaction({
         mutation: {
             // Link success and error hooks
-            onSuccess: onSuccess,
+            onSuccess: (hash) => {
+                emitter({
+                    result: { hash },
+                });
+                onHandle();
+            },
             onError: (error) => {
-                onError(error.message);
+                emitter({
+                    error: {
+                        code: RpcErrorCodes.serverError,
+                        message: error?.message ?? "Error when sending the TX",
+                    },
+                });
+                onHandle();
             },
         },
     });
 
-    const tx = listener?.tx;
+    const tx = args?.tx;
     const { txs, sendTx: toSendTx } = useMemo(() => {
         // Case of a single tx
         if (!Array.isArray(tx))
@@ -68,7 +64,7 @@ export function TransactionModal({
         };
     }, [tx, address]);
 
-    if (!listener) {
+    if (!args) {
         return null;
     }
 
@@ -78,9 +74,9 @@ export function TransactionModal({
                 You need to confirm this transaction
             </Title>
             <TextData>
-                {listener.context ? (
+                {args.context ? (
                     <p className={styles.modalListener__context}>
-                        {listener.context}
+                        {args.context}
                     </p>
                 ) : null}
                 <AccordionTransactions txs={txs} />

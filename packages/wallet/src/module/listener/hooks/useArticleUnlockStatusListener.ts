@@ -143,14 +143,16 @@ export function useArticleUnlockStatusListener() {
         // If we got no session, directly emit the locked state
         if (!session) {
             listenerParam?.emitter({
-                key: "not-unlocked",
-                status: "locked",
+                result: {
+                    key: "not-unlocked",
+                    status: "locked",
+                },
             });
             return;
         }
 
         // Emit the status
-        listenerParam?.emitter(currentUnlockStatus);
+        listenerParam?.emitter({ result: currentUnlockStatus });
 
         // If that's a valid status, clear the paywall context
         if (currentUnlockStatus.key === "valid") {

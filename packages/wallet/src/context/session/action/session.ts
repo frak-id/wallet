@@ -14,6 +14,7 @@ const sessionOptions: SessionOptions = {
     ttl: 60 * 60 * 24 * 7, // 1 week
     cookieOptions: {
         secure: true,
+        sameSite: "none",
     },
 };
 

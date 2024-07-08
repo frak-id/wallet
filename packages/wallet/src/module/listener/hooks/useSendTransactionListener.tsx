@@ -44,11 +44,11 @@ export function useSendTransactionListener() {
             // Otherwise, send emitter to the dialog
             setDisplayedRequest({
                 type: "transaction",
-                listener: {
+                args: {
                     tx,
                     context,
-                    emitter,
                 },
+                emitter,
             });
         },
         [setDisplayedRequest]

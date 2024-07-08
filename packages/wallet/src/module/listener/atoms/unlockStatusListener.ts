@@ -1,13 +1,22 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import { unlockStateFromCurrentAtom } from "@/module/listener/atoms/unlockStatusListenerLocal";
-import type { ArticleUnlockStatusReturnType } from "@frak-labs/nexus-sdk/core";
+import type {
+    ArticleUnlockStatusReturnType,
+    IFrameRpcSchema,
+    RpcResponse,
+} from "@frak-labs/nexus-sdk/core";
 import { atom } from "jotai";
 import type { Hex } from "viem";
 
 type UnlockStateListenerParam = {
     contentId: Hex;
     articleId: Hex;
-    emitter: (response: ArticleUnlockStatusReturnType) => Promise<void>;
+    emitter: (
+        response: RpcResponse<
+            IFrameRpcSchema,
+            "frak_listenToArticleUnlockStatus"
+        >
+    ) => Promise<void>;
 };
 
 /**

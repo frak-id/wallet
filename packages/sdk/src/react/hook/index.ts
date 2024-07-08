@@ -8,3 +8,4 @@ export type { ArticleUnlockStatusQueryReturnType } from "./useArticleUnlockStatu
 export { useSendTransactionAction } from "./useSendTransaction";
 export { useSiweAuthenticate } from "./useSiweAuthenticate";
 export { usePressReferralInteraction } from "./helper/usePressReferralInteraction";
+export { useSendInteraction } from "./useSendInteraction";

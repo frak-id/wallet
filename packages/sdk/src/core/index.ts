@@ -6,10 +6,6 @@ export {
     hashAndCompressData,
     decompressDataAndCheckHash,
     createIframe,
-    getIFrameResponseKeyProvider,
-    iFrameRequestKeyProvider,
-    getRedirectResponseResponseKeyProvider,
-    redirectRequestKeyProvider,
 } from "./utils";
 
 // Types
@@ -34,6 +30,7 @@ export type {
     // Client
     NexusClient,
     // Transport
+    RpcResponse,
     IFrameTransport,
     IFrameRpcEvent,
     IFrameEvent,

@@ -10,7 +10,7 @@ import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions = Omit<
     UseMutationOptions<
-        Extract<SendInteractionReturnType, { key: "success" }>,
+        SendInteractionReturnType,
         FrakRpcError,
         SendInteractionParamsType
     >,

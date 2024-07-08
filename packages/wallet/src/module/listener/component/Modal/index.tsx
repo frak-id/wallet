@@ -5,7 +5,8 @@ import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import { AuthModal } from "@/module/listener/component/Modal/AuthModal";
 import { TransactionModal } from "@/module/listener/component/Modal/TransactionModal";
-import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
+import type { ModalEventRequestArgs } from "@/module/listener/types/ModalEvent";
+import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
 import { useAtomValue, useSetAtom } from "jotai/index";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./index.module.css";
@@ -33,7 +34,7 @@ export function ListenerModal() {
  */
 function ListenerModalDialog({
     currentRequest,
-}: { currentRequest: modalEventRequestArgs }) {
+}: { currentRequest: ModalEventRequestArgs }) {
     /**
      * The current request that is being displayed
      */
@@ -108,6 +109,13 @@ function ListenerModalDialog({
             open={isOpen}
             onOpenChange={(value) => {
                 if (!value) {
+                    // Emit the discarded event
+                    currentRequest.emitter({
+                        error: {
+                            code: RpcErrorCodes.clientAborted,
+                            message: "User cancelled the request",
+                        },
+                    });
                     onClose();
                 }
             }}

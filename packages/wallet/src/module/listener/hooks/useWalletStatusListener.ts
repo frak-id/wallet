@@ -54,7 +54,7 @@ export function useWalletStatusListener() {
 
         // Build the wallet status and emit it
         const walletStatus = buildWalletStatus(session);
-        listener.emitter(walletStatus);
+        listener.emitter({ result: walletStatus });
     }, [listener, session]);
 
     /**

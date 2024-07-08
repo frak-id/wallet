@@ -10,7 +10,7 @@ import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions = Omit<
     UseMutationOptions<
-        Extract<SiweAuthenticateReturnType, { key: "success" }>,
+        SiweAuthenticateReturnType,
         FrakRpcError,
         SiweAuthenticateActionParamsType
     >,

@@ -17,15 +17,6 @@ export type SendInteractionParamsType = {
 /**
  * Return type of the send interaction rpc request
  */
-export type SendInteractionReturnType =
-    | SendInteractionSuccess
-    | SendInteractionError;
-
-type SendInteractionSuccess = Readonly<{
-    key: "success";
+export type SendInteractionReturnType = Readonly<{
     hash: Hex;
-}>;
-type SendInteractionError = Readonly<{
-    key: "error" | "not-connected" | "no-session";
-    reason?: string;
 }>;

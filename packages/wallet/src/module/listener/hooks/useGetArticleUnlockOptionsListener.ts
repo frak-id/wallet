@@ -44,7 +44,7 @@ export function useGetArticleUnlockOptionsListener() {
 
             // If no contentId or articleId, return
             if (!(contentId && articleId)) {
-                await emitter({ prices: [] });
+                await emitter({ result: { prices: [] } });
                 return;
             }
 
@@ -60,8 +60,12 @@ export function useGetArticleUnlockOptionsListener() {
 
             // Send the prices
             await emitter({
-                prices: prices,
-                frkBalanceAsHex: balance ? toHex(BigInt(balance)) : undefined,
+                result: {
+                    prices: prices,
+                    frkBalanceAsHex: balance
+                        ? toHex(BigInt(balance))
+                        : undefined,
+                },
             });
         },
         [session?.wallet?.address, rawBalance, refreshBalance]

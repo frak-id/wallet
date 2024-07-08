@@ -1,7 +1,4 @@
-import {
-    getRedirectResponseResponseKeyProvider,
-    hashAndCompressData,
-} from "@frak-labs/nexus-sdk/core";
+import { hashAndCompressData } from "@frak-labs/nexus-sdk/core";
 import type { StartArticleUnlockReturnType } from "@frak-labs/nexus-sdk/core";
 
 /**
@@ -11,16 +8,8 @@ export async function getStartUnlockResponseRedirectUrl({
     redirectUrl,
     response,
 }: { redirectUrl: string; response: StartArticleUnlockReturnType }) {
-    // Get the key provider we will use to compress the response
-    const keyProvider = getRedirectResponseResponseKeyProvider(
-        "frak_startArticleUnlock"
-    );
-
     // Compress the data
-    const { compressed, compressedHash } = await hashAndCompressData(
-        response,
-        keyProvider
-    );
+    const { compressed, compressedHash } = await hashAndCompressData(response);
 
     // Parse the redirect URL provided
     const parsedRedirectUrl = new URL(redirectUrl);
