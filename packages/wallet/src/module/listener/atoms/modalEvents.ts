@@ -1,9 +1,9 @@
-import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
+import type { ModalEventRequestArgs } from "@/module/listener/types/ModalEvent";
 import { atom } from "jotai";
 
 /**
  * The currently displayed listener request
  */
 export const modalDisplayedRequestAtom = atom<
-    modalEventRequestArgs | undefined
+    ModalEventRequestArgs | undefined
 >(undefined);

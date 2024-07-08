@@ -25,15 +25,6 @@ export type SendTransactionTxType = Readonly<{
 /**
  * Return type of the send transaction rpc request
  */
-export type SendTransactionReturnType =
-    | SendTransactionSuccess
-    | SendTransactionError;
-
-type SendTransactionSuccess = Readonly<{
-    key: "success";
+export type SendTransactionReturnType = Readonly<{
     hash: Hex;
-}>;
-type SendTransactionError = Readonly<{
-    key: "error" | "aborted";
-    reason?: string;
 }>;

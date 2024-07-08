@@ -2,9 +2,10 @@ import { pushInteraction } from "@/context/interaction/action/pushInteraction";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
-import type {
-    ExtractedParametersFromRpc,
-    IFrameRpcSchema,
+import {
+    type ExtractedParametersFromRpc,
+    type IFrameRpcSchema,
+    RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
 import { useAtomValue, useSetAtom } from "jotai";
 import { tryit } from "radash";
@@ -59,8 +60,9 @@ export function useSendInteractionListener() {
                 });
                 // Send the response
                 await emitter({
-                    result: {
-                        key: "not-connected",
+                    error: {
+                        code: RpcErrorCodes.walletNotConnected,
+                        message: "User isn't connected",
                     },
                 });
                 // And exit
@@ -83,8 +85,9 @@ export function useSendInteractionListener() {
                 // todo: Check if the error is about no session or not
                 // Send the response
                 await emitter({
-                    result: {
-                        key: "no-session",
+                    error: {
+                        code: RpcErrorCodes.noInteractionSession,
+                        message: "User doesn't have an interaction session",
                     },
                 });
                 return;

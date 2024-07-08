@@ -37,11 +37,11 @@ export function useSiweAuthenticateListener() {
             // Build the msg to sign and send emitter to the dialog
             setDisplayedRequest({
                 type: "auth",
-                listener: {
-                    siweMessage,
+                args: {
+                    siwe: siweMessage,
                     context,
-                    emitter,
                 },
+                emitter,
             });
         },
         [setDisplayedRequest]

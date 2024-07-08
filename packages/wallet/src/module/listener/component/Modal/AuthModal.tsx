@@ -1,43 +1,17 @@
 import { Login } from "@/module/listener/component/Authenticate/Login";
 import { SiweAuthenticate } from "@/module/listener/component/Authenticate/SiweAuthenticate";
-import type { SiweAuthenticateListenerParam } from "@/module/listener/types/auth";
-import type { modalEventRequestArgs } from "@/module/listener/types/modalEvent";
+import type { ModalEventRequestArgs } from "@/module/listener/types/ModalEvent";
+import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
 import { type PropsWithChildren, useMemo } from "react";
-import type { Hex } from "viem";
 import type { SiweMessage } from "viem/siwe";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
-function onError(listener: SiweAuthenticateListenerParam, reason?: string) {
-    listener.emitter({
-        result: {
-            key: "error",
-            reason,
-        },
-    });
-}
-
-function onSuccessAuth(
-    listener: SiweAuthenticateListenerParam,
-    signature: Hex,
-    message: string,
-    onHandle: () => void
-) {
-    listener.emitter({
-        result: {
-            key: "success",
-            signature,
-            message,
-        },
-    });
-    onHandle();
-}
-
 export function AuthModal({
-    args: { listener },
+    args: { emitter, args },
     onHandle,
 }: {
-    args: Extract<modalEventRequestArgs, { type: "auth" }>;
+    args: Extract<ModalEventRequestArgs, { type: "auth" }>;
     onHandle: () => void;
 }) {
     const { address, chainId } = useAccount();
@@ -46,14 +20,14 @@ export function AuthModal({
      * Compute the current step
      */
     const step = useMemo(() => {
-        if (!listener) {
+        if (!args) {
             return null;
         }
 
         // If logged in, return the siwe step
         if (address && chainId) {
             const siweMessage: SiweMessage = {
-                ...listener.siweMessage,
+                ...args.siwe,
                 address,
                 chainId,
             };
@@ -62,7 +36,7 @@ export function AuthModal({
 
         // If not logged in, return the siwe step
         return { key: "login" } as const;
-    }, [listener, address, chainId]);
+    }, [args, address, chainId]);
 
     const onSuccessLogin = () => {
         // todo: tmp component telling we are waiting for the login propagation??
@@ -79,24 +53,47 @@ export function AuthModal({
             return (
                 <Login
                     onSuccess={onSuccessLogin}
-                    onError={(err) => onError(listener, err)}
+                    onError={(err) => {
+                        emitter({
+                            error: {
+                                code: RpcErrorCodes.serverError,
+                                message: err ?? "Error during the user login",
+                            },
+                        });
+                        onHandle();
+                    }}
                 />
             );
         }
 
         return step?.siweMessage ? (
             <SiweAuthenticate
-                context={listener.context}
+                context={args.context}
                 siweMessage={step.siweMessage}
-                onSuccess={(signature, message) =>
-                    onSuccessAuth(listener, signature, message, onHandle)
-                }
-                onError={(err) => onError(listener, err)}
+                onSuccess={(signature, message) => {
+                    emitter({
+                        result: {
+                            signature,
+                            message,
+                        },
+                    });
+                    onHandle();
+                }}
+                onError={(err) => {
+                    emitter({
+                        error: {
+                            code: RpcErrorCodes.serverError,
+                            message:
+                                err ?? "Error during the siwe authentication",
+                        },
+                    });
+                    onHandle();
+                }}
             />
         ) : null;
-    }, [step, onHandle, listener]);
+    }, [step, onHandle, emitter, args]);
 
-    if (!(step && listener)) {
+    if (!(step && emitter)) {
         return null;
     }
 
