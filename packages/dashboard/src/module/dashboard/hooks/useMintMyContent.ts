@@ -7,7 +7,11 @@ import { useMutation } from "@tanstack/react-query";
 export function useMintMyContent() {
     return useMutation({
         mutationKey: ["mint-my-content"],
-        mutationFn: ({ name, domain }: { name: string; domain: string }) =>
-            mintMyContent({ name, domain }),
+        mutationFn: (args: {
+            name: string;
+            domain: string;
+            contentTypes: bigint;
+            setupInteractions?: boolean;
+        }) => mintMyContent(args),
     });
 }

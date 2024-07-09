@@ -40,7 +40,6 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
 
     // Get the campaign
     const campaign = await campaignRepository.getOneById(id);
-
     if (!campaign) {
         throw new Error("Campaign not found");
     }

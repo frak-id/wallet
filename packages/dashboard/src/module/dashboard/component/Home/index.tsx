@@ -128,12 +128,26 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         const parsedDomain = parseUrl(domain);
 
         // Trigger the minting of the content
-        const { error, success } = await triggerMintMyContent({
-            name: form.getValues().name,
-            domain: parsedDomain.hostname,
-        });
-        error && setError(handleError(error, domain));
-        success && setSuccess(true);
+        try {
+            const { mintTxHash, transferTxHash, setupInteractionTxData } =
+                await triggerMintMyContent({
+                    name: form.getValues().name,
+                    domain: parsedDomain.hostname,
+                    // todo: hardcoded type, should be in the sdk
+                    contentTypes: 1n << 2n,
+                });
+
+            console.log("Minted content", {
+                mintTxHash,
+                transferTxHash,
+                setupInteractionTxData,
+            });
+
+            success && setSuccess(true);
+        } catch (err: unknown) {
+            setError(formatError(err, domain));
+            return;
+        }
     }
 
     return (
@@ -239,9 +253,18 @@ function parseUrl(domain: string) {
     }
 }
 
-function handleError(error: string, domain: string) {
-    if (error.includes("ENODATA")) {
+function formatError(error: unknown, domain: string): string {
+    let errorString: string;
+    if (error instanceof Error) {
+        errorString = error.message;
+    } else if (typeof error === "string") {
+        errorString = error;
+    } else {
+        errorString = "Unknown error when minting the content";
+    }
+
+    if (errorString.includes("ENODATA")) {
         return `The DNS txt record is not set for the domain ${domain}`;
     }
-    return error;
+    return errorString;
 }
