@@ -1,6 +1,7 @@
 import { Header } from "@/module/common/component/Header";
 import { MainLayout } from "@/module/common/component/MainLayout";
 import { Navigation } from "@/module/common/component/Navigation";
+import { ClientOnly } from "@frak-labs/nexus-wallet/src/module/common/component/ClientOnly";
 import type { ReactNode } from "react";
 
 export default function RestrictedLayout({
@@ -11,7 +12,9 @@ export default function RestrictedLayout({
     return (
         <>
             <Header />
-            <Navigation />
+            <ClientOnly>
+                <Navigation />
+            </ClientOnly>
             <MainLayout>{children}</MainLayout>
         </>
     );
