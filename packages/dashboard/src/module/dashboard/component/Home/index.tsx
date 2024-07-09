@@ -2,6 +2,10 @@ import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { ButtonProduct } from "@/module/dashboard/component/ButtonProduct";
+import {
+    useCheckDnsTxtRecordSet,
+    useDnsTxtRecordSet,
+} from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyContent } from "@/module/dashboard/hooks/useMintMyContent";
 import {
     Form,
@@ -17,7 +21,7 @@ import { Button } from "@module/component/Button";
 import { validateUrl } from "@module/utils/validateUrl";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import styles from "./index.module.css";
 
@@ -71,6 +75,7 @@ export function Home() {
                                 {step === 1 && <NewProductForm {...form} />}
                                 {step === 2 && (
                                     <NewProductVerify
+                                        name={form.getValues().name}
                                         domain={form.getValues().domain}
                                     />
                                 )}
@@ -99,12 +104,30 @@ export function Home() {
     );
 }
 
+/**
+ * Initial form to create the product
+ * @param form
+ * @constructor
+ */
 function NewProductForm(form: UseFormReturn<ProductNew>) {
     const isModalOpen = useAtomValue(isModalOpenAtom);
     const [success, setSuccess] = useAtom(successAtom);
     const resetAtoms = useSetAtom(resetAtom);
     const [error, setError] = useState<string | undefined>();
-    const { mutateAsync: triggerMintMyContent } = useMintMyContent();
+
+    const rawDomain = form.watch("domain");
+    const parsedDomain = useMemo(
+        () => parseUrl(rawDomain)?.hostname,
+        [rawDomain]
+    );
+
+    const { data: dnsRecord, isLoading } = useDnsTxtRecordSet({
+        name: form.watch("name"),
+        domain: parsedDomain,
+        enabled: isModalOpen,
+    });
+
+    const { mutateAsync: checkDomainSetup } = useCheckDnsTxtRecordSet();
 
     useEffect(() => {
         if (!isModalOpen) return;
@@ -114,6 +137,7 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         resetAtoms();
     }, [isModalOpen, form.reset, resetAtoms]);
 
+    // Verify the validity of a domain
     async function verifyDomain() {
         // Reset the error and success states
         setError(undefined);
@@ -123,30 +147,24 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         const isFormValid = await form.trigger();
         if (!isFormValid) return;
 
-        // Parse the domain name to get the hostname
-        const domain = form.getValues().domain;
-        const parsedDomain = parseUrl(domain);
-
-        // Trigger the minting of the content
-        try {
-            const { mintTxHash, transferTxHash, setupInteractionTxData } =
-                await triggerMintMyContent({
-                    name: form.getValues().name,
-                    domain: parsedDomain.hostname,
-                    // todo: hardcoded type, should be in the sdk
-                    contentTypes: 1n << 2n,
-                });
-
-            console.log("Minted content", {
-                mintTxHash,
-                transferTxHash,
-                setupInteractionTxData,
-            });
-
-            success && setSuccess(true);
-        } catch (err: unknown) {
-            setError(formatError(err, domain));
+        // Ensure we got a domain
+        if (!parsedDomain) {
+            setError("Invalid domain name");
             return;
+        }
+
+        // Check the validity of the domain
+        const isValidDomain = await checkDomainSetup({
+            name: form.getValues().name,
+            domain: parsedDomain,
+        });
+
+        if (!isValidDomain) {
+            setError(
+                `The DNS txt record is not set for the domain ${parsedDomain}`
+            );
+        } else {
+            setSuccess(true);
         }
     }
 
@@ -156,6 +174,7 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
                 To list a new product, you must enter the domain name of the
                 website where the SDK has been installed.
             </p>
+
             <FormField
                 control={form.control}
                 name="name"
@@ -212,6 +231,14 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
                     </FormItem>
                 )}
             />
+
+            {dnsRecord && !isLoading && (
+                <p>
+                    DNS TXT record expected to set for domain validation is:{" "}
+                    <br />"{dnsRecord}"
+                </p>
+            )}
+
             {error && <p className={"error"}>{error}</p>}
             {success && (
                 <p className={"success"}>
@@ -222,8 +249,23 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
     );
 }
 
-function NewProductVerify({ domain }: { domain: string }) {
+/**
+ * Form post creation, once everything is verified
+ * @param name
+ * @param domain
+ * @constructor
+ */
+function NewProductVerify({ name, domain }: { name: string; domain: string }) {
     const parsedDomain = parseUrl(domain);
+
+    const {
+        mutate: triggerMintMyContent,
+        isIdle,
+        error,
+        data,
+    } = useMintMyContent();
+
+    if (!parsedDomain) return null;
 
     return (
         <div>
@@ -231,19 +273,42 @@ function NewProductVerify({ domain }: { domain: string }) {
                 <strong>Verify your information</strong>
             </p>
             <p className={styles.newProductForm__verify}>
-                I confirm that I want to list the following domain name :<br />
-                Domain name: <strong>{parsedDomain.hostname}</strong>
+                I confirm that I want to list "{name}" on the following domain :
+                <br />
+                <strong>{parsedDomain.hostname}</strong>
                 <br />
                 Uri: <strong>{parsedDomain.href}</strong>
             </p>
-            <AuthFingerprint className={styles.newProductForm__fingerprint}>
+            <AuthFingerprint
+                className={styles.newProductForm__fingerprint}
+                action={() =>
+                    triggerMintMyContent({
+                        name,
+                        domain: parsedDomain.hostname,
+                        // todo: hardcoded type, should be in the sdk
+                        contentTypes: 1n << 2n,
+                    })
+                }
+                disabled={!isIdle}
+            >
                 Validate you Product
             </AuthFingerprint>
+
+            {error && <p className={"error"}>{error.message}</p>}
+            {data && (
+                <p className={"success"}>
+                    Your product has been successfully listed on transaction{" "}
+                    <strong>{data.mintTxHash}</strong>
+                </p>
+            )}
         </div>
     );
 }
 
 function parseUrl(domain: string) {
+    if (!domain || domain.length === 0) {
+        return undefined;
+    }
     try {
         // Try to parse the URL as-is
         return new URL(domain);
@@ -251,20 +316,4 @@ function parseUrl(domain: string) {
         // If parsing fails, try adding 'https://' prefix
         return new URL(`https://${domain}`);
     }
-}
-
-function formatError(error: unknown, domain: string): string {
-    let errorString: string;
-    if (error instanceof Error) {
-        errorString = error.message;
-    } else if (typeof error === "string") {
-        errorString = error;
-    } else {
-        errorString = "Unknown error when minting the content";
-    }
-
-    if (errorString.includes("ENODATA")) {
-        return `The DNS txt record is not set for the domain ${domain}`;
-    }
-    return errorString;
 }

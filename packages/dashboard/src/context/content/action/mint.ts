@@ -1,20 +1,11 @@
 "use server";
-import * as dns from "node:dns";
-import { promisify } from "node:util";
 import { getSafeSession } from "@/context/auth/actions/session";
+import { isDnsTxtRecordSet } from "@/context/content/action/verifyDomain";
 import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { contentRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
-import { flat } from "radash";
-import {
-    type Address,
-    type Hex,
-    concatHex,
-    encodeFunctionData,
-    keccak256,
-    toHex,
-} from "viem";
+import { type Hex, encodeFunctionData, keccak256, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
     prepareTransactionRequest,
@@ -34,12 +25,10 @@ export async function mintMyContent({
     name,
     domain,
     contentTypes,
-    setupInteractions = true,
 }: {
     name: string;
     domain: string;
     contentTypes: bigint;
-    setupInteractions?: boolean;
 }) {
     const session = await getSafeSession();
 
@@ -47,25 +36,19 @@ export async function mintMyContent({
     const contentId = BigInt(keccak256(toHex(domain)));
     await assertContentDoesntExist({ contentId });
 
-    const waitedTxtRecord = await getDnsTxtString({
-        domain,
-        wallet: session.wallet,
-    });
-
-    // Ensure the DNS txt record is set
-    const records = flat(await promisify(dns.resolveTxt)(domain));
-    if (!records.includes(waitedTxtRecord)) {
+    // Check if the DNS txt record is set
+    const isRecordSet = await isDnsTxtRecordSet({ name, domain });
+    if (!isRecordSet) {
         throw new Error(
             `The DNS txt record is not set for the domain ${domain}`
         );
     }
 
     console.log(`Minting content ${name} for ${session.wallet}`, {
-        setupInteractions,
         contentId,
     });
 
-    // Get the airdropper private key
+    // Get the minter private key
     const minterPrivateKey = process.env.CONTENT_MINTER_PRIVATE_KEY;
     if (!minterPrivateKey) {
         throw new Error("Missing CONTENT_MINTER_PRIVATE_KEY env variable");
@@ -139,16 +122,4 @@ async function assertContentDoesntExist({ contentId }: { contentId: bigint }) {
     if (existingMetadata.contentTypes !== 0n) {
         throw new Error("Content already minted");
     }
-}
-
-/**
- * Get the DNS txt record waited for the given domain
- */
-export async function getDnsTxtString({
-    domain,
-    wallet,
-}: { domain: string; wallet?: Address }) {
-    const safeWallet = wallet ?? (await getSafeSession()).wallet;
-    const hash = keccak256(concatHex([toHex(domain), toHex(safeWallet)]));
-    return `frak-business hash=${hash}`;
 }
