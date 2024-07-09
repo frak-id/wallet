@@ -1,5 +1,5 @@
 {
-  "name": "@frak-labs/nexus-example",
+  "name": "@frak-labs-example/news",
   "version": "0.1.7",
   "description": "Simple demo of a future Frak Wallet",
   "private": true,

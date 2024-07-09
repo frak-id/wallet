@@ -1,5 +1,5 @@
 import { use } from "sst/constructs";
-import type { NextjsSiteProps, StackContext } from "sst/constructs";
+import type { StackContext } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
 import { isDevStack, isProdStack } from "./utils";
@@ -30,9 +30,9 @@ export function ExampleAppStack({ stack }: StackContext) {
         ? "news-example"
         : `news-example-${stack.stage.toLowerCase()}`;
 
-    // Config for the webapp deployment
-    const ssrConfig: Partial<NextjsSiteProps> = {
-        path: "packages/example",
+    // Declare the next-js site on news-example.frak.id
+    const exampleSite = new NextjsSite(stack, "example", {
+        path: "example/news",
         // Bind to the configs
         bind: configs,
         openNextVersion: "3.0.6",
@@ -55,17 +55,11 @@ export function ExampleAppStack({ stack }: StackContext) {
                 },
             ],
         },
-    };
-
-    // Declare the next-js site on news-example.frak.id
-    const exampleSite = new NextjsSite(stack, "example", {
         // Set the custom domain
         customDomain: {
             domainName: `${subDomain}.frak.id`.toLowerCase(),
             hostedZone: "frak.id",
         },
-        // Add the config
-        ...ssrConfig,
     });
 
     // Declare the next js site on news-paper.xyz
