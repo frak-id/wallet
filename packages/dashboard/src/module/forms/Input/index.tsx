@@ -1,4 +1,4 @@
-import { mergeElement } from "@/module/common/utils/mergeElement";
+import { mergeElement } from "@module/utils/mergeElement";
 import { cva, cx } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 import { forwardRef, isValidElement } from "react";

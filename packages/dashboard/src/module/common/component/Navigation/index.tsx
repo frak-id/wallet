@@ -9,7 +9,7 @@ import { Message } from "@/assets/icons/Message";
 import { Users } from "@/assets/icons/Users";
 import { Wallet } from "@/assets/icons/Wallet";
 import { NavigationCampaigns } from "@/module/common/component/NavigationCampaigns";
-import { mergeElement } from "@/module/common/utils/mergeElement";
+import { mergeElement } from "@module/utils/mergeElement";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { cx } from "class-variance-authority";
 import { usePathname, useRouter } from "next/navigation";
