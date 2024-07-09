@@ -5,6 +5,7 @@ import {
     NexusConfigProvider,
     NexusIFrameClientProvider,
 } from "@frak-labs/nexus-sdk/react";
+import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -14,7 +15,6 @@ import {
 } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai";
 import type { PropsWithChildren } from "react";
-import { jotaiStore } from "../atoms/store";
 
 /**
  * The query client that will be used by tanstack/react-query

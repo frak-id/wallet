@@ -12,8 +12,8 @@ import { getSignOptions } from "@/context/wallet/action/sign";
 import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { jotaiStore } from "@/module/common/atoms/store";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
+import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import {
     ENTRYPOINT_ADDRESS_V06,

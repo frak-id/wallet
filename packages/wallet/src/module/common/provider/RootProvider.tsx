@@ -3,10 +3,10 @@
 import { availableChains, getTransport } from "@/context/blockchain/provider";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { jotaiStore } from "@/module/common/atoms/store";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import type { Session } from "@/types/Session";
+import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
