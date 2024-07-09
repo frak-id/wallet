@@ -1,7 +1,7 @@
-import { AuthFingerprint } from "@/module/common/component/AuthFingerprint";
 import { TextData } from "@/module/common/component/TextData";
 import { HelpModal } from "@/module/listener/component/Modal";
 import styles from "@/module/listener/component/Modal/index.module.css";
+import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";

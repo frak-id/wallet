@@ -14,7 +14,7 @@ import { type Address, concatHex, keccak256, toHex } from "viem";
 export async function mintMyContent({
     name,
     domain,
-}: { name: Address; domain: string }) {
+}: { name: string; domain: string }) {
     const session = await getSafeSession();
     const waitedTxtRecord = await getDnsTxtString({
         domain,

@@ -2,7 +2,6 @@
 
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { Back } from "@/module/common/component/Back";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Grid } from "@/module/common/component/Grid";
 import { Input } from "@/module/common/component/Input";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
@@ -15,6 +14,7 @@ import {
 import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
 import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";

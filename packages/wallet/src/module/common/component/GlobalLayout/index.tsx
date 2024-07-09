@@ -1,5 +1,5 @@
 import styles from "@/app/layout.module.css";
-import { ClientOnly } from "@/module/common/component/ClientOnly";
+import { ClientOnly } from "@module/component/ClientOnly";
 import type { ReactNode } from "react";
 
 export function GlobalLayout({

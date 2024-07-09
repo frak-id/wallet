@@ -21,6 +21,7 @@ html {
 body {
     font-size: 14px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
 }
 
 ul {
@@ -62,9 +63,11 @@ sup {
 }
 
 .error {
-    display: block;
-    padding-top: 5px;
     color: var(--frak-color-red);
+}
+
+.success {
+    color: var(--frak-color-green);
 }
 
 .sr-only {

@@ -17,6 +17,10 @@
     color: var(--frak-color-grayText);
 }
 
+.form__label--medium {
+    font-weight: 500;
+}
+
 .form__label--selected {
     color: var(--frak-color-royal-blue) !important;
 }

@@ -1,7 +1,7 @@
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { ArrowDownToLine } from "lucide-react";
 import styles from "./index.module.css";
 

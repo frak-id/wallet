@@ -1,0 +1,9 @@
+.buttonProduct {
+    justify-content: center;
+    width: 295px;
+    height: 150px;
+    border-radius: 12px !important;
+    background: var(--frak-color-blur) !important;
+    backdrop-filter: blur(10px);
+    line-height: 20px;
+}

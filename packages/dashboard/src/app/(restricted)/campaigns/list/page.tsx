@@ -9,7 +9,7 @@ export default function CampaignsListPage() {
         <>
             <Head
                 title={{ content: "Campaigns" }}
-                leftSection={<Breadcrumb />}
+                leftSection={<Breadcrumb current={"Campaign List"} />}
                 rightSection={<ButtonNewCampaign />}
             />
             <Filters />

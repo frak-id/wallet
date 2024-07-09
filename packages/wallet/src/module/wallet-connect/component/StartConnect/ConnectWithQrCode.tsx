@@ -1,5 +1,5 @@
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { useWalletConnectToDapp } from "@/module/wallet-connect/hook/useWalletConnectToDapp";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import styles from "./index.module.css";

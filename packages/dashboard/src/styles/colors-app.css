@@ -50,4 +50,5 @@
     --frak-popover-text-color: var(--frak-color-tuna);
     --frak-popover-background-color: var(--frak-color-white);
     --frak-focus-border-color: var(--frak-color-royal-blue);
+    --frak-alertDialog-background-color: var(--frak-color-white);
 }

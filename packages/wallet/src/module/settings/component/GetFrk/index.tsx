@@ -2,10 +2,10 @@
 
 import { frakChainId } from "@/context/blockchain/provider";
 import { isRunningInProd } from "@/context/common/env";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { useAirdropFrk } from "@/module/common/hook/useAirdropFrk";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { Landmark } from "lucide-react";
 import { useAccount, useChainId } from "wagmi";
 

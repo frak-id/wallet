@@ -28,11 +28,19 @@ export function FormCheck(form: UseFormReturn<Campaign>) {
             </FormItem>
             <FormItem>
                 <FormDescription title={"Type of order"} />
-                <Input disabled={true} {...form.control.register("order")} />
+                <Input
+                    length={"medium"}
+                    disabled={true}
+                    {...form.control.register("order")}
+                />
             </FormItem>
             <FormItem>
                 <FormDescription title={"Campaign goal"} />
-                <Input disabled={true} {...form.control.register("type")} />
+                <Input
+                    length={"medium"}
+                    disabled={true}
+                    {...form.control.register("type")}
+                />
             </FormItem>
             <FormBudgetRow {...form} isCheckCampaign={true} />
             <FormObjectives {...form} />

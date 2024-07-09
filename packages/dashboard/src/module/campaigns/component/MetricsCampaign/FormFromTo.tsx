@@ -109,6 +109,7 @@ export function FormFromTo<
                             <FormMessage />
                             <FormControl>
                                 <InputNumber
+                                    length={"small"}
                                     placeholder={from.placeholder}
                                     rightSection={from.rightSection}
                                     disabled={checked !== true}
@@ -128,6 +129,7 @@ export function FormFromTo<
                             <FormMessage />
                             <FormControl>
                                 <InputNumber
+                                    length={"small"}
                                     placeholder={to.placeholder}
                                     rightSection={to.rightSection}
                                     disabled={checked !== true}

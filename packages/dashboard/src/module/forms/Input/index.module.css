@@ -10,6 +10,18 @@
     transition: border-color 0.2s;
 }
 
+.inputWrapper--small {
+    width: 157px;
+}
+
+.inputWrapper--medium {
+    width: 320px;
+}
+
+.inputWrapper--big {
+    width: 100%;
+}
+
 .input {
     all: unset;
     box-sizing: border-box;

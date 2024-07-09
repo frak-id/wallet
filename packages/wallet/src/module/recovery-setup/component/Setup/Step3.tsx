@@ -1,10 +1,10 @@
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { useDownloadRecoveryFile } from "@/module/recovery-setup/hook/useDownloadRecoveryFile";
 import {
     recoveryOptionsAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useAtomValue, useSetAtom } from "jotai";
 
 const ACTUAL_STEP = 3;

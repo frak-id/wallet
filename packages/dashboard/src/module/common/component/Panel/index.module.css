@@ -23,3 +23,17 @@
 .secondary {
     border-radius: 0;
 }
+
+.ghost {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--frak-color-white);
+
+    & .panel__title {
+        color: var(--frak-color-white);
+        font-size: 14px;
+        font-weight: 700;
+    }
+}

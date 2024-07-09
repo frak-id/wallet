@@ -1,6 +1,6 @@
-import { ButtonRipple } from "@/module/common/component/ButtonRipple";
 import { useIsCommunityTokenMintAvailable } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import { useMintCommunityToken } from "@/module/community-token/hooks/useMintCommunityToken";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import styles from "./index.module.css";
 
 export function ButtonMintCommunity({
