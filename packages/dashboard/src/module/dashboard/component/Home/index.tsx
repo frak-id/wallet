@@ -127,15 +127,13 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         const domain = form.getValues().domain;
         const parsedDomain = parseUrl(domain);
 
-        try {
-            await triggerMintMyContent({
-                name: form.getValues().name,
-                domain: parsedDomain.hostname,
-            });
-            setSuccess(true);
-        } catch (error: unknown) {
-            setError(handleError(error as Error, domain));
-        }
+        // Trigger the minting of the content
+        const { error, success } = await triggerMintMyContent({
+            name: form.getValues().name,
+            domain: parsedDomain.hostname,
+        });
+        error && setError(handleError(error, domain));
+        success && setSuccess(true);
     }
 
     return (
@@ -241,9 +239,9 @@ function parseUrl(domain: string) {
     }
 }
 
-function handleError(error: Error, domain: string) {
-    if (error.message.includes("ENODATA")) {
+function handleError(error: string, domain: string) {
+    if (error.includes("ENODATA")) {
         return `The DNS txt record is not set for the domain ${domain}`;
     }
-    return error.message;
+    return error;
 }

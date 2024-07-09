@@ -20,16 +20,25 @@ export async function mintMyContent({
         domain,
         wallet: session.wallet,
     });
+    const error = `The DNS txt record is not set for the domain ${domain}`;
 
     // Ensure the DNS txt record is set
-    const records = flat(await promisify(dns.resolveTxt)(domain));
-    if (!records.includes(waitedTxtRecord)) {
-        throw new Error(
-            `The DNS txt record is not set for the domain ${domain}`
-        );
+    try {
+        const records = flat(await promisify(dns.resolveTxt)(domain));
+        if (!records.includes(waitedTxtRecord)) {
+            return {
+                error,
+            };
+        }
+    } catch {
+        return {
+            error,
+        };
     }
 
     console.log(`Minting content ${name} for ${session.wallet}`);
+
+    return { success: true };
 }
 
 /**
