@@ -4,7 +4,7 @@ import { Switch } from "@/module/common/component/Switch";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
-import { Loader } from "@frak-labs/shared/module/asset/icons/Loader";
+import { Spinner } from "@module/component/Spinner";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -59,9 +59,7 @@ export function ToggleSession() {
                         ? "Your session is open. You can be rewarded"
                         : "Open a session to get reward"}{" "}
                     <SessionTooltip sessionStatus={sessionStatus} />
-                    {(isOpeningSession || isClosingSession) && (
-                        <Loader className={styles.loader} />
-                    )}
+                    {(isOpeningSession || isClosingSession) && <Spinner />}
                 </div>
             </Panel>
         </>

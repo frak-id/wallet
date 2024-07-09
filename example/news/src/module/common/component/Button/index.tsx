@@ -1,5 +1,5 @@
 import css from "!!raw-loader!./index.module.css";
-import { Loader } from "@frak-labs/shared/module/asset/icons/Loader";
+import { Spinner } from "@frak-labs/shared/module/component/Spinner";
 import { Slot } from "@radix-ui/react-slot";
 import { cloneElement, forwardRef, isValidElement } from "react";
 import type {
@@ -71,7 +71,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 {...props}
             >
                 <>
-                    {isLoading && <Loader className={styles.loader} />}
+                    {isLoading && <Spinner />}
                     {LeftIcon && <LeftIcon className={styles.leftIcon} />}
                     {asChild && isValidElement(children)
                         ? cloneElement(

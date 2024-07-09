@@ -1,4 +1,4 @@
-import { Loader } from "@frak-labs/shared/module/asset/icons/Loader";
+import { Spinner } from "@module/component/Spinner";
 import type { MouseEvent } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
@@ -58,7 +58,7 @@ export function ButtonRipple({
             }}
         >
             <>
-                {isLoading && <Loader className={styles.loader} />}
+                {isLoading && <Spinner />}
                 {children}
             </>
         </button>
