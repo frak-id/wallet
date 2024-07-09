@@ -1,5 +1,4 @@
 "use server";
-
 import * as dns from "node:dns";
 import { promisify } from "node:util";
 import { getSafeSession } from "@/context/auth/actions/session";
@@ -21,6 +20,7 @@ import {
     prepareTransactionRequest,
     readContract,
     sendTransaction,
+    waitForTransactionReceipt,
 } from "viem/actions";
 
 /**
@@ -62,20 +62,21 @@ export async function mintMyContent({
 
     console.log(`Minting content ${name} for ${session.wallet}`, {
         setupInteractions,
+        contentId,
     });
 
     // Get the airdropper private key
-    const airdropperPrivateKey = process.env.AIRDROP_PRIVATE_KEY;
-    if (!airdropperPrivateKey) {
-        throw new Error("Missing AIRDROP_PRIVATE_KEY env variable");
+    const minterPrivateKey = process.env.CONTENT_MINTER_PRIVATE_KEY;
+    if (!minterPrivateKey) {
+        throw new Error("Missing CONTENT_MINTER_PRIVATE_KEY env variable");
     }
-    const airdropperAccount = privateKeyToAccount(airdropperPrivateKey as Hex);
+    const minterAccount = privateKeyToAccount(minterPrivateKey as Hex);
 
     // Prepare the mint tx and send it
     const mintTxPreparation = await prepareTransactionRequest(
         frakChainPocClient,
         {
-            account: airdropperAccount,
+            account: minterAccount,
             chain: frakChainPocClient.chain,
             to: addresses.contentRegistry,
             data: encodeFunctionData({
@@ -89,18 +90,23 @@ export async function mintMyContent({
         frakChainPocClient,
         mintTxPreparation
     );
+    // Wait for the mint to be done before proceeding to the transfer
+    await waitForTransactionReceipt(frakChainPocClient, {
+        hash: mintTxHash,
+        confirmations: 1,
+    });
 
     // Then prepare the transfer tx and send it
     const transferTxPreparation = await prepareTransactionRequest(
         frakChainPocClient,
         {
-            account: airdropperAccount,
+            account: minterAccount,
             chain: frakChainPocClient.chain,
             to: addresses.contentRegistry,
             data: encodeFunctionData({
                 abi: contentRegistryAbi,
                 functionName: "transferFrom",
-                args: [airdropperAccount.address, session.wallet, contentId],
+                args: [minterAccount.address, session.wallet, contentId],
             }),
         }
     );
@@ -130,7 +136,7 @@ async function assertContentDoesntExist({ contentId }: { contentId: bigint }) {
         functionName: "getMetadata",
         args: [BigInt(contentId)],
     });
-    if (existingMetadata) {
+    if (existingMetadata.contentTypes !== 0n) {
         throw new Error("Content already minted");
     }
 }
