@@ -1,6 +1,6 @@
-# @frak-labs/nexus-dashboard
+# @frak-labs-example/wallet-ethcc
 
-## 0.0.2
+## 0.1.8
 
 ### Patch Changes
 
