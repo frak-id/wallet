@@ -1,4 +1,5 @@
-.button, .frak-button {
+.button,
+.frak-button {
     box-sizing: border-box;
     text-align: center;
     cursor: pointer;
@@ -8,11 +9,13 @@
     line-height: 1.5;
 }
 
-.button > svg, .frak-button > svg {
+.button > svg,
+.frak-button > svg {
     vertical-align: middle;
 }
 
-.button:disabled, .frak-button:disabled {
+.button:disabled,
+.frak-button:disabled {
     background-color: var(--frak-button-disabled-background-color);
     color: var(--frak-button-disabled-text-color);
     cursor: not-allowed;
@@ -32,7 +35,8 @@
     padding: 0;
 }
 
-.size--small, .frak-size--small {
+.size--small,
+.frak-size--small {
     padding: 6px 10px;
 }
 
@@ -40,7 +44,8 @@
     padding: 6px 15px;
 }
 
-.size--big, .frak-size--big {
+.size--big,
+.frak-size--big {
     padding: 6px 22px;
 }
 
@@ -52,7 +57,8 @@
     margin-left: 8px;
 }
 
-.primary, .frak-primary {
+.primary,
+.frak-primary {
     background: var(--frak-button-primary-background-color);
     border: 1px solid var(--frak-button-primary-border-color);
 }
@@ -147,5 +153,5 @@
 }
 
 .frak-l-equipe:hover {
-    opacity: .85;
+    opacity: 0.85;
 }

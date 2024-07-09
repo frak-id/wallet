@@ -10,15 +10,14 @@
     width: 100%;
     height: auto;
     border-radius: 8px;
-
 }
 
 .articleItem__title {
     font-size: 18px;
-    color: #0D141C;
+    color: #0d141c;
 }
 
 .articleItem__description {
     font-size: 16px;
-    color: #4F7396;
+    color: #4f7396;
 }

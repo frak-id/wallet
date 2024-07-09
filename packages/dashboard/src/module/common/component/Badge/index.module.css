@@ -9,23 +9,23 @@
 }
 
 .primary {
-    background-color: #E8F8FD;
-    color: #13B2E4;
+    background-color: #e8f8fd;
+    color: #13b2e4;
 }
 
 .secondary {
-    background-color: #F0F1F3;
+    background-color: #f0f1f3;
     color: #667085;
 }
 
 .success {
-    background-color: #E7F4EE;
-    color: #0D894F;
+    background-color: #e7f4ee;
+    color: #0d894f;
 }
 
 .danger {
-    background-color: #FEEDEC;
-    color: #F04438;
+    background-color: #feedec;
+    color: #f04438;
 }
 
 .information {

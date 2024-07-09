@@ -13,19 +13,19 @@
     max-height: var(--radix-tooltip-content-available-height);
 }
 
-.tooltip__content[data-state='delayed-open'][data-side='top'] {
+.tooltip__content[data-state="delayed-open"][data-side="top"] {
     animation-name: slideDownAndFade;
 }
 
-.tooltip__content[data-state='delayed-open'][data-side='right'] {
+.tooltip__content[data-state="delayed-open"][data-side="right"] {
     animation-name: slideLeftAndFade;
 }
 
-.tooltip__content[data-state='delayed-open'][data-side='bottom'] {
+.tooltip__content[data-state="delayed-open"][data-side="bottom"] {
     animation-name: slideUpAndFade;
 }
 
-.tooltip__content[data-state='delayed-open'][data-side='left'] {
+.tooltip__content[data-state="delayed-open"][data-side="left"] {
     animation-name: slideRightAndFade;
 }
 

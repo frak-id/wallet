@@ -4,7 +4,7 @@
     overflow-x: auto;
     color: var(--frak-table-text-color);
     border: 1px solid var(--frak-table-border-color);
-    box-shadow: 0 2px 2px 0 #1018281A;
+    box-shadow: 0 2px 2px 0 #1018281a;
 }
 
 .table {
@@ -51,7 +51,8 @@ button.table__button:has(span) {
     padding: 0;
 }
 
-.table > tbody > tr > td, .table > tfoot > tr > th {
+.table > tbody > tr > td,
+.table > tfoot > tr > th {
     padding: 18px 22px;
     text-align: left;
     border-top: 1px solid var(--frak-table-row-border-color);
@@ -59,5 +60,5 @@ button.table__button:has(span) {
 }
 
 .table a {
-    color: #0E51E3;
+    color: #0e51e3;
 }

@@ -2,7 +2,7 @@
     padding: 24px;
     border: 1px solid var(--frak-panel-border-color);
     background: var(--frak-panel-background-color);
-    box-shadow: 0 2px 2px 0 #1018281A;
+    box-shadow: 0 2px 2px 0 #1018281a;
     color: var(--frak-panel-text-color);
     font-weight: 400;
 }

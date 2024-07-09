@@ -9,7 +9,7 @@
     width: 20px;
     height: 20px;
     border-radius: 100%;
-    border: 2px solid #94979F;
+    border: 2px solid #94979f;
     cursor: pointer;
 
     &:focus-visible {
@@ -17,7 +17,7 @@
     }
 
     &:has(.radioGroup__indicator) {
-        background: #94979F;
+        background: #94979f;
     }
 }
 
@@ -31,7 +31,7 @@
 }
 
 .radioGroup__indicator::after {
-    content: '';
+    content: "";
     display: block;
     width: 10px;
     height: 10px;

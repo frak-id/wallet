@@ -2,12 +2,12 @@
     background-color: var(--frak-separator-background-color);
 }
 
-.separator[data-orientation='horizontal'] {
+.separator[data-orientation="horizontal"] {
     height: 1px;
     width: 100%;
 }
 
-.separator[data-orientation='vertical'] {
+.separator[data-orientation="vertical"] {
     height: 100%;
     width: 1px;
 }

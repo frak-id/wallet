@@ -13,7 +13,7 @@ body {
     }
 }
 
-html:has(body>div[id="theme-article"]) {
+html:has(body > div[id="theme-article"]) {
     overflow: hidden;
 }
 

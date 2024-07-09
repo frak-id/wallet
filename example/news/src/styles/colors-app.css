@@ -8,13 +8,11 @@
     --frak-input-text-color: var(--frak-color-white);
     --frak-input-placeholder-color: var(--frak-color-silver-chalice);
     --frak-button-primary-background-color: var(
-            --frak-color-bright-turquoise-20
+        --frak-color-bright-turquoise-20
     );
     --frak-button-primary-border-color: var(--frak-color-blumine);
     --frak-button-outlined-border-color: var(--frak-color-bright-turquoise);
-    --frak-button-submit-background-color: var(
-            --frak-color-bright-turquoise-20
-    );
+    --frak-button-submit-background-color: var(--frak-color-bright-turquoise-20);
     --frak-button-submit-border-color: var(--frak-color-bright-turquoise);
     --frak-button-danger-background-color: var(--frak-color-red-34);
     --frak-button-danger-border-color: var(--frak-color-red);

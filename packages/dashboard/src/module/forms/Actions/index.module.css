@@ -4,7 +4,8 @@
     justify-content: space-between;
 }
 
-.action__left, .action__right {
+.action__left,
+.action__right {
     display: flex;
     align-items: center;
     gap: 15px;

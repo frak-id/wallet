@@ -161,11 +161,13 @@ sup {
     height: 10px;
 }
 
-.scrollbars::-webkit-scrollbar-thumb { /* Foreground */
+.scrollbars::-webkit-scrollbar-thumb {
+    /* Foreground */
     background: var(--scrollbar-foreground);
 }
 
-.scrollbars::-webkit-scrollbar-track { /* Background */
+.scrollbars::-webkit-scrollbar-track {
+    /* Background */
     background: var(--scrollbar-background);
 }
 

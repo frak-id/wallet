@@ -5,8 +5,8 @@
     grid-template-rows: 1fr auto;
     gap: 0 0;
     grid-template-areas:
-    "."
-    ".";
+        "."
+        ".";
     flex: 1;
 }
 

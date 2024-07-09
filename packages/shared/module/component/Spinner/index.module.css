@@ -14,10 +14,11 @@
     left: calc(50% - 12.5% / 2);
     width: 12.5%;
     height: 100%;
-    animation: rt-spinner-leaf-fade var(--spinner-animation-duration) linear infinite;
+    animation: rt-spinner-leaf-fade var(--spinner-animation-duration) linear
+        infinite;
 
     &::before {
-        content: '';
+        content: "";
         display: block;
         width: 100%;
         height: 30%;

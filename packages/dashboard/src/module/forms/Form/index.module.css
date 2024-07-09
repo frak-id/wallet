@@ -43,7 +43,7 @@
 }
 
 .form__radio:has(button[data-state="checked"]) {
-    background: #818C9C24;
+    background: #818c9c24;
 }
 
 .form__radioWithLabel {

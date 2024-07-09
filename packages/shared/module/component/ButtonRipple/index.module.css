@@ -26,7 +26,9 @@
     box-shadow: 6px 6px 6px 0 var(--frak-panel-shadow-color);
 }
 
-.buttonRipple__button:active, .buttonRipple__button:target, .buttonRipple__button:disabled {
+.buttonRipple__button:active,
+.buttonRipple__button:target,
+.buttonRipple__button:disabled {
     box-shadow: none;
 }
 

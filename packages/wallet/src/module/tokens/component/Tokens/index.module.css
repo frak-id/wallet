@@ -16,7 +16,7 @@
 }
 
 .tokens__button:last-child:before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     height: 80%;

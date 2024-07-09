@@ -6,20 +6,16 @@
     --frak-panel-background-color: var(--frak-color-mystic2);
     --frak-panel-outlined-border-color: var(--frak-color-white);
     --frak-panel-shadow-color: var(--frak-shadow-color);
-    --frak-panel-border-color: rgba(129, 140, 156, .2);
+    --frak-panel-border-color: rgba(129, 140, 156, 0.2);
     --frak-input-background-color: var(--frak-color-white);
     --frak-input-border-color: var(--frak-color-white);
     --frak-input-text-color: var(--frak-color-black);
     --frak-input-placeholder-color: var(--frak-color-silver-chalice);
-    --frak-accordion-content-background-color: var(
-            --frak-color-blue-background
-    );
+    --frak-accordion-content-background-color: var(--frak-color-blue-background);
     --frak-accordion-trigger-color: var(--frak-color-black);
     --frak-notice-text-color: var(--frak-color-dark);
     --frak-alertDialog-background-color: var(--frak-color-white);
-    --frak-button-primary-background-color: var(
-            --frak-color-white
-    );
+    --frak-button-primary-background-color: var(--frak-color-white);
     --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
     --frak-button-disabled-text-color: var(--frak-color-grayText);
     --frak-navigation-color: var(--frak-color-black);
@@ -33,7 +29,7 @@
     --frak-token-max-color: var(--frak-color-black);
     --frak-skeleton-base-color: var(--frak-color-mystic2);
     --frak-skeleton-highlight-color: #f5f5f5;
-    --frak-skeleton-border-color: rgba(129, 140, 156, .2);
+    --frak-skeleton-border-color: rgba(129, 140, 156, 0.2);
     --frak-drawer-background-color: var(--frak-color-white);
     --frak-drawer-handle-background-color: var(--frak-color-mystic);
 }
@@ -46,20 +42,16 @@
     --frak-panel-background-color: var(--frak-color-tangaroa);
     --frak-panel-outlined-border-color: var(--frak-color-blue-zodiac-darker);
     --frak-panel-shadow-color: var(--frak-shadow-color);
-    --frak-panel-border-color: rgba(129, 140, 156, .2);
+    --frak-panel-border-color: rgba(129, 140, 156, 0.2);
     --frak-input-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-input-border-color: var(--frak-color-white);
     --frak-input-text-color: var(--frak-color-white);
     --frak-input-placeholder-color: var(--frak-color-silver-chalice);
-    --frak-accordion-content-background-color: var(
-            --frak-color-blue-background
-    );
+    --frak-accordion-content-background-color: var(--frak-color-blue-background);
     --frak-accordion-trigger-color: var(--frak-color-white);
     --frak-notice-text-color: var(--frak-color-grayText);
     --frak-alertDialog-background-color: var(--frak-color-blue-zodiac-darker);
-    --frak-button-primary-background-color: var(
-            --frak-color-blue-zodiac-darker
-    );
+    --frak-button-primary-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
     --frak-button-disabled-text-color: var(--frak-color-grayText);
     --frak-navigation-color: var(--frak-color-white);
@@ -67,13 +59,15 @@
     --frak-token-item-hover-color: var(--frak-color-grayText);
     --frak-header-border-color: var(--frak-color-white);
     --frak-header-wallet-color: var(--frak-color-east-bay);
-    --frak-auth-fingerprint-background-color: var(--frak-color-blue-zodiac-darker);
+    --frak-auth-fingerprint-background-color: var(
+        --frak-color-blue-zodiac-darker
+    );
     --frak-auth-fingerprint-shadow-color: var(--frak-shadow-color);
     --frak-token-max-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-token-max-color: var(--frak-color-white);
     --frak-skeleton-base-color: var(--frak-color-tangaroa);
     --frak-skeleton-highlight-color: var(--frak-color-blue-background);
-    --frak-skeleton-border-color: rgba(129, 140, 156, .2);
+    --frak-skeleton-border-color: rgba(129, 140, 156, 0.2);
     --frak-drawer-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-drawer-handle-background-color: var(--frak-color-white);
 }

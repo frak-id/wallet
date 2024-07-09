@@ -41,19 +41,19 @@
     border-radius: 8px;
     text-align: center;
     transition-property: all;
-    transition-timing-function: cubic-bezier(.4,0,.2,1);
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: .15s;
 }
 
 .modalListener__stepItem--active {
-    background-color: #F5F5F51A;
+    background-color: #f5f5f51a;
     color: var(--frak-color-white);
 }
 
 .modalListener__help {
     margin-top: 20px;
     font-size: 12px;
-    color: #818C9C;
+    color: #818c9c;
 }
 
 .modalListener__context {

@@ -12,7 +12,7 @@
 
 .title {
     font-size: 18px;
-    color: #0D141C;
+    color: #0d141c;
 }
 
 .introduction {
@@ -20,17 +20,17 @@
     padding: 20px 0;
     font-size: 22px;
     font-weight: 500;
-    color: #0D141C;
+    color: #0d141c;
 }
 
 .footer {
     padding: 40px 20px;
     text-align: center;
     font-size: 16px;
-    color: #4F7396;
+    color: #4f7396;
 }
 
 .footer a {
-    color: #4F7396;
+    color: #4f7396;
     text-decoration: none;
 }

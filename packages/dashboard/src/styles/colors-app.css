@@ -44,8 +44,12 @@
     --frak-multiselect-checks-background-color: var(--frak-color-white);
     --frak-multiselect-checks-border-color: var(--frak-color-regent-gray);
     --frak-multiselect-checks-selected-text-color: var(--frak-color-white);
-    --frak-multiselect-checks-selected-border-color: var(--frak-color-royal-blue);
-    --frak-multiselect-checks-selected-background-color: var(--frak-color-royal-blue);
+    --frak-multiselect-checks-selected-border-color: var(
+        --frak-color-royal-blue
+    );
+    --frak-multiselect-checks-selected-background-color: var(
+        --frak-color-royal-blue
+    );
     --frak-checkbox-label-text-color: var(--frak-color-pale-sky);
     --frak-popover-text-color: var(--frak-color-tuna);
     --frak-popover-background-color: var(--frak-color-white);

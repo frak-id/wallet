@@ -2,14 +2,14 @@
     all: unset;
     width: 36px;
     height: 20px;
-    background-color: #C2C6CE;
+    background-color: #c2c6ce;
     border-radius: 9999px;
     position: relative;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     cursor: pointer;
 }
 
-.switch[data-state='checked'] {
+.switch[data-state="checked"] {
     background-color: var(--frak-color-royal-blue);
 }
 
@@ -24,6 +24,6 @@
     will-change: transform;
 }
 
-.switchThumb[data-state='checked'] {
+.switchThumb[data-state="checked"] {
     transform: translateX(20px);
 }

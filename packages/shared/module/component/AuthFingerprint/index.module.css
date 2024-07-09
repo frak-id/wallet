@@ -22,7 +22,9 @@
     box-shadow: 6px 6px 6px 0 var(--frak-auth-fingerprint-shadow-color);
 }
 
-.authFingerprint__button:active, .authFingerprint__button:target, .authFingerprint__button:disabled {
+.authFingerprint__button:active,
+.authFingerprint__button:target,
+.authFingerprint__button:disabled {
     box-shadow: none;
 }
 
@@ -77,7 +79,7 @@
 }
 
 .authFingerprint__shiny::after {
-    content: ' ';
+    content: " ";
     display: var(--pseudo-element-display);
     position: absolute;
     top: 50%;
