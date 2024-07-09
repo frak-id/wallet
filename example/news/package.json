@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs-example/news",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Simple demo of a future Frak Wallet",
   "private": true,
   "type": "module",

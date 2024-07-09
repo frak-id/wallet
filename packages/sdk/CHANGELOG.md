@@ -1,5 +1,19 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.10
+
+### Patch Changes
+
+- [`4fd74e0`](https://github.com/frak-id/wallet/commit/4fd74e03d93584109e9a308900fc4a30f517724c) Thanks [@KONFeature](https://github.com/KONFeature)! - Removed previous `frak_listenToSetUserReferred` rpc action in favor of the new generic interaction handler
+
+- [`30e3863`](https://github.com/frak-id/wallet/commit/30e3863dfdbfa80d319d988226b64d73c668a7bf) Thanks [@KONFeature](https://github.com/KONFeature)! - Add `frak_sendTransaction` rpc action on the wallet. Only callable from dapp inside the `frak.id` domain for now.
+
+- [`4fd74e0`](https://github.com/frak-id/wallet/commit/4fd74e03d93584109e9a308900fc4a30f517724c) Thanks [@KONFeature](https://github.com/KONFeature)! - Add `frak_sendInteraction` rpc action to submit user interaction from a content / product
+
+- [`e3d003f`](https://github.com/frak-id/wallet/commit/e3d003f046b5215c83711af7758da76002216617) Thanks [@KONFeature](https://github.com/KONFeature)! - Adding `domain` field in the nexus config (auto filled when using the react component `NexusConfigProvider`)
+
+- [`e3d003f`](https://github.com/frak-id/wallet/commit/e3d003f046b5215c83711af7758da76002216617) Thanks [@KONFeature](https://github.com/KONFeature)! - Added the `siweAuthenticate` method (with the react hook) to craft strong authentication with the nexus wallet
+
 ## 0.0.9
 
 ### Patch Changes
