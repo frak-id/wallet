@@ -126,7 +126,8 @@ export function TableCampaigns() {
                 columnHelper.accessor("scheduled.dateStart", {
                     enableSorting: false,
                     header: () => "Date",
-                    cell: ({ getValue }) => formatDate(new Date(getValue())),
+                    cell: ({ getValue }) =>
+                        getValue() && formatDate(new Date(getValue())),
                 }),
                 columnHelper.accessor("budget.maxEuroDaily", {
                     enableSorting: false,
@@ -160,6 +161,7 @@ export function TableCampaigns() {
         data && (
             <Table
                 data={data}
+                limit={data.length}
                 columns={columns}
                 filtering={filtering}
                 setFiltering={setFiltering}
