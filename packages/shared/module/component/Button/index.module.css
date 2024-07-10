@@ -75,6 +75,8 @@
 
 .danger {
     background: var(--frak-button-danger-background-color);
+    border: 1px solid transparent;
+    color: var(--frak-button-danger-text-color);
 }
 
 .information {

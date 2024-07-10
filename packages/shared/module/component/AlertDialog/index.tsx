@@ -5,7 +5,7 @@ import styles from "./index.module.css";
 
 export type AlertDialogComponentProps = {
     title?: ReactNode | string;
-    description?: string;
+    description?: string | ReactNode;
     text?: ReactNode | string;
     button?: {
         label?: ReactNode | string;
@@ -34,7 +34,7 @@ export function AlertDialog({
     buttonElement,
     footer: { className: footerClassName = "", after: footerAfter } = {},
     action,
-    actionClose,
+    actionClose = false,
     showCloseButton = true,
     cancel,
     defaultOpen = false,
