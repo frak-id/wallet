@@ -32,29 +32,34 @@ export function usePressReferralInteraction({ contentId }: { contentId: Hex }) {
             walletStatus?.key ?? "no-wallet-status",
         ],
         queryFn: async () => {
-            // If just no context but wallet present
+            // If no context but wallet present
             if (!nexusContext && walletStatus?.key === "connected") {
                 await updateContextAsync({ r: walletStatus.wallet });
                 return null;
             }
+            // If no context at all, directly exit
+            if (!nexusContext) return null;
 
-            // todo: If no wallet connected, but context present, send it anyway to cache it on the wallet side
-            if (!nexusContext || walletStatus?.key !== "connected") return null;
-
-            // If context and wallet present, and same referrer address, early exit
-            if (isAddressEqual(nexusContext.r, walletStatus.wallet))
+            // If context present and same wallet as the referrer exit
+            if (
+                walletStatus?.key === "connected" &&
+                isAddressEqual(nexusContext.r, walletStatus.wallet)
+            ) {
                 return null;
+            }
 
             // Build the press referral interaction
             const interaction = PressInteractionEncoder.referred({
                 referrer: nexusContext.r,
             });
 
-            // Send the interaction (todo: interpret the result and return it)
+            // Send the interaction
             await sendInteraction({ contentId, interaction });
 
             // Update the context with the current wallet as referrer
-            await updateContextAsync({ r: walletStatus.wallet });
+            if (walletStatus?.key === "connected") {
+                await updateContextAsync({ r: walletStatus.wallet });
+            }
 
             return { referrer: nexusContext.r };
         },
@@ -80,7 +85,8 @@ function useOutputStateMapper({
     status: "pending" | "success" | "error";
 }) {
     const errorState = useMemo(() => {
-        if (!(error instanceof FrakRpcError)) return null;
+        if (!error) return null;
+        if (!(error instanceof FrakRpcError)) return "error";
 
         switch (error.code) {
             case RpcErrorCodes.walletNotConnected:

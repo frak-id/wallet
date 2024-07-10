@@ -1,11 +1,10 @@
-import { getSessionStatus } from "@/context/interaction/action/interactionSession";
 import { Panel } from "@/module/common/component/Panel";
 import { Switch } from "@/module/common/component/Switch";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
+import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import { Spinner } from "@module/component/Spinner";
-import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
@@ -14,18 +13,10 @@ import styles from "./index.module.css";
 export function ToggleSession() {
     const { address } = useAccount();
 
-    const { data: sessionStatus, isPending: sessionStatusIsPending } = useQuery(
-        {
-            queryKey: ["interactions", "session-status"],
-            queryFn: async () => {
-                if (!address) {
-                    return null;
-                }
-                return getSessionStatus({ wallet: address });
-            },
-            enabled: !!address,
-        }
-    );
+    const { data: sessionStatus, isPending: sessionStatusIsPending } =
+        useInteractionSessionStatus({
+            address,
+        });
 
     const { mutate: openSession, isPending: isOpeningSession } =
         useOpenSession();

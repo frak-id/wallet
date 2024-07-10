@@ -16,9 +16,6 @@ type OnAuthenticateRequest = IFrameRequestResolver<
 
 /**
  * Hook used for the SIWE authentication of a user
- * TODO: Multi step process
- *  1. If not logged in -> register or login
- *  2. Then perform the SIWE authentication
  */
 export function useSiweAuthenticateListener() {
     const setDisplayedRequest = useSetAtom(modalDisplayedRequestAtom);

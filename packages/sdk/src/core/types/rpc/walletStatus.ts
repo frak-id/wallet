@@ -7,6 +7,10 @@ export type WalletStatusReturnType = Readonly<
 export type WalletConnected = {
     key: "connected";
     wallet: Address;
+    interactionSession?: {
+        startTimestamp: number;
+        endTimestamp: number;
+    };
 };
 
 export type WalletNotConnected = {
