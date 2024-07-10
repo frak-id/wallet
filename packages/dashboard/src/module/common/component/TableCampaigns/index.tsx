@@ -125,12 +125,14 @@ export function TableCampaigns() {
                     header: () => "Status",
                     cell: ({ getValue }) => <State state={getValue()} />,
                 }),
-                columnHelper.accessor("scheduled.dateStart", {
+                {
                     enableSorting: false,
+                    id: "Date",
                     header: () => "Date",
-                    cell: ({ getValue }) =>
-                        getValue() && formatDate(new Date(getValue())),
-                }),
+                    accessorFn: (row) =>
+                        row?.scheduled?.dateStart &&
+                        formatDate(new Date(row.scheduled.dateStart)),
+                },
                 columnHelper.accessor("budget.maxEuroDaily", {
                     enableSorting: false,
                     header: () => "Budget",
