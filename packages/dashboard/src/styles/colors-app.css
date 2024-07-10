@@ -11,6 +11,7 @@
     --frak-navigation-background-color: var(--frak-color-blur);
     --frak-navigation-profile-separator-color: var(--frak-color-white);
     --frak-navigation-item-color: var(--frak-color-white);
+    --frak-navigation-disabled-item-color: var(--frak-color-grayText);
     --frak-navigation-item-hover-color: rgba(0, 20, 50, 1);
     --frak-navigation-item-hover-background-color: rgba(245, 245, 245, 0.5);
     --frak-button-color: var(--frak-color-white);

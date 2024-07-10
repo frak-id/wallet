@@ -37,6 +37,11 @@
     cursor: pointer;
     color: var(--frak-navigation-item-color);
     transition: background .15s, color .15s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:disabled {
+        cursor: not-allowed;
+        color: var(--frak-navigation-disabled-item-color);
+    }
 }
 
 .navigationItem__button:hover,

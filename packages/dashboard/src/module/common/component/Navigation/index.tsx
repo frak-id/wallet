@@ -34,19 +34,19 @@ export function Navigation() {
                 ) : (
                     <NavigationCampaigns />
                 )}
-                <NavigationItem url={"/members"}>
+                <NavigationItem url={"/members"} disabled={true}>
                     <NavigationLabel icon={<Users />}>Members</NavigationLabel>
                 </NavigationItem>
-                <NavigationItem url={"/revenue"}>
+                <NavigationItem url={"/revenue"} disabled={true}>
                     <NavigationLabel icon={<Cash />}>Revenue</NavigationLabel>
                 </NavigationItem>
-                <NavigationItem url={"/messenger"}>
+                <NavigationItem url={"/messenger"} disabled={true}>
                     <NavigationLabel icon={<Message />}>
                         Messenger
                     </NavigationLabel>
                 </NavigationItem>
                 <NavigationItem
-                    url={"/wallet"}
+                    url={process.env.NEXUS_WALLET_URL}
                     className={styles.navigation__itemToBottom}
                 >
                     <NavigationLabel icon={<Wallet />}>Wallet</NavigationLabel>
@@ -54,7 +54,7 @@ export function Navigation() {
                 <NavigationItem url={"/settings"}>
                     <NavigationLabel icon={<Gear />}>Settings</NavigationLabel>
                 </NavigationItem>
-                <NavigationItem url={"/help"}>
+                <NavigationItem url={"/help"} disabled={true}>
                     <NavigationLabel icon={<Info />}>
                         Help & FAQ
                     </NavigationLabel>
@@ -70,6 +70,7 @@ type NavigationItemProps = {
     isSub?: boolean;
     rightSection?: ReactNode;
     isActive?: boolean;
+    disabled?: boolean;
 };
 
 export function NavigationItem({
@@ -79,6 +80,7 @@ export function NavigationItem({
     className = "",
     rightSection,
     isActive,
+    disabled,
     ...props
 }: PropsWithChildren<NavigationItemProps>) {
     const router = useRouter();
@@ -105,6 +107,7 @@ export function NavigationItem({
                     !isSub && activeClassName,
                     isActive && styles["navigationItem__button--active"]
                 )}
+                disabled={disabled}
                 {...props}
                 {...buttonProps}
             >
