@@ -42,6 +42,7 @@ export function Home() {
     const success = useAtomValue(successAtom);
     const [step, setStep] = useAtom(stepAtom);
     const [isModalOpen, setIsModalOpen] = useAtom(isModalOpenAtom);
+    const resetAtoms = useSetAtom(resetAtom);
 
     const form = useForm<ProductNew>({
         defaultValues: {
@@ -49,6 +50,15 @@ export function Home() {
             domain: "",
         },
     });
+
+    /**
+     * Reset the form and the atoms when the modal is closed
+     */
+    useEffect(() => {
+        if (isModalOpen) return;
+        form.reset();
+        resetAtoms();
+    }, [isModalOpen, form.reset, resetAtoms]);
 
     return (
         <Panel variant={"ghost"} title={"My Products"}>
@@ -84,7 +94,12 @@ export function Home() {
                         cancel={
                             step === 1 ? (
                                 <Button variant={"outline"}>Cancel</Button>
-                            ) : undefined
+                            ) : (
+                                step === 2 &&
+                                success && (
+                                    <Button variant={"outline"}>Close</Button>
+                                )
+                            )
                         }
                         action={
                             step === 1 ? (
@@ -112,7 +127,6 @@ export function Home() {
 function NewProductForm(form: UseFormReturn<ProductNew>) {
     const isModalOpen = useAtomValue(isModalOpenAtom);
     const [success, setSuccess] = useAtom(successAtom);
-    const resetAtoms = useSetAtom(resetAtom);
     const [error, setError] = useState<string | undefined>();
 
     const rawDomain = form.watch("domain");
@@ -129,13 +143,13 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
 
     const { mutateAsync: checkDomainSetup } = useCheckDnsTxtRecordSet();
 
+    /**
+     * Reset the error when the modal is opened
+     */
     useEffect(() => {
         if (!isModalOpen) return;
-
-        form.reset();
         setError(undefined);
-        resetAtoms();
-    }, [isModalOpen, form.reset, resetAtoms]);
+    }, [isModalOpen]);
 
     // Verify the validity of a domain
     async function verifyDomain() {
@@ -256,6 +270,7 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
  * @constructor
  */
 function NewProductVerify({ name, domain }: { name: string; domain: string }) {
+    const setIsModalOpen = useSetAtom(isModalOpenAtom);
     const parsedDomain = parseUrl(domain);
 
     const {
@@ -264,6 +279,13 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
         error,
         data,
     } = useMintMyContent();
+
+    useEffect(() => {
+        // Slight delay for closing the modal
+        setTimeout(() => {
+            data && setIsModalOpen(false);
+        }, 5_000);
+    }, [data, setIsModalOpen]);
 
     if (!parsedDomain) return null;
 

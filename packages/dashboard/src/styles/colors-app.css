@@ -26,6 +26,8 @@
     --frak-button-informationOutline-border-color: var(--frak-color-royal-blue);
     --frak-button-submit-background-color: var(--frak-color-royal-blue);
     --frak-button-submit-text-color: var(--frak-color-white);
+    --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
+    --frak-button-disabled-text-color: var(--frak-color-grayText);
     --frak-input-background-color: var(--frak-color-whisper);
     --frak-input-border-color: var(--frak-color-mischka);
     --frak-input-text-color: var(--frak-color-tuna);
