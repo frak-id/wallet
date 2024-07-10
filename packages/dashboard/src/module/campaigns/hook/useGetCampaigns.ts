@@ -8,8 +8,6 @@ import { useQuery } from "@tanstack/react-query";
  */
 export const useGetCampaigns = () =>
     useQuery({
-        queryKey: ["useGetCampaigns"],
-        queryFn: async () => {
-            return await getMyCampaigns();
-        },
+        queryKey: ["campaigns", "my-campaigns"],
+        queryFn: async () => await getMyCampaigns(),
     });

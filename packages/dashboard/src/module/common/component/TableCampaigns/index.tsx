@@ -1,5 +1,6 @@
 "use client";
 
+import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
 import { State } from "@/module/common/component/State";
 import type { ReactTableProps } from "@/module/common/component/Table";
@@ -7,7 +8,7 @@ import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import type { CampaignWithState } from "@/types/Campaign";
 import { Skeleton } from "@module/component/Skeleton";
-import { createColumnHelper } from "@tanstack/react-table";
+import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { usePrevious } from "@uidotdev/usehooks";
 import { Eye, Pencil, Trash2 } from "lucide-react";
@@ -145,19 +146,7 @@ export function TableCampaigns() {
                 }),
                 columnHelper.display({
                     header: "Action",
-                    cell: () => (
-                        <div className={styles.table__actions}>
-                            <button type={"button"}>
-                                <Eye size={20} absoluteStrokeWidth={true} />
-                            </button>
-                            <button type={"button"}>
-                                <Pencil size={20} absoluteStrokeWidth={true} />
-                            </button>
-                            <button type={"button"}>
-                                <Trash2 size={20} absoluteStrokeWidth={true} />
-                            </button>
-                        </div>
-                    ),
+                    cell: ({ row }) => <CellActions row={row} />,
                 }),
             ] as ColumnDef<CampaignWithState>[],
         []
@@ -177,5 +166,43 @@ export function TableCampaigns() {
                 pagination={false}
             />
         )
+    );
+}
+
+/**
+ * Component representing the posible cell actions
+ * @param row
+ * @constructor
+ */
+function CellActions({
+    row,
+}: Pick<CellContext<CampaignWithState, unknown>, "row">) {
+    const { mutate: onDeleteClick, isPending: isDeleting } =
+        useDeleteCampaign();
+
+    const actions = useMemo(() => row.original.actions, [row.original.actions]);
+
+    return (
+        <div className={styles.table__actions}>
+            <button type={"button"} onClick={() => console.log("View")}>
+                <Eye size={20} absoluteStrokeWidth={true} />
+            </button>
+            {actions.canEdit && (
+                <button type={"button"} onClick={() => console.log("Edit")}>
+                    <Pencil size={20} absoluteStrokeWidth={true} />
+                </button>
+            )}
+            {actions.canDelete && (
+                <button
+                    type={"button"}
+                    disabled={isDeleting}
+                    onClick={() =>
+                        onDeleteClick({ campaignId: row.original._id })
+                    }
+                >
+                    <Trash2 size={20} absoluteStrokeWidth={true} />
+                </button>
+            )}
+        </div>
     );
 }

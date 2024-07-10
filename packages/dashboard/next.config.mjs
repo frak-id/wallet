@@ -7,6 +7,7 @@ const wantedFromConfig = [
     "NEXUS_WALLET_URL",
     "SESSION_ENCRYPTION_KEY",
     "MONGODB_BUSINESS_URI",
+    "CONTENT_MINTER_PRIVATE_KEY",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 

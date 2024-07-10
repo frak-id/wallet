@@ -48,6 +48,22 @@ class CampaignRepository {
             })
             .toArray();
     }
+
+    /**
+     * Find a campaign by it's id
+     * @param id
+     */
+    public async getOneById(id: ObjectId) {
+        return this.collection.findOne({ _id: id });
+    }
+
+    /**
+     * Delete a campaign by it's id
+     * @param id
+     */
+    public async delete(id: ObjectId) {
+        await this.collection.deleteOne({ _id: id });
+    }
 }
 
 export const getCampaignRepository = DI.registerAndExposeGetter({
