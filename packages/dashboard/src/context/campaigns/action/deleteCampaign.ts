@@ -1,32 +1,13 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import { getAttachedCampaigns } from "@/context/campaigns/action/getAttachedCampaigns";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { ObjectId } from "mongodb";
-import { type Address, encodeFunctionData, isAddressEqual } from "viem";
-
-/**
- * Delete a campaign around the given content
- *  todo: This is a tx call that should trigger a tx, how to trigger tx on the nexus?
- *   - Maybe back to the wallet connect implementation?
- *   - Or maybe use wallet connect screen with some SDK screens, and stuff passed in the calldata?
- */
-export async function deleteCampaignsCallData({
-    contentId,
-    campaigns,
-}: { contentId: bigint; campaigns: Address[] }) {
-    const calldata = encodeFunctionData({
-        abi: contentInteractionManagerAbi,
-        functionName: "detachCampaigns",
-        args: [contentId, campaigns],
-    });
-    return {
-        to: addresses.contentInteractionManager,
-        data: calldata,
-    };
-}
+import { encodeFunctionData, isAddressEqual } from "viem";
 
 /**
  * Function used to delete a campaign
@@ -49,12 +30,53 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
         throw new Error("You can only delete your own campaigns");
     }
 
-    // todo: Check if we will need to perform a on-chain deletion
-    // todo: If yes, build the calldata to withdraw the tokens and detach the campaign
-    if (campaign.state.key === "created") {
-        throw new Error("Cannot delete a deployed campaign yet");
+    // If the campaign isn't attached, we can just delete it and return
+    if (campaign.state.key !== "created") {
+        await campaignRepository.delete(id);
+        return { key: "success" } as const;
     }
 
-    // Delete the campaign
+    // Check if the campaign is attached or not
+    const campaignAddress = campaign.state.address;
+    const activeCampaigns = await getAttachedCampaigns({
+        contentId: campaign.contentId,
+    });
+    console.log("Active campaigns", { activeCampaigns, campaignAddress });
+
+    // Check if it's in the active ones
+    const isActive =
+        activeCampaigns.findIndex((a) => isAddressEqual(a, campaignAddress)) !==
+        -1;
+
+    // If it's active, return the call-data required to detach the campaign
+    if (isActive) {
+        return {
+            key: "require-onchain-delete",
+            calls: [
+                // Withdraw tokens from the campaigns
+                {
+                    to: campaignAddress,
+                    data: encodeFunctionData({
+                        abi: referralCampaignAbi,
+                        functionName: "withdraw",
+                    }),
+                    value: "0x00",
+                },
+                // Detach the campaign
+                {
+                    to: addresses.contentInteractionManager,
+                    data: encodeFunctionData({
+                        abi: contentInteractionManagerAbi,
+                        functionName: "detachCampaigns",
+                        args: [BigInt(campaign.contentId), [campaignAddress]],
+                    }),
+                    value: "0x00",
+                },
+            ],
+        } as const;
+    }
+
+    // Otherwise, just delete it
     await campaignRepository.delete(id);
+    return { key: "success" } as const;
 }
