@@ -22,7 +22,6 @@ export function useMintMyContent() {
                 await mintMyContent(args);
 
             // Then perform the blockchain side of the mint
-            // todo: fcked up, the form is taking over the control over the iframe popup, idk why, zindex seems good
             console.log(`Minting user content for ${args.name}`, {
                 tx: {
                     to: addresses.contentRegistry,
@@ -31,18 +30,18 @@ export function useMintMyContent() {
                 },
                 sendTx,
             });
-            /*const { hash: interactionDeployHash } = await sendTx({
+            const { hash: interactionDeployHash } = await sendTx({
                 context: `Deploying user interactions handler for ${args.name}`,
                 tx: {
                     to: addresses.contentInteractionManager,
                     value: "0x00",
                     data: setupInteractionTxData,
                 },
-            });*/
+            });
 
             return {
                 mintTxHash,
-                // interactionDeployHash,
+                interactionDeployHash,
             };
         },
     });
