@@ -1,5 +1,4 @@
 import { Row } from "@/module/common/component/Row";
-import { Checkbox } from "@/module/forms/Checkbox";
 import {
     FormControl,
     FormField,
@@ -8,6 +7,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { InputNumber } from "@/module/forms/InputNumber";
+import { Checkbox } from "@module/component/forms/Checkbox";
 import { useEffect, useState } from "react";
 import type {
     FieldPath,

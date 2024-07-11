@@ -32,6 +32,12 @@
     --frak-skeleton-border-color: rgba(129, 140, 156, 0.2);
     --frak-drawer-background-color: var(--frak-color-white);
     --frak-drawer-handle-background-color: var(--frak-color-mystic);
+    --frak-checkbox-background-color: var(--frak-color-white);
+    --frak-checkbox-border-color: var(--frak-color-regent-gray-34);
+    --frak-checkbox-label-text-color: var(--frak-color-pale-sky);
+    --frak-checkbox-checked-background-color: var(--frak-color-white);
+    --frak-checkbox-checked-border-color: var(--frak-color-regent-gray-34);
+    --frak-checkbox-checked-text-color: var(--frak-color-grayText);
 }
 
 :root[data-theme="dark"] {
@@ -70,4 +76,10 @@
     --frak-skeleton-border-color: rgba(129, 140, 156, 0.2);
     --frak-drawer-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-drawer-handle-background-color: var(--frak-color-white);
+    --frak-checkbox-background-color: var(--frak-color-white);
+    --frak-checkbox-border-color: var(--frak-color-tangaroa);
+    --frak-checkbox-label-text-color: var(--frak-color-pale-sky);
+    --frak-checkbox-checked-background-color: var(--frak-color-white);
+    --frak-checkbox-checked-border-color: var(--frak-color-tangaroa);
+    --frak-checkbox-checked-text-color: var(--frak-color-black);
 }

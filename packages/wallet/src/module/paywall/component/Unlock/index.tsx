@@ -2,7 +2,6 @@
 
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
 import { Back } from "@/module/common/component/Back";
-import { Checkbox } from "@/module/common/component/Checkbox";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
 import { useIsCommunityTokenMintAvailable } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
@@ -30,6 +29,7 @@ import { usePaywallRedirection } from "@/module/paywall/hook/usePaywallRedirecti
 import { useUnlockArticle } from "@/module/paywall/hook/useUnlockArticle";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
+import { Checkbox } from "@module/component/forms/Checkbox";
 import { useAtom } from "jotai";
 import { useAtomValue, useSetAtom } from "jotai/index";
 import { BookText } from "lucide-react";

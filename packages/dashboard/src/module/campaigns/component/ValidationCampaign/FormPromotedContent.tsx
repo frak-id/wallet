@@ -1,4 +1,3 @@
-import { Checkbox } from "@/module/forms/Checkbox";
 import {
     FormControl,
     FormDescription,
@@ -8,6 +7,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
+import { Checkbox } from "@module/component/forms/Checkbox";
 import type { UseFormReturn } from "react-hook-form";
 
 const itemsSpecialAdvertising = [

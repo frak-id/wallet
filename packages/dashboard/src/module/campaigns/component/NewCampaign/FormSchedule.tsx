@@ -7,7 +7,6 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
-import { Checkbox } from "@/module/forms/Checkbox";
 import {
     FormControl,
     FormDescription,
@@ -18,6 +17,7 @@ import {
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { Button } from "@module/component/Button";
+import { Checkbox } from "@module/component/forms/Checkbox";
 import { format, isBefore, startOfDay } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";

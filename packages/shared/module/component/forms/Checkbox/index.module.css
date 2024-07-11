@@ -5,9 +5,9 @@
     justify-content: center;
     width: 16px;
     height: 16px;
-    border: 2px solid var(--frak-color-regent-gray);
+    border: 2px solid var(--frak-checkbox-border-color);
     border-radius: 6px;
-    background-color: var(--frak-color-white);
+    background-color: var(--frak-checkbox-background-color);
 
     &:focus-visible {
         box-shadow: 0 0 0 1px var(--frak-focus-border-color);
@@ -15,9 +15,9 @@
 }
 
 .checkbox[data-state="checked"] {
-    border: 2px solid var(--frak-color-royal-blue);
-    background-color: var(--frak-color-royal-blue);
-    color: var(--frak-color-white);
+    border: 2px solid var(--frak-checkbox-checked-border-color);
+    background-color: var(--frak-checkbox-checked-background-color);
+    color: var(--frak-checkbox-checked-text-color);
 }
 
 .checkbox:hover {

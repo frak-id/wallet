@@ -55,7 +55,12 @@
     --frak-multiselect-checks-selected-background-color: var(
         --frak-color-royal-blue
     );
+    --frak-checkbox-background-color: var(--frak-color-white);
+    --frak-checkbox-border-color: var(--frak-color-regent-gray);
     --frak-checkbox-label-text-color: var(--frak-color-pale-sky);
+    --frak-checkbox-checked-background-color: var(--frak-color-royal-blue);
+    --frak-checkbox-checked-border-color: var(--frak-color-royal-blue);
+    --frak-checkbox-checked-text-color: var(--frak-color-white);
     --frak-popover-text-color: var(--frak-color-tuna);
     --frak-popover-background-color: var(--frak-color-white);
     --frak-focus-border-color: var(--frak-color-royal-blue);

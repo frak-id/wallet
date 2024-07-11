@@ -6,9 +6,11 @@
   "license": "GNU GPL 3.0",
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.1",
+    "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-slot": "^1.1.0",
     "class-variance-authority": "^0.7.0",
     "jotai": "^2.9.0",
+    "lucide-react": "^0.407.0",
     "next": "14.2.4",
     "react-loading-skeleton": "^3.4.0",
     "viem": "^2.16.5"
