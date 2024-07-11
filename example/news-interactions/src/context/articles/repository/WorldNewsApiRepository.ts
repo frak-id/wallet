@@ -21,7 +21,7 @@ class WorldNewsApiRepository {
         url.searchParams.append("api-key", this.apiKey);
         url.searchParams.append("source-countries", "us,eu");
         url.searchParams.append("language", "en");
-        url.searchParams.append("min-sentiment", "0.1");
+        url.searchParams.append("min-sentiment", "0.1"); // We only want positive news here
         url.searchParams.append("max-sentiment", "1");
         url.searchParams.append(
             "earliest-publish-date",

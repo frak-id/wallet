@@ -1,14 +1,15 @@
-import type { ObjectId } from "mongodb";
-
-export type NewsDocument = {
-    _id?: ObjectId;
+export type LightNews = {
+    id: string;
     title: string;
-    text: string;
     summary: string;
     image: string;
     sourceCountry: string;
     author: string;
-    url: string;
     publishDate: Date;
     category?: string;
+};
+
+export type FullNews = LightNews & {
+    text: string;
+    url: string;
 };
