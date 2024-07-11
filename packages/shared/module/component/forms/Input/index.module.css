@@ -1,18 +1,40 @@
 .inputWrapper {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
     border-radius: 8px;
     overflow: hidden;
     background-color: var(--frak-input-background-color);
+    color: var(--frak-input-text-color);
+    transition: border-color 0.2s;
+}
+
+.inputWrapper--small {
+    width: 157px;
+}
+
+.inputWrapper--medium {
+    width: 320px;
+}
+
+.inputWrapper--big {
+    width: 100%;
 }
 
 .input {
     all: unset;
     box-sizing: border-box;
-    padding: 5px 8px;
+    padding: 9px 12px;
     width: 100%;
-    line-height: 1.7;
+    line-height: 20px;
     color: var(--frak-input-text-color);
-    font-size: 16px;
+    font-weight: 400;
+}
+
+.inputWrapper:has(.input:focus) {
+    box-shadow: 0 0 0 1px var(--frak-focus-border-color);
 }
 
 .input::placeholder {
@@ -25,6 +47,10 @@
 .input::-ms-input-placeholder {
     /* Microsoft Edge */
     color: var(--frak-input-placeholder-color);
+}
+
+.input:disabled {
+    cursor: not-allowed;
 }
 
 .input[data-invalid="true"] {
@@ -40,4 +66,10 @@
 
 .input[type="number"] {
     -moz-appearance: textfield;
+}
+
+.rightSection {
+    padding-right: 12px;
+    font-weight: 400;
+    color: var(--frak-input-rightSection-text-color);
 }

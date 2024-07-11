@@ -3,8 +3,8 @@ import { FormObjectives } from "@/module/campaigns/component/ValidationCampaign/
 import { FormPromotedContent } from "@/module/campaigns/component/ValidationCampaign/FormPromotedContent";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
-import { Input } from "@/module/forms/Input";
 import type { Campaign } from "@/types/Campaign";
+import { Input } from "@module/component/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormCheck(form: UseFormReturn<Campaign>) {

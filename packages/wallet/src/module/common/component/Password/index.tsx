@@ -1,5 +1,5 @@
-import { Input } from "@/module/common/component/Input";
 import { ButtonRipple } from "@module/component/ButtonRipple";
+import { Input } from "@module/component/forms/Input";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import styles from "./index.module.css";
 

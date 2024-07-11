@@ -6,8 +6,8 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import { InputNumber } from "@/module/forms/InputNumber";
 import { Checkbox } from "@module/component/forms/Checkbox";
+import { InputNumber } from "@module/component/forms/InputNumber";
 import { useEffect, useState } from "react";
 import type {
     FieldPath,

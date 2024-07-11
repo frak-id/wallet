@@ -7,7 +7,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import { Input } from "@/module/forms/Input";
 import {
     Select,
     SelectContent,
@@ -16,6 +15,7 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
+import { Input } from "@module/component/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormBudgetRow(

@@ -1,3 +1,7 @@
+:root {
+    --frak-input-border-width: 0;
+}
+
 :root[data-theme="light"] {
     --frak-text-color: var(--frak-color-black);
     --frak-link-color: var(--frak-color-black);

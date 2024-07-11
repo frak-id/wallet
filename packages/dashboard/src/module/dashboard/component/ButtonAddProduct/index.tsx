@@ -14,9 +14,9 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import { Input } from "@/module/forms/Input";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { Button } from "@module/component/Button";
+import { Input } from "@module/component/forms/Input";
 import { validateUrl } from "@module/utils/validateUrl";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck } from "lucide-react";

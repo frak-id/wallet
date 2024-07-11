@@ -42,24 +42,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     length,
                 })} ${classNameWrapper}`}
             >
-                {leftSection && isValidElement(leftSection) ? (
-                    mergeElement(leftSection, { className: styles.leftSection })
-                ) : (
-                    <span className={styles.leftSection}>{leftSection}</span>
-                )}
+                {leftSection}
                 <input
                     type={type}
-                    className={cx(
-                        styles.input,
-                        className,
-                        leftSection ? styles.withLeftSection : undefined
-                    )}
+                    className={cx(styles.input, className)}
                     ref={ref}
                     {...props}
                 />
                 {rightSection && isValidElement(rightSection) ? (
                     mergeElement(rightSection, {
-                        className: styles.rightSection,
+                        className: `${styles.rightSection} ${rightSection?.props?.className ?? ""}`,
                     })
                 ) : (
                     <span className={styles.rightSection}>{rightSection}</span>

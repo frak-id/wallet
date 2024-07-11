@@ -1,17 +1,14 @@
-import { Input } from "@/module/forms/Input";
-import type { InputProps } from "@/module/forms/Input";
-import { type InputHTMLAttributes, type ReactNode, forwardRef } from "react";
+import { Input } from "@module/component/forms/Input";
+import type { InputProps } from "@module/component/forms/Input";
+import { forwardRef } from "react";
+import type { InputHTMLAttributes } from "react";
 import type {
     ControllerRenderProps,
     FieldPath,
     FieldValues,
 } from "react-hook-form";
 
-interface InputNumberProps extends InputHTMLAttributes<HTMLInputElement> {
-    classNameWrapper?: string;
-    leftSection?: string | ReactNode;
-    rightSection?: string | ReactNode;
-}
+interface InputNumberProps extends InputHTMLAttributes<HTMLInputElement> {}
 
 export const InputNumber = forwardRef<
     HTMLInputElement,

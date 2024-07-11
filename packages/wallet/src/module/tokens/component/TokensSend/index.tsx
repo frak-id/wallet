@@ -3,7 +3,6 @@
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
-import { Input } from "@/module/common/component/Input";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import {
@@ -15,6 +14,7 @@ import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
 import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
 import { ButtonRipple } from "@module/component/ButtonRipple";
+import { Input } from "@module/component/forms/Input";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
