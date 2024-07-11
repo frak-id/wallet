@@ -7,7 +7,7 @@ const font = Inter({
     subsets: ["latin"],
     variable: "--font-family",
     fallback: ["--font-family-sans"],
-    weight: ["400", "500", "700"],
+    weight: ["400", "500", "600", "700"],
     display: "swap",
 });
 
