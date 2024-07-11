@@ -1,25 +1,35 @@
+import { Panel } from "@/module/common/component/Panel";
+import { ButtonAddProduct } from "@/module/dashboard/component/ButtonAddProduct";
+import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import { useMyContents } from "@/module/dashboard/hooks/useMyContents";
 import { Button } from "@module/component/Button";
+import { Spinner } from "@module/component/Spinner";
+import styles from "./index.module.css";
 
 /**
  * Component to display all the current user content
  * @constructor
  */
 export function MyContents() {
-    const { isEmpty, contents } = useMyContents();
+    const { isEmpty, contents, isPending } = useMyContents();
+
+    if (isPending) {
+        return <Spinner />;
+    }
 
     if (isEmpty || !contents) {
         return <NoContents />;
     }
 
     return (
-        <>
-            <h3>Owned contents</h3>
-            <ContentListSection contents={contents.owner} />
-
-            <h3>Operated contents</h3>
-            <ContentListSection contents={contents.operator} />
-        </>
+        <Panel variant={"ghost"} title={"My Products"}>
+            <ContentListSection
+                contents={[
+                    ...(contents?.operator ?? []),
+                    ...(contents?.owner ?? []),
+                ]}
+            />
+        </Panel>
     );
 }
 
@@ -36,7 +46,8 @@ function ContentListSection({
     contents,
 }: { contents: { id: bigint; name: string; domain: string }[] }) {
     return (
-        <div>
+        <div className={styles.contentListSection}>
+            <ButtonAddProduct />
             {contents.map((content) => (
                 <ContentListItem key={content.id} content={content} />
             ))}
@@ -48,8 +59,10 @@ function ContentListItem({
     content,
 }: { content: { id: bigint; name: string; domain: string } }) {
     return (
-        <div>
-            {content.name}: {content.domain}
-        </div>
+        <ProductItem>
+            {content.name}
+            <br />
+            {content.domain}
+        </ProductItem>
     );
 }

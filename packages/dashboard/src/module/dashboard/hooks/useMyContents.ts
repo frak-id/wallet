@@ -6,7 +6,7 @@ import { useMemo } from "react";
  * Hook to get all the current user contents
  */
 export function useMyContents() {
-    const { data } = useQuery({
+    const { data, isPending } = useQuery({
         queryKey: ["my-contents"],
         queryFn: () => getMyContents(),
     });
@@ -17,6 +17,7 @@ export function useMyContents() {
                 !data ||
                 (data.owner.length === 0 && data.operator.length === 0),
             contents: data,
+            isPending,
         };
-    }, [data]);
+    }, [data, isPending]);
 }

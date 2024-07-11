@@ -1,4 +1,6 @@
-.buttonProduct {
+.productItem {
+    display: flex;
+    align-items: center;
     justify-content: center;
     width: 295px;
     height: 150px;
@@ -6,4 +8,5 @@
     background: var(--frak-color-blur) !important;
     backdrop-filter: blur(10px);
     line-height: 20px;
+    text-align: center;
 }

@@ -1,7 +1,6 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
-import { ButtonProduct } from "@/module/dashboard/component/ButtonProduct";
+import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import {
     useCheckDnsTxtRecordSet,
     useDnsTxtRecordSet,
@@ -38,7 +37,7 @@ const resetAtom = atom(null, (_get, set) => {
     set(successAtom, false);
 });
 
-export function Home() {
+export function ButtonAddProduct() {
     const success = useAtomValue(successAtom);
     const [step, setStep] = useAtom(stepAtom);
     const [isModalOpen, setIsModalOpen] = useAtom(isModalOpenAtom);
@@ -61,61 +60,60 @@ export function Home() {
     }, [isModalOpen, form.reset, resetAtoms]);
 
     return (
-        <Panel variant={"ghost"} title={"My Products"}>
-            <Form {...form}>
-                <form>
-                    <AlertDialog
-                        open={isModalOpen}
-                        onOpenChange={setIsModalOpen}
-                        title={
-                            <>
-                                <BadgeCheck color={"#0DDB84"} /> List a New
-                                Product
-                            </>
-                        }
-                        buttonElement={
-                            <ButtonProduct>
+        <Form {...form}>
+            <form>
+                <AlertDialog
+                    open={isModalOpen}
+                    onOpenChange={setIsModalOpen}
+                    title={
+                        <>
+                            <BadgeCheck color={"#0DDB84"} /> List a New Product
+                        </>
+                    }
+                    buttonElement={
+                        <Button size={"none"} variant={"ghost"}>
+                            <ProductItem>
                                 +<br />
                                 List a Product
-                            </ButtonProduct>
-                        }
-                        showCloseButton={false}
-                        text={
-                            <>
-                                {step === 1 && <NewProductForm {...form} />}
-                                {step === 2 && (
-                                    <NewProductVerify
-                                        name={form.getValues().name}
-                                        domain={form.getValues().domain}
-                                    />
-                                )}
-                            </>
-                        }
-                        cancel={
-                            step === 1 ? (
-                                <Button variant={"outline"}>Cancel</Button>
-                            ) : (
-                                step === 2 &&
-                                success && (
-                                    <Button variant={"outline"}>Close</Button>
-                                )
+                            </ProductItem>
+                        </Button>
+                    }
+                    showCloseButton={false}
+                    text={
+                        <>
+                            {step === 1 && <NewProductForm {...form} />}
+                            {step === 2 && (
+                                <NewProductVerify
+                                    name={form.getValues().name}
+                                    domain={form.getValues().domain}
+                                />
+                            )}
+                        </>
+                    }
+                    cancel={
+                        step === 1 ? (
+                            <Button variant={"outline"}>Cancel</Button>
+                        ) : (
+                            step === 2 &&
+                            success && (
+                                <Button variant={"outline"}>Close</Button>
                             )
-                        }
-                        action={
-                            step === 1 ? (
-                                <Button
-                                    variant={"information"}
-                                    disabled={!success}
-                                    onClick={() => setStep(2)}
-                                >
-                                    Next
-                                </Button>
-                            ) : undefined
-                        }
-                    />
-                </form>
-            </Form>
-        </Panel>
+                        )
+                    }
+                    action={
+                        step === 1 ? (
+                            <Button
+                                variant={"information"}
+                                disabled={!success}
+                                onClick={() => setStep(2)}
+                            >
+                                Next
+                            </Button>
+                        ) : undefined
+                    }
+                />
+            </form>
+        </Form>
     );
 }
 
