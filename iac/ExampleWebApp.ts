@@ -16,8 +16,13 @@ export function ExampleAppStack({ stack }: StackContext) {
     }
 
     // The configs required to run the app
-    const { sessionEncryptionKey, mongoExampleUri, nexusUrl, adminPassword } =
-        use(ConfigStack);
+    const {
+        sessionEncryptionKey,
+        mongoExampleUri,
+        nexusUrl,
+        adminPassword,
+        worldNewsApiKey,
+    } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
         mongoExampleUri,
@@ -64,10 +69,26 @@ export function ExampleAppStack({ stack }: StackContext) {
 
     // Declare the next js site on news-paper.xyz
     // Use it for the ETH-CC demo
-    const newsSite = new NextjsSite(stack, "walletExampleEthCC", {
+    const ethCCDemo = new NextjsSite(stack, "walletExampleEthCC", {
         path: "example/wallet-ethcc",
         // Bind to the configs
         bind: [nexusUrl],
+        openNextVersion: "3.0.6",
+        // Number of server side instance to keep warm
+        warm: 10,
+        // Set the custom domain
+        customDomain: {
+            domainName: "ethcc.news-paper.xyz",
+            hostedZone: "news-paper.xyz",
+        },
+    });
+
+    // Declare the next js site on news-paper.xyz
+    // Use it for the ETH-CC demo
+    const newsInteractionDemo = new NextjsSite(stack, "newsInteractionDemo", {
+        path: "example/news-interactions",
+        // Bind to the configs
+        bind: [nexusUrl, worldNewsApiKey, mongoExampleUri],
         openNextVersion: "3.0.6",
         // Number of server side instance to keep warm
         warm: 10,
@@ -80,6 +101,7 @@ export function ExampleAppStack({ stack }: StackContext) {
 
     stack.addOutputs({
         ExampleSiteUrl: exampleSite.url,
-        NewsSiteUrl: newsSite.url,
+        NewsSiteUrl: ethCCDemo.url,
+        NewsInteractionSiteUrl: newsInteractionDemo.url,
     });
 }

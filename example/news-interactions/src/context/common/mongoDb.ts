@@ -13,6 +13,6 @@ export const getMongoDb = DI.registerAndExposeGetter({
         // Connect to the database
         await client.connect();
         // and then connect to the poc database
-        return client.db("news-demo");
+        return client.db("poc-example");
     },
 });

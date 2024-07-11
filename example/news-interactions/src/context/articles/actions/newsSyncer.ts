@@ -11,6 +11,7 @@ export async function synchroniseNews() {
 
     // Get the latest published date, it's yesterday or sooner exit
     const latestNewsDate = await newsRepository.getLatestNewsDate();
+    console.log("Synchronising the news", { latestNewsDate });
     if (latestNewsDate) {
         const maxSyncDate = new Date();
         maxSyncDate.setHours(0, 0, 0, 0);
@@ -32,8 +33,8 @@ export async function synchroniseNews() {
         url: news.url,
         image: news.image,
         publishDate: new Date(news.publish_date),
-        category: news.catgory,
-        sourceCountry: news.source_country,
+        category: news.catgory?.toLowerCase(),
+        sourceCountry: news.source_country.toUpperCase(),
     }));
 
     // Create the news

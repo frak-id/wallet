@@ -26,6 +26,8 @@ export async function getLatestNews({
         summary: doc.summary,
         image: doc.image,
         sourceCountry: doc.sourceCountry,
+        author: doc.author,
+        publishDate: doc.publishDate,
     }));
 }
 
@@ -48,6 +50,8 @@ export async function getNewsById(id: string): Promise<FullNews | null> {
         summary: document.summary,
         image: document.image,
         sourceCountry: document.sourceCountry,
+        author: document.author,
+        publishDate: document.publishDate,
         text: document.text,
         url: document.url,
     };
