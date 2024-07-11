@@ -9,7 +9,7 @@ import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import { AlertDialogArticle } from "@/module/history/component/AlertDialogArticle";
 import { DrawerArticle } from "@/module/history/component/DrawerArticle";
 import type { ArticleUnlockWithFrontData } from "@/types/HistoryItem";
-import { useMediaQuery } from "@uidotdev/usehooks";
+import { useMediaQuery } from "@module/hook/useMediaQuery";
 import { BookText } from "lucide-react";
 import Image from "next/image";
 import styles from "./index.module.css";

@@ -9,7 +9,7 @@ import { AlertDialogArticle } from "@/module/history/component/AlertDialogArticl
 import { DrawerArticle } from "@/module/history/component/DrawerArticle";
 import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
 import type { FrkReceived as FrkReceivedType } from "@/types/HistoryItem";
-import { useMediaQuery } from "@uidotdev/usehooks";
+import { useMediaQuery } from "@module/hook/useMediaQuery";
 import { HandCoins } from "lucide-react";
 
 type ArticleUnlockProps = {

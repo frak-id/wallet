@@ -8,32 +8,40 @@ import { Laptop } from "@/assets/icons/Laptop";
 import { Message } from "@/assets/icons/Message";
 import { Users } from "@/assets/icons/Users";
 import { Wallet } from "@/assets/icons/Wallet";
-import { NavigationCampaigns } from "@/module/common/component/NavigationCampaigns";
 import { mergeElement } from "@module/utils/mergeElement";
-import { useMediaQuery } from "@uidotdev/usehooks";
 import { cx } from "class-variance-authority";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 
-export function Navigation() {
-    const isMobile = useMediaQuery("(max-width : 768px)");
+/**
+ * Import NavigationCampaignsSwitcher component dynamically to avoid loading it on the server side
+ * due to the use of useMediaQuery hook
+ */
+const NavigationCampaignsSwitcher = dynamic(
+    () =>
+        import("@/module/common/component/NavigationCampaignsSwitcher").then(
+            (mod) => mod.NavigationCampaignsSwitcher
+        ),
+    {
+        ssr: false,
+        loading: () => (
+            <NavigationItem url={"/campaigns/list"} disabled={true}>
+                <NavigationLabel icon={<Laptop />}>Campaigns</NavigationLabel>
+            </NavigationItem>
+        ),
+    }
+);
 
+export function Navigation() {
     return (
         <nav className={styles.navigation}>
             <ul className={styles.navigation__list}>
                 <NavigationItem url={"/dashboard"}>
                     <NavigationLabel icon={<Home />}>Dashboard</NavigationLabel>
                 </NavigationItem>
-                {isMobile ? (
-                    <NavigationItem url={"/campaigns/list"}>
-                        <NavigationLabel icon={<Laptop />}>
-                            Campaigns
-                        </NavigationLabel>
-                    </NavigationItem>
-                ) : (
-                    <NavigationCampaigns />
-                )}
+                <NavigationCampaignsSwitcher />
                 <NavigationItem url={"/members"} disabled={true}>
                     <NavigationLabel icon={<Users />}>Members</NavigationLabel>
                 </NavigationItem>
@@ -132,7 +140,7 @@ export function SubNavigationItem({
     );
 }
 
-function NavigationLabel({
+export function NavigationLabel({
     icon,
     children,
 }: PropsWithChildren<{ icon: ReactNode }>) {

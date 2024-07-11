@@ -7,7 +7,7 @@ import {
 import { Title } from "@/module/common/component/Title";
 import { SessionItem } from "@/module/wallet-connect/component/SessionsConnected/SessionItem";
 import { useWalletConnectSessions } from "@/module/wallet-connect/hook/useWalletConnectSessions";
-import { useMediaQuery } from "@uidotdev/usehooks";
+import { useMediaQuery } from "@module/hook/useMediaQuery";
 import { first } from "radash";
 import { type PropsWithChildren, type ReactNode, useMemo } from "react";
 import styles from "./index.module.css";

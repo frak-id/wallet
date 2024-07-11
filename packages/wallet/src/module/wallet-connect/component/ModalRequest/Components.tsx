@@ -5,8 +5,8 @@ import styles from "@/module/wallet-connect/component/ModalRequest/index.module.
 import { useWalletConnect } from "@/module/wallet-connect/provider/WalletConnectProvider";
 import type { WalletConnectRequestArgs } from "@/module/wallet-connect/types/event";
 import { ButtonRipple } from "@module/component/ButtonRipple";
+import { useMediaQuery } from "@module/hook/useMediaQuery";
 import { useMutation } from "@tanstack/react-query";
-import { useMediaQuery } from "@uidotdev/usehooks";
 import type { Verify } from "@walletconnect/types";
 import type { SignClientTypes } from "@walletconnect/types/dist/types/sign-client/client";
 import { getSdkError } from "@walletconnect/utils";
