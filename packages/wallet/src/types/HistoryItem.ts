@@ -24,6 +24,7 @@ export type ArticleUnlock = Readonly<{
 
 /**
  * Represent an article unlocking history item
+ * todo: to be deleted once front updated
  */
 export type FrkReceived = Readonly<{
     key: "frk-received";
@@ -35,6 +36,7 @@ export type FrkReceived = Readonly<{
     receivedAmount: string;
 }>;
 
+/// todo: to be deleted once front updated
 export type FrkSent = Readonly<{
     key: "frk-sent";
     txHash: Hex;
@@ -55,6 +57,7 @@ export type ArticleUnlockWithFrontData = ArticleUnlock & {
     provider?: ArticleProvider;
 };
 
+/// todo: to be deleted once fornt updated, can be just article unlock
 export type HistoryItemWithFrontData =
     | ArticleUnlockWithFrontData
     | FrkReceived
