@@ -19,6 +19,7 @@ import { type Address, formatEther, toHex } from "viem";
 import { getBlock, getLogs } from "viem/actions";
 
 /**
+ * todo: to be deleted once front updated
  * Get am account full history
  *   - In a non POC world, this shouldn't use getLogs, but instead use an indexed database like thegraph or pounder.sh
  * @param account

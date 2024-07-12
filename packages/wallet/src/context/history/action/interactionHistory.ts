@@ -5,7 +5,7 @@ import { unstable_cache } from "next/cache";
 import type { Address } from "viem";
 
 const QUERY = gql(`
-query RewardHistoryQuery($wallet: String!) {
+query InteractionHistoryQuery($wallet: String!) {
   pressEvents(limit: 50, where: {user: $wallet}) {
     items {
       data
