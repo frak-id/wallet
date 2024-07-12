@@ -1,3 +1,5 @@
+"use server";
+
 import type { InteractionHistory } from "@/types/InteractionHistory";
 import { getClient } from "@frak-labs/nexus-dashboard/src/context/indexer/client";
 import { gql } from "@urql/core";

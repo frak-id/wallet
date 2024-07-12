@@ -3,14 +3,6 @@
     width: 100%;
 }
 
-.alertDialogArticle + div {
-    margin-top: 32px;
-}
-
-.alertDialogArticle:has(+ div) {
-    margin-top: 32px;
-}
-
-.alertDialogArticle:first-child {
-    margin-top: 0;
+.alertDialogArticle + .alertDialogArticle {
+    margin-top: 20px;
 }

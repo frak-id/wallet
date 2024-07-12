@@ -1,28 +1,49 @@
 "use client";
 
-import { Skeleton } from "@/module/common/component/Skeleton";
-import { ArticleUnlock } from "@/module/history/component/ArticleUnlock";
-import { FrkReceived } from "@/module/history/component/FrkReceived";
-import { FrkSent } from "@/module/history/component/FrkSent";
-import { useGetHistory } from "@/module/history/hook/useGetHistory";
-import { Fragment } from "react";
+import { Panel } from "@/module/common/component/Panel";
+import { InteractionHistory } from "@/module/history/component/InteractionHistory";
+import { RewardHistory } from "@/module/history/component/RewardHistory";
+import { UnlockHistory } from "@/module/history/component/UnlockHistory";
+import { atom, useAtom, useAtomValue } from "jotai";
+import type { PropsWithChildren } from "react";
+import styles from "./index.module.css";
+
+type HistoryType = "unlock" | "rewards" | "interaction";
+
+const historyTypeAtom = atom<HistoryType | undefined>(undefined);
 
 export function History() {
-    const { history } = useGetHistory();
+    const type = useAtomValue(historyTypeAtom);
+    return (
+        <>
+            <Panel className={styles.history__panel}>
+                <nav className={styles.history__nav}>
+                    <ButtonType currentType={"unlock"}>Unlock</ButtonType> |{" "}
+                    <ButtonType currentType={"rewards"}>Rewards</ButtonType> |{" "}
+                    <ButtonType currentType={"interaction"}>
+                        Interaction
+                    </ButtonType>
+                </nav>
+            </Panel>
+            {type === "unlock" && <UnlockHistory />}
+            {type === "rewards" && <RewardHistory />}
+            {type === "interaction" && <InteractionHistory />}
+        </>
+    );
+}
 
-    if (!history) return <Skeleton count={3} height={110} />;
-
-    return history?.map((historyItem) => (
-        <Fragment key={`${historyItem.key} ${historyItem.txHash}`}>
-            {historyItem.key === "article-unlock" && (
-                <ArticleUnlock article={historyItem} />
-            )}
-            {historyItem.key === "frk-received" && (
-                <FrkReceived frkReceived={historyItem} />
-            )}
-            {historyItem.key === "frk-sent" && (
-                <FrkSent frkSent={historyItem} />
-            )}
-        </Fragment>
-    ));
+function ButtonType({
+    currentType,
+    children,
+}: PropsWithChildren<{ currentType: HistoryType }>) {
+    const [type, setType] = useAtom(historyTypeAtom);
+    return (
+        <button
+            type="button"
+            className={`${currentType === type ? styles.history__active : ""} button`}
+            onClick={() => setType(currentType)}
+        >
+            {children}
+        </button>
+    );
 }

@@ -1,0 +1,19 @@
+.history__panel {
+    margin-bottom: 20px;
+}
+
+.history__nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: var(--frak-color-grayText);
+}
+
+:root[data-theme="dark"] .history__active {
+    color: var(--frak-color-white);
+}
+
+:root[data-theme="light"] .history__active {
+    color: var(--frak-color-black);
+}

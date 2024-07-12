@@ -4,7 +4,7 @@ import { paidItemUnlockedEventAbi } from "@/context/blockchain/abis/event-abi";
 import { getViemClientFromChainId } from "@/context/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getBlockDate } from "@/context/history/utils/blockDate";
-import type { ArticleUnlock } from "@/types/HistoryItem";
+import type { ArticleUnlockHistory } from "@/types/ArticleUnlockHistory";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { unstable_cache } from "next/cache";
 import { parallel, sort } from "radash";
@@ -32,7 +32,7 @@ async function _getUnlockHistory({
     });
 
     // Map them to the ArticleUnlock type
-    const unlockedItems: ArticleUnlock[] = await parallel(
+    const unlockedItems: ArticleUnlockHistory[] = await parallel(
         2,
         unlockedItemsEvents,
         async (log) => {

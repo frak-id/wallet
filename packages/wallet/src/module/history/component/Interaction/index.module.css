@@ -1,0 +1,27 @@
+.interaction__text {
+    padding-left: 40px;
+}
+
+.interaction__title {
+    color: #7c7b8c;
+    font-weight: 400;
+}
+
+.interaction__titleText {
+    line-height: 1.4em;
+}
+
+.interaction__titleText > span {
+    display: block;
+}
+
+.interaction__provider {
+    color: var(--frak-text-color);
+}
+
+.interaction__image {
+    display: block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}

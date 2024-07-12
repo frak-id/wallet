@@ -8,15 +8,15 @@ import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import { AlertDialogArticle } from "@/module/history/component/AlertDialogArticle";
 import { DrawerArticle } from "@/module/history/component/DrawerArticle";
 import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
-import type { FrkReceived as FrkReceivedType } from "@/types/HistoryItem";
+import type { RewardHistory } from "@/types/RewardHistory";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
-import { HandCoins } from "lucide-react";
+import { HandCoins, Handshake } from "lucide-react";
 
-type ArticleUnlockProps = {
-    frkReceived: FrkReceivedType;
+type RewardProps = {
+    reward: RewardHistory;
 };
 
-export function FrkReceived({ frkReceived }: ArticleUnlockProps) {
+export function Reward({ reward }: RewardProps) {
     // Convert the amount to euro
     const { convertToEuro, isEnabled } = useConvertToEuro();
 
@@ -27,29 +27,30 @@ export function FrkReceived({ frkReceived }: ArticleUnlockProps) {
     const Component = isDesktop ? AlertDialogArticle : DrawerArticle;
 
     const amount = isEnabled
-        ? convertToEuro(frkReceived.receivedAmount)
-        : formatFrk(Number(frkReceived.receivedAmount));
+        ? convertToEuro(reward.amount)
+        : formatFrk(Number(reward.amount));
+    const label = reward.type === "claim" ? "claimed" : "added";
+    const icon = reward.type === "claim" ? <Handshake /> : <HandCoins />;
 
     return (
         <Component
             trigger={
                 <Panel size={"small"}>
-                    <Title icon={<HandCoins />}>
-                        <strong>{amount}</strong> received
+                    <Title icon={icon}>
+                        <strong>{amount}</strong> {label}
                     </Title>
                 </Panel>
             }
         >
             <>
-                <Title icon={<HandCoins />}>
-                    <strong>{amount}</strong> received
+                <Title icon={icon}>
+                    <strong>{amount}</strong> {label}
                 </Title>
                 <Row withIcon={true}>
-                    From:{" "}
-                    <ExplorerLink wallet={true} hash={frkReceived.fromHash} />
+                    Date: {new Date(reward.timestamp * 1000).toLocaleString()}
                 </Row>
                 <Row withIcon={true}>
-                    Transaction: <ExplorerLink hash={frkReceived.txHash} />
+                    Transaction: <ExplorerLink hash={reward.txHash} />
                 </Row>
             </>
         </Component>

@@ -1,3 +1,5 @@
+"use server";
+
 import type { RewardHistory } from "@/types/RewardHistory";
 import { getClient } from "@frak-labs/nexus-dashboard/src/context/indexer/client";
 import { gql } from "@urql/core";
