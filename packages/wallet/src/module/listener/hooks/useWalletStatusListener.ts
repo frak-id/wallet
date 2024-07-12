@@ -99,8 +99,8 @@ export function useWalletStatusListener() {
         // Format the interaction session if present
         const formattedInteractionSession = interactionSession
             ? {
-                  startTimestamp: interactionSession.sessionStart.getTime(),
-                  endTimestamp: interactionSession.sessionEnd.getTime(),
+                  startTimestamp: new Date(interactionSession.sessionStart).getTime(),
+                  endTimestamp: new Date(interactionSession.sessionEnd).getTime(),
               }
             : undefined;
 
