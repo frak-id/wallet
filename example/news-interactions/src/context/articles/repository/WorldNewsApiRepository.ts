@@ -7,14 +7,13 @@ class WorldNewsApiRepository {
      * Get the articles from yesterday
      */
     public async getYesterdayArticles() {
-        // Get the dte for yesterday
-        const yesterday = new Date();
-        yesterday.setHours(0, 0, 0, 0);
-        yesterday.setDate(yesterday.getDate() - 1);
+        // Get the date 6 hours ago (can be negative)
+        const sixHoursAgo = new Date();
+        sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
 
-        // Get the dte for yesterday
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+        // Get the date 6 hours ago (can be negative)
+        const eighteenHoursAgo = new Date();
+        eighteenHoursAgo.setHours(eighteenHoursAgo.getHours() - 24);
 
         // Build the url we will query
         const url = new URL("https://api.worldnewsapi.com/search-news");
@@ -25,12 +24,14 @@ class WorldNewsApiRepository {
         url.searchParams.append("max-sentiment", "1");
         url.searchParams.append(
             "earliest-publish-date",
-            yesterday.toISOString()
+            this.formatDate(eighteenHoursAgo)
         );
         url.searchParams.append(
             "latest-publish-date",
-            todayStart.toISOString()
+            this.formatDate(sixHoursAgo)
         );
+        url.searchParams.append("sort", "publish-time");
+        url.searchParams.append("sort-direction", "DESC");
 
         // Query it
         const response = await fetch(url.toString());
@@ -38,6 +39,10 @@ class WorldNewsApiRepository {
 
         // And return our data
         return data.news;
+    }
+
+    formatDate(date: Date) {
+        return date.toISOString().replace("T", " ").replace("Z", "");
     }
 }
 

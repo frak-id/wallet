@@ -1,3 +1,4 @@
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { use } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
@@ -97,6 +98,13 @@ export function ExampleAppStack({ stack }: StackContext) {
             domainName: "news-paper.xyz",
             hostedZone: "news-paper.xyz",
         },
+        // Allow llm calls
+        permissions: [
+            new PolicyStatement({
+                actions: ["bedrock:InvokeModel"],
+                resources: ["*"],
+            }),
+        ],
     });
 
     stack.addOutputs({
