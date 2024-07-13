@@ -12,7 +12,9 @@ import { useNexusContext } from "../utils/useNexusContext";
  *   -> And automatically set the referral context in the url
  * @param contentId
  */
-export function usePressReferralInteraction({ contentId }: { contentId: Hex }) {
+export function usePressReferralInteraction({
+    contentId,
+}: { contentId?: Hex } = {}) {
     // Get the current nexus context
     const { nexusContext, updateContextAsync } = useNexusContext();
 

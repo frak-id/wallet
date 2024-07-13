@@ -52,6 +52,8 @@ const frakWalletSdkConfig = {
     metadata: {
         name: "News interaction - Frak",
     },
+    // Specify domain for valid test on localhost
+    domain: "news-paper.xyz",
 };
 
 export function RootProvider({ children }: PropsWithChildren) {
