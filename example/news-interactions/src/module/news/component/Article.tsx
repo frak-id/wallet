@@ -75,7 +75,16 @@ export function NewsArticleComponent({ articleId }: { articleId: string }) {
 
             <Markdown>{article.text.replace("```markdown", "")}</Markdown>
 
-            <div ref={footerRef}>Footer</div>
+            <footer ref={footerRef}>
+                News provided by{" "}
+                <a
+                    href={"https://worldnewsapi.com/"}
+                    target={"_blank"}
+                    rel={"noreferrer"}
+                >
+                    WorldNewsApi
+                </a>
+            </footer>
         </div>
     );
 }
