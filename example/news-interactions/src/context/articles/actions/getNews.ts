@@ -1,26 +1,47 @@
 "use server";
 
 import { synchroniseNews } from "@/context/articles/actions/newsSyncer";
+import type { NewsDocument } from "@/context/articles/dto/NewsDocument";
 import { getNewsRepository } from "@/context/articles/repository/NewsRepository";
 import type { FullNews, LightNews } from "@/types/News";
-import { ObjectId } from "mongodb";
+import { ObjectId, type WithId } from "mongodb";
 
 /**
  * Get the latest news
- * @param limit
- * @param offset
  */
-export async function getLatestNews({
-    limit,
-    offset,
-}: { limit: number; offset: number }): Promise<LightNews[]> {
+export async function getNewsForHome() {
     // Do a synchronisation if needed
     await synchroniseNews();
 
     // Get the repository and fetch the news
     const repository = await getNewsRepository();
-    const documents = await repository.getLatestNews({ limit, offset });
-    return documents.map((doc) => ({
+
+    // Get the 3 latest news
+    const latestNews = await repository.getLatestNews({ limit: 3, offset: 0 });
+
+    // Get the 5 most positive news
+    const positiveNews = await repository.getMostPositiveNews({
+        limit: 5,
+        offset: 0,
+    });
+    const featuredNews = await repository.getMostPositiveNews({
+        limit: 5,
+        offset: 5,
+    });
+
+    // Get a random news
+    const randomNews = await repository.getRandomNews();
+
+    return {
+        positives: positiveNews.map(newsDocumentToLightNews),
+        featured: featuredNews.map(newsDocumentToLightNews),
+        latest: latestNews.map(newsDocumentToLightNews),
+        quickByte: newsDocumentToLightNews(randomNews),
+    };
+}
+
+function newsDocumentToLightNews(doc: WithId<NewsDocument>): LightNews {
+    return {
         id: doc._id.toHexString(),
         title: doc.title,
         summary: doc.summary,
@@ -28,7 +49,7 @@ export async function getLatestNews({
         sourceCountry: doc.sourceCountry,
         author: doc.author,
         publishDate: doc.publishDate,
-    }));
+    };
 }
 
 /**
