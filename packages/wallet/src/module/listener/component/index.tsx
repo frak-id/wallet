@@ -27,7 +27,7 @@ export function ListenerUI() {
     const onGetArticleUnlockOptions = useGetArticleUnlockOptionsListener();
 
     // Hook to listen for the gating unlock status of an article
-    const { onArticleUnlockStatusListenerRequest } =
+    const onArticleUnlockStatusListenerRequest =
         useArticleUnlockStatusListener();
 
     // Hook used when a dashboard action is requested
