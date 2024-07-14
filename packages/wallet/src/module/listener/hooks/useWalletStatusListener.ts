@@ -1,16 +1,14 @@
+import { getSessionStatus } from "@/context/interaction/action/interactionSession";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type { Session } from "@/types/Session";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
-    RpcResponse,
     WalletStatusReturnType,
 } from "@frak-labs/nexus-sdk/core";
-import { useAtom } from "jotai";
-import { atom, useAtomValue } from "jotai/index";
-import { useCallback, useEffect } from "react";
+import { jotaiStore } from "@module/atoms/store";
+import { useCallback } from "react";
 
 type OnListenToWallet = IFrameRequestResolver<
     Extract<
@@ -20,35 +18,9 @@ type OnListenToWallet = IFrameRequestResolver<
 >;
 
 /**
- * Atom representing the current wallet listener
- */
-const walletListenerEmitterAtom = atom<{
-    emitter: (
-        response: RpcResponse<IFrameRpcSchema, "frak_listenToWalletStatus">
-    ) => Promise<void>;
-} | null>(null);
-
-/**
  * Hook use to listen to the wallet status
  */
 export function useWalletStatusListener() {
-    /**
-     * The current wallet status state
-     */
-    const [listener, setListener] = useAtom(walletListenerEmitterAtom);
-
-    /**
-     * Get the current user session
-     */
-    const session = useAtomValue(sessionAtom);
-
-    /**
-     * Get the current interaction session status
-     */
-    const { data: interactionSession } = useInteractionSessionStatus({
-        address: session?.wallet?.address,
-    });
-
     /**
      * The function that will be called when a wallet status is requested
      * @param _
@@ -56,65 +28,57 @@ export function useWalletStatusListener() {
      */
     const onWalletListenRequest: OnListenToWallet = useCallback(
         async (_, emitter) => {
-            // Save our emitter, this will trigger session and balance fetching
-            setListener({ emitter });
+            // Fetch the current session directly
+            const currentSession = jotaiStore.get(sessionAtom);
+
+            // Build the wallet status and emit it
+            const walletStatus = await buildWalletStatus(currentSession);
+
+            // And emit it
+            await emitter({ result: walletStatus });
         },
-        [setListener]
+        []
     );
-
-    /**
-     * Send the updated state every time we got one
-     */
-    useEffect(() => {
-        // If we don't have an emitter, early exit
-        if (!listener) return;
-
-        // Build the wallet status and emit it
-        const walletStatus = buildWalletStatus(
-            session,
-            interactionSession ?? undefined
-        );
-        listener.emitter({ result: walletStatus });
-    }, [listener, interactionSession, session]);
 
     /**
      * Build the wallet status
      */
-    function buildWalletStatus(
-        session?: Session | null,
-        interactionSession?: {
-            sessionStart: Date;
-            sessionEnd: Date;
-        }
-    ): WalletStatusReturnType {
-        const wallet = session?.wallet?.address;
+    const buildWalletStatus = useCallback(
+        async (session?: Session | null): Promise<WalletStatusReturnType> => {
+            const wallet = session?.wallet?.address;
 
-        // If no wallet present, just return the not logged in status
-        if (!wallet) {
+            // If no wallet present, just return the not logged in status
+            if (!wallet) {
+                return {
+                    key: "not-connected",
+                };
+            }
+            // Otherwise, fetch the interaction session status
+            const interactionSession = await getSessionStatus({
+                wallet,
+            });
+
+            // Format the interaction session if present
+            const formattedInteractionSession = interactionSession
+                ? {
+                      startTimestamp: new Date(
+                          interactionSession.sessionStart
+                      ).getTime(),
+                      endTimestamp: new Date(
+                          interactionSession.sessionEnd
+                      ).getTime(),
+                  }
+                : undefined;
+
+            // Otherwise, return hte logged in status
             return {
-                key: "not-connected",
+                key: "connected",
+                wallet,
+                interactionSession: formattedInteractionSession,
             };
-        }
-
-        // Format the interaction session if present
-        const formattedInteractionSession = interactionSession
-            ? {
-                  startTimestamp: new Date(
-                      interactionSession.sessionStart
-                  ).getTime(),
-                  endTimestamp: new Date(
-                      interactionSession.sessionEnd
-                  ).getTime(),
-              }
-            : undefined;
-
-        // Otherwise, return hte logged in status
-        return {
-            key: "connected",
-            wallet,
-            interactionSession: formattedInteractionSession,
-        };
-    }
+        },
+        []
+    );
 
     return {
         onWalletListenRequest,

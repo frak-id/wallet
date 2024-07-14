@@ -1,12 +1,14 @@
+import { frakChainId } from "@/context/blockchain/provider";
 import { getArticlePricesForUser } from "@/context/paywall/action/getPrices";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { getErc20Balance } from "@/context/tokens/action/getBalance";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
-import { useAtomValue } from "jotai";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { jotaiStore } from "@module/atoms/store";
 import { useCallback } from "react";
 import { toHex } from "viem";
 
@@ -21,16 +23,6 @@ type OnGetArticleUnlockOptions = IFrameRequestResolver<
  * Hook use to answer the get article unlock options request
  */
 export function useGetArticleUnlockOptionsListener() {
-    // Fetch the current user session
-    const session = useAtomValue(sessionAtom);
-
-    /**
-     * Listen to the current session FRK balance if needed
-     */
-    const { rawBalance, refreshBalance } = useFrkBalance({
-        wallet: session?.wallet?.address,
-    });
-
     /**
      * The function that will be called when the unlock options for an article is requested
      * @param _
@@ -48,6 +40,9 @@ export function useGetArticleUnlockOptionsListener() {
                 return;
             }
 
+            // Get the current user session
+            const session = jotaiStore.get(sessionAtom);
+
             // Fetch the prices
             const prices = await getArticlePricesForUser({
                 contentId,
@@ -55,8 +50,18 @@ export function useGetArticleUnlockOptionsListener() {
                 address: session?.wallet?.address ?? undefined,
             });
 
-            // Fetch the balance if not already here
-            const balance = rawBalance ?? (await refreshBalance()).data;
+            // If we don't have any session, return
+            if (!session) {
+                await emitter({ result: { prices: prices } });
+                return;
+            }
+
+            // Otherwise, fetch the balance
+            const balance = await getErc20Balance({
+                wallet: session.wallet.address,
+                chainId: frakChainId,
+                token: addresses.paywallToken,
+            });
 
             // Send the prices
             await emitter({
@@ -68,7 +73,7 @@ export function useGetArticleUnlockOptionsListener() {
                 },
             });
         },
-        [session?.wallet?.address, rawBalance, refreshBalance]
+        []
     );
 
     return { onGetArticleUnlockOptions };

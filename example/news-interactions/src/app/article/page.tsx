@@ -1,9 +1,18 @@
 "use client";
 import { NewsArticleComponent } from "@/module/news/component/Article";
+import { Spinner } from "@module/component/Spinner";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 
-export default function NewsArticlePage() {
+export default function NewsArticlePageWrapper() {
+    return (
+        <Suspense fallback={<Spinner />}>
+            <NewsArticlePage />
+        </Suspense>
+    );
+}
+
+function NewsArticlePage() {
     const searchParams = useSearchParams();
     const articleId = useMemo(() => searchParams.get("id"), [searchParams.get]);
 
