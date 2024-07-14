@@ -61,7 +61,6 @@ export function useArticleUnlockStatusListener(): OnListenToArticleUnlockStatus 
     } = useOnChainArticleUnlockStatus({
         contentId: listenerParam?.contentId,
         articleId: listenerParam?.articleId,
-        queryOptions: {},
     });
 
     // Just a syncer + mapper between tanstack and jotai
