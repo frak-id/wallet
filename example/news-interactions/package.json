@@ -1,0 +1,43 @@
+{
+  "name": "@frak-labs-example/news-interactions",
+  "version": "0.1.8",
+  "description": "Demo of a news paper website using the Frak SDK to sniff user interactions",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "sst bind PORT=3004 next dev --turbo",
+    "build": "sst bind next build --experimental-turbo",
+    "start": "sst bind next start",
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --write .",
+    "deploy": "sst deploy --stage prod"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.614.0",
+    "@frak-labs/nexus-sdk": "workspace:*",
+    "@frak-labs/shared": "workspace:*",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@tanstack/react-query": "^5.49.2",
+    "@tanstack/store": "^0.5.3",
+    "mongodb": "^6.8.0",
+    "next": "14.2.4",
+    "radash": "^12.1.0",
+    "raw-loader": "^4.0.2",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-loading-skeleton": "^3.4.0",
+    "react-markdown": "^9.0.1",
+    "use-local-storage-state": "^19.3.1",
+    "viem": "^2.16.5"
+  },
+  "devDependencies": {
+    "@types/humanize-duration": "^3.27.4",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "sst": "2.43.3",
+    "typescript": "^5"
+  }
+}

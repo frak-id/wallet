@@ -106,11 +106,9 @@ export function createIFrameNexusClient({
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
             // Decompress the message
-            console.log("Will try to decompress", { message, args });
             const decompressed = await decompressDataAndCheckHash<
                 RpcResponse<IFrameRpcSchema>
             >(message.data);
-            console.log("Decompressed listening data", { args, decompressed });
             // Transmit the result if it's a success
             if (decompressed.result) {
                 // @ts-ignore

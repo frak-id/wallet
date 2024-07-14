@@ -1,6 +1,6 @@
 import type { ContentDocument } from "@/context/article/dto/ContentDocument";
-import { DI } from "@/context/common/di";
 import { getMongoDb } from "@/context/common/mongoDb";
+import { DI } from "@frak-labs/shared/context/utils/di";
 import type { Collection } from "mongodb";
 import type { Hex } from "viem";
 
