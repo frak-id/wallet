@@ -4,7 +4,7 @@ import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
-import { useSetAtom } from "jotai";
+import { jotaiStore } from "@module/atoms/store";
 import { useCallback } from "react";
 
 type OnAuthenticateRequest = IFrameRequestResolver<
@@ -17,34 +17,25 @@ type OnAuthenticateRequest = IFrameRequestResolver<
 /**
  * Hook used for the SIWE authentication of a user
  */
-export function useSiweAuthenticateListener() {
-    const setDisplayedRequest = useSetAtom(modalDisplayedRequestAtom);
-
+export function useSiweAuthenticateListener(): OnAuthenticateRequest {
     /**
      * The function that will be called when a dashboard action is requested
      * @param request
      * @param emitter
      */
-    const onSiweAuthenticateRequest: OnAuthenticateRequest = useCallback(
-        async (request, emitter) => {
-            // Extract the params
-            const siweMessage = request.params[0];
-            const context = request.params[1];
+    return useCallback(async (request, emitter) => {
+        // Extract the params
+        const siweMessage = request.params[0];
+        const context = request.params[1];
 
-            // Build the msg to sign and send emitter to the dialog
-            setDisplayedRequest({
-                type: "auth",
-                args: {
-                    siwe: siweMessage,
-                    context,
-                },
-                emitter,
-            });
-        },
-        [setDisplayedRequest]
-    );
-
-    return {
-        onSiweAuthenticateRequest,
-    };
+        // Set the request in the jotai store
+        jotaiStore.set(modalDisplayedRequestAtom, {
+            type: "auth",
+            args: {
+                siwe: siweMessage,
+                context,
+            },
+            emitter,
+        });
+    }, []);
 }

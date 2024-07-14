@@ -31,10 +31,10 @@ export function ListenerUI() {
         useArticleUnlockStatusListener();
 
     // Hook used when a dashboard action is requested
-    const { onSendTransactionRequest } = useSendTransactionListener();
+    const onSendTransactionRequest = useSendTransactionListener();
 
     // Hook used when a dashboard action is requested
-    const { onSiweAuthenticateRequest } = useSiweAuthenticateListener();
+    const onSiweAuthenticateRequest = useSiweAuthenticateListener();
 
     // Hook used when a dashboard action is requested
     const onInteractionRequest = useSendInteractionListener();
