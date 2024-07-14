@@ -47,7 +47,6 @@ export function InjectReferralPopupComponent({
     if (
         !(referralState && ["no-wallet", "no-session"].includes(referralState))
     ) {
-        console.log(`Not showing referral popup, state: ${referralState}`);
         return null;
     }
 

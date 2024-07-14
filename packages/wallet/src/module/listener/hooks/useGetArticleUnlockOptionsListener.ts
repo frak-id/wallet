@@ -22,59 +22,52 @@ type OnGetArticleUnlockOptions = IFrameRequestResolver<
 /**
  * Hook use to answer the get article unlock options request
  */
-export function useGetArticleUnlockOptionsListener() {
+export function useGetArticleUnlockOptionsListener(): OnGetArticleUnlockOptions {
     /**
      * The function that will be called when the unlock options for an article is requested
      * @param _
      * @param emitter
      */
-    const onGetArticleUnlockOptions: OnGetArticleUnlockOptions = useCallback(
-        async (params, emitter) => {
-            // Extract the contentId and articleId
-            const contentId = params.params[0];
-            const articleId = params.params[1];
+    return useCallback(async (params, emitter) => {
+        // Extract the contentId and articleId
+        const contentId = params.params[0];
+        const articleId = params.params[1];
 
-            // If no contentId or articleId, return
-            if (!(contentId && articleId)) {
-                await emitter({ result: { prices: [] } });
-                return;
-            }
+        // If no contentId or articleId, return
+        if (!(contentId && articleId)) {
+            await emitter({ result: { prices: [] } });
+            return;
+        }
 
-            // Get the current user session
-            const session = jotaiStore.get(sessionAtom);
+        // Get the current user session
+        const session = jotaiStore.get(sessionAtom);
 
-            // Fetch the prices
-            const prices = await getArticlePricesForUser({
-                contentId,
-                articleId,
-                address: session?.wallet?.address ?? undefined,
-            });
+        // Fetch the prices
+        const prices = await getArticlePricesForUser({
+            contentId,
+            articleId,
+            address: session?.wallet?.address ?? undefined,
+        });
 
-            // If we don't have any session, return
-            if (!session) {
-                await emitter({ result: { prices: prices } });
-                return;
-            }
+        // If we don't have any session, return
+        if (!session) {
+            await emitter({ result: { prices: prices } });
+            return;
+        }
 
-            // Otherwise, fetch the balance
-            const balance = await getErc20Balance({
-                wallet: session.wallet.address,
-                chainId: frakChainId,
-                token: addresses.paywallToken,
-            });
+        // Otherwise, fetch the balance
+        const balance = await getErc20Balance({
+            wallet: session.wallet.address,
+            chainId: frakChainId,
+            token: addresses.paywallToken,
+        });
 
-            // Send the prices
-            await emitter({
-                result: {
-                    prices: prices,
-                    frkBalanceAsHex: balance
-                        ? toHex(BigInt(balance))
-                        : undefined,
-                },
-            });
-        },
-        []
-    );
-
-    return { onGetArticleUnlockOptions };
+        // Send the prices
+        await emitter({
+            result: {
+                prices: prices,
+                frkBalanceAsHex: balance ? toHex(BigInt(balance)) : undefined,
+            },
+        });
+    }, []);
 }
