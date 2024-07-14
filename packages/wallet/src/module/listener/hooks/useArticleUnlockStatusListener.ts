@@ -17,8 +17,9 @@ import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
+import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import { useAtomValue } from "jotai/index";
 import { waitForUserOperationReceipt } from "permissionless";
 import { useCallback, useEffect } from "react";
@@ -34,7 +35,7 @@ type OnListenToArticleUnlockStatus = IFrameRequestResolver<
 /**
  * Hook use to listen to the wallet status
  */
-export function useArticleUnlockStatusListener() {
+export function useArticleUnlockStatusListener(): OnListenToArticleUnlockStatus {
     // Fetch the AA transports
     const { viemClient, bundlerClient } = useAAClients({
         chainId: frakChainId,
@@ -46,25 +47,9 @@ export function useArticleUnlockStatusListener() {
     const [listenerParam, setListenerParam] = useAtom(unlockStatusListenerAtom);
 
     /**
-     * Get the current user session
-     */
-    const session = useAtomValue(sessionAtom);
-
-    /**
      * The current unlock status mapped from the current listener param
      */
     const currentUnlockStatus = useAtomValue(unlockStateAtom);
-
-    /**
-     * Setter for our atom about on chain unlock status
-     * TODO: Maybe tanstack queries + jotai would be great here
-     */
-    const setOnChainUnlockStatus = useSetAtom(unlockStateFromOnChainSetterAtom);
-
-    /**
-     * Setter for the global paywall status
-     */
-    const setCurrentPaywallStatusAtom = useSetAtom(paywallStatusAtom);
 
     /**
      * Check if the user is allowed on chain
@@ -76,55 +61,12 @@ export function useArticleUnlockStatusListener() {
     } = useOnChainArticleUnlockStatus({
         contentId: listenerParam?.contentId,
         articleId: listenerParam?.articleId,
-        address: session?.wallet?.address,
     });
 
     // Just a syncer + mapper between tanstack and jotai
     useEffect(() => {
-        setOnChainUnlockStatus(onChainUnlockStatus);
-    }, [setOnChainUnlockStatus, onChainUnlockStatus]);
-
-    /**
-     * The current context (used to display real time data if a current unlock is in progress)
-     */
-    const currentPaywallClear = useSetAtom(clearCurrentStateIfMatchAtom);
-
-    /**
-     * The function that will be called when we want to listen to an article unlock status
-     * @param request
-     * @param emitter
-     */
-    const onArticleUnlockStatusListenerRequest: OnListenToArticleUnlockStatus =
-        useCallback(
-            async (request, emitter) => {
-                // Extract content id and article id
-                const contentId = request.params[0];
-                const articleId = request.params[1];
-
-                // If we got nothing, early exit
-                if (!(contentId && articleId)) {
-                    setListenerParam(null);
-                    setOnChainUnlockStatus(undefined);
-                    return;
-                }
-
-                // Reset the onchain unlock status and refetch it
-                setOnChainUnlockStatus(undefined);
-                refreshOnChainUnlockStatus();
-
-                // Otherwise, save emitter and params
-                setListenerParam({
-                    contentId,
-                    articleId,
-                    emitter,
-                });
-            },
-            [
-                setListenerParam,
-                refreshOnChainUnlockStatus,
-                setOnChainUnlockStatus,
-            ]
-        );
+        jotaiStore.set(unlockStateFromOnChainSetterAtom, onChainUnlockStatus);
+    }, [onChainUnlockStatus]);
 
     /**
      * Every time the 'currentUnlockStatus' atom is updated, emit it (if we don't have any concurrent updates)
@@ -141,6 +83,7 @@ export function useArticleUnlockStatusListener() {
         }
 
         // If we got no session, directly emit the locked state
+        const session = jotaiStore.get(sessionAtom);
         if (!session) {
             listenerParam?.emitter({
                 result: {
@@ -156,15 +99,9 @@ export function useArticleUnlockStatusListener() {
 
         // If that's a valid status, clear the paywall context
         if (currentUnlockStatus.key === "valid") {
-            currentPaywallClear();
+            jotaiStore.set(clearCurrentStateIfMatchAtom);
         }
-    }, [
-        currentUnlockStatus,
-        session,
-        listenerParam?.emitter,
-        currentPaywallClear,
-        isFetchingOnChainStatus,
-    ]);
+    }, [currentUnlockStatus, listenerParam?.emitter, isFetchingOnChainStatus]);
 
     /**
      * The additional loader params, used to listen to a user op or a tx hash
@@ -191,7 +128,7 @@ export function useArticleUnlockStatusListener() {
                     }
                 );
                 // Set the global paywall status as a success with it's user op hash
-                setCurrentPaywallStatusAtom({
+                jotaiStore.set(paywallStatusAtom, {
                     key: "success",
                     userOpHash: loaderParam.userOpHash,
                     txHash: status.receipt.transactionHash,
@@ -219,7 +156,31 @@ export function useArticleUnlockStatusListener() {
             !!bundlerClient,
     });
 
-    return {
-        onArticleUnlockStatusListenerRequest,
-    };
+    return useCallback(
+        async (request, emitter) => {
+            // Extract content id and article id
+            const contentId = request.params[0];
+            const articleId = request.params[1];
+
+            // Always reset the onchain unlock status state
+            jotaiStore.set(unlockStateFromOnChainSetterAtom, undefined);
+
+            // If we got nothing, early exit
+            if (!(contentId && articleId)) {
+                setListenerParam(null);
+                return;
+            }
+
+            // Reset the onchain unlock status and refetch it
+            refreshOnChainUnlockStatus();
+
+            // Otherwise, save emitter and params
+            setListenerParam({
+                contentId,
+                articleId,
+                emitter,
+            });
+        },
+        [setListenerParam, refreshOnChainUnlockStatus]
+    );
 }

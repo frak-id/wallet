@@ -7,8 +7,9 @@ import { AuthModal } from "@/module/listener/component/Modal/AuthModal";
 import { TransactionModal } from "@/module/listener/component/Modal/TransactionModal";
 import type { ModalEventRequestArgs } from "@/module/listener/types/ModalEvent";
 import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
-import { useAtomValue, useSetAtom } from "jotai/index";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { jotaiStore } from "@module/atoms/store";
+import { useAtomValue } from "jotai/index";
+import { useCallback, useEffect, useMemo } from "react";
 import styles from "./index.module.css";
 
 /**
@@ -36,16 +37,6 @@ function ListenerModalDialog({
     currentRequest,
 }: { currentRequest: ModalEventRequestArgs }) {
     /**
-     * The current request that is being displayed
-     */
-    const setCurrentRequest = useSetAtom(modalDisplayedRequestAtom);
-
-    /**
-     * Display state of the modal
-     */
-    const [isOpen, setIsOpen] = useState(true);
-
-    /**
      * Display the iframe
      */
     useEffect(() => {
@@ -56,17 +47,9 @@ function ListenerModalDialog({
      * Method to close the modal
      */
     const onClose = useCallback(() => {
-        setIsOpen(false);
         iFrameToggleVisibility(false);
-        setCurrentRequest(undefined);
-    }, [setCurrentRequest]);
-
-    /**
-     * Action when a modal is closed
-     */
-    const onHandle = useCallback(() => {
-        onClose();
-    }, [onClose]);
+        jotaiStore.set(modalDisplayedRequestAtom, undefined);
+    }, []);
 
     /**
      * The inner component to display
@@ -76,9 +59,7 @@ function ListenerModalDialog({
         if (currentRequest.type === "auth") {
             return {
                 title: "Nexus Wallet",
-                content: (
-                    <AuthModal args={currentRequest} onHandle={onHandle} />
-                ),
+                content: <AuthModal args={currentRequest} onHandle={onClose} />,
             };
         }
 
@@ -89,7 +70,7 @@ function ListenerModalDialog({
                 content: (
                     <TransactionModal
                         args={currentRequest}
-                        onHandle={onHandle}
+                        onHandle={onClose}
                     />
                 ),
             };
@@ -99,14 +80,14 @@ function ListenerModalDialog({
             title: "Error",
             content: <>Can't handle type {currentRequest} yet</>,
         };
-    }, [currentRequest, onHandle]);
+    }, [currentRequest, onClose]);
 
     return (
         <AlertDialog
             classNameTitle={styles.modalListener__title}
             title={component.title}
             text={component.content}
-            open={isOpen}
+            open={true}
             onOpenChange={(value) => {
                 if (!value) {
                     // Emit the discarded event

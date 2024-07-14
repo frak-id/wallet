@@ -21,23 +21,23 @@ export function ListenerUI() {
     >(undefined);
 
     // Hook used when a wallet status is requested
-    const { onWalletListenRequest } = useWalletStatusListener();
+    const onWalletListenRequest = useWalletStatusListener();
 
     // Hook a website want to fetch the unlock options for an article
-    const { onGetArticleUnlockOptions } = useGetArticleUnlockOptionsListener();
+    const onGetArticleUnlockOptions = useGetArticleUnlockOptionsListener();
 
     // Hook to listen for the gating unlock status of an article
-    const { onArticleUnlockStatusListenerRequest } =
+    const onArticleUnlockStatusListenerRequest =
         useArticleUnlockStatusListener();
 
     // Hook used when a dashboard action is requested
-    const { onSendTransactionRequest } = useSendTransactionListener();
+    const onSendTransactionRequest = useSendTransactionListener();
 
     // Hook used when a dashboard action is requested
-    const { onSiweAuthenticateRequest } = useSiweAuthenticateListener();
+    const onSiweAuthenticateRequest = useSiweAuthenticateListener();
 
     // Hook used when a dashboard action is requested
-    const { onInteractionRequest } = useSendInteractionListener();
+    const onInteractionRequest = useSendInteractionListener();
 
     // Create the resolver
     useEffect(() => {

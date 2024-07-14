@@ -4,7 +4,7 @@ import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
-import { useSetAtom } from "jotai";
+import { jotaiStore } from "@module/atoms/store";
 import { useCallback } from "react";
 
 type OnSendTransactionRequest = IFrameRequestResolver<
@@ -21,40 +21,29 @@ type OnSendTransactionRequest = IFrameRequestResolver<
  * todo: Should have a top level "receiveAction" page, receiving stuff (like paywall unlock / send tx / login etc), performing the action and redirection
  * todo: The component use inside the "receiveAction" should be the same as the one used inside each AlertDialog here
  */
-export function useSendTransactionListener() {
-    const setDisplayedRequest = useSetAtom(modalDisplayedRequestAtom);
-
+export function useSendTransactionListener(): OnSendTransactionRequest {
     /**
      * The function that will be called when a dashboard action is requested
      * @param request
      * @param emitter
      */
-    const onSendTransactionRequest: OnSendTransactionRequest = useCallback(
-        async (request, emitter) => {
-            // Extract the action and params
-            const tx = request.params[0];
-            const context = request.params[1];
+    return useCallback(async (request, emitter) => {
+        // Extract the action and params
+        const tx = request.params[0];
+        const context = request.params[1];
 
-            // If no action present
-            if (!tx) {
-                // Exit
-                return;
-            }
+        // If no action present
+        if (!tx) {
+            return;
+        }
 
-            // Otherwise, send emitter to the dialog
-            setDisplayedRequest({
-                type: "transaction",
-                args: {
-                    tx,
-                    context,
-                },
-                emitter,
-            });
-        },
-        [setDisplayedRequest]
-    );
-
-    return {
-        onSendTransactionRequest,
-    };
+        jotaiStore.set(modalDisplayedRequestAtom, {
+            type: "transaction",
+            args: {
+                tx,
+                context,
+            },
+            emitter,
+        });
+    }, []);
 }

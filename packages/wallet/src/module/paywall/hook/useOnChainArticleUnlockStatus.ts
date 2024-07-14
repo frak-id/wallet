@@ -1,4 +1,6 @@
 import { getUnlockStatusOnArticle } from "@/context/paywall/action/getStatus";
+import { sessionAtom } from "@/module/common/atoms/session";
+import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
 
@@ -10,7 +12,11 @@ export const useOnChainArticleUnlockStatus = ({
     contentId,
     articleId,
     address,
-}: { contentId?: Hex; articleId?: Hex; address?: Address }) =>
+}: {
+    contentId?: Hex;
+    articleId?: Hex;
+    address?: Address;
+}) =>
     useQuery({
         queryKey: [
             "onChainArticleUnlockStatus",
@@ -19,14 +25,23 @@ export const useOnChainArticleUnlockStatus = ({
             address ?? "no-wallet",
         ],
         queryFn: async () => {
-            if (!(contentId && articleId && address)) {
+            if (!(contentId && articleId)) {
                 return null;
             }
+
+            // Get the address from the jotai store if not provided
+            const checkedAddress =
+                address ?? jotaiStore.get(sessionAtom)?.wallet?.address;
+            // If still not present, exit
+            if (!checkedAddress) {
+                return null;
+            }
+
             return getUnlockStatusOnArticle({
                 contentId,
                 articleId,
-                user: address,
+                user: checkedAddress,
             });
         },
-        enabled: !!contentId && !!articleId && !!address,
+        enabled: !!contentId && !!articleId,
     });

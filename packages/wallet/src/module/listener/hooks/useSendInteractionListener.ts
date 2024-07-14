@@ -7,7 +7,7 @@ import {
     type IFrameRpcSchema,
     RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
-import { useAtomValue, useSetAtom } from "jotai";
+import { jotaiStore } from "@module/atoms/store";
 import { tryit } from "radash";
 import { useCallback } from "react";
 
@@ -21,87 +21,71 @@ type OnInteractionRequest = IFrameRequestResolver<
 /**
  * Hook use to listen to the user interactions
  */
-export function useSendInteractionListener() {
-    /**
-     * Get the current user session
-     */
-    const session = useAtomValue(sessionAtom);
-
-    /**
-     * Add the pending interaction to the list
-     */
-    const addPendingInteraction = useSetAtom(addPendingInteractionAtom);
-
+export function useSendInteractionListener(): OnInteractionRequest {
     /**
      * The function that will be called when a user referred is requested
      * @param request
      * @param emitter
      */
-    const onInteractionRequest: OnInteractionRequest = useCallback(
-        async (request, emitter) => {
-            // Extract the contentId and walletAddress
-            const contentId = request.params[0];
-            const interaction = request.params[1];
-            const signature = request.params[2];
-            const userAddress = session?.wallet?.address;
+    return useCallback(async (request, emitter) => {
+        // Extract the contentId and walletAddress
+        const contentId = request.params[0];
+        const interaction = request.params[1];
+        const signature = request.params[2];
 
-            // If no contentId or interaction, return
-            if (!(contentId && interaction)) {
-                return;
-            }
+        // If no contentId or interaction, return
+        if (!(contentId && interaction)) {
+            return;
+        }
 
-            // If no current wallet present
-            if (!userAddress) {
-                // add to an interaction storage queue
-                addPendingInteraction({
-                    contentId,
-                    interaction,
-                    signature,
-                });
-                // Send the response
-                await emitter({
-                    error: {
-                        code: RpcErrorCodes.walletNotConnected,
-                        message: "User isn't connected",
-                    },
-                });
-                // And exit
-                return;
-            }
+        const userAddress = jotaiStore.get(sessionAtom)?.wallet?.address;
 
-            // Otherwise, just set the user referred on content
-            const [, txHash] = await tryit(() =>
-                pushInteraction({
-                    wallet: userAddress,
-                    toPush: {
-                        contentId,
-                        interaction,
-                        submittedSignature: signature,
-                    },
-                })
-            )();
-
-            if (!txHash) {
-                // todo: Check if the error is about no session or not
-                // Send the response
-                await emitter({
-                    error: {
-                        code: RpcErrorCodes.noInteractionSession,
-                        message: "User doesn't have an interaction session",
-                    },
-                });
-                return;
-            }
-
+        // If no current wallet present
+        if (!userAddress) {
+            // Save the pending interaction
+            jotaiStore.set(addPendingInteractionAtom, {
+                contentId,
+                interaction,
+                signature,
+            });
             // Send the response
             await emitter({
-                result: { hash: txHash },
+                error: {
+                    code: RpcErrorCodes.walletNotConnected,
+                    message: "User isn't connected",
+                },
             });
-        },
-        [session?.wallet?.address, addPendingInteraction]
-    );
+            // And exit
+            return;
+        }
 
-    return {
-        onInteractionRequest,
-    };
+        // Otherwise, just set the user referred on content
+        const [, txHash] = await tryit(() =>
+            pushInteraction({
+                wallet: userAddress,
+                toPush: {
+                    contentId,
+                    interaction,
+                    submittedSignature: signature,
+                },
+            })
+        )();
+
+        if (!txHash) {
+            // todo: Check if the error is about no session or not
+            // Send the response
+            await emitter({
+                error: {
+                    code: RpcErrorCodes.noInteractionSession,
+                    message: "User doesn't have an interaction session",
+                },
+            });
+            return;
+        }
+
+        // Send the response
+        await emitter({
+            result: { hash: txHash },
+        });
+    }, []);
 }
