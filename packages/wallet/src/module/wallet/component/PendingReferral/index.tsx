@@ -99,7 +99,11 @@ export function PendingReferral() {
         },
     });
 
-    return pendingReward?.pFrkPendingRaw ? (
+    if (!pendingReward?.pFrkPendingRaw) {
+        return null;
+    }
+
+    return (
         <Panel size={"small"}>
             <Title icon={<CircleDollarSign width={32} height={32} />}>
                 Pending referral reward
@@ -129,5 +133,5 @@ export function PendingReferral() {
                 </>
             )}
         </Panel>
-    ) : null;
+    );
 }

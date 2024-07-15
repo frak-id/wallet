@@ -10,7 +10,7 @@ import styles from "./index.module.css";
 
 type HistoryType = "unlock" | "rewards" | "interaction";
 
-const historyTypeAtom = atom<HistoryType | undefined>(undefined);
+const historyTypeAtom = atom<HistoryType>("interaction");
 
 export function History() {
     const type = useAtomValue(historyTypeAtom);
@@ -18,11 +18,11 @@ export function History() {
         <>
             <Panel className={styles.history__panel}>
                 <nav className={styles.history__nav}>
-                    <ButtonType currentType={"unlock"}>Unlock</ButtonType> |{" "}
-                    <ButtonType currentType={"rewards"}>Rewards</ButtonType> |{" "}
                     <ButtonType currentType={"interaction"}>
                         Interaction
-                    </ButtonType>
+                    </ButtonType>{" "}
+                    | <ButtonType currentType={"unlock"}>Unlock</ButtonType> |{" "}
+                    <ButtonType currentType={"rewards"}>Rewards</ButtonType>
                 </nav>
             </Panel>
             {type === "unlock" && <UnlockHistory />}

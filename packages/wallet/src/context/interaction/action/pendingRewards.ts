@@ -2,6 +2,7 @@
 import { getClient } from "@frak-labs/nexus-dashboard/src/context/indexer/client";
 import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { gql } from "@urql/core";
+import { unstable_cache } from "next/cache";
 import { type Address, encodeFunctionData, formatEther } from "viem";
 
 const QUERY = gql(`
@@ -32,14 +33,14 @@ type QueryResult = {
  * @param user
  * @param referrer
  */
-export async function getPendingRewards({ user }: { user: Address }) {
+async function _getPendingRewards({ user }: { user: Address }) {
     // Get our indexer result
     const result = await getClient()
         .query<QueryResult>(QUERY, { wallet: user })
         .toPromise();
 
-    if (!result.data) {
-        throw new Error("No data found");
+    if (!result.data?.rewards.items.length) {
+        return null;
     }
 
     // Extract the pending rewards
@@ -66,3 +67,15 @@ export async function getPendingRewards({ user }: { user: Address }) {
         perContracts: pendingRewards,
     };
 }
+
+/**
+ * Cached version of the user tokens
+ */
+export const getPendingRewards = unstable_cache(
+    _getPendingRewards,
+    ["get-pending-rewards"],
+    {
+        // Keep that in server cache for 15min
+        revalidate: 15 * 60,
+    }
+);
