@@ -1,4 +1,5 @@
 import { isConvertToEuroEnableAtom } from "@/module/settings/atoms/betaOptions";
+import { computeWithPrecision } from "@module/utils/computeWithPrecision";
 import { useAtomValue } from "jotai";
 import { useCallback } from "react";
 
@@ -10,7 +11,7 @@ export function useConvertToEuro() {
     const convertToEuro = useCallback(
         (amount: string | number, token = "") => {
             if (!(isEnabled && amount)) return `${amount} ${token}`;
-            return `${Number(amount) * EXCHANGE_RATE} €`;
+            return `${computeWithPrecision(Number(amount), EXCHANGE_RATE, "*")} €`;
         },
         [isEnabled]
     );

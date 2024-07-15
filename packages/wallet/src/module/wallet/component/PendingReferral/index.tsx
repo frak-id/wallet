@@ -1,5 +1,5 @@
 import { frakChainId } from "@/context/blockchain/provider";
-import { getPendingReferralReward } from "@/context/interaction/action/pendingReferral";
+import { getPendingRewards } from "@/context/interaction/action/pendingRewards";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAAClients } from "@/module/common/hook/useAAClients";
@@ -40,7 +40,7 @@ export function PendingReferral() {
         queryKey: ["referral", "pending-reward", address],
         queryFn: async () => {
             if (!address) return null;
-            return await getPendingReferralReward({
+            return await getPendingRewards({
                 user: address,
             });
         },

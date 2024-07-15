@@ -1,7 +1,7 @@
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
-import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
 import { Skeleton } from "@module/component/Skeleton";
+import { computeWithPrecision } from "@module/utils/computeWithPrecision";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Table as TableReact } from "@tanstack/react-table";
