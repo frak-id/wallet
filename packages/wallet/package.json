@@ -41,6 +41,7 @@
     "dexie": "^4.0.7",
     "dexie-react-hooks": "^1.1.7",
     "humanize-duration": "^3.32.1",
+    "inapp-spy": "^3.0.0",
     "iron-session": "^8.0.2",
     "jotai": "^2.8.4",
     "jotai-effect": "^1.0.0",
