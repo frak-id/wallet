@@ -1,5 +1,6 @@
 import "@/styles/all.css";
 import { Fonts } from "@/module/common/component/Fonts";
+import { Footer } from "@/module/common/component/Footer";
 import { MainLayout } from "@/module/common/component/MainLayout";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import type { Metadata, Viewport } from "next";
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-    themeColor: "#001432",
+    themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -47,7 +48,10 @@ export default function RootLayout({
             <body>
                 <Fonts />
                 <RootProvider>
-                    <MainLayout>{children}</MainLayout>
+                    <MainLayout>
+                        {children}
+                        <Footer />
+                    </MainLayout>
                 </RootProvider>
             </body>
         </html>

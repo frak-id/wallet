@@ -1,0 +1,18 @@
+.hero {
+    font-family: var(--font-family-merriWeather);
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 18px;
+}
+
+.hero__title {
+    position: relative;
+    margin: -40px 13px 0 13px;
+    padding: 10px;
+    background: #ffffff;
+}
+
+.hero__image {
+    width: 100%;
+    height: auto;
+}

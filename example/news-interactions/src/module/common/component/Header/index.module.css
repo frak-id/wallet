@@ -1,0 +1,14 @@
+.header {
+    padding: 9px 0;
+}
+
+.header__title {
+    margin: 0;
+    text-align: center;
+}
+
+.header__link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

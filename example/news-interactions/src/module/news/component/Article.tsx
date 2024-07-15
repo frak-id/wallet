@@ -3,7 +3,7 @@ import { useIntersectionObserver } from "@/module/common/hooks/useIntersectionOb
 import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { usePressReferralInteraction } from "@frak-labs/nexus-sdk/react";
 import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
-import { Spinner } from "@module/component/Spinner";
+import { Skeleton } from "@module/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import Markdown from "react-markdown";
@@ -58,7 +58,7 @@ export function NewsArticleComponent({ articleId }: { articleId: string }) {
     });
 
     if (!article) {
-        return <Spinner />;
+        return <Skeleton count={3} height={100} />;
     }
 
     return (

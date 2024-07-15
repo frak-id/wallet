@@ -1,18 +1,12 @@
-import ReactSkeleton from "react-loading-skeleton";
+import ReactSkeleton, { type SkeletonProps } from "react-loading-skeleton";
 import styles from "./index.module.css";
-
-type SkeletonProps = {
-    width?: number;
-    height?: string | number;
-    containerClassName?: string;
-    className?: string;
-};
 
 export function Skeleton({
     width,
     height = 250,
     containerClassName = "",
     className = "",
+    ...props
 }: SkeletonProps) {
     return (
         <ReactSkeleton
@@ -21,6 +15,7 @@ export function Skeleton({
             borderRadius={8}
             containerClassName={`${containerClassName} ${styles.skeleton}`}
             className={`${styles.skeleton} ${className}`}
+            {...props}
         />
     );
 }
