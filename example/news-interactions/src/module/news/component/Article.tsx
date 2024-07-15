@@ -1,11 +1,13 @@
 import { getNewsById } from "@/context/articles/actions/getNews";
+import { testPromptOnNewsText } from "@/context/articles/actions/promptTester";
 import { useIntersectionObserver } from "@/module/common/hooks/useIntersectionObserver";
+import type { FullNews } from "@/types/News";
 import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { usePressReferralInteraction } from "@frak-labs/nexus-sdk/react";
 import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
 import { Spinner } from "@module/component/Spinner";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import Markdown from "react-markdown";
 import { keccak256, toHex } from "viem";
 
@@ -76,15 +78,73 @@ export function NewsArticleComponent({ articleId }: { articleId: string }) {
             <Markdown>{article.text.replace("```markdown", "")}</Markdown>
 
             <footer ref={footerRef}>
-                News provided by{" "}
-                <a
-                    href={"https://worldnewsapi.com/"}
-                    target={"_blank"}
-                    rel={"noreferrer"}
-                >
-                    WorldNewsApi
-                </a>
+                <div>
+                    Original news from
+                    <a href={article.url} target={"_blank"} rel={"noreferrer"}>
+                        {new URL(article.url).hostname}
+                    </a>
+                </div>
+                <div>
+                    News provided by{" "}
+                    <a
+                        href={"https://worldnewsapi.com/"}
+                        target={"_blank"}
+                        rel={"noreferrer"}
+                    >
+                        WorldNewsApi
+                    </a>
+                </div>
             </footer>
+
+            <hr />
+            <PromptTester article={article} />
         </div>
+    );
+}
+
+function PromptTester({ article }: { article: FullNews }) {
+    const [prompt, setPrompt] = useState<string>("");
+
+    const {
+        data: newText,
+        status,
+        mutate: generate,
+    } = useMutation({
+        mutationKey: ["prompt", "generate"],
+        mutationFn: async () => testPromptOnNewsText({ prompt, news: article }),
+    });
+
+    return (
+        <>
+            <h3>Test formatting prompt</h3>
+
+            <h4>Original text</h4>
+            <code>{article.originalText}</code>
+
+            <h4>Prompt</h4>
+            <p>The original text will be added at the end of the prompt</p>
+            <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+            />
+            <button
+                type={"button"}
+                onClick={() => {
+                    console.log("Prompt", prompt);
+                    generate();
+                }}
+            >
+                Submit prompt
+            </button>
+
+            <hr/>
+
+            <h4>Result</h4>
+            <p>Generation status {status}</p>
+            <code>{newText}</code>
+
+            <h4>Formatted result text</h4>
+            <Markdown>{newText}</Markdown>
+        </>
     );
 }

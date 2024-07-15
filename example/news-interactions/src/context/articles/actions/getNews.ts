@@ -74,6 +74,7 @@ export async function getNewsById(id: string): Promise<FullNews | null> {
         author: document.author,
         publishDate: document.publishDate,
         text: document.text,
+        originalText: document.originalText,
         url: document.url,
     };
 }

@@ -11,5 +11,6 @@ export type LightNews = {
 
 export type FullNews = LightNews & {
     text: string;
+    originalText: string;
     url: string;
 };
