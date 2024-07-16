@@ -65,7 +65,7 @@ export async function mintMyContent({
             data: encodeFunctionData({
                 abi: contentRegistryAbi,
                 functionName: "mint",
-                args: [contentTypes, name, domain],
+                args: [contentTypes, name, domain, session.wallet],
             }),
         }
     );
@@ -79,25 +79,6 @@ export async function mintMyContent({
         confirmations: 1,
     });
 
-    // Then prepare the transfer tx and send it
-    const transferTxPreparation = await prepareTransactionRequest(
-        frakChainPocClient,
-        {
-            account: minterAccount,
-            chain: frakChainPocClient.chain,
-            to: addresses.contentRegistry,
-            data: encodeFunctionData({
-                abi: contentRegistryAbi,
-                functionName: "transferFrom",
-                args: [minterAccount.address, session.wallet, contentId],
-            }),
-        }
-    );
-    const transferTxHash = await sendTransaction(
-        frakChainPocClient,
-        transferTxPreparation
-    );
-
     // Prepare the interaction setup tx data
     const setupInteractionTxData = encodeFunctionData({
         abi: contentInteractionManagerAbi,
@@ -105,7 +86,7 @@ export async function mintMyContent({
         args: [contentId],
     });
 
-    return { mintTxHash, transferTxHash, setupInteractionTxData };
+    return { mintTxHash, setupInteractionTxData };
 }
 
 /**
