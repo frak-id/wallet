@@ -1,7 +1,8 @@
 "use client";
+
 import { Header } from "@/module/common/component/Header";
 import { Hero } from "@/module/common/component/Hero";
-import { NewsArticleComponent } from "@/module/news/component/Article";
+import { NewsArticle } from "@/module/news/component/NewsArticle";
 import { Spinner } from "@module/component/Spinner";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo } from "react";
@@ -27,7 +28,7 @@ function NewsArticlePage() {
         <>
             <Header inArticle={true} />
             <Hero />
-            <NewsArticleComponent articleId={articleId} />
+            <NewsArticle articleId={articleId} />
         </>
     );
 }

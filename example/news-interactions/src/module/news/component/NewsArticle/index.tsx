@@ -5,11 +5,15 @@ import { usePressReferralInteraction } from "@frak-labs/nexus-sdk/react";
 import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
 import { Skeleton } from "@module/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import { useMemo } from "react";
 import Markdown from "react-markdown";
 import { keccak256, toHex } from "viem";
+import forward from "./assets/forward.svg";
+import share from "./assets/share.svg";
+import styles from "./index.module.css";
 
-export function NewsArticleComponent({ articleId }: { articleId: string }) {
+export function NewsArticle({ articleId }: { articleId: string }) {
     usePressReferralInteraction();
 
     const blockchainArticleId = useMemo(
@@ -62,29 +66,32 @@ export function NewsArticleComponent({ articleId }: { articleId: string }) {
     }
 
     return (
-        <div>
-            <h1 ref={titleRef}>{article.title}</h1>
+        <article className={styles.article}>
+            <h1 ref={titleRef} className={styles.article__title}>
+                {article.title}
+            </h1>
 
-            <p>{article.summary}</p>
+            <p className={styles.article__author}>
+                Written by {article.author}
+                <span className={styles.article__social}>
+                    <Image src={share} alt="Share" />
+                    <Image src={forward} alt="Forward" />
+                </span>
+            </p>
+
+            <p className={styles.article__summary}>{article.summary}</p>
 
             <img
                 src={article.image}
                 alt={article.title}
-                style={{ maxWidth: 300 }}
+                className={styles.article__image}
             />
 
-            <Markdown>{article.text.replace("```markdown", "")}</Markdown>
+            <div className={styles.article__markdown}>
+                <Markdown>{article.text.replace("```markdown", "")}</Markdown>
+            </div>
 
-            <footer ref={footerRef}>
-                News provided by{" "}
-                <a
-                    href={"https://worldnewsapi.com/"}
-                    target={"_blank"}
-                    rel={"noreferrer"}
-                >
-                    WorldNewsApi
-                </a>
-            </footer>
-        </div>
+            <div ref={footerRef}>&nbsp;</div>
+        </article>
     );
 }
