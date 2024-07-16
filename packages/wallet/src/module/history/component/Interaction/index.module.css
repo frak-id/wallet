@@ -1,5 +1,5 @@
-.interaction__text {
-    padding-left: 40px;
+.interaction__panel + .interaction__panel {
+    margin-top: 20px;
 }
 
 .interaction__title {
@@ -17,11 +17,4 @@
 
 .interaction__provider {
     color: var(--frak-text-color);
-}
-
-.interaction__image {
-    display: block;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
 }
