@@ -17,7 +17,6 @@ const nextConfig = {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
     },
-    transpilePackages: ["lucide-react"],
     compiler: {
         removeConsole: isDistant,
     },
