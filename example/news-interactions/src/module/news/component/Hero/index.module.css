@@ -7,7 +7,7 @@
 
 .hero__title {
     position: relative;
-    margin: -40px 13px 0 13px;
+    margin: 0 13px 0 13px;
     padding: 10px;
     font-size: 13px;
     background: #ffffff;
@@ -17,4 +17,8 @@
 .hero__image {
     width: 100%;
     height: auto;
+}
+
+.hero__image + .hero__title {
+    margin-top: -40px;
 }
