@@ -62,6 +62,14 @@ export async function validateAuthentication({
         previousWallet: authenticator.smartWalletAddress,
     });
 
+    // If the wallet didn't have any predicated smart wallet address, set it
+    if (authenticator.smartWalletAddress === undefined) {
+        await authenticatorRepository.updateSmartWalletAddress({
+            credentialId: authenticator._id,
+            smartWalletAddress: wallet.address,
+        });
+    }
+
     // Add it to the session
     await setSession({
         wallet,

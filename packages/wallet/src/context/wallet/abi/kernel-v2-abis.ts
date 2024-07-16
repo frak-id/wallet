@@ -1,8 +1,275 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ContentInteractionAction
+// InteractionDelegator
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-export const contentInteractionActionAbi = [
+export const interactionDelegatorAbi = [
+    {
+        type: "constructor",
+        inputs: [{ name: "_owner", internalType: "address", type: "address" }],
+        stateMutability: "nonpayable",
+    },
+    { type: "fallback", stateMutability: "payable" },
+    { type: "receive", stateMutability: "payable" },
+    {
+        type: "function",
+        inputs: [],
+        name: "cancelOwnershipHandover",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "pendingOwner", internalType: "address", type: "address" },
+        ],
+        name: "completeOwnershipHandover",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            {
+                name: "_delegatedInteractions",
+                internalType:
+                    "struct InteractionDelegator.DelegatedInteraction[]",
+                type: "tuple[]",
+                components: [
+                    {
+                        name: "wallet",
+                        internalType: "address",
+                        type: "address",
+                    },
+                    {
+                        name: "interaction",
+                        internalType: "struct Interaction",
+                        type: "tuple",
+                        components: [
+                            {
+                                name: "contentId",
+                                internalType: "uint256",
+                                type: "uint256",
+                            },
+                            {
+                                name: "data",
+                                internalType: "bytes",
+                                type: "bytes",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+        name: "execute",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            {
+                name: "_delegatedInteractions",
+                internalType:
+                    "struct InteractionDelegator.DelegatedBatchedInteraction[]",
+                type: "tuple[]",
+                components: [
+                    {
+                        name: "wallet",
+                        internalType: "address",
+                        type: "address",
+                    },
+                    {
+                        name: "interactions",
+                        internalType: "struct Interaction[]",
+                        type: "tuple[]",
+                        components: [
+                            {
+                                name: "contentId",
+                                internalType: "uint256",
+                                type: "uint256",
+                            },
+                            {
+                                name: "data",
+                                internalType: "bytes",
+                                type: "bytes",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+        name: "executeBatched",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "user", internalType: "address", type: "address" },
+            { name: "roles", internalType: "uint256", type: "uint256" },
+        ],
+        name: "grantRoles",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "user", internalType: "address", type: "address" },
+            { name: "roles", internalType: "uint256", type: "uint256" },
+        ],
+        name: "hasAllRoles",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "user", internalType: "address", type: "address" },
+            { name: "roles", internalType: "uint256", type: "uint256" },
+        ],
+        name: "hasAnyRole",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [],
+        name: "owner",
+        outputs: [{ name: "result", internalType: "address", type: "address" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "pendingOwner", internalType: "address", type: "address" },
+        ],
+        name: "ownershipHandoverExpiresAt",
+        outputs: [{ name: "result", internalType: "uint256", type: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [],
+        name: "renounceOwnership",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "roles", internalType: "uint256", type: "uint256" }],
+        name: "renounceRoles",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [],
+        name: "requestOwnershipHandover",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "user", internalType: "address", type: "address" },
+            { name: "roles", internalType: "uint256", type: "uint256" },
+        ],
+        name: "revokeRoles",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "user", internalType: "address", type: "address" }],
+        name: "rolesOf",
+        outputs: [{ name: "roles", internalType: "uint256", type: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "newOwner", internalType: "address", type: "address" },
+        ],
+        name: "transferOwnership",
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "pendingOwner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+        ],
+        name: "OwnershipHandoverCanceled",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "pendingOwner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+        ],
+        name: "OwnershipHandoverRequested",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "oldOwner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "newOwner",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+        ],
+        name: "OwnershipTransferred",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "user",
+                internalType: "address",
+                type: "address",
+                indexed: true,
+            },
+            {
+                name: "roles",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: true,
+            },
+        ],
+        name: "RolesUpdated",
+    },
+    { type: "error", inputs: [], name: "AlreadyInitialized" },
+    { type: "error", inputs: [], name: "NewOwnerIsZeroAddress" },
+    { type: "error", inputs: [], name: "NoHandoverRequest" },
+    { type: "error", inputs: [], name: "Unauthorized" },
+] as const;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// InteractionDelegatorAction
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const interactionDelegatorActionAbi = [
     {
         type: "constructor",
         inputs: [
@@ -60,10 +327,21 @@ export const contentInteractionActionAbi = [
 ] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// InteractionSessionValidator
+// InteractionDelegatorValidator
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-export const interactionSessionValidatorAbi = [
+export const interactionDelegatorValidatorAbi = [
+    {
+        type: "constructor",
+        inputs: [
+            {
+                name: "_delegatorAddress",
+                internalType: "address",
+                type: "address",
+            },
+        ],
+        stateMutability: "nonpayable",
+    },
     {
         type: "function",
         inputs: [{ name: "", internalType: "bytes", type: "bytes" }],
@@ -73,80 +351,20 @@ export const interactionSessionValidatorAbi = [
     },
     {
         type: "function",
-        inputs: [],
-        name: "eip712Domain",
-        outputs: [
-            { name: "fields", internalType: "bytes1", type: "bytes1" },
-            { name: "name", internalType: "string", type: "string" },
-            { name: "version", internalType: "string", type: "string" },
-            { name: "chainId", internalType: "uint256", type: "uint256" },
-            {
-                name: "verifyingContract",
-                internalType: "address",
-                type: "address",
-            },
-            { name: "salt", internalType: "bytes32", type: "bytes32" },
-            {
-                name: "extensions",
-                internalType: "uint256[]",
-                type: "uint256[]",
-            },
-        ],
-        stateMutability: "view",
-    },
-    {
-        type: "function",
-        inputs: [{ name: "_data", internalType: "bytes", type: "bytes" }],
+        inputs: [{ name: "", internalType: "bytes", type: "bytes" }],
         name: "enable",
         outputs: [],
         stateMutability: "payable",
     },
     {
         type: "function",
-        inputs: [{ name: "_wallet", internalType: "address", type: "address" }],
-        name: "getCurrentSession",
-        outputs: [
-            {
-                name: "",
-                internalType: "struct InteractionSessionValidatorStorage",
-                type: "tuple",
-                components: [
-                    {
-                        name: "sessionStart",
-                        internalType: "uint48",
-                        type: "uint48",
-                    },
-                    {
-                        name: "sessionEnd",
-                        internalType: "uint48",
-                        type: "uint48",
-                    },
-                    {
-                        name: "sessionValidator",
-                        internalType: "address",
-                        type: "address",
-                    },
-                ],
-            },
-        ],
-        stateMutability: "view",
-    },
-    {
-        type: "function",
-        inputs: [],
-        name: "getDomainSeparator",
-        outputs: [{ name: "", internalType: "bytes32", type: "bytes32" }],
-        stateMutability: "view",
-    },
-    {
-        type: "function",
         inputs: [
-            { name: "", internalType: "address", type: "address" },
-            { name: "", internalType: "bytes", type: "bytes" },
+            { name: "_caller", internalType: "address", type: "address" },
+            { name: "_data", internalType: "bytes", type: "bytes" },
         ],
         name: "validCaller",
         outputs: [{ name: "", internalType: "bool", type: "bool" }],
-        stateMutability: "pure",
+        stateMutability: "view",
     },
     {
         type: "function",
@@ -164,7 +382,7 @@ export const interactionSessionValidatorAbi = [
         type: "function",
         inputs: [
             {
-                name: "_userOp",
+                name: "",
                 internalType: "struct UserOperation",
                 type: "tuple",
                 components: [
@@ -209,7 +427,7 @@ export const interactionSessionValidatorAbi = [
                     { name: "signature", internalType: "bytes", type: "bytes" },
                 ],
             },
-            { name: "_userOpHash", internalType: "bytes32", type: "bytes32" },
+            { name: "", internalType: "bytes32", type: "bytes32" },
             { name: "", internalType: "uint256", type: "uint256" },
         ],
         name: "validateUserOp",
@@ -218,38 +436,6 @@ export const interactionSessionValidatorAbi = [
         ],
         stateMutability: "payable",
     },
-    {
-        type: "event",
-        anonymous: false,
-        inputs: [
-            {
-                name: "wallet",
-                internalType: "address",
-                type: "address",
-                indexed: true,
-            },
-            {
-                name: "sessionValidator",
-                internalType: "address",
-                type: "address",
-                indexed: false,
-            },
-            {
-                name: "sessionStart",
-                internalType: "uint256",
-                type: "uint256",
-                indexed: false,
-            },
-            {
-                name: "sessionEnd",
-                internalType: "uint256",
-                type: "uint256",
-                indexed: false,
-            },
-        ],
-        name: "InteractionSessionEnabled",
-    },
-    { type: "error", inputs: [], name: "InvalidEnableParams" },
     { type: "error", inputs: [], name: "NotImplemented" },
 ] as const;
 

@@ -44,6 +44,8 @@ export function useOpenSession() {
                 data: txData,
             });
 
+            console.log(`Open session tx hash: ${openSessionTxHash}`);
+
             // Send the pending interactions
             const interactionsQueueHandling =
                 await consumePendingInteractions();

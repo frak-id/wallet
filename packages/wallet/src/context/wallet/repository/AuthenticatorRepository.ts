@@ -2,6 +2,7 @@ import { getMongoDb } from "@/context/common/mongoDb";
 import type { AuthenticatorDocument } from "@/context/wallet/dto/AuthenticatorDocument";
 import { DI } from "@frak-labs/shared/context/utils/di";
 import type { Collection } from "mongodb";
+import type {Address} from "viem";
 
 /**
  * Repository used to access the authenticator collection
@@ -49,6 +50,24 @@ export class AuthenticatorRepository {
         await this.collection.updateOne(
             { _id: credentialId },
             { $set: { counter } }
+        );
+    }
+
+    /**
+     * Set the smart wallet address for the given credential
+     * @param credentialId
+     * @param smartWalletAddress
+     */
+    public async updateSmartWalletAddress({
+        credentialId,
+        smartWalletAddress,
+    }: {
+        credentialId: string;
+        smartWalletAddress: Address;
+    }): Promise<void> {
+        await this.collection.updateOne(
+            { _id: credentialId },
+            { $set: { smartWalletAddress } }
         );
     }
 }

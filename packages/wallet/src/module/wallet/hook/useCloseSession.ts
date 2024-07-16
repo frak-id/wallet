@@ -1,28 +1,38 @@
-import { kernelAddresses } from "@/context/blockchain/addresses";
-import { interactionSessionValidatorAbi } from "@/context/wallet/abi/kernel-v2-abis";
+import { getSessionDisableData } from "@/context/interaction/action/interactionSession";
+import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { encodeFunctionData } from "viem";
-import { useSendTransaction } from "wagmi";
+import { useAccount, useSendTransaction } from "wagmi";
 
 export function useCloseSession() {
     const queryClient = useQueryClient();
+    const { address } = useAccount();
     const { sendTransactionAsync } = useSendTransaction();
 
     return useMutation({
         mutationKey: ["interactions", "close-session"],
         mutationFn: async () => {
+            if (!address) {
+                return;
+            }
+
+            // Get the disable data
+            const disableData = await getSessionDisableData();
+
             // Build the session disable data
-            const disableCallData = encodeFunctionData({
-                abi: interactionSessionValidatorAbi,
-                functionName: "disable",
-                args: ["0x"],
-            });
+            const txData = encodeWalletMulticall(
+                disableData.map((tx) => ({
+                    to: address,
+                    data: tx,
+                }))
+            );
 
             // Send the disable call
             const txHash = await sendTransactionAsync({
-                to: kernelAddresses.interactionSessionValidator,
-                data: disableCallData,
+                to: address,
+                data: txData,
             });
+
+            console.log(`Close session tx hash: ${txHash}`);
 
             // Refresh the interactions stuff
             await queryClient.invalidateQueries({
