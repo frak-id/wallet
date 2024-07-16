@@ -32,11 +32,15 @@ export async function getNewsForHome() {
     // Get a random news
     const randomNews = await repository.getRandomNews();
 
+    // Get a hero news
+    const heroNews = await repository.getRandomNews();
+
     return {
         positives: positiveNews.map(newsDocumentToLightNews),
         featured: featuredNews.map(newsDocumentToLightNews),
         latest: latestNews.map(newsDocumentToLightNews),
         quickByte: newsDocumentToLightNews(randomNews),
+        hero: newsDocumentToLightNews(heroNews),
     };
 }
 

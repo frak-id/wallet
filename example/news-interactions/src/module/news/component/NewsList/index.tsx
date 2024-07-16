@@ -1,11 +1,12 @@
 "use client";
 
 import { getNewsForHome } from "@/context/articles/actions/getNews";
+import { Skeleton } from "@/module/common/component/Skeleton";
+import { Hero } from "@/module/news/component/Hero";
 import { HighlightTitle } from "@/module/news/component/HighlightTitle";
 import { List } from "@/module/news/component/List";
 import { QuickBites } from "@/module/news/component/QuickBites";
 import { Title } from "@/module/news/component/Title";
-import { Skeleton } from "@module/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 
 export function NewsList() {
@@ -20,6 +21,8 @@ export function NewsList() {
 
     return (
         <>
+            <Hero {...news.hero} />
+
             <Title>Top stories</Title>
             <List>
                 {news?.latest?.map((news) => (

@@ -49,9 +49,13 @@
 }
 
 .listItem__image {
+    width: 120px;
+    height: auto;
     max-width: 120px;
 }
 
 .listItem__imageSummary {
+    width: 70px;
+    height: auto;
     max-width: 70px;
 }

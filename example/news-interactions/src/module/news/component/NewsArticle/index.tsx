@@ -1,9 +1,10 @@
 import { getNewsById } from "@/context/articles/actions/getNews";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import { useIntersectionObserver } from "@/module/common/hooks/useIntersectionObserver";
+import { Hero } from "@/module/news/component/Hero";
 import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { usePressReferralInteraction } from "@frak-labs/nexus-sdk/react";
 import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
-import { Skeleton } from "@module/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useMemo } from "react";
@@ -66,32 +67,27 @@ export function NewsArticle({ articleId }: { articleId: string }) {
     }
 
     return (
-        <article className={styles.article}>
-            <h1 ref={titleRef} className={styles.article__title}>
-                {article.title}
-            </h1>
+        <>
+            <Hero {...article} ref={titleRef} />
+            <article className={styles.article}>
+                <p className={styles.article__author}>
+                    Written by {article.author}
+                    <span className={styles.article__social}>
+                        <Image src={share} alt="Share" />
+                        <Image src={forward} alt="Forward" />
+                    </span>
+                </p>
 
-            <p className={styles.article__author}>
-                Written by {article.author}
-                <span className={styles.article__social}>
-                    <Image src={share} alt="Share" />
-                    <Image src={forward} alt="Forward" />
-                </span>
-            </p>
+                <p className={styles.article__summary}>{article.summary}</p>
 
-            <p className={styles.article__summary}>{article.summary}</p>
+                <div className={styles.article__markdown}>
+                    <Markdown>
+                        {article.text.replace("```markdown", "")}
+                    </Markdown>
+                </div>
 
-            <img
-                src={article.image}
-                alt={article.title}
-                className={styles.article__image}
-            />
-
-            <div className={styles.article__markdown}>
-                <Markdown>{article.text.replace("```markdown", "")}</Markdown>
-            </div>
-
-            <div ref={footerRef}>&nbsp;</div>
-        </article>
+                <div ref={footerRef}>&nbsp;</div>
+            </article>
+        </>
     );
 }
