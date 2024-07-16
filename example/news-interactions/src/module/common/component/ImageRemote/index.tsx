@@ -7,6 +7,7 @@ type ImageRemoteProps = {
     height: number;
     title: string;
     className?: string;
+    priority?: boolean;
 };
 
 export function ImageRemote({
@@ -14,6 +15,7 @@ export function ImageRemote({
     width,
     height,
     title,
+    priority = false,
     className = "",
 }: ImageRemoteProps) {
     const [isImageLoaded, setIsImageLoaded] = useState(true);
@@ -21,11 +23,12 @@ export function ImageRemote({
         image &&
         isImageLoaded && (
             <Image
+                priority={priority}
                 src={image}
                 alt={title}
                 className={className}
-                onLoadingComplete={(result) => {
-                    if (result.naturalWidth === 0) {
+                onLoad={(event) => {
+                    if (event.target.naturalWidth === 0) {
                         setIsImageLoaded(false);
                     }
                 }}

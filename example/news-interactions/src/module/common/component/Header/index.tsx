@@ -12,6 +12,7 @@ export function Header({ inArticle = false }: { inArticle?: boolean }) {
             <h1 className={styles.header__title}>
                 <Link href={"/"} className={styles.header__link}>
                     <Image
+                        priority={true}
                         src={inArticle ? logoArticle : logo}
                         alt="A positive world"
                     />

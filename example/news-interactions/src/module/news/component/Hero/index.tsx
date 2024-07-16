@@ -11,6 +11,7 @@ export const Hero = forwardRef<
         <div className={styles.hero}>
             <Link href={`/article?id=${id}`}>
                 <ImageRemote
+                    priority={true}
                     image={image}
                     title={title}
                     width={600}
