@@ -1,4 +1,5 @@
 "use server";
+import { kernelAddresses } from "@/context/blockchain/addresses";
 import { frakChainPocClient } from "@/context/blockchain/provider";
 import { getInteractionContract } from "@/context/interaction/action/interactionContracts";
 import { getSessionStatus } from "@/context/interaction/action/interactionSession";
@@ -13,7 +14,6 @@ import {
     type Hex,
     type PrivateKeyAccount,
     concatHex,
-    encodeAbiParameters,
     encodeFunctionData,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -35,6 +35,7 @@ export async function pushInteraction({
     wallet: Address;
     toPush: InteractionToPush | InteractionToPush[];
 }) {
+    console.log("Pushing interaction", toPush);
     // Check if the user has a valid session
     const sessionStatus = await getSessionStatus({ wallet });
     if (sessionStatus === null) {
@@ -139,34 +140,32 @@ export async function pushInteractions({
         data: Hex;
     }[];
 }) {
-    // Encode every interactions in the right format for our delegator
-    const interactionDatas = interactions.map(({ wallet, contentId, data }) =>
-        encodeAbiParameters(
-            [
-                { name: "wallet", type: "address", value: wallet },
-                { name: "contentId", type: "uint256", value: contentId },
-                { name: "data", type: "bytes", value: data },
-            ],
-            [wallet, contentId, data]
-        )
-    );
-
-    // Encode that in an array
-    const encodedInteractions = encodeAbiParameters(
-        [{ name: "interactions", type: "bytes[]", value: interactionDatas }],
-        [interactionDatas]
-    );
-
-    // Compress it using LibZip
-    const compressedData = solady.LibZip.cdCompress(encodedInteractions) as Hex;
-
-    // Push it
-    return await sendTransaction(frakChainPocClient, {
-        account: executor,
-        data: encodeFunctionData({
-            abi: interactionDelegatorAbi,
-            functionName: "execute",
-            args: [compressedData],
-        }),
+    // Prepare the execute data
+    const executeNoBatchData = encodeFunctionData({
+        abi: interactionDelegatorAbi,
+        functionName: "execute",
+        args: [
+            interactions.map((inter) => ({
+                wallet: inter.wallet,
+                interaction: {
+                    contentId: inter.contentId,
+                    data: inter.data,
+                },
+            })),
+        ],
     });
+
+    // Compress it
+    const compressedExecute = solady.LibZip.cdCompress(
+        executeNoBatchData
+    ) as Hex;
+
+    // And send it
+    const txHash = await sendTransaction(frakChainPocClient, {
+        account: executor,
+        to: kernelAddresses.interactionDelegator,
+        data: compressedExecute,
+    });
+    console.log("Pushed interactions", txHash);
+    return txHash;
 }

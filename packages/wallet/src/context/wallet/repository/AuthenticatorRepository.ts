@@ -51,6 +51,24 @@ export class AuthenticatorRepository {
             { $set: { counter } }
         );
     }
+
+    /**
+     * Set the smart wallet address for the given credential
+     * @param credentialId
+     * @param smartWalletAddress
+     */
+    public async updateSmartWalletAddress({
+        credentialId,
+        smartWalletAddress,
+    }: {
+        credentialId: string;
+        smartWalletAddress: string;
+    }): Promise<void> {
+        await this.collection.updateOne(
+            { _id: credentialId },
+            { $set: { smartWalletAddress } }
+        );
+    }
 }
 
 export const getAuthenticatorRepository = DI.registerAndExposeGetter({

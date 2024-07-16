@@ -12,7 +12,7 @@ export type AuthenticatorDocument = Readonly<{
     // This is the credential id
     _id: string;
     // The smart wallet address associated with it
-    smartWalletAddress: Address;
+    smartWalletAddress?: Address;
     // The user agent from the device where it came from
     userAgent: string;
     // The extracted pub key

@@ -3,6 +3,7 @@
 import { kernelAddresses } from "@/context/blockchain/addresses";
 import { frakChainPocClient } from "@/context/blockchain/provider";
 import { getExecutionAbi, setExecutionAbi } from "@/context/recover/utils/abi";
+import { tryit } from "radash";
 import {
     type Address,
     type Hex,
@@ -69,12 +70,17 @@ export async function getSessionStatus({
     sessionEnd: Date;
 } | null> {
     // Read all the prices from the blockchain
-    const status = await readContract(frakChainPocClient, {
-        address: wallet,
-        abi: [getExecutionAbi],
-        functionName: "getExecution",
-        args: [sendInteractionSelector],
-    });
+    const [, status] = await tryit(() =>
+        readContract(frakChainPocClient, {
+            address: wallet,
+            abi: [getExecutionAbi],
+            functionName: "getExecution",
+            args: [sendInteractionSelector],
+        })
+    )();
+    if (!status) {
+        return null;
+    }
 
     // If it's not on the latest executor or validator, return null
     if (
@@ -157,7 +163,14 @@ export async function getSessionDisableData(): Promise<Hex[]> {
         encodeFunctionData({
             abi: [setExecutionAbi],
             functionName: "setExecution",
-            args: [selector, zeroAddress, kernelAddresses.interactionDelegatorValidator, 0, 0, "0x00"],
+            args: [
+                selector,
+                zeroAddress,
+                kernelAddresses.interactionDelegatorValidator,
+                0,
+                0,
+                "0x00",
+            ],
         });
 
     // Return the txs data

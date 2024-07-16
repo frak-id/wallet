@@ -8,6 +8,8 @@ export const interactionDelegatorAbi = [
         inputs: [{ name: "_owner", internalType: "address", type: "address" }],
         stateMutability: "nonpayable",
     },
+    { type: "fallback", stateMutability: "payable" },
+    { type: "receive", stateMutability: "payable" },
     {
         type: "function",
         inputs: [],
@@ -26,14 +28,76 @@ export const interactionDelegatorAbi = [
     },
     {
         type: "function",
-        inputs: [{ name: "_compressed", internalType: "bytes", type: "bytes" }],
+        inputs: [
+            {
+                name: "_delegatedInteractions",
+                internalType:
+                    "struct InteractionDelegator.DelegatedInteraction[]",
+                type: "tuple[]",
+                components: [
+                    {
+                        name: "wallet",
+                        internalType: "address",
+                        type: "address",
+                    },
+                    {
+                        name: "interaction",
+                        internalType: "struct Interaction",
+                        type: "tuple",
+                        components: [
+                            {
+                                name: "contentId",
+                                internalType: "uint256",
+                                type: "uint256",
+                            },
+                            {
+                                name: "data",
+                                internalType: "bytes",
+                                type: "bytes",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
         name: "execute",
         outputs: [],
         stateMutability: "nonpayable",
     },
     {
         type: "function",
-        inputs: [{ name: "_compressed", internalType: "bytes", type: "bytes" }],
+        inputs: [
+            {
+                name: "_delegatedInteractions",
+                internalType:
+                    "struct InteractionDelegator.DelegatedBatchedInteraction[]",
+                type: "tuple[]",
+                components: [
+                    {
+                        name: "wallet",
+                        internalType: "address",
+                        type: "address",
+                    },
+                    {
+                        name: "interactions",
+                        internalType: "struct Interaction[]",
+                        type: "tuple[]",
+                        components: [
+                            {
+                                name: "contentId",
+                                internalType: "uint256",
+                                type: "uint256",
+                            },
+                            {
+                                name: "data",
+                                internalType: "bytes",
+                                type: "bytes",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
         name: "executeBatched",
         outputs: [],
         stateMutability: "nonpayable",
