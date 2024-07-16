@@ -2,7 +2,6 @@ import { Panel } from "@/module/common/component/Panel";
 import { ButtonAddProduct } from "@/module/dashboard/component/ButtonAddProduct";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import { useMyContents } from "@/module/dashboard/hooks/useMyContents";
-import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
 import styles from "./index.module.css";
 
@@ -37,7 +36,7 @@ function NoContents() {
     return (
         <div>
             You don't have any content yet.
-            <Button>Register one</Button>
+            <ButtonAddProduct />
         </div>
     );
 }
