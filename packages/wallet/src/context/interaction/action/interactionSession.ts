@@ -2,18 +2,15 @@
 
 import { kernelAddresses } from "@/context/blockchain/addresses";
 import { frakChainPocClient } from "@/context/blockchain/provider";
-import { setExecutionAbi } from "@/context/recover/utils/abi";
-import { interactionSessionValidatorAbi } from "@/context/wallet/abi/kernel-v2-abis";
+import { getExecutionAbi, setExecutionAbi } from "@/context/recover/utils/abi";
 import {
     type Address,
     type Hex,
-    encodeAbiParameters,
     encodeFunctionData,
     isAddressEqual,
     toFunctionSelector,
     zeroAddress,
 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
 import { readContract } from "viem/actions";
 
 // Get the recovery selector
@@ -73,20 +70,33 @@ export async function getSessionStatus({
 } | null> {
     // Read all the prices from the blockchain
     const status = await readContract(frakChainPocClient, {
-        address: kernelAddresses.interactionSessionValidator,
-        abi: interactionSessionValidatorAbi,
-        functionName: "getCurrentSession",
-        args: [wallet],
+        address: wallet,
+        abi: [getExecutionAbi],
+        functionName: "getExecution",
+        args: [sendInteractionSelector],
     });
 
-    // If the session is not valid, return null
-    if (isAddressEqual(status.sessionValidator, zeroAddress)) {
+    // If it's not on the latest executor or validator, return null
+    if (
+        !isAddressEqual(
+            status.executor,
+            kernelAddresses.interactionDelegatorAction
+        )
+    ) {
+        return null;
+    }
+    if (
+        !isAddressEqual(
+            status.validator,
+            kernelAddresses.interactionDelegatorValidator
+        )
+    ) {
         return null;
     }
 
     // Parse date
-    const sessionStart = new Date(status.sessionStart * 1000);
-    const sessionEnd = new Date(status.sessionEnd * 1000);
+    const sessionStart = new Date(status.validAfter * 1000);
+    const sessionEnd = new Date(status.validUntil * 1000);
     const now = new Date();
 
     // If session expired, return null
@@ -108,49 +118,27 @@ export async function getSessionStatus({
 export async function getSessionEnableData({
     sessionEnd,
 }: { sessionEnd: Date }): Promise<Hex[]> {
-    // So this shouldn't be the airdropper private key
-    // todo: Only temporary for testing purposes, will be reinforced
-    const sessionPrivateKey = process.env.AIRDROP_PRIVATE_KEY;
-    if (!sessionPrivateKey) {
-        throw new Error("Missing AIRDROP_PRIVATE_KEY env variable");
-    }
-
-    // Get our session signer
-    const sessionAccount = privateKeyToAccount(sessionPrivateKey as Hex);
-
     // Get allowed after (date.now / 1000) and  until
-    const start = BigInt(Math.floor(Date.now() / 1000));
-    const end = BigInt(Math.floor(sessionEnd.getTime() / 1000));
-
-    // Build the enable data
-    const enableDataLayout = [
-        { name: "sessionStart", type: "uint256" },
-        { name: "sessionEnd", type: "uint256" },
-        { name: "sessionValidator", type: "address" },
-    ] as const;
-    const enableData = encodeAbiParameters(enableDataLayout, [
-        start,
-        end,
-        sessionAccount.address,
-    ]);
+    const start = Math.floor(Date.now() / 1000);
+    const end = Math.floor(sessionEnd.getTime() / 1000);
 
     const enableTxForSelector = (selector: Hex) =>
         encodeFunctionData({
             abi: [setExecutionAbi],
             functionName: "setExecution",
             args: [
-                // The passkey addition method
+                // The current selector we want to allow
                 selector,
                 // The interaction action address
-                kernelAddresses.interactionAction,
+                kernelAddresses.interactionDelegatorAction,
                 // The address of the interaction session validator
-                kernelAddresses.interactionSessionValidator,
+                kernelAddresses.interactionDelegatorValidator,
                 // Valid until timestamps, in seconds
-                0,
+                end,
                 // Valid after timestamp, in seconds
-                0,
+                start,
                 // Data used to enable our session validator
-                enableData,
+                "0x00",
             ],
         });
 
@@ -158,5 +146,23 @@ export async function getSessionEnableData({
     return [
         enableTxForSelector(sendInteractionSelector),
         enableTxForSelector(sendInteractionsSelector),
+    ];
+}
+
+/**
+ * Get an interaction session enable data
+ */
+export async function getSessionDisableData(): Promise<Hex[]> {
+    const disableTxForSelector = (selector: Hex) =>
+        encodeFunctionData({
+            abi: [setExecutionAbi],
+            functionName: "setExecution",
+            args: [selector, zeroAddress, kernelAddresses.interactionDelegatorValidator, 0, 0, "0x00"],
+        });
+
+    // Return the txs data
+    return [
+        disableTxForSelector(sendInteractionSelector),
+        disableTxForSelector(sendInteractionsSelector),
     ];
 }

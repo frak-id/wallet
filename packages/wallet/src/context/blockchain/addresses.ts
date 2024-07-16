@@ -8,8 +8,12 @@ export const kernelAddresses = {
     multiWebAuthnValidator: "0xD546c4Ba2e8e5e5c961C36e6Db0460Be03425808",
     ecdsaValidator: "0xd9AB5096a832b9ce79914329DAEE236f8Eea0390",
     // Interactions
-    interactionSessionValidator: "0x4794D967Bcd1A07EBd1c6dC4A44210Bb27ca7f50",
-    interactionAction: "0xbDa850Ec1CD0F15275746fb185F98eE03F8Cdc4d",
+    interactionDelegator: "0x886dCA033838236B3851C90B79C67AA77C9BA4C0",
+    interactionDelegatorValidator: "0xCB2f6ED98Bd4776D3db99aeFaC3626060dF5B850",
+    interactionDelegatorAction: "0xD910e1e952ab2F23282dB8450AA7054841Ef53B8",
+    // todo: old
+    // interactionSessionValidator: "0x4794D967Bcd1A07EBd1c6dC4A44210Bb27ca7f50",
+    // interactionAction: "0xbDa850Ec1CD0F15275746fb185F98eE03F8Cdc4d",
     // Kernel stuff
     accountLogic: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
     factory: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",

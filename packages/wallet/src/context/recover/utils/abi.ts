@@ -34,12 +34,12 @@ export const getExecutionAbi = {
             internalType: "struct ExecutionDetail",
             components: [
                 {
-                    name: "validUntil",
+                    name: "validAfter",
                     type: "uint48",
                     internalType: "uint48",
                 },
                 {
-                    name: "validAfter",
+                    name: "validUntil",
                     type: "uint48",
                     internalType: "uint48",
                 },

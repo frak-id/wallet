@@ -150,6 +150,7 @@ export const contentRegistryAbi = [
             },
             { name: "_name", internalType: "string", type: "string" },
             { name: "_domain", internalType: "string", type: "string" },
+            { name: "_owner", internalType: "address", type: "address" },
         ],
         name: "mint",
         outputs: [{ name: "id", internalType: "uint256", type: "uint256" }],
@@ -369,6 +370,62 @@ export const contentRegistryAbi = [
         anonymous: false,
         inputs: [
             {
+                name: "contentId",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: true,
+            },
+            {
+                name: "domain",
+                internalType: "string",
+                type: "string",
+                indexed: false,
+            },
+            {
+                name: "contentTypes",
+                internalType: "ContentTypes",
+                type: "uint256",
+                indexed: false,
+            },
+            {
+                name: "name",
+                internalType: "string",
+                type: "string",
+                indexed: false,
+            },
+        ],
+        name: "ContentMinted",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
+                name: "contentId",
+                internalType: "uint256",
+                type: "uint256",
+                indexed: true,
+            },
+            {
+                name: "contentTypes",
+                internalType: "ContentTypes",
+                type: "uint256",
+                indexed: false,
+            },
+            {
+                name: "name",
+                internalType: "string",
+                type: "string",
+                indexed: false,
+            },
+        ],
+        name: "ContentUpdated",
+    },
+    {
+        type: "event",
+        anonymous: false,
+        inputs: [
+            {
                 name: "pendingOwner",
                 internalType: "address",
                 type: "address",
@@ -458,6 +515,7 @@ export const contentRegistryAbi = [
     { type: "error", inputs: [], name: "AlreadyInitialized" },
     { type: "error", inputs: [], name: "BalanceQueryForZeroAddress" },
     { type: "error", inputs: [], name: "InvalidNameOrDomain" },
+    { type: "error", inputs: [], name: "InvalidOwner" },
     { type: "error", inputs: [], name: "NewOwnerIsZeroAddress" },
     { type: "error", inputs: [], name: "NoHandoverRequest" },
     { type: "error", inputs: [], name: "NotOwnerNorApproved" },
