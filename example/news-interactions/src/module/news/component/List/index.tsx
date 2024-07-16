@@ -1,6 +1,6 @@
 import { ImageRemote } from "@/module/common/component/ImageRemote";
 import type { LightNews } from "@/types/News";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import type { PropsWithChildren } from "react";
 import styles from "./index.module.css";
 

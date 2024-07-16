@@ -1,5 +1,5 @@
+import { Link } from "next-view-transitions";
 import Image from "next/image";
-import Link from "next/link";
 import burger from "./assets/burger.svg";
 import logoArticle from "./assets/logo-article.png";
 import logo from "./assets/logo.png";

@@ -1,5 +1,5 @@
 import { ImageRemote } from "@/module/common/component/ImageRemote";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { forwardRef } from "react";
 import styles from "./index.module.css";
 

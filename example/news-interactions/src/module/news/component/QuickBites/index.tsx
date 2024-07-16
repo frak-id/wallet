@@ -1,5 +1,5 @@
 import type { LightNews } from "@/types/News";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import styles from "./index.module.css";
 
 export function QuickBites({ id, title, summary }: LightNews) {

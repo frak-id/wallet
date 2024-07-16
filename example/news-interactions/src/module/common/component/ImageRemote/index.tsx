@@ -28,7 +28,8 @@ export function ImageRemote({
                 alt={title}
                 className={className}
                 onLoad={(event) => {
-                    if (event.target.naturalWidth === 0) {
+                    const target = event.target as HTMLImageElement;
+                    if (target.naturalWidth === 0) {
                         setIsImageLoaded(false);
                     }
                 }}
