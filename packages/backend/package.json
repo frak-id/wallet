@@ -1,0 +1,21 @@
+{
+  "name": "@frak-labs/nexus-backend",
+  "version": "0.0.1",
+  "description": "Simple backend used within the Nexus context.",
+  "private": true,
+  "type": "module",
+  "license": "GNU GPL 3.0",
+  "scripts": {
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "viem": "^2.16.5"
+  },
+  "devDependencies": {
+    "sst": "2.43.3",
+    "typescript": "^5"
+  }
+}
