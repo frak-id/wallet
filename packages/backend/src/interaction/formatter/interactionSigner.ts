@@ -3,7 +3,7 @@ import { Config } from "sst/node/config";
 import { type Address, type Hex, keccak256 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { readContract, signTypedData } from "viem/actions";
-import { getViemClient } from "../client/viem";
+import { getViemClient } from "../../blockchain/client";
 
 /**
  * Generate an interaction validation

@@ -1,4 +1,4 @@
-import { pushInteraction } from "@/context/interaction/action/pushInteraction";
+import { pushInteractions } from "@/context/interaction/action/pushInteraction";
 import {
     cleanPendingInteractionsAtom,
     pendingInteractionAtom,
@@ -30,7 +30,7 @@ export function useConsumePendingInteractions() {
             }
 
             // Submit the interactions
-            const txHash = await pushInteraction({
+            const txHash = await pushInteractions({
                 wallet: address,
                 toPush: interactions,
             });

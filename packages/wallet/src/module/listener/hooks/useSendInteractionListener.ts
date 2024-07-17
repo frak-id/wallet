@@ -60,7 +60,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
         }
 
         // Otherwise, just set the user referred on content
-        const [, txHash] = await tryit(() =>
+        const [, delegationId] = await tryit(() =>
             pushInteraction({
                 wallet: userAddress,
                 toPush: {
@@ -71,7 +71,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
             })
         )();
 
-        if (!txHash) {
+        if (!delegationId) {
             // todo: Check if the error is about no session or not
             // Send the response
             await emitter({
@@ -85,7 +85,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
 
         // Send the response
         await emitter({
-            result: { hash: txHash },
+            result: { delegationId },
         });
     }, []);
 }

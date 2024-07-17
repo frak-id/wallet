@@ -28,19 +28,30 @@ export async function pushInteraction({
     toPush,
 }: {
     wallet: Address;
-    toPush: InteractionToPush | InteractionToPush[];
+    toPush: InteractionToPush;
 }) {
-    console.log("Pushing interaction", toPush);
+    // Build the SQS message and send it
+    const message = mapToMessage({ wallet, toPush });
+    const queueResult = await getSqsClient().send(message);
 
+    // Return the queue id
+    return queueResult.MessageId;
+}
+
+/**
+ * Try to push an interaction for the given wallet via an interaction
+ */
+export async function pushInteractions({
+    wallet,
+    toPush,
+}: {
+    wallet: Address;
+    toPush: InteractionToPush[];
+}) {
     // Craft every interactions events message
-    const messages: SendMessageCommand[] = [];
-    if (!Array.isArray(toPush)) {
-        messages.push(mapToMessage({ wallet, toPush }));
-    } else {
-        messages.push(
-            ...toPush.map((toPush) => mapToMessage({ wallet, toPush }))
-        );
-    }
+    const messages: SendMessageCommand[] = toPush.map((toPush) =>
+        mapToMessage({ wallet, toPush })
+    );
 
     // Get our SQS client
     const sqsClient = getSqsClient();

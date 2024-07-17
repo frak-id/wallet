@@ -11,8 +11,8 @@ import {
     ecdsaValidatorStorageAbi,
     getExecutionAbi,
 } from "@/context/recover/utils/abi";
-import { multiWebAuthNValidatorV2Abi } from "@/context/wallet/abi/kernel-v2-abis";
 import type { CurrentRecovery } from "@/types/Recovery";
+import { multiWebAuthNValidatorV2Abi } from "@frak-labs/shared/context/blockchain/abis/kernel-v2-abis";
 import { map, tryit } from "radash";
 import {
     type Address,

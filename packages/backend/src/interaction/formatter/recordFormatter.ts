@@ -7,7 +7,7 @@ import type { SQSRecord } from "aws-lambda";
 import { memo } from "radash";
 import { type Address, type Hex, concatHex, encodeFunctionData } from "viem";
 import { readContract } from "viem/actions";
-import { getViemClient } from "../client/viem";
+import { getViemClient } from "../../blockchain/client";
 import { getInteractionSignature } from "./interactionSigner";
 
 type InteractionEvent = {
