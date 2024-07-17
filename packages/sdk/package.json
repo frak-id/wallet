@@ -80,7 +80,7 @@
   "devDependencies": {
     "@tanstack/react-query": ">=5.51.5",
     "@types/node": "^20",
-    "tsup": "^8.1.0",
+    "tsup": "^8.1.2",
     "typescript": "^5"
   }
 }
