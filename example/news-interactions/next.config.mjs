@@ -17,7 +17,6 @@ const nextConfig = {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
     },
-    transpilePackages: ["lucide-react"],
     compiler: {
         removeConsole: isDistant,
     },
@@ -26,7 +25,7 @@ const nextConfig = {
         remotePatterns: [
             {
                 protocol: "https",
-                hostname: "news-paper.xyz",
+                hostname: "**",
             },
             {
                 protocol: "http",

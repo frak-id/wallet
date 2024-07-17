@@ -1,4 +1,3 @@
-import type { ArticleProvider } from "@/context/common/dexie/ArticleInfoModel";
 import type { Address } from "viem";
 
 type BaseInteraction = {
@@ -20,13 +19,3 @@ export type ReferredInteraction = BaseInteraction & {
 };
 
 export type InteractionHistory = OpenOrReadInteraction | ReferredInteraction;
-
-/**
- * Represent an interaction history item with the front data
- */
-export type InteractionHistoryWithFrontData = InteractionHistory & {
-    articleUrl?: string;
-    articleTitle?: string;
-    contentTitle?: string;
-    provider?: ArticleProvider;
-};

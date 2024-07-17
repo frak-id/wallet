@@ -1,11 +1,11 @@
-import { NewsList } from "@/module/news/component/List";
+import { Header } from "@/module/common/component/Header";
+import { NewsList } from "@/module/news/component/NewsList";
 
 export default function HomePage() {
     return (
-        <div>
-            <h1>Nexus interaction demo</h1>
-
+        <>
+            <Header />
             <NewsList />
-        </div>
+        </>
     );
 }

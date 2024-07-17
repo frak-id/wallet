@@ -1,7 +1,13 @@
 .skeleton {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
+    gap: 20px;
     width: 100%;
+
+    & br {
+        display: none;
+    }
 }
 
 .skeleton + .skeleton {
