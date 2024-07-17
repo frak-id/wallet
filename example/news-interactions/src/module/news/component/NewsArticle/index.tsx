@@ -68,7 +68,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
 
     return (
         <>
-            <Hero {...article} ref={titleRef} />
+            <Hero isArticle={true} {...article} ref={titleRef} />
             <article className={styles.article}>
                 <p className={styles.article__author}>
                     Written by {article.author}
