@@ -22,4 +22,3 @@ export {
     useSiweAuthenticate,
     usePressReferralInteraction,
 } from "./hook";
-export type { ArticleUnlockStatusQueryReturnType } from "./hook";

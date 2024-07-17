@@ -3,7 +3,7 @@ import { cssRaw as cssRaw2 } from "@/module/common/component/Button";
 import type { Article } from "@/type/Article";
 import type { UnlockOptionsReturnType } from "@frak-labs/nexus-sdk/core";
 import type { WalletStatusReturnType } from "@frak-labs/nexus-sdk/core";
-import type { ArticleUnlockStatusQueryReturnType } from "@frak-labs/nexus-sdk/react";
+import type { ArticleUnlockStatusReturnType } from "@frak-labs/nexus-sdk/core";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Hex } from "viem";
@@ -69,7 +69,7 @@ export function InjectUnlockComponent({
 }: {
     balanceHex: Hex | undefined;
     prices: UnlockOptionsReturnType["prices"];
-    unlockStatus: ArticleUnlockStatusQueryReturnType | undefined | null;
+    unlockStatus: ArticleUnlockStatusReturnType | undefined;
     walletStatus: WalletStatusReturnType | undefined;
     article: Article;
 }) {

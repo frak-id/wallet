@@ -7,10 +7,8 @@ import type {
     UnlockOptionsReturnType,
     WalletStatusReturnType,
 } from "@frak-labs/nexus-sdk/core";
-import {
-    type ArticleUnlockStatusQueryReturnType,
-    useNexusConfig,
-} from "@frak-labs/nexus-sdk/react";
+import type { ArticleUnlockStatusReturnType } from "@frak-labs/nexus-sdk/core";
+import { useNexusConfig } from "@frak-labs/nexus-sdk/react";
 import { formatHash } from "@frak-labs/nexus-wallet/src/context/wallet/utils/hashFormatter";
 import type { ArticlePriceForUser } from "@frak-labs/nexus-wallet/src/types/Price";
 import { LogoFrak } from "@frak-labs/shared/module/asset/icons/LogoFrak";
@@ -30,7 +28,7 @@ export function UnlockButtons({
 }: {
     balanceHex?: Hex;
     prices: UnlockOptionsReturnType["prices"];
-    unlockStatus: ArticleUnlockStatusQueryReturnType | undefined | null;
+    unlockStatus: ArticleUnlockStatusReturnType | undefined | null;
     walletStatus: WalletStatusReturnType | undefined;
     article: Article | undefined;
 }) {

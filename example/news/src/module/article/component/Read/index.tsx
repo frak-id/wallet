@@ -85,8 +85,7 @@ export function ReadArticle({
                     referralState={referralState}
                 />
             )}
-            {articleUnlockStatus &&
-            articleUnlockStatus?.key !== "waiting-response" ? (
+            {articleUnlockStatus ? (
                 <iframe
                     ref={setIframeRef}
                     id="frak-article-iframe"

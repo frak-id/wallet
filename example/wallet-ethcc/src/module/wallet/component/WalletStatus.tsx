@@ -22,9 +22,9 @@ export function WalletStatus() {
 function InnerStatus({
     status,
 }: {
-    status?: Readonly<WalletStatusReturnType | { key: "waiting-response" }>;
+    status?: Readonly<WalletStatusReturnType>;
 }) {
-    if (!status || status.key === "waiting-response") {
+    if (!status) {
         return <div>Loading...</div>;
     }
 
