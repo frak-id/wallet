@@ -3,10 +3,12 @@ import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArti
 import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import type { Article } from "@/type/Article";
 import { getStartArticleUnlockUrl } from "@frak-labs/nexus-sdk/actions";
-import type { UnlockOptionsReturnType } from "@frak-labs/nexus-sdk/core";
+import type {
+    UnlockOptionsReturnType,
+    WalletStatusReturnType,
+} from "@frak-labs/nexus-sdk/core";
 import {
     type ArticleUnlockStatusQueryReturnType,
-    type WalletStatusQueryReturnType,
     useNexusConfig,
 } from "@frak-labs/nexus-sdk/react";
 import { formatHash } from "@frak-labs/nexus-wallet/src/context/wallet/utils/hashFormatter";
@@ -29,7 +31,7 @@ export function UnlockButtons({
     balanceHex?: Hex;
     prices: UnlockOptionsReturnType["prices"];
     unlockStatus: ArticleUnlockStatusQueryReturnType | undefined | null;
-    walletStatus: WalletStatusQueryReturnType | undefined;
+    walletStatus: WalletStatusReturnType | undefined;
     article: Article | undefined;
 }) {
     const [articlePrice, setArticlePrice] = useState<
@@ -162,8 +164,8 @@ export function UnlockButtons({
 function LockedWalletStatusInfo({
     walletStatus,
     balanceHex,
-}: { walletStatus?: WalletStatusQueryReturnType; balanceHex?: Hex }) {
-    if (!walletStatus || walletStatus.key === "waiting-response") {
+}: { walletStatus?: WalletStatusReturnType; balanceHex?: Hex }) {
+    if (!walletStatus) {
         return <>Fetching your current wallet...</>;
     }
 

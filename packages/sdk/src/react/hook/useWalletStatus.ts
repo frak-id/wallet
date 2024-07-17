@@ -2,13 +2,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { WalletStatusReturnType } from "../../core";
 import { watchWalletStatus } from "../../core/actions";
+import { ClientNotFound } from "../../core/types/rpc/error";
+import { Deferred } from "../../core/utils/Deferred";
 import { useNexusClient } from "./useNexusClient";
-
-export type WalletStatusQueryReturnType =
-    | WalletStatusReturnType
-    | {
-          key: "waiting-response";
-      };
 
 /**
  * Hooks used to listen to the current wallet status
@@ -33,17 +29,31 @@ export function useWalletStatus() {
     /**
      * Setup the query listener
      */
-    return useQuery<WalletStatusQueryReturnType>({
+    return useQuery<WalletStatusReturnType>({
         gcTime: 0,
         queryKey: ["nexus-sdk", "wallet-status-listener"],
         queryFn: async () => {
             if (!client) {
-                return { key: "waiting-response" };
+                throw new ClientNotFound();
             }
-            // Setup the listener
-            await watchWalletStatus(client, newStatusUpdated);
+
+            // Our first result deferred
+            const firstResult = new Deferred<WalletStatusReturnType>();
+            let hasResolved = false;
+
+            // Setup the listener, with a callback request that will resolve the first result
+            await watchWalletStatus(client, (status) => {
+                newStatusUpdated(status);
+
+                // If the promise hasn't resolved yet, resolve it
+                if (!hasResolved) {
+                    firstResult.resolve(status);
+                    hasResolved = true;
+                }
+            });
+
             // Wait for the first response
-            return { key: "waiting-response" };
+            return firstResult.promise;
         },
         enabled: !!client,
     });

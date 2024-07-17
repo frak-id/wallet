@@ -22,7 +22,4 @@ export {
     useSiweAuthenticate,
     usePressReferralInteraction,
 } from "./hook";
-export type {
-    WalletStatusQueryReturnType,
-    ArticleUnlockStatusQueryReturnType,
-} from "./hook";
+export type { ArticleUnlockStatusQueryReturnType } from "./hook";

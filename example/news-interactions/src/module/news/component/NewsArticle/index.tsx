@@ -36,7 +36,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                         articleId: blockchainArticleId,
                     }),
                 });
-                console.log("Open interaction hash", interactionHash);
+                console.log("Open interaction delegation id", interactionHash);
             },
         }
     );
@@ -44,6 +44,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
     // Trigger the read article event when the user has scrolled to the bottom of the article
     const { targetRef: footerRef } = useIntersectionObserver<HTMLDivElement>({
         threshold: 1,
+        oneShot: true,
         onIntersect: async () => {
             console.log("Sending read article interaction");
             const interactionHash = await pushInteraction({
@@ -51,7 +52,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                     articleId: blockchainArticleId,
                 }),
             });
-            console.log("Read interaction hash", interactionHash);
+            console.log("Read interaction delegation id", interactionHash);
         },
     });
 

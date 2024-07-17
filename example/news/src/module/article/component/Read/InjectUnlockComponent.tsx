@@ -2,10 +2,8 @@ import { UnlockButtons } from "@/module/article/component/UnlockButtons";
 import { cssRaw as cssRaw2 } from "@/module/common/component/Button";
 import type { Article } from "@/type/Article";
 import type { UnlockOptionsReturnType } from "@frak-labs/nexus-sdk/core";
-import type {
-    ArticleUnlockStatusQueryReturnType,
-    WalletStatusQueryReturnType,
-} from "@frak-labs/nexus-sdk/react";
+import type { WalletStatusReturnType } from "@frak-labs/nexus-sdk/core";
+import type { ArticleUnlockStatusQueryReturnType } from "@frak-labs/nexus-sdk/react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Hex } from "viem";
@@ -72,7 +70,7 @@ export function InjectUnlockComponent({
     balanceHex: Hex | undefined;
     prices: UnlockOptionsReturnType["prices"];
     unlockStatus: ArticleUnlockStatusQueryReturnType | undefined | null;
-    walletStatus: WalletStatusQueryReturnType | undefined;
+    walletStatus: WalletStatusReturnType | undefined;
     article: Article;
 }) {
     const [element, setElement] = useState<Element | undefined>();
