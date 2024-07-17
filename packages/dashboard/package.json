@@ -52,7 +52,7 @@
     "react-hook-form": "^7.52.1",
     "urql": "^4.1.0",
     "use-session-storage-state": "^19.0.0",
-    "viem": "^2.16.5"
+    "viem": "^2.17.4"
   },
   "devDependencies": {
     "@types/node": "^20",

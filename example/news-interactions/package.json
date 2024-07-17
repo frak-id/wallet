@@ -28,7 +28,7 @@
     "react-markdown": "^9.0.1",
     "sharp": "^0.33.4",
     "swiper": "^11.1.5",
-    "viem": "^2.16.5"
+    "viem": "^2.17.4"
   },
   "devDependencies": {
     "@types/node": "^20",

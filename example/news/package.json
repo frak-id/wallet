@@ -30,7 +30,7 @@
     "react-dom": "^18",
     "react-loading-skeleton": "^3.4.0",
     "use-local-storage-state": "^19.3.1",
-    "viem": "^2.16.5"
+    "viem": "^2.17.4"
   },
   "devDependencies": {
     "@types/humanize-duration": "^3.27.4",
