@@ -2,6 +2,7 @@
 
 import { getNewsForHome } from "@/context/articles/actions/getNews";
 import { Skeleton } from "@/module/common/component/Skeleton";
+import { Swiper } from "@/module/common/component/Swiper";
 import { Hero } from "@/module/news/component/Hero";
 import { HighlightTitle } from "@/module/news/component/HighlightTitle";
 import { List } from "@/module/news/component/List";
@@ -34,11 +35,7 @@ export function NewsList() {
             <QuickBites {...news?.quickByte} />
 
             <HighlightTitle>Featured news</HighlightTitle>
-            <List>
-                {news?.featured?.map((news) => (
-                    <List.Item key={news.id} news={news} />
-                ))}
-            </List>
+            <Swiper featured={news?.featured} />
 
             <HighlightTitle>Positive news</HighlightTitle>
             <List>

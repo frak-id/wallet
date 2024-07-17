@@ -13,7 +13,7 @@ html {
     color: var(--frak-text-color);
     scroll-behavior: smooth;
     height: 100dvh;
-    transition: background .3s;
+    transition: background 0.3s;
     overflow: hidden;
 
     & body {
@@ -40,9 +40,9 @@ html {
             width: 430px;
             height: 805px;
             min-height: auto;
-            overflow: auto;
+            overflow-x: hidden;
             background-size: cover;
-            transition: background .3s;
+            transition: background 0.3s;
             border: 2px solid #ececec;
         }
     }

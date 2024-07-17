@@ -59,3 +59,23 @@
     height: auto;
     max-width: 70px;
 }
+
+.listItemSwiper {
+    display: block;
+    width: 200px;
+}
+
+.listItemSwiper__title {
+    position: relative;
+    margin: -40px 13px 0 13px;
+    padding: 10px;
+    font-size: 13px;
+    background: #ffffff;
+    color: #434343;
+}
+
+.listItemSwiper__image {
+    width: 200px;
+    height: auto;
+    max-width: 200px;
+}

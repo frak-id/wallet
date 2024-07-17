@@ -80,3 +80,19 @@ function ItemWithSummary({ news }: { news: LightNews }) {
         </Link>
     );
 }
+
+export function ItemSwiper({ news }: { news: LightNews }) {
+    const { id, title, image } = news;
+    return (
+        <Link href={`/article?id=${id}`} className={styles.listItemSwiper}>
+            <ImageRemote
+                image={image}
+                title={title}
+                width={200}
+                height={200}
+                className={styles.listItemSwiper__image}
+            />
+            <h2 className={styles.listItemSwiper__title}>{title}</h2>
+        </Link>
+    );
+}
