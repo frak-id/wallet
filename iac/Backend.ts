@@ -1,6 +1,8 @@
 import { Duration } from "aws-cdk-lib";
-import { Cron, Queue } from "sst/constructs";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { Cron, Queue, use } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
+import { ConfigStack } from "./Config";
 
 /**
  * Define backend stack
@@ -8,7 +10,7 @@ import type { StackContext } from "sst/constructs";
  * @constructor
  */
 export function BackendStack(ctx: StackContext) {
-    interactionsResources(ctx);
+    // interactionsResources(ctx);
     newsResources(ctx);
 }
 
@@ -16,7 +18,7 @@ export function BackendStack(ctx: StackContext) {
  * Define all of our interactions resources
  * @param stack
  */
-function interactionsResources({ stack }: StackContext) {
+export function interactionsResources({ stack }: StackContext) {
     // todo: split queue in half? Like interaction validator queue then interaction processor queue?
     // todo: Move sensitive stuff here? like airdropper and stuff?
     // todo: Should some part of business stuff moved here also? Like content minting?
@@ -51,12 +53,22 @@ function interactionsResources({ stack }: StackContext) {
  * @param stack
  */
 function newsResources({ stack }: StackContext) {
+    const { mongoExampleUri, worldNewsApiKey } = use(ConfigStack);
+
     const fetchingCron = new Cron(stack, "NewsFetchCron", {
         schedule: "rate(12 hours)",
         job: {
             function: {
                 handler: "packages/backend/src/news/fetch.handler",
                 timeout: "15 minutes",
+                bind: [mongoExampleUri, worldNewsApiKey],
+                // Allow llm calls
+                permissions: [
+                    new PolicyStatement({
+                        actions: ["bedrock:InvokeModel"],
+                        resources: ["*"],
+                    }),
+                ],
             },
         },
     });

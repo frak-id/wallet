@@ -1,4 +1,5 @@
 import { DI } from "@frak-labs/shared/context/utils/di";
+import { Config } from "sst/node/config";
 
 class WorldNewsApiRepository {
     constructor(private apiKey: string) {}
@@ -20,8 +21,8 @@ class WorldNewsApiRepository {
         url.searchParams.append("api-key", this.apiKey);
         url.searchParams.append("source-countries", "us,eu");
         url.searchParams.append("language", "en");
-        url.searchParams.append("min-sentiment", "0.1"); // We only want positive news here
-        url.searchParams.append("max-sentiment", "1");
+        url.searchParams.append("min-sentiment", "-0.2");
+        url.searchParams.append("max-sentiment", "0.9");
         url.searchParams.append(
             "earliest-publish-date",
             this.formatDate(eighteenHoursAgo)
@@ -41,21 +42,15 @@ class WorldNewsApiRepository {
         return data.news;
     }
 
+    // Format the date in the form:  yyyy-mm-dd hh:mm:ss
     formatDate(date: Date) {
-        return date.toISOString().replace("T", " ").replace("Z", "");
+        return date.toISOString().split(".")[0].replace("T", " ");
     }
 }
 
 export const getWorldNewsApiRepository = DI.registerAndExposeGetter({
     id: "WorldNewsApiRepository",
-    getter: () => {
-        const apiKey = process.env.WORLD_NEWS_API_KEY;
-        if (!apiKey) {
-            throw new Error("Missing WORLD_NEWS_API_KEY");
-        }
-
-        return new WorldNewsApiRepository(apiKey);
-    },
+    getter: () => new WorldNewsApiRepository(Config.WORLD_NEWS_API_KEY),
 });
 
 type NewsResponse = {

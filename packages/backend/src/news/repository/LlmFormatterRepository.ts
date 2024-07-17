@@ -28,7 +28,8 @@ class LlmFormatterRepository {
 5. Use **bold** for key names or organizations when first mentioned.
 6. Format any relevant quotes using > blockquotes.
 7. Conclude with perspective or implications of the news.
-8. Ensure objectivity and balance throughout.
+9. No Html allowed in the output, only markdown.
+10. Your answer will be interpreted directly to be displayed. It should be ready to go.
 
 News content to rewrite:
 ${news.text}`;
@@ -54,7 +55,5 @@ ${news.text}`;
 
 export const getLlmFormatterRepository = DI.registerAndExposeGetter({
     id: "LlmFormatterRepository",
-    getter: () => {
-        return new LlmFormatterRepository();
-    },
+    getter: () => new LlmFormatterRepository(),
 });

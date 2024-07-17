@@ -1,6 +1,5 @@
 "use server";
 
-import { synchroniseNews } from "@/context/articles/actions/newsSyncer";
 import type { NewsDocument } from "@/context/articles/dto/NewsDocument";
 import { getNewsRepository } from "@/context/articles/repository/NewsRepository";
 import type { FullNews, LightNews } from "@/types/News";
@@ -10,9 +9,6 @@ import { ObjectId, type WithId } from "mongodb";
  * Get the latest news
  */
 export async function getNewsForHome() {
-    // Do a synchronisation if needed
-    await synchroniseNews();
-
     // Get the repository and fetch the news
     const repository = await getNewsRepository();
 
