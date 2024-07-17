@@ -10,24 +10,34 @@ import { ConfigStack } from "./Config";
  * @constructor
  */
 export function BackendStack(ctx: StackContext) {
-    // interactionsResources(ctx);
+    const { interactionQueue } = interactionsResources(ctx);
     newsResources(ctx);
+
+    return { interactionQueue };
 }
 
 /**
  * Define all of our interactions resources
  * @param stack
  */
-export function interactionsResources({ stack }: StackContext) {
+function interactionsResources({ stack }: StackContext) {
     // todo: split queue in half? Like interaction validator queue then interaction processor queue?
     // todo: Move sensitive stuff here? like airdropper and stuff?
     // todo: Should some part of business stuff moved here also? Like content minting?
+
+    const { airdropPrivateKey, interactionValidatorPrivateKey, alchemyApiKey } =
+        use(ConfigStack);
     // Interaction handling stuff
     const interactionQueue = new Queue(stack, "InteractionQueue", {
         consumer: {
             function: {
                 handler: "packages/backend/src/interaction/queue.handler",
                 timeout: "15 minutes",
+                bind: [
+                    airdropPrivateKey,
+                    interactionValidatorPrivateKey,
+                    alchemyApiKey,
+                ],
             },
             cdk: {
                 eventSource: {
@@ -42,10 +52,16 @@ export function interactionsResources({ stack }: StackContext) {
                 },
             },
         },
+        cdk: {
+            queue: {
+                visibilityTimeout: Duration.minutes(60),
+            },
+        },
     });
     stack.addOutputs({
         InteractionQueueId: interactionQueue.id,
     });
+    return { interactionQueue };
 }
 
 /**
