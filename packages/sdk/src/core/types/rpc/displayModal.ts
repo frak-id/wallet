@@ -3,7 +3,6 @@ import type {
     SendTransactionModalStepType,
     SiweAuthenticateModalStepType,
 } from "./modal";
-import type { ModalStepType } from "./modal/generic";
 
 /**
  * Generic type of steps we will display in the modal to the end user
@@ -16,15 +15,17 @@ export type ModalStepTypes =
 /**
  * A generic modal rpc requests
  *  - Just containing every steps
+ *
+ *  todo: fix types
  */
 export type ModalRpcRequest<Types extends ModalStepTypes[] = ModalStepTypes[]> =
     {
-        steps: Types extends ModalStepType<infer Key, infer Params, infer _>[]
-            ? {
-                  key: Key;
-                  params: Params;
-              }[]
-            : never;
+        steps: {
+            [K in keyof Types]: {
+                key: Types[K]["key"];
+                params: Types[K]["params"];
+            };
+        };
     };
 
 /**
@@ -34,12 +35,12 @@ export type ModalRpcRequest<Types extends ModalStepTypes[] = ModalStepTypes[]> =
 export type ModalRpcResponse<
     Types extends ModalStepTypes[] = ModalStepTypes[],
 > = {
-    results: Types extends ModalStepType<infer Key, infer _, infer Returns>[]
-        ? {
-              key: Key;
-              returns: Returns;
-          }[]
-        : never;
+    results: {
+        [K in keyof Types]: {
+            key: Types[K]["key"];
+            returns: Types[K]["returns"];
+        };
+    };
 };
 
 /**

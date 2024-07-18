@@ -1,5 +1,8 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
-import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
+import {
+    modalDisplayedRequestAtom,
+    setNewModalAtom,
+} from "@/module/listener/atoms/modalEvents";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
@@ -36,7 +39,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
         // todo: deduplicate modal request (like max one login and tx,, multi auth if different siwe ok)
         // todo: reorg modal request (login first, then auth, then txs)
 
-        jotaiStore.set(modalDisplayedRequestAtom, {
+        jotaiStore.set(setNewModalAtom, {
             modal,
             context: request.params[1],
             emitter,

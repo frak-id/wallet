@@ -20,6 +20,6 @@ export type SiweAuthenticateReturnType = Readonly<{
  */
 export type SiweAuthenticateModalStepType = ModalStepType<
     "siweAuthenticate",
-    { siwe: Partial<SiweAuthenticationParams> },
+    { siwe: SiweAuthenticationParams },
     SiweAuthenticateReturnType
 >;
