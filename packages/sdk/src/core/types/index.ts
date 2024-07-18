@@ -6,8 +6,6 @@ export type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
 } from "./rpc/startUnlock";
-export type { SiweAuthenticateActionParamsType } from "./rpc/authenticate";
-export type { SendTransactionActionParamsType } from "./rpc/sendTransaction";
 export type {
     PreparedInteraction,
     SendInteractionParamsType,

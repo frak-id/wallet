@@ -1,9 +1,5 @@
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import type {
-    FrakRpcError,
-    SendTransactionActionParamsType,
-    SendTransactionReturnType,
-} from "../../core";
+import type { FrakRpcError, SendTransactionReturnType } from "../../core";
 import {
     type SendTransactionParams,
     sendTransaction,
@@ -15,7 +11,7 @@ type MutationOptions = Omit<
     UseMutationOptions<
         SendTransactionReturnType,
         FrakRpcError,
-        SendTransactionActionParamsType
+        SendTransactionParams
     >,
     "mutationFn" | "mutationKey"
 >;

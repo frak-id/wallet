@@ -1,9 +1,5 @@
 import type { Hex } from "viem";
 import type {
-    SiweAuthenticateReturnType,
-    SiweAuthenticationParams,
-} from "./rpc/authenticate";
-import type {
     ModalRpcStepsInput,
     ModalRpcStepsResultType,
 } from "./rpc/displayModal";
@@ -11,10 +7,6 @@ import type {
     PreparedInteraction,
     SendInteractionReturnType,
 } from "./rpc/interaction";
-import type {
-    SendTransactionReturnType,
-    SendTransactionRpcParamsType,
-} from "./rpc/sendTransaction";
 import type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
@@ -50,22 +42,6 @@ export type IFrameRpcSchema = [
         Method: "frak_listenToArticleUnlockStatus";
         Parameters: [contentId: Hex, articleId: Hex];
         ReturnType: ArticleUnlockStatusReturnType;
-    },
-    /**
-     * Method to ask the user to send a transaction
-     */
-    {
-        Method: "frak_sendTransaction";
-        Parameters: SendTransactionRpcParamsType;
-        ReturnType: SendTransactionReturnType;
-    },
-    /**
-     * Method to ask the user for a strong authentication
-     */
-    {
-        Method: "frak_siweAuthenticate";
-        Parameters: [request: SiweAuthenticationParams, context?: string];
-        ReturnType: SiweAuthenticateReturnType;
     },
     /**
      * Method to transmit a user interaction

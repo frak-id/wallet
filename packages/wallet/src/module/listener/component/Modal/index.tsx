@@ -10,6 +10,7 @@ import {
 } from "@/module/listener/atoms/modalEvents";
 import { SiweAuthenticateModalStep } from "@/module/listener/component/Authenticate";
 import { LoginModalStep } from "@/module/listener/component/Login";
+import { ModalStepIndicator } from "@/module/listener/component/Modal/Step";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
 import {
     type LoginModalStepType,
@@ -59,7 +60,6 @@ function ListenerModalDialog({
      * Method to close the modal
      */
     const onClose = useCallback(() => {
-        // todo: submit the results?
         iFrameToggleVisibility(false);
         jotaiStore.set(clearRpcModalAtom);
     }, []);
@@ -129,7 +129,7 @@ function ListenerModalDialog({
                 <>
                     <ModalStepIndicator />
                     <CurrentModalStepComponent
-                        onClose={onFinished}
+                        onModalFinish={onFinished}
                         onError={onError}
                     />
                 </>
@@ -153,21 +153,13 @@ function ListenerModalDialog({
 }
 
 /**
- * Step indicator on the modal header
- * @constructor
- */
-function ModalStepIndicator() {
-    return <>I'm your current step indicator</>;
-}
-
-/**
  * Return the right inner component depending on the current modal step
  * @constructor
  */
 function CurrentModalStepComponent({
-    onClose,
+    onModalFinish,
     onError,
-}: { onClose: () => void; onError: (reason?: string) => void }) {
+}: { onModalFinish: () => void; onError: (reason?: string) => void }) {
     const modalSteps = useAtomValue(modalStepsAtom);
     const currentStep = useMemo(
         () => modalSteps?.steps?.[modalSteps.currentStep] ?? undefined,
@@ -180,7 +172,7 @@ function CurrentModalStepComponent({
     const onStepFinished = useCallback(
         (result: ModalStepTypes["returns"]) => {
             if (!modalSteps) {
-                onClose();
+                onModalFinish();
                 return;
             }
 
@@ -205,10 +197,10 @@ function CurrentModalStepComponent({
 
             // If we reached the end of the steps, we close the modal
             if (modalSteps.currentStep + 1 >= modalSteps.steps.length) {
-                onClose();
+                onModalFinish();
             }
         },
-        [onClose, modalSteps]
+        [onModalFinish, modalSteps]
     );
 
     /**

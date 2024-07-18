@@ -18,8 +18,6 @@ export type {
     RedirectRpcSchema,
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
-    SendTransactionActionParamsType,
-    SiweAuthenticateActionParamsType,
     PreparedInteraction,
     SendInteractionParamsType,
     SendInteractionReturnType,
