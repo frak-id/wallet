@@ -1,6 +1,6 @@
 import {
     type ExtractedParametersFromRpc,
-    type IFrameRpcEvent,
+    type IFrameEvent,
     type IFrameRpcSchema,
     type RpcResponse,
     decompressDataAndCheckHash,
@@ -49,7 +49,7 @@ export function createIFrameRequestResolver(
     }
 
     // Listen to the window message
-    const onMessage = async (message: MessageEvent<IFrameRpcEvent>) => {
+    const onMessage = async (message: MessageEvent<IFrameEvent>) => {
         // TODO: Check that the origin match one of our providers
         // TODO: Populate the request with a bit of context??
         // TODO: Content id is just a hash of the origin.domain so we can totally parse it and check when needed?
@@ -58,6 +58,20 @@ export function createIFrameRequestResolver(
         console.log("Received a request message from in the iframe", {
             message,
         });
+
+        // Check if that's a lifecycle event
+        if ("lifecycle" in message.data) {
+            const { lifecycle, data } = message.data;
+
+            // Check if that's a css lifecycle event and that we have data
+            if (lifecycle === "css" && data) {
+                const style = document.createElement("style");
+                style.id = "nexus-wallet-css";
+                style.appendChild(document.createTextNode(data));
+                document.head.appendChild(style);
+            }
+            return;
+        }
 
         // Get the data
         const { id, topic, data } = message.data;

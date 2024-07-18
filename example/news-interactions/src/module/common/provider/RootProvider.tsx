@@ -51,6 +51,7 @@ const frakWalletSdkConfig = {
     walletUrl: process.env.NEXUS_WALLET_URL as string,
     metadata: {
         name: "News interaction - Frak",
+        css: "body { background-color: red; }",
     },
     // Specify domain for valid test on localhost
     domain: "news-paper.xyz",

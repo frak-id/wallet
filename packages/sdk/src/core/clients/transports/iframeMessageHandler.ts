@@ -14,6 +14,12 @@ export type IFrameMessageHandlerParam = {
      */
     nexusWalletUrl: string;
     /**
+     * The metadata of the app
+     */
+    metadata?: {
+        css?: string;
+    };
+    /**
      * The iframe on which we will bound our listener
      */
     iframe: HTMLIFrameElement;
@@ -45,11 +51,13 @@ export type IFrameMessageHandler = {
 /**
  * Create an iframe message handler
  * @param nexusWalletUrl
+ * @param metadata
  * @param iframe
  * @param channelManager
  */
 export function createIFrameMessageHandler({
     nexusWalletUrl,
+    metadata,
     iframe,
     channelManager,
 }: IFrameMessageHandlerParam): IFrameMessageHandler {
@@ -91,6 +99,14 @@ export function createIFrameMessageHandler({
                 case "connected":
                     // Mark it as connected only if the event is 'connected'
                     isConnected.resolve(true);
+
+                    // Send the css to the iframe
+                    sendEvent({
+                        lifecycle: "css",
+                        data:
+                            metadata?.css ||
+                            ".fallback-frak-todo { display: none; }",
+                    });
                     break;
                 case "show":
                 case "hide":
