@@ -13,6 +13,7 @@ import { LoginModalStep } from "@/module/listener/component/Login";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
 import {
     type LoginModalStepType,
+    type ModalRpcStepsResultType,
     type ModalStepTypes,
     RpcErrorCodes,
     type SendTransactionModalStepType,
@@ -64,6 +65,37 @@ function ListenerModalDialog({
     }, []);
 
     /**
+     * Method when the user reached the end of the modal
+     */
+    const onFinished = useCallback(() => {
+        const results = jotaiStore.get(modalStepsAtom)?.results;
+        if (!results) {
+            currentRequest.emitter({
+                error: {
+                    code: RpcErrorCodes.serverError,
+                    message: "No result following the modal",
+                },
+            });
+            onClose();
+            return;
+        }
+
+        // Format the results from [{key, returns}] to {key: returns}
+        const formattedResults = results.reduce(
+            (acc, { key, returns }) => {
+                acc[key] = returns;
+                return acc;
+            },
+            {} as Record<string, unknown>
+        ) as ModalRpcStepsResultType;
+
+        currentRequest.emitter({
+            result: formattedResults,
+        });
+        onClose();
+    }, [onClose, currentRequest]);
+
+    /**
      * Method to close the modal
      */
     const onError = useCallback(
@@ -97,7 +129,7 @@ function ListenerModalDialog({
                 <>
                     <ModalStepIndicator />
                     <CurrentModalStepComponent
-                        onClose={onClose}
+                        onClose={onFinished}
                         onError={onError}
                     />
                 </>

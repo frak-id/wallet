@@ -24,8 +24,8 @@ type OnDisplayModalRequest = IFrameRequestResolver<
 export function useDisplayModalListener(): OnDisplayModalRequest {
     return useCallback(async (request, emitter) => {
         // If no modal to display, early exit
-        const modal = request.params[0];
-        if (modal.steps.length === 0) {
+        const steps = request.params[0];
+        if (Object.keys(steps).length === 0) {
             await emitter({
                 error: {
                     code: RpcErrorCodes.invalidRequest,
@@ -40,7 +40,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
         // todo: reorg modal request (login first, then auth, then txs)
 
         jotaiStore.set(setNewModalAtom, {
-            modal,
+            steps,
             context: request.params[1],
             emitter,
         });

@@ -13,40 +13,26 @@ export type ModalStepTypes =
     | SendTransactionModalStepType;
 
 /**
- * A generic modal rpc requests
- *  - Just containing every steps
- *
- *  todo: fix types
+ * Type for the result of a modal request
  */
-export type ModalRpcRequest<Types extends ModalStepTypes[] = ModalStepTypes[]> =
-    {
-        steps: {
-            [K in keyof Types]: {
-                key: Types[K]["key"];
-                params: Types[K]["params"];
-            };
-        };
-    };
+export type ModalRpcStepsResultType<
+    T extends ModalStepTypes[] = ModalStepTypes[],
+> = {
+    [K in T[number]["key"]]: Extract<T[number], { key: K }>["returns"];
+};
 
 /**
- * A generic modal rpc response
- *  The modals should be a list of modal key + results (no params)
+ * Type for the RPC input of a modal
  */
-export type ModalRpcResponse<
-    Types extends ModalStepTypes[] = ModalStepTypes[],
-> = {
-    results: {
-        [K in keyof Types]: {
-            key: Types[K]["key"];
-            returns: Types[K]["returns"];
-        };
+export type ModalRpcStepsInput<T extends ModalStepTypes[] = ModalStepTypes[]> =
+    {
+        [K in T[number]["key"]]?: Extract<T[number], { key: K }>["params"];
     };
-};
 
 /**
  * Generic params used to display modals
  */
-export type DisplayModalParamsType<TModalTypes extends ModalStepTypes[]> = {
-    modal: ModalRpcRequest<TModalTypes>;
+export type DisplayModalParamsType<T extends ModalStepTypes[]> = {
+    steps: ModalRpcStepsInput<T>;
     context?: string;
 };

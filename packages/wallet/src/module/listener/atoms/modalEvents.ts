@@ -1,13 +1,14 @@
+import { sessionAtom } from "@/module/common/atoms/session";
 import type {
     IFrameRpcSchema,
-    ModalRpcRequest,
-    ModalRpcResponse,
+    ModalRpcStepsInput,
+    ModalStepTypes,
     RpcResponse,
 } from "@frak-labs/nexus-sdk/core";
 import { atom } from "jotai";
 
 export type ModalDisplayedRequest = {
-    modal: ModalRpcRequest;
+    steps: ModalRpcStepsInput;
     context?: string;
     emitter: (
         response: RpcResponse<IFrameRpcSchema, "frak_displayModal">
@@ -27,33 +28,50 @@ export const modalDisplayedRequestAtom = atom<ModalDisplayedRequest | null>(
 export const modalStepsAtom = atom<{
     // Global modal context
     context?: string;
-    // Index of the current step in our step array
+    // Key of the current step
     currentStep: number;
-    // All the steps, with returns marked as optional
-    steps: ModalRpcRequest["steps"];
-    // todo: All the step results
-    results: ModalRpcResponse["results"];
+    // All the step but in a table, for easier management
+    steps: Pick<ModalStepTypes, "key" | "params">[];
+    // All the steps results in an array
+    results: Pick<ModalStepTypes, "key" | "returns">[];
 } | null>(null);
-
-/**
- * Simple atom to read the current step
- */
-export const currentModalStepAtom = atom((get) => {
-    const steps = get(modalStepsAtom);
-    return steps?.steps[steps.currentStep];
-});
 
 /**
  * Setter for when we receive a new modal request
  */
 export const setNewModalAtom = atom(
     null,
-    (_get, set, newModal: ModalDisplayedRequest) => {
+    (get, set, newModal: ModalDisplayedRequest) => {
         set(modalDisplayedRequestAtom, newModal);
+
+        // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
+        const steps = Object.entries(newModal.steps).map(([key, params]) => ({
+            key,
+            params,
+        })) as Pick<ModalStepTypes, "key" | "params">[];
+
+        // Build our initial result array
+        let currentStep = 0;
+        const results: Pick<ModalStepTypes, "key" | "returns">[] = [];
+
+        // If the steps include login, check if user got a current session
+        if (steps.find((step) => step.key === "login")) {
+            // Check if the user is already logged in or not on mount
+            const session = get(sessionAtom);
+            if (session) {
+                results.push({
+                    key: "login",
+                    returns: { wallet: session.wallet },
+                });
+                currentStep++;
+            }
+        }
+
+        // Set the initial state
         set(modalStepsAtom, {
-            currentStep: 0,
-            steps: newModal.modal.steps,
-            results: [],
+            currentStep,
+            steps: steps,
+            results,
         });
     }
 );

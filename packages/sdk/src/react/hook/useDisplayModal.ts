@@ -2,39 +2,38 @@ import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import type {
     DisplayModalParamsType,
     FrakRpcError,
-    ModalRpcResponse,
+    ModalRpcStepsResultType,
     ModalStepTypes,
 } from "../../core";
 import { displayModal } from "../../core/actions/displayModal";
 import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
-type MutationOptions<TModalTypes extends ModalStepTypes[] = ModalStepTypes[]> =
-    Omit<
-        UseMutationOptions<
-            ModalRpcResponse<TModalTypes>,
-            FrakRpcError,
-            DisplayModalParamsType<TModalTypes>
-        >,
-        "mutationFn" | "mutationKey"
-    >;
+type MutationOptions<T extends ModalStepTypes[]> = Omit<
+    UseMutationOptions<
+        ModalRpcStepsResultType<T>,
+        FrakRpcError,
+        DisplayModalParamsType<T>
+    >,
+    "mutationFn" | "mutationKey"
+>;
 
-interface UseDisplayModalParams {
-    mutations?: MutationOptions;
+interface UseDisplayModalParams<T extends ModalStepTypes[] = ModalStepTypes[]> {
+    mutations?: MutationOptions<T>;
 }
 
 /**
  * Send a user interaction
  */
-export function useDisplayModal({ mutations }: UseDisplayModalParams = {}) {
+export function useDisplayModal<T extends ModalStepTypes[] = ModalStepTypes[]>({
+    mutations,
+}: UseDisplayModalParams<T> = {}) {
     const client = useNexusClient();
 
     return useMutation({
         ...mutations,
         mutationKey: ["nexus-sdk", "display-modal"],
-        mutationFn: async <TModalTypes extends ModalStepTypes[]>(
-            args: DisplayModalParamsType<TModalTypes>
-        ) => {
+        mutationFn: async (args: DisplayModalParamsType<T>) => {
             if (!client) {
                 throw new ClientNotFound();
             }

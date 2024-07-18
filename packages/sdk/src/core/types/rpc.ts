@@ -3,7 +3,10 @@ import type {
     SiweAuthenticateReturnType,
     SiweAuthenticationParams,
 } from "./rpc/authenticate";
-import type { ModalRpcRequest, ModalRpcResponse } from "./rpc/displayModal";
+import type {
+    ModalRpcStepsInput,
+    ModalRpcStepsResultType,
+} from "./rpc/displayModal";
 import type {
     PreparedInteraction,
     SendInteractionReturnType,
@@ -69,8 +72,8 @@ export type IFrameRpcSchema = [
      */
     {
         Method: "frak_displayModal";
-        Parameters: [requests: ModalRpcRequest, context?: string];
-        ReturnType: ModalRpcResponse;
+        Parameters: [requests: ModalRpcStepsInput, context?: string];
+        ReturnType: ModalRpcStepsResultType;
     },
     /**
      * Method to transmit a user interaction

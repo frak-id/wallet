@@ -37,9 +37,9 @@ export type { PaidArticleUnlockPrice } from "./generic";
 // Modal related
 export type {
     ModalStepTypes,
+    ModalRpcStepsInput,
+    ModalRpcStepsResultType,
     DisplayModalParamsType,
-    ModalRpcResponse,
-    ModalRpcRequest,
 } from "./rpc/displayModal";
 export type {
     LoginModalStepType,

@@ -4,7 +4,10 @@ import type {
     SendTransactionActionParamsType,
     SendTransactionReturnType,
 } from "../../core";
-import { sendTransaction } from "../../core/actions";
+import {
+    type SendTransactionParams,
+    sendTransaction,
+} from "../../core/actions";
 import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
@@ -32,7 +35,7 @@ export function useSendTransactionAction({
     return useMutation({
         ...mutations,
         mutationKey: ["nexus-sdk", "send-transaction"],
-        mutationFn: async (params: SendTransactionActionParamsType) => {
+        mutationFn: async (params: SendTransactionParams) => {
             if (!client) {
                 throw new ClientNotFound();
             }

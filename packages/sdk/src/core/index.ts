@@ -26,8 +26,8 @@ export type {
     // RPC Modal generics
     ModalStepTypes,
     DisplayModalParamsType,
-    ModalRpcResponse,
-    ModalRpcRequest,
+    ModalRpcStepsInput,
+    ModalRpcStepsResultType,
     // RPC Modal types
     LoginModalStepType,
     SiweAuthenticateModalStepType,

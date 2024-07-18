@@ -7,7 +7,14 @@ export {
     getStartArticleUnlockUrl,
     decodeStartUnlockReturn,
 } from "./startUnlock";
-export { sendTransaction } from "./sendTransaction";
-export { siweAuthenticate } from "./siweAuthenticate";
 export { sendInteraction } from "./sendInteraction";
 export { displayModal } from "./displayModal";
+// Modal wrappers
+export {
+    siweAuthenticate,
+    type SiweAuthenticateModalParams,
+} from "./wrapper/siweAuthenticate";
+export {
+    sendTransaction,
+    type SendTransactionParams,
+} from "./wrapper/sendTransaction";

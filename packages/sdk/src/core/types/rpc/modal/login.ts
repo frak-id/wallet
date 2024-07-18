@@ -1,11 +1,10 @@
-import type { Address } from "viem";
-import type { ModalStepType } from "./generic";
+import type { SiweAuthenticateReturnType } from "./siweAuthenticate";
 
 /**
- * The login modal type
+ * Generic type of modal we will display to the end user
  */
-export type LoginModalStepType = ModalStepType<
-    "login",
-    never,
-    { wallet: Address }
->;
+export type LoginModalStepType = {
+    key: "login";
+    params: object;
+    returns: SiweAuthenticateReturnType;
+};
