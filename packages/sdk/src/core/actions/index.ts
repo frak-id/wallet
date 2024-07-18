@@ -10,3 +10,4 @@ export {
 export { sendTransaction } from "./sendTransaction";
 export { siweAuthenticate } from "./siweAuthenticate";
 export { sendInteraction } from "./sendInteraction";
+export { displayModal } from "./displayModal";

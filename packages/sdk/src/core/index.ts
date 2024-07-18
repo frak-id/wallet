@@ -19,14 +19,23 @@ export type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
     SendTransactionActionParamsType,
-    SendTransactionReturnType,
-    SendTransactionTxType,
-    SiweAuthenticateReturnType,
     SiweAuthenticateActionParamsType,
-    SiweAuthenticationParams,
     PreparedInteraction,
     SendInteractionParamsType,
     SendInteractionReturnType,
+    // RPC Modal generics
+    ModalTypes,
+    DisplayModalParamsType,
+    ModalRpcResponse,
+    ModalRpcRequest,
+    // RPC Modal types
+    LoginModalType,
+    SiweAuthenticateModalType,
+    SiweAuthenticationParams,
+    SiweAuthenticateReturnType,
+    SendTransactionTxType,
+    SendTransactionModalType,
+    SendTransactionReturnType,
     // Client
     NexusClient,
     // Transport

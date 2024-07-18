@@ -21,4 +21,5 @@ export {
     useSendInteraction,
     useSiweAuthenticate,
     usePressReferralInteraction,
+    useDisplayModal,
 } from "./hook";

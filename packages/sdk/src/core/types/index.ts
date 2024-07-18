@@ -6,16 +6,8 @@ export type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
 } from "./rpc/startUnlock";
-export type {
-    SiweAuthenticateActionParamsType,
-    SiweAuthenticateReturnType,
-    SiweAuthenticationParams,
-} from "./rpc/authenticate";
-export type {
-    SendTransactionActionParamsType,
-    SendTransactionReturnType,
-    SendTransactionTxType,
-} from "./rpc/sendTransaction";
+export type { SiweAuthenticateActionParamsType } from "./rpc/authenticate";
+export type { SendTransactionActionParamsType } from "./rpc/sendTransaction";
 export type {
     PreparedInteraction,
     SendInteractionParamsType,
@@ -42,3 +34,19 @@ export type {
 } from "./compression";
 // Generic stuff
 export type { PaidArticleUnlockPrice } from "./generic";
+// Modal related
+export type {
+    ModalTypes,
+    DisplayModalParamsType,
+    ModalRpcResponse,
+    ModalRpcRequest,
+} from "./rpc/displayModal";
+export type {
+    LoginModalType,
+    SiweAuthenticateModalType,
+    SiweAuthenticationParams,
+    SiweAuthenticateReturnType,
+    SendTransactionTxType,
+    SendTransactionModalType,
+    SendTransactionReturnType,
+} from "./rpc/modal";
