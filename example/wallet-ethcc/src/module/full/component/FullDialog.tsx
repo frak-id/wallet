@@ -109,7 +109,7 @@ function ActionResult({
             </h4>
 
             <h5>Login data</h5>
-            <p>Address: {data.login.address}</p>
+            <p>Address: {data.login.wallet}</p>
             <hr />
 
             <h5>Open session data</h5>

@@ -9,7 +9,7 @@ export type NexusWalletSdkConfig = Readonly<{
         // Your app name
         name: string;
         // Your app styles to skin modals
-        css: string;
+        css?: string;
     };
     // Your domain (will be retrieved automatically if not provided)
     domain: string;

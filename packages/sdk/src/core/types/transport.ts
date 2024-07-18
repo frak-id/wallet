@@ -131,6 +131,6 @@ type IFrameLifecycleEvent =
     | LifecycleEventCSS;
 
 type LifecycleEventCSS = {
-    lifecycle: "css";
+    lifecycle: "modal-css";
     data: string;
 };

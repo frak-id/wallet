@@ -78,7 +78,7 @@ export function createIFrameMessageHandler({
     const contentWindow = iframe.contentWindow;
 
     // Create our deferred promise
-    const isConnected = new Deferred<boolean>();
+    const isConnectedDeferred = new Deferred<boolean>();
 
     // Create the function that will handle incoming iframe messages
     const msgHandler = async (event: MessageEvent<IFrameEvent>) => {
@@ -97,16 +97,7 @@ export function createIFrameMessageHandler({
         if ("lifecycle" in event.data) {
             switch (event.data.lifecycle) {
                 case "connected":
-                    // Mark it as connected only if the event is 'connected'
-                    isConnected.resolve(true);
-
-                    // Send the css to the iframe
-                    sendEvent({
-                        lifecycle: "css",
-                        data:
-                            metadata?.css ||
-                            ".fallback-frak-todo { display: none; }",
-                    });
+                    isConnectedDeferred.resolve(true);
                     break;
                 case "show":
                 case "hide":
@@ -143,9 +134,45 @@ export function createIFrameMessageHandler({
         window.removeEventListener("message", msgHandler);
     };
 
+    // Mark it as connected only if the event is 'connected'
+    const isConnected = injectCssOnConnect({
+        isConnected: isConnectedDeferred.promise,
+        metadata,
+        sendEvent,
+    });
+
     return {
-        isConnected: isConnected.promise,
+        isConnected,
         sendEvent,
         cleanup,
     };
+}
+
+/**
+ * Inject CSS when modal is connected if needed
+ * @param isConnected
+ * @param metadata
+ * @param sendEvent
+ */
+function injectCssOnConnect({
+    isConnected,
+    metadata,
+    sendEvent,
+}: {
+    isConnected: Promise<boolean>;
+    metadata?: { css?: string };
+    sendEvent: (message: IFrameEvent) => void;
+}): Promise<boolean> {
+    const css = metadata?.css;
+    if (!css) {
+        return isConnected;
+    }
+
+    return isConnected.then((connected) => {
+        sendEvent({
+            lifecycle: "modal-css",
+            data: css,
+        });
+        return connected;
+    });
 }
