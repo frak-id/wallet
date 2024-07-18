@@ -1,9 +1,7 @@
 import { Link } from "next-view-transitions";
 import Image from "next/image";
-import burger from "./assets/burger.svg";
 import logoArticle from "./assets/logo-article.png";
 import logo from "./assets/logo.png";
-import search from "./assets/search.svg";
 import styles from "./index.module.css";
 
 export function Header({ inArticle = false }: { inArticle?: boolean }) {
@@ -18,12 +16,6 @@ export function Header({ inArticle = false }: { inArticle?: boolean }) {
                     />
                 </Link>
             </h1>
-            <Image src={burger} alt="Menu" className={styles.header__burger} />
-            <Image
-                src={search}
-                alt="Search"
-                className={styles.header__search}
-            />
         </header>
     );
 }

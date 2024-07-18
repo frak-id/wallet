@@ -11,7 +11,6 @@ import { useMemo } from "react";
 import Markdown from "react-markdown";
 import { keccak256, toHex } from "viem";
 import forward from "./assets/forward.svg";
-import share from "./assets/share.svg";
 import styles from "./index.module.css";
 
 export function NewsArticle({ articleId }: { articleId: string }) {
@@ -73,10 +72,12 @@ export function NewsArticle({ articleId }: { articleId: string }) {
             <article className={styles.article}>
                 <p className={styles.article__author}>
                     Written by {article.author}
-                    <span className={styles.article__social}>
-                        <Image src={share} alt="Share" />
-                        <Image src={forward} alt="Forward" />
-                    </span>
+                    <button
+                        type={"button"}
+                        className={`button ${styles.article__social}`}
+                    >
+                        <Image src={forward} alt="Share" />
+                    </button>
                 </p>
 
                 <p className={styles.article__summary}>{article.summary}</p>
