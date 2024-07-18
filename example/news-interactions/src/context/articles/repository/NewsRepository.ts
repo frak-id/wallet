@@ -10,18 +10,6 @@ class NewsRepository {
     constructor(private readonly collection: Collection<NewsDocument>) {}
 
     /**
-     * Get the latest news date
-     */
-    public async getLatestNewsDate() {
-        const latestNews = await this.collection
-            .find()
-            .sort({ publishDate: -1 })
-            .limit(1)
-            .toArray();
-        return latestNews.length > 0 ? latestNews[0].publishDate : null;
-    }
-
-    /**
      * Get the latest news
      * @param limit
      * @param offset
@@ -71,16 +59,6 @@ class NewsRepository {
      */
     public async getNewsById(id: ObjectId) {
         return this.collection.findOne({ _id: id });
-    }
-
-    /**
-     * Create multiple news
-     */
-    public async createMany(news: NewsDocument[]) {
-        const insertResult = await this.collection.insertMany(news);
-        if (!insertResult.acknowledged) {
-            throw new Error("Failed to insert the news");
-        }
     }
 }
 

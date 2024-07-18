@@ -15,7 +15,6 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.614.0",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
     "@tanstack/react-query": "^5.49.2",

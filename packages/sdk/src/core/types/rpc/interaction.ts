@@ -18,5 +18,5 @@ export type SendInteractionParamsType = {
  * Return type of the send interaction rpc request
  */
 export type SendInteractionReturnType = Readonly<{
-    hash: Hex;
+    delegationId: string;
 }>;

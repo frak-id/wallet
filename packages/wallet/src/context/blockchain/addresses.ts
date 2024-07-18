@@ -6,7 +6,6 @@ export const kernelAddresses = {
     multiWebAuthnRecovery: "0x8b29229515D3e5b829D59617A791b5B3a2c32ff1",
     multiWebAuthnValidator: "0xF05f18D9312f10d1d417c45040B8497899f66A5E",
     // Interactions
-    interactionDelegator: "0x4b8350E6291063bF14ca1E4379147a3bd23714CB",
     interactionDelegatorValidator: "0xb33cc9Aea3f6e1125179Ec0A1D9783eD3717d04C",
     interactionDelegatorAction: "0xD910e1e952ab2F23282dB8450AA7054841Ef53B8",
     // Kernel stuff

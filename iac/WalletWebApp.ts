@@ -1,6 +1,7 @@
 import type { StackContext } from "sst/constructs";
 import { use } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
+import { BackendStack } from "./Backend";
 import { ConfigStack } from "./Config";
 import { isProdStack } from "./utils";
 
@@ -32,6 +33,9 @@ export function WalletAppStack({ stack }: StackContext) {
         nexusUrl,
     ];
 
+    // Get the interaction queue
+    const { interactionQueue } = use(BackendStack);
+
     // Base domain for our whole app
     const subDomain = isProdStack(stack)
         ? "nexus"
@@ -46,7 +50,7 @@ export function WalletAppStack({ stack }: StackContext) {
             hostedZone: "frak.id",
         },
         // Bind to the configs
-        bind: configs,
+        bind: [...configs, interactionQueue],
         openNextVersion: "3.0.6",
         // Number of server side instance to keep warm
         warm: isProdStack(stack) ? 10 : 1,

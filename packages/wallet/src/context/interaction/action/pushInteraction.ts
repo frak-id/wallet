@@ -1,29 +1,24 @@
 "use server";
-import { kernelAddresses } from "@/context/blockchain/addresses";
-import { frakChainPocClient } from "@/context/blockchain/provider";
-import { getInteractionContract } from "@/context/interaction/action/interactionContracts";
-import { getSessionStatus } from "@/context/interaction/action/interactionSession";
-import { getInteractionValidationSignature } from "@/context/interaction/utils/interactionSigner";
-import { interactionDelegatorAbi } from "@/context/wallet/abi/kernel-v2-abis";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
-import { contentInteractionDiamondAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { DI } from "@frak-labs/shared/context/utils/di";
 import { parallel } from "radash";
-import * as solady from "solady";
-import {
-    type Address,
-    type Hex,
-    type PrivateKeyAccount,
-    concatHex,
-    encodeFunctionData,
-} from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { sendTransaction } from "viem/actions";
+import type { Address, Hex } from "viem";
 
 type InteractionToPush = {
     contentId: Hex;
     interaction: PreparedInteraction;
     submittedSignature?: Hex;
 };
+
+const getSqsClient = DI.registerAndExposeGetter({
+    id: "SqsClient",
+    isAsync: false,
+    getter: () =>
+        new SQSClient({
+            region: "eu-west-1",
+        }),
+});
 
 /**
  * Try to push an interaction for the given wallet via an interaction
@@ -33,139 +28,71 @@ export async function pushInteraction({
     toPush,
 }: {
     wallet: Address;
-    toPush: InteractionToPush | InteractionToPush[];
+    toPush: InteractionToPush;
 }) {
-    console.log("Pushing interaction", toPush);
-    // Check if the user has a valid session
-    const sessionStatus = await getSessionStatus({ wallet });
-    if (sessionStatus === null) {
-        throw new Error("No session available for this user");
-    }
+    // Build the SQS message and send it
+    const message = mapToMessage({ wallet, toPush });
+    const queueResult = await getSqsClient().send(message);
 
-    // todo: Only temporary for testing purposes, will be reinforced
-    // todo So this shouldn't be the airdropper private key but a KMS aws key
-    const sessionPrivateKey = process.env.AIRDROP_PRIVATE_KEY;
-    if (!sessionPrivateKey) {
-        throw new Error("Missing AIRDROP_PRIVATE_KEY env variable");
-    }
-    const sessionAccount = privateKeyToAccount(sessionPrivateKey as Hex);
-
-    // If we got a single interactions to push
-    if (!Array.isArray(toPush)) {
-        // Prepare it
-        const interaction = await prepareInteraction({
-            wallet,
-            toPush,
-        });
-
-        // Push it
-        return await pushInteractions({
-            executor: sessionAccount,
-            interactions: [interaction],
-        });
-    }
-
-    // In the case of multiple interactions
-    const interactions = await parallel(4, toPush, async (toPush) =>
-        prepareInteraction({
-            wallet,
-            toPush,
-        })
-    );
-
-    return await pushInteractions({
-        executor: sessionAccount,
-        interactions,
-    });
+    // Return the queue id
+    return queueResult.MessageId;
 }
 
 /**
- * Prepare an interaction to be pushed
+ * Try to push an interaction for the given wallet via an interaction
+ */
+export async function pushInteractions({
+    wallet,
+    toPush,
+}: {
+    wallet: Address;
+    toPush: InteractionToPush[];
+}) {
+    // Craft every interactions events message
+    const messages: SendMessageCommand[] = toPush.map((toPush) =>
+        mapToMessage({ wallet, toPush })
+    );
+
+    // Get our SQS client
+    const sqsClient = getSqsClient();
+
+    // And send every the messages to the queue
+    const results = await parallel(4, messages, async (message) =>
+        sqsClient.send(message)
+    );
+    console.log("Pushed interactions", results);
+}
+
+/**
+ * Type of an interaction event, waited by the queue
+ */
+type InteractionEvent = {
+    wallet: Address;
+    contentId: Hex;
+    interaction: {
+        handlerTypeDenominator: Hex;
+        interactionData: Hex;
+    };
+    signature?: Hex;
+};
+
+/**
+ * Map an interaction to a SQS Message
  * @param wallet
  * @param toPush
  */
-async function prepareInteraction({
+function mapToMessage({
     wallet,
     toPush,
-}: { wallet: Address; toPush: InteractionToPush }): Promise<{
-    wallet: Address;
-    contentId: bigint;
-    data: Hex;
-}> {
-    // todo: Should simulate the interaction to ensure it will pass
-    const contentId = BigInt(toPush.contentId);
-
-    // Get an interaction manager
-    const interactionContract = await getInteractionContract({ contentId });
-
-    // Get the signature
-    const signature =
-        toPush.submittedSignature ??
-        (await getInteractionValidationSignature({
-            user: wallet,
-            facetData: toPush.interaction.interactionData,
-            contentId,
-            interactionContract,
-        }));
-
-    // Build the interaction data
-    const interactionTx = encodeFunctionData({
-        abi: contentInteractionDiamondAbi,
-        functionName: "handleInteraction",
-        args: [
-            concatHex([
-                toPush.interaction.handlerTypeDenominator,
-                toPush.interaction.interactionData,
-            ]),
-            signature,
-        ],
+}: { wallet: Address; toPush: InteractionToPush }): SendMessageCommand {
+    const event: InteractionEvent = {
+        wallet,
+        contentId: toPush.contentId,
+        interaction: toPush.interaction,
+        signature: toPush.submittedSignature,
+    };
+    return new SendMessageCommand({
+        MessageBody: JSON.stringify(event),
+        QueueUrl: process.env.INTERACTION_QUEUE_URL,
     });
-
-    return { wallet, contentId, data: interactionTx };
-}
-
-/**
- * Push an array of interactions
- * @param executor
- * @param interactions
- */
-export async function pushInteractions({
-    executor,
-    interactions,
-}: {
-    executor: PrivateKeyAccount;
-    interactions: {
-        wallet: Address;
-        contentId: bigint;
-        data: Hex;
-    }[];
-}) {
-    // Prepare the execute data
-    const executeNoBatchData = encodeFunctionData({
-        abi: interactionDelegatorAbi,
-        functionName: "execute",
-        args: [
-            interactions.map((inter) => ({
-                wallet: inter.wallet,
-                interaction: {
-                    contentId: inter.contentId,
-                    data: inter.data,
-                },
-            })),
-        ],
-    });
-
-    // Compress it
-    const compressedExecute = solady.LibZip.cdCompress(
-        executeNoBatchData
-    ) as Hex;
-
-    // And send it
-    const txHash = await sendTransaction(frakChainPocClient, {
-        account: executor,
-        to: kernelAddresses.interactionDelegator,
-        data: compressedExecute,
-    });
-    console.log("Pushed interactions", txHash);
-    return txHash;
 }

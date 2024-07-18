@@ -6,7 +6,6 @@ import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
 import { BadgeCheck } from "lucide-react";
-import Link from "next/link";
 import { toHex } from "viem";
 
 export function SendInteraction() {
@@ -57,7 +56,6 @@ export function SendInteraction() {
     );
 }
 
-// Display the authentication result well formatted
 function InteractionResult({ data }: { data: SendInteractionReturnType }) {
     return (
         <div>
@@ -66,13 +64,7 @@ function InteractionResult({ data }: { data: SendInteractionReturnType }) {
                 Interaction pushed with success
             </h4>
 
-            <p>TxHash: {data.hash}</p>
-            <Link
-                href={`https://sepolia.arbiscan.io/tx/${data.hash}`}
-                target={"_blank"}
-            >
-                View on arbiscan
-            </Link>
+            <p>DelegationId: {data.delegationId}</p>
         </div>
     );
 }

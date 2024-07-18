@@ -1,4 +1,3 @@
-import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { use } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
@@ -17,13 +16,8 @@ export function ExampleAppStack({ stack }: StackContext) {
     }
 
     // The configs required to run the app
-    const {
-        sessionEncryptionKey,
-        mongoExampleUri,
-        nexusUrl,
-        adminPassword,
-        worldNewsApiKey,
-    } = use(ConfigStack);
+    const { sessionEncryptionKey, mongoExampleUri, nexusUrl, adminPassword } =
+        use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
         mongoExampleUri,
@@ -89,7 +83,7 @@ export function ExampleAppStack({ stack }: StackContext) {
     const newsInteractionDemo = new NextjsSite(stack, "newsInteractionDemo", {
         path: "example/news-interactions",
         // Bind to the configs
-        bind: [nexusUrl, worldNewsApiKey, mongoExampleUri],
+        bind: [nexusUrl, mongoExampleUri],
         openNextVersion: "3.0.6",
         // Number of server side instance to keep warm
         warm: 10,
@@ -98,13 +92,6 @@ export function ExampleAppStack({ stack }: StackContext) {
             domainName: "news-paper.xyz",
             hostedZone: "news-paper.xyz",
         },
-        // Allow llm calls
-        permissions: [
-            new PolicyStatement({
-                actions: ["bedrock:InvokeModel"],
-                resources: ["*"],
-            }),
-        ],
     });
 
     stack.addOutputs({

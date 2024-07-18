@@ -1,4 +1,5 @@
 import type { SSTConfig } from "sst";
+import { BackendStack } from "./iac/Backend";
 import { ConfigStack } from "./iac/Config";
 import { DashboardWebApp } from "./iac/DashboardWebApp";
 import { ExampleAppStack } from "./iac/ExampleWebApp";
@@ -43,6 +44,9 @@ export default {
         });
 
         app.stack(ConfigStack);
+
+        app.stack(BackendStack);
+
         app.stack(WalletAppStack);
         app.stack(ExampleAppStack);
         app.stack(DashboardWebApp);

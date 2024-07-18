@@ -1,18 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import type { ArticleUnlockStatusReturnType } from "../../core";
+import {
+    type ArticleUnlockStatusReturnType,
+    FrakRpcError,
+    RpcErrorCodes,
+} from "../../core";
 import {
     type WatchUnlockStatusParams,
     watchUnlockStatus,
 } from "../../core/actions";
+import { ClientNotFound } from "../../core/types/rpc/error";
+import { Deferred } from "../../core/utils/Deferred";
 import { useNexusClient } from "./useNexusClient";
-
-export type ArticleUnlockStatusQueryReturnType =
-    | ArticleUnlockStatusReturnType
-    | {
-          status: "waiting-response";
-          key: "waiting-response";
-      };
 
 /**
  * Hooks used to listen to the current article unlock status
@@ -45,7 +44,7 @@ export function useArticleUnlockStatus({
     /**
      * Setup the query listener
      */
-    return useQuery<ArticleUnlockStatusQueryReturnType | null>({
+    return useQuery<ArticleUnlockStatusReturnType>({
         queryKey: [
             "nexus-sdk",
             "article-unlock-status",
@@ -55,25 +54,35 @@ export function useArticleUnlockStatus({
         gcTime: 0,
         queryFn: async () => {
             if (!client) {
-                return {
-                    status: "waiting-response",
-                    key: "waiting-response",
-                };
+                throw new ClientNotFound();
             }
             if (!(articleId && contentId)) {
-                return null;
+                throw new FrakRpcError(
+                    RpcErrorCodes.invalidRequest,
+                    "Missing articleId or contentId"
+                );
             }
+
+            // Our first deffered result
+            const firstResult = new Deferred<ArticleUnlockStatusReturnType>();
+            let hasResolved = false;
+
             // Setup the listener
             await watchUnlockStatus(
                 client,
                 { articleId, contentId },
-                newStatusUpdated
+                (status) => {
+                    newStatusUpdated(status);
+                    // If the promise hasn't resolved yet, resolve it
+                    if (!hasResolved) {
+                        firstResult.resolve(status);
+                        hasResolved = true;
+                    }
+                }
             );
+
             // Wait for the first response
-            return {
-                status: "waiting-response",
-                key: "waiting-response",
-            };
+            return firstResult.promise;
         },
         enabled: !!client && !!articleId && !!contentId,
     });
