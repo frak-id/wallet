@@ -37,6 +37,14 @@ export const modalStepsAtom = atom<{
 } | null>(null);
 
 /**
+ * Clear a received rpc modal
+ */
+export const clearRpcModalAtom = atom(null, (_get, set) => {
+    set(modalDisplayedRequestAtom, null);
+    set(modalStepsAtom, null);
+});
+
+/**
  * Setter for when we receive a new modal request
  */
 export const setNewModalAtom = atom(
@@ -45,10 +53,7 @@ export const setNewModalAtom = atom(
         set(modalDisplayedRequestAtom, newModal);
 
         // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
-        const steps = Object.entries(newModal.steps).map(([key, params]) => ({
-            key,
-            params,
-        })) as Pick<ModalStepTypes, "key" | "params">[];
+        const steps = prepareInputStepsArray(newModal.steps);
 
         // Build our initial result array
         let currentStep = 0;
@@ -61,7 +66,7 @@ export const setNewModalAtom = atom(
             if (session) {
                 results.push({
                     key: "login",
-                    returns: { wallet: session.wallet },
+                    returns: { wallet: session.wallet.address },
                 });
                 currentStep++;
             }
@@ -77,9 +82,27 @@ export const setNewModalAtom = atom(
 );
 
 /**
- * Clear a received rpc modal
+ * Prepare the input steps array
+ * @param steps
  */
-export const clearRpcModalAtom = atom(null, (_get, set) => {
-    set(modalDisplayedRequestAtom, null);
-    set(modalStepsAtom, null);
-});
+function prepareInputStepsArray(steps: ModalRpcStepsInput) {
+    // Build the initial array
+    const inputSteps = Object.entries(steps).map(([key, params]) => ({
+        key,
+        params,
+    })) as Pick<ModalStepTypes, "key" | "params">[];
+
+    // Sort the steps by importance
+    inputSteps.sort(
+        (a, b) => stepImportanceMap[a.key] - stepImportanceMap[b.key]
+    );
+
+    // Return the sorted array
+    return inputSteps;
+}
+
+const stepImportanceMap: Record<ModalStepTypes["key"], number> = {
+    login: -1,
+    siweAuthenticate: 1,
+    sendTransaction: 10,
+};

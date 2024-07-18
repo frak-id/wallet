@@ -1,5 +1,6 @@
 import { modalStepsAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
+import type { ModalStepTypes } from "@frak-labs/nexus-sdk/core";
 import { atom, useAtomValue } from "jotai/index";
 import type { PropsWithChildren } from "react";
 
@@ -8,24 +9,21 @@ import type { PropsWithChildren } from "react";
  */
 const activeStepAtom = atom((get) => get(modalStepsAtom)?.currentStep ?? 0);
 
+const stepTitlesMap: Record<ModalStepTypes["key"], string> = {
+    login: "Login",
+    siweAuthenticate: "Authenticate",
+    sendTransaction: "Transaction",
+};
+
 /**
  * Get the steps to displayed name atoms
  */
 const stepsNameAtom = atom((get) => {
     const currentSteps = get(modalStepsAtom);
     if (!currentSteps) return [];
-    return currentSteps.steps.map((step) => {
-        switch (step.key) {
-            case "login":
-                return "Login";
-            case "siweAuthenticate":
-                return "Authenticate";
-            case "sendTransaction":
-                return "Transaction";
-            default:
-                return "Unknown";
-        }
-    });
+    return currentSteps.steps.map(
+        (step) => stepTitlesMap[step.key] ?? "Unknown"
+    );
 });
 
 /**

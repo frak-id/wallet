@@ -36,9 +36,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             return;
         }
 
-        // todo: deduplicate modal request (like max one login and tx,, multi auth if different siwe ok)
-        // todo: reorg modal request (login first, then auth, then txs)
-
+        // Set our modal
         jotaiStore.set(setNewModalAtom, {
             steps,
             context: request.params[1],
