@@ -30,7 +30,7 @@ export function useConsumePendingInteractions() {
             }
 
             // Submit the interactions
-            const txHash = await pushInteractions({
+            const delegationId = await pushInteractions({
                 wallet: address,
                 toPush: interactions,
             });
@@ -39,7 +39,7 @@ export function useConsumePendingInteractions() {
             cleanPendingInteractions();
 
             return {
-                txHash,
+                delegationId,
                 submittedInteractions: interactions.length,
             };
         },

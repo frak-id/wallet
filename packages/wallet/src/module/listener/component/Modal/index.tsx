@@ -11,11 +11,13 @@ import {
 import { SiweAuthenticateModalStep } from "@/module/listener/component/Authenticate";
 import { LoginModalStep } from "@/module/listener/component/Login";
 import { ModalStepIndicator } from "@/module/listener/component/Modal/Step";
+import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
 import {
     type LoginModalStepType,
     type ModalRpcStepsResultType,
     type ModalStepTypes,
+    type OpenInteractionSessionModalStepType,
     RpcErrorCodes,
     type SendTransactionModalStepType,
     type SiweAuthenticateModalStepType,
@@ -236,6 +238,16 @@ function CurrentModalStepComponent({
                     <TransactionModalStep
                         params={
                             currentStep.params as SendTransactionModalStepType["params"]
+                        }
+                        onFinish={onStepFinished}
+                        onError={onError}
+                    />
+                );
+            case "openSession":
+                return (
+                    <OpenSessionModalStep
+                        params={
+                            currentStep.params as OpenInteractionSessionModalStepType["params"]
                         }
                         onFinish={onStepFinished}
                         onError={onError}

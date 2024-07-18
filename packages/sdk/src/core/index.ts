@@ -34,6 +34,8 @@ export type {
     SendTransactionTxType,
     SendTransactionModalStepType,
     SendTransactionReturnType,
+    OpenInteractionSessionReturnType,
+    OpenInteractionSessionModalStepType,
     // Client
     NexusClient,
     // Transport

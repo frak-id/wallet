@@ -1,13 +1,21 @@
 import { getSessionEnableData } from "@/context/interaction/action/interactionSession";
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { useConsumePendingInteractions } from "@/module/wallet/hook/useConsumePendingInteractions";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+    type UseMutationOptions,
+    useMutation,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useAccount, useSendTransaction } from "wagmi";
 
 /**
  * Hook used to open a session
  */
-export function useOpenSession() {
+export function useOpenSession({
+    mutations,
+}: {
+    mutations?: UseMutationOptions<{ openSessionTxHash: string } | undefined>;
+} = {}) {
     const queryClient = useQueryClient();
     const { address } = useAccount();
     const { sendTransactionAsync } = useSendTransaction();
@@ -16,6 +24,7 @@ export function useOpenSession() {
         useConsumePendingInteractions();
 
     return useMutation({
+        ...mutations,
         mutationKey: ["interactions", "open-session"],
         mutationFn: async () => {
             // If no wallet address, return
@@ -47,8 +56,7 @@ export function useOpenSession() {
             console.log(`Open session tx hash: ${openSessionTxHash}`);
 
             // Send the pending interactions
-            const interactionsQueueHandling =
-                await consumePendingInteractions();
+            await consumePendingInteractions();
 
             // Refresh the interactions stuff
             await queryClient.invalidateQueries({
@@ -58,7 +66,6 @@ export function useOpenSession() {
 
             return {
                 openSessionTxHash,
-                interactionsQueueHandling,
             };
         },
     });

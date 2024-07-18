@@ -47,7 +47,7 @@ export async function pushInteractions({
 }: {
     wallet: Address;
     toPush: InteractionToPush[];
-}) {
+}): Promise<string[]> {
     // Craft every interactions events message
     const messages: SendMessageCommand[] = toPush.map((toPush) =>
         mapToMessage({ wallet, toPush })
@@ -61,6 +61,9 @@ export async function pushInteractions({
         sqsClient.send(message)
     );
     console.log("Pushed interactions", results);
+
+    // Return the queue id
+    return results.map((result) => result.MessageId) as string[];
 }
 
 /**

@@ -1,0 +1,143 @@
+"use client";
+
+import { Panel } from "@/module/common/component/Panel";
+import type {
+    LoginModalStepType,
+    ModalRpcStepsResultType,
+    SendTransactionModalStepType,
+    SiweAuthenticateModalStepType,
+} from "@frak-labs/nexus-sdk/core";
+import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
+import { useDisplayModal } from "@frak-labs/nexus-sdk/react";
+import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { Button } from "@module/component/Button";
+import { BadgeCheck } from "lucide-react";
+import { useMemo } from "react";
+import { encodeFunctionData } from "viem";
+import { parseSiweMessage } from "viem/siwe";
+
+export function FullDialog() {
+    const {
+        mutate: displayModal,
+        data,
+        error,
+        status,
+        isPending,
+    } = useDisplayModal();
+
+    return (
+        <Panel variant={"primary"}>
+            <h2>Full Dialog</h2>
+
+            <p>
+                When the btn is clicked, the SDK will ask the Nexus Wallet to
+                perform all the available actions
+            </p>
+            <br />
+
+            <p>Actions state: {status}</p>
+            <br />
+
+            <Button
+                onClick={() =>
+                    displayModal({
+                        steps: {
+                            siweAuthenticate: {
+                                siwe: {
+                                    domain: "example.com",
+                                    uri: "https://nexus.frak.id/",
+                                    statement: "Please authenticate",
+                                    nonce: "0123456789",
+                                    version: "1",
+                                },
+                            },
+                            sendTransaction: {
+                                tx: {
+                                    to: addresses.contentInteractionManager,
+                                    value: "0x00",
+                                    data: encodeFunctionData({
+                                        abi: contentInteractionManagerAbi,
+                                        functionName: "getInteractionContract",
+                                        args: [
+                                            106219508196454080375526586478153583586194937194493887259467424694676997453395n,
+                                        ],
+                                    }),
+                                },
+                            },
+                            openSession: {},
+                            login: {},
+                        },
+                    })
+                }
+                type={"button"}
+                disabled={isPending}
+            >
+                Let's gooo
+            </Button>
+            <br />
+
+            {data && <ActionResult data={data} />}
+
+            {error && <ActionError error={error} />}
+        </Panel>
+    );
+}
+
+// Display the authentication result well formatted
+function ActionResult({
+    data,
+}: {
+    data: ModalRpcStepsResultType<
+        [
+            LoginModalStepType,
+            OpenInteractionSessionModalStepType,
+            SiweAuthenticateModalStepType,
+            SendTransactionModalStepType,
+        ]
+    >;
+}) {
+    const siweData = useMemo(() => {
+        return parseSiweMessage(data.siweAuthenticate.message);
+    }, [data.siweAuthenticate.message]);
+
+    return (
+        <>
+            <h4>
+                <BadgeCheck />
+                Action success
+            </h4>
+
+            <h5>Login data</h5>
+            <p>Address: {data.login.address}</p>
+            <hr />
+
+            <h5>Open session data</h5>
+            <p>Session start: {data.openSession.startTimestamp}</p>
+            <p>Session end: {data.openSession.endTimestamp}</p>
+            <hr />
+
+            <h5>Siwe data</h5>
+            <p>Address: {siweData?.address}</p>
+            <p>Domain: {siweData?.domain}</p>
+            <p>URI: {siweData?.uri}</p>
+            <p>Statement: {siweData?.statement}</p>
+
+            <p>Signature: {data.siweAuthenticate.signature}</p>
+
+            <hr />
+            <h5>Send transaction data</h5>
+            <p>Transaction hash: {data.sendTransaction.hash}</p>
+        </>
+    );
+}
+
+function ActionError({ error }: { error: Error }) {
+    return (
+        <div>
+            <h4>Error when performing the action</h4>
+
+            <p>{error.message}</p>
+        </div>
+    );
+}

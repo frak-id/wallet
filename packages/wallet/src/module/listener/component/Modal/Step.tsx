@@ -12,6 +12,7 @@ const activeStepAtom = atom((get) => get(modalStepsAtom)?.currentStep ?? 0);
 const stepTitlesMap: Record<ModalStepTypes["key"], string> = {
     login: "Login",
     siweAuthenticate: "Authenticate",
+    openSession: "Open Session",
     sendTransaction: "Transaction",
 };
 

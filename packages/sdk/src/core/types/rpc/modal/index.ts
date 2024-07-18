@@ -9,3 +9,7 @@ export type {
     SendTransactionTxType,
     SendTransactionReturnType,
 } from "./transaction";
+export type {
+    OpenInteractionSessionReturnType,
+    OpenInteractionSessionModalStepType,
+} from "./openSession";
