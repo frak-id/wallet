@@ -1,7 +1,7 @@
 import type {
     DisplayModalParamsType,
     ModalRpcResponse,
-    ModalTypes,
+    ModalStepTypes,
     NexusClient,
 } from "../types";
 
@@ -10,7 +10,7 @@ import type {
  * @param client
  * @param contentId
  */
-export async function displayModal<TModalTypes extends ModalTypes[]>(
+export async function displayModal<TModalTypes extends ModalStepTypes[]>(
     client: NexusClient,
     { modal, context }: DisplayModalParamsType<TModalTypes>
 ): Promise<ModalRpcResponse<TModalTypes>> {

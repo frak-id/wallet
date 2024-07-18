@@ -24,17 +24,17 @@ export type {
     SendInteractionParamsType,
     SendInteractionReturnType,
     // RPC Modal generics
-    ModalTypes,
+    ModalStepTypes,
     DisplayModalParamsType,
     ModalRpcResponse,
     ModalRpcRequest,
     // RPC Modal types
-    LoginModalType,
-    SiweAuthenticateModalType,
+    LoginModalStepType,
+    SiweAuthenticateModalStepType,
     SiweAuthenticationParams,
     SiweAuthenticateReturnType,
     SendTransactionTxType,
-    SendTransactionModalType,
+    SendTransactionModalStepType,
     SendTransactionReturnType,
     // Client
     NexusClient,

@@ -3,6 +3,7 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { ListenerModal } from "@/module/listener/component/Modal";
 import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
+import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useSendTransactionListener } from "@/module/listener/hooks/useSendTransactionListener";
@@ -39,6 +40,9 @@ export function ListenerUI() {
     // Hook used when a dashboard action is requested
     const onInteractionRequest = useSendInteractionListener();
 
+    // Hook when a modal display is asked
+    const onDisplayModalRequest = useDisplayModalListener();
+
     // Create the resolver
     useEffect(() => {
         const newResolver = createIFrameRequestResolver({
@@ -71,9 +75,14 @@ export function ListenerUI() {
             frak_siweAuthenticate: onSiweAuthenticateRequest,
 
             /**
-             * Listen request for the auth request
+             * Listen request for the send interaction request
              */
             frak_sendInteraction: onInteractionRequest,
+
+            /**
+             * Listen request for the modal display request
+             */
+            frak_displayModal: onDisplayModalRequest,
         });
 
         // Set our new resolver
@@ -90,6 +99,7 @@ export function ListenerUI() {
         onSendTransactionRequest,
         onSiweAuthenticateRequest,
         onInteractionRequest,
+        onDisplayModalRequest,
     ]);
 
     /**

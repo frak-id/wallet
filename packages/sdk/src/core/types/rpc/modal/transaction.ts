@@ -1,5 +1,5 @@
 import type { Address, Hex } from "viem";
-import type { GenericModalType } from "./generic";
+import type { ModalStepType } from "./generic";
 
 /**
  * Generic format representing a tx to be sent
@@ -18,7 +18,7 @@ export type SendTransactionReturnType = Readonly<{
     hash: Hex;
 }>;
 
-export type SendTransactionModalType = GenericModalType<
+export type SendTransactionModalStepType = ModalStepType<
     "sendTransaction",
     { tx: SendTransactionTxType | SendTransactionTxType[] },
     SendTransactionReturnType

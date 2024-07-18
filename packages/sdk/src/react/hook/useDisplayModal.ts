@@ -3,20 +3,21 @@ import type {
     DisplayModalParamsType,
     FrakRpcError,
     ModalRpcResponse,
-    ModalTypes,
+    ModalStepTypes,
 } from "../../core";
 import { displayModal } from "../../core/actions/displayModal";
 import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
-type MutationOptions<TModalTypes extends ModalTypes[] = ModalTypes[]> = Omit<
-    UseMutationOptions<
-        ModalRpcResponse<TModalTypes>,
-        FrakRpcError,
-        DisplayModalParamsType<TModalTypes>
-    >,
-    "mutationFn" | "mutationKey"
->;
+type MutationOptions<TModalTypes extends ModalStepTypes[] = ModalStepTypes[]> =
+    Omit<
+        UseMutationOptions<
+            ModalRpcResponse<TModalTypes>,
+            FrakRpcError,
+            DisplayModalParamsType<TModalTypes>
+        >,
+        "mutationFn" | "mutationKey"
+    >;
 
 interface UseDisplayModalParams {
     mutations?: MutationOptions;
@@ -31,7 +32,7 @@ export function useDisplayModal({ mutations }: UseDisplayModalParams = {}) {
     return useMutation({
         ...mutations,
         mutationKey: ["nexus-sdk", "display-modal"],
-        mutationFn: async <TModalTypes extends ModalTypes[]>(
+        mutationFn: async <TModalTypes extends ModalStepTypes[]>(
             args: DisplayModalParamsType<TModalTypes>
         ) => {
             if (!client) {

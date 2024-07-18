@@ -1,11 +1,11 @@
-export type { LoginModalType } from "./login";
+export type { LoginModalStepType } from "./login";
 export type {
-    SiweAuthenticateModalType,
+    SiweAuthenticateModalStepType,
     SiweAuthenticationParams,
     SiweAuthenticateReturnType,
 } from "./siweAuthenticate";
 export type {
-    SendTransactionModalType,
+    SendTransactionModalStepType,
     SendTransactionTxType,
     SendTransactionReturnType,
 } from "./transaction";

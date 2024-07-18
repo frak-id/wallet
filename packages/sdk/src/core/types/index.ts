@@ -36,17 +36,17 @@ export type {
 export type { PaidArticleUnlockPrice } from "./generic";
 // Modal related
 export type {
-    ModalTypes,
+    ModalStepTypes,
     DisplayModalParamsType,
     ModalRpcResponse,
     ModalRpcRequest,
 } from "./rpc/displayModal";
 export type {
-    LoginModalType,
-    SiweAuthenticateModalType,
+    LoginModalStepType,
+    SiweAuthenticateModalStepType,
     SiweAuthenticationParams,
     SiweAuthenticateReturnType,
     SendTransactionTxType,
-    SendTransactionModalType,
+    SendTransactionModalStepType,
     SendTransactionReturnType,
 } from "./rpc/modal";

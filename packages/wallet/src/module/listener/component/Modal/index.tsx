@@ -6,7 +6,7 @@ import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import { AuthModal } from "@/module/listener/component/Modal/AuthModal";
 import { TransactionModal } from "@/module/listener/component/Modal/TransactionModal";
 import type { ModalEventRequestArgs } from "@/module/listener/types/ModalEvent";
-import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
+import {type ModalRpcRequest, RpcErrorCodes} from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
 import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect, useMemo } from "react";
@@ -35,7 +35,7 @@ export function ListenerModal() {
  */
 function ListenerModalDialog({
     currentRequest,
-}: { currentRequest: ModalEventRequestArgs }) {
+}: { currentRequest: ModalRpcRequest }) {
     /**
      * Display the iframe
      */

@@ -1,10 +1,10 @@
 import type { Address } from "viem";
-import type { GenericModalType } from "./generic";
+import type { ModalStepType } from "./generic";
 
 /**
  * The login modal type
  */
-export type LoginModalType = GenericModalType<
+export type LoginModalStepType = ModalStepType<
     "login",
     never,
     { wallet: Address }
