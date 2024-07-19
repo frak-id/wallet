@@ -13,3 +13,4 @@ export type {
     OpenInteractionSessionReturnType,
     OpenInteractionSessionModalStepType,
 } from "./openSession";
+export type { ModalStepMetadata } from "./generic";

@@ -1,5 +1,6 @@
 import type { Hex } from "viem";
 import type {
+    ModalRpcMetadata,
     ModalRpcStepsInput,
     ModalRpcStepsResultType,
 } from "./rpc/displayModal";
@@ -48,7 +49,7 @@ export type IFrameRpcSchema = [
      */
     {
         Method: "frak_displayModal";
-        Parameters: [requests: ModalRpcStepsInput, context?: string];
+        Parameters: [requests: ModalRpcStepsInput, metadata?: ModalRpcMetadata];
         ReturnType: ModalRpcStepsResultType;
     },
     /**

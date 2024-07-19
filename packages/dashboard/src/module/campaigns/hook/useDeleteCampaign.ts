@@ -15,7 +15,9 @@ export const useDeleteCampaign = () => {
             // If it's requiring an on-chain deletion, execute the transaction
             if (result.key !== "success") {
                 const { hash } = await sendTxAsync({
-                    context: `Deleting the campaign ${campaignId}`,
+                    metadata: {
+                        context: `Deleting the campaign ${campaignId}`,
+                    },
                     tx: [...result.calls],
                 });
                 console.log("Submitted campaign deletion transaction", {

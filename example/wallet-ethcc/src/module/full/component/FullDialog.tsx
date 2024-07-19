@@ -44,6 +44,9 @@ export function FullDialog() {
                     displayModal({
                         steps: {
                             siweAuthenticate: {
+                                metadata: {
+                                    title: "AUTH",
+                                },
                                 siwe: {
                                     domain: "example.com",
                                     uri: "https://nexus.frak.id/",
@@ -53,6 +56,9 @@ export function FullDialog() {
                                 },
                             },
                             sendTransaction: {
+                                metadata: {
+                                    title: "TX",
+                                },
                                 tx: {
                                     to: addresses.contentInteractionManager,
                                     value: "0x00",

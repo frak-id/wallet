@@ -9,7 +9,7 @@ import type { PropsWithChildren } from "react";
  */
 const activeStepAtom = atom((get) => get(modalStepsAtom)?.currentStep ?? 0);
 
-const stepTitlesMap: Record<ModalStepTypes["key"], string> = {
+const defaultStepTitlesMap: Record<ModalStepTypes["key"], string> = {
     login: "Login",
     siweAuthenticate: "Authenticate",
     openSession: "Open Session",
@@ -23,7 +23,10 @@ const stepsNameAtom = atom((get) => {
     const currentSteps = get(modalStepsAtom);
     if (!currentSteps) return [];
     return currentSteps.steps.map(
-        (step) => stepTitlesMap[step.key] ?? "Unknown"
+        (step) =>
+            step.params.metadata?.title ??
+            defaultStepTitlesMap[step.key] ??
+            "Unknown"
     );
 });
 

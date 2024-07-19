@@ -1,5 +1,6 @@
 import { generateSiweNonce } from "viem/siwe";
 import type {
+    ModalRpcMetadata,
     NexusClient,
     SiweAuthenticateReturnType,
     SiweAuthenticationParams,
@@ -11,7 +12,7 @@ import { displayModal } from "../displayModal";
  */
 export type SiweAuthenticateModalParams = {
     siwe?: Partial<SiweAuthenticationParams>;
-    context?: string;
+    metadata?: ModalRpcMetadata;
 };
 
 /**
@@ -22,7 +23,7 @@ export type SiweAuthenticateModalParams = {
  */
 export async function siweAuthenticate(
     client: NexusClient,
-    { siwe, context }: SiweAuthenticateModalParams
+    { siwe, metadata }: SiweAuthenticateModalParams
 ): Promise<SiweAuthenticateReturnType> {
     const realStatement =
         siwe?.statement ??
@@ -40,7 +41,7 @@ export async function siweAuthenticate(
 
     // Trigger a modal with login options
     const result = await displayModal(client, {
-        context,
+        metadata,
         steps: {
             login: {},
             siweAuthenticate: {

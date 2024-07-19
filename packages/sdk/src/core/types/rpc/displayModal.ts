@@ -32,9 +32,21 @@ export type ModalRpcStepsInput<T extends ModalStepTypes[] = ModalStepTypes[]> =
     };
 
 /**
+ * RPC metadata for the modal
+ */
+export type ModalRpcMetadata = Readonly<{
+    header?: {
+        title?: string;
+        icon?: string;
+    };
+    context?: string;
+    discordActionText?: string;
+}>;
+
+/**
  * Generic params used to display modals
  */
 export type DisplayModalParamsType<T extends ModalStepTypes[]> = {
     steps: ModalRpcStepsInput<T>;
-    context?: string;
+    metadata?: ModalRpcMetadata;
 };

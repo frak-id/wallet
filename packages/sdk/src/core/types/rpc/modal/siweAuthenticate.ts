@@ -1,5 +1,6 @@
 import type { Hex } from "viem";
 import type { SiweMessage } from "viem/siwe";
+import type { GenericModalStepType } from "./generic";
 
 /**
  * Parameters of the send transaction rpc request
@@ -17,8 +18,8 @@ export type SiweAuthenticateReturnType = Readonly<{
 /**
  * Generic type of modal we will display to the end user
  */
-export type SiweAuthenticateModalStepType = {
-    key: "siweAuthenticate";
-    params: { siwe: SiweAuthenticationParams };
-    returns: SiweAuthenticateReturnType;
-};
+export type SiweAuthenticateModalStepType = GenericModalStepType<
+    "siweAuthenticate",
+    { siwe: SiweAuthenticationParams },
+    SiweAuthenticateReturnType
+>;

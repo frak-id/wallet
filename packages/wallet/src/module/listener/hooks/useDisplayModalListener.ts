@@ -39,7 +39,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
         // Set our modal
         jotaiStore.set(setNewModalAtom, {
             steps,
-            context: request.params[1],
+            metadata: request.params[1],
             emitter,
         });
     }, []);

@@ -23,10 +23,12 @@ export type {
     SendInteractionReturnType,
     // RPC Modal generics
     ModalStepTypes,
+    ModalRpcMetadata,
     DisplayModalParamsType,
     ModalRpcStepsInput,
     ModalRpcStepsResultType,
     // RPC Modal types
+    ModalStepMetadata,
     LoginModalStepType,
     SiweAuthenticateModalStepType,
     SiweAuthenticationParams,

@@ -20,10 +20,10 @@ export async function displayModal<
     T extends ModalStepTypes[] = ModalStepTypes[],
 >(
     client: NexusClient,
-    { steps, context }: DisplayModalParamsType<T>
+    { steps, metadata }: DisplayModalParamsType<T>
 ): Promise<ModalRpcStepsResultType<T>> {
     return (await client.request({
         method: "frak_displayModal",
-        params: [steps, context],
+        params: [steps, metadata],
     })) as ModalRpcStepsResultType<T>;
 }

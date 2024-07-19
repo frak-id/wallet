@@ -38,8 +38,10 @@ export type {
     ModalRpcStepsInput,
     ModalRpcStepsResultType,
     DisplayModalParamsType,
+    ModalRpcMetadata,
 } from "./rpc/displayModal";
 export type {
+    ModalStepMetadata,
     LoginModalStepType,
     SiweAuthenticateModalStepType,
     SiweAuthenticationParams,

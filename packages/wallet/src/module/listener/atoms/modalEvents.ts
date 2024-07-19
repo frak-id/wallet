@@ -1,6 +1,7 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import type {
     IFrameRpcSchema,
+    ModalRpcMetadata,
     ModalRpcStepsInput,
     ModalStepTypes,
     RpcResponse,
@@ -9,7 +10,7 @@ import { atom } from "jotai";
 
 export type ModalDisplayedRequest = {
     steps: ModalRpcStepsInput;
-    context?: string;
+    metadata?: ModalRpcMetadata;
     emitter: (
         response: RpcResponse<IFrameRpcSchema, "frak_displayModal">
     ) => Promise<void>;
@@ -27,7 +28,7 @@ export const modalDisplayedRequestAtom = atom<ModalDisplayedRequest | null>(
  */
 export const modalStepsAtom = atom<{
     // Global modal context
-    context?: string;
+    metadata?: ModalRpcMetadata;
     // Key of the current step
     currentStep: number;
     // All the step but in a table, for easier management

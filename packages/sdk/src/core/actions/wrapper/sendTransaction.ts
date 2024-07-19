@@ -1,4 +1,5 @@
 import type {
+    ModalRpcMetadata,
     NexusClient,
     SendTransactionModalStepType,
     SendTransactionReturnType,
@@ -7,7 +8,7 @@ import { displayModal } from "../displayModal";
 
 export type SendTransactionParams = {
     tx: SendTransactionModalStepType["params"]["tx"];
-    context?: string;
+    metadata?: ModalRpcMetadata;
 };
 
 /**
@@ -15,15 +16,14 @@ export type SendTransactionParams = {
  * @param client
  * @param tx
  * @param context
- * @param callback
  */
 export async function sendTransaction(
     client: NexusClient,
-    { tx, context }: SendTransactionParams
+    { tx, metadata }: SendTransactionParams
 ): Promise<SendTransactionReturnType> {
     // Trigger a modal with login options
     const result = await displayModal(client, {
-        context,
+        metadata,
         steps: {
             login: {},
             sendTransaction: { tx },
