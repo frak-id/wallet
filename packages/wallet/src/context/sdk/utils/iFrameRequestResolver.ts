@@ -65,9 +65,9 @@ export function createIFrameRequestResolver(
 
             // Check if that's a css lifecycle event and that we have data
             if (lifecycle === "modal-css" && data) {
-                const style = document.createElement("style");
-                style.id = "nexus-wallet-css";
-                style.appendChild(document.createTextNode(data));
+                const style = document.createElement("link");
+                style.rel = "stylesheet";
+                style.href = data;
                 document.head.appendChild(style);
             }
             return;

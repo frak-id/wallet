@@ -1,0 +1,99 @@
+.nexus-modal-overlay {
+    background: rgba(0, 0, 0, 0.36);
+}
+.nexus-modal-content {
+    padding-top: 67px;
+    background-color: #fff;
+    border-radius: 0;
+    border: solid 1px #000000;
+    color: #011a61;
+
+    & a {
+        color: #011a61;
+    }
+}
+.nexus-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #011a61;
+    letter-spacing: -.02em;
+}
+.nexus-modal-close {
+    color: #011a61;
+    text-decoration: underline;
+    font-size: 12px;
+    letter-spacing: -.02em;
+}
+.nexus-modal-description {
+}
+.nexus-modal-text {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    letter-spacing: -.04em;
+}
+.nexus-modal-steps {
+    gap: 12px;
+    background-color: #fff;
+    color: #000;
+}
+.nexus-modal-step {
+    flex: initial;
+    background-color: #fff;
+    color: #000;
+
+    &::after {
+        content: "---";
+        margin-left: 12px;
+        font-size: 10px;
+        letter-spacing: -.02em;
+    }
+}
+.nexus-modal-step:last-child {
+    &::after {
+        display: none;
+    }
+}
+.nexus-modal-step-active {
+    background-color: #fff;
+
+    & .nexus-modal-step-number {
+        background-color: #12244b;
+    }
+}
+.nexus-modal-step-done {
+    & .nexus-modal-step-number {
+        background-color: #0ddb84;
+        color: #000;
+    }
+}
+.nexus-modal-buttons-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: 40px;
+}
+.nexus-modal-button-primary,
+.nexus-modal-button-secondary {
+    border: none;
+    padding: 8px 14px;
+    min-width: 200px;
+    border-radius: 16px;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+}
+.nexus-modal-button-primary {
+    background-color: #011a61;
+    color: #fff;
+    border: 1px solid transparent;
+}
+.nexus-modal-button-secondary {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #000000;
+}

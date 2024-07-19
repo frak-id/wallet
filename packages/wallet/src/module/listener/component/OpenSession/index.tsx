@@ -1,10 +1,8 @@
-import { Panel } from "@/module/common/component/Panel";
-import { HelpModal } from "@/module/listener/component/Modal";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
-import { AuthFingerprint } from "@module/component/AuthFingerprint";
+import { prefixGlobalCss } from "@module/utils/prefixGlobalCss";
 import { useAccount } from "wagmi";
 
 /**
@@ -14,6 +12,7 @@ import { useAccount } from "wagmi";
  * @constructor
  */
 export function OpenSessionModalStep({
+    params,
     onFinish,
     onError,
 }: {
@@ -21,6 +20,7 @@ export function OpenSessionModalStep({
     onFinish: (args: OpenInteractionSessionModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { metadata } = params;
     const { address } = useAccount();
     const { refetch: refetchSessionStatus } = useInteractionSessionStatus({
         address,
@@ -54,23 +54,24 @@ export function OpenSessionModalStep({
 
     return (
         <>
-            <Panel size={"normal"}>
-                <p>
-                    Setting up a rewarding session. This will allow you to
-                    seamlessly discount or perks based on your interaction with
-                    the application.
-                </p>
-            </Panel>
-            <HelpModal />
-            <AuthFingerprint
-                className={styles.modalListener__action}
-                disabled={isPending}
-                action={() => {
-                    openSession();
-                }}
-            >
-                Open session
-            </AuthFingerprint>
+            {metadata?.description && (
+                <div className={prefixGlobalCss("text")}>
+                    <p>{metadata.description}</p>
+                </div>
+            )}
+            <div className={prefixGlobalCss("buttons-wrapper")}>
+                <div>
+                    <button
+                        type={"button"}
+                        className={prefixGlobalCss("button-primary")}
+                        disabled={isPending}
+                        onClick={() => openSession()}
+                    >
+                        {metadata?.primaryActionText ??
+                            "Being rewarded with Nexus"}
+                    </button>
+                </div>
+            </div>
 
             {isError && error && (
                 <p className={`error ${styles.modalListener__error}`}>

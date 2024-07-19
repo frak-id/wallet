@@ -1,7 +1,9 @@
 import { modalStepsAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type { ModalStepTypes } from "@frak-labs/nexus-sdk/core";
+import { prefixGlobalCss } from "@module/utils/prefixGlobalCss";
 import { atom, useAtomValue } from "jotai/index";
+import { Check } from "lucide-react";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -43,7 +45,22 @@ export function ModalStepIndicator() {
     return (
         <Steps>
             {stepsName.map((name, index) => (
-                <StepItem key={name} isActive={index === activeStep}>
+                <StepItem
+                    key={name}
+                    isActive={index === activeStep}
+                    isDone={index < activeStep}
+                >
+                    <span
+                        className={`${prefixGlobalCss("step-number")} ${
+                            styles.modalListener__stepNumber
+                        }`}
+                    >
+                        {index < activeStep ? (
+                            <Check size={14} absoluteStrokeWidth={true} />
+                        ) : (
+                            index + 1
+                        )}
+                    </span>
                     {name}
                 </StepItem>
             ))}
@@ -52,18 +69,25 @@ export function ModalStepIndicator() {
 }
 
 function Steps({ children }: PropsWithChildren) {
-    return <div className={styles.modalListener__steps}>{children}</div>;
+    return (
+        <div
+            className={`${prefixGlobalCss("steps")} ${styles.modalListener__steps}`}
+        >
+            {children}
+        </div>
+    );
 }
 
 function StepItem({
     isActive,
+    isDone,
     children,
-}: PropsWithChildren<{ isActive: boolean }>) {
+}: PropsWithChildren<{ isActive: boolean; isDone: boolean }>) {
     return (
         <div
-            className={`${styles.modalListener__stepItem} ${isActiveStyle(
-                isActive
-            )}`}
+            className={`${prefixGlobalCss("step")} ${
+                styles.modalListener__stepItem
+            } ${isActiveStyle(isActive)} ${isDoneStyle(isDone)}`}
         >
             {children}
         </div>
@@ -71,5 +95,17 @@ function StepItem({
 }
 
 function isActiveStyle(isActive: boolean) {
-    return isActive ? styles["modalListener__stepItem--active"] : "";
+    return isActive
+        ? `${prefixGlobalCss("step-active")} ${
+              styles["modalListener__stepItem--active"]
+          }`
+        : "";
+}
+
+function isDoneStyle(isDone: boolean) {
+    return isDone
+        ? `${prefixGlobalCss("step-done")} ${
+              styles["modalListener__stepItem--done"]
+          }`
+        : "";
 }

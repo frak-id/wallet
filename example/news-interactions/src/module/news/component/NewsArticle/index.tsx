@@ -3,7 +3,10 @@ import { Skeleton } from "@/module/common/component/Skeleton";
 import { useIntersectionObserver } from "@/module/common/hooks/useIntersectionObserver";
 import { Hero } from "@/module/news/component/Hero";
 import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
-import { usePressReferralInteraction } from "@frak-labs/nexus-sdk/react";
+import {
+    useDisplayModal,
+    usePressReferralInteraction,
+} from "@frak-labs/nexus-sdk/react";
 import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
@@ -22,6 +25,8 @@ export function NewsArticle({ articleId }: { articleId: string }) {
     );
 
     const { mutateAsync: pushInteraction } = useSendInteraction();
+
+    const { mutate: displayModal } = useDisplayModal();
 
     // Trigger the open article event when title is visible
     const { targetRef: titleRef } = useIntersectionObserver<HTMLHeadingElement>(
@@ -75,6 +80,37 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                     <button
                         type={"button"}
                         className={`button ${styles.article__social}`}
+                        onClick={() =>
+                            displayModal({
+                                steps: {
+                                    openSession: {
+                                        metadata: {
+                                            title: "Open reward session",
+                                            description:
+                                                "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                                            primaryActionText:
+                                                "Being rewarded with Nexus",
+                                        },
+                                    },
+                                    login: {
+                                        metadata: {
+                                            title: "Login",
+                                            description:
+                                                "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                                            primaryActionText:
+                                                "Login with Nexus",
+                                            secondaryActionText:
+                                                "Create a Nexus",
+                                        },
+                                    },
+                                },
+                                metadata: {
+                                    header: {
+                                        title: "Payment for your data",
+                                    },
+                                },
+                            })
+                        }
                     >
                         <Image src={forward} alt="Share" />
                     </button>

@@ -119,9 +119,10 @@ function ListenerModalDialog({
      * The inner component to display
      */
     const { title } = useMemo(() => {
-        // todo: How to get the title? Depending on the latest step of this modal request? Provided as context?
-        return { title: "Title" };
-    }, []);
+        return {
+            title: currentRequest.metadata?.header?.title ?? "",
+        };
+    }, [currentRequest?.metadata?.header?.title]);
 
     return (
         <AlertDialog
@@ -161,7 +162,10 @@ function ListenerModalDialog({
 function CurrentModalStepComponent({
     onModalFinish,
     onError,
-}: { onModalFinish: () => void; onError: (reason?: string) => void }) {
+}: {
+    onModalFinish: () => void;
+    onError: (reason?: string) => void;
+}) {
     const modalSteps = useAtomValue(modalStepsAtom);
     const currentStep = useMemo(
         () => modalSteps?.steps?.[modalSteps.currentStep] ?? undefined,

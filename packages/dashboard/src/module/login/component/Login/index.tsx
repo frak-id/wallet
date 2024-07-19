@@ -29,7 +29,11 @@ export function Login() {
             <Button
                 onClick={() =>
                     authenticate({
-                        context: "Authentication",
+                        metadata: {
+                            header: {
+                                title: "Authentication",
+                            },
+                        },
                     })
                 }
             >

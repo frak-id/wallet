@@ -1,8 +1,6 @@
-import { TextData } from "@/module/common/component/TextData";
-import { HelpModal } from "@/module/listener/component/Modal";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type { SiweAuthenticateModalStepType } from "@frak-labs/nexus-sdk/core";
-import { AuthFingerprint } from "@module/component/AuthFingerprint";
+import { prefixGlobalCss } from "@module/utils/prefixGlobalCss";
 import { useMemo } from "react";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
@@ -21,6 +19,7 @@ export function SiweAuthenticateModalStep({
     onFinish: (result: SiweAuthenticateModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { metadata } = params;
     const { address, chainId } = useAccount();
     const siweMessage: SiweMessage | undefined = useMemo(() => {
         if (!(address && chainId)) {
@@ -54,23 +53,27 @@ export function SiweAuthenticateModalStep({
 
     return (
         <>
-            <TextData>
-                <p>{siweMessage?.statement}</p>
-                <p>Domain: {siweMessage?.domain}</p>
-                <p>Uri: {siweMessage?.uri}</p>
-            </TextData>
-            <HelpModal />
-            <AuthFingerprint
-                className={styles.modalListener__action}
-                disabled={isPending}
-                action={() => {
-                    signMessage({
-                        message,
-                    });
-                }}
-            >
-                Validate authentication
-            </AuthFingerprint>
+            {metadata?.description && (
+                <div className={prefixGlobalCss("text")}>
+                    <p>{metadata.description}</p>
+                </div>
+            )}
+            <div className={prefixGlobalCss("buttons-wrapper")}>
+                <div>
+                    <button
+                        type={"button"}
+                        className={prefixGlobalCss("button-primary")}
+                        disabled={isPending}
+                        onClick={() => {
+                            signMessage({
+                                message,
+                            });
+                        }}
+                    >
+                        {metadata?.primaryActionText ?? "Authenticate"}
+                    </button>
+                </div>
+            </div>
 
             {isError && error && (
                 <p className={`error ${styles.modalListener__error}`}>
