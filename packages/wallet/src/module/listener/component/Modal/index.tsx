@@ -2,6 +2,7 @@
 
 import { iFrameToggleVisibility } from "@/context/sdk/utils/iFrameToggleVisibility";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
+import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import {
     type ModalDisplayedRequest,
     clearRpcModalAtom,
@@ -23,8 +24,16 @@ import {
     type SiweAuthenticateModalStepType,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
-import { useAtomValue } from "jotai/index";
-import { useCallback, useEffect, useMemo } from "react";
+import { useMediaQuery } from "@module/hook/useMediaQuery";
+import { useAtomValue } from "jotai";
+import {
+    type Dispatch,
+    type PropsWithChildren,
+    type SetStateAction,
+    useCallback,
+    useEffect,
+    useMemo,
+} from "react";
 import styles from "./index.module.css";
 
 /**
@@ -125,18 +134,8 @@ function ListenerModalDialog({
     }, [currentRequest?.metadata?.header?.title]);
 
     return (
-        <AlertDialog
-            classNameTitle={styles.modalListener__title}
+        <ModalComponent
             title={title}
-            text={
-                <>
-                    <ModalStepIndicator />
-                    <CurrentModalStepComponent
-                        onModalFinish={onFinished}
-                        onError={onError}
-                    />
-                </>
-            }
             open={true}
             onOpenChange={(value) => {
                 if (!value) {
@@ -151,7 +150,57 @@ function ListenerModalDialog({
                     onClose();
                 }
             }}
-        />
+        >
+            <>
+                <ModalStepIndicator />
+                <CurrentModalStepComponent
+                    onModalFinish={onFinished}
+                    onError={onError}
+                />
+            </>
+        </ModalComponent>
+    );
+}
+
+/**
+ * Main component for the modal (either drawer or alert bx depending on the client)
+ * @param title
+ * @param open
+ * @param onOpenChange
+ * @param children
+ * @constructor
+ */
+function ModalComponent({
+    title,
+    open,
+    onOpenChange,
+    children,
+}: PropsWithChildren<{
+    title?: string;
+    open: boolean;
+    onOpenChange: Dispatch<SetStateAction<boolean>>;
+}>) {
+    // Check if the screen is desktop or mobile
+    const isDesktop = useMediaQuery("(min-width : 600px)");
+
+    // Use a Drawer for mobile and an AlertDialog for desktop
+    if (isDesktop) {
+        return (
+            <AlertDialog
+                classNameTitle={styles.modalListener__title}
+                title={title}
+                text={children}
+                open={open}
+                onOpenChange={onOpenChange}
+            />
+        );
+    }
+
+    // Otherwise, return bottom drawer
+    return (
+        <Drawer open={open} onOpenChange={onOpenChange}>
+            <DrawerContent>{children}</DrawerContent>
+        </Drawer>
     );
 }
 
@@ -261,17 +310,4 @@ function CurrentModalStepComponent({
                 return <>Can't handle {currentStep} yet</>;
         }
     }, [currentStep, onStepFinished, onError]);
-}
-
-/**
- * Generic helper modal
- * @constructor
- */
-export function HelpModal() {
-    return (
-        <p className={styles.modalListener__help}>
-            Need help? Contact us at{" "}
-            <a href="mailto:hello@frak.id">hello@frak.id</a>
-        </p>
-    );
 }

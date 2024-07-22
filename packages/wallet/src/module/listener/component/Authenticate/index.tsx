@@ -1,6 +1,6 @@
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type { SiweAuthenticateModalStepType } from "@frak-labs/nexus-sdk/core";
-import { prefixGlobalCss } from "@module/utils/prefixGlobalCss";
+import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMemo } from "react";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
@@ -54,15 +54,15 @@ export function SiweAuthenticateModalStep({
     return (
         <>
             {metadata?.description && (
-                <div className={prefixGlobalCss("text")}>
+                <div className={prefixModalCss("text")}>
                     <p>{metadata.description}</p>
                 </div>
             )}
-            <div className={prefixGlobalCss("buttons-wrapper")}>
+            <div className={prefixModalCss("buttons-wrapper")}>
                 <div>
                     <button
                         type={"button"}
-                        className={prefixGlobalCss("button-primary")}
+                        className={prefixModalCss("button-primary")}
                         disabled={isPending}
                         onClick={() => {
                             signMessage({

@@ -2,7 +2,7 @@ import styles from "@/module/listener/component/Modal/index.module.css";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
-import { prefixGlobalCss } from "@module/utils/prefixGlobalCss";
+import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAccount } from "wagmi";
 
 /**
@@ -55,15 +55,15 @@ export function OpenSessionModalStep({
     return (
         <>
             {metadata?.description && (
-                <div className={prefixGlobalCss("text")}>
+                <div className={prefixModalCss("text")}>
                     <p>{metadata.description}</p>
                 </div>
             )}
-            <div className={prefixGlobalCss("buttons-wrapper")}>
+            <div className={prefixModalCss("buttons-wrapper")}>
                 <div>
                     <button
                         type={"button"}
-                        className={prefixGlobalCss("button-primary")}
+                        className={prefixModalCss("button-primary")}
                         disabled={isPending}
                         onClick={() => openSession()}
                     >

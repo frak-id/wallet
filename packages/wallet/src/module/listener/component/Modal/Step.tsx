@@ -1,7 +1,7 @@
 import { modalStepsAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type { ModalStepTypes } from "@frak-labs/nexus-sdk/core";
-import { prefixGlobalCss } from "@module/utils/prefixGlobalCss";
+import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { atom, useAtomValue } from "jotai/index";
 import { Check } from "lucide-react";
 import type { PropsWithChildren } from "react";
@@ -51,7 +51,7 @@ export function ModalStepIndicator() {
                     isDone={index < activeStep}
                 >
                     <span
-                        className={`${prefixGlobalCss("step-number")} ${
+                        className={`${prefixModalCss("step-number")} ${
                             styles.modalListener__stepNumber
                         }`}
                     >
@@ -71,7 +71,7 @@ export function ModalStepIndicator() {
 function Steps({ children }: PropsWithChildren) {
     return (
         <div
-            className={`${prefixGlobalCss("steps")} ${styles.modalListener__steps}`}
+            className={`${prefixModalCss("steps")} ${styles.modalListener__steps}`}
         >
             {children}
         </div>
@@ -85,7 +85,7 @@ function StepItem({
 }: PropsWithChildren<{ isActive: boolean; isDone: boolean }>) {
     return (
         <div
-            className={`${prefixGlobalCss("step")} ${
+            className={`${prefixModalCss("step")} ${
                 styles.modalListener__stepItem
             } ${isActiveStyle(isActive)} ${isDoneStyle(isDone)}`}
         >
@@ -96,7 +96,7 @@ function StepItem({
 
 function isActiveStyle(isActive: boolean) {
     return isActive
-        ? `${prefixGlobalCss("step-active")} ${
+        ? `${prefixModalCss("step-active")} ${
               styles["modalListener__stepItem--active"]
           }`
         : "";
@@ -104,7 +104,7 @@ function isActiveStyle(isActive: boolean) {
 
 function isDoneStyle(isDone: boolean) {
     return isDone
-        ? `${prefixGlobalCss("step-done")} ${
+        ? `${prefixModalCss("step-done")} ${
               styles["modalListener__stepItem--done"]
           }`
         : "";

@@ -4,7 +4,7 @@ import styles from "@/module/listener/component/Modal/index.module.css";
 import type { LoginModalStepType } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
 import { buildRedirectUrl } from "@module/utils/buildRedirectUrl";
-import { prefixGlobalCss } from "@module/utils/prefixGlobalCss";
+import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useCallback, useEffect } from "react";
 
 /**
@@ -64,15 +64,15 @@ export function LoginModalStep({
     return (
         <>
             {metadata?.description && (
-                <div className={prefixGlobalCss("text")}>
+                <div className={prefixModalCss("text")}>
                     <p>{metadata.description}</p>
                 </div>
             )}
-            <div className={prefixGlobalCss("buttons-wrapper")}>
+            <div className={prefixModalCss("buttons-wrapper")}>
                 <div>
                     <button
                         type={"button"}
-                        className={prefixGlobalCss("button-primary")}
+                        className={prefixModalCss("button-primary")}
                         disabled={isLoading}
                         onClick={() => openRegister()}
                     >
@@ -82,7 +82,7 @@ export function LoginModalStep({
                 <div>
                     <button
                         type={"button"}
-                        className={prefixGlobalCss("button-primary")}
+                        className={prefixModalCss("button-primary")}
                         disabled={isLoading}
                         onClick={() => {
                             login({})
@@ -103,7 +103,7 @@ export function LoginModalStep({
                     <div>
                         <button
                             type={"button"}
-                            className={prefixGlobalCss("button-secondary")}
+                            className={prefixModalCss("button-secondary")}
                             onClick={() => {
                                 if (!metadata.articleUrl) return;
                                 window.parent.location.href = buildRedirectUrl(

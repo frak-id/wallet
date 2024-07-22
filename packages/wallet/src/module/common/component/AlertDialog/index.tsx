@@ -1,6 +1,6 @@
 import { LogoFrak } from "@module/asset/icons/LogoFrak";
 import { mergeElement } from "@module/utils/mergeElement";
-import { prefixGlobalCss } from "@module/utils/prefixGlobalCss";
+import { prefixModalCss } from "@module/utils/prefixModalCss";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -67,10 +67,10 @@ export function AlertDialog({
             </AlertDialogPrimitive.Trigger>
             <AlertDialogPrimitive.Portal>
                 <AlertDialogPrimitive.Overlay
-                    className={`${prefixGlobalCss("overlay")} ${styles.alertDialog__overlay}`}
+                    className={`${prefixModalCss("overlay")} ${styles.alertDialog__overlay}`}
                 />
                 <AlertDialogPrimitive.Content
-                    className={`${prefixGlobalCss("content")} ${styles.alertDialog__content} ${
+                    className={`${prefixModalCss("content")} ${styles.alertDialog__content} ${
                         showCloseButton
                             ? styles.alertDialog__withCloseButton
                             : ""
@@ -80,12 +80,12 @@ export function AlertDialog({
                         <AlertDialogPrimitive.Cancel asChild>
                             {closeButton ? (
                                 mergeElement(closeButton, {
-                                    className: `${prefixGlobalCss("close")} ${styles.alertDialog__close}`,
+                                    className: `${prefixModalCss("close")} ${styles.alertDialog__close}`,
                                 })
                             ) : (
                                 <button
                                     type={"button"}
-                                    className={`${prefixGlobalCss("close")} ${styles.alertDialog__close}`}
+                                    className={`${prefixModalCss("close")} ${styles.alertDialog__close}`}
                                     aria-label="Close"
                                 >
                                     <X />
@@ -95,7 +95,7 @@ export function AlertDialog({
                     )}
                     {title ? (
                         <AlertDialogPrimitive.Title
-                            className={`${prefixGlobalCss("title")} ${styles.alertDialog__title} ${classNameTitle}`}
+                            className={`${prefixModalCss("title")} ${styles.alertDialog__title} ${classNameTitle}`}
                         >
                             {title}
                             {showProvidedBy && (
@@ -120,7 +120,7 @@ export function AlertDialog({
                     )}
                     {text && (
                         <div
-                            className={`${prefixGlobalCss("description")} ${styles.alertDialog__description} `}
+                            className={`${prefixModalCss("description")} ${styles.alertDialog__description} `}
                         >
                             {text}
                         </div>
