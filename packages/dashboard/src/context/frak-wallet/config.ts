@@ -6,7 +6,7 @@ export const frakWalletSdkConfig: Omit<NexusWalletSdkConfig, "domain"> = {
     metadata: {
         name: "Dashboard",
         css: isRunningLocally
-            ? "http://localhost:3002/css/nexus-modals.css"
+            ? "http://localhost:3001/css/nexus-modals.css"
             : "https://business-dev.frak.id/css/nexus-modals.css",
     },
 };
