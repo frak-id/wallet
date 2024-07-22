@@ -22,4 +22,5 @@ export {
     useSiweAuthenticate,
     usePressReferralInteraction,
     useDisplayModal,
+    useOpenSso,
 } from "./hook";

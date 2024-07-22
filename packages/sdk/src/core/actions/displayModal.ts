@@ -5,12 +5,6 @@ import type {
     NexusClient,
 } from "../types";
 
-/*
-TODO:
- - Should enforce the result type depending on the request type
- - Should be able to have smth like a pre send hook on the sdk level to fullfill some informations from the client if needed (notably about siwe stuff)
- */
-
 /**
  * Function used to display a modal
  * @param client

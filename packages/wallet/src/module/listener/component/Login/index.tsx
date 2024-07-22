@@ -1,10 +1,11 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
+import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type { LoginModalStepType } from "@frak-labs/nexus-sdk/core";
-import { jotaiStore } from "@module/atoms/store";
 import { buildRedirectUrl } from "@module/utils/buildRedirectUrl";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect } from "react";
 
 /**
@@ -23,6 +24,7 @@ export function LoginModalStep({
 }) {
     const { metadata } = params;
     const { login, isSuccess, isLoading, isError, error } = useLogin();
+    const openSsoPopup = useOpenSsoPopup();
 
     /**
      * Small hook to open the registration page
@@ -31,39 +33,29 @@ export function LoginModalStep({
     const openRegister = useCallback(() => {
         // If we are on the server side do nothing
         if (window === undefined) return;
+        if (!params.ssoMetadata) return;
 
-        // Get the nexus url
-        const nexusUrl = process.env.APP_URL ?? "https://nexus.frak.id/";
+        // Open the SSO popup
+        openSsoPopup({
+            metadata: {
+                name: "register",
+                ...params.ssoMetadata,
+            },
+            directExit: true,
+        });
+    }, [params, openSsoPopup]);
 
-        // Open the popup
-        const windowFeatures =
-            "menubar=no,status=no,scrollbars=no,fullscreen=no,width=500, height=800";
-        const openedWindow = window.open(
-            `${nexusUrl}/sso?directExit=true`,
-            "nexus",
-            windowFeatures
-        );
-        if (openedWindow) {
-            openedWindow.focus();
-        }
-    }, []);
+    const session = useAtomValue(sessionAtom);
 
     /**
      * Listen to the session status, and exit directly after a session is set in the storage
      *  - Will be triggered if the user goes through the external registration process
      */
     useEffect(() => {
-        const unsub = jotaiStore.sub(sessionAtom, () => {
-            const session = jotaiStore.get(sessionAtom);
-            if (session) {
-                onFinish({ wallet: session.wallet.address });
-            }
-        });
-
-        return () => {
-            unsub();
-        };
-    }, [onFinish]);
+        if (session) {
+            onFinish({ wallet: session.wallet.address });
+        }
+    }, [onFinish, session]);
 
     return (
         <>
@@ -109,10 +101,10 @@ export function LoginModalStep({
                             type={"button"}
                             className={prefixModalCss("button-secondary")}
                             onClick={() => {
-                                if (!metadata.articleUrl) return;
+                                if (!params.articleUrl) return;
                                 window.parent.location.href = buildRedirectUrl(
                                     window.location.origin,
-                                    metadata.articleUrl
+                                    params.articleUrl
                                 );
                             }}
                         >

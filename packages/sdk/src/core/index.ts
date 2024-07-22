@@ -21,6 +21,8 @@ export type {
     PreparedInteraction,
     SendInteractionParamsType,
     SendInteractionReturnType,
+    SsoMetadata,
+    OpenSsoParamsType,
     // RPC Modal generics
     ModalStepTypes,
     ModalRpcMetadata,

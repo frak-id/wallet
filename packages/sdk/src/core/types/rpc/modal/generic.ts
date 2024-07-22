@@ -15,6 +15,5 @@ export type ModalStepMetadata = {
         description?: string;
         primaryActionText?: string;
         secondaryActionText?: string;
-        articleUrl?: string;
     };
 };

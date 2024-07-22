@@ -23,7 +23,7 @@ export function SsoRegisterComponent({ onSuccess }: { onSuccess: () => void }) {
     );
 
     /**
-     * Get the message that will displayed inside the button
+     * Get the message that will be displayed inside the button
      */
     const message = useMemo(() => {
         if (isPreviouslyUsedAuthenticatorError) {

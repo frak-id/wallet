@@ -7,6 +7,10 @@ export type {
     StartArticleUnlockReturnType,
 } from "./rpc/startUnlock";
 export type {
+    SsoMetadata,
+    OpenSsoParamsType,
+} from "./rpc/sso";
+export type {
     PreparedInteraction,
     SendInteractionParamsType,
     SendInteractionReturnType,

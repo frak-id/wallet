@@ -8,6 +8,7 @@ import type {
     PreparedInteraction,
     SendInteractionReturnType,
 } from "./rpc/interaction";
+import type { OpenSsoParamsType } from "./rpc/sso";
 import type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
@@ -63,6 +64,18 @@ export type IFrameRpcSchema = [
             signature?: Hex,
         ];
         ReturnType: SendInteractionReturnType;
+    },
+    /**
+     * Method to start a SSO
+     */
+    {
+        Method: "frak_sso";
+        Parameters: [
+            params: OpenSsoParamsType,
+            name: string,
+            customCss?: string,
+        ];
+        ReturnType: undefined;
     },
 ];
 

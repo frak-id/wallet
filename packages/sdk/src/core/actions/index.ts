@@ -9,6 +9,7 @@ export {
 } from "./startUnlock";
 export { sendInteraction } from "./sendInteraction";
 export { displayModal } from "./displayModal";
+export { openSso } from "./openSso";
 // Modal wrappers
 export {
     siweAuthenticate,
