@@ -2,7 +2,7 @@ import { getSession } from "@/context/session/action/session";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const AUTH_ROUTES = ["/login", "/register"];
+const AUTH_ROUTES = ["/login", "/register", "/recovery", "/sso"];
 const RESTRICTED_ROUTES = [
     "/history",
     "/settings",

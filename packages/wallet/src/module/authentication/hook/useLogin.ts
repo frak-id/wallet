@@ -3,15 +3,23 @@ import { validateAuthentication } from "@/context/wallet/action/authenticate";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { sessionAtom } from "@/module/common/atoms/session";
+import type { Session } from "@/types/Session";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
 
 /**
  * Hook that handle the registration process
  */
-export function useLogin() {
+export function useLogin(
+    mutations?: UseMutationOptions<
+        Session,
+        Error,
+        { lastAuthentication?: PreviousAuthenticatorModel }
+    >
+) {
     // Setter for the last authentication
     const addLastAuthentication = useSetAtom(addLastAuthenticationAtom);
 
@@ -26,6 +34,7 @@ export function useLogin() {
         error,
         mutateAsync: login,
     } = useMutation({
+        ...mutations,
         mutationKey: ["login"],
         mutationFn: async ({
             lastAuthentication,

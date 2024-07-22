@@ -38,7 +38,11 @@ export function LoginModalStep({
         // Open the popup
         const windowFeatures =
             "menubar=no,status=no,scrollbars=no,fullscreen=no,width=500, height=800";
-        const openedWindow = window.open(nexusUrl, "nexus", windowFeatures);
+        const openedWindow = window.open(
+            `${nexusUrl}/sso?directExit=true`,
+            "nexus",
+            windowFeatures
+        );
         if (openedWindow) {
             openedWindow.focus();
         }

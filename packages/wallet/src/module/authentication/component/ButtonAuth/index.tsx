@@ -1,8 +1,6 @@
-import { postAuthRedirectAtom } from "@/module/authentication/atoms/redirection";
 import { hasPaywallContextAtom } from "@/module/paywall/atoms/paywall";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { PropsWithChildren } from "react";
@@ -12,13 +10,12 @@ export function ButtonAuth({
     disabled,
     children,
 }: PropsWithChildren<{
-    trigger: () => Promise<WebAuthNWallet>;
+    trigger: () => Promise<unknown>;
     disabled?: boolean;
 }>) {
     const router = useRouter();
     const [, startTransition] = useTransition();
     const [disabledButton, setDisabledButton] = useState(false);
-    const [redirectUrl, setRedirectUrl] = useAtom(postAuthRedirectAtom);
     const hasPaywallContext = useAtomValue(hasPaywallContextAtom);
 
     return (
@@ -28,12 +25,6 @@ export function ButtonAuth({
                 await trigger();
 
                 startTransition(() => {
-                    if (redirectUrl) {
-                        setRedirectUrl(null);
-                        window.location.href = decodeURIComponent(redirectUrl);
-                        return;
-                    }
-
                     router.push(hasPaywallContext ? "/unlock" : "/wallet");
                     setDisabledButton(false);
                 });

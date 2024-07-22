@@ -3,14 +3,16 @@ import { getRegisterOptions } from "@/context/wallet/action/registerOptions";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 import { sessionAtom } from "@/module/common/atoms/session";
+import type { Session } from "@/types/Session";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
 import { useSetAtom } from "jotai/index";
 
 /**
  * Hook that handle the registration process
  */
-export function useRegister() {
+export function useRegister(mutations?: UseMutationOptions<Session>) {
     // Setter for the session
     const setSession = useSetAtom(sessionAtom);
 
@@ -28,6 +30,7 @@ export function useRegister() {
         error,
         mutateAsync: register,
     } = useMutation({
+        ...mutations,
         mutationKey: ["register"],
         mutationFn: async () => {
             // Build the credentials to exclude

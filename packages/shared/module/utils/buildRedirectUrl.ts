@@ -5,7 +5,7 @@
  */
 export function buildRedirectUrl(nexusWalletUrl: string, redirectUrl: string) {
     const outputUrl = new URL(nexusWalletUrl);
-    outputUrl.pathname = "/register";
+    outputUrl.pathname = "/sso";
     outputUrl.searchParams.set("redirectUrl", encodeURIComponent(redirectUrl));
     return outputUrl.toString();
 }
