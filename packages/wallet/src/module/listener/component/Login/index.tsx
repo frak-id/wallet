@@ -1,6 +1,7 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type { LoginModalStepType } from "@frak-labs/nexus-sdk/core";
+import { buildRedirectUrl } from "@module/utils/buildRedirectUrl";
 import { prefixGlobalCss } from "@module/utils/prefixGlobalCss";
 
 /**
@@ -54,6 +55,13 @@ export function LoginModalStep({
                         <button
                             type={"button"}
                             className={prefixGlobalCss("button-secondary")}
+                            onClick={() => {
+                                if (!metadata.articleUrl) return;
+                                window.parent.location.href = buildRedirectUrl(
+                                    window.location.origin,
+                                    metadata.articleUrl
+                                );
+                            }}
                         >
                             {metadata.secondaryActionText}
                         </button>

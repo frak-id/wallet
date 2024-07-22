@@ -101,6 +101,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                                                 "Login with Nexus",
                                             secondaryActionText:
                                                 "Create a Nexus",
+                                            articleUrl: window.location.href,
                                         },
                                     },
                                 },
