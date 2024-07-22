@@ -1,8 +1,10 @@
 "use client";
 
 import { deleteSession } from "@/context/session/action/session";
+import { sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
+import { jotaiStore } from "@module/atoms/store";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
@@ -30,8 +32,12 @@ export function Logout() {
             <ButtonRipple
                 size={"small"}
                 onClick={async () => {
+                    // Session deletion
                     await deleteSession();
+                    jotaiStore.set(sessionAtom, null);
+                    // Query cache
                     queryClient.removeQueries();
+                    // Local storage cleanup
                     setTimeout(() => {
                         cleanLocalStorage();
                         router.push("/register");
