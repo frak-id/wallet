@@ -1,5 +1,6 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
+import { openSessionAtom } from "@/module/wallet/atoms/openSession";
 import type {
     IFrameRpcSchema,
     ModalRpcMetadata,
@@ -71,6 +72,19 @@ export const setNewModalAtom = atom(
                 results.push({
                     key: "login",
                     returns: { wallet: session.wallet.address },
+                });
+                currentStep++;
+            }
+        }
+
+        if (steps.find((step) => step.key === "openSession")) {
+            // Check if the user is already logged in or not on mount
+            const session = get(sessionAtom);
+            const openSession = get(openSessionAtom);
+            if (session && openSession) {
+                results.push({
+                    key: "openSession",
+                    returns: openSession,
                 });
                 currentStep++;
             }

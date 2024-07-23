@@ -1,4 +1,6 @@
 import { getSessionStatus } from "@/context/interaction/action/interactionSession";
+import { openSessionAtom } from "@/module/wallet/atoms/openSession";
+import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import type { Address } from "viem";
 
@@ -14,7 +16,9 @@ export function useInteractionSessionStatus({
             if (!address) {
                 return null;
             }
-            return getSessionStatus({ wallet: address });
+            const sessionStatus = await getSessionStatus({ wallet: address });
+            jotaiStore.set(openSessionAtom, sessionStatus);
+            return sessionStatus;
         },
         enabled: !!address,
     });
