@@ -18,6 +18,6 @@ export async function displayModal<
 ): Promise<ModalRpcStepsResultType<T>> {
     return (await client.request({
         method: "frak_displayModal",
-        params: [steps, metadata],
+        params: [steps, client.config.metadata.name, metadata],
     })) as ModalRpcStepsResultType<T>;
 }

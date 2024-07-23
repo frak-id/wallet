@@ -10,6 +10,7 @@ import type {
 import { atom } from "jotai";
 
 export type ModalDisplayedRequest = {
+    appName: string;
     context: IFrameResolvingContext;
     steps: ModalRpcStepsInput;
     metadata?: ModalRpcMetadata;

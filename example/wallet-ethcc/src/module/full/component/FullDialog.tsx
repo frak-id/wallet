@@ -72,7 +72,14 @@ export function FullDialog() {
                                 },
                             },
                             openSession: {},
-                            login: {},
+                            login: {
+                                allowSso: true,
+                                ssoMetadata: {
+                                    homepageLink: "https://frak.id/",
+                                    logoUrl:
+                                        "https://pbs.twimg.com/profile_images/1593655640643305474/aTQ98ZdJ_400x400.jpg",
+                                },
+                            },
                         },
                     })
                 }

@@ -33,7 +33,9 @@ export function useOpenSsoPopup() {
             }));
 
             // Build the SSO url
-            const ssoUrl = new URL(window.location.hostname);
+            const ssoUrl = new URL(window.location.origin);
+            ssoUrl.pathname = "/sso";
+            ssoUrl.searchParams.set("productId", productId);
             if (directExit !== undefined) {
                 ssoUrl.searchParams.set("directExit", directExit.toString());
             }

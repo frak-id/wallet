@@ -50,7 +50,11 @@ export type IFrameRpcSchema = [
      */
     {
         Method: "frak_displayModal";
-        Parameters: [requests: ModalRpcStepsInput, metadata?: ModalRpcMetadata];
+        Parameters: [
+            requests: ModalRpcStepsInput,
+            name: string,
+            metadata?: ModalRpcMetadata,
+        ];
         ReturnType: ModalRpcStepsResultType;
     },
     /**

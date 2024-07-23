@@ -3,7 +3,10 @@ import { useLogin } from "@/module/authentication/hook/useLogin";
 import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
 import styles from "@/module/listener/component/Modal/index.module.css";
-import type { LoginModalStepType } from "@frak-labs/nexus-sdk/core";
+import type {
+    LoginModalStepType,
+    SsoMetadata,
+} from "@frak-labs/nexus-sdk/core";
 import { buildRedirectUrl } from "@module/utils/buildRedirectUrl";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAtomValue } from "jotai/index";
@@ -15,11 +18,13 @@ import { useCallback, useEffect } from "react";
  * @constructor
  */
 export function LoginModalStep({
+    appName,
     context,
     params,
     onFinish,
     onError,
 }: {
+    appName: string;
     context: IFrameResolvingContext;
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
@@ -27,27 +32,6 @@ export function LoginModalStep({
 }) {
     const { metadata } = params;
     const { login, isSuccess, isLoading, isError, error } = useLogin();
-    const openSsoPopup = useOpenSsoPopup();
-
-    /**
-     * Small hook to open the registration page
-     * todo: More specified to the modal flow? Transmit some params? Exit just after the success?
-     */
-    const openRegister = useCallback(() => {
-        // If we are on the server side do nothing
-        if (window === undefined) return;
-        if (!params.ssoMetadata) return;
-
-        // Open the SSO popup
-        openSsoPopup({
-            productId: context.productId,
-            metadata: {
-                name: "register",
-                ...params.ssoMetadata,
-            },
-            directExit: true,
-        });
-    }, [params, context, openSsoPopup]);
 
     const session = useAtomValue(sessionAtom);
 
@@ -74,16 +58,6 @@ export function LoginModalStep({
                         type={"button"}
                         className={prefixModalCss("button-primary")}
                         disabled={isLoading}
-                        onClick={() => openRegister()}
-                    >
-                        {"Register"}
-                    </button>
-                </div>
-                <div>
-                    <button
-                        type={"button"}
-                        className={prefixModalCss("button-primary")}
-                        disabled={isLoading}
                         onClick={() => {
                             login({})
                                 .then((authResult) => {
@@ -99,6 +73,16 @@ export function LoginModalStep({
                         {metadata?.primaryActionText ?? "Login"}
                     </button>
                 </div>
+                {params.allowSso && (
+                    <div>
+                        <SsoButton
+                            appName={appName}
+                            context={context}
+                            ssoMetadata={params.ssoMetadata}
+                            alternateText={metadata?.secondaryActionText}
+                        />
+                    </div>
+                )}
                 {metadata?.secondaryActionText && (
                     <div>
                         <button
@@ -130,5 +114,56 @@ export function LoginModalStep({
                 </p>
             )}
         </>
+    );
+}
+
+/**
+ * Button used to launch an SSO registration
+ * @param context
+ * @param ssoMetadata
+ * @param alternateText
+ * @constructor
+ */
+function SsoButton({
+    appName,
+    context,
+    ssoMetadata,
+    alternateText,
+}: {
+    appName: string;
+    context: IFrameResolvingContext;
+    ssoMetadata: SsoMetadata;
+    alternateText?: string;
+}) {
+    const openSsoPopup = useOpenSsoPopup();
+
+    /**
+     * Small hook to open the registration page
+     */
+    const openRegister = useCallback(() => {
+        // If we are on the server side do nothing
+        if (window === undefined) return;
+
+        // Open the SSO popup
+        openSsoPopup({
+            productId: context.productId,
+            metadata: {
+                name: appName,
+                ...ssoMetadata,
+            },
+            directExit: true,
+        });
+    }, [appName, ssoMetadata, context, openSsoPopup]);
+
+    return (
+        <button
+            type={"button"}
+            className={prefixModalCss("button-secondary")}
+            onClick={() => {
+                openRegister();
+            }}
+        >
+            {alternateText ?? "Register"}
+        </button>
     );
 }

@@ -1,12 +1,16 @@
 "use client";
 
-import { ssoContextAtom } from "@/module/authentication/atoms/sso";
+import {
+    currentSsoMetadataAtom,
+    ssoContextAtom,
+} from "@/module/authentication/atoms/sso";
 import styles from "@/module/authentication/component/Login/index.module.css";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { jotaiStore } from "@module/atoms/store";
+import { useAtomValue } from "jotai/index";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -26,10 +30,12 @@ export function Sso() {
      * Set the sso context atom directly
      */
     useEffect(() => {
+        const productId = searchParams.get("productId");
         const redirectUrl = searchParams.get("redirectUrl");
         const directExit = searchParams.get("directExit");
 
         jotaiStore.set(ssoContextAtom, {
+            productId: productId ?? undefined,
             redirectUrl: redirectUrl ?? undefined,
             directExit: directExit ? directExit === "true" : undefined,
         });
@@ -57,9 +63,6 @@ export function Sso() {
         <Grid
             footer={
                 <>
-                    <Link href={"/recovery"} className={styles.login__link}>
-                        <CloudUpload /> Recover wallet from file
-                    </Link>
                     <Notice>
                         Avant de continuer, assurez vous d’utiliser un appareil
                         vous appartenant. Nexus est une solution permettant à
@@ -74,13 +77,46 @@ export function Sso() {
                         Règles de confidentialités et les Conditions
                         d’utilisation.
                     </Notice>
+                    <Link href={"/recovery"} className={styles.login__link}>
+                        <CloudUpload /> Recover wallet from file
+                    </Link>
                 </>
             }
         >
-            <h3>Créer un portefeuille</h3>
+            <Header />
+            <br />
             <SsoRegisterComponent onSuccess={onSuccess} />
             <br />
             <SsoLoginComponent onSuccess={onSuccess} />
         </Grid>
+    );
+}
+
+function Header() {
+    const currentMetadata = useAtomValue(currentSsoMetadataAtom);
+
+    if (!currentMetadata) {
+        return <h2>Create your Wallet</h2>;
+    }
+
+    return (
+        <>
+            <img
+                src={currentMetadata.logoUrl}
+                alt={currentMetadata.name}
+                height={50}
+            />
+            <h2>Create your Wallet</h2>
+            <p>
+                to receive your rewards immediately from{" "}
+                <a
+                    href={currentMetadata.homepageLink}
+                    target={"_blank"}
+                    rel={"noreferrer"}
+                >
+                    {currentMetadata.name}
+                </a>
+            </p>
+        </>
     );
 }

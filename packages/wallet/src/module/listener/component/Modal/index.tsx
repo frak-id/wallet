@@ -272,6 +272,7 @@ function CurrentModalStepComponent({
             case "login":
                 return (
                     <LoginModalStep
+                        appName={currentRequest.appName}
                         context={currentRequest.context}
                         params={
                             currentStep.params as LoginModalStepType["params"]
@@ -313,5 +314,11 @@ function CurrentModalStepComponent({
             default:
                 return <>Can't handle {currentStep} yet</>;
         }
-    }, [currentStep, onStepFinished, onError, currentRequest.context]);
+    }, [
+        currentStep,
+        onStepFinished,
+        onError,
+        currentRequest.context,
+        currentRequest.appName,
+    ]);
 }
