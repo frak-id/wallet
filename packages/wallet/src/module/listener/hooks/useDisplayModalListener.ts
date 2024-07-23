@@ -22,7 +22,7 @@ type OnDisplayModalRequest = IFrameRequestResolver<
  * Hook used to listen to the display modal action
  */
 export function useDisplayModalListener(): OnDisplayModalRequest {
-    return useCallback(async (request, emitter) => {
+    return useCallback(async (request, context, emitter) => {
         // If no modal to display, early exit
         const steps = request.params[0];
         if (Object.keys(steps).length === 0) {
@@ -38,6 +38,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
 
         // Set our modal
         jotaiStore.set(setNewModalAtom, {
+            context,
             steps,
             metadata: request.params[1],
             emitter,

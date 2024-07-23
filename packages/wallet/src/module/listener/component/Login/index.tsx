@@ -1,3 +1,4 @@
+import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
@@ -14,10 +15,12 @@ import { useCallback, useEffect } from "react";
  * @constructor
  */
 export function LoginModalStep({
+    context,
     params,
     onFinish,
     onError,
 }: {
+    context: IFrameResolvingContext;
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
@@ -37,13 +40,14 @@ export function LoginModalStep({
 
         // Open the SSO popup
         openSsoPopup({
+            productId: context.productId,
             metadata: {
                 name: "register",
                 ...params.ssoMetadata,
             },
             directExit: true,
         });
-    }, [params, openSsoPopup]);
+    }, [params, context, openSsoPopup]);
 
     const session = useAtomValue(sessionAtom);
 

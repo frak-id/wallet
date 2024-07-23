@@ -28,7 +28,7 @@ export function useGetArticleUnlockOptionsListener(): OnGetArticleUnlockOptions 
      * @param _
      * @param emitter
      */
-    return useCallback(async (params, emitter) => {
+    return useCallback(async (params, _, emitter) => {
         // Extract the contentId and articleId
         const contentId = params.params[0];
         const articleId = params.params[1];

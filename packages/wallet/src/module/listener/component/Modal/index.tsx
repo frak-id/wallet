@@ -154,6 +154,7 @@ function ListenerModalDialog({
             <>
                 <ModalStepIndicator />
                 <CurrentModalStepComponent
+                    currentRequest={currentRequest}
                     onModalFinish={onFinished}
                     onError={onError}
                 />
@@ -211,9 +212,11 @@ function ModalComponent({
 function CurrentModalStepComponent({
     onModalFinish,
     onError,
+    currentRequest,
 }: {
     onModalFinish: () => void;
     onError: (reason?: string) => void;
+    currentRequest: ModalDisplayedRequest;
 }) {
     const modalSteps = useAtomValue(modalStepsAtom);
     const currentStep = useMemo(
@@ -269,6 +272,7 @@ function CurrentModalStepComponent({
             case "login":
                 return (
                     <LoginModalStep
+                        context={currentRequest.context}
                         params={
                             currentStep.params as LoginModalStepType["params"]
                         }
@@ -309,5 +313,5 @@ function CurrentModalStepComponent({
             default:
                 return <>Can't handle {currentStep} yet</>;
         }
-    }, [currentStep, onStepFinished, onError]);
+    }, [currentStep, onStepFinished, onError, currentRequest.context]);
 }

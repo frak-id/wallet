@@ -157,7 +157,7 @@ export function useArticleUnlockStatusListener(): OnListenToArticleUnlockStatus 
     });
 
     return useCallback(
-        async (request, emitter) => {
+        async (request, _, emitter) => {
             // Extract content id and article id
             const contentId = request.params[0];
             const articleId = request.params[1];

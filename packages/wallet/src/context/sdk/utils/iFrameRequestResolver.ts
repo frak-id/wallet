@@ -6,6 +6,15 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/nexus-sdk/core";
+import { type Hex, keccak256, toHex } from "viem";
+
+/**
+ * The current resolving context
+ */
+export type IFrameResolvingContext = {
+    productId: Hex;
+    origin: string;
+};
 
 /**
  * Type for our iframe rpc response emitter
@@ -26,6 +35,7 @@ export type IFrameRequestResolver<
         ExtractedParametersFromRpc<IFrameRpcSchema> = ExtractedParametersFromRpc<IFrameRpcSchema>,
 > = (
     params: TParams,
+    context: IFrameResolvingContext,
     responseEmitter: IFrameResponseEmitter<TParams>
 ) => Promise<void>;
 
@@ -58,6 +68,15 @@ export function createIFrameRequestResolver(
         console.log("Received a request message from in the iframe", {
             message,
         });
+
+        // Parse the origin URL
+        const url = new URL(message.origin);
+
+        // Build our resolving context
+        const resolvingContext: IFrameResolvingContext = {
+            productId: keccak256(toHex(url.hostname)),
+            origin: message.origin,
+        };
 
         // Check if that's a lifecycle event
         if ("lifecycle" in message.data) {
@@ -107,7 +126,7 @@ export function createIFrameRequestResolver(
 
         // Response to the requests
         // @ts-ignore
-        await resolver(uncompressedData, responseEmitter);
+        await resolver(uncompressedData, resolvingContext, responseEmitter);
     };
 
     // Add the message listener

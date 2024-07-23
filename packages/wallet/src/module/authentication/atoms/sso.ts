@@ -17,10 +17,9 @@ export type AppSpecificSsoMetadata = SsoMetadata & {
     css?: string;
 };
 
+type AppMetadatas = Record<string, AppSpecificSsoMetadata>;
+
 /**
  * The atom for the current sso metadata
  */
-export const ssoMetadataAtom = atomWithStorage<AppSpecificSsoMetadata | null>(
-    "ssoMetadata",
-    null
-);
+export const ssoMetadataAtom = atomWithStorage<AppMetadatas>("ssoMetadata", {});

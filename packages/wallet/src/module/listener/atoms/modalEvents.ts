@@ -1,3 +1,4 @@
+import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import type {
     IFrameRpcSchema,
@@ -9,6 +10,7 @@ import type {
 import { atom } from "jotai";
 
 export type ModalDisplayedRequest = {
+    context: IFrameResolvingContext;
     steps: ModalRpcStepsInput;
     metadata?: ModalRpcMetadata;
     emitter: (

@@ -73,7 +73,7 @@ export function useWalletStatusListener(): OnListenToWallet {
      * @param emitter
      */
     return useCallback(
-        async (_, emitter) => {
+        async (_, __, emitter) => {
             // Emit the first status
             await emitCurrentStatus(emitter);
 

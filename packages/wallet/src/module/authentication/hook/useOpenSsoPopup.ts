@@ -4,6 +4,7 @@ import {
 } from "@/module/authentication/atoms/sso";
 import { jotaiStore } from "@module/atoms/store";
 import { useCallback } from "react";
+import type { Hex } from "viem";
 
 /**
  * Hook used to open the SSO popup
@@ -11,10 +12,12 @@ import { useCallback } from "react";
 export function useOpenSsoPopup() {
     return useCallback(
         ({
+            productId,
             metadata,
             directExit,
             redirectUrl,
         }: {
+            productId: Hex;
             metadata: AppSpecificSsoMetadata;
             directExit?: boolean;
             redirectUrl?: string;
@@ -24,7 +27,10 @@ export function useOpenSsoPopup() {
             }
 
             // Set the SSO metadata
-            jotaiStore.set(ssoMetadataAtom, metadata);
+            jotaiStore.set(ssoMetadataAtom, (prev) => ({
+                ...prev,
+                [productId]: metadata,
+            }));
 
             // Build the SSO url
             const ssoUrl = new URL(window.location.hostname);
