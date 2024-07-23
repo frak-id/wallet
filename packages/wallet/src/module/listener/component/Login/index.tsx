@@ -1,4 +1,5 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
+import { getSession } from "@/context/session/action/session";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
@@ -7,8 +8,10 @@ import type {
     LoginModalStepType,
     SsoMetadata,
 } from "@frak-labs/nexus-sdk/core";
+import { jotaiStore } from "@module/atoms/store";
 import { buildRedirectUrl } from "@module/utils/buildRedirectUrl";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect } from "react";
 
@@ -135,6 +138,25 @@ function SsoButton({
     ssoMetadata: SsoMetadata;
     alternateText?: string;
 }) {
+    /**
+     * This mutation is used to ensure that post SSO we have a session, not automatically updated
+     */
+    const { mutate: updateSessionStatus } = useMutation({
+        mutationKey: ["session", "force-refetch"],
+        mutationFn: async () => {
+            // If our jotai store already contain a session, we can early exit
+            if (jotaiStore.get(sessionAtom)) {
+                return;
+            }
+
+            // Otherwise we fetch the session
+            const session = await getSession();
+            if (session) {
+                jotaiStore.set(sessionAtom, session);
+            }
+        },
+    });
+
     const openSsoPopup = useOpenSsoPopup();
 
     /**
@@ -161,6 +183,9 @@ function SsoButton({
             className={prefixModalCss("button-secondary")}
             onClick={() => {
                 openRegister();
+            }}
+            onFocus={() => {
+                updateSessionStatus();
             }}
         >
             {alternateText ?? "Register"}
