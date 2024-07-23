@@ -1,6 +1,6 @@
-import { atomWithStorage } from "jotai/utils";
+import { atom } from "jotai";
 
-export const openSessionAtom = atomWithStorage<{
+export const openSessionAtom = atom<{
     sessionStart: number;
     sessionEnd: number;
-} | null>("openSession", null);
+} | null>(null);

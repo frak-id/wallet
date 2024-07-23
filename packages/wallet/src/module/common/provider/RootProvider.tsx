@@ -86,7 +86,7 @@ export function RootProvider({
  * @constructor
  */
 function OpenSessionStatus({ session }: { session: Session | null }) {
-    useInteractionSessionStatus({
+    const { data: sessionStatus } = useInteractionSessionStatus({
         address: session?.wallet.address,
     });
 
@@ -94,6 +94,8 @@ function OpenSessionStatus({ session }: { session: Session | null }) {
         jotaiStore.set(openSessionAtom, null);
         return null;
     }
+
+    jotaiStore.set(openSessionAtom, sessionStatus ?? null);
 
     return null;
 }
