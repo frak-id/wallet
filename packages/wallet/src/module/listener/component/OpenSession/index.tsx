@@ -7,7 +7,7 @@ import { useAccount } from "wagmi";
 
 /**
  * The component for the login step of a modal
- *  -> TODO: Should check if the user already got a session status, if yes, auto skip this step
+ *  todo: Autoskip instead of click when session is present
  * @param onClose
  * @constructor
  */
@@ -22,9 +22,11 @@ export function OpenSessionModalStep({
 }) {
     const { metadata } = params;
     const { address } = useAccount();
-    const { refetch: refetchSessionStatus } = useInteractionSessionStatus({
-        address,
-    });
+    const {
+        data: currentSession,
+        isPending: isFetchingStatus,
+        refetch: refetchSessionStatus,
+    } = useInteractionSessionStatus({ address });
 
     const {
         mutate: openSession,
@@ -33,6 +35,15 @@ export function OpenSessionModalStep({
         error,
     } = useOpenSession({
         mutations: {
+            onMutate: () => {
+                if (currentSession) {
+                    onFinish({
+                        startTimestamp: currentSession.sessionStart,
+                        endTimestamp: currentSession.sessionEnd,
+                    });
+                    throw new Error("session-exit");
+                }
+            },
             onSuccess: async () => {
                 // Fetch the session status
                 const status = await refetchSessionStatus();
@@ -47,7 +58,10 @@ export function OpenSessionModalStep({
                 });
             },
             onError: (error) => {
-                onError(error.message);
+                // If that's not an error about an existing session, directly exit
+                if (error.message !== "session-exit") {
+                    onError(error.message);
+                }
             },
         },
     });
@@ -64,7 +78,7 @@ export function OpenSessionModalStep({
                     <button
                         type={"button"}
                         className={prefixModalCss("button-primary")}
-                        disabled={isPending}
+                        disabled={isPending || isFetchingStatus}
                         onClick={() => openSession()}
                     >
                         {metadata?.primaryActionText ??
