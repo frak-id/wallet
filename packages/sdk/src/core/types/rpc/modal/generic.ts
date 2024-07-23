@@ -10,6 +10,7 @@ export type GenericModalStepType<TKey, TParams, TReturns> = {
 };
 
 export type ModalStepMetadata = {
+    hidden?: boolean;
     metadata?: {
         title?: string;
         description?: string;

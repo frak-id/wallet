@@ -110,6 +110,16 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                                                 "https://news-paper.xyz/",
                                         },
                                     },
+                                    success: {
+                                        hidden: true,
+                                        metadata: {
+                                            description:
+                                                "You can now copy the current url and share it",
+                                        },
+                                        sharingLink: {
+                                            baseLink: window.location.href,
+                                        },
+                                    },
                                 },
                                 metadata: {
                                     header: {

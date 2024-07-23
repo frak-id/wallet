@@ -13,6 +13,7 @@ import { SiweAuthenticateModalStep } from "@/module/listener/component/Authentic
 import { LoginModalStep } from "@/module/listener/component/Login";
 import { ModalStepIndicator } from "@/module/listener/component/Modal/Step";
 import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
+import { SuccessModalStep } from "@/module/listener/component/Success";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
 import {
     type LoginModalStepType,
@@ -22,6 +23,7 @@ import {
     RpcErrorCodes,
     type SendTransactionModalStepType,
     type SiweAuthenticateModalStepType,
+    type SuccessModalStepType,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
@@ -309,6 +311,14 @@ function CurrentModalStepComponent({
                         }
                         onFinish={onStepFinished}
                         onError={onError}
+                    />
+                );
+            case "success":
+                return (
+                    <SuccessModalStep
+                        params={
+                            currentStep.params as SuccessModalStepType["params"]
+                        }
                     />
                 );
             default:

@@ -16,6 +16,7 @@ const defaultStepTitlesMap: Record<ModalStepTypes["key"], string> = {
     siweAuthenticate: "Authenticate",
     openSession: "Open Session",
     sendTransaction: "Transaction",
+    success: "Success",
 };
 
 /**
@@ -24,7 +25,11 @@ const defaultStepTitlesMap: Record<ModalStepTypes["key"], string> = {
 const stepsNameAtom = atom((get) => {
     const currentSteps = get(modalStepsAtom);
     if (!currentSteps) return [];
-    return currentSteps.steps.map(
+    // Filter out steps where params.hidden is true
+    const visibleSteps = currentSteps.steps.filter(
+        (step) => !step.params.hidden
+    );
+    return visibleSteps.map(
         (step) =>
             step.params.metadata?.title ??
             defaultStepTitlesMap[step.key] ??

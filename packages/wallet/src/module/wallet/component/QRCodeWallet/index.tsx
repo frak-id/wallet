@@ -1,7 +1,7 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useCopyAddress } from "@/module/wallet/hook/useCopyAddress";
 import { ButtonRipple } from "@module/component/ButtonRipple";
+import { useCopyAddress } from "@module/hook/useCopyAddress";
 import { ArrowDownToLine, Copy } from "lucide-react";
 import { useQRCode } from "next-qrcode";
 import { useAccount } from "wagmi";

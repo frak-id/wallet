@@ -3,6 +3,7 @@ import type {
     OpenInteractionSessionModalStepType,
     SendTransactionModalStepType,
     SiweAuthenticateModalStepType,
+    SuccessModalStepType,
 } from "./modal";
 
 /**
@@ -12,7 +13,8 @@ export type ModalStepTypes =
     | LoginModalStepType
     | SiweAuthenticateModalStepType
     | SendTransactionModalStepType
-    | OpenInteractionSessionModalStepType;
+    | OpenInteractionSessionModalStepType
+    | SuccessModalStepType;
 
 /**
  * Type for the result of a modal request
