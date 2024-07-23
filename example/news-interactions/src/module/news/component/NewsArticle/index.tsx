@@ -101,7 +101,13 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                                                 "Login with Nexus",
                                             secondaryActionText:
                                                 "Create a Nexus",
-                                            articleUrl: window.location.href,
+                                        },
+                                        allowSso: true,
+                                        ssoMetadata: {
+                                            logoUrl:
+                                                "https://news-paper.xyz/favicons/icon-192.png",
+                                            homepageLink:
+                                                "https://news-paper.xyz/",
                                         },
                                     },
                                 },
