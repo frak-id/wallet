@@ -9,7 +9,6 @@ import type {
     SsoMetadata,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
-import { buildRedirectUrl } from "@module/utils/buildRedirectUrl";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
@@ -86,23 +85,6 @@ export function LoginModalStep({
                         />
                     </div>
                 )}
-                {metadata?.secondaryActionText && (
-                    <div>
-                        <button
-                            type={"button"}
-                            className={prefixModalCss("button-secondary")}
-                            onClick={() => {
-                                if (!params.articleUrl) return;
-                                window.parent.location.href = buildRedirectUrl(
-                                    window.location.origin,
-                                    params.articleUrl
-                                );
-                            }}
-                        >
-                            {metadata.secondaryActionText}
-                        </button>
-                    </div>
-                )}
             </div>
 
             {isSuccess && (
@@ -122,6 +104,7 @@ export function LoginModalStep({
 
 /**
  * Button used to launch an SSO registration
+ * @param appName
  * @param context
  * @param ssoMetadata
  * @param alternateText
