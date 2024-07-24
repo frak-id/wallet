@@ -123,6 +123,14 @@ export type IFrameRpcEvent = {
     };
 };
 
-type IFrameLifecycleEvent = {
-    lifecycle: "connected" | "show" | "hide";
+type IFrameLifecycleEvent =
+    | {
+          lifecycle: "connected" | "show" | "hide";
+          data: never;
+      }
+    | LifecycleEventCSS;
+
+type LifecycleEventCSS = {
+    lifecycle: "modal-css";
+    data: string;
 };

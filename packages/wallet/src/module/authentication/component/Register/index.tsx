@@ -1,32 +1,17 @@
 "use client";
-
-import { postAuthRedirectAtom } from "@/module/authentication/atoms/redirection";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { useSetAtom } from "jotai";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./index.module.css";
 
 export function Register() {
     const router = useRouter();
     const { register, error, isRegisterInProgress } = useRegister();
     const [disabled, setDisabled] = useState(false);
-
-    /**
-     * Get the redirectUrl from the URL and set it in storage if needed
-     */
-    const searchParams = useSearchParams();
-    const redirectUrl = searchParams.get("redirectUrl");
-    const setRedirectUrl = useSetAtom(postAuthRedirectAtom);
-    useEffect(() => {
-        if (!redirectUrl) return;
-        setRedirectUrl(redirectUrl);
-    }, [redirectUrl, setRedirectUrl]);
 
     /**
      * Boolean used to know if the error is about a previously used authenticator
@@ -76,11 +61,6 @@ export function Register() {
         );
     }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress]);
 
-    const triggerRegister = useCallback(async () => {
-        const { wallet } = await register();
-        return wallet;
-    }, [register]);
-
     useEffect(() => {
         if (!error) return;
 
@@ -112,7 +92,7 @@ export function Register() {
             }
         >
             <ButtonAuth
-                trigger={triggerRegister}
+                trigger={register}
                 disabled={disabled || isPreviouslyUsedAuthenticatorError}
             >
                 {message}

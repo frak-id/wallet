@@ -2,16 +2,10 @@ import css from "!!raw-loader!./index.module.css";
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { Button } from "@/module/common/component/Button";
 import type { Article } from "@/type/Article";
+import { buildRedirectUrl } from "@frak-labs/shared/module/utils/buildRedirectUrl";
 import { useMemo } from "react";
 
 export const cssRaw = css;
-
-function buildRedirectUrl(redirectUrl: string) {
-    const outputUrl = new URL(frakWalletSdkConfig.walletUrl);
-    outputUrl.pathname = "/register";
-    outputUrl.searchParams.set("redirectUrl", encodeURIComponent(redirectUrl));
-    return outputUrl.toString();
-}
 
 export function ReferralPopup({
     article,
@@ -36,6 +30,7 @@ export function ReferralPopup({
                     size={"small"}
                     onClick={() => {
                         window.location.href = buildRedirectUrl(
+                            frakWalletSdkConfig.walletUrl,
                             `${window.location.origin}/article?id=${article.id}`
                         );
                     }}

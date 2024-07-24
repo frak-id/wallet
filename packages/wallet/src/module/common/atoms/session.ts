@@ -1,4 +1,4 @@
 import type { Session } from "@/types/Session";
-import { atom } from "jotai/index";
+import { atomWithStorage } from "jotai/utils";
 
-export const sessionAtom = atom<Session | null>(null);
+export const sessionAtom = atomWithStorage<Session | null>("session", null);

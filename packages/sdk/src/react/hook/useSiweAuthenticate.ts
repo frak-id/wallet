@@ -1,8 +1,10 @@
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import { siweAuthenticate } from "../../core/actions";
+import {
+    type SiweAuthenticateModalParams,
+    siweAuthenticate,
+} from "../../core/actions";
 import type {
     FrakRpcError,
-    SiweAuthenticateActionParamsType,
     SiweAuthenticateReturnType,
 } from "../../core/types";
 import { ClientNotFound } from "../../core/types/rpc/error";
@@ -12,7 +14,7 @@ type MutationOptions = Omit<
     UseMutationOptions<
         SiweAuthenticateReturnType,
         FrakRpcError,
-        SiweAuthenticateActionParamsType
+        SiweAuthenticateModalParams
     >,
     "mutationFn" | "mutationKey"
 >;
@@ -36,7 +38,7 @@ export function useSiweAuthenticate({
             "siwe-authenticate",
             client?.config.domain ?? "no-domain",
         ],
-        mutationFn: async (params: SiweAuthenticateActionParamsType) => {
+        mutationFn: async (params: SiweAuthenticateModalParams) => {
             if (!client) {
                 throw new ClientNotFound();
             }

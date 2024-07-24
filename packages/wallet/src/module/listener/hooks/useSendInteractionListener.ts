@@ -27,7 +27,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
      * @param request
      * @param emitter
      */
-    return useCallback(async (request, emitter) => {
+    return useCallback(async (request, _, emitter) => {
         // Extract the contentId and walletAddress
         const contentId = request.params[0];
         const interaction = request.params[1];

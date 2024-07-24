@@ -31,7 +31,9 @@ export function useMintMyContent() {
                 sendTx,
             });
             const { hash: interactionDeployHash } = await sendTx({
-                context: `Deploying user interactions handler for ${args.name}`,
+                metadata: {
+                    context: `Deploying user interactions handler for ${args.name}`,
+                },
                 tx: {
                     to: addresses.contentInteractionManager,
                     value: "0x00",

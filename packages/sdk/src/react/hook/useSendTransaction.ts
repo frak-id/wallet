@@ -1,10 +1,9 @@
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import type {
-    FrakRpcError,
-    SendTransactionActionParamsType,
-    SendTransactionReturnType,
-} from "../../core";
-import { sendTransaction } from "../../core/actions";
+import type { FrakRpcError, SendTransactionReturnType } from "../../core";
+import {
+    type SendTransactionParams,
+    sendTransaction,
+} from "../../core/actions";
 import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
@@ -12,7 +11,7 @@ type MutationOptions = Omit<
     UseMutationOptions<
         SendTransactionReturnType,
         FrakRpcError,
-        SendTransactionActionParamsType
+        SendTransactionParams
     >,
     "mutationFn" | "mutationKey"
 >;
@@ -32,7 +31,7 @@ export function useSendTransactionAction({
     return useMutation({
         ...mutations,
         mutationKey: ["nexus-sdk", "send-transaction"],
-        mutationFn: async (params: SendTransactionActionParamsType) => {
+        mutationFn: async (params: SendTransactionParams) => {
             if (!client) {
                 throw new ClientNotFound();
             }

@@ -41,7 +41,9 @@ export function ValidationCampaign() {
                 // Send the campaign creation transaction
                 const [, result] = await tryit(() =>
                     sendTransaction({
-                        context: `Create campaign ${campaign.title}`,
+                        metadata: {
+                            context: `Create campaign ${campaign.title}`,
+                        },
                         tx: {
                             to: addresses.contentInteractionManager,
                             value: "0x00",

@@ -4,6 +4,7 @@ import {
     NexusConfigProvider,
     NexusIFrameClientProvider,
 } from "@frak-labs/nexus-sdk/react";
+import { isRunningLocally } from "@frak-labs/shared/context/utils/env";
 import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
@@ -51,6 +52,9 @@ const frakWalletSdkConfig = {
     walletUrl: process.env.NEXUS_WALLET_URL as string,
     metadata: {
         name: "News interaction - Frak",
+        css: isRunningLocally
+            ? "http://localhost:3011/css/nexus-modals.css"
+            : "https://news-paper.xyz/css/nexus-modals.css",
     },
     // Specify domain for valid test on localhost
     domain: "news-paper.xyz",

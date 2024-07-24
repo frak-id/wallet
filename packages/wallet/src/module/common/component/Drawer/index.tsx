@@ -1,5 +1,6 @@
 "use client";
 
+import { prefixDrawerCss } from "@module/utils/prefixDrawerCss";
 import {
     type ComponentProps,
     type ComponentPropsWithoutRef,
@@ -33,7 +34,7 @@ const DrawerOverlay = forwardRef<
 >(({ className, ...props }, ref) => (
     <DrawerPrimitive.Overlay
         ref={ref}
-        className={`${styles.drawer__overlay} ${className}`}
+        className={`${prefixDrawerCss("overlay")} ${styles.drawer__overlay} ${className}`}
         {...props}
     />
 ));
@@ -47,10 +48,12 @@ const DrawerContent = forwardRef<
         <DrawerOverlay />
         <DrawerPrimitive.Content
             ref={ref}
-            className={`${styles.drawer__contentWrapper} ${className}`}
+            className={`${prefixDrawerCss("content")} ${styles.drawer__contentWrapper} ${className}`}
             {...props}
         >
-            <div className={styles.drawer__handle} />
+            <div
+                className={`${prefixDrawerCss("handle")} ${styles.drawer__handle}`}
+            />
             <div className={styles.drawer__content}>{children}</div>
         </DrawerPrimitive.Content>
     </DrawerPortal>

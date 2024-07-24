@@ -3,10 +3,10 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { ListenerModal } from "@/module/listener/component/Modal";
 import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
+import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
+import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
-import { useSendTransactionListener } from "@/module/listener/hooks/useSendTransactionListener";
-import { useSiweAuthenticateListener } from "@/module/listener/hooks/useSiweAuthenticateListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
 import { useEffect, useState } from "react";
 
@@ -31,13 +31,13 @@ export function ListenerUI() {
         useArticleUnlockStatusListener();
 
     // Hook used when a dashboard action is requested
-    const onSendTransactionRequest = useSendTransactionListener();
-
-    // Hook used when a dashboard action is requested
-    const onSiweAuthenticateRequest = useSiweAuthenticateListener();
-
-    // Hook used when a dashboard action is requested
     const onInteractionRequest = useSendInteractionListener();
+
+    // Hook when a modal display is asked
+    const onDisplayModalRequest = useDisplayModalListener();
+
+    // Hook when a modal display is asked
+    const onOpenSso = useOnOpenSso();
 
     // Create the resolver
     useEffect(() => {
@@ -61,19 +61,19 @@ export function ListenerUI() {
             frak_getArticleUnlockOptions: onGetArticleUnlockOptions,
 
             /**
-             * Listen request for the transaction request
-             */
-            frak_sendTransaction: onSendTransactionRequest,
-
-            /**
-             * Listen request for the auth request
-             */
-            frak_siweAuthenticate: onSiweAuthenticateRequest,
-
-            /**
-             * Listen request for the auth request
+             * Listen request for the send interaction request
              */
             frak_sendInteraction: onInteractionRequest,
+
+            /**
+             * Listen request for the modal display request
+             */
+            frak_displayModal: onDisplayModalRequest,
+
+            /**
+             * Listen request for the open sso request
+             */
+            frak_sso: onOpenSso,
         });
 
         // Set our new resolver
@@ -87,9 +87,9 @@ export function ListenerUI() {
         onWalletListenRequest,
         onGetArticleUnlockOptions,
         onArticleUnlockStatusListenerRequest,
-        onSendTransactionRequest,
-        onSiweAuthenticateRequest,
         onInteractionRequest,
+        onDisplayModalRequest,
+        onOpenSso,
     ]);
 
     /**

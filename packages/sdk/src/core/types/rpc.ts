@@ -1,16 +1,14 @@
 import type { Hex } from "viem";
 import type {
-    SiweAuthenticateReturnType,
-    SiweAuthenticationParams,
-} from "./rpc/authenticate";
+    ModalRpcMetadata,
+    ModalRpcStepsInput,
+    ModalRpcStepsResultType,
+} from "./rpc/displayModal";
 import type {
     PreparedInteraction,
     SendInteractionReturnType,
 } from "./rpc/interaction";
-import type {
-    SendTransactionReturnType,
-    SendTransactionRpcParamsType,
-} from "./rpc/sendTransaction";
+import type { OpenSsoParamsType } from "./rpc/sso";
 import type {
     StartArticleUnlockParams,
     StartArticleUnlockReturnType,
@@ -48,20 +46,16 @@ export type IFrameRpcSchema = [
         ReturnType: ArticleUnlockStatusReturnType;
     },
     /**
-     * Method to ask the user to send a transaction
+     * Method to transmit a user interaction
      */
     {
-        Method: "frak_sendTransaction";
-        Parameters: SendTransactionRpcParamsType;
-        ReturnType: SendTransactionReturnType;
-    },
-    /**
-     * Method to ask the user for a strong authentication
-     */
-    {
-        Method: "frak_siweAuthenticate";
-        Parameters: [request: SiweAuthenticationParams, context?: string];
-        ReturnType: SiweAuthenticateReturnType;
+        Method: "frak_displayModal";
+        Parameters: [
+            requests: ModalRpcStepsInput,
+            name: string,
+            metadata?: ModalRpcMetadata,
+        ];
+        ReturnType: ModalRpcStepsResultType;
     },
     /**
      * Method to transmit a user interaction
@@ -74,6 +68,18 @@ export type IFrameRpcSchema = [
             signature?: Hex,
         ];
         ReturnType: SendInteractionReturnType;
+    },
+    /**
+     * Method to start a SSO
+     */
+    {
+        Method: "frak_sso";
+        Parameters: [
+            params: OpenSsoParamsType,
+            name: string,
+            customCss?: string,
+        ];
+        ReturnType: undefined;
     },
 ];
 

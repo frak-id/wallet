@@ -7,7 +7,6 @@ import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
-import { useCallback } from "react";
 import styles from "./index.module.css";
 
 /**
@@ -16,11 +15,6 @@ import styles from "./index.module.css";
  */
 export function Login() {
     const { login } = useLogin();
-
-    const triggerLogin = useCallback(async () => {
-        const { wallet } = await login({});
-        return wallet;
-    }, [login]);
 
     return (
         <>
@@ -36,7 +30,7 @@ export function Login() {
                     </>
                 }
             >
-                <ButtonAuth trigger={triggerLogin}>
+                <ButtonAuth trigger={() => login({})}>
                     Recover your <strong>NEXUS</strong>
                 </ButtonAuth>
             </Grid>

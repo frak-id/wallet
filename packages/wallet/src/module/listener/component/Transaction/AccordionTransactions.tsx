@@ -31,11 +31,11 @@ export function AccordionTransactions({
                             To: <WalletAddress wallet={tx.to} />
                         </p>
 
-                        {BigInt(tx.value) > 0n ? (
+                        {tx.value && BigInt(tx.value) > 0n ? (
                             <p>Amount: ${formatEther(BigInt(tx.value))}</p>
                         ) : null}
 
-                        {BigInt(tx.data.length) > 0n ? (
+                        {tx.data && tx.data.length > 0 ? (
                             <p>Data: {tx.data}</p>
                         ) : null}
                     </AccordionContent>

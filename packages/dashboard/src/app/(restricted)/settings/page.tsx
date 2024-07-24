@@ -32,7 +32,9 @@ export default function SettingsPage() {
                 <Button
                     onClick={() =>
                         sendTx({
-                            context: "Test transaction",
+                            metadata: {
+                                context: "Test transaction",
+                            },
                             tx: {
                                 to: addresses.contentInteractionManager,
                                 value: "0x00",

@@ -1,8 +1,12 @@
 "use client";
 
 import { Panel } from "@/module/common/component/Panel";
-import type { SiweAuthenticateReturnType } from "@frak-labs/nexus-sdk/core";
-import { useSiweAuthenticate } from "@frak-labs/nexus-sdk/react";
+import type {
+    LoginModalStepType,
+    ModalRpcStepsResultType,
+    SiweAuthenticateModalStepType,
+} from "@frak-labs/nexus-sdk/core";
+import { useDisplayModal } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";
@@ -10,12 +14,12 @@ import { parseSiweMessage } from "viem/siwe";
 
 export function WalletLogin() {
     const {
-        mutate: authenticate,
+        mutate: displayModal,
         data,
         error,
         status,
         isPending,
-    } = useSiweAuthenticate();
+    } = useDisplayModal();
 
     return (
         <Panel variant={"primary"}>
@@ -35,7 +39,22 @@ export function WalletLogin() {
             <br />
 
             <Button
-                onClick={() => authenticate({})}
+                onClick={() =>
+                    displayModal({
+                        steps: {
+                            login: {},
+                            siweAuthenticate: {
+                                siwe: {
+                                    domain: "example.com",
+                                    uri: "https://nexus.frak.id/",
+                                    statement: "Please authenticate",
+                                    nonce: "0123456789",
+                                    version: "1",
+                                },
+                            },
+                        },
+                    })
+                }
                 type={"button"}
                 disabled={isPending}
             >
@@ -51,25 +70,31 @@ export function WalletLogin() {
 }
 
 // Display the authentication result well formatted
-function AuthenticationResult({ data }: { data: SiweAuthenticateReturnType }) {
+function AuthenticationResult({
+    data,
+}: {
+    data: ModalRpcStepsResultType<
+        [LoginModalStepType, SiweAuthenticateModalStepType]
+    >;
+}) {
     const siweData = useMemo(() => {
-        return parseSiweMessage(data.message);
-    }, [data.message]);
+        return parseSiweMessage(data.siweAuthenticate.message);
+    }, [data.siweAuthenticate.message]);
 
     return (
-        <div>
+        <>
             <h4>
                 <BadgeCheck />
                 Authentication success
             </h4>
 
-            <p>Address: {siweData.address}</p>
-            <p>Domain: {siweData.domain}</p>
-            <p>URI: {siweData.uri}</p>
-            <p>Statement: {siweData.statement}</p>
+            <p>Address: {siweData?.address}</p>
+            <p>Domain: {siweData?.domain}</p>
+            <p>URI: {siweData?.uri}</p>
+            <p>Statement: {siweData?.statement}</p>
 
-            <p>Signature: {data.signature}</p>
-        </div>
+            <p>Signature: {data.siweAuthenticate.signature}</p>
+        </>
     );
 }
 

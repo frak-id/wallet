@@ -1,8 +1,11 @@
 "use client";
 
 import { Panel } from "@/module/common/component/Panel";
-import type { SendTransactionReturnType } from "@frak-labs/nexus-sdk/core";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import type {
+    ModalRpcStepsResultType,
+    SendTransactionModalStepType,
+} from "@frak-labs/nexus-sdk/core";
+import { useDisplayModal } from "@frak-labs/nexus-sdk/react";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Button } from "@module/component/Button";
@@ -12,12 +15,12 @@ import { encodeFunctionData } from "viem";
 
 export function SendTransaction() {
     const {
-        mutate: sendTx,
+        mutate: displayModal,
         data,
         error,
         status,
         isPending,
-    } = useSendTransactionAction();
+    } = useDisplayModal();
 
     return (
         <Panel variant={"primary"}>
@@ -38,18 +41,24 @@ export function SendTransaction() {
 
             <Button
                 onClick={() =>
-                    sendTx({
-                        context: "Test transaction",
-                        tx: {
-                            to: addresses.contentInteractionManager,
-                            value: "0x00",
-                            data: encodeFunctionData({
-                                abi: contentInteractionManagerAbi,
-                                functionName: "getInteractionContract",
-                                args: [
-                                    106219508196454080375526586478153583586194937194493887259467424694676997453395n,
-                                ],
-                            }),
+                    displayModal({
+                        metadata: {
+                            context: "Test transaction",
+                        },
+                        steps: {
+                            sendTransaction: {
+                                tx: {
+                                    to: addresses.contentInteractionManager,
+                                    value: "0x00",
+                                    data: encodeFunctionData({
+                                        abi: contentInteractionManagerAbi,
+                                        functionName: "getInteractionContract",
+                                        args: [
+                                            106219508196454080375526586478153583586194937194493887259467424694676997453395n,
+                                        ],
+                                    }),
+                                },
+                            },
                         },
                     })
                 }
@@ -68,7 +77,9 @@ export function SendTransaction() {
 }
 
 // Display the authentication result well formatted
-function SendTxResult({ data }: { data: SendTransactionReturnType }) {
+function SendTxResult({
+    data,
+}: { data: ModalRpcStepsResultType<[SendTransactionModalStepType]> }) {
     return (
         <div>
             <h4>
@@ -76,9 +87,9 @@ function SendTxResult({ data }: { data: SendTransactionReturnType }) {
                 Send TX success
             </h4>
 
-            <p>TxHash: {data.hash}</p>
+            <p>TxHash: {data.sendTransaction.hash}</p>
             <Link
-                href={`https://sepolia.arbiscan.io/tx/${data.hash}`}
+                href={`https://sepolia.arbiscan.io/tx/${data.sendTransaction.hash}`}
                 target={"_blank"}
             >
                 View on arbiscan

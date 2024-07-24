@@ -35,6 +35,18 @@
     border-radius: 8px;
 }
 
+.modalListener__stepNumber {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    width: 20px;
+    height: 20px;
+    background-color: #818c9c;
+    color: #fff;
+    border-radius: 50%;
+}
+
 .modalListener__stepItem {
     flex: 1;
     padding: 4px;
@@ -42,7 +54,7 @@
     text-align: center;
     transition-property: all;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: .15s;
+    transition-duration: 0.15s;
 }
 
 .modalListener__stepItem--active {

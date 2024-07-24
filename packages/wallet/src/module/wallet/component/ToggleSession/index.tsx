@@ -88,7 +88,10 @@ function SessionClosed({ isClosed }: { isClosed: boolean }) {
 function SessionTooltip({
     sessionStatus,
 }: {
-    sessionStatus: { sessionStart: Date; sessionEnd: Date } | null | undefined;
+    sessionStatus:
+        | { sessionStart: number; sessionEnd: number }
+        | null
+        | undefined;
 }) {
     return (
         <Tooltip

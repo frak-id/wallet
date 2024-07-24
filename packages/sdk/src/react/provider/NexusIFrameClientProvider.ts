@@ -64,7 +64,7 @@ export function NexusIFrameClientProvider({
         name: "nexus-wallet",
         src: `${config.walletUrl}/listener`,
         style: style ?? defaultIframeStyle,
-        allow: "publickey-credentials-get *",
+        allow: "publickey-credentials-get *; clipboard-write",
         ref: (iframe: HTMLIFrameElement) => {
             if (!iframe || client) {
                 return;

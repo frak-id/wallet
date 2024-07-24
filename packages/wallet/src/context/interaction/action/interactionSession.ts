@@ -66,8 +66,8 @@ const sendInteractionsSelector = toFunctionSelector({
 export async function getSessionStatus({
     wallet,
 }: { wallet: Address }): Promise<{
-    sessionStart: Date;
-    sessionEnd: Date;
+    sessionStart: number;
+    sessionEnd: number;
 } | null> {
     // Read all the prices from the blockchain
     const [, status] = await tryit(() =>
@@ -112,8 +112,8 @@ export async function getSessionStatus({
 
     // Return the session status
     return {
-        sessionStart,
-        sessionEnd,
+        sessionStart: sessionStart.getTime(),
+        sessionEnd: sessionEnd.getTime(),
     };
 }
 
