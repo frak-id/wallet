@@ -2,17 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { type Hex, isAddressEqual } from "viem";
 import { FrakRpcError, RpcErrorCodes } from "../../../core";
-import { PressInteractionEncoder } from "../../../core/interactions";
+import { ReferralInteractionEncoder } from "../../../core/interactions";
 import { useSendInteraction } from "../useSendInteraction";
 import { useWalletStatus } from "../useWalletStatus";
 import { useNexusContext } from "../utils/useNexusContext";
 
 /**
- * Helper hook to automatically submit a press referral interaction when detected
+ * Helper hook to automatically submit a referral interaction when detected
  *   -> And automatically set the referral context in the url
  * @param contentId
  */
-export function usePressReferralInteraction({
+export function useReferralInteraction({
     contentId,
 }: { contentId?: Hex } = {}) {
     // Get the current nexus context
@@ -29,7 +29,7 @@ export function usePressReferralInteraction({
         gcTime: 0,
         queryKey: [
             "nexus-sdk",
-            "auto-press-referral-interaction",
+            "auto-referral-interaction",
             nexusContext?.r ?? "no-referrer",
             walletStatus?.key ?? "no-wallet-status",
         ],
@@ -51,7 +51,7 @@ export function usePressReferralInteraction({
             }
 
             // Build the press referral interaction
-            const interaction = PressInteractionEncoder.referred({
+            const interaction = ReferralInteractionEncoder.referred({
                 referrer: nexusContext.r,
             });
 

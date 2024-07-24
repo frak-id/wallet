@@ -1,3 +1,4 @@
+import { newsDemoContentId } from "@/context/common/config";
 import { InjectBannerComponent } from "@/module/article/component/Read/InjectBannerComponent";
 import { InjectReferralPopupComponent } from "@/module/article/component/Read/InjectReferralPopupComponent";
 import { InjectUnlockComponent } from "@/module/article/component/Read/InjectUnlockComponent";
@@ -7,7 +8,7 @@ import type { Article } from "@/type/Article";
 import {
     useArticleUnlockOptions,
     useArticleUnlockStatus,
-    usePressReferralInteraction,
+    useReferralInteraction,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
 import { useEffect, useState } from "react";
@@ -22,8 +23,8 @@ export function ReadArticle({
     isFree: boolean;
 }) {
     // The press referral interaction hook
-    const referralState = usePressReferralInteraction({
-        contentId: article.contentId as Hex,
+    const referralState = useReferralInteraction({
+        contentId: newsDemoContentId,
     });
 
     // The injecting state for the unlock component
@@ -35,13 +36,13 @@ export function ReadArticle({
     // The unlock options for the article
     const { data: unlockOptions } = useArticleUnlockOptions({
         articleId: article.id as Hex,
-        contentId: article.contentId as Hex,
+        contentId: newsDemoContentId,
     });
 
     // The unlock status
     const { data: articleUnlockStatus } = useArticleUnlockStatus({
         articleId: article.id as Hex,
-        contentId: article.contentId as Hex,
+        contentId: newsDemoContentId,
     });
 
     // The user status

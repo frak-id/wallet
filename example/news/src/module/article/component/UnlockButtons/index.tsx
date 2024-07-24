@@ -1,4 +1,5 @@
 import css from "!!raw-loader!./index.module.css";
+import { newsDemoContentId } from "@/context/common/config";
 import { ButtonUnlockArticle } from "@/module/article/component/ButtonUnlockArticle";
 import { useConvertToEuro } from "@/module/common/hook/useConvertToEuro";
 import type { Article } from "@/type/Article";
@@ -224,7 +225,7 @@ const useUnlockRedirectUrl = ({
                 articleUrl: `${window.location.origin}/article?id=${article.id}`,
                 redirectUrl: `${window.location.origin}/article?id=${article.id}`,
                 provider: article.provider,
-                contentId: article.contentId as Hex,
+                contentId: newsDemoContentId,
                 contentTitle: "Demo article",
             });
         },

@@ -25,23 +25,23 @@ export function GET(
 ) {
     const normalisedId = BigInt(params.id.replace(".json", ""));
 
-    // Check if the content id is in the list
-    for (const contentKey of Object.keys(contentIds)) {
-        const contentId = contentIds[contentKey as ContentKey];
-        if (contentId !== normalisedId) {
-            continue;
-        }
+    // Find the right content key, or fallback to news paper
+    let key =
+        Object.keys(contentIds).find(
+            (contentKey) =>
+                contentIds[contentKey as ContentKey] === normalisedId
+        ) ?? "newsPaper";
 
-        return NextResponse.json({
-            name: `${contentKey} Community NFT`,
-            description: "Super token description",
-            ...getImages(contentKey as ContentNames),
-            // Content related
-            contentId: toHex(normalisedId),
-            contentType: "press",
-        });
+    if (["ethCCdemo", "newsExample", "newsPaper"].includes(key)) {
+        key = "frak";
     }
 
-    // Otherwise, return an error
-    return NextResponse.error();
+    return NextResponse.json({
+        name: `${key} Community NFT`,
+        description: "Super token description",
+        ...getImages(key as ContentNames),
+        // Content related
+        contentId: toHex(normalisedId),
+        contentType: "press",
+    });
 }

@@ -1,4 +1,4 @@
-import { type Address, type Hex, concatHex, pad } from "viem";
+import { type Hex, concatHex, pad } from "viem";
 import type { PreparedInteraction } from "../types";
 
 /**
@@ -12,7 +12,6 @@ const PressTypeSelector = "0x02";
 export const PressActionsSelector = {
     OpenArticle: "0xc0a24ffb",
     ReadArticle: "0xd5bd0fbe",
-    Referred: "0x3d1508ad",
 } as const;
 
 /**
@@ -45,23 +44,7 @@ function readArticle({ articleId }: { articleId: Hex }): PreparedInteraction {
     };
 }
 
-/**
- * Encode a referred interaction
- * @param referrer
- */
-function referred({ referrer }: { referrer: Address }): PreparedInteraction {
-    const interactionData = concatHex([
-        PressActionsSelector.Referred,
-        pad(referrer, { size: 32 }),
-    ]);
-    return {
-        handlerTypeDenominator: PressTypeSelector,
-        interactionData,
-    };
-}
-
 export const PressInteractionEncoder = {
     openArticle,
     readArticle,
-    referred,
 };

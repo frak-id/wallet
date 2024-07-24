@@ -20,7 +20,7 @@ export {
     useSendTransactionAction,
     useSendInteraction,
     useSiweAuthenticate,
-    usePressReferralInteraction,
+    useReferralInteraction,
     useDisplayModal,
     useOpenSso,
 } from "./hook";

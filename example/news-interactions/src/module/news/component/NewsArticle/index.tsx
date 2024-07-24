@@ -5,7 +5,7 @@ import { Hero } from "@/module/news/component/Hero";
 import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import {
     useDisplayModal,
-    usePressReferralInteraction,
+    useReferralInteraction,
 } from "@frak-labs/nexus-sdk/react";
 import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ import forward from "./assets/forward.svg";
 import styles from "./index.module.css";
 
 export function NewsArticle({ articleId }: { articleId: string }) {
-    usePressReferralInteraction();
+    useReferralInteraction();
 
     const blockchainArticleId = useMemo(
         () => keccak256(toHex(articleId)),
