@@ -1,8 +1,9 @@
 "use client";
 
 import { getOnChainCampaignsDetails } from "@/context/campaigns/action/getDetails";
+import { reloadCampaign } from "@/context/campaigns/action/reload";
 import type { CampaignState } from "@/context/campaigns/dto/CampaignDocument";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { formatEther } from "viem";
 
 /**
@@ -21,8 +22,13 @@ export function OnChainCampaignInfo({
             getOnChainCampaignsDetails({ campaignAddress: state.address }),
     });
 
+    const { mutate, status: reloadRequestStatus } = useMutation({
+        mutationKey: ["campaign", "ask-reload-details", state.address],
+        mutationFn: () => reloadCampaign({ campaignAddress: state.address }),
+    });
+
     if (isLoading || !onChainInfos) {
-        return <>Loading on-chain informations...</>;
+        return <>Loading on-chain information's...</>;
     }
 
     return (
@@ -42,6 +48,12 @@ export function OnChainCampaignInfo({
             <br />
             Version: {onChainInfos.metadata[1]}
             <br />
+            <hr />
+            <button onClick={() => mutate()} type={"button"}>
+                Reload
+            </button>
+            <br />
+            Reload request status: {reloadRequestStatus}
         </>
     );
 }

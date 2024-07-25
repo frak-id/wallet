@@ -16,6 +16,7 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.616.0",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
     "@lucasmogari/react-pagination": "^1.2.0",

@@ -1,5 +1,6 @@
 import { pick } from "radash";
 import { Config } from "sst/node/config";
+import { Queue } from "sst/node/queue";
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
@@ -33,6 +34,7 @@ const nextConfig = {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
         // APP_URL: Config.NEXUS_DASHBOARD_URL,
+        CAMPAIGN_RELOAD_QUEUE_URL: Queue.ReloadCampaignQueue.queueUrl,
     },
     transpilePackages: ["lucide-react"],
     compiler: {
