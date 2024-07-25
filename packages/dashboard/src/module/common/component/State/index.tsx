@@ -8,10 +8,33 @@ const mapStateToBadgeVariant = {
     created: "success",
 } as const;
 
+/**
+ * If state == created, display additional badges (isActive, isAttached)
+ * @param state
+ * @constructor
+ */
 export function State({ state }: { state: CampaignState }) {
+    if (state.key !== "created") {
+        return (
+            <Badge variant={mapStateToBadgeVariant[state.key]}>
+                {capitalize(state.key)}
+            </Badge>
+        );
+    }
+
     return (
-        <Badge variant={mapStateToBadgeVariant[state.key]}>
-            {capitalize(state.key)}
-        </Badge>
+        <>
+            <Badge variant={mapStateToBadgeVariant[state.key]}>
+                {capitalize(state.key)}
+            </Badge>
+            {/*Active badges*/}
+            <Badge variant="information">
+                {state.isActive ? "Active" : "Not active"}
+            </Badge>
+            {/*Attachment badges*/}
+            <Badge variant="information">
+                {state.interactionLink.isAttached ? "Attached" : "Not attached"}
+            </Badge>
+        </>
     );
 }

@@ -1,8 +1,9 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import ky from "ky";
-import { type Address, formatEther } from "viem";
+import { type Address, formatEther, getAddress, isAddressEqual } from "viem";
 
 type ApiResult = {
     contentId: string;
@@ -31,8 +32,23 @@ export async function getMyCampaignsStats() {
         return [];
     }
 
+    // Get the readable mongodb campaign names
+    const campaignRepository = await getCampaignRepository();
+    const campaignDocuments = await campaignRepository.findByAddressesOrCreator(
+        {
+            addresses: campaignStats.map((campaign) => getAddress(campaign.id)),
+        }
+    );
+
     // Cleanly format all of the stats from string to bigint
     return campaignStats.map((campaign) => {
+        // Get the matching campaign name and id
+        const campaignDoc = campaignDocuments.find(
+            (doc) =>
+                doc.state.key === "created" &&
+                isAddressEqual(doc.state.address, campaign.id)
+        );
+
         // Map a few stuff we will use for computation
         const totalRewards = BigInt(campaign.totalRewards);
         const createReferredLinkInteractions = Number(
@@ -65,18 +81,15 @@ export async function getMyCampaignsStats() {
                 : BigInt(0);
 
         return {
-            contentId: BigInt(campaign.contentId),
-            isContentOwner: campaign.isContentOwner === 1,
-            id: campaign.id,
             // Raw stats
-            totalInteractions: Number(campaign.totalInteractions),
             openInteractions: Number(campaign.openInteractions),
             readInteractions: Number(campaign.readInteractions),
             referredInteractions,
             createReferredLinkInteractions,
             totalRewards,
             // Polished stats for the array
-            title: campaign.id,
+            title: campaignDoc?.title ?? campaign.id,
+            id: campaignDoc?._id?.toHexString() ?? campaign.id,
             amountSpent: Number.parseFloat(formatEther(totalRewards)).toFixed(
                 2
             ),

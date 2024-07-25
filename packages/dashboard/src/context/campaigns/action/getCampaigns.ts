@@ -71,7 +71,10 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
                             abi: interactionCampaignAbi,
                             address: campaign.id,
                             functionName: "hasAnyRole",
-                            args: [session.wallet, campaignRoles.manager],
+                            args: [
+                                session.wallet,
+                                BigInt(campaignRoles.manager),
+                            ],
                         }) as const
                 ),
                 allowFailure: false,
