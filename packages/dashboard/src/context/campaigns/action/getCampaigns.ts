@@ -3,61 +3,25 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import { campaignRoles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { getClient } from "@/context/indexer/client";
 import type { CampaignWithState } from "@/types/Campaign";
 import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
-import { gql } from "@urql/core";
+import ky from "ky";
 import { all } from "radash";
 import { type Address, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 
-/**
- * Get the content for a given administrator query
- */
-const QUERY = gql(`
-query GetCampaignForUser($wallet: String!) {
-  contentAdministrators(
-    where: {user: $wallet}
-  ) {
-    items {
-      content {
-        id
-        campaigns {
-          items {
-            id
-            attached
-            detachTimestamp
-            attachTimestamp
-            name
-            version
-          }
-        }
-      }
-    }
-  }
- }
-`);
-
-type QueryResult = {
-    contentAdministrators: {
-        items: {
-            content: {
-                id: string;
-                campaigns: {
-                    items: {
-                        id: Address;
-                        attached: boolean;
-                        detachTimestamp: string | null;
-                        attachTimestamp: string;
-                        name: string;
-                        version: string;
-                    }[];
-                };
-            };
-        }[];
-    };
-};
+type ApiResult = {
+    contentId: string;
+    isContentOwner: number; // bool
+    id: Address;
+    name: string;
+    version: string;
+    attached: number;
+    // bigint, time is second
+    attachTimestamp: string;
+    detachTimestamp: string;
+}[];
 
 /**
  * Get the current user campaigns
@@ -65,15 +29,11 @@ type QueryResult = {
 export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     const session = await getSafeSession();
 
-    // Get our indexer result
-    const result = await getClient()
-        .query<QueryResult>(QUERY, { wallet: session.wallet })
-        .toPromise();
+    // Perform the request to our api
+    let blockchainCampaigns = await ky
+        .get(`https://indexer.frak.id/admin/${session.wallet}/campaigns`)
+        .json<ApiResult>();
 
-    // Extract each campaigns and find them in the mongo database
-    let blockchainCampaigns = result.data?.contentAdministrators.items.flatMap(
-        (item) => item.content.campaigns.items
-    );
     if (!blockchainCampaigns) {
         blockchainCampaigns = [];
     }
@@ -163,12 +123,11 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
             state: {
                 ...state,
                 interactionLink: {
-                    isAttached: blockchainCampaign.attached,
+                    isAttached: blockchainCampaign.attached === 1,
                     attachTimestamp: blockchainCampaign.attachTimestamp,
                     detachTimestamp:
                         blockchainCampaign.detachTimestamp ?? undefined,
                 },
-                isAttached: blockchainCampaign.attached,
                 isActive: isActives[blockchainCampaignIndex],
             },
         };

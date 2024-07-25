@@ -41,6 +41,7 @@
     "date-fns": "^3.6.0",
     "iron-session": "^8.0.2",
     "jotai": "^2.9.0",
+    "ky": "^1.4.0",
     "lucide-react": "^0.408.0",
     "mongodb": "^6.8.0",
     "next": "14.2.5",
