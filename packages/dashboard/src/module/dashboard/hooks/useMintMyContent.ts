@@ -28,7 +28,6 @@ export function useMintMyContent() {
                     value: "0x00",
                     data: setupInteractionTxData,
                 },
-                sendTx,
             });
             const { hash: interactionDeployHash } = await sendTx({
                 metadata: {

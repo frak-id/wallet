@@ -41,7 +41,7 @@ class CampaignRepository {
     public async findByAddressesOrCreator({
         addresses,
         creator,
-    }: { addresses: Address[]; creator: Address }) {
+    }: { addresses: Address[]; creator?: Address }) {
         return this.collection
             .find({
                 $or: [{ "state.address": { $in: addresses } }, { creator }],

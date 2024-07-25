@@ -242,12 +242,6 @@ function CurrentModalStepComponent({
                 return;
             }
 
-            // If we reached the end of the steps, we close the modal
-            if (modalSteps.currentStep + 1 >= modalSteps.steps.length) {
-                onModalFinish();
-                return;
-            }
-
             const currentStepIndex = modalSteps.currentStep;
 
             // Our new result array
@@ -266,6 +260,12 @@ function CurrentModalStepComponent({
                     results: newResults,
                 };
             });
+
+            // If we reached the end of the steps, we close the modal
+            if (modalSteps.currentStep + 1 >= modalSteps.steps.length) {
+                onModalFinish();
+                return;
+            }
         },
         [onModalFinish, modalSteps]
     );

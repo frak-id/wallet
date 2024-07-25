@@ -1,4 +1,5 @@
 "use server";
+
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
 import { DI } from "@frak-labs/shared/context/utils/di";

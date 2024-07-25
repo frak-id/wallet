@@ -11,9 +11,10 @@ import { ConfigStack } from "./Config";
  */
 export function BackendStack(ctx: StackContext) {
     const { interactionQueue } = interactionsResources(ctx);
+    const { reloadCampaignQueue } = campaignResources(ctx);
     newsResources(ctx);
 
-    return { interactionQueue };
+    return { interactionQueue, reloadCampaignQueue };
 }
 
 /**
@@ -62,6 +63,47 @@ function interactionsResources({ stack }: StackContext) {
         InteractionQueueId: interactionQueue.id,
     });
     return { interactionQueue };
+}
+
+/**
+ * Define all of our campaign resources
+ * @param stack
+ */
+function campaignResources({ stack }: StackContext) {
+    // todo: split queue in half? Like interaction validator queue then interaction processor queue?
+    // todo: Move sensitive stuff here? like airdropper and stuff?
+    // todo: Should some part of business stuff moved here also? Like content minting?
+
+    const { airdropPrivateKey, alchemyApiKey } = use(ConfigStack);
+    // Interaction handling stuff
+    const reloadCampaignQueue = new Queue(stack, "ReloadCampaignQueue", {
+        consumer: {
+            function: {
+                handler: "packages/backend/src/campaign/reloadQueue.handler",
+                timeout: "15 minutes",
+                bind: [airdropPrivateKey, alchemyApiKey],
+            },
+            cdk: {
+                eventSource: {
+                    // Maximum amount of item sent to the function (at most 200 interactions)
+                    batchSize: 200,
+                    // Wait at most 2min to push the interactions
+                    maxBatchingWindow: Duration.seconds(5),
+                    // Don't allow more than 4 parallel executions
+                    maxConcurrency: 4,
+                },
+            },
+        },
+        cdk: {
+            queue: {
+                visibilityTimeout: Duration.minutes(60),
+            },
+        },
+    });
+    stack.addOutputs({
+        ReloadCampaignQueueId: reloadCampaignQueue.id,
+    });
+    return { reloadCampaignQueue };
 }
 
 /**

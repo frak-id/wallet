@@ -79,6 +79,9 @@ async function pushInteractions(
         interactionTx: Hex;
     }[]
 ) {
+    if (interactions.length === 0) {
+        return;
+    }
     // Prepare the execution data
     const executeNoBatchData = encodeFunctionData({
         abi: interactionDelegatorAbi,

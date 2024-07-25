@@ -13,6 +13,10 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/sdk/_esm" />
       <excludeFolder url="file://$MODULE_DIR$/packages/sdk/_types" />
       <excludeFolder url="file://$MODULE_DIR$/packages/sdk/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/example/news-interactions/.open-next" />
+      <excludeFolder url="file://$MODULE_DIR$/example/news/.open-next" />
+      <excludeFolder url="file://$MODULE_DIR$/example/wallet-ethcc/.open-next" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/dashboard/.open-next" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

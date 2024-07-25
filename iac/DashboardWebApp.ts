@@ -1,5 +1,6 @@
 import { type StackContext, use } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
+import { BackendStack } from "./Backend";
 import { ConfigStack } from "./Config";
 import { isProdStack } from "./utils";
 
@@ -25,6 +26,9 @@ export function DashboardWebApp({ stack }: StackContext) {
         contentMinterPrivateKey,
     ];
 
+    // Get the campaign reloader queue
+    const { reloadCampaignQueue } = use(BackendStack);
+
     // Base domain for our whole app
     const subDomain = isProdStack(stack)
         ? "business"
@@ -39,7 +43,7 @@ export function DashboardWebApp({ stack }: StackContext) {
             hostedZone: "frak.id",
         },
         // Bind to the configs
-        bind: configs,
+        bind: [...configs, reloadCampaignQueue],
         openNextVersion: "3.0.6",
         // Number of server side instance to keep warm
         warm: isProdStack(stack) ? 10 : 1,
