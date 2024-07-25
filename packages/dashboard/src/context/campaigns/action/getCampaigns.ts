@@ -20,7 +20,7 @@ type ApiResult = {
     attached: number;
     // bigint, time is second
     attachTimestamp: string;
-    detachTimestamp: string;
+    detachTimestamp?: string | null;
 }[];
 
 /**
