@@ -5,7 +5,6 @@ import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { ThemeListener } from "@/module/settings/atoms/theme";
-import { openSessionAtom } from "@/module/wallet/atoms/openSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type { Session } from "@/types/Session";
 import { jotaiStore } from "@module/atoms/store";
@@ -86,17 +85,9 @@ export function RootProvider({
  * @constructor
  */
 function OpenSessionStatus({ session }: { session: Session | null }) {
-    const { data: sessionStatus } = useInteractionSessionStatus({
+    useInteractionSessionStatus({
         address: session?.wallet.address,
     });
-
-    if (!session) {
-        jotaiStore.set(openSessionAtom, null);
-        return null;
-    }
-
-    jotaiStore.set(openSessionAtom, sessionStatus ?? null);
-
     return null;
 }
 

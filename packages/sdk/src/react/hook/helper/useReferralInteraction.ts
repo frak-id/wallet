@@ -52,6 +52,14 @@ export function useReferralInteraction({
     const launchReferral = useCallback(async () => {
         if (!nexusContext) return;
 
+        // If context present and same wallet as the referrer exit
+        if (
+            walletStatus?.key === "connected" &&
+            isAddressEqual(nexusContext.r, walletStatus.wallet)
+        ) {
+            return;
+        }
+
         // Build the referral interaction
         const interaction = ReferralInteractionEncoder.referred({
             referrer: nexusContext.r,
@@ -59,7 +67,11 @@ export function useReferralInteraction({
 
         // Send the interaction
         await sendInteraction({ contentId, interaction });
-    }, [sendInteraction, contentId, nexusContext]);
+
+        return {
+            referrer: nexusContext.r,
+        };
+    }, [sendInteraction, contentId, nexusContext, walletStatus]);
 
     // Setup the query that will transmit the referral interaction
     const { data, error, status } = useQuery({
@@ -100,9 +112,7 @@ export function useReferralInteraction({
                 return null;
             }
 
-            await launchReferral();
-
-            return { referrer: nexusContext.r };
+            return launchReferral();
         },
         enabled: !!walletStatus,
     });
@@ -113,10 +123,9 @@ export function useReferralInteraction({
     useMemo(() => {
         if (displayModalStatus !== "success" || !nexusContext) return;
 
-        launchReferral().then(() => {
-            queryClient.setQueryData(queryKey, {
-                referrer: nexusContext.r,
-            });
+        launchReferral().then((referralData) => {
+            if (!referralData) return;
+            queryClient.setQueryData(queryKey, referralData);
         });
     }, [
         displayModalStatus,

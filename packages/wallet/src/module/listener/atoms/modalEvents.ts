@@ -80,7 +80,20 @@ export const setNewModalAtom = atom(
         if (steps.find((step) => step.key === "openSession")) {
             // Check if the user is already logged in or not on mount
             const session = get(sessionAtom);
-            const openSession = get(openSessionAtom);
+            let openSession = get(openSessionAtom);
+
+            /**
+             * Jotai bug in a derived atom with atomWithStorage?
+             * openSessionAtom is not in sync with the local storage
+             * we can have an older value in the atom
+             */
+            const storedValue = localStorage.getItem("sessionOpen");
+            const parsedStoredValue = storedValue && JSON.parse(storedValue);
+            if (parsedStoredValue !== openSession) {
+                set(openSessionAtom, parsedStoredValue);
+                openSession = parsedStoredValue;
+            }
+
             if (session && openSession) {
                 results.push({
                     key: "openSession",
