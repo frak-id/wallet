@@ -1,7 +1,9 @@
+import { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStats";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { Skeleton } from "@module/component/Skeleton";
 import { computeWithPrecision } from "@module/utils/computeWithPrecision";
+import { useQuery } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Table as TableReact } from "@tanstack/react-table";
@@ -32,153 +34,6 @@ type TableData = {
     amountSpent: number;
 };
 
-const mockData: TableData[] = [
-    {
-        _id: "1",
-        title: "Campaign 1",
-        result: 1365,
-        share: 2152,
-        coverage: 2152,
-        print: 13254,
-        ctr: 16.2,
-        costPerShare: 0.58,
-        cpc: 63.53,
-        costPerResult: 1.09,
-        amountSpent: 1253.54,
-    },
-    {
-        _id: "2",
-        title: "Campaign 2",
-        result: 980,
-        share: 1800,
-        coverage: 1800,
-        print: 10200,
-        ctr: 14.5,
-        costPerShare: 0.65,
-        cpc: 70.0,
-        costPerResult: 1.2,
-        amountSpent: 1176.0,
-    },
-    {
-        _id: "3",
-        title: "Campaign 3",
-        result: 1500,
-        share: 2500,
-        coverage: 2500,
-        print: 15000,
-        ctr: 16.7,
-        costPerShare: 0.6,
-        cpc: 62.0,
-        costPerResult: 1.1,
-        amountSpent: 1650.0,
-    },
-    {
-        _id: "4",
-        title: "Campaign 4",
-        result: 1120,
-        share: 1900,
-        coverage: 1900,
-        print: 12000,
-        ctr: 15.8,
-        costPerShare: 0.62,
-        cpc: 65.0,
-        costPerResult: 1.15,
-        amountSpent: 1288.0,
-    },
-    {
-        _id: "5",
-        title: "Campaign 5",
-        result: 1340,
-        share: 2100,
-        coverage: 2100,
-        print: 14000,
-        ctr: 15.0,
-        costPerShare: 0.61,
-        cpc: 64.0,
-        costPerResult: 1.12,
-        amountSpent: 1496.8,
-    },
-    {
-        _id: "6",
-        title: "Campaign 6",
-        result: 1450,
-        share: 2300,
-        coverage: 2300,
-        print: 14500,
-        ctr: 15.9,
-        costPerShare: 0.59,
-        cpc: 66.0,
-        costPerResult: 1.13,
-        amountSpent: 1638.5,
-    },
-    {
-        _id: "7",
-        title: "Campaign 7",
-        result: 1250,
-        share: 2000,
-        coverage: 2000,
-        print: 13000,
-        ctr: 15.4,
-        costPerShare: 0.6,
-        cpc: 68.0,
-        costPerResult: 1.14,
-        amountSpent: 1425.0,
-    },
-    {
-        _id: "8",
-        title: "Campaign 8",
-        result: 1600,
-        share: 2600,
-        coverage: 2600,
-        print: 16000,
-        ctr: 16.3,
-        costPerShare: 0.57,
-        cpc: 61.0,
-        costPerResult: 1.08,
-        amountSpent: 1728.0,
-    },
-    {
-        _id: "9",
-        title: "Campaign 9",
-        result: 1100,
-        share: 1850,
-        coverage: 1850,
-        print: 11500,
-        ctr: 15.7,
-        costPerShare: 0.63,
-        cpc: 67.0,
-        costPerResult: 1.16,
-        amountSpent: 1276.0,
-    },
-    {
-        _id: "10",
-        title: "Campaign 10",
-        result: 1400,
-        share: 2200,
-        coverage: 2200,
-        print: 14000,
-        ctr: 15.8,
-        costPerShare: 0.61,
-        cpc: 65.0,
-        costPerResult: 1.12,
-        amountSpent: 1568.0,
-    },
-];
-
-/*const mockDataTotal = [
-    {
-        result: 13043,
-        share: 9180,
-        coverage: 34256,
-        print: 64376,
-        ctr: 5,
-        costPerShare: 1.74,
-        cpc: 142.08,
-        costPerResult: 2.18,
-        amountSpent: 5972,
-    },
-];*/
-
 type TableMetas = {
     page: number;
     limit: number;
@@ -188,17 +43,6 @@ type TableMetas = {
     previousPage: string;
     totalPages: number;
     totalResults: number;
-};
-
-const mockMetas: TableMetas = {
-    page: 1,
-    limit: 10,
-    firstPage: "1",
-    lastPage: "10",
-    nextPage: "2",
-    previousPage: "1",
-    totalPages: 10,
-    totalResults: 100,
 };
 
 const columnHelper = createColumnHelper<TableData>();
@@ -217,6 +61,11 @@ function sumRows(table: TableReact<TableData>, column: keyof TableData) {
 }
 
 export function TablePerformance() {
+    const { data, isLoading } = useQuery({
+        queryKey: ["campaigns", "my-campaigns-stats"],
+        queryFn: async () => await getMyCampaignsStats(),
+    });
+
     const [localTitle] = useSessionStorageState("title-autocomplete", {
         defaultValue: "",
     });
@@ -247,15 +96,17 @@ export function TablePerformance() {
                     ),
                     footer: "Total",
                 }),
-                columnHelper.accessor("result", {
+                columnHelper.accessor("referredInteractions", {
                     header: "Résultat",
-                    footer: ({ table }) => sumRows(table, "result"),
+                    footer: ({ table }) =>
+                        sumRows(table, "referredInteractions"),
                 }),
-                columnHelper.accessor("share", {
+                columnHelper.accessor("createReferredLinkInteractions", {
                     header: () => "Partage",
-                    footer: ({ table }) => sumRows(table, "share"),
+                    footer: ({ table }) =>
+                        sumRows(table, "createReferredLinkInteractions"),
                 }),
-                columnHelper.accessor("coverage", {
+                columnHelper.accessor("readInteractions", {
                     header: () => (
                         <TooltipTable
                             content={
@@ -272,11 +123,11 @@ export function TablePerformance() {
                             <span>Couverture</span>
                         </TooltipTable>
                     ),
-                    footer: ({ table }) => sumRows(table, "coverage"),
+                    footer: ({ table }) => sumRows(table, "readInteractions"),
                 }),
-                columnHelper.accessor("print", {
+                columnHelper.accessor("openInteractions", {
                     header: () => "Impression",
-                    footer: ({ table }) => sumRows(table, "print"),
+                    footer: ({ table }) => sumRows(table, "openInteractions"),
                 }),
                 columnHelper.accessor("ctr", {
                     header: () => "CTR",
@@ -302,17 +153,20 @@ export function TablePerformance() {
         []
     );
 
+    if (!data || isLoading) {
+        return <Skeleton />;
+    }
+
     return (
         <>
-            {mockData && mockMetas ? (
-                <Table
-                    data={mockData}
-                    metas={mockMetas}
-                    columns={columns}
-                    filtering={filtering}
-                    setFiltering={setFiltering}
-                />
-            ) : null}
+            <Table
+                data={data}
+                limit={data.length}
+                columns={columns}
+                filtering={filtering}
+                setFiltering={setFiltering}
+                pagination={false}
+            />
         </>
     );
 }
