@@ -16,9 +16,49 @@ import { type Hex, keccak256, toHex } from "viem";
 import forward from "./assets/forward.svg";
 import styles from "./index.module.css";
 
+const modalConfig = {
+    steps: {
+        openSession: {
+            metadata: {
+                title: "Open reward session",
+                description:
+                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                primaryActionText: "Being rewarded with Nexus",
+            },
+        },
+        login: {
+            metadata: {
+                title: "Login",
+                description:
+                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                primaryActionText: "Login with Nexus",
+                secondaryActionText: "Create a Nexus",
+            },
+            allowSso: true,
+            ssoMetadata: {
+                logoUrl: "https://news-paper.xyz/favicons/icon-192.png",
+                homepageLink: "https://news-paper.xyz/",
+            },
+        },
+        success: {
+            hidden: true,
+            metadata: {
+                description: "You have successfully been rewarded",
+            },
+        },
+    },
+    metadata: {
+        header: {
+            title: "Payment for your data",
+        },
+        closeOnFinish: false,
+    },
+} as const;
+
 export function NewsArticle({ articleId }: { articleId: string }) {
     const referralState = useReferralInteraction({
         contentId: articleId as Hex,
+        modalConfig,
     });
 
     const blockchainArticleId = useMemo(
@@ -84,50 +124,15 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                         className={`button ${styles.article__social}`}
                         onClick={() =>
                             displayModal({
+                                ...modalConfig,
                                 steps: {
-                                    openSession: {
-                                        metadata: {
-                                            title: "Open reward session",
-                                            description:
-                                                "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
-                                            primaryActionText:
-                                                "Being rewarded with Nexus",
-                                        },
-                                    },
-                                    login: {
-                                        metadata: {
-                                            title: "Login",
-                                            description:
-                                                "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
-                                            primaryActionText:
-                                                "Login with Nexus",
-                                            secondaryActionText:
-                                                "Create a Nexus",
-                                        },
-                                        allowSso: true,
-                                        ssoMetadata: {
-                                            logoUrl:
-                                                "https://news-paper.xyz/favicons/icon-192.png",
-                                            homepageLink:
-                                                "https://news-paper.xyz/",
-                                        },
-                                    },
+                                    ...modalConfig.steps,
                                     success: {
-                                        hidden: true,
-                                        metadata: {
-                                            description:
-                                                "You can now copy the current url and share it",
-                                        },
+                                        ...modalConfig.steps.success,
                                         sharingLink: {
                                             baseLink: window.location.href,
                                         },
                                     },
-                                },
-                                metadata: {
-                                    header: {
-                                        title: "Payment for your data",
-                                    },
-                                    closeOnFinish: false,
                                 },
                             })
                         }

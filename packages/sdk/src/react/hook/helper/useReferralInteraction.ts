@@ -1,60 +1,28 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { type Hex, isAddressEqual } from "viem";
+import { isAddressEqual } from "viem";
+import type { Hex } from "viem";
 import { FrakRpcError, RpcErrorCodes } from "../../../core";
+import type { DisplayModalParamsType, ModalStepTypes } from "../../../core";
 import { ReferralInteractionEncoder } from "../../../core/interactions";
 import { useDisplayModal } from "../useDisplayModal";
 import { useSendInteraction } from "../useSendInteraction";
 import { useWalletStatus } from "../useWalletStatus";
 import { useNexusContext } from "../utils/useNexusContext";
 
-const modal = {
-    steps: {
-        openSession: {
-            metadata: {
-                title: "Open reward session",
-                description:
-                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
-                primaryActionText: "Being rewarded with Nexus",
-            },
-        },
-        login: {
-            metadata: {
-                title: "Login",
-                description:
-                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
-                primaryActionText: "Login with Nexus",
-                secondaryActionText: "Create a Nexus",
-            },
-            allowSso: true,
-            ssoMetadata: {
-                logoUrl: "https://news-paper.xyz/favicons/icon-192.png",
-                homepageLink: "https://news-paper.xyz/",
-            },
-        },
-        success: {
-            hidden: true,
-            metadata: {
-                description: "You have successfully been rewarded",
-            },
-        },
-    },
-    metadata: {
-        header: {
-            title: "Payment for your data",
-        },
-        closeOnFinish: false,
-    },
-} as const;
-
 /**
  * Helper hook to automatically submit a referral interaction when detected
  *   -> And automatically set the referral context in the url
  * @param contentId
+ * @param modalConfig
  */
 export function useReferralInteraction({
     contentId,
-}: { contentId?: Hex } = {}) {
+    modalConfig,
+}: {
+    contentId?: Hex;
+    modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
+} = {}) {
     const queryClient = useQueryClient();
 
     // Get the current nexus context
@@ -128,7 +96,7 @@ export function useReferralInteraction({
                 (walletStatus.key === "connected" &&
                     !walletStatus.interactionSession)
             ) {
-                displayModal(modal);
+                modalConfig && displayModal(modalConfig);
                 return null;
             }
 
