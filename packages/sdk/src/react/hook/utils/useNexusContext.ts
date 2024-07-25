@@ -37,6 +37,7 @@ export function useNexusContext() {
             // Return the parsed context
             return parsedContext;
         },
+        enabled: !!location?.href,
     });
 
     /**
@@ -67,5 +68,9 @@ export function useNexusContext() {
             },
         });
 
-    return { nexusContext, updateContext, updateContextAsync };
+    return {
+        nexusContext,
+        updateContext,
+        updateContextAsync,
+    };
 }

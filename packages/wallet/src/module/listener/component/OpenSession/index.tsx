@@ -1,7 +1,9 @@
 import styles from "@/module/listener/component/Modal/index.module.css";
+import { openSessionAtom } from "@/module/wallet/atoms/openSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
+import { jotaiStore } from "@module/atoms/store";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAccount } from "wagmi";
 
@@ -48,9 +50,13 @@ export function OpenSessionModalStep({
                 // Fetch the session status
                 const status = await refetchSessionStatus();
                 if (!status.data) {
+                    jotaiStore.set(openSessionAtom, null);
                     onError("Failed to open the session status");
                     return;
                 }
+
+                jotaiStore.set(openSessionAtom, status.data ?? null);
+
                 // Finish the step
                 onFinish({
                     startTimestamp: status.data.sessionStart,

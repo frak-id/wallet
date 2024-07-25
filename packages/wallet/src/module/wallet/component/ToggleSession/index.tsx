@@ -1,12 +1,14 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Switch } from "@/module/common/component/Switch";
 import { Tooltip } from "@/module/common/component/Tooltip";
+import { openSessionAtom } from "@/module/wallet/atoms/openSession";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
+import { jotaiStore } from "@module/atoms/store";
 import { Spinner } from "@module/component/Spinner";
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
@@ -17,6 +19,14 @@ export function ToggleSession() {
         useInteractionSessionStatus({
             address,
         });
+
+    useMemo(() => {
+        if (!sessionStatus) {
+            jotaiStore.set(openSessionAtom, null);
+            return;
+        }
+        jotaiStore.set(openSessionAtom, sessionStatus ?? null);
+    }, [sessionStatus]);
 
     const { mutate: openSession, isPending: isOpeningSession } =
         useOpenSession();

@@ -72,10 +72,16 @@ function ListenerModalDialog({
     /**
      * Method to close the modal
      */
-    const onClose = useCallback(() => {
-        iFrameToggleVisibility(false);
-        jotaiStore.set(clearRpcModalAtom);
-    }, []);
+    const onClose = useCallback(
+        (force?: boolean) => {
+            // Don't close if the metadata does not allows it or if we force it
+            if (!force && currentRequest.metadata?.closeOnFinish === false)
+                return;
+            iFrameToggleVisibility(false);
+            jotaiStore.set(clearRpcModalAtom);
+        },
+        [currentRequest.metadata?.closeOnFinish]
+    );
 
     /**
      * Method when the user reached the end of the modal
@@ -149,7 +155,7 @@ function ListenerModalDialog({
                             message: "User cancelled the request",
                         },
                     });
-                    onClose();
+                    onClose(true);
                 }
             }}
         >
@@ -236,6 +242,12 @@ function CurrentModalStepComponent({
                 return;
             }
 
+            // If we reached the end of the steps, we close the modal
+            if (modalSteps.currentStep + 1 >= modalSteps.steps.length) {
+                onModalFinish();
+                return;
+            }
+
             const currentStepIndex = modalSteps.currentStep;
 
             // Our new result array
@@ -254,11 +266,6 @@ function CurrentModalStepComponent({
                     results: newResults,
                 };
             });
-
-            // If we reached the end of the steps, we close the modal
-            if (modalSteps.currentStep + 1 >= modalSteps.steps.length) {
-                onModalFinish();
-            }
         },
         [onModalFinish, modalSteps]
     );
@@ -319,6 +326,7 @@ function CurrentModalStepComponent({
                         params={
                             currentStep.params as SuccessModalStepType["params"]
                         }
+                        onFinish={onStepFinished}
                     />
                 );
             default:

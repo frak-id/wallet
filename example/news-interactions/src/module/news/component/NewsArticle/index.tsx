@@ -12,12 +12,14 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useMemo } from "react";
 import Markdown from "react-markdown";
-import { keccak256, toHex } from "viem";
+import { type Hex, keccak256, toHex } from "viem";
 import forward from "./assets/forward.svg";
 import styles from "./index.module.css";
 
 export function NewsArticle({ articleId }: { articleId: string }) {
-    useReferralInteraction();
+    const referralState = useReferralInteraction({
+        contentId: articleId as Hex,
+    });
 
     const blockchainArticleId = useMemo(
         () => keccak256(toHex(articleId)),
@@ -125,6 +127,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                                     header: {
                                         title: "Payment for your data",
                                     },
+                                    closeOnFinish: false,
                                 },
                             })
                         }
