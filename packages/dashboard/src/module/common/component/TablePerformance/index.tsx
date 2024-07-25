@@ -20,19 +20,7 @@ const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
     }
 );
 
-type TableData = {
-    _id: string;
-    title: string;
-    result: number;
-    share: number;
-    coverage: number;
-    print: number;
-    ctr: number;
-    costPerShare: number;
-    cpc: number;
-    costPerResult: number;
-    amountSpent: number;
-};
+type TableData = Awaited<ReturnType<typeof getMyCampaignsStats>>[number];
 
 type TableMetas = {
     page: number;

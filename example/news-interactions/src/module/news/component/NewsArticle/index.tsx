@@ -2,7 +2,10 @@ import { getNewsById } from "@/context/articles/actions/getNews";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { useIntersectionObserver } from "@/module/common/hooks/useIntersectionObserver";
 import { Hero } from "@/module/news/component/Hero";
-import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
+import {
+    PressInteractionEncoder,
+    ReferralInteractionEncoder,
+} from "@frak-labs/nexus-sdk/interactions";
 import {
     useDisplayModal,
     useReferralInteraction,
@@ -56,7 +59,7 @@ const modalConfig = {
 } as const;
 
 export function NewsArticle({ articleId }: { articleId: string }) {
-    const referralState = useReferralInteraction({
+    useReferralInteraction({
         contentId: articleId as Hex,
         modalConfig,
     });
@@ -68,7 +71,20 @@ export function NewsArticle({ articleId }: { articleId: string }) {
 
     const { mutateAsync: pushInteraction } = useSendInteraction();
 
-    const { mutate: displayModal } = useDisplayModal();
+    const { mutate: displayModal } = useDisplayModal({
+        mutations: {
+            onSuccess: async () => {
+                // Since this modal is used to create interaction link, send the event after creation
+                const interactionHash = await pushInteraction({
+                    interaction: ReferralInteractionEncoder.createLink(),
+                });
+                console.log(
+                    "Referral link creation interaction",
+                    interactionHash
+                );
+            },
+        },
+    });
 
     // Trigger the open article event when title is visible
     const { targetRef: titleRef } = useIntersectionObserver<HTMLHeadingElement>(

@@ -70,10 +70,6 @@ function interactionsResources({ stack }: StackContext) {
  * @param stack
  */
 function campaignResources({ stack }: StackContext) {
-    // todo: split queue in half? Like interaction validator queue then interaction processor queue?
-    // todo: Move sensitive stuff here? like airdropper and stuff?
-    // todo: Should some part of business stuff moved here also? Like content minting?
-
     const { airdropPrivateKey, alchemyApiKey } = use(ConfigStack);
     // Interaction handling stuff
     const reloadCampaignQueue = new Queue(stack, "ReloadCampaignQueue", {

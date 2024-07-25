@@ -4,7 +4,7 @@ import type { PreparedInteraction } from "../types";
 /**
  * Denominator for the referral content type
  */
-const ReferralTypeSelector = "0x02";
+const ReferralTypeSelector = "0x1E";
 
 /**
  * All the referral interactions actions

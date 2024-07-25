@@ -88,7 +88,7 @@ export async function saveCampaign(campaign: Campaign) {
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
-        addresses.paywallToken,
+        addresses.mUsdToken,
         parseEther(initialReward.toString()), // initial reward
         5_000n, // user reward percent (on 1/10_000 so 50%), todo: should be campaign param
         capPeriod,
