@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useMemo } from "react";
 import Markdown from "react-markdown";
-import { type Hex, keccak256, toHex } from "viem";
+import { keccak256, toHex } from "viem";
 import forward from "./assets/forward.svg";
 import styles from "./index.module.css";
 
@@ -57,10 +57,7 @@ const modalConfig = {
 } as const;
 
 export function NewsArticle({ articleId }: { articleId: string }) {
-    useReferralInteraction({
-        contentId: articleId as Hex,
-        modalConfig,
-    });
+    useReferralInteraction({ modalConfig });
 
     const blockchainArticleId = useMemo(
         () => keccak256(toHex(articleId)),

@@ -4,6 +4,7 @@ import type { InteractionSession } from "@/types/Session";
 import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import type { UndefinedInitialDataOptions } from "@tanstack/react-query";
+import { RESET } from "jotai/utils";
 import type { Address } from "viem";
 
 /**
@@ -24,7 +25,7 @@ export function useInteractionSessionStatus({
                 return null;
             }
             const session = await getSessionStatus({ wallet: address });
-            jotaiStore.set(interactionSessionAtom, session);
+            jotaiStore.set(interactionSessionAtom, session ?? RESET);
             return session;
         },
         enabled: !!address,

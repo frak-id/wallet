@@ -15,7 +15,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai/index";
-import { useHydrateAtoms } from "jotai/utils";
+import { RESET, useHydrateAtoms } from "jotai/utils";
 import { type PropsWithChildren, useMemo } from "react";
 import { createClient } from "viem";
 import { WagmiProvider, createConfig } from "wagmi";
@@ -63,8 +63,8 @@ export function RootProvider({
     // Hydrate the session atoms
     useHydrateAtoms(
         [
-            [sessionAtom, session],
-            [interactionSessionAtom, interactionSession],
+            [sessionAtom, session ?? RESET],
+            [interactionSessionAtom, interactionSession ?? RESET],
         ],
         {
             store: jotaiStore,

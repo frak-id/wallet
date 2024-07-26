@@ -1,14 +1,28 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { isAddressEqual } from "viem";
 import type { Hex } from "viem";
+import { isAddressEqual } from "viem";
+import type {
+    DisplayModalParamsType,
+    ModalStepTypes,
+    WalletStatusReturnType,
+} from "../../../core";
 import { FrakRpcError, RpcErrorCodes } from "../../../core";
-import type { DisplayModalParamsType, ModalStepTypes } from "../../../core";
 import { ReferralInteractionEncoder } from "../../../core/interactions";
 import { useDisplayModal } from "../useDisplayModal";
 import { useSendInteraction } from "../useSendInteraction";
 import { useWalletStatus } from "../useWalletStatus";
 import { useNexusContext } from "../utils/useNexusContext";
+
+type ReferralState =
+    | "idle"
+    | "processing"
+    | "success"
+    | "no-wallet"
+    | "no-session"
+    | "error"
+    | "no-referrer"
+    | "self-referral";
 
 /**
  * Helper hook to automatically submit a referral interaction when detected
@@ -23,11 +37,8 @@ export function useReferralInteraction({
     contentId?: Hex;
     modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
 } = {}) {
-    const queryClient = useQueryClient();
-
     // Get the current nexus context
-    const { nexusContext, updateContext, updateContextAsync } =
-        useNexusContext();
+    const { nexusContext, updateContextAsync } = useNexusContext();
 
     // Get the wallet status
     const { data: walletStatus } = useWalletStatus();
@@ -35,138 +46,111 @@ export function useReferralInteraction({
     // Hook to send an interaction
     const { mutateAsync: sendInteraction } = useSendInteraction();
 
-    // Hook to display the modal
-    const { mutate: displayModal, status: displayModalStatus } =
-        useDisplayModal();
+    // Helper to display a modal if needed
+    const ensureWalletConnected = useEnsureWalletConnected({
+        modalConfig,
+        walletStatus,
+    });
 
-    const getQueryKey = useCallback(() => {
-        return [
+    // Function to process the referral
+    const processReferral = useCallback(async (): Promise<ReferralState> => {
+        try {
+            const currentWallet = await ensureWalletConnected();
+
+            if (!nexusContext?.r) {
+                if (currentWallet) {
+                    await updateContextAsync({ r: currentWallet });
+                }
+                return "no-referrer";
+            }
+
+            if (
+                currentWallet &&
+                isAddressEqual(nexusContext.r, currentWallet)
+            ) {
+                return "self-referral";
+            }
+
+            const interaction = ReferralInteractionEncoder.referred({
+                referrer: nexusContext.r,
+            });
+
+            await sendInteraction({ contentId, interaction });
+
+            if (currentWallet) {
+                await updateContextAsync({ r: currentWallet });
+            }
+            return "success";
+        } catch (error) {
+            return mapErrorToState(error);
+        }
+    }, [
+        nexusContext,
+        contentId,
+        ensureWalletConnected,
+        sendInteraction,
+        updateContextAsync,
+    ]);
+
+    // Setup the query that will transmit the referral interaction
+    const {
+        data: referralState,
+        error,
+        status,
+    } = useQuery({
+        gcTime: 0,
+        staleTime: 0,
+        queryKey: [
             "nexus-sdk",
             "auto-referral-interaction",
             nexusContext?.r ?? "no-referrer",
             walletStatus?.key ?? "no-wallet-status",
-        ];
-    }, [nexusContext, walletStatus]);
-    const queryKey = useMemo(getQueryKey, []);
-
-    const launchReferral = useCallback(async () => {
-        if (!nexusContext) return;
-
-        // If context present and same wallet as the referrer exit
-        if (
-            walletStatus?.key === "connected" &&
-            isAddressEqual(nexusContext.r, walletStatus.wallet)
-        ) {
-            return;
-        }
-
-        // Build the referral interaction
-        const interaction = ReferralInteractionEncoder.referred({
-            referrer: nexusContext.r,
-        });
-
-        // Send the interaction
-        await sendInteraction({ contentId, interaction });
-
-        return {
-            referrer: nexusContext.r,
-        };
-    }, [sendInteraction, contentId, nexusContext, walletStatus]);
-
-    // Setup the query that will transmit the referral interaction
-    const { data, error, status } = useQuery({
-        gcTime: 0,
-        staleTime: 0,
-        queryKey,
-        queryFn: async () => {
-            // If no wallet status, directly exit
-            if (!walletStatus) {
-                return null;
-            }
-
-            // If no context but wallet present
-            if (!nexusContext && walletStatus?.key === "connected") {
-                await updateContextAsync({ r: walletStatus.wallet });
-                return null;
-            }
-            // If no context at all, directly exit
-            if (!nexusContext) {
-                return null;
-            }
-
-            // If context present and same wallet as the referrer exit
-            if (
-                walletStatus?.key === "connected" &&
-                isAddressEqual(nexusContext.r, walletStatus.wallet)
-            ) {
-                return null;
-            }
-
-            // If no wallet connected or no open reward session, display the modal to propose the user to connect
-            if (
-                walletStatus.key === "not-connected" ||
-                (walletStatus.key === "connected" &&
-                    !walletStatus.interactionSession)
-            ) {
-                modalConfig && displayModal(modalConfig);
-                return null;
-            }
-
-            return launchReferral();
-        },
+        ],
+        queryFn: processReferral,
         enabled: !!walletStatus,
     });
 
-    /**
-     * Launch the referral interaction when the modal is in success and successfully connected
-     */
-    useMemo(() => {
-        if (displayModalStatus !== "success" || !nexusContext) return;
-
-        launchReferral().then((referralData) => {
-            if (!referralData) return;
-            queryClient.setQueryData(queryKey, referralData);
-        });
-    }, [
-        displayModalStatus,
-        nexusContext,
-        queryClient,
-        queryKey,
-        launchReferral,
-    ]);
-
-    /**
-     * Update the context with the current wallet as referrer when the status is in success
-     */
-    useMemo(() => {
-        if (walletStatus?.key === "connected" && status === "success") {
-            setTimeout(() => updateContext({ r: walletStatus.wallet }), 0);
-        }
-    }, [walletStatus, status, updateContext]);
-
-    // Map that to our final state
-    return useOutputStateMapper({ data, error, status });
+    return useMemo(() => {
+        if (status === "pending") return "processing";
+        if (status === "error") return mapErrorToState(error);
+        return referralState || "idle";
+    }, [referralState, status, error]);
 }
 
 /**
- * Mapper for our output state
- * @param data
- * @param error
- * @param status
+ * Helper to ensure a wallet is connected, and display a modal if we got everything needed
  */
-function useOutputStateMapper({
-    data,
-    error,
-    status,
+function useEnsureWalletConnected({
+    modalConfig,
+    walletStatus,
 }: {
-    data?: unknown;
-    error?: Error | null;
-    status: "pending" | "success" | "error";
+    modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
+    walletStatus?: WalletStatusReturnType;
 }) {
-    const errorState = useMemo(() => {
-        if (!error) return null;
-        if (!(error instanceof FrakRpcError)) return "error";
+    // Hook to display the modal
+    const { mutateAsync: displayModal } = useDisplayModal();
 
+    return useCallback(async () => {
+        if (
+            walletStatus?.key !== "connected" ||
+            !walletStatus.interactionSession
+        ) {
+            if (!modalConfig) {
+                return undefined;
+            }
+            const result = await displayModal(modalConfig);
+            return result?.login?.wallet ?? undefined;
+        }
+        return walletStatus.wallet ?? undefined;
+    }, [walletStatus, modalConfig, displayModal]);
+}
+
+/**
+ * Helper to map an error to a state
+ * @param error
+ */
+function mapErrorToState(error: unknown): ReferralState {
+    if (error instanceof FrakRpcError) {
         switch (error.code) {
             case RpcErrorCodes.walletNotConnected:
                 return "no-wallet";
@@ -175,18 +159,6 @@ function useOutputStateMapper({
             default:
                 return "error";
         }
-    }, [error]);
-
-    // Map that to our final state
-    return useMemo(() => {
-        // First simple status
-        switch (status) {
-            case "pending":
-                return "loading";
-            case "success":
-                return data === null ? "no-referral" : "referred";
-            case "error":
-                return errorState ?? "error";
-        }
-    }, [data, errorState, status]);
+    }
+    return "error";
 }
