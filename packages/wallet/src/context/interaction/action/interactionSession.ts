@@ -3,6 +3,8 @@
 import { kernelAddresses } from "@/context/blockchain/addresses";
 import { frakChainPocClient } from "@/context/blockchain/provider";
 import { getExecutionAbi, setExecutionAbi } from "@/context/recover/utils/abi";
+import { getSession } from "@/context/session/action/session";
+import type { InteractionSession } from "@/types/Session";
 import { tryit } from "radash";
 import {
     type Address,
@@ -60,15 +62,26 @@ const sendInteractionsSelector = toFunctionSelector({
 });
 
 /**
+ * Get the full sessions
+ */
+export async function getFullSessionStatus() {
+    const session = await getSession();
+    if (!session) {
+        return { session: null, interactionSession: null };
+    }
+    const interactionSession = await getSessionStatus({
+        wallet: session.wallet.address,
+    });
+    return { session, interactionSession };
+}
+
+/**
  * Get the current session status
  * @param wallet
  */
 export async function getSessionStatus({
     wallet,
-}: { wallet: Address }): Promise<{
-    sessionStart: number;
-    sessionEnd: number;
-} | null> {
+}: { wallet: Address }): Promise<InteractionSession | null> {
     // Read all the prices from the blockchain
     const [, status] = await tryit(() =>
         readContract(frakChainPocClient, {

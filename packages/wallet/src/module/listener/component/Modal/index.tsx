@@ -31,7 +31,6 @@ import { useAtomValue } from "jotai";
 import {
     type Dispatch,
     type PropsWithChildren,
-    type SetStateAction,
     useCallback,
     useEffect,
     useMemo,
@@ -72,15 +71,27 @@ function ListenerModalDialog({
     /**
      * Method to close the modal
      */
-    const onClose = useCallback(
-        (force?: boolean) => {
-            // Don't close if the metadata does not allows it or if we force it
-            if (!force && currentRequest.metadata?.closeOnFinish === false)
-                return;
-            iFrameToggleVisibility(false);
-            jotaiStore.set(clearRpcModalAtom);
+    const onClose = useCallback(() => {
+        iFrameToggleVisibility(false);
+        jotaiStore.set(clearRpcModalAtom);
+    }, []);
+
+    /**
+     * Method to close the modal
+     */
+    const onError = useCallback(
+        (reason?: string, code: number = RpcErrorCodes.serverError) => {
+            currentRequest.emitter({
+                error: {
+                    code,
+                    message:
+                        reason ??
+                        "Error during the user interaction with the modal",
+                },
+            });
+            onClose();
         },
-        [currentRequest.metadata?.closeOnFinish]
+        [onClose, currentRequest]
     );
 
     /**
@@ -89,13 +100,7 @@ function ListenerModalDialog({
     const onFinished = useCallback(() => {
         const results = jotaiStore.get(modalStepsAtom)?.results;
         if (!results) {
-            currentRequest.emitter({
-                error: {
-                    code: RpcErrorCodes.serverError,
-                    message: "No result following the modal",
-                },
-            });
-            onClose();
+            onError("No result following the modal", RpcErrorCodes.serverError);
             return;
         }
 
@@ -112,24 +117,50 @@ function ListenerModalDialog({
             result: formattedResults,
         });
         onClose();
-    }, [onClose, currentRequest]);
+    }, [onClose, onError, currentRequest]);
 
     /**
-     * Method to close the modal
+     * When the modal visibility changes
      */
-    const onError = useCallback(
-        (reason?: string) => {
-            currentRequest.emitter({
-                error: {
-                    code: RpcErrorCodes.serverError,
-                    message:
-                        reason ??
-                        "Error during the user interaction with the modal",
+    const onOpenChange = useCallback(
+        (isVisible: boolean) => {
+            if (isVisible) return;
+
+            // Get the current results
+            const steps = jotaiStore.get(modalStepsAtom);
+            const results = steps?.results;
+
+            // Get the expected results and the current results
+            const expectedResults =
+                steps?.steps?.filter((step) => step.key !== "success")
+                    ?.length ?? 0;
+            const resultsLength = steps?.results?.length ?? 0;
+
+            // If we don't have enough results, we can tell the requester that the modal was cancelled
+            if (!results || expectedResults !== resultsLength) {
+                onError(
+                    "User cancelled the request",
+                    RpcErrorCodes.clientAborted
+                );
+                return;
+            }
+
+            // Otherwise, we can tell the requester that the modal was cancelled
+            // Format the results from [{key, returns}] to {key: returns}
+            const formattedResults = results.reduce(
+                (acc, { key, returns }) => {
+                    acc[key] = returns;
+                    return acc;
                 },
+                {} as Record<string, unknown>
+            ) as ModalRpcStepsResultType;
+
+            currentRequest.emitter({
+                result: formattedResults,
             });
             onClose();
         },
-        [onClose, currentRequest]
+        [currentRequest, onClose, onError]
     );
 
     /**
@@ -142,23 +173,7 @@ function ListenerModalDialog({
     }, [currentRequest?.metadata?.header?.title]);
 
     return (
-        <ModalComponent
-            title={title}
-            open={true}
-            onOpenChange={(value) => {
-                if (!value) {
-                    // todo: Should include in the error the partial results?? (if any)
-                    // Emit the discarded event
-                    currentRequest.emitter({
-                        error: {
-                            code: RpcErrorCodes.clientAborted,
-                            message: "User cancelled the request",
-                        },
-                    });
-                    onClose(true);
-                }
-            }}
-        >
+        <ModalComponent title={title} open={true} onOpenChange={onOpenChange}>
             <>
                 <ModalStepIndicator />
                 <CurrentModalStepComponent
@@ -187,7 +202,7 @@ function ModalComponent({
 }: PropsWithChildren<{
     title?: string;
     open: boolean;
-    onOpenChange: Dispatch<SetStateAction<boolean>>;
+    onOpenChange: Dispatch<boolean>;
 }>) {
     // Check if the screen is desktop or mobile
     const isDesktop = useMediaQuery("(min-width : 600px)");
@@ -323,6 +338,7 @@ function CurrentModalStepComponent({
             case "success":
                 return (
                     <SuccessModalStep
+                        appName={currentRequest.appName}
                         params={
                             currentStep.params as SuccessModalStepType["params"]
                         }

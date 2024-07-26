@@ -1,7 +1,9 @@
 import { getSessionStatus } from "@/context/interaction/action/interactionSession";
-import { openSessionAtom } from "@/module/wallet/atoms/openSession";
+import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
+import type { InteractionSession } from "@/types/Session";
 import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
+import type { UndefinedInitialDataOptions } from "@tanstack/react-query";
 import type { Address } from "viem";
 
 /**
@@ -9,15 +11,20 @@ import type { Address } from "viem";
  */
 export function useInteractionSessionStatus({
     address,
-}: { address?: Address }) {
+    query,
+}: {
+    address?: Address;
+    query?: Partial<UndefinedInitialDataOptions<InteractionSession | null>>;
+}) {
     return useQuery({
+        ...query,
         queryKey: ["interactions", "session-status"],
         queryFn: async () => {
             if (!address) {
                 return null;
             }
             const session = await getSessionStatus({ wallet: address });
-            jotaiStore.set(openSessionAtom, session);
+            jotaiStore.set(interactionSessionAtom, session);
             return session;
         },
         enabled: !!address,

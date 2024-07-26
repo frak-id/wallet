@@ -44,7 +44,6 @@ const modalConfig = {
             },
         },
         success: {
-            hidden: true,
             metadata: {
                 description: "You have successfully been rewarded",
             },
@@ -54,7 +53,6 @@ const modalConfig = {
         header: {
             title: "Payment for your data",
         },
-        closeOnFinish: false,
     },
 } as const;
 
@@ -144,9 +142,15 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                                 steps: {
                                     ...modalConfig.steps,
                                     success: {
-                                        ...modalConfig.steps.success,
-                                        sharingLink: {
-                                            baseLink: window.location.href,
+                                        metadata: {
+                                            description:
+                                                "Get rewarded for sharing this article with your friends",
+                                        },
+                                        sharing: {
+                                            popupTitle:
+                                                "Share this article with your friends",
+                                            text: `Discover this awesome article from ${article?.author ?? "A Positive World"}!`,
+                                            link: window.location.href,
                                         },
                                     },
                                 },

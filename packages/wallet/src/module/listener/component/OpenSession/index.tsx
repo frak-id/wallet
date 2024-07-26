@@ -3,7 +3,6 @@ import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteraction
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { useMemo } from "react";
 import { useAccount } from "wagmi";
 
 /**
@@ -27,14 +26,14 @@ export function OpenSessionModalStep({
         data: currentSession,
         isPending: isFetchingStatus,
         refetch: refetchSessionStatus,
-    } = useInteractionSessionStatus({ address });
-
-    /**
-     * Refetch the session status when the modal is opened
-     */
-    useMemo(() => {
-        setTimeout(() => refetchSessionStatus(), 0);
-    }, [refetchSessionStatus]);
+    } = useInteractionSessionStatus({
+        address,
+        query: {
+            refetchOnMount: true,
+            refetchOnWindowFocus: true,
+            staleTime: 0,
+        },
+    });
 
     const {
         mutate: openSession,

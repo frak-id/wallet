@@ -5,8 +5,9 @@ import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { ThemeListener } from "@/module/settings/atoms/theme";
+import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
-import type { Session } from "@/types/Session";
+import type { InteractionSession, Session } from "@/types/Session";
 import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
@@ -53,12 +54,22 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 
 export function RootProvider({
     session,
+    interactionSession,
     children,
-}: PropsWithChildren<{ session: Session | null }>) {
+}: PropsWithChildren<{
+    session: Session | null;
+    interactionSession: InteractionSession | null;
+}>) {
     // Hydrate the session atoms
-    useHydrateAtoms([[sessionAtom, session]], {
-        store: jotaiStore,
-    });
+    useHydrateAtoms(
+        [
+            [sessionAtom, session],
+            [interactionSessionAtom, interactionSession],
+        ],
+        {
+            store: jotaiStore,
+        }
+    );
 
     return (
         <>

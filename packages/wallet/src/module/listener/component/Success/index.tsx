@@ -1,28 +1,60 @@
 import type { SuccessModalStepType } from "@frak-labs/nexus-sdk/core";
-import { useCopyAddress } from "@module/hook/useCopyAddress";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { useMemo } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useCopyToClipboard } from "@uidotdev/usehooks";
+import { tryit } from "radash";
 
 /**
  * The component for the success step of a modal
+ * @param appName
  * @param params
  * @param onFinish
  * @constructor
  */
 export function SuccessModalStep({
+    appName,
     params,
     onFinish,
 }: {
+    appName: string;
     params: SuccessModalStepType["params"];
     onFinish: (args: object) => void;
 }) {
-    const { metadata, sharingLink } = params;
-    const { copied, copyAddress } = useCopyAddress();
+    const { metadata, sharing } = params;
+    const [, copyToClipboard] = useCopyToClipboard();
 
-    // Trigger the onFinish after a delay
-    useMemo(() => {
-        setTimeout(() => onFinish({}), 100);
-    }, [onFinish]);
+    const {
+        data: shareResult,
+        mutate: triggerSharing,
+        isPending: isSharing,
+    } = useMutation({
+        mutationKey: ["modal-success-sharing", params],
+        mutationFn: async () => {
+            if (!sharing?.link) return;
+
+            // Build our sharing data
+            const shareData = {
+                title: sharing?.popupTitle ?? `${appName} invite link`,
+                text: sharing?.text ?? "Discover this awesome content!",
+                url: sharing.link,
+            };
+
+            // Trigger copy to clipboard if no native sharing
+            if (
+                typeof navigator !== "undefined" &&
+                typeof navigator.share === "function" &&
+                navigator.canShare(shareData)
+            ) {
+                const [err] = await tryit(() => navigator.share(shareData))();
+                // If no error, return the shared state
+                if (!err) return "Shared!";
+            }
+
+            // Trigger native sharing stuff
+            await copyToClipboard(sharing.link);
+            return "Copied!";
+        },
+    });
 
     return (
         <>
@@ -31,22 +63,32 @@ export function SuccessModalStep({
                     <p>{metadata.description}</p>
                 </div>
             )}
-            {sharingLink?.baseLink && (
-                <div className={prefixModalCss("buttons-wrapper")}>
+            <div className={prefixModalCss("buttons-wrapper")}>
+                {sharing?.link && (
                     <div>
                         <button
                             type={"button"}
                             className={prefixModalCss("button-primary")}
-                            onClick={() => {
-                                if (!sharingLink.baseLink) return;
-                                copyAddress(sharingLink.baseLink);
-                            }}
+                            disabled={isSharing}
+                            onClick={() => triggerSharing()}
                         >
-                            {copied ? "Copied!" : "Copy the current url"}
+                            {shareResult ?? "Share to earn"}
                         </button>
                     </div>
+                )}
+
+                <div>
+                    <button
+                        type={"button"}
+                        className={prefixModalCss("button-secondary")}
+                        onClick={() => {
+                            onFinish({});
+                        }}
+                    >
+                        {metadata?.secondaryActionText ?? "Close"}
+                    </button>
                 </div>
-            )}
+            </div>
         </>
     );
 }

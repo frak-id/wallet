@@ -25,9 +25,9 @@ const defaultStepTitlesMap: Record<ModalStepTypes["key"], string> = {
 const stepsNameAtom = atom((get) => {
     const currentSteps = get(modalStepsAtom);
     if (!currentSteps) return [];
-    // Filter out steps where params.hidden is true
+    // Filter out the success step, if any
     const visibleSteps = currentSteps.steps.filter(
-        (step) => !step.params.hidden
+        (step) => step.key !== "success"
     );
     return visibleSteps.map(
         (step) =>

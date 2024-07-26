@@ -1,3 +1,4 @@
+import { TextData } from "@/module/common/component/TextData";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type { SiweAuthenticateModalStepType } from "@frak-labs/nexus-sdk/core";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
@@ -58,6 +59,13 @@ export function SiweAuthenticateModalStep({
                     <p>{metadata.description}</p>
                 </div>
             )}
+
+            <TextData>
+                <p>{siweMessage?.statement}</p>
+                <p>Domain: {siweMessage?.domain}</p>
+                <p>Uri: {siweMessage?.uri}</p>
+            </TextData>
+
             <div className={prefixModalCss("buttons-wrapper")}>
                 <div>
                     <button

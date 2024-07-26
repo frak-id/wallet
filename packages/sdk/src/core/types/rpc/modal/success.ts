@@ -6,8 +6,10 @@ import type { GenericModalStepType } from "./generic";
 export type SuccessModalStepType = GenericModalStepType<
     "success",
     {
-        sharingLink?: {
-            baseLink?: string;
+        sharing?: {
+            popupTitle?: string;
+            text?: string;
+            link?: string;
         };
     },
     object

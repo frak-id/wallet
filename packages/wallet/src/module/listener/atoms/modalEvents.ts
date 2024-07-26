@@ -1,6 +1,6 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { openSessionAtom } from "@/module/wallet/atoms/openSession";
+import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type {
     IFrameRpcSchema,
     ModalRpcMetadata,
@@ -80,19 +80,7 @@ export const setNewModalAtom = atom(
         if (steps.find((step) => step.key === "openSession")) {
             // Check if the user is already logged in or not on mount
             const session = get(sessionAtom);
-            let openSession = get(openSessionAtom);
-
-            /**
-             * Jotai bug in a derived atom with atomWithStorage?
-             * openSessionAtom is not in sync with the local storage
-             * we can have an older value in the atom
-             */
-            const storedValue = localStorage.getItem("sessionOpen");
-            const parsedStoredValue = storedValue && JSON.parse(storedValue);
-            if (parsedStoredValue !== openSession) {
-                set(openSessionAtom, parsedStoredValue);
-                openSession = parsedStoredValue;
-            }
+            const openSession = get(interactionSessionAtom);
 
             if (session && openSession) {
                 results.push({

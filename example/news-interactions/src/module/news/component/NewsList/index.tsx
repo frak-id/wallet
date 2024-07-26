@@ -11,12 +11,12 @@ import { Title } from "@/module/news/component/Title";
 import { useQuery } from "@tanstack/react-query";
 
 export function NewsList() {
-    const { data: news } = useQuery({
+    const { data: news, isPending } = useQuery({
         queryKey: ["news", "list"],
         queryFn: async () => getNewsForHome(),
     });
 
-    if (!news) {
+    if (!news || isPending) {
         return <Skeleton count={3} height={100} />;
     }
 

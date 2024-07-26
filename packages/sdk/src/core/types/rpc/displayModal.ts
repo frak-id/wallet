@@ -42,7 +42,6 @@ export type ModalRpcMetadata = Readonly<{
         icon?: string;
     };
     context?: string;
-    closeOnFinish?: boolean;
 }>;
 
 /**

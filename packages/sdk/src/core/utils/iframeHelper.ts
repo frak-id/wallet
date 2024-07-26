@@ -1,4 +1,22 @@
 /**
+ * Base props for the iframe
+ */
+export const baseIframeProps = {
+    id: "nexus-wallet",
+    name: "nexus-wallet",
+    allow: "publickey-credentials-get *; clipboard-write; web-share *",
+    style: {
+        width: "0",
+        height: "0",
+        border: "0",
+        position: "absolute",
+        zIndex: 1000,
+        top: "-1000px",
+        left: "-1000px",
+    },
+};
+
+/**
  * Create the given iframe
  * @param walletBaseUrl
  */
@@ -14,9 +32,13 @@ export function createIframe({
     }
 
     const iframe = document.createElement("iframe");
-    iframe.name = "nexus-wallet";
-    iframe.id = "nexus-wallet";
-    iframe.style.zIndex = "1000";
+
+    // Set the base iframe props
+    iframe.id = baseIframeProps.id;
+    iframe.name = baseIframeProps.name;
+    iframe.allow = baseIframeProps.allow;
+    iframe.style.zIndex = baseIframeProps.style.zIndex.toString();
+
     changeIframeVisibility({ iframe, isVisible: false });
     document.body.appendChild(iframe);
 

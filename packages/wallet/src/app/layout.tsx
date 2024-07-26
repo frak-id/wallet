@@ -1,6 +1,6 @@
-import { getSession } from "@/context/session/action/session";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
+import { getFullSessionStatus } from "@/context/interaction/action/interactionSession";
 import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
 import Script from "next/script";
@@ -54,13 +54,18 @@ export default async function RootLayout({
     children: ReactNode;
 }>) {
     // Check if a user is logged in or not
-    const session = await getSession();
+    const { session, interactionSession } = await getFullSessionStatus();
 
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`scrollbars ${sora.className}`}>
                 <NextTopLoader showSpinner={false} />
-                <RootProvider session={session}>{children}</RootProvider>
+                <RootProvider
+                    session={session}
+                    interactionSession={interactionSession}
+                >
+                    {children}
+                </RootProvider>
                 <Script id="theme" strategy="afterInteractive">
                     {`
                     function setTheme(newTheme) {

@@ -11,6 +11,7 @@ import {
     type NexusWalletSdkConfig,
     createIFrameNexusClient,
 } from "../../core";
+import { baseIframeProps } from "../../core/utils/iframeHelper";
 import { useNexusConfig } from "../hook";
 
 /**
@@ -25,19 +26,6 @@ export const NexusIFrameClientContext = createContext<NexusClient | undefined>(
  */
 export type NexusIFrameClientProps = {
     config: NexusWalletSdkConfig;
-};
-
-/**
- * Default style for the iframe
- */
-const defaultIframeStyle: CSSProperties = {
-    width: "0",
-    height: "0",
-    border: "0",
-    position: "absolute",
-    zIndex: 1000,
-    top: "-1000px",
-    left: "-1000px",
 };
 
 /**
@@ -60,11 +48,9 @@ export function NexusIFrameClientProvider({
 
     // Create the iframe that will be used to communicate with the wallet
     const iFrame = createElement("iframe", {
-        id: "nexus-wallet",
-        name: "nexus-wallet",
+        ...baseIframeProps,
         src: `${config.walletUrl}/listener`,
-        style: style ?? defaultIframeStyle,
-        allow: "publickey-credentials-get *; clipboard-write",
+        style: style ?? baseIframeProps.style,
         ref: (iframe: HTMLIFrameElement) => {
             if (!iframe || client) {
                 return;
