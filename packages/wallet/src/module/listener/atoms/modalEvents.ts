@@ -1,6 +1,4 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
-import { sessionAtom } from "@/module/common/atoms/session";
-import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type {
     IFrameRpcSchema,
     ModalRpcMetadata,
@@ -48,82 +46,3 @@ export const clearRpcModalAtom = atom(null, (_get, set) => {
     set(modalDisplayedRequestAtom, null);
     set(modalStepsAtom, null);
 });
-
-/**
- * Setter for when we receive a new modal request
- */
-export const setNewModalAtom = atom(
-    null,
-    (get, set, newModal: ModalDisplayedRequest) => {
-        set(modalDisplayedRequestAtom, newModal);
-
-        // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
-        const steps = prepareInputStepsArray(newModal.steps);
-
-        // Build our initial result array
-        let currentStep = 0;
-        const results: Pick<ModalStepTypes, "key" | "returns">[] = [];
-
-        // If the steps include login, check if user got a current session
-        if (steps.find((step) => step.key === "login")) {
-            // Check if the user is already logged in or not on mount
-            const session = get(sessionAtom);
-            if (session) {
-                results.push({
-                    key: "login",
-                    returns: { wallet: session.wallet.address },
-                });
-                currentStep++;
-            }
-        }
-
-        if (steps.find((step) => step.key === "openSession")) {
-            // Check if the user is already logged in or not on mount
-            const session = get(sessionAtom);
-            const openSession = get(interactionSessionAtom);
-
-            if (session && openSession) {
-                results.push({
-                    key: "openSession",
-                    returns: openSession,
-                });
-                currentStep++;
-            }
-        }
-
-        // Set the initial state
-        set(modalStepsAtom, {
-            currentStep,
-            steps: steps,
-            results,
-        });
-    }
-);
-
-/**
- * Prepare the input steps array
- * @param steps
- */
-function prepareInputStepsArray(steps: ModalRpcStepsInput) {
-    // Build the initial array
-    const inputSteps = Object.entries(steps).map(([key, params]) => ({
-        key,
-        params,
-    })) as Pick<ModalStepTypes, "key" | "params">[];
-
-    // Sort the steps by importance
-    inputSteps.sort(
-        (a, b) => stepImportanceMap[a.key] - stepImportanceMap[b.key]
-    );
-
-    // Return the sorted array
-    return inputSteps;
-}
-
-const stepImportanceMap: Record<ModalStepTypes["key"], number> = {
-    login: -1,
-    siweAuthenticate: 1,
-    openSession: 5,
-    sendTransaction: 10,
-    success: 100,
-};
