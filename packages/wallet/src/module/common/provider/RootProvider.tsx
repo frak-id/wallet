@@ -6,7 +6,6 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
-import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type { InteractionSession, Session } from "@/types/Session";
 import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -79,7 +78,6 @@ export function RootProvider({
                     persistOptions={persistOptions}
                 >
                     <WagmiProviderWithDynamicConfig>
-                        <OpenSessionStatus session={session} />
                         {children}
                     </WagmiProviderWithDynamicConfig>
                     <ReactQueryDevtools initialIsOpen={false} />
@@ -88,18 +86,6 @@ export function RootProvider({
             </Provider>
         </>
     );
-}
-
-/**
- * Check if we have an open session status
- * @param session
- * @constructor
- */
-function OpenSessionStatus({ session }: { session: Session | null }) {
-    useInteractionSessionStatus({
-        address: session?.wallet.address,
-    });
-    return null;
 }
 
 function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
