@@ -5,7 +5,6 @@ import {
     NexusIFrameClientProvider,
 } from "@frak-labs/nexus-sdk/react";
 import { isRunningLocally } from "@frak-labs/shared/context/utils/env";
-import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -13,7 +12,6 @@ import {
     PersistQueryClientProvider,
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
-import { Provider } from "jotai";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -62,18 +60,16 @@ const frakWalletSdkConfig = {
 
 export function RootProvider({ children }: PropsWithChildren) {
     return (
-        <Provider store={jotaiStore}>
-            <PersistQueryClientProvider
-                client={queryClient}
-                persistOptions={persistOptions}
-            >
-                <NexusConfigProvider config={frakWalletSdkConfig}>
-                    <NexusIFrameClientProvider>
-                        <ReactQueryDevtools initialIsOpen={false} />
-                        {children}
-                    </NexusIFrameClientProvider>
-                </NexusConfigProvider>
-            </PersistQueryClientProvider>
-        </Provider>
+        <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={persistOptions}
+        >
+            <NexusConfigProvider config={frakWalletSdkConfig}>
+                <NexusIFrameClientProvider>
+                    <ReactQueryDevtools initialIsOpen={false} />
+                    {children}
+                </NexusIFrameClientProvider>
+            </NexusConfigProvider>
+        </PersistQueryClientProvider>
     );
 }

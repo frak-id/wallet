@@ -20,8 +20,9 @@
     "lucide-react": "^0.408.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@tanstack/react-query": "^5.51.5",
-    "@tanstack/store": "^0.5.5",
-    "humanize-duration": "^3.32.1",
+    "@tanstack/query-sync-storage-persister": "^5.51.5",
+    "@tanstack/react-query-devtools": "^5.51.5",
+    "@tanstack/react-query-persist-client": "^5.51.5",
     "next": "14.2.5",
     "radash": "^12.1.0",
     "react": "^18",
@@ -29,7 +30,6 @@
     "viem": "^2.17.4"
   },
   "devDependencies": {
-    "@types/humanize-duration": "^3.27.4",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

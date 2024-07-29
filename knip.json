@@ -1,0 +1,26 @@
+{
+    "workspaces": {
+        ".": {
+            "entry": "sst.config.ts",
+            "project": "iat/*.ts",
+            "ignore": [".sst/**"]
+        },
+        "example/*": {},
+        "packages/*": {
+            "ignore": [".open-next/**", ".next/**"]
+        },
+        "packages/sdk": {
+            "entry": "src/**/index.{ts,tsx,js}",
+            "project": "src/**/*.{ts,tsx,js}",
+            "ignore": ["dist/**"]
+        },
+        "packages/shared": {
+            "entry": "context/**/*.{ts,tsx,js},module/**/*.{ts,tsx,js}",
+            "project": "context/**/*.{ts,tsx,js},module/**/*.{ts,tsx,js}"
+        },
+        "packages/backend": {
+            "entry": "src/**/*.ts",
+            "project": "src/**/*.ts"
+        }
+    }
+}
