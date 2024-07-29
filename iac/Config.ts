@@ -27,10 +27,6 @@ export function ConfigStack({ stack }: StackContext) {
         "INTERACTION_VALIDATOR_PRIVATE_KEY"
     );
     const adminPassword = new Config.Secret(stack, "ADMIN_PASSWORD");
-    const walletconnectProjectId = new Config.Secret(
-        stack,
-        "WALLETCONNECT_PROJECT_ID"
-    );
     const worldNewsApiKey = new Config.Secret(stack, "WORLD_NEWS_API_KEY");
 
     const nexusUrl = new Config.Parameter(stack, "NEXUS_WALLET_URL", {
@@ -49,7 +45,6 @@ export function ConfigStack({ stack }: StackContext) {
         interactionValidatorPrivateKey,
         adminPassword,
         nexusUrl,
-        walletconnectProjectId,
         worldNewsApiKey,
     };
 }

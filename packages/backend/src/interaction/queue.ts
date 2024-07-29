@@ -33,6 +33,15 @@ export const handler = Handler(
         );
         console.log(`Will process ${interactionsReady.length} interactions`);
 
+        // If no result out of the mapping, early exit
+        if (interactionsReady.length === 0) {
+            return {
+                batchItemFailures: interactionsData.map((out) => ({
+                    itemIdentifier: out.id,
+                })),
+            };
+        }
+
         // Send them
         const [error, txHash] = await tryit(() =>
             pushInteractions(interactionsReady)
@@ -79,9 +88,6 @@ async function pushInteractions(
         interactionTx: Hex;
     }[]
 ) {
-    if (interactions.length === 0) {
-        return;
-    }
     // Prepare the execution data
     const executeNoBatchData = encodeFunctionData({
         abi: interactionDelegatorAbi,

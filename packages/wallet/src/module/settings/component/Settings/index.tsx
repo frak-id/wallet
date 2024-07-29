@@ -6,7 +6,6 @@ import { Title } from "@/module/common/component/Title";
 import { BetaOptions } from "@/module/settings/component/BetaOptions";
 import { RecoveryLink } from "@/module/settings/component/Recovery";
 import { SwitchChain } from "@/module/settings/component/SwitchChain";
-import { SessionsConnected } from "@/module/wallet-connect/component/SessionsConnected";
 import { WalletAddress } from "@/module/wallet/component/WalletAddress";
 import { useAtomValue } from "jotai";
 import { Fingerprint } from "lucide-react";
@@ -20,7 +19,6 @@ export function Settings() {
             <RecoveryLink />
             <SwitchChain />
             <BetaOptions />
-            <SessionsConnected />
         </>
     );
 }
