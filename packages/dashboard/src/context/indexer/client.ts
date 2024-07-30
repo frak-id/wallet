@@ -3,7 +3,7 @@ import { registerUrql } from "@urql/next/rsc";
 
 const makeClient = () => {
     return createClient({
-        url: "https://indexer.frak.id/",
+        url: "https://indexer.frak.id/graphql",
         exchanges: [cacheExchange, fetchExchange],
     });
 };
