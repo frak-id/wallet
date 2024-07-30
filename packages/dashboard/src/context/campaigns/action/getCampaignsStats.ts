@@ -90,17 +90,11 @@ export async function getMyCampaignsStats() {
             // Polished stats for the array
             title: campaignDoc?.title ?? campaign.id,
             id: campaignDoc?._id?.toHexString() ?? campaign.id,
-            amountSpent: Number.parseFloat(formatEther(totalRewards)).toFixed(
-                2
-            ),
+            amountSpent: Number.parseFloat(formatEther(totalRewards)),
             sharingRate,
-            costPerShare: Number.parseFloat(formatEther(costPerShare)).toFixed(
-                2
-            ),
+            costPerShare: Number.parseFloat(formatEther(costPerShare)),
             ctr,
-            costPerResult: Number.parseFloat(
-                formatEther(costPerResult)
-            ).toFixed(2),
+            costPerResult: Number.parseFloat(formatEther(costPerResult)),
         };
     });
 }

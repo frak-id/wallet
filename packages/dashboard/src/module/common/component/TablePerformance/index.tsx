@@ -37,7 +37,11 @@ const columnHelper = createColumnHelper<TableData>();
 
 const initialFilteringState = { page: 1 };
 
-function sumRows(table: TableReact<TableData>, column: keyof TableData) {
+function sumRows(
+    table: TableReact<TableData>,
+    column: keyof TableData,
+    formatting?: { dollar?: boolean }
+) {
     const total = table
         .getFilteredRowModel()
         .rows.reduce(
@@ -45,7 +49,22 @@ function sumRows(table: TableReact<TableData>, column: keyof TableData) {
                 computeWithPrecision(sum, row.original[column] as number, "+"),
             0
         );
+    if (formatting?.dollar) {
+        return <span>${total.toFixed(2)}</span>;
+    }
     return <span>{total}</span>;
+}
+
+function avgPercentages(table: TableReact<TableData>, column: keyof TableData) {
+    const allRows = table.getFilteredRowModel().rows;
+    const totalPercent = allRows.reduce(
+        (sum, row) =>
+            computeWithPrecision(sum, row.original[column] as number, "+"),
+        0
+    );
+    const average = totalPercent / allRows.length;
+
+    return <span>{(average * 100).toFixed(2)}%</span>;
 }
 
 export function TablePerformance() {
@@ -119,23 +138,31 @@ export function TablePerformance() {
                 }),
                 columnHelper.accessor("sharingRate", {
                     header: () => "Sharing Rate",
-                    footer: ({ table }) => sumRows(table, "sharingRate"),
+                    footer: ({ table }) => avgPercentages(table, "sharingRate"),
+                    cell: ({ getValue }) => `${(getValue() * 100).toFixed(2)}%`,
                 }),
                 columnHelper.accessor("costPerShare", {
                     header: () => "Coût par partage",
-                    footer: ({ table }) => sumRows(table, "costPerShare"),
+                    footer: ({ table }) =>
+                        sumRows(table, "costPerShare", { dollar: true }),
+                    cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
                 }),
                 columnHelper.accessor("ctr", {
                     header: () => "CTR",
-                    footer: ({ table }) => sumRows(table, "ctr"),
+                    footer: ({ table }) => avgPercentages(table, "ctr"),
+                    cell: ({ getValue }) => `${(getValue() * 100).toFixed(2)}%`,
                 }),
                 columnHelper.accessor("costPerResult", {
                     header: () => "Coût par résultat",
-                    footer: ({ table }) => sumRows(table, "costPerResult"),
+                    footer: ({ table }) =>
+                        sumRows(table, "costPerResult", { dollar: true }),
+                    cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
                 }),
                 columnHelper.accessor("amountSpent", {
                     header: () => "Montant dépensé",
-                    footer: ({ table }) => sumRows(table, "amountSpent"),
+                    footer: ({ table }) =>
+                        sumRows(table, "amountSpent", { dollar: true }),
+                    cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
                 }),
             ] as ColumnDef<TableData>[],
         []
