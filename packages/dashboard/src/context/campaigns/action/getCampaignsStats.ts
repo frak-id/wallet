@@ -57,7 +57,7 @@ export async function getMyCampaignsStats() {
         const referredInteractions = Number(campaign.referredInteractions);
 
         // CTR = share / couverture
-        const ctr =
+        const sharingRate =
             referredInteractions > 0
                 ? createReferredLinkInteractions / referredInteractions
                 : 0;
@@ -69,7 +69,7 @@ export async function getMyCampaignsStats() {
                 : BigInt(0);
 
         // CPC = activation / share
-        const cpc =
+        const ctr =
             createReferredLinkInteractions > 0
                 ? referredInteractions / createReferredLinkInteractions
                 : 0;
@@ -93,11 +93,11 @@ export async function getMyCampaignsStats() {
             amountSpent: Number.parseFloat(formatEther(totalRewards)).toFixed(
                 2
             ),
-            ctr,
+            sharingRate,
             costPerShare: Number.parseFloat(formatEther(costPerShare)).toFixed(
                 2
             ),
-            cpc,
+            ctr,
             costPerResult: Number.parseFloat(
                 formatEther(costPerResult)
             ).toFixed(2),

@@ -117,17 +117,17 @@ export function TablePerformance() {
                     header: () => "Impression",
                     footer: ({ table }) => sumRows(table, "openInteractions"),
                 }),
-                columnHelper.accessor("ctr", {
-                    header: () => "CTR",
-                    footer: ({ table }) => sumRows(table, "ctr"),
+                columnHelper.accessor("sharingRate", {
+                    header: () => "Sharing Rate",
+                    footer: ({ table }) => sumRows(table, "sharingRate"),
                 }),
                 columnHelper.accessor("costPerShare", {
                     header: () => "Coût par partage",
                     footer: ({ table }) => sumRows(table, "costPerShare"),
                 }),
-                columnHelper.accessor("cpc", {
-                    header: () => "CPC",
-                    footer: ({ table }) => sumRows(table, "cpc"),
+                columnHelper.accessor("ctr", {
+                    header: () => "CTR",
+                    footer: ({ table }) => sumRows(table, "ctr"),
                 }),
                 columnHelper.accessor("costPerResult", {
                     header: () => "Coût par résultat",
