@@ -1,5 +1,6 @@
 import { frakChainId } from "@/context/blockchain/provider";
 import { getPendingRewards } from "@/context/interaction/action/pendingRewards";
+import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAAClients } from "@/module/common/hook/useAAClients";
@@ -7,33 +8,22 @@ import { useInvalidateUserTokens } from "@/module/tokens/hook/useGetUserTokens";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
-import {
-    type SmartAccountClient,
-    getUserOperationReceipt,
-} from "permissionless";
-import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
-import { useMemo } from "react";
-import { useConnectorClient } from "wagmi";
+import { useAccount, useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
 
 export function PendingReferral() {
     // Invalidate the user tokens
     const invalidateUserTokens = useInvalidateUserTokens();
-    /**
-     * Get our current smart wallet client
-     */
-    const { data: connectorClient } = useConnectorClient();
 
     // Get the user wallet address
-    const address = useMemo(
-        () => connectorClient?.account?.address,
-        [connectorClient]
-    );
+    const { address } = useAccount();
 
     // Fetch the AA transports
     const { bundlerClient } = useAAClients({
         chainId: frakChainId,
     });
+
+    const { sendTransactionAsync } = useSendTransaction();
 
     // Fetch the pending reward
     const { data: pendingReward, refetch: refetchPendingReward } = useQuery({
@@ -55,19 +45,10 @@ export function PendingReferral() {
     } = useMutation({
         mutationKey: ["referral", "claim-reward", address],
         mutationFn: async () => {
-            const nexusWallet =
-                connectorClient as SmartAccountClient<ENTRYPOINT_ADDRESS_V06_TYPE>;
-            if (
-                !(
-                    nexusWallet.account &&
-                    pendingReward?.perContracts &&
-                    bundlerClient
-                )
-            )
-                return;
+            if (!(pendingReward?.perContracts && bundlerClient)) return;
 
             // For each pending rewards, launch a tx
-            const txs = await nexusWallet.account.encodeCallData(
+            const txs = encodeWalletMulticall(
                 pendingReward.perContracts.map((contract) => ({
                     to: contract.address,
                     data: contract.claimTx,
@@ -76,18 +57,11 @@ export function PendingReferral() {
             );
 
             // Send the user op
-            const userOpHash = await nexusWallet.sendUserOperation({
-                userOperation: {
-                    callData: txs,
-                },
-                account: nexusWallet.account,
+            const txHash = await sendTransactionAsync({
+                to: address,
+                data: txs,
             });
-
-            // Wait for it
-            const userOpReceipt = await getUserOperationReceipt(bundlerClient, {
-                hash: userOpHash,
-            });
-            console.log("UserOp receipt", userOpReceipt);
+            console.log("UserOp receipt", txHash);
 
             // Invalidate the user tokens
             await invalidateUserTokens();
@@ -95,7 +69,7 @@ export function PendingReferral() {
             // Refetch the pending reward
             await refetchPendingReward();
 
-            return userOpReceipt?.receipt?.transactionHash;
+            return txHash;
         },
     });
 

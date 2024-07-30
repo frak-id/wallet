@@ -49,6 +49,7 @@ export function usePerformRecoveryOnChain(chainId: number) {
             // TODO: We should ensure that the new wallet is different from the initial wallet
 
             // Build the recovery account
+            // @ts-ignore: The useClient hook doesn't expose a client with the PublicRpcSchema, should be fixed
             const smartAccount = recoverySmartAccount(client, {
                 localAccount: recoveryAccount,
                 initialWallet: file.initialWallet,

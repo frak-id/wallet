@@ -86,7 +86,7 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                                                 startOfDay(new Date())
                                             )
                                         }
-                                        initialFocus
+                                        startMonth={startOfDay(new Date())}
                                     />
                                 </PopoverContent>
                             </Popover>
@@ -149,7 +149,9 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                                                         "scheduled.dateStart"
                                                     )
                                             }
-                                            initialFocus
+                                            startMonth={form.getValues(
+                                                "scheduled.dateStart"
+                                            )}
                                         />
                                     </PopoverContent>
                                 </Popover>

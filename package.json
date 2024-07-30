@@ -15,7 +15,7 @@
     "format": "biome check --write .",
     "deploy": "sst deploy --stage dev",
     "deploy:prod": "sst deploy --stage prod",
-    "build": "sst build --stage prod",
+    "build": "sst build --stage dev",
     "clean": "rimraf **/.open-next/ **/.next/ .sst/dist/ .sst/artifacts/",
     "update:deps": "npm-check-updates -ui -ws",
     "changeset": "changeset",
