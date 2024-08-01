@@ -48,7 +48,7 @@ export const getTransport = memo(
 /**
  * Get the viem client for the given chain
  */
-export const getViemClientFromChain = memo(
+const getViemClientFromChain = memo(
     ({ chain }: { chain: Chain }) =>
         createClient({
             chain,

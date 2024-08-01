@@ -47,7 +47,6 @@ export function Filters() {
                             disabled={(date) =>
                                 isBefore(date, startOfDay(new Date()))
                             }
-                            initialFocus={true}
                         />
                     </PopoverContent>
                 </Popover>

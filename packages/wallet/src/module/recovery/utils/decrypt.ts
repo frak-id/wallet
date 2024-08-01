@@ -1,4 +1,4 @@
-import { passToKey } from "@/module/recovery/utils/encrypt";
+import { passToKey } from "@/module/recovery-setup/utils/encrypt";
 import { base64URLStringToBuffer } from "@simplewebauthn/browser";
 import { type Hex, bytesToString } from "viem";
 

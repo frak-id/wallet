@@ -20,7 +20,7 @@
     align-items: center;
 }
 
-.navButton {
+.navButtonPrevious {
     all: unset;
     display: flex;
     opacity: 0.5;
@@ -29,14 +29,21 @@
     &:hover {
         opacity: 1;
     }
-}
 
-.navButtonPrevious {
     position: absolute;
     left: 4px;
 }
 
 .navButtonNext {
+    all: unset;
+    display: flex;
+    opacity: 0.5;
+    cursor: pointer;
+
+    &:hover {
+        opacity: 1;
+    }
+
     position: absolute;
     right: 4px;
 }

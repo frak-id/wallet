@@ -17,9 +17,9 @@
   "dependencies": {
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
+    "lucide-react": "^0.417.0",
     "@radix-ui/react-slot": "^1.1.0",
-    "@tanstack/react-query": "^5.51.5",
-    "@tanstack/store": "^0.5.5",
+    "@tanstack/react-query": "^5.51.15",
     "humanize-duration": "^3.32.1",
     "iron-session": "^8.0.2",
     "mongodb": "^6.8.0",
@@ -30,11 +30,11 @@
     "react-dom": "^18",
     "react-loading-skeleton": "^3.4.0",
     "use-local-storage-state": "^19.3.1",
-    "viem": "^2.17.4"
+    "viem": "^2.18.5"
   },
   "devDependencies": {
     "@types/humanize-duration": "^3.27.4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "sst": "2.43.4",

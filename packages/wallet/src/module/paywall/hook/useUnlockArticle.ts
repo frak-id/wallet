@@ -4,6 +4,7 @@ import { frakChainId } from "@/context/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
+import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { useInvalidateCommunityTokenAvailability } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import {
     setPaywallErrorAtom,
@@ -50,7 +51,7 @@ export function useUnlockArticle({
         // Build the smart wallet client
         return {
             smartWalletClient:
-                connectorClient as SmartAccountClient<ENTRYPOINT_ADDRESS_V06_TYPE>,
+                connectorClient as unknown as SmartAccountClient<ENTRYPOINT_ADDRESS_V06_TYPE>,
             address: connectorClient?.account?.address,
         };
     }, [connectorClient]);
@@ -159,8 +160,7 @@ export function useUnlockArticle({
                 walletAddress: address,
                 context,
             });
-            const smartWalletData =
-                await smartWalletClient.account.encodeCallData(txs);
+            const smartWalletData = encodeWalletMulticall(txs);
 
             // Launch the user operation
             setPaywallLoading("pendingSignature");

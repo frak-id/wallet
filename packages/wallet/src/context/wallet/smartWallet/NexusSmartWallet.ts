@@ -30,6 +30,8 @@ import {
     type Chain,
     type Client,
     type Hex,
+    type PublicActions,
+    type PublicRpcSchema,
     type Transport,
     boolToHex,
     concatHex,
@@ -182,7 +184,13 @@ export async function nexusSmartAccount<
     return toSmartAccount({
         address: accountAddress,
 
-        client: client,
+        client: client as Client<
+            TTransport,
+            TChain,
+            undefined,
+            PublicRpcSchema,
+            PublicActions
+        >,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
         source: "nexusSmartAccount",
 

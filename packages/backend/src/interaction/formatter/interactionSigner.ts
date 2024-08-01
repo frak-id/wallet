@@ -1,6 +1,6 @@
 import { contentInteractionDiamondAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { Config } from "sst/node/config";
-import { type Address, type Hex, keccak256 } from "viem";
+import { type Address, type Hex, concatHex, keccak256 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { readContract, signTypedData } from "viem/actions";
 import { getViemClient } from "../../blockchain/client";
@@ -29,11 +29,10 @@ export async function getInteractionSignature({
     const interactionHash = keccak256(facetData);
 
     // Get the current interaction nonce
-    const nonce = await readContract(client, {
-        address: interactionContract,
-        abi: contentInteractionDiamondAbi,
-        functionName: "getNonceForInteraction",
-        args: [interactionHash, user],
+    const nonce = await getNonce({
+        interactionHash,
+        user,
+        interactionContract,
     });
 
     // Sign this interaction data
@@ -67,4 +66,33 @@ export async function getInteractionSignature({
             nonce,
         },
     });
+}
+
+const nonceCache = new Map<Hex, bigint>();
+
+async function getNonce({
+    interactionHash,
+    user,
+    interactionContract,
+}: { interactionHash: Hex; user: Address; interactionContract: Address }) {
+    const cacheKey = keccak256(
+        concatHex([interactionContract, interactionHash, user])
+    );
+
+    const current = nonceCache.get(cacheKey);
+    if (current) {
+        nonceCache.set(cacheKey, current + 1n);
+        return current + 1n;
+    }
+
+    // Otherwise, fetch it and cache it
+    const client = getViemClient();
+    const nonce = await readContract(client, {
+        address: interactionContract,
+        abi: contentInteractionDiamondAbi,
+        functionName: "getNonceForInteraction",
+        args: [interactionHash, user],
+    });
+    nonceCache.set(cacheKey, nonce);
+    return nonce;
 }

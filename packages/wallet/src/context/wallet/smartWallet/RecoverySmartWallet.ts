@@ -17,6 +17,8 @@ import {
     type Chain,
     type Client,
     type LocalAccount,
+    type PublicActions,
+    type PublicRpcSchema,
     type Transport,
     concatHex,
     isAddressEqual,
@@ -72,7 +74,13 @@ export function recoverySmartAccount<
     return toSmartAccount({
         address: initialWallet.address,
 
-        client: client,
+        client: client as Client<
+            TTransport,
+            TChain,
+            undefined,
+            PublicRpcSchema,
+            PublicActions
+        >,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
         source: "nexusRecoverySmartAccount",
 

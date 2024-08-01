@@ -16,7 +16,7 @@
     "plugins": [{"name": "next"}],
     "paths": {
       "@/*": ["./src/*"],
-      "@module/*": ["../shared/module/*"]
+      "@module/*": ["../../packages/shared/module/*"]
     },
     "verbatimModuleSyntax": true
   },

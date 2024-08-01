@@ -21,29 +21,35 @@ export function Calendar({
             className={cx(styles.root, className)}
             classNames={{
                 months: styles.months,
-                caption: styles.caption,
+                month_caption: styles.caption,
                 nav: styles.nav,
-                nav_button: cx(styles.navButton),
-                nav_button_previous: styles.navButtonPrevious,
-                nav_button_next: styles.navButtonNext,
-                table: styles.table,
-                head_row: styles.headRow,
-                head_cell: styles.headCell,
-                tbody: styles.tbody,
-                row: styles.row,
-                cell: styles.cell,
-                day: cx(buttonVariants({ variant: "ghost" }), styles.day),
-                day_range_end: "day-range-end",
-                day_selected: styles.daySelected,
-                day_today: styles.dayToday,
-                day_outside: cx("day-outside", styles.dayOutside),
-                day_disabled: styles.dayDisabled,
-                day_hidden: "invisible",
+                button_previous: styles.navButtonPrevious,
+                button_next: styles.navButtonNext,
+                month_grid: styles.table,
+                weekdays: styles.headRow,
+                weekday: styles.headCell,
+                weeks: styles.tbody,
+                week: styles.row,
+                day: styles.cell,
+                day_button: cx(
+                    buttonVariants({ variant: "ghost" }),
+                    styles.day
+                ),
+                range_end: "day-range-end",
+                selected: styles.daySelected,
+                today: styles.dayToday,
+                outside: cx("day-outside", styles.dayOutside),
+                disabled: styles.dayDisabled,
+                hidden: "invisible",
                 ...classNames,
             }}
             components={{
-                IconLeft: () => <ChevronLeft size={18} />,
-                IconRight: () => <ChevronRight size={18} />,
+                Chevron: (props) => {
+                    if (props.orientation === "left") {
+                        return <ChevronLeft size={18} />;
+                    }
+                    return <ChevronRight size={18} />;
+                },
             }}
             {...props}
         />

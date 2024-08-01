@@ -109,9 +109,18 @@ export function smartAccountConnector<
         async isAuthorized() {
             return true;
         },
-        async getClient({ chainId }: { chainId: number }) {
+        // @ts-ignore: Permissionless account type is fcked up for now (missing a few required props)
+        async getClient(parameters?: { chainId?: number }) {
             const provider: Provider = await this.getProvider();
-            const client = await provider.getSmartAccountClient(chainId);
+
+            const safeChainId = parameters?.chainId ?? config.chains[0].id;
+            if (!safeChainId) {
+                throw new Error(
+                    "chainId is required to connect to get a smart account client"
+                );
+            }
+
+            const client = await provider.getSmartAccountClient(safeChainId);
             if (!client) {
                 throw new Error("No client found for the given chain");
             }
