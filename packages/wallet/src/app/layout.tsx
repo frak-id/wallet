@@ -1,6 +1,7 @@
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import { getFullSessionStatus } from "@/context/interaction/action/interactionSession";
+import { MetricalpReactProvider } from "@metricalp/react";
 import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
 import Script from "next/script";
@@ -64,7 +65,11 @@ export default async function RootLayout({
                     session={session}
                     interactionSession={interactionSession}
                 >
-                    {children}
+                    <MetricalpReactProvider
+                        tid={process.env.METRICALP_TID ?? ""}
+                    >
+                        {children}
+                    </MetricalpReactProvider>
                 </RootProvider>
                 <Script id="theme" strategy="afterInteractive">
                     {`

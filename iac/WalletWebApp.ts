@@ -18,8 +18,8 @@ export function WalletAppStack({ stack }: StackContext) {
         alchemyApiKey,
         pimlicoApiKey,
         airdropPrivateKey,
-        interactionValidatorPrivateKey,
         nexusUrl,
+        metricalpTid,
     } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
@@ -27,8 +27,8 @@ export function WalletAppStack({ stack }: StackContext) {
         alchemyApiKey,
         pimlicoApiKey,
         airdropPrivateKey,
-        interactionValidatorPrivateKey,
         nexusUrl,
+        metricalpTid,
     ];
 
     // Get the interaction queue

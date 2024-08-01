@@ -6,11 +6,11 @@ import { Queue } from "sst/node/queue";
 const wantedFromConfig = [
     "ALCHEMY_API_KEY",
     "PIMLICO_API_KEY",
+    "METRICALP_TID",
     // TODO: Shouldn't be here, but Next is crying all over the place when using SST.Config, to fix
     "MONGODB_NEXUS_URI",
     "SESSION_ENCRYPTION_KEY",
     "AIRDROP_PRIVATE_KEY",
-    "INTERACTION_VALIDATOR_PRIVATE_KEY",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 

@@ -28,6 +28,7 @@ export function ConfigStack({ stack }: StackContext) {
     );
     const adminPassword = new Config.Secret(stack, "ADMIN_PASSWORD");
     const worldNewsApiKey = new Config.Secret(stack, "WORLD_NEWS_API_KEY");
+    const metricalpTid = new Config.Secret(stack, "METRICALP_TID");
 
     const nexusUrl = new Config.Parameter(stack, "NEXUS_WALLET_URL", {
         value: getWalletUrl(stack),
@@ -46,5 +47,6 @@ export function ConfigStack({ stack }: StackContext) {
         adminPassword,
         nexusUrl,
         worldNewsApiKey,
+        metricalpTid,
     };
 }
