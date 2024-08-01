@@ -1,6 +1,7 @@
 import { isRunningInProd } from "@/context/common/env";
-import { memo } from "radash";
-import { type Chain, createClient, extractChain } from "viem";
+import { getViemClientFromChain } from "@frak-labs/shared/context/blockchain/provider";
+import { getAlchemyTransportNoBatch } from "@frak-labs/shared/context/blockchain/transport/alchemy-transport";
+import { createClient, extractChain } from "viem";
 import {
     arbitrum,
     arbitrumSepolia,
@@ -10,10 +11,6 @@ import {
     optimismSepolia,
     polygon,
 } from "viem/chains";
-import {
-    getAlchemyTransport,
-    getAlchemyTransportNoBatch,
-} from "./alchemy-transport";
 
 /**
  * All the available chains
@@ -34,31 +31,6 @@ export const availableChains = isRunningInProd
       ] as const);
 
 export type AvailableChainIds = (typeof availableChains)[number]["id"];
-
-/**
- * Get the transport for the given chain
- */
-export const getTransport = memo(
-    ({ chain }: { chain: Chain }) => getAlchemyTransport({ chain }),
-    {
-        key: ({ chain }: { chain: Chain }) => `viem-transport-${chain.id}`,
-    }
-);
-
-/**
- * Get the viem client for the given chain
- */
-const getViemClientFromChain = memo(
-    ({ chain }: { chain: Chain }) =>
-        createClient({
-            chain,
-            transport: getTransport({ chain }),
-            cacheTime: 60_000,
-        }),
-    {
-        key: ({ chain }: { chain: Chain }) => `viem-client-${chain.id}`,
-    }
-);
 
 /**
  * Get a viem client for the chain id

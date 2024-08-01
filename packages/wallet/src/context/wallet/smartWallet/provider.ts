@@ -2,7 +2,6 @@ import {
     getBundlerClient,
     getPaymasterClient,
 } from "@/context/blockchain/aa-provider";
-import { getAlchemyTransport } from "@/context/blockchain/alchemy-transport";
 import {
     type AvailableChainIds,
     availableChains,
@@ -13,6 +12,7 @@ import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
+import { getViemClientFromChain } from "@frak-labs/shared/context/blockchain/provider";
 import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import {
@@ -24,7 +24,7 @@ import type { SmartAccount } from "permissionless/accounts";
 import { sponsorUserOperation } from "permissionless/actions/pimlico";
 import type { EntryPoint } from "permissionless/types";
 import { tryit } from "radash";
-import { type Chain, type Transport, createClient, extractChain } from "viem";
+import { type Chain, type Transport, extractChain } from "viem";
 import { estimateGas } from "viem/actions";
 
 /**
@@ -181,16 +181,7 @@ async function buildSmartAccount<
     if (!chain) {
         throw new Error(`Chain with id ${chainId} not configured`);
     }
-    const viemClient = createClient({
-        chain: chain,
-        transport: getAlchemyTransport({ chain }),
-        cacheTime: 60_000,
-        batch: {
-            multicall: {
-                wait: 50,
-            },
-        },
-    });
+    const viemClient = getViemClientFromChain({ chain });
 
     // Get the smart wallet client
     const smartAccount = await nexusSmartAccount(viemClient, {
