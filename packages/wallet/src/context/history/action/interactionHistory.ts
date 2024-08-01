@@ -1,7 +1,7 @@
 "use server";
 
+import { getClient } from "@/context/common/graphql";
 import type { InteractionHistory } from "@/types/InteractionHistory";
-import { getClient } from "@frak-labs/nexus-dashboard/src/context/indexer/client";
 import { gql } from "@urql/core";
 import { unstable_cache } from "next/cache";
 import type { Address } from "viem";

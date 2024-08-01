@@ -21,7 +21,7 @@ type GetContentsResult = {
  * Get all the user contents
  * todo: should have a caching layer
  */
-export async function getContents({ wallet }: { wallet: Address }) {
+async function getContents({ wallet }: { wallet: Address }) {
     // Get our api results
     const json = await ky
         .get(`https://indexer.frak.id/admin/${wallet}/contents`)

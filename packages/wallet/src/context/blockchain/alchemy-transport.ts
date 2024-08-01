@@ -65,7 +65,7 @@ export function getAlchemyTransportNoBatch({ chain }: { chain: Chain }) {
  * @param chain
  * @param version
  */
-export function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
+function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
     // Ensure we got an api key
     if (!process.env.ALCHEMY_API_KEY) {
         return undefined;

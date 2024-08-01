@@ -2,6 +2,7 @@
 
 import { erc6909Transfer } from "@/context/blockchain/abis/event-abi";
 import { frakChainPocClient } from "@/context/blockchain/provider";
+import { isCommunityTokenForContentEnabled } from "@/context/community-token/action/getCommunityToken";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { communityTokenAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
@@ -9,30 +10,6 @@ import { unstable_cache } from "next/cache";
 import { unique } from "radash";
 import type { Address } from "viem";
 import { getLogs, multicall, readContract } from "viem/actions";
-
-/**
- * Check if the community token is enabled for the given content
- * @param contentId
- */
-async function _isCommunityTokenForContentEnabled({
-    contentId,
-}: { contentId: bigint }) {
-    return await readContract(frakChainPocClient, {
-        address: addresses.communityToken,
-        abi: communityTokenAbi,
-        functionName: "isEnabled",
-        args: [contentId],
-    });
-}
-
-export const isCommunityTokenForContentEnabled = unstable_cache(
-    _isCommunityTokenForContentEnabled,
-    ["check-community-token-for-content"],
-    {
-        // Keep that in server cache for 48hr
-        revalidate: 60 * 60 * 48,
-    }
-);
 
 /**
  * Check if the community token is enabled for the given content

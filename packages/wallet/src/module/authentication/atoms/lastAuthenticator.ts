@@ -11,7 +11,7 @@ type LastAuthentication = Session & {
 /**
  * Atom with our last authenticator
  */
-export const lastAuthenticatorAtom = atomWithStorage<LastAuthentication | null>(
+const lastAuthenticatorAtom = atomWithStorage<LastAuthentication | null>(
     "lastAuthentication",
     null
 );
