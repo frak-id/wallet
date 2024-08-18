@@ -10,6 +10,9 @@ export const getTransport = memo(
     ({ chain }: { chain: Chain }) => {
         const erpcTransport = getErpcTransport({ chain });
         const alchemyTransport = getAlchemyTransport({ chain });
+        if (!erpcTransport) {
+            return alchemyTransport;
+        }
         return fallback([erpcTransport, alchemyTransport]);
     },
     {
