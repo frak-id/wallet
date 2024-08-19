@@ -1,9 +1,7 @@
-import { frakChainId } from "@/context/blockchain/provider";
 import { getPendingRewards } from "@/context/interaction/action/pendingRewards";
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useAAClients } from "@/module/common/hook/useAAClients";
 import { useInvalidateUserTokens } from "@/module/tokens/hook/useGetUserTokens";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -17,11 +15,6 @@ export function PendingReferral() {
 
     // Get the user wallet address
     const { address } = useAccount();
-
-    // Fetch the AA transports
-    const { bundlerClient } = useAAClients({
-        chainId: frakChainId,
-    });
 
     const { sendTransactionAsync } = useSendTransaction();
 
@@ -45,7 +38,7 @@ export function PendingReferral() {
     } = useMutation({
         mutationKey: ["referral", "claim-reward", address],
         mutationFn: async () => {
-            if (!(pendingReward?.perContracts && bundlerClient)) return;
+            if (!pendingReward?.perContracts) return;
 
             // For each pending rewards, launch a tx
             const txs = encodeWalletMulticall(

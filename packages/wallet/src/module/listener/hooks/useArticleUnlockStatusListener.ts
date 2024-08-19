@@ -1,7 +1,7 @@
+import { getPimlicoClient } from "@/context/blockchain/aa-provider";
 import { frakChainId } from "@/context/blockchain/provider";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { useAAClients } from "@/module/common/hook/useAAClients";
 import {
     unlockStateAtom,
     unlockStateFromOnChainSetterAtom,
@@ -24,6 +24,7 @@ import { useAtomValue } from "jotai/index";
 import { waitForUserOperationReceipt } from "permissionless";
 import { useCallback, useEffect } from "react";
 import { waitForTransactionReceipt } from "viem/actions";
+import { useClient } from "wagmi";
 
 type OnListenToArticleUnlockStatus = IFrameRequestResolver<
     Extract<
@@ -37,7 +38,7 @@ type OnListenToArticleUnlockStatus = IFrameRequestResolver<
  */
 export function useArticleUnlockStatusListener(): OnListenToArticleUnlockStatus {
     // Fetch the AA transports
-    const { viemClient, bundlerClient } = useAAClients({
+    const viemClient = useClient({
         chainId: frakChainId,
     });
 
@@ -119,10 +120,14 @@ export function useArticleUnlockStatusListener(): OnListenToArticleUnlockStatus 
             loaderParam.txHash ?? "no-tx-hash",
         ],
         queryFn: async () => {
+            if (!viemClient) {
+                return null;
+            }
+
             // If we are waiting for the user op hash
-            if (loaderParam.userOpHash && bundlerClient) {
+            if (loaderParam.userOpHash) {
                 const status = await waitForUserOperationReceipt(
-                    bundlerClient,
+                    getPimlicoClient(viemClient.chain),
                     {
                         hash: loaderParam.userOpHash,
                     }
@@ -137,7 +142,7 @@ export function useArticleUnlockStatusListener(): OnListenToArticleUnlockStatus 
             }
 
             // If we are waiting for the tx hash
-            if (loaderParam.txHash && viemClient) {
+            if (loaderParam.txHash) {
                 await waitForTransactionReceipt(viemClient, {
                     hash: loaderParam.txHash,
                     confirmations: 2,
@@ -150,10 +155,7 @@ export function useArticleUnlockStatusListener(): OnListenToArticleUnlockStatus 
             // If we arrived here, nothing to load
             return null;
         },
-        enabled:
-            loaderParam.key !== "nothing-to-load" &&
-            !!viemClient &&
-            !!bundlerClient,
+        enabled: loaderParam.key !== "nothing-to-load" && !!viemClient,
     });
 
     return useCallback(

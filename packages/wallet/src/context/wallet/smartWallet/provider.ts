@@ -1,6 +1,6 @@
 import {
-    getBundlerClient,
-    getPaymasterClient,
+    getPimlicoClient,
+    getPimlicoTransport,
 } from "@/context/blockchain/aa-provider";
 import {
     type AvailableChainIds,
@@ -21,9 +21,12 @@ import {
     createSmartAccountClient,
 } from "permissionless";
 import type { SmartAccount } from "permissionless/accounts";
-import { sponsorUserOperation } from "permissionless/actions/pimlico";
+import {
+    getUserOperationGasPrice,
+    sponsorUserOperation,
+} from "permissionless/actions/pimlico";
 import type { EntryPoint } from "permissionless/types";
-import { tryit } from "radash";
+import { all, tryit } from "radash";
 import { type Chain, type Transport, extractChain } from "viem";
 import { estimateGas } from "viem/actions";
 
@@ -204,34 +207,47 @@ async function buildSmartAccount<
     });
 
     // Get the bundler and paymaster clients
-    const { bundlerTransport } = getBundlerClient(viemClient.chain);
-    const paymasterClient = getPaymasterClient(viemClient.chain);
+    const pimlicoTransport = getPimlicoTransport(viemClient.chain);
+    const pimlicoClient = getPimlicoClient(viemClient.chain);
 
     // Build the smart wallet client
     const client = createSmartAccountClient({
         account: smartAccount,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
         chain: viemClient.chain,
-        bundlerTransport,
+        bundlerTransport: pimlicoTransport,
         // Only add a middleware if the paymaster client is available
         middleware: {
             sponsorUserOperation: async (args) => {
-                // Perform a direct gas estimation of the call and update the user op
-                const [, estimation] = await tryit(() =>
-                    estimateGas(frakChainPocClient, {
-                        account: args.userOperation.sender,
-                        to: args.userOperation.sender,
-                        data: args.userOperation.callData,
-                    })
-                )();
+                // Get gas price + direct estimation in //
+                const {
+                    gasPrice: { standard },
+                    tryEstimation: [, estimation],
+                } = await all({
+                    gasPrice: getUserOperationGasPrice(pimlicoClient),
+                    tryEstimation: tryit(() =>
+                        estimateGas(frakChainPocClient, {
+                            account: args.userOperation.sender,
+                            to: args.userOperation.sender,
+                            data: args.userOperation.callData,
+                        })
+                    )(),
+                });
+
+                // Update the gas prices
+                args.userOperation.maxFeePerGas = standard.maxFeePerGas;
+                args.userOperation.maxPriorityFeePerGas =
+                    standard.maxPriorityFeePerGas;
+
+                // If no estimation, just sponsor the user operation
                 if (!estimation) {
-                    return sponsorUserOperation(paymasterClient, args);
+                    return sponsorUserOperation(pimlicoClient, args);
                 }
                 // Use the estimation with 25% of error margin on the estimation
                 args.userOperation.callGasLimit = (estimation * 125n) / 100n;
 
                 // Send the sponsoring request
-                return sponsorUserOperation(paymasterClient, args);
+                return sponsorUserOperation(pimlicoClient, args);
             },
         },
     }) as unknown as Client;

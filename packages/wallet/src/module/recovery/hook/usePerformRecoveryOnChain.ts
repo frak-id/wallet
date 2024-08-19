@@ -1,6 +1,6 @@
 import {
-    getBundlerClient,
-    getPaymasterClient,
+    getPimlicoClient,
+    getPimlicoTransport,
 } from "@/context/blockchain/aa-provider";
 import { doAddPassKeyFnAbi } from "@/context/recover/utils/abi";
 import { recoverySmartAccount } from "@/context/wallet/smartWallet/RecoverySmartWallet";
@@ -18,13 +18,13 @@ import { useClient } from "wagmi";
 /**
  * Perform the recovery on the given chain
  * Steps for recovery
- *  - Upload the recovery file -> TODO
- *  - Perform a test using the `useLogin` hook to try to do a softRecover (passing wallet address and authenticator id from the file as param)  -> TODO
- *  - If login good, then proceed as usual  -> TODO
- *  - Create a webauthn authenticator  -> Hook op
- *  - Enter file passphrase -> TODO
- *  - Decrypt the guardian private key and build local account -> Hook op
- *  - Display options to recover the wallet on every deployed chains -> Hook op
+ *  - Upload the recovery file
+ *  - Perform a test using the `useLogin` hook to try to do a softRecover (passing wallet address and authenticator id from the file as param)
+ *  - If login good, then proceed as usual
+ *  - Create a webauthn authenticator
+ *  - Enter file passphrase
+ *  - Decrypt the guardian private key and build local account
+ *  - Display options to recover the wallet on every deployed chains
  */
 export function usePerformRecoveryOnChain(chainId: number) {
     // Get the viem client for the given chain
@@ -56,19 +56,19 @@ export function usePerformRecoveryOnChain(chainId: number) {
             });
 
             // Get the bundler and paymaster clients
-            const { bundlerTransport } = getBundlerClient(client.chain);
-            const paymasterClient = getPaymasterClient(client.chain);
+            const pimlicoTransport = getPimlicoTransport(client.chain);
+            const pimlicoClient = getPimlicoClient(client.chain);
 
             // Build the smart wallet client
             const accountClient = createSmartAccountClient({
                 account: smartAccount,
                 entryPoint: ENTRYPOINT_ADDRESS_V06,
                 chain: client.chain,
-                bundlerTransport,
+                bundlerTransport: pimlicoTransport,
                 // Only add a middleware if the paymaster client is available
                 middleware: {
                     sponsorUserOperation: (args) =>
-                        sponsorUserOperation(paymasterClient, args),
+                        sponsorUserOperation(pimlicoClient, args),
                 },
             });
 

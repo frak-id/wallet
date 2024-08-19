@@ -70,14 +70,15 @@ function interactionsResources({ stack }: StackContext) {
  * @param stack
  */
 function campaignResources({ stack }: StackContext) {
-    const { airdropPrivateKey, alchemyApiKey } = use(ConfigStack);
+    const { airdropPrivateKey, alchemyApiKey, nexusRpcSecret } =
+        use(ConfigStack);
     // Interaction handling stuff
     const reloadCampaignQueue = new Queue(stack, "ReloadCampaignQueue", {
         consumer: {
             function: {
                 handler: "packages/backend/src/campaign/reloadQueue.handler",
                 timeout: "15 minutes",
-                bind: [airdropPrivateKey, alchemyApiKey],
+                bind: [airdropPrivateKey, alchemyApiKey, nexusRpcSecret],
             },
             cdk: {
                 eventSource: {
