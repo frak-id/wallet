@@ -40,15 +40,6 @@ export function Sso() {
     const { prompt, isInstalled } = useAddToHomeScreenPrompt();
 
     /**
-     * Redirect to the wallet's homepage if the app is installed
-     */
-    useMemo(() => {
-        if (isInstalled && process.env.APP_URL) {
-            window.location.href = process.env.APP_URL;
-        }
-    }, [isInstalled]);
-
-    /**
      * Get the search params and set stuff in the sso context
      */
     const searchParams = useSearchParams();
@@ -98,6 +89,15 @@ export function Sso() {
             return;
         }
     }, []);
+
+    /**
+     * Redirect to the wallet's homepage if the app is installed
+     */
+    useMemo(() => {
+        if (isInstalled) {
+            redirectOrClose();
+        }
+    }, [isInstalled, redirectOrClose]);
 
     return (
         <Grid
