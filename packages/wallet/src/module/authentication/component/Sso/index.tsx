@@ -1,5 +1,6 @@
 "use client";
 
+import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import {
     currentSsoMetadataAtom,
     ssoContextAtom,
@@ -13,6 +14,9 @@ import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScree
 import { InstallApp } from "@/module/wallet/component/InstallApp";
 import { jotaiStore } from "@module/atoms/store";
 import { ButtonRipple } from "@module/component/ButtonRipple";
+import { startAuthentication } from "@simplewebauthn/browser";
+import { generateAuthenticationOptions } from "@simplewebauthn/server";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
@@ -130,6 +134,8 @@ export function Sso() {
                     <SsoRegisterComponent onSuccess={onSuccess} />
                     <br />
                     <SsoLoginComponent onSuccess={onSuccess} />
+                    <br />
+                    <DebugSection />
                 </>
             )}
             {success && (
@@ -172,6 +178,106 @@ function Header() {
                     {currentMetadata.name}
                 </a>
             </p>
+        </>
+    );
+}
+
+function DebugSection() {
+    const { data: debugData, error: debugError } = useQuery({
+        queryKey: ["debug", "webauthn"],
+        gcTime: 0,
+        refetchOnMount: true,
+        queryFn: async () => {
+            const isWebAuthNAvailable =
+                !!window.PublicKeyCredential &&
+                !!PublicKeyCredential.isConditionalMediationAvailable;
+            const isConditionalMediationAvailable =
+                await PublicKeyCredential.isConditionalMediationAvailable();
+            const isUserVerifyingPlatformAuthenticatorAvailable =
+                await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+
+            return {
+                isWebAuthNAvailable,
+                isConditionalMediationAvailable,
+                isUserVerifyingPlatformAuthenticatorAvailable,
+            };
+        },
+    });
+
+    const {
+        mutate: setupConditional,
+        data: authentData,
+        error: authentError,
+        status: authentStatus,
+    } = useMutation({
+        mutationKey: ["debug", "webauthn-conditional"],
+        mutationFn: async () => {
+            // Get regular options
+            const authenticationOptions = await generateAuthenticationOptions({
+                rpID: rpId,
+                userVerification: "required",
+                // timeout in ms (3min, can be useful for mobile phone linking)
+                timeout: 180_000,
+            });
+
+            // Get the credential
+            /*return await navigator.credentials.get({
+                mediation: "conditional",
+                publicKey: {
+                    rpId: authenticationOptions.rpId,
+                    challenge: base64URLStringToBuffer(authenticationOptions.challenge),
+                },
+            })*/
+
+            // Start the authentication with conditional mediation
+            return await startAuthentication(authenticationOptions, true);
+        },
+    });
+
+    if (!debugData) {
+        return (
+            <>
+                No debug data <br />
+                {debugError && <pre>{JSON.stringify(debugError, null, 2)}</pre>}
+            </>
+        );
+    }
+
+    return (
+        <>
+            <p>
+                Is webauthn available?{" "}
+                {debugData.isWebAuthNAvailable.toString()}
+            </p>
+            <p>
+                Is conditional mediation available?{" "}
+                {debugData.isConditionalMediationAvailable.toString()}
+            </p>
+            <p>
+                Is user verifying platform authenticator available?{" "}
+                {debugData.isUserVerifyingPlatformAuthenticatorAvailable.toString()}
+            </p>
+
+            <hr />
+
+            <button onClick={() => setupConditional()} type={"button"}>
+                Setup conditional
+            </button>
+
+            <br />
+
+            <input
+                type={"text"}
+                name={"empty autocomplete"}
+                autoComplete={"username webauthn"}
+                placeholder={"Click me"}
+            />
+
+            <hr />
+
+            <p>Conditional status: {authentStatus}</p>
+            {authentData && <pre>{JSON.stringify(authentData, null, 2)}</pre>}
+            {authentError && <pre>{JSON.stringify(authentError, null, 2)}</pre>}
         </>
     );
 }
