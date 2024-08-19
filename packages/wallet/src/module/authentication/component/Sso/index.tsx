@@ -9,18 +9,45 @@ import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogi
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
+import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
+import { InstallApp } from "@/module/wallet/component/InstallApp";
 import { jotaiStore } from "@module/atoms/store";
+import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useAtomValue } from "jotai/index";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 /**
  * The SSO page itself
  * @constructor
  */
 export function Sso() {
+    /**
+     * The current metadata
+     */
+    const currentMetadata = useAtomValue(currentSsoMetadataAtom);
+
+    /**
+     * The success state after login or register
+     */
+    const [success, setSuccess] = useState(false);
+
+    /**
+     * The PWA prompt and installed state
+     */
+    const { prompt, isInstalled } = useAddToHomeScreenPrompt();
+
+    /**
+     * Redirect to the wallet's homepage if the app is installed
+     */
+    useMemo(() => {
+        if (isInstalled && process.env.APP_URL) {
+            window.location.href = process.env.APP_URL;
+        }
+    }, [isInstalled]);
+
     /**
      * Get the search params and set stuff in the sso context
      */
@@ -45,6 +72,19 @@ export function Sso() {
      * The on success callback
      */
     const onSuccess = useCallback(() => {
+        // If PWA can be installed, show the button to propose to install it
+        if (prompt) {
+            setSuccess(true);
+            return;
+        }
+
+        redirectOrClose();
+    }, [prompt]);
+
+    /**
+     * Redirect or close after success
+     */
+    const redirectOrClose = useCallback(() => {
         // Check the current atom context
         const ssoContext = jotaiStore.get(ssoContextAtom);
         // If we got a redirect, redirect to the page directly
@@ -85,9 +125,24 @@ export function Sso() {
         >
             <Header />
             <br />
-            <SsoRegisterComponent onSuccess={onSuccess} />
-            <br />
-            <SsoLoginComponent onSuccess={onSuccess} />
+            {!success && (
+                <>
+                    <SsoRegisterComponent onSuccess={onSuccess} />
+                    <br />
+                    <SsoLoginComponent onSuccess={onSuccess} />
+                </>
+            )}
+            {success && (
+                <>
+                    <p>You are successfully connected to your wallet.</p>
+                    <br />
+                    <InstallApp />
+                    <br />
+                    <ButtonRipple onClick={redirectOrClose}>
+                        Continue to {currentMetadata?.name}
+                    </ButtonRipple>
+                </>
+            )}
         </Grid>
     );
 }
