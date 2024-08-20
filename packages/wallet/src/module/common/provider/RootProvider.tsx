@@ -1,12 +1,13 @@
 "use client";
 
-import { availableChains, getTransport } from "@/context/blockchain/provider";
+import { availableChains } from "@/context/blockchain/provider";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type { InteractionSession, Session } from "@/types/Session";
+import { getTransport } from "@frak-labs/shared/context/blockchain/provider";
 import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";

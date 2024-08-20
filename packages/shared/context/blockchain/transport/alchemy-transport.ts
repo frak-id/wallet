@@ -1,11 +1,10 @@
 import { http, type Chain } from "viem";
-import type { AvailableChainIds } from "./provider";
 
 /**
  * The alchemy network names, used to rebuild the rpc urls
  * From: https://github.com/alchemyplatform/alchemy-sdk-js/blob/fddd65fff4bd7367469ccb44a0900aa1dcc0cc62/src/types/types.ts#L81
  */
-const AlchemyNetworkName: Record<AvailableChainIds, string> = {
+const AlchemyNetworkName: Record<number, string> = {
     // Testnet's
     //80002: "polygon-amoy",
     11155420: "opt-sepolia",
@@ -71,8 +70,13 @@ function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
         return undefined;
     }
 
+    // Ensure we got a network name
+    if (!AlchemyNetworkName[chain.id]) {
+        return undefined;
+    }
+
     // Build the alchemy rpc url depending on the chain
     return `https://${
-        AlchemyNetworkName[chain.id as AvailableChainIds]
+        AlchemyNetworkName[chain.id]
     }.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 }

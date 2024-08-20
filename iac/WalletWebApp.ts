@@ -20,6 +20,7 @@ export function WalletAppStack({ stack }: StackContext) {
         airdropPrivateKey,
         interactionValidatorPrivateKey,
         nexusUrl,
+        nexusRpcSecret,
     } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
@@ -29,6 +30,7 @@ export function WalletAppStack({ stack }: StackContext) {
         airdropPrivateKey,
         interactionValidatorPrivateKey,
         nexusUrl,
+        nexusRpcSecret,
     ];
 
     // Get the interaction queue

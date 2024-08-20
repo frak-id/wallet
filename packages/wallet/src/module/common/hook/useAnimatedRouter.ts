@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import * as NProgress from "nprogress";
+import NProgress from "nprogress";
 
 export function useAnimatedRouter() {
     const router = useRouter();

@@ -5,6 +5,7 @@ import { Queue } from "sst/node/queue";
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
     "ALCHEMY_API_KEY",
+    "NEXUS_RPC_SECRET",
     "NEXUS_WALLET_URL",
     "SESSION_ENCRYPTION_KEY",
     "MONGODB_BUSINESS_URI",

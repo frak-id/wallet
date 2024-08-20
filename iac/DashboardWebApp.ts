@@ -13,6 +13,7 @@ export function DashboardWebApp({ stack }: StackContext) {
     // The configs required to run the app
     const {
         alchemyApiKey,
+        nexusRpcSecret,
         nexusUrl,
         sessionEncryptionKey,
         mongoBusinessUri,
@@ -20,6 +21,7 @@ export function DashboardWebApp({ stack }: StackContext) {
     } = use(ConfigStack);
     const configs = [
         alchemyApiKey,
+        nexusRpcSecret,
         nexusUrl,
         sessionEncryptionKey,
         mongoBusinessUri,
