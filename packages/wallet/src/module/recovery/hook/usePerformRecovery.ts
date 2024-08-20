@@ -6,14 +6,30 @@ import { doAddPassKeyFnAbi } from "@/context/recover/utils/abi";
 import { recoverySmartAccount } from "@/context/wallet/smartWallet/RecoverySmartWallet";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { useMutation } from "@tanstack/react-query";
+import { type DefaultError, useMutation } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
 import {
     ENTRYPOINT_ADDRESS_V06,
     createSmartAccountClient,
 } from "permissionless";
-import { sponsorUserOperation } from "permissionless/actions/pimlico";
-import { type LocalAccount, encodeFunctionData, keccak256, toHex } from "viem";
+import {
+    getUserOperationGasPrice,
+    sponsorUserOperation,
+} from "permissionless/actions/pimlico";
+import {
+    type Hex,
+    type LocalAccount,
+    encodeFunctionData,
+    keccak256,
+    toHex,
+} from "viem";
 import { useClient } from "wagmi";
+
+type MutationParams = {
+    file: RecoveryFileContent;
+    recoveryAccount: LocalAccount<string>;
+    newWallet: Omit<WebAuthNWallet, "address">;
+};
 
 /**
  * Perform the recovery on the given chain
@@ -26,24 +42,23 @@ import { useClient } from "wagmi";
  *  - Decrypt the guardian private key and build local account
  *  - Display options to recover the wallet on every deployed chains
  */
-export function usePerformRecoveryOnChain(chainId: number) {
+export function usePerformRecovery(
+    options?: UseMutationOptions<Hex, DefaultError, MutationParams>
+) {
     // Get the viem client for the given chain
-    const client = useClient({ chainId });
+    const client = useClient();
 
     const { mutateAsync, mutate, ...mutationStuff } = useMutation({
-        mutationKey: ["recovery", "perform-recovery", chainId],
+        ...options,
+        mutationKey: ["recovery", "perform-recovery"],
         gcTime: 0,
         mutationFn: async ({
             file,
             recoveryAccount,
             newWallet,
-        }: {
-            file: RecoveryFileContent;
-            recoveryAccount: LocalAccount<string>;
-            newWallet: Omit<WebAuthNWallet, "address">;
-        }) => {
+        }: MutationParams) => {
             if (!client) {
-                throw new Error(`No client found for chain ${chainId}`);
+                throw new Error("No client found");
             }
 
             // TODO: We should ensure that the new wallet is different from the initial wallet
@@ -56,8 +71,8 @@ export function usePerformRecoveryOnChain(chainId: number) {
             });
 
             // Get the bundler and paymaster clients
-            const pimlicoTransport = getPimlicoTransport(client.chain);
-            const pimlicoClient = getPimlicoClient(client.chain);
+            const pimlicoTransport = getPimlicoTransport();
+            const pimlicoClient = getPimlicoClient();
 
             // Build the smart wallet client
             const accountClient = createSmartAccountClient({
@@ -67,8 +82,18 @@ export function usePerformRecoveryOnChain(chainId: number) {
                 bundlerTransport: pimlicoTransport,
                 // Only add a middleware if the paymaster client is available
                 middleware: {
-                    sponsorUserOperation: (args) =>
-                        sponsorUserOperation(pimlicoClient, args),
+                    sponsorUserOperation: async (args) => {
+                        const { standard } =
+                            await getUserOperationGasPrice(pimlicoClient);
+
+                        // Update the gas prices
+                        args.userOperation.maxFeePerGas = standard.maxFeePerGas;
+                        args.userOperation.maxPriorityFeePerGas =
+                            standard.maxPriorityFeePerGas;
+
+                        // Sponsor the user operation
+                        return sponsorUserOperation(pimlicoClient, args);
+                    },
                 },
             });
 

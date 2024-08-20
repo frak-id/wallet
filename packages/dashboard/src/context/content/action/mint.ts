@@ -1,7 +1,7 @@
 "use server";
 import { getSafeSession } from "@/context/auth/actions/session";
 import { isDnsTxtRecordSet } from "@/context/content/action/verifyDomain";
-import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
+import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { contentRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
@@ -57,10 +57,10 @@ export async function mintMyContent({
 
     // Prepare the mint tx and send it
     const mintTxPreparation = await prepareTransactionRequest(
-        frakChainPocClient,
+        currentViemClient,
         {
             account: minterAccount,
-            chain: frakChainPocClient.chain,
+            chain: currentViemClient.chain,
             to: addresses.contentRegistry,
             data: encodeFunctionData({
                 abi: contentRegistryAbi,
@@ -70,11 +70,11 @@ export async function mintMyContent({
         }
     );
     const mintTxHash = await sendTransaction(
-        frakChainPocClient,
+        currentViemClient,
         mintTxPreparation
     );
     // Wait for the mint to be done before proceeding to the transfer
-    await waitForTransactionReceipt(frakChainPocClient, {
+    await waitForTransactionReceipt(currentViemClient, {
         hash: mintTxHash,
         confirmations: 1,
     });
@@ -94,7 +94,7 @@ export async function mintMyContent({
  * @param contentId
  */
 async function assertContentDoesntExist({ contentId }: { contentId: bigint }) {
-    const existingMetadata = await readContract(frakChainPocClient, {
+    const existingMetadata = await readContract(currentViemClient, {
         address: addresses.contentRegistry,
         abi: contentRegistryAbi,
         functionName: "getMetadata",

@@ -4,7 +4,7 @@ import { getSafeSession } from "@/context/auth/actions/session";
 import { campaignRoles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import type { CampaignWithState } from "@/types/Campaign";
-import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
+import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import ky from "ky";
 import { all } from "radash";
@@ -51,7 +51,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     if (blockchainCampaigns.length > 0) {
         const { isActivesNew, canEditsNew } = await all({
             // Check if the campaign is active
-            isActivesNew: multicall(frakChainPocClient, {
+            isActivesNew: multicall(currentViemClient, {
                 contracts: blockchainCampaigns.map(
                     (campaign) =>
                         ({
@@ -64,7 +64,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
                 allowFailure: false,
             }),
             // Check if the campaign can be edited
-            canEditsNew: multicall(frakChainPocClient, {
+            canEditsNew: multicall(currentViemClient, {
                 contracts: blockchainCampaigns.map(
                     (campaign) =>
                         ({

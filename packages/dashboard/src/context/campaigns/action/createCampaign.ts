@@ -8,7 +8,7 @@ import {
     referralConfigStruct,
 } from "@/context/campaigns/utils/constants";
 import type { Campaign } from "@/types/Campaign";
-import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
+import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { ObjectId } from "mongodb";
@@ -134,7 +134,7 @@ export async function updateCampaignState({
     }
 
     // Otherwise, find the deployed address in the logs of the transaction
-    const receipt = await getTransactionReceipt(frakChainPocClient, {
+    const receipt = await getTransactionReceipt(currentViemClient, {
         hash: txHash,
     });
     const parsedLogs = parseEventLogs({

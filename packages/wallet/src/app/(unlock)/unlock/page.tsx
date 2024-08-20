@@ -1,7 +1,4 @@
 "use client";
-
-import { frakChainId } from "@/context/blockchain/provider";
-import { EnforceChain } from "@/module/chain/component/EnforceChain";
 import { isPaywallRedirectingAtom } from "@/module/paywall/atoms/paywall";
 import { paywallContextAtom } from "@/module/paywall/atoms/paywallContext";
 import { PaywallUnlock } from "@/module/paywall/component/Unlock";
@@ -25,9 +22,5 @@ export default function UnlockPage() {
         return null;
     }
 
-    return (
-        <EnforceChain targetChainId={frakChainId} silentSwitch={true}>
-            <PaywallUnlock context={paywallContext} />
-        </EnforceChain>
-    );
+    return <PaywallUnlock context={paywallContext} />;
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { frakChainPocClient } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/context/blockchain/provider";
 import { isRunningInDev, isRunningLocally } from "@/context/common/env";
 import { communityTokenAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
@@ -28,7 +28,7 @@ async function _getNftMetadata({
     tokenId: bigint;
 }) {
     // Get the metadata url
-    let metadataUrl = await readContract(frakChainPocClient, {
+    let metadataUrl = await readContract(currentViemClient, {
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "tokenURI",

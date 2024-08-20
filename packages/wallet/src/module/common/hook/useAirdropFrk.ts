@@ -1,4 +1,3 @@
-import { frakChainId } from "@/context/blockchain/provider";
 import { isRunningInProd } from "@/context/common/env";
 import { triggerFrkAirdrop } from "@/context/mock/action/airdropFrk";
 import { useMutation } from "@tanstack/react-query";
@@ -10,7 +9,7 @@ import { useClient } from "wagmi";
  * Hook that handle the airdrop frk
  */
 export function useAirdropFrk() {
-    const viemClient = useClient({ chainId: frakChainId });
+    const viemClient = useClient();
 
     // Airdrop the FRK and wait for the receipt if needed
     const { isPending: isAirdroppingFrk, mutateAsync: airdropFrk } =

@@ -1,6 +1,6 @@
 "use server";
 
-import { frakChainPocClient } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/context/blockchain/provider";
 import { getErc20Balance } from "@/context/tokens/action/getBalance";
 import type { ArticlePrice, ArticlePriceForUser } from "@/types/Price";
 import { paywallAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
@@ -17,7 +17,7 @@ async function _getArticlePrices({
     contentId,
 }: { contentId: Hex }): Promise<ArticlePrice[]> {
     // Read all the prices from the blockchain
-    const prices = await readContract(frakChainPocClient, {
+    const prices = await readContract(currentViemClient, {
         address: addresses.paywall,
         abi: paywallAbi,
         functionName: "getContentPrices",
@@ -68,7 +68,7 @@ async function _getArticlePricesForUser({
     }
 
     // Check if the user already unlocked an article
-    const [isAllowed] = await readContract(frakChainPocClient, {
+    const [isAllowed] = await readContract(currentViemClient, {
         address: addresses.paywall,
         abi: paywallAbi,
         functionName: "isReadAllowed",
@@ -85,7 +85,6 @@ async function _getArticlePricesForUser({
     const userBalance = await getErc20Balance({
         token: addresses.paywallToken,
         wallet: address,
-        chainId: frakChainPocClient.chain.id,
     });
 
     // Map the prices with the user balance (to check if enabled or not)

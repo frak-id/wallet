@@ -18,16 +18,13 @@ import type { Address } from "viem";
  * @param wallet
  * @param chainId
  */
-async function _getUserErc20Tokens({
-    wallet,
-    chainId,
-}: { wallet: Address; chainId: number }) {
+async function _getUserErc20Tokens({ wallet }: { wallet: Address }) {
     if (!wallet) {
         return;
     }
 
     // Get the alchemy client
-    const alchemyClient = getAlchemyClientNoBatch({ chainId });
+    const alchemyClient = getAlchemyClientNoBatch();
 
     // Get all of his assets
     const balances = await getTokenBalances(alchemyClient, {
@@ -42,7 +39,7 @@ async function _getUserErc20Tokens({
 
     // Fetch every token metadata and return that
     return await parallel(2, effectiveBalances, async (tBalance) => {
-        const metadata = await _getTokenMetadata(chainId, {
+        const metadata = await _getTokenMetadata({
             address: tBalance.contractAddress,
         });
         const formattedBalance = formatUnits(
@@ -91,9 +88,9 @@ export async function invalidateUserErc20Tokens() {
  * @param address
  */
 const _getTokenMetadata = unstable_cache(
-    (chainId: number, args: GetTokenMetadataParams) => {
+    (args: GetTokenMetadataParams) => {
         // Get the alchemy client
-        const alchemyClient = getAlchemyClientNoBatch({ chainId });
+        const alchemyClient = getAlchemyClientNoBatch();
         // Get and return token metadata
         return getTokenMetadata(alchemyClient, args);
     },

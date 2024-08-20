@@ -1,6 +1,6 @@
 "use client";
 
-import { availableChains } from "@/context/blockchain/provider";
+import { currentChain } from "@/context/blockchain/provider";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
@@ -93,7 +93,7 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
     const config = useMemo(
         () =>
             createConfig({
-                chains: availableChains,
+                chains: [currentChain],
                 connectors: [smartAccountConnector()],
                 client: ({ chain }) =>
                     createClient({

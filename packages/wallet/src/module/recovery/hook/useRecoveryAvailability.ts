@@ -1,11 +1,11 @@
-import { getChainsAvailableForRecovery } from "@/context/recover/action/get";
+import { getRecoveryAvailability } from "@/context/recover/action/get";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useQuery } from "@tanstack/react-query";
 
 /**
  * Fetch the recovery status for the given chain
  */
-export function useAvailableChainsForRecovery({
+export function useRecoveryAvailability({
     file,
     newAuthenticatorId,
 }: { file: RecoveryFileContent; newAuthenticatorId: string }) {
@@ -19,7 +19,7 @@ export function useAvailableChainsForRecovery({
         gcTime: 0,
         enabled: !!file.initialWallet.address,
         queryFn: async () =>
-            getChainsAvailableForRecovery({
+            getRecoveryAvailability({
                 wallet: file.initialWallet.address,
                 expectedGuardian: file.guardianAddress,
                 newAuthenticatorId,
@@ -27,6 +27,6 @@ export function useAvailableChainsForRecovery({
     });
     return {
         ...queryStuff,
-        availableChains: data,
+        recoveryAvailability: data,
     };
 }

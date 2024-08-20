@@ -1,4 +1,3 @@
-import { frakChainId } from "@/context/blockchain/provider";
 import { getErc20Balance } from "@/context/tokens/action/getBalance";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +17,6 @@ export function useFrkBalance({ wallet }: { wallet?: Address }) {
 
             return getErc20Balance({
                 wallet,
-                chainId: frakChainId,
                 token: addresses.paywallToken,
             });
         },

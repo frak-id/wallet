@@ -1,6 +1,4 @@
 "use client";
-
-import { frakChainId } from "@/context/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
@@ -66,7 +64,7 @@ export function useUnlockArticle({
     /**
      * Get our viem client
      */
-    const viemClient = useClient({ chainId: frakChainId });
+    const viemClient = useClient();
 
     // Set paywall error
     const setPaywallError = useSetAtom(setPaywallErrorAtom);

@@ -1,4 +1,3 @@
-import { frakChainId } from "@/context/blockchain/provider";
 import { getArticlePricesForUser } from "@/context/paywall/action/getPrices";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { getErc20Balance } from "@/context/tokens/action/getBalance";
@@ -58,7 +57,6 @@ export function useGetArticleUnlockOptionsListener(): OnGetArticleUnlockOptions 
         // Otherwise, fetch the balance
         const balance = await getErc20Balance({
             wallet: session.wallet.address,
-            chainId: frakChainId,
             token: addresses.paywallToken,
         });
 

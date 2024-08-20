@@ -1,11 +1,21 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+    type DefaultError,
+    type UseMutationOptions,
+    useMutation,
+    useQueryClient,
+} from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";
 
+type MutationParams = {
+    setupTxData: Hex;
+};
 /**
- * Setup the recovery for the given chain
+ * Setup the recovery
  */
-export function useSetupRecovery() {
+export function useSetupRecovery(
+    options?: UseMutationOptions<Hex | null, DefaultError, MutationParams>
+) {
     const { address } = useAccount();
     const { sendTransactionAsync } = useSendTransaction();
     const queryClient = useQueryClient();
@@ -14,24 +24,21 @@ export function useSetupRecovery() {
      * Perform the recovery setup
      */
     const { mutate, mutateAsync, ...mutationStuff } = useMutation({
+        ...options,
         mutationKey: ["recovery", "setup", address],
         gcTime: 0,
-        mutationFn: async ({
-            chainId,
-            setupTxData,
-        }: { chainId: number; setupTxData: Hex }) => {
+        mutationFn: async ({ setupTxData }: MutationParams) => {
             if (!address) return null;
 
             // Perform the setup transaction
             const txHash = await sendTransactionAsync({
                 to: address,
                 data: setupTxData,
-                chainId,
             });
 
             // Invalidate the recovery options for the given chain
             await queryClient.invalidateQueries({
-                queryKey: ["recovery", "status", address, chainId],
+                queryKey: ["recovery", "status", address],
                 exact: true,
             });
 

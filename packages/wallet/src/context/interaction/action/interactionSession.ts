@@ -1,7 +1,7 @@
 "use server";
 
 import { kernelAddresses } from "@/context/blockchain/addresses";
-import { frakChainPocClient } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/context/blockchain/provider";
 import { getExecutionAbi, setExecutionAbi } from "@/context/recover/utils/abi";
 import { getSession } from "@/context/session/action/session";
 import type { InteractionSession } from "@/types/Session";
@@ -84,7 +84,7 @@ export async function getSessionStatus({
 }: { wallet: Address }): Promise<InteractionSession | null> {
     // Read all the prices from the blockchain
     const [, status] = await tryit(() =>
-        readContract(frakChainPocClient, {
+        readContract(currentViemClient, {
             address: wallet,
             abi: [getExecutionAbi],
             functionName: "getExecution",

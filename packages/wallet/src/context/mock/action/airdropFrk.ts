@@ -1,6 +1,6 @@
 "use server";
 
-import { frakChainPocClient } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/context/blockchain/provider";
 import { CachesTags } from "@/context/common/caching";
 import { isRunningInProd } from "@/context/common/env";
 import { paywallTokenAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
@@ -37,7 +37,7 @@ export async function triggerFrkAirdrop({
 
     // Prepare the tx
     const preparationResult = await prepareTransactionRequest(
-        frakChainPocClient,
+        currentViemClient,
         {
             account: airdropperAccount,
             chain: arbitrumSepolia,
@@ -51,7 +51,7 @@ export async function triggerFrkAirdrop({
     );
 
     // Send the tx
-    const txHash = await sendTransaction(frakChainPocClient, preparationResult);
+    const txHash = await sendTransaction(currentViemClient, preparationResult);
 
     // Invalidate user balance cache
     revalidateTag(CachesTags.WALLET_ERC20_BALANCE);

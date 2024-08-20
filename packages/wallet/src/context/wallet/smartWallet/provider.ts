@@ -2,17 +2,12 @@ import {
     getPimlicoClient,
     getPimlicoTransport,
 } from "@/context/blockchain/aa-provider";
-import {
-    type AvailableChainIds,
-    availableChains,
-    frakChainPocClient,
-} from "@/context/blockchain/provider";
+import { currentChain, currentViemClient } from "@/context/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/sign";
 import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { getViemClientFromChain } from "@frak-labs/shared/context/blockchain/provider";
 import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import {
@@ -27,7 +22,7 @@ import {
 } from "permissionless/actions/pimlico";
 import type { EntryPoint } from "permissionless/types";
 import { all, tryit } from "radash";
-import { type Chain, type Transport, extractChain } from "viem";
+import type { Chain, Transport } from "viem";
 import { estimateGas } from "viem/actions";
 
 /**
@@ -70,9 +65,6 @@ export function getSmartAccountProvider<
         estimateGas?: () => undefined | bigint;
     };
 
-    // Cached smart accounts
-    let smartAccounts: Record<number, ConnectorClient | undefined> = {};
-
     // The current smart account
     let currentSmartAccountClient: ConnectorClient | undefined;
 
@@ -92,7 +84,6 @@ export function getSmartAccountProvider<
         // Otherwise, replace the session
         currentWebAuthNWallet = newWallet;
         // Cleanup the cached stuff
-        smartAccounts = {};
         currentSmartAccountClient = undefined;
         // And tell that it has changed
         onAccountChanged(newWallet);
@@ -112,9 +103,9 @@ export function getSmartAccountProvider<
         /**
          * Get the smart account client for the given chain
          */
-        getSmartAccountClient: async (chainId: number) => {
+        getSmartAccountClient: async () => {
             // Try to find it in cache
-            let targetSmartAccount = smartAccounts[chainId];
+            let targetSmartAccount = currentSmartAccountClient;
             if (targetSmartAccount) {
                 return targetSmartAccount;
             }
@@ -126,12 +117,10 @@ export function getSmartAccountProvider<
 
             // Otherwise, build it
             targetSmartAccount = await buildSmartAccount({
-                chainId,
                 wallet: currentWebAuthNWallet,
             });
 
             // Save the new one
-            smartAccounts[chainId] = targetSmartAccount;
             currentSmartAccountClient = targetSmartAccount;
 
             // Return the built client
@@ -143,7 +132,6 @@ export function getSmartAccountProvider<
          */
         disconnect: async () => {
             // Cleanup the cached stuff
-            smartAccounts = {};
             currentSmartAccountClient = undefined;
         },
     };
@@ -160,9 +148,8 @@ async function buildSmartAccount<
     chains extends readonly Chain[] = Chain[],
     account extends SmartAccount<entryPoint> = SmartAccount<entryPoint>,
 >({
-    chainId,
     wallet,
-}: { chainId: number; wallet: WebAuthNWallet }): Promise<
+}: { wallet: WebAuthNWallet }): Promise<
     SmartAccountClient<entryPoint, transport, chains[number], account> & {
         estimateGas?: () => undefined | bigint;
     }
@@ -176,18 +163,8 @@ async function buildSmartAccount<
         estimateGas?: () => undefined | bigint;
     };
 
-    // Get the viem client
-    const chain = extractChain({
-        chains: availableChains,
-        id: chainId as AvailableChainIds,
-    });
-    if (!chain) {
-        throw new Error(`Chain with id ${chainId} not configured`);
-    }
-    const viemClient = getViemClientFromChain({ chain });
-
     // Get the smart wallet client
-    const smartAccount = await nexusSmartAccount(viemClient, {
+    const smartAccount = await nexusSmartAccount(currentViemClient, {
         authenticatorId: wallet.authenticatorId,
         signerPubKey: wallet.publicKey,
         signatureProvider: async (message) => {
@@ -207,14 +184,14 @@ async function buildSmartAccount<
     });
 
     // Get the bundler and paymaster clients
-    const pimlicoTransport = getPimlicoTransport(viemClient.chain);
-    const pimlicoClient = getPimlicoClient(viemClient.chain);
+    const pimlicoTransport = getPimlicoTransport();
+    const pimlicoClient = getPimlicoClient();
 
     // Build the smart wallet client
     const client = createSmartAccountClient({
         account: smartAccount,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
-        chain: viemClient.chain,
+        chain: currentChain,
         bundlerTransport: pimlicoTransport,
         // Only add a middleware if the paymaster client is available
         middleware: {
@@ -226,7 +203,7 @@ async function buildSmartAccount<
                 } = await all({
                     gasPrice: getUserOperationGasPrice(pimlicoClient),
                     tryEstimation: tryit(() =>
-                        estimateGas(frakChainPocClient, {
+                        estimateGas(currentViemClient, {
                             account: args.userOperation.sender,
                             to: args.userOperation.sender,
                             data: args.userOperation.callData,

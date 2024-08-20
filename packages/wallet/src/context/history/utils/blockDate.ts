@@ -1,6 +1,6 @@
 "use server";
 
-import { getViemClientFromChainId } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/context/blockchain/provider";
 import { unstable_cache } from "next/cache";
 import { getBlock } from "viem/actions";
 
@@ -8,12 +8,8 @@ import { getBlock } from "viem/actions";
  * Get the timestamp of the given block
  * @param blockHash
  */
-async function _getBlockDate({
-    blockNumber,
-    chainId,
-}: { blockNumber: bigint; chainId: number }) {
-    const viemClient = getViemClientFromChainId({ chainId });
-    const block = await getBlock(viemClient, {
+async function _getBlockDate({ blockNumber }: { blockNumber: bigint }) {
+    const block = await getBlock(currentViemClient, {
         blockNumber,
         includeTransactions: false,
     });

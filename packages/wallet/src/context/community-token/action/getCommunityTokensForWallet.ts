@@ -1,7 +1,7 @@
 "use server";
 
 import { erc6909Transfer } from "@/context/blockchain/abis/event-abi";
-import { frakChainPocClient } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/context/blockchain/provider";
 import { isCommunityTokenForContentEnabled } from "@/context/community-token/action/getCommunityToken";
 import type { CommunityTokenBalance } from "@/types/CommunityTokenBalances";
 import { communityTokenAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
@@ -27,7 +27,7 @@ async function _isCommunityTokenEnabledForWallet({
     }
 
     // Check if that's enabled for the wallet
-    const communityTokenBalance = await readContract(frakChainPocClient, {
+    const communityTokenBalance = await readContract(currentViemClient, {
         address: addresses.communityToken,
         abi: communityTokenAbi,
         functionName: "balanceOf",
@@ -54,7 +54,7 @@ export async function getCommunityTokensForWallet({
     wallet,
 }: { wallet: Address }): Promise<CommunityTokenBalance[]> {
     // Get all the transfer to logs
-    const transferToLogs = await getLogs(frakChainPocClient, {
+    const transferToLogs = await getLogs(currentViemClient, {
         address: addresses.communityToken,
         event: erc6909Transfer,
         args: { to: wallet },
@@ -66,7 +66,7 @@ export async function getCommunityTokensForWallet({
     const tokenIds = unique(transferToLogs.map((log) => log.args.id));
 
     // Then, for each logs, check if the user has a balance of this token
-    const balances = await multicall(frakChainPocClient, {
+    const balances = await multicall(currentViemClient, {
         allowFailure: false,
         contracts: tokenIds.map(
             (id) =>

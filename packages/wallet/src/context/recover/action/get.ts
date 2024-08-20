@@ -1,11 +1,7 @@
 "use server";
 
 import { kernelAddresses } from "@/context/blockchain/addresses";
-import {
-    type AvailableChainIds,
-    availableChains,
-    getViemClientFromChainId,
-} from "@/context/blockchain/provider";
+import { currentViemClient } from "@/context/blockchain/provider";
 import {
     doAddPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
@@ -13,7 +9,7 @@ import {
 } from "@/context/recover/utils/abi";
 import type { CurrentRecovery } from "@/types/Recovery";
 import { multiWebAuthNValidatorV2Abi } from "@frak-labs/shared/context/blockchain/abis/kernel-v2-abis";
-import { map, tryit } from "radash";
+import { tryit } from "radash";
 import {
     type Address,
     isAddressEqual,
@@ -31,17 +27,13 @@ import { readContract } from "viem/actions";
  */
 export async function getCurrentRecoveryOption({
     wallet,
-    chainId,
-}: { wallet: Address; chainId: number }): Promise<CurrentRecovery | null> {
-    // Get the viem client for the given chain
-    const viemClient = getViemClientFromChainId({ chainId });
-
+}: { wallet: Address }): Promise<CurrentRecovery | null> {
     // Get the recovery selector
     const addPasskeySelector = toFunctionSelector(doAddPassKeyFnAbi);
 
     // Query the kernel wallet to see the current recovery options
     const [, recoveryOption] = await tryit(() =>
-        readContract(viemClient, {
+        readContract(currentViemClient, {
             address: wallet,
             abi: [getExecutionAbi],
             functionName: "getExecution",
@@ -71,7 +63,7 @@ export async function getCurrentRecoveryOption({
     }
 
     // Fetch the burner wallet associated with the recovery
-    const guardianAddress = await readContract(viemClient, {
+    const guardianAddress = await readContract(currentViemClient, {
         address: kernelAddresses.ecdsaValidator,
         abi: [ecdsaValidatorStorageAbi],
         functionName: "ecdsaValidatorStorage",
@@ -93,7 +85,7 @@ export async function getCurrentRecoveryOption({
  * @param expectedGuardian
  * @param newAuthenticatorId
  */
-export async function getChainsAvailableForRecovery({
+export async function getRecoveryAvailability({
     wallet,
     expectedGuardian,
     newAuthenticatorId,
@@ -101,45 +93,34 @@ export async function getChainsAvailableForRecovery({
     wallet: Address;
     expectedGuardian: Address;
     newAuthenticatorId: string;
-}): Promise<
-    {
-        chainId: AvailableChainIds;
-        available: boolean;
-        alreadyRecovered?: boolean;
-    }[]
-> {
-    const chainsId = availableChains.map((c) => c.id) as AvailableChainIds[];
-    return await map(chainsId, async (chainId) => {
-        // Get the recovery option for the wallet
-        const currentRecovery = await getCurrentRecoveryOption({
-            wallet,
-            chainId,
-        });
-        if (!currentRecovery) {
-            return { chainId, available: false };
-        }
-        // If the address doesn't match, tell the user that the guardian is not the same
-        if (
-            !isAddressEqual(currentRecovery.guardianAddress, expectedGuardian)
-        ) {
-            return { chainId, available: false };
-        }
-        const viemClient = getViemClientFromChainId({ chainId });
-        const [, potentiallyExistingPasskey] = await tryit(() =>
-            readContract(viemClient, {
-                address: kernelAddresses.multiWebAuthnValidator,
-                abi: multiWebAuthNValidatorV2Abi,
-                functionName: "getPasskey",
-                args: [wallet, keccak256(toHex(newAuthenticatorId))],
-            })
-        )();
-        // Check if the wallet already have this authenticator id enabled
-        return {
-            chainId,
-            available: true,
-            alreadyRecovered:
-                potentiallyExistingPasskey &&
-                potentiallyExistingPasskey[1].x !== 0n,
-        };
+}): Promise<{
+    available: boolean;
+    alreadyRecovered?: boolean;
+}> {
+    // Get the recovery option for the wallet
+    const currentRecovery = await getCurrentRecoveryOption({
+        wallet,
     });
+    if (!currentRecovery) {
+        return { available: false };
+    }
+    // If the address doesn't match, tell the user that the guardian is not the same
+    if (!isAddressEqual(currentRecovery.guardianAddress, expectedGuardian)) {
+        return { available: false };
+    }
+    const [, potentiallyExistingPasskey] = await tryit(() =>
+        readContract(currentViemClient, {
+            address: kernelAddresses.multiWebAuthnValidator,
+            abi: multiWebAuthNValidatorV2Abi,
+            functionName: "getPasskey",
+            args: [wallet, keccak256(toHex(newAuthenticatorId))],
+        })
+    )();
+    // Check if the wallet already have this authenticator id enabled
+    return {
+        available: true,
+        alreadyRecovered:
+            potentiallyExistingPasskey &&
+            potentiallyExistingPasskey[1].x !== 0n,
+    };
 }

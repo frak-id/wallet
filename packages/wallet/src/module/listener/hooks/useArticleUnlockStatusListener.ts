@@ -1,5 +1,4 @@
 import { getPimlicoClient } from "@/context/blockchain/aa-provider";
-import { frakChainId } from "@/context/blockchain/provider";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import {
@@ -38,9 +37,7 @@ type OnListenToArticleUnlockStatus = IFrameRequestResolver<
  */
 export function useArticleUnlockStatusListener(): OnListenToArticleUnlockStatus {
     // Fetch the AA transports
-    const viemClient = useClient({
-        chainId: frakChainId,
-    });
+    const viemClient = useClient();
 
     /**
      * The current wallet status state
@@ -127,7 +124,7 @@ export function useArticleUnlockStatusListener(): OnListenToArticleUnlockStatus 
             // If we are waiting for the user op hash
             if (loaderParam.userOpHash) {
                 const status = await waitForUserOperationReceipt(
-                    getPimlicoClient(viemClient.chain),
+                    getPimlicoClient(),
                     {
                         hash: loaderParam.userOpHash,
                     }

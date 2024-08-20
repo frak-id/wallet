@@ -1,7 +1,7 @@
 "use server";
 
 import { paidItemUnlockedEventAbi } from "@/context/blockchain/abis/event-abi";
-import { getViemClientFromChainId } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/context/blockchain/provider";
 import { formatSecondDuration } from "@/context/common/duration";
 import { getBlockDate } from "@/context/history/utils/blockDate";
 import type { ArticleUnlockHistory } from "@/types/ArticleUnlockHistory";
@@ -13,16 +13,11 @@ import { getLogs } from "viem/actions";
 
 async function _getUnlockHistory({
     account,
-    chainId,
 }: {
     account: Address;
-    chainId: number;
 }) {
-    // Get the client for the given chain
-    const viemClient = getViemClientFromChainId({ chainId });
-
     // Get the paid item unlocked events for a user
-    const unlockedItemsEvents = await getLogs(viemClient, {
+    const unlockedItemsEvents = await getLogs(currentViemClient, {
         address: addresses.paywall,
         event: paidItemUnlockedEventAbi,
         args: { user: account },
@@ -55,7 +50,6 @@ async function _getUnlockHistory({
                 blockNumber: log.blockNumber,
                 txDate: await getBlockDate({
                     blockNumber: log.blockNumber,
-                    chainId,
                 }),
                 contentId: toHex(contentId),
                 articleId,
