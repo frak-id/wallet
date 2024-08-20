@@ -22,7 +22,7 @@ export const currentViemClient = getViemClientFromChain({
 export function getAlchemyClientNoBatch() {
     // Build the alchemy client (no batching or anything, isn't supported by alchemy custom endpoints)
     return createClient({
-        currentChain,
+        chain: currentChain,
         transport: getAlchemyTransportNoBatch({ chain: currentChain }),
         cacheTime: 60_000,
         batch: {

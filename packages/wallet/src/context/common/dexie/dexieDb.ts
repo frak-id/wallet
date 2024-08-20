@@ -5,7 +5,7 @@ import type { PreviousAuthenticatorModel } from "@/context/common/dexie/Previous
 import type { Table } from "dexie";
 import { Dexie } from "dexie";
 
-export class WalletDB extends Dexie {
+class WalletDB extends Dexie {
     // This table will be used to fetch article link from articleId + contentId in the history
     articleInfo!: Table<ArticleInfoModel>;
     // This table will be used to store all the authenticator a user as used on his device
