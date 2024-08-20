@@ -13,5 +13,3 @@ export const isPaywallUnlockActionDisabledAtom = atom((get) => {
     // The main actions is disabled if we are in a loading state, but not in an idle one
     return !!uiState.loading;
 });
-
-export const paywallJoinCommunityDuringSetup = atom(false);

@@ -22,7 +22,7 @@ const storageThemeAtom = atomWithStorage<Theme>("theme", "auto");
 /**
  * Atom to manipulate the base user theme and update the root element
  */
-export const userThemeAtom = atom(
+const userThemeAtom = atom(
     (get) => {
         const userTheme = get(storageThemeAtom);
         if (userTheme === "auto") {

@@ -3,7 +3,6 @@ import { formatSecondDuration } from "@/context/common/duration";
 import { getArticlePrice } from "@/context/paywall/action/getPrices";
 import { getStartUnlockResponseRedirectUrl } from "@/context/sdk/utils/startUnlock";
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
-import { useInvalidateCommunityTokenAvailability } from "@/module/community-token/hooks/useIsCommunityTokenMintAvailable";
 import {
     setPaywallErrorAtom,
     setPaywallLoadingAtom,
@@ -14,10 +13,7 @@ import { paywallUnlockUiStateAtom } from "@/module/paywall/atoms/unlockUiState";
 import { useOnChainArticleUnlockStatus } from "@/module/paywall/hook/useOnChainArticleUnlockStatus";
 import { useFrkBalance } from "@/module/wallet/hook/useFrkBalance";
 import type { UnlockSuccessData } from "@/types/Unlock";
-import {
-    communityTokenAbi,
-    paywallAbi,
-} from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
+import { paywallAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
@@ -32,10 +28,7 @@ import { useClient, useConnectorClient } from "wagmi";
 /**
  * Hook used to fetch and handle the prices
  */
-export function useUnlockArticle({
-    context,
-    joinCommunity,
-}: { context: PaywallContext; joinCommunity: boolean }) {
+export function useUnlockArticle({ context }: { context: PaywallContext }) {
     /**
      * Get our current smart wallet client
      */
@@ -77,8 +70,6 @@ export function useUnlockArticle({
             articleId: context.articleId,
             address: address,
         });
-
-    const invalidateCommunityTokens = useInvalidateCommunityTokenAvailability();
 
     /**
      * Launch the article unlocking
@@ -186,9 +177,6 @@ export function useUnlockArticle({
                 },
             });
 
-            // Invalidate the community token availability
-            await invalidateCommunityTokens();
-
             // Set the ui success state
             setUiState({
                 success: {
@@ -267,23 +255,9 @@ export function useUnlockArticle({
                 data: unlockFnCall,
             });
 
-            // If the user also want to join the community, add this tx to it
-            if (joinCommunity) {
-                const joinCommunityFnCall = encodeFunctionData({
-                    abi: communityTokenAbi,
-                    functionName: "mint",
-                    args: [walletAddress, BigInt(context.contentId)],
-                });
-                txs.push({
-                    to: addresses.communityToken,
-                    value: 0n,
-                    data: joinCommunityFnCall,
-                });
-            }
-
             return txs;
         },
-        [viemClient, joinCommunity]
+        [viemClient]
     );
 
     useEffect(() => {

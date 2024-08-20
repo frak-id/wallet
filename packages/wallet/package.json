@@ -51,8 +51,6 @@
     "react-drag-drop-files": "^2.3.10",
     "react-hook-form": "^7.52.1",
     "react-loading-skeleton": "^3.4.0",
-    "react-slick": "^0.30.2",
-    "slick-carousel": "^1.8.1",
     "urql": "^4.1.0",
     "vaul": "^0.9.1",
     "viem": "^2.18.5",
@@ -66,7 +64,6 @@
     "@types/nprogress": "^0.2.3",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@types/react-slick": "^0.23.13",
     "sst": "2.43.4",
     "typescript": "^5"
   }
