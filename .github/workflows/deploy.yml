@@ -1,0 +1,65 @@
+name: 🚀 Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+env:
+  CI: true
+
+permissions:
+  id-token: write
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    name: Deployment
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - uses: dorny/paths-filter@v3
+        name: Check changes
+        id: changes
+        with:
+          base: ${{ github.ref }}
+          list-files: 'shell'
+          filters: |
+            deployRequired:
+              - 'packages/**'
+              - 'example/**'
+
+      - name: "🔨 Install dependencies"
+        if: steps.changes.outputs.deployRequired == 'true'
+        run: bun install --frozen-lockfile
+
+      - name: "👥 Configure AWS Credentials"
+        if: steps.changes.outputs.deployRequired == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
+          aws-region: eu-west-1
+          retry-max-attempts: 5
+
+      - name:  "👥 Login to Amazon ECR"
+        if: steps.changes.outputs.deployRequired == 'true'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: "🚀 SST Deploy"
+        if: steps.changes.outputs.deployRequired == 'true'
+        run: |
+          echo "Deploying with stage: dev"
+          bun sst deploy --stage dev
