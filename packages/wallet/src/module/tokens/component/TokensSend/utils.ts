@@ -1,13 +1,4 @@
 import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
-
-export function getFrkToken({ tokens }: { tokens: GetUserErc20Token[] }) {
-    return tokens.find(
-        ({ contractAddress }) =>
-            contractAddress.toLowerCase() ===
-            addresses.paywallToken.toLowerCase()
-    );
-}
 
 export function getUpdatedToken({
     tokens,

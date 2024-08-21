@@ -5,13 +5,13 @@ type BaseInteraction = {
     timestamp: number; // timestamp in seconds
 };
 
-export type OpenOrReadInteraction = BaseInteraction & {
+type OpenOrReadInteraction = BaseInteraction & {
     type: "OPEN_ARTICLE" | "READ_ARTICLE";
     data: {
         articleId: string;
     };
 };
-export type ReferredInteraction = BaseInteraction & {
+type ReferredInteraction = BaseInteraction & {
     type: "REFERRED";
     data: {
         referrer: Address;
