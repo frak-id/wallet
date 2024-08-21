@@ -1,5 +1,15 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.11
+
+### Patch Changes
+
+- [`3e52138`](https://github.com/frak-id/wallet/commit/3e521385bb1c0e452da21eb746781730c9269250) Thanks [@KONFeature](https://github.com/KONFeature)! - Create a generic `displayModal` endpoint to craft nice modals where user manual validations is needed
+
+- [`f653237`](https://github.com/frak-id/wallet/commit/f653237a1b2b4d4cba926ebc01dba1d9c5d9b717) Thanks [@KONFeature](https://github.com/KONFeature)! - Remove gating related functionnality, and so `watchUnlockStatus` and `getUnlockOptions` hooks
+
+- [`d5f797e`](https://github.com/frak-id/wallet/commit/d5f797e6c981fef852df523d7ea6a6baebb59af7) Thanks [@KONFeature](https://github.com/KONFeature)! - Add the current interaction session state to the walletStatus rpc endpoint
+
 ## 0.0.10
 
 ### Patch Changes
