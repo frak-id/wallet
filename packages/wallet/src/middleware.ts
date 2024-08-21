@@ -3,20 +3,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const AUTH_ROUTES = ["/login", "/register", "/recovery", "/sso"];
-const RESTRICTED_ROUTES = [
-    "/history",
-    "/settings",
-    "/tokens",
-    "/unlock",
-    "/wallet",
-];
+const RESTRICTED_ROUTES = ["/history", "/settings", "/tokens", "/wallet"];
 
 /**
- * Middleware configuration, excluding also /listener and /paywall
+ * Middleware configuration, excluding also /listener
  */
 export const config = {
     matcher: [
-        "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|manifest.json|favicons|listener|paywall).*)",
+        "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|manifest.json|favicons|listener).*)",
     ],
 };
 

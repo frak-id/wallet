@@ -11,12 +11,7 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 function cleanLocalStorage() {
-    const localStorageItems = [
-        "theme",
-        "paywallContext",
-        "paywallStatus",
-        "REACT_QUERY_OFFLINE_CACHE",
-    ];
+    const localStorageItems = ["theme", "REACT_QUERY_OFFLINE_CACHE"];
     localStorageItems.map((item) => window.localStorage.removeItem(item));
 }
 

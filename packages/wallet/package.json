@@ -35,7 +35,6 @@
     "@uidotdev/usehooks": "^2.4.1",
     "@wagmi/core": "^2.13.1",
     "dexie": "^4.0.8",
-    "humanize-duration": "^3.32.1",
     "iron-session": "^8.0.2",
     "jotai": "^2.9.1",
     "lucide-react": "^0.417.0",
@@ -58,7 +57,6 @@
   },
   "devDependencies": {
     "@simplewebauthn/types": "^10.0.0",
-    "@types/humanize-duration": "^3.27.4",
     "@types/dom-view-transitions": "^1.0.5",
     "@types/node": "^22",
     "@types/nprogress": "^0.2.3",

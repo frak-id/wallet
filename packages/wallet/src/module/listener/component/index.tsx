@@ -2,9 +2,7 @@
 
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { ListenerModal } from "@/module/listener/component/Modal";
-import { useArticleUnlockStatusListener } from "@/module/listener/hooks/useArticleUnlockStatusListener";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
-import { useGetArticleUnlockOptionsListener } from "@/module/listener/hooks/useGetArticleUnlockOptionsListener";
 import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
@@ -23,13 +21,6 @@ export function ListenerUI() {
     // Hook used when a wallet status is requested
     const onWalletListenRequest = useWalletStatusListener();
 
-    // Hook a website want to fetch the unlock options for an article
-    const onGetArticleUnlockOptions = useGetArticleUnlockOptionsListener();
-
-    // Hook to listen for the gating unlock status of an article
-    const onArticleUnlockStatusListenerRequest =
-        useArticleUnlockStatusListener();
-
     // Hook used when a dashboard action is requested
     const onInteractionRequest = useSendInteractionListener();
 
@@ -43,22 +34,9 @@ export function ListenerUI() {
     useEffect(() => {
         const newResolver = createIFrameRequestResolver({
             /**
-             * Listen request on an article unlock status
-             */
-            frak_listenToArticleUnlockStatus:
-                onArticleUnlockStatusListenerRequest,
-
-            /**
              * Listen request on the wallet status
              */
             frak_listenToWalletStatus: onWalletListenRequest,
-
-            /**
-             * Get the unlock options for an article
-             * @param request
-             * @param emitter
-             */
-            frak_getArticleUnlockOptions: onGetArticleUnlockOptions,
 
             /**
              * Listen request for the send interaction request
@@ -85,8 +63,6 @@ export function ListenerUI() {
         };
     }, [
         onWalletListenRequest,
-        onGetArticleUnlockOptions,
-        onArticleUnlockStatusListenerRequest,
         onInteractionRequest,
         onDisplayModalRequest,
         onOpenSso,
@@ -96,20 +72,10 @@ export function ListenerUI() {
      * Once all the required state are set, we can start handling the request
      */
     useEffect(() => {
-        if (
-            resolver &&
-            typeof onWalletListenRequest === "function" &&
-            typeof onGetArticleUnlockOptions === "function" &&
-            typeof onArticleUnlockStatusListenerRequest === "function"
-        ) {
+        if (resolver && typeof onWalletListenRequest === "function") {
             resolver.setReadyToHandleRequest();
         }
-    }, [
-        resolver,
-        onWalletListenRequest,
-        onGetArticleUnlockOptions,
-        onArticleUnlockStatusListenerRequest,
-    ]);
+    }, [resolver, onWalletListenRequest]);
 
     /**
      * Add a data attribute to the root element to style the layout
