@@ -13,7 +13,7 @@ export function isProdStack(stack: Stack): boolean {
  * @param stack
  */
 export function isDevStack(stack: Stack): boolean {
-    return stack.stage === "dev";
+    return ["dev" /*, "rodolphe"*/].includes(stack.stage);
 }
 
 /**
@@ -25,7 +25,7 @@ export function getWalletUrl(stack: Stack): string {
         return "https://nexus.frak.id";
     }
     if (isDevStack(stack)) {
-        return "https://nexus-dev.frak.id";
+        return `https://nexus-${stack.stage}.frak.id`;
     }
-    return "http://localhost:3000";
+    return "https://localhost:3000";
 }

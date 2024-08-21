@@ -51,7 +51,7 @@ const frakWalletSdkConfig = {
     metadata: {
         name: "News interaction - Frak",
         css: isRunningLocally
-            ? "http://localhost:3011/css/nexus-modals.css"
+            ? "https://localhost:3011/css/nexus-modals.css"
             : "https://news-paper.xyz/css/nexus-modals.css",
     },
     // Specify domain for valid test on localhost

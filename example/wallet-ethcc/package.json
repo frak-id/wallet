@@ -6,7 +6,8 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "sst bind next dev --turbo",
+    "next-dev-https": "next dev --experimental-https",
+    "dev": "sst bind bun run next-dev-https",
     "build": "sst bind next build --experimental-turbo",
     "start": "sst bind next start",
     "lint": "biome lint .",

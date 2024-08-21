@@ -54,6 +54,9 @@ export function WalletAppStack({ stack }: StackContext) {
         openNextVersion: "3.0.6",
         // Number of server side instance to keep warm
         warm: isProdStack(stack) ? 10 : 1,
+        dev: {
+            deploy: false,
+        },
     });
 
     stack.addOutputs({
