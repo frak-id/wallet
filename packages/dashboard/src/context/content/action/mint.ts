@@ -1,7 +1,7 @@
 "use server";
 import { getSafeSession } from "@/context/auth/actions/session";
+import { viemClient } from "@/context/blockchain/provider";
 import { isDnsTxtRecordSet } from "@/context/content/action/verifyDomain";
-import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { contentRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
@@ -56,25 +56,19 @@ export async function mintMyContent({
     const minterAccount = privateKeyToAccount(minterPrivateKey as Hex);
 
     // Prepare the mint tx and send it
-    const mintTxPreparation = await prepareTransactionRequest(
-        currentViemClient,
-        {
-            account: minterAccount,
-            chain: currentViemClient.chain,
-            to: addresses.contentRegistry,
-            data: encodeFunctionData({
-                abi: contentRegistryAbi,
-                functionName: "mint",
-                args: [contentTypes, name, domain, session.wallet],
-            }),
-        }
-    );
-    const mintTxHash = await sendTransaction(
-        currentViemClient,
-        mintTxPreparation
-    );
+    const mintTxPreparation = await prepareTransactionRequest(viemClient, {
+        account: minterAccount,
+        chain: viemClient.chain,
+        to: addresses.contentRegistry,
+        data: encodeFunctionData({
+            abi: contentRegistryAbi,
+            functionName: "mint",
+            args: [contentTypes, name, domain, session.wallet],
+        }),
+    });
+    const mintTxHash = await sendTransaction(viemClient, mintTxPreparation);
     // Wait for the mint to be done before proceeding to the transfer
-    await waitForTransactionReceipt(currentViemClient, {
+    await waitForTransactionReceipt(viemClient, {
         hash: mintTxHash,
         confirmations: 1,
     });
@@ -94,7 +88,7 @@ export async function mintMyContent({
  * @param contentId
  */
 async function assertContentDoesntExist({ contentId }: { contentId: bigint }) {
-    const existingMetadata = await readContract(currentViemClient, {
+    const existingMetadata = await readContract(viemClient, {
         address: addresses.contentRegistry,
         abi: contentRegistryAbi,
         functionName: "getMetadata",

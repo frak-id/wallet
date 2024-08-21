@@ -14,15 +14,14 @@ const config: KnipConfig = {
         "packages/*": {
             ignore: [".open-next/**", ".next/**"],
         },
-        // todo: Fix knip for it, still throwing out a lot of unused types and stuff
-        // "packages/sdk": {
-        //     entry: "src/**/index.{ts,tsx,js}",
-        //     project: "src/**/*.{ts,tsx,js}",
-        //     ignore: ["dist/**"],
-        // },
+        "packages/sdk": {
+            entry: "src/**/index.{ts,tsx}",
+            project: "src/**/*.{ts,tsx}",
+            ignore: ["dist/**"],
+        },
         "packages/shared": {
-            entry: "context/**/*.{ts,tsx,js},module/**/*.{ts,tsx,js}",
-            project: "context/**/*.{ts,tsx,js},module/**/*.{ts,tsx,js}",
+            entry: "**/*.{ts,tsx}",
+            project: "**/*.{ts,tsx}",
         },
         "packages/backend": {
             entry: "src/**/*.ts",
