@@ -6,7 +6,6 @@ import { Grid } from "@/module/common/component/Grid";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import {
-    getFrkToken,
     getUpdatedToken,
     validateAmount,
 } from "@/module/tokens/component/TokensSend/utils";
@@ -60,21 +59,19 @@ export function TokensSend() {
     /**
      * When the tokens change, check if the selected token has been updated
      */
-    // biome-ignore lint/correctness/useExhaustiveDependencies: trigger only when tokens change, not when the selected token changes
     useEffect(() => {
         if (!tokens) return;
 
         // If no token is selected, select the FRK token by default
         if (!selectedToken) {
-            const frkToken = getFrkToken({ tokens });
-            setSelectedToken(frkToken);
+            setSelectedToken(tokens[0]);
             return;
         }
 
         // If the selected token has been updated, update the selected token
         const findTokenUpdated = getUpdatedToken({ tokens, selectedToken });
         if (findTokenUpdated) setSelectedToken(findTokenUpdated);
-    }, [tokens]);
+    }, [tokens, selectedToken]);
 
     // Submit handler that launches the transaction
     const onSubmit: SubmitHandler<FormInput> = async (data) => {

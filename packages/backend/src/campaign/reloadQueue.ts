@@ -1,4 +1,3 @@
-import { mUsdTokenAbi } from "@frak-labs/shared/context/blockchain/abis/frak-gating-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import type { SQSEvent } from "aws-lambda";
 import type { SQSBatchResponse } from "aws-lambda/trigger/sqs";
@@ -47,6 +46,17 @@ export const handler = Handler(
     }
 );
 
+const mintAbi = {
+    type: "function",
+    inputs: [
+        { name: "_to", internalType: "address", type: "address" },
+        { name: "_amount", internalType: "uint256", type: "uint256" },
+    ],
+    name: "mint",
+    outputs: [],
+    stateMutability: "nonpayable",
+} as const;
+
 /**
  * Perform the campaign reload
  * @param reloadRequest
@@ -71,7 +81,7 @@ async function reloadCampaign(reloadRequest: ReloadRequest) {
         account: executorAccount,
         to: addresses.mUsdToken,
         data: encodeFunctionData({
-            abi: mUsdTokenAbi,
+            abi: [mintAbi],
             functionName: "mint",
             args: [reloadRequest.campaign, parseEther("1000")],
         }),

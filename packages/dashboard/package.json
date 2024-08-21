@@ -34,7 +34,6 @@
     "@tanstack/react-query-persist-client": "^5.51.15",
     "@tanstack/react-table": "^8.19.3",
     "@uidotdev/usehooks": "^2.4.1",
-    "@urql/next": "^1.1.1",
     "class-variance-authority": "^0.7.0",
     "cmdk": "^1.0.0",
     "countries-list": "^3.1.0",
@@ -51,7 +50,6 @@
     "react-day-picker": "^9.0.5",
     "react-dom": "^18",
     "react-hook-form": "^7.52.1",
-    "urql": "^4.1.0",
     "use-session-storage-state": "^19.0.0",
     "viem": "^2.18.5"
   },

@@ -5,11 +5,11 @@ import { useAccount } from "wagmi";
 /**
  * Fetch the recovery status for the given chain
  */
-export function useRecoverySetupStatus({ chainId }: { chainId: number }) {
+export function useRecoverySetupStatus() {
     const { address } = useAccount();
 
     const { data, ...queryStuff } = useQuery({
-        queryKey: ["recovery", "status", address, chainId],
+        queryKey: ["recovery", "status", address],
         gcTime: 0,
         enabled: !!address,
         queryFn: async () => {
@@ -17,7 +17,6 @@ export function useRecoverySetupStatus({ chainId }: { chainId: number }) {
             // Fetch the recovery options
             const options = await getCurrentRecoveryOption({
                 wallet: address,
-                chainId,
             });
             return options ?? null;
         },

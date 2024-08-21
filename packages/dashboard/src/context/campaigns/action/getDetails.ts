@@ -1,9 +1,9 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import { viemClient } from "@/context/blockchain/provider";
 import { campaignRoles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { ObjectId } from "mongodb";
@@ -33,7 +33,7 @@ export async function getOnChainCampaignsDetails({
 
     // Fetch a few onchain information
     const [metadata, isActive, isAllowedToEdit, balance] = await multicall(
-        frakChainPocClient,
+        viemClient,
         {
             contracts: [
                 {

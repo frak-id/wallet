@@ -1,6 +1,4 @@
 "use server";
-
-import { triggerFrkAirdrop } from "@/context/mock/action/airdropFrk";
 import { setSession } from "@/context/session/action/session";
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
 import { rpId, rpOrigin } from "@/context/wallet/smartWallet/webAuthN";
@@ -8,7 +6,6 @@ import { formatWallet } from "@/context/wallet/utils/walletFormatter";
 import { base64URLStringToBuffer } from "@simplewebauthn/browser";
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
-import { guard } from "radash";
 
 /**
  * Validate a wallet authentication
@@ -74,14 +71,6 @@ export async function validateAuthentication({
     await setSession({
         wallet,
     });
-
-    // Trigger a frk airdrop
-    await guard(() =>
-        triggerFrkAirdrop({
-            user: wallet.address,
-            amount: "100",
-        })
-    );
 
     return {
         wallet,

@@ -1,6 +1,5 @@
 "use server";
-
-import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
+import { viemClient } from "@/context/blockchain/provider";
 import {
     contentInteractionDiamondAbi,
     contentInteractionManagerAbi,
@@ -16,14 +15,14 @@ export async function getAttachedCampaigns({
     contentId,
 }: { contentId: string }) {
     // Get the root interaction contract
-    const contentInteraction = await readContract(frakChainPocClient, {
+    const contentInteraction = await readContract(viemClient, {
         address: addresses.contentInteractionManager,
         abi: contentInteractionManagerAbi,
         functionName: "getInteractionContract",
         args: [BigInt(contentId)],
     });
     // Get the current content campaigns
-    return readContract(frakChainPocClient, {
+    return readContract(viemClient, {
         address: contentInteraction,
         abi: contentInteractionDiamondAbi,
         functionName: "getCampaigns",

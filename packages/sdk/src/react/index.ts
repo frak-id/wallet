@@ -14,9 +14,7 @@ export type {
 export {
     useNexusConfig,
     useNexusClient,
-    useArticleUnlockOptions,
     useWalletStatus,
-    useArticleUnlockStatus,
     useSendTransactionAction,
     useSendInteraction,
     useSiweAuthenticate,

@@ -5,7 +5,7 @@ import { arbitrum, arbitrumSepolia } from "viem/chains";
 /**
  * The current blockchain
  */
-export const currentChain = isRunningInProd ? arbitrum : arbitrumSepolia;
+const currentChain = isRunningInProd ? arbitrum : arbitrumSepolia;
 
 /**
  * Directly expose the frak chain client, since the paywall part is based on that

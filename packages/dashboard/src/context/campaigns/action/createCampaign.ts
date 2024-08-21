@@ -1,6 +1,7 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import { viemClient } from "@/context/blockchain/provider";
 import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
@@ -8,7 +9,6 @@ import {
     referralConfigStruct,
 } from "@/context/campaigns/utils/constants";
 import type { Campaign } from "@/types/Campaign";
-import { frakChainPocClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { ObjectId } from "mongodb";
@@ -134,7 +134,7 @@ export async function updateCampaignState({
     }
 
     // Otherwise, find the deployed address in the logs of the transaction
-    const receipt = await getTransactionReceipt(frakChainPocClient, {
+    const receipt = await getTransactionReceipt(viemClient, {
         hash: txHash,
     });
     const parsedLogs = parseEventLogs({

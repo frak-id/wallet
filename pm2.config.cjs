@@ -27,15 +27,6 @@ module.exports = {
             },
         },
         {
-            name: "news-gating",
-            script: "bun",
-            args: "run dev",
-            cwd: "./example/news",
-            env: {
-                PORT: 3010,
-            },
-        },
-        {
             name: "news-interaction",
             script: "bun",
             args: "run dev",

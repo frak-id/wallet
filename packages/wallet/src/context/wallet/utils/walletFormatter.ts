@@ -1,4 +1,4 @@
-import { frakChainPocClient } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/context/blockchain/provider";
 import {
     getAccountAddress,
     getAccountInitCode,
@@ -50,7 +50,7 @@ async function predicateSmartWalletAddress({
 }) {
     const authenticatorIdHash = keccak256(toHex(authenticatorId));
     return getAccountAddress({
-        client: frakChainPocClient,
+        client: currentViemClient,
         initCodeProvider: () =>
             getAccountInitCode({
                 authenticatorIdHash,

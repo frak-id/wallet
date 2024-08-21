@@ -2,7 +2,7 @@ import type { SsoMetadata } from "@frak-labs/nexus-sdk/core";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
-export type SsoContext = {
+type SsoContext = {
     productId?: string;
     redirectUrl?: string;
     directExit?: boolean;

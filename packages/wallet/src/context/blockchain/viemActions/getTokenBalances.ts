@@ -7,7 +7,7 @@ import type { Account, Address, Chain, Client, Transport } from "viem";
 /**
  * Get all the balances of an account parameters
  */
-export type GetTokenBalancesParameters = {
+type GetTokenBalancesParameters = {
     address: Address;
     type: "erc20";
 };
@@ -15,7 +15,7 @@ export type GetTokenBalancesParameters = {
 /**
  * Get all the balances of an account, formatted output of the action
  */
-export type GetTokenBalancesResponse = {
+type GetTokenBalancesResponse = {
     address: Address;
     tokenBalances: {
         contractAddress: Address;

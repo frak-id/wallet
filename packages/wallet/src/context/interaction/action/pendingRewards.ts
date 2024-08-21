@@ -1,5 +1,5 @@
 "use server";
-import { getClient } from "@frak-labs/nexus-dashboard/src/context/indexer/client";
+import { getClient } from "@/context/common/graphql";
 import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { gql } from "@urql/core";
 import { unstable_cache } from "next/cache";

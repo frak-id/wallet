@@ -26,7 +26,7 @@ const DrawerTrigger = DrawerPrimitive.Trigger;
 
 const DrawerPortal = DrawerPrimitive.Portal;
 
-const DrawerClose = DrawerPrimitive.Close;
+// const DrawerClose = DrawerPrimitive.Close;
 
 const DrawerOverlay = forwardRef<
     ElementRef<typeof DrawerPrimitive.Overlay>,
@@ -100,15 +100,4 @@ const DrawerDescription = forwardRef<
 ));
 DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
-export {
-    Drawer,
-    DrawerPortal,
-    DrawerOverlay,
-    DrawerTrigger,
-    DrawerClose,
-    DrawerContent,
-    DrawerHeader,
-    DrawerFooter,
-    DrawerTitle,
-    DrawerDescription,
-};
+export { Drawer, DrawerTrigger, DrawerContent };

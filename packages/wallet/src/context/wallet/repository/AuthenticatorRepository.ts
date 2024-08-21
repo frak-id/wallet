@@ -7,7 +7,7 @@ import type { Address } from "viem";
 /**
  * Repository used to access the authenticator collection
  */
-export class AuthenticatorRepository {
+class AuthenticatorRepository {
     constructor(
         private readonly collection: Collection<AuthenticatorDocument>
     ) {}

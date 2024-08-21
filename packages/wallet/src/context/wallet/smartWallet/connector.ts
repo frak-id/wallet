@@ -1,3 +1,4 @@
+import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccount } from "permissionless/accounts";
 import type { EntryPoint } from "permissionless/types";
@@ -44,30 +45,28 @@ export function smartAccountConnector<
             // Fetch the provider
             const provider: Provider = await this.getProvider();
 
-            if (!chainId && provider.currentSmartAccountClient) {
+            // If the chain id is not provided, use the current chain
+            if (chainId && chainId !== currentChain.id) {
+                throw new Error("Invalid chain id");
+            }
+
+            // If we got it in cache return it
+            if (provider.currentSmartAccountClient) {
                 return {
                     accounts: [
                         provider.currentSmartAccountClient.account.address,
                     ],
-                    chainId: provider.currentSmartAccountClient.chain.id,
+                    chainId: currentChain.id,
                 };
             }
 
-            const safeChainId = chainId ?? config.chains[0].id;
-            if (!safeChainId) {
-                throw new Error(
-                    "chainId is required to connect to a smart account"
-                );
-            }
-
             // Ask the provider to build it
-            const smartAccountClient =
-                await provider.getSmartAccountClient(safeChainId);
+            const smartAccountClient = await provider.getSmartAccountClient();
             return {
                 accounts: smartAccountClient
                     ? [smartAccountClient.account.address]
                     : [],
-                chainId: safeChainId,
+                chainId: currentChain.id,
             };
         },
 
@@ -87,9 +86,7 @@ export function smartAccountConnector<
                 return [provider.currentSmartAccountClient.account.address];
             }
             // Otherwise, get the account for the default chain (could be the case just after the login)
-            const smartAccountClient = await provider.getSmartAccountClient(
-                config.chains[0].id
-            );
+            const smartAccountClient = await provider.getSmartAccountClient();
             if (!smartAccountClient) {
                 return [];
             }
@@ -100,11 +97,7 @@ export function smartAccountConnector<
          * Get the current chain id (or otherwise the first one in the config)
          */
         async getChainId() {
-            const provider: Provider = await this.getProvider();
-            return (
-                provider.currentSmartAccountClient?.chain?.id ??
-                config.chains[0].id
-            );
+            return currentChain.id;
         },
         async isAuthorized() {
             return true;
@@ -113,14 +106,14 @@ export function smartAccountConnector<
         async getClient(parameters?: { chainId?: number }) {
             const provider: Provider = await this.getProvider();
 
-            const safeChainId = parameters?.chainId ?? config.chains[0].id;
-            if (!safeChainId) {
-                throw new Error(
-                    "chainId is required to connect to get a smart account client"
-                );
+            if (
+                parameters?.chainId &&
+                parameters?.chainId !== currentChain.id
+            ) {
+                throw new Error("Invalid chain id");
             }
 
-            const client = await provider.getSmartAccountClient(safeChainId);
+            const client = await provider.getSmartAccountClient();
             if (!client) {
                 throw new Error("No client found for the given chain");
             }

@@ -11,13 +11,8 @@ export {
 // Types
 export type {
     // Rpc
-    UnlockOptionsReturnType,
-    ArticleUnlockStatusReturnType,
     WalletStatusReturnType,
     IFrameRpcSchema,
-    RedirectRpcSchema,
-    StartArticleUnlockParams,
-    StartArticleUnlockReturnType,
     PreparedInteraction,
     SendInteractionParamsType,
     SendInteractionReturnType,
@@ -52,8 +47,6 @@ export type {
     ExtractedReturnTypeFromRpc,
     // Config
     NexusWalletSdkConfig,
-    // Generics
-    PaidArticleUnlockPrice,
     // Compression
     KeyProvider,
     CompressedData,

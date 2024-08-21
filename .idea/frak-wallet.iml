@@ -18,6 +18,7 @@
       <excludeFolder url="file://$MODULE_DIR$/example/wallet-ethcc/.open-next" />
       <excludeFolder url="file://$MODULE_DIR$/packages/dashboard/.open-next" />
       <excludeFolder url="file://$MODULE_DIR$/.sst/cache" />
+      <excludeFolder url="file://$MODULE_DIR$/.sst" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
