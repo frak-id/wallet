@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import {createElement, useMemo, useState} from "react";
-import {ClientOnly} from "@module/component/ClientOnly";
+import { ClientOnly } from "@module/component/ClientOnly";
+import { createElement, useMemo, useState } from "react";
 
 export default function IFrameTesterQuerier() {
     return (
         <ClientOnly>
             <div>
                 <h1>Iframe tester querier</h1>
-                <hr/>
-                <IFrameClientProvider/>
+                <hr />
+                <IFrameClientProvider />
             </div>
         </ClientOnly>
     );
@@ -21,7 +21,9 @@ export default function IFrameTesterQuerier() {
  * @constructor
  */
 function IFrameClientProvider() {
-    const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | undefined>(undefined);
+    const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | undefined>(
+        undefined
+    );
 
     // Create the iframe-query that will be used to communicate with the wallet
     const iframeElem = createElement("iframe", {
@@ -38,19 +40,26 @@ function IFrameClientProvider() {
         },
     });
 
-    const [lastResponse, setLastResponse] = useState<string | undefined>(undefined)
+    const [lastResponse, setLastResponse] = useState<string | undefined>(
+        undefined
+    );
 
     useMemo(() => {
-        if (!window) return ;
+        if (!window) return;
 
         // Define the message listener
-        const onMessage = async (message: MessageEvent<{testStorageResponse?: boolean, testStorageItem?: string}>) => {
+        const onMessage = async (
+            message: MessageEvent<{
+                testStorageResponse?: boolean;
+                testStorageItem?: string;
+            }>
+        ) => {
             if (!message.data?.testStorageResponse) {
                 return;
             }
             setLastResponse(message.data.testStorageItem ?? "No response");
             console.log("Received a response from the iframe-query", message);
-        }
+        };
 
         // Add the message listener
         window.addEventListener("message", onMessage);
@@ -61,17 +70,27 @@ function IFrameClientProvider() {
         };
     }, []);
 
-    return <div>
-        <h2>IFrame query</h2>
-        <button onClick={() => {
-            iframeRef?.contentWindow?.postMessage({
-                testStorageAccess: true,
-            }, "*");
-        }  }>Request storage read</button>
+    return (
+        <div>
+            <h2>IFrame query</h2>
+            <button
+                onClick={() => {
+                    iframeRef?.contentWindow?.postMessage(
+                        {
+                            testStorageAccess: true,
+                        },
+                        "*"
+                    );
+                }}
+                type={"button"}
+            >
+                Request storage read
+            </button>
 
-        <hr />
-        <p>Response: {lastResponse}</p>
-        <h2>Iframe</h2>
-        {iframeElem}
-    </div>
+            <hr />
+            <p>Response: {lastResponse}</p>
+            <h2>Iframe</h2>
+            {iframeElem}
+        </div>
+    );
 }

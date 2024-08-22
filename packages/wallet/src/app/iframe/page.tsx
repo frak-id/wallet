@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import {useMemo, useState} from "react";
-import {getSession} from "@/context/session/action/session";
+import { getSession } from "@/context/session/action/session";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 
 /**
  * Simple page to test iframe-query storage sharing between cross domain applications
@@ -35,11 +35,20 @@ function IFrameStorageStatus() {
 
             // Fetch the test storage item
             const testStorageItem = localStorage.getItem("test");
+            const storageAccessResult = localStorage.getItem(
+                "storageAccessResult"
+            );
 
             // Fetch the current user session
             const session = await getSession();
 
-            return { apiExist, hasStorageAccess, testStorageItem, session };
+            return {
+                apiExist,
+                hasStorageAccess,
+                testStorageItem,
+                storageAccessResult,
+                session,
+            };
         },
     });
 
@@ -49,22 +58,36 @@ function IFrameStorageStatus() {
             <p>API exist: {data?.apiExist ? "yes" : "no"}</p>
             <p>Has access: {data?.hasStorageAccess ? "yes" : "no"}</p>
             <p>Test storage item: {data?.testStorageItem}</p>
+            <p>Storage access result: {data?.storageAccessResult}</p>
             <p>Session: {data?.session?.wallet?.address ?? "undefined"}</p>
             {error && <p>Error: {error.message}</p>}
-            <button onClick={() => refetch()} type={"button"}>Refresh</button>
+            <button onClick={() => refetch()} type={"button"}>
+                Refresh
+            </button>
         </div>
     );
 }
 
 function IFrameStorageRequester() {
+    const { mutate } = useMutation({
+        mutationKey: ["storage-request"],
+        mutationFn: async () => {
+            await document.requestStorageAccess();
+            const accessPostRequest = await document.hasStorageAccess();
+            console.log("Request storage access result", accessPostRequest);
+            localStorage.setItem(
+                "storageAccessResult",
+                accessPostRequest.toString()
+            );
+        },
+    });
+
     return (
         <div>
             <h2>Request storage</h2>
             <button
                 onClick={() => {
-                    document.requestStorageAccess().then((result) => {
-                        console.log("Request storage access result", result);
-                    });
+                    mutate();
                 }}
                 type={"button"}
             >
@@ -82,7 +105,6 @@ function IFrameSetStorage() {
                 onClick={() => {
                     console.log("Setting test storage");
                     localStorage.setItem("test", "hello");
-
 
                     // @ts-ignore
                     window.sharedStorage?.set("test", "hello", {
@@ -106,13 +128,15 @@ function IFrameSetStorage() {
 }
 
 function IFrameListener() {
-    const [queryCount, setQueryCount] = useState<number>(0)
+    const [queryCount, setQueryCount] = useState<number>(0);
 
     useMemo(() => {
-        if (!window) return ;
+        if (!window) return;
 
         // Define the message listener
-        const onMessage = async (message: MessageEvent<{testStorageAccess?: boolean}>) => {
+        const onMessage = async (
+            message: MessageEvent<{ testStorageAccess?: boolean }>
+        ) => {
             if (!message.data?.testStorageAccess) {
                 return;
             }
@@ -126,13 +150,13 @@ function IFrameListener() {
             message.source?.postMessage(
                 {
                     testStorageResponse: true,
-                    testStorageItem
+                    testStorageItem,
                 },
                 {
                     targetOrigin: message.origin,
                 }
             );
-        }
+        };
 
         // Add the message listener
         window.addEventListener("message", onMessage);
