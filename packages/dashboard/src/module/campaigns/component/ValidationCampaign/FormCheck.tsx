@@ -5,6 +5,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { Input } from "@module/component/forms/Input";
+import { capitalize } from "radash";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormCheck(form: UseFormReturn<Campaign>) {
@@ -31,16 +32,18 @@ export function FormCheck(form: UseFormReturn<Campaign>) {
                 <Input
                     length={"medium"}
                     disabled={true}
-                    {...form.control.register("order")}
+                    defaultValue={capitalize(form.getValues("order"))}
                 />
             </FormItem>
             <FormItem>
                 <FormDescription title={"Campaign goal"} />
-                <Input
-                    length={"medium"}
-                    disabled={true}
-                    {...form.control.register("type")}
-                />
+                {form.getValues("type") && (
+                    <Input
+                        length={"medium"}
+                        disabled={true}
+                        defaultValue={capitalize(form.getValues("type") ?? "")}
+                    />
+                )}
             </FormItem>
             <FormBudgetRow {...form} isCheckCampaign={true} />
             <FormObjectives {...form} />
