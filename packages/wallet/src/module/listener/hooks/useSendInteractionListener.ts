@@ -47,6 +47,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
                 contentId,
                 interaction,
                 signature,
+                timestamp: Date.now(),
             });
             // Send the response
             await emitter({

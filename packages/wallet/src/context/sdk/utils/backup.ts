@@ -1,5 +1,10 @@
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sessionAtom } from "@/module/common/atoms/session";
+import {
+    addPendingInteractionsAtom,
+    pendingInteractionAtom,
+} from "@/module/wallet/atoms/pendingInteraction";
+import type { PendingInteraction } from "@/types/Interaction";
 import type { Session } from "@/types/Session";
 import {
     type CompressedData,
@@ -16,6 +21,7 @@ import type { Hex } from "viem";
 type BackupData = {
     productId: Hex;
     session?: Session;
+    pendingInteractions?: PendingInteraction[];
 };
 
 /**
@@ -48,6 +54,9 @@ export async function restoreBackupData({
     if (data.session) {
         jotaiStore.set(sessionAtom, data.session);
     }
+    if (data.pendingInteractions) {
+        jotaiStore.set(addPendingInteractionsAtom, data.pendingInteractions);
+    }
 }
 
 /**
@@ -55,10 +64,18 @@ export async function restoreBackupData({
  * @param productId
  */
 export async function pushBackupData({
-    backup,
+    productId,
 }: {
-    backup: BackupData;
+    productId: Hex;
 }) {
+    // Build backup datas
+    const backup: BackupData = {
+        productId,
+        session: jotaiStore.get(sessionAtom) ?? undefined,
+        pendingInteractions: jotaiStore.get(pendingInteractionAtom)
+            .interactions,
+    };
+
     // Create a compressed backup
     const compressedBackup = await hashAndCompressData(backup);
 

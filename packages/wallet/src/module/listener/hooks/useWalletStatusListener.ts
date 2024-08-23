@@ -71,10 +71,7 @@ export function useWalletStatusListener(): OnListenToWallet {
 
             // And push some backup data if we got ones
             await pushBackupData({
-                backup: {
-                    productId: context.productId,
-                    session: currentSession,
-                },
+                productId: context.productId,
             });
         },
         []
