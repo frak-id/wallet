@@ -18,6 +18,7 @@ import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { Button } from "@module/component/Button";
 import { Input } from "@module/component/forms/Input";
 import { validateUrl } from "@module/utils/validateUrl";
+import { useQueryClient } from "@tanstack/react-query";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -268,8 +269,8 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
  * @constructor
  */
 function NewProductVerify({ name, domain }: { name: string; domain: string }) {
-    const setIsModalOpen = useSetAtom(isModalOpenAtom);
     const parsedDomain = parseUrl(domain);
+    const queryClient = useQueryClient();
 
     const {
         mutate: triggerMintMyContent,
@@ -279,11 +280,11 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
     } = useMintMyContent();
 
     useEffect(() => {
-        // Slight delay for closing the modal
-        setTimeout(() => {
-            data && setIsModalOpen(false);
-        }, 5_000);
-    }, [data, setIsModalOpen]);
+        if (!data) return;
+        queryClient.invalidateQueries({
+            queryKey: ["my-contents"],
+        });
+    }, [data, queryClient]);
 
     if (!parsedDomain) return null;
 
