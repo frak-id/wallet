@@ -15,8 +15,6 @@ const wantedFromConfig = [
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
-const isDistant = ["prod", "dev"].includes(Config.STAGE);
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     env: {
@@ -27,7 +25,7 @@ const nextConfig = {
     },
     transpilePackages: ["lucide-react"],
     compiler: {
-        removeConsole: isDistant,
+        removeConsole: Config.STAGE === "prod",
     },
     output: "standalone",
 };

@@ -1,13 +1,8 @@
-import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
+import type { PendingInteraction } from "@/types/Interaction";
 import { atom } from "jotai/index";
 import { atomWithStorage } from "jotai/utils";
-import type { Hex } from "viem";
-
-type PendingInteraction = {
-    contentId: Hex;
-    interaction: PreparedInteraction;
-    signature?: Hex;
-};
+import { unique } from "radash";
+import { keccak256, stringToHex } from "viem";
 
 type PendingInteractionsStorage = {
     interactions: PendingInteraction[];
@@ -27,11 +22,37 @@ export const pendingInteractionAtom =
 export const addPendingInteractionAtom = atom(
     null,
     (_get, set, pInteraction: PendingInteraction) => {
-        set(pendingInteractionAtom, (prev) => ({
-            interactions: [...prev.interactions, pInteraction],
-        }));
+        set(pendingInteractionAtom, (prev) => {
+            const newInteractions = [...prev.interactions, pInteraction];
+            return {
+                interactions: filterDuplicateInteractions(newInteractions),
+            };
+        });
     }
 );
+
+/**
+ * Add a list of pending interactions to our storage
+ *   todo: filter out all of the duplicate ones
+ */
+export const addPendingInteractionsAtom = atom(
+    null,
+    (_get, set, pInteractions: PendingInteraction[]) => {
+        set(pendingInteractionAtom, (prev) => {
+            const newInteractions = [...prev.interactions, ...pInteractions];
+            return {
+                interactions: filterDuplicateInteractions(newInteractions),
+            };
+        });
+    }
+);
+
+const filterDuplicateInteractions = (
+    interactions: PendingInteraction[]
+): PendingInteraction[] =>
+    unique(interactions, (interaction) =>
+        keccak256(stringToHex(JSON.stringify(interaction)))
+    );
 
 /**
  * Clean the pending interactions

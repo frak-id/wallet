@@ -22,6 +22,7 @@ export type {
     ExtractedMethodFromRpc,
     RpcResponse,
 } from "./transport";
+export type { IFrameLifecycleEvent, ClientLifecycleEvent } from "./lifecycle";
 export type { NexusWalletSdkConfig } from "./config";
 export type {
     CompressedData,

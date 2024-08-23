@@ -17,10 +17,7 @@ type LoginWithoutSso = {
  */
 export type LoginModalStepType = GenericModalStepType<
     "login",
-    {
-        // todo: still needed??
-        articleUrl?: string;
-    } & (LoginWithSso | LoginWithoutSso),
+    LoginWithSso | LoginWithoutSso,
     {
         wallet: Address;
     }

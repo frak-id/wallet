@@ -34,6 +34,7 @@ export function LoginModalStep({
 }) {
     const { metadata } = params;
     const { login, isSuccess, isLoading, isError, error } = useLogin();
+    const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
 
     const session = useAtomValue(sessionAtom);
 
@@ -60,7 +61,21 @@ export function LoginModalStep({
                         type={"button"}
                         className={prefixModalCss("button-primary")}
                         disabled={isLoading}
-                        onClick={() => {
+                        onClick={async () => {
+                            const hasStorageAccess =
+                                await requestAndCheckStorageAccess();
+
+                            if (hasStorageAccess) {
+                                const session =
+                                    await mutateAsyncUpdateSessionStatus();
+                                if (session) {
+                                    onFinish({
+                                        wallet: session.wallet.address,
+                                    });
+                                    return;
+                                }
+                            }
+
                             login({})
                                 .then((authResult) => {
                                     onFinish({
@@ -121,25 +136,7 @@ function SsoButton({
     ssoMetadata: SsoMetadata;
     alternateText?: string;
 }) {
-    /**
-     * This mutation is used to ensure that post SSO we have a session, not automatically updated
-     */
-    const { mutate: updateSessionStatus } = useMutation({
-        mutationKey: ["session", "force-refetch"],
-        mutationFn: async () => {
-            // If our jotai store already contain a session, we can early exit
-            if (jotaiStore.get(sessionAtom)) {
-                return;
-            }
-
-            // Otherwise we fetch the session
-            const session = await getSession();
-            if (session) {
-                jotaiStore.set(sessionAtom, session);
-            }
-        },
-    });
-
+    const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
     const openSsoPopup = useOpenSsoPopup();
 
     /**
@@ -164,14 +161,48 @@ function SsoButton({
         <button
             type={"button"}
             className={prefixModalCss("button-secondary")}
-            onClick={() => {
+            onClick={async () => {
+                await requestAndCheckStorageAccess();
                 openRegister();
             }}
-            onFocus={() => {
-                updateSessionStatus();
+            onFocus={async () => {
+                await mutateAsyncUpdateSessionStatus();
             }}
         >
             {alternateText ?? "Register"}
         </button>
     );
+}
+
+/**
+ * Request and check the storage access
+ */
+async function requestAndCheckStorageAccess() {
+    await document.requestStorageAccess();
+    return await document.hasStorageAccess();
+}
+
+/**
+ * This mutation is used to ensure that post SSO we have a session, not automatically updated
+ */
+function useUpdateSessionStatus() {
+    const { mutateAsync: mutateAsyncUpdateSessionStatus } = useMutation({
+        mutationKey: ["session", "force-refetch"],
+        mutationFn: async () => {
+            // If our jotai store already contain a session, we can early exit
+            if (jotaiStore.get(sessionAtom)) {
+                return;
+            }
+
+            // Otherwise we fetch the session
+            const session = await getSession();
+            if (session) {
+                jotaiStore.set(sessionAtom, session);
+            }
+
+            return session;
+        },
+    });
+
+    return { mutateAsyncUpdateSessionStatus };
 }

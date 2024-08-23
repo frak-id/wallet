@@ -150,9 +150,11 @@ function prepareInputStepsArray(steps: ModalRpcStepsInput) {
 }
 
 const stepImportanceMap: Record<ModalStepTypes["key"], number> = {
-    login: -1,
-    siweAuthenticate: 1,
-    openSession: 5,
+    // Jumpable steps
+    login: -2,
+    openSession: -1,
+    // Normal steps
+    siweAuthenticate: 5,
     sendTransaction: 10,
     success: 100,
 };

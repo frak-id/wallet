@@ -43,6 +43,8 @@ export type {
     IFrameTransport,
     IFrameRpcEvent,
     IFrameEvent,
+    IFrameLifecycleEvent,
+    ClientLifecycleEvent,
     ExtractedParametersFromRpc,
     ExtractedReturnTypeFromRpc,
     // Config
