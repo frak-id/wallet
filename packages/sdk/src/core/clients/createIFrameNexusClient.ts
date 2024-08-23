@@ -1,8 +1,8 @@
-import { FrakRpcError } from "../types";
+import { type ExtractedParametersFromRpc, FrakRpcError } from "../types";
 import type { NexusClient } from "../types/client";
 import type { NexusWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
-import { RpcErrorCodes } from "../types/rpc/error";
+import { InternalError, RpcErrorCodes } from "../types/rpc/error";
 import type {
     ListenerRequestFn,
     RequestFn,
@@ -13,8 +13,16 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "../utils/compression";
+import { BACKUP_KEY } from "../utils/constants";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
-import { createIFrameMessageHandler } from "./transports/iframeMessageHandler";
+import {
+    type IframeLifecycleManager,
+    createIFrameLifecycleManager,
+} from "./transports/iframeLifecycleManager";
+import {
+    type IFrameMessageHandler,
+    createIFrameMessageHandler,
+} from "./transports/iframeMessageHandler";
 
 /**
  * Create a new iframe Nexus client
@@ -29,20 +37,22 @@ export function createIFrameNexusClient({
     // Build our channel manager
     const channelManager = createIFrameChannelManager();
 
+    const lifecycleManager = createIFrameLifecycleManager({ iframe });
+
     // Build our message handler
     const messageHandler = createIFrameMessageHandler({
         nexusWalletUrl: config.walletUrl,
-        metadata: config.metadata,
         iframe,
         channelManager,
+        iframeLifecycleManager: lifecycleManager,
     });
 
     // Build our request function
-    const request: RequestFn<IFrameRpcSchema> = async <TParameters, TResult>(
-        args: TParameters
+    const request: RequestFn<IFrameRpcSchema> = async <_, TResult>(
+        args: ExtractedParametersFromRpc<IFrameRpcSchema>
     ) => {
         // Ensure the iframe is init
-        const isConnected = await messageHandler.isConnected;
+        const isConnected = await lifecycleManager.isConnected;
         if (!isConnected) {
             throw new FrakRpcError(
                 RpcErrorCodes.clientNotConnected,
@@ -82,7 +92,6 @@ export function createIFrameNexusClient({
         // Send the message to the iframe
         messageHandler.sendEvent({
             id: channelId,
-            // @ts-ignore, todo: idk why the fck it's needed
             topic: args.method,
             data: compressedMessage,
         });
@@ -91,12 +100,15 @@ export function createIFrameNexusClient({
     };
 
     // Build our listener function
-    const listenerRequest: ListenerRequestFn<IFrameRpcSchema> = async (
-        args,
-        callback
+    const listenerRequest: ListenerRequestFn<IFrameRpcSchema> = async <
+        _,
+        TResult,
+    >(
+        args: ExtractedParametersFromRpc<IFrameRpcSchema>,
+        callback: (result: TResult) => void
     ) => {
         // Ensure the iframe is init
-        const isConnected = await messageHandler.isConnected;
+        const isConnected = await lifecycleManager.isConnected;
         if (!isConnected) {
             throw new FrakRpcError(
                 RpcErrorCodes.clientNotConnected,
@@ -112,10 +124,9 @@ export function createIFrameNexusClient({
             >(message.data);
             // Transmit the result if it's a success
             if (decompressed.result) {
-                // @ts-ignore
-                callback(decompressed.result);
+                callback(decompressed.result as TResult);
             } else {
-                // todo: throw an error? Callback with an error?
+                throw new InternalError("No valid result in the response");
             }
         });
 
@@ -140,11 +151,64 @@ export function createIFrameNexusClient({
         iframe.remove();
     };
 
+    // Perform the post connection setup
+    const waitForSetup = postConnectionSetup({
+        config,
+        messageHandler,
+        lifecycleManager,
+    });
+
     return {
         config,
-        waitForConnection: messageHandler.isConnected,
+        waitForConnection: lifecycleManager.isConnected,
+        waitForSetup,
         request,
         listenerRequest,
         destroy,
     };
+}
+
+/**
+ * Perform the post connection setup
+ * @param config
+ * @param lifecycleManager
+ * @param messageHandler
+ */
+export async function postConnectionSetup({
+    config,
+    messageHandler,
+    lifecycleManager,
+}: {
+    config: NexusWalletSdkConfig;
+    lifecycleManager: IframeLifecycleManager;
+    messageHandler: IFrameMessageHandler;
+}): Promise<void> {
+    // Wait for the handler to be connected
+    await lifecycleManager.isConnected;
+
+    // Push raw CSS if needed
+    const pushCss = async () => {
+        const rawCss = config.metadata.css;
+        if (!rawCss) return;
+
+        messageHandler.sendEvent({
+            clientLifecycle: "modal-css",
+            data: { rawCss },
+        });
+    };
+
+    // Restore backup if needed
+    const restoreBackup = async () => {
+        if (typeof window === "undefined") return;
+
+        const backup = window.localStorage.getItem(BACKUP_KEY);
+        if (!backup) return;
+
+        messageHandler.sendEvent({
+            clientLifecycle: "restore-backup",
+            data: { backup },
+        });
+    };
+
+    await Promise.all([pushCss(), restoreBackup()]);
 }

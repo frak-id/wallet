@@ -1,5 +1,6 @@
 import type { RpcSchema } from "viem";
 import type { Prettify } from "viem/chains";
+import type { ClientLifecycleEvent, IFrameLifecycleEvent } from "./lifecycle";
 import type { IFrameRpcSchema } from "./rpc";
 
 /**
@@ -77,11 +78,10 @@ export type RequestFn<TRpcSchema extends RpcSchema> = <
 export type ListenerRequestFn<TRpcSchema extends RpcSchema> = <
     TParameters extends
         ExtractedParametersFromRpc<TRpcSchema> = ExtractedParametersFromRpc<TRpcSchema>,
+    _ReturnType = ExtractedReturnTypeFromRpc<TRpcSchema, TParameters>,
 >(
     args: TParameters,
-    callback: (
-        result: ExtractedReturnTypeFromRpc<TRpcSchema, TParameters>
-    ) => void
+    callback: (result: _ReturnType) => void
 ) => Promise<void>;
 
 /**
@@ -92,6 +92,10 @@ export type IFrameTransport = {
      * Wait for the connection to be established
      */
     waitForConnection: Promise<boolean>;
+    /**
+     * Wait for the setup to be done
+     */
+    waitForSetup: Promise<void>;
     /**
      * Function used to perform a single request via the iframe transport
      */
@@ -109,7 +113,10 @@ export type IFrameTransport = {
 /**
  * Represent an iframe event
  */
-export type IFrameEvent = IFrameRpcEvent | IFrameLifecycleEvent;
+export type IFrameEvent =
+    | IFrameRpcEvent
+    | IFrameLifecycleEvent
+    | ClientLifecycleEvent;
 
 /**
  * Represent an iframe rpc event
@@ -121,16 +128,4 @@ export type IFrameRpcEvent = {
         compressed: string;
         compressedHash: string;
     };
-};
-
-type IFrameLifecycleEvent =
-    | {
-          lifecycle: "connected" | "show" | "hide";
-          data: never;
-      }
-    | LifecycleEventCSS;
-
-type LifecycleEventCSS = {
-    lifecycle: "modal-css";
-    data: string;
 };

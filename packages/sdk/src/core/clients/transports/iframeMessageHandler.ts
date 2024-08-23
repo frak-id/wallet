@@ -1,9 +1,8 @@
 import { FrakRpcError } from "../../types";
 import { RpcErrorCodes } from "../../types/rpc/error";
 import type { IFrameEvent } from "../../types/transport";
-import { Deferred } from "../../utils/Deferred";
-import { changeIframeVisibility } from "../../utils/iframeHelper";
 import type { IFrameChannelManager } from "./iframeChannelManager";
+import type { IframeLifecycleManager } from "./iframeLifecycleManager";
 
 /**
  * Config needed for the creation of an iframe message handler
@@ -14,12 +13,6 @@ export type IFrameMessageHandlerParam = {
      */
     nexusWalletUrl: string;
     /**
-     * The metadata of the app
-     */
-    metadata?: {
-        css?: string;
-    };
-    /**
      * The iframe on which we will bound our listener
      */
     iframe: HTMLIFrameElement;
@@ -28,16 +21,17 @@ export type IFrameMessageHandlerParam = {
      * The channel manager that will be used to manage the channels
      */
     channelManager: IFrameChannelManager;
+
+    /**
+     * The lifecycle manager
+     */
+    iframeLifecycleManager: IframeLifecycleManager;
 };
 
 /**
  * Represent the output of an iframe message handler
  */
 export type IFrameMessageHandler = {
-    /**
-     * Promise that will resolve when the iframe is connected
-     */
-    isConnected: Promise<boolean>;
     /**
      * Function used to send an event to the iframe
      */
@@ -57,9 +51,9 @@ export type IFrameMessageHandler = {
  */
 export function createIFrameMessageHandler({
     nexusWalletUrl,
-    metadata,
     iframe,
     channelManager,
+    iframeLifecycleManager,
 }: IFrameMessageHandlerParam): IFrameMessageHandler {
     // Ensure the window is valid
     if (typeof window === "undefined") {
@@ -77,9 +71,6 @@ export function createIFrameMessageHandler({
     }
     const contentWindow = iframe.contentWindow;
 
-    // Create our deferred promise
-    const isConnectedDeferred = new Deferred<boolean>();
-
     // Create the function that will handle incoming iframe messages
     const msgHandler = async (event: MessageEvent<IFrameEvent>) => {
         if (!event.origin) {
@@ -94,19 +85,14 @@ export function createIFrameMessageHandler({
         }
 
         // Check if that's a lifecycle event
-        if ("lifecycle" in event.data) {
-            switch (event.data.lifecycle) {
-                case "connected":
-                    isConnectedDeferred.resolve(true);
-                    break;
-                case "show":
-                case "hide":
-                    changeIframeVisibility({
-                        iframe,
-                        isVisible: event.data.lifecycle === "show",
-                    });
-                    break;
-            }
+        if ("iframeLifecycle" in event.data) {
+            await iframeLifecycleManager.handleEvent(event.data);
+            return;
+        }
+        if ("clientLifecycle" in event.data) {
+            console.error(
+                "Client lifecycle event received on the client side, dismissing it"
+            );
             return;
         }
 
@@ -134,45 +120,8 @@ export function createIFrameMessageHandler({
         window.removeEventListener("message", msgHandler);
     };
 
-    // Mark it as connected only if the event is 'connected'
-    const isConnected = injectCssOnConnect({
-        isConnected: isConnectedDeferred.promise,
-        metadata,
-        sendEvent,
-    });
-
     return {
-        isConnected,
         sendEvent,
         cleanup,
     };
-}
-
-/**
- * Inject CSS when modal is connected if needed
- * @param isConnected
- * @param metadata
- * @param sendEvent
- */
-function injectCssOnConnect({
-    isConnected,
-    metadata,
-    sendEvent,
-}: {
-    isConnected: Promise<boolean>;
-    metadata?: { css?: string };
-    sendEvent: (message: IFrameEvent) => void;
-}): Promise<boolean> {
-    const css = metadata?.css;
-    if (!css) {
-        return isConnected;
-    }
-
-    return isConnected.then((connected) => {
-        sendEvent({
-            lifecycle: "modal-css",
-            data: css,
-        });
-        return connected;
-    });
 }
