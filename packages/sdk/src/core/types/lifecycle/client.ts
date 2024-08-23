@@ -5,7 +5,7 @@ export type ClientLifecycleEvent = CustomCssEvent | RestoreBackupEvent;
 
 type CustomCssEvent = {
     clientLifecycle: "modal-css";
-    data: { rawCss: string };
+    data: { cssLink: string };
 };
 
 type RestoreBackupEvent = {

@@ -1,3 +1,5 @@
+import { restoreBackupData } from "@/context/sdk/utils/backup";
+import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import {
     type ExtractedParametersFromRpc,
     type IFrameEvent,
@@ -82,12 +84,22 @@ export function createIFrameRequestResolver(
         if ("clientLifecycle" in message.data) {
             const { clientLifecycle, data } = message.data;
 
-            // Check if that's a css lifecycle event and that we have data
-            if (clientLifecycle === "modal-css" && data) {
-                const style = document.createElement("link");
-                style.rel = "stylesheet";
-                style.href = data.rawCss;
-                document.head.appendChild(style);
+            switch (clientLifecycle) {
+                case "modal-css": {
+                    const style = document.createElement("link");
+                    style.rel = "stylesheet";
+                    style.href = data.cssLink;
+                    document.head.appendChild(style);
+                    break;
+                }
+                case "restore-backup": {
+                    // Restore the backup
+                    await restoreBackupData({
+                        backup: data.backup,
+                        productId: resolvingContext.productId,
+                    });
+                    break;
+                }
             }
             return;
         }
@@ -145,7 +157,7 @@ export function createIFrameRequestResolver(
 
     // Helper to tell when we are ready to process message
     function setReadyToHandleRequest() {
-        window.parent?.postMessage({ iframeLifecycle: "connected" }, "*");
+        emitLifecycleEvent({ iframeLifecycle: "connected" });
     }
 
     return {

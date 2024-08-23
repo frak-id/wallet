@@ -188,17 +188,17 @@ export async function postConnectionSetup({
 
     // Push raw CSS if needed
     const pushCss = async () => {
-        const rawCss = config.metadata.css;
-        if (!rawCss) return;
+        const cssLink = config.metadata.css;
+        if (!cssLink) return;
 
         messageHandler.sendEvent({
             clientLifecycle: "modal-css",
-            data: { rawCss },
+            data: { cssLink },
         });
     };
 
-    // Restore backup if needed
-    const restoreBackup = async () => {
+    // Push local backup if needed
+    const pushBackup = async () => {
         if (typeof window === "undefined") return;
 
         const backup = window.localStorage.getItem(BACKUP_KEY);
@@ -210,5 +210,5 @@ export async function postConnectionSetup({
         });
     };
 
-    await Promise.all([pushCss(), restoreBackup()]);
+    await Promise.all([pushCss(), pushBackup()]);
 }

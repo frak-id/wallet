@@ -1,6 +1,5 @@
 "use client";
-
-import { iFrameToggleVisibility } from "@/context/sdk/utils/iFrameToggleVisibility";
+import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import {
@@ -65,14 +64,18 @@ function ListenerModalDialog({
      * Display the iframe
      */
     useEffect(() => {
-        iFrameToggleVisibility(true);
+        emitLifecycleEvent({
+            iframeLifecycle: "show",
+        });
     }, []);
 
     /**
      * Method to close the modal
      */
     const onClose = useCallback(() => {
-        iFrameToggleVisibility(false);
+        emitLifecycleEvent({
+            iframeLifecycle: "hide",
+        });
         jotaiStore.set(clearRpcModalAtom);
     }, []);
 

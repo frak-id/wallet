@@ -4,7 +4,7 @@
 export type IFrameLifecycleEvent =
     | {
           iframeLifecycle: "connected" | "show" | "hide";
-          data: never;
+          data?: never;
       }
     | DoBackupEvent;
 

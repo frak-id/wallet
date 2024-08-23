@@ -1,6 +1,8 @@
 import { getSessionStatus } from "@/context/interaction/action/interactionSession";
+import { pushBackupData } from "@/context/sdk/utils/backup";
 import type {
     IFrameRequestResolver,
+    IFrameResolvingContext,
     IFrameResponseEmitter,
 } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
@@ -28,6 +30,7 @@ export function useWalletStatusListener(): OnListenToWallet {
      */
     const emitCurrentStatus = useCallback(
         async (
+            context: IFrameResolvingContext,
             emitter: IFrameResponseEmitter<{
                 method: "frak_listenToWalletStatus";
             }>
@@ -45,6 +48,7 @@ export function useWalletStatusListener(): OnListenToWallet {
                 return;
             }
 
+            // And then fetch the interaction session
             const interactionSession = await getSessionStatus({
                 wallet: currentSession.wallet.address,
             });
@@ -56,11 +60,20 @@ export function useWalletStatusListener(): OnListenToWallet {
                   }
                 : undefined;
 
+            // Emit the event
             await emitter({
                 result: {
                     key: "connected",
                     wallet: currentSession.wallet.address,
                     interactionSession: formattedInteractionSession,
+                },
+            });
+
+            // And push some backup data if we got ones
+            await pushBackupData({
+                backup: {
+                    productId: context.productId,
+                    session: currentSession,
                 },
             });
         },
@@ -73,14 +86,14 @@ export function useWalletStatusListener(): OnListenToWallet {
      * @param emitter
      */
     return useCallback(
-        async (_, __, emitter) => {
+        async (_, context, emitter) => {
             // Emit the first status
-            await emitCurrentStatus(emitter);
+            await emitCurrentStatus(context, emitter);
 
             // Listen to jotai store update
             jotaiStore.sub(sessionAtom, () => {
                 console.log("session update from jotai sub within context");
-                emitCurrentStatus(emitter);
+                emitCurrentStatus(context, emitter);
             });
 
             // todo: cleanup function
