@@ -13,10 +13,10 @@ export type Campaign = {
     title: string;
     order: string;
     contentId: Hex | "";
-    type: Goal | "";
+    type: Goal | "" | undefined;
     specialCategories: SpecialCategory[];
     budget: {
-        type: Budget | "";
+        type: Budget | "" | undefined;
         maxEuroDaily: number;
     };
     territories: TCountryCode[];

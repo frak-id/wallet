@@ -76,7 +76,9 @@ export function ValidationCampaign() {
         <FormLayout>
             <Head
                 title={{ content: "Campaign Validation", size: "small" }}
-                rightSection={<ButtonCancel />}
+                rightSection={
+                    <ButtonCancel onClick={() => form.reset(campaign)} />
+                }
             />
             <Form {...form}>
                 <form

@@ -43,13 +43,6 @@ export function NewCampaign() {
         defaultValues: campaign,
     });
 
-    /**
-     * Populate the form with campaign atom
-     */
-    useEffect(() => {
-        form.reset(campaign);
-    }, [campaign, form.reset]);
-
     function onSubmit(values: Campaign) {
         console.log(values);
         setCampaign(values);
@@ -60,7 +53,9 @@ export function NewCampaign() {
         <FormLayout>
             <Head
                 title={{ content: "Create a new campaign", size: "small" }}
-                rightSection={<ButtonCancel />}
+                rightSection={
+                    <ButtonCancel onClick={() => form.reset(campaign)} />
+                }
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>

@@ -37,7 +37,11 @@ export function MetricsCampaign() {
         <FormLayout>
             <Head
                 title={{ content: "Campaign Metrics", size: "small" }}
-                rightSection={<ButtonCancel />}
+                rightSection={
+                    <ButtonCancel
+                        onClick={() => form.reset(campaign.rewards)}
+                    />
+                }
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>

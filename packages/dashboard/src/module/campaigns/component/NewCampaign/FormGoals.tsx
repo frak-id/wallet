@@ -26,7 +26,7 @@ import {
     User,
     Volume2,
 } from "lucide-react";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./FormGoals.module.css";
 
@@ -102,10 +102,25 @@ const itemsGoals: ItemGoals[] = [
 export function FormGoals(form: UseFormReturn<Campaign>) {
     const [goal, setGoal] = useState<ItemGoals | undefined>();
 
+    // Force refresh the form when reset the type
+    const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
+    const watchType = form.watch("type");
+
+    /**
+     * Reset goals when the type is reset
+     */
+    useEffect(() => {
+        if (watchType !== "") return;
+        setForceRefresh(new Date().getTime());
+        form.setValue("type", undefined);
+        setGoal(undefined);
+    }, [watchType, form]);
+
     return (
         <Panel title="Goals">
             <Column>
                 <FormField
+                    key={forceRefresh}
                     control={form.control}
                     name="order"
                     rules={{ required: "Select an order" }}
@@ -138,6 +153,7 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
             </Column>
             <Column fullWidth={true}>
                 <FormField
+                    key={forceRefresh}
                     control={form.control}
                     name="type"
                     rules={{ required: "Select a goal" }}

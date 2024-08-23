@@ -16,15 +16,31 @@ import {
 } from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
 import { Input } from "@module/component/forms/Input";
+import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormBudgetRow(
     form: UseFormReturn<Campaign> & { isCheckCampaign?: boolean }
 ) {
     const { isCheckCampaign } = form;
+
+    // Force refresh the form when reset the budget type
+    const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
+    const watchBudgetType = form.watch("budget.type");
+
+    /**
+     * Reset budget type when the type is reset
+     */
+    useEffect(() => {
+        if (watchBudgetType !== "") return;
+        setForceRefresh(new Date().getTime());
+        form.setValue("budget.type", undefined);
+    }, [watchBudgetType, form]);
+
     return (
         <Row>
             <FormField
+                key={forceRefresh}
                 control={form.control}
                 name="budget.type"
                 render={({ field }) => (

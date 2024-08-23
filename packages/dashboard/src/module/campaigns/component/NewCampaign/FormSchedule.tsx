@@ -20,7 +20,7 @@ import { Button } from "@module/component/Button";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { format, isBefore, startOfDay } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./FormSchedule.module.css";
 
@@ -28,6 +28,17 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
     const [isEndDate, setIsEndDate] = useState<boolean | "indeterminate">(
         "indeterminate"
     );
+
+    // Watch the end date to uncheck the end date checkbox
+    const watchScheduledEnd = form.watch("scheduled.dateEnd");
+
+    /**
+     * Uncheck the end date checkbox
+     */
+    useEffect(() => {
+        if (watchScheduledEnd) return;
+        setIsEndDate(false);
+    }, [watchScheduledEnd]);
 
     return (
         <Panel title="Schedule">
@@ -105,6 +116,7 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                             <Checkbox
                                 onCheckedChange={setIsEndDate}
                                 id={"is-end-date"}
+                                checked={isEndDate === true}
                             />
                             <FormLabel
                                 variant={"checkbox"}
