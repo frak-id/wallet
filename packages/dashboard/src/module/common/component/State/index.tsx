@@ -29,11 +29,11 @@ export function State({ state }: { state: CampaignState }) {
             </Badge>
             {/*Active badges*/}
             <Badge variant="information">
-                {state.isActive ? "Active" : "Not active"}
+                {state.isActive === true ? "Active" : "Not active"}
             </Badge>
             {/*Attachment badges*/}
             <Badge variant="information">
-                {state.interactionLink.isAttached ? "Attached" : "Not attached"}
+                {state.interactionLink?.isAttached === true ? "Attached" : "Not attached"}
             </Badge>
         </>
     );

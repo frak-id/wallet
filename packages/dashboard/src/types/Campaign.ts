@@ -44,14 +44,14 @@ export type CampaignState =
       }
     | {
           key: "created";
-          interactionLink: {
+          interactionLink?: {
               // Is campaign attached? If not, it's done for good
               isAttached: boolean;
               attachTimestamp: string;
               detachTimestamp?: string;
           };
           // Active = can distribute rewards
-          isActive: boolean;
+          isActive?: boolean;
           // Campaign deployed address
           address: Address;
       };
