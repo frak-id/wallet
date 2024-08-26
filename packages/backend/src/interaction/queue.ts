@@ -8,7 +8,7 @@ import { Handler } from "sst/context";
 import { Config } from "sst/node/config";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { sendTransaction } from "viem/actions";
+import { estimateFeesPerGas, sendTransaction } from "viem/actions";
 import { getViemClient } from "../blockchain/client";
 import { recordToInteraction } from "./formatter/recordFormatter";
 
@@ -114,10 +114,19 @@ async function pushInteractions(
         Config.AIRDROP_PRIVATE_KEY as Hex
     );
 
+    // Estimate the gas
+    const { maxFeePerGas, maxPriorityFeePerGas } = await estimateFeesPerGas(
+        getViemClient()
+    );
+
     // And send it
     return await sendTransaction(getViemClient(), {
         account: executorAccount,
         to: addresses.interactionDelegator,
         data: compressedExecute,
+        // We will pay 40% more gas than the estimation, to ensure proper inclusion
+        maxFeePerGas: (maxFeePerGas * 140n) / 100n,
+        // We will pay 25% more priority fee than the estimation, to ensure proper inclusion
+        maxPriorityFeePerGas: (maxPriorityFeePerGas * 125n) / 100n,
     });
 }
