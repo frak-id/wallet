@@ -2,6 +2,7 @@
 
 import * as dns from "node:dns";
 import { promisify } from "node:util";
+import { isExistingContent } from "@/context/content/action/mint";
 import { flat } from "radash";
 import { concatHex, keccak256, toHex } from "viem";
 
@@ -34,4 +35,31 @@ export async function isDnsTxtRecordSet({
     } catch {
         return false;
     }
+}
+
+/**
+ * Check hte validity of a domain name before proceeding to a mint
+ * @param name
+ * @param domain
+ */
+export async function verifyDomainName({
+    name,
+    domain,
+}: { name: string; domain: string }) {
+    // Precompute the domain id and check if it's already minted or not
+    const contentId = BigInt(keccak256(toHex(domain)));
+    const alreadyExist = await isExistingContent({ contentId });
+    if (alreadyExist) {
+        return {
+            alreadyExist: true,
+            isRecordSet: false,
+        };
+    }
+
+    // Check if the DNS txt record is set
+    const isRecordSet = await isDnsTxtRecordSet({ name, domain });
+    return {
+        alreadyExist: false,
+        isRecordSet,
+    };
 }

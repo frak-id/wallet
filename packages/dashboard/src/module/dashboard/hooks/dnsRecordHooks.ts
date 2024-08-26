@@ -1,6 +1,6 @@
 import {
     getDnsTxtString,
-    isDnsTxtRecordSet,
+    verifyDomainName,
 } from "@/context/content/action/verifyDomain";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
@@ -30,16 +30,18 @@ export function useDnsTxtRecordSet({
 }
 
 /**
- * Function ot check if the dns record is set
+ * Function ot check:
+ *  - if the content isn't already minted
+ *  - if the dns record is set
  */
-export function useCheckDnsTxtRecordSet() {
+export function useCheckDomainName() {
     return useMutation({
-        mutationKey: ["mint", "check-dns-record"],
+        mutationKey: ["mint", "check-domain-name"],
         mutationFn: async ({
             name,
             domain,
         }: { name: string; domain: string }) =>
-            await isDnsTxtRecordSet({
+            await verifyDomainName({
                 name,
                 domain,
             }),

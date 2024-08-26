@@ -2,7 +2,7 @@ import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Row } from "@/module/common/component/Row";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import {
-    useCheckDnsTxtRecordSet,
+    useCheckDomainName,
     useDnsTxtRecordSet,
 } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyContent } from "@/module/dashboard/hooks/useMintMyContent";
@@ -140,7 +140,7 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         enabled: isModalOpen,
     });
 
-    const { mutateAsync: checkDomainSetup } = useCheckDnsTxtRecordSet();
+    const { mutateAsync: checkDomainSetup } = useCheckDomainName();
 
     /**
      * Reset the error when the modal is opened
@@ -167,12 +167,14 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         }
 
         // Check the validity of the domain
-        const isValidDomain = await checkDomainSetup({
+        const { alreadyExist, isRecordSet } = await checkDomainSetup({
             name: form.getValues().name,
             domain: parsedDomain,
         });
 
-        if (!isValidDomain) {
+        if (alreadyExist) {
+            setError(`A product already exists for the domain ${parsedDomain}`);
+        } else if (!isRecordSet) {
             setError(
                 `The DNS txt record is not set for the domain ${parsedDomain}`
             );

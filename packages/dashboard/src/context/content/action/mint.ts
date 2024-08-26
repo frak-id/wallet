@@ -34,7 +34,12 @@ export async function mintMyContent({
 
     // Precompute the domain id and check if it's already minted or not
     const contentId = BigInt(keccak256(toHex(domain)));
-    await assertContentDoesntExist({ contentId });
+    const contentAlreadyExist = await isExistingContent({ contentId });
+    if (contentAlreadyExist) {
+        throw new Error(
+            `The content ${name} already exists for the domain ${domain}`
+        );
+    }
 
     // Check if the DNS txt record is set
     const isRecordSet = await isDnsTxtRecordSet({ name, domain });
@@ -87,14 +92,13 @@ export async function mintMyContent({
  * Assert that a content doesn't exist yet
  * @param contentId
  */
-async function assertContentDoesntExist({ contentId }: { contentId: bigint }) {
+export async function isExistingContent({ contentId }: { contentId: bigint }) {
     const existingMetadata = await readContract(viemClient, {
         address: addresses.contentRegistry,
         abi: contentRegistryAbi,
         functionName: "getMetadata",
         args: [BigInt(contentId)],
     });
-    if (existingMetadata.contentTypes !== 0n) {
-        throw new Error("Content already minted");
-    }
+    // Return true if the existing metadata exists
+    return existingMetadata.contentTypes !== 0n;
 }

@@ -33,7 +33,9 @@ export function State({ state }: { state: CampaignState }) {
             </Badge>
             {/*Attachment badges*/}
             <Badge variant="information">
-                {state.interactionLink?.isAttached === true ? "Attached" : "Not attached"}
+                {state.interactionLink?.isAttached === true
+                    ? "Attached"
+                    : "Not attached"}
             </Badge>
         </>
     );
