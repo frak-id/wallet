@@ -7,7 +7,7 @@ export const kernelAddresses = {
     multiWebAuthnValidator: "0xF05f18D9312f10d1d417c45040B8497899f66A5E",
     // Interactions
     interactionDelegatorValidator: "0xb33cc9Aea3f6e1125179Ec0A1D9783eD3717d04C",
-    interactionDelegatorAction: "0xD910e1e952ab2F23282dB8450AA7054841Ef53B8",
+    interactionDelegatorAction: "0xF9aC3355363a1F3b501Df411cA4d08e8F854bF76",
     // Kernel stuff
     ecdsaValidator: "0xd9AB5096a832b9ce79914329DAEE236f8Eea0390",
     accountLogic: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
