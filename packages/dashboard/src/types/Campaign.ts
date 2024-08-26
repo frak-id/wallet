@@ -52,6 +52,8 @@ export type CampaignState =
           };
           // Active = can distribute rewards
           isActive?: boolean;
+          // Running = is paused or not
+          isRunning?: boolean;
           // Campaign deployed address
           address: Address;
       };
@@ -62,5 +64,6 @@ export type CampaignWithState = Campaign & {
     actions: {
         canEdit: boolean;
         canDelete: boolean;
+        canToggleRunningStatus: boolean;
     };
 };

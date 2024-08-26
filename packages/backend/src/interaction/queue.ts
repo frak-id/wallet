@@ -2,13 +2,13 @@ import { interactionDelegatorAbi } from "@frak-labs/shared/context/blockchain/ab
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import type { SQSEvent } from "aws-lambda";
 import type { SQSBatchResponse } from "aws-lambda/trigger/sqs";
-import { parallel, sift, tryit } from "radash";
+import { all, parallel, sift, tryit } from "radash";
 import * as solady from "solady";
 import { Handler } from "sst/context";
 import { Config } from "sst/node/config";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { estimateFeesPerGas, sendTransaction } from "viem/actions";
+import { estimateFeesPerGas, estimateGas, sendTransaction } from "viem/actions";
 import { getViemClient } from "../blockchain/client";
 import { recordToInteraction } from "./formatter/recordFormatter";
 
@@ -114,16 +114,26 @@ async function pushInteractions(
         Config.AIRDROP_PRIVATE_KEY as Hex
     );
 
-    // Estimate the gas
-    const { maxFeePerGas, maxPriorityFeePerGas } = await estimateFeesPerGas(
-        getViemClient()
-    );
+    // Estimate the gas consumption and price
+    const {
+        gas,
+        fees: { maxFeePerGas, maxPriorityFeePerGas },
+    } = await all({
+        gas: estimateGas(getViemClient(), {
+            account: executorAccount,
+            to: addresses.interactionDelegator,
+            data: compressedExecute,
+        }),
+        fees: estimateFeesPerGas(getViemClient()),
+    });
 
     // And send it
     return await sendTransaction(getViemClient(), {
         account: executorAccount,
         to: addresses.interactionDelegator,
         data: compressedExecute,
+        // We will provide 50% more gas than the estimation, to ensure proper inclusion
+        gas: (gas * 150n) / 100n,
         // We will pay 40% more gas than the estimation, to ensure proper inclusion
         maxFeePerGas: (maxFeePerGas * 140n) / 100n,
         // We will pay 25% more priority fee than the estimation, to ensure proper inclusion

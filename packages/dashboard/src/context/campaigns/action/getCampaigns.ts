@@ -5,7 +5,10 @@ import { viemClient } from "@/context/blockchain/provider";
 import { campaignRoles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import type { CampaignWithState } from "@/types/Campaign";
-import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
+import {
+    interactionCampaignAbi,
+    referralCampaignAbi,
+} from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import ky from "ky";
 import { all } from "radash";
 import { type Address, isAddressEqual } from "viem";
@@ -48,8 +51,9 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     // Find each state for each campaigns
     let isActives: boolean[] = [];
     let canEdits: boolean[] = [];
+    let isRunnings: boolean[] = [];
     if (blockchainCampaigns.length > 0) {
-        const { isActivesNew, canEditsNew } = await all({
+        const { isActivesNew, canEditsNew, isRunningsNew } = await all({
             // Check if the campaign is active
             isActivesNew: multicall(viemClient, {
                 contracts: blockchainCampaigns.map(
@@ -79,9 +83,23 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
                 ),
                 allowFailure: false,
             }),
+            // Check if the campaign can be edited
+            isRunningsNew: multicall(viemClient, {
+                contracts: blockchainCampaigns.map(
+                    (campaign) =>
+                        ({
+                            abi: referralCampaignAbi,
+                            address: campaign.id,
+                            functionName: "isRunning",
+                            args: [],
+                        }) as const
+                ),
+                allowFailure: false,
+            }),
         });
         isActives = isActivesNew;
         canEdits = canEditsNew;
+        isRunnings = isRunningsNew;
     }
 
     // Map all of that to campaign with state object
@@ -93,6 +111,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
             actions: {
                 canEdit: isAddressEqual(campaign.creator, session.wallet),
                 canDelete: isAddressEqual(campaign.creator, session.wallet),
+                canToggleRunningStatus: false,
             },
         };
 
@@ -132,6 +151,11 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
                         blockchainCampaign.detachTimestamp ?? undefined,
                 },
                 isActive: isActives[blockchainCampaignIndex],
+                isRunning: isRunnings[blockchainCampaignIndex],
+            },
+            actions: {
+                ...mappedCampaign.actions,
+                canToggleRunningStatus: true,
             },
         };
     });

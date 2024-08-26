@@ -496,6 +496,13 @@ export const referralCampaignAbi = [
     {
         type: "function",
         inputs: [],
+        name: "isRunning",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [],
         name: "owner",
         outputs: [{ name: "result", internalType: "address", type: "address" }],
         stateMutability: "view",
@@ -557,10 +564,17 @@ export const referralCampaignAbi = [
     {
         type: "function",
         inputs: [
-            { name: "startDate", internalType: "uint48", type: "uint48" },
-            { name: "endDate", internalType: "uint48", type: "uint48" },
+            { name: "_startDate", internalType: "uint48", type: "uint48" },
+            { name: "_endDate", internalType: "uint48", type: "uint48" },
         ],
         name: "setActivationDate",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "_isRunning", internalType: "bool", type: "bool" }],
+        name: "setRunningStatus",
         outputs: [],
         stateMutability: "nonpayable",
     },
