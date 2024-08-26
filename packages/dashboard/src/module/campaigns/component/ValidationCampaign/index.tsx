@@ -1,27 +1,32 @@
 "use client";
+
 import {
     saveCampaign,
     updateCampaignState,
 } from "@/context/campaigns/action/createCampaign";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
-import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
+import { campaignSuccessAtom } from "@/module/campaigns/atoms/steps";
 import { ButtonCancel } from "@/module/campaigns/component/NewCampaign/ButtonCancel";
 import { FormCheck } from "@/module/campaigns/component/ValidationCampaign/FormCheck";
 import { Head } from "@/module/common/component/Head";
+import { Panel } from "@/module/common/component/Panel";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import { tryit } from "radash";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import type { Hex } from "viem";
+import styles from "./index.module.css";
 
 export function ValidationCampaign() {
-    const setStep = useSetAtom(campaignStepAtom);
     const [campaign, setCampaign] = useAtom(campaignAtom);
+    const [campaignSuccess, setCampaignSuccess] = useAtom(campaignSuccessAtom);
+    const [txHash, setTxHash] = useState<Hex | undefined>();
 
     // Hook used to send transaction via the nexus wallet
     const { mutateAsync: sendTransaction, isPending: isPendingTransaction } =
@@ -56,8 +61,8 @@ export function ValidationCampaign() {
                     txHash: result?.hash,
                 });
 
-                // Once all good, back to previous state
-                setStep((prev) => prev + 1);
+                setTxHash(result?.hash);
+                setCampaignSuccess(true);
             },
         });
 
@@ -77,7 +82,10 @@ export function ValidationCampaign() {
             <Head
                 title={{ content: "Campaign Validation", size: "small" }}
                 rightSection={
-                    <ButtonCancel onClick={() => form.reset(campaign)} />
+                    <ButtonCancel
+                        onClick={() => form.reset(campaign)}
+                        disabled={campaignSuccess}
+                    />
                 }
             />
             <Form {...form}>
@@ -86,7 +94,15 @@ export function ValidationCampaign() {
                         createCampaign(campaign)
                     )}
                 >
-                    <FormCheck {...form} />
+                    {!campaignSuccess && <FormCheck {...form} />}
+                    {campaignSuccess && (
+                        <Panel title="Campaign creation success">
+                            <p className={styles.validationCampaign__message}>
+                                Your campaign was successfully created !
+                            </p>
+                            {txHash && <p>Transaction hash: {txHash}</p>}
+                        </Panel>
+                    )}
                     <Actions
                         isLoading={
                             isPendingTransaction || isPendingCreateCampaign

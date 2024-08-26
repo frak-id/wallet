@@ -3,7 +3,10 @@ import { Button } from "@module/component/Button";
 import { useSetAtom } from "jotai";
 import { X } from "lucide-react";
 
-export function ButtonCancel({ onClick }: { onClick: () => void }) {
+export function ButtonCancel({
+    onClick,
+    disabled,
+}: { onClick: () => void; disabled?: boolean }) {
     const campaignReset = useSetAtom(campaignResetAtom);
 
     return (
@@ -14,6 +17,7 @@ export function ButtonCancel({ onClick }: { onClick: () => void }) {
                 campaignReset();
                 onClick?.();
             }}
+            disabled={disabled}
         >
             Cancel
         </Button>

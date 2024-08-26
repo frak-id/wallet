@@ -14,14 +14,3 @@
 .action__right {
     gap: 8px;
 }
-
-.action__message {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    font-weight: 600;
-}
-
-.action__message--success {
-    color: var(--frak-color-malachite);
-}
