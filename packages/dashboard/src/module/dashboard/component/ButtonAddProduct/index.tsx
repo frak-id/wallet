@@ -3,7 +3,7 @@ import { Row } from "@/module/common/component/Row";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import {
     useCheckDomainName,
-    useDnsTxtRecordSet,
+    useDnsTxtRecordToSet,
 } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyContent } from "@/module/dashboard/hooks/useMintMyContent";
 import {
@@ -16,6 +16,7 @@ import {
 } from "@/module/forms/Form";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { Button } from "@module/component/Button";
+import { Spinner } from "@module/component/Spinner";
 import { Input } from "@module/component/forms/Input";
 import { validateUrl } from "@module/utils/validateUrl";
 import { useQueryClient } from "@tanstack/react-query";
@@ -134,7 +135,7 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         [rawDomain]
     );
 
-    const { data: dnsRecord, isLoading } = useDnsTxtRecordSet({
+    const { data: dnsRecord, isLoading } = useDnsTxtRecordToSet({
         name: form.watch("name"),
         domain: parsedDomain,
         enabled: isModalOpen,
@@ -247,12 +248,13 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
                 )}
             />
 
-            {dnsRecord && !isLoading && (
+            {dnsRecord || isLoading ? (
                 <p>
                     DNS TXT record expected to set for domain validation is:{" "}
-                    <br />"{dnsRecord}"
+                    <br />
+                    {isLoading ? <Spinner /> : <pre>{dnsRecord}</pre>}
                 </p>
-            )}
+            ) : null}
 
             {error && <p className={"error"}>{error}</p>}
             {success && (

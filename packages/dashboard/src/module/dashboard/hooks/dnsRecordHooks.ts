@@ -3,6 +3,7 @@ import {
     verifyDomainName,
 } from "@/context/content/action/verifyDomain";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { sleep } from "radash";
 
 /**
  * Hook to fetch the dns record to be set
@@ -10,16 +11,21 @@ import { useMutation, useQuery } from "@tanstack/react-query";
  * @param domain
  * @param enabled
  */
-export function useDnsTxtRecordSet({
+export function useDnsTxtRecordToSet({
     name,
     domain,
     enabled,
 }: { name: string; domain?: string; enabled: boolean }) {
     return useQuery({
         queryKey: ["mint", "dns-record", name, domain],
-        queryFn: async () => {
+        queryFn: async ({ signal }) => {
             if (!domain) return "";
 
+            // Manual sleep to do a debounce like effect
+            await sleep(300);
+            if (signal.aborted) return "";
+
+            // Fetch the dns txt string
             return await getDnsTxtString({
                 name,
                 domain,
