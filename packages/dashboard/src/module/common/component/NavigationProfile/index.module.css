@@ -3,12 +3,12 @@
     align-items: center;
     gap: 12px;
 
-    &::before {
+    /*&::before {
         content: "";
         width: 1px;
         height: 40px;
         background: var(--frak-navigation-profile-separator-color);
-    }
+    }*/
 }
 
 .navigationProfile__avatar {
@@ -16,7 +16,13 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: white;
+    border: 1px solid white;
+    text-align: center;
+
+    & > svg {
+        margin-top: 3px;
+        margin-left: 1px;
+    }
 }
 
 .navigationProfile__infos {
