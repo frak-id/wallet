@@ -55,13 +55,23 @@ export function useReferralInteraction({
     // Function to process the referral
     const processReferral = useCallback(async (): Promise<ReferralState> => {
         try {
-            const currentWallet = await ensureWalletConnected();
+            // Get the current wallet, without auto displaying the modal
+            let currentWallet = await ensureWalletConnected({
+                autoDisplay: false,
+            });
 
             if (!nexusContext?.r) {
                 if (currentWallet) {
                     await updateContextAsync({ r: currentWallet });
                 }
                 return "no-referrer";
+            }
+
+            // We have a referral, so if we don't have a current wallet, display the modal
+            if (!currentWallet) {
+                currentWallet = await ensureWalletConnected({
+                    autoDisplay: true,
+                });
             }
 
             if (
@@ -130,19 +140,25 @@ function useEnsureWalletConnected({
     // Hook to display the modal
     const { mutateAsync: displayModal } = useDisplayModal();
 
-    return useCallback(async () => {
-        if (
-            walletStatus?.key !== "connected" ||
-            !walletStatus.interactionSession
-        ) {
-            if (!modalConfig) {
-                return undefined;
+    return useCallback(
+        async ({ autoDisplay }: { autoDisplay: boolean }) => {
+            // If wallet not connected, or no interaction session
+            if (
+                walletStatus?.key !== "connected" ||
+                !walletStatus.interactionSession
+            ) {
+                // If we don't have any modal setup, or we don't want to auto display it, do nothing
+                if (!(modalConfig && autoDisplay)) {
+                    return undefined;
+                }
+                const result = await displayModal(modalConfig);
+                return result?.login?.wallet ?? undefined;
             }
-            const result = await displayModal(modalConfig);
-            return result?.login?.wallet ?? undefined;
-        }
-        return walletStatus.wallet ?? undefined;
-    }, [walletStatus, modalConfig, displayModal]);
+
+            return walletStatus.wallet ?? undefined;
+        },
+        [walletStatus, modalConfig, displayModal]
+    );
 }
 
 /**
