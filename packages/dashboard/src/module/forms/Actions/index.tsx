@@ -1,10 +1,11 @@
 import {
+    campaignIsClosingAtom,
     campaignStepAtom,
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
 import { Panel } from "@/module/common/component/Panel";
 import { Button } from "@module/component/Button";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import styles from "./index.module.css";
@@ -15,6 +16,7 @@ export function Actions({ isLoading = false }: { isLoading?: boolean }) {
     const router = useRouter();
     const [step, setStep] = useAtom(campaignStepAtom);
     const campaignSuccess = useAtomValue(campaignSuccessAtom);
+    const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
 
     useEffect(() => {
         router.push(pages[step - 1]);
@@ -24,8 +26,9 @@ export function Actions({ isLoading = false }: { isLoading?: boolean }) {
         <Panel variant={"secondary"} className={styles.actions}>
             <div className={styles.action__left}>
                 <Button
+                    type={"submit"}
                     variant={"outline"}
-                    onClick={() => router.push("/campaigns")}
+                    onClick={async () => setCampaignIsClosing(true)}
                 >
                     Close
                 </Button>
@@ -51,6 +54,7 @@ function ButtonNext({
     step,
     isLoading = false,
 }: { step: number; isLoading: boolean }) {
+    const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
     return step === pages.length ? (
         <Button
             type={"submit"}
@@ -61,7 +65,11 @@ function ButtonNext({
             Publish
         </Button>
     ) : (
-        <Button type={"submit"} variant={"information"}>
+        <Button
+            type={"submit"}
+            variant={"information"}
+            onClick={() => setCampaignIsClosing(false)}
+        >
             Next
         </Button>
     );

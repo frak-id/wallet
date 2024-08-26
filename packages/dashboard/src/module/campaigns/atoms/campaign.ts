@@ -1,4 +1,5 @@
 import {
+    campaignIsClosingAtom,
     campaignStepAtom,
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
@@ -39,5 +40,6 @@ export const campaignAtom = atomWithStorage<Campaign>(
 export const campaignResetAtom = atom(null, (_get, set) => {
     set(campaignAtom, initialValues);
     set(campaignSuccessAtom, false);
+    set(campaignIsClosingAtom, false);
     set(campaignStepAtom, 1);
 });

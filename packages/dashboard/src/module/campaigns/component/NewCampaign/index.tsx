@@ -5,7 +5,7 @@ import {
     campaignResetAtom,
 } from "@/module/campaigns/atoms/campaign";
 import {
-    campaignStepAtom,
+    campaignIsClosingAtom,
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
 import { ButtonCancel } from "@/module/campaigns/component/NewCampaign/ButtonCancel";
@@ -16,19 +16,21 @@ import { FormSchedule } from "@/module/campaigns/component/NewCampaign/FormSched
 import { FormSpecialAdvertising } from "@/module/campaigns/component/NewCampaign/FormSpecialAdvertising";
 import { FormTerritory } from "@/module/campaigns/component/NewCampaign/FormTerritory";
 import { FormTitle } from "@/module/campaigns/component/NewCampaign/FormTitle";
+import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 export function NewCampaign() {
-    const setStep = useSetAtom(campaignStepAtom);
     const campaignSuccess = useAtomValue(campaignSuccessAtom);
-    const [campaign, setCampaign] = useAtom(campaignAtom);
+    const campaign = useAtomValue(campaignAtom);
     const campaignReset = useSetAtom(campaignResetAtom);
+    const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
+    const saveCampaign = useSaveCampaign();
 
     /**
      * Reset campaign atom when campaign was in success
@@ -37,16 +39,15 @@ export function NewCampaign() {
         if (campaignSuccess) {
             campaignReset();
         }
-    }, [campaignSuccess, campaignReset]);
+        setCampaignIsClosing(false);
+    }, [campaignSuccess, campaignReset, setCampaignIsClosing]);
 
     const form = useForm<Campaign>({
         defaultValues: campaign,
     });
 
-    function onSubmit(values: Campaign) {
-        console.log(values);
-        setCampaign(values);
-        setStep((prev) => prev + 1);
+    async function onSubmit(values: Campaign) {
+        await saveCampaign(values);
     }
 
     return (

@@ -1,20 +1,20 @@
 "use client";
 
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
-import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
 import { FormObjectives } from "@/module/campaigns/component/MetricsCampaign/FormObjectives";
 import { ButtonCancel } from "@/module/campaigns/component/NewCampaign/ButtonCancel";
+import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 export function MetricsCampaign() {
-    const setStep = useSetAtom(campaignStepAtom);
-    const [campaign, setCampaign] = useAtom(campaignAtom);
+    const campaign = useAtomValue(campaignAtom);
+    const saveCampaign = useSaveCampaign();
 
     const form = useForm<Campaign["rewards"]>({
         defaultValues: campaign.rewards,
@@ -27,10 +27,8 @@ export function MetricsCampaign() {
         form.reset(campaign.rewards);
     }, [campaign, form.reset]);
 
-    function onSubmit(values: Campaign["rewards"]) {
-        console.log(values);
-        setCampaign({ ...campaign, rewards: values });
-        setStep((prev) => prev + 1);
+    async function onSubmit(values: Campaign["rewards"]) {
+        await saveCampaign({ ...campaign, rewards: values });
     }
 
     return (

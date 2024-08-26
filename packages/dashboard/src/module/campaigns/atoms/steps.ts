@@ -12,3 +12,11 @@ export const campaignSuccessAtom = atomWithStorage<boolean>(
     "campaignSuccess",
     false
 );
+
+/**
+ * Atom used when user is closing the campaign by clicking on the close button
+ */
+export const campaignIsClosingAtom = atomWithStorage<boolean>(
+    "campaignIsClosing",
+    false
+);
