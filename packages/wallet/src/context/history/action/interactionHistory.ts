@@ -60,7 +60,7 @@ export const getInteractionHistory = unstable_cache(
     _getInteractionHistory,
     ["history", "interaction"],
     {
-        // Keep that in server cache for 15min
-        revalidate: 15 * 60,
+        // Keep that in server cache for 2min
+        revalidate: 2 * 60,
     }
 );

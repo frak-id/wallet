@@ -3,7 +3,7 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import type { InteractionHistory } from "@/types/InteractionHistory";
-import { BookText, Forward, MailOpen, Link } from "lucide-react";
+import { BookText, Forward, Link, MailOpen } from "lucide-react";
 import styles from "./index.module.css";
 
 type InteractionProps = {

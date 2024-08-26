@@ -1,32 +1,13 @@
 "use server";
-import { getClient } from "@/context/common/graphql";
 import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
-import { gql } from "@urql/core";
+import ky from "ky";
 import { unstable_cache } from "next/cache";
 import { type Address, encodeFunctionData, formatEther } from "viem";
 
-const QUERY = gql(`
-query RewardsQuery($wallet: String!) {
-  rewards(where: {pendingAmount_not: "0", user: $wallet}) {
-    items {
-      pendingAmount
-      contract {
-        id
-      }
-    }
-  }
-}
-`);
-type QueryResult = {
-    rewards: {
-        items: {
-            pendingAmount: string;
-            contract: {
-                id: Address;
-            };
-        }[];
-    };
-};
+type ApiResult = Array<{
+    amount: string;
+    address: Address;
+}>;
 
 /**
  * Tell that a user has been referred by another user
@@ -34,25 +15,27 @@ type QueryResult = {
  * @param referrer
  */
 async function _getPendingRewards({ user }: { user: Address }) {
-    // Get our indexer result
-    const result = await getClient()
-        .query<QueryResult>(QUERY, { wallet: user })
-        .toPromise();
+    // Perform the request to our api
+    const rewards = await ky
+        .get(`https://indexer.frak.id/rewards/${user}`)
+        .json<ApiResult>();
 
-    if (!result.data?.rewards.items.length) {
+    if (!rewards.length) {
         return null;
     }
 
+    const claimTx = encodeFunctionData({
+        abi: referralCampaignAbi,
+        functionName: "pullReward",
+        args: [user],
+    });
+
     // Extract the pending rewards
-    const pendingRewards = result.data.rewards.items.map((item) => {
+    const pendingRewards = rewards.map((reward) => {
         return {
-            address: item.contract.id,
-            amount: BigInt(item.pendingAmount),
-            claimTx: encodeFunctionData({
-                abi: referralCampaignAbi,
-                functionName: "pullReward",
-                args: [user],
-            }),
+            address: reward.address,
+            amount: BigInt(reward.amount),
+            claimTx,
         };
     });
 

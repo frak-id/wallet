@@ -1,45 +1,20 @@
 "use server";
-
-import { getClient } from "@/context/common/graphql";
 import type { RewardHistory } from "@/types/RewardHistory";
-import { gql } from "@urql/core";
+import ky from "ky";
 import { unstable_cache } from "next/cache";
 import { type Address, type Hex, formatEther } from "viem";
 
-const QUERY = gql(`
-query RewardHistoryQuery($wallet: String!) {
-  rewardAddedEvents(limit: 20, where: {rewardId_contains: $wallet}) {
-    items {
-      amount
-      timestamp
-      txHash
-    }
-  }
-  rewardClaimedEvents(limit: 20, where: {rewardId_contains: $wallet}) {
-    items {
-      amount
-      timestamp
-      txHash
-    }
-  }
-}
-`);
-
-type QueryResult = {
-    rewardClaimedEvents: {
-        items: {
-            amount: string;
-            timestamp: string;
-            txHash: Hex;
-        }[];
-    };
-    rewardAddedEvents: {
-        items: {
-            amount: string;
-            timestamp: string;
-            txHash: Hex;
-        }[];
-    };
+type ApiResult = {
+    added: {
+        amount: string;
+        timestamp: string;
+        txHash: Hex;
+    }[];
+    claimed: {
+        amount: string;
+        timestamp: string;
+        txHash: Hex;
+    }[];
 };
 
 /**
@@ -51,14 +26,14 @@ async function _getRewardHistory({
 }: {
     account: Address;
 }): Promise<RewardHistory[]> {
-    // Get our indexer result
-    const result = await getClient()
-        .query<QueryResult>(QUERY, { wallet: account })
-        .toPromise();
+    // Perform the request to our api
+    const rewardsHistory = await ky
+        .get(`https://indexer.frak.id/rewards/${account}/history`)
+        .json<ApiResult>();
 
-    // Map our result
-    return [
-        ...(result.data?.rewardAddedEvents?.items?.map(
+    // Merge both array into one
+    const finalArray = [
+        ...(rewardsHistory?.added?.map(
             (item) =>
                 ({
                     type: "add",
@@ -67,7 +42,7 @@ async function _getRewardHistory({
                     txHash: item.txHash,
                 }) as const
         ) ?? []),
-        ...(result.data?.rewardClaimedEvents?.items?.map(
+        ...(rewardsHistory?.claimed?.map(
             (item) =>
                 ({
                     type: "claim",
@@ -77,6 +52,10 @@ async function _getRewardHistory({
                 }) as const
         ) ?? []),
     ];
+
+    // Sort it by timestamp
+    finalArray.sort((a, b) => a.timestamp - b.timestamp);
+    return finalArray;
 }
 
 /**
@@ -86,7 +65,7 @@ export const getRewardHistory = unstable_cache(
     _getRewardHistory,
     ["history", "reward"],
     {
-        // Keep that in server cache for 15min
-        revalidate: 15 * 60,
+        // Keep that in server cache for 2min
+        revalidate: 2 * 60,
     }
 );
