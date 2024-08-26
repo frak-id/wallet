@@ -1,20 +1,22 @@
 import { saveCampaign } from "@/context/campaigns/action/createCampaign";
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import {
+    campaignAtom,
+    campaignResetAtom,
+} from "@/module/campaigns/atoms/campaign";
 import {
     campaignIsClosingAtom,
     campaignStepAtom,
 } from "@/module/campaigns/atoms/steps";
 import type { Campaign } from "@/types/Campaign";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
 
 export function useSaveCampaign() {
     const router = useRouter();
     const setCampaign = useSetAtom(campaignAtom);
-    const [campaignIsClosing, setCampaignIsClosing] = useAtom(
-        campaignIsClosingAtom
-    );
+    const campaignIsClosing = useAtomValue(campaignIsClosingAtom);
     const setStep = useSetAtom(campaignStepAtom);
+    const campaignReset = useSetAtom(campaignResetAtom);
 
     return async function save(values: Campaign) {
         console.log(values);
@@ -22,7 +24,7 @@ export function useSaveCampaign() {
 
         if (campaignIsClosing) {
             await saveCampaign(values);
-            setCampaignIsClosing(false);
+            campaignReset();
             router.push("/campaigns");
             return;
         }
