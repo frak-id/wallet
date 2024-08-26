@@ -2,9 +2,23 @@ import { FormBudgetRow } from "@/module/campaigns/component/NewCampaign/FormBudg
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
+import { useCallback } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormBudget(form: UseFormReturn<Campaign>) {
+    const type = form.watch("budget.type");
+    const maxEuroDaily = Number(form.watch("budget.maxEuroDaily"));
+
+    const calculateCostPerDay = useCallback(() => {
+        const days = getNumberOfDays(type);
+        return maxEuroDaily / days;
+    }, [type, maxEuroDaily]);
+
+    const costPerDay = calculateCostPerDay();
+    const average = (costPerDay * 0.82).toFixed(2);
+    const maxDaily = (costPerDay * 1.25).toFixed(2);
+    const maxWeekly = (costPerDay * 7).toFixed(2);
+
     return (
         <Panel title="Budget">
             <FormDescription>
@@ -15,9 +29,28 @@ export function FormBudget(form: UseFormReturn<Campaign>) {
             </FormDescription>
             <FormBudgetRow {...form} />
             <FormDescription>
-                You will spend an average of €25 per day. Your maximum daily
-                spend is €31.25 and your maximum weekly spend is €175.
+                {type && maxEuroDaily > 0 && (
+                    <>
+                        You will spend an average of €{average} per day. Your
+                        maximum daily spend is €{maxDaily} and your maximum
+                        weekly spend is €{maxWeekly}.
+                    </>
+                )}
             </FormDescription>
         </Panel>
     );
+}
+
+function getNumberOfDays(type: Campaign["budget"]["type"]) {
+    switch (type) {
+        case "daily":
+        case "global":
+            return 1;
+        case "weekly":
+            return 7;
+        case "monthly":
+            return 30;
+        default:
+            return 1;
+    }
 }
