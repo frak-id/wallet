@@ -17,5 +17,12 @@ type ReferredInteraction = BaseInteraction & {
         referrer: Address;
     };
 };
+type CreateReferralLinkInteraction = BaseInteraction & {
+    type: "CREATE_REFERRAL_LINK";
+    data: null;
+};
 
-export type InteractionHistory = OpenOrReadInteraction | ReferredInteraction;
+export type InteractionHistory =
+    | OpenOrReadInteraction
+    | ReferredInteraction
+    | CreateReferralLinkInteraction;

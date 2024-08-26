@@ -43,6 +43,7 @@
     "lucide-react": "^0.417.0",
     "mongodb": "^6.8.0",
     "next": "14.2.5",
+    "ky": "^1.5.0",
     "next-qrcode": "^2.5.1",
     "nextjs-toploader": "^1.6.12",
     "normalize.css": "^8.0.1",
