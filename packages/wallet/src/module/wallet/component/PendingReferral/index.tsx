@@ -66,7 +66,7 @@ export function PendingReferral() {
         },
     });
 
-    if (!pendingReward?.pFrkPendingRaw) {
+    if (!pendingReward?.pendingRaw) {
         return null;
     }
 
@@ -83,8 +83,8 @@ export function PendingReferral() {
             {!isSuccess && (
                 <>
                     <p>
-                        You got {pendingReward?.pFrkPendingFormatted} pFRK
-                        pending thanks to your referral activities!
+                        You got {pendingReward?.pendingFormatted} mUSD pending
+                        thanks to your referral activities!
                     </p>
                     <ButtonRipple
                         className={styles.pendingReferral__button}

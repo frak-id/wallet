@@ -1,13 +1,17 @@
 "use server";
+import type { Token } from "@/types/Token";
 import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import ky from "ky";
 import { unstable_cache } from "next/cache";
 import { type Address, encodeFunctionData, formatEther } from "viem";
 
-type ApiResult = Array<{
-    amount: string;
-    address: Address;
-}>;
+type ApiResult = {
+    rewards: {
+        amount: string;
+        address: Address;
+    }[];
+    tokens: Token[];
+};
 
 /**
  * Tell that a user has been referred by another user
@@ -16,7 +20,7 @@ type ApiResult = Array<{
  */
 async function _getPendingRewards({ user }: { user: Address }) {
     // Perform the request to our api
-    const rewards = await ky
+    const { rewards } = await ky
         .get(`https://indexer.frak.id/rewards/${user}`)
         .json<ApiResult>();
 
@@ -45,8 +49,8 @@ async function _getPendingRewards({ user }: { user: Address }) {
     }, 0n);
 
     return {
-        pFrkPendingRaw: pendingAmount,
-        pFrkPendingFormatted: formatEther(pendingAmount),
+        pendingRaw: pendingAmount,
+        pendingFormatted: formatEther(pendingAmount),
         perContracts: pendingRewards,
     };
 }

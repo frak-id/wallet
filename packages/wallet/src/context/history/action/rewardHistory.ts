@@ -1,5 +1,6 @@
 "use server";
 import type { RewardHistory } from "@/types/RewardHistory";
+import type { Token } from "@/types/Token";
 import ky from "ky";
 import { unstable_cache } from "next/cache";
 import { type Address, type Hex, formatEther } from "viem";
@@ -15,6 +16,7 @@ type ApiResult = {
         timestamp: string;
         txHash: Hex;
     }[];
+    tokens: Token[];
 };
 
 /**
@@ -53,9 +55,8 @@ async function _getRewardHistory({
         ) ?? []),
     ];
 
-    // Sort it by timestamp
-    finalArray.sort((a, b) => a.timestamp - b.timestamp);
-    return finalArray;
+    // Sort it by timestamp in the descending order
+    return finalArray.sort((a, b) => b.timestamp - a.timestamp);
 }
 
 /**

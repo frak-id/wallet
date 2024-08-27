@@ -1,6 +1,6 @@
 "use client";
 
-import { formatFrk } from "@/context/wallet/utils/frkFormatter";
+import { formatMUSD } from "@/context/wallet/utils/mUsdFormatter";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
@@ -28,7 +28,7 @@ export function Reward({ reward }: RewardProps) {
 
     const amount = isEnabled
         ? convertToEuro(reward.amount)
-        : formatFrk(Number(reward.amount));
+        : formatMUSD(Number(reward.amount));
     const label = reward.type === "claim" ? "claimed" : "added";
     const icon = reward.type === "claim" ? <Handshake /> : <HandCoins />;
 
