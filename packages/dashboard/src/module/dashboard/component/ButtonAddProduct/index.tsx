@@ -33,6 +33,7 @@ type ProductNew = {
 
 const isModalOpenAtom = atom(false);
 const successAtom = atom(false);
+const isMintingAtom = atom(false);
 const stepAtom = atom(1);
 const resetAtom = atom(null, (_get, set) => {
     set(stepAtom, 1);
@@ -44,6 +45,7 @@ export function ButtonAddProduct() {
     const [step, setStep] = useAtom(stepAtom);
     const [isModalOpen, setIsModalOpen] = useAtom(isModalOpenAtom);
     const resetAtoms = useSetAtom(resetAtom);
+    const isMinting = useAtomValue(isMintingAtom);
 
     const form = useForm<ProductNew>({
         defaultValues: {
@@ -96,9 +98,13 @@ export function ButtonAddProduct() {
                         step === 1 ? (
                             <Button variant={"outline"}>Cancel</Button>
                         ) : (
-                            step === 2 &&
-                            success && (
-                                <Button variant={"outline"}>Close</Button>
+                            step === 2 && (
+                                <Button
+                                    variant={"outline"}
+                                    disabled={isMinting}
+                                >
+                                    Close
+                                </Button>
                             )
                         )
                     }
@@ -275,6 +281,7 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
 function NewProductVerify({ name, domain }: { name: string; domain: string }) {
     const parsedDomain = parseUrl(domain);
     const queryClient = useQueryClient();
+    const [isMinting, setIsMinting] = useAtom(isMintingAtom);
 
     const {
         mutate: triggerMintMyContent,
@@ -285,10 +292,16 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
 
     useEffect(() => {
         if (!data) return;
-        queryClient.invalidateQueries({
-            queryKey: ["my-contents"],
-        });
-    }, [data, queryClient]);
+
+        // Delay the invalidation of the query and the success message
+        // to be sure that indexer has indexed the transaction
+        setTimeout(() => {
+            queryClient.invalidateQueries({
+                queryKey: ["my-contents"],
+            });
+            setIsMinting(false);
+        }, 5000);
+    }, [data, queryClient, setIsMinting]);
 
     if (!parsedDomain) return null;
 
@@ -306,21 +319,28 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
             </p>
             <AuthFingerprint
                 className={styles.newProductForm__fingerprint}
-                action={() =>
+                action={() => {
+                    setIsMinting(true);
                     triggerMintMyContent({
                         name,
                         domain: parsedDomain.hostname,
                         // todo: hardcoded type, should be in the sdk
                         contentTypes: 1n << 2n,
-                    })
-                }
+                    });
+                }}
                 disabled={!isIdle}
             >
                 Validate you Product
             </AuthFingerprint>
 
             {error && <p className={"error"}>{error.message}</p>}
-            {data && (
+            {data && isMinting && (
+                <p>
+                    Your product is being indexed
+                    <span className={"dotsLoading"}>...</span>
+                </p>
+            )}
+            {data && !isMinting && (
                 <p className={"success"}>
                     Your product has been successfully listed on transaction{" "}
                     <strong>{data.mintTxHash}</strong>
