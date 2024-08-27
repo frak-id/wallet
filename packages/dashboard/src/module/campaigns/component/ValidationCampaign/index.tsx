@@ -20,14 +20,13 @@ import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
-import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { tryit } from "radash";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import type { Hex } from "viem";
+import type { Hex, TransactionReceipt } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
 import styles from "./index.module.css";
 
@@ -43,6 +42,7 @@ export function ValidationCampaign() {
     const { mutateAsync: sendTransaction, isPending: isPendingTransaction } =
         useSendTransactionAction();
 
+    // Perform the campaign creation
     const { mutate: createCampaign, isPending: isPendingCreateCampaign } =
         useMutation({
             mutationKey: ["campaign", "create"],
@@ -78,14 +78,17 @@ export function ValidationCampaign() {
             },
         });
 
-    const { isLoading: isWaitingForFinalisedCreation } = useQuery({
+    const {
+        isLoading: isWaitingForFinalisedCreation,
+        data: transactionReceipt,
+    } = useQuery({
         queryKey: ["campaign", "wait-for-finalised-deployment"],
         enabled: !!txHash,
         queryFn: async () => {
             if (!txHash) return null;
-            // We are waiting for the block with the tx hash to have at least 64 confirmations,
+            // We are waiting for the block with the tx hash to have at least 32 confirmations,
             //  it will leave the time for the indexer to process it + the time for the block to be finalised
-            await waitForTransactionReceipt(viemClient, {
+            return await waitForTransactionReceipt(viemClient, {
                 hash: txHash,
                 confirmations: 32,
             });
@@ -136,21 +139,14 @@ export function ValidationCampaign() {
                     })}
                 >
                     {!campaignSuccess && <FormCheck {...form} />}
-                    {campaignSuccess && (
-                        <Panel title="Campaign creation success">
-                            <p className={styles.validationCampaign__message}>
-                                Your campaign was successfully created !
-                            </p>
-                            <br />
-                            {isWaitingForFinalisedCreation && (
-                                <p>
-                                    <Spinner /> We are waiting for the campaign
-                                    to be finalised
-                                </p>
-                            )}
-                            {txHash && <p>Transaction hash: {txHash}</p>}
-                        </Panel>
-                    )}
+                    <CampaignSuccessInfo
+                        txHash={txHash}
+                        isCreated={campaignSuccess}
+                        isWaitingForFinalisedCreation={
+                            isWaitingForFinalisedCreation
+                        }
+                        receipt={transactionReceipt}
+                    />
                     <Actions
                         isLoading={
                             isPendingTransaction ||
@@ -161,5 +157,44 @@ export function ValidationCampaign() {
                 </form>
             </Form>
         </FormLayout>
+    );
+}
+
+/**
+ * If created but waiting for finalised, show a spinner
+ *  Once finalised and success, show txHash + success message
+ */
+function CampaignSuccessInfo({
+    txHash,
+    isCreated,
+    isWaitingForFinalisedCreation,
+    receipt,
+}: {
+    txHash?: Hex;
+    isCreated: boolean;
+    isWaitingForFinalisedCreation: boolean;
+    receipt?: TransactionReceipt | null;
+}) {
+    if (!isCreated) return null;
+
+    if (isCreated && isWaitingForFinalisedCreation && !receipt) {
+        return (
+            <Panel title="Campaign creation in progress">
+                <p>
+                    Setting all the right blockchain data
+                    <span className={"dotsLoading"}>...</span>
+                </p>
+            </Panel>
+        );
+    }
+
+    return (
+        <Panel title="Campaign creation success">
+            <p className={styles.validationCampaign__message}>
+                Your campaign was successfully created !
+            </p>
+            <br />
+            {txHash && <p>Transaction hash: {txHash}</p>}
+        </Panel>
     );
 }

@@ -21,6 +21,7 @@ import {
     parseAbi,
     parseEther,
     parseEventLogs,
+    stringToHex,
 } from "viem";
 import { getTransactionReceipt } from "viem/actions";
 
@@ -86,6 +87,11 @@ export async function saveCampaign(campaign: Campaign) {
         end = Math.floor(new Date(campaign.scheduled.dateEnd).getTime() / 1000);
     }
 
+    // The blockchain name of the campaign is fitted on a bytes32
+    const blockchainName = stringToHex(campaign.title.substring(0, 32), {
+        size: 32,
+    });
+
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
         addresses.mUsdToken,
@@ -97,6 +103,7 @@ export async function saveCampaign(campaign: Campaign) {
             : 0n,
         start,
         end,
+        blockchainName,
     ]);
 
     // Return the encoded calldata to deploy and attach this campaign

@@ -34,4 +34,5 @@ export const referralConfigStruct = [
         type: "uint48",
     },
     { name: "endDate", internalType: "uint48", type: "uint48" },
+    { name: "name", internalType: "bytes32", type: "bytes32" },
 ] as const;
