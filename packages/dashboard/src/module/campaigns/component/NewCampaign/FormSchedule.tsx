@@ -36,8 +36,7 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
      * Uncheck the end date checkbox
      */
     useEffect(() => {
-        if (watchScheduledEnd) return;
-        setIsEndDate(false);
+        setIsEndDate(!!watchScheduledEnd);
     }, [watchScheduledEnd]);
 
     return (
@@ -85,11 +84,15 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                                         selected={field.value}
                                         onSelect={(value) => {
                                             if (!value) return;
-                                            form.setValue(
-                                                "scheduled.dateEnd",
-                                                value
-                                            );
                                             field.onChange(value);
+
+                                            // If checkbox is checked, set the end date to the same date
+                                            if (isEndDate) {
+                                                form.setValue(
+                                                    "scheduled.dateEnd",
+                                                    value
+                                                );
+                                            }
                                         }}
                                         disabled={(date) =>
                                             isBefore(
@@ -114,7 +117,17 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                     <div className={styles.formSchedule__endDate}>
                         <FormItem variant={"checkbox"}>
                             <Checkbox
-                                onCheckedChange={setIsEndDate}
+                                onCheckedChange={(value) => {
+                                    setIsEndDate(value);
+
+                                    // Reset the end date if the checkbox is unchecked
+                                    if (value === false) {
+                                        form.setValue(
+                                            "scheduled.dateEnd",
+                                            undefined
+                                        );
+                                    }
+                                }}
                                 id={"is-end-date"}
                                 checked={isEndDate === true}
                             />
@@ -157,8 +170,10 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                                                     startOfDay(new Date())
                                                 ) ||
                                                 date <
-                                                    form.getValues(
-                                                        "scheduled.dateStart"
+                                                    new Date(
+                                                        form.getValues(
+                                                            "scheduled.dateStart"
+                                                        )
                                                     )
                                             }
                                             startMonth={form.getValues(

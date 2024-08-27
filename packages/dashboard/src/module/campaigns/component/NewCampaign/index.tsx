@@ -46,6 +46,13 @@ export function NewCampaign() {
         defaultValues: campaign,
     });
 
+    /**
+     * Populate the form with campaign atom
+     */
+    useEffect(() => {
+        form.reset(campaign);
+    }, [campaign, form.reset]);
+
     async function onSubmit(values: Campaign) {
         await saveCampaign(values);
     }

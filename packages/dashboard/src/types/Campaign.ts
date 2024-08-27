@@ -12,7 +12,7 @@ type Budget = "daily" | "weekly" | "monthly" | "global";
 export type Campaign = {
     title: string;
     order: string;
-    contentId: Hex | "";
+    contentId: Hex | "" | undefined;
     type: Goal | "" | undefined;
     specialCategories: SpecialCategory[];
     budget: {

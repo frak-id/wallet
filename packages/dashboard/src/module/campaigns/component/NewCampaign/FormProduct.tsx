@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
+import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormProduct(form: UseFormReturn<Campaign>) {
@@ -23,11 +24,25 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
         ...(contents?.owner ?? []),
     ];
 
+    // Force refresh the form when reset the contentId
+    const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
+    const watchContentId = form.watch("contentId");
+
+    /**
+     * Reset contentId
+     */
+    useEffect(() => {
+        if (watchContentId !== "") return;
+        setForceRefresh(new Date().getTime());
+        form.setValue("contentId", undefined);
+    }, [watchContentId, form]);
+
     if (isEmpty) return null;
 
     return (
         <Panel title="Product">
             <FormField
+                key={forceRefresh}
                 control={form.control}
                 name="contentId"
                 rules={{ required: "Select a product" }}
