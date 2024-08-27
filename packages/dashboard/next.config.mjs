@@ -42,6 +42,8 @@ const nextConfig = {
         removeConsole: isDistant,
     },
     output: "standalone",
+    // tmp fix for terser build issue, see: https://github.com/vercel/next.js/issues/69263
+    swcMinify: false,
 };
 
 export default nextConfig;

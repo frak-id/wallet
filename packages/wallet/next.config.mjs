@@ -28,6 +28,10 @@ const nextConfig = {
         removeConsole: Config.STAGE === "prod",
     },
     output: "standalone",
+    experimental: {
+        // tmp fix for build issue, see: https://github.com/vercel/next.js/issues/60807
+        serverComponentsExternalPackages: ["@peculiar/*"]
+    }
 };
 
 export default nextConfig;
