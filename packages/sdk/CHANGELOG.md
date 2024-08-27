@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.12
+
+### Patch Changes
+
+- [`3aca02c`](https://github.com/frak-id/wallet/commit/3aca02c223236c3d176edff6130d8ebb874262d5) Thanks [@KONFeature](https://github.com/KONFeature)! - Reduce login modal frequency with `useReferralInteraction` hook
+
 ## 0.0.11
 
 ### Patch Changes
