@@ -1,5 +1,6 @@
 "use client";
 
+import { viemClient } from "@/context/blockchain/provider";
 import {
     saveCampaign,
     updateCampaignState,
@@ -19,13 +20,15 @@ import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
-import { useMutation } from "@tanstack/react-query";
+import { Spinner } from "@module/component/Spinner";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { tryit } from "radash";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex } from "viem";
+import { waitForTransactionReceipt } from "viem/actions";
 import styles from "./index.module.css";
 
 export function ValidationCampaign() {
@@ -75,6 +78,20 @@ export function ValidationCampaign() {
             },
         });
 
+    const { isLoading: isWaitingForFinalisedCreation } = useQuery({
+        queryKey: ["campaign", "wait-for-finalised-deployment"],
+        enabled: !!txHash,
+        queryFn: async () => {
+            if (!txHash) return null;
+            // We are waiting for the block with the tx hash to have at least 64 confirmations,
+            //  it will leave the time for the indexer to process it + the time for the block to be finalised
+            await waitForTransactionReceipt(viemClient, {
+                hash: txHash,
+                confirmations: 32,
+            });
+        },
+    });
+
     const form = useForm<Campaign>({
         defaultValues: campaign,
     });
@@ -93,7 +110,9 @@ export function ValidationCampaign() {
                 rightSection={
                     <ButtonCancel
                         onClick={() => form.reset(campaign)}
-                        disabled={campaignSuccess}
+                        disabled={
+                            campaignSuccess || isWaitingForFinalisedCreation
+                        }
                     />
                 }
             />
@@ -101,7 +120,7 @@ export function ValidationCampaign() {
                 <form
                     onSubmit={form.handleSubmit(async (campaign) => {
                         // If the campaign is already a success, we don't need to do anything
-                        if (campaignSuccess) {
+                        if (campaignSuccess && !isWaitingForFinalisedCreation) {
                             router.push("/campaigns");
                             return;
                         }
@@ -122,12 +141,21 @@ export function ValidationCampaign() {
                             <p className={styles.validationCampaign__message}>
                                 Your campaign was successfully created !
                             </p>
+                            <br />
+                            {isWaitingForFinalisedCreation && (
+                                <p>
+                                    <Spinner /> We are waiting for the campaign
+                                    to be finalised
+                                </p>
+                            )}
                             {txHash && <p>Transaction hash: {txHash}</p>}
                         </Panel>
                     )}
                     <Actions
                         isLoading={
-                            isPendingTransaction || isPendingCreateCampaign
+                            isPendingTransaction ||
+                            isPendingCreateCampaign ||
+                            isWaitingForFinalisedCreation
                         }
                     />
                 </form>
