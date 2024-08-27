@@ -1,3 +1,4 @@
+import { viemClient } from "@/context/blockchain/provider";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Row } from "@/module/common/component/Row";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
@@ -19,11 +20,13 @@ import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
 import { Input } from "@module/component/forms/Input";
 import { validateUrl } from "@module/utils/validateUrl";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
+import type { Hex, TransactionReceipt } from "viem";
+import { waitForTransactionReceipt } from "viem/actions";
 import styles from "./index.module.css";
 
 type ProductNew = {
@@ -255,11 +258,12 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
             />
 
             {dnsRecord || isLoading ? (
-                <p>
-                    DNS TXT record expected to set for domain validation is:{" "}
-                    <br />
+                <>
+                    <p>
+                        DNS TXT record expected to set for domain validation is:{" "}
+                    </p>
                     {isLoading ? <Spinner /> : <pre>{dnsRecord}</pre>}
-                </p>
+                </>
             ) : null}
 
             {error && <p className={"error"}>{error}</p>}
@@ -281,27 +285,40 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
 function NewProductVerify({ name, domain }: { name: string; domain: string }) {
     const parsedDomain = parseUrl(domain);
     const queryClient = useQueryClient();
-    const [isMinting, setIsMinting] = useAtom(isMintingAtom);
+    const setIsMinting = useSetAtom(isMintingAtom);
 
     const {
         mutate: triggerMintMyContent,
         isIdle,
         error,
-        data,
+        data: { mintTxHash } = {},
     } = useMintMyContent();
 
-    useEffect(() => {
-        if (!data) return;
-
-        // Delay the invalidation of the query and the success message
-        // to be sure that indexer has indexed the transaction
-        setTimeout(() => {
-            queryClient.invalidateQueries({
-                queryKey: ["my-contents"],
+    const {
+        isLoading: isWaitingForFinalisedCreation,
+        data: transactionReceipt,
+    } = useQuery({
+        queryKey: ["mint", "wait-for-finalised-deployment"],
+        enabled: !!mintTxHash,
+        queryFn: async () => {
+            if (!mintTxHash) return null;
+            // We are waiting for the block with the tx hash to have at least 32 confirmations,
+            //  it will leave the time for the indexer to process it + the time for the block to be finalised
+            return await waitForTransactionReceipt(viemClient, {
+                hash: mintTxHash,
+                confirmations: 32,
             });
-            setIsMinting(false);
-        }, 5000);
-    }, [data, queryClient, setIsMinting]);
+        },
+    });
+
+    useEffect(() => {
+        if (!transactionReceipt) return;
+        queryClient
+            .invalidateQueries({
+                queryKey: ["my-contents"],
+            })
+            .then(() => setIsMinting(false));
+    }, [transactionReceipt, queryClient, setIsMinting]);
 
     if (!parsedDomain) return null;
 
@@ -334,19 +351,47 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
             </AuthFingerprint>
 
             {error && <p className={"error"}>{error.message}</p>}
-            {data && isMinting && (
-                <p>
-                    Your product is being indexed
-                    <span className={"dotsLoading"}>...</span>
-                </p>
-            )}
-            {data && !isMinting && (
-                <p className={"success"}>
-                    Your product has been successfully listed on transaction{" "}
-                    <strong>{data.mintTxHash}</strong>
-                </p>
-            )}
+            <ProductSuccessInfo
+                txHash={mintTxHash}
+                isWaitingForFinalisedCreation={isWaitingForFinalisedCreation}
+                receipt={transactionReceipt}
+            />
         </div>
+    );
+}
+
+/**
+ * If created but waiting for finalised, show a spinner
+ *  Once finalised and success, show txHash + success message
+ */
+function ProductSuccessInfo({
+    txHash,
+    isWaitingForFinalisedCreation,
+    receipt,
+}: {
+    txHash?: Hex;
+    isWaitingForFinalisedCreation: boolean;
+    receipt?: TransactionReceipt | null;
+}) {
+    if (!txHash) return null;
+
+    if (txHash && isWaitingForFinalisedCreation && !receipt) {
+        return (
+            <p>
+                Setting all the right blockchain data
+                <span className={"dotsLoading"}>...</span>
+            </p>
+        );
+    }
+
+    return (
+        <>
+            <p className={"success"}>
+                Your product has been successfully listed on transaction
+            </p>
+            <br />
+            {txHash && <p>Transaction hash: {txHash}</p>}
+        </>
     );
 }
 
