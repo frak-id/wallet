@@ -5,12 +5,9 @@ import { viemClient } from "@/context/blockchain/provider";
 import { campaignRoles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import type { CampaignWithState } from "@/types/Campaign";
-import {
-    interactionCampaignAbi,
-    referralCampaignAbi,
-} from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
+import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import ky from "ky";
-import { all } from "radash";
+import { all, sift } from "radash";
 import { type Address, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 
@@ -32,14 +29,11 @@ type ApiResult = {
 export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     const session = await getSafeSession();
 
-    // Perform the request to our api
-    let blockchainCampaigns = await ky
-        .get(`https://indexer.frak.id/admin/${session.wallet}/campaigns`)
-        .json<ApiResult>();
-
-    if (!blockchainCampaigns) {
-        blockchainCampaigns = [];
-    }
+    // Perform the request to our api, and fallback to empty array
+    const blockchainCampaigns =
+        (await ky
+            .get(`https://indexer.frak.id/admin/${session.wallet}/campaigns`)
+            .json<ApiResult>()) ?? [];
 
     // Find the campaigns in the database
     const repository = await getCampaignRepository();
@@ -48,73 +42,40 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
         creator: session.wallet,
     });
 
-    // Find each state for each campaigns
-    let isActives: boolean[] = [];
-    let canEdits: boolean[] = [];
-    let isRunnings: boolean[] = [];
-    if (blockchainCampaigns.length > 0) {
-        const { isActivesNew, canEditsNew, isRunningsNew } = await all({
-            // Check if the campaign is active
-            isActivesNew: multicall(viemClient, {
-                contracts: blockchainCampaigns.map(
-                    (campaign) =>
-                        ({
-                            abi: interactionCampaignAbi,
-                            address: campaign.id,
-                            functionName: "isActive",
-                            args: [],
-                        }) as const
-                ),
-                allowFailure: false,
-            }),
-            // Check if the campaign can be edited
-            canEditsNew: multicall(viemClient, {
-                contracts: blockchainCampaigns.map(
-                    (campaign) =>
-                        ({
-                            abi: interactionCampaignAbi,
-                            address: campaign.id,
-                            functionName: "hasAnyRole",
-                            args: [
-                                session.wallet,
-                                BigInt(campaignRoles.manager),
-                            ],
-                        }) as const
-                ),
-                allowFailure: false,
-            }),
-            // Check if the campaign can be edited
-            isRunningsNew: multicall(viemClient, {
-                contracts: blockchainCampaigns.map(
-                    (campaign) =>
-                        ({
-                            abi: referralCampaignAbi,
-                            address: campaign.id,
-                            functionName: "isRunning",
-                            args: [],
-                        }) as const
-                ),
-                allowFailure: false,
-            }),
-        });
-        isActives = isActivesNew;
-        canEdits = canEditsNew;
-        isRunnings = isRunningsNew;
-    }
+    // Create the state of unique addresses we will fetch
+    const campaignAddresses = new Set<Address>([
+        ...sift(
+            campaignDocuments.map((campaign) =>
+                campaign.state.key === "created" ? campaign.state.address : null
+            )
+        ),
+        ...blockchainCampaigns.map((campaign) => campaign.id),
+    ]);
+
+    // Fetch the onchain state for each campaign
+    const onChainStates = await getOnChainStateForCampaigns({
+        addresses: Array.from(campaignAddresses),
+        wallet: session.wallet,
+    });
 
     // Map all of that to campaign with state object
     return campaignDocuments.map((campaign) => {
-        // Build the initial full campaign
+        // Build initial campaign based on off-chain data
+        const isOffchainCreator = isAddressEqual(
+            campaign.creator,
+            session.wallet
+        );
         const mappedCampaign = {
             ...campaign,
             _id: campaign._id.toHexString(),
             actions: {
-                canEdit: isAddressEqual(campaign.creator, session.wallet),
-                canDelete: isAddressEqual(campaign.creator, session.wallet),
+                canEdit: isOffchainCreator,
+                canDelete: isOffchainCreator,
                 canToggleRunningStatus: false,
             },
         };
 
+        // If the campaign is not created, return it as is
         const state = campaign.state;
         if (state.key !== "created") {
             // Update the mapped campaign to disallow edit if in state creationFailed
@@ -123,21 +84,17 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
             return mappedCampaign as CampaignWithState;
         }
 
-        // Find the blockchain campaign index
-        const blockchainCampaignIndex = blockchainCampaigns.findIndex((item) =>
+        // Find the blockchain campaign for this campaign
+        const blockchainCampaign = blockchainCampaigns.find((item) =>
             isAddressEqual(item.id, state.address)
         );
-        const blockchainCampaign =
-            blockchainCampaignIndex === -1
-                ? undefined
-                : blockchainCampaigns[blockchainCampaignIndex];
         if (!blockchainCampaign) {
-            // Tell that the user can't edit it and return
             return mappedCampaign as CampaignWithState;
         }
+        const onChainState = onChainStates[blockchainCampaign.id];
 
         // Update the edit state depending on it
-        mappedCampaign.actions.canEdit = canEdits[blockchainCampaignIndex];
+        mappedCampaign.actions.canEdit = onChainState?.canEdit ?? false;
 
         // And return it
         return {
@@ -150,8 +107,8 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
                     detachTimestamp:
                         blockchainCampaign.detachTimestamp ?? undefined,
                 },
-                isActive: isActives[blockchainCampaignIndex],
-                isRunning: isRunnings[blockchainCampaignIndex],
+                isActive: onChainState?.isActive ?? false,
+                isRunning: onChainState?.isRunning ?? false,
             },
             actions: {
                 ...mappedCampaign.actions,
@@ -159,4 +116,81 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
             },
         };
     });
+}
+
+/**
+ * Get the onchain state for each campaign address
+ */
+async function getOnChainStateForCampaigns({
+    addresses,
+    wallet,
+}: { addresses: Address[]; wallet: Address }): Promise<
+    Record<Address, { canEdit: boolean; isActive: boolean; isRunning: boolean }>
+> {
+    // If no address provided, early exit
+    if (addresses.length === 0) {
+        return {};
+    }
+
+    const baseMulticallParams = {
+        abi: interactionCampaignAbi,
+        args: [],
+    } as const;
+
+    // Otherwise, fetch the state for each address
+    const { isActives, canEdits, isRunnings } = await all({
+        // Check if the campaign is active
+        isActives: multicall(viemClient, {
+            contracts: addresses.map(
+                (address) =>
+                    ({
+                        ...baseMulticallParams,
+                        address,
+                        functionName: "isActive",
+                    }) as const
+            ),
+            allowFailure: false,
+        }),
+        // Check if the campaign can be edited
+        canEdits: multicall(viemClient, {
+            contracts: addresses.map(
+                (address) =>
+                    ({
+                        ...baseMulticallParams,
+                        address,
+                        functionName: "hasAnyRole",
+                        args: [wallet, BigInt(campaignRoles.manager)],
+                    }) as const
+            ),
+            allowFailure: false,
+        }),
+        // Check if the campaign can be edited
+        isRunnings: multicall(viemClient, {
+            contracts: addresses.map(
+                (address) =>
+                    ({
+                        ...baseMulticallParams,
+                        address,
+                        functionName: "isRunning",
+                    }) as const
+            ),
+            allowFailure: false,
+        }),
+    });
+
+    // Map the results to an object
+    return addresses.reduce(
+        (acc, address, index) => {
+            acc[address] = {
+                canEdit: canEdits[index],
+                isActive: isActives[index],
+                isRunning: isRunnings[index],
+            };
+            return acc;
+        },
+        {} as Record<
+            Address,
+            { canEdit: boolean; isActive: boolean; isRunning: boolean }
+        >
+    );
 }

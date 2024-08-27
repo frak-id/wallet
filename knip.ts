@@ -3,6 +3,7 @@ import type { KnipConfig } from "knip";
 const config: KnipConfig = {
     // Exclude types analysis for now
     exclude: ["types"],
+    ignore: ["**/*.d.ts"],
     // Include all the workspaces
     workspaces: {
         ".": {
@@ -11,17 +12,12 @@ const config: KnipConfig = {
             ignore: [".sst/**"],
         },
         "example/*": {},
-        "packages/*": {
-            ignore: [".open-next/**", ".next/**"],
-        },
         "packages/sdk": {
             entry: "src/**/index.{ts,tsx}",
-            project: "src/**/*.{ts,tsx}",
-            ignore: ["dist/**"],
+            project: ["src/**/*.{ts,tsx}"],
         },
         "packages/shared": {
             entry: "**/*.{ts,tsx}",
-            project: "**/*.{ts,tsx}",
         },
         "packages/backend": {
             entry: "src/**/*.ts",

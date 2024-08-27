@@ -110,13 +110,17 @@ export function TableCampaigns() {
                     enableSorting: false,
                     header: "On/Off",
                     id: "state-running",
-                    cell: ({ getValue }) => {
+                    cell: ({ getValue, row }) => {
                         const state = getValue();
                         const isCreated = state.key === "created";
                         return (
                             <Switch
                                 checked={isCreated && state.isRunning}
-                                disabled={!isCreated || isUpdatingCampaignState}
+                                disabled={
+                                    !isCreated ||
+                                    isUpdatingCampaignState ||
+                                    !row.original.actions.canEdit
+                                }
                                 onCheckedChange={() => {
                                     if (!isCreated || isUpdatingCampaignState)
                                         return;

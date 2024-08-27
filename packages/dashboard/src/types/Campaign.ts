@@ -44,8 +44,8 @@ export type CampaignState =
       }
     | {
           key: "created";
+          // Interaction link only present if blockchain campaign fetched
           interactionLink?: {
-              // Is campaign attached? If not, it's done for good
               isAttached: boolean;
               attachTimestamp: string;
               detachTimestamp?: string;
