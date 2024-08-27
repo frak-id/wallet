@@ -57,8 +57,10 @@ export function TableCampaigns() {
         }
     );
     const previousTitle = usePrevious(localTitle);
-    const { mutate: onUpdateCampaignRunningStatus } =
-        useUpdateCampaignRunningStatus();
+    const {
+        mutate: onUpdateCampaignRunningStatus,
+        isPending: isUpdatingCampaignState,
+    } = useUpdateCampaignRunningStatus();
 
     useEffect(() => {
         if (previousTitle === undefined) {
@@ -114,12 +116,13 @@ export function TableCampaigns() {
                         return (
                             <Switch
                                 checked={isCreated && state.isRunning}
-                                disabled={!isCreated}
+                                disabled={!isCreated || isUpdatingCampaignState}
                                 onCheckedChange={() => {
-                                    if (!isCreated) return;
+                                    if (!isCreated || isUpdatingCampaignState)
+                                        return;
                                     onUpdateCampaignRunningStatus({
                                         campaign: state.address,
-                                        newRunningStatus: true,
+                                        newRunningStatus: !state.isRunning,
                                     });
                                 }}
                             />
@@ -172,7 +175,7 @@ export function TableCampaigns() {
                     cell: ({ row }) => <CellActions row={row} />,
                 }),
             ] as ColumnDef<CampaignWithState>[],
-        [onUpdateCampaignRunningStatus]
+        [onUpdateCampaignRunningStatus, isUpdatingCampaignState]
     );
 
     if (!data || isLoading) {
