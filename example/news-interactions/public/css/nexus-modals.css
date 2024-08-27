@@ -32,7 +32,6 @@
     flex-direction: column;
     gap: 12px;
     letter-spacing: -.04em;
-    color: inherit;
 }
 .nexus-modal-steps {
     gap: 12px;
@@ -113,6 +112,7 @@
 }
 .nexus-drawer-content {
     background-color: #242321;
+    color: #fff;
     box-shadow: 0 -3px 18px 0 #00000040;
 
     &:focus-visible {
