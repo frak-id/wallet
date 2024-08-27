@@ -2,11 +2,13 @@
 
 import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
+import { useUpdateCampaignRunningStatus } from "@/module/campaigns/hook/useUpdateCampaignRunningStatus";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { State } from "@/module/common/component/State";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
+import { Switch } from "@/module/forms/Switch";
 import type { CampaignWithState } from "@/types/Campaign";
 import { Button } from "@module/component/Button";
 import { Skeleton } from "@module/component/Skeleton";
@@ -55,6 +57,8 @@ export function TableCampaigns() {
         }
     );
     const previousTitle = usePrevious(localTitle);
+    const { mutate: onUpdateCampaignRunningStatus } =
+        useUpdateCampaignRunningStatus();
 
     useEffect(() => {
         if (previousTitle === undefined) {
@@ -100,17 +104,28 @@ export function TableCampaigns() {
                         />
                     ),
                 }),*/
-                /*columnHelper.accessor("enabled", {
+                columnHelper.accessor("state", {
+                    enableSorting: false,
                     header: "On/Off",
+                    id: "state-running",
                     cell: ({ getValue }) => {
+                        const state = getValue();
+                        const isCreated = state.key === "created";
                         return (
                             <Switch
-                                checked={getValue()}
-                                onCheckedChange={(value) => console.log(value)}
+                                checked={isCreated && state.isRunning}
+                                disabled={!isCreated}
+                                onCheckedChange={() => {
+                                    if (!isCreated) return;
+                                    onUpdateCampaignRunningStatus({
+                                        campaign: state.address,
+                                        newRunningStatus: true,
+                                    });
+                                }}
                             />
                         );
                     },
-                }),*/
+                }),
                 columnHelper.accessor("title", {
                     enableSorting: false,
                     header: () => "Campaign",
@@ -123,6 +138,7 @@ export function TableCampaigns() {
                 columnHelper.accessor("state", {
                     enableSorting: false,
                     header: () => "Status",
+                    id: "state",
                     cell: ({ getValue }) => <State state={getValue()} />,
                 }),
                 {
@@ -156,7 +172,7 @@ export function TableCampaigns() {
                     cell: ({ row }) => <CellActions row={row} />,
                 }),
             ] as ColumnDef<CampaignWithState>[],
-        []
+        [onUpdateCampaignRunningStatus]
     );
 
     if (!data || isLoading) {
