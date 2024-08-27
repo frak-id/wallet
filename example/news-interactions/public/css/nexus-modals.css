@@ -32,7 +32,7 @@
     flex-direction: column;
     gap: 12px;
     letter-spacing: -.04em;
-    color: #fff;
+    color: inherit;
 }
 .nexus-modal-steps {
     gap: 12px;
