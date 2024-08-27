@@ -3,7 +3,7 @@ import { use } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
 import { BackendStack } from "./Backend";
 import { ConfigStack } from "./Config";
-import { isProdStack } from "./utils";
+import { isProdStack, openNextVersion } from "./utils";
 
 /**
  * Define the wallet webapp SST stack
@@ -51,7 +51,7 @@ export function WalletAppStack({ stack }: StackContext) {
         },
         // Bind to the configs
         bind: [...configs, interactionQueue],
-        openNextVersion: "3.0.6",
+        openNextVersion: openNextVersion,
         // Number of server side instance to keep warm
         warm: isProdStack(stack) ? 10 : 1,
         dev: {

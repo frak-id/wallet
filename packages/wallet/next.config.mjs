@@ -30,8 +30,8 @@ const nextConfig = {
     output: "standalone",
     experimental: {
         // tmp fix for build issue, see: https://github.com/vercel/next.js/issues/60807
-        serverComponentsExternalPackages: ["@peculiar/*"]
-    }
+        serverComponentsExternalPackages: ["@peculiar/*"],
+    },
 };
 
 export default nextConfig;

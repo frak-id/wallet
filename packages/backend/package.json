@@ -21,7 +21,7 @@
     "viem": "^2.18.5"
   },
   "devDependencies": {
-    "sst": "2.43.4",
+    "sst": "2.43.6",
     "typescript": "^5",
     "@types/aws-lambda": "^8.10.141"
   }

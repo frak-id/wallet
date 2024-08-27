@@ -1,5 +1,7 @@
 import type { Stack } from "sst/constructs";
 
+export const openNextVersion = "3.1.1";
+
 /**
  * Check if we are running in prod or not
  * @param stack

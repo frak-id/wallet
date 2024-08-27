@@ -2,7 +2,7 @@ import { use } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
-import { isProdStack } from "./utils";
+import { isProdStack, openNextVersion } from "./utils";
 
 /**
  * Define the example webapp SST stack
@@ -24,7 +24,7 @@ export function ExampleAppStack({ stack }: StackContext) {
         path: "example/wallet-ethcc",
         // Bind to the configs
         bind: [nexusUrl],
-        openNextVersion: "3.0.6",
+        openNextVersion: openNextVersion,
         // Number of server side instance to keep warm
         warm: 10,
         // Set the custom domain
@@ -40,7 +40,7 @@ export function ExampleAppStack({ stack }: StackContext) {
         path: "example/news-interactions",
         // Bind to the configs
         bind: [nexusUrl, mongoExampleUri],
-        openNextVersion: "3.0.6",
+        openNextVersion: openNextVersion,
         // Number of server side instance to keep warm
         warm: 10,
         // Set the custom domain
