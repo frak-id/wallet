@@ -34,8 +34,7 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
     useEffect(() => {
         if (watchContentId !== "") return;
         setForceRefresh(new Date().getTime());
-        form.setValue("contentId", undefined);
-    }, [watchContentId, form]);
+    }, [watchContentId]);
 
     if (isEmpty) return null;
 
