@@ -22,13 +22,6 @@ export function useMintMyContent() {
                 await mintMyContent(args);
 
             // Then perform the blockchain side of the mint
-            console.log(`Minting user content for ${args.name}`, {
-                tx: {
-                    to: addresses.contentRegistry,
-                    value: "0x00",
-                    data: setupInteractionTxData,
-                },
-            });
             const { hash: interactionDeployHash } = await sendTx({
                 metadata: {
                     context: `Deploying user interactions handler for ${args.name}`,
@@ -38,6 +31,9 @@ export function useMintMyContent() {
                     value: "0x00",
                     data: setupInteractionTxData,
                 },
+            });
+            console.log(`User interactions handler deployed for ${args.name}`, {
+                hash: interactionDeployHash,
             });
 
             return {
