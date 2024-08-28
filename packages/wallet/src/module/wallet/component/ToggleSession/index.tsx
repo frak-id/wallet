@@ -1,11 +1,11 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Switch } from "@/module/common/component/Switch";
-import { Tooltip } from "@/module/common/component/Tooltip";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { InteractionSession } from "@/types/Session";
 import { Spinner } from "@module/component/Spinner";
+import { Tooltip } from "@module/component/Tooltip";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";

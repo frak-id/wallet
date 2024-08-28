@@ -1,6 +1,6 @@
 import { Badge } from "@/module/common/component/Badge";
-import { TooltipTable } from "@/module/common/component/TooltipTable";
 import type { CampaignState } from "@/types/Campaign";
+import { Tooltip } from "@module/component/Tooltip";
 
 /**
  * If state == created, display additional badges (isActive, isAttached)
@@ -24,26 +24,26 @@ export function CampaignStateTag({ state }: { state: CampaignState }) {
     // Check if the campaign is active
     if (!state.isActive) {
         return (
-            <TooltipTable
+            <Tooltip
                 content={
                     "The campaign isn't active, check the funding and the activation date to enable it"
                 }
             >
                 <Badge variant="danger">Stopped</Badge>
-            </TooltipTable>
+            </Tooltip>
         );
     }
 
     // Check if for any reason it can't be executed
     if (!state.interactionLink?.isAttached) {
         return (
-            <TooltipTable
+            <Tooltip
                 content={
                     "The campaign is stopped since it's not attached to the user interactions"
                 }
             >
                 <Badge variant="danger">Stopped</Badge>
-            </TooltipTable>
+            </Tooltip>
         );
     }
 
