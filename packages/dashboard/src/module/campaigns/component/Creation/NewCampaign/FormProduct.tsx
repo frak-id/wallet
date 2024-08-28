@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
+import { usePrevious } from "@uidotdev/usehooks";
 import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -27,14 +28,15 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
     // Force refresh the form when reset the contentId
     const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
     const watchContentId = form.watch("contentId");
+    const previousContentId = usePrevious(watchContentId);
 
     /**
      * Reset contentId
      */
     useEffect(() => {
-        if (watchContentId !== "") return;
+        if (watchContentId === "" && !previousContentId) return;
         setForceRefresh(new Date().getTime());
-    }, [watchContentId]);
+    }, [watchContentId, previousContentId]);
 
     if (isEmpty) return null;
 

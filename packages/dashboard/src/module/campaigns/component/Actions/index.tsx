@@ -1,3 +1,4 @@
+import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import {
     campaignIsClosingAtom,
     campaignStepAtom,
@@ -7,20 +8,33 @@ import { Panel } from "@/module/common/component/Panel";
 import { Button } from "@module/component/Button";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { memo, useCallback, useEffect } from "react";
 import styles from "./index.module.css";
 
-const pages = ["/campaigns/new", "/campaigns/metrics", "/campaigns/validation"];
-
-export function Actions({ isLoading = false }: { isLoading?: boolean }) {
+export const Actions = memo(function Actions({
+    isLoading = false,
+}: { isLoading?: boolean }) {
     const router = useRouter();
     const [step, setStep] = useAtom(campaignStepAtom);
     const campaignSuccess = useAtomValue(campaignSuccessAtom);
     const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
+    const { id: campaignId } = useAtomValue(campaignAtom);
+
+    const getPages = useCallback((campaignId?: string) => {
+        return campaignId
+            ? [
+                  `/campaigns/edit/${campaignId}`,
+                  `/campaigns/edit/${campaignId}/metrics`,
+                  `/campaigns/edit/${campaignId}/validation`,
+              ]
+            : ["/campaigns/new", "/campaigns/metrics", "/campaigns/validation"];
+    }, []);
+
+    const pages = getPages(campaignId);
 
     useEffect(() => {
         router.push(pages[step - 1]);
-    }, [step, router.push]);
+    }, [step, router.push, pages]);
 
     return (
         <Panel variant={"secondary"} className={styles.actions}>
@@ -43,19 +57,22 @@ export function Actions({ isLoading = false }: { isLoading?: boolean }) {
                     </Button>
                 )}
                 {!campaignSuccess && (
-                    <ButtonNext step={step} isLoading={isLoading} />
+                    <ButtonNext
+                        isLoading={isLoading}
+                        isLastStep={step === pages.length}
+                    />
                 )}
             </div>
         </Panel>
     );
-}
+});
 
 function ButtonNext({
-    step,
     isLoading = false,
-}: { step: number; isLoading: boolean }) {
+    isLastStep = false,
+}: { isLoading: boolean; isLastStep: boolean }) {
     const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
-    return step === pages.length ? (
+    return isLastStep ? (
         <Button
             type={"submit"}
             variant={"submit"}

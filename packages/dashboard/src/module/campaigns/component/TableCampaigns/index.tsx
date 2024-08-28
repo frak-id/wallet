@@ -1,5 +1,6 @@
 "use client";
 
+import { campaignResetAtom } from "@/module/campaigns/atoms/campaign";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
@@ -15,9 +16,11 @@ import { Skeleton } from "@module/component/Skeleton";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { usePrevious } from "@uidotdev/usehooks";
+import { useSetAtom } from "jotai/index";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { capitalize } from "radash";
 import { useEffect, useMemo, useState } from "react";
 import useSessionStorageState from "use-session-storage-state";
@@ -211,14 +214,25 @@ function CellActions({
     row,
 }: Pick<CellContext<CampaignWithState, unknown>, "row">) {
     const actions = useMemo(() => row.original.actions, [row.original.actions]);
+    const router = useRouter();
+    const campaignReset = useSetAtom(campaignResetAtom);
 
     return (
         <div className={styles.table__actions}>
-            <button type={"button"} onClick={() => console.log("View")}>
+            <button
+                type={"button"}
+                onClick={() => router.push(`/campaigns/${row.original._id}`)}
+            >
                 <Eye size={20} absoluteStrokeWidth={true} />
             </button>
             {actions.canEdit && (
-                <button type={"button"} onClick={() => console.log("Edit")}>
+                <button
+                    type={"button"}
+                    onClick={() => {
+                        campaignReset();
+                        router.push(`/campaigns/edit/${row.original._id}`);
+                    }}
+                >
                     <Pencil size={20} absoluteStrokeWidth={true} />
                 </button>
             )}
