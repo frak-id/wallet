@@ -307,6 +307,7 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
             return await waitForTransactionReceipt(viemClient, {
                 hash: mintTxHash,
                 confirmations: 32,
+                retryCount: 32,
             });
         },
     });

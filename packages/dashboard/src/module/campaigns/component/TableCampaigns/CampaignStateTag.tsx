@@ -7,13 +7,18 @@ import type { CampaignState } from "@/types/Campaign";
  * @param state
  * @constructor
  */
-export function State({ state }: { state: CampaignState }) {
+export function CampaignStateTag({ state }: { state: CampaignState }) {
     // Draft and creationFailed are simple badges
     if (state.key === "draft") {
         return <Badge variant={"secondary"}>Draft</Badge>;
     }
     if (state.key !== "created") {
         return <Badge variant={"danger"}>Setup failed</Badge>;
+    }
+
+    // Check if the campaign is running
+    if (!state.isRunning) {
+        return <Badge variant="primary">Paused</Badge>;
     }
 
     // Check if the campaign is active
@@ -40,11 +45,6 @@ export function State({ state }: { state: CampaignState }) {
                 <Badge variant="danger">Stopped</Badge>
             </TooltipTable>
         );
-    }
-
-    // Check if the campaign is running
-    if (!state.isRunning) {
-        return <Badge variant="primary">Paused</Badge>;
     }
 
     // If we are here, all good

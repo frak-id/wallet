@@ -1,10 +1,10 @@
 "use client";
 
+import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
 import { useUpdateCampaignRunningStatus } from "@/module/campaigns/hook/useUpdateCampaignRunningStatus";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { State } from "@/module/common/component/State";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
@@ -146,7 +146,9 @@ export function TableCampaigns() {
                     enableSorting: false,
                     header: () => "Status",
                     id: "state",
-                    cell: ({ getValue }) => <State state={getValue()} />,
+                    cell: ({ getValue }) => (
+                        <CampaignStateTag state={getValue()} />
+                    ),
                 }),
                 {
                     enableSorting: false,

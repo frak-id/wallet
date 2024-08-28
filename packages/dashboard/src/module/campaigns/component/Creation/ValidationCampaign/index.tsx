@@ -91,6 +91,7 @@ export function ValidationCampaign() {
             return await waitForTransactionReceipt(viemClient, {
                 hash: txHash,
                 confirmations: 32,
+                retryCount: 32,
             });
         },
     });

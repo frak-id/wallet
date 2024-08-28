@@ -2,6 +2,7 @@ import { viemClient } from "@/context/blockchain/provider";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { guard } from "radash";
 import { type Address, encodeFunctionData } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
 
@@ -37,10 +38,13 @@ export function useUpdateCampaignRunningStatus() {
             });
 
             // Wait for transaction confirmation
-            await waitForTransactionReceipt(viemClient, {
-                hash,
-                confirmations: 32,
-            });
+            await guard(() =>
+                waitForTransactionReceipt(viemClient, {
+                    hash,
+                    confirmations: 8,
+                    retryCount: 32,
+                })
+            );
 
             // Invalidate my campaigns query
             await queryClient.invalidateQueries({
