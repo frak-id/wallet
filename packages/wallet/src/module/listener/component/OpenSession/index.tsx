@@ -1,3 +1,4 @@
+import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
@@ -75,7 +76,7 @@ export function OpenSessionModalStep({
     });
 
     return (
-        <>
+        <RequireWebAuthN>
             {metadata?.description && (
                 <div className={prefixModalCss("text")}>
                     <p>{metadata.description}</p>
@@ -100,6 +101,6 @@ export function OpenSessionModalStep({
                     {error.message}
                 </p>
             )}
-        </>
+        </RequireWebAuthN>
     );
 }

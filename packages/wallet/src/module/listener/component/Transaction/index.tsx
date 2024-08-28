@@ -1,4 +1,5 @@
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
+import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import { Title } from "@/module/common/component/Title";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
@@ -40,7 +41,7 @@ export function TransactionModalStep({
     }
 
     return (
-        <>
+        <RequireWebAuthN>
             <Title className={styles.modalListener__subTitle}>
                 You need to confirm this transaction
             </Title>
@@ -62,7 +63,7 @@ export function TransactionModalStep({
                     {error.message}
                 </p>
             )}
-        </>
+        </RequireWebAuthN>
     );
 }
 

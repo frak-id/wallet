@@ -3,6 +3,7 @@ import { getSession } from "@/context/session/action/session";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
+import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type {
     LoginModalStepType,
@@ -49,7 +50,7 @@ export function LoginModalStep({
     }, [onFinish, session]);
 
     return (
-        <>
+        <RequireWebAuthN>
             {metadata?.description && (
                 <div className={prefixModalCss("text")}>
                     <p>{metadata.description}</p>
@@ -113,7 +114,7 @@ export function LoginModalStep({
                     {error.message}
                 </p>
             )}
-        </>
+        </RequireWebAuthN>
     );
 }
 

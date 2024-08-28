@@ -56,9 +56,10 @@ export function useReferralInteraction({
     const processReferral = useCallback(async (): Promise<ReferralState> => {
         try {
             // Get the current wallet, without auto displaying the modal
-            let currentWallet = await ensureWalletConnected({
-                autoDisplay: false,
-            });
+            let currentWallet =
+                walletStatus?.key === "connected"
+                    ? walletStatus.wallet
+                    : undefined;
 
             if (!nexusContext?.r) {
                 if (currentWallet) {
@@ -69,9 +70,7 @@ export function useReferralInteraction({
 
             // We have a referral, so if we don't have a current wallet, display the modal
             if (!currentWallet) {
-                currentWallet = await ensureWalletConnected({
-                    autoDisplay: true,
-                });
+                currentWallet = await ensureWalletConnected();
             }
 
             if (
@@ -100,6 +99,7 @@ export function useReferralInteraction({
         ensureWalletConnected,
         sendInteraction,
         updateContextAsync,
+        walletStatus,
     ]);
 
     // Setup the query that will transmit the referral interaction
@@ -140,25 +140,22 @@ function useEnsureWalletConnected({
     // Hook to display the modal
     const { mutateAsync: displayModal } = useDisplayModal();
 
-    return useCallback(
-        async ({ autoDisplay }: { autoDisplay: boolean }) => {
-            // If wallet not connected, or no interaction session
-            if (
-                walletStatus?.key !== "connected" ||
-                !walletStatus.interactionSession
-            ) {
-                // If we don't have any modal setup, or we don't want to auto display it, do nothing
-                if (!(modalConfig && autoDisplay)) {
-                    return undefined;
-                }
-                const result = await displayModal(modalConfig);
-                return result?.login?.wallet ?? undefined;
+    return useCallback(async () => {
+        // If wallet not connected, or no interaction session
+        if (
+            walletStatus?.key !== "connected" ||
+            !walletStatus.interactionSession
+        ) {
+            // If we don't have any modal setup, or we don't want to auto display it, do nothing
+            if (!modalConfig) {
+                return undefined;
             }
+            const result = await displayModal(modalConfig);
+            return result?.login?.wallet ?? undefined;
+        }
 
-            return walletStatus.wallet ?? undefined;
-        },
-        [walletStatus, modalConfig, displayModal]
-    );
+        return walletStatus.wallet ?? undefined;
+    }, [walletStatus, modalConfig, displayModal]);
 }
 
 /**
