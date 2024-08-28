@@ -10,6 +10,7 @@ type Budget = "daily" | "weekly" | "monthly" | "global";
  * Direct campaign type
  */
 export type Campaign = {
+    id?: string;
     title: string;
     order: string;
     contentId: Hex | "";
@@ -58,9 +59,23 @@ export type CampaignState =
           address: Address;
       };
 
-export type CampaignWithState = Campaign & {
+export type CampaignWithState =
+    | DraftCampaignWithState
+    | FinalizedCampaignWithState;
+
+export type FinalizedCampaignWithState = Campaign & {
     _id: string;
-    state: CampaignState;
+    state: Extract<CampaignState, { key: "created" | "creationFailed" }>;
+    actions: {
+        canEdit: boolean;
+        canDelete: boolean;
+        canToggleRunningStatus: boolean;
+    };
+};
+
+export type DraftCampaignWithState = Partial<Campaign> & {
+    _id: string;
+    state: Extract<CampaignState, { key: "draft" }>;
     actions: {
         canEdit: boolean;
         canDelete: boolean;

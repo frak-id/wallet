@@ -1,4 +1,4 @@
-import { saveCampaign } from "@/context/campaigns/action/createCampaign";
+import { saveCampaignDraft } from "@/context/campaigns/action/createCampaign";
 import {
     campaignAtom,
     campaignResetAtom,
@@ -8,6 +8,7 @@ import {
     campaignStepAtom,
 } from "@/module/campaigns/atoms/steps";
 import type { Campaign } from "@/types/Campaign";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
 
@@ -17,13 +18,21 @@ export function useSaveCampaign() {
     const campaignIsClosing = useAtomValue(campaignIsClosingAtom);
     const setStep = useSetAtom(campaignStepAtom);
     const campaignReset = useSetAtom(campaignResetAtom);
+    const queryClient = useQueryClient();
 
     return async function save(values: Campaign) {
         console.log(values);
         setCampaign(values);
 
         if (campaignIsClosing) {
-            await saveCampaign(values);
+            const { id } = await saveCampaignDraft(values);
+            if (id) {
+                setCampaign({ ...values, id });
+                // Invalidate my campaigns query
+                await queryClient.invalidateQueries({
+                    queryKey: ["campaigns", "my-campaigns"],
+                });
+            }
             campaignReset();
             router.push("/campaigns");
             return;

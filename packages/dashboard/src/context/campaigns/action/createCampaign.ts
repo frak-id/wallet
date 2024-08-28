@@ -2,7 +2,7 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
-import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
+import type { DraftCampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
     referralCampaignId,
@@ -26,12 +26,36 @@ import {
 import { getTransactionReceipt } from "viem/actions";
 
 /**
+ * Save a campaign draft
+ * @param campaign
+ */
+export async function saveCampaignDraft(
+    campaign: Partial<Campaign>
+): Promise<{ id?: string }> {
+    const currentSession = await getSafeSession();
+
+    // Build the partial document
+    const draftDocument: DraftCampaignDocument = {
+        ...campaign,
+        creator: currentSession.wallet,
+        state: {
+            key: "draft",
+        },
+    };
+
+    // Insert it
+    const repository = await getCampaignRepository();
+    const finalDraft = await repository.upsertDraft(draftDocument);
+    return {
+        id: finalDraft?._id?.toHexString(),
+    };
+}
+
+/**
  * Function to create a new campaign
  * @param campaign
  */
-export async function saveCampaign(campaign: Campaign) {
-    const currentSession = await getSafeSession();
-
+export async function getCreationData(campaign: Campaign) {
     if (!campaign.contentId) {
         throw new Error("Content ID is required");
     }
@@ -46,19 +70,6 @@ export async function saveCampaign(campaign: Campaign) {
     if (clickRewards.from < 0) {
         throw new Error("Click reward from must be positive");
     }
-
-    /// Build our campaign document
-    const campaignDocument: CampaignDocument = {
-        ...campaign,
-        creator: currentSession.wallet,
-        state: {
-            key: "draft",
-        },
-    };
-
-    // Insert it
-    const repository = await getCampaignRepository();
-    const id = await repository.create(campaignDocument);
 
     // Compute the initial reward for a referral (avg between min and max)
     const initialReward = Math.floor((clickRewards.from + clickRewards.to) / 2);
@@ -117,7 +128,7 @@ export async function saveCampaign(campaign: Campaign) {
         ],
     });
 
-    return { id: id.toHexString(), creationData };
+    return { creationData };
 }
 
 /**

@@ -35,11 +35,15 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
         await campaignRepository.delete(id);
         return { key: "success" } as const;
     }
+    const contentId = campaign.contentId as string | undefined;
+    if (!contentId) {
+        throw new Error("Content ID is required");
+    }
 
     // Check if the campaign is attached or not
     const campaignAddress = campaign.state.address;
     const activeCampaigns = await getAttachedCampaigns({
-        contentId: campaign.contentId,
+        contentId,
     });
     console.log("Active campaigns", { activeCampaigns, campaignAddress });
 
@@ -68,7 +72,7 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
                     data: encodeFunctionData({
                         abi: contentInteractionManagerAbi,
                         functionName: "detachCampaigns",
-                        args: [BigInt(campaign.contentId), [campaignAddress]],
+                        args: [BigInt(contentId), [campaignAddress]],
                     }),
                     value: "0x00",
                 },

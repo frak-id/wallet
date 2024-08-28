@@ -114,7 +114,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
                 ...mappedCampaign.actions,
                 canToggleRunningStatus: true,
             },
-        };
+        } as CampaignWithState;
     });
 }
 

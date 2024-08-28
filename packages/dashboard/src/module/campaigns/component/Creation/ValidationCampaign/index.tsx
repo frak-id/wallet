@@ -2,7 +2,8 @@
 
 import { viemClient } from "@/context/blockchain/provider";
 import {
-    saveCampaign,
+    getCreationData,
+    saveCampaignDraft,
     updateCampaignState,
 } from "@/context/campaigns/action/createCampaign";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
@@ -52,7 +53,15 @@ export function ValidationCampaign() {
                 setCampaign(campaign);
 
                 // Save it in the database
-                const { id, creationData } = await saveCampaign(campaign);
+                const { id } = await saveCampaignDraft(campaign);
+                if (!id) {
+                    throw new Error("Unable to save campaign draft");
+                }
+                // Build the creation data
+                const { creationData } = await getCreationData({
+                    ...campaign,
+                    id,
+                });
 
                 // Send the campaign creation transaction
                 const [, result] = await tryit(() =>

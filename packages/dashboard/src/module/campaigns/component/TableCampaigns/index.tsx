@@ -167,7 +167,7 @@ export function TableCampaigns() {
                                 <span className={styles.table__budgetAmount}>
                                     {formatPrice(getValue())}
                                 </span>
-                                {row.original.budget.type && (
+                                {row.original.budget?.type && (
                                     <span className={styles.table__budgetType}>
                                         {capitalize(row.original.budget.type)}
                                     </span>

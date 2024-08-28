@@ -3,25 +3,54 @@
 import type {
     CampaignDocument,
     CampaignState,
+    DraftCampaignDocument,
 } from "@/context/campaigns/dto/CampaignDocument";
 import { getMongoDb } from "@/context/common/mongoDb";
 import { DI } from "@frak-labs/shared/context/utils/di";
-import type { Collection, ObjectId } from "mongodb";
+import { type Collection, ObjectId } from "mongodb";
 import type { Address } from "viem";
 
 class CampaignRepository {
     constructor(private readonly collection: Collection<CampaignDocument>) {}
 
     /**
-     * Create a new campaign
-     * @param campaign
+     * Normalize the id
+     * @param id
+     * @private
      */
-    public async create(campaign: CampaignDocument) {
-        const insertResult = await this.collection.insertOne(campaign);
-        if (!insertResult.acknowledged) {
-            throw new Error("Failed to insert campaign");
+    private normalizeId(id: string | ObjectId) {
+        return typeof id === "string" ? ObjectId.createFromHexString(id) : id;
+    }
+
+    /**
+     * Upsert a campaign draft
+     */
+    public async upsertDraft(draft: DraftCampaignDocument) {
+        // If no id, just insert it
+        if (!draft._id) {
+            const insertResult = await this.collection.insertOne(draft);
+            if (!insertResult.acknowledged) {
+                throw new Error("Failed to insert campaign");
+            }
+
+            // And return the draft just after
+            return {
+                ...draft,
+                _id: insertResult.insertedId,
+            };
         }
-        return insertResult.insertedId;
+
+        // Otherwise, parse the id (if string, to object id, otherwise, just the id)
+        const id = this.normalizeId(draft._id);
+        return this.collection.findOneAndReplace(
+            {
+                _id: id,
+            },
+            draft,
+            {
+                returnDocument: "after",
+            }
+        );
     }
 
     /**
@@ -29,8 +58,14 @@ class CampaignRepository {
      * @param id
      * @param state
      */
-    public async updateState(id: ObjectId, state: CampaignState) {
-        await this.collection.updateOne({ _id: id }, { $set: { state } });
+    public async updateState(
+        id: ObjectId,
+        state: Extract<CampaignState, { key: "created" | "creationFailed" }>
+    ) {
+        await this.collection.updateOne(
+            { _id: this.normalizeId(id) },
+            { $set: { state } }
+        );
     }
 
     /**
@@ -54,7 +89,7 @@ class CampaignRepository {
      * @param id
      */
     public async getOneById(id: ObjectId) {
-        return this.collection.findOne({ _id: id });
+        return this.collection.findOne({ _id: this.normalizeId(id) });
     }
 
     /**
@@ -62,7 +97,7 @@ class CampaignRepository {
      * @param id
      */
     public async delete(id: ObjectId) {
-        await this.collection.deleteOne({ _id: id });
+        await this.collection.deleteOne({ _id: this.normalizeId(id) });
     }
 }
 
