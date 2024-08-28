@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.13
+
+### Patch Changes
+
+- [`f8c200a`](https://github.com/frak-id/wallet/commit/f8c200acb1304b9390509ad440a47ba336b578d9) Thanks [@KONFeature](https://github.com/KONFeature)! - Fix `useReferralInteraction` to directly populate nexus context if user is logged in
+
 ## 0.0.12
 
 ### Patch Changes
