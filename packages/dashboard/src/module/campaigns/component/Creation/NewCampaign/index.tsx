@@ -8,14 +8,14 @@ import {
     campaignIsClosingAtom,
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
-import { ButtonCancel } from "@/module/campaigns/component/NewCampaign/ButtonCancel";
-import { FormBudget } from "@/module/campaigns/component/NewCampaign/FormBudget";
-import { FormGoals } from "@/module/campaigns/component/NewCampaign/FormGoals";
-import { FormProduct } from "@/module/campaigns/component/NewCampaign/FormProduct";
-import { FormSchedule } from "@/module/campaigns/component/NewCampaign/FormSchedule";
-import { FormSpecialAdvertising } from "@/module/campaigns/component/NewCampaign/FormSpecialAdvertising";
-import { FormTerritory } from "@/module/campaigns/component/NewCampaign/FormTerritory";
-import { FormTitle } from "@/module/campaigns/component/NewCampaign/FormTitle";
+import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
+import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
+import { FormGoals } from "@/module/campaigns/component/Creation/NewCampaign/FormGoals";
+import { FormProduct } from "@/module/campaigns/component/Creation/NewCampaign/FormProduct";
+import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
+import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/NewCampaign/FormSpecialAdvertising";
+import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign/FormTerritory";
+import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";

@@ -1,5 +1,3 @@
-"use client";
-
 import { Laptop } from "@/assets/icons/Laptop";
 import {
     Collapsible,
@@ -8,15 +6,28 @@ import {
 } from "@/module/common/component/Collapsible";
 import {
     NavigationItem,
+    NavigationLabel,
     SubNavigationItem,
 } from "@/module/common/component/Navigation";
+import { useMediaQuery } from "@module/hook/useMediaQuery";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+export function NavigationCampaignsSwitcher() {
+    const isMobile = useMediaQuery("(max-width : 768px)");
+    return isMobile ? (
+        <NavigationItem url={"/campaigns/list"}>
+            <NavigationLabel icon={<Laptop />}>Campaigns</NavigationLabel>
+        </NavigationItem>
+    ) : (
+        <NavigationCampaigns />
+    );
+}
+
 const url = "/campaigns";
 
-export function NavigationCampaigns() {
+function NavigationCampaigns() {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(pathname.startsWith(url));
 

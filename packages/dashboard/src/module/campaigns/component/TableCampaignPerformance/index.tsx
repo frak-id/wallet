@@ -67,7 +67,7 @@ function avgPercentages(table: TableReact<TableData>, column: keyof TableData) {
     return <span>{(average * 100).toFixed(2)}%</span>;
 }
 
-export function TablePerformance() {
+export function TableCampaignPerformance() {
     const { data, isLoading } = useQuery({
         queryKey: ["campaigns", "my-campaigns-stats"],
         queryFn: async () => await getMyCampaignsStats(),

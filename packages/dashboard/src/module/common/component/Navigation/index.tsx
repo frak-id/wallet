@@ -21,9 +21,9 @@ import styles from "./index.module.css";
  */
 const NavigationCampaignsSwitcher = dynamic(
     () =>
-        import("@/module/common/component/NavigationCampaignsSwitcher").then(
-            (mod) => mod.NavigationCampaignsSwitcher
-        ),
+        import(
+            "@/module/common/component/Navigation/NavigationCampaignsSwitcher"
+        ).then((mod) => mod.NavigationCampaignsSwitcher),
     {
         ssr: false,
         loading: () => (

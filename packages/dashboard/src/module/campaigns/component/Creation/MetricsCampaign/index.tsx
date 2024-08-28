@@ -1,8 +1,8 @@
 "use client";
 
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
-import { FormObjectives } from "@/module/campaigns/component/MetricsCampaign/FormObjectives";
-import { ButtonCancel } from "@/module/campaigns/component/NewCampaign/ButtonCancel";
+import { FormObjectives } from "@/module/campaigns/component/Creation/MetricsCampaign/FormObjectives";
+import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Actions } from "@/module/forms/Actions";

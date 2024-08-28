@@ -10,8 +10,8 @@ import {
     campaignIsClosingAtom,
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
-import { ButtonCancel } from "@/module/campaigns/component/NewCampaign/ButtonCancel";
-import { FormCheck } from "@/module/campaigns/component/ValidationCampaign/FormCheck";
+import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
+import { FormCheck } from "@/module/campaigns/component/Creation/ValidationCampaign/FormCheck";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";

@@ -1,6 +1,6 @@
-import { FormBudgetRow } from "@/module/campaigns/component/NewCampaign/FormBudgetRow";
-import { FormObjectives } from "@/module/campaigns/component/ValidationCampaign/FormObjectives";
-import { FormPromotedContent } from "@/module/campaigns/component/ValidationCampaign/FormPromotedContent";
+import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
+import { FormObjectives } from "@/module/campaigns/component/Creation/ValidationCampaign/FormObjectives";
+import { FormPromotedContent } from "@/module/campaigns/component/Creation/ValidationCampaign/FormPromotedContent";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";

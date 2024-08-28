@@ -1,4 +1,4 @@
-import { FormBudgetRow } from "@/module/campaigns/component/NewCampaign/FormBudgetRow";
+import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
