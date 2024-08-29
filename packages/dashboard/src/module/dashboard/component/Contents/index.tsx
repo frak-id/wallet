@@ -3,7 +3,7 @@ import { ButtonAddProduct } from "@/module/dashboard/component/ButtonAddProduct"
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import { useMyContents } from "@/module/dashboard/hooks/useMyContents";
 import { Spinner } from "@module/component/Spinner";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import styles from "./index.module.css";
 
 /**
@@ -58,16 +58,13 @@ function ProductListSection({
 function ProductListItem({
     product,
 }: { product: { id: bigint; name: string; domain: string } }) {
-    const router = useRouter();
     return (
-        <ProductItem
-            onClick={() => {
-                router.push(`/product/${product.id}`);
-            }}
-        >
-            {product.name}
-            <br />
-            {product.domain}
-        </ProductItem>
+        <Link href={`/product/${product.id}`}>
+            <ProductItem>
+                {product.name}
+                <br />
+                {product.domain}
+            </ProductItem>
+        </Link>
     );
 }
