@@ -16,17 +16,28 @@ export function FormObjectives(form: UseFormReturn<Campaign["rewards"]>) {
                 id={"click"}
                 label={"Click"}
                 form={form}
+                defaultChecked={true}
                 from={{
                     name: "click.from",
                     label: "From",
                     placeholder: "25,00 €",
                     rightSection: "EUR",
+                    rules: {
+                        validate: {
+                            required: (value) => value > 0,
+                        },
+                    },
                 }}
                 to={{
                     name: "click.to",
                     label: "To",
                     placeholder: "25,00 €",
                     rightSection: "EUR",
+                    rules: {
+                        validate: {
+                            required: (value) => value > 0,
+                        },
+                    },
                 }}
             />
             <FormFromTo
@@ -45,6 +56,7 @@ export function FormObjectives(form: UseFormReturn<Campaign["rewards"]>) {
                     placeholder: "25,00 €",
                     rightSection: "EUR",
                 }}
+                disabled={true}
             />
             <FormFromTo
                 id={"purchase"}
@@ -62,6 +74,7 @@ export function FormObjectives(form: UseFormReturn<Campaign["rewards"]>) {
                     placeholder: "25,00 €",
                     rightSection: "EUR",
                 }}
+                disabled={true}
             />
         </Panel>
     );

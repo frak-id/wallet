@@ -19,7 +19,6 @@ export function useSaveCampaign() {
     const queryClient = useQueryClient();
 
     return async function save(values: Campaign) {
-        console.log(values);
         setCampaign(values);
 
         if (campaignIsClosing) {
@@ -29,6 +28,10 @@ export function useSaveCampaign() {
                 // Invalidate my campaigns query
                 await queryClient.invalidateQueries({
                     queryKey: ["campaigns", "my-campaigns"],
+                });
+                // Invalidate campaign query
+                await queryClient.invalidateQueries({
+                    queryKey: ["campaign", id],
                 });
             }
             campaignReset();

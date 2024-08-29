@@ -12,6 +12,11 @@
     color: var(--frak-color-trout);
 }
 
+.form__label[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .form__label--light {
     font-weight: 500;
     color: var(--frak-color-grayText);

@@ -43,6 +43,7 @@ export function FormBudgetRow(
                 key={forceRefresh}
                 control={form.control}
                 name="budget.type"
+                rules={{ required: "Select a budget" }}
                 render={({ field }) => (
                     <FormItem>
                         {isCheckCampaign ? (
@@ -81,7 +82,11 @@ export function FormBudgetRow(
             <FormField
                 control={form.control}
                 name="budget.maxEuroDaily"
-                rules={{ required: "Select an amount" }}
+                rules={{
+                    validate: {
+                        required: (value) => value > 0 || "Invalid amount",
+                    },
+                }}
                 render={({ field }) => (
                     <FormItem>
                         <FormMessage />

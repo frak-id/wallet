@@ -24,6 +24,11 @@
     cursor: pointer;
 }
 
+.checkbox:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .checkbox__indicator {
     display: flex;
 }

@@ -46,6 +46,8 @@ type FormFromToProps<
     };
     form: UseFormReturn<TFieldValues>;
     hideIfAllZero?: boolean;
+    disabled?: boolean;
+    defaultChecked?: boolean;
 };
 
 export function FormFromTo<
@@ -58,17 +60,22 @@ export function FormFromTo<
     to,
     form,
     hideIfAllZero,
+    disabled,
+    defaultChecked = false,
 }: FormFromToProps<TFieldValues, TName>) {
     type FieldValue = PathValue<TFieldValues, TName>;
 
     const values = form.getValues([from.name, to.name]);
     const isAllZero = values.every((value) => value === 0);
 
-    const [checked, setIsChecked] = useState<boolean | "indeterminate">();
+    const [checked, setIsChecked] = useState<boolean | "indeterminate">(
+        defaultChecked
+    );
 
     useEffect(() => {
+        if (defaultChecked) return;
         setIsChecked(!isAllZero ?? "indeterminate");
-    }, [isAllZero]);
+    }, [isAllZero, defaultChecked]);
 
     function checkingCheckbox(value: boolean | "indeterminate") {
         setIsChecked(value);
@@ -87,11 +94,13 @@ export function FormFromTo<
                     onCheckedChange={checkingCheckbox}
                     checked={checked === true}
                     id={id}
+                    disabled={disabled}
                 />
                 <FormLabel
                     variant={"checkbox"}
                     selected={checked === true}
                     htmlFor={id}
+                    aria-disabled={disabled}
                 >
                     {label}
                 </FormLabel>
