@@ -14,8 +14,10 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.637.0",
     "@frak-labs/shared": "workspace:*",
+    "@sparticuz/chromium": "127",
     "aws-lambda": "^1.0.7",
     "mongodb": "^6.8.0",
+    "puppeteer-core": "23.1.1",
     "radash": "^12.1.0",
     "solady": "^0.0.235",
     "viem": "^2.18.5"

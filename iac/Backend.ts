@@ -1,8 +1,10 @@
 import { Duration } from "aws-cdk-lib";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
-import { Cron, Queue, use } from "sst/constructs";
+import {Bucket, Cron, Queue, use} from "sst/constructs";
 import type { StackContext } from "sst/constructs";
+import { Api } from "sst/constructs";
 import { ConfigStack } from "./Config";
+import { isProdStack } from "./utils";
 
 /**
  * Define backend stack
@@ -100,6 +102,39 @@ function campaignResources({ stack }: StackContext) {
     stack.addOutputs({
         ReloadCampaignQueueId: reloadCampaignQueue.id,
     });
+
+    const storageBucket = new Bucket(stack, "CampaignStorageBucket", {});
+
+    // Base domain for the api
+    const subDomain = isProdStack(stack)
+        ? "business-api"
+        : `business-api-${stack.stage.toLowerCase()}`;
+
+    // Api to take screenshot of the campaign
+    const api = new Api(stack, "CampaignServerApi", {
+        customDomain: {
+            domainName: `${subDomain}.frak.id`.toLowerCase(),
+            hostedZone: "frak.id",
+        },
+        routes: {
+            "POST /campaigns/screenshot": {
+                function: {
+                    handler: "packages/backend/src/campaign/screenshot.handler",
+                    timeout: "15 minutes",
+                    memorySize: 1024,
+                    nodejs: {
+                        install: ["@sparticuz/chromium"],
+                    },
+                    bind: [storageBucket]
+                },
+            },
+        },
+    });
+
+    stack.addOutputs({
+        ApiId: api.id,
+    });
+
     return { reloadCampaignQueue };
 }
 
