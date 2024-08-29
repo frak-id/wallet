@@ -2,6 +2,7 @@
 
 import { viemClient } from "@/context/blockchain/provider";
 import { Panel } from "@/module/common/component/Panel";
+import { ManageProductTeam } from "@/module/product/component/ProductDetails/ManageTeam";
 import {
     useSendTransactionAction,
     useWalletStatus,
@@ -138,6 +139,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                     </>
                 )}
             </Panel>
+            <ManageProductTeam productId={productId} />
         </>
     );
 }
