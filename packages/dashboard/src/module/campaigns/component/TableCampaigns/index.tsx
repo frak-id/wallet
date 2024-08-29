@@ -119,7 +119,7 @@ export function TableCampaigns() {
                                 disabled={
                                     !isCreated ||
                                     isUpdatingCampaignState ||
-                                    !row.original.actions.canEdit
+                                    !row.original.actions.canToggleRunningStatus
                                 }
                                 onCheckedChange={() => {
                                     if (!isCreated || isUpdatingCampaignState)

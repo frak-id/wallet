@@ -69,7 +69,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
             ...campaign,
             _id: campaign._id.toHexString(),
             actions: {
-                canEdit: isOffchainCreator,
+                canEdit: campaign.state.key === "draft",
                 canDelete: isOffchainCreator,
                 canToggleRunningStatus: false,
             },
@@ -112,7 +112,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
             },
             actions: {
                 ...mappedCampaign.actions,
-                canToggleRunningStatus: true,
+                canToggleRunningStatus: onChainState?.canEdit ?? false,
             },
         } as CampaignWithState;
     });
