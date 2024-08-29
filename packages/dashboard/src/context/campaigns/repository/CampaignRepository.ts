@@ -42,11 +42,12 @@ class CampaignRepository {
 
         // Otherwise, parse the id (if string, to object id, otherwise, just the id)
         const id = this.normalizeId(draft._id);
+        const draftWithNormalizedId = { ...draft, _id: id };
         return this.collection.findOneAndReplace(
             {
                 _id: id,
             },
-            draft,
+            draftWithNormalizedId,
             {
                 returnDocument: "after",
             }

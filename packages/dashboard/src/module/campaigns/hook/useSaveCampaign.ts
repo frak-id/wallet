@@ -10,10 +10,8 @@ import {
 import type { Campaign } from "@/types/Campaign";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
-import { useRouter } from "next/navigation";
 
 export function useSaveCampaign() {
-    const router = useRouter();
     const setCampaign = useSetAtom(campaignAtom);
     const campaignIsClosing = useAtomValue(campaignIsClosingAtom);
     const setStep = useSetAtom(campaignStepAtom);
@@ -34,7 +32,9 @@ export function useSaveCampaign() {
                 });
             }
             campaignReset();
-            router.push("/campaigns");
+            // router.push("/campaigns/list");
+            // Weird bug, not redirected with router.push
+            window.location.href = "/campaigns/list";
             return;
         }
 

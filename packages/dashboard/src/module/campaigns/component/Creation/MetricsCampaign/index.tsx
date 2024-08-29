@@ -1,11 +1,11 @@
 "use client";
 
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import { Actions } from "@/module/campaigns/component/Actions";
 import { FormObjectives } from "@/module/campaigns/component/Creation/MetricsCampaign/FormObjectives";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
-import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { useAtomValue } from "jotai";

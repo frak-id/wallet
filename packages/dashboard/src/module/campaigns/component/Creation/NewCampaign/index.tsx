@@ -8,6 +8,7 @@ import {
     campaignIsClosingAtom,
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
+import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/Creation/NewCampaign/FormGoals";
@@ -18,14 +19,13 @@ import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign
 import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
-import { Actions } from "@/module/forms/Actions";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-export function NewCampaign() {
+export function NewCampaign({ title }: { title: string }) {
     const campaignSuccess = useAtomValue(campaignSuccessAtom);
     const campaign = useAtomValue(campaignAtom);
     const campaignReset = useSetAtom(campaignResetAtom);
@@ -60,7 +60,10 @@ export function NewCampaign() {
     return (
         <FormLayout>
             <Head
-                title={{ content: "Create a new campaign", size: "small" }}
+                title={{
+                    content: title,
+                    size: "small",
+                }}
                 rightSection={
                     <ButtonCancel onClick={() => form.reset(campaign)} />
                 }
