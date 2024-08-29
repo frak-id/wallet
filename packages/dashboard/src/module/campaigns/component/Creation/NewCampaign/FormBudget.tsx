@@ -29,7 +29,7 @@ export function FormBudget(form: UseFormReturn<Campaign>) {
             </FormDescription>
             <FormBudgetRow {...form} />
             <FormDescription>
-                {type && maxEuroDaily > 0 && (
+                {type && type !== "global" && maxEuroDaily > 0 && (
                     <>
                         You will spend an average of €{average} per day. Your
                         maximum daily spend is €{maxDaily} and your maximum
@@ -44,13 +44,11 @@ export function FormBudget(form: UseFormReturn<Campaign>) {
 function getNumberOfDays(type: Campaign["budget"]["type"]) {
     switch (type) {
         case "daily":
-        case "global":
-            return 1;
         case "weekly":
             return 7;
         case "monthly":
             return 30;
         default:
-            return 1;
+            return 7;
     }
 }
