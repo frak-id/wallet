@@ -4,7 +4,10 @@ import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import { campaignRoles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
+import {
+    interactionCampaignAbi,
+    referralCampaignAbi,
+} from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { ObjectId } from "mongodb";
 import { type Address, erc20Abi } from "viem";
@@ -32,9 +35,8 @@ export async function getOnChainCampaignsDetails({
     const session = await getSafeSession();
 
     // Fetch a few onchain information
-    const [metadata, isActive, isAllowedToEdit, balance] = await multicall(
-        viemClient,
-        {
+    const [metadata, isActive, isRunning, isAllowedToEdit, balance, config] =
+        await multicall(viemClient, {
             contracts: [
                 {
                     abi: interactionCampaignAbi,
@@ -51,6 +53,12 @@ export async function getOnChainCampaignsDetails({
                 {
                     abi: interactionCampaignAbi,
                     address: campaignAddress,
+                    functionName: "isRunning",
+                    args: [],
+                } as const,
+                {
+                    abi: interactionCampaignAbi,
+                    address: campaignAddress,
                     functionName: "hasAnyRole",
                     args: [session.wallet, BigInt(campaignRoles.manager)],
                 } as const,
@@ -60,16 +68,23 @@ export async function getOnChainCampaignsDetails({
                     functionName: "balanceOf",
                     args: [campaignAddress],
                 } as const,
+                {
+                    abi: referralCampaignAbi,
+                    address: campaignAddress,
+                    functionName: "getConfig",
+                    args: [],
+                } as const,
             ],
             allowFailure: false,
-        }
-    );
+        });
 
     // Return the data
     return {
         metadata,
         isActive,
+        isRunning,
         isAllowedToEdit,
         balance,
+        config,
     };
 }

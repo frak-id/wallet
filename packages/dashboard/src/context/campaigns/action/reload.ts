@@ -18,7 +18,7 @@ const getSqsClient = DI.registerAndExposeGetter({
  * Ask to reload a campaign from
  * @param campaignAddress
  */
-export async function reloadCampaign({
+export async function addCampaignFund({
     campaignAddress,
 }: { campaignAddress: Address }) {
     const session = await getSafeSession();
