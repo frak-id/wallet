@@ -39,6 +39,7 @@ export function ButtonCancel({
                         campaignReset();
                         onClick?.();
                         setOpen(false);
+                        window.location.href = "/campaigns/list";
                     }}
                 >
                     Cancel campaign

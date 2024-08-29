@@ -42,7 +42,7 @@ export const Actions = memo(function Actions({
                 <Button
                     type={"submit"}
                     variant={"outline"}
-                    onClick={async () => setCampaignIsClosing(true)}
+                    onClick={() => setCampaignIsClosing(true)}
                 >
                     Close
                 </Button>
