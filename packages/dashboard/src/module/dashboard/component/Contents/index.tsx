@@ -22,7 +22,7 @@ export function MyContents() {
     }
 
     return (
-        <Panel variant={"ghost"} title={"My Products"}>
+        <Panel variant={"ghost"} title={"My Products"} withBadge={false}>
             <ProductListSection
                 products={[
                     ...(contents?.operator ?? []),

@@ -28,7 +28,14 @@ export const panelVariants = cva(styles.panel, {
 
 export const Panel = forwardRef<HTMLDivElement, PanelProps>(
     (
-        { variant, title, withBadge, className = "", children, ...props },
+        {
+            variant,
+            title,
+            withBadge = true,
+            className = "",
+            children,
+            ...props
+        },
         ref
     ) => {
         return (
