@@ -99,9 +99,9 @@ export async function getCreationData(campaign: Campaign) {
     }
 
     // The blockchain name of the campaign is fitted on a bytes32
-    const blockchainName = stringToHex(campaign.title.substring(0, 32), {
-        size: 32,
-    });
+    // const blockchainName = stringToHex(campaign.title.substring(0, 32), {
+    //     size: 32,
+    // });
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
@@ -114,7 +114,6 @@ export async function getCreationData(campaign: Campaign) {
             : 0n,
         start,
         end,
-        blockchainName,
     ]);
 
     // Return the encoded calldata to deploy and attach this campaign
