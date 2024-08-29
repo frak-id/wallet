@@ -23,7 +23,7 @@ import {
     parseEventLogs,
     stringToHex,
 } from "viem";
-import { getTransactionReceipt } from "viem/actions";
+import { getTransactionReceipt, simulateContract } from "viem/actions";
 
 /**
  * Save a campaign draft
@@ -56,6 +56,8 @@ export async function saveCampaignDraft(
  * @param campaign
  */
 export async function getCreationData(campaign: Campaign) {
+    const session = await getSafeSession();
+
     if (!campaign.contentId) {
         throw new Error("Content ID is required");
     }
@@ -99,9 +101,12 @@ export async function getCreationData(campaign: Campaign) {
     }
 
     // The blockchain name of the campaign is fitted on a bytes32
-    // const blockchainName = stringToHex(campaign.title.substring(0, 32), {
-    //     size: 32,
-    // });
+    const blockchainName = stringToHex(
+        campaign.title.replace(/[^a-zA-Z0-9]/g, "").substring(0, 32),
+        {
+            size: 32,
+        }
+    );
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
@@ -114,7 +119,22 @@ export async function getCreationData(campaign: Campaign) {
             : 0n,
         start,
         end,
+        blockchainName,
     ]);
+
+    // Perform a contract simulation
+    //  this will fail if the tx will fail
+    await simulateContract(viemClient, {
+        account: session.wallet,
+        address: addresses.contentInteractionManager,
+        abi: contentInteractionManagerAbi,
+        functionName: "deployCampaign",
+        args: [
+            BigInt(campaign.contentId),
+            referralCampaignId,
+            campaignInitData,
+        ],
+    });
 
     // Return the encoded calldata to deploy and attach this campaign
     const creationData = encodeFunctionData({
