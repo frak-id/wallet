@@ -2,11 +2,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-weight: 500;
 }
 
 .size--small {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .size--medium {
@@ -19,6 +18,14 @@
 
 .title__icon {
     display: flex;
+}
+
+.h2 {
+    font-weight: 500;
+}
+
+.h3 {
+    font-weight: 700;
 }
 
 .title__text {

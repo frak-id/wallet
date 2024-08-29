@@ -10,12 +10,12 @@
 
 .primary {
     background-color: #e8f8fd;
-    color: #13b2e4;
+    color: var(--frak-color-cerulean);
 }
 
 .secondary {
     background-color: #f0f1f3;
-    color: #667085;
+    color: var(--frak-color-pale-sky);
 }
 
 .success {
@@ -25,7 +25,7 @@
 
 .danger {
     background-color: #feedec;
-    color: #f04438;
+    color: var(--frak-color-red);
 }
 
 .information {

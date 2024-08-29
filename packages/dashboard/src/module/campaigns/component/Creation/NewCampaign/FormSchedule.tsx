@@ -21,24 +21,16 @@ import { Checkbox } from "@module/component/forms/Checkbox";
 import { format, isBefore, startOfDay } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { UseFormReturn } from "react-hook-form";
+import type {
+    Control,
+    FieldValues,
+    Path,
+    PathValue,
+    UseFormReturn,
+} from "react-hook-form";
 import styles from "./FormSchedule.module.css";
 
 export function FormSchedule(form: UseFormReturn<Campaign>) {
-    const [isEndDate, setIsEndDate] = useState<boolean | "indeterminate">(
-        "indeterminate"
-    );
-
-    // Watch the end date to uncheck the end date checkbox
-    const watchScheduledEnd = form.watch("scheduled.dateEnd");
-
-    /**
-     * Uncheck the end date checkbox
-     */
-    useEffect(() => {
-        setIsEndDate(!!watchScheduledEnd);
-    }, [watchScheduledEnd]);
-
     return (
         <Panel title="Schedule">
             <FormDescription title={"Schedule"}>
@@ -52,8 +44,32 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                 a result, the amount spent daily will fluctuate.
             </FormDescription>
 
+            <FormScheduleFields {...form} />
+        </Panel>
+    );
+}
+
+export function FormScheduleFields<T extends FieldValues>(
+    form: UseFormReturn<T>
+) {
+    const [isEndDate, setIsEndDate] = useState<boolean | "indeterminate">(
+        "indeterminate"
+    );
+
+    // Watch the end date to uncheck the end date checkbox
+    const watchScheduledEnd = form.watch("scheduled.dateEnd" as Path<T>);
+
+    /**
+     * Uncheck the end date checkbox
+     */
+    useEffect(() => {
+        setIsEndDate(!!watchScheduledEnd);
+    }, [watchScheduledEnd]);
+
+    return (
+        <>
             <FormField
-                control={form.control}
+                control={form.control as Control<FieldValues>}
                 name="scheduled.dateStart"
                 render={({ field }) => {
                     const { value, ...rest } = field;
@@ -89,8 +105,11 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                                             // If checkbox is checked, set the end date to the same date
                                             if (isEndDate) {
                                                 form.setValue(
-                                                    "scheduled.dateEnd",
-                                                    value
+                                                    "scheduled.dateEnd" as Path<T>,
+                                                    value as PathValue<
+                                                        T,
+                                                        Path<T>
+                                                    >
                                                 );
                                             }
                                         }}
@@ -111,7 +130,7 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
             />
 
             <FormField
-                control={form.control}
+                control={form.control as Control<FieldValues>}
                 name="scheduled.dateEnd"
                 render={({ field }) => (
                     <div className={styles.formSchedule__endDate}>
@@ -123,8 +142,8 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                                     // Reset the end date if the checkbox is unchecked
                                     if (value === false) {
                                         form.setValue(
-                                            "scheduled.dateEnd",
-                                            undefined
+                                            "scheduled.dateEnd" as Path<T>,
+                                            undefined as PathValue<T, Path<T>>
                                         );
                                     }
                                 }}
@@ -164,20 +183,21 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                                             mode="single"
                                             selected={field.value}
                                             onSelect={field.onChange}
-                                            disabled={(date) =>
-                                                isBefore(
-                                                    date,
-                                                    startOfDay(new Date())
-                                                ) ||
-                                                date <
-                                                    new Date(
-                                                        form.getValues(
-                                                            "scheduled.dateStart"
-                                                        )
-                                                    )
-                                            }
+                                            disabled={(date) => {
+                                                const dateStart =
+                                                    form.getValues(
+                                                        "scheduled.dateStart" as Path<T>
+                                                    );
+                                                return (
+                                                    isBefore(
+                                                        date,
+                                                        startOfDay(new Date())
+                                                    ) ||
+                                                    date < new Date(dateStart)
+                                                );
+                                            }}
                                             startMonth={form.getValues(
-                                                "scheduled.dateStart"
+                                                "scheduled.dateStart" as Path<T>
                                             )}
                                         />
                                     </PopoverContent>
@@ -188,6 +208,6 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
                     </div>
                 )}
             />
-        </Panel>
+        </>
     );
 }

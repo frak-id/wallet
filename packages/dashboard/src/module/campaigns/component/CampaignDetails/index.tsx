@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 /**
  * Campaign details component
- * @param params
+ * @param campaignId
  * @constructor
  */
 export function CampaignDetails({
@@ -16,12 +16,16 @@ export function CampaignDetails({
 }: {
     campaignId: string;
 }) {
-    const { data: campaign, isLoading } = useQuery({
+    const {
+        data: campaign,
+        isLoading,
+        isPending,
+    } = useQuery({
         queryKey: ["campaign", campaignId],
         queryFn: () => getCampaignDetails({ campaignId }),
     });
 
-    if (isLoading) {
+    if (isLoading || isPending) {
         return <Skeleton />;
     }
 

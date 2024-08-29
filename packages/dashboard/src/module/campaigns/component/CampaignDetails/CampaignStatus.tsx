@@ -1,17 +1,32 @@
 import { getOnChainCampaignsDetails } from "@/context/campaigns/action/getDetails";
-import { addCampaignFund } from "@/context/campaigns/action/reload";
 import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
+import { CampaignBalance } from "@/module/campaigns/component/CampaignDetails/CampaignBalance";
+import { CampaignDates } from "@/module/campaigns/component/CampaignDetails/CampaignDates";
+import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { sleep } from "radash";
+import { Title } from "@/module/common/component/Title";
+import { useQuery } from "@tanstack/react-query";
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import { useMemo } from "react";
-import { type Address, type Hex, encodeFunctionData, formatEther } from "viem";
+import type { Address, Hex } from "viem";
+import styles from "./CampaignStatus.module.css";
+
+const statusVariants = cva(styles.campaignStatus__status, {
+    variants: {
+        variant: {
+            loading: styles.loading,
+            paused: styles.paused,
+            active: styles.active,
+            stopped: styles.stopped,
+        },
+    },
+});
+type StatusVariantProps = VariantProps<typeof statusVariants>["variant"];
 
 /**
  * Display the campaign status
- * @param campaignId
+ * @param campaign
  * @constructor
  */
 export function CampaignStatus({
@@ -37,9 +52,27 @@ export function CampaignStatus({
 function OffChainCampaignStatus({
     state,
 }: { state: "draft" | "creationFailed" }) {
+    const status = useMemo<{
+        label: string;
+        variant: StatusVariantProps;
+    }>(() => {
+        if (state === "draft") {
+            return { label: "Draft", variant: "paused" };
+        }
+
+        return { label: "Creation failed", variant: "stopped" };
+    }, [state]);
+
     return (
         <p>
-            Status: <strong>{state}</strong>
+            Status:{" "}
+            <span
+                className={statusVariants({
+                    variant: status.variant,
+                })}
+            >
+                {status.label}
+            </span>
         </p>
     );
 }
@@ -48,71 +81,28 @@ function OnChainCampaignStatus({
     campaignAddress,
     deploymentTxHash,
 }: { campaignAddress: Address; deploymentTxHash: Hex }) {
-    const { mutateAsync: sendTransaction } = useSendTransactionAction();
-
-    const {
-        data: onChainInfos,
-        isLoading,
-        refetch: refreshOnChainInfos,
-    } = useQuery({
+    const { data: onChainInfos, isLoading } = useQuery({
         queryKey: ["campaign", "on-chain-details", campaignAddress],
         queryFn: () => getOnChainCampaignsDetails({ campaignAddress }),
     });
 
-    const { mutate: addFundRequest, isPending: isAddingFund } = useMutation({
-        mutationKey: ["campaign", "add-fund", campaignAddress],
-        mutationFn: async () => {
-            // Launch the request
-            await addCampaignFund({ campaignAddress });
-            // Wait a bit
-            await sleep(5_000);
-            // Refresh on chain info
-            await refreshOnChainInfos();
-        },
-    });
-
-    const { mutate: updateDates, isPending: isUpdatingDates } = useMutation({
-        mutationKey: ["campaign", "update-date", campaignAddress],
-        mutationFn: async () => {
-            // Build the function data
-            const calldata = encodeFunctionData({
-                abi: referralCampaignAbi,
-                functionName: "setActivationDate",
-                // todo: first arg start timestamp in second
-                // todo: second arg end timestamp in second
-                args: [0, 0],
-            });
-
-            // Send the transaction
-            await sendTransaction({
-                tx: {
-                    to: campaignAddress,
-                    data: calldata,
-                },
-                metadata: {
-                    header: {
-                        title: "Update campaign",
-                    },
-                    context: "Change campaign start and end dates",
-                },
-            });
-        },
-    });
-
-    const status = useMemo(() => {
+    const status = useMemo<{
+        label: string;
+        variant: StatusVariantProps;
+    }>(() => {
         if (!onChainInfos) {
-            return "Loading";
+            return { label: "Loading", variant: "loading" };
         }
 
         if (!onChainInfos.isRunning) {
-            return "Paused";
+            return { label: "Paused", variant: "paused" };
         }
 
         if (!onChainInfos.isActive) {
-            return "Stopped";
+            return { label: "Stopped", variant: "stopped" };
         }
 
-        return "Running";
+        return { label: "Active", variant: "active" };
     }, [onChainInfos]);
 
     if (isLoading) {
@@ -126,53 +116,43 @@ function OnChainCampaignStatus({
 
     if (!onChainInfos) {
         return (
-            <>
+            <Column fullWidth={true}>
                 <h3>Campaign status</h3>
-                <p>
-                    Deployed at: <pre>{campaignAddress}</pre>
-                </p>
-                <p>
-                    Deployed on transaction: <pre>{deploymentTxHash}</pre>
-                </p>
+                <p>Campaign Address: {campaignAddress}</p>
+                <p>Deployment Tx Hash: {deploymentTxHash}</p>
                 <p>On-chain information's not found</p>
-            </>
+            </Column>
         );
     }
 
     return (
         <>
-            <h3>Campaign status</h3>
-            <p>
-                Deployed at: <pre>{campaignAddress}</pre>
-            </p>
-            <p>
-                Deployed on transaction: <pre>{deploymentTxHash}</pre>
-            </p>
-            <br />
-            <p>
-                Status: <strong>{status}</strong>
-            </p>
-
-            <h3>Balance</h3>
-            <p>{formatEther(BigInt(onChainInfos.balance))}</p>
-            <button
-                onClick={() => addFundRequest()}
-                type={"button"}
-                disabled={isAddingFund}
-            >
-                Reload
-            </button>
-
-            <h3>Dates</h3>
-            <p>Start: {onChainInfos?.config?.startDate}</p>
-            <p>End: {onChainInfos?.config?.endDate}</p>
-            <button
-                onClick={() => updateDates()}
-                type={"button"}
-                disabled={isUpdatingDates}
-            >
-                Update dates
-            </button>
+            <Column fullWidth={true}>
+                <Title as={"h3"} size={"small"}>
+                    Campaign status
+                </Title>
+                <div>
+                    <p>Campaign Address: {campaignAddress}</p>
+                    <p>Deployment Tx Hash: {deploymentTxHash}</p>
+                    <br />
+                    <p>
+                        Status:{" "}
+                        <span
+                            className={statusVariants({
+                                variant: status.variant,
+                            })}
+                        >
+                            {status.label}
+                        </span>
+                    </p>
+                </div>
+            </Column>
+            <Column fullWidth={true}>
+                <CampaignBalance campaignAddress={campaignAddress} />
+            </Column>
+            <Column fullWidth={true}>
+                <CampaignDates campaignAddress={campaignAddress} />
+            </Column>
         </>
     );
 }
