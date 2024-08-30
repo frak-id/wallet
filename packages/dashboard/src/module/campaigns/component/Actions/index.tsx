@@ -9,6 +9,7 @@ import { Button } from "@module/component/Button";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect } from "react";
+import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
 export const Actions = memo(function Actions({
@@ -37,8 +38,8 @@ export const Actions = memo(function Actions({
     }, [step, router.push, pages]);
 
     return (
-        <Panel variant={"secondary"} className={styles.actions}>
-            <div className={styles.action__left}>
+        <ActionsWrapper
+            left={
                 <Button
                     type={"submit"}
                     variant={"outline"}
@@ -46,26 +47,40 @@ export const Actions = memo(function Actions({
                 >
                     Close
                 </Button>
-            </div>
-            <div className={styles.action__right}>
-                {step > 1 && !campaignSuccess && (
-                    <Button
-                        variant={"informationOutline"}
-                        onClick={() => setStep((prev) => prev - 1)}
-                    >
-                        Previous
-                    </Button>
-                )}
-                {!campaignSuccess && (
-                    <ButtonNext
-                        isLoading={isLoading}
-                        isLastStep={step === pages.length}
-                    />
-                )}
-            </div>
-        </Panel>
+            }
+            right={
+                <>
+                    {step > 1 && !campaignSuccess && (
+                        <Button
+                            variant={"informationOutline"}
+                            onClick={() => setStep((prev) => prev - 1)}
+                        >
+                            Previous
+                        </Button>
+                    )}
+                    {!campaignSuccess && (
+                        <ButtonNext
+                            isLoading={isLoading}
+                            isLastStep={step === pages.length}
+                        />
+                    )}
+                </>
+            }
+        />
     );
 });
+
+export function ActionsWrapper({
+    left,
+    right,
+}: { left?: ReactNode; right?: ReactNode }) {
+    return (
+        <Panel variant={"secondary"} className={styles.actions}>
+            {left && <div className={styles.action__left}>{left}</div>}
+            {right && <div className={styles.action__right}>{right}</div>}
+        </Panel>
+    );
+}
 
 function ButtonNext({
     isLoading = false,

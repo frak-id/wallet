@@ -3,7 +3,10 @@ import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
 
-export function FormObjectives(form: UseFormReturn<Campaign>) {
+export function FormObjectives(
+    form: UseFormReturn<Campaign> & { disabled?: boolean }
+) {
+    const { disabled } = form;
     return (
         <FormItem>
             <FormDescription title={"Objectives"} />
@@ -24,6 +27,7 @@ export function FormObjectives(form: UseFormReturn<Campaign>) {
                     rightSection: "EUR",
                 }}
                 hideIfAllZero={true}
+                disabled={disabled}
             />
             <FormFromTo
                 id={"registration"}
@@ -42,6 +46,7 @@ export function FormObjectives(form: UseFormReturn<Campaign>) {
                     rightSection: "EUR",
                 }}
                 hideIfAllZero={true}
+                disabled={disabled}
             />
             <FormFromTo
                 id={"purchase"}
@@ -60,6 +65,7 @@ export function FormObjectives(form: UseFormReturn<Campaign>) {
                     rightSection: "EUR",
                 }}
                 hideIfAllZero={true}
+                disabled={disabled}
             />
         </FormItem>
     );

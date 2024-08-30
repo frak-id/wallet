@@ -20,9 +20,12 @@ import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormBudgetRow(
-    form: UseFormReturn<Campaign> & { isCheckCampaign?: boolean }
+    form: UseFormReturn<Campaign> & {
+        isCheckCampaign?: boolean;
+        disabled?: boolean;
+    }
 ) {
-    const { isCheckCampaign } = form;
+    const { isCheckCampaign, disabled } = form;
 
     // Force refresh the form when reset the budget type
     const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
@@ -55,6 +58,7 @@ export function FormBudgetRow(
                         <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
+                            disabled={disabled}
                         >
                             <FormControl>
                                 <SelectTrigger length={"medium"} {...field}>
@@ -95,6 +99,7 @@ export function FormBudgetRow(
                                 placeholder={"25,00 €"}
                                 length={"medium"}
                                 rightSection={"EUR"}
+                                disabled={disabled}
                                 {...field}
                             />
                         </FormControl>

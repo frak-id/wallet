@@ -16,6 +16,9 @@
         box-shadow: 0 0 0 1px var(--frak-focus-border-color);
     }
 }
+.select__trigger:disabled {
+    cursor: not-allowed;
+}
 
 .select__trigger--medium {
     width: 320px;

@@ -121,7 +121,7 @@ export function FormFromTo<
                                     length={"small"}
                                     placeholder={from.placeholder}
                                     rightSection={from.rightSection}
-                                    disabled={checked !== true}
+                                    disabled={disabled ?? checked !== true}
                                     {...field}
                                 />
                             </FormControl>
@@ -141,7 +141,7 @@ export function FormFromTo<
                                     length={"small"}
                                     placeholder={to.placeholder}
                                     rightSection={to.rightSection}
-                                    disabled={checked !== true}
+                                    disabled={disabled ?? checked !== true}
                                     {...field}
                                 />
                             </FormControl>
