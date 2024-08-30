@@ -1,7 +1,7 @@
 .alertDialog__overlay {
     background-color: rgba(0, 0, 0, 0.44);
     position: fixed;
-    z-index: 10;
+    /*z-index: 10;*/
     inset: 0;
     animation: overlayShow 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -28,7 +28,7 @@
     position: fixed;
     top: 50%;
     left: 50%;
-    z-index: 20;
+    /*z-index: 20;*/
     transform: translate(-50%, -50%);
     width: 90vw;
     max-width: 420px;

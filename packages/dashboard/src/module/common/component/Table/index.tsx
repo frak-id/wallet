@@ -30,6 +30,7 @@ export type ReactTableProps<TData, TMetas> = {
     filtering?: TableFiltering;
     setFiltering?: Dispatch<SetStateAction<TableFiltering>>;
     limit?: number;
+    preTable?: ReactNode;
 };
 
 type Metas = {
@@ -53,6 +54,7 @@ export function Table<TData extends object, TMetas extends Metas>({
     filtering,
     setFiltering,
     limit,
+    preTable,
 }: ReactTableProps<TData, TMetas>) {
     const [, setSessionStorageFiltering] = useSessionStorageState<{
         page: number;
@@ -153,6 +155,7 @@ export function Table<TData extends object, TMetas extends Metas>({
     return (
         <>
             <div className={`${styles.tableWrapper} ${classNameWrapper}`}>
+                {preTable && <div className={styles.preTable}>{preTable}</div>}
                 <table className={`${styles.table} ${className}`}>
                     <thead>
                         {table.getHeaderGroups().map((headerGroup) => (

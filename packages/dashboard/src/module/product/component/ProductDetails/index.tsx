@@ -3,6 +3,7 @@
 import { viemClient } from "@/context/blockchain/provider";
 import { roles } from "@/context/blockchain/roles";
 import { Panel } from "@/module/common/component/Panel";
+import { FormLayout } from "@/module/forms/Form";
 import { ManageProductTeam } from "@/module/product/component/ProductDetails/ManageTeam";
 import {
     useSendTransactionAction,
@@ -105,7 +106,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
     });
 
     return (
-        <>
+        <FormLayout>
             <Panel title={"Interactions handler"}>
                 {isFetchingInteractionContract && <Spinner />}
                 {detailsData?.interactionContract && (
@@ -142,6 +143,6 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                 )}
             </Panel>
             <ManageProductTeam productId={productId} />
-        </>
+        </FormLayout>
     );
 }

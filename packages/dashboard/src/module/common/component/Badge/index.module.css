@@ -32,3 +32,8 @@
     background-color: var(--frak-color-moon-raker);
     color: var(--frak-color-royal-blue);
 }
+
+.warning {
+    background-color: #fdf1e8;
+    color: #e46a11;
+}

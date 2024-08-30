@@ -10,6 +10,7 @@ import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type Address, encodeFunctionData, isAddress, toHex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
+import { TableTeam } from "../TableTeam";
 
 /**
  * Component to manage a product team
@@ -93,7 +94,7 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
     return (
         <Panel title={"Manage your team"}>
             {/* Display the add administrator form if it's a product owner */}
-            {isProductOwner && (
+            {/*isProductOwner && (
                 <div>
                     <p>Add an administrator</p>
                     <input type="text" placeholder="Wallet address" />
@@ -101,18 +102,13 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
                         Add
                     </button>
                 </div>
-            )}
+            )*/}
             {/* Display the error if there is one */}
             {updateAdministratorError && (
                 <p>{updateAdministratorError.message}</p>
             )}
             {/* Display the administrators */}
-            {administrators.map((admin) => (
-                <div key={admin.wallet}>
-                    <p>{admin.wallet}</p>
-                    <p>{admin.isOwner ? "Admin" : "Operator"}</p>
-                </div>
-            ))}
+            <TableTeam productId={productId} />
         </Panel>
     );
 }
