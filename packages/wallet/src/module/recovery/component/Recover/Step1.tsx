@@ -15,7 +15,7 @@ export function Step1() {
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
 
-    // Get the recovery file content
+    // Get the recovery file product
     const [fileContent, setFileContent] = useAtom(recoveryFileContentAtom);
 
     /**
@@ -39,7 +39,7 @@ export function Step1() {
             ) {
                 // Should display a user message
                 setFileContent(null);
-                throw new Error("Invalid file content");
+                throw new Error("Invalid file product");
             }
             // If all good here, should check that the guardian address match the wallet address recovery options
             // A backend actions checking possible recovery chains???

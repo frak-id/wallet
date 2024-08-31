@@ -66,7 +66,7 @@ export function createIFrameMessageHandler({
     if (!iframe.contentWindow) {
         throw new FrakRpcError(
             RpcErrorCodes.configError,
-            "The iframe does not have a content window"
+            "The iframe does not have a product window"
         );
     }
     const contentWindow = iframe.contentWindow;

@@ -1,6 +1,7 @@
 /**
- * The campaign related Solady roles
+ * The on-chain roles
  */
-export const campaignRoles = {
-    manager: 1 << 3,
+export const roles = {
+    productManager: BigInt(1 << 2),
+    campaignManager: BigInt(1 << 3),
 } as const;

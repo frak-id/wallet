@@ -84,7 +84,7 @@ export const handler = Handler(
 async function pushInteractions(
     interactions: {
         wallet: Address;
-        contentId: bigint;
+        productId: bigint;
         interactionTx: Hex;
     }[]
 ) {
@@ -96,7 +96,7 @@ async function pushInteractions(
             interactions.map((inter) => ({
                 wallet: inter.wallet,
                 interaction: {
-                    contentId: inter.contentId,
+                    productId: inter.productId,
                     data: inter.interactionTx,
                 },
             })),

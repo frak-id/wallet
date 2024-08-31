@@ -1,4 +1,4 @@
-import { contentInteractionDiamondAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productInteractionDiamondAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { Config } from "sst/node/config";
 import { type Address, type Hex, concatHex, keccak256 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -8,19 +8,19 @@ import { getViemClient } from "../../blockchain/client";
 /**
  * Generate an interaction validation
  * @param facetData
- * @param contentId
+ * @param productId
  * @param user
  * @param interactionContract
  */
 export async function getInteractionSignature({
     facetData,
-    contentId,
+                                                  productId,
     user,
     interactionContract,
 }: {
     facetData: Hex;
     user: Address;
-    contentId: bigint;
+    productId: bigint;
     interactionContract: Address;
 }): Promise<Hex> {
     const client = getViemClient();
@@ -45,14 +45,14 @@ export async function getInteractionSignature({
     return await signTypedData(client, {
         account: signerAccount,
         domain: {
-            name: "Frak.ContentInteraction",
+            name: "Frak.ProductInteraction",
             version: "0.0.1",
             chainId: client.chain.id,
             verifyingContract: interactionContract,
         },
         types: {
             ValidateInteraction: [
-                { name: "contentId", type: "uint256" },
+                { name: "productId", type: "uint256" },
                 { name: "interactionData", type: "bytes32" },
                 { name: "user", type: "address" },
                 { name: "nonce", type: "uint256" },
@@ -60,7 +60,7 @@ export async function getInteractionSignature({
         },
         primaryType: "ValidateInteraction",
         message: {
-            contentId,
+            productId,
             interactionData: interactionHash,
             user,
             nonce,
@@ -89,7 +89,7 @@ async function getNonce({
     const client = getViemClient();
     const nonce = await readContract(client, {
         address: interactionContract,
-        abi: contentInteractionDiamondAbi,
+        abi: productInteractionDiamondAbi,
         functionName: "getNonceForInteraction",
         args: [interactionHash, user],
     });

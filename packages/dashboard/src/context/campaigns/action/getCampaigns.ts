@@ -2,10 +2,12 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
-import { campaignRoles } from "@/context/blockchain/roles";
+import { roles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import type { CampaignWithState } from "@/types/Campaign";
 import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
+import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
+import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import ky from "ky";
 import { all, sift } from "radash";
 import { type Address, isAddressEqual } from "viem";
@@ -122,13 +124,13 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
  * Get the onchain state for each campaign address
  */
 async function getOnChainStateForCampaigns({
-    addresses,
+    addresses: campaignAddresses,
     wallet,
 }: { addresses: Address[]; wallet: Address }): Promise<
     Record<Address, { canEdit: boolean; isActive: boolean; isRunning: boolean }>
 > {
     // If no address provided, early exit
-    if (addresses.length === 0) {
+    if (campaignAddresses.length === 0) {
         return {};
     }
 
@@ -141,7 +143,7 @@ async function getOnChainStateForCampaigns({
     const { isActives, canEdits, isRunnings } = await all({
         // Check if the campaign is active
         isActives: multicall(viemClient, {
-            contracts: addresses.map(
+            contracts: campaignAddresses.map(
                 (address) =>
                     ({
                         ...baseMulticallParams,
@@ -153,20 +155,21 @@ async function getOnChainStateForCampaigns({
         }),
         // Check if the campaign can be edited
         canEdits: multicall(viemClient, {
-            contracts: addresses.map(
-                (address) =>
+            contracts: campaignAddresses.map(
+                (_) =>
                     ({
-                        ...baseMulticallParams,
-                        address,
-                        functionName: "hasAnyRole",
-                        args: [wallet, BigInt(campaignRoles.manager)],
+                        abi: productAdministratorRegistryAbi,
+                        address: addresses.productAdministratorRegistry,
+                        functionName: "hasAllRolesOrAdmin",
+                        // todo: product id for this campaign
+                        args: [0n, wallet, roles.campaignManager],
                     }) as const
             ),
             allowFailure: false,
         }),
         // Check if the campaign can be edited
         isRunnings: multicall(viemClient, {
-            contracts: addresses.map(
+            contracts: campaignAddresses.map(
                 (address) =>
                     ({
                         ...baseMulticallParams,
@@ -179,7 +182,7 @@ async function getOnChainStateForCampaigns({
     });
 
     // Map the results to an object
-    return addresses.reduce(
+    return campaignAddresses.reduce(
         (acc, address, index) => {
             acc[address] = {
                 canEdit: canEdits[index],

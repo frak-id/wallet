@@ -9,7 +9,7 @@ export function useDownloadRecoveryFile() {
         mutationKey: ["recovery", "download-file"],
         gcTime: 0,
         mutationFn: async ({ file }: { file: RecoveryFileContent }) => {
-            // Build the blob with the file content
+            // Build the blob with the file product
             const blob = new Blob([JSON.stringify(file)], {
                 type: "text/json;charset=utf-8",
             });

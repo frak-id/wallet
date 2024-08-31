@@ -1,8 +1,8 @@
 "use server";
 import { viemClient } from "@/context/blockchain/provider";
 import {
-    contentInteractionDiamondAbi,
-    contentInteractionManagerAbi,
+    productInteractionDiamondAbi,
+    productInteractionManagerAbi,
 } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { readContract } from "viem/actions";
@@ -17,14 +17,14 @@ export async function getAttachedCampaigns({
     // Get the root interaction contract
     const contentInteraction = await readContract(viemClient, {
         address: addresses.contentInteractionManager,
-        abi: contentInteractionManagerAbi,
+        abi: productInteractionManagerAbi,
         functionName: "getInteractionContract",
         args: [BigInt(contentId)],
     });
     // Get the current product campaigns
     return readContract(viemClient, {
         address: contentInteraction,
-        abi: contentInteractionDiamondAbi,
+        abi: productInteractionDiamondAbi,
         functionName: "getCampaigns",
     });
 }

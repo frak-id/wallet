@@ -19,7 +19,7 @@ import styles from "./Step5.module.css";
 const ACTUAL_STEP = 5;
 
 export function Step5() {
-    // Get the recovery file content
+    // Get the recovery file product
     const recoveryFileContent = useAtomValue(recoveryFileContentAtom);
 
     return (

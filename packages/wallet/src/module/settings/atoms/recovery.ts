@@ -25,7 +25,7 @@ export const recoveryOptionsAtom = atom<
 >(undefined);
 
 /**
- * Atom to store the recovery file content
+ * Atom to store the recovery file product
  */
 export const recoveryFileContentAtom = atom<RecoveryFileContent | null>(null);
 

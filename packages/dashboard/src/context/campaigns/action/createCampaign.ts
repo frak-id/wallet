@@ -9,7 +9,7 @@ import {
     referralConfigStruct,
 } from "@/context/campaigns/utils/constants";
 import type { Campaign } from "@/types/Campaign";
-import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { ObjectId } from "mongodb";
 import { first } from "radash";
@@ -127,7 +127,7 @@ export async function getCreationData(campaign: Campaign) {
     await simulateContract(viemClient, {
         account: session.wallet,
         address: addresses.contentInteractionManager,
-        abi: contentInteractionManagerAbi,
+        abi: productInteractionManagerAbi,
         functionName: "deployCampaign",
         args: [
             BigInt(campaign.productId),
@@ -138,7 +138,7 @@ export async function getCreationData(campaign: Campaign) {
 
     // Return the encoded calldata to deploy and attach this campaign
     const creationData = encodeFunctionData({
-        abi: contentInteractionManagerAbi,
+        abi: productInteractionManagerAbi,
         functionName: "deployCampaign",
         args: [
             BigInt(campaign.productId),

@@ -2,8 +2,8 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import { isDnsTxtRecordSet } from "@/context/product/action/verifyDomain";
-import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { contentRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
+import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { type Hex, encodeFunctionData, keccak256, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -65,7 +65,7 @@ export async function mintProduct({
         chain: viemClient.chain,
         to: addresses.contentRegistry,
         data: encodeFunctionData({
-            abi: contentRegistryAbi,
+            abi: productRegistryAbi,
             functionName: "mint",
             args: [productTypes, name, domain, session.wallet],
         }),
@@ -79,7 +79,7 @@ export async function mintProduct({
 
     // Prepare the interaction setup tx data
     const setupInteractionTxData = encodeFunctionData({
-        abi: contentInteractionManagerAbi,
+        abi: productInteractionManagerAbi,
         functionName: "deployInteractionContract",
         args: [productId],
     });
@@ -94,10 +94,10 @@ export async function mintProduct({
 export async function isExistingProduct({ productId }: { productId: bigint }) {
     const existingMetadata = await readContract(viemClient, {
         address: addresses.contentRegistry,
-        abi: contentRegistryAbi,
+        abi: productRegistryAbi,
         functionName: "getMetadata",
         args: [BigInt(productId)],
     });
     // Return true if the existing metadata exists
-    return existingMetadata.contentTypes !== 0n;
+    return existingMetadata.productTypes !== 0n;
 }

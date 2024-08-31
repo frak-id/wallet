@@ -42,7 +42,7 @@ export function useGenerateRecoveryOptions() {
                 pass,
             });
 
-            // Return the file content
+            // Return the file product
             return {
                 setupTxData: options.setupTxData,
                 file: {

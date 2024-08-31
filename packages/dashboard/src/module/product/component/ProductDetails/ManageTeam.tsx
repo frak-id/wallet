@@ -1,9 +1,10 @@
 import { viemClient } from "@/context/blockchain/provider";
+import { roles } from "@/context/blockchain/roles";
 import { getContentAdministrators } from "@/context/product/action/getAdministrators";
 import { Panel } from "@/module/common/component/Panel";
 import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,13 +43,11 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
             // Send the transaction
             const { hash } = await sendTransaction({
                 tx: {
-                    to: addresses.contentInteractionManager,
+                    to: addresses.productAdministratorRegistry,
                     data: encodeFunctionData({
-                        abi: contentInteractionManagerAbi,
-                        functionName: isAddition
-                            ? "addOperator"
-                            : "deleteOperator",
-                        args: [productId, wallet],
+                        abi: productAdministratorRegistryAbi,
+                        functionName: isAddition ? "grantRoles" : "revokeRoles",
+                        args: [productId, wallet, roles.productManager],
                     }),
                 },
                 metadata: {

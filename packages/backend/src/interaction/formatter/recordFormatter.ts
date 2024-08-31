@@ -1,6 +1,6 @@
 import {
-    contentInteractionDiamondAbi,
-    contentInteractionManagerAbi,
+    productInteractionDiamondAbi,
+    productInteractionManagerAbi,
 } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import type { SQSRecord } from "aws-lambda";
@@ -12,7 +12,7 @@ import { getInteractionSignature } from "./interactionSigner";
 
 type InteractionEvent = {
     wallet: Address;
-    contentId: Hex;
+    productId: Hex;
     interaction: {
         handlerTypeDenominator: Hex;
         interactionData: Hex;
@@ -28,7 +28,7 @@ export async function recordToInteraction(record: SQSRecord): Promise<{
     id: string;
     data: {
         wallet: Address;
-        contentId: bigint;
+        productId: bigint;
         interactionTx: Hex;
     } | null;
 }> {
@@ -36,16 +36,16 @@ export async function recordToInteraction(record: SQSRecord): Promise<{
         // Try to parse the SQS record
         const parsed = JSON.parse(record.body) as InteractionEvent;
         // Ensure our field are present
-        if (!(parsed.contentId && parsed.wallet && parsed.interaction)) {
+        if (!(parsed.productId && parsed.wallet && parsed.interaction)) {
             return {
                 id: record.messageId,
                 data: null,
             };
         }
-        const contentId = BigInt(parsed.contentId);
+        const productId = BigInt(parsed.productId);
 
         // Fetch the interaction contract
-        const interactionContract = await getInteractionContract({ contentId });
+        const interactionContract = await getInteractionContract({ productId });
 
         // Get the signature if needed
         const signature =
@@ -53,13 +53,13 @@ export async function recordToInteraction(record: SQSRecord): Promise<{
             (await getInteractionSignature({
                 user: parsed.wallet,
                 facetData: parsed.interaction.interactionData,
-                contentId: contentId,
+                productId,
                 interactionContract,
             }));
 
         // Build the interaction data
         const interactionTx = encodeFunctionData({
-            abi: contentInteractionDiamondAbi,
+            abi: productInteractionDiamondAbi,
             functionName: "handleInteraction",
             args: [
                 concatHex([
@@ -75,7 +75,7 @@ export async function recordToInteraction(record: SQSRecord): Promise<{
             id: record.messageId,
             data: {
                 wallet: parsed.wallet,
-                contentId,
+                productId: productId,
                 interactionTx,
             },
         };
@@ -95,16 +95,16 @@ export async function recordToInteraction(record: SQSRecord): Promise<{
  * Fetch an interaction contract and save it in mem cache
  */
 const getInteractionContract = memo(
-    async ({ contentId }: { contentId: bigint }) => {
+    async ({ productId }: { productId: bigint }) => {
         const client = getViemClient();
         return await readContract(client, {
             address: addresses.contentInteractionManager,
-            abi: contentInteractionManagerAbi,
+            abi: productInteractionManagerAbi,
             functionName: "getInteractionContract",
-            args: [contentId],
+            args: [productId],
         });
     },
     {
-        key: ({ contentId }: { contentId: bigint }) => contentId.toString(),
+        key: ({ productId }: { productId: bigint }) => productId.toString(),
     }
 );

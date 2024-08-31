@@ -1,8 +1,9 @@
 import { viemClient } from "@/context/blockchain/provider";
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
-import { contentRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
+import { productRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useQuery } from "@tanstack/react-query";
+import { isAddressEqual } from "viem";
 import { readContract } from "viem/actions";
 
 /**
@@ -20,12 +21,13 @@ export function useIsProductOwner({ productId }: { productId: bigint }) {
                 return false;
             }
 
-            return readContract(viemClient, {
-                abi: contentRegistryAbi,
+            const owner = await readContract(viemClient, {
+                abi: productRegistryAbi,
                 address: addresses.contentRegistry,
-                functionName: "isAuthorized",
-                args: [productId, walletStatus.wallet],
+                functionName: "ownerOf",
+                args: [productId],
             });
+            return isAddressEqual(owner, walletStatus.wallet);
         },
     });
 }

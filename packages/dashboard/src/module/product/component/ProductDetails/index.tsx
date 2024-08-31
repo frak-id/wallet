@@ -1,13 +1,15 @@
 "use client";
 
 import { viemClient } from "@/context/blockchain/provider";
+import { roles } from "@/context/blockchain/roles";
 import { Panel } from "@/module/common/component/Panel";
 import { ManageProductTeam } from "@/module/product/component/ProductDetails/ManageTeam";
 import {
     useSendTransactionAction,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
-import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -38,16 +40,16 @@ export function ProductDetails({ productId }: { productId: bigint }) {
 
             // Check if the user is allowed on the product
             const isAllowed = await readContract(viemClient, {
-                abi: contentInteractionManagerAbi,
-                functionName: "isAllowedOnContent",
-                address: addresses.contentInteractionManager,
-                args: [productId, walletStatus.wallet],
+                abi: productAdministratorRegistryAbi,
+                functionName: "hasAllRolesOrAdmin",
+                address: addresses.productAdministratorRegistry,
+                args: [productId, walletStatus.wallet, roles.productManager],
             });
 
             // Fetch the on chain interaction contract
             const [, interactionContract] = await tryit(() =>
                 readContract(viemClient, {
-                    abi: contentInteractionManagerAbi,
+                    abi: productInteractionManagerAbi,
                     functionName: "getInteractionContract",
                     address: addresses.contentInteractionManager,
                     args: [productId],
@@ -65,7 +67,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                 tx: {
                     to: addresses.contentInteractionManager,
                     data: encodeFunctionData({
-                        abi: contentInteractionManagerAbi,
+                        abi: productInteractionManagerAbi,
                         functionName: "deployInteractionContract",
                         args: [productId],
                     }),
@@ -87,7 +89,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                 tx: {
                     to: addresses.contentInteractionManager,
                     data: encodeFunctionData({
-                        abi: contentInteractionManagerAbi,
+                        abi: productInteractionManagerAbi,
                         functionName: "deleteInteractionContract",
                         args: [productId],
                     }),

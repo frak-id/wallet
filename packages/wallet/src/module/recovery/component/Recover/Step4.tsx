@@ -19,7 +19,7 @@ export function Step4() {
     // Set the new wallet
     const setNewWallet = useSetAtom(recoveryNewWalletAtom);
 
-    // Get the recovery file content
+    // Get the recovery file product
     const recoveryFileContent = useAtomValue(recoveryFileContentAtom);
 
     // Register the new wallet
