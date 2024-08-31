@@ -10,7 +10,7 @@ import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/block
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import ky from "ky";
 import { all, sift } from "radash";
-import { type Address, isAddressEqual } from "viem";
+import { type Address, type Hex, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 
 type ApiResult = {
@@ -54,9 +54,33 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
         ...blockchainCampaigns.map((campaign) => campaign.id),
     ]);
 
+    const campaignProductIds = sift(
+        [...campaignAddresses].map((address) => {
+            const campaign = blockchainCampaigns.find((item) =>
+                isAddressEqual(item.id, address)
+            );
+            if (campaign)
+                return {
+                    address,
+                    productId: campaign.productId,
+                };
+            const document = campaignDocuments.find(
+                (item) =>
+                    item.state.key === "created" &&
+                    isAddressEqual(item.state.address, address)
+            );
+            if (document)
+                return {
+                    address,
+                    productId: document.productId,
+                };
+            return null;
+        })
+    );
+
     // Fetch the onchain state for each campaign
     const onChainStates = await getOnChainStateForCampaigns({
-        addresses: Array.from(campaignAddresses),
+        campaignProductIds,
         wallet: session.wallet,
     });
 
@@ -124,13 +148,16 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
  * Get the onchain state for each campaign address
  */
 async function getOnChainStateForCampaigns({
-    addresses: campaignAddresses,
+    campaignProductIds,
     wallet,
-}: { addresses: Address[]; wallet: Address }): Promise<
+}: {
+    campaignProductIds: { address: Address; productId: Hex }[];
+    wallet: Address;
+}): Promise<
     Record<Address, { canEdit: boolean; isActive: boolean; isRunning: boolean }>
 > {
     // If no address provided, early exit
-    if (campaignAddresses.length === 0) {
+    if (campaignProductIds.length === 0) {
         return {};
     }
 
@@ -143,8 +170,8 @@ async function getOnChainStateForCampaigns({
     const { isActives, canEdits, isRunnings } = await all({
         // Check if the campaign is active
         isActives: multicall(viemClient, {
-            contracts: campaignAddresses.map(
-                (address) =>
+            contracts: campaignProductIds.map(
+                ({ address }) =>
                     ({
                         ...baseMulticallParams,
                         address,
@@ -155,22 +182,25 @@ async function getOnChainStateForCampaigns({
         }),
         // Check if the campaign can be edited
         canEdits: multicall(viemClient, {
-            contracts: campaignAddresses.map(
-                (_) =>
+            contracts: campaignProductIds.map(
+                ({ productId }) =>
                     ({
                         abi: productAdministratorRegistryAbi,
                         address: addresses.productAdministratorRegistry,
                         functionName: "hasAllRolesOrAdmin",
-                        // todo: product id for this campaign
-                        args: [0n, wallet, roles.campaignManager],
+                        args: [
+                            BigInt(productId),
+                            wallet,
+                            roles.campaignManager,
+                        ],
                     }) as const
             ),
             allowFailure: false,
         }),
         // Check if the campaign can be edited
         isRunnings: multicall(viemClient, {
-            contracts: campaignAddresses.map(
-                (address) =>
+            contracts: campaignProductIds.map(
+                ({ address }) =>
                     ({
                         ...baseMulticallParams,
                         address,
@@ -182,8 +212,8 @@ async function getOnChainStateForCampaigns({
     });
 
     // Map the results to an object
-    return campaignAddresses.reduce(
-        (acc, address, index) => {
+    return campaignProductIds.reduce(
+        (acc, { address }, index) => {
             acc[address] = {
                 canEdit: canEdits[index],
                 isActive: isActives[index],

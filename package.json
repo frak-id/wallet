@@ -6,7 +6,7 @@
   "type": "module",
   "license": "GNU GPL 3.0",
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "turbo run dev //#dev:infra",
     "dev:infra": "sst dev",
     "lint": "biome lint .",
     "format:check": "biome check .",

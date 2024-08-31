@@ -48,20 +48,20 @@ export function ValidationCampaign() {
         useMutation({
             mutationKey: ["campaign", "create"],
             mutationFn: async (campaign: Campaign) => {
-                // Save it
-                console.log(campaign);
-                setCampaign(campaign);
-
                 // Save it in the database
                 const { id } = await saveCampaignDraft(campaign);
                 if (!id) {
                     throw new Error("Unable to save campaign draft");
                 }
-                // Build the creation data
-                const { creationData } = await getCreationData({
+                const newCampaign = {
                     ...campaign,
                     id,
-                });
+                };
+                console.log(newCampaign);
+                // Update the atom
+                setCampaign(newCampaign);
+                // Build the creation data
+                const { creationData } = await getCreationData(newCampaign);
 
                 // Send the campaign creation transaction
                 const [, result] = await tryit(() =>

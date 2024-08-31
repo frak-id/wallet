@@ -3,7 +3,8 @@
     "tasks": {
         "//#dev:infra": {
             "outputs": [".sst/**", "!.sst/cache/**", "!.sst/debug.log"],
-            "inputs": ["iac/**"]
+            "inputs": ["iac/**"],
+            "persistent": true
         },
         "@frak-labs/nexus-sdk#build": {
             "outputs": ["dist/**"],

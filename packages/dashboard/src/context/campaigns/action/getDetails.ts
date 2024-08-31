@@ -12,7 +12,7 @@ import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/block
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { ObjectId } from "mongodb";
 import { type Address, erc20Abi } from "viem";
-import { multicall } from "viem/actions";
+import { multicall, readContract } from "viem/actions";
 
 /**
  * Fetch the campaign details from mongodb
@@ -34,6 +34,14 @@ export async function getOnChainCampaignsDetails({
     campaignAddress,
 }: { campaignAddress: Address }) {
     const session = await getSafeSession();
+
+    // Get the campaign product id
+    const [productId, ,] = await readContract(viemClient, {
+        abi: interactionCampaignAbi,
+        address: campaignAddress,
+        functionName: "getLink",
+        args: [],
+    });
 
     // Fetch a few onchain information
     const [metadata, isActive, isRunning, isAllowedToEdit, balance, config] =
@@ -61,8 +69,11 @@ export async function getOnChainCampaignsDetails({
                     abi: productAdministratorRegistryAbi,
                     address: addresses.productAdministratorRegistry,
                     functionName: "hasAllRolesOrAdmin",
-                    // todo: product id
-                    args: [0n, session.wallet, roles.campaignManager],
+                    args: [
+                        BigInt(productId),
+                        session.wallet,
+                        roles.campaignManager,
+                    ],
                 } as const,
                 {
                     abi: erc20Abi,
