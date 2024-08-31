@@ -26,7 +26,7 @@ const sendInteractionSelector = toFunctionSelector({
             type: "tuple",
             components: [
                 {
-                    name: "contentId",
+                    name: "productId",
                     internalType: "uint256",
                     type: "uint256",
                 },
@@ -48,7 +48,7 @@ const sendInteractionsSelector = toFunctionSelector({
             type: "tuple[]",
             components: [
                 {
-                    name: "contentId",
+                    name: "productId",
                     internalType: "uint256",
                     type: "uint256",
                 },

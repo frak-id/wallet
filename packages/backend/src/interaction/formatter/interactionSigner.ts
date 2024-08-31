@@ -14,7 +14,7 @@ import { getViemClient } from "../../blockchain/client";
  */
 export async function getInteractionSignature({
     facetData,
-                                                  productId,
+    productId,
     user,
     interactionContract,
 }: {

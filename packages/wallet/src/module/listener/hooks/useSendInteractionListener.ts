@@ -28,13 +28,13 @@ export function useSendInteractionListener(): OnInteractionRequest {
      * @param emitter
      */
     return useCallback(async (request, _, emitter) => {
-        // Extract the contentId and walletAddress
-        const contentId = request.params[0];
+        // Extract the productId and walletAddress
+        const productId = request.params[0];
         const interaction = request.params[1];
         const signature = request.params[2];
 
-        // If no contentId or interaction, return
-        if (!(contentId && interaction)) {
+        // If no productId or interaction, return
+        if (!(productId && interaction)) {
             return;
         }
 
@@ -44,7 +44,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
         if (!userAddress) {
             // Save the pending interaction
             jotaiStore.set(addPendingInteractionAtom, {
-                contentId,
+                productId,
                 interaction,
                 signature,
                 timestamp: Date.now(),
@@ -65,7 +65,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
             pushInteraction({
                 wallet: userAddress,
                 toPush: {
-                    contentId,
+                    productId,
                     interaction,
                     submittedSignature: signature,
                 },

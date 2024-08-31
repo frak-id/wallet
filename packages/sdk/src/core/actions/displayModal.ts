@@ -8,7 +8,7 @@ import type {
 /**
  * Function used to display a modal
  * @param client
- * @param contentId
+ * @param args
  */
 export async function displayModal<
     T extends ModalStepTypes[] = ModalStepTypes[],

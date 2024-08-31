@@ -7,7 +7,7 @@ import type { Address } from "viem";
 type ApiResult = Array<
     {
         timestamp: string;
-        contentId: string;
+        productId: string;
     } & (
         | {
               type: "OPEN_ARTICLE" | "READ_ARTICLE";

@@ -33,7 +33,7 @@ export function SendInteraction() {
             <Button
                 onClick={() =>
                     sendInteraction({
-                        contentId:
+                        productId:
                             toHex(
                                 106219508196454080375526586478153583586194937194493887259467424694676997453395n
                             ),
