@@ -2,7 +2,7 @@ import { type Address, concatHex, pad } from "viem";
 import type { PreparedInteraction } from "../types";
 
 /**
- * Denominator for the referral content type
+ * Denominator for the referral product type
  */
 const ReferralTypeSelector = "0x1E";
 

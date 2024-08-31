@@ -7,7 +7,7 @@ import { parallel } from "radash";
 import type { Address, Hex } from "viem";
 
 type InteractionToPush = {
-    contentId: Hex;
+    productId: Hex;
     interaction: PreparedInteraction;
     submittedSignature?: Hex;
 };
@@ -72,7 +72,7 @@ export async function pushInteractions({
  */
 type InteractionEvent = {
     wallet: Address;
-    contentId: Hex;
+    productId: Hex;
     interaction: {
         handlerTypeDenominator: Hex;
         interactionData: Hex;
@@ -91,7 +91,7 @@ function mapToMessage({
 }: { wallet: Address; toPush: InteractionToPush }): SendMessageCommand {
     const event: InteractionEvent = {
         wallet,
-        contentId: toPush.contentId,
+        productId: toPush.productId,
         interaction: toPush.interaction,
         signature: toPush.submittedSignature,
     };

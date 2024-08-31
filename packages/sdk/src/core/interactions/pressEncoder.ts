@@ -2,7 +2,7 @@ import { type Hex, concatHex, pad } from "viem";
 import type { PreparedInteraction } from "../types";
 
 /**
- * Denominator for the press content type
+ * Denominator for the press product type
  */
 const PressTypeSelector = "0x02";
 

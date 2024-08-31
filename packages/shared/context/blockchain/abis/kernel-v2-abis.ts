@@ -46,7 +46,7 @@ export const interactionDelegatorAbi = [
                         type: "tuple",
                         components: [
                             {
-                                name: "contentId",
+                                name: "productId",
                                 internalType: "uint256",
                                 type: "uint256",
                             },
@@ -84,7 +84,7 @@ export const interactionDelegatorAbi = [
                         type: "tuple[]",
                         components: [
                             {
-                                name: "contentId",
+                                name: "productId",
                                 internalType: "uint256",
                                 type: "uint256",
                             },
@@ -275,7 +275,7 @@ export const interactionDelegatorActionAbi = [
         inputs: [
             {
                 name: "_interactionManager",
-                internalType: "contract ContentInteractionManager",
+                internalType: "contract ProductInteractionManager",
                 type: "address",
             },
         ],
@@ -290,7 +290,7 @@ export const interactionDelegatorActionAbi = [
                 type: "tuple",
                 components: [
                     {
-                        name: "contentId",
+                        name: "productId",
                         internalType: "uint256",
                         type: "uint256",
                     },
@@ -311,7 +311,7 @@ export const interactionDelegatorActionAbi = [
                 type: "tuple[]",
                 components: [
                     {
-                        name: "contentId",
+                        name: "productId",
                         internalType: "uint256",
                         type: "uint256",
                     },

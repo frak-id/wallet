@@ -11,7 +11,7 @@ const initialValues: Campaign = {
     title: "",
     order: "",
     type: "",
-    contentId: "",
+    productId: "",
     specialCategories: [],
     budget: {
         type: "",

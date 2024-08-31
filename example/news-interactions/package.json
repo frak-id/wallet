@@ -6,7 +6,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "next-dev-https": "next dev --experimental-https",
+    "next-dev-https": "next dev --experimental-https --port 3011",
     "dev": "sst bind bun run next-dev-https",
     "build": "sst bind next build --experimental-turbo",
     "start": "sst bind next start",

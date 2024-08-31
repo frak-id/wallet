@@ -3,23 +3,23 @@ import type {
     SendInteractionParamsType,
     SendInteractionReturnType,
 } from "../types";
-import { computeContentId } from "../utils/computeContentId";
+import { computeProductId } from "../utils/computeProductId";
 
 /**
  * Function used to send an interaction
  * @param client
- * @param contentId
- * @param request
+ * @param productId
+ * @param interaction
  * @param validation
  */
 export async function sendInteraction(
     client: NexusClient,
-    { contentId, interaction, validation }: SendInteractionParamsType
+    { productId, interaction, validation }: SendInteractionParamsType
 ): Promise<SendInteractionReturnType> {
-    const cId = contentId ?? computeContentId(client.config);
+    const pId = productId ?? computeProductId(client.config);
 
     return await client.request({
         method: "frak_sendInteraction",
-        params: [cId, interaction, validation],
+        params: [pId, interaction, validation],
     });
 }

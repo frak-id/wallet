@@ -6,43 +6,44 @@ import type { Address } from "viem";
 
 type ApiResult = {
     id: string; // bigint
-    isContentOwner: number; // bool, 0 false 1 true
+    isOwner: number; // bool, 0 false 1 true
+    roles: string; // bigint
     domain: string;
     name: string;
-    contentTypes: string; //bigint
+    productTypes: string; //bigint
 }[];
 
-type GetContentsResult = {
+type GetProductResult = {
     owner: { id: bigint; name: string; domain: string }[];
     operator: { id: bigint; name: string; domain: string }[];
 };
 
 /**
- * Get all the user contents
- * todo: should have a caching layer
+ * Get all the user products
  */
-async function getContents({ wallet }: { wallet: Address }) {
+async function getProducts({ wallet }: { wallet: Address }) {
     // Get our api results
     const json = await ky
-        .get(`https://indexer.frak.id/admin/${wallet}/contents`)
+        .get(`https://indexer.frak.id/admin/${wallet}/products`)
         .json<ApiResult>();
 
     // Map it to the form: { owner: [contents], operator: [contents] }
     return (
         json.reduce(
-            (acc: GetContentsResult, item: ApiResult[number]) => {
-                // Map our content
-                const mappedContent = {
+            (acc: GetProductResult, item: ApiResult[number]) => {
+                // Map our product
+                const mappedProduct = {
                     id: BigInt(item.id),
                     name: item.name,
                     domain: item.domain,
                 };
 
                 // Push it in the right list
-                if (item.isContentOwner === 1) {
-                    acc.owner.push(mappedContent);
+                if (item.isOwner === 1) {
+                    acc.owner.push(mappedProduct);
                 } else {
-                    acc.operator.push(mappedContent);
+                    // todo: check roles
+                    acc.operator.push(mappedProduct);
                 }
                 return acc;
             },
@@ -52,9 +53,9 @@ async function getContents({ wallet }: { wallet: Address }) {
 }
 
 /**
- * Get the contents for the current user
+ * Get the products for the current user
  */
-export async function getMyContents() {
+export async function getMyProducts() {
     const session = await getSafeSession();
-    return getContents({ wallet: session.wallet });
+    return getProducts({ wallet: session.wallet });
 }

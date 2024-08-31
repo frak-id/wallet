@@ -6,10 +6,8 @@
   "type": "module",
   "license": "GNU GPL 3.0",
   "scripts": {
-    "dev": "pm2 start pm2.config.cjs",
-    "dev:stop": "pm2 stop all",
-    "dev:restart": "pm2 restart all",
-    "dev:gui": "pm2 plus",
+    "dev": "turbo dev",
+    "dev:infra": "sst dev",
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
@@ -32,7 +30,6 @@
     "@types/node": "^22.0.0",
     "knip": "^5.27.0",
     "npm-check-updates": "^16.14.20",
-    "pm2": "^5.4.2",
     "rimraf": "^6.0.1",
     "sst": "2.43.6",
     "typescript": "^5.5.4"
@@ -40,5 +37,9 @@
   "workspaces": [
     "packages/*",
     "example/*"
-  ]
+  ],
+  "dependencies": {
+    "turbo": "^2.1.1"
+  },
+  "packageManager": "bun@1.1.26"
 }

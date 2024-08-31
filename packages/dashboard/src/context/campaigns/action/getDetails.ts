@@ -2,12 +2,13 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
-import { campaignRoles } from "@/context/blockchain/roles";
+import { roles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
     interactionCampaignAbi,
     referralCampaignAbi,
 } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
+import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { ObjectId } from "mongodb";
 import { type Address, erc20Abi } from "viem";
@@ -57,10 +58,11 @@ export async function getOnChainCampaignsDetails({
                     args: [],
                 } as const,
                 {
-                    abi: interactionCampaignAbi,
-                    address: campaignAddress,
-                    functionName: "hasAnyRole",
-                    args: [session.wallet, BigInt(campaignRoles.manager)],
+                    abi: productAdministratorRegistryAbi,
+                    address: addresses.productAdministratorRegistry,
+                    functionName: "hasAllRolesOrAdmin",
+                    // todo: product id
+                    args: [0n, session.wallet, roles.campaignManager],
                 } as const,
                 {
                     abi: erc20Abi,

@@ -41,7 +41,7 @@ export type IFrameRpcSchema = [
     {
         Method: "frak_sendInteraction";
         Parameters: [
-            contentId: Hex,
+            productId: Hex,
             interaction: PreparedInteraction,
             signature?: Hex,
         ];

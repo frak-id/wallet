@@ -9,7 +9,7 @@ export type PreparedInteraction = Readonly<{
  * Parameters of an interaction handling request
  */
 export type SendInteractionParamsType = {
-    contentId?: Hex; // If null will be recomputed from domain
+    productId?: Hex; // If null will be recomputed from domain
     interaction: PreparedInteraction;
     validation?: Hex;
 };

@@ -27,14 +27,14 @@ type ReferralState =
 /**
  * Helper hook to automatically submit a referral interaction when detected
  *   -> And automatically set the referral context in the url
- * @param contentId
+ * @param productId
  * @param modalConfig
  */
 export function useReferralInteraction({
-    contentId,
+    productId,
     modalConfig,
 }: {
-    contentId?: Hex;
+    productId?: Hex;
     modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
 } = {}) {
     // Get the current nexus context
@@ -84,7 +84,7 @@ export function useReferralInteraction({
                 referrer: nexusContext.r,
             });
 
-            await sendInteraction({ contentId, interaction });
+            await sendInteraction({ productId, interaction });
 
             if (currentWallet) {
                 await updateContextAsync({ r: currentWallet });
@@ -95,7 +95,7 @@ export function useReferralInteraction({
         }
     }, [
         nexusContext,
-        contentId,
+        productId,
         ensureWalletConnected,
         sendInteraction,
         updateContextAsync,

@@ -4,7 +4,7 @@
     gap: 12px;
 
     /*&::before {
-        content: "";
+        product: "";
         width: 1px;
         height: 40px;
         background: var(--frak-navigation-profile-separator-color);

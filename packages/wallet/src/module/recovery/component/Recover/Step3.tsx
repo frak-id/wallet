@@ -14,7 +14,7 @@ import { useMemo, useState } from "react";
 const ACTUAL_STEP = 3;
 
 export function Step3() {
-    // Get the recovery file content
+    // Get the recovery file product
     const recoveryFileContent = useAtomValue(recoveryFileContentAtom);
 
     // Set the password for recovery

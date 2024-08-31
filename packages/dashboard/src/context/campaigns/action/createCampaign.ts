@@ -9,7 +9,7 @@ import {
     referralConfigStruct,
 } from "@/context/campaigns/utils/constants";
 import type { Campaign } from "@/types/Campaign";
-import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { ObjectId } from "mongodb";
 import { first } from "radash";
@@ -58,8 +58,8 @@ export async function saveCampaignDraft(
 export async function getCreationData(campaign: Campaign) {
     const session = await getSafeSession();
 
-    if (!campaign.contentId) {
-        throw new Error("Content ID is required");
+    if (!campaign.productId) {
+        throw new Error("Product id is required");
     }
 
     const clickRewards = campaign?.rewards?.click;
@@ -126,11 +126,11 @@ export async function getCreationData(campaign: Campaign) {
     //  this will fail if the tx will fail
     await simulateContract(viemClient, {
         account: session.wallet,
-        address: addresses.contentInteractionManager,
-        abi: contentInteractionManagerAbi,
+        address: addresses.productInteractionManager,
+        abi: productInteractionManagerAbi,
         functionName: "deployCampaign",
         args: [
-            BigInt(campaign.contentId),
+            BigInt(campaign.productId),
             referralCampaignId,
             campaignInitData,
         ],
@@ -138,10 +138,10 @@ export async function getCreationData(campaign: Campaign) {
 
     // Return the encoded calldata to deploy and attach this campaign
     const creationData = encodeFunctionData({
-        abi: contentInteractionManagerAbi,
+        abi: productInteractionManagerAbi,
         functionName: "deployCampaign",
         args: [
-            BigInt(campaign.contentId),
+            BigInt(campaign.productId),
             referralCampaignId,
             campaignInitData,
         ],

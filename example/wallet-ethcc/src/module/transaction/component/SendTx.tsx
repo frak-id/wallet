@@ -6,7 +6,7 @@ import type {
     SendTransactionModalStepType,
 } from "@frak-labs/nexus-sdk/core";
 import { useDisplayModal } from "@frak-labs/nexus-sdk/react";
-import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Button } from "@module/component/Button";
 import { BadgeCheck } from "lucide-react";
@@ -48,10 +48,10 @@ export function SendTransaction() {
                         steps: {
                             sendTransaction: {
                                 tx: {
-                                    to: addresses.contentInteractionManager,
+                                    to: addresses.productInteractionManager,
                                     value: "0x00",
                                     data: encodeFunctionData({
-                                        abi: contentInteractionManagerAbi,
+                                        abi: productInteractionManagerAbi,
                                         functionName: "getInteractionContract",
                                         args: [
                                             106219508196454080375526586478153583586194937194493887259467424694676997453395n,

@@ -1,9 +1,10 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { getContentAdministrators } from "@/context/content/action/getAdministrators";
+import { roles } from "@/context/blockchain/roles";
+import { getProductAdministrators } from "@/context/product/action/getAdministrators";
 import { Panel } from "@/module/common/component/Panel";
 import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +23,7 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
     const { data: administrators, isLoading } = useQuery({
         queryKey: ["product", "team", productId.toString()],
         queryFn: () =>
-            getContentAdministrators({ contentId: toHex(productId) }),
+            getProductAdministrators({ productId: toHex(productId) }),
     });
 
     const {
@@ -42,13 +43,11 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
             // Send the transaction
             const { hash } = await sendTransaction({
                 tx: {
-                    to: addresses.contentInteractionManager,
+                    to: addresses.productAdministratorRegistry,
                     data: encodeFunctionData({
-                        abi: contentInteractionManagerAbi,
-                        functionName: isAddition
-                            ? "addOperator"
-                            : "deleteOperator",
-                        args: [productId, wallet],
+                        abi: productAdministratorRegistryAbi,
+                        functionName: isAddition ? "grantRoles" : "revokeRoles",
+                        args: [productId, wallet, roles.productManager],
                     }),
                 },
                 metadata: {
@@ -111,7 +110,7 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
             {administrators.map((admin) => (
                 <div key={admin.wallet}>
                     <p>{admin.wallet}</p>
-                    <p>{admin.isContentOwner ? "Admin" : "Operator"}</p>
+                    <p>{admin.isOwner ? "Admin" : "Operator"}</p>
                 </div>
             ))}
         </Panel>

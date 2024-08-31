@@ -35,7 +35,7 @@ export function SuccessModalStep({
             // Build our sharing data
             const shareData = {
                 title: sharing?.popupTitle ?? `${appName} invite link`,
-                text: sharing?.text ?? "Discover this awesome content!",
+                text: sharing?.text ?? "Discover this awesome product!",
                 url: sharing.link,
             };
 

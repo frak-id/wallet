@@ -25,7 +25,7 @@ const modalConfig = {
             metadata: {
                 title: "Open reward session",
                 description:
-                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
                 primaryActionText: "Being rewarded with Nexus",
             },
         },
@@ -33,7 +33,7 @@ const modalConfig = {
             metadata: {
                 title: "Login",
                 description:
-                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our content. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
                 primaryActionText: "Login with Nexus",
                 secondaryActionText: "Create a Nexus",
             },
