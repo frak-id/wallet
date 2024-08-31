@@ -1,23 +1,23 @@
 import { Panel } from "@/module/common/component/Panel";
 import { ButtonAddProduct } from "@/module/dashboard/component/ButtonAddProduct";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
-import { useMyContents } from "@/module/dashboard/hooks/useMyContents";
+import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import { Spinner } from "@module/component/Spinner";
 import Link from "next/link";
 import styles from "./index.module.css";
 
 /**
- * Component to display all the current user content
+ * Component to display all the current user product
  * @constructor
  */
-export function MyContents() {
-    const { isEmpty, contents, isPending } = useMyContents();
+export function MyProducts() {
+    const { isEmpty, products, isPending } = useMyProducts();
 
     if (isPending) {
         return <Spinner />;
     }
 
-    if (isEmpty || !contents) {
+    if (isEmpty || !products) {
         return <NoContents />;
     }
 
@@ -25,8 +25,8 @@ export function MyContents() {
         <Panel variant={"ghost"} title={"My Products"} withBadge={false}>
             <ProductListSection
                 products={[
-                    ...(contents?.operator ?? []),
-                    ...(contents?.owner ?? []),
+                    ...(products?.operator ?? []),
+                    ...(products?.owner ?? []),
                 ]}
             />
         </Panel>

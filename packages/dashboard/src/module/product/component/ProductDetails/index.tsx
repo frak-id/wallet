@@ -36,7 +36,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                 return null;
             }
 
-            // Check if the user is allowed on the content
+            // Check if the user is allowed on the product
             const isAllowed = await readContract(viemClient, {
                 abi: contentInteractionManagerAbi,
                 functionName: "isAllowedOnContent",

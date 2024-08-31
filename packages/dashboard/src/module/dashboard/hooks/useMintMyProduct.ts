@@ -1,25 +1,25 @@
-import { mintMyContent } from "@/context/content/action/mint";
+import { mintProduct } from "@/context/product/action/mint";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
 
 /**
- * Hook to mint the user content
+ * Hook to mint the user product
  */
-export function useMintMyContent() {
+export function useMintMyProduct() {
     const { mutateAsync: sendTx } = useSendTransactionAction();
 
     return useMutation({
-        mutationKey: ["mint", "launch-initial-mint"],
+        mutationKey: ["product", "launch-mint"],
         mutationFn: async (args: {
             name: string;
             domain: string;
-            contentTypes: bigint;
+            productTypes: bigint;
             setupInteractions?: boolean;
         }) => {
             // Perform the backend side of the mint
             const { mintTxHash, setupInteractionTxData } =
-                await mintMyContent(args);
+                await mintProduct(args);
 
             // Then perform the blockchain side of the mint
             const { hash: interactionDeployHash } = await sendTx({

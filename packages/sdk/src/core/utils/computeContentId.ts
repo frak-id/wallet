@@ -1,7 +1,7 @@
 import { keccak256, toHex } from "viem";
 
 /**
- * Compute the content id from a domain
+ * Compute the product id from a domain
  * @param domain
  */
 export function computeContentId({ domain }: { domain: string }) {

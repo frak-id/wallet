@@ -7,7 +7,7 @@ import type { WithId } from "mongodb";
 import { capitalize } from "radash";
 
 /**
- * Display the campaign promoted content
+ * Display the campaign promoted product
  * @param campaign
  * @constructor
  */

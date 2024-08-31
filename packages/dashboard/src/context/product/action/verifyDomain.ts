@@ -2,7 +2,7 @@
 
 import * as dns from "node:dns";
 import { promisify } from "node:util";
-import { isExistingContent } from "@/context/content/action/mint";
+import { isExistingProduct } from "@/context/product/action/mint";
 import { flat } from "radash";
 import { concatHex, keccak256, toHex } from "viem";
 
@@ -47,8 +47,8 @@ export async function verifyDomainName({
     domain,
 }: { name: string; domain: string }) {
     // Precompute the domain id and check if it's already minted or not
-    const contentId = BigInt(keccak256(toHex(domain)));
-    const alreadyExist = await isExistingContent({ contentId });
+    const productId = BigInt(keccak256(toHex(domain)));
+    const alreadyExist = await isExistingProduct({ productId: productId });
     if (alreadyExist) {
         return {
             alreadyExist: true,

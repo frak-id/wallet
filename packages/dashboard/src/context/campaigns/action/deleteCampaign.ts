@@ -35,7 +35,7 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
         await campaignRepository.delete(id);
         return { key: "success" } as const;
     }
-    const contentId = campaign.contentId as string | undefined;
+    const contentId = campaign.productId as string | undefined;
     if (!contentId) {
         throw new Error("Content ID is required");
     }

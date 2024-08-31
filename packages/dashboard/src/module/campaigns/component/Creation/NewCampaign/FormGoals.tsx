@@ -82,7 +82,7 @@ const itemsGoals: ItemGoals[] = [
         information: {
             title: "Sales",
             description:
-                "Find people likely to subscribe or buy content on a pay-per-view basis",
+                "Find people likely to subscribe or buy product on a pay-per-view basis",
             badges: ["Subscription", "Revenue", "Conversion"],
         },
     },

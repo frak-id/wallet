@@ -1,7 +1,7 @@
 import {
     getDnsTxtString,
     verifyDomainName,
-} from "@/context/content/action/verifyDomain";
+} from "@/context/product/action/verifyDomain";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { sleep } from "radash";
 
@@ -37,7 +37,7 @@ export function useDnsTxtRecordToSet({
 
 /**
  * Function ot check:
- *  - if the content isn't already minted
+ *  - if the product isn't already minted
  *  - if the dns record is set
  */
 export function useCheckDomainName() {

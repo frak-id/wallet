@@ -60,7 +60,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
             return;
         }
 
-        // Otherwise, just set the user referred on content
+        // Otherwise, just set the user referred on product
         const [, delegationId] = await tryit(() =>
             pushInteraction({
                 wallet: userAddress,

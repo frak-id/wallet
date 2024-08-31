@@ -1,7 +1,7 @@
 "use server";
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
-import { isDnsTxtRecordSet } from "@/context/content/action/verifyDomain";
+import { isDnsTxtRecordSet } from "@/context/product/action/verifyDomain";
 import { contentInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { contentRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
@@ -15,29 +15,28 @@ import {
 } from "viem/actions";
 
 /**
- * Mint a new content for the given user
+ * Mint a new product for the given user
  * @param name
  * @param domain
- * @param contentTypes
- * @param setupInteractions
+ * @param productTypes
  */
-export async function mintMyContent({
+export async function mintProduct({
     name,
     domain,
-    contentTypes,
+    productTypes,
 }: {
     name: string;
     domain: string;
-    contentTypes: bigint;
+    productTypes: bigint;
 }) {
     const session = await getSafeSession();
 
     // Precompute the domain id and check if it's already minted or not
-    const contentId = BigInt(keccak256(toHex(domain)));
-    const contentAlreadyExist = await isExistingContent({ contentId });
-    if (contentAlreadyExist) {
+    const productId = BigInt(keccak256(toHex(domain)));
+    const alreadyExist = await isExistingProduct({ productId: productId });
+    if (alreadyExist) {
         throw new Error(
-            `The content ${name} already exists for the domain ${domain}`
+            `The product ${name} already exists for the domain ${domain}`
         );
     }
 
@@ -49,8 +48,8 @@ export async function mintMyContent({
         );
     }
 
-    console.log(`Minting content ${name} for ${session.wallet}`, {
-        contentId,
+    console.log(`Minting product ${name} for ${session.wallet}`, {
+        productId,
     });
 
     // Get the minter private key
@@ -68,7 +67,7 @@ export async function mintMyContent({
         data: encodeFunctionData({
             abi: contentRegistryAbi,
             functionName: "mint",
-            args: [contentTypes, name, domain, session.wallet],
+            args: [productTypes, name, domain, session.wallet],
         }),
     });
     const mintTxHash = await sendTransaction(viemClient, mintTxPreparation);
@@ -82,22 +81,22 @@ export async function mintMyContent({
     const setupInteractionTxData = encodeFunctionData({
         abi: contentInteractionManagerAbi,
         functionName: "deployInteractionContract",
-        args: [contentId],
+        args: [productId],
     });
 
     return { mintTxHash, setupInteractionTxData };
 }
 
 /**
- * Assert that a content doesn't exist yet
+ * Assert that a product doesn't exist yet
  * @param contentId
  */
-export async function isExistingContent({ contentId }: { contentId: bigint }) {
+export async function isExistingProduct({ productId }: { productId: bigint }) {
     const existingMetadata = await readContract(viemClient, {
         address: addresses.contentRegistry,
         abi: contentRegistryAbi,
         functionName: "getMetadata",
-        args: [BigInt(contentId)],
+        args: [BigInt(productId)],
     });
     // Return true if the existing metadata exists
     return existingMetadata.contentTypes !== 0n;

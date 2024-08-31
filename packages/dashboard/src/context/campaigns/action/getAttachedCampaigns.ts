@@ -8,7 +8,7 @@ import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { readContract } from "viem/actions";
 
 /**
- * Get all the attached campaigns on a content
+ * Get all the attached campaigns on a product
  * @param contentId
  */
 export async function getAttachedCampaigns({
@@ -21,7 +21,7 @@ export async function getAttachedCampaigns({
         functionName: "getInteractionContract",
         args: [BigInt(contentId)],
     });
-    // Get the current content campaigns
+    // Get the current product campaigns
     return readContract(viemClient, {
         address: contentInteraction,
         abi: contentInteractionDiamondAbi,

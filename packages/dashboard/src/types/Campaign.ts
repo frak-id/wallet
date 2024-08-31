@@ -13,7 +13,7 @@ export type Campaign = {
     id?: string;
     title: string;
     order: string;
-    contentId: Hex | "";
+    productId: Hex | "";
     type: Goal | "" | undefined;
     specialCategories: SpecialCategory[];
     budget: {

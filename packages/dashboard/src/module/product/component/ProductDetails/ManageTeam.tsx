@@ -1,5 +1,5 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { getContentAdministrators } from "@/context/content/action/getAdministrators";
+import { getContentAdministrators } from "@/context/product/action/getAdministrators";
 import { Panel } from "@/module/common/component/Panel";
 import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
@@ -22,7 +22,7 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
     const { data: administrators, isLoading } = useQuery({
         queryKey: ["product", "team", productId.toString()],
         queryFn: () =>
-            getContentAdministrators({ contentId: toHex(productId) }),
+            getContentAdministrators({ productId: toHex(productId) }),
     });
 
     const {

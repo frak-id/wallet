@@ -6,7 +6,7 @@ import {
     useCheckDomainName,
     useDnsTxtRecordToSet,
 } from "@/module/dashboard/hooks/dnsRecordHooks";
-import { useMintMyContent } from "@/module/dashboard/hooks/useMintMyContent";
+import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
 import {
     Form,
     FormControl,
@@ -292,7 +292,7 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
         isIdle,
         error,
         data: { mintTxHash } = {},
-    } = useMintMyContent();
+    } = useMintMyProduct();
 
     const {
         isLoading: isWaitingForFinalisedCreation,
@@ -343,7 +343,7 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
                         name,
                         domain: parsedDomain.hostname,
                         // todo: hardcoded type, should be in the sdk
-                        contentTypes: 1n << 2n,
+                        productTypes: 1n << 2n,
                     });
                 }}
                 disabled={!isIdle}

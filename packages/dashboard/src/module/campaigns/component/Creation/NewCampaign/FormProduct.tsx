@@ -1,5 +1,5 @@
 import { Panel } from "@/module/common/component/Panel";
-import { useMyContents } from "@/module/dashboard/hooks/useMyContents";
+import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import {
     FormControl,
     FormField,
@@ -19,24 +19,24 @@ import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormProduct(form: UseFormReturn<Campaign>) {
-    const { isEmpty, contents } = useMyContents();
+    const { isEmpty, products } = useMyProducts();
     const contentList = [
-        ...(contents?.operator ?? []),
-        ...(contents?.owner ?? []),
+        ...(products?.operator ?? []),
+        ...(products?.owner ?? []),
     ];
 
     // Force refresh the form when reset the contentId
     const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
-    const watchContentId = form.watch("contentId");
-    const previousContentId = usePrevious(watchContentId);
+    const watchProductId = form.watch("productId");
+    const previousContentId = usePrevious(watchProductId);
 
     /**
      * Reset contentId
      */
     useEffect(() => {
-        if (watchContentId === "" && !previousContentId) return;
+        if (watchProductId === "" && !previousContentId) return;
         setForceRefresh(new Date().getTime());
-    }, [watchContentId, previousContentId]);
+    }, [watchProductId, previousContentId]);
 
     if (isEmpty) return null;
 
@@ -45,7 +45,7 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
             <FormField
                 key={forceRefresh}
                 control={form.control}
-                name="contentId"
+                name="productId"
                 rules={{ required: "Select a product" }}
                 render={({ field }) => (
                     <FormItem>

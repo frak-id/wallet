@@ -58,8 +58,8 @@ export async function saveCampaignDraft(
 export async function getCreationData(campaign: Campaign) {
     const session = await getSafeSession();
 
-    if (!campaign.contentId) {
-        throw new Error("Content ID is required");
+    if (!campaign.productId) {
+        throw new Error("Product id is required");
     }
 
     const clickRewards = campaign?.rewards?.click;
@@ -130,7 +130,7 @@ export async function getCreationData(campaign: Campaign) {
         abi: contentInteractionManagerAbi,
         functionName: "deployCampaign",
         args: [
-            BigInt(campaign.contentId),
+            BigInt(campaign.productId),
             referralCampaignId,
             campaignInitData,
         ],
@@ -141,7 +141,7 @@ export async function getCreationData(campaign: Campaign) {
         abi: contentInteractionManagerAbi,
         functionName: "deployCampaign",
         args: [
-            BigInt(campaign.contentId),
+            BigInt(campaign.productId),
             referralCampaignId,
             campaignInitData,
         ],

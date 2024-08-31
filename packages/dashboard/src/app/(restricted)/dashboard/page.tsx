@@ -2,7 +2,7 @@
 
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
-import { MyContents } from "@/module/dashboard/component/Contents";
+import { MyProducts } from "../../../module/dashboard/component/Products";
 
 export default function DashboardPage() {
     return (
@@ -12,7 +12,7 @@ export default function DashboardPage() {
                 leftSection={<Breadcrumb current={"Home"} />}
             />
 
-            <MyContents />
+            <MyProducts />
         </>
     );
 }
