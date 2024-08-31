@@ -72,7 +72,7 @@ export async function pushInteractions({
  */
 type InteractionEvent = {
     wallet: Address;
-    contentId: Hex;
+    productId: Hex;
     interaction: {
         handlerTypeDenominator: Hex;
         interactionData: Hex;
@@ -91,7 +91,7 @@ function mapToMessage({
 }: { wallet: Address; toPush: InteractionToPush }): SendMessageCommand {
     const event: InteractionEvent = {
         wallet,
-        contentId: toPush.productId,
+        productId: toPush.productId,
         interaction: toPush.interaction,
         signature: toPush.submittedSignature,
     };

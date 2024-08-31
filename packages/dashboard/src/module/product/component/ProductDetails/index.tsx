@@ -51,7 +51,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                 readContract(viemClient, {
                     abi: productInteractionManagerAbi,
                     functionName: "getInteractionContract",
-                    address: addresses.contentInteractionManager,
+                    address: addresses.productInteractionManager,
                     args: [productId],
                 })
             )();
@@ -65,7 +65,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
         mutationFn: async () => {
             await sendTransaction({
                 tx: {
-                    to: addresses.contentInteractionManager,
+                    to: addresses.productInteractionManager,
                     data: encodeFunctionData({
                         abi: productInteractionManagerAbi,
                         functionName: "deployInteractionContract",
@@ -87,7 +87,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
         mutationFn: async () => {
             await sendTransaction({
                 tx: {
-                    to: addresses.contentInteractionManager,
+                    to: addresses.productInteractionManager,
                     data: encodeFunctionData({
                         abi: productInteractionManagerAbi,
                         functionName: "deleteInteractionContract",

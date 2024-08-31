@@ -98,7 +98,7 @@ const getInteractionContract = memo(
     async ({ productId }: { productId: bigint }) => {
         const client = getViemClient();
         return await readContract(client, {
-            address: addresses.contentInteractionManager,
+            address: addresses.productInteractionManager,
             abi: productInteractionManagerAbi,
             functionName: "getInteractionContract",
             args: [productId],

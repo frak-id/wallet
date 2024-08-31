@@ -36,7 +36,7 @@ export default function SettingsPage() {
                                 context: "Test transaction",
                             },
                             tx: {
-                                to: addresses.contentInteractionManager,
+                                to: addresses.productInteractionManager,
                                 value: "0x00",
                                 data: encodeFunctionData({
                                     abi: productInteractionManagerAbi,

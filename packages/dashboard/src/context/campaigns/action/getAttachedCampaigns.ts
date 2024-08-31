@@ -9,21 +9,21 @@ import { readContract } from "viem/actions";
 
 /**
  * Get all the attached campaigns on a product
- * @param contentId
+ * @param productId
  */
 export async function getAttachedCampaigns({
-    contentId,
-}: { contentId: string }) {
+    productId,
+}: { productId: string }) {
     // Get the root interaction contract
-    const contentInteraction = await readContract(viemClient, {
-        address: addresses.contentInteractionManager,
+    const interactionContract = await readContract(viemClient, {
+        address: addresses.productInteractionManager,
         abi: productInteractionManagerAbi,
         functionName: "getInteractionContract",
-        args: [BigInt(contentId)],
+        args: [BigInt(productId)],
     });
     // Get the current product campaigns
     return readContract(viemClient, {
-        address: contentInteraction,
+        address: interactionContract,
         abi: productInteractionDiamondAbi,
         functionName: "getCampaigns",
     });

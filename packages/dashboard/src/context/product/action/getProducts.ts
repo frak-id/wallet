@@ -10,10 +10,10 @@ type ApiResult = {
     roles: string; // bigint
     domain: string;
     name: string;
-    contentTypes: string; //bigint
+    productTypes: string; //bigint
 }[];
 
-type GetContentsResult = {
+type GetProductResult = {
     owner: { id: bigint; name: string; domain: string }[];
     operator: { id: bigint; name: string; domain: string }[];
 };
@@ -30,9 +30,9 @@ async function getProducts({ wallet }: { wallet: Address }) {
     // Map it to the form: { owner: [contents], operator: [contents] }
     return (
         json.reduce(
-            (acc: GetContentsResult, item: ApiResult[number]) => {
+            (acc: GetProductResult, item: ApiResult[number]) => {
                 // Map our product
-                const mappedContent = {
+                const mappedProduct = {
                     id: BigInt(item.id),
                     name: item.name,
                     domain: item.domain,
@@ -40,10 +40,10 @@ async function getProducts({ wallet }: { wallet: Address }) {
 
                 // Push it in the right list
                 if (item.isOwner === 1) {
-                    acc.owner.push(mappedContent);
+                    acc.owner.push(mappedProduct);
                 } else {
                     // todo: check roles
-                    acc.operator.push(mappedContent);
+                    acc.operator.push(mappedProduct);
                 }
                 return acc;
             },

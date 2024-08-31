@@ -1,6 +1,6 @@
 import { viemClient } from "@/context/blockchain/provider";
 import { roles } from "@/context/blockchain/roles";
-import { getContentAdministrators } from "@/context/product/action/getAdministrators";
+import { getProductAdministrators } from "@/context/product/action/getAdministrators";
 import { Panel } from "@/module/common/component/Panel";
 import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
@@ -23,7 +23,7 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
     const { data: administrators, isLoading } = useQuery({
         queryKey: ["product", "team", productId.toString()],
         queryFn: () =>
-            getContentAdministrators({ productId: toHex(productId) }),
+            getProductAdministrators({ productId: toHex(productId) }),
     });
 
     const {
@@ -110,7 +110,7 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
             {administrators.map((admin) => (
                 <div key={admin.wallet}>
                     <p>{admin.wallet}</p>
-                    <p>{admin.isContentOwner ? "Admin" : "Operator"}</p>
+                    <p>{admin.isOwner ? "Admin" : "Operator"}</p>
                 </div>
             ))}
         </Panel>

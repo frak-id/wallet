@@ -14,8 +14,8 @@ import { type Address, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 
 type ApiResult = {
-    contentId: string;
-    isContentOwner: number; // bool
+    productId: string;
+    isOwner: number; // bool
     id: Address;
     name: string;
     version: string;

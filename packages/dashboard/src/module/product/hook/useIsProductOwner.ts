@@ -23,7 +23,7 @@ export function useIsProductOwner({ productId }: { productId: bigint }) {
 
             const owner = await readContract(viemClient, {
                 abi: productRegistryAbi,
-                address: addresses.contentRegistry,
+                address: addresses.productRegistry,
                 functionName: "ownerOf",
                 args: [productId],
             });

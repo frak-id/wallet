@@ -63,7 +63,7 @@ export async function mintProduct({
     const mintTxPreparation = await prepareTransactionRequest(viemClient, {
         account: minterAccount,
         chain: viemClient.chain,
-        to: addresses.contentRegistry,
+        to: addresses.productRegistry,
         data: encodeFunctionData({
             abi: productRegistryAbi,
             functionName: "mint",
@@ -89,11 +89,11 @@ export async function mintProduct({
 
 /**
  * Assert that a product doesn't exist yet
- * @param contentId
+ * @param productId
  */
 export async function isExistingProduct({ productId }: { productId: bigint }) {
     const existingMetadata = await readContract(viemClient, {
-        address: addresses.contentRegistry,
+        address: addresses.productRegistry,
         abi: productRegistryAbi,
         functionName: "getMetadata",
         args: [BigInt(productId)],

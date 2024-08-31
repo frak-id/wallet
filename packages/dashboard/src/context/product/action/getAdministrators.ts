@@ -12,7 +12,7 @@ type ApiResult = {
 /**
  * Get all the administrators of a product
  */
-export async function getContentAdministrators({
+export async function getProductAdministrators({
     productId,
 }: { productId: Hex }) {
     // Get our api results
@@ -23,7 +23,7 @@ export async function getContentAdministrators({
     // Return that mapped with the right types
     return json.map((result) => ({
         wallet: result.wallet,
-        isContentOwner: result.isOwner === 1,
+        isOwner: result.isOwner === 1,
         roles: toHex(BigInt(result.roles)),
         addedTimestamp: BigInt(result.addedTimestamp),
     }));

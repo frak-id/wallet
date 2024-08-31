@@ -70,7 +70,7 @@ export function ValidationCampaign() {
                             context: `Create campaign ${campaign.title}`,
                         },
                         tx: {
-                            to: addresses.contentInteractionManager,
+                            to: addresses.productInteractionManager,
                             value: "0x00",
                             data: creationData,
                         },

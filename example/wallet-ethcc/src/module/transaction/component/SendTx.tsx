@@ -48,7 +48,7 @@ export function SendTransaction() {
                         steps: {
                             sendTransaction: {
                                 tx: {
-                                    to: addresses.contentInteractionManager,
+                                    to: addresses.productInteractionManager,
                                     value: "0x00",
                                     data: encodeFunctionData({
                                         abi: productInteractionManagerAbi,

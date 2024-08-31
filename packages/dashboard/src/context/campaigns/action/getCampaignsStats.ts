@@ -6,8 +6,8 @@ import ky from "ky";
 import { type Address, formatEther, getAddress, isAddressEqual } from "viem";
 
 type ApiResult = {
-    contentId: string;
-    isContentOwner: number; // bool
+    productId: string;
+    isOwner: number; // bool
     id: Address;
     totalInteractions: string;
     openInteractions: string;

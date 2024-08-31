@@ -126,7 +126,7 @@ export async function getCreationData(campaign: Campaign) {
     //  this will fail if the tx will fail
     await simulateContract(viemClient, {
         account: session.wallet,
-        address: addresses.contentInteractionManager,
+        address: addresses.productInteractionManager,
         abi: productInteractionManagerAbi,
         functionName: "deployCampaign",
         args: [

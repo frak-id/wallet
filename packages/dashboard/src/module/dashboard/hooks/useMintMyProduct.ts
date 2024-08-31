@@ -27,7 +27,7 @@ export function useMintMyProduct() {
                     context: `Deploying user interactions handler for ${args.name}`,
                 },
                 tx: {
-                    to: addresses.contentInteractionManager,
+                    to: addresses.productInteractionManager,
                     value: "0x00",
                     data: setupInteractionTxData,
                 },
