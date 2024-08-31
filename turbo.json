@@ -1,0 +1,34 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "tasks": {
+        "//#dev:infra": {
+            "outputs": [".sst/**", "!.sst/cache/**", "!.sst/debug.log"],
+            "inputs": ["iac/**"]
+        },
+        "@frak-labs/nexus-sdk#build": {
+            "outputs": ["dist/**"],
+            "inputs": ["src/**"]
+        },
+        "build": {
+            "dependsOn": [
+                "@frak-labs/nexus-sdk#build",
+                "//#dev:infra",
+                "^build"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**",
+                ".open-next/**",
+                "!..open-next/cache/**"
+            ]
+        },
+        "typecheck": {
+            "dependsOn": ["^typecheck"]
+        },
+        "dev": {
+            "dependsOn": ["@frak-labs/nexus-sdk#build"],
+            "persistent": true,
+            "cache": false
+        }
+    }
+}

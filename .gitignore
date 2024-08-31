@@ -45,3 +45,6 @@ packages/wallet/next-env.d.ts
 .sst
 
 .idea
+
+# Turbo tmp stuff
+.turbo
