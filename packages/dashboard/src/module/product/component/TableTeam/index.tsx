@@ -35,6 +35,7 @@ const columnHelper = createColumnHelper<ManageTeamTableData>();
 
 export function TableTeam({ productId }: { productId: bigint }) {
     const { data: walletStatus } = useWalletStatus();
+    const { data: isProductOwner } = useIsProductOwner({ productId });
 
     const { data: administrators, isLoading } = useQuery({
         queryKey: ["product", "team", productId.toString(), walletStatus?.key],
@@ -98,9 +99,11 @@ export function TableTeam({ productId }: { productId: bigint }) {
                 data={administrators}
                 columns={columns}
                 preTable={
-                    <ButtonAddTeam productId={productId}>
-                        <Button variant={"submit"}>Add Team Member</Button>
-                    </ButtonAddTeam>
+                    isProductOwner && (
+                        <ButtonAddTeam productId={productId}>
+                            <Button variant={"submit"}>Add Team Member</Button>
+                        </ButtonAddTeam>
+                    )
                 }
             />
         </>

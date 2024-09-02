@@ -29,3 +29,29 @@
     line-height: 18px;
     color: var(--frak-color-pale-sky);
 }
+
+.filters {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 16px;
+}
+
+.filters__item {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+
+    &:last-child {
+        justify-content: flex-end;
+    }
+}
+
+.filters__search {
+    max-width: 320px;
+}
+
+.filters__datePickerTrigger {
+    gap: 8px;
+    line-height: 20px;
+}

@@ -2,6 +2,7 @@
 
 import { campaignResetAtom } from "@/module/campaigns/atoms/campaign";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
+import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
 import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
 import { useUpdateCampaignRunningStatus } from "@/module/campaigns/hook/useUpdateCampaignRunningStatus";
@@ -13,8 +14,13 @@ import { Switch } from "@/module/forms/Switch";
 import type { CampaignWithState } from "@/types/Campaign";
 import { Button } from "@module/component/Button";
 import { Skeleton } from "@module/component/Skeleton";
-import { type CellContext, createColumnHelper } from "@tanstack/react-table";
+import {
+    type CellContext,
+    type ColumnFiltersState,
+    createColumnHelper,
+} from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
+import { atom, useAtomValue } from "jotai";
 import { useSetAtom } from "jotai/index";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -33,12 +39,15 @@ const Table = dynamic<ReactTableProps<CampaignWithState>>(
 
 const columnHelper = createColumnHelper<CampaignWithState>();
 
+export const tableCampaignFiltersAtom = atom<ColumnFiltersState>([]);
+
 export function TableCampaigns() {
     const { data, isLoading } = useGetCampaigns();
     const {
         mutate: onUpdateCampaignRunningStatus,
         isPending: isUpdatingCampaignState,
     } = useUpdateCampaignRunningStatus();
+    const columnFilters = useAtomValue(tableCampaignFiltersAtom);
 
     const columns = useMemo(
         () =>
@@ -88,11 +97,15 @@ export function TableCampaigns() {
                     ),
                 }),
                 {
-                    id: "Date",
+                    id: "date",
                     header: () => "Date",
                     accessorFn: (row) =>
                         row?.scheduled?.dateStart &&
                         formatDate(new Date(row.scheduled.dateStart)),
+                    filterFn: (row, _, value) =>
+                        row?.original?.scheduled?.dateStart &&
+                        new Date(row.original.scheduled.dateStart).getDate() >
+                            new Date(value).getDate(),
                 },
                 columnHelper.accessor("budget.maxEuroDaily", {
                     header: () => "Budget",
@@ -123,7 +136,20 @@ export function TableCampaigns() {
         return <Skeleton />;
     }
 
-    return data && <Table data={data} columns={columns} enableSorting={true} />;
+    return (
+        data && (
+            <>
+                <TableCampaignFilters />
+                <Table
+                    data={data}
+                    columns={columns}
+                    enableSorting={true}
+                    enableFiltering={true}
+                    columnFilters={columnFilters}
+                />
+            </>
+        )
+    );
 }
 
 /**

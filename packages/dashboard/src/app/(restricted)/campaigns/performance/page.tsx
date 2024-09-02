@@ -1,7 +1,6 @@
 "use client";
 
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
-import { Filters } from "@/module/common/component/Filters";
 import { Head } from "@/module/common/component/Head";
 import { Button } from "@module/component/Button";
 import { Plus } from "lucide-react";
@@ -25,7 +24,6 @@ export default function CampaignsPerformancePage() {
                     </Button>
                 }
             />
-            <Filters />
             <TableCampaignPerformance />
         </>
     );

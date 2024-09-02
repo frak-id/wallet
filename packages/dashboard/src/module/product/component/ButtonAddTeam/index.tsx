@@ -12,7 +12,6 @@ import {
     FormValidMessage,
 } from "@/module/forms/Form";
 import { useAddProductMember } from "@/module/product/hook/useAddProductMember";
-import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { permissionLabelsArray } from "@/module/product/utils/permissions";
 import { Button } from "@module/component/Button";
 import { Tooltip } from "@module/component/Tooltip";
@@ -43,7 +42,6 @@ export function ButtonAddTeam({
     children,
 }: PropsWithChildren<{ productId: bigint }>) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { data: isProductOwner } = useIsProductOwner({ productId });
     const {
         mutateAsync: addProductMember,
         isPending: isAddingMember,
@@ -78,11 +76,6 @@ export function ButtonAddTeam({
         },
         [addProductMember, productId]
     );
-
-    /**
-     * Directly exit if the user isn't the owner
-     */
-    if (!isProductOwner) return null;
 
     return (
         <Form {...form}>

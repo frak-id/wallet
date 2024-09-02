@@ -1,12 +1,14 @@
 import {
     type Column,
+    type ColumnFiltersState,
     flexRender,
     getCoreRowModel,
+    getFilteredRowModel,
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
-import { ArrowDownUp, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowDown, ArrowDownUp, ArrowUp } from "lucide-react";
 import { type PropsWithChildren, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import styles from "./index.module.css";
@@ -19,6 +21,8 @@ export type ReactTableProps<TData> = {
     preTable?: ReactNode;
     // Some custom configs
     enableSorting?: boolean;
+    enableFiltering?: boolean;
+    columnFilters?: ColumnFiltersState;
 };
 
 export function Table<TData extends object>({
@@ -28,6 +32,8 @@ export function Table<TData extends object>({
     className = "",
     preTable,
     enableSorting = false,
+    enableFiltering = false,
+    columnFilters = [],
 }: ReactTableProps<TData>) {
     const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -39,44 +45,16 @@ export function Table<TData extends object>({
         columns,
         state: {
             sorting,
+            columnFilters,
         },
         enableSorting,
         onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
+        getFilteredRowModel: enableFiltering
+            ? getFilteredRowModel()
+            : undefined,
     });
-
-    /**
-     * Sorting wrapper for headers
-     * @param children
-     * @param column
-     * @constructor
-     */
-    function Sorting({
-        children,
-        ...column
-    }: PropsWithChildren<Column<TData, unknown>>) {
-        if (!column.getCanSort()) {
-            return <span>{children}</span>;
-        }
-        const isSorted = column.getIsSorted();
-        const Icon =
-            isSorted === false
-                ? ArrowDownUp
-                : isSorted === "asc"
-                  ? ChevronUp
-                  : ChevronDown;
-        return (
-            <button
-                className={styles.table__button}
-                type={"button"}
-                onClick={column.getToggleSortingHandler()}
-            >
-                {children}
-                {Icon && <Icon className={styles.table__filterIcon} />}
-            </button>
-        );
-    }
 
     const rowModel = table.getRowModel();
     const footerGroups = table.getFooterGroups();
@@ -161,5 +139,37 @@ export function Table<TData extends object>({
                 </table>
             </div>
         </>
+    );
+}
+
+/**
+ * Sorting wrapper for headers
+ * @param children
+ * @param column
+ * @constructor
+ */
+function Sorting<TData>({
+    children,
+    ...column
+}: PropsWithChildren<Column<TData, unknown>>) {
+    if (!column.getCanSort()) {
+        return <span>{children}</span>;
+    }
+    const isSorted = column.getIsSorted();
+    const Icon =
+        isSorted === false
+            ? ArrowDownUp
+            : isSorted === "asc"
+              ? ArrowUp
+              : ArrowDown;
+    return (
+        <button
+            className={styles.table__button}
+            type={"button"}
+            onClick={column.getToggleSortingHandler()}
+        >
+            {children}
+            {Icon && <Icon className={styles.table__filterIcon} />}
+        </button>
     );
 }

@@ -1,12 +1,18 @@
 import { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStats";
+import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { Skeleton } from "@module/component/Skeleton";
 import { computeWithPrecision } from "@module/utils/computeWithPrecision";
 import { useQuery } from "@tanstack/react-query";
-import { createColumnHelper } from "@tanstack/react-table";
+import {
+    type ColumnFiltersState,
+    createColumnHelper,
+} from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Table as TableReact } from "@tanstack/react-table";
+import { atom } from "jotai";
+import { useAtomValue } from "jotai/index";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo } from "react";
@@ -52,7 +58,11 @@ function avgPercentages(table: TableReact<TableData>, column: keyof TableData) {
     return <span>{(average * 100).toFixed(2)}%</span>;
 }
 
+export const tablePerformanceFiltersAtom = atom<ColumnFiltersState>([]);
+
 export function TableCampaignPerformance() {
+    const columnFilters = useAtomValue(tablePerformanceFiltersAtom);
+
     const { data, isLoading } = useQuery({
         queryKey: ["campaigns", "my-campaigns-stats"],
         queryFn: async () => await getMyCampaignsStats(),
@@ -139,7 +149,14 @@ export function TableCampaignPerformance() {
 
     return (
         <>
-            <Table data={data} columns={columns} enableSorting={true} />
+            <TablePerformanceFilters />
+            <Table
+                data={data}
+                columns={columns}
+                enableSorting={true}
+                enableFiltering={true}
+                columnFilters={columnFilters}
+            />
         </>
     );
 }
