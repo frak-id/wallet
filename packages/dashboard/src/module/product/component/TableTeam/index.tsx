@@ -1,19 +1,19 @@
-import { getContentAdministrators } from "@/context/content/action/getAdministrators";
+import { getProductAdministrators } from "@/context/product/action/getAdministrators";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Badge } from "@/module/common/component/Badge";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { ButtonAddTeam } from "@/module/product/component/ButtonAddTeam";
+import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
+import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
 import { Skeleton } from "@module/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
-import { usePrevious } from "@uidotdev/usehooks";
 import { Pencil, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
-import useSessionStorageState from "use-session-storage-state";
-import { toHex } from "viem";
+import { useMemo, useState } from "react";
+import { isAddressEqual, toHex } from "viem";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
@@ -23,49 +23,21 @@ const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
     }
 );
 
-type TableData = Awaited<ReturnType<typeof getContentAdministrators>>[number];
+type TableData = Awaited<ReturnType<typeof getProductAdministrators>>[number];
 
 type TableMetas = {
     page: number;
     limit: number;
-    firstPage: string;
-    lastPage: string;
-    nextPage: string;
-    previousPage: string;
-    totalPages: number;
-    totalResults: number;
 };
 
 const columnHelper = createColumnHelper<TableData>();
-
-const initialFilteringState = { page: 1 };
 
 export function TableTeam({ productId }: { productId: bigint }) {
     const { data: administrators, isLoading } = useQuery({
         queryKey: ["product", "team", productId.toString()],
         queryFn: () =>
-            getContentAdministrators({ contentId: toHex(productId) }),
+            getProductAdministrators({ productId: toHex(productId) }),
     });
-
-    const [localTitle] = useSessionStorageState("title-autocomplete", {
-        defaultValue: "",
-    });
-    const [filtering, setFiltering] = useSessionStorageState(
-        "table-filtering",
-        {
-            defaultValue: initialFilteringState,
-        }
-    );
-    const previousTitle = usePrevious(localTitle);
-
-    useEffect(() => {
-        if (previousTitle === undefined) {
-            return;
-        }
-        if (localTitle !== previousTitle) {
-            setFiltering(initialFilteringState);
-        }
-    }, [localTitle, previousTitle, setFiltering]);
 
     const columns = useMemo(
         () =>
@@ -86,21 +58,21 @@ export function TableTeam({ productId }: { productId: bigint }) {
                     header: "Member",
                     cell: "John Doe",
                 }),*/
-                columnHelper.accessor("isContentOwner", {
+                columnHelper.accessor("roleDetails", {
                     enableSorting: false,
                     header: "Permission",
                     cell: ({ getValue }) => (
-                        <Badge variant={getValue() ? "success" : "warning"}>
-                            {getValue() ? "Admin" : "Operator"}
-                        </Badge>
+                        <PermissionsBadge roleDetails={getValue()} />
                     ),
                 }),
                 columnHelper.display({
                     header: "Action",
-                    cell: ({ row }) => <CellActions row={row} />,
+                    cell: ({ row }) => (
+                        <CellActions row={row} productId={productId} />
+                    ),
                 }),
             ] as ColumnDef<TableData>[],
-        []
+        [productId]
     );
 
     if (!administrators || isLoading) {
@@ -113,10 +85,8 @@ export function TableTeam({ productId }: { productId: bigint }) {
                 data={administrators}
                 limit={administrators.length}
                 columns={columns}
-                filtering={filtering}
-                setFiltering={setFiltering}
                 pagination={false}
-                preTable={<ButtonAddTeam />}
+                preTable={<ButtonAddTeam productId={productId} />}
             />
         </>
     );
@@ -125,9 +95,29 @@ export function TableTeam({ productId }: { productId: bigint }) {
 /**
  * Component representing the possible cell actions
  * @param row
+ * @param productId
  * @constructor
  */
-function CellActions({ row }: Pick<CellContext<TableData, unknown>, "row">) {
+function CellActions({
+    row,
+    productId,
+}: Pick<CellContext<TableData, unknown>, "row"> & { productId: bigint }) {
+    const { data: isProductOwner } = useIsProductOwner({ productId });
+    const { data: wallletStatus } = useWalletStatus();
+
+    // Check if the user can do actions
+    const canDoActions = useMemo(() => {
+        if (isProductOwner) return true;
+
+        // Otherwise, check if the user is the current cell
+        if (!wallletStatus) return false;
+        if (wallletStatus?.key !== "connected") return false;
+        return isAddressEqual(row.original.wallet, wallletStatus.wallet);
+    }, [isProductOwner, row, wallletStatus]);
+
+    // Directly exit if the user can't do actions
+    if (!canDoActions) return null;
+
     // const actions = useMemo(() => row.original.actions, [row.original.actions]);
     return (
         <div className={styles.table__actions}>
@@ -191,4 +181,22 @@ function ModalDelete({ row }: Pick<CellContext<TableData, unknown>, "row">) {
             }
         />
     );
+}
+
+function PermissionsBadge({
+    roleDetails,
+}: { roleDetails: TableData["roleDetails"] }) {
+    if (roleDetails.admin) {
+        return <Badge variant={"success"}>Admin</Badge>;
+    }
+
+    const badges = [];
+
+    if (roleDetails.productManager) {
+        badges.push(<Badge variant={"warning"}>Product</Badge>);
+    }
+    if (roleDetails.campaignManager) {
+        badges.push(<Badge variant={"warning"}>Campaign</Badge>);
+    }
+    return <>{badges}</>;
 }

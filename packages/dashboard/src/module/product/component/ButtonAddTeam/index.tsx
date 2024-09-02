@@ -15,6 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/module/forms/Select";
+import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { Button } from "@module/component/Button";
 import { Input } from "@module/component/forms/Input";
 import { atom, useAtom, useAtomValue } from "jotai";
@@ -36,9 +37,10 @@ const walletAtom = atom<string | undefined>();
 
 const availablePermissions = ["Admin", "Operator"];
 
-export function ButtonAddTeam() {
+export function ButtonAddTeam({ productId }: { productId: bigint }) {
     const [isModalOpen, setIsModalOpen] = useAtom(isModalOpenAtom);
     const wallet = useAtomValue(walletAtom);
+    const { data: isProductOwner } = useIsProductOwner({ productId });
     // const resetAtoms = useSetAtom(resetAtom);
     // const isMinting = useAtomValue(isMintingAtom);
 
@@ -57,6 +59,11 @@ export function ButtonAddTeam() {
     //     form.reset();
     //     resetAtoms();
     // }, [isModalOpen, form.reset, resetAtoms]);
+
+    /**
+     * Directly exit if the user isn't the owner
+     */
+    if (!isProductOwner) return null;
 
     return (
         /*<Form {...form}>
