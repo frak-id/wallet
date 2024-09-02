@@ -4,7 +4,7 @@ import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
-import { type Address, encodeFunctionData, maxUint256 } from "viem";
+import { type Address, type Hex, encodeFunctionData } from "viem";
 
 type RemoveProductMemberArg = {
     productId: bigint;
@@ -14,6 +14,9 @@ type RemoveProductMemberArg = {
 ) &
     ({ isRenouncing: true } | { isRenouncing: false; wallet: Address });
 
+/**
+ * Hook to remove or renounce a member from a product
+ */
 export function useRemoveProductMember() {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
@@ -21,25 +24,42 @@ export function useRemoveProductMember() {
     return useMutation({
         mutationKey: ["product", "remove-member"],
         mutationFn: async (args: RemoveProductMemberArg) => {
-            // Create the map of role keys to roles
-            const rolesMaskToDelete = args.fullRemoval
-                ? maxUint256
-                : args.rolesToDelete
-                      .map((roleKey) => roles[roleKey])
-                      .reduce((acc, role) => acc | role, 0n);
-
-            // Craft the transaction (different data if we are renouncing roles or revoking them)
-            const txData = args.isRenouncing
-                ? encodeFunctionData({
-                      abi: productAdministratorRegistryAbi,
-                      functionName: "renounceRoles",
-                      args: [args.productId, rolesMaskToDelete],
-                  })
-                : encodeFunctionData({
-                      abi: productAdministratorRegistryAbi,
-                      functionName: "revokeRoles",
-                      args: [args.productId, args.wallet, rolesMaskToDelete],
-                  });
+            // Build the right tx data based on the arguments
+            let txData: Hex;
+            if (args.fullRemoval && args.isRenouncing) {
+                txData = encodeFunctionData({
+                    abi: productAdministratorRegistryAbi,
+                    functionName: "renounceAllRoles",
+                    args: [args.productId],
+                });
+            } else if (args.fullRemoval && !args.isRenouncing) {
+                txData = encodeFunctionData({
+                    abi: productAdministratorRegistryAbi,
+                    functionName: "revokeAllRoles",
+                    args: [args.productId, args.wallet],
+                });
+            } else {
+                // Otherwise, build our roles bitmap
+                const rolesMaskToDelete = args.rolesToDelete
+                    .map((roleKey) => roles[roleKey])
+                    .reduce((acc, role) => acc | role, 0n);
+                // And craft the tx based on that
+                txData = args.isRenouncing
+                    ? encodeFunctionData({
+                          abi: productAdministratorRegistryAbi,
+                          functionName: "renounceRoles",
+                          args: [args.productId, rolesMaskToDelete],
+                      })
+                    : encodeFunctionData({
+                          abi: productAdministratorRegistryAbi,
+                          functionName: "revokeRoles",
+                          args: [
+                              args.productId,
+                              args.wallet,
+                              rolesMaskToDelete,
+                          ],
+                      });
+            }
 
             // Send the transaction
             const { hash } = await sendTransaction({
@@ -49,10 +69,12 @@ export function useRemoveProductMember() {
                 },
                 metadata: {
                     header: {
-                        title: "Remove member",
+                        title: args.isRenouncing
+                            ? "Renouncing"
+                            : "Updating member",
                     },
                     context: args.isRenouncing
-                        ? "Renouncing permissions on the product"
+                        ? "Renouncing to a permissions on the product"
                         : `Revoking permissions to ${args.wallet} on the product`,
                 },
             });

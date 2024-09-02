@@ -1,8 +1,11 @@
 import { getProductAdministrators } from "@/context/product/action/getAdministrators";
-import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Badge } from "@/module/common/component/Badge";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { ButtonAddTeam } from "@/module/product/component/ButtonAddTeam";
+import {
+    DeleteTeamMemberModal,
+    UpdateRoleTeamMemberModal,
+} from "@/module/product/component/TableTeam/Modal";
 import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { permissionLabels } from "@/module/product/utils/permissions";
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
@@ -12,29 +15,27 @@ import { Tooltip } from "@module/component/Tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Pencil, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { isAddressEqual, toHex } from "viem";
 import styles from "./index.module.css";
 
-const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
-    () => import("@/module/common/component/Table").then((mod) => mod.Table),
-    {
-        loading: () => <Skeleton />,
-    }
-);
+const Table = dynamic<
+    ReactTableProps<ManageTeamTableData, ManageTeamTableMetas>
+>(() => import("@/module/common/component/Table").then((mod) => mod.Table), {
+    loading: () => <Skeleton />,
+});
 
-type TableData = Awaited<
+export type ManageTeamTableData = Awaited<
     ReturnType<typeof getProductAdministrators>
 >[number] & { isMe: boolean };
 
-type TableMetas = {
+type ManageTeamTableMetas = {
     page: number;
     limit: number;
 };
 
-const columnHelper = createColumnHelper<TableData>();
+const columnHelper = createColumnHelper<ManageTeamTableData>();
 
 export function TableTeam({ productId }: { productId: bigint }) {
     const { data: walletStatus } = useWalletStatus();
@@ -87,7 +88,7 @@ export function TableTeam({ productId }: { productId: bigint }) {
                         <CellActions row={row} productId={productId} />
                     ),
                 }),
-            ] as ColumnDef<TableData>[],
+            ] as ColumnDef<ManageTeamTableData>[],
         [productId]
     );
 
@@ -121,22 +122,43 @@ export function TableTeam({ productId }: { productId: bigint }) {
 function CellActions({
     row,
     productId,
-}: Pick<CellContext<TableData, unknown>, "row"> & { productId: bigint }) {
+}: Pick<CellContext<ManageTeamTableData, unknown>, "row"> & {
+    productId: bigint;
+}) {
     const { data: isProductOwner } = useIsProductOwner({ productId });
     const { data: wallletStatus } = useWalletStatus();
 
     // Check if the user can do actions
-    const canDoActions = useMemo(() => {
+    const { canDoActions, isSelfAction } = useMemo(() => {
         // If it's the admin role, disable permissions
-        if (row.original.roleDetails.admin) return false;
+        if (row.original.roleDetails.admin)
+            return {
+                canDoActions: false,
+                isSelfAction: false,
+            };
 
         // If we are the product owner, we can do everything
-        if (isProductOwner) return true;
+        if (isProductOwner)
+            return {
+                canDoActions: true,
+                isSelfAction: false,
+            };
 
         // Otherwise, check if the user is the current cell
-        if (!wallletStatus) return false;
-        if (wallletStatus?.key !== "connected") return false;
-        return isAddressEqual(row.original.wallet, wallletStatus.wallet);
+        if (wallletStatus?.key !== "connected")
+            return {
+                canDoActions: false,
+                isSelfAction: false,
+            };
+
+        const isCurrentUser = isAddressEqual(
+            row.original.wallet,
+            wallletStatus.wallet
+        );
+        return {
+            canDoActions: isCurrentUser,
+            isSelfAction: isCurrentUser,
+        };
     }, [isProductOwner, row, wallletStatus]);
 
     // Directly exit if the user can't do actions
@@ -145,76 +167,23 @@ function CellActions({
     // const actions = useMemo(() => row.original.actions, [row.original.actions]);
     return (
         <div className={styles.table__actions}>
-            <ButtonAddTeam productId={productId}>
-                <button type={"button"}>
-                    <Pencil size={20} absoluteStrokeWidth={true} />
-                </button>
-            </ButtonAddTeam>
-            {/*<button type={"button"}>
-                <Pencil size={20} absoluteStrokeWidth={true} />
-            </button>*/}
-            <ModalDelete row={row} />
+            <UpdateRoleTeamMemberModal
+                productId={productId}
+                row={row}
+                isRenouncing={isSelfAction}
+            />
+            <DeleteTeamMemberModal
+                row={row}
+                productId={productId}
+                isRenouncing={isSelfAction}
+            />
         </div>
-    );
-}
-
-/**
- * Component representing the delete modal
- * @param row
- * @constructor
- */
-function ModalDelete({ row }: Pick<CellContext<TableData, unknown>, "row">) {
-    const [open, setOpen] = useState(false);
-    // const {
-    //     mutateAsync: onDeleteClick,
-    //     isPending: isDeleting,
-    //     isError,
-    // } = useDeleteCampaign();
-
-    return (
-        <AlertDialog
-            open={open}
-            onOpenChange={setOpen}
-            title={"Delete member"}
-            buttonElement={
-                <button type={"button"}>
-                    <Trash2 size={20} absoluteStrokeWidth={true} />
-                </button>
-            }
-            description={
-                <>
-                    Are you sure you want to delete the user{" "}
-                    <strong>{row.original.wallet}</strong>?
-                </>
-            }
-            /*text={
-                isError ? (
-                    <p className={"error"}>An error occurred, try again</p>
-                ) : undefined
-            }*/
-            cancel={<Button variant={"outline"}>Cancel</Button>}
-            action={
-                <Button
-                    variant={"danger"}
-                    // isLoading={isDeleting}
-                    // disabled={isDeleting}
-                    onClick={async () => {
-                        // await onDeleteClick({
-                        //     campaignId: row.original._id,
-                        // });
-                        setOpen(false);
-                    }}
-                >
-                    Delete
-                </Button>
-            }
-        />
     );
 }
 
 function PermissionsBadge({
     roleDetails,
-}: { roleDetails: TableData["roleDetails"] }) {
+}: { roleDetails: ManageTeamTableData["roleDetails"] }) {
     if (roleDetails.admin) {
         return <Badge variant={"success"}>Admin</Badge>;
     }
@@ -231,7 +200,7 @@ function PermissionsBadge({
     if (roleDetails.campaignManager) {
         badges.push(
             <Tooltip content={permissionLabels.campaignManager.description}>
-                <Badge variant={"warning"}>Product</Badge>
+                <Badge variant={"warning"}>Campaign</Badge>
             </Tooltip>
         );
     }

@@ -17,7 +17,7 @@ export function useWaitForTxAndInvalidateQueries() {
             await guard(() =>
                 waitForTransactionReceipt(viemClient, {
                     hash,
-                    confirmations: 16,
+                    confirmations: 32,
                     retryCount: 32,
                 })
             );
