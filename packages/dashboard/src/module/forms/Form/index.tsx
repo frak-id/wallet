@@ -173,13 +173,19 @@ FormControl.displayName = "FormControl";
 
 const FormDescription = forwardRef<
     HTMLParagraphElement,
-    HTMLAttributes<HTMLParagraphElement>
->(({ title, className = "", children, ...props }, ref) => {
+    HTMLAttributes<HTMLParagraphElement> & {
+        classNameTitle?: string;
+    }
+>(({ title, classNameTitle = "", className = "", children, ...props }, ref) => {
     const { formDescriptionId } = useFormField();
 
     return (
         <>
-            {title && <h3 className={styles.form__title}>{title}</h3>}
+            {title && (
+                <h3 className={`${styles.form__title} ${classNameTitle}`}>
+                    {title}
+                </h3>
+            )}
             <p
                 ref={ref}
                 id={formDescriptionId}

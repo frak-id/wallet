@@ -3,96 +3,115 @@ import { Row } from "@/module/common/component/Row";
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/module/forms/Select";
 import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { Button } from "@module/component/Button";
+import { Checkbox } from "@module/component/forms/Checkbox";
 import { Input } from "@module/component/forms/Input";
-import { atom, useAtom, useAtomValue } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type PropsWithChildren, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import { isAddress } from "viem";
+import styles from "./index.module.css";
 
 type FormWallet = {
     wallet: string;
 };
 
-type FormPermission = {
-    permission: string;
+type FormPermissions = {
+    permissions: string[];
 };
 
 const isModalOpenAtom = atom(false);
 const walletAtom = atom<string | undefined>();
+const resetAtom = atom(null, (_get, set) => {
+    set(walletAtom, undefined);
+});
 
-const availablePermissions = ["Admin", "Operator"];
+const availablePermissions = [
+    {
+        id: "productManager",
+        label: "Product manager",
+    },
+    {
+        id: "campaignManager",
+        label: "Campaign manager",
+    },
+];
 
-export function ButtonAddTeam({ productId }: { productId: bigint }) {
+export function ButtonAddTeam({
+    productId,
+    children,
+}: PropsWithChildren<{ productId: bigint }>) {
     const [isModalOpen, setIsModalOpen] = useAtom(isModalOpenAtom);
     const wallet = useAtomValue(walletAtom);
     const { data: isProductOwner } = useIsProductOwner({ productId });
-    // const resetAtoms = useSetAtom(resetAtom);
-    // const isMinting = useAtomValue(isMintingAtom);
+    const resetAtoms = useSetAtom(resetAtom);
 
-    // const form = useForm<FormMember>({
-    //     defaultValues: {
-    //         wallet: "",
-    //         permission: "",
-    //     },
-    // });
+    const form = useForm<FormPermissions>({
+        defaultValues: {
+            permissions: [],
+        },
+    });
 
     /**
      * Reset the form and the atoms when the modal is closed
      */
-    // useEffect(() => {
-    //     if (isModalOpen) return;
-    //     form.reset();
-    //     resetAtoms();
-    // }, [isModalOpen, form.reset, resetAtoms]);
+    useEffect(() => {
+        if (isModalOpen) return;
+        form.reset();
+        resetAtoms();
+    }, [isModalOpen, form.reset, resetAtoms]);
 
     /**
      * Directly exit if the user isn't the owner
      */
     if (!isProductOwner) return null;
 
+    function onSubmit(values: FormPermissions) {
+        console.log({ values, wallet });
+        // todo: Add the new member
+    }
+
     return (
-        /*<Form {...form}>
-            <form>*/
-        <AlertDialog
-            open={isModalOpen}
-            onOpenChange={setIsModalOpen}
-            title={
-                <>
-                    <BadgeCheck color={"#0DDB84"} /> Add a new member
-                </>
-            }
-            buttonElement={<Button variant={"submit"}>Add Team Member</Button>}
-            showCloseButton={false}
-            text={
-                <>
-                    <FormWallet />
-                    <FormPermission />
-                </>
-            }
-            cancel={<Button variant={"outline"}>Cancel</Button>}
-            action={
-                <Button variant={"submit"} disabled={!wallet}>
-                    Add Member
-                </Button>
-            }
-        />
-        /*    </form>
-        </Form>*/
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+                <AlertDialog
+                    open={isModalOpen}
+                    onOpenChange={setIsModalOpen}
+                    title={
+                        <>
+                            <BadgeCheck color={"#0DDB84"} /> Add a new member
+                        </>
+                    }
+                    buttonElement={children}
+                    showCloseButton={false}
+                    text={
+                        <>
+                            <FormWallet />
+                            <FormPermissions {...form} />
+                        </>
+                    }
+                    cancel={<Button variant={"outline"}>Cancel</Button>}
+                    action={
+                        <Button
+                            variant={"submit"}
+                            disabled={!wallet}
+                            onClick={form.handleSubmit(onSubmit)}
+                        >
+                            Add Member
+                        </Button>
+                    }
+                />
+            </form>
+        </Form>
     );
 }
 
@@ -101,8 +120,6 @@ export function ButtonAddTeam({ productId }: { productId: bigint }) {
  * @constructor
  */
 function FormWallet() {
-    const isModalOpen = useAtomValue(isModalOpenAtom);
-    const [error, setError] = useState<string | undefined>();
     const [wallet, setWallet] = useAtom(walletAtom);
 
     const form = useForm<FormWallet>({
@@ -111,23 +128,14 @@ function FormWallet() {
         },
     });
 
-    /**
-     * Reset the error when the modal is opened
-     */
-    useEffect(() => {
-        if (!isModalOpen) return;
-        setError(undefined);
-    }, [isModalOpen]);
-
     function onSubmit(values: FormWallet) {
-        console.log(values);
         setWallet(values.wallet);
     }
 
     return (
         <>
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
+                <form>
                     <FormField
                         control={form.control}
                         name="wallet"
@@ -151,8 +159,10 @@ function FormWallet() {
                                             {...field}
                                         />
                                         <Button
-                                            type={"submit"}
                                             variant={"submit"}
+                                            onClick={form.handleSubmit(
+                                                onSubmit
+                                            )}
                                         >
                                             Verify
                                         </Button>
@@ -165,7 +175,6 @@ function FormWallet() {
                 </form>
             </Form>
 
-            {error && <p className={"error"}>{error}</p>}
             {wallet && (
                 <p className={"success"}>The new member is ready to be added</p>
             )}
@@ -174,78 +183,80 @@ function FormWallet() {
 }
 
 /**
- * Initial form to add wallet permission
+ * Initial form to add wallet permissions
  * @constructor
  */
-function FormPermission() {
-    const isModalOpen = useAtomValue(isModalOpenAtom);
-    const [error, setError] = useState<string | undefined>();
-
-    const form = useForm<FormPermission>({
-        defaultValues: {
-            permission: "",
-        },
-    });
-
-    /**
-     * Reset the error when the modal is opened
-     */
-    useEffect(() => {
-        if (!isModalOpen) return;
-        setError(undefined);
-    }, [isModalOpen]);
-
-    function onSubmit(values: FormPermission) {
-        console.log(values);
-    }
-
+function FormPermissions(form: UseFormReturn<FormPermissions>) {
     return (
         <>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormField
-                        control={form.control}
-                        name="permission"
-                        rules={{ required: "Select a permission" }}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel weight={"medium"}>
-                                    Permission
-                                </FormLabel>
-                                <FormControl>
-                                    <Select
-                                        name={field.name}
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value}
+            <FormField
+                control={form.control}
+                name="permissions"
+                rules={{ required: "Select a permission" }}
+                render={() => (
+                    <FormItem>
+                        <FormDescription
+                            title={"Permissions"}
+                            className={styles.formPermission__description}
+                            classNameTitle={
+                                styles.formPermission__descriptionTitle
+                            }
+                        >
+                            Choose the type of permission.
+                            <br /> Product manager can manage the interaction
+                            contract and update it.
+                            <br />
+                            Campaign manager can deploy campaigns, put them on
+                            standby, and delete them.
+                        </FormDescription>
+                        {availablePermissions.map((item) => (
+                            <FormField
+                                key={item.id}
+                                control={form.control}
+                                name="permissions"
+                                render={({ field }) => (
+                                    <FormItem
+                                        variant={"checkbox"}
+                                        key={item.id}
                                     >
-                                        <SelectTrigger
-                                            length={"medium"}
-                                            {...field}
-                                        >
-                                            <SelectValue placeholder="Select a permission" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {availablePermissions.map(
-                                                (permission) => (
-                                                    <SelectItem
-                                                        key={permission}
-                                                        value={permission}
-                                                    >
-                                                        {permission}
-                                                    </SelectItem>
-                                                )
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value?.includes(
+                                                    item.id
+                                                )}
+                                                onCheckedChange={(checked) => {
+                                                    return checked
+                                                        ? field.onChange([
+                                                              ...field.value,
+                                                              item.id,
+                                                          ])
+                                                        : field.onChange(
+                                                              field.value?.filter(
+                                                                  (value) =>
+                                                                      value !==
+                                                                      item.id
+                                                              )
+                                                          );
+                                                }}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormLabel
+                                            variant={"checkbox"}
+                                            selected={field.value?.includes(
+                                                item.id
                                             )}
-                                        </SelectContent>
-                                    </Select>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </form>
-            </Form>
-
-            {error && <p className={"error"}>{error}</p>}
+                                        >
+                                            {item.label}
+                                        </FormLabel>
+                                    </FormItem>
+                                )}
+                            />
+                        ))}
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
         </>
     );
 }

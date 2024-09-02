@@ -86,7 +86,11 @@ export function TableTeam({ productId }: { productId: bigint }) {
                 limit={administrators.length}
                 columns={columns}
                 pagination={false}
-                preTable={<ButtonAddTeam productId={productId} />}
+                preTable={
+                    <ButtonAddTeam productId={productId}>
+                        <Button variant={"submit"}>Add Team Member</Button>
+                    </ButtonAddTeam>
+                }
             />
         </>
     );
@@ -121,9 +125,14 @@ function CellActions({
     // const actions = useMemo(() => row.original.actions, [row.original.actions]);
     return (
         <div className={styles.table__actions}>
-            <button type={"button"}>
+            <ButtonAddTeam productId={productId}>
+                <button type={"button"}>
+                    <Pencil size={20} absoluteStrokeWidth={true} />
+                </button>
+            </ButtonAddTeam>
+            {/*<button type={"button"}>
                 <Pencil size={20} absoluteStrokeWidth={true} />
-            </button>
+            </button>*/}
             <ModalDelete row={row} />
         </div>
     );
@@ -198,5 +207,5 @@ function PermissionsBadge({
     if (roleDetails.campaignManager) {
         badges.push(<Badge variant={"warning"}>Campaign</Badge>);
     }
-    return <>{badges}</>;
+    return <span className={styles.table__badges}>{badges}</span>;
 }

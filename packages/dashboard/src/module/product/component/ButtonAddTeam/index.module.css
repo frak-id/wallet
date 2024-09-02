@@ -1,16 +1,4 @@
-.newProductForm__introduction {
-    margin-bottom: 14px;
-    font-size: 16px;
-    font-weight: 400;
-}
-
-.newProductForm__verify {
-    margin-bottom: 27px;
-    font-size: 16px;
-    font-weight: 400;
-}
-
-.newProductForm__fingerprint {
-    margin-bottom: 20px;
-    font-size: 16px;
+.formPermission__description,
+.formPermission__descriptionTitle {
+    font-size: 14px;
 }

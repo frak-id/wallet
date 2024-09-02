@@ -3,7 +3,7 @@
     gap: 8px;
     align-items: center;
 
-    & > button {
+    & button {
         all: unset;
         cursor: pointer;
         display: flex;
@@ -13,4 +13,9 @@
 .table__buttonWallet {
     color: var(--frak-color-royal-blue);
     font-weight: 600;
+}
+
+.table__badges {
+    display: flex;
+    gap: 10px;
 }
