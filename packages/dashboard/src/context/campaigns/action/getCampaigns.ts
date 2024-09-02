@@ -10,7 +10,7 @@ import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/block
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import ky from "ky";
 import { all, sift } from "radash";
-import { type Address, type Hex, isAddressEqual } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 
 type ApiResult = {
@@ -62,17 +62,17 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
             if (campaign)
                 return {
                     address,
-                    productId: campaign.productId,
+                    productId: BigInt(campaign.productId),
                 };
             const document = campaignDocuments.find(
                 (item) =>
                     item.state.key === "created" &&
                     isAddressEqual(item.state.address, address)
             );
-            if (document)
+            if (document?.productId)
                 return {
                     address,
-                    productId: document.productId,
+                    productId: BigInt(document.productId),
                 };
             return null;
         })
@@ -151,7 +151,7 @@ async function getOnChainStateForCampaigns({
     campaignProductIds,
     wallet,
 }: {
-    campaignProductIds: { address: Address; productId: Hex }[];
+    campaignProductIds: { address: Address; productId: bigint }[];
     wallet: Address;
 }): Promise<
     Record<Address, { canEdit: boolean; isActive: boolean; isRunning: boolean }>
@@ -188,11 +188,7 @@ async function getOnChainStateForCampaigns({
                         abi: productAdministratorRegistryAbi,
                         address: addresses.productAdministratorRegistry,
                         functionName: "hasAllRolesOrAdmin",
-                        args: [
-                            BigInt(productId),
-                            wallet,
-                            roles.campaignManager,
-                        ],
+                        args: [productId, wallet, roles.campaignManager],
                     }) as const
             ),
             allowFailure: false,
