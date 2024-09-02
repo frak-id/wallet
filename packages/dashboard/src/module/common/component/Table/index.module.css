@@ -12,6 +12,12 @@
     border-collapse: collapse;
 }
 
+.preTable {
+    display: flex;
+    justify-content: flex-end;
+    padding: 18px 24px;
+}
+
 button.table__button {
     all: unset;
     box-sizing: border-box;

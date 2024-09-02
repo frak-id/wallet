@@ -18,6 +18,7 @@
 }
 .select__trigger:disabled {
     cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .select__trigger--medium {
@@ -43,6 +44,7 @@
     box-shadow: 0 10px 38px -10px rgba(22, 23, 24, 0.35), 0 10px 20px -15px
         rgba(22, 23, 24, 0.2);
     max-height: 384px;
+    width: var(--radix-select-trigger-width);
 }
 
 .select__viewport {

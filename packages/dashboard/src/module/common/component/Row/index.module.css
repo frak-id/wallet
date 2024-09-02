@@ -8,6 +8,10 @@
     align-items: flex-start;
 }
 
+.row--center {
+    align-items: center;
+}
+
 .row--end {
     align-items: flex-end;
 }

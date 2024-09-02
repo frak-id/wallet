@@ -1,158 +1,78 @@
-import { TablePagination } from "@/module/common/component/TablePagination";
 import {
+    type Column,
+    type ColumnFiltersState,
     flexRender,
     getCoreRowModel,
-    getPaginationRowModel,
+    getFilteredRowModel,
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import type { Dispatch, ReactNode, SetStateAction } from "react";
-import useSessionStorageState from "use-session-storage-state";
+import { ArrowDown, ArrowDownUp, ArrowUp } from "lucide-react";
+import { type PropsWithChildren, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
-type TableFiltering = {
-    page: number;
-    field?: string;
-    order?: string;
-};
-
-export type ReactTableProps<TData, TMetas> = {
+export type ReactTableProps<TData> = {
     data: TData[];
-    metas?: TMetas;
     columns: ColumnDef<TData>[];
-    pagination?: boolean;
     classNameWrapper?: string;
     className?: string;
-    link?: string;
-    filtering?: TableFiltering;
-    setFiltering?: Dispatch<SetStateAction<TableFiltering>>;
-    limit?: number;
+    preTable?: ReactNode;
+    // Some custom configs
+    enableSorting?: boolean;
+    enableFiltering?: boolean;
+    columnFilters?: ColumnFiltersState;
 };
 
-type Metas = {
-    page: number;
-    limit: number;
-    firstPage?: string;
-    lastPage?: string;
-    nextPage?: string;
-    previousPage?: string;
-    totalPages?: number;
-    totalResults?: number;
-};
-
-export function Table<TData extends object, TMetas extends Metas>({
+export function Table<TData extends object>({
     data,
-    metas,
     columns,
-    pagination = true,
     classNameWrapper = "",
     className = "",
-    filtering,
-    setFiltering,
-    limit,
-}: ReactTableProps<TData, TMetas>) {
-    const [, setSessionStorageFiltering] = useSessionStorageState<{
-        page: number;
-        field?: string;
-        order?: string;
-    }>("table-filtering", {
-        defaultValue: { page: 1, field: undefined, order: undefined },
-    });
-    const { /* limit, totalPages,*/ totalResults } = metas ?? {};
+    preTable,
+    enableSorting = false,
+    enableFiltering = false,
+    columnFilters = [],
+}: ReactTableProps<TData>) {
     const [sorting, setSorting] = useState<SortingState>([]);
-    const [rowSelection, setRowSelection] = useState({});
-    const totalItems = totalResults ?? data.length;
 
+    /**
+     * Build the table instance
+     */
     const table = useReactTable({
         data,
         columns,
         state: {
             sorting,
-            rowSelection,
+            columnFilters,
         },
-        enableRowSelection: true,
-        onRowSelectionChange: setRowSelection,
+        enableSorting,
         onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
+        getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
+        getFilteredRowModel: enableFiltering
+            ? getFilteredRowModel()
+            : undefined,
     });
-
-    function handlePageChange(page: number) {
-        if (!page) {
-            return;
-        }
-        setFiltering?.((prevState) => {
-            setTimeout(() => {
-                setSessionStorageFiltering({
-                    page,
-                    field: prevState.field,
-                    order: prevState.order,
-                });
-            }, 100);
-            return { page, field: prevState.field, order: prevState.order };
-        });
-    }
-
-    function handleSortingChange(field: string) {
-        setFiltering?.((prevState) => {
-            if (prevState.field === field) {
-                setSessionStorageFiltering({
-                    page: 1,
-                    field,
-                    order: prevState.order === "asc" ? "desc" : "asc",
-                });
-                return {
-                    page: 1,
-                    field,
-                    order: prevState.order === "asc" ? "desc" : "asc",
-                };
-            }
-            setSessionStorageFiltering({ page: 1, field, order: "asc" });
-            return { page: 1, field, order: "asc" };
-        });
-    }
-
-    useEffect(() => {
-        limit && table.setPageSize(limit);
-    }, [table, limit]);
-
-    type TagProps = {
-        canSort: boolean;
-        field: string;
-        children: ReactNode;
-    };
-
-    function Sorting({ canSort, field, children, ...props }: TagProps) {
-        const Tag = canSort ? "button" : "span";
-        const Icon =
-            filtering?.field === field && filtering?.order === "asc"
-                ? ChevronUp
-                : ChevronDown;
-        return (
-            <Tag className={styles.table__button} {...props}>
-                {children}
-                {canSort && <Icon className={styles.table__filterIcon} />}
-            </Tag>
-        );
-    }
 
     const rowModel = table.getRowModel();
     const footerGroups = table.getFooterGroups();
-    const hasFooters = useMemo(() => {
-        return footerGroups.some((group) =>
-            group.headers.some((header) =>
-                Boolean(header.column.columnDef.footer)
-            )
-        );
-    }, [footerGroups]);
+    const hasFooters = useMemo(
+        () =>
+            footerGroups.some((group) =>
+                group.headers.some((header) =>
+                    Boolean(header.column.columnDef.footer)
+                )
+            ),
+        [footerGroups]
+    );
 
     return (
         <>
             <div className={`${styles.tableWrapper} ${classNameWrapper}`}>
+                {preTable && <div className={styles.preTable}>{preTable}</div>}
+
                 <table className={`${styles.table} ${className}`}>
                     <thead>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -160,18 +80,7 @@ export function Table<TData extends object, TMetas extends Metas>({
                                 {headerGroup.headers.map((header) => (
                                     <th key={header.id}>
                                         {header.isPlaceholder ? null : (
-                                            <Sorting
-                                                canSort={header.column.getCanSort()}
-                                                {...{
-                                                    field: header.column.id,
-                                                    onClick: () => {
-                                                        header.column.getCanSort() &&
-                                                            handleSortingChange(
-                                                                header.column.id
-                                                            );
-                                                    },
-                                                }}
-                                            >
+                                            <Sorting {...header.column}>
                                                 {flexRender(
                                                     header.column.columnDef
                                                         .header,
@@ -184,6 +93,7 @@ export function Table<TData extends object, TMetas extends Metas>({
                             </tr>
                         ))}
                     </thead>
+
                     <tbody>
                         {rowModel.rows.length === 0 ? (
                             <tr>
@@ -206,6 +116,7 @@ export function Table<TData extends object, TMetas extends Metas>({
                             ))
                         )}
                     </tbody>
+
                     {hasFooters && (
                         <tfoot>
                             {footerGroups.map((footerGroup) => (
@@ -226,15 +137,39 @@ export function Table<TData extends object, TMetas extends Metas>({
                         </tfoot>
                     )}
                 </table>
-                {pagination && (
-                    <TablePagination
-                        onPageChange={handlePageChange}
-                        totalItems={totalItems}
-                        page={filtering?.page ?? 1}
-                        itemsPerPage={limit ?? 10}
-                    />
-                )}
             </div>
         </>
+    );
+}
+
+/**
+ * Sorting wrapper for headers
+ * @param children
+ * @param column
+ * @constructor
+ */
+function Sorting<TData>({
+    children,
+    ...column
+}: PropsWithChildren<Column<TData, unknown>>) {
+    if (!column.getCanSort()) {
+        return <span>{children}</span>;
+    }
+    const isSorted = column.getIsSorted();
+    const Icon =
+        isSorted === false
+            ? ArrowDownUp
+            : isSorted === "asc"
+              ? ArrowUp
+              : ArrowDown;
+    return (
+        <button
+            className={styles.table__button}
+            type={"button"}
+            onClick={column.getToggleSortingHandler()}
+        >
+            {children}
+            {Icon && <Icon className={styles.table__filterIcon} />}
+        </button>
     );
 }

@@ -1,0 +1,9 @@
+.InputWithToggle__button {
+    all: unset;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.3;
+    }
+}

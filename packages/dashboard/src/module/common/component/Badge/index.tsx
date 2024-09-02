@@ -12,6 +12,7 @@ export const badgeVariants = cva(styles.badge, {
             success: styles.success,
             danger: styles.danger,
             information: styles.information,
+            warning: styles.warning,
         },
     },
     defaultVariants: {

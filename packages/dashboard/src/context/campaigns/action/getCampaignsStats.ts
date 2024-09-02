@@ -1,9 +1,18 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import { viemClient } from "@/context/blockchain/provider";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import ky from "ky";
-import { type Address, formatEther, getAddress, isAddressEqual } from "viem";
+import {
+    type Address,
+    formatEther,
+    getAddress,
+    hexToString,
+    isAddressEqual,
+} from "viem";
+import { multicall } from "viem/actions";
 
 type ApiResult = {
     productId: string;
@@ -40,14 +49,33 @@ export async function getMyCampaignsStats() {
         }
     );
 
+    const onChainMetadatas = await multicall(viemClient, {
+        allowFailure: false,
+        contracts: campaignStats.map(
+            (campaign) =>
+                ({
+                    address: campaign.id,
+                    abi: interactionCampaignAbi,
+                    functionName: "getMetadata",
+                }) as const
+        ),
+    });
+
     // Cleanly format all of the stats from string to bigint
-    return campaignStats.map((campaign) => {
+    return campaignStats.map((campaign, index) => {
         // Get the matching campaign name and id
         const campaignDoc = campaignDocuments.find(
             (doc) =>
                 doc.state.key === "created" &&
                 isAddressEqual(doc.state.address, campaign.id)
         );
+        const onChainTitle = hexToString(onChainMetadatas[index]?.[2])
+            // Remove non ascii characters
+            .replace(/[^\x20-\x7E]/g, "")
+            .trim();
+        const title =
+            campaignDoc?.title ??
+            (onChainTitle.length > 1 ? onChainTitle : campaign.id);
 
         // Map a few stuff we will use for computation
         const totalRewards = BigInt(campaign.totalRewards);
@@ -88,7 +116,7 @@ export async function getMyCampaignsStats() {
             createReferredLinkInteractions,
             totalRewards,
             // Polished stats for the array
-            title: campaignDoc?.title ?? campaign.id,
+            title,
             id: campaignDoc?._id?.toHexString() ?? campaign.id,
             amountSpent: Number.parseFloat(formatEther(totalRewards)),
             sharingRate,

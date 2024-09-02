@@ -173,13 +173,19 @@ FormControl.displayName = "FormControl";
 
 const FormDescription = forwardRef<
     HTMLParagraphElement,
-    HTMLAttributes<HTMLParagraphElement>
->(({ title, className = "", children, ...props }, ref) => {
+    HTMLAttributes<HTMLParagraphElement> & {
+        classNameTitle?: string;
+    }
+>(({ title, classNameTitle = "", className = "", children, ...props }, ref) => {
     const { formDescriptionId } = useFormField();
 
     return (
         <>
-            {title && <h3 className={styles.form__title}>{title}</h3>}
+            {title && (
+                <h3 className={`${styles.form__title} ${classNameTitle}`}>
+                    {title}
+                </h3>
+            )}
             <p
                 ref={ref}
                 id={formDescriptionId}
@@ -217,6 +223,29 @@ const FormMessage = forwardRef<
 });
 FormMessage.displayName = "FormMessage";
 
+const FormValidMessage = forwardRef<
+    HTMLParagraphElement,
+    HTMLAttributes<HTMLParagraphElement>
+>(({ className = "", children, ...props }, ref) => {
+    const { formMessageId, invalid, error } = useFormField();
+
+    if (invalid || !!error) {
+        return null;
+    }
+
+    return (
+        <p
+            ref={ref}
+            id={`${formMessageId}-valid`}
+            className={`success ${className}`}
+            {...props}
+        >
+            {children}
+        </p>
+    );
+});
+FormValidMessage.displayName = "FormValidMessage";
+
 export {
     useFormField,
     Form,
@@ -226,5 +255,6 @@ export {
     FormControl,
     FormDescription,
     FormMessage,
+    FormValidMessage,
     FormField,
 };

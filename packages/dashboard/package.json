@@ -20,7 +20,6 @@
     "@aws-sdk/client-sqs": "^3.637.0",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
-    "@lucasmogari/react-pagination": "^1.2.0",
     "@radix-ui/react-collapsible": "^1.1.0",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-popover": "^1.1.1",
@@ -51,7 +50,6 @@
     "react-day-picker": "^9.0.8",
     "react-dom": "^18",
     "react-hook-form": "^7.53.0",
-    "use-session-storage-state": "^19.0.0",
     "viem": "^2.18.5"
   },
   "devDependencies": {
