@@ -223,6 +223,29 @@ const FormMessage = forwardRef<
 });
 FormMessage.displayName = "FormMessage";
 
+const FormValidMessage = forwardRef<
+    HTMLParagraphElement,
+    HTMLAttributes<HTMLParagraphElement>
+>(({ className = "", children, ...props }, ref) => {
+    const { formMessageId, invalid, error } = useFormField();
+
+    if (invalid || !!error) {
+        return null;
+    }
+
+    return (
+        <p
+            ref={ref}
+            id={`${formMessageId}-valid`}
+            className={`success ${className}`}
+            {...props}
+        >
+            {children}
+        </p>
+    );
+});
+FormValidMessage.displayName = "FormValidMessage";
+
 export {
     useFormField,
     Form,
@@ -232,5 +255,6 @@ export {
     FormControl,
     FormDescription,
     FormMessage,
+    FormValidMessage,
     FormField,
 };

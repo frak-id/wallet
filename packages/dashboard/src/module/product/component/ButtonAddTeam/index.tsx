@@ -1,3 +1,4 @@
+import type { RolesKeys } from "@/context/blockchain/roles";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -8,41 +9,53 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
+    FormValidMessage,
 } from "@/module/forms/Form";
+import { useAddProductMember } from "@/module/product/hook/useAddProductMember";
 import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { Button } from "@module/component/Button";
+import { Tooltip } from "@module/component/Tooltip";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { Input } from "@module/component/forms/Input";
-import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck } from "lucide-react";
-import { type PropsWithChildren, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import type { UseFormReturn } from "react-hook-form";
-import { isAddress } from "viem";
+import {
+    type PropsWithChildren,
+    useCallback,
+    useEffect,
+    useState,
+} from "react";
+import {
+    type UseControllerProps,
+    useForm,
+    useFormContext,
+} from "react-hook-form";
+import { type Address, isAddress } from "viem";
 import styles from "./index.module.css";
 
-type FormWallet = {
-    wallet: string;
+type FormAddTeamMembers = {
+    wallet?: Address;
+    permissions: RolesKeys[];
 };
 
-type FormPermissions = {
-    permissions: string[];
-};
-
-const isModalOpenAtom = atom(false);
-const walletAtom = atom<string | undefined>();
-const resetAtom = atom(null, (_get, set) => {
-    set(walletAtom, undefined);
-});
-
-const availablePermissions = [
+/**
+ * List of available permissions with label + description
+ */
+const availablePermissions: {
+    id: RolesKeys;
+    label: string;
+    description: string;
+}[] = [
     {
         id: "productManager",
         label: "Product manager",
+        description:
+            "Product manager can manage the interaction contract and update it.",
     },
     {
         id: "campaignManager",
         label: "Campaign manager",
+        description:
+            "Campaign manager can deploy campaigns, put them on standby, and delete them.",
     },
 ];
 
@@ -50,14 +63,17 @@ export function ButtonAddTeam({
     productId,
     children,
 }: PropsWithChildren<{ productId: bigint }>) {
-    const [isModalOpen, setIsModalOpen] = useAtom(isModalOpenAtom);
-    const wallet = useAtomValue(walletAtom);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: isProductOwner } = useIsProductOwner({ productId });
-    const resetAtoms = useSetAtom(resetAtom);
+    const {
+        mutateAsync: addProductMember,
+        isPending: isAddingMember,
+        error,
+    } = useAddProductMember();
 
-    const form = useForm<FormPermissions>({
+    const form = useForm<FormAddTeamMembers>({
         defaultValues: {
-            permissions: [],
+            permissions: ["productManager", "campaignManager"],
         },
     });
 
@@ -67,18 +83,27 @@ export function ButtonAddTeam({
     useEffect(() => {
         if (isModalOpen) return;
         form.reset();
-        resetAtoms();
-    }, [isModalOpen, form.reset, resetAtoms]);
+    }, [isModalOpen, form.reset]);
+
+    const onSubmit = useCallback(
+        async (data: FormAddTeamMembers) => {
+            if (!data.wallet) return;
+            // Trigger the product adding
+            await addProductMember({
+                productId,
+                wallet: data.wallet,
+                roles: data.permissions,
+            });
+            // Close the modal
+            setIsModalOpen(false);
+        },
+        [addProductMember, productId]
+    );
 
     /**
      * Directly exit if the user isn't the owner
      */
     if (!isProductOwner) return null;
-
-    function onSubmit(values: FormPermissions) {
-        console.log({ values, wallet });
-        // todo: Add the new member
-    }
 
     return (
         <Form {...form}>
@@ -95,15 +120,39 @@ export function ButtonAddTeam({
                     showCloseButton={false}
                     text={
                         <>
-                            <FormWallet />
-                            <FormPermissions {...form} />
+                            {isAddingMember && (
+                                <p>
+                                    Adding the new member to the product
+                                    <span className={"dotsLoading"}>...</span>
+                                </p>
+                            )}
+                            <FormWallet
+                                control={form.control}
+                                name={"wallet"}
+                                disabled={isAddingMember}
+                            />
+                            <FormPermissions
+                                control={form.control}
+                                name={"permissions"}
+                                disabled={isAddingMember}
+                            />
+                            {error && (
+                                <p>
+                                    Error when adding the operator on your
+                                    product: {error.message}
+                                </p>
+                            )}
                         </>
                     }
-                    cancel={<Button variant={"outline"}>Cancel</Button>}
+                    cancel={
+                        <Button variant={"outline"} disabled={isAddingMember}>
+                            Cancel
+                        </Button>
+                    }
                     action={
                         <Button
                             variant={"submit"}
-                            disabled={!wallet}
+                            disabled={!form.formState.isValid || isAddingMember}
                             onClick={form.handleSubmit(onSubmit)}
                         >
                             Add Member
@@ -119,65 +168,56 @@ export function ButtonAddTeam({
  * Initial form to add wallet address
  * @constructor
  */
-function FormWallet() {
-    const [wallet, setWallet] = useAtom(walletAtom);
-
-    const form = useForm<FormWallet>({
-        defaultValues: {
-            wallet: "",
-        },
-    });
-
-    function onSubmit(values: FormWallet) {
-        setWallet(values.wallet);
-    }
+function FormWallet(props: UseControllerProps<FormAddTeamMembers, "wallet">) {
+    const { trigger } = useFormContext();
+    // on mount trigger a wallet field verification
+    useEffect(() => {
+        trigger("wallet");
+    }, [trigger]);
 
     return (
         <>
-            <Form {...form}>
-                <form>
-                    <FormField
-                        control={form.control}
-                        name="wallet"
-                        rules={{
-                            required: "Missing wallet",
-                            validate: {
-                                required: (value) =>
-                                    isAddress(value) || "Invalid wallet",
-                            },
-                        }}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel weight={"medium"}>
-                                    Enter your Member Wallet
-                                </FormLabel>
-                                <FormControl>
-                                    <Row>
-                                        <Input
-                                            length={"medium"}
-                                            placeholder={"Wallet Address...."}
-                                            {...field}
-                                        />
-                                        <Button
-                                            variant={"submit"}
-                                            onClick={form.handleSubmit(
-                                                onSubmit
-                                            )}
-                                        >
-                                            Verify
-                                        </Button>
-                                    </Row>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </form>
-            </Form>
-
-            {wallet && (
-                <p className={"success"}>The new member is ready to be added</p>
-            )}
+            <FormField
+                control={props.control}
+                name="wallet"
+                rules={{
+                    required: "Wallet address required",
+                    validate: {
+                        required: (value) =>
+                            (value && isAddress(value)) ||
+                            "Invalid wallet address",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Enter your Member Wallet
+                        </FormLabel>
+                        <FormControl>
+                            <Row>
+                                <Input
+                                    length={"medium"}
+                                    placeholder={"Wallet Address...."}
+                                    {...field}
+                                />
+                                <Button
+                                    variant={"submit"}
+                                    disabled={props.disabled}
+                                    onClick={() => {
+                                        trigger("wallet");
+                                    }}
+                                >
+                                    Verify
+                                </Button>
+                            </Row>
+                        </FormControl>
+                        <FormMessage />
+                        <FormValidMessage>
+                            The new member is ready to be added
+                        </FormValidMessage>
+                    </FormItem>
+                )}
+            />
         </>
     );
 }
@@ -186,14 +226,22 @@ function FormWallet() {
  * Initial form to add wallet permissions
  * @constructor
  */
-function FormPermissions(form: UseFormReturn<FormPermissions>) {
+function FormPermissions(
+    props: UseControllerProps<FormAddTeamMembers, "permissions">
+) {
     return (
         <>
             <FormField
-                control={form.control}
+                control={props.control}
                 name="permissions"
-                rules={{ required: "Select a permission" }}
-                render={() => (
+                rules={{
+                    required: "Select a permission",
+                    validate: {
+                        required: (value) =>
+                            value?.length > 0 || "Select a permission",
+                    },
+                }}
+                render={({ field }) => (
                     <FormItem>
                         <FormDescription
                             title={"Permissions"}
@@ -202,57 +250,51 @@ function FormPermissions(form: UseFormReturn<FormPermissions>) {
                                 styles.formPermission__descriptionTitle
                             }
                         >
-                            Choose the type of permission.
-                            <br /> Product manager can manage the interaction
-                            contract and update it.
-                            <br />
-                            Campaign manager can deploy campaigns, put them on
-                            standby, and delete them.
+                            Choose the permission for the new operator.
                         </FormDescription>
-                        {availablePermissions.map((item) => (
-                            <FormField
-                                key={item.id}
-                                control={form.control}
-                                name="permissions"
-                                render={({ field }) => (
-                                    <FormItem
-                                        variant={"checkbox"}
-                                        key={item.id}
-                                    >
+                        {availablePermissions.map(
+                            ({ id, label, description }) => {
+                                return (
+                                    <FormItem variant={"checkbox"} key={id}>
                                         <FormControl>
                                             <Checkbox
-                                                checked={field.value?.includes(
-                                                    item.id
+                                                checked={field?.value?.includes(
+                                                    id
                                                 )}
                                                 onCheckedChange={(checked) => {
                                                     return checked
                                                         ? field.onChange([
                                                               ...field.value,
-                                                              item.id,
+                                                              id,
                                                           ])
                                                         : field.onChange(
-                                                              field.value?.filter(
+                                                              field?.value?.filter(
                                                                   (value) =>
                                                                       value !==
-                                                                      item.id
+                                                                      id
                                                               )
                                                           );
                                                 }}
                                                 {...field}
                                             />
                                         </FormControl>
-                                        <FormLabel
-                                            variant={"checkbox"}
-                                            selected={field.value?.includes(
-                                                item.id
-                                            )}
+                                        <Tooltip
+                                            content={description}
+                                            className={"tooltipPermissions"}
                                         >
-                                            {item.label}
-                                        </FormLabel>
+                                            <FormLabel
+                                                variant={"checkbox"}
+                                                selected={field?.value?.includes(
+                                                    id
+                                                )}
+                                            >
+                                                {label}
+                                            </FormLabel>
+                                        </Tooltip>
                                     </FormItem>
-                                )}
-                            />
-                        ))}
+                                );
+                            }
+                        )}
                         <FormMessage />
                     </FormItem>
                 )}
