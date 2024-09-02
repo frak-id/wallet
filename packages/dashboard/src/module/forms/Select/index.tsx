@@ -23,7 +23,7 @@ const SelectTriggerVariants = cva(styles.select__trigger, {
     },
 });
 
-interface SelectTriggerProps
+export interface SelectTriggerProps
     extends ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>,
         VariantProps<typeof SelectTriggerVariants> {}
 
