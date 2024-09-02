@@ -4,9 +4,11 @@ import { Badge } from "@/module/common/component/Badge";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { ButtonAddTeam } from "@/module/product/component/ButtonAddTeam";
 import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
+import { permissionLabels } from "@/module/product/utils/permissions";
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
 import { Skeleton } from "@module/component/Skeleton";
+import { Tooltip } from "@module/component/Tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -23,7 +25,9 @@ const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
     }
 );
 
-type TableData = Awaited<ReturnType<typeof getProductAdministrators>>[number];
+type TableData = Awaited<
+    ReturnType<typeof getProductAdministrators>
+>[number] & { isMe: boolean };
 
 type TableMetas = {
     page: number;
@@ -33,10 +37,24 @@ type TableMetas = {
 const columnHelper = createColumnHelper<TableData>();
 
 export function TableTeam({ productId }: { productId: bigint }) {
+    const { data: walletStatus } = useWalletStatus();
+
     const { data: administrators, isLoading } = useQuery({
-        queryKey: ["product", "team", productId.toString()],
-        queryFn: () =>
-            getProductAdministrators({ productId: toHex(productId) }),
+        queryKey: ["product", "team", productId.toString(), walletStatus?.key],
+        queryFn: async () => {
+            const administrators = await getProductAdministrators({
+                productId: toHex(productId),
+            });
+            if (walletStatus?.key !== "connected")
+                return administrators.map((admin) => ({
+                    ...admin,
+                    isMe: false,
+                }));
+            return administrators.map((admin) => ({
+                ...admin,
+                isMe: isAddressEqual(admin.wallet, walletStatus.wallet),
+            }));
+        },
     });
 
     const columns = useMemo(
@@ -45,19 +63,17 @@ export function TableTeam({ productId }: { productId: bigint }) {
                 columnHelper.accessor("wallet", {
                     enableSorting: false,
                     header: "Wallet",
-                    cell: ({ getValue }) => (
+                    cell: ({ getValue, row }) => (
                         <Button
                             variant={"ghost"}
                             className={styles.table__buttonWallet}
                         >
-                            {getValue()}
+                            {row.original.isMe
+                                ? `Me (${getValue()})`
+                                : getValue()}
                         </Button>
                     ),
                 }),
-                /*columnHelper.display({
-                    header: "Member",
-                    cell: "John Doe",
-                }),*/
                 columnHelper.accessor("roleDetails", {
                     enableSorting: false,
                     header: "Permission",
@@ -111,6 +127,10 @@ function CellActions({
 
     // Check if the user can do actions
     const canDoActions = useMemo(() => {
+        // If it's the admin role, disable permissions
+        if (row.original.roleDetails.admin) return false;
+
+        // If we are the product owner, we can do everything
         if (isProductOwner) return true;
 
         // Otherwise, check if the user is the current cell
@@ -202,10 +222,18 @@ function PermissionsBadge({
     const badges = [];
 
     if (roleDetails.productManager) {
-        badges.push(<Badge variant={"warning"}>Product</Badge>);
+        badges.push(
+            <Tooltip content={permissionLabels.productManager.description}>
+                <Badge variant={"warning"}>Product</Badge>
+            </Tooltip>
+        );
     }
     if (roleDetails.campaignManager) {
-        badges.push(<Badge variant={"warning"}>Campaign</Badge>);
+        badges.push(
+            <Tooltip content={permissionLabels.campaignManager.description}>
+                <Badge variant={"warning"}>Product</Badge>
+            </Tooltip>
+        );
     }
     return <span className={styles.table__badges}>{badges}</span>;
 }

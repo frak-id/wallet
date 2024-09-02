@@ -34,16 +34,6 @@ export function ManageProductTeam({ productId }: { productId: bigint }) {
 
     return (
         <Panel title={"Manage your team"}>
-            {/* Display the add administrator form if it's a product owner */}
-            {/*isProductOwner && (
-                <div>
-                    <p>Add an administrator</p>
-                    <input type="text" placeholder="Wallet address" />
-                    <button disabled={isUpdatingAdministrators} type={"button"}>
-                        Add
-                    </button>
-                </div>
-            )*/}
             {/* Display the administrators */}
             <TableTeam productId={productId} />
         </Panel>

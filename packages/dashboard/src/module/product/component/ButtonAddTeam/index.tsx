@@ -13,6 +13,7 @@ import {
 } from "@/module/forms/Form";
 import { useAddProductMember } from "@/module/product/hook/useAddProductMember";
 import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
+import { permissionLabelsArray } from "@/module/product/utils/permissions";
 import { Button } from "@module/component/Button";
 import { Tooltip } from "@module/component/Tooltip";
 import { Checkbox } from "@module/component/forms/Checkbox";
@@ -36,28 +37,6 @@ type FormAddTeamMembers = {
     wallet?: Address;
     permissions: RolesKeys[];
 };
-
-/**
- * List of available permissions with label + description
- */
-const availablePermissions: {
-    id: RolesKeys;
-    label: string;
-    description: string;
-}[] = [
-    {
-        id: "productManager",
-        label: "Product manager",
-        description:
-            "Product manager can manage the interaction contract and update it.",
-    },
-    {
-        id: "campaignManager",
-        label: "Campaign manager",
-        description:
-            "Campaign manager can deploy campaigns, put them on standby, and delete them.",
-    },
-];
 
 export function ButtonAddTeam({
     productId,
@@ -252,7 +231,7 @@ function FormPermissions(
                         >
                             Choose the permission for the new operator.
                         </FormDescription>
-                        {availablePermissions.map(
+                        {permissionLabelsArray.map(
                             ({ id, label, description }) => {
                                 return (
                                     <FormItem variant={"checkbox"} key={id}>
