@@ -15,100 +15,34 @@ import { Button } from "@module/component/Button";
 import { Skeleton } from "@module/component/Skeleton";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
-import { usePrevious } from "@uidotdev/usehooks";
 import { useSetAtom } from "jotai/index";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { capitalize } from "radash";
-import { useEffect, useMemo, useState } from "react";
-import useSessionStorageState from "use-session-storage-state";
+import { useMemo, useState } from "react";
 import styles from "./index.module.css";
 
-const Table = dynamic<ReactTableProps<CampaignWithState, TableMetas>>(
+const Table = dynamic<ReactTableProps<CampaignWithState>>(
     () => import("@/module/common/component/Table").then((mod) => mod.Table),
     {
         loading: () => <Skeleton />,
     }
 );
 
-type TableMetas = {
-    page: number;
-    limit: number;
-    firstPage: string;
-    lastPage: string;
-    nextPage: string;
-    previousPage: string;
-    totalPages: number;
-    totalResults: number;
-};
-
 const columnHelper = createColumnHelper<CampaignWithState>();
-
-const initialFilteringState = { page: 1 };
 
 export function TableCampaigns() {
     const { data, isLoading } = useGetCampaigns();
-    const [localTitle] = useSessionStorageState("title-autocomplete", {
-        defaultValue: "",
-    });
-    const [filtering, setFiltering] = useSessionStorageState(
-        "table-filtering",
-        {
-            defaultValue: initialFilteringState,
-        }
-    );
-    const previousTitle = usePrevious(localTitle);
     const {
         mutate: onUpdateCampaignRunningStatus,
         isPending: isUpdatingCampaignState,
     } = useUpdateCampaignRunningStatus();
 
-    useEffect(() => {
-        if (previousTitle === undefined) {
-            return;
-        }
-        if (localTitle !== previousTitle) {
-            setFiltering(initialFilteringState);
-        }
-    }, [localTitle, previousTitle, setFiltering]);
-
     const columns = useMemo(
         () =>
             [
-                /*columnHelper.display({
-                    id: "checkbox",
-                    header: ({ table }) => (
-                        <Checkbox
-                            {...{
-                                checked: table.getIsSomeRowsSelected()
-                                    ? "indeterminate"
-                                    : table.getIsAllPageRowsSelected(),
-                                onCheckedChange: (checked) => {
-                                    if (checked !== "indeterminate") {
-                                        table.toggleAllPageRowsSelected(
-                                            checked
-                                        );
-                                    }
-                                },
-                            }}
-                        />
-                    ),
-                    cell: ({ row }) => (
-                        <Checkbox
-                            {...{
-                                checked: row.getIsSelected() ?? "indeterminate",
-                                disabled: !row.getCanSelect(),
-                                onCheckedChange: (checked) => {
-                                    if (checked !== "indeterminate") {
-                                        row.toggleSelected(checked);
-                                    }
-                                },
-                            }}
-                        />
-                    ),
-                }),*/
                 columnHelper.accessor("state", {
                     enableSorting: false,
                     header: "On/Off",
@@ -146,7 +80,7 @@ export function TableCampaigns() {
                     ),
                 }),
                 columnHelper.accessor("state", {
-                    enableSorting: false,
+                    enableSorting: true,
                     header: () => "Status",
                     id: "state",
                     cell: ({ getValue }) => (
@@ -154,7 +88,6 @@ export function TableCampaigns() {
                     ),
                 }),
                 {
-                    enableSorting: false,
                     id: "Date",
                     header: () => "Date",
                     accessorFn: (row) =>
@@ -162,7 +95,6 @@ export function TableCampaigns() {
                         formatDate(new Date(row.scheduled.dateStart)),
                 },
                 columnHelper.accessor("budget.maxEuroDaily", {
-                    enableSorting: false,
                     header: () => "Budget",
                     cell: ({ getValue, row }) => {
                         return (
@@ -191,18 +123,7 @@ export function TableCampaigns() {
         return <Skeleton />;
     }
 
-    return (
-        data && (
-            <Table
-                data={data}
-                limit={data.length}
-                columns={columns}
-                filtering={filtering}
-                setFiltering={setFiltering}
-                pagination={false}
-            />
-        )
-    );
+    return data && <Table data={data} columns={columns} enableSorting={true} />;
 }
 
 /**

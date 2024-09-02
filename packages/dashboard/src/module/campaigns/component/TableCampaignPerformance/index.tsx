@@ -7,13 +7,11 @@ import { useQuery } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Table as TableReact } from "@tanstack/react-table";
-import { usePrevious } from "@uidotdev/usehooks";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
-import useSessionStorageState from "use-session-storage-state";
+import { useMemo } from "react";
 
-const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
+const Table = dynamic<ReactTableProps<TableData>>(
     () => import("@/module/common/component/Table").then((mod) => mod.Table),
     {
         loading: () => <Skeleton />,
@@ -22,20 +20,7 @@ const Table = dynamic<ReactTableProps<TableData, TableMetas>>(
 
 type TableData = Awaited<ReturnType<typeof getMyCampaignsStats>>[number];
 
-type TableMetas = {
-    page: number;
-    limit: number;
-    firstPage: string;
-    lastPage: string;
-    nextPage: string;
-    previousPage: string;
-    totalPages: number;
-    totalResults: number;
-};
-
 const columnHelper = createColumnHelper<TableData>();
-
-const initialFilteringState = { page: 1 };
 
 function sumRows(
     table: TableReact<TableData>,
@@ -72,26 +57,6 @@ export function TableCampaignPerformance() {
         queryKey: ["campaigns", "my-campaigns-stats"],
         queryFn: async () => await getMyCampaignsStats(),
     });
-
-    const [localTitle] = useSessionStorageState("title-autocomplete", {
-        defaultValue: "",
-    });
-    const [filtering, setFiltering] = useSessionStorageState(
-        "table-filtering",
-        {
-            defaultValue: initialFilteringState,
-        }
-    );
-    const previousTitle = usePrevious(localTitle);
-
-    useEffect(() => {
-        if (previousTitle === undefined) {
-            return;
-        }
-        if (localTitle !== previousTitle) {
-            setFiltering(initialFilteringState);
-        }
-    }, [localTitle, previousTitle, setFiltering]);
 
     const columns = useMemo(
         () =>
@@ -174,14 +139,7 @@ export function TableCampaignPerformance() {
 
     return (
         <>
-            <Table
-                data={data}
-                limit={data.length}
-                columns={columns}
-                filtering={filtering}
-                setFiltering={setFiltering}
-                pagination={false}
-            />
+            <Table data={data} columns={columns} enableSorting={true} />
         </>
     );
 }

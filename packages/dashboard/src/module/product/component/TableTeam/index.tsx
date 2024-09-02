@@ -20,20 +20,16 @@ import { useMemo } from "react";
 import { isAddressEqual, toHex } from "viem";
 import styles from "./index.module.css";
 
-const Table = dynamic<
-    ReactTableProps<ManageTeamTableData, ManageTeamTableMetas>
->(() => import("@/module/common/component/Table").then((mod) => mod.Table), {
-    loading: () => <Skeleton />,
-});
+const Table = dynamic<ReactTableProps<ManageTeamTableData>>(
+    () => import("@/module/common/component/Table").then((mod) => mod.Table),
+    {
+        loading: () => <Skeleton />,
+    }
+);
 
 export type ManageTeamTableData = Awaited<
     ReturnType<typeof getProductAdministrators>
 >[number] & { isMe: boolean };
-
-type ManageTeamTableMetas = {
-    page: number;
-    limit: number;
-};
 
 const columnHelper = createColumnHelper<ManageTeamTableData>();
 
@@ -100,9 +96,7 @@ export function TableTeam({ productId }: { productId: bigint }) {
         <>
             <Table
                 data={administrators}
-                limit={administrators.length}
                 columns={columns}
-                pagination={false}
                 preTable={
                     <ButtonAddTeam productId={productId}>
                         <Button variant={"submit"}>Add Team Member</Button>
