@@ -35,6 +35,7 @@ import { productTypesMask } from "@frak-labs/nexus-sdk/core";
 import { Button } from "@module/component/Button";
 import { Input, type InputProps } from "@module/component/forms/Input";
 import { Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./index.module.css";
@@ -46,6 +47,7 @@ type FormProduct = {
 };
 
 export function ProductDetails({ productId }: { productId: bigint }) {
+    const router = useRouter();
     const {
         data: product,
         isLoading: productIsLoading,
@@ -214,7 +216,12 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                 <ActionsWrapper
                     left={
                         <>
-                            <Button variant={"outline"}>Cancel</Button>
+                            <Button
+                                variant={"outline"}
+                                onClick={() => router.push("/dashboard")}
+                            >
+                                Cancel
+                            </Button>
                             {editProductSuccess && <ActionsMessageSuccess />}
                         </>
                     }
