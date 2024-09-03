@@ -30,6 +30,13 @@ export function SiweAuthenticateModalStep({
             ...params.siwe,
             address,
             chainId,
+            expirationTime: params?.siwe?.expirationTimeTimestamp
+                ? new Date(params.siwe.expirationTimeTimestamp)
+                : undefined,
+            notBefore: params.siwe.notBeforeTimestamp
+                ? new Date(params.siwe.notBeforeTimestamp)
+                : undefined,
+            issuedAt: new Date(),
         };
     }, [params, address, chainId]);
 

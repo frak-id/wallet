@@ -5,6 +5,7 @@ import type { AuthSession, AuthSessionClient } from "@/types/AuthSession";
 import { getIronSession } from "iron-session";
 import type { SessionOptions } from "iron-session";
 import { cookies, headers } from "next/headers";
+import { guard } from "radash";
 import { type Hex, keccak256, toHex } from "viem";
 import {
     parseSiweMessage,
@@ -92,9 +93,21 @@ export async function deleteSession() {
  */
 export async function getSession(): Promise<AuthSessionClient | null> {
     const session = await getFullSession();
-    if (!session.wallet) return null;
+    if (!(session.wallet && session.siwe.message)) return null;
 
-    // todo: siwe check every 2 hours??
+    const message = parseSiweMessage(session.siwe.message);
+    if (!message) {
+        await deleteSession();
+        return null;
+    }
+    if (
+        !message.expirationTime ||
+        message.expirationTime.getTime() < Date.now()
+    ) {
+        // We ensure it won't fail since if fetch in the middleware it wouldn't be valid
+        await guard(() => deleteSession());
+        return null;
+    }
 
     return {
         wallet: session.wallet,
