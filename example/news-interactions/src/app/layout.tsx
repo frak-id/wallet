@@ -32,7 +32,6 @@ export const metadata: Metadata = {
     publisher: "Frak labs",
     manifest: "/manifest.json",
     keywords: ["frak", "blockchain", "nexus", "wallet", "ethcc"],
-    // TODO: Twitter, openGraph, appleWebApp?
 };
 
 export const viewport: Viewport = {

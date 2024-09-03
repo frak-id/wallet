@@ -4,12 +4,13 @@ import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "../polyfill/bigint-serialization";
+import { isRunningInProd } from "@/context/common/env";
 
 export const metadata: Metadata = {
-    title: "Nexus Dashboard by Frak",
-    applicationName: "Nexus Dashboard",
+    title: "Nexus Business Hub | Manage Your Web3 Products",
+    applicationName: "Nexus Business Hub",
     description:
-        "The simple and cross-platform wallet to centralise your contents.",
+        "Nexus Business Hub: Deploy, manage, and optimize your Web3 products. Create blockchain-based campaigns, track interactions, and grow your community in the decentralized ecosystem.",
     authors: [
         { name: "Frak labs", url: "https://frak.id/" },
         { name: "Rodolphe Stoclin", url: "https://github.com/srod" },
@@ -30,8 +31,34 @@ export const metadata: Metadata = {
     creator: "Frak labs",
     publisher: "Frak labs",
     manifest: "/manifest.json",
-    keywords: ["dashboard", "community", "frak", "blockchain", "nexus"],
-    // TODO: Twitter, openGraph, appleWebApp?
+    keywords: [
+        "web3",
+        "blockchain",
+        "product management",
+        "decentralized",
+        "business dashboard",
+        "campaign management",
+        "community building",
+        "nexus",
+        "frak",
+    ],
+    openGraph: {
+        type: "website",
+        url: isRunningInProd
+            ? "https://business.frak.id"
+            : "https://business-dev.frak.id",
+        title: "Nexus Business Hub | Manage Your Web3 Products",
+        description:
+            "Deploy, manage, and optimize your Web3 products with Nexus Business Hub. Create blockchain-based campaigns and grow your community.",
+        siteName: "Nexus Business Hub",
+    },
+    twitter: {
+        card: "summary_large_image",
+        site: "@frak_defi",
+        title: "Nexus Business Hub | Manage Your Web3 Products",
+        description:
+            "Deploy, manage, and optimize your Web3 products with Nexus Business Hub. Create blockchain-based campaigns and grow your community.",
+    },
 };
 
 export const viewport: Viewport = {

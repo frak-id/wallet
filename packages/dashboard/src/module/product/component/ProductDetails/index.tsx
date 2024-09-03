@@ -3,7 +3,6 @@
 import { ActionsWrapper } from "@/module/campaigns/component/Actions";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
-import { useProduct } from "@/module/product/hook/useProduct";
 import {
     Form,
     FormControl,
@@ -23,6 +22,7 @@ import {
 import type { SelectTriggerProps } from "@/module/forms/Select";
 import { InteractionContract } from "@/module/product/component/ProductDetails/InteractionContract";
 import { ManageProductTeam } from "@/module/product/component/ProductDetails/ManageTeam";
+import { useProduct } from "@/module/product/hook/useProduct";
 import { Button } from "@module/component/Button";
 import { Input, type InputProps } from "@module/component/forms/Input";
 import { Pencil } from "lucide-react";
