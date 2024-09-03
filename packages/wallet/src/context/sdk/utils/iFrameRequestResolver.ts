@@ -62,15 +62,6 @@ export function createIFrameRequestResolver(
 
     // Listen to the window message
     const onMessage = async (message: MessageEvent<IFrameEvent>) => {
-        // TODO: Check that the origin match one of our providers
-        // TODO: Populate the request with a bit of context??
-        // TODO: Product id is just a hash of the origin.domain so we can totally parse it and check when needed?
-        // TODO: - Like a few sensitive RPC only callable by minted product?
-        // TODO: - Maybe a logic where product using the prod wallet need to have a stake somewhere?
-        console.log("Received a request message from in the iframe", {
-            message,
-        });
-
         // Parse the origin URL
         const url = new URL(message.origin);
 

@@ -26,7 +26,6 @@ export function useGenerateRecoveryOptions() {
 
             // Get the recovery options
             const options = await generateRecoveryData({
-                wallet,
                 guardianAddress: burnerAddress,
             });
 

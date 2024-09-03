@@ -146,7 +146,7 @@ export function smartAccountConnector<
             // Not relevant
         },
         onChainChanged() {
-            // Not relevant -> TODO: But are we sure about that?
+            // Not relevant
         },
         onDisconnect() {
             config.emitter.emit("disconnect");

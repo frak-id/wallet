@@ -1,23 +1,20 @@
 "use server";
 
 import { kernelAddresses } from "@/context/blockchain/addresses";
-import { isRunningInProd } from "@/context/common/env";
 import {
     doAddPassKeyFnAbi,
     setExecutionAbi,
 } from "@/context/recover/utils/abi";
 import type { GeneratedRecoveryData } from "@/types/Recovery";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
+import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
 
 /**
  * Generate the recovery data
- * TODO: Is wallet rly needed? Should we perform check beforehand?
  */
 export async function generateRecoveryData({
     guardianAddress,
 }: {
-    wallet: WebAuthNWallet;
     guardianAddress: Address;
 }): Promise<GeneratedRecoveryData> {
     // Get the recovery selector
