@@ -62,14 +62,11 @@ export function TableTeam({ productId }: { productId: bigint }) {
                     enableSorting: false,
                     header: "Wallet",
                     cell: ({ getValue, row }) => (
-                        <Button
-                            variant={"ghost"}
-                            className={styles.table__buttonWallet}
-                        >
+                        <>
                             {row.original.isMe
                                 ? `Me (${getValue()})`
                                 : getValue()}
-                        </Button>
+                        </>
                     ),
                 }),
                 columnHelper.accessor("roleDetails", {
@@ -189,14 +186,20 @@ function PermissionsBadge({
 
     if (roleDetails.productManager) {
         badges.push(
-            <Tooltip content={permissionLabels.productManager.description}>
+            <Tooltip
+                content={permissionLabels.productManager.description}
+                key={"productManager"}
+            >
                 <Badge variant={"warning"}>Product</Badge>
             </Tooltip>
         );
     }
     if (roleDetails.campaignManager) {
         badges.push(
-            <Tooltip content={permissionLabels.campaignManager.description}>
+            <Tooltip
+                content={permissionLabels.campaignManager.description}
+                key={"campaignManager"}
+            >
                 <Badge variant={"warning"}>Campaign</Badge>
             </Tooltip>
         );
