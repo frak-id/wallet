@@ -7,9 +7,9 @@ import { readContract } from "viem/actions";
 /**
  * Hook to get the product metadata
  */
-export function useProduct({ productId }: { productId: string }) {
+export function useProductMetadata({ productId }: { productId: string }) {
     return useQuery({
-        queryKey: ["product", productId],
+        queryKey: ["product", "metadata", productId],
         queryFn: () =>
             readContract(viemClient, {
                 address: addresses.productRegistry,

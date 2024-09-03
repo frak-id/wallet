@@ -18,8 +18,6 @@ type ReadPubKeyResult = Readonly<{
 export async function handler(
     event: ReadPubKeyEvent
 ): Promise<ReadPubKeyResult> {
-    console.log("Reading public key for event", event);
-
     // Case for product id
     if (event.productId) {
         if (!isHex(event.productId)) {

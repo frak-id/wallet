@@ -23,10 +23,10 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { SelectTriggerProps } from "@/module/forms/Select";
-import { InteractionContract } from "@/module/product/component/ProductDetails/InteractionContract";
+import { InteractionSettings } from "@/module/product/component/ProductDetails/InteractionSettings";
 import { ManageProductTeam } from "@/module/product/component/ProductDetails/ManageTeam";
 import { useEditProduct } from "@/module/product/hook/useEditProduct";
-import { useProduct } from "@/module/product/hook/useProduct";
+import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import {
     decodeProductTypesMask,
     productTypesLabel,
@@ -52,7 +52,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
         data: product,
         isLoading: productIsLoading,
         isPending: productIsPending,
-    } = useProduct({ productId: productId.toString() });
+    } = useProductMetadata({ productId: productId.toString() });
     const {
         mutate: editProduct,
         isSuccess: editProductSuccess,
@@ -102,7 +102,6 @@ export function ProductDetails({ productId }: { productId: bigint }) {
     return (
         <FormLayout>
             <Form {...form}>
-                <InteractionContract productId={productId} />
                 {!(productIsLoading || productIsPending) && (
                     <Panel title={product?.name}>
                         <FormField
@@ -213,6 +212,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                     </Panel>
                 )}
                 <ManageProductTeam productId={productId} />
+                <InteractionSettings productId={productId} />
                 <ActionsWrapper
                     left={
                         <>

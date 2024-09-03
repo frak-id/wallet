@@ -1,6 +1,6 @@
+import { LambdaClient } from "@aws-sdk/client-lambda";
 import { SQSClient } from "@aws-sdk/client-sqs";
 import { memo } from "radash";
-import {LambdaClient} from "@aws-sdk/client-lambda";
 
 /**
  * Get an AWS sqs client
