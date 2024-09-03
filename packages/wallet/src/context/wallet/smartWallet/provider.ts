@@ -16,11 +16,8 @@ import {
     createSmartAccountClient,
 } from "permissionless";
 import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
-import { tryit } from "radash";
-import type { Chain, Transport } from "viem";
-import { paymasterActions } from "viem/account-abstraction";
+import type { Transport } from "viem";
 import type { SmartAccount } from "viem/account-abstraction";
-import { estimateGas } from "viem/actions";
 
 /**
  * Get the current authenticated wallet
@@ -47,14 +44,13 @@ type SmartAccountProvierParameters = {
  */
 export function getSmartAccountProvider<
     transport extends Transport = Transport,
-    chains extends readonly Chain[] = Chain[],
     account extends SmartAccountV06 = SmartAccountV06,
 >({ onAccountChanged }: SmartAccountProvierParameters) {
     console.log("Building a new smart account provider");
     // A few types shortcut
     type ConnectorClient = SmartAccountClient<
         transport,
-        chains[number],
+        typeof currentChain,
         SmartAccount<account>
     > & {
         estimateGas?: () => undefined | bigint;
@@ -139,23 +135,12 @@ export function getSmartAccountProvider<
  */
 async function buildSmartAccount<
     transport extends Transport = Transport,
-    chains extends readonly Chain[] = Chain[],
     account extends SmartAccountV06 = SmartAccountV06,
 >({
     wallet,
 }: { wallet: WebAuthNWallet }): Promise<
-    SmartAccountClient<transport, chains[number], SmartAccount<account>> & {
-        estimateGas?: () => undefined | bigint;
-    }
+    SmartAccountClient<transport, typeof currentChain, SmartAccount<account>>
 > {
-    type Client = SmartAccountClient<
-        transport,
-        chains[number],
-        SmartAccount<account>
-    > & {
-        estimateGas?: () => undefined | bigint;
-    };
-
     // Get the smart wallet client
     const smartAccount = await nexusSmartAccount(currentViemClient, {
         authenticatorId: wallet.authenticatorId,
@@ -179,10 +164,9 @@ async function buildSmartAccount<
     // Get the bundler and paymaster clients
     const pimlicoTransport = getPimlicoTransport();
     const pimlicoClient = getPimlicoClient();
-    const pmActions = paymasterActions(pimlicoClient);
 
     // Build the smart wallet client
-    const client = createSmartAccountClient({
+    return createSmartAccountClient({
         account: smartAccount,
         chain: currentChain,
         bundlerTransport: pimlicoTransport,
@@ -196,30 +180,10 @@ async function buildSmartAccount<
             },
         },
         // Get the right paymaster datas
-        paymaster: {
-            getPaymasterData: async (userOperation) => {
-                const [, estimation] = await tryit(() =>
-                    estimateGas(currentViemClient, {
-                        account: userOperation.sender,
-                        to: userOperation.sender,
-                        data: userOperation.callData,
-                    })
-                )();
-                if (!estimation) {
-                    return pmActions.getPaymasterData(userOperation);
-                }
-                // Use the estimation with 25% of error margin on the estimation
-                userOperation.callGasLimit = (estimation * 125n) / 100n;
-                return pmActions.getPaymasterData(userOperation);
-            },
-        },
-    }) as unknown as Client;
-
-    // Override the estimate gas method
-    // https://github.com/wevm/wagmi/blob/main/packages/core/src/actions/sendTransaction.ts#L77
-    client.estimateGas = () => {
-        return undefined;
-    };
-
-    return client;
+        paymaster: true,
+    }) as SmartAccountClient<
+        transport,
+        typeof currentChain,
+        SmartAccount<account>
+    >;
 }

@@ -17,7 +17,6 @@ import {
     keccak256,
     toHex,
 } from "viem";
-import { paymasterActions } from "viem/account-abstraction";
 import { useClient } from "wagmi";
 
 type MutationParams = {
@@ -59,7 +58,6 @@ export function usePerformRecovery(
             // TODO: We should ensure that the new wallet is different from the initial wallet
 
             // Build the recovery account
-            // @ts-ignore: The useClient hook doesn't expose a client with the PublicRpcSchema, should be fixed
             const smartAccount = await recoverySmartAccount(client, {
                 localAccount: recoveryAccount,
                 initialWallet: file.initialWallet,
@@ -68,7 +66,6 @@ export function usePerformRecovery(
             // Get the bundler and paymaster clients
             const pimlicoTransport = getPimlicoTransport();
             const pimlicoClient = getPimlicoClient();
-            const pmActions = paymasterActions(pimlicoClient);
 
             // Build the smart wallet client
             const accountClient = createSmartAccountClient({
@@ -84,11 +81,7 @@ export function usePerformRecovery(
                         return standard;
                     },
                 },
-                paymaster: {
-                    getPaymasterData: async (userOperation) => {
-                        return pmActions.getPaymasterData(userOperation);
-                    },
-                },
+                paymaster: true,
             });
 
             // Build the function data

@@ -1,4 +1,5 @@
 import { kernelAddresses } from "@/context/blockchain/addresses";
+import type { currentViemClient } from "@/context/blockchain/provider";
 import {
     type SmartAccountV06,
     getAccountInitCode,
@@ -6,9 +7,11 @@ import {
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { isSmartAccountDeployed } from "permissionless";
 import { getAccountNonce } from "permissionless/actions";
+import { memo, tryit } from "radash";
 import {
     type Chain,
     type Client,
+    type Hex,
     type LocalAccount,
     type Transport,
     concatHex,
@@ -22,7 +25,7 @@ import {
     getUserOperationHash,
     toSmartAccount,
 } from "viem/account-abstraction";
-import { signMessage } from "viem/actions";
+import { estimateGas, signMessage } from "viem/actions";
 
 export type NexusRecoverySmartAccount = SmartAccountV06;
 
@@ -34,8 +37,8 @@ export type NexusRecoverySmartAccount = SmartAccountV06;
  */
 export function recoverySmartAccount<
     TAccountSource extends string,
-    TTransport extends Transport = Transport,
-    TChain extends Chain = Chain,
+    TTransport extends Transport,
+    TChain extends Chain,
 >(
     client: Client<TTransport, TChain>,
     {
@@ -49,15 +52,14 @@ export function recoverySmartAccount<
     if (!initialWallet?.address) throw new Error("Account address not found");
 
     // Helper to check if the smart account is already deployed (with caching)
-    let smartAccountDeployed = false;
-    const isKernelAccountDeployed = async () => {
-        if (smartAccountDeployed) return true;
-        smartAccountDeployed = await isSmartAccountDeployed(
-            client,
-            initialWallet.address
-        );
-        return smartAccountDeployed;
-    };
+    const isKernelAccountDeployed = memo(
+        async () => {
+            return await isSmartAccountDeployed(client, initialWallet.address);
+        },
+        {
+            key: () => `${initialWallet.address}-id-deployed`,
+        }
+    );
 
     // Build the smart account itself
     return toSmartAccount({
@@ -147,6 +149,29 @@ export function recoverySmartAccount<
             throw new Error(
                 "Recovery account doesn't support message signature"
             );
+        },
+        userOperation: {
+            // Custom override for gas estimation
+            async estimateGas(userOperation) {
+                if (!userOperation.callData) {
+                    return undefined;
+                }
+
+                const [, estimation] = await tryit(() =>
+                    estimateGas(client as typeof currentViemClient, {
+                        account: userOperation.sender ?? initialWallet.address,
+                        to: userOperation.sender ?? initialWallet.address,
+                        data: userOperation.callData as Hex,
+                    })
+                )();
+                if (!estimation) {
+                    return undefined;
+                }
+                // Use the estimation with 25% of error margin on the estimation
+                return {
+                    callGasLimit: (estimation * 125n) / 100n,
+                };
+            },
         },
     });
 }

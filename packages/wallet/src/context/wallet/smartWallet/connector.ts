@@ -1,7 +1,7 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
-import type { Chain, Transport } from "viem";
+import type { Transport } from "viem";
 import { createConnector } from "wagmi";
 
 smartAccountConnector.type = "nexusSmartAccountConnector" as const;
@@ -11,12 +11,11 @@ smartAccountConnector.type = "nexusSmartAccountConnector" as const;
  */
 export function smartAccountConnector<
     transport extends Transport = Transport,
-    chains extends readonly Chain[] = Chain[],
     account extends SmartAccountV06 = SmartAccountV06,
 >() {
     // A few types shortcut
     type Provider = ReturnType<
-        typeof getSmartAccountProvider<transport, chains, account>
+        typeof getSmartAccountProvider<transport, account>
     >;
 
     // The current provider
@@ -27,6 +26,7 @@ export function smartAccountConnector<
         id: "nexus-connector",
         name: "Nexus Smart Account",
         type: smartAccountConnector.type,
+        supportsSimulation: true,
 
         /**
          * On setup, create the account for the first chain in the config

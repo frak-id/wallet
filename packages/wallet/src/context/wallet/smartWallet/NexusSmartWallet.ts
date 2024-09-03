@@ -1,7 +1,7 @@
 import { kernelAddresses } from "@/context/blockchain/addresses";
+import type { currentViemClient } from "@/context/blockchain/provider";
 import { KernelExecuteAbi } from "@/context/wallet/abi/kernel-account-abis";
 import {
-    type AccountMetadata,
     fetchAccountMetadata,
     wrapMessageForSignature,
 } from "@/context/wallet/smartWallet/signature";
@@ -16,6 +16,7 @@ import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
 import { isSmartAccountDeployed } from "permissionless";
 import { getAccountNonce } from "permissionless/actions";
+import { memo, tryit } from "radash";
 import {
     type Address,
     type Chain,
@@ -41,6 +42,7 @@ import {
     getUserOperationHash,
     toSmartAccount,
 } from "viem/account-abstraction";
+import { estimateGas } from "viem/actions";
 
 export type NexusSmartAccount = SmartAccountV06;
 
@@ -88,8 +90,8 @@ function formatSignature({
  * @param deployedAccountAddress
  */
 export async function nexusSmartAccount<
-    TTransport extends Transport = Transport,
-    TChain extends Chain = Chain,
+    TTransport extends Transport,
+    TChain extends Chain,
 >(
     client: Client<TTransport, TChain>,
     {
@@ -130,24 +132,24 @@ export async function nexusSmartAccount<
         preDeterminedAccountAddress ?? computedAccountAddress;
 
     // Helper to check if the smart account is already deployed (with caching)
-    let smartAccountDeployed = false;
-    const isKernelAccountDeployed = async () => {
-        if (smartAccountDeployed) return true;
-        smartAccountDeployed = await isSmartAccountDeployed(
-            client,
-            accountAddress
-        );
-        return smartAccountDeployed;
-    };
+    const isKernelAccountDeployed = memo(
+        async () => {
+            return await isSmartAccountDeployed(client, accountAddress);
+        },
+        {
+            key: () => `${accountAddress}-id-deployed`,
+        }
+    );
 
     // Helper fetching the account metadata (used for msg signing)
-    let accountMetadata: AccountMetadata | undefined = undefined;
-    const getAccountMetadata = async () => {
-        if (accountMetadata) return accountMetadata;
-        // Fetch the account metadata
-        accountMetadata = await fetchAccountMetadata(client, accountAddress);
-        return accountMetadata;
-    };
+    const getAccountMetadata = memo(
+        async () => {
+            return await fetchAccountMetadata(client, accountAddress);
+        },
+        {
+            key: () => `${accountAddress}-metadata`,
+        }
+    );
 
     // Helper to perform a signature of a hash
     const isRip7212Supported = isRip7212ChainSupported(client.chain.id);
@@ -223,30 +225,10 @@ export async function nexusSmartAccount<
                 entryPointAddress: entryPoint06Address,
             });
         },
-        // Get dummy sig
-        async getStubSignature() {
-            // The max curve value for p256 signature stuff
-            const maxCurveValue =
-                BigInt(
-                    "0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"
-                ) - 1n;
-
-            // Generate a template signature for the webauthn validator
-            const sig = formatSignature({
-                isRip7212Supported,
-                authenticatorIdHash,
-                challengeOffset: maxUint256,
-                rs: [maxCurveValue, maxCurveValue],
-                authenticatorData: `0x${maxUint256.toString(16).repeat(6)}`,
-                clientData: `0x${maxUint256.toString(16).repeat(6)}`,
-            });
-
-            // return the coded signature
-            return concatHex(["0x00000000", sig]);
-        },
 
         // Sign simple hash
         async sign({ hash }) {
+            console.log("Want to signe a simple hash", hash);
             const metadata = await getAccountMetadata();
             const challenge = wrapMessageForSignature({
                 message: hash,
@@ -293,6 +275,50 @@ export async function nexusSmartAccount<
 
             // Always use the sudo mode, since we are starting from the postula that this p256 signer is the default one for the smart account
             return concatHex(["0x00000000", encodedSignature]);
+        },
+        // Get dummy sig
+        async getStubSignature() {
+            // The max curve value for p256 signature stuff
+            const maxCurveValue =
+                BigInt(
+                    "0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"
+                ) - 1n;
+
+            // Generate a template signature for the webauthn validator
+            const sig = formatSignature({
+                isRip7212Supported,
+                authenticatorIdHash,
+                challengeOffset: maxUint256,
+                rs: [maxCurveValue, maxCurveValue],
+                authenticatorData: `0x${maxUint256.toString(16).repeat(6)}`,
+                clientData: `0x${maxUint256.toString(16).repeat(6)}`,
+            });
+
+            // return the coded signature
+            return concatHex(["0x00000000", sig]);
+        },
+        userOperation: {
+            // Custom override for gas estimation
+            async estimateGas(userOperation) {
+                if (!userOperation.callData) {
+                    return undefined;
+                }
+
+                const [, estimation] = await tryit(() =>
+                    estimateGas(client as typeof currentViemClient, {
+                        account: userOperation.sender ?? accountAddress,
+                        to: userOperation.sender ?? accountAddress,
+                        data: userOperation.callData as Hex,
+                    })
+                )();
+                if (!estimation) {
+                    return undefined;
+                }
+                // Use the estimation with 25% of error margin on the estimation
+                return {
+                    callGasLimit: (estimation * 125n) / 100n,
+                };
+            },
         },
     });
 }
