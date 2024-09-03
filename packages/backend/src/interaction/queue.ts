@@ -5,12 +5,14 @@ import type { SQSBatchResponse } from "aws-lambda/trigger/sqs";
 import { all, parallel, sift, tryit } from "radash";
 import * as solady from "solady";
 import { Handler } from "sst/context";
-import { Config } from "sst/node/config";
 import { type Address, type Hex, encodeFunctionData } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
 import { estimateFeesPerGas, estimateGas, sendTransaction } from "viem/actions";
 import { getViemClient } from "../blockchain/client";
 import { recordToInteraction } from "./formatter/recordFormatter";
+import {
+    getInteractionExecutorAccount,
+    initProductInteractionSigner,
+} from "./signer/productSigner";
 
 /**
  * Our invocation queue handler
@@ -18,6 +20,8 @@ import { recordToInteraction } from "./formatter/recordFormatter";
 export const handler = Handler(
     "sqs",
     async (event: SQSEvent): Promise<SQSBatchResponse> => {
+        await initProductInteractionSigner();
+
         // Map each records into interactions
         const interactionsData = await parallel(
             4,
@@ -109,10 +113,7 @@ async function pushInteractions(
     ) as Hex;
 
     // The executor that will submit the interactions
-    // todo: Should be replaced with a kms one
-    const executorAccount = privateKeyToAccount(
-        Config.AIRDROP_PRIVATE_KEY as Hex
-    );
+    const executorAccount = await getInteractionExecutorAccount();
 
     // Estimate the gas consumption and price
     const {

@@ -1,9 +1,10 @@
 import { productInteractionDiamondAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { Config } from "sst/node/config";
 import { type Address, type Hex, concatHex, keccak256 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
 import { readContract, signTypedData } from "viem/actions";
 import { getViemClient } from "../../blockchain/client";
+import { getProductSpecificAccount } from "../signer/productSigner";
+
+const interactionValidatorRoles = 1n << 4n;
 
 /**
  * Generate an interaction validation
@@ -24,8 +25,6 @@ export async function getInteractionSignature({
     interactionContract: Address;
 }): Promise<Hex> {
     const client = getViemClient();
-    // todo: Should ensure we can generate signature for the given `contentId`
-
     const interactionHash = keccak256(facetData);
 
     // Get the current interaction nonce
@@ -35,13 +34,21 @@ export async function getInteractionSignature({
         interactionContract,
     });
 
-    // Sign this interaction data
-    // todo: Temp, only for testing purpose
-    // todo: The signer will be dependant on the contentId, and the signature provider can be an external api endpoint
-    const signerAccount = privateKeyToAccount(
-        Config.INTERACTION_VALIDATOR_PRIVATE_KEY as Hex
-    );
+    // Get the signer for this product
+    const signerAccount = await getProductSpecificAccount({ productId });
 
+    // Check if the signer has the required role
+    const hasSignerRole = await readContract(client, {
+        abi: productInteractionDiamondAbi,
+        address: interactionContract,
+        functionName: "hasAllRoles",
+        args: [signerAccount.address, interactionValidatorRoles],
+    });
+    if (!hasSignerRole) {
+        throw new Error("Signer does not have the required role");
+    }
+
+    // Sign the typed data
     return await signTypedData(client, {
         account: signerAccount,
         domain: {
