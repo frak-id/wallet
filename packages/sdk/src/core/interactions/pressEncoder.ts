@@ -1,10 +1,6 @@
-import { type Hex, concatHex, pad } from "viem";
+import { type Hex, concatHex, pad, toHex } from "viem";
+import { productTypes } from "../constants/productTypes";
 import type { PreparedInteraction } from "../types";
-
-/**
- * Denominator for the press product type
- */
-const PressTypeSelector = "0x02";
 
 /**
  * All the press interactions actions
@@ -24,7 +20,7 @@ function openArticle({ articleId }: { articleId: Hex }): PreparedInteraction {
         pad(articleId, { size: 32 }),
     ]);
     return {
-        handlerTypeDenominator: PressTypeSelector,
+        handlerTypeDenominator: toHex(productTypes.press),
         interactionData,
     };
 }
@@ -39,7 +35,7 @@ function readArticle({ articleId }: { articleId: Hex }): PreparedInteraction {
         pad(articleId, { size: 32 }),
     ]);
     return {
-        handlerTypeDenominator: PressTypeSelector,
+        handlerTypeDenominator: toHex(productTypes.press),
         interactionData,
     };
 }

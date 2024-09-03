@@ -8,6 +8,13 @@ export {
     createIframe,
 } from "./utils";
 
+// Constants
+export {
+    type ProductTypesKey,
+    productTypes,
+    productTypesMask,
+} from "./constants/productTypes";
+
 // Types
 export type {
     // Rpc

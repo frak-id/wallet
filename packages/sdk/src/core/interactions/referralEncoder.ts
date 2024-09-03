@@ -1,10 +1,6 @@
-import { type Address, concatHex, pad } from "viem";
+import { type Address, concatHex, pad, toHex } from "viem";
+import { productTypes } from "../constants/productTypes";
 import type { PreparedInteraction } from "../types";
-
-/**
- * Denominator for the referral product type
- */
-const ReferralTypeSelector = "0x1E";
 
 /**
  * All the referral interactions actions
@@ -23,7 +19,7 @@ function createLink(): PreparedInteraction {
         "0x",
     ]);
     return {
-        handlerTypeDenominator: ReferralTypeSelector,
+        handlerTypeDenominator: toHex(productTypes.referral),
         interactionData,
     };
 }
@@ -38,7 +34,7 @@ function referred({ referrer }: { referrer: Address }): PreparedInteraction {
         pad(referrer, { size: 32 }),
     ]);
     return {
-        handlerTypeDenominator: ReferralTypeSelector,
+        handlerTypeDenominator: toHex(productTypes.referral),
         interactionData,
     };
 }

@@ -3,7 +3,7 @@
 import { ActionsWrapper } from "@/module/campaigns/component/Actions";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
-import { useProduct } from "@/module/dashboard/hooks/useProduct";
+import { useProduct } from "@/module/product/hook/useProduct";
 import {
     Form,
     FormControl,
