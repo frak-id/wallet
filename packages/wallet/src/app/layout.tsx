@@ -4,7 +4,6 @@ import { isRunningInProd } from "@/context/common/env";
 import { getFullSessionStatus } from "@/context/interaction/action/interactionSession";
 import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
-import Script from "next/script";
 import NextTopLoader from "nextjs-toploader";
 import type { ReactNode } from "react";
 
@@ -98,24 +97,6 @@ export default async function RootLayout({
                 >
                     {children}
                 </RootProvider>
-                <Script id="theme" strategy="afterInteractive">
-                    {`
-                    function setTheme(newTheme) {
-                        document.querySelector(":root").dataset.theme = newTheme;
-                    }
-                    const queryDark = "(prefers-color-scheme: dark)";
-                    const watchSystemTheme = window.matchMedia(queryDark);
-                    const themeSystem = watchSystemTheme.matches ? "dark" : "light";
-                    const themeLocalStorage = JSON.parse(localStorage.getItem("theme"));
-                    setTheme(themeLocalStorage ?? themeSystem);
-                    watchSystemTheme.addEventListener("change", function (event) {
-                        const themeLocalStorage = JSON.parse(localStorage.getItem("theme"));
-                        if(themeLocalStorage === null) {
-                            setTheme(event.matches ? "dark" : "light");
-                        }
-                    });
-                `}
-                </Script>
             </body>
         </html>
     );
