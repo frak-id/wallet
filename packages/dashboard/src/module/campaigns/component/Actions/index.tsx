@@ -7,6 +7,7 @@ import {
 import { Panel } from "@/module/common/component/Panel";
 import { Button } from "@module/component/Button";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect } from "react";
 import type { ReactNode } from "react";
@@ -104,5 +105,16 @@ function ButtonNext({
         >
             Next
         </Button>
+    );
+}
+
+export function ActionsMessageSuccess() {
+    return (
+        <span
+            className={`${styles.action__message} ${styles["action__message--success"]}`}
+        >
+            <Check />
+            All changes have been saved
+        </span>
     );
 }

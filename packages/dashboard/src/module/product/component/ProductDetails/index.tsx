@@ -1,6 +1,9 @@
 "use client";
 
-import { ActionsWrapper } from "@/module/campaigns/component/Actions";
+import {
+    ActionsMessageSuccess,
+    ActionsWrapper,
+} from "@/module/campaigns/component/Actions";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -22,38 +25,25 @@ import {
 import type { SelectTriggerProps } from "@/module/forms/Select";
 import { InteractionContract } from "@/module/product/component/ProductDetails/InteractionContract";
 import { ManageProductTeam } from "@/module/product/component/ProductDetails/ManageTeam";
+import { useEditProduct } from "@/module/product/hook/useEditProduct";
 import { useProduct } from "@/module/product/hook/useProduct";
+import {
+    decodeProductTypesMask,
+    productTypesLabel,
+} from "@/module/product/utils/productTypes";
+import { productTypesMask } from "@frak-labs/nexus-sdk/core";
 import { Button } from "@module/component/Button";
 import { Input, type InputProps } from "@module/component/forms/Input";
 import { Pencil } from "lucide-react";
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./index.module.css";
 
 type FormProduct = {
     name: string;
     domain: string;
-    productTypes: string;
+    productTypes: bigint;
 };
-
-const productTypes = [
-    {
-        id: "4",
-        label: "Text",
-    },
-    {
-        id: "5",
-        label: "Video",
-    },
-    {
-        id: "6",
-        label: "Product",
-    },
-    {
-        id: "7",
-        label: "Others",
-    },
-];
 
 export function ProductDetails({ productId }: { productId: bigint }) {
     const {
@@ -61,30 +51,50 @@ export function ProductDetails({ productId }: { productId: bigint }) {
         isLoading: productIsLoading,
         isPending: productIsPending,
     } = useProduct({ productId: productId.toString() });
+    const {
+        mutate: editProduct,
+        isSuccess: editProductSuccess,
+        isPending: editProductPending,
+    } = useEditProduct({
+        productId: productId.toString(),
+    });
     const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
 
     const form = useForm<FormProduct>({
+        values: useMemo(() => product, [product]),
         defaultValues: {
             name: "",
             domain: "",
-            productTypes: "5",
+            productTypes: 0n,
         },
     });
 
     /**
-     * Reset the form when the product is fetched
+     * Force refresh the form when the product is loaded
      */
     useEffect(() => {
         if (!product) return;
-        form.reset({
-            ...product,
-            productTypes: product.productTypes.toString(),
-        });
         setForceRefresh(new Date().getTime());
-    }, [product, form.reset]);
+    }, [product]);
 
+    /**
+     * On success, reset the form
+     */
+    useEffect(() => {
+        if (!editProductSuccess) return;
+        form.reset(form.getValues());
+        setForceRefresh(new Date().getTime());
+    }, [editProductSuccess, form.reset, form.getValues]);
+
+    /**
+     * Launch the mutation to edit the product
+     * @param values
+     */
     function onSubmit(values: FormProduct) {
-        console.log({ values });
+        editProduct({
+            name: values.name,
+            productTypes: values.productTypes.toString(),
+        });
     }
 
     return (
@@ -121,7 +131,6 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                             rules={{
                                 required: "Missing domain name",
                             }}
-                            disabled={true}
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel weight={"medium"}>
@@ -132,6 +141,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                                             length={"medium"}
                                             placeholder={"Domain name...."}
                                             {...field}
+                                            disabled={true}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -152,27 +162,47 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                                     </FormLabel>
                                     <FormMessage />
                                     <Select
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value.toString()}
+                                        onValueChange={(value) =>
+                                            field.onChange(
+                                                productTypesMask[
+                                                    value as keyof typeof productTypesMask
+                                                ]
+                                            )
+                                        }
+                                        defaultValue={
+                                            decodeProductTypesMask(
+                                                BigInt(field.value)
+                                            )?.[0]
+                                        }
                                     >
                                         <FormControl>
                                             <SelectWithToggle
                                                 length={"medium"}
                                                 {...field}
-                                                value={field.value.toString()}
+                                                value={
+                                                    decodeProductTypesMask(
+                                                        BigInt(field.value)
+                                                    )?.[0]
+                                                }
                                             >
                                                 <SelectValue placeholder="Select a product type" />
                                             </SelectWithToggle>
                                         </FormControl>
                                         <SelectContent>
-                                            {productTypes.map((item) => (
-                                                <SelectItem
-                                                    key={item.id}
-                                                    value={item.id}
-                                                >
-                                                    {item.label}
-                                                </SelectItem>
-                                            ))}
+                                            {Object.keys(productTypesMask).map(
+                                                (key) => (
+                                                    <SelectItem
+                                                        key={key}
+                                                        value={key}
+                                                    >
+                                                        {
+                                                            productTypesLabel[
+                                                                key as keyof typeof productTypesLabel
+                                                            ].name
+                                                        }
+                                                    </SelectItem>
+                                                )
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 </FormItem>
@@ -182,10 +212,25 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                 )}
                 <ManageProductTeam productId={productId} />
                 <ActionsWrapper
-                    left={<Button variant={"outline"}>Cancel</Button>}
+                    left={
+                        <>
+                            <Button variant={"outline"}>Cancel</Button>
+                            {editProductSuccess && <ActionsMessageSuccess />}
+                        </>
+                    }
                     right={
                         <>
-                            <Button variant={"informationOutline"}>
+                            <Button
+                                variant={"informationOutline"}
+                                onClick={() => {
+                                    form.reset(product);
+                                    setForceRefresh(new Date().getTime());
+                                }}
+                                disabled={
+                                    editProductPending ||
+                                    !form.formState.isDirty
+                                }
+                            >
                                 Discard Changes
                             </Button>
                             <Button
@@ -193,6 +238,11 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                                 onClick={() => {
                                     form.handleSubmit(onSubmit)();
                                 }}
+                                disabled={
+                                    editProductPending ||
+                                    !form.formState.isDirty
+                                }
+                                isLoading={editProductPending}
                             >
                                 Validate
                             </Button>
@@ -209,7 +259,12 @@ const InputWithToggle = forwardRef<HTMLInputElement, InputProps>(
         const [isDisabled, setIsDisabled] = useState(true);
         return (
             <Row align={"center"}>
-                <Input {...props} ref={ref} disabled={isDisabled} />
+                <Input
+                    {...props}
+                    ref={ref}
+                    disabled={isDisabled}
+                    onBlur={() => setIsDisabled(true)}
+                />
                 <button
                     type={"button"}
                     className={styles.InputWithToggle__button}
@@ -229,7 +284,12 @@ const SelectWithToggle = forwardRef<HTMLButtonElement, SelectTriggerProps>(
         const [isDisabled, setIsDisabled] = useState(true);
         return (
             <Row align={"center"}>
-                <SelectTrigger {...props} ref={ref} disabled={isDisabled}>
+                <SelectTrigger
+                    {...props}
+                    ref={ref}
+                    disabled={isDisabled}
+                    onBlur={() => setIsDisabled(true)}
+                >
                     {children}
                 </SelectTrigger>
                 <button
