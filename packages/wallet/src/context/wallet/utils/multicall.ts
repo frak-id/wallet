@@ -6,10 +6,10 @@ import { type Address, type Hex, encodeFunctionData } from "viem";
  * @param txs
  */
 export function encodeWalletMulticall(
-    txs: {
+    txs: readonly {
         to: Address;
+        data?: Hex;
         value?: bigint;
-        data: Hex;
     }[]
 ): Hex {
     return encodeFunctionData({
@@ -19,7 +19,7 @@ export function encodeWalletMulticall(
             txs.map((tx) => ({
                 to: tx.to,
                 value: tx.value ?? 0n,
-                data: tx.data,
+                data: tx.data ?? "0x",
             })),
         ],
     });

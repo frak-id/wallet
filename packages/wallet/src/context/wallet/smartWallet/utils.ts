@@ -4,7 +4,7 @@ import {
     KernelInitAbi,
 } from "@/context/wallet/abi/kernel-account-abis";
 import type { P256PubKey } from "@/types/WebAuthN";
-import { ENTRYPOINT_ADDRESS_V06, getSenderAddress } from "permissionless";
+import { getSenderAddress } from "permissionless/actions";
 import {
     type Address,
     type Chain,
@@ -18,7 +18,17 @@ import {
     slice,
     toFunctionSelector,
 } from "viem";
+import {
+    type SmartAccount,
+    type SmartAccountImplementation,
+    type entryPoint06Abi,
+    entryPoint06Address,
+} from "viem/account-abstraction";
 import { formatAbiItem } from "viem/utils";
+
+export type SmartAccountV06 = SmartAccount<
+    SmartAccountImplementation<typeof entryPoint06Abi, "0.6">
+>;
 
 /**
  * The account creation ABI for a kernel smart account (from the KernelFactory)
@@ -120,7 +130,7 @@ export const getAccountAddress = async <
     // Get the sender address based on the init code
     return getSenderAddress(client, {
         initCode: concatHex([kernelAddresses.factory, initCode]),
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
+        entryPointAddress: entryPoint06Address,
     });
 };
 

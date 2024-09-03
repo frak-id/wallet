@@ -6,6 +6,7 @@ import {
     wrapMessageForSignature,
 } from "@/context/wallet/smartWallet/signature";
 import {
+    type SmartAccountV06,
     getAccountAddress,
     getAccountInitCode,
     isAlreadyFormattedCall,
@@ -13,25 +14,13 @@ import {
 import { isRip7212ChainSupported } from "@/context/wallet/smartWallet/webAuthN";
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
-import {
-    ENTRYPOINT_ADDRESS_V06,
-    getAccountNonce,
-    getUserOperationHash,
-    isSmartAccountDeployed,
-} from "permissionless";
-import {
-    SignTransactionNotSupportedBySmartAccount,
-    type SmartAccount,
-    toSmartAccount,
-} from "permissionless/accounts";
-import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
+import { isSmartAccountDeployed } from "permissionless";
+import { getAccountNonce } from "permissionless/actions";
 import {
     type Address,
     type Chain,
     type Client,
     type Hex,
-    type PublicActions,
-    type PublicRpcSchema,
     type Transport,
     boolToHex,
     concatHex,
@@ -46,16 +35,14 @@ import {
     size,
     toHex,
 } from "viem";
+import {
+    entryPoint06Abi,
+    entryPoint06Address,
+    getUserOperationHash,
+    toSmartAccount,
+} from "viem/account-abstraction";
 
-export type NexusSmartAccount<
-    transport extends Transport = Transport,
-    chain extends Chain | undefined = Chain | undefined,
-> = SmartAccount<
-    ENTRYPOINT_ADDRESS_V06_TYPE,
-    "nexusSmartAccount",
-    transport,
-    chain
->;
+export type NexusSmartAccount = SmartAccountV06;
 
 /**
  * Format the given signature
@@ -116,7 +103,7 @@ export async function nexusSmartAccount<
         signatureProvider: (message: Hex) => Promise<WebAuthNSignature>;
         preDeterminedAccountAddress?: Address;
     }
-): Promise<NexusSmartAccount<TTransport, TChain>> {
+): Promise<NexusSmartAccount> {
     const authenticatorIdHash = keccak256(toHex(authenticatorId));
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
@@ -182,161 +169,62 @@ export async function nexusSmartAccount<
 
     // Build the smart account itself
     return toSmartAccount({
-        address: accountAddress,
-
-        client: client as Client<
-            TTransport,
-            TChain,
-            undefined,
-            PublicRpcSchema,
-            PublicActions
-        >,
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
-        source: "nexusSmartAccount",
-
-        /**
-         * Get the smart account nonce
-         */
-        async getNonce() {
-            return getAccountNonce(client, {
-                sender: accountAddress,
-                entryPoint: ENTRYPOINT_ADDRESS_V06,
-            });
+        client,
+        // Entry point config
+        entryPoint: {
+            version: "0.6",
+            abi: entryPoint06Abi,
+            address: entryPoint06Address,
         },
-
-        /**
-         * Get the smart account factory
-         */
-        async getFactory() {
-            if (await isKernelAccountDeployed()) return undefined;
-            if (!canCreateAccount) return undefined;
-            return kernelAddresses.factory;
-        },
-
-        /**
-         * Get the smart account factory data
-         */
-        async getFactoryData() {
-            if (await isKernelAccountDeployed()) return undefined;
-            if (!canCreateAccount) return undefined;
-            return generateInitCode();
-        },
-
-        /**
-         * Generate the account init code
-         */
-        async getInitCode() {
-            if (await isKernelAccountDeployed()) return "0x";
-            if (!canCreateAccount) {
-                throw new Error(
-                    "Cannot create account with mismatching pre-determined address"
-                );
-            }
-            return concatHex([kernelAddresses.factory, generateInitCode()]);
-        },
-
-        /**
-         * Let the smart account sign the given userOperation
-         * @param userOperation
-         */
-        async signUserOperation(userOperation) {
-            const hash = getUserOperationHash({
-                userOperation: {
-                    ...userOperation,
-                    signature: "0x",
-                },
-                entryPoint: ENTRYPOINT_ADDRESS_V06,
-                chainId: client.chain.id,
-            });
-            const encodedSignature = await signHash(hash);
-
-            // Always use the sudo mode, since we are starting from the postula that this p256 signer is the default one for the smart account
-            return concatHex(["0x00000000", encodedSignature]);
-        },
-
-        /**
-         * Sign a message
-         * @param message
-         */
-        async signMessage({ message }) {
-            const metadata = await getAccountMetadata();
-            // Encode the msg and wrap it
-            const hashedMessage = hashMessage(message);
-            const challenge = wrapMessageForSignature({
-                message: hashedMessage,
-                metadata,
-            });
-            // And sign it
-            return signHash(challenge);
-        },
-
-        /**
-         * Sign a given transaction
-         * @param _
-         * @param __
-         */
-        async signTransaction(_, __) {
-            throw new SignTransactionNotSupportedBySmartAccount();
-        },
-
-        /**
-         * Sign typed data
-         */
-        async signTypedData(typedData) {
-            const metadata = await getAccountMetadata();
-            // Encode the msg and wrap it
-            const typedDataHash = hashTypedData(typedData);
-            const challenge = wrapMessageForSignature({
-                message: typedDataHash,
-                metadata,
-            });
-            // And sign it
-            return signHash(challenge);
-        },
-
-        /**
-         * Encode the deployment call data of this account
-         * TODO: It's supported, just need to dev it
-         * @param _
-         */
-        async encodeDeployCallData(_) {
-            throw new Error(
-                "WebAuthN account doesn't support account deployment"
-            );
-        },
-
-        /**
-         * Encode transaction call data for this smart account
-         * @param _tx
-         */
-        async encodeCallData(_tx) {
-            if (Array.isArray(_tx)) {
+        // Account address
+        getAddress: async () => accountAddress,
+        // Encode calls
+        async encodeCalls(calls) {
+            if (calls.length > 1) {
                 // Encode a batched call
-                return encodeWalletMulticall(_tx);
+                return encodeWalletMulticall(calls);
             }
+            const call = calls[0];
             // If the target is the current smart wallet, don't sur-encode it
             if (
                 isAlreadyFormattedCall({
                     wallet: accountAddress,
-                    to: _tx.to,
-                    data: _tx.data,
+                    to: call.to,
+                    data: call.data ?? "0x",
                 })
             ) {
-                return _tx.data;
+                return call.data ?? "0x";
             }
 
             // Encode a simple call
             return encodeFunctionData({
                 abi: KernelExecuteAbi,
                 functionName: "execute",
-                args: [_tx.to, _tx.value, _tx.data, 0],
+                args: [call.to, call.value ?? 0n, call.data ?? "0x", 0],
             });
         },
-
-        /**
-         * Get a dummy signature for this smart account
-         */
-        async getDummySignature() {
+        // Factory args
+        async getFactoryArgs() {
+            if (!canCreateAccount) {
+                return { factory: undefined, factoryData: undefined };
+            }
+            if (await isKernelAccountDeployed()) {
+                return { factory: undefined, factoryData: undefined };
+            }
+            return {
+                factory: kernelAddresses.factory,
+                factoryData: generateInitCode(),
+            };
+        },
+        // Get nonce
+        async getNonce() {
+            return getAccountNonce(client, {
+                address: accountAddress,
+                entryPointAddress: entryPoint06Address,
+            });
+        },
+        // Get dummy sig
+        async getStubSignature() {
             // The max curve value for p256 signature stuff
             const maxCurveValue =
                 BigInt(
@@ -355,6 +243,56 @@ export async function nexusSmartAccount<
 
             // return the coded signature
             return concatHex(["0x00000000", sig]);
+        },
+
+        // Sign simple hash
+        async sign({ hash }) {
+            const metadata = await getAccountMetadata();
+            const challenge = wrapMessageForSignature({
+                message: hash,
+                metadata,
+            });
+            // And sign it
+            return signHash(challenge);
+        },
+        // Sign a message
+        async signMessage({ message }) {
+            const hashedMessage = hashMessage(message);
+            const metadata = await getAccountMetadata();
+            const challenge = wrapMessageForSignature({
+                message: hashedMessage,
+                metadata,
+            });
+            // And sign it
+            return signHash(challenge);
+        },
+        // Sign typed data
+        async signTypedData(typedData) {
+            const typedDataHash = hashTypedData(typedData);
+            const metadata = await getAccountMetadata();
+            const challenge = wrapMessageForSignature({
+                message: typedDataHash,
+                metadata,
+            });
+            // And sign it
+            return signHash(challenge);
+        },
+        // Sign user operation
+        async signUserOperation(userOperation) {
+            const hash = getUserOperationHash({
+                userOperation: {
+                    ...userOperation,
+                    sender: userOperation.sender ?? accountAddress,
+                    signature: "0x",
+                },
+                entryPointAddress: entryPoint06Address,
+                entryPointVersion: "0.6",
+                chainId: client.chain.id,
+            });
+            const encodedSignature = await signHash(hash);
+
+            // Always use the sudo mode, since we are starting from the postula that this p256 signer is the default one for the smart account
+            return concatHex(["0x00000000", encodedSignature]);
         },
     });
 }

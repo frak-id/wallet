@@ -1,41 +1,30 @@
 import { kernelAddresses } from "@/context/blockchain/addresses";
-import { getAccountInitCode } from "@/context/wallet/smartWallet/utils";
+import {
+    type SmartAccountV06,
+    getAccountInitCode,
+} from "@/context/wallet/smartWallet/utils";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import {
-    ENTRYPOINT_ADDRESS_V06,
-    getAccountNonce,
-    getUserOperationHash,
-    isSmartAccountDeployed,
-} from "permissionless";
-import {
-    SignTransactionNotSupportedBySmartAccount,
-    type SmartAccount,
-    toSmartAccount,
-} from "permissionless/accounts";
-import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types";
+import { isSmartAccountDeployed } from "permissionless";
+import { getAccountNonce } from "permissionless/actions";
 import {
     type Chain,
     type Client,
     type LocalAccount,
-    type PublicActions,
-    type PublicRpcSchema,
     type Transport,
     concatHex,
     isAddressEqual,
     keccak256,
     toHex,
 } from "viem";
+import {
+    entryPoint06Abi,
+    entryPoint06Address,
+    getUserOperationHash,
+    toSmartAccount,
+} from "viem/account-abstraction";
 import { signMessage } from "viem/actions";
 
-export type NexusRecoverySmartAccount<
-    transport extends Transport = Transport,
-    chain extends Chain | undefined = Chain | undefined,
-> = SmartAccount<
-    ENTRYPOINT_ADDRESS_V06_TYPE,
-    "nexusRecoverySmartAccount",
-    transport,
-    chain
->;
+export type NexusRecoverySmartAccount = SmartAccountV06;
 
 /**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
@@ -56,7 +45,7 @@ export function recoverySmartAccount<
         localAccount: LocalAccount<TAccountSource>;
         initialWallet: WebAuthNWallet;
     }
-): NexusRecoverySmartAccount<TTransport, TChain> {
+): Promise<NexusRecoverySmartAccount> {
     if (!initialWallet?.address) throw new Error("Account address not found");
 
     // Helper to check if the smart account is already deployed (with caching)
@@ -72,61 +61,35 @@ export function recoverySmartAccount<
 
     // Build the smart account itself
     return toSmartAccount({
-        address: initialWallet.address,
-
-        client: client as Client<
-            TTransport,
-            TChain,
-            undefined,
-            PublicRpcSchema,
-            PublicActions
-        >,
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
-        source: "nexusRecoverySmartAccount",
-
-        /**
-         * Get the smart account nonce
-         */
+        client,
+        entryPoint: {
+            version: "0.6",
+            abi: entryPoint06Abi,
+            address: entryPoint06Address,
+        },
+        // Account address
+        getAddress: async () => initialWallet.address,
+        // Get nonce
         async getNonce() {
             return getAccountNonce(client, {
-                sender: initialWallet.address,
-                entryPoint: ENTRYPOINT_ADDRESS_V06,
+                address: await this.getAddress(),
+                entryPointAddress: entryPoint06Address,
             });
         },
-
-        /**
-         * Get the smart account factory
-         */
-        async getFactory() {
-            if (await isKernelAccountDeployed()) return undefined;
-            return kernelAddresses.factory;
-        },
-
-        /**
-         * Get the smart account factory data
-         */
-        async getFactoryData() {
-            if (await isKernelAccountDeployed()) return undefined;
-            return getAccountInitCode({
-                authenticatorIdHash: keccak256(
-                    toHex(initialWallet.authenticatorId)
-                ),
-                signerPubKey: initialWallet.publicKey,
-            });
-        },
-
-        /**
-         * Generate the account init code
-         */
-        async getInitCode() {
-            if (await isKernelAccountDeployed()) return "0x";
-            const initCode = getAccountInitCode({
-                authenticatorIdHash: keccak256(
-                    toHex(initialWallet.authenticatorId)
-                ),
-                signerPubKey: initialWallet.publicKey,
-            });
-            return concatHex([kernelAddresses.factory, initCode]);
+        // Factory args
+        async getFactoryArgs() {
+            if (await isKernelAccountDeployed()) {
+                return { factory: undefined, factoryData: undefined };
+            }
+            return {
+                factory: kernelAddresses.factory,
+                factoryData: getAccountInitCode({
+                    authenticatorIdHash: keccak256(
+                        toHex(initialWallet.authenticatorId)
+                    ),
+                    signerPubKey: initialWallet.publicKey,
+                }),
+            };
         },
 
         /**
@@ -137,9 +100,11 @@ export function recoverySmartAccount<
             const hash = getUserOperationHash({
                 userOperation: {
                     ...userOperation,
+                    sender: userOperation.sender ?? initialWallet.address,
                     signature: "0x",
                 },
-                entryPoint: ENTRYPOINT_ADDRESS_V06,
+                entryPointAddress: entryPoint06Address,
+                entryPointVersion: "0.6",
                 chainId: client.chain.id,
             });
             const signature = await signMessage(client, {
@@ -150,68 +115,38 @@ export function recoverySmartAccount<
             // Use it as a plugin, since should be enabled during recovery phase
             return concatHex(["0x00000001", signature]);
         },
-
-        /**
-         * Sign a message
-         */
-        async signMessage() {
-            throw new Error(
-                "Recovery account doesn't support message signature"
-            );
-        },
-
-        /**
-         * Sign a given transaction
-         */
-        async signTransaction() {
-            throw new SignTransactionNotSupportedBySmartAccount();
-        },
-
-        /**
-         * Sign typed data
-         */
-        async signTypedData() {
-            throw new Error(
-                "Recovery account doesn't support message signature"
-            );
-        },
-
-        /**
-         * Encode the deployment call data of this account
-         */
-        async encodeDeployCallData() {
-            throw new Error(
-                "WebAuthN account doesn't support account deployment"
-            );
-        },
-
-        /**
-         * Encode transaction call data for this smart account
-         * @param _tx
-         */
-        async encodeCallData(_tx) {
-            if (Array.isArray(_tx)) {
+        // Encode call data
+        async encodeCalls(calls) {
+            if (calls.length > 1) {
                 throw new Error(
                     "Recovery account doesn't support batched transactions"
                 );
             }
-
-            if (!isAddressEqual(_tx.to, initialWallet.address)) {
+            const call = calls[0];
+            if (!isAddressEqual(call.to, initialWallet.address)) {
                 throw new Error(
                     "Recovery account doesn't support transactions to other addresses"
                 );
             }
 
-            return _tx.data;
+            return call.data ?? "0x";
         },
-
-        /**
-         * Get a dummy signature for this smart account
-         */
-        async getDummySignature() {
+        // Dummy sig
+        async getStubSignature() {
             const dummySig =
                 "0xfffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c";
             return concatHex(["0x00000001", dummySig]);
+        },
+        // Signature disables for recovery account
+        async signMessage() {
+            throw new Error(
+                "Recovery account doesn't support message signature"
+            );
+        },
+        async signTypedData() {
+            throw new Error(
+                "Recovery account doesn't support message signature"
+            );
         },
     });
 }
