@@ -28,8 +28,8 @@ export function DashboardWebApp({ stack }: StackContext) {
         contentMinterPrivateKey,
     ];
 
-    // Get the campaign reloader queue
-    const { reloadCampaignQueue } = use(BackendStack);
+    // Get a few backend resources we will bind to the frontend
+    const { reloadCampaignQueue, readPubKeyFunction } = use(BackendStack);
 
     // Base domain for our whole app
     const subDomain = isProdStack(stack)
@@ -45,7 +45,7 @@ export function DashboardWebApp({ stack }: StackContext) {
             hostedZone: "frak.id",
         },
         // Bind to the configs
-        bind: [...configs, reloadCampaignQueue],
+        bind: [...configs, reloadCampaignQueue, readPubKeyFunction],
         openNextVersion: openNextVersion,
         // Number of server side instance to keep warm
         warm: isProdStack(stack) ? 10 : 1,

@@ -17,12 +17,12 @@ import { ConfigStack } from "./Config";
  * @constructor
  */
 export function BackendStack(ctx: StackContext) {
-    const { interactionQueue } = interactionsResources(ctx);
+    const { interactionQueue, readPubKeyFunction } = interactionsResources(ctx);
     const { reloadCampaignQueue } = campaignResources(ctx);
 
     newsResources(ctx);
 
-    return { interactionQueue, reloadCampaignQueue };
+    return { interactionQueue, reloadCampaignQueue, readPubKeyFunction };
 }
 
 /**
@@ -36,6 +36,7 @@ function interactionsResources({ stack }: StackContext) {
         generateSecretString: {
             secretStringTemplate: JSON.stringify({ masterPrivateKey: "" }),
             generateStringKey: "masterPrivateKey",
+            // Exclude letter not in the hex set
             excludeCharacters: "ghijklmnopqrstuvwxyz",
             excludeUppercase: true,
             excludePunctuation: true,
@@ -68,7 +69,7 @@ function interactionsResources({ stack }: StackContext) {
             permissions: [
                 new PolicyStatement({
                     actions: ["secretsmanager:GetSecretValue"],
-                    resources: ["*"],
+                    resources: [masterKeySecret.secretArn],
                 }),
             ],
         }
@@ -98,12 +99,26 @@ function interactionsResources({ stack }: StackContext) {
         },
     });
 
+    const readPubKeyFunction = new SstFunction(stack, "ReadPubKeyFunction", {
+        handler: "packages/backend/src/interaction/readPubKey.handler",
+        timeout: "30 seconds",
+        bind: [masterSecretId],
+        permissions: [
+            new PolicyStatement({
+                actions: ["secretsmanager:GetSecretValue"],
+                resources: [masterKeySecret.secretArn],
+            }),
+        ],
+    });
+
+    // Grant the read access on this secret for the consumer function
     masterKeySecret.grantRead(interactionConsumerFunction);
 
     stack.addOutputs({
         InteractionQueueId: interactionQueue.id,
+        ReadPubKeyFunctionId: readPubKeyFunction.id,
     });
-    return { interactionQueue };
+    return { interactionQueue, readPubKeyFunction };
 }
 
 /**
