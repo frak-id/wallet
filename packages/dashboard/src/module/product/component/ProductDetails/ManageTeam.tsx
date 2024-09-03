@@ -10,13 +10,17 @@ import { TableTeam } from "../TableTeam";
  * @constructor
  */
 export function ManageProductTeam({ productId }: { productId: bigint }) {
-    const { data: administrators, isLoading } = useQuery({
+    const {
+        data: administrators,
+        isLoading,
+        isPending,
+    } = useQuery({
         queryKey: ["product", "team", productId.toString()],
         queryFn: () =>
             getProductAdministrators({ productId: toHex(productId) }),
     });
 
-    if (isLoading) {
+    if (isLoading || isPending) {
         return (
             <Panel title={"Manage your team"}>
                 <Spinner />

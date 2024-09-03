@@ -1,11 +1,9 @@
 "use client";
 
-import { viemClient } from "@/context/blockchain/provider";
-import { roles } from "@/context/blockchain/roles";
 import { ActionsWrapper } from "@/module/campaigns/component/Actions";
-import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
+import { useProduct } from "@/module/dashboard/hooks/useProduct";
 import {
     Form,
     FormControl,
@@ -23,145 +21,67 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { SelectTriggerProps } from "@/module/forms/Select";
+import { InteractionContract } from "@/module/product/component/ProductDetails/InteractionContract";
 import { ManageProductTeam } from "@/module/product/component/ProductDetails/ManageTeam";
-import {
-    useSendTransactionAction,
-    useWalletStatus,
-} from "@frak-labs/nexus-sdk/react";
-import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Button } from "@module/component/Button";
-import { Spinner } from "@module/component/Spinner";
 import { Input, type InputProps } from "@module/component/forms/Input";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
-import { tryit } from "radash";
-import { forwardRef, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { encodeFunctionData } from "viem";
-import { readContract } from "viem/actions";
 import styles from "./index.module.css";
 
 type FormProduct = {
     name: string;
     domain: string;
-    contentType: string;
+    productTypes: string;
 };
 
-const contentType = [
+const productTypes = [
     {
-        id: "text",
+        id: "4",
         label: "Text",
     },
     {
-        id: "video",
+        id: "5",
         label: "Video",
     },
     {
-        id: "product",
+        id: "6",
         label: "Product",
     },
     {
-        id: "others",
+        id: "7",
         label: "Others",
     },
 ];
 
 export function ProductDetails({ productId }: { productId: bigint }) {
-    const { data: walletStatus } = useWalletStatus();
-    const { mutateAsync: sendTransaction } = useSendTransactionAction();
-
     const {
-        data: detailsData,
-        isLoading: isFetchingInteractionContract,
-        refetch: refreshDetails,
-    } = useQuery({
-        enabled: !!productId,
-        queryKey: [
-            "product",
-            "details",
-            walletStatus?.key,
-            productId.toString(),
-        ],
-        queryFn: async () => {
-            if (walletStatus?.key !== "connected") {
-                return null;
-            }
-
-            // Check if the user is allowed on the product
-            const isAllowed = await readContract(viemClient, {
-                abi: productAdministratorRegistryAbi,
-                functionName: "hasAllRolesOrAdmin",
-                address: addresses.productAdministratorRegistry,
-                args: [productId, walletStatus.wallet, roles.productManager],
-            });
-
-            // Fetch the on chain interaction contract
-            const [, interactionContract] = await tryit(() =>
-                readContract(viemClient, {
-                    abi: productInteractionManagerAbi,
-                    functionName: "getInteractionContract",
-                    address: addresses.productInteractionManager,
-                    args: [productId],
-                })
-            )();
-
-            return { isAllowed, interactionContract };
-        },
-    });
-
-    const { mutate: deployInteraction } = useMutation({
-        mutationKey: ["product", "deploy-interaction"],
-        mutationFn: async () => {
-            await sendTransaction({
-                tx: {
-                    to: addresses.productInteractionManager,
-                    data: encodeFunctionData({
-                        abi: productInteractionManagerAbi,
-                        functionName: "deployInteractionContract",
-                        args: [productId],
-                    }),
-                },
-                metadata: {
-                    header: {
-                        title: "Deploy interaction handler",
-                    },
-                },
-            });
-            await refreshDetails();
-        },
-    });
-
-    const { mutate: deleteInteraction } = useMutation({
-        mutationKey: ["product", "delete-interaction"],
-        mutationFn: async () => {
-            await sendTransaction({
-                tx: {
-                    to: addresses.productInteractionManager,
-                    data: encodeFunctionData({
-                        abi: productInteractionManagerAbi,
-                        functionName: "deleteInteractionContract",
-                        args: [productId],
-                    }),
-                },
-                metadata: {
-                    header: {
-                        title: "Remove interaction handler",
-                    },
-                },
-            });
-            await refreshDetails();
-        },
-    });
+        data: product,
+        isLoading: productIsLoading,
+        isPending: productIsPending,
+    } = useProduct({ productId: productId.toString() });
+    const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
 
     const form = useForm<FormProduct>({
         defaultValues: {
             name: "",
             domain: "",
-            contentType: "",
+            productTypes: "5",
         },
     });
+
+    /**
+     * Reset the form when the product is fetched
+     */
+    useEffect(() => {
+        if (!product) return;
+        form.reset({
+            ...product,
+            productTypes: product.productTypes.toString(),
+        });
+        setForceRefresh(new Date().getTime());
+    }, [product, form.reset]);
 
     function onSubmit(values: FormProduct) {
         console.log({ values });
@@ -170,45 +90,9 @@ export function ProductDetails({ productId }: { productId: bigint }) {
     return (
         <FormLayout>
             <Form {...form}>
-                <Panel title={"Interactions handler"}>
-                    <Column>
-                        {isFetchingInteractionContract && <Spinner />}
-                        {detailsData?.interactionContract && (
-                            <>
-                                <div>
-                                    Interaction contract:{" "}
-                                    <pre>{detailsData.interactionContract}</pre>
-                                    {detailsData?.isAllowed && (
-                                        <Button
-                                            variant={"submit"}
-                                            onClick={() => deleteInteraction()}
-                                        >
-                                            Remove interaction handler
-                                        </Button>
-                                    )}
-                                </div>
-                            </>
-                        )}
-                        {!(
-                            isFetchingInteractionContract ||
-                            detailsData?.interactionContract
-                        ) && (
-                            <>
-                                <div>
-                                    No interaction contract deployed
-                                    {detailsData?.isAllowed && (
-                                        <Button
-                                            variant={"submit"}
-                                            onClick={() => deployInteraction()}
-                                        >
-                                            Deploy interaction handler
-                                        </Button>
-                                    )}
-                                </div>
-                            </>
-                        )}
-                    </Column>
-                    <Column>
+                <InteractionContract productId={productId} />
+                {!(productIsLoading || productIsPending) && (
+                    <Panel title={product?.name}>
                         <FormField
                             control={form.control}
                             name="name"
@@ -255,29 +139,33 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                             )}
                         />
                         <FormField
+                            key={forceRefresh}
                             control={form.control}
-                            name="contentType"
-                            rules={{ required: "Select a content type" }}
+                            name="productTypes"
+                            rules={{
+                                required: "Select a product type",
+                            }}
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel weight={"medium"}>
-                                        Content type
+                                        Product type
                                     </FormLabel>
                                     <FormMessage />
                                     <Select
                                         onValueChange={field.onChange}
-                                        defaultValue={field.value}
+                                        defaultValue={field.value.toString()}
                                     >
                                         <FormControl>
                                             <SelectWithToggle
                                                 length={"medium"}
                                                 {...field}
+                                                value={field.value.toString()}
                                             >
-                                                <SelectValue placeholder="Select a content type" />
+                                                <SelectValue placeholder="Select a product type" />
                                             </SelectWithToggle>
                                         </FormControl>
                                         <SelectContent>
-                                            {contentType.map((item) => (
+                                            {productTypes.map((item) => (
                                                 <SelectItem
                                                     key={item.id}
                                                     value={item.id}
@@ -290,8 +178,8 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                                 </FormItem>
                             )}
                         />
-                    </Column>
-                </Panel>
+                    </Panel>
+                )}
                 <ManageProductTeam productId={productId} />
                 <ActionsWrapper
                     left={<Button variant={"outline"}>Cancel</Button>}
