@@ -5,25 +5,19 @@ import {
 import { currentChain, currentViemClient } from "@/context/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/sign";
 import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
+import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import {
-    ENTRYPOINT_ADDRESS_V06,
     type SmartAccountClient,
     createSmartAccountClient,
 } from "permissionless";
-import type { SmartAccount } from "permissionless/accounts";
-import {
-    getUserOperationGasPrice,
-    sponsorUserOperation,
-} from "permissionless/actions/pimlico";
-import type { EntryPoint } from "permissionless/types";
-import { all, tryit } from "radash";
-import type { Chain, Transport } from "viem";
-import { estimateGas } from "viem/actions";
+import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
+import type { Transport } from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
 
 /**
  * Get the current authenticated wallet
@@ -49,18 +43,15 @@ type SmartAccountProvierParameters = {
  * Get the smart account provider for our wagmi connector
  */
 export function getSmartAccountProvider<
-    entryPoint extends EntryPoint,
     transport extends Transport = Transport,
-    chains extends readonly Chain[] = Chain[],
-    account extends SmartAccount<entryPoint> = SmartAccount<entryPoint>,
+    account extends SmartAccountV06 = SmartAccountV06,
 >({ onAccountChanged }: SmartAccountProvierParameters) {
     console.log("Building a new smart account provider");
     // A few types shortcut
     type ConnectorClient = SmartAccountClient<
-        entryPoint,
         transport,
-        chains[number],
-        account
+        typeof currentChain,
+        SmartAccount<account>
     > & {
         estimateGas?: () => undefined | bigint;
     };
@@ -143,26 +134,13 @@ export function getSmartAccountProvider<
  * @param wallet
  */
 async function buildSmartAccount<
-    entryPoint extends EntryPoint,
     transport extends Transport = Transport,
-    chains extends readonly Chain[] = Chain[],
-    account extends SmartAccount<entryPoint> = SmartAccount<entryPoint>,
+    account extends SmartAccountV06 = SmartAccountV06,
 >({
     wallet,
 }: { wallet: WebAuthNWallet }): Promise<
-    SmartAccountClient<entryPoint, transport, chains[number], account> & {
-        estimateGas?: () => undefined | bigint;
-    }
+    SmartAccountClient<transport, typeof currentChain, SmartAccount<account>>
 > {
-    type Client = SmartAccountClient<
-        entryPoint,
-        transport,
-        chains[number],
-        account
-    > & {
-        estimateGas?: () => undefined | bigint;
-    };
-
     // Get the smart wallet client
     const smartAccount = await nexusSmartAccount(currentViemClient, {
         authenticatorId: wallet.authenticatorId,
@@ -188,52 +166,24 @@ async function buildSmartAccount<
     const pimlicoClient = getPimlicoClient();
 
     // Build the smart wallet client
-    const client = createSmartAccountClient({
+    return createSmartAccountClient({
         account: smartAccount,
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
         chain: currentChain,
         bundlerTransport: pimlicoTransport,
-        // Only add a middleware if the paymaster client is available
-        middleware: {
-            sponsorUserOperation: async (args) => {
+        // Get the right gas fees for the user operation
+        userOperation: {
+            estimateFeesPerGas: async () => {
                 // Get gas price + direct estimation in //
-                const {
-                    gasPrice: { standard },
-                    tryEstimation: [, estimation],
-                } = await all({
-                    gasPrice: getUserOperationGasPrice(pimlicoClient),
-                    tryEstimation: tryit(() =>
-                        estimateGas(currentViemClient, {
-                            account: args.userOperation.sender,
-                            to: args.userOperation.sender,
-                            data: args.userOperation.callData,
-                        })
-                    )(),
-                });
-
-                // Update the gas prices
-                args.userOperation.maxFeePerGas = standard.maxFeePerGas;
-                args.userOperation.maxPriorityFeePerGas =
-                    standard.maxPriorityFeePerGas;
-
-                // If no estimation, just sponsor the user operation
-                if (!estimation) {
-                    return sponsorUserOperation(pimlicoClient, args);
-                }
-                // Use the estimation with 25% of error margin on the estimation
-                args.userOperation.callGasLimit = (estimation * 125n) / 100n;
-
-                // Send the sponsoring request
-                return sponsorUserOperation(pimlicoClient, args);
+                const { standard } =
+                    await getUserOperationGasPrice(pimlicoClient);
+                return standard;
             },
         },
-    }) as unknown as Client;
-
-    // Override the estimate gas method
-    // https://github.com/wevm/wagmi/blob/main/packages/core/src/actions/sendTransaction.ts#L77
-    client.estimateGas = () => {
-        return undefined;
-    };
-
-    return client;
+        // Get the right paymaster datas
+        paymaster: true,
+    }) as SmartAccountClient<
+        transport,
+        typeof currentChain,
+        SmartAccount<account>
+    >;
 }

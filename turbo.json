@@ -11,11 +11,7 @@
             "inputs": ["src/**"]
         },
         "build": {
-            "dependsOn": [
-                "@frak-labs/nexus-sdk#build",
-                "//#dev:infra",
-                "^build"
-            ],
+            "dependsOn": ["@frak-labs/nexus-sdk#build", "^build"],
             "outputs": [
                 ".next/**",
                 "!.next/cache/**",

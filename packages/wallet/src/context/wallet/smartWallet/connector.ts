@@ -1,8 +1,7 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
-import type { SmartAccount } from "permissionless/accounts";
-import type { EntryPoint } from "permissionless/types";
-import type { Chain, Transport } from "viem";
+import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
+import type { Transport } from "viem";
 import { createConnector } from "wagmi";
 
 smartAccountConnector.type = "nexusSmartAccountConnector" as const;
@@ -11,14 +10,12 @@ smartAccountConnector.type = "nexusSmartAccountConnector" as const;
  * Create a connector for the smart account
  */
 export function smartAccountConnector<
-    entryPoint extends EntryPoint,
     transport extends Transport = Transport,
-    chains extends readonly Chain[] = Chain[],
-    account extends SmartAccount<entryPoint> = SmartAccount<entryPoint>,
+    account extends SmartAccountV06 = SmartAccountV06,
 >() {
     // A few types shortcut
     type Provider = ReturnType<
-        typeof getSmartAccountProvider<entryPoint, transport, chains, account>
+        typeof getSmartAccountProvider<transport, account>
     >;
 
     // The current provider
@@ -29,6 +26,7 @@ export function smartAccountConnector<
         id: "nexus-connector",
         name: "Nexus Smart Account",
         type: smartAccountConnector.type,
+        supportsSimulation: true,
 
         /**
          * On setup, create the account for the first chain in the config
@@ -102,7 +100,7 @@ export function smartAccountConnector<
         async isAuthorized() {
             return true;
         },
-        // @ts-ignore: Permissionless account type is fcked up for now (missing a few required props)
+
         async getClient(parameters?: { chainId?: number }) {
             const provider: Provider = await this.getProvider();
 

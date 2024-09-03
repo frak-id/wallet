@@ -8,14 +8,8 @@ import type { RecoveryFileContent } from "@/types/Recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { type DefaultError, useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import {
-    ENTRYPOINT_ADDRESS_V06,
-    createSmartAccountClient,
-} from "permissionless";
-import {
-    getUserOperationGasPrice,
-    sponsorUserOperation,
-} from "permissionless/actions/pimlico";
+import { createSmartAccountClient } from "permissionless";
+import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
 import {
     type Hex,
     type LocalAccount,
@@ -64,8 +58,7 @@ export function usePerformRecovery(
             // TODO: We should ensure that the new wallet is different from the initial wallet
 
             // Build the recovery account
-            // @ts-ignore: The useClient hook doesn't expose a client with the PublicRpcSchema, should be fixed
-            const smartAccount = recoverySmartAccount(client, {
+            const smartAccount = await recoverySmartAccount(client, {
                 localAccount: recoveryAccount,
                 initialWallet: file.initialWallet,
             });
@@ -77,24 +70,18 @@ export function usePerformRecovery(
             // Build the smart wallet client
             const accountClient = createSmartAccountClient({
                 account: smartAccount,
-                entryPoint: ENTRYPOINT_ADDRESS_V06,
                 chain: client.chain,
                 bundlerTransport: pimlicoTransport,
-                // Only add a middleware if the paymaster client is available
-                middleware: {
-                    sponsorUserOperation: async (args) => {
+                // Get the right gas fees for the user operation
+                userOperation: {
+                    estimateFeesPerGas: async () => {
+                        // Get gas price + direct estimation in //
                         const { standard } =
                             await getUserOperationGasPrice(pimlicoClient);
-
-                        // Update the gas prices
-                        args.userOperation.maxFeePerGas = standard.maxFeePerGas;
-                        args.userOperation.maxPriorityFeePerGas =
-                            standard.maxPriorityFeePerGas;
-
-                        // Sponsor the user operation
-                        return sponsorUserOperation(pimlicoClient, args);
+                        return standard;
                     },
                 },
+                paymaster: true,
             });
 
             // Build the function data
