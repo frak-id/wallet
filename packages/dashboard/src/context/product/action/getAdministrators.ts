@@ -16,6 +16,7 @@ type ApiResult = {
 export async function getProductAdministrators({
     productId,
 }: { productId: Hex }) {
+    console.log(productId);
     // Get our api results
     const json = await ky
         .get(`https://indexer.frak.id/products/${productId}/administrators`)

@@ -1,18 +1,9 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
-import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { DI } from "@frak-labs/shared/context/utils/di";
+import { getSqsClient } from "@/context/common/awsClients";
+import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import type { Address } from "viem";
-
-const getSqsClient = DI.registerAndExposeGetter({
-    id: "SqsClient",
-    isAsync: false,
-    getter: () =>
-        new SQSClient({
-            region: "eu-west-1",
-        }),
-});
 
 /**
  * Ask to reload a campaign from

@@ -5,9 +5,10 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { BetaOptions } from "@/module/settings/component/BetaOptions";
 import { RecoveryLink } from "@/module/settings/component/Recovery";
-import { WalletAddress } from "@/module/wallet/component/WalletAddress";
+import { WalletAddress } from "@module/component/HashDisplay";
 import { useAtomValue } from "jotai";
 import { Fingerprint } from "lucide-react";
+import { toHex } from "viem";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
@@ -33,7 +34,9 @@ function BiometryInfo() {
             <ul className={styles.settings__list}>
                 <li>
                     Authenticator:{" "}
-                    <WalletAddress wallet={wallet?.authenticatorId ?? "0"} />
+                    <WalletAddress
+                        wallet={toHex(wallet?.authenticatorId ?? "0")}
+                    />
                 </li>
 
                 <li>

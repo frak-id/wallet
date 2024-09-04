@@ -1,11 +1,12 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
-import { formatHash } from "@/context/wallet/utils/hashFormatter";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { ButtonRipple } from "@module/component/ButtonRipple";
+import { formatHash } from "@module/component/HashDisplay";
 import { SquareUser } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { toHex } from "viem";
 import styles from "./index.module.css";
 
 export function LoginItem({
@@ -29,10 +30,13 @@ export function LoginItem({
             >
                 <span>
                     <span className={styles.loginItem__name}>
-                        <SquareUser /> {formatHash(lastAuthentication.wallet)}
+                        <SquareUser />{" "}
+                        {formatHash({ hash: lastAuthentication.wallet })}
                     </span>
                     Authenticator:{" "}
-                    {formatHash(lastAuthentication.authenticatorId)}
+                    {formatHash({
+                        hash: toHex(lastAuthentication.authenticatorId),
+                    })}
                 </span>
                 <span>
                     <Fingerprint

@@ -5,7 +5,13 @@ import type { GenericModalStepType } from "./generic";
 /**
  * Parameters of the send transaction rpc request
  */
-export type SiweAuthenticationParams = Omit<SiweMessage, "address" | "chainId">;
+export type SiweAuthenticationParams = Omit<
+    SiweMessage,
+    "address" | "chainId" | "expirationTime" | "issuedAt" | "notBefore"
+> & {
+    expirationTimeTimestamp?: number;
+    notBeforeTimestamp?: number;
+};
 
 /**
  * Return type of the send transaction rpc request

@@ -1,5 +1,6 @@
 import { pick } from "radash";
 import { Config } from "sst/node/config";
+import { Function as SstFunction } from "sst/node/function";
 import { Queue } from "sst/node/queue";
 
 // Secret env variable from SST we want in the frontend
@@ -36,6 +37,8 @@ const nextConfig = {
         STAGE: Config.STAGE,
         // APP_URL: Config.NEXUS_DASHBOARD_URL,
         CAMPAIGN_RELOAD_QUEUE_URL: Queue.ReloadCampaignQueue.queueUrl,
+        READ_PUBLIC_KEY_FUNCTION_NAME:
+            SstFunction.ReadPubKeyFunction.functionName,
     },
     transpilePackages: ["lucide-react"],
     compiler: {

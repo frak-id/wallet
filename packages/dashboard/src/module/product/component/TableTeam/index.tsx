@@ -10,6 +10,7 @@ import { useIsProductOwner } from "@/module/product/hook/useIsProductOwner";
 import { permissionLabels } from "@/module/product/utils/permissions";
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
+import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";
 import { Tooltip } from "@module/component/Tooltip";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +18,7 @@ import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
-import { isAddressEqual, toHex } from "viem";
+import { type Hex, isAddressEqual, toHex } from "viem";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<ManageTeamTableData>>(
@@ -33,15 +34,16 @@ export type ManageTeamTableData = Awaited<
 
 const columnHelper = createColumnHelper<ManageTeamTableData>();
 
-export function TableTeam({ productId }: { productId: bigint }) {
+export function TableTeam({ productId }: { productId: Hex }) {
     const { data: walletStatus } = useWalletStatus();
     const { data: isProductOwner } = useIsProductOwner({ productId });
 
     const { data: administrators, isLoading } = useQuery({
         queryKey: ["product", "team", productId.toString(), walletStatus?.key],
         queryFn: async () => {
+            console.log("productId", productId);
             const administrators = await getProductAdministrators({
-                productId: toHex(productId),
+                productId: toHex(BigInt(productId)),
             });
             if (walletStatus?.key !== "connected")
                 return administrators.map((admin) => ({
@@ -63,9 +65,8 @@ export function TableTeam({ productId }: { productId: bigint }) {
                     header: "Wallet",
                     cell: ({ getValue, row }) => (
                         <>
-                            {row.original.isMe
-                                ? `Me (${getValue()})`
-                                : getValue()}
+                            {row.original.isMe && "Me: "}
+                            <WalletAddress wallet={getValue()} />
                         </>
                     ),
                 }),
@@ -117,7 +118,7 @@ function CellActions({
     row,
     productId,
 }: Pick<CellContext<ManageTeamTableData, unknown>, "row"> & {
-    productId: bigint;
+    productId: Hex;
 }) {
     const { data: isProductOwner } = useIsProductOwner({ productId });
     const { data: wallletStatus } = useWalletStatus();

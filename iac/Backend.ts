@@ -1,7 +1,14 @@
-import { Duration } from "aws-cdk-lib";
+import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
-import { Cron, Queue, use } from "sst/constructs";
+import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
 import type { StackContext } from "sst/constructs";
+import {
+    Config,
+    Cron,
+    Queue,
+    Function as SstFunction,
+    use,
+} from "sst/constructs";
 import { ConfigStack } from "./Config";
 
 /**
@@ -10,36 +17,68 @@ import { ConfigStack } from "./Config";
  * @constructor
  */
 export function BackendStack(ctx: StackContext) {
-    const { interactionQueue } = interactionsResources(ctx);
+    const { interactionQueue, readPubKeyFunction } = interactionsResources(ctx);
     const { reloadCampaignQueue } = campaignResources(ctx);
+
     newsResources(ctx);
 
-    return { interactionQueue, reloadCampaignQueue };
+    return { interactionQueue, reloadCampaignQueue, readPubKeyFunction };
 }
 
 /**
  * Define all of our interactions resources
+ *  todo: expose an api to get the signer public key for a given productId
  * @param stack
  */
 function interactionsResources({ stack }: StackContext) {
-    // todo: split queue in half? Like interaction validator queue then interaction processor queue?
-    // todo: Move sensitive stuff here? like airdropper and stuff?
-    // todo: Should some part of business stuff moved here also? Like product minting?
+    // Generate our master private key secret for product key derivation
+    const masterKeySecret = new AwsSecret(stack, "MasterPrivateKey", {
+        generateSecretString: {
+            secretStringTemplate: JSON.stringify({ masterPrivateKey: "" }),
+            generateStringKey: "masterPrivateKey",
+            // Exclude letter not in the hex set
+            excludeCharacters: "ghijklmnopqrstuvwxyz",
+            excludeUppercase: true,
+            excludePunctuation: true,
+            includeSpace: false,
+            passwordLength: 64,
+        },
+        description: "Master private key for product key derivation",
+        removalPolicy: RemovalPolicy.RETAIN,
+    });
+
+    // Create a new config parameter to store the secret ARN
+    const masterSecretId = new Config.Parameter(stack, "MASTER_KEY_SECRET_ID", {
+        value: masterKeySecret.secretFullArn ?? masterKeySecret.secretArn,
+    });
 
     const { airdropPrivateKey, interactionValidatorPrivateKey, alchemyApiKey } =
         use(ConfigStack);
+    const interactionConsumerFunction = new SstFunction(
+        stack,
+        "InteractionQueueConsumer",
+        {
+            handler: "packages/backend/src/interaction/queue.handler",
+            timeout: "15 minutes",
+            bind: [
+                masterSecretId,
+                airdropPrivateKey,
+                interactionValidatorPrivateKey,
+                alchemyApiKey,
+            ],
+            permissions: [
+                new PolicyStatement({
+                    actions: ["secretsmanager:GetSecretValue"],
+                    resources: [masterKeySecret.secretArn],
+                }),
+            ],
+        }
+    );
+
     // Interaction handling stuff
     const interactionQueue = new Queue(stack, "InteractionQueue", {
         consumer: {
-            function: {
-                handler: "packages/backend/src/interaction/queue.handler",
-                timeout: "15 minutes",
-                bind: [
-                    airdropPrivateKey,
-                    interactionValidatorPrivateKey,
-                    alchemyApiKey,
-                ],
-            },
+            function: interactionConsumerFunction,
             cdk: {
                 eventSource: {
                     // Maximum amount of item sent to the function (at most 200 interactions)
@@ -59,10 +98,27 @@ function interactionsResources({ stack }: StackContext) {
             },
         },
     });
+
+    const readPubKeyFunction = new SstFunction(stack, "ReadPubKeyFunction", {
+        handler: "packages/backend/src/interaction/readPubKey.handler",
+        timeout: "30 seconds",
+        bind: [masterSecretId],
+        permissions: [
+            new PolicyStatement({
+                actions: ["secretsmanager:GetSecretValue"],
+                resources: [masterKeySecret.secretArn],
+            }),
+        ],
+    });
+
+    // Grant the read access on this secret for the consumer function
+    masterKeySecret.grantRead(interactionConsumerFunction);
+
     stack.addOutputs({
         InteractionQueueId: interactionQueue.id,
+        ReadPubKeyFunctionId: readPubKeyFunction.id,
     });
-    return { interactionQueue };
+    return { interactionQueue, readPubKeyFunction };
 }
 
 /**

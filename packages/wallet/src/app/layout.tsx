@@ -1,7 +1,7 @@
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
-import { isRunningInProd } from "@/context/common/env";
 import { getFullSessionStatus } from "@/context/interaction/action/interactionSession";
+import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";

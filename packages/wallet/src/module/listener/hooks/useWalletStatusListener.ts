@@ -89,11 +89,8 @@ export function useWalletStatusListener(): OnListenToWallet {
 
             // Listen to jotai store update
             jotaiStore.sub(sessionAtom, () => {
-                console.log("session update from jotai sub within context");
                 emitCurrentStatus(context, emitter);
             });
-
-            // todo: cleanup function
         },
         [emitCurrentStatus]
     );

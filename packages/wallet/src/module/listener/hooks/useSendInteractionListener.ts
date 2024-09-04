@@ -7,6 +7,7 @@ import {
     type IFrameRpcSchema,
     RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
+import { isRunningLocally } from "@frak-labs/shared/context/utils/env";
 import { jotaiStore } from "@module/atoms/store";
 import { tryit } from "radash";
 import { useCallback } from "react";
@@ -27,7 +28,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
      * @param request
      * @param emitter
      */
-    return useCallback(async (request, _, emitter) => {
+    return useCallback(async (request, context, emitter) => {
         // Extract the productId and walletAddress
         const productId = request.params[0];
         const interaction = request.params[1];
@@ -36,6 +37,15 @@ export function useSendInteractionListener(): OnInteractionRequest {
         // If no productId or interaction, return
         if (!(productId && interaction)) {
             return;
+        }
+
+        if (BigInt(productId) !== BigInt(context.productId)) {
+            console.error(
+                "Mismatching product id, aborting the user op reception"
+            );
+            if (!isRunningLocally) {
+                return;
+            }
         }
 
         const userAddress = jotaiStore.get(sessionAtom)?.wallet?.address;

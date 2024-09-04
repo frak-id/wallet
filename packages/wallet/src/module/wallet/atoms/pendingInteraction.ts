@@ -33,7 +33,6 @@ export const addPendingInteractionAtom = atom(
 
 /**
  * Add a list of pending interactions to our storage
- *   todo: filter out all of the duplicate ones
  */
 export const addPendingInteractionsAtom = atom(
     null,

@@ -4,11 +4,12 @@ import {
     recoveryFileContentAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { WalletAddress } from "@/module/wallet/component/WalletAddress";
 import { Button } from "@module/component/Button";
+import { WalletAddress } from "@module/component/HashDisplay";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
+import { toHex } from "viem";
 import styles from "./Step2.module.css";
 
 const ACTUAL_STEP = 2;
@@ -72,7 +73,9 @@ export function Step2() {
                 <br />
                 Authenticator:{" "}
                 <WalletAddress
-                    wallet={fileContent?.initialWallet?.authenticatorId ?? "0"}
+                    wallet={toHex(
+                        fileContent?.initialWallet?.authenticatorId ?? "0"
+                    )}
                 />
             </p>
             <p>

@@ -7,3 +7,8 @@ export const roles = {
 } as const;
 
 export type RolesKeys = keyof typeof roles;
+
+/**
+ * Role specific for the interaction validator
+ */
+export const interactionValidatorRoles = BigInt(1 << 4);

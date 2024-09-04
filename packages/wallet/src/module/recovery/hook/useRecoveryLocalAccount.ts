@@ -15,12 +15,10 @@ export function useRecoveryLocalAccount() {
             pass,
         }: { file: RecoveryFileContent; pass: string }) => {
             // Decrypt the guardian private key
-            console.log("Starting unlock");
             const privateKey = await decryptPrivateKey({
                 pass,
                 guardianPrivateKeyEncrypted: file.guardianPrivateKeyEncrypted,
             });
-            console.log("Private key parsed", privateKey);
 
             // Build the recovery smart account
             return privateKeyToAccount(privateKey);

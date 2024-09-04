@@ -4,10 +4,10 @@ import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
-import { type Address, encodeFunctionData } from "viem";
+import { type Address, type Hex, encodeFunctionData } from "viem";
 
 type AddProductMemberArg = {
-    productId: bigint;
+    productId: Hex;
     wallet: Address;
     roles: RolesKeys[];
 };
@@ -28,7 +28,7 @@ export function useAddProductMember() {
             const txData = encodeFunctionData({
                 abi: productAdministratorRegistryAbi,
                 functionName: "grantRoles",
-                args: [args.productId, args.wallet, rolesToAdd],
+                args: [BigInt(args.productId), args.wallet, rolesToAdd],
             });
 
             // Send the transaction

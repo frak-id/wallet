@@ -1,5 +1,5 @@
-import { isRunningInProd } from "@/context/common/env";
 import { DI } from "@frak-labs/shared/context/utils/di";
+import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { MongoClient } from "mongodb";
 
 // Get the mongo db client
@@ -8,7 +8,6 @@ export const getMongoDb = DI.registerAndExposeGetter({
     isAsync: true,
     getter: async () => {
         // Get the mongo client
-        // TODO: Should use Config.MONGODB_FRAK_POC_URI instead, but next isn't happy about it
         const client = new MongoClient(
             process.env.MONGODB_BUSINESS_URI as string
         );

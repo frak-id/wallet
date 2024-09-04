@@ -3,7 +3,7 @@
 import { useCopyToClipboard } from "@uidotdev/usehooks";
 import { useEffect, useState } from "react";
 
-export function useCopyAddress() {
+export function useCopyToClipboardWithState() {
     const [copied, setCopied] = useState(false);
     const [, copyToClipboard] = useCopyToClipboard();
 
@@ -15,7 +15,7 @@ export function useCopyAddress() {
         }
     }, [copied]);
 
-    function copyAddress(wallet: string) {
+    function copy(wallet: string) {
         if (!copied) {
             copyToClipboard(wallet);
             setCopied(true);
@@ -24,6 +24,6 @@ export function useCopyAddress() {
 
     return {
         copied,
-        copyAddress,
+        copy,
     };
 }

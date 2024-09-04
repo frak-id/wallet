@@ -21,10 +21,10 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { SelectTriggerProps } from "@/module/forms/Select";
-import { InteractionContract } from "@/module/product/component/ProductDetails/InteractionContract";
+import { InteractionSettings } from "@/module/product/component/ProductDetails/InteractionSettings";
 import { ManageProductTeam } from "@/module/product/component/ProductDetails/ManageTeam";
 import { useEditProduct } from "@/module/product/hook/useEditProduct";
-import { useProduct } from "@/module/product/hook/useProduct";
+import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import {
     decodeProductTypesMask,
     productTypesLabel,
@@ -36,6 +36,7 @@ import { Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 type FormProduct = {
@@ -44,19 +45,19 @@ type FormProduct = {
     productTypes: bigint;
 };
 
-export function ProductDetails({ productId }: { productId: bigint }) {
+export function ProductDetails({ productId }: { productId: Hex }) {
     const router = useRouter();
     const {
         data: product,
         isLoading: productIsLoading,
         isPending: productIsPending,
-    } = useProduct({ productId: productId.toString() });
+    } = useProductMetadata({ productId });
     const {
         mutate: editProduct,
         isSuccess: editProductSuccess,
         isPending: editProductPending,
     } = useEditProduct({
-        productId: productId.toString(),
+        productId,
     });
     const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
 
@@ -112,7 +113,6 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                 }
             />
             <Form {...form}>
-                <InteractionContract productId={productId} />
                 {!(productIsLoading || productIsPending) && (
                     <Panel title={"Details of the product"}>
                         <FormField
@@ -258,6 +258,7 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                     </Panel>
                 )}
                 <ManageProductTeam productId={productId} />
+                <InteractionSettings productId={productId} />
             </Form>
         </FormLayout>
     );

@@ -1,6 +1,6 @@
-import { isRunningInProd } from "@/context/common/env";
 import { getViemClientFromChain } from "@frak-labs/shared/context/blockchain/provider";
 import { getAlchemyTransportNoBatch } from "@frak-labs/shared/context/blockchain/transport/alchemy-transport";
+import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { createClient } from "viem";
 import { arbitrum, arbitrumSepolia } from "viem/chains";
 

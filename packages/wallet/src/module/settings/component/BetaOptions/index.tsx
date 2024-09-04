@@ -1,6 +1,5 @@
 "use client";
 
-import { isRunningInProd } from "@/context/common/env";
 import {
     Accordion,
     AccordionContent,
@@ -11,6 +10,7 @@ import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { isConvertToEuroEnableAtom } from "@/module/settings/atoms/betaOptions";
+import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { Button } from "@frak-labs/shared/module/component/Button";
 import { useAtom } from "jotai";
 import { FlaskConical, Square, SquareCheck } from "lucide-react";

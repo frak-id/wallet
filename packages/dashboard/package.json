@@ -17,6 +17,7 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
+    "@aws-sdk/client-lambda": "^3.637.0",
     "@aws-sdk/client-sqs": "^3.637.0",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",

@@ -2,14 +2,15 @@ import { viemClient } from "@/context/blockchain/provider";
 import { productRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useQuery } from "@tanstack/react-query";
+import type { Hex } from "viem";
 import { readContract } from "viem/actions";
 
 /**
  * Hook to get the product metadata
  */
-export function useProduct({ productId }: { productId: string }) {
+export function useProductMetadata({ productId }: { productId: Hex }) {
     return useQuery({
-        queryKey: ["product", productId],
+        queryKey: ["product", "metadata", productId],
         queryFn: () =>
             readContract(viemClient, {
                 address: addresses.productRegistry,
