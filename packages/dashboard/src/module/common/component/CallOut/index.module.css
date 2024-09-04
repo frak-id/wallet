@@ -3,6 +3,11 @@
     border-radius: 8px;
     font-weight: 600;
     line-height: 20px;
+
+    & a {
+        color: inherit;
+        text-decoration: underline;
+    }
 }
 
 .callOut + .callOut {
