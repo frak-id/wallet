@@ -23,10 +23,6 @@ export function ConfigStack({ stack }: StackContext) {
         stack,
         "CONTENT_MINTER_PRIVATE_KEY"
     );
-    const interactionValidatorPrivateKey = new Config.Secret(
-        stack,
-        "INTERACTION_VALIDATOR_PRIVATE_KEY"
-    );
     const adminPassword = new Config.Secret(stack, "ADMIN_PASSWORD");
     const worldNewsApiKey = new Config.Secret(stack, "WORLD_NEWS_API_KEY");
 
@@ -44,7 +40,6 @@ export function ConfigStack({ stack }: StackContext) {
         nexusRpcSecret,
         airdropPrivateKey,
         contentMinterPrivateKey,
-        interactionValidatorPrivateKey,
         adminPassword,
         nexusUrl,
         worldNewsApiKey,

@@ -52,20 +52,14 @@ function interactionsResources({ stack }: StackContext) {
         value: masterKeySecret.secretFullArn ?? masterKeySecret.secretArn,
     });
 
-    const { airdropPrivateKey, interactionValidatorPrivateKey, alchemyApiKey } =
-        use(ConfigStack);
+    const { alchemyApiKey } = use(ConfigStack);
     const interactionConsumerFunction = new SstFunction(
         stack,
         "InteractionQueueConsumer",
         {
             handler: "packages/backend/src/interaction/queue.handler",
             timeout: "15 minutes",
-            bind: [
-                masterSecretId,
-                airdropPrivateKey,
-                interactionValidatorPrivateKey,
-                alchemyApiKey,
-            ],
+            bind: [masterSecretId, alchemyApiKey],
             permissions: [
                 new PolicyStatement({
                     actions: ["secretsmanager:GetSecretValue"],
