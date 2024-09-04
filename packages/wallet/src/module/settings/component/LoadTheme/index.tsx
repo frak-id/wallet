@@ -11,7 +11,6 @@ export function LoadTheme() {
         <Script id="theme" strategy="afterInteractive">
             {`
                     function setTheme(newTheme) {
-                        console.log("Setting theme to", newTheme);
                         document.querySelector(":root").dataset.theme = newTheme;
                     }
                     const queryDark = "(prefers-color-scheme: dark)";
