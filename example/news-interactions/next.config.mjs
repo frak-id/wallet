@@ -5,8 +5,6 @@ import { Config } from "sst/node/config";
 const wantedFromConfig = ["NEXUS_WALLET_URL", "MONGODB_FRAK_POC_URI"];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
-const isDistant = ["dev", "prod"].includes(Config.STAGE);
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     env: {
@@ -14,7 +12,7 @@ const nextConfig = {
         STAGE: Config.STAGE,
     },
     compiler: {
-        removeConsole: isDistant,
+        removeConsole: Config.STAGE === "prod",
     },
     output: "standalone",
     images: {

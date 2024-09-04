@@ -1,8 +1,12 @@
-import type { SuccessModalStepType } from "@frak-labs/nexus-sdk/core";
+import {
+    NexusContextManager,
+    type SuccessModalStepType,
+} from "@frak-labs/nexus-sdk/core";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation } from "@tanstack/react-query";
 import { useCopyToClipboard } from "@uidotdev/usehooks";
 import { tryit } from "radash";
+import { useAccount } from "wagmi";
 
 /**
  * The component for the success step of a modal
@@ -20,6 +24,7 @@ export function SuccessModalStep({
     params: SuccessModalStepType["params"];
     onFinish: (args: object) => void;
 }) {
+    const { address } = useAccount();
     const { metadata, sharing } = params;
     const [, copyToClipboard] = useCopyToClipboard();
 
@@ -32,11 +37,20 @@ export function SuccessModalStep({
         mutationFn: async () => {
             if (!sharing?.link) return;
 
+            // Ensure the sharing link contain the current nexus wallet as referrer
+            const sharingLink = await NexusContextManager.update({
+                url: sharing.link,
+                context: {
+                    r: address,
+                },
+            });
+            if (!sharingLink) return;
+
             // Build our sharing data
             const shareData = {
                 title: sharing?.popupTitle ?? `${appName} invite link`,
                 text: sharing?.text ?? "Discover this awesome product!",
-                url: sharing.link,
+                url: sharingLink,
             };
 
             // Trigger copy to clipboard if no native sharing
@@ -51,7 +65,7 @@ export function SuccessModalStep({
             }
 
             // Trigger native sharing stuff
-            await copyToClipboard(sharing.link);
+            await copyToClipboard(sharingLink);
             return "Copied!";
         },
     });

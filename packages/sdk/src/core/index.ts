@@ -6,6 +6,7 @@ export {
     hashAndCompressData,
     decompressDataAndCheckHash,
     createIframe,
+    NexusContextManager,
 } from "./utils";
 
 // Constants

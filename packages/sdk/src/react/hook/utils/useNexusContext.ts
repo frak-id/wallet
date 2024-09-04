@@ -1,12 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { compressJson, decompressJson } from "../../../core/utils/compression";
+import { NexusContextManager } from "../../../core";
 import type { NexusContext } from "../../types/NexusContext";
 import { useWindowLocation } from "./useWindowLocation";
-
-/**
- * The context key
- */
-const contextKey = "nCtx";
 
 /**
  * Extract the current nexus context from the url
@@ -24,18 +19,8 @@ export function useNexusContext() {
             // If no url extracted yet, early exit
             if (!location?.href) return null;
 
-            // Check if the url contain the nexus context key
-            const url = new URL(location.href);
-            const nexusContext = url.searchParams.get(contextKey);
-            if (!nexusContext) return null;
-
-            // Parse the nexus context
-            const parsedContext =
-                await decompressJson<NexusContext>(nexusContext);
-            if (!parsedContext) return null;
-
-            // Return the parsed context
-            return parsedContext;
+            // Parse the current context
+            return NexusContextManager.parse({ url: location.href });
         },
         enabled: !!location?.href,
     });
@@ -47,24 +32,22 @@ export function useNexusContext() {
         useMutation({
             mutationKey: ["nexus-sdk", "update-context"],
             mutationFn: async (newContext: Partial<NexusContext>) => {
+                console.log("Updating context", { newContext });
+
                 // If no window here early exit
-                if (!location || typeof window === "undefined") return;
+                if (!location?.href || typeof window === "undefined") {
+                    console.error("No window found, can't update context");
+                    return;
+                }
 
-                // Build the new context
-                const fullNewContext = nexusContext
-                    ? { ...nexusContext, ...newContext }
-                    : newContext;
-
-                // Compress the updated context
-                const compressedContext = await compressJson(fullNewContext);
-                if (!compressedContext) return;
-
-                // Build the new url
-                const url = new URL(location.href);
-                url.searchParams.set(contextKey, compressedContext);
+                // Get our new url with the nexus context
+                const newUrl = await NexusContextManager.update({
+                    url: location.href,
+                    context: newContext,
+                });
 
                 // Update the url
-                window.history.replaceState(null, "", url.toString());
+                window.history.replaceState(null, "", newUrl);
             },
         });
 

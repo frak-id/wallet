@@ -54,6 +54,11 @@ export function useReferralInteraction({
 
     // Function to process the referral
     const processReferral = useCallback(async (): Promise<ReferralState> => {
+        console.log("Nexus context info for referral interactions", {
+            walletStatus,
+            nexusContext,
+        });
+
         try {
             // Get the current wallet, without auto displaying the modal
             let currentWallet =
@@ -78,6 +83,11 @@ export function useReferralInteraction({
                 isAddressEqual(nexusContext.r, currentWallet)
             ) {
                 return "self-referral";
+            }
+
+            // If we got one now, create a promise that will update the context
+            if (currentWallet) {
+                await updateContextAsync({ r: currentWallet });
             }
 
             const interaction = ReferralInteractionEncoder.referred({
@@ -115,6 +125,8 @@ export function useReferralInteraction({
             "auto-referral-interaction",
             nexusContext?.r ?? "no-referrer",
             walletStatus?.key ?? "no-wallet-status",
+            productId ?? "no-product-id",
+            ensureWalletConnected.name ?? "no-ensure-wallet-connected-function",
         ],
         queryFn: processReferral,
         enabled: !!walletStatus,
