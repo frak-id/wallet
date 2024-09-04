@@ -144,10 +144,13 @@ export function UpdateRoleTeamMemberModal({
                             product
                         </p>
                     ) : (
-                        <p>
-                            Pick the permissions you want to remove to the user{" "}
+                        <>
+                            <p>
+                                Pick the permissions you want to remove to the
+                                user{" "}
+                            </p>
                             <pre>{row.original.wallet}</pre>
-                        </p>
+                        </>
                     )}
                     <br />
                     {permissionLabelsArray.map(({ id, label, description }) => (

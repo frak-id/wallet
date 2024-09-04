@@ -98,9 +98,10 @@ export function AlertDialog({
                     )}
                     {description ? (
                         <AlertDialogPrimitive.Description
+                            asChild
                             className={styles.alertDialog__description}
                         >
-                            {description}
+                            <div>{description}</div>
                         </AlertDialogPrimitive.Description>
                     ) : (
                         <AlertDialogPrimitive.Description />
