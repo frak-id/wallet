@@ -1,7 +1,7 @@
 "use client";
 
 import { currentChain } from "@/context/blockchain/provider";
-import { WalletAddress } from "@/module/wallet/component/WalletAddress";
+import { WalletAddress } from "@module/component/WalletAddress";
 import { useMemo } from "react";
 import { useConnectorClient } from "wagmi";
 import styles from "./index.module.css";

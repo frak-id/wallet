@@ -5,7 +5,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { BetaOptions } from "@/module/settings/component/BetaOptions";
 import { RecoveryLink } from "@/module/settings/component/Recovery";
-import { WalletAddress } from "@/module/wallet/component/WalletAddress";
+import { WalletAddress } from "@module/component/WalletAddress";
 import { useAtomValue } from "jotai";
 import { Fingerprint } from "lucide-react";
 import { useAccount } from "wagmi";

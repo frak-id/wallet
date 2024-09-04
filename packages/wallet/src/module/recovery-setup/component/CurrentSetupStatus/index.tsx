@@ -1,5 +1,5 @@
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
-import { WalletAddress } from "@/module/wallet/component/WalletAddress";
+import { WalletAddress } from "@module/component/WalletAddress";
 
 /**
  * Component for the settings with the recovery options

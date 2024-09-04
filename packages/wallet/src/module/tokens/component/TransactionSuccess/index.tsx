@@ -1,5 +1,5 @@
 import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
-import { WalletAddress } from "@/module/wallet/component/WalletAddress";
+import { WalletAddress } from "@module/component/WalletAddress";
 import styles from "./index.module.css";
 
 export function TransactionSuccess({ hash }: { hash: string }) {

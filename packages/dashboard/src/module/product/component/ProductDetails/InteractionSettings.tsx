@@ -15,6 +15,7 @@ import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/block
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
+import { WalletAddress } from "@module/component/WalletAddress";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { tryit } from "radash";
@@ -140,7 +141,9 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
                     {detailsData?.interactionContract && (
                         <p>
                             <strong>Address: </strong>{" "}
-                            <pre>{detailsData.interactionContract}</pre>
+                            <WalletAddress
+                                wallet={detailsData.interactionContract}
+                            />
                         </p>
                     )}
 
@@ -286,7 +289,7 @@ function ManagedInteractionValidator({
             {data.validatorPublicKey && (
                 <p>
                     <strong>Public Key: </strong>{" "}
-                    <pre>{data.validatorPublicKey}</pre>
+                    <WalletAddress wallet={data.validatorPublicKey} />
                 </p>
             )}
 

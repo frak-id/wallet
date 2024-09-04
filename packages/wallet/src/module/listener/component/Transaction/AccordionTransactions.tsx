@@ -4,8 +4,8 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/module/common/component/Accordion";
-import { WalletAddress } from "@/module/wallet/component/WalletAddress";
 import type { SendTransactionTxType } from "@frak-labs/nexus-sdk/core";
+import { WalletAddress } from "@module/component/WalletAddress";
 import { formatEther } from "viem";
 import styles from "./index.module.css";
 

@@ -4,8 +4,8 @@ import {
     recoveryFileContentAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { WalletAddress } from "@/module/wallet/component/WalletAddress";
 import { Button } from "@module/component/Button";
+import { WalletAddress } from "@module/component/WalletAddress";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
