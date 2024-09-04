@@ -1,0 +1,35 @@
+.columns {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.columns + .columns {
+    margin-top: 24px;
+}
+
+.column {
+    flex-basis: 50%;
+}
+
+.column + .column {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.column--1-4 {
+    flex-grow: initial;
+    flex-basis: 25%;
+}
+
+.column--3-4 {
+    flex-grow: initial;
+    flex-basis: 75%;
+}
+
+.column--full {
+    flex-grow: initial;
+    flex-basis: 100%;
+}

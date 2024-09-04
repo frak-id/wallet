@@ -31,6 +31,7 @@ import {
 } from "@/module/product/utils/productTypes";
 import { productTypesMask } from "@frak-labs/nexus-sdk/core";
 import { Button } from "@module/component/Button";
+import { Column, Columns } from "@module/component/Columns";
 import { Input, type InputProps } from "@module/component/forms/Input";
 import { Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -220,13 +221,13 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                                 </FormItem>
                             )}
                         />
-                        <div className={styles.productDetails__action}>
-                            <div>
+                        <Columns>
+                            <Column>
                                 {editProductSuccess && (
                                     <ActionsMessageSuccess />
                                 )}
-                            </div>
-                            <div className={styles.productDetails__actionRight}>
+                            </Column>
+                            <Column>
                                 <Button
                                     variant={"informationOutline"}
                                     onClick={() => {
@@ -253,8 +254,8 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                                 >
                                     Validate
                                 </Button>
-                            </div>
-                        </div>
+                            </Column>
+                        </Columns>
                     </Panel>
                 )}
                 <ManageProductTeam productId={productId} />

@@ -1,4 +1,5 @@
 import { getOnChainCampaignsDetails } from "@/context/campaigns/action/getDetails";
+import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import styles from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule.module.css";
 import { Calendar } from "@/module/common/component/Calendar";
 import {
@@ -19,11 +20,12 @@ import {
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { Button } from "@module/component/Button";
+import { Column, Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format, isBefore, startOfDay } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type Address, encodeFunctionData } from "viem";
 
@@ -87,20 +89,22 @@ export function CampaignDates({
         },
     });
 
+    const setInitialValues = useCallback(() => {
+        if (!onChainInfos) return;
+        const dateStart = new Date(onChainInfos.config.startDate * 1000);
+        const dateEnd = onChainInfos.config.endDate
+            ? new Date(onChainInfos.config.endDate * 1000)
+            : undefined;
+        return {
+            scheduled: {
+                dateStart,
+                dateEnd,
+            },
+        };
+    }, [onChainInfos]);
+
     const form = useForm<FormDates>({
-        values: useMemo(() => {
-            if (!onChainInfos) return;
-            const dateStart = new Date(onChainInfos.config.startDate * 1000);
-            const dateEnd = onChainInfos.config.endDate
-                ? new Date(onChainInfos.config.endDate * 1000)
-                : undefined;
-            return {
-                scheduled: {
-                    dateStart,
-                    dateEnd,
-                },
-            };
-        }, [onChainInfos]),
+        values: useMemo(() => setInitialValues(), [setInitialValues]),
         defaultValues: {
             scheduled: {
                 dateStart: new Date(),
@@ -313,14 +317,32 @@ export function CampaignDates({
                             )}
                         />
                     </Row>
-                    <Button
-                        type={"submit"}
-                        variant={"submit"}
-                        isLoading={isUpdatingDates}
-                        disabled={isUpdatingDates || !form.formState.isDirty}
-                    >
-                        Validate Dates
-                    </Button>
+                    <Columns>
+                        <Column>
+                            {isSuccessDates && <ActionsMessageSuccess />}
+                        </Column>
+                        <Column>
+                            <Button
+                                variant={"informationOutline"}
+                                onClick={() => form.reset(setInitialValues())}
+                                disabled={
+                                    isUpdatingDates || !form.formState.isDirty
+                                }
+                            >
+                                Discard Changes
+                            </Button>
+                            <Button
+                                type={"submit"}
+                                variant={"submit"}
+                                isLoading={isUpdatingDates}
+                                disabled={
+                                    isUpdatingDates || !form.formState.isDirty
+                                }
+                            >
+                                Validate Dates
+                            </Button>
+                        </Column>
+                    </Columns>
                 </form>
             </Form>
         </>
