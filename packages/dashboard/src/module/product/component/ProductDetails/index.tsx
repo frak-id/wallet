@@ -1,9 +1,7 @@
 "use client";
 
-import {
-    ActionsMessageSuccess,
-    ActionsWrapper,
-} from "@/module/campaigns/component/Actions";
+import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
+import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -34,7 +32,7 @@ import {
 import { productTypesMask } from "@frak-labs/nexus-sdk/core";
 import { Button } from "@module/component/Button";
 import { Input, type InputProps } from "@module/component/forms/Input";
-import { Pencil } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -101,10 +99,22 @@ export function ProductDetails({ productId }: { productId: bigint }) {
 
     return (
         <FormLayout>
+            <Head
+                title={{ content: product?.name ?? "", size: "small" }}
+                rightSection={
+                    <Button
+                        variant={"outline"}
+                        leftIcon={<X size={20} />}
+                        onClick={() => router.push("/dashboard")}
+                    >
+                        Cancel
+                    </Button>
+                }
+            />
             <Form {...form}>
                 <InteractionContract productId={productId} />
                 {!(productIsLoading || productIsPending) && (
-                    <Panel title={product?.name}>
+                    <Panel title={"Details of the product"}>
                         <FormField
                             control={form.control}
                             name="name"
@@ -210,52 +220,44 @@ export function ProductDetails({ productId }: { productId: bigint }) {
                                 </FormItem>
                             )}
                         />
+                        <div className={styles.productDetails__action}>
+                            <div>
+                                {editProductSuccess && (
+                                    <ActionsMessageSuccess />
+                                )}
+                            </div>
+                            <div className={styles.productDetails__actionRight}>
+                                <Button
+                                    variant={"informationOutline"}
+                                    onClick={() => {
+                                        form.reset(product);
+                                        setForceRefresh(new Date().getTime());
+                                    }}
+                                    disabled={
+                                        editProductPending ||
+                                        !form.formState.isDirty
+                                    }
+                                >
+                                    Discard Changes
+                                </Button>
+                                <Button
+                                    variant={"submit"}
+                                    onClick={() => {
+                                        form.handleSubmit(onSubmit)();
+                                    }}
+                                    disabled={
+                                        editProductPending ||
+                                        !form.formState.isDirty
+                                    }
+                                    isLoading={editProductPending}
+                                >
+                                    Validate
+                                </Button>
+                            </div>
+                        </div>
                     </Panel>
                 )}
                 <ManageProductTeam productId={productId} />
-                <ActionsWrapper
-                    left={
-                        <>
-                            <Button
-                                variant={"outline"}
-                                onClick={() => router.push("/dashboard")}
-                            >
-                                Cancel
-                            </Button>
-                            {editProductSuccess && <ActionsMessageSuccess />}
-                        </>
-                    }
-                    right={
-                        <>
-                            <Button
-                                variant={"informationOutline"}
-                                onClick={() => {
-                                    form.reset(product);
-                                    setForceRefresh(new Date().getTime());
-                                }}
-                                disabled={
-                                    editProductPending ||
-                                    !form.formState.isDirty
-                                }
-                            >
-                                Discard Changes
-                            </Button>
-                            <Button
-                                variant={"submit"}
-                                onClick={() => {
-                                    form.handleSubmit(onSubmit)();
-                                }}
-                                disabled={
-                                    editProductPending ||
-                                    !form.formState.isDirty
-                                }
-                                isLoading={editProductPending}
-                            >
-                                Validate
-                            </Button>
-                        </>
-                    }
-                />
             </Form>
         </FormLayout>
     );
@@ -274,7 +276,7 @@ const InputWithToggle = forwardRef<HTMLInputElement, InputProps>(
                 />
                 <button
                     type={"button"}
-                    className={styles.InputWithToggle__button}
+                    className={styles.inputWithToggle__button}
                     onClick={() => setIsDisabled(!isDisabled)}
                     disabled={disabled}
                 >
@@ -301,7 +303,7 @@ const SelectWithToggle = forwardRef<HTMLButtonElement, SelectTriggerProps>(
                 </SelectTrigger>
                 <button
                     type={"button"}
-                    className={styles.InputWithToggle__button}
+                    className={styles.inputWithToggle__button}
                     onClick={() => setIsDisabled(!isDisabled)}
                     disabled={disabled}
                 >
