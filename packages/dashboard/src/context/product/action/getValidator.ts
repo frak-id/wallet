@@ -33,6 +33,9 @@ const getPubKey = memo(
             pubKey: Address;
         };
         return parsed?.pubKey;
+    },
+    {
+        key: ({ productId, type }) => `pub-key-${productId}-${type}`,
     }
 );
 

@@ -9,7 +9,8 @@ export const getSqsClient = memo(
     () =>
         new SQSClient({
             region: "eu-west-1",
-        })
+        }),
+    { key: () => "sqs-client" }
 );
 
 /**
@@ -19,5 +20,6 @@ export const getLambdaClient = memo(
     () =>
         new LambdaClient({
             region: "eu-west-1",
-        })
+        }),
+    { key: () => "lambda-client" }
 );

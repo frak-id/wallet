@@ -136,9 +136,7 @@ export async function nexusSmartAccount<
         async () => {
             return await isSmartAccountDeployed(client, accountAddress);
         },
-        {
-            key: () => `${accountAddress}-id-deployed`,
-        }
+        { key: () => `${accountAddress}-id-deployed` }
     );
 
     // Helper fetching the account metadata (used for msg signing)
@@ -146,9 +144,7 @@ export async function nexusSmartAccount<
         async () => {
             return await fetchAccountMetadata(client, accountAddress);
         },
-        {
-            key: () => `${accountAddress}-metadata`,
-        }
+        { key: () => `${accountAddress}-metadata` }
     );
 
     // Helper to perform a signature of a hash

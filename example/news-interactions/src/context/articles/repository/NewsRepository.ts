@@ -1,7 +1,7 @@
 import type { NewsDocument } from "@/context/articles/dto/NewsDocument";
 import { getMongoDb } from "@/context/common/mongoDb";
-import { DI } from "@frak-labs/shared/context/utils/di";
 import type { Collection, ObjectId, WithId } from "mongodb";
+import { memo } from "radash";
 
 /**
  * Repository used to access the news repository
@@ -62,11 +62,10 @@ class NewsRepository {
     }
 }
 
-export const getNewsRepository = DI.registerAndExposeGetter({
-    id: "NewsRepository",
-    isAsync: true,
-    getter: async () => {
+export const getNewsRepository = memo(
+    async () => {
         const db = await getMongoDb();
         return new NewsRepository(db.collection<NewsDocument>("news"));
     },
-});
+    { key: () => "NewsRepository" }
+);

@@ -1,4 +1,4 @@
-import { DI } from "@frak-labs/shared/context/utils/di";
+import { memo } from "radash";
 import { Config } from "sst/node/config";
 
 class WorldNewsApiRepository {
@@ -48,10 +48,10 @@ class WorldNewsApiRepository {
     }
 }
 
-export const getWorldNewsApiRepository = DI.registerAndExposeGetter({
-    id: "WorldNewsApiRepository",
-    getter: () => new WorldNewsApiRepository(Config.WORLD_NEWS_API_KEY),
-});
+export const getWorldNewsApiRepository = memo(
+    () => new WorldNewsApiRepository(Config.WORLD_NEWS_API_KEY),
+    { key: () => "WorldNewsApiRepository" }
+);
 
 type NewsResponse = {
     offset: number;

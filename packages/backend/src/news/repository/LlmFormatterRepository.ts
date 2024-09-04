@@ -2,7 +2,7 @@ import {
     BedrockRuntimeClient,
     InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
-import { DI } from "@frak-labs/shared/context/utils/di";
+import { memo } from "radash";
 
 class LlmFormatterRepository {
     private client: BedrockRuntimeClient;
@@ -53,7 +53,7 @@ ${news.text}`;
     }
 }
 
-export const getLlmFormatterRepository = DI.registerAndExposeGetter({
-    id: "LlmFormatterRepository",
-    getter: () => new LlmFormatterRepository(),
-});
+export const getLlmFormatterRepository = memo(
+    () => new LlmFormatterRepository(),
+    { key: () => "LlmFormatterRepository" }
+);

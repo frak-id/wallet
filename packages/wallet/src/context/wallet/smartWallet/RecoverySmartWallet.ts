@@ -56,9 +56,7 @@ export function recoverySmartAccount<
         async () => {
             return await isSmartAccountDeployed(client, initialWallet.address);
         },
-        {
-            key: () => `${initialWallet.address}-id-deployed`,
-        }
+        { key: () => `${initialWallet.address}-id-deployed` }
     );
 
     // Build the smart account itself

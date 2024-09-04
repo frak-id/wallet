@@ -68,5 +68,6 @@ export const walletHasValidSession = memo(
 
         // If session expired, return null
         return now > sessionStart || sessionEnd > now;
-    }
+    },
+    { key: ({ wallet }) => `${wallet}-has-valid-session` }
 );

@@ -1,12 +1,10 @@
-import { DI } from "@frak-labs/shared/context/utils/di";
 import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { MongoClient } from "mongodb";
+import { memo } from "radash";
 
 // Get the mongo db client
-export const getMongoDb = DI.registerAndExposeGetter({
-    id: "Mongo",
-    isAsync: true,
-    getter: async () => {
+export const getMongoDb = memo(
+    async () => {
         // Get the mongo client
         const client = new MongoClient(
             process.env.MONGODB_BUSINESS_URI as string
@@ -17,4 +15,5 @@ export const getMongoDb = DI.registerAndExposeGetter({
         const dbName = isRunningInProd ? "business" : "business-dev";
         return client.db(dbName);
     },
-});
+    { key: () => "MongoDb" }
+);

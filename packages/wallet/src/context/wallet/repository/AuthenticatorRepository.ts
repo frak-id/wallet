@@ -1,7 +1,7 @@
 import { getMongoDb } from "@/context/common/mongoDb";
 import type { AuthenticatorDocument } from "@/context/wallet/dto/AuthenticatorDocument";
-import { DI } from "@frak-labs/shared/context/utils/di";
 import type { Collection } from "mongodb";
+import { memo } from "radash";
 import type { Address } from "viem";
 
 /**
@@ -72,13 +72,12 @@ class AuthenticatorRepository {
     }
 }
 
-export const getAuthenticatorRepository = DI.registerAndExposeGetter({
-    id: "AuthenticatorRepository",
-    isAsync: true,
-    getter: async () => {
+export const getAuthenticatorRepository = memo(
+    async () => {
         const db = await getMongoDb();
         return new AuthenticatorRepository(
             db.collection<AuthenticatorDocument>("authenticators")
         );
     },
-});
+    { key: () => "AuthenticatorRepository" }
+);

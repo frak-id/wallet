@@ -2,8 +2,7 @@
 
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
-import { DI } from "@frak-labs/shared/context/utils/di";
-import { parallel } from "radash";
+import { memo, parallel } from "radash";
 import type { Address, Hex } from "viem";
 
 type InteractionToPush = {
@@ -12,14 +11,13 @@ type InteractionToPush = {
     submittedSignature?: Hex;
 };
 
-const getSqsClient = DI.registerAndExposeGetter({
-    id: "SqsClient",
-    isAsync: false,
-    getter: () =>
+const getSqsClient = memo(
+    () =>
         new SQSClient({
             region: "eu-west-1",
         }),
-});
+    { key: () => "sqs-client" }
+);
 
 /**
  * Try to push an interaction for the given wallet via an interaction
