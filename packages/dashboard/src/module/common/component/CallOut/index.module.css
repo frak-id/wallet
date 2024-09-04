@@ -1,0 +1,40 @@
+.callOut {
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    line-height: 20px;
+}
+
+.callOut + .callOut {
+    margin-top: 12px;
+}
+
+.primary {
+    background-color: #e8f8fd;
+    color: var(--frak-color-cerulean);
+}
+
+.secondary {
+    background-color: #f0f1f3;
+    color: var(--frak-color-pale-sky);
+}
+
+.success {
+    background-color: #e7f4ee;
+    color: #0d894f;
+}
+
+.danger {
+    background-color: #feedec;
+    color: var(--frak-color-red);
+}
+
+.information {
+    background-color: var(--frak-color-moon-raker);
+    color: var(--frak-color-royal-blue);
+}
+
+.warning {
+    background-color: #fdf1e8;
+    color: #e46a11;
+}
