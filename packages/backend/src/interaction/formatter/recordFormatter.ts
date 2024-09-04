@@ -5,10 +5,17 @@ import {
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import type { SQSRecord } from "aws-lambda";
 import { memo } from "radash";
-import { type Address, type Hex, concatHex, encodeFunctionData } from "viem";
+import {
+    type Address,
+    type Hex,
+    encodeFunctionData,
+    encodePacked,
+    toHex,
+} from "viem";
 import { readContract } from "viem/actions";
 import { getViemClient } from "../../blockchain/client";
 import { getInteractionSignature } from "./interactionSigner";
+import { walletHasValidSession } from "./verifyWalletSession";
 
 type InteractionEvent = {
     wallet: Address;
@@ -44,6 +51,20 @@ export async function recordToInteraction(record: SQSRecord): Promise<{
         }
         const productId = BigInt(parsed.productId);
 
+        // Ensure that the wallet has a valid session
+        const hasValidSession = await walletHasValidSession({
+            wallet: parsed.wallet,
+        });
+        if (!hasValidSession) {
+            console.error("Invalid session for wallet", {
+                wallet: parsed.wallet,
+            });
+            return {
+                id: record.messageId,
+                data: null,
+            };
+        }
+
         // Fetch the interaction contract
         const interactionContract = await getInteractionContract({ productId });
 
@@ -62,10 +83,13 @@ export async function recordToInteraction(record: SQSRecord): Promise<{
             abi: productInteractionDiamondAbi,
             functionName: "handleInteraction",
             args: [
-                concatHex([
-                    parsed.interaction.handlerTypeDenominator,
-                    parsed.interaction.interactionData,
-                ]),
+                encodePacked(
+                    ["uint8", "bytes"],
+                    [
+                        Number(parsed.interaction.handlerTypeDenominator),
+                        parsed.interaction.interactionData,
+                    ]
+                ),
                 signature,
             ],
         });
@@ -105,6 +129,7 @@ const getInteractionContract = memo(
         });
     },
     {
-        key: ({ productId }: { productId: bigint }) => productId.toString(),
+        key: ({ productId }: { productId: bigint }) =>
+            `interaction-contract-${toHex(productId)}`,
     }
 );

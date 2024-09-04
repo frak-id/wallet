@@ -1,3 +1,4 @@
+import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
@@ -78,7 +79,9 @@ function interactionsResources({ stack }: StackContext) {
                     // Maximum amount of item sent to the function (at most 200 interactions)
                     batchSize: 200,
                     // Wait at most 2min to push the interactions
-                    maxBatchingWindow: Duration.minutes(2),
+                    maxBatchingWindow: isRunningInProd
+                        ? Duration.minutes(2)
+                        : Duration.seconds(10),
                     // Allow partial failures
                     reportBatchItemFailures: true,
                     // Don't allow more than 4 parallel executions

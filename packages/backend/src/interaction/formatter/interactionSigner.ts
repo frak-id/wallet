@@ -48,9 +48,8 @@ export async function getInteractionSignature({
         throw new Error("Signer does not have the required role");
     }
 
-    // Sign the typed data
-    return await signTypedData(client, {
-        account: signerAccount,
+    // Build the typed data
+    const typedData = {
         domain: {
             name: "Frak.ProductInteraction",
             version: "0.0.1",
@@ -72,6 +71,12 @@ export async function getInteractionSignature({
             user,
             nonce,
         },
+    } as const;
+
+    // Sign the typed data
+    return await signTypedData(client, {
+        account: signerAccount,
+        ...typedData,
     });
 }
 
