@@ -78,9 +78,21 @@ class CampaignRepository {
         addresses,
         creator,
     }: { addresses: Address[]; creator?: Address }) {
+        // Build our regex
+        const addressesRegex = new RegExp(addresses.join("|"), "i");
+        const creatorRegex = new RegExp(`^${creator}$`, "i");
+
+        // Perform the query
         return this.collection
             .find({
-                $or: [{ "state.address": { $in: addresses } }, { creator }],
+                $or: [
+                    {
+                        "state.address": { $regex: addressesRegex },
+                    },
+                    {
+                        creator: { $regex: creatorRegex },
+                    },
+                ],
             })
             .toArray();
     }

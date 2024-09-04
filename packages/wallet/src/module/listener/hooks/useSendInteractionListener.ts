@@ -41,9 +41,16 @@ export function useSendInteractionListener(): OnInteractionRequest {
 
         if (BigInt(productId) !== BigInt(context.productId)) {
             console.error(
-                "Mismatching product id, aborting the user op reception"
+                "Mismatching product id, aborting the user op reception",
+                { productId, context: context }
             );
             if (!isRunningLocally) {
+                await emitter({
+                    error: {
+                        code: RpcErrorCodes.configError,
+                        message: "Mismatching product id",
+                    },
+                });
                 return;
             }
         }

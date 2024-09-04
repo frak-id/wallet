@@ -9,8 +9,8 @@ import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abi
 import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import ky from "ky";
-import { all, sift } from "radash";
-import { type Address, isAddressEqual } from "viem";
+import { all, sift, unique } from "radash";
+import { type Address, getAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 
 type ApiResult = {
@@ -45,17 +45,22 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     });
 
     // Create the state of unique addresses we will fetch
-    const campaignAddresses = new Set<Address>([
-        ...sift(
-            campaignDocuments.map((campaign) =>
-                campaign.state.key === "created" ? campaign.state.address : null
-            )
-        ),
-        ...blockchainCampaigns.map((campaign) => campaign.id),
-    ]);
+    const campaignAddresses = sift(
+        unique(
+            [
+                ...campaignDocuments.map((campaign) =>
+                    campaign.state.key === "created"
+                        ? campaign.state.address
+                        : null
+                ),
+                ...blockchainCampaigns.map((campaign) => campaign.id),
+            ],
+            (a) => !!a && getAddress(a)
+        )
+    );
 
     const campaignProductIds = sift(
-        [...campaignAddresses].map((address) => {
+        campaignAddresses.map((address) => {
             const campaign = blockchainCampaigns.find((item) =>
                 isAddressEqual(item.id, address)
             );
@@ -117,7 +122,9 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
         if (!blockchainCampaign) {
             return mappedCampaign as CampaignWithState;
         }
-        const onChainState = onChainStates[blockchainCampaign.id];
+        const onChainState = onChainStates.find((item) =>
+            isAddressEqual(item.address, blockchainCampaign.id)
+        );
 
         // Update the edit state depending on it
         mappedCampaign.actions.canEdit = onChainState?.canEdit ?? false;
@@ -154,7 +161,12 @@ async function getOnChainStateForCampaigns({
     campaignProductIds: { address: Address; productId: bigint }[];
     wallet: Address;
 }): Promise<
-    Record<Address, { canEdit: boolean; isActive: boolean; isRunning: boolean }>
+    {
+        address: Address;
+        canEdit: boolean;
+        isActive: boolean;
+        isRunning: boolean;
+    }[]
 > {
     // If no address provided, early exit
     if (campaignProductIds.length === 0) {
@@ -210,16 +222,19 @@ async function getOnChainStateForCampaigns({
     // Map the results to an object
     return campaignProductIds.reduce(
         (acc, { address }, index) => {
-            acc[address] = {
+            acc.push({
+                address,
                 canEdit: canEdits[index],
                 isActive: isActives[index],
                 isRunning: isRunnings[index],
-            };
+            });
             return acc;
         },
-        {} as Record<
-            Address,
-            { canEdit: boolean; isActive: boolean; isRunning: boolean }
-        >
+        [] as {
+            address: Address;
+            canEdit: boolean;
+            isActive: boolean;
+            isRunning: boolean;
+        }[]
     );
 }
