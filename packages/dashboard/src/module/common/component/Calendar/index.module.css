@@ -20,8 +20,11 @@
     align-items: center;
 }
 
-.navButtonPrevious {
+.navButtonPrevious,
+.navButtonNext {
     all: unset;
+    position: absolute;
+    z-index: 1;
     display: flex;
     opacity: 0.5;
     cursor: pointer;
@@ -30,21 +33,17 @@
         opacity: 1;
     }
 
-    position: absolute;
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+}
+
+.navButtonPrevious {
     left: 4px;
 }
 
 .navButtonNext {
-    all: unset;
-    display: flex;
-    opacity: 0.5;
-    cursor: pointer;
-
-    &:hover {
-        opacity: 1;
-    }
-
-    position: absolute;
     right: 4px;
 }
 
@@ -86,6 +85,7 @@
     width: 36px;
     height: 36px;
     justify-content: center;
+    border-radius: 8px;
 
     &:hover {
         background-color: var(--frak-color-mischka);
@@ -94,10 +94,12 @@
 
 .daySelected {
     background-color: var(--frak-color-mischka);
+    border-radius: 8px;
 }
 
 .dayToday {
     background-color: var(--frak-color-moon-raker);
+    border-radius: 8px;
 }
 
 .dayOutside {

@@ -133,8 +133,11 @@ export function FormScheduleFields<T extends FieldValues>(
                 control={form.control as Control<FieldValues>}
                 name="scheduled.dateEnd"
                 render={({ field }) => (
-                    <div className={styles.formSchedule__endDate}>
-                        <FormItem variant={"checkbox"}>
+                    <>
+                        <FormItem
+                            variant={"checkbox"}
+                            className={styles.formSchedule__endDate}
+                        >
                             <Checkbox
                                 onCheckedChange={(value) => {
                                     setIsEndDate(value);
@@ -205,7 +208,7 @@ export function FormScheduleFields<T extends FieldValues>(
                                 <FormMessage />
                             </FormItem>
                         )}
-                    </div>
+                    </>
                 )}
             />
         </>
