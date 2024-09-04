@@ -5,6 +5,7 @@ import { CampaignDates } from "@/module/campaigns/component/CampaignDetails/Camp
 import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { TransactionHash, WalletAddress } from "@module/component/HashDisplay";
 import { useQuery } from "@tanstack/react-query";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
@@ -118,8 +119,13 @@ function OnChainCampaignStatus({
         return (
             <Column fullWidth={true}>
                 <h3>Campaign status</h3>
-                <p>Campaign Address: {campaignAddress}</p>
-                <p>Deployment Tx Hash: {deploymentTxHash}</p>
+                <p>
+                    Campaign Address: <WalletAddress wallet={campaignAddress} />
+                </p>
+                <p>
+                    Deployment Tx Hash:{" "}
+                    <TransactionHash hash={deploymentTxHash} />
+                </p>
                 <p>On-chain information's not found</p>
             </Column>
         );
@@ -132,8 +138,14 @@ function OnChainCampaignStatus({
                     Campaign status
                 </Title>
                 <div>
-                    <p>Campaign Address: {campaignAddress}</p>
-                    <p>Deployment Tx Hash: {deploymentTxHash}</p>
+                    <p>
+                        Campaign Address:{" "}
+                        <WalletAddress wallet={campaignAddress} />
+                    </p>
+                    <p>
+                        Deployment Tx Hash:{" "}
+                        <TransactionHash hash={deploymentTxHash} />
+                    </p>
                     <br />
                     <p>
                         Status:{" "}

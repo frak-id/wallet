@@ -2,6 +2,7 @@ import { viemClient } from "@/context/blockchain/provider";
 import { roles } from "@/context/blockchain/roles";
 import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
 import { Badge } from "@/module/common/component/Badge";
+import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
@@ -15,8 +16,8 @@ import {
 import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Button } from "@module/component/Button";
+import { WalletAddress } from "@module/component/HashDisplay";
 import { Spinner } from "@module/component/Spinner";
-import { WalletAddress } from "@module/component/WalletAddress";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { tryit } from "radash";
@@ -131,7 +132,7 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
                     {detailsData?.interactionContract &&
                         detailsData?.isAllowed && (
                             <Button
-                                variant={"submit"}
+                                variant={"danger"}
                                 onClick={() => deleteInteraction()}
                             >
                                 Delete contract
@@ -153,24 +154,27 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
                             </Button>
                         )}
 
-                    <p>
-                        <strong>Info:</strong> The Interaction Contract receives
-                        user interactions and triggers campaigns after
-                        validation.
+                    <CallOut variant={"secondary"}>
+                        The Interaction Contract receives user interactions and
+                        triggers campaigns after validation.
                         <br />
                         It's essential for enabling blockchain-based user
                         engagement with your product.
-                    </p>
+                    </CallOut>
                 </div>
-                <hr />
+
+                <br />
+                <br />
+
                 {detailsData?.interactionContract && (
                     <ManagedInteractionValidator
                         productId={productId}
                         interactionContract={detailsData.interactionContract}
                     />
                 )}
-                <hr />
-                <p>
+                <br />
+                <br />
+                <CallOut variant={"secondary"}>
                     For more information on using the Managed Interaction
                     Validator with the SDK, see our{" "}
                     <Link
@@ -181,7 +185,7 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
                         documentation
                     </Link>
                     .
-                </p>
+                </CallOut>
             </>
         </Panel>
     );
@@ -288,7 +292,7 @@ function ManagedInteractionValidator({
 
             {data.hasValidatorRoles ? (
                 <Button
-                    variant={"submit"}
+                    variant={"danger"}
                     onClick={() => changeValidatorAllowance({ allow: false })}
                 >
                     Revoke permissions
@@ -302,13 +306,12 @@ function ManagedInteractionValidator({
                 </Button>
             )}
 
-            <p>
-                <strong>Info:</strong> The Managed Interaction Validator
-                simplifies Nexus SDK integration by handling interaction
-                validation.
+            <CallOut variant={"secondary"}>
+                The Managed Interaction Validator simplifies Nexus SDK
+                integration by handling interaction validation.
                 <br /> When allowed, you can submit user interactions without
                 generating ECDSA signatures.
-            </p>
+            </CallOut>
 
             {data.interactionExecutorPubKey && (
                 <p>

@@ -1,5 +1,6 @@
-import { formatHash } from "@/context/wallet/utils/hashFormatter";
+import { formatHash } from "@module/component/HashDisplay";
 import { ExternalLink } from "lucide-react";
+import type { Hex } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 import styles from "./index.module.css";
 
@@ -12,7 +13,7 @@ export function ExplorerLink({
     className = "",
     text = "",
 }: {
-    hash: string;
+    hash: Hex;
     wallet?: boolean;
     icon?: boolean;
     className?: string;
@@ -27,7 +28,7 @@ export function ExplorerLink({
             rel={"noreferrer"}
             className={`${styles.polygonLink} ${className}`}
         >
-            {text ? <span>{text}</span> : <span>{formatHash(hash)}</span>}
+            {text ? <span>{text}</span> : <span>{formatHash({ hash })}</span>}
             {icon && <ExternalLink className={styles.polygonLink__icon} />}
         </a>
     );

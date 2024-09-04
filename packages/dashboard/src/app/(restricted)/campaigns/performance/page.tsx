@@ -1,11 +1,11 @@
 "use client";
 
+import { TableCampaignPerformance } from "@/module/campaigns/component/TableCampaignPerformance";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
 import { Button } from "@module/component/Button";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { TableCampaignPerformance } from "../../../../module/campaigns/component/TableCampaignPerformance";
 
 export default function CampaignsPerformancePage() {
     const router = useRouter();
