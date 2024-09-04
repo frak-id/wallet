@@ -1,13 +1,13 @@
 import { mintProduct } from "@/context/product/action/mint";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import { useMutation } from "@tanstack/react-query";
 
 /**
  * Hook to mint the user product
  */
 export function useMintMyProduct() {
-    const { mutateAsync: sendTx } = useSendTransactionAction();
+    const { mutateAsync: deployInteractionContract } =
+        useSetupInteractionContract();
 
     return useMutation({
         mutationKey: ["product", "launch-mint"],
@@ -18,27 +18,16 @@ export function useMintMyProduct() {
             setupInteractions?: boolean;
         }) => {
             // Perform the backend side of the mint
-            const { mintTxHash, setupInteractionTxData } =
-                await mintProduct(args);
+            const { mintTxHash, productId } = await mintProduct(args);
 
-            // Then perform the blockchain side of the mint
-            const { hash: interactionDeployHash } = await sendTx({
-                metadata: {
-                    context: `Deploying user interactions handler for ${args.name}`,
-                },
-                tx: {
-                    to: addresses.productInteractionManager,
-                    value: "0x00",
-                    data: setupInteractionTxData,
-                },
-            });
-            console.log(`User interactions handler deployed for ${args.name}`, {
-                hash: interactionDeployHash,
+            // Setup the interaction contract
+            await deployInteractionContract({
+                productId: BigInt(productId),
+                directAllowValidator: true,
             });
 
             return {
                 mintTxHash,
-                interactionDeployHash,
             };
         },
     });

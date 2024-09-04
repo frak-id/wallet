@@ -3,6 +3,7 @@ import { roles } from "@/context/blockchain/roles";
 import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
 import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
+import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
     useSendTransactionAction,
     useWalletStatus,
@@ -29,6 +30,8 @@ import { readContract } from "viem/actions";
 export function InteractionSettings({ productId }: { productId: bigint }) {
     const { data: walletStatus } = useWalletStatus();
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
+    const { mutateAsync: setupInteractionContract } =
+        useSetupInteractionContract();
 
     const {
         data: detailsData,
@@ -69,28 +72,6 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
                 isAllowed,
                 interactionContract,
             };
-        },
-    });
-
-    const { mutate: deployInteraction } = useMutation({
-        mutationKey: ["product", "deploy-interaction"],
-        mutationFn: async () => {
-            await sendTransaction({
-                tx: {
-                    to: addresses.productInteractionManager,
-                    data: encodeFunctionData({
-                        abi: productInteractionManagerAbi,
-                        functionName: "deployInteractionContract",
-                        args: [productId],
-                    }),
-                },
-                metadata: {
-                    header: {
-                        title: "Deploy interaction handler",
-                    },
-                },
-            });
-            await refreshDetails();
         },
     });
 
@@ -161,7 +142,12 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
                         detailsData?.isAllowed && (
                             <Button
                                 variant={"submit"}
-                                onClick={() => deployInteraction()}
+                                onClick={() =>
+                                    setupInteractionContract({
+                                        productId,
+                                        directAllowValidator: true,
+                                    })
+                                }
                             >
                                 Deploy contract
                             </Button>
@@ -215,7 +201,10 @@ function ManagedInteractionValidator({
             productId.toString(),
         ],
         queryFn: async () => {
-            const validatorPublicKey = await getManagedValidatorPublicKey({
+            const {
+                productPubKey: validatorPublicKey,
+                interactionExecutorPubKey,
+            } = await getManagedValidatorPublicKey({
                 productId: toHex(productId),
             });
             if (!validatorPublicKey) {
@@ -227,7 +216,11 @@ function ManagedInteractionValidator({
                 functionName: "hasAllRoles",
                 args: [validatorPublicKey, roles.interactionValidatorRoles],
             });
-            return { validatorPublicKey, hasValidatorRoles };
+            return {
+                validatorPublicKey,
+                interactionExecutorPubKey,
+                hasValidatorRoles,
+            };
         },
     });
 
@@ -316,6 +309,13 @@ function ManagedInteractionValidator({
                 <br /> When allowed, you can submit user interactions without
                 generating ECDSA signatures.
             </p>
+
+            {data.interactionExecutorPubKey && (
+                <p>
+                    <strong>Interaction executor: </strong>{" "}
+                    <WalletAddress wallet={data.interactionExecutorPubKey} />
+                </p>
+            )}
         </div>
     );
 }

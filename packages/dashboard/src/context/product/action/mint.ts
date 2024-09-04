@@ -2,7 +2,6 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import { isDnsTxtRecordSet } from "@/context/product/action/verifyDomain";
-import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { productRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { type Hex, encodeFunctionData, keccak256, toHex } from "viem";
@@ -77,14 +76,7 @@ export async function mintProduct({
         confirmations: 1,
     });
 
-    // Prepare the interaction setup tx data
-    const setupInteractionTxData = encodeFunctionData({
-        abi: productInteractionManagerAbi,
-        functionName: "deployInteractionContract",
-        args: [productId],
-    });
-
-    return { mintTxHash, setupInteractionTxData };
+    return { mintTxHash, productId: toHex(productId) };
 }
 
 /**
