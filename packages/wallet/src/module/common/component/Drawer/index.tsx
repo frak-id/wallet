@@ -51,10 +51,14 @@ const DrawerContent = forwardRef<
             className={`${prefixDrawerCss("content")} ${styles.drawer__contentWrapper} ${className}`}
             {...props}
         >
-            <div
-                className={`${prefixDrawerCss("handle")} ${styles.drawer__handle}`}
-            />
-            <div className={styles.drawer__content}>{children}</div>
+            <DrawerPrimitive.Title asChild>
+                <div
+                    className={`${prefixDrawerCss("handle")} ${styles.drawer__handle}`}
+                />
+            </DrawerPrimitive.Title>
+            <DrawerPrimitive.Description asChild>
+                <div className={styles.drawer__content}>{children}</div>
+            </DrawerPrimitive.Description>
         </DrawerPrimitive.Content>
     </DrawerPortal>
 ));

@@ -112,8 +112,8 @@ export function AlertDialog({
                         <AlertDialogPrimitive.Title />
                     )}
                     {description ? (
-                        <AlertDialogPrimitive.Description>
-                            {description}
+                        <AlertDialogPrimitive.Description asChild>
+                            <div>{description}</div>
                         </AlertDialogPrimitive.Description>
                     ) : (
                         <AlertDialogPrimitive.Description />
