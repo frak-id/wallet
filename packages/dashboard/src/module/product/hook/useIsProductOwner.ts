@@ -3,14 +3,14 @@ import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
 import { productRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useQuery } from "@tanstack/react-query";
-import { isAddressEqual } from "viem";
+import { type Hex, isAddressEqual } from "viem";
 import { readContract } from "viem/actions";
 
 /**
  * Hook to check if the current user is the owner of the product
  * @param productId
  */
-export function useIsProductOwner({ productId }: { productId: bigint }) {
+export function useIsProductOwner({ productId }: { productId: Hex }) {
     const { data: walletStatus } = useWalletStatus();
 
     return useQuery({
@@ -25,7 +25,7 @@ export function useIsProductOwner({ productId }: { productId: bigint }) {
                 abi: productRegistryAbi,
                 address: addresses.productRegistry,
                 functionName: "ownerOf",
-                args: [productId],
+                args: [BigInt(productId)],
             });
             return isAddressEqual(owner, walletStatus.wallet);
         },

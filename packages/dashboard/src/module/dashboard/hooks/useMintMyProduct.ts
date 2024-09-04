@@ -22,7 +22,7 @@ export function useMintMyProduct() {
 
             // Setup the interaction contract
             await deployInteractionContract({
-                productId: BigInt(productId),
+                productId,
                 directAllowValidator: true,
             });
 

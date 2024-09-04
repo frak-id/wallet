@@ -1,4 +1,4 @@
-import { roles } from "@/context/blockchain/roles";
+import { interactionValidatorRoles } from "@/context/blockchain/roles";
 import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
@@ -6,7 +6,7 @@ import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchai
 import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
-import { encodeFunctionData, toHex } from "viem";
+import { type Hex, encodeFunctionData } from "viem";
 import { readContract } from "viem/actions";
 
 /**
@@ -22,7 +22,7 @@ export function useSetupInteractionContract() {
         mutationFn: async ({
             directAllowValidator,
             productId,
-        }: { productId: bigint; directAllowValidator: boolean }) => {
+        }: { productId: Hex; directAllowValidator: boolean }) => {
             // Send the deploy interaction call
             const { hash: interactionDeploymentHash } = await sendTransaction({
                 tx: {
@@ -30,7 +30,7 @@ export function useSetupInteractionContract() {
                     data: encodeFunctionData({
                         abi: productInteractionManagerAbi,
                         functionName: "deployInteractionContract",
-                        args: [productId],
+                        args: [BigInt(productId)],
                     }),
                 },
                 metadata: {
@@ -52,7 +52,7 @@ export function useSetupInteractionContract() {
 
             // Get the manager validator address
             const { productPubKey } = await getManagedValidatorPublicKey({
-                productId: toHex(productId),
+                productId: productId,
             });
             if (!productPubKey) {
                 return;
@@ -64,7 +64,7 @@ export function useSetupInteractionContract() {
                     address: addresses.productInteractionManager,
                     abi: productInteractionManagerAbi,
                     functionName: "getInteractionContract",
-                    args: [productId],
+                    args: [BigInt(productId)],
                 }
             );
             // Allow it
@@ -74,7 +74,7 @@ export function useSetupInteractionContract() {
                     data: encodeFunctionData({
                         abi: productInteractionManagerAbi,
                         functionName: "grantRoles",
-                        args: [productPubKey, roles.interactionValidatorRoles],
+                        args: [productPubKey, interactionValidatorRoles],
                     }),
                 },
                 metadata: {

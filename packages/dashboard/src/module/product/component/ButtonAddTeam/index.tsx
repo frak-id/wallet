@@ -29,7 +29,7 @@ import {
     useForm,
     useFormContext,
 } from "react-hook-form";
-import { type Address, isAddress } from "viem";
+import { type Address, type Hex, isAddress } from "viem";
 import styles from "./index.module.css";
 
 type FormAddTeamMembers = {
@@ -40,7 +40,7 @@ type FormAddTeamMembers = {
 export function ButtonAddTeam({
     productId,
     children,
-}: PropsWithChildren<{ productId: bigint }>) {
+}: PropsWithChildren<{ productId: Hex }>) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const {
         mutateAsync: addProductMember,

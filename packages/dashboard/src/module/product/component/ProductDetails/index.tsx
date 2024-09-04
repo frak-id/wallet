@@ -38,6 +38,7 @@ import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 type FormProduct = {
@@ -46,19 +47,19 @@ type FormProduct = {
     productTypes: bigint;
 };
 
-export function ProductDetails({ productId }: { productId: bigint }) {
+export function ProductDetails({ productId }: { productId: Hex }) {
     const router = useRouter();
     const {
         data: product,
         isLoading: productIsLoading,
         isPending: productIsPending,
-    } = useProductMetadata({ productId: productId.toString() });
+    } = useProductMetadata({ productId });
     const {
         mutate: editProduct,
         isSuccess: editProductSuccess,
         isPending: editProductPending,
     } = useEditProduct({
-        productId: productId.toString(),
+        productId,
     });
     const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
 

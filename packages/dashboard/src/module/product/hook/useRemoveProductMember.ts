@@ -7,7 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 
 type RemoveProductMemberArg = {
-    productId: bigint;
+    productId: Hex;
 } & (
     | { fullRemoval: true }
     | { fullRemoval: false; rolesToDelete: RolesKeys[] }
@@ -24,19 +24,20 @@ export function useRemoveProductMember() {
     return useMutation({
         mutationKey: ["product", "remove-member"],
         mutationFn: async (args: RemoveProductMemberArg) => {
+            const productId = BigInt(args.productId);
             // Build the right tx data based on the arguments
             let txData: Hex;
             if (args.fullRemoval && args.isRenouncing) {
                 txData = encodeFunctionData({
                     abi: productAdministratorRegistryAbi,
                     functionName: "renounceAllRoles",
-                    args: [args.productId],
+                    args: [productId],
                 });
             } else if (args.fullRemoval && !args.isRenouncing) {
                 txData = encodeFunctionData({
                     abi: productAdministratorRegistryAbi,
                     functionName: "revokeAllRoles",
-                    args: [args.productId, args.wallet],
+                    args: [productId, args.wallet],
                 });
             } else {
                 // Otherwise, build our roles bitmap
@@ -48,16 +49,12 @@ export function useRemoveProductMember() {
                     ? encodeFunctionData({
                           abi: productAdministratorRegistryAbi,
                           functionName: "renounceRoles",
-                          args: [args.productId, rolesMaskToDelete],
+                          args: [productId, rolesMaskToDelete],
                       })
                     : encodeFunctionData({
                           abi: productAdministratorRegistryAbi,
                           functionName: "revokeRoles",
-                          args: [
-                              args.productId,
-                              args.wallet,
-                              rolesMaskToDelete,
-                          ],
+                          args: [productId, args.wallet, rolesMaskToDelete],
                       });
             }
 

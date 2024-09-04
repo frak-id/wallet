@@ -5,11 +5,13 @@ import type { ManageTeamTableData } from "@/module/product/component/TableTeam/i
 import { useRemoveProductMember } from "@/module/product/hook/useRemoveProductMember";
 import { permissionLabelsArray } from "@/module/product/utils/permissions";
 import { Button } from "@module/component/Button";
+import { WalletAddress } from "@module/component/HashDisplay";
 import { Tooltip } from "@module/component/Tooltip";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import type { CellContext } from "@tanstack/react-table";
 import { Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import type { Hex } from "viem";
 
 /**
  * Component representing the delete modal
@@ -23,7 +25,7 @@ export function DeleteTeamMemberModal({
     productId,
     isRenouncing,
 }: Pick<CellContext<ManageTeamTableData, unknown>, "row"> & {
-    productId: bigint;
+    productId: Hex;
     isRenouncing: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -52,7 +54,8 @@ export function DeleteTeamMemberModal({
                 ) : (
                     <>
                         Are you sure you want to delete the user{" "}
-                        <pre>{row.original.wallet}</pre>?
+                        <WalletAddress wallet={row.original.wallet} />
+                        {}?
                     </>
                 )
             }
@@ -98,7 +101,7 @@ export function UpdateRoleTeamMemberModal({
     productId,
     isRenouncing,
 }: Pick<CellContext<ManageTeamTableData, unknown>, "row"> & {
-    productId: bigint;
+    productId: Hex;
     isRenouncing: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -149,7 +152,7 @@ export function UpdateRoleTeamMemberModal({
                                 Pick the permissions you want to remove to the
                                 user{" "}
                             </p>
-                            <pre>{row.original.wallet}</pre>
+                            <WalletAddress wallet={row.original.wallet} />
                         </>
                     )}
                     <br />

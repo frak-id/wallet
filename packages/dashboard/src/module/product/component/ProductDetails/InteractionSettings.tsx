@@ -1,5 +1,5 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { roles } from "@/context/blockchain/roles";
+import { interactionValidatorRoles, roles } from "@/context/blockchain/roles";
 import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
 import { Badge } from "@/module/common/component/Badge";
 import { CallOut } from "@/module/common/component/CallOut";
@@ -21,14 +21,14 @@ import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { tryit } from "radash";
-import { type Address, encodeFunctionData, toHex } from "viem";
+import { type Address, type Hex, encodeFunctionData } from "viem";
 import { readContract } from "viem/actions";
 
 /**
  * Component to manage the interaction settings
  * @constructor
  */
-export function InteractionSettings({ productId }: { productId: bigint }) {
+export function InteractionSettings({ productId }: { productId: Hex }) {
     const { data: walletStatus } = useWalletStatus();
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
     const { mutateAsync: setupInteractionContract } =
@@ -56,7 +56,11 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
                 abi: productAdministratorRegistryAbi,
                 functionName: "hasAllRolesOrAdmin",
                 address: addresses.productAdministratorRegistry,
-                args: [productId, walletStatus.wallet, roles.productManager],
+                args: [
+                    BigInt(productId),
+                    walletStatus.wallet,
+                    roles.productManager,
+                ],
             });
 
             // Fetch the on chain interaction contract
@@ -65,7 +69,7 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
                     abi: productInteractionManagerAbi,
                     functionName: "getInteractionContract",
                     address: addresses.productInteractionManager,
-                    args: [productId],
+                    args: [BigInt(productId)],
                 })
             )();
 
@@ -85,7 +89,7 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
                     data: encodeFunctionData({
                         abi: productInteractionManagerAbi,
                         functionName: "deleteInteractionContract",
-                        args: [productId],
+                        args: [BigInt(productId)],
                     }),
                 },
                 metadata: {
@@ -194,7 +198,7 @@ export function InteractionSettings({ productId }: { productId: bigint }) {
 function ManagedInteractionValidator({
     productId,
     interactionContract,
-}: { productId: bigint; interactionContract: Address }) {
+}: { productId: Hex; interactionContract: Address }) {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
 
     const { data, isLoading, refetch } = useQuery({
@@ -202,14 +206,14 @@ function ManagedInteractionValidator({
             "product",
             "managed-interaction-validator",
             interactionContract,
-            productId.toString(),
+            productId,
         ],
         queryFn: async () => {
             const {
                 productPubKey: validatorPublicKey,
                 interactionExecutorPubKey,
             } = await getManagedValidatorPublicKey({
-                productId: toHex(productId),
+                productId,
             });
             if (!validatorPublicKey) {
                 return null;
@@ -218,7 +222,7 @@ function ManagedInteractionValidator({
                 abi: productInteractionDiamondAbi,
                 address: interactionContract,
                 functionName: "hasAllRoles",
-                args: [validatorPublicKey, roles.interactionValidatorRoles],
+                args: [validatorPublicKey, interactionValidatorRoles],
             });
             return {
                 validatorPublicKey,
@@ -247,7 +251,7 @@ function ManagedInteractionValidator({
                         functionName: allow ? "grantRoles" : "revokeRoles",
                         args: [
                             data.validatorPublicKey,
-                            roles.interactionValidatorRoles,
+                            interactionValidatorRoles,
                         ],
                     }),
                 },

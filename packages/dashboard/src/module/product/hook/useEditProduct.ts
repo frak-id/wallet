@@ -3,7 +3,7 @@ import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { productRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
-import { encodeFunctionData } from "viem";
+import { type Hex, encodeFunctionData } from "viem";
 
 type ProductEditParams = {
     productTypes: string;
@@ -13,7 +13,7 @@ type ProductEditParams = {
 /**
  * Hook to edit product metadata
  */
-export function useEditProduct({ productId }: { productId: string }) {
+export function useEditProduct({ productId }: { productId: Hex }) {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
 
