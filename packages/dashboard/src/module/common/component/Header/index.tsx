@@ -5,13 +5,13 @@ import styles from "./index.module.css";
 
 export function Header() {
     return (
-        <>
+        <div>
             <header className={styles.header}>
                 <Link href={"/dashboard"} className={styles.header__logo}>
                     <LogoFrak />
                 </Link>
                 <NavigationTop />
             </header>
-        </>
+        </div>
     );
 }
