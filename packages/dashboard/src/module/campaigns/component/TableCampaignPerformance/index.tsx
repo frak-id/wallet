@@ -79,12 +79,12 @@ export function TableCampaignPerformance() {
                     footer: "Total",
                 }),
                 columnHelper.accessor("referredInteractions", {
-                    header: "Résultat",
+                    header: "Result",
                     footer: ({ table }) =>
                         sumRows(table, "referredInteractions"),
                 }),
                 columnHelper.accessor("createReferredLinkInteractions", {
-                    header: () => "Partage",
+                    header: () => "Share",
                     footer: ({ table }) =>
                         sumRows(table, "createReferredLinkInteractions"),
                 }),
@@ -93,7 +93,7 @@ export function TableCampaignPerformance() {
                         <TooltipTable
                             content={
                                 <>
-                                    <strong>Couverture</strong>
+                                    <strong>Coverage</strong>
                                     <br /> Le nombre d’utilisateurs uniques qui
                                     ont vu votre contenu au moins une fois. La
                                     couverture est différente des impressions,
@@ -102,7 +102,7 @@ export function TableCampaignPerformance() {
                                 </>
                             }
                         >
-                            <span>Couverture</span>
+                            <span>Coverage</span>
                         </TooltipTable>
                     ),
                     footer: ({ table }) => sumRows(table, "readInteractions"),
@@ -117,7 +117,7 @@ export function TableCampaignPerformance() {
                     cell: ({ getValue }) => `${(getValue() * 100).toFixed(2)}%`,
                 }),
                 columnHelper.accessor("costPerShare", {
-                    header: () => "Coût par partage",
+                    header: () => "Cost per share",
                     footer: ({ table }) =>
                         sumRows(table, "costPerShare", { dollar: true }),
                     cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
@@ -128,13 +128,13 @@ export function TableCampaignPerformance() {
                     cell: ({ getValue }) => `${(getValue() * 100).toFixed(2)}%`,
                 }),
                 columnHelper.accessor("costPerResult", {
-                    header: () => "Coût par résultat",
+                    header: () => "Cost per Result",
                     footer: ({ table }) =>
                         sumRows(table, "costPerResult", { dollar: true }),
                     cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
                 }),
                 columnHelper.accessor("amountSpent", {
-                    header: () => "Montant dépensé",
+                    header: () => "Amount Spent",
                     footer: ({ table }) =>
                         sumRows(table, "amountSpent", { dollar: true }),
                     cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
