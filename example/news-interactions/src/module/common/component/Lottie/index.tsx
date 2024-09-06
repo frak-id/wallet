@@ -15,7 +15,10 @@ export function Lottie({ className }: { className?: string }) {
 
     return (
         <div className={className}>
-            <Link href={process.env.NEXUS_WALLET_URL as string}>
+            <Link
+                href={process.env.NEXUS_WALLET_URL as string}
+                target={"_blank"}
+            >
                 <Player
                     src={lottie}
                     autoplay
