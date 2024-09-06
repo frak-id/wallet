@@ -1,3 +1,4 @@
+import { Lottie } from "@/module/common/component/Lottie";
 import { Link } from "next-view-transitions";
 import Image from "next/image";
 import logoArticle from "./assets/logo-article.png";
@@ -16,6 +17,7 @@ export function Header({ inArticle = false }: { inArticle?: boolean }) {
                     />
                 </Link>
             </h1>
+            <Lottie className={styles.header__lottie} />
         </header>
     );
 }

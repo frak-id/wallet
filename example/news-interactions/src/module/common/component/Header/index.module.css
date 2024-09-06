@@ -15,7 +15,8 @@
 }
 
 .header__burger,
-.header__search {
+.header__search,
+.header__lottie {
     position: absolute;
     top: 50%;
 }
@@ -28,4 +29,9 @@
 .header__search {
     right: 15px;
     margin-top: -7px;
+}
+
+.header__lottie {
+    right: 25px;
+    margin-top: -20px;
 }
