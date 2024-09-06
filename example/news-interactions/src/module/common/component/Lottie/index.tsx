@@ -19,7 +19,7 @@ export function Lottie({ className }: { className?: string }) {
                 <Player
                     src={lottie}
                     autoplay
-                    loop={false}
+                    loop={3}
                     speed={1}
                     style={{ width: "33px" }}
                 />
