@@ -1,4 +1,5 @@
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
+import { requestAndCheckStorageAccess } from "@/module/listener/component/Login";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
@@ -88,7 +89,10 @@ export function OpenSessionModalStep({
                         type={"button"}
                         className={prefixModalCss("button-primary")}
                         disabled={isPending || isFetchingStatus}
-                        onClick={() => openSession()}
+                        onClick={async () => {
+                            await requestAndCheckStorageAccess();
+                            openSession();
+                        }}
                     >
                         {metadata?.primaryActionText ??
                             "Being rewarded with Nexus"}

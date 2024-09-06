@@ -178,7 +178,7 @@ function SsoButton({
 /**
  * Request and check the storage access
  */
-async function requestAndCheckStorageAccess() {
+export async function requestAndCheckStorageAccess() {
     await document.requestStorageAccess();
     return await document.hasStorageAccess();
 }
