@@ -1,4 +1,5 @@
 const SERVICE_WORKER_FILE_PATH = "./sw.js";
+let pushManagerSubscription: PushSubscription;
 
 export function notificationUnsupported(): boolean {
     let unsupported = false;
@@ -44,28 +45,12 @@ async function subscribe(
                 "Created subscription Object: ",
                 subscription.toJSON()
             );
-            submitSubscription(subscription).then((_) => {
-                onSubscribe(subscription);
-            });
+            pushManagerSubscription = subscription;
+            onSubscribe(subscription);
         })
         .catch((e) => {
             console.error("Failed to subscribe cause of: ", e);
         });
-}
-
-async function submitSubscription(
-    subscription: PushSubscription
-): Promise<void> {
-    const endpointUrl = "/api/web-push/subscription";
-    const res = await fetch(endpointUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ subscription }),
-    });
-    const result = await res.json();
-    console.log(result);
 }
 
 export async function registerAndSubscribe(
@@ -88,12 +73,16 @@ export async function sendWebPush(message: string | null): Promise<void> {
         icon: "nextjs.png",
         url: "https://google.com",
     };
+    console.log("pushBody", JSON.stringify(pushBody));
     const res = await fetch(endPointUrl, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify(pushBody),
+        body: JSON.stringify({
+            subscription: pushManagerSubscription,
+            payload: pushBody,
+        }),
     });
     const result = await res.json();
     navigator.setAppBadge && (await navigator.setAppBadge(1));

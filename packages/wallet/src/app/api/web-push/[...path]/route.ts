@@ -1,5 +1,5 @@
 import { Config } from "sst/node/config";
-import webpush, { type PushSubscription } from "web-push";
+import webpush from "web-push";
 
 webpush.setVapidDetails(
     "mailto:mail@example.com",
@@ -7,13 +7,9 @@ webpush.setVapidDetails(
     Config.VAPID_PRIVATE_KEY as string
 );
 
-let subscription: PushSubscription & { keys: { p256dh: string; auth: string } };
-
 export async function POST(request: Request) {
     const { pathname } = new URL(request.url);
     switch (pathname) {
-        case "/api/web-push/subscription":
-            return setSubscription(request);
         case "/api/web-push/send":
             return sendPush(request);
         default:
@@ -21,20 +17,11 @@ export async function POST(request: Request) {
     }
 }
 
-async function setSubscription(request: Request) {
-    const body: {
-        subscription: PushSubscription & {
-            keys: { p256dh: string; auth: string };
-        };
-    } = await request.json();
-    subscription = body.subscription;
-    return new Response(JSON.stringify({ message: "Subscription set." }), {});
-}
-
 async function sendPush(request: Request) {
-    console.log(subscription, "subs");
     const body = await request.json();
-    const pushPayload = JSON.stringify(body);
+    console.log("body", body);
+    const { subscription, payload } = body;
+    const pushPayload = JSON.stringify(payload);
     await webpush.sendNotification(subscription, pushPayload);
     return new Response(JSON.stringify({ message: "Push sent." }), {});
 }
