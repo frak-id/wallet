@@ -32,6 +32,10 @@ export function createIFrameLifecycleManager({
                     localStorage.removeItem(BACKUP_KEY);
                 }
                 break;
+            // Remove nexus backup
+            case "remove-backup":
+                localStorage.removeItem(BACKUP_KEY);
+                break;
             // Change iframe visibility
             case "show":
             case "hide":

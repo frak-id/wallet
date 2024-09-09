@@ -85,3 +85,12 @@ export async function pushBackupData({
         data: { backup: JSON.stringify(compressedBackup) },
     });
 }
+
+/**
+ * Remove existing backup data
+ */
+export function removeBackupData() {
+    emitLifecycleEvent({
+        iframeLifecycle: "remove-backup",
+    });
+}
