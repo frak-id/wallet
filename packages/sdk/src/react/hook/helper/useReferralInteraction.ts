@@ -52,6 +52,16 @@ export function useReferralInteraction({
         walletStatus,
     });
 
+    // Helper to get the current wallet
+    const getCurrentWallet = useCallback(
+        (walletStatus: WalletStatusReturnType | undefined) => {
+            return walletStatus?.key === "connected"
+                ? walletStatus.wallet
+                : undefined;
+        },
+        []
+    );
+
     // Function to process the referral
     const processReferral = useCallback(async (): Promise<ReferralState> => {
         console.log("Nexus context info for referral interactions", {
@@ -61,10 +71,7 @@ export function useReferralInteraction({
 
         try {
             // Get the current wallet, without auto displaying the modal
-            let currentWallet =
-                walletStatus?.key === "connected"
-                    ? walletStatus.wallet
-                    : undefined;
+            let currentWallet = getCurrentWallet(walletStatus);
 
             if (!nexusContext?.r) {
                 if (currentWallet) {
@@ -110,6 +117,7 @@ export function useReferralInteraction({
         sendInteraction,
         updateContextAsync,
         walletStatus,
+        getCurrentWallet,
     ]);
 
     // Setup the query that will transmit the referral interaction
