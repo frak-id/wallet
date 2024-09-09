@@ -71,7 +71,7 @@ const itemsGoals: ItemGoals[] = [
         information: {
             title: "Registration",
             description:
-                "Create more registrations on your media for more qualified data and no longer depend on cookie consent.",
+                "Create more registrations on your website for more qualified data and no longer depend on cookie consent.",
             badges: ["Registration", "CRM", "Qualified data"],
         },
     },
@@ -126,6 +126,14 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                     rules={{ required: "Select an order" }}
                     render={({ field }) => (
                         <FormItem>
+                            <FormDescription>
+                                <strong>Enhance Efficiency</strong>: Picking a
+                                goal helps streamline your experience with
+                                settings that best suit your campaign
+                                objectives, while a programmatic AI engine
+                                optimizes the delivery to ensure the best
+                                performance.
+                            </FormDescription>
                             <FormDescription title={"Type of order"} />
                             <FormControl>
                                 <Select
@@ -137,11 +145,11 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                                         <SelectValue placeholder="Select an order" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="auctions">
-                                            Auctions
+                                        <SelectItem value="adaptive">
+                                            Adaptive Pricing
                                         </SelectItem>
-                                        <SelectItem value="other">
-                                            Other
+                                        <SelectItem value="auctions" disabled>
+                                            Auctions
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
