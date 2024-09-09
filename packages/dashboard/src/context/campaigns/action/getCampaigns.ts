@@ -10,7 +10,7 @@ import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/block
 import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import ky from "ky";
 import { all, sift, unique } from "radash";
-import {type Address, getAddress, isAddress, isAddressEqual} from "viem";
+import { type Address, getAddress, isAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 
 type ApiResult = {
@@ -55,7 +55,8 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
                 ),
                 ...blockchainCampaigns.map((campaign) => campaign.id),
             ],
-            (a) => a && isAddress(a, { strict: false }) ? getAddress(a) : "unknown"
+            (a) =>
+                a && isAddress(a, { strict: false }) ? getAddress(a) : "unknown"
         )
     );
 
