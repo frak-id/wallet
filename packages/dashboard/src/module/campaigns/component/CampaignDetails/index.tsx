@@ -75,7 +75,9 @@ export function CampaignDetails({
                     />
                     <CampaignTerritory campaign={campaign} />
                     <FormPriceRange {...form} disabled={true} />
-                    <CampaignPromotedContent campaign={campaign} />
+                    <CampaignPromotedContent
+                        promotedContents={campaign?.promotedContents ?? []}
+                    />
                 </Form>
             </Panel>
             <ActionsWrapper

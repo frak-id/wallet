@@ -1,20 +1,19 @@
-import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { Badge } from "@/module/common/component/Badge";
 import { Column } from "@/module/common/component/Column";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
-import type { WithId } from "mongodb";
+import type { Campaign } from "@/types/Campaign";
 import { capitalize } from "radash";
 
 /**
  * Display the campaign promoted product
- * @param campaign
+ * @param promotedContents
  * @constructor
  */
 export function CampaignPromotedContent({
-    campaign,
-}: { campaign: WithId<CampaignDocument> }) {
-    if (!campaign?.promotedContents?.length) return null;
+    promotedContents,
+}: { promotedContents: Campaign["promotedContents"] }) {
+    if (!promotedContents.length) return null;
 
     return (
         <Column fullWidth={true}>
@@ -22,7 +21,7 @@ export function CampaignPromotedContent({
                 Promoted Content
             </Title>
             <Row align={"start"}>
-                {campaign.promotedContents.map((content) => (
+                {promotedContents.map((content) => (
                     <Badge key={content} variant={"secondary"}>
                         {capitalize(content)}
                     </Badge>

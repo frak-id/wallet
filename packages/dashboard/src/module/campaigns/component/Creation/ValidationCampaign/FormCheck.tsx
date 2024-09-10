@@ -1,9 +1,9 @@
+import { CampaignPromotedContent } from "@/module/campaigns/component/CampaignDetails/CampaignPromotedContent";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
 import { FormOrder } from "@/module/campaigns/component/Creation/ValidationCampaign/FormOrder";
 import { FormPriceRange } from "@/module/campaigns/component/Creation/ValidationCampaign/FormPriceRange";
-import { FormPromotedContent } from "@/module/campaigns/component/Creation/ValidationCampaign/FormPromotedContent";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
@@ -21,8 +21,10 @@ export function FormCheck(form: UseFormReturn<Campaign>) {
             <FormOrder {...form} />
             <FormGoal {...form} />
             <FormBudgetRow {...form} isCheckCampaign={true} />
-            <FormPriceRange {...form} />
-            <FormPromotedContent {...form} />
+            <FormPriceRange {...form} disabled={true} />
+            <CampaignPromotedContent
+                promotedContents={form.getValues("promotedContents") ?? []}
+            />
         </Panel>
     );
 }
