@@ -9,7 +9,7 @@ import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { useAtomValue } from "jotai";
-import { useEffect } from "react";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 
 export function MetricsCampaign() {
@@ -17,15 +17,8 @@ export function MetricsCampaign() {
     const saveCampaign = useSaveCampaign();
 
     const form = useForm<Campaign["rewards"]>({
-        defaultValues: campaign.rewards,
+        values: useMemo(() => campaign.rewards, [campaign.rewards]),
     });
-
-    /**
-     * Populate the form with campaign atom
-     */
-    useEffect(() => {
-        form.reset(campaign.rewards);
-    }, [campaign, form.reset]);
 
     async function onSubmit(values: Campaign["rewards"]) {
         await saveCampaign({ ...campaign, rewards: values });

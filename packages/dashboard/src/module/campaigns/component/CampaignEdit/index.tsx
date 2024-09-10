@@ -1,13 +1,15 @@
 "use client";
 
 import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import {
+    campaignAtom,
+    isFetchedCampaignAtom,
+} from "@/module/campaigns/atoms/campaign";
 import type { Campaign } from "@/types/Campaign";
 import { Spinner } from "@module/component/Spinner";
 import { useQuery } from "@tanstack/react-query";
-import { useSetAtom } from "jotai";
-import { useEffect } from "react";
-import type { PropsWithChildren } from "react";
+import { useAtom, useSetAtom } from "jotai";
+import { type PropsWithChildren, useEffect } from "react";
 
 /**
  * Campaign edit component
@@ -17,8 +19,13 @@ import type { PropsWithChildren } from "react";
 export function CampaignEdit({
     campaignId,
     children,
-}: PropsWithChildren<{ campaignId: string }>) {
+}: PropsWithChildren<{
+    campaignId: string;
+}>) {
     const setCampaign = useSetAtom(campaignAtom);
+    const [isFetchedCampaign, setIsFetchedCampaign] = useAtom(
+        isFetchedCampaignAtom
+    );
     const {
         data: campaign,
         isLoading,
@@ -29,10 +36,17 @@ export function CampaignEdit({
     });
 
     useEffect(() => {
-        if (campaign) {
+        if (!isFetchedCampaign && campaign) {
             setCampaign({ ...campaign, id: campaignId } as Campaign);
+            setIsFetchedCampaign(true);
         }
-    }, [campaign, setCampaign, campaignId]);
+    }, [
+        isFetchedCampaign,
+        setIsFetchedCampaign,
+        campaign,
+        setCampaign,
+        campaignId,
+    ]);
 
     if (isLoading || isPending) {
         return <Spinner />;

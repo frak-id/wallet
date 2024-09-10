@@ -22,6 +22,10 @@ export const InputNumber = forwardRef<
             ref={ref}
             type={"number"}
             onChange={(event) => {
+                if (Number.isNaN(event.target.valueAsNumber)) {
+                    onChange("");
+                    return;
+                }
                 onChange(event.target.valueAsNumber);
             }}
         />

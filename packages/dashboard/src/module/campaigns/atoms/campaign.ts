@@ -38,6 +38,11 @@ export const campaignAtom = atomWithStorage<Campaign>(
 );
 
 /**
+ * Keep track to know if campaign has been fetched
+ */
+export const isFetchedCampaignAtom = atom(false);
+
+/**
  * Atom to reset the recovery
  */
 export const campaignResetAtom = atom(null, (_get, set) => {
@@ -45,4 +50,5 @@ export const campaignResetAtom = atom(null, (_get, set) => {
     set(campaignSuccessAtom, false);
     set(campaignIsClosingAtom, false);
     set(campaignStepAtom, 1);
+    set(isFetchedCampaignAtom, false);
 });

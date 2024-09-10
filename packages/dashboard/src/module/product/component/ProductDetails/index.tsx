@@ -60,7 +60,6 @@ export function ProductDetails({ productId }: { productId: Hex }) {
     } = useEditProduct({
         productId,
     });
-    const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
 
     const form = useForm<FormProduct>({
         values: useMemo(() => product, [product]),
@@ -72,20 +71,11 @@ export function ProductDetails({ productId }: { productId: Hex }) {
     });
 
     /**
-     * Force refresh the form when the product is loaded
-     */
-    useEffect(() => {
-        if (!product) return;
-        setForceRefresh(new Date().getTime());
-    }, [product]);
-
-    /**
      * On success, reset the form
      */
     useEffect(() => {
         if (!editProductSuccess) return;
         form.reset(form.getValues());
-        setForceRefresh(new Date().getTime());
     }, [editProductSuccess, form.reset, form.getValues]);
 
     /**
@@ -162,7 +152,6 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                             )}
                         />
                         <FormField
-                            key={forceRefresh}
                             control={form.control}
                             name="productTypes"
                             rules={{
@@ -182,7 +171,7 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                                                 ]
                                             )
                                         }
-                                        defaultValue={
+                                        value={
                                             decodeProductTypesMask(
                                                 BigInt(field.value)
                                             )?.[0]
@@ -232,7 +221,6 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                                     variant={"informationOutline"}
                                     onClick={() => {
                                         form.reset(product);
-                                        setForceRefresh(new Date().getTime());
                                     }}
                                     disabled={
                                         editProductPending ||

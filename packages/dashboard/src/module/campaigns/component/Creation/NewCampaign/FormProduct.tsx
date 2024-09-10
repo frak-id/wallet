@@ -14,8 +14,6 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
-import { usePrevious } from "@uidotdev/usehooks";
-import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormProduct(form: UseFormReturn<Campaign>) {
@@ -25,25 +23,11 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
         ...(products?.owner ?? []),
     ];
 
-    // Force refresh the form when reset the contentId
-    const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
-    const watchProductId = form.watch("productId");
-    const previousContentId = usePrevious(watchProductId);
-
-    /**
-     * Reset contentId
-     */
-    useEffect(() => {
-        if (watchProductId === "" && !previousContentId) return;
-        setForceRefresh(new Date().getTime());
-    }, [watchProductId, previousContentId]);
-
     if (isEmpty) return null;
 
     return (
         <Panel title="Product">
             <FormField
-                key={forceRefresh}
                 control={form.control}
                 name="productId"
                 rules={{ required: "Select a product" }}
@@ -52,8 +36,11 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
                         <FormControl>
                             <Select
                                 name={field.name}
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
+                                onValueChange={(value) => {
+                                    if (value === "") return;
+                                    field.onChange(value);
+                                }}
+                                value={field.value}
                             >
                                 <SelectTrigger length={"medium"} {...field}>
                                     <SelectValue placeholder="Select a product" />

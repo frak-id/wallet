@@ -23,7 +23,7 @@ import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 
 export function NewCampaign({ title }: { title: string }) {
@@ -44,7 +44,7 @@ export function NewCampaign({ title }: { title: string }) {
     }, [campaignSuccess, campaignReset, setCampaignIsClosing]);
 
     const form = useForm<Campaign>({
-        defaultValues: campaign,
+        values: useMemo(() => campaign, [campaign]),
     });
 
     /**

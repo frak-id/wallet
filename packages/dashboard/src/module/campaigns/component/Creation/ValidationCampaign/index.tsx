@@ -25,7 +25,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { tryit } from "radash";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex, TransactionReceipt } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
@@ -106,15 +106,8 @@ export function ValidationCampaign() {
     });
 
     const form = useForm<Campaign>({
-        defaultValues: campaign,
+        values: useMemo(() => campaign, [campaign]),
     });
-
-    /**
-     * Populate the form with campaign atom
-     */
-    useEffect(() => {
-        form.reset(campaign);
-    }, [campaign, form.reset]);
 
     return (
         <FormLayout>

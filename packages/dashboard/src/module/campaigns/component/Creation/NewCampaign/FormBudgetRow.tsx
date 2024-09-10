@@ -15,8 +15,7 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
-import { Input } from "@module/component/forms/Input";
-import { useEffect, useState } from "react";
+import { InputNumber } from "@module/component/forms/InputNumber";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormBudgetRow(
@@ -27,23 +26,9 @@ export function FormBudgetRow(
 ) {
     const { isCheckCampaign, disabled } = form;
 
-    // Force refresh the form when reset the budget type
-    const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
-    const watchBudgetType = form.watch("budget.type");
-
-    /**
-     * Reset budget type when the type is reset
-     */
-    useEffect(() => {
-        if (watchBudgetType !== "") return;
-        setForceRefresh(new Date().getTime());
-        form.setValue("budget.type", undefined);
-    }, [watchBudgetType, form]);
-
     return (
         <Row>
             <FormField
-                key={forceRefresh}
                 control={form.control}
                 name="budget.type"
                 rules={{ required: "Select a budget" }}
@@ -56,8 +41,11 @@ export function FormBudgetRow(
                         )}
                         <FormMessage />
                         <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
+                            onValueChange={(value) => {
+                                if (value === "") return;
+                                field.onChange(value);
+                            }}
+                            value={field.value}
                             disabled={disabled}
                         >
                             <FormControl>
@@ -95,7 +83,7 @@ export function FormBudgetRow(
                     <FormItem>
                         <FormMessage />
                         <FormControl>
-                            <Input
+                            <InputNumber
                                 placeholder={"25,00 €"}
                                 length={"medium"}
                                 rightSection={"EUR"}

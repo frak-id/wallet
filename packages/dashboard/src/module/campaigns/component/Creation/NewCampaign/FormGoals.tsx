@@ -101,26 +101,24 @@ const itemsGoals: ItemGoals[] = [
 
 export function FormGoals(form: UseFormReturn<Campaign>) {
     const [goal, setGoal] = useState<ItemGoals | undefined>();
-
-    // Force refresh the form when reset the type
-    const [forceRefresh, setForceRefresh] = useState(new Date().getTime());
     const watchType = form.watch("type");
 
     /**
-     * Reset goals when the type is reset
+     * Set goal when we have a type
      */
     useEffect(() => {
-        if (watchType !== "") return;
-        setForceRefresh(new Date().getTime());
-        form.setValue("type", undefined);
-        setGoal(undefined);
-    }, [watchType, form]);
+        if (watchType === "") return;
+        setGoal(
+            watchType
+                ? itemsGoals.find((item) => item.id === watchType)
+                : undefined
+        );
+    }, [watchType]);
 
     return (
         <Panel title="Goals">
             <Column>
                 <FormField
-                    key={forceRefresh}
                     control={form.control}
                     name="order"
                     rules={{ required: "Select an order" }}
@@ -138,8 +136,11 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                             <FormControl>
                                 <Select
                                     name={field.name}
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
+                                    onValueChange={(value) => {
+                                        if (value === "") return;
+                                        field.onChange(value);
+                                    }}
+                                    value={field.value}
                                 >
                                     <SelectTrigger length={"medium"} {...field}>
                                         <SelectValue placeholder="Select an order" />
@@ -161,7 +162,6 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
             </Column>
             <Column fullWidth={true}>
                 <FormField
-                    key={forceRefresh}
                     control={form.control}
                     name="type"
                     rules={{ required: "Select a goal" }}
