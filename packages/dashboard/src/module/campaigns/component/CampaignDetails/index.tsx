@@ -9,8 +9,8 @@ import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
-import { FormObjectives } from "@/module/campaigns/component/Creation/ValidationCampaign/FormObjectives";
 import { FormOrder } from "@/module/campaigns/component/Creation/ValidationCampaign/FormOrder";
+import { FormPriceRange } from "@/module/campaigns/component/Creation/ValidationCampaign/FormPriceRange";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
@@ -74,7 +74,7 @@ export function CampaignDetails({
                         disabled={true}
                     />
                     <CampaignTerritory campaign={campaign} />
-                    <FormObjectives {...form} disabled={true} />
+                    <FormPriceRange {...form} disabled={true} />
                     <CampaignPromotedContent campaign={campaign} />
                 </Form>
             </Panel>

@@ -4,13 +4,15 @@ import { FormDescription } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
 
-export function FormObjectives(form: UseFormReturn<Campaign["rewards"]>) {
+export function FormPriceRange(form: UseFormReturn<Campaign["rewards"]>) {
     return (
-        <Panel title="Enter your objectives">
+        <Panel title="Configure Price Range">
             <FormDescription>
-                Declare whether your ads concern credit, employment, housing or
-                a social, electoral or political issue. Criteria differ from
-                country to country.
+                Set a price range for each campaign objective. The budget will
+                be distributed between the referee and referrer according to an
+                automatically optimized allocation key. Frak will apply a 20%
+                management fee to support the campaign delivery and to cover
+                operational costs.
             </FormDescription>
             <FormFromTo
                 id={"click"}

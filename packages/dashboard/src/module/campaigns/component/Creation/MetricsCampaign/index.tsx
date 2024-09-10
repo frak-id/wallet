@@ -2,7 +2,7 @@
 
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { Actions } from "@/module/campaigns/component/Actions";
-import { FormObjectives } from "@/module/campaigns/component/Creation/MetricsCampaign/FormObjectives";
+import { FormPriceRange } from "@/module/campaigns/component/Creation/MetricsCampaign/FormPriceRange";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
@@ -43,7 +43,7 @@ export function MetricsCampaign() {
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormObjectives {...form} />
+                    <FormPriceRange {...form} />
                     <Actions />
                 </form>
             </Form>

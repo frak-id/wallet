@@ -3,13 +3,13 @@ import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
 
-export function FormObjectives(
+export function FormPriceRange(
     form: UseFormReturn<Campaign> & { disabled?: boolean }
 ) {
     const { disabled } = form;
     return (
         <FormItem>
-            <FormDescription title={"Objectives"} />
+            <FormDescription title={"Price Range"} />
             <FormFromTo
                 id={"click"}
                 label={"Click"}
