@@ -81,7 +81,7 @@
     "js-sha256": "^0.11.0"
   },
   "devDependencies": {
-    "@tanstack/react-query": ">=5.53.3",
+    "@tanstack/react-query": ">=5.55.4",
     "@types/node": "^22",
     "tsup": "^8.2.4",
     "typescript": "^5"
