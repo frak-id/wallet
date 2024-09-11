@@ -44,17 +44,26 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
                 className={panelVariants({ variant, className })}
                 {...props}
             >
-                {title && (
-                    <Title
-                        icon={withBadge && <BadgeCheck color={"#0DDB84"} />}
-                        size={"small"}
-                        className={styles.panel__title}
-                    >
-                        {title}
-                    </Title>
-                )}
+                <PanelTitle title={title} withBadge={withBadge} />
                 {children}
             </div>
         );
     }
 );
+
+export function PanelTitle({
+    withBadge = true,
+    title,
+}: { withBadge?: boolean; title?: string }) {
+    return (
+        title && (
+            <Title
+                icon={withBadge && <BadgeCheck color={"#0DDB84"} />}
+                size={"small"}
+                className={styles.panel__title}
+            >
+                {title}
+            </Title>
+        )
+    );
+}

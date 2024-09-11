@@ -4,6 +4,7 @@ import { getManagedValidatorPublicKey } from "@/context/product/action/getValida
 import { Badge } from "@/module/common/component/Badge";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
+import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
     useSendTransactionAction,
@@ -111,7 +112,7 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
     }
 
     return (
-        <Panel title={"Interaction Settings"}>
+        <PanelAccordion title={"Interaction Settings"}>
             <>
                 <div>
                     <h3>Interaction Contract</h3>
@@ -191,7 +192,7 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                     .
                 </CallOut>
             </>
-        </Panel>
+        </PanelAccordion>
     );
 }
 

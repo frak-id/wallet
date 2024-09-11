@@ -1,6 +1,5 @@
 "use client";
 
-import { Accordion } from "@/module/common/component/Accordion";
 import { Step1 } from "@/module/recovery-setup/component/Setup/Step1";
 import { Step2 } from "@/module/recovery-setup/component/Setup/Step2";
 import { Step3 } from "@/module/recovery-setup/component/Setup/Step3";
@@ -9,6 +8,7 @@ import {
     recoveryResetAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
+import { Accordion } from "@module/component/Accordion";
 import { useAtomValue, useSetAtom } from "jotai";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";

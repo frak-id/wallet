@@ -3,7 +3,7 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@/module/common/component/Accordion";
+} from "@module/component/Accordion";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 

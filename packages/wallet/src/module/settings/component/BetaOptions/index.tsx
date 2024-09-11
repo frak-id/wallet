@@ -1,17 +1,17 @@
 "use client";
 
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/module/common/component/Accordion";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { isConvertToEuroEnableAtom } from "@/module/settings/atoms/betaOptions";
 import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { Button } from "@frak-labs/shared/module/component/Button";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@module/component/Accordion";
 import { useAtom } from "jotai";
 import { FlaskConical, Square, SquareCheck } from "lucide-react";
 import styles from "./index.module.css";
