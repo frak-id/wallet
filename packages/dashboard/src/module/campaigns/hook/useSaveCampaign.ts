@@ -1,8 +1,5 @@
 import { saveCampaignDraft } from "@/context/campaigns/action/createCampaign";
-import {
-    campaignAtom,
-    campaignResetAtom,
-} from "@/module/campaigns/atoms/campaign";
+import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import {
     campaignIsClosingAtom,
     campaignStepAtom,
@@ -10,13 +7,14 @@ import {
 import type { Campaign } from "@/types/Campaign";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useRouter } from "next/navigation";
 
 export function useSaveCampaign() {
     const setCampaign = useSetAtom(campaignAtom);
     const campaignIsClosing = useAtomValue(campaignIsClosingAtom);
     const setStep = useSetAtom(campaignStepAtom);
-    const campaignReset = useSetAtom(campaignResetAtom);
     const queryClient = useQueryClient();
+    const router = useRouter();
 
     return async function save(values: Campaign) {
         setCampaign(values);
@@ -34,10 +32,7 @@ export function useSaveCampaign() {
                     queryKey: ["campaign", id],
                 });
             }
-            campaignReset();
-            // router.push("/campaigns/list");
-            // Weird bug, not redirected with router.push
-            window.location.href = "/campaigns/list";
+            router.push("/campaigns/list");
             return;
         }
 
