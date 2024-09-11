@@ -1,4 +1,7 @@
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import {
+    campaignActionAtom,
+    campaignAtom,
+} from "@/module/campaigns/atoms/campaign";
 import {
     campaignIsClosingAtom,
     campaignStepAtom,
@@ -19,22 +22,34 @@ export const Actions = memo(function Actions({
     const router = useRouter();
     const [step, setStep] = useAtom(campaignStepAtom);
     const campaignSuccess = useAtomValue(campaignSuccessAtom);
+    const campaignAction = useAtomValue(campaignActionAtom);
     const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
     const { id: campaignId } = useAtomValue(campaignAtom);
 
-    const getPages = useCallback((campaignId?: string) => {
-        return campaignId
-            ? [
-                  `/campaigns/edit/${campaignId}`,
-                  `/campaigns/edit/${campaignId}/metrics`,
-                  `/campaigns/edit/${campaignId}/validation`,
-              ]
-            : ["/campaigns/new", "/campaigns/metrics", "/campaigns/validation"];
-    }, []);
+    const getPages = useCallback(
+        (campaignId?: string) => {
+            if (campaignAction === "create") {
+                return [
+                    "/campaigns/new",
+                    "/campaigns/metrics",
+                    "/campaigns/validation",
+                ];
+            }
+            if (campaignAction === "edit") {
+                return [
+                    `/campaigns/edit/${campaignId}`,
+                    `/campaigns/edit/${campaignId}/metrics`,
+                    `/campaigns/edit/${campaignId}/validation`,
+                ];
+            }
+        },
+        [campaignAction]
+    );
 
     const pages = getPages(campaignId);
 
     useEffect(() => {
+        if (!pages) return;
         router.push(pages[step - 1]);
     }, [step, router.push, pages]);
 
@@ -62,7 +77,7 @@ export const Actions = memo(function Actions({
                     {!campaignSuccess && (
                         <ButtonNext
                             isLoading={isLoading}
-                            isLastStep={step === pages.length}
+                            isLastStep={step === pages?.length}
                         />
                     )}
                 </>

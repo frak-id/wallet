@@ -2,6 +2,7 @@
 
 import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
 import {
+    campaignActionAtom,
     campaignAtom,
     isFetchedCampaignAtom,
 } from "@/module/campaigns/atoms/campaign";
@@ -23,6 +24,7 @@ export function CampaignEdit({
     campaignId: string;
 }>) {
     const setCampaign = useSetAtom(campaignAtom);
+    const setCampaignAction = useSetAtom(campaignActionAtom);
     const [isFetchedCampaign, setIsFetchedCampaign] = useAtom(
         isFetchedCampaignAtom
     );
@@ -34,6 +36,10 @@ export function CampaignEdit({
         queryKey: ["campaign", campaignId],
         queryFn: () => getCampaignDetails({ campaignId }),
     });
+
+    useEffect(() => {
+        setCampaignAction("edit");
+    }, [setCampaignAction]);
 
     useEffect(() => {
         if (!isFetchedCampaign && campaign) {
