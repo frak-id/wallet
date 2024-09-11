@@ -10,7 +10,17 @@ import { sendNotification, setVapidDetails } from "web-push";
 export type NotificationPayload = Readonly<
     {
         title: string;
-    } & NotificationOptions
+        data?: {
+            url?: string;
+        };
+        // Waning: not supported on firefox nor safari
+        //  see: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification#browser_compatibility
+        actions?: {
+            action: string;
+            title: string;
+            icon?: string;
+        }[];
+    } & Omit<NotificationOptions, "data">
 >;
 
 /**
@@ -47,8 +57,6 @@ export async function sendPush({
 
     // Wait for all the push to be sent
     const results = await Promise.allSettled(pushPromises);
-
-    console.log("results", results);
 
     // Log a few infos about the results
     const successCount = results.filter((r) => r.status === "fulfilled").length;
