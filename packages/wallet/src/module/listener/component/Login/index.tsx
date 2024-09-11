@@ -5,6 +5,7 @@ import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
+import { requestAndCheckStorageAccess } from "@/module/listener/utils/thirdParties";
 import type {
     LoginModalStepType,
     SsoMetadata,
@@ -34,7 +35,26 @@ export function LoginModalStep({
     onError: (reason?: string) => void;
 }) {
     const { metadata } = params;
-    const { login, isSuccess, isLoading, isError, error } = useLogin();
+    const { login, isSuccess, isLoading, isError, error } = useLogin({
+        // On mutation, request access to the storage and update context if granted
+        onMutate: async () => {
+            const hasStorageAccess = await requestAndCheckStorageAccess();
+
+            if (hasStorageAccess) {
+                const session = await mutateAsyncUpdateSessionStatus();
+                if (session) {
+                    onFinish({
+                        wallet: session.wallet.address,
+                    });
+                    return;
+                }
+            }
+        },
+        // On error, transmit the error up a level
+        onError: (error) => onError(error.message),
+        // On success, transmit the wallet address up a level
+        onSuccess: (session) => onFinish({ wallet: session.wallet.address }),
+    });
     const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
 
     const session = useAtomValue(sessionAtom);
@@ -62,31 +82,7 @@ export function LoginModalStep({
                         type={"button"}
                         className={prefixModalCss("button-primary")}
                         disabled={isLoading}
-                        onClick={async () => {
-                            const hasStorageAccess =
-                                await requestAndCheckStorageAccess();
-
-                            if (hasStorageAccess) {
-                                const session =
-                                    await mutateAsyncUpdateSessionStatus();
-                                if (session) {
-                                    onFinish({
-                                        wallet: session.wallet.address,
-                                    });
-                                    return;
-                                }
-                            }
-
-                            login({})
-                                .then((authResult) => {
-                                    onFinish({
-                                        wallet: authResult.wallet.address,
-                                    });
-                                })
-                                .catch((error) => {
-                                    onError(error.message);
-                                });
-                        }}
+                        onClick={() => login({})}
                     >
                         {metadata?.primaryActionText ?? "Login"}
                     </button>
@@ -174,15 +170,6 @@ function SsoButton({
         </button>
     );
 }
-
-/**
- * Request and check the storage access
- */
-export async function requestAndCheckStorageAccess() {
-    await document.requestStorageAccess();
-    return await document.hasStorageAccess();
-}
-
 /**
  * This mutation is used to ensure that post SSO we have a session, not automatically updated
  */

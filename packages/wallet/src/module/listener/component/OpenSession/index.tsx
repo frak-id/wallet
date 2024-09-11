@@ -1,6 +1,6 @@
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
-import { requestAndCheckStorageAccess } from "@/module/listener/component/Login";
 import styles from "@/module/listener/component/Modal/index.module.css";
+import { requestAndCheckStorageAccess } from "@/module/listener/utils/thirdParties";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
@@ -44,7 +44,8 @@ export function OpenSessionModalStep({
         error,
     } = useOpenSession({
         mutations: {
-            onMutate: () => {
+            onMutate: async () => {
+                // If we already got a session, directly exit
                 if (currentSession) {
                     onFinish({
                         startTimestamp: currentSession.sessionStart,
@@ -52,6 +53,8 @@ export function OpenSessionModalStep({
                     });
                     throw new Error("session-exit");
                 }
+                // Then, perform a request to access the storage
+                await requestAndCheckStorageAccess();
             },
             onSuccess: async () => {
                 // Fetch the session status
@@ -89,8 +92,7 @@ export function OpenSessionModalStep({
                         type={"button"}
                         className={prefixModalCss("button-primary")}
                         disabled={isPending || isFetchingStatus}
-                        onClick={async () => {
-                            await requestAndCheckStorageAccess();
+                        onClick={() => {
                             openSession();
                         }}
                     >

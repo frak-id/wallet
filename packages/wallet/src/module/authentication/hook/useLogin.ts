@@ -17,7 +17,7 @@ export function useLogin(
     mutations?: UseMutationOptions<
         Session,
         Error,
-        { lastAuthentication?: PreviousAuthenticatorModel }
+        { lastAuthentication?: PreviousAuthenticatorModel } | undefined
     >
 ) {
     // Setter for the last authentication
@@ -36,15 +36,15 @@ export function useLogin(
     } = useMutation({
         ...mutations,
         mutationKey: ["login"],
-        mutationFn: async ({
-            lastAuthentication,
-        }: { lastAuthentication?: PreviousAuthenticatorModel }) => {
+        mutationFn: async (args?: {
+            lastAuthentication?: PreviousAuthenticatorModel;
+        }) => {
             // Get the authenticate options (if needed)
-            const allowCredentials = lastAuthentication
+            const allowCredentials = args?.lastAuthentication
                 ? [
                       {
-                          id: lastAuthentication.authenticatorId,
-                          transports: lastAuthentication.transports,
+                          id: args?.lastAuthentication.authenticatorId,
+                          transports: args?.lastAuthentication.transports,
                       } as const,
                   ]
                 : undefined;
