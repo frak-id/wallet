@@ -22,6 +22,7 @@ type BackupData = {
     productId: Hex;
     session?: Session;
     pendingInteractions?: PendingInteraction[];
+    expireAtTimestamp: number;
 };
 
 /**
@@ -46,6 +47,14 @@ export async function restoreBackupData({
     // Ensure that the backup data is for the current product
     if (data.productId !== productId) {
         throw new Error("Invalid backup data");
+    }
+
+    // If the backup is older than a week ago, ask to remove it and return
+    if (data.expireAtTimestamp > Date.now()) {
+        emitLifecycleEvent({
+            iframeLifecycle: "remove-backup",
+        });
+        return;
     }
 
     // todo: additional security measure
@@ -74,6 +83,8 @@ export async function pushBackupData({
         session: jotaiStore.get(sessionAtom) ?? undefined,
         pendingInteractions: jotaiStore.get(pendingInteractionAtom)
             .interactions,
+        // Backup will expire in a week
+        expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
     };
 
     // If nothing to backup, just remove it
