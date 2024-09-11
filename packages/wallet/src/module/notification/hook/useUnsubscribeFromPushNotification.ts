@@ -1,7 +1,10 @@
 "use client";
-import { unsubscribeFromPush as unsubAction } from "@/context/notification/action/unsubscribe";
+import {
+    hasPushTokens,
+    unsubscribeFromPush as unsubAction,
+} from "@/context/notification/action/unsubscribe";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 
 /**
@@ -9,6 +12,13 @@ import { useAtom } from "jotai";
  */
 export function useUnsubscribeFromPushNotification() {
     const [subscription, setSubscription] = useAtom(subscriptionAtom);
+
+    const { data: hasPushToken, refetch } = useQuery({
+        queryKey: ["push", "token-count"],
+        queryFn: async () => {
+            return await hasPushTokens();
+        },
+    });
 
     /**
      * Mutation used to subscribe to the push notification
@@ -28,8 +38,16 @@ export function useUnsubscribeFromPushNotification() {
 
             // Remove every subscription related to this user
             await unsubAction();
+
+            // Refetch the push token count
+            await refetch();
         },
     });
 
-    return { unsubscribeFromPush, unsubscribeFromPushAsync, ...mutationState };
+    return {
+        hasPushToken,
+        unsubscribeFromPush,
+        unsubscribeFromPushAsync,
+        ...mutationState,
+    };
 }

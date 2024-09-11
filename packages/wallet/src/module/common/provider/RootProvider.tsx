@@ -4,6 +4,7 @@ import { currentChain } from "@/context/blockchain/provider";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
+import { useSetupNotificationWorker } from "@/module/notification/hook/useSetupNotificationWorker";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type { InteractionSession, Session } from "@/types/Session";
@@ -78,6 +79,7 @@ export function RootProvider({
                     client={queryClient}
                     persistOptions={persistOptions}
                 >
+                    <SetupNotificationWorker />
                     <WagmiProviderWithDynamicConfig>
                         {children}
                     </WagmiProviderWithDynamicConfig>
@@ -87,6 +89,11 @@ export function RootProvider({
             </Provider>
         </>
     );
+}
+
+function SetupNotificationWorker() {
+    useSetupNotificationWorker();
+    return null;
 }
 
 function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {

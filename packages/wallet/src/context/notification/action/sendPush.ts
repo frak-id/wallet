@@ -7,7 +7,7 @@ import { sendNotification, setVapidDetails } from "web-push";
 /**
  * Payload of a notification
  */
-type NotificationPayload = Readonly<
+export type NotificationPayload = Readonly<
     {
         title: string;
     } & NotificationOptions
@@ -24,14 +24,20 @@ export async function sendPush({
     const pushTokenRepository = await getPushTokensRepository();
     const pushTokens = await pushTokenRepository.getForWallets(wallets);
 
-    // Set the vapid details globally
+    // Early exit if no push tokens are found
+    if (pushTokens.length === 0) {
+        console.log("No push tokens found for the given wallets");
+        return;
+    }
+
+    // Set the vapid details globally\
     setVapidDetails(
         "mailto:hello@frak.id",
         process.env.VAPID_PUBLIC_KEY as string,
         process.env.VAPID_PRIVATE_KEY as string
     );
 
-    // For each push token, send the push
+    // For each push token, send the push\
     const pushPromises = pushTokens.map(async (pushToken) => {
         await sendNotification(
             pushToken.pushSubscription,
@@ -41,6 +47,8 @@ export async function sendPush({
 
     // Wait for all the push to be sent
     const results = await Promise.allSettled(pushPromises);
+
+    console.log("results", results);
 
     // Log a few infos about the results
     const successCount = results.filter((r) => r.status === "fulfilled").length;

@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
+import { useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";
 
 /**
@@ -14,7 +15,6 @@ export function useNotificationSetupStatus() {
         try {
             const result = await Notification.requestPermission();
             console.log("Notification permission: ", result);
-            await refetch();
         } catch (e) {
             console.error("Failed to request notification permission: ", e);
         }
@@ -24,6 +24,9 @@ export function useNotificationSetupStatus() {
      * Check if notification are supported or not
      */
     const isSupported = useMemo(() => {
+        if (typeof window === "undefined" || typeof navigator === "undefined") {
+            return false;
+        }
         return (
             "serviceWorker" in navigator &&
             "PushManager" in window &&
@@ -34,28 +37,31 @@ export function useNotificationSetupStatus() {
     /**
      * Fetch the status
      */
-    const { data, refetch } = useQuery({
-        queryKey: ["push", "setup-status", `isSupported-${isSupported}`],
-        queryFn: () => {
-            if (!isSupported) {
-                return { isSupported };
-            }
+    const statusResult = useMemo(() => {
+        if (!isSupported) {
+            return { isSupported, isNotificationAllowed: false };
+        }
 
-            const notificationPermission = Notification.permission;
-            const isNotificationAllowed = notificationPermission === "granted";
-            return { isSupported, isNotificationAllowed };
-        },
-    });
+        const notificationPermission = Notification.permission;
+        const isNotificationAllowed = notificationPermission === "granted";
+        return { isSupported, isNotificationAllowed };
+    }, [isSupported]);
+
+    /**
+     * The current subscription atom
+     */
+    const subscription = useAtomValue(subscriptionAtom);
 
     return useMemo(() => {
-        if (!data?.isSupported) {
+        if (!statusResult?.isSupported) {
             return { isSupported: false };
         }
 
         return {
             isSupported: true,
-            isNotificationAllowed: data.isNotificationAllowed,
+            isNotificationAllowed: statusResult.isNotificationAllowed,
             askForNotificationPermission,
+            subscription,
         };
-    }, [data, askForNotificationPermission]);
+    }, [statusResult, subscription, askForNotificationPermission]);
 }

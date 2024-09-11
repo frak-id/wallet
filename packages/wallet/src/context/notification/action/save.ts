@@ -14,12 +14,12 @@ export async function savePushToken({
     // Get the current user wallet
     const session = await getSession();
     if (!session?.wallet?.address) {
-        throw new Error("No wallet found in session");
+        return;
     }
 
     // If the subscription doesn't contain an endpoint, exit
     if (!subscription.endpoint) {
-        throw new Error("Invalid subscription endpoint");
+        return;
     }
 
     // Map the subscription to a valid push subscription
@@ -40,7 +40,7 @@ export async function savePushToken({
     const pushTokenRepository = await getPushTokensRepository();
     const alreadyExist = await pushTokenRepository.existForId(id);
     if (alreadyExist) {
-        throw new Error("Push token already exist");
+        return;
     }
 
     // Save the token
