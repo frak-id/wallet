@@ -1,5 +1,5 @@
 import { getSessionStatus } from "@/context/interaction/action/interactionSession";
-import { pushBackupData, removeBackupData } from "@/context/sdk/utils/backup";
+import { pushBackupData } from "@/context/sdk/utils/backup";
 import type {
     IFrameRequestResolver,
     IFrameResolvingContext,
@@ -45,8 +45,10 @@ export function useWalletStatusListener(): OnListenToWallet {
                         key: "not-connected",
                     },
                 });
-                // And remove the backup data
-                removeBackupData();
+                // And push fresh backup data with no session
+                await pushBackupData({
+                    productId: context.productId,
+                });
                 return;
             }
 

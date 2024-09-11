@@ -76,6 +76,14 @@ export async function pushBackupData({
             .interactions,
     };
 
+    // If nothing to backup, just remove it
+    if (!(backup.session || backup.pendingInteractions?.length)) {
+        emitLifecycleEvent({
+            iframeLifecycle: "remove-backup",
+        });
+        return;
+    }
+
     // Create a compressed backup
     const compressedBackup = await hashAndCompressData(backup);
 
@@ -83,14 +91,5 @@ export async function pushBackupData({
     emitLifecycleEvent({
         iframeLifecycle: "do-backup",
         data: { backup: JSON.stringify(compressedBackup) },
-    });
-}
-
-/**
- * Remove existing backup data
- */
-export function removeBackupData() {
-    emitLifecycleEvent({
-        iframeLifecycle: "remove-backup",
     });
 }
