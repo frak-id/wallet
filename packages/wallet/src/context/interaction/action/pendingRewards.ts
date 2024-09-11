@@ -2,7 +2,6 @@
 import type { Token } from "@/types/Token";
 import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import ky from "ky";
-import { unstable_cache } from "next/cache";
 import { type Address, encodeFunctionData, formatEther } from "viem";
 
 type ApiResult = {
@@ -18,7 +17,7 @@ type ApiResult = {
  * @param user
  * @param referrer
  */
-async function _getPendingRewards({ user }: { user: Address }) {
+export async function getPendingRewards({ user }: { user: Address }) {
     // Perform the request to our api
     const { rewards } = await ky
         .get(`https://indexer.frak.id/rewards/${user}`)
@@ -54,15 +53,3 @@ async function _getPendingRewards({ user }: { user: Address }) {
         perContracts: pendingRewards,
     };
 }
-
-/**
- * Cached version of the user tokens
- */
-export const getPendingRewards = unstable_cache(
-    _getPendingRewards,
-    ["get-pending-rewards"],
-    {
-        // Keep that in server cache for 15min
-        revalidate: 15 * 60,
-    }
-);

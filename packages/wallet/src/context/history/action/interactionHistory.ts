@@ -1,7 +1,6 @@
 "use server";
 import type { InteractionHistory } from "@/types/InteractionHistory";
 import ky from "ky";
-import { unstable_cache } from "next/cache";
 import type { Address } from "viem";
 
 type ApiResult = Array<
@@ -32,7 +31,7 @@ type ApiResult = Array<
  * Get the reward history for a user
  * @param account
  */
-async function _getInteractionHistory({
+export async function getInteractionHistory({
     account,
 }: {
     account: Address;
@@ -52,15 +51,3 @@ async function _getInteractionHistory({
         }) ?? []
     );
 }
-
-/**
- * Cached version of the wallet history fetch
- */
-export const getInteractionHistory = unstable_cache(
-    _getInteractionHistory,
-    ["history", "interaction"],
-    {
-        // Keep that in server cache for 2min
-        revalidate: 2 * 60,
-    }
-);

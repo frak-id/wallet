@@ -2,7 +2,6 @@ import { getPendingRewards } from "@/context/interaction/action/pendingRewards";
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useInvalidateUserTokens } from "@/module/tokens/hook/useGetUserTokens";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
@@ -10,9 +9,6 @@ import { useAccount, useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
 
 export function PendingReferral() {
-    // Invalidate the user tokens
-    const invalidateUserTokens = useInvalidateUserTokens();
-
     // Get the user wallet address
     const { address } = useAccount();
 
@@ -55,9 +51,6 @@ export function PendingReferral() {
                 data: txs,
             });
             console.log("UserOp receipt", txHash);
-
-            // Invalidate the user tokens
-            await invalidateUserTokens();
 
             // Refetch the pending reward
             await refetchPendingReward();

@@ -2,7 +2,6 @@
 import type { RewardHistory } from "@/types/RewardHistory";
 import type { Token } from "@/types/Token";
 import ky from "ky";
-import { unstable_cache } from "next/cache";
 import { type Address, type Hex, formatEther } from "viem";
 
 type ApiResult = {
@@ -23,7 +22,7 @@ type ApiResult = {
  * Get the reward history for a user
  * @param account
  */
-async function _getRewardHistory({
+export async function getRewardHistory({
     account,
 }: {
     account: Address;
@@ -58,15 +57,3 @@ async function _getRewardHistory({
     // Sort it by timestamp in the descending order
     return finalArray.sort((a, b) => b.timestamp - a.timestamp);
 }
-
-/**
- * Cached version of the wallet history fetch
- */
-export const getRewardHistory = unstable_cache(
-    _getRewardHistory,
-    ["history", "reward"],
-    {
-        // Keep that in server cache for 2min
-        revalidate: 2 * 60,
-    }
-);

@@ -7,8 +7,7 @@ import {
     type GetTokenMetadataParams,
     getTokenMetadata,
 } from "@/context/blockchain/viemActions/getTokenMetadata";
-import { CachesTags } from "@/context/common/caching";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { parallel } from "radash";
 import { formatUnits } from "viem";
 import type { Address } from "viem";
@@ -18,7 +17,7 @@ import type { Address } from "viem";
  * @param wallet
  * @param chainId
  */
-async function _getUserErc20Tokens({ wallet }: { wallet: Address }) {
+export async function getUserErc20Tokens({ wallet }: { wallet: Address }) {
     if (!wallet) {
         return;
     }
@@ -60,28 +59,6 @@ export type GetUserErc20Token = {
     formattedBalance: string;
     metadata: GetTokenMetadataResponse;
 };
-
-/**
- * Cached version of the user tokens
- */
-export const getUserErc20Tokens = unstable_cache(
-    _getUserErc20Tokens,
-    ["get-erc20-assets"],
-    {
-        // Tags for revalidation
-        tags: [CachesTags.WALLET_ERC20_ASSETS, CachesTags.WALLET_ERC20_BALANCE],
-        // Keep that in server cache for 2min
-        revalidate: 120,
-    }
-);
-
-/**
- * Invalidate the user erc20 tokens
- */
-export async function invalidateUserErc20Tokens() {
-    revalidateTag(CachesTags.WALLET_ERC20_ASSETS);
-    revalidateTag(CachesTags.WALLET_ERC20_BALANCE);
-}
 
 /**
  * Get the metadata of a token, cached version
