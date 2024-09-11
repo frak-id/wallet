@@ -31,3 +31,14 @@
     display: flex;
     margin: 0;
 }
+
+.header__buttonRefresh {
+    position: absolute;
+    margin-top: -10px;
+    top: 50%;
+    right: 5px;
+}
+
+.header__buttonRefresh > svg {
+    stroke: var(--frak-color-grayText);
+}

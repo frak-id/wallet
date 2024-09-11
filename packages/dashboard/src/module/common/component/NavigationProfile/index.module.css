@@ -3,12 +3,12 @@
     align-items: center;
     gap: 12px;
 
-    /*&::before {
-        product: "";
+    &::before {
+        content: "";
         width: 1px;
         height: 40px;
         background: var(--frak-navigation-profile-separator-color);
-    }*/
+    }
 }
 
 .navigationProfile__avatar {
