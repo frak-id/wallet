@@ -30,6 +30,17 @@ export function checkPermissionStateAndAct(
     }
 }
 
+export async function registerAndSubscribe(
+    onSubscribe: (subs: PushSubscription | null) => void
+): Promise<void> {
+    try {
+        await navigator.serviceWorker.register(SERVICE_WORKER_FILE_PATH);
+        await subscribe(onSubscribe);
+    } catch (e) {
+        console.error("Failed to register service-worker: ", e);
+    }
+}
+
 async function subscribe(
     onSubscribe: (subs: PushSubscription | null) => void
 ): Promise<void> {
@@ -51,17 +62,6 @@ async function subscribe(
         .catch((e) => {
             console.error("Failed to subscribe cause of: ", e);
         });
-}
-
-export async function registerAndSubscribe(
-    onSubscribe: (subs: PushSubscription | null) => void
-): Promise<void> {
-    try {
-        await navigator.serviceWorker.register(SERVICE_WORKER_FILE_PATH);
-        await subscribe(onSubscribe);
-    } catch (e) {
-        console.error("Failed to register service-worker: ", e);
-    }
 }
 
 export async function sendWebPush(message: string | null): Promise<void> {
