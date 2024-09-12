@@ -93,21 +93,24 @@ function SendTestNotification() {
                     const address = data.get("address") as Address;
                     const title = data.get("title") as string;
                     const body = data.get("body") as string;
-                    sendPush({wallet: address, title, body});
+                    sendPush({ wallet: address, title, body });
                 }}
             >
                 <label>
                     Wallet
-                    <input type="text" name={"address"}/>
-                </label><br/>
+                    <input type="text" name={"address"} />
+                </label>
+                <br />
                 <label>
                     Title
-                    <input type="text" name={"title"}/>
-                </label><br/>
+                    <input type="text" name={"title"} />
+                </label>
+                <br />
                 <label>
                     Body
-                    <input type="text" name={"body"}/>
-                </label><br/>
+                    <input type="text" name={"body"} />
+                </label>
+                <br />
                 <button type={"submit"} disabled={isPending}>
                     Send test notification
                 </button>
