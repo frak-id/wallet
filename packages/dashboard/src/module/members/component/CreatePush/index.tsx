@@ -1,15 +1,19 @@
+"use client";
+
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
-import { Panel } from "@/module/common/component/Panel";
-import { FormLayout } from "@/module/forms/Form";
+import { Form, FormLayout } from "@/module/forms/Form";
 import { AudiencePanel } from "@/module/members/component/CreatePush/AudiencePanel";
+import { PushPayloadPanel } from "@/module/members/component/CreatePush/PushPayloadPanel";
+import { PushTitlePanel } from "@/module/members/component/CreatePush/PushTitlePanel";
 import type { NotificationPayload } from "@frak-labs/shared/types/NotificationPayload";
-import { Form, useForm } from "react-hook-form";
+import { useCallback } from "react";
+import { useForm } from "react-hook-form";
 import type { Address } from "viem";
 
-type CreatePushNotificationForm = {
-    pushCampaignTitle?: string;
-    payload?: NotificationPayload;
+export type FormCreatePushNotification = {
+    pushCampaignTitle: string;
+    payload: NotificationPayload;
     audience: Address[];
 };
 
@@ -18,13 +22,24 @@ type CreatePushNotificationForm = {
  * @constructor
  */
 export function CreatePushNotification() {
-    const form = useForm<CreatePushNotificationForm>({
+    const form = useForm<FormCreatePushNotification>({
         defaultValues: {
-            pushCampaignTitle: undefined,
-            payload: undefined,
+            pushCampaignTitle: "",
+            payload: {
+                title: "",
+                body: "",
+                data: {
+                    url: "",
+                },
+            },
             audience: [],
         },
     });
+
+    const onSubmit = useCallback(async (data: FormCreatePushNotification) => {
+        console.log("Submitting push data", {data})
+        // todo: Do some shit here
+    }, []);
 
     return (
         <FormLayout>
@@ -46,13 +61,14 @@ export function CreatePushNotification() {
                 }
             />
             <Form {...form}>
-                <Panel title={"Push Notification Title"}>
-                    {/*    todo: Push campaign title*/}
-                </Panel>
-                <Panel title={"Message"}>
-                    {/*    todo: message form + live preview*/}
-                </Panel>
-                <AudiencePanel />
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <PushTitlePanel
+                        control={form.control}
+                        name={"pushCampaignTitle"}
+                    />
+                    <PushPayloadPanel control={form.control} name={"payload"} />
+                    <AudiencePanel />
+                </form>
             </Form>
         </FormLayout>
     );
