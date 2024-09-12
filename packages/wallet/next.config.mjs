@@ -1,4 +1,5 @@
 import path from "node:path";
+import NextBundleAnalyzer from "@next/bundle-analyzer";
 import { ChildCompilationPlugin } from "@serwist/webpack-plugin/internal";
 import { pick } from "radash";
 import { Config } from "sst/node/config";
@@ -50,4 +51,7 @@ const nextConfig = {
     },
 };
 
-export default nextConfig;
+export default NextBundleAnalyzer({
+    enabled: true,
+    logLevel: "info",
+})(nextConfig);
