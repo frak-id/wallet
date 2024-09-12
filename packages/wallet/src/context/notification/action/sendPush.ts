@@ -1,27 +1,9 @@
 "use server";
 
 import { getPushTokensRepository } from "@/context/notification/repository/PushTokensRepository";
+import type { NotificationPayload } from "@frak-labs/shared/types/NotificationPayload";
 import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
-
-/**
- * Payload of a notification
- */
-export type NotificationPayload = Readonly<
-    {
-        title: string;
-        data?: {
-            url?: string;
-        };
-        // Waning: not supported on firefox nor safari
-        //  see: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification#browser_compatibility
-        actions?: {
-            action: string;
-            title: string;
-            icon?: string;
-        }[];
-    } & Omit<NotificationOptions, "data">
->;
 
 /**
  * Save a new push subscription token for the given user

@@ -1,4 +1,4 @@
-import type { NotificationPayload } from "@/context/notification/action/sendPush";
+import type { NotificationPayload } from "@frak-labs/shared/types/NotificationPayload";
 
 /**
  * Interface representing a notification

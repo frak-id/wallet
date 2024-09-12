@@ -1,7 +1,5 @@
-import {
-    type NotificationPayload,
-    sendPush,
-} from "@/context/notification/action/sendPush";
+import { sendPush } from "@/context/notification/action/sendPush";
+import type { NotificationPayload } from "@frak-labs/shared/types/NotificationPayload";
 import type { Address } from "viem";
 
 export async function POST(request: Request) {
