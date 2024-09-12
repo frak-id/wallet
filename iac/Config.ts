@@ -29,6 +29,8 @@ export function ConfigStack({ stack }: StackContext) {
     const nexusUrl = new Config.Parameter(stack, "NEXUS_WALLET_URL", {
         value: getWalletUrl(stack),
     });
+    const vapidPublicKey = new Config.Secret(stack, "VAPID_PUBLIC_KEY");
+    const vapidPrivateKey = new Config.Secret(stack, "VAPID_PRIVATE_KEY");
 
     return {
         sessionEncryptionKey,
@@ -43,5 +45,7 @@ export function ConfigStack({ stack }: StackContext) {
         adminPassword,
         nexusUrl,
         worldNewsApiKey,
+        vapidPublicKey,
+        vapidPrivateKey,
     };
 }

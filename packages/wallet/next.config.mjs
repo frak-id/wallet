@@ -1,3 +1,5 @@
+import path from "node:path";
+import { ChildCompilationPlugin } from "@serwist/webpack-plugin/internal";
 import { pick } from "radash";
 import { Config } from "sst/node/config";
 import { Queue } from "sst/node/queue";
@@ -11,6 +13,8 @@ const wantedFromConfig = [
     "MONGODB_NEXUS_URI",
     "SESSION_ENCRYPTION_KEY",
     "AIRDROP_PRIVATE_KEY",
+    "VAPID_PUBLIC_KEY",
+    "VAPID_PRIVATE_KEY",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
@@ -27,6 +31,23 @@ const nextConfig = {
         removeConsole: Config.STAGE === "prod",
     },
     output: "standalone",
+    // Custom webpack config to also bundle the service-worker file
+    webpack: (config, { isServer, dir }) => {
+        // For server case, directly return the config
+        if (isServer) {
+            return config;
+        }
+
+        // Otherwise, add the plugin to bundle the service-worker
+        config.plugins.push(
+            new ChildCompilationPlugin({
+                src: path.join(dir, "src/app/service-worker.ts"),
+                dest: path.resolve(dir, "public/sw.js"),
+            })
+        );
+
+        return config;
+    },
 };
 
 export default nextConfig;

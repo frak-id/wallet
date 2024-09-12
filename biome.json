@@ -12,7 +12,8 @@
             ".next/**",
             "tsconfig.json",
             "tsconfig.*.json",
-            "package.json"
+            "package.json",
+            "sw.js"
         ]
     },
     "organizeImports": {

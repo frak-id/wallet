@@ -2,12 +2,13 @@
 
 import { Panel } from "@/module/common/component/Panel";
 import { InteractionHistory } from "@/module/history/component/InteractionHistory";
+import { NotificationHistory } from "@/module/history/component/NotificationHistory";
 import { RewardHistory } from "@/module/history/component/RewardHistory";
 import { atom, useAtom, useAtomValue } from "jotai";
 import type { PropsWithChildren } from "react";
 import styles from "./index.module.css";
 
-type HistoryType = "rewards" | "interaction";
+type HistoryType = "rewards" | "interaction" | "notifications";
 
 const historyTypeAtom = atom<HistoryType>("interaction");
 
@@ -20,11 +21,15 @@ export function History() {
                     <ButtonType currentType={"interaction"}>
                         Interaction
                     </ButtonType>{" "}
-                    | <ButtonType currentType={"rewards"}>Rewards</ButtonType>
+                    | <ButtonType currentType={"rewards"}>Rewards</ButtonType>|{" "}
+                    <ButtonType currentType={"notifications"}>
+                        Notifications
+                    </ButtonType>
                 </nav>
             </Panel>
             {type === "rewards" && <RewardHistory />}
             {type === "interaction" && <InteractionHistory />}
+            {type === "notifications" && <NotificationHistory />}
         </>
     );
 }
