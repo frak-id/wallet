@@ -1,6 +1,5 @@
 import "@/styles/all.css";
 import { Fonts } from "@/module/common/component/Fonts";
-import { Footer } from "@/module/common/component/Footer";
 import { MainLayout } from "@/module/common/component/MainLayout";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import type { Metadata, Viewport } from "next";
@@ -8,9 +7,9 @@ import { ViewTransitions } from "next-view-transitions";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-    title: "News with Nexus Wallet by Frak",
-    applicationName: "News - Frak",
-    description: "News paper website using Nexus Wallet by Frak.",
+    title: "Good Vibes with Nexus Wallet by Frak",
+    applicationName: "Good Vibes - Frak",
+    description: "Good Vibes website using Nexus Wallet by Frak.",
     authors: [
         { name: "Frak labs", url: "https://frak.id/" },
         { name: "Rodolphe Stoclin", url: "https://github.com/srod" },
@@ -18,7 +17,7 @@ export const metadata: Metadata = {
     ],
     icons: {
         icon: [
-            { rel: "icon", url: "/favicons/favicon.ico", sizes: "32x32" },
+            { rel: "icon", url: "/favicons/favicon.ico", sizes: "48x48" },
             { rel: "icon", url: "/favicons/icon.svg", type: "image/svg+xml" },
         ],
         apple: [
@@ -49,10 +48,7 @@ export default function RootLayout({
                 <body>
                     <Fonts />
                     <RootProvider>
-                        <MainLayout>
-                            {children}
-                            <Footer />
-                        </MainLayout>
+                        <MainLayout>{children}</MainLayout>
                     </RootProvider>
                 </body>
             </html>

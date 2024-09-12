@@ -1,8 +1,8 @@
 {
-    "name": "News with Nexus Wallet by Frak",
-    "short_name": "News - Frak",
-    "description": "News paper website using Nexus Wallet by Frak.",
-    "version": "0.0.1",
+    "name": "Good Vibes with Nexus Wallet by Frak",
+    "short_name": "Good Vibes - Frak",
+    "description": "Good Vibes website using Nexus Wallet by Frak.",
+    "version": "0.0.2",
     "icons": [
         {
             "src": "/favicons/icon-192.png",
