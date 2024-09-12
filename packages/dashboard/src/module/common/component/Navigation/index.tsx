@@ -42,7 +42,7 @@ export function Navigation() {
                     <NavigationLabel icon={<Home />}>Dashboard</NavigationLabel>
                 </NavigationItem>
                 <NavigationCampaignsSwitcher />
-                <NavigationItem url={"/members"} disabled={true}>
+                <NavigationItem url={"/members"}>
                     <NavigationLabel icon={<Users />}>Members</NavigationLabel>
                 </NavigationItem>
                 <NavigationItem url={"/revenue"} disabled={true}>

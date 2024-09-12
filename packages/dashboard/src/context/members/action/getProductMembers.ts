@@ -1,8 +1,8 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import type { MembersPageItem } from "@/types/Members";
 import ky from "ky";
-import type { Address } from "viem";
 
 type GetMembersParam = {
     // Indicating if we only want the total count
@@ -39,14 +39,7 @@ type GetMembersParam = {
 
 type GetMembersResponse = {
     totalCount: number;
-    members: {
-        user: Address;
-        totalInteractions: number;
-        rewards: string; // bigint
-        firstInteractionTimestamp: string; // number (timestamp)
-        productIds: string[]; // bigint[]
-        productNames: string[];
-    }[];
+    members: MembersPageItem[];
 };
 
 /**
