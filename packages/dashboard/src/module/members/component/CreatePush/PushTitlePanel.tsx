@@ -10,19 +10,18 @@ import {
 } from "@/module/forms/Form";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/index";
 import { Input } from "@module/component/forms/Input";
-import type { UseControllerProps } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 
 /**
  * Audience panel
  * @constructor
  */
-export function PushTitlePanel(
-    props: UseControllerProps<FormCreatePushNotification, "pushCampaignTitle">
-) {
+export function PushTitlePanel() {
+    const form = useFormContext<FormCreatePushNotification>();
     return (
         <Panel title={"Push Notification Title"}>
             <FormField
-                control={props.control}
+                control={form.control}
                 name={"pushCampaignTitle"}
                 rules={{
                     required: "Push campaign title is required",

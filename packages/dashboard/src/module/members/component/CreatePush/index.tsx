@@ -14,7 +14,7 @@ import type { Address } from "viem";
 export type FormCreatePushNotification = {
     pushCampaignTitle: string;
     payload: NotificationPayload;
-    audience: Address[];
+    targets: Address[];
 };
 
 /**
@@ -32,12 +32,12 @@ export function CreatePushNotification() {
                     url: "",
                 },
             },
-            audience: [],
+            targets: [],
         },
     });
 
     const onSubmit = useCallback(async (data: FormCreatePushNotification) => {
-        console.log("Submitting push data", {data})
+        console.log("Submitting push data", { data });
         // todo: Do some shit here
     }, []);
 
@@ -62,11 +62,8 @@ export function CreatePushNotification() {
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <PushTitlePanel
-                        control={form.control}
-                        name={"pushCampaignTitle"}
-                    />
-                    <PushPayloadPanel control={form.control} name={"payload"} />
+                    <PushTitlePanel />
+                    <PushPayloadPanel />
                     <AudiencePanel />
                 </form>
             </Form>

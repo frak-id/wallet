@@ -40,13 +40,13 @@ type GetMembersRequest = {
     offset?: number;
 };
 
-type GetMembersParam = Omit<GetMembersRequest, "noData" | "onlyAddress">;
+export type GetMembersParam = Omit<GetMembersRequest, "noData" | "onlyAddress">;
 
 /**
  * Full get members response
  */
 type GetMembersResponse = {
-    totalCount: number;
+    totalResult: number;
     members: MembersPageItem[];
 };
 
@@ -73,11 +73,12 @@ export async function getProductsMembersCount(
 ) {
     const session = await getSafeSession();
 
-    return await ky
+    const result = await ky
         .post(`https://indexer.frak.id/members/${session.wallet}`, {
             json: { ...params, noData: true },
         })
         .json<Omit<GetMembersResponse, "members">>();
+    return result.totalResult;
 }
 
 /**

@@ -24,11 +24,7 @@ import {
     useEffect,
     useState,
 } from "react";
-import {
-    type UseControllerProps,
-    useForm,
-    useFormContext,
-} from "react-hook-form";
+import { useForm, useFormContext } from "react-hook-form";
 import { type Address, type Hex, isAddress } from "viem";
 import styles from "./index.module.css";
 
@@ -98,16 +94,8 @@ export function ButtonAddTeam({
                                     <span className={"dotsLoading"}>...</span>
                                 </p>
                             )}
-                            <FormWallet
-                                control={form.control}
-                                name={"wallet"}
-                                disabled={isAddingMember}
-                            />
-                            <FormPermissions
-                                control={form.control}
-                                name={"permissions"}
-                                disabled={isAddingMember}
-                            />
+                            <FormWallet disabled={isAddingMember} />
+                            <FormPermissions disabled={isAddingMember} />
                             {error && (
                                 <p>
                                     Error when adding the operator on your
@@ -140,8 +128,8 @@ export function ButtonAddTeam({
  * Initial form to add wallet address
  * @constructor
  */
-function FormWallet(props: UseControllerProps<FormAddTeamMembers, "wallet">) {
-    const { trigger } = useFormContext();
+function FormWallet({ disabled }: { disabled: boolean }) {
+    const { trigger, control } = useFormContext<FormAddTeamMembers>();
     // on mount trigger a wallet field verification
     useEffect(() => {
         trigger("wallet");
@@ -150,7 +138,7 @@ function FormWallet(props: UseControllerProps<FormAddTeamMembers, "wallet">) {
     return (
         <>
             <FormField
-                control={props.control}
+                control={control}
                 name="wallet"
                 rules={{
                     required: "Wallet address required",
@@ -171,10 +159,11 @@ function FormWallet(props: UseControllerProps<FormAddTeamMembers, "wallet">) {
                                     length={"medium"}
                                     placeholder={"Wallet Address...."}
                                     {...field}
+                                    value={field.value ?? ""}
                                 />
                                 <Button
                                     variant={"submit"}
-                                    disabled={props.disabled}
+                                    disabled={disabled}
                                     onClick={() => {
                                         trigger("wallet");
                                     }}
@@ -198,13 +187,13 @@ function FormWallet(props: UseControllerProps<FormAddTeamMembers, "wallet">) {
  * Initial form to add wallet permissions
  * @constructor
  */
-function FormPermissions(
-    props: UseControllerProps<FormAddTeamMembers, "permissions">
-) {
+function FormPermissions({ disabled }: { disabled: boolean }) {
+    const { control } = useFormContext<FormAddTeamMembers>();
+
     return (
         <>
             <FormField
-                control={props.control}
+                control={control}
                 name="permissions"
                 rules={{
                     required: "Select a permission",
@@ -233,6 +222,7 @@ function FormPermissions(
                                                 checked={field?.value?.includes(
                                                     id
                                                 )}
+                                                disabled={disabled}
                                                 onCheckedChange={(checked) => {
                                                     return checked
                                                         ? field.onChange([

@@ -11,7 +11,7 @@ import {
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/index";
 import { Input } from "@module/component/forms/Input";
 import { TextArea } from "@module/component/forms/TextArea";
-import type { UseControllerProps } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 
 /**
  *  Build the push payload panel
@@ -21,14 +21,13 @@ import type { UseControllerProps } from "react-hook-form";
  *      - TextArea for the message?
  * @constructor
  */
-export function PushPayloadPanel(
-    props: UseControllerProps<FormCreatePushNotification, "payload">
-) {
+export function PushPayloadPanel() {
+    const form = useFormContext<FormCreatePushNotification>();
     return (
         <Panel title={"Message"}>
             {/*Title field*/}
             <FormField
-                control={props.control}
+                control={form.control}
                 name={"payload.title"}
                 rules={{
                     required: "Push title required",
@@ -51,7 +50,7 @@ export function PushPayloadPanel(
             />
             {/*Message field*/}
             <FormField
-                control={props.control}
+                control={form.control}
                 name={"payload.body"}
                 rules={{
                     required: "Push message required",
@@ -79,7 +78,7 @@ export function PushPayloadPanel(
             {/*URL Field*/}
 
             <FormField
-                control={props.control}
+                control={form.control}
                 name={"payload.data.url"}
                 rules={{
                     required: false,
