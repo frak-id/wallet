@@ -3,9 +3,12 @@
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
 import { Player } from "@lottiefiles/react-lottie-player";
 import { Link } from "next-view-transitions";
+import { useState } from "react";
 import lottie from "./assets/lottie.json";
+import styles from "./index.module.css";
 
 export function Lottie({ className }: { className?: string }) {
+    const [playerState, setPlayerState] = useState<"complete" | undefined>();
     // Get the wallet status
     const { data: walletStatus } = useWalletStatus();
 
@@ -14,7 +17,9 @@ export function Lottie({ className }: { className?: string }) {
     }
 
     return (
-        <div className={className}>
+        <div
+            className={`${className} ${playerState === "complete" ? styles.lottie__complete : ""}`}
+        >
             <Link
                 href={process.env.NEXUS_WALLET_URL as string}
                 target={"_blank"}
@@ -25,6 +30,9 @@ export function Lottie({ className }: { className?: string }) {
                     loop={3}
                     speed={1}
                     style={{ width: "33px" }}
+                    onEvent={(event) =>
+                        event === "complete" && setPlayerState("complete")
+                    }
                 />
             </Link>
         </div>
