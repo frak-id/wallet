@@ -27,7 +27,7 @@ export interface CallOutProps
 export const CallOut = forwardRef<HTMLDivElement, CallOutProps>(
     ({ className, variant, ...props }, ref) => {
         return (
-            <div
+            <p
                 className={`${callOutVariants({
                     variant,
                 })} ${className}`}

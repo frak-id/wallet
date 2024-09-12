@@ -30,7 +30,7 @@ export const titleVariants = cva(styles.title, {
         },
     },
     defaultVariants: {
-        size: "medium",
+        size: "small",
     },
 });
 
