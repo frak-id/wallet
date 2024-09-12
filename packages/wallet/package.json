@@ -26,7 +26,6 @@
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-switch": "^1.1.0",
-    "@serwist/next": "^9.0.7",
     "@simplewebauthn/browser": "^10.0.0",
     "@simplewebauthn/server": "^10.0.1",
     "@tanstack/query-sync-storage-persister": "^5.55.4",
@@ -59,6 +58,7 @@
   },
   "devDependencies": {
     "serwist": "^9.0.7",
+    "@serwist/webpack-plugin": "^9.0.7",
     "@simplewebauthn/types": "^10.0.0",
     "@types/dom-view-transitions": "^1.0.5",
     "@types/node": "^22",

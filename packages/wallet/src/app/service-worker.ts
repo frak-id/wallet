@@ -1,40 +1,31 @@
 import { dexieDb } from "@/context/common/dexie/dexieDb";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
-import { keccak256, toHex } from "viem";
 
-// This declares the value of `injectionPoint` to TypeScript.
-// `injectionPoint` is the string that will be replaced by the
-// actual precache manifest. By default, this string is set to
-// `"self.__SW_MANIFEST"`.
+declare const self: ServiceWorkerGlobalScope;
+
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
         __SW_MANIFEST: (PrecacheEntry | string)[] | undefined;
     }
 }
 
-declare const self: ServiceWorkerGlobalScope;
+/**
+ * Auto skips the waiting phase
+ */
+self.skipWaiting();
 
 /**
- * We are using Serwist mainly for the clean typescript transpilation
- *   Maybe we could exploit some of the preloading features??
+ * Auto claims all clients
  */
-const serwist = new Serwist({
-    precacheEntries: self.__SW_MANIFEST,
-    skipWaiting: true,
-    clientsClaim: true,
-    navigationPreload: false,
-    // todo: env specific stuff
-    disableDevLogs: false,
+self.addEventListener("activate", () => self.clients.claim());
+
+/**
+ * Log a few stuff on install
+ */
+self.addEventListener("install", (event) => {
+    console.log("Service worker installed", event);
+    console.log("Serwist manifest", self.__SW_MANIFEST);
 });
-
-self.addEventListener("install", serwist.handleInstall);
-
-self.addEventListener("activate", (event) => serwist.handleActivate(event));
-
-self.addEventListener("fetch", (event) => serwist.handleFetch(event));
-
-self.addEventListener("message", serwist.handleCache);
 
 /**
  * Handle a new push message
@@ -62,9 +53,7 @@ self.addEventListener("push", (event) => {
 
     // Save the notification in our database
     const notificationDb = dexieDb.notification;
-    const notificationId = keccak256(
-        toHex(`${Date.now()}-${JSON.stringify(payload)}`)
-    );
+    const notificationId = `${Date.now()}-${JSON.stringify(payload)}`;
     const insertToDbPromise = notificationDb
         .put({
             id: notificationId,

@@ -1,12 +1,8 @@
-import withSerwistInit from "@serwist/next";
+import path from "node:path";
+import { InjectManifest } from "@serwist/webpack-plugin";
 import { pick } from "radash";
 import { Config } from "sst/node/config";
 import { Queue } from "sst/node/queue";
-
-const withSerwist = withSerwistInit({
-    swSrc: "src/app/service-worker.ts",
-    swDest: "public/sw.js",
-});
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
@@ -23,7 +19,7 @@ const wantedFromConfig = [
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
 /** @type {import('next').NextConfig} */
-const nextConfig = withSerwist({
+const nextConfig = {
     env: {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
@@ -35,6 +31,25 @@ const nextConfig = withSerwist({
         removeConsole: Config.STAGE === "prod",
     },
     output: "standalone",
-});
+    // Custom webpack config to also bundle the service-worker file
+    webpack: (config, { isServer, dev, dir }) => {
+        // For server case, directly return the config
+        if (isServer) {
+            return config;
+        }
+
+        // Otherwise, add the plugin to bundle the service-worker
+        config.plugins.push(
+            new InjectManifest({
+                swSrc: path.join(dir, "src/app/service-worker.ts"),
+                swDest: path.resolve(dir, "public/sw.js"),
+                disablePrecacheManifest: dev,
+                exclude: [/\.map$/, /asset-manifest\.json$/, /sw\.js$/],
+            })
+        );
+
+        return config;
+    },
+};
 
 export default nextConfig;
