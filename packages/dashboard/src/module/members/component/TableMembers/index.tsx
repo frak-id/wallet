@@ -53,7 +53,9 @@ export function TableMembers() {
                     enableSorting: true,
                     header: () => "Member from",
                     cell: ({ getValue }) =>
-                        new Date(Number.parseInt(getValue()) * 1000).toLocaleDateString(),
+                        new Date(
+                            Number.parseInt(getValue()) * 1000
+                        ).toLocaleDateString(),
                 }),
                 columnHelper.accessor("totalInteractions", {
                     enableSorting: true,

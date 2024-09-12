@@ -3,10 +3,13 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import type { MembersPageItem } from "@/types/Members";
 import ky from "ky";
+import type { Address } from "viem";
 
-type GetMembersParam = {
+type GetMembersRequest = {
     // Indicating if we only want the total count
     noData?: boolean;
+    // Indicating if we only want the address
+    onlyAddress?: boolean;
     // Some filters to apply to the query
     filter?: {
         productIds?: string[];
@@ -37,6 +40,11 @@ type GetMembersParam = {
     offset?: number;
 };
 
+type GetMembersParam = Omit<GetMembersRequest, "noData" | "onlyAddress">;
+
+/**
+ * Full get members response
+ */
 type GetMembersResponse = {
     totalCount: number;
     members: MembersPageItem[];
@@ -54,4 +62,34 @@ export async function getProductMembers(params: GetMembersParam) {
             json: params,
         })
         .json<GetMembersResponse>();
+}
+
+/**
+ * Count the number of mumbers for a product matching the given criteria
+ * @param params
+ */
+export async function getProductsMembersCount(
+    params: Omit<GetMembersParam, "limit" | "offset" | "sort">
+) {
+    const session = await getSafeSession();
+
+    return await ky
+        .post(`https://indexer.frak.id/members/${session.wallet}`, {
+            json: { ...params, noData: true },
+        })
+        .json<Omit<GetMembersResponse, "members">>();
+}
+
+/**
+ * Fetch the members of a product
+ * @param params
+ */
+export async function getProductsMembersAddress(params: GetMembersParam) {
+    const session = await getSafeSession();
+
+    return await ky
+        .post(`https://indexer.frak.id/members/${session.wallet}`, {
+            json: { ...params, onlyAddress: true },
+        })
+        .json<Omit<GetMembersResponse, "members"> & { users: Address[] }>();
 }
