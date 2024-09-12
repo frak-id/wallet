@@ -3,7 +3,7 @@ import { Button } from "@module/component/Button";
 import { X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
-export function CancelButtonWithAlert({
+export function ButtonWithConfirmationAlert({
     description,
     buttonText = "Cancel",
     title = "Cancel",

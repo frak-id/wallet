@@ -1,5 +1,5 @@
 import { campaignResetAtom } from "@/module/campaigns/atoms/campaign";
-import { CancelButtonWithAlert } from "@/module/common/component/CancelButtonWithAlert";
+import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { useSetAtom } from "jotai";
 
 export function ButtonCancel({
@@ -9,7 +9,7 @@ export function ButtonCancel({
     const campaignReset = useSetAtom(campaignResetAtom);
 
     return (
-        <CancelButtonWithAlert
+        <ButtonWithConfirmationAlert
             description={
                 <>
                     Are you sure you want to cancel the campaign ?<br />

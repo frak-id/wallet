@@ -1,4 +1,4 @@
-import { CancelButtonWithAlert } from "@/module/common/component/CancelButtonWithAlert";
+import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { FormLayout } from "@/module/forms/Form";
@@ -34,7 +34,7 @@ export function CreatePushNotification() {
                     size: "small",
                 }}
                 rightSection={
-                    <CancelButtonWithAlert
+                    <ButtonWithConfirmationAlert
                         description={
                             "Are you sure you want to discard everything related to your new push notification?"
                         }
