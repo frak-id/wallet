@@ -3,30 +3,27 @@ import type { FormMembersFiltering } from "@/module/members/component/MembersFil
 import { Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { Input } from "@module/component/forms/Input";
-import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 
 export function RewardFiltering() {
-    const form = useFormContext<FormMembersFiltering>();
-    const inputDisabled = useMemo(
-        () => form.getValues("rewards") === undefined,
-        [form]
-    );
+    const { control } = useFormContext<FormMembersFiltering>();
+    const currentRewards = useWatch({ control, name: "rewards" });
+    const rewardsInputDisabled = currentRewards === undefined;
 
     return (
         <div>
             <FormField
-                control={form.control}
+                control={control}
                 name={"rewards"}
                 render={({ field }) => (
                     <FormItem variant={"checkbox"}>
                         <Checkbox
-                            checked={!!field.value}
+                            checked={!rewardsInputDisabled}
                             id={"reward-filters"}
                             onCheckedChange={(checked) => {
                                 field.onChange(
                                     checked
-                                        ? { min: 0, max: undefined }
+                                        ? { min: 1, max: undefined }
                                         : undefined
                                 );
                             }}
@@ -36,39 +33,47 @@ export function RewardFiltering() {
                             variant={"checkbox"}
                             selected={!!field.value}
                         >
-                            Reward filtering
+                            Rewards
                         </FormLabel>
                     </FormItem>
                 )}
             />
             <Columns>
                 <FormField
-                    control={form.control}
+                    control={control}
                     name={"rewards.min"}
-                    disabled={inputDisabled}
+                    disabled={rewardsInputDisabled}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>From</FormLabel>
                             <Input
                                 type={"number"}
                                 {...field}
-                                value={field.value ?? ""}
+                                value={
+                                    rewardsInputDisabled
+                                        ? ""
+                                        : field.value ?? ""
+                                }
                                 placeholder={"Min reward"}
                             />
                         </FormItem>
                     )}
                 />
                 <FormField
-                    control={form.control}
+                    control={control}
                     name={"rewards.max"}
-                    disabled={inputDisabled}
+                    disabled={rewardsInputDisabled}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>To</FormLabel>
                             <Input
                                 type={"number"}
                                 {...field}
-                                value={field.value ?? ""}
+                                value={
+                                    rewardsInputDisabled
+                                        ? ""
+                                        : field.value ?? ""
+                                }
                                 placeholder={"Max reward"}
                             />
                         </FormItem>

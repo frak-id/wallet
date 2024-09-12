@@ -3,7 +3,7 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import type { MembersPageItem } from "@/types/Members";
 import ky from "ky";
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 
 type GetMembersRequest = {
     // Indicating if we only want the total count
@@ -18,8 +18,8 @@ type GetMembersRequest = {
             max?: number;
         };
         rewards?: {
-            min?: number;
-            max?: number;
+            min?: Hex;
+            max?: Hex;
         };
         firstInteractionTimestamp?: {
             min?: number;

@@ -9,6 +9,7 @@ import { RewardFiltering } from "@/module/members/component/MembersFiltering/Rew
 import { Button } from "@module/component/Button";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
+import { parseEther, toHex } from "viem";
 
 /**
  * Filter for the members fetching process
@@ -29,6 +30,17 @@ export function MembersFiltering({
     const onSubmit = useCallback(
         async (data: FormMembersFiltering) => {
             console.log("Form filter set", { data });
+
+            // Fix rewards min and max if needed
+            if (data.rewards) {
+                const { min, max } = data.rewards;
+                if (min) {
+                    data.rewards.min = toHex(parseEther(min));
+                }
+                if (max) {
+                    data.rewards.max = toHex(parseEther(max));
+                }
+            }
             // todo: Some verification here?
             onFilterSet(data);
         },
@@ -39,12 +51,12 @@ export function MembersFiltering({
         <Form {...form}>
             <ProductFiltering />
             <MembershipDateFiltering />
-            <RewardFiltering />
             <InteractionsFiltering />
+            <RewardFiltering />
 
             <Button
                 type={"button"}
-                variant={"primary"}
+                variant={"secondary"}
                 onClick={form.handleSubmit(onSubmit)}
             >
                 Validate filter
