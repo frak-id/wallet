@@ -18,11 +18,7 @@
       "@/*": ["./src/*"],
       "@module/*": ["../shared/module/*"]
     },
-    "verbatimModuleSyntax": true,
-    "types": [
-      // This allows Serwist to type `window.serwist`.
-      "@serwist/next/typings"
-    ]
+    "verbatimModuleSyntax": true
   },
   "include": [
     "./next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

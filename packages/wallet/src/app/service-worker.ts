@@ -1,13 +1,10 @@
 import { dexieDb } from "@/context/common/dexie/dexieDb";
-import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 
 declare const self: ServiceWorkerGlobalScope;
 
-declare global {
-    interface WorkerGlobalScope extends SerwistGlobalConfig {
-        __SW_MANIFEST: (PrecacheEntry | string)[] | undefined;
-    }
-}
+/*
+ * todo: Dexi is fat af in when compiled, find a lighter way, should be under 200kb (and now it's at 701kb)
+ */
 
 /**
  * Auto skips the waiting phase
@@ -24,7 +21,6 @@ self.addEventListener("activate", () => self.clients.claim());
  */
 self.addEventListener("install", (event) => {
     console.log("Service worker installed", event);
-    console.log("Serwist manifest", self.__SW_MANIFEST);
 });
 
 /**

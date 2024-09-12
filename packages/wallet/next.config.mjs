@@ -1,5 +1,5 @@
 import path from "node:path";
-import { InjectManifest } from "@serwist/webpack-plugin";
+import { ChildCompilationPlugin } from "@serwist/webpack-plugin/internal";
 import { pick } from "radash";
 import { Config } from "sst/node/config";
 import { Queue } from "sst/node/queue";
@@ -32,7 +32,7 @@ const nextConfig = {
     },
     output: "standalone",
     // Custom webpack config to also bundle the service-worker file
-    webpack: (config, { isServer, dev, dir }) => {
+    webpack: (config, { isServer, dir }) => {
         // For server case, directly return the config
         if (isServer) {
             return config;
@@ -40,11 +40,9 @@ const nextConfig = {
 
         // Otherwise, add the plugin to bundle the service-worker
         config.plugins.push(
-            new InjectManifest({
-                swSrc: path.join(dir, "src/app/service-worker.ts"),
-                swDest: path.resolve(dir, "public/sw.js"),
-                disablePrecacheManifest: dev,
-                exclude: [/\.map$/, /asset-manifest\.json$/, /sw\.js$/],
+            new ChildCompilationPlugin({
+                src: path.join(dir, "src/app/service-worker.ts"),
+                dest: path.resolve(dir, "public/sw.js"),
             })
         );
 
