@@ -1,3 +1,5 @@
+"use client";
+
 import type { NotificationModel } from "@/context/common/dexie/NotificationModel";
 import { dexieDb } from "@/context/common/dexie/dexieDb";
 import { Panel } from "@/module/common/component/Panel";

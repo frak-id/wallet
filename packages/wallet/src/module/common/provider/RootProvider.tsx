@@ -1,10 +1,11 @@
 "use client";
 
 import { currentChain } from "@/context/blockchain/provider";
+import { savePushToken } from "@/context/notification/action/save";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import { useSetupNotificationWorker } from "@/module/notification/hook/useSetupNotificationWorker";
+import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { ThemeListener } from "@/module/settings/atoms/theme";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type { InteractionSession, Session } from "@/types/Session";
@@ -17,7 +18,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai/index";
 import { RESET, useHydrateAtoms } from "jotai/utils";
-import { type PropsWithChildren, useMemo } from "react";
+import { type PropsWithChildren, useEffect, useMemo } from "react";
 import { createClient } from "viem";
 import { WagmiProvider, createConfig } from "wagmi";
 
@@ -79,7 +80,7 @@ export function RootProvider({
                     client={queryClient}
                     persistOptions={persistOptions}
                 >
-                    <SetupNotificationWorker />
+                    <SetupServiceWorker />
                     <WagmiProviderWithDynamicConfig>
                         {children}
                     </WagmiProviderWithDynamicConfig>
@@ -91,8 +92,49 @@ export function RootProvider({
     );
 }
 
-function SetupNotificationWorker() {
-    useSetupNotificationWorker();
+/**
+ * Setup the service worker for push notifications
+ * @constructor
+ */
+function SetupServiceWorker() {
+    // Hook to automatically register the service worker if possible
+    useEffect(() => {
+        // Early exit if not supported
+        if (
+            typeof navigator === "undefined" ||
+            !("serviceWorker" in navigator)
+        ) {
+            return;
+        }
+
+        const loadServiceWorker = async () => {
+            // Ask the navigator to register the service worker
+            const registration = await navigator.serviceWorker.register(
+                "./sw.js",
+                {
+                    scope: "/",
+                    updateViaCache: "none",
+                }
+            );
+            // Get potential subscription already present in the service worker
+            const subscription =
+                "pushManager" in registration
+                    ? await registration.pushManager.getSubscription()
+                    : undefined;
+            if (!subscription) {
+                console.log(
+                    "No previous subscription found on this service worker"
+                );
+                return;
+            }
+            jotaiStore.set(subscriptionAtom, subscription);
+            // Save this new subscription
+            await savePushToken({ subscription: subscription.toJSON() });
+        };
+
+        loadServiceWorker();
+    }, []);
+
     return null;
 }
 

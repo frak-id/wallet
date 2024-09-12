@@ -4,7 +4,6 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { RemoveAllNotification } from "@/module/notification/component/RemoveAllNotification";
-import { TestPushNotification } from "@/module/notification/component/TestPush";
 import { BetaOptions } from "@/module/settings/component/BetaOptions";
 import { RecoveryLink } from "@/module/settings/component/Recovery";
 import { WalletAddress } from "@module/component/HashDisplay";
@@ -20,7 +19,6 @@ export function Settings() {
             <BiometryInfo />
             <RecoveryLink />
             <RemoveAllNotification />
-            <TestPushNotification />
             <BetaOptions />
         </>
     );
