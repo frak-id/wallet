@@ -1,7 +1,7 @@
 import { Lottie } from "@/module/common/component/Lottie";
 import { Link } from "next-view-transitions";
 import Image from "next/image";
-import logo from "./assets/logo-good-vibes.png";
+import logo from "./assets/logo-good-vibes.svg";
 import styles from "./index.module.css";
 
 export function Header() {
