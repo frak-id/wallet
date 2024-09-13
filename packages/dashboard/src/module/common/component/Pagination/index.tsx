@@ -1,4 +1,5 @@
 import { Button } from "@module/component/Button";
+import { cx } from "class-variance-authority";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { type ComponentProps, type ReactNode, forwardRef } from "react";
 import styles from "./index.module.css";
@@ -45,9 +46,11 @@ const PaginationLink = ({
     <Button
         variant="ghost"
         size={"none"}
-        className={`${styles.pagination__link} ${
-            isActive ? styles["pagination__link--active"] : ""
-        } ${className}`}
+        className={cx(
+            styles.pagination__link,
+            isActive && styles["pagination__link--active"],
+            className
+        )}
         {...props}
     >
         {children}

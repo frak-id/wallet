@@ -2,7 +2,6 @@
 
 import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
-import { ActionsWrapper } from "@/module/campaigns/component/Actions";
 import { CampaignPromotedContent } from "@/module/campaigns/component/CampaignDetails/CampaignPromotedContent";
 import { CampaignStatus } from "@/module/campaigns/component/CampaignDetails/CampaignStatus";
 import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/CampaignTerritory";
@@ -11,6 +10,7 @@ import { FormAdvertising } from "@/module/campaigns/component/Creation/Validatio
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
 import { FormOrder } from "@/module/campaigns/component/Creation/ValidationCampaign/FormOrder";
 import { FormPriceRange } from "@/module/campaigns/component/Creation/ValidationCampaign/FormPriceRange";
+import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";

@@ -7,13 +7,12 @@ import {
     campaignStepAtom,
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
-import { Panel } from "@/module/common/component/Panel";
+import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Button } from "@module/component/Button";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect } from "react";
-import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
 export const Actions = memo(function Actions({
@@ -85,18 +84,6 @@ export const Actions = memo(function Actions({
         />
     );
 });
-
-export function ActionsWrapper({
-    left,
-    right,
-}: { left?: ReactNode; right?: ReactNode }) {
-    return (
-        <Panel variant={"secondary"} className={styles.actions}>
-            {left && <div className={styles.action__left}>{left}</div>}
-            {right && <div className={styles.action__right}>{right}</div>}
-        </Panel>
-    );
-}
 
 function ButtonNext({
     isLoading = false,

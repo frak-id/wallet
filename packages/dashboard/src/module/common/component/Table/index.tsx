@@ -1,29 +1,36 @@
 import {
     type Column,
     type ColumnFiltersState,
+    type RowPinningState,
+    type RowSelectionState,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import type { SortingState } from "@tanstack/react-table";
+import type { TableOptions } from "@tanstack/table-core";
 import { ArrowDown, ArrowDownUp, ArrowUp } from "lucide-react";
 import { type PropsWithChildren, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
 export type ReactTableProps<TData> = {
-    data: TData[];
-    columns: ColumnDef<TData>[];
     classNameWrapper?: string;
     className?: string;
     preTable?: ReactNode;
+    postTable?: ReactNode;
     // Some custom configs
-    enableSorting?: boolean;
     enableFiltering?: boolean;
+    // Some states
     columnFilters?: ColumnFiltersState;
-};
+    rowSelection?: RowSelectionState;
+    rowPinning?: RowPinningState;
+} & Omit<
+    TableOptions<TData>,
+    "state" | "getCoreRowModel" | "getSortedRowModel" | "getFilteredRowModel"
+>;
 
 export function Table<TData extends object>({
     data,
@@ -31,9 +38,12 @@ export function Table<TData extends object>({
     classNameWrapper = "",
     className = "",
     preTable,
-    enableSorting = false,
+    postTable,
     enableFiltering = false,
-    columnFilters = [],
+    columnFilters,
+    rowSelection,
+    rowPinning,
+    ...additionalProps
 }: ReactTableProps<TData>) {
     const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -46,14 +56,18 @@ export function Table<TData extends object>({
         state: {
             sorting,
             columnFilters,
+            rowSelection,
+            rowPinning,
         },
-        enableSorting,
         onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
+        getSortedRowModel: additionalProps.enableSorting
+            ? getSortedRowModel()
+            : undefined,
         getFilteredRowModel: enableFiltering
             ? getFilteredRowModel()
             : undefined,
+        ...additionalProps,
     });
 
     const rowModel = table.getRowModel();
@@ -137,6 +151,8 @@ export function Table<TData extends object>({
                         </tfoot>
                     )}
                 </table>
+
+                {postTable}
             </div>
         </>
     );

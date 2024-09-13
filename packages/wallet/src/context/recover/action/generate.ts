@@ -40,7 +40,7 @@ export async function generateRecoveryData({
             0,
             // Valid after timestamp, in seconds
             validAfter,
-            // Data used to validate the ecdsa validator
+            // Data used to confirm the ecdsa validator
             guardianAddress,
         ],
     });

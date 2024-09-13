@@ -16,16 +16,18 @@ import {
 import { Separator } from "@/module/common/component/Separator";
 import { Button } from "@module/component/Button";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
-import { forwardRef, useEffect, useState } from "react";
-import type { ButtonHTMLAttributes, KeyboardEvent } from "react";
+import { forwardRef, useState } from "react";
+import type { ButtonHTMLAttributes } from "react";
 import styles from "./index.module.css";
 
+type Option = {
+    name: string;
+    value?: string;
+};
+
 interface MultiSelectProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    options: {
-        name: string;
-    }[];
-    onValueChange: (value: string[]) => void;
-    defaultValue?: string[];
+    options: Option[];
+    onValueChange: (value: Option[]) => void;
     placeholder?: string;
     animation?: number;
     asChild?: boolean;
@@ -37,7 +39,6 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
         {
             options,
             onValueChange,
-            defaultValue = [],
             value,
             placeholder = "Select options",
             asChild = false,
@@ -46,43 +47,29 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
         },
         ref
     ) => {
-        const localValue = value as string[];
-        const [selectedValues, setSelectedValues] =
-            useState<string[]>(localValue);
+        const namesFromValue = Array.isArray(value)
+            ? value.map(
+                  (v: string) =>
+                      options.find((o) => (o.value ?? o.name) === v)?.name ?? v
+              )
+            : [];
+        const selectedNames = new Set(namesFromValue);
         const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-        /**
-         * Sync value from props with selected values
-         */
-        useEffect(() => {
-            if (localValue.join(",") === selectedValues.join(",")) return;
-            setSelectedValues(localValue);
-        }, [localValue, selectedValues]);
-
-        const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-            if (event.key === "Enter") {
-                setIsPopoverOpen(true);
-            } else if (
-                event.key === "Backspace" &&
-                !event.currentTarget.value
-            ) {
-                const newSelectedValues = [...selectedValues];
-                newSelectedValues.pop();
-                setSelectedValues(newSelectedValues);
-                onValueChange(newSelectedValues);
+        const toggleOption = (args: Option) => {
+            const isSelected = selectedNames.has(args.name);
+            if (isSelected) {
+                selectedNames.delete(args.name);
+            } else {
+                selectedNames.add(args.name);
             }
-        };
-
-        const toggleOption = (value: string) => {
-            const newSelectedValues = selectedValues.includes(value)
-                ? selectedValues.filter((v) => v !== value)
-                : [...selectedValues, value];
-            setSelectedValues(newSelectedValues);
-            onValueChange(newSelectedValues);
+            const filterValues = Array.from(selectedNames)
+                .map((name) => options.find((o) => o.name === name))
+                .filter((value) => value !== undefined);
+            onValueChange(filterValues);
         };
 
         const handleClear = () => {
-            setSelectedValues([]);
             onValueChange([]);
         };
 
@@ -100,9 +87,9 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                         onClick={handleTogglePopover}
                         className={styles.multiSelect__trigger}
                     >
-                        {selectedValues.length > 0 ? (
+                        {selectedNames.size > 0 ? (
                             <SelectedValues
-                                selectedValues={selectedValues}
+                                selectedValues={selectedNames}
                                 options={options}
                                 toggleOption={toggleOption}
                                 handleClear={handleClear}
@@ -120,16 +107,13 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                     onEscapeKeyDown={() => setIsPopoverOpen(false)}
                 >
                     <Command>
-                        <CommandInput
-                            placeholder="Search..."
-                            onKeyDown={handleInputKeyDown}
-                        />
+                        <CommandInput placeholder="Search..." />
                         <CommandSeparator />
                         <CommandList>
                             <CommandEmpty>No results found.</CommandEmpty>
                             <CommandGroup>
                                 <OptionsList
-                                    selectedValues={selectedValues}
+                                    selectedValues={selectedNames}
                                     options={options}
                                     toggleOption={toggleOption}
                                 />
@@ -138,7 +122,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                         <CommandSeparator />
                         <CommandGroup>
                             <div className={styles.multiSelect__actions}>
-                                {selectedValues.length > 0 && (
+                                {selectedNames.size > 0 && (
                                     <>
                                         <CommandItem
                                             onSelect={handleClear}
@@ -172,41 +156,51 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
 );
 MultiSelect.displayName = "MultiSelect";
 
+/**
+ * List of selected values
+ * @param selectedValues
+ * @param options
+ * @param toggleOption
+ * @param handleClear
+ * @constructor
+ */
 function SelectedValues({
     selectedValues,
     options,
     toggleOption,
     handleClear,
 }: {
-    selectedValues: string[];
-    options: {
-        name: string;
-    }[];
-    toggleOption: (value: string) => void;
+    selectedValues: Set<string>;
+    options: Option[];
+    toggleOption: (args: Option) => void;
     handleClear: () => void;
 }) {
     return (
         <div className={styles.multiSelect__triggerInner}>
             <div className={styles.multiSelect__triggerBadges}>
-                {selectedValues.map((value) => {
-                    const option = options.find((o) => o.name === value);
-                    return (
-                        <Badge
-                            key={value}
-                            variant={"information"}
-                            className={styles.multiSelect__badge}
-                        >
-                            {option?.name}
-                            <X
-                                size={14}
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    toggleOption(value);
-                                }}
-                            />
-                        </Badge>
-                    );
-                })}
+                {selectedValues.size > 2 && (
+                    <SelectedValuesMore size={selectedValues.size} />
+                )}
+                {selectedValues.size <= 2 &&
+                    options
+                        .filter((option) => selectedValues.has(option.name))
+                        .map((option) => (
+                            <Badge
+                                key={option.name}
+                                variant={"information"}
+                                className={styles.multiSelect__badge}
+                            >
+                                {option?.name}
+                                <X
+                                    size={14}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (!option) return;
+                                        toggleOption(option);
+                                    }}
+                                />
+                            </Badge>
+                        ))}
             </div>
             <div className={styles.multiSelect__actions}>
                 <XIcon
@@ -226,40 +220,64 @@ function SelectedValues({
     );
 }
 
+/**
+ * When more than 2 selected values
+ * @param size
+ * @constructor
+ */
+function SelectedValuesMore({
+    size,
+}: {
+    size: number;
+}) {
+    return (
+        <div className={styles.multiSelect__triggerInner}>
+            <div className={styles.multiSelect__triggerBadges}>
+                <Badge
+                    variant={"information"}
+                    className={styles.multiSelect__badge}
+                >
+                    {size} selected
+                </Badge>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * List of all options
+ * @param selectedValues
+ * @param options
+ * @param toggleOption
+ * @constructor
+ */
 function OptionsList({
     selectedValues,
     options,
     toggleOption,
 }: {
-    selectedValues: string[];
-    options: {
-        name: string;
-    }[];
-    toggleOption: (value: string) => void;
+    selectedValues: Set<string>;
+    options: Option[];
+    toggleOption: (args: Option) => void;
 }) {
-    return (
-        <>
-            {options.map((option) => {
-                const isSelected = selectedValues.includes(option.name);
-                return (
-                    <CommandItem
-                        key={option.name}
-                        onSelect={() => toggleOption(option.name)}
-                        className="cursor-pointer"
-                    >
-                        <div
-                            className={`${styles.multiSelect__checks} ${
-                                isSelected
-                                    ? styles["multiSelect__checks--selected"]
-                                    : styles["multiSelect__checks--notSelected"]
-                            }`}
-                        >
-                            <CheckIcon size={12} />
-                        </div>
-                        <span>{option.name}</span>
-                    </CommandItem>
-                );
-            })}
-        </>
-    );
+    return options.map((option) => {
+        const isSelected = selectedValues.has(option.name);
+        return (
+            <CommandItem
+                key={option.name}
+                onSelect={() => toggleOption(option)}
+            >
+                <div
+                    className={`${styles.multiSelect__checks} ${
+                        isSelected
+                            ? styles["multiSelect__checks--selected"]
+                            : styles["multiSelect__checks--notSelected"]
+                    }`}
+                >
+                    <CheckIcon size={12} />
+                </div>
+                <span>{option.name}</span>
+            </CommandItem>
+        );
+    });
 }
