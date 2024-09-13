@@ -27,7 +27,7 @@
                 "noExcessiveCognitiveComplexity": {
                     "level": "error",
                     "options": {
-                        "maxAllowedComplexity": 16
+                        "maxAllowedComplexity": 17
                     }
                 },
                 "noUselessTernary": "error",

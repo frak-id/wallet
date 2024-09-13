@@ -47,7 +47,7 @@ export function DashboardWebApp({ stack }: StackContext) {
         // Enable image optimization
         imageOptimization: {
             memorySize: 512,
-            staticImageOptimization: true
+            staticImageOptimization: true,
         },
         // Bind to the configs
         bind: [...configs, reloadCampaignQueue, readPubKeyFunction],

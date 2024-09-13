@@ -33,7 +33,7 @@ export function ExampleAppStack({ stack }: StackContext) {
         // Enable image optimization
         imageOptimization: {
             memorySize: 512,
-            staticImageOptimization: true
+            staticImageOptimization: true,
         },
     });
 
@@ -52,7 +52,7 @@ export function ExampleAppStack({ stack }: StackContext) {
         // Enable image optimization
         imageOptimization: {
             memorySize: 512,
-            staticImageOptimization: true
+            staticImageOptimization: true,
         },
     });
 
