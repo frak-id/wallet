@@ -51,7 +51,10 @@ export function RewardFiltering() {
                     disabled={rewardsInputDisabled || formState.disabled}
                     rules={{
                         required: false,
-                        min: 0,
+                        min: {
+                            value: 0,
+                            message: "Minimum rewards must be greater than 0",
+                        },
                     }}
                     render={({ field }) => (
                         <FormItem>
@@ -76,7 +79,10 @@ export function RewardFiltering() {
                     disabled={rewardsInputDisabled || formState.disabled}
                     rules={{
                         required: false,
-                        min: 0,
+                        min: {
+                            value: 0,
+                            message: "Maximum rewards must be greater than 0",
+                        },
                         validate: (value) => {
                             if (!value) return;
                             if (

@@ -25,8 +25,16 @@ export function PushTitlePanel() {
                 name={"pushCampaignTitle"}
                 rules={{
                     required: "Push campaign title is required",
-                    minLength: 5,
-                    maxLength: 100,
+                    minLength: {
+                        value: 5,
+                        message:
+                            "The push campaign title require at least 5 characters",
+                    },
+                    maxLength: {
+                        value: 100,
+                        message:
+                            "The push campaign title can't exceed 40 characters",
+                    },
                 }}
                 render={({ field }) => (
                     <FormItem>

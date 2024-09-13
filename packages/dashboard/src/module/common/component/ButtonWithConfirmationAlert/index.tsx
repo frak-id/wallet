@@ -29,7 +29,7 @@ export function ButtonWithConfirmationAlert({
                     leftIcon={<X size={20} />}
                     disabled={disabled}
                 >
-                    Cancel
+                    {buttonText}
                 </Button>
             }
             description={description}

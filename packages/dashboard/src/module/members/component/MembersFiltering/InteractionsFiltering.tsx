@@ -51,7 +51,11 @@ export function InteractionsFiltering() {
                     disabled={inputDisabled || formState.disabled}
                     rules={{
                         required: false,
-                        min: 0,
+                        min: {
+                            value: 0,
+                            message:
+                                "Minimum interactions count must be greater than 0",
+                        },
                     }}
                     render={({ field }) => (
                         <FormItem>
@@ -72,7 +76,11 @@ export function InteractionsFiltering() {
                     disabled={inputDisabled || formState.disabled}
                     rules={{
                         required: false,
-                        min: 0,
+                        min: {
+                            value: 0,
+                            message:
+                                "Maximum interactions count must be greater than 0",
+                        },
                         validate: (value) => {
                             if (!value) return;
                             if (

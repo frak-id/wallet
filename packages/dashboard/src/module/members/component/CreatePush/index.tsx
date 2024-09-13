@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
@@ -8,6 +9,7 @@ import { PushPayloadPanel } from "@/module/members/component/CreatePush/PushPayl
 import { PushTitlePanel } from "@/module/members/component/CreatePush/PushTitlePanel";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import type { NotificationPayload } from "@frak-labs/shared/types/NotificationPayload";
+import { Button } from "@module/component/Button";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import type { Address } from "viem";
@@ -39,7 +41,6 @@ export function CreatePushNotification() {
                     url: "",
                 },
             },
-            targets: [],
         },
     });
 
@@ -72,6 +73,35 @@ export function CreatePushNotification() {
                     <PushTitlePanel />
                     <PushPayloadPanel />
                     <AudiencePanel />
+                    <ActionsWrapper
+                        left={
+                            <ButtonWithConfirmationAlert
+                                description={
+                                    <>
+                                        <p>
+                                            Do you want to stop this push
+                                            notification campaign creation?
+                                        </p>
+                                        <p>
+                                            You will be able to continue it's
+                                            creation later
+                                        </p>
+                                    </>
+                                }
+                                title={"Close"}
+                                buttonText={"Close"}
+                                onClick={() => {
+                                    // todo: Should backup in local storage to be able to resume it's creation later
+                                    form.reset();
+                                }}
+                            />
+                        }
+                        right={
+                            <Button type={"submit"} variant={"information"}>
+                                Next
+                            </Button>
+                        }
+                    />
                 </form>
             </Form>
         </FormLayout>

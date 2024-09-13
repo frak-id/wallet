@@ -31,8 +31,16 @@ export function PushPayloadPanel() {
                 name={"payload.title"}
                 rules={{
                     required: "Push title required",
-                    minLength: 5,
-                    maxLength: 40,
+                    minLength: {
+                        value: 8,
+                        message:
+                            "The notification title require at least 8 characters",
+                    },
+                    maxLength: {
+                        value: 40,
+                        message:
+                            "The notification title can't exceed 40 characters",
+                    },
                 }}
                 render={({ field }) => (
                     <FormItem>
@@ -54,8 +62,14 @@ export function PushPayloadPanel() {
                 name={"payload.body"}
                 rules={{
                     required: "Push message required",
-                    minLength: 20,
-                    maxLength: 500,
+                    minLength: {
+                        value: 10,
+                        message: "The message require at least 10 characters",
+                    },
+                    maxLength: {
+                        value: 500,
+                        message: "The message can't exceed 500 characters",
+                    },
                 }}
                 render={({ field }) => (
                     <FormItem>
