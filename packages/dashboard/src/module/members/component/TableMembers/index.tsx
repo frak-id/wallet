@@ -1,6 +1,7 @@
 "use client";
 
 import { getProductMembers } from "@/context/members/action/getProductMembers";
+import { Row } from "@/module/common/component/Row";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import {
     addSelectedMembersAtom,
@@ -11,16 +12,18 @@ import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import type { MembersPageItem } from "@/types/Members";
+import { Button } from "@module/component/Button";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { useSetAtom } from "jotai/index";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { formatEther, isAddressEqual } from "viem";
+import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<MembersPageItem>>(
     () => import("@/module/common/component/Table").then((mod) => mod.Table),
@@ -38,7 +41,7 @@ const columnHelper = createColumnHelper<MembersPageItem>();
  */
 export function TableMembers() {
     const filters = useAtomValue(tableMembersFiltersAtom);
-    const selectedMembers = useAtomValue(selectedMembersAtom);
+    const [selectedMembers, setSelectedMembers] = useAtom(selectedMembersAtom);
     const addSelectedMember = useSetAtom(addSelectedMembersAtom);
     const removeSelectedMember = useSetAtom(removeSelectedMembersAtom);
 
@@ -144,9 +147,37 @@ export function TableMembers() {
                     rowCount={page.totalResult}
                     pagination={paginationState}
                     postTable={
-                        page.totalResult > (filters.limit ?? 10) && (
-                            <Pagination totalResult={page.totalResult} />
-                        )
+                        <>
+                            {(selectedMembers?.length ?? 0) > 0 && (
+                                <>
+                                    <Row
+                                        align={"center"}
+                                        className={styles.selectedMembersRow}
+                                    >
+                                        <p>
+                                            You have selected{" "}
+                                            <strong>
+                                                {selectedMembers?.length}
+                                            </strong>{" "}
+                                            Members
+                                        </p>
+                                        <Button
+                                            type={"button"}
+                                            onClick={() =>
+                                                setSelectedMembers([])
+                                            }
+                                            variant={"outline"}
+                                        >
+                                            Clear selection
+                                        </Button>
+                                    </Row>
+                                </>
+                            )}
+
+                            {page.totalResult > (filters.limit ?? 10) && (
+                                <Pagination totalResult={page.totalResult} />
+                            )}
+                        </>
                     }
                 />
             )}
