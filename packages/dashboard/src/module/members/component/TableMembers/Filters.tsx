@@ -8,7 +8,6 @@ import {
 import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
 import { Button } from "@module/component/Button";
-import { InputSearch } from "@module/component/forms/InputSearch";
 import { useSetAtom } from "jotai";
 import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
@@ -20,12 +19,12 @@ export function TableMembersFilters() {
 
     return (
         <div className={styles.filters}>
-            <div className={styles.filters__item}>
+            {/*<div className={styles.filters__item}>
                 <InputSearch
                     placeholder={"Search members..."}
                     classNameWrapper={styles.filters__search}
                 />
-            </div>
+            </div>*/}
             <div className={styles.filters__item}>
                 <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                     <PopoverTrigger asChild>
