@@ -17,8 +17,8 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
-    "@aws-sdk/client-lambda": "^3.637.0",
-    "@aws-sdk/client-sqs": "^3.637.0",
+    "@aws-sdk/client-lambda": "^3.650.0",
+    "@aws-sdk/client-sqs": "^3.650.0",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
     "@lucasmogari/react-pagination": "^1.2.0",
@@ -44,7 +44,7 @@
     "jotai": "^2.9.3",
     "ky": "^1.7.2",
     "lucide-react": "^0.441.0",
-    "mongodb": "^6.8.0",
+    "mongodb": "^6.9.0",
     "next": "14.2.11",
     "normalize.css": "^8.0.1",
     "radash": "^12.1.0",
@@ -52,7 +52,7 @@
     "react-day-picker": "^9.0.9",
     "react-dom": "^18",
     "react-hook-form": "^7.53.0",
-    "viem": "^2.21.1"
+    "viem": "^2.21.6"
   },
   "devDependencies": {
     "@types/node": "^22",

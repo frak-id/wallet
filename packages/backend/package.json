@@ -12,14 +12,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.637.0",
-    "@aws-sdk/client-secrets-manager": "^3.637.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.650.0",
+    "@aws-sdk/client-secrets-manager": "^3.650.0",
     "@frak-labs/shared": "workspace:*",
     "aws-lambda": "^1.0.7",
-    "mongodb": "^6.8.0",
+    "mongodb": "^6.9.0",
     "radash": "^12.1.0",
-    "solady": "^0.0.236",
-    "viem": "^2.21.1"
+    "solady": "^0.0.238",
+    "viem": "^2.21.6"
   },
   "devDependencies": {
     "sst": "2.43.6",

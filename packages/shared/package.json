@@ -17,7 +17,7 @@
     "radash": "^12.1.0",
     "react-hook-form": "^7.53.0",
     "react-loading-skeleton": "^3.4.0",
-    "viem": "^2.21.1"
+    "viem": "^2.21.6"
   },
   "devDependencies": {
     "@types/react": "^18",
