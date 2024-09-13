@@ -44,11 +44,14 @@ export function DashboardWebApp({ stack }: StackContext) {
             domainName: `${subDomain}.frak.id`.toLowerCase(),
             hostedZone: "frak.id",
         },
+        // Enable image optimization
+        imageOptimization: {
+            memorySize: 512,
+            staticImageOptimization: true
+        },
         // Bind to the configs
         bind: [...configs, reloadCampaignQueue, readPubKeyFunction],
         openNextVersion: openNextVersion,
-        // Number of server side instance to keep warm
-        warm: isProdStack(stack) ? 10 : 1,
     });
 
     stack.addOutputs({

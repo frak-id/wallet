@@ -51,11 +51,16 @@ export function WalletAppStack({ stack }: StackContext) {
             domainName: `${subDomain}.frak.id`.toLowerCase(),
             hostedZone: "frak.id",
         },
+        // Enable image optimization
+        imageOptimization: {
+            memorySize: 512,
+            staticImageOptimization: true
+        },
         // Bind to the configs
         bind: [...configs, interactionQueue],
         openNextVersion: openNextVersion,
         // Number of server side instance to keep warm
-        warm: isProdStack(stack) ? 10 : 1,
+        warm: 1,
         dev: {
             deploy: false,
         },

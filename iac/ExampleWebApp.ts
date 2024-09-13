@@ -25,12 +25,15 @@ export function ExampleAppStack({ stack }: StackContext) {
         // Bind to the configs
         bind: [nexusUrl],
         openNextVersion: openNextVersion,
-        // Number of server side instance to keep warm
-        warm: 10,
         // Set the custom domain
         customDomain: {
             domainName: "ethcc.news-paper.xyz",
             hostedZone: "news-paper.xyz",
+        },
+        // Enable image optimization
+        imageOptimization: {
+            memorySize: 512,
+            staticImageOptimization: true
         },
     });
 
@@ -41,12 +44,15 @@ export function ExampleAppStack({ stack }: StackContext) {
         // Bind to the configs
         bind: [nexusUrl, mongoExampleUri],
         openNextVersion: openNextVersion,
-        // Number of server side instance to keep warm
-        warm: 10,
         // Set the custom domain
         customDomain: {
             domainName: "news-paper.xyz",
             hostedZone: "news-paper.xyz",
+        },
+        // Enable image optimization
+        imageOptimization: {
+            memorySize: 512,
+            staticImageOptimization: true
         },
     });
 
