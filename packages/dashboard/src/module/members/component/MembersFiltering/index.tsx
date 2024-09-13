@@ -72,6 +72,12 @@ export function MembersFiltering({
             if (!(data.interactions?.min || data.interactions?.max)) {
                 data.interactions = undefined;
             }
+
+            // Fix productIds if no filter provided
+            if (!data.productIds?.length) {
+                data.productIds = undefined;
+            }
+
             // todo: Some verification here?
             onFilterSet(data);
         },

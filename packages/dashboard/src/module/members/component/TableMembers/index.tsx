@@ -107,7 +107,7 @@ export function TableMembers() {
                 <Table
                     data={page.members}
                     columns={columns}
-                    enableRowSelection={true}
+                    enableRowSelection={false}
                     onRowSelectionChange={setSelectedRow}
                     rowSelection={selectedRow}
                     postTable={
