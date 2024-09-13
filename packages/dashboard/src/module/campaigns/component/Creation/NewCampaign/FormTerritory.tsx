@@ -31,7 +31,12 @@ export function FormTerritory(form: UseFormReturn<Campaign>) {
                         <FormControl>
                             <MultiSelect
                                 options={getCountryDataList()}
-                                onValueChange={field.onChange}
+                                onValueChange={(value) => {
+                                    const countries = value
+                                        .map((v) => v.name)
+                                        .filter(Boolean);
+                                    field.onChange(countries);
+                                }}
                                 placeholder="Select country"
                                 {...field}
                             />

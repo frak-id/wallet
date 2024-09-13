@@ -2,11 +2,14 @@
 
 import { getProductMembers } from "@/context/members/action/getProductMembers";
 import type { ReactTableProps } from "@/module/common/component/Table";
+import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
+import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import type { MembersPageItem } from "@/types/Members";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import { useAtomValue } from "jotai";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { formatEther } from "viem";
@@ -26,10 +29,12 @@ const columnHelper = createColumnHelper<MembersPageItem>();
  *  - filter on top
  */
 export function TableMembers() {
+    const filters = useAtomValue(tableMembersFiltersAtom);
+
     const { data: page, isPending } = useQuery({
-        queryKey: ["members", "page"],
+        queryKey: ["members", "page", filters],
         queryFn: async () => {
-            return await getProductMembers({ limit: 10, offset: 0 });
+            return await getProductMembers(filters);
         },
     });
 
@@ -78,6 +83,7 @@ export function TableMembers() {
     return (
         page && (
             <>
+                <TableMembersFilters />
                 <Table data={page.members} columns={columns} />
             </>
         )
