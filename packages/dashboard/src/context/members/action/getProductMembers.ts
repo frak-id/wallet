@@ -88,9 +88,10 @@ export async function getProductsMembersCount(
 export async function getProductsMembersAddress(params: GetMembersParam) {
     const session = await getSafeSession();
 
-    return await ky
+    const result = await ky
         .post(`https://indexer.frak.id/members/${session.wallet}`, {
             json: { ...params, onlyAddress: true },
         })
         .json<Omit<GetMembersResponse, "members"> & { users: Address[] }>();
+    return result.users;
 }

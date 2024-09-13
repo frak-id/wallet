@@ -68,7 +68,8 @@ function PreSelectedMembers({ members }: { members: Address[] }) {
 }
 
 function SelectAudience() {
-    const { setValue } = useFormContext<FormCreatePushNotification>();
+    const { setValue, getValues } =
+        useFormContext<FormCreatePushNotification>();
 
     const {
         mutate: computeAudienceSize,
@@ -89,6 +90,7 @@ function SelectAudience() {
                     computeAudienceSize(filter);
                     setValue("target.filter", filter);
                 }}
+                initialValue={getValues("target.filter")}
             />
             <p>
                 You will reach{" "}

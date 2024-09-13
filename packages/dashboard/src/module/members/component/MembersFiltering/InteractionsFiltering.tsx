@@ -82,10 +82,17 @@ export function InteractionsFiltering() {
                                 "Maximum interactions count must be greater than 0",
                         },
                         validate: (value) => {
-                            if (!value) return;
                             if (
-                                currentInteractions?.min !== undefined &&
-                                value < currentInteractions.min
+                                !value ||
+                                Number.isNaN(value) ||
+                                Number.isNaN(currentInteractions?.min)
+                            )
+                                return;
+
+                            if (
+                                Number.parseInt(
+                                    currentInteractions?.min as unknown as string
+                                ) >= Number.parseInt(value as unknown as string)
                             ) {
                                 return "Max interactions should be greater than minimum";
                             }

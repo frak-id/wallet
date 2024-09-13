@@ -84,10 +84,17 @@ export function RewardFiltering() {
                             message: "Maximum rewards must be greater than 0",
                         },
                         validate: (value) => {
-                            if (!value) return;
                             if (
-                                currentRewards?.min !== undefined &&
-                                value < currentRewards.min
+                                !value ||
+                                Number.isNaN(value) ||
+                                Number.isNaN(currentRewards?.min)
+                            )
+                                return;
+                            if (
+                                Number.parseFloat(
+                                    currentRewards?.min as unknown as string
+                                ) >=
+                                Number.parseFloat(value as unknown as string)
                             ) {
                                 return "Max reward should be greater than min reward";
                             }
