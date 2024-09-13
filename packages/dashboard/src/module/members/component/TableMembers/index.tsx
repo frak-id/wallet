@@ -7,11 +7,16 @@ import { TableMembersFilters } from "@/module/members/component/TableMembers/Fil
 import type { MembersPageItem } from "@/types/Members";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";
+import { Checkbox } from "@module/component/forms/Checkbox";
 import { useQuery } from "@tanstack/react-query";
-import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import {
+    type ColumnDef,
+    type RowSelectionState,
+    createColumnHelper,
+} from "@tanstack/react-table";
 import { useAtomValue } from "jotai";
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { formatEther } from "viem";
 
 const Table = dynamic<ReactTableProps<MembersPageItem>>(
@@ -30,6 +35,7 @@ const columnHelper = createColumnHelper<MembersPageItem>();
  */
 export function TableMembers() {
     const filters = useAtomValue(tableMembersFiltersAtom);
+    const [selectedRow, setSelectedRow] = useState<RowSelectionState>({});
 
     const { data: page, isPending } = useQuery({
         queryKey: ["members", "page", filters],
@@ -42,6 +48,17 @@ export function TableMembers() {
     const columns = useMemo(
         () =>
             [
+                columnHelper.display({
+                    id: "select",
+                    cell: ({ row }) => (
+                        <Checkbox
+                            id={`select-${row.id}`}
+                            checked={row.getIsSelected()}
+                            onCheckedChange={row.getToggleSelectedHandler()}
+                            disabled={!row.getCanSelect()}
+                        />
+                    ),
+                }),
                 columnHelper.accessor("user", {
                     enableSorting: true,
                     header: () => "Wallet",
@@ -84,7 +101,13 @@ export function TableMembers() {
         page && (
             <>
                 <TableMembersFilters />
-                <Table data={page.members} columns={columns} />
+                <Table
+                    data={page.members}
+                    columns={columns}
+                    enableRowSelection={true}
+                    onRowSelectionChange={setSelectedRow}
+                    rowSelection={selectedRow}
+                />
             </>
         )
     );
