@@ -4,11 +4,12 @@ import { getProductMembers } from "@/context/members/action/getProductMembers";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
+import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import type { MembersPageItem } from "@/types/Members";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";
 import { Checkbox } from "@module/component/forms/Checkbox";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
     type ColumnDef,
     type RowSelectionState,
@@ -42,6 +43,7 @@ export function TableMembers() {
         queryFn: async () => {
             return await getProductMembers(filters);
         },
+        placeholderData: keepPreviousData,
     });
 
     // Build our columns
@@ -97,18 +99,24 @@ export function TableMembers() {
     if (!page || isPending) {
         return <Skeleton />;
     }
+
     return (
-        page && (
-            <>
-                <TableMembersFilters />
+        <>
+            <TableMembersFilters />
+            {page && (
                 <Table
                     data={page.members}
                     columns={columns}
                     enableRowSelection={true}
                     onRowSelectionChange={setSelectedRow}
                     rowSelection={selectedRow}
+                    postTable={
+                        page.totalResult > (filters.limit ?? 10) && (
+                            <Pagination totalResult={page.totalResult} />
+                        )
+                    }
                 />
-            </>
-        )
+            )}
+        </>
     );
 }

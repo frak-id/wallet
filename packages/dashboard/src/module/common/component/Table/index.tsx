@@ -20,6 +20,7 @@ export type ReactTableProps<TData> = {
     classNameWrapper?: string;
     className?: string;
     preTable?: ReactNode;
+    postTable?: ReactNode;
     // Some custom configs
     enableFiltering?: boolean;
     // Some states
@@ -37,6 +38,7 @@ export function Table<TData extends object>({
     classNameWrapper = "",
     className = "",
     preTable,
+    postTable,
     enableFiltering = false,
     columnFilters,
     rowSelection,
@@ -149,6 +151,8 @@ export function Table<TData extends object>({
                         </tfoot>
                     )}
                 </table>
+
+                {postTable}
             </div>
         </>
     );
