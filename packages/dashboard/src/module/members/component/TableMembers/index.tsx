@@ -2,6 +2,11 @@
 
 import { getProductMembers } from "@/context/members/action/getProductMembers";
 import type { ReactTableProps } from "@/module/common/component/Table";
+import {
+    addSelectedMembersAtom,
+    removeSelectedMembersAtom,
+    selectedMembersAtom,
+} from "@/module/members/atoms/selectedMembers";
 import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
@@ -10,15 +15,12 @@ import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import {
-    type ColumnDef,
-    type RowSelectionState,
-    createColumnHelper,
-} from "@tanstack/react-table";
+import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useAtomValue } from "jotai";
+import { useSetAtom } from "jotai/index";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
-import { formatEther } from "viem";
+import { useMemo } from "react";
+import { formatEther, isAddressEqual } from "viem";
 
 const Table = dynamic<ReactTableProps<MembersPageItem>>(
     () => import("@/module/common/component/Table").then((mod) => mod.Table),
@@ -36,7 +38,26 @@ const columnHelper = createColumnHelper<MembersPageItem>();
  */
 export function TableMembers() {
     const filters = useAtomValue(tableMembersFiltersAtom);
-    const [selectedRow, setSelectedRow] = useState<RowSelectionState>({});
+    const selectedMembers = useAtomValue(selectedMembersAtom);
+    const addSelectedMember = useSetAtom(addSelectedMembersAtom);
+    const removeSelectedMember = useSetAtom(removeSelectedMembersAtom);
+
+    /**
+     * Replicate pagination state for the table using the filter
+     */
+    const paginationState = useMemo(() => {
+        const { offset, limit } = filters;
+        if (!offset || offset === 0) {
+            return {
+                pageIndex: 0,
+                pageSize: limit ?? 10,
+            };
+        }
+        return {
+            pageIndex: offset / (limit ?? 10),
+            pageSize: limit ?? 10,
+        };
+    }, [filters]);
 
     const { data: page, isPending } = useQuery({
         queryKey: ["members", "page", filters],
@@ -52,14 +73,26 @@ export function TableMembers() {
             [
                 columnHelper.display({
                     id: "select",
-                    cell: ({ row }) => (
-                        <Checkbox
-                            id={`select-${row.id}`}
-                            checked={row.getIsSelected()}
-                            onCheckedChange={row.getToggleSelectedHandler()}
-                            disabled={!row.getCanSelect()}
-                        />
-                    ),
+                    cell: ({ row }) => {
+                        return (
+                            <Checkbox
+                                id={`select-${row.id}`}
+                                checked={
+                                    !!selectedMembers?.find((a) =>
+                                        isAddressEqual(a, row.original.user)
+                                    )
+                                }
+                                onCheckedChange={(checked) => {
+                                    if (checked) {
+                                        addSelectedMember(row.original.user);
+                                    } else {
+                                        removeSelectedMember(row.original.user);
+                                    }
+                                }}
+                                disabled={false}
+                            />
+                        );
+                    },
                 }),
                 columnHelper.accessor("user", {
                     enableSorting: true,
@@ -93,7 +126,7 @@ export function TableMembers() {
                         `${formatEther(BigInt(getValue()))} mUSD`,
                 }),
             ] as ColumnDef<MembersPageItem>[],
-        []
+        [selectedMembers, addSelectedMember, removeSelectedMember]
     );
 
     if (!page || isPending) {
@@ -107,9 +140,9 @@ export function TableMembers() {
                 <Table
                     data={page.members}
                     columns={columns}
-                    enableRowSelection={false}
-                    onRowSelectionChange={setSelectedRow}
-                    rowSelection={selectedRow}
+                    manualPagination={true}
+                    rowCount={page.totalResult}
+                    pagination={paginationState}
                     postTable={
                         page.totalResult > (filters.limit ?? 10) && (
                             <Pagination totalResult={page.totalResult} />

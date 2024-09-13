@@ -1,6 +1,7 @@
 import {
     type Column,
     type ColumnFiltersState,
+    type PaginationState,
     type RowPinningState,
     type RowSelectionState,
     flexRender,
@@ -27,6 +28,7 @@ export type ReactTableProps<TData> = {
     columnFilters?: ColumnFiltersState;
     rowSelection?: RowSelectionState;
     rowPinning?: RowPinningState;
+    pagination?: PaginationState;
 } & Omit<
     TableOptions<TData>,
     "state" | "getCoreRowModel" | "getSortedRowModel" | "getFilteredRowModel"
@@ -43,6 +45,7 @@ export function Table<TData extends object>({
     columnFilters,
     rowSelection,
     rowPinning,
+    pagination,
     ...additionalProps
 }: ReactTableProps<TData>) {
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -58,6 +61,7 @@ export function Table<TData extends object>({
             columnFilters,
             rowSelection,
             rowPinning,
+            pagination,
         },
         onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
