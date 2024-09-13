@@ -1,4 +1,9 @@
-import { FormField, FormItem, FormLabel } from "@/module/forms/Form";
+import {
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering/index";
 import { Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";
@@ -6,7 +11,7 @@ import { Input } from "@module/component/forms/Input";
 import { useFormContext, useWatch } from "react-hook-form";
 
 export function RewardFiltering() {
-    const { control } = useFormContext<FormMembersFiltering>();
+    const { control, formState } = useFormContext<FormMembersFiltering>();
     const currentRewards = useWatch({ control, name: "rewards" });
     const rewardsInputDisabled = currentRewards === undefined;
 
@@ -19,6 +24,7 @@ export function RewardFiltering() {
                     <FormItem variant={"checkbox"}>
                         <Checkbox
                             checked={!rewardsInputDisabled}
+                            disabled={formState.disabled}
                             id={"reward-filters"}
                             onCheckedChange={(checked) => {
                                 field.onChange(
@@ -42,7 +48,11 @@ export function RewardFiltering() {
                 <FormField
                     control={control}
                     name={"rewards.min"}
-                    disabled={rewardsInputDisabled}
+                    disabled={rewardsInputDisabled || formState.disabled}
+                    rules={{
+                        required: false,
+                        min: 0,
+                    }}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>From</FormLabel>
@@ -56,13 +66,27 @@ export function RewardFiltering() {
                                 }
                                 placeholder={"Min reward"}
                             />
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
                 <FormField
                     control={control}
                     name={"rewards.max"}
-                    disabled={rewardsInputDisabled}
+                    disabled={rewardsInputDisabled || formState.disabled}
+                    rules={{
+                        required: false,
+                        min: 0,
+                        validate: (value) => {
+                            if (!value) return;
+                            if (
+                                currentRewards?.min !== undefined &&
+                                value < currentRewards.min
+                            ) {
+                                return "Max reward should be greater than min reward";
+                            }
+                        },
+                    }}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>To</FormLabel>
@@ -76,6 +100,7 @@ export function RewardFiltering() {
                                 }
                                 placeholder={"Max reward"}
                             />
+                            <FormMessage />
                         </FormItem>
                     )}
                 />

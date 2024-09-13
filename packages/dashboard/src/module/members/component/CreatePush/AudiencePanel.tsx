@@ -6,6 +6,7 @@ import {
 } from "@/context/members/action/getProductMembers";
 import { Panel } from "@/module/common/component/Panel";
 import { selectedMembersAtom } from "@/module/members/atoms/selectedMembers";
+import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/index";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
@@ -40,11 +41,11 @@ export function AudiencePanel() {
  */
 function PreSelectedMembers({ members }: { members: Address[] }) {
     const setSelectedMembers = useSetAtom(selectedMembersAtom);
-    const form = useFormContext();
+    const { setValue } = useFormContext<FormCreatePushNotification>();
 
     useEffect(() => {
-        form.setValue("targets", members);
-    }, [members, form.setValue]);
+        setValue("target.wallets", members);
+    }, [members, setValue]);
 
     return (
         <>
@@ -54,7 +55,10 @@ function PreSelectedMembers({ members }: { members: Address[] }) {
             </p>
 
             <Button
-                onClick={() => setSelectedMembers(undefined)}
+                onClick={() => {
+                    setSelectedMembers(undefined);
+                    setValue("target", undefined);
+                }}
                 variant={"danger"}
             >
                 Clear selected members
@@ -64,6 +68,8 @@ function PreSelectedMembers({ members }: { members: Address[] }) {
 }
 
 function SelectAudience() {
+    const { setValue } = useFormContext<FormCreatePushNotification>();
+
     const {
         mutate: computeAudienceSize,
         data: targetAudience,
@@ -79,7 +85,10 @@ function SelectAudience() {
     return (
         <>
             <MembersFiltering
-                onFilterSet={(filter) => computeAudienceSize(filter)}
+                onFilterSet={(filter) => {
+                    computeAudienceSize(filter);
+                    setValue("target.filter", filter);
+                }}
             />
             <p>
                 You will reach{" "}

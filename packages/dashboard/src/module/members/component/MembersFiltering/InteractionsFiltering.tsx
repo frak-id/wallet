@@ -1,4 +1,9 @@
-import { FormField, FormItem, FormLabel } from "@/module/forms/Form";
+import {
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering/index";
 import { Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";
@@ -6,7 +11,7 @@ import { Input } from "@module/component/forms/Input";
 import { useFormContext, useWatch } from "react-hook-form";
 
 export function InteractionsFiltering() {
-    const { control } = useFormContext<FormMembersFiltering>();
+    const { control, formState } = useFormContext<FormMembersFiltering>();
     const currentInteractions = useWatch({ control, name: "interactions" });
     const inputDisabled = currentInteractions === undefined;
 
@@ -20,6 +25,7 @@ export function InteractionsFiltering() {
                         <Checkbox
                             checked={!inputDisabled}
                             id={"interaction-filters"}
+                            disabled={formState.disabled}
                             onCheckedChange={(checked) => {
                                 field.onChange(
                                     checked
@@ -42,7 +48,11 @@ export function InteractionsFiltering() {
                 <FormField
                     control={control}
                     name={"interactions.min"}
-                    disabled={inputDisabled}
+                    disabled={inputDisabled || formState.disabled}
+                    rules={{
+                        required: false,
+                        min: 0,
+                    }}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>From</FormLabel>
@@ -52,13 +62,27 @@ export function InteractionsFiltering() {
                                 value={inputDisabled ? "" : field.value ?? ""}
                                 placeholder={"Min interactions"}
                             />
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
                 <FormField
                     control={control}
                     name={"interactions.max"}
-                    disabled={inputDisabled}
+                    disabled={inputDisabled || formState.disabled}
+                    rules={{
+                        required: false,
+                        min: 0,
+                        validate: (value) => {
+                            if (!value) return;
+                            if (
+                                currentInteractions?.min !== undefined &&
+                                value < currentInteractions.min
+                            ) {
+                                return "Max interactions should be greater than minimum";
+                            }
+                        },
+                    }}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>To</FormLabel>
@@ -68,6 +92,7 @@ export function InteractionsFiltering() {
                                 value={inputDisabled ? "" : field.value ?? ""}
                                 placeholder={"Max interactions"}
                             />
+                            <FormMessage />
                         </FormItem>
                     )}
                 />

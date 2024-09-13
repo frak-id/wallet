@@ -6,6 +6,7 @@ import { Form, FormLayout } from "@/module/forms/Form";
 import { AudiencePanel } from "@/module/members/component/CreatePush/AudiencePanel";
 import { PushPayloadPanel } from "@/module/members/component/CreatePush/PushPayloadPanel";
 import { PushTitlePanel } from "@/module/members/component/CreatePush/PushTitlePanel";
+import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import type { NotificationPayload } from "@frak-labs/shared/types/NotificationPayload";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
@@ -14,7 +15,13 @@ import type { Address } from "viem";
 export type FormCreatePushNotification = {
     pushCampaignTitle: string;
     payload: NotificationPayload;
-    targets: Address[];
+    target?:
+        | {
+              wallets: Address[];
+          }
+        | {
+              filter: FormMembersFiltering;
+          };
 };
 
 /**
