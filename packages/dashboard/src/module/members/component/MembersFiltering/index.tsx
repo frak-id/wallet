@@ -52,8 +52,6 @@ export function MembersFiltering({
 
     const onSubmit = useCallback(
         async (data: FormMembersFiltering) => {
-            console.log("Form filter set", { data });
-
             // Fix rewards min and max if needed
             if (data.rewards) {
                 const { min, max } = data.rewards;
@@ -78,7 +76,6 @@ export function MembersFiltering({
                 data.productIds = undefined;
             }
 
-            // todo: Some verification here?
             onFilterSet(data);
         },
         [onFilterSet]

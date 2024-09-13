@@ -22,12 +22,12 @@ import { useFormContext } from "react-hook-form";
  * @constructor
  */
 export function PushPayloadPanel() {
-    const form = useFormContext<FormCreatePushNotification>();
+    const { control } = useFormContext<FormCreatePushNotification>();
     return (
         <Panel title={"Message"}>
             {/*Title field*/}
             <FormField
-                control={form.control}
+                control={control}
                 name={"payload.title"}
                 rules={{
                     required: "Push title required",
@@ -58,7 +58,7 @@ export function PushPayloadPanel() {
             />
             {/*Message field*/}
             <FormField
-                control={form.control}
+                control={control}
                 name={"payload.body"}
                 rules={{
                     required: "Push message required",
@@ -92,7 +92,7 @@ export function PushPayloadPanel() {
             {/*URL Field*/}
 
             <FormField
-                control={form.control}
+                control={control}
                 name={"payload.data.url"}
                 rules={{
                     required: false,

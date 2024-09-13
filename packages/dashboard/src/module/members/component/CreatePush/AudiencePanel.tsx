@@ -5,6 +5,7 @@ import {
     getProductsMembersCount,
 } from "@/context/members/action/getProductMembers";
 import { Panel } from "@/module/common/component/Panel";
+import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
 import { selectedMembersAtom } from "@/module/members/atoms/selectedMembers";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/index";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
@@ -22,14 +23,27 @@ import type { Address } from "viem";
  * @constructor
  */
 export function AudiencePanel() {
+    const { control } = useFormContext<FormCreatePushNotification>();
     const selectedMembers = useAtomValue(selectedMembersAtom);
 
     return (
         <Panel title={"Audience"}>
-            {selectedMembers?.length && (
-                <PreSelectedMembers members={selectedMembers} />
-            )}
-            {!selectedMembers?.length && <SelectAudience />}
+            <FormField
+                control={control}
+                name={"target"}
+                rules={{
+                    required: "Push audience is required",
+                }}
+                render={() => (
+                    <FormItem>
+                        {selectedMembers?.length && (
+                            <PreSelectedMembers members={selectedMembers} />
+                        )}
+                        {!selectedMembers?.length && <SelectAudience />}
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
         </Panel>
     );
 }
