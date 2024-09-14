@@ -9,10 +9,11 @@
     "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
-    "elysia": "latest",
     "@aws-sdk/client-bedrock-runtime": "^3.650.0",
     "@aws-sdk/client-secrets-manager": "^3.650.0",
+    "@elysiajs/cron": "^1.1.1",
     "@frak-labs/shared": "workspace:*",
+    "elysia": "latest",
     "mongodb": "^6.9.0",
     "radash": "^12.1.0",
     "solady": "^0.0.238",
