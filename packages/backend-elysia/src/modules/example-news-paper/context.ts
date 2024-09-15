@@ -1,4 +1,4 @@
-import { getMongoDb } from "../../../common/mongo";
+import { getMongoDb } from "../../common/mongo";
 import { NewsRepository } from "./repository/NewsRepository";
 
 /**

@@ -55,7 +55,7 @@ const frakWalletSdkConfig = {
             : "https://news-paper.xyz/css/nexus-modals.css",
     },
     // Specify domain for valid test on localhost
-    domain: "news-paper.xyz",
+    domain: "example-news-paper.xyz",
 };
 
 export function RootProvider({ children }: PropsWithChildren) {

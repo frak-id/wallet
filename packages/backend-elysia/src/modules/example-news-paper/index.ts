@@ -6,7 +6,7 @@ import { fetchLatestNew, getNewsById, getNewsForHome } from "./controller";
 import { FullNewsDto, LightNewsDto } from "./models";
 
 /**
- * Elysia group for the news-paper website
+ * Elysia group for the example-news-paper website
  * @param app
  */
 export const exampleNewsPaper = async (app: Elysia) => {
@@ -14,7 +14,7 @@ export const exampleNewsPaper = async (app: Elysia) => {
     const context = await getNewsPaperContext();
 
     // Then build our api
-    return app.group("/example/news-paper", (app) =>
+    return app.group("/exampleNewsPaper", (app) =>
         app
             .decorate(context)
             // Cron to automatically fetch the latest news every 6 hours
@@ -54,21 +54,18 @@ export const exampleNewsPaper = async (app: Elysia) => {
                     store: {
                         cron: { fetchNews },
                     },
-                }) => {
-                    fetchNews.trigger();
-                    return {
-                        fetchNewsCron: {
-                            run: {
-                                prevRun: fetchNews.previousRun(),
-                                currRun: fetchNews.currentRun(),
-                                planning: fetchNews.nextRuns(10),
-                            },
-                            isBusy: fetchNews.isBusy(),
-                            isRunning: fetchNews.isRunning(),
-                            isStopped: fetchNews.isStopped(),
+                }) => ({
+                    fetchNewsCron: {
+                        run: {
+                            prevRun: fetchNews.previousRun(),
+                            currRun: fetchNews.currentRun(),
+                            planning: fetchNews.nextRuns(10),
                         },
-                    };
-                }
+                        isBusy: fetchNews.isBusy(),
+                        isRunning: fetchNews.isRunning(),
+                        isStopped: fetchNews.isStopped(),
+                    },
+                })
             )
     );
 };

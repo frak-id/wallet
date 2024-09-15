@@ -1,12 +1,12 @@
+import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { exampleNewsPaper } from "./modules";
 
 const app = new Elysia()
-    .get("/", () => {
-        return { status: "ok" };
-    })
+    .use(cors())
+    .get("/", () => ({ status: "ok" }))
     .use(exampleNewsPaper)
-    .listen(3000);
+    .listen(Number.parseInt(process.env.PORT ?? "3030"));
 
 console.log(
     `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`

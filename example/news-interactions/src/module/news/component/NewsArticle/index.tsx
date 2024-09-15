@@ -1,4 +1,3 @@
-import { getNewsById } from "@/context/articles/actions/getNews";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { useIntersectionObserver } from "@/module/common/hooks/useIntersectionObserver";
 import { Hero } from "@/module/news/component/Hero";
@@ -11,6 +10,7 @@ import {
     useReferralInteraction,
 } from "@frak-labs/nexus-sdk/react";
 import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
+import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useMemo } from "react";
@@ -116,7 +116,12 @@ export function NewsArticle({ articleId }: { articleId: string }) {
     // Fetch the article
     const { data: article } = useQuery({
         queryKey: ["news", "full", articleId],
-        queryFn: async () => getNewsById(articleId),
+        queryFn: async () => {
+            const result = await backendApi.exampleNewsPaper
+                .news({ id: articleId })
+                .get();
+            return result.data;
+        },
         enabled: !!articleId,
     });
 

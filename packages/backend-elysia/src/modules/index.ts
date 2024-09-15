@@ -1,1 +1,1 @@
-export { exampleNewsPaper } from "./example/news-paper/";
+export { exampleNewsPaper } from "./example-news-paper";

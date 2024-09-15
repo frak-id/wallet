@@ -71,24 +71,13 @@ export async function getNewsById({
 
 // Simple mapper for news document to light one
 function newsDocumentToLightNews(doc: WithId<NewsDocument>): LightNews {
-    if (!doc) {
-        return {
-            id: "t",
-            title: "t",
-            summary: "t",
-            image: "t",
-            sourceCountry: "t",
-            author: "t",
-            publishDate: new Date(),
-        };
-    }
     return {
         id: doc._id,
         title: doc.title,
         summary: doc.summary,
         image: doc.image,
-        sourceCountry: doc.sourceCountry,
-        author: doc.author,
+        sourceCountry: doc.sourceCountry ?? "",
+        author: doc.author ?? "",
         publishDate: doc.publishDate,
     };
 }
