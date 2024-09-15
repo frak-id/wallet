@@ -1,5 +1,5 @@
 {
-  "name": "@frak-labs/backend",
+  "name": "@frak-labs/backend-elysia",
   "version": "0.0.1",
   "scripts": {
     "lint": "biome lint .",

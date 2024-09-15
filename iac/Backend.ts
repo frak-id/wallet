@@ -3,13 +3,7 @@ import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
 import type { StackContext } from "sst/constructs";
-import {
-    Config,
-    Cron,
-    Queue,
-    Function as SstFunction,
-    use,
-} from "sst/constructs";
+import { Config, Queue, Function as SstFunction, use } from "sst/constructs";
 import { ConfigStack } from "./Config";
 
 /**
@@ -20,8 +14,6 @@ import { ConfigStack } from "./Config";
 export function BackendStack(ctx: StackContext) {
     const { interactionQueue, readPubKeyFunction } = interactionsResources(ctx);
     const { reloadCampaignQueue } = campaignResources(ctx);
-
-    newsResources(ctx);
 
     return { interactionQueue, reloadCampaignQueue, readPubKeyFunction };
 }
@@ -154,34 +146,4 @@ function campaignResources({ stack }: StackContext) {
         ReloadCampaignQueueId: reloadCampaignQueue.id,
     });
     return { reloadCampaignQueue };
-}
-
-/**
- * Define all of our news demo resources
- * @param stack
- */
-function newsResources({ stack }: StackContext) {
-    const { mongoExampleUri, worldNewsApiKey } = use(ConfigStack);
-
-    const fetchingCron = new Cron(stack, "NewsFetchCron", {
-        schedule: "rate(12 hours)",
-        job: {
-            function: {
-                handler: "packages/backend/src/news/fetch.handler",
-                timeout: "15 minutes",
-                bind: [mongoExampleUri, worldNewsApiKey],
-                // Allow llm calls
-                permissions: [
-                    new PolicyStatement({
-                        actions: ["bedrock:InvokeModel"],
-                        resources: ["*"],
-                    }),
-                ],
-            },
-        },
-    });
-
-    stack.addOutputs({
-        FetchingCronId: fetchingCron.id,
-    });
 }
