@@ -12,7 +12,7 @@ export function ConfigStack({ stack }: StackContext) {
         stack,
         "SESSION_ENCRYPTION_KEY"
     );
-    const mongoExampleUri = new Config.Secret(stack, "MONGODB_FRAK_POC_URI");
+    const mongoExampleUri = new Config.Secret(stack, "MONGODB_EXAMPLE_URI");
     const mongoNexusUri = new Config.Secret(stack, "MONGODB_NEXUS_URI");
     const mongoBusinessUri = new Config.Secret(stack, "MONGODB_BUSINESS_URI");
     const alchemyApiKey = new Config.Secret(stack, "ALCHEMY_API_KEY");

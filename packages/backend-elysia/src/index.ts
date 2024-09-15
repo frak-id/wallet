@@ -1,11 +1,11 @@
 import { Elysia } from "elysia";
-import { exampleNewsPaper } from "./example/news-paper";
+import { exampleNewsPaper } from "./modules";
 
 const app = new Elysia()
-    .use(exampleNewsPaper)
     .get("/", () => {
-        return "Hello Elysia";
+        return { status: "ok" };
     })
+    .use(exampleNewsPaper)
     .listen(3000);
 
 console.log(
