@@ -8,7 +8,7 @@ import {
     getExecutionAbi,
 } from "@/context/recover/utils/abi";
 import type { CurrentRecovery } from "@/types/Recovery";
-import { multiWebAuthNValidatorV2Abi } from "@frak-labs/constant";
+import { multiWebAuthNValidatorV2Abi } from "@frak-labs/app-essentials";
 import { tryit } from "radash";
 import {
     type Address,

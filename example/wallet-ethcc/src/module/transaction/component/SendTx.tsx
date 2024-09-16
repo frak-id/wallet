@@ -1,7 +1,10 @@
 "use client";
 
 import { Panel } from "@/module/common/component/Panel";
-import { addresses, productInteractionManagerAbi } from "@frak-labs/constant";
+import {
+    addresses,
+    productInteractionManagerAbi,
+} from "@frak-labs/app-essentials";
 import type {
     ModalRpcStepsResultType,
     SendTransactionModalStepType,

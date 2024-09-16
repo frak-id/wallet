@@ -18,7 +18,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import { referralCampaignAbi } from "@frak-labs/constant";
+import { referralCampaignAbi } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";

@@ -1,6 +1,6 @@
 "use server";
 import type { Token } from "@/types/Token";
-import { referralCampaignAbi } from "@frak-labs/constant";
+import { referralCampaignAbi } from "@frak-labs/app-essentials";
 import ky from "ky";
 import { type Address, encodeFunctionData, formatEther } from "viem";
 

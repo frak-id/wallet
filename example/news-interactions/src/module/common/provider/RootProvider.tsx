@@ -1,6 +1,6 @@
 "use client";
 
-import { isRunningLocally } from "@frak-labs/constant";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import {
     NexusConfigProvider,
     NexusIFrameClientProvider,

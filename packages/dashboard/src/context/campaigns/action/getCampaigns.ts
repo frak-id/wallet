@@ -9,7 +9,7 @@ import {
     addresses,
     interactionCampaignAbi,
     productAdministratorRegistryAbi,
-} from "@frak-labs/constant";
+} from "@frak-labs/app-essentials";
 import ky from "ky";
 import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";

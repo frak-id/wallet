@@ -1,5 +1,5 @@
-import { isRunningInProd } from "@frak-labs/constant";
-import { getViemClientFromChain } from "@frak-labs/constant/blockchain";
+import { isRunningInProd } from "@frak-labs/app-essentials";
+import { getViemClientFromChain } from "@frak-labs/app-essentials/blockchain";
 import { arbitrum, arbitrumSepolia } from "viem/chains";
 
 /**

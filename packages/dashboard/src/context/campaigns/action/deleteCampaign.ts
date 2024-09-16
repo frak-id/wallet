@@ -7,7 +7,7 @@ import {
     addresses,
     productInteractionManagerAbi,
     referralCampaignAbi,
-} from "@frak-labs/constant";
+} from "@frak-labs/app-essentials";
 import { ObjectId } from "mongodb";
 import { encodeFunctionData, isAddressEqual } from "viem";
 

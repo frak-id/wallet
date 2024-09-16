@@ -6,7 +6,7 @@ import {
     setExecutionAbi,
 } from "@/context/recover/utils/abi";
 import type { GeneratedRecoveryData } from "@/types/Recovery";
-import { isRunningInProd } from "@frak-labs/constant";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
 
 /**

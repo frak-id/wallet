@@ -15,7 +15,7 @@
     "@aws-sdk/client-bedrock-runtime": "^3.650.0",
     "@aws-sdk/client-secrets-manager": "^3.650.0",
     "@frak-labs/shared": "workspace:*",
-    "@frak-labs/constant": "workspace:*",
+    "@frak-labs/app-essentials": "workspace:*",
     "aws-lambda": "^1.0.7",
     "mongodb": "^6.9.0",
     "radash": "^12.1.0",

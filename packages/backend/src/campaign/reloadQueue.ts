@@ -1,4 +1,4 @@
-import { addresses } from "@frak-labs/constant";
+import { addresses } from "@frak-labs/app-essentials";
 import type { SQSEvent } from "aws-lambda";
 import type { SQSBatchResponse } from "aws-lambda/trigger/sqs";
 import { parallel, sift, sleep } from "radash";

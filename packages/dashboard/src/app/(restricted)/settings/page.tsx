@@ -2,7 +2,10 @@
 
 import { deleteSession } from "@/context/auth/actions/session";
 import { sendPushNotification } from "@/context/crm/actions/sendPush";
-import { addresses, productInteractionManagerAbi } from "@frak-labs/constant";
+import {
+    addresses,
+    productInteractionManagerAbi,
+} from "@frak-labs/app-essentials";
 import type { SendTransactionReturnType } from "@frak-labs/nexus-sdk/core";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";

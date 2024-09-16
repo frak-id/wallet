@@ -3,7 +3,7 @@ import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitF
 import {
     addresses,
     productAdministratorRegistryAbi,
-} from "@frak-labs/constant";
+} from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, encodeFunctionData } from "viem";

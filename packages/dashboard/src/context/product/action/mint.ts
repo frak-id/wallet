@@ -2,7 +2,7 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import { isDnsTxtRecordSet } from "@/context/product/action/verifyDomain";
-import { addresses, productRegistryAbi } from "@frak-labs/constant";
+import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
 import { type Hex, encodeFunctionData, keccak256, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {

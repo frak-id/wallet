@@ -1,5 +1,5 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { addresses, productRegistryAbi } from "@frak-labs/constant";
+import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 import { type Hex, isAddressEqual } from "viem";

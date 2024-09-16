@@ -1,8 +1,8 @@
-import { isRunningInProd } from "@frak-labs/constant";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import {
     getAlchemyTransportNoBatch,
     getViemClientFromChain,
-} from "@frak-labs/constant/blockchain";
+} from "@frak-labs/app-essentials/blockchain";
 import { createClient } from "viem";
 import { arbitrum, arbitrumSepolia } from "viem/chains";
 

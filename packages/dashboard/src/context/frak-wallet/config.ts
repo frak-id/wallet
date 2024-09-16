@@ -1,4 +1,4 @@
-import { isRunningLocally } from "@frak-labs/constant";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import type { NexusWalletSdkConfig } from "@frak-labs/nexus-sdk/core";
 
 export const frakWalletSdkConfig: Omit<NexusWalletSdkConfig, "domain"> = {

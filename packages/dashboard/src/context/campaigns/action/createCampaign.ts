@@ -9,7 +9,10 @@ import {
     referralConfigStruct,
 } from "@/context/campaigns/utils/constants";
 import type { Campaign } from "@/types/Campaign";
-import { addresses, productInteractionManagerAbi } from "@frak-labs/constant";
+import {
+    addresses,
+    productInteractionManagerAbi,
+} from "@frak-labs/app-essentials";
 import { ObjectId } from "mongodb";
 import { first } from "radash";
 import {

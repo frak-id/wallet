@@ -1,5 +1,5 @@
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
-import { referralCampaignAbi } from "@frak-labs/constant";
+import { referralCampaignAbi } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, encodeFunctionData } from "viem";

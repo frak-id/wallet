@@ -4,7 +4,7 @@ import {
     addresses,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
-} from "@frak-labs/constant";
+} from "@frak-labs/app-essentials";
 import { readContract } from "viem/actions";
 
 /**

@@ -2,7 +2,7 @@ import {
     addresses,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
-} from "@frak-labs/constant";
+} from "@frak-labs/app-essentials";
 import type { SQSRecord } from "aws-lambda";
 import { memo } from "radash";
 import {

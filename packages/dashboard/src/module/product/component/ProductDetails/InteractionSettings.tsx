@@ -12,7 +12,7 @@ import {
     productAdministratorRegistryAbi,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
-} from "@frak-labs/constant";
+} from "@frak-labs/app-essentials";
 import {
     useSendTransactionAction,
     useWalletStatus,

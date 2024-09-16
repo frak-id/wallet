@@ -1,7 +1,10 @@
 import { interactionValidatorRoles } from "@/context/blockchain/roles";
 import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
-import { addresses, productInteractionManagerAbi } from "@frak-labs/constant";
+import {
+    addresses,
+    productInteractionManagerAbi,
+} from "@frak-labs/app-essentials";
 import type { SendTransactionModalStepType } from "@frak-labs/nexus-sdk/core";
 import {
     useSendTransactionAction,

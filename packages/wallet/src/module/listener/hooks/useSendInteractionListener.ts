@@ -2,7 +2,7 @@ import { pushInteraction } from "@/context/interaction/action/pushInteraction";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
-import { isRunningLocally } from "@frak-labs/constant";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,

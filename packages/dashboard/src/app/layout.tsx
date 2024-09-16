@@ -4,7 +4,7 @@ import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "../polyfill/bigint-serialization";
-import { isRunningInProd } from "@frak-labs/constant";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 
 export const metadata: Metadata = {
     title: "Nexus Business Hub | Manage Your Web3 Products",

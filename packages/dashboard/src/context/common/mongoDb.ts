@@ -1,4 +1,4 @@
-import { isRunningInProd } from "@frak-labs/constant";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { MongoClient } from "mongodb";
 import { memo } from "radash";
 
