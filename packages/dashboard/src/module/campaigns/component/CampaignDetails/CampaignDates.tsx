@@ -1,6 +1,7 @@
 import { getOnChainCampaignsDetails } from "@/context/campaigns/action/getDetails";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import styles from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule.module.css";
+import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
 import {
     Popover,
@@ -24,7 +25,6 @@ import { Column, Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format, isBefore, startOfDay } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type Address, encodeFunctionData } from "viem";
@@ -164,15 +164,7 @@ export function CampaignDates({
                                         <Popover>
                                             <PopoverTrigger {...rest} asChild>
                                                 <FormControl>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={
-                                                            styles.datePicker__trigger
-                                                        }
-                                                    >
-                                                        <CalendarIcon
-                                                            size={20}
-                                                        />
+                                                    <ButtonCalendar>
                                                         {field.value ? (
                                                             format(
                                                                 field.value,
@@ -183,7 +175,7 @@ export function CampaignDates({
                                                                 Pick a date
                                                             </span>
                                                         )}
-                                                    </Button>
+                                                    </ButtonCalendar>
                                                 </FormControl>
                                             </PopoverTrigger>
                                             <PopoverContent align="start">
@@ -232,15 +224,7 @@ export function CampaignDates({
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={
-                                                            styles.datePicker__trigger
-                                                        }
-                                                    >
-                                                        <CalendarIcon
-                                                            size={20}
-                                                        />
+                                                    <ButtonCalendar>
                                                         {field.value ? (
                                                             format(
                                                                 field.value,
@@ -251,7 +235,7 @@ export function CampaignDates({
                                                                 Pick a date
                                                             </span>
                                                         )}
-                                                    </Button>
+                                                    </ButtonCalendar>
                                                 </FormControl>
                                             </PopoverTrigger>
                                             <PopoverContent align="start">

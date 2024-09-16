@@ -71,36 +71,26 @@ export function MembersFiltering({
 
     const onSubmit = useCallback(
         async (data: FormMembersFiltering) => {
+            // Fix rewards min and max if needed
+            data.rewards = fixRewards(data.rewards);
+
+            // Fix interactions if no filter provided
+            data.interactions = fixInteractions(data.interactions);
+
+            // Fix productIds if no filter provided
+            data.productIds = fixProductIds(data.productIds);
+
+            // Fix firstInteractionTimestamp if no filter provided
+            data.firstInteractionTimestamp = fixFirstInteractionTimestamp(
+                data.firstInteractionTimestamp
+            );
+
             const allValues = filterOutUndefined(form.getValues());
             setFiltersDirtyCount(allValues.length);
 
-            // Fix rewards min and max if needed
-            if (data.rewards) {
-                const { min, max } = data.rewards;
-                if (min) {
-                    data.rewards.min = toHex(parseEther(min));
-                }
-                if (max) {
-                    data.rewards.max = toHex(parseEther(max));
-                }
-                if (!(min || max)) {
-                    data.rewards = undefined;
-                }
-            }
-
-            // Fix interactions if no filter provided
-            if (!(data.interactions?.min || data.interactions?.max)) {
-                data.interactions = undefined;
-            }
-
-            // Fix productIds if no filter provided
-            if (!data.productIds?.length) {
-                data.productIds = undefined;
-            }
-
             onFilterSet(data);
         },
-        [onFilterSet, form.getValues, setFiltersDirtyCount]
+        [onFilterSet, form, setFiltersDirtyCount]
     );
 
     return (
@@ -134,6 +124,62 @@ export function MembersFiltering({
     );
 }
 
+/**
+ * Fix rewards min and max values
+ * @param rewards
+ */
+const fixRewards = (rewards: FormMembersFiltering["rewards"]) => {
+    if (rewards) {
+        const { min, max } = rewards;
+        if (min) rewards.min = toHex(parseEther(min));
+        if (max) rewards.max = toHex(parseEther(max));
+        if (!(min || max)) return undefined;
+        return rewards;
+    }
+    return rewards;
+};
+
+/**
+ * Fix interactions min and max values
+ * @param interactions
+ */
+const fixInteractions = (
+    interactions: FormMembersFiltering["interactions"]
+) => {
+    if (!(interactions?.min || interactions?.max)) {
+        return undefined;
+    }
+    return interactions;
+};
+
+/**
+ * Fix productIds values
+ * @param productIds
+ */
+const fixProductIds = (productIds: FormMembersFiltering["productIds"]) => {
+    if (!productIds?.length) {
+        return undefined;
+    }
+    return productIds;
+};
+
+/**
+ * Fix firstInteractionTimestamp min and max values
+ * @param firstInteractionTimestamp
+ */
+const fixFirstInteractionTimestamp = (
+    firstInteractionTimestamp: FormMembersFiltering["firstInteractionTimestamp"]
+) => {
+    if (!(firstInteractionTimestamp?.min || firstInteractionTimestamp?.max)) {
+        return undefined;
+    }
+    return firstInteractionTimestamp;
+};
+
+/**
+ * Filter out undefined values from the object
+ * @param obj
+ */
 function filterOutUndefined(obj: FormMembersFiltering): string[] {
     const result: string[] = [];
 

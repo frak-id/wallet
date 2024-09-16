@@ -1,5 +1,6 @@
 "use client";
 
+import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
 import { Panel } from "@/module/common/component/Panel";
 import {
@@ -16,10 +17,8 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Button } from "@module/component/Button";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { format, isBefore, startOfDay } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import type {
     Control,
@@ -79,19 +78,13 @@ export function FormScheduleFields<T extends FieldValues>(
                             <Popover>
                                 <PopoverTrigger {...rest} asChild>
                                     <FormControl>
-                                        <Button
-                                            variant={"outline"}
-                                            className={
-                                                styles.datePicker__trigger
-                                            }
-                                        >
-                                            <CalendarIcon size={20} />
+                                        <ButtonCalendar>
                                             {field.value ? (
                                                 format(field.value, "PPP")
                                             ) : (
                                                 <span>Pick a date</span>
                                             )}
-                                        </Button>
+                                        </ButtonCalendar>
                                     </FormControl>
                                 </PopoverTrigger>
                                 <PopoverContent align="start">
@@ -166,19 +159,13 @@ export function FormScheduleFields<T extends FieldValues>(
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <FormControl>
-                                            <Button
-                                                variant={"outline"}
-                                                className={
-                                                    styles.datePicker__trigger
-                                                }
-                                            >
-                                                <CalendarIcon size={20} />
+                                            <ButtonCalendar>
                                                 {field.value ? (
                                                     format(field.value, "PPP")
                                                 ) : (
                                                     <span>Pick a date</span>
                                                 )}
-                                            </Button>
+                                            </ButtonCalendar>
                                         </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent align="start">
