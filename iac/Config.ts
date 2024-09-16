@@ -1,6 +1,6 @@
 import { Config } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
-import { getWalletUrl } from "./utils";
+import { getBackendUrl, getWalletUrl } from "./utils";
 
 /**
  * Define the app wide configs
@@ -26,11 +26,15 @@ export function ConfigStack({ stack }: StackContext) {
     const adminPassword = new Config.Secret(stack, "ADMIN_PASSWORD");
     const worldNewsApiKey = new Config.Secret(stack, "WORLD_NEWS_API_KEY");
 
+    const vapidPublicKey = new Config.Secret(stack, "VAPID_PUBLIC_KEY");
+    const vapidPrivateKey = new Config.Secret(stack, "VAPID_PRIVATE_KEY");
+
     const nexusUrl = new Config.Parameter(stack, "NEXUS_WALLET_URL", {
         value: getWalletUrl(stack),
     });
-    const vapidPublicKey = new Config.Secret(stack, "VAPID_PUBLIC_KEY");
-    const vapidPrivateKey = new Config.Secret(stack, "VAPID_PRIVATE_KEY");
+    const backendUrl = new Config.Parameter(stack, "BACKEND_URL", {
+        value: getBackendUrl(stack),
+    });
 
     return {
         sessionEncryptionKey,
@@ -47,5 +51,6 @@ export function ConfigStack({ stack }: StackContext) {
         worldNewsApiKey,
         vapidPublicKey,
         vapidPrivateKey,
+        backendUrl,
     };
 }

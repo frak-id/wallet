@@ -1,5 +1,4 @@
 import type { SSTConfig } from "sst";
-import { use } from "sst/constructs";
 import { BackendStack } from "./iac/Backend";
 import { ConfigStack } from "./iac/Config";
 import { DashboardWebApp } from "./iac/DashboardWebApp";
@@ -47,9 +46,6 @@ export default {
         app.stack(ConfigStack);
 
         app.stack(BackendStack);
-
-        // Add the backend url to the default binding
-        app.addDefaultFunctionBinding([use(BackendStack).backendUrlConfig]);
 
         app.stack(WalletAppStack);
         app.stack(ExampleAppStack);

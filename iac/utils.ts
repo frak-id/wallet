@@ -35,7 +35,21 @@ export function getWalletUrl(stack: Stack): string {
         return "https://nexus.frak.id";
     }
     if (isDevStack(stack)) {
-        return `https://nexus-${stack.stage}.frak.id`;
+        return "https://nexus-dev.frak.id";
     }
     return "https://localhost:3000";
+}
+
+/**
+ * Get the current backend url
+ * @param stack
+ */
+export function getBackendUrl(stack: Stack): string {
+    if (isProdStack(stack)) {
+        return "https://backend.frak.id";
+    }
+    if (isDevStack(stack)) {
+        return "https://backend-dev.frak.id";
+    }
+    return "https://localhost:3030";
 }

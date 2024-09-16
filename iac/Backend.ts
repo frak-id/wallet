@@ -28,13 +28,12 @@ export function BackendStack(ctx: StackContext) {
     const { reloadCampaignQueue } = campaignResources(ctx);
 
     // Add the elysia backend
-    const { backendUrlConfig } = elysiaBackend(ctx);
+    elysiaBackend(ctx);
 
     return {
         interactionQueue,
         reloadCampaignQueue,
         readPubKeyFunction,
-        backendUrlConfig,
     };
 }
 
@@ -175,11 +174,8 @@ function campaignResources({ stack }: StackContext) {
 function elysiaBackend({ stack }: StackContext) {
     // Create a new ecs service that will host our elysia backend
     const services = buildEcsService({ stack });
-    const backendUrlConfig = new Config.Parameter(stack, "BACKEND_URL", {
-        value: services?.alb?.loadBalancerDnsName ?? "http://localhost:3030",
-    });
     if (!services) {
-        return { backendUrlConfig };
+        return;
     }
     const { vpc, cluster, alb } = services;
 
@@ -234,7 +230,7 @@ function elysiaBackend({ stack }: StackContext) {
         console.error(
             "No fargate service found for elysia service, skipping ALB setup"
         );
-        return { backendUrlConfig };
+        return;
     }
 
     // Create the target group for a potential alb usage
@@ -270,8 +266,4 @@ function elysiaBackend({ stack }: StackContext) {
         protocol: ApplicationProtocol.HTTP,
         defaultTargetGroups: [elysiaTargetGroup],
     });
-
-    return {
-        backendUrlConfig,
-    };
 }
