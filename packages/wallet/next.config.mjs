@@ -12,7 +12,6 @@ const wantedFromConfig = [
     // TODO: Shouldn't be here, but Next is crying all over the place when using SST.Config, to fix
     "MONGODB_NEXUS_URI",
     "SESSION_ENCRYPTION_KEY",
-    "AIRDROP_PRIVATE_KEY",
     "VAPID_PUBLIC_KEY",
     "VAPID_PRIVATE_KEY",
 ];
