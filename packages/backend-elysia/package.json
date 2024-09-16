@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs/backend-elysia",
-  "description": "Elysia Backend",
+  "description": "Elysia Backend for the nexus api",
   "version": "0.0.1",
   "scripts": {
     "lint": "biome lint .",
