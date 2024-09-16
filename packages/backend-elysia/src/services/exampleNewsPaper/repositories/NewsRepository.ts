@@ -1,13 +1,14 @@
-import type { NewsDocument } from "@/context/articles/dto/NewsDocument";
-import { getMongoDb } from "@/context/common/mongoDb";
-import type { Collection, ObjectId, WithId } from "mongodb";
-import { memo } from "radash";
+import type { Collection, Db, WithId } from "mongodb";
+import type { NewsDocument } from "../models/dto/NewsDocument";
 
 /**
  * Repository used to access the news repository
  */
-class NewsRepository {
-    constructor(private readonly collection: Collection<NewsDocument>) {}
+export class NewsRepository {
+    private readonly collection: Collection<NewsDocument>;
+    constructor(db: Db) {
+        this.collection = db.collection<NewsDocument>("news");
+    }
 
     /**
      * Get the latest news
@@ -54,18 +55,18 @@ class NewsRepository {
     }
 
     /**
-     * Get a news by it's id
+     * Get news by its id
      * @param id
      */
-    public async getNewsById(id: ObjectId) {
+    public async getNewsById(id: string) {
         return this.collection.findOne({ _id: id });
     }
-}
 
-export const getNewsRepository = memo(
-    async () => {
-        const db = await getMongoDb();
-        return new NewsRepository(db.collection<NewsDocument>("news"));
-    },
-    { key: () => "NewsRepository" }
-);
+    /**
+     * Insert many documents
+     * @param documents
+     */
+    public async insertMany(documents: NewsDocument[]) {
+        return this.collection.insertMany(documents);
+    }
+}

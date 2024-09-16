@@ -1,0 +1,31 @@
+{
+  "name": "@frak-labs/backend-elysia",
+  "version": "0.0.1",
+  "scripts": {
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "dev": "sst bind bun dev:watch",
+    "dev:docker": "sst bind \"env | grep -E 'SST_|AWS_' > .env.tmp && docker run --env-file .env.tmp --expose 3030 elysia-dev\"",
+    "build:docker": "docker build --tag \"elysia-dev\" .",
+    "dev:watch": "bun run --watch src/index.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.650.0",
+    "@aws-sdk/client-secrets-manager": "^3.650.0",
+    "@elysiajs/cors": "^1.1.1",
+    "@elysiajs/cron": "^1.1.1",
+    "elysia": "1.1.12",
+    "mongodb": "^6.9.0",
+    "radash": "^12.1.0",
+    "solady": "^0.0.238",
+    "viem": "^2.21.6",
+    "sst": "2.43.6"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "module": "src/index.ts",
+  "main": "./src/index.ts"
+}

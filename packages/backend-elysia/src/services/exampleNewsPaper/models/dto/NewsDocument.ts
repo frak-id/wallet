@@ -1,10 +1,14 @@
-import type { ObjectId } from "mongodb";
-
+/**
+ * Representing a news document in our mongo database
+ */
 export type NewsDocument = {
-    _id?: ObjectId;
+    _id?: string;
     title: string;
     text: string;
-    originalText: string;
+    origin: {
+        text: string;
+        summary?: string;
+    };
     summary: string;
     image: string;
     sourceCountry: string;

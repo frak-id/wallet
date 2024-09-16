@@ -16,7 +16,7 @@ export function ExampleAppStack({ stack }: StackContext) {
     }
 
     // The configs required to run the app
-    const { mongoExampleUri, nexusUrl } = use(ConfigStack);
+    const { nexusUrl, backendUrl } = use(ConfigStack);
 
     // Declare the next js site on news-paper.xyz
     // Use it for the ETH-CC demo
@@ -42,7 +42,7 @@ export function ExampleAppStack({ stack }: StackContext) {
     const newsInteractionDemo = new NextjsSite(stack, "newsInteractionDemo", {
         path: "example/news-interactions",
         // Bind to the configs
-        bind: [nexusUrl, mongoExampleUri],
+        bind: [nexusUrl, backendUrl],
         openNextVersion: openNextVersion,
         // Set the custom domain
         customDomain: {

@@ -15,7 +15,15 @@ export function isProdStack(stack: Stack): boolean {
  * @param stack
  */
 export function isDevStack(stack: Stack): boolean {
-    return ["dev" /*, "rodolphe"*/].includes(stack.stage);
+    return stack.stage === "dev";
+}
+
+/**
+ * Check if we are running a distant stack
+ * @param stack
+ */
+export function isDistantStack(stack: Stack): boolean {
+    return isProdStack(stack) || isDevStack(stack);
 }
 
 /**
@@ -27,7 +35,21 @@ export function getWalletUrl(stack: Stack): string {
         return "https://nexus.frak.id";
     }
     if (isDevStack(stack)) {
-        return `https://nexus-${stack.stage}.frak.id`;
+        return "https://nexus-dev.frak.id";
     }
     return "https://localhost:3000";
+}
+
+/**
+ * Get the current backend url
+ * @param stack
+ */
+export function getBackendUrl(stack: Stack): string {
+    if (isProdStack(stack)) {
+        return "https://backend.frak.id";
+    }
+    if (isDevStack(stack)) {
+        return "https://backend-dev.frak.id";
+    }
+    return "https://localhost:3030";
 }

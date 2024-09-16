@@ -1,7 +1,4 @@
-import { memo } from "radash";
-import { Config } from "sst/node/config";
-
-class WorldNewsApiRepository {
+export class WorldNewsApiRepository {
     constructor(private apiKey: string) {}
 
     /**
@@ -21,6 +18,10 @@ class WorldNewsApiRepository {
         url.searchParams.append("api-key", this.apiKey);
         url.searchParams.append("source-countries", "us,eu");
         url.searchParams.append("language", "en");
+        url.searchParams.append(
+            "categories",
+            "sports,business,technology,science,environment,health"
+        );
         url.searchParams.append("min-sentiment", "-0.2");
         url.searchParams.append("max-sentiment", "0.9");
         url.searchParams.append(
@@ -33,6 +34,8 @@ class WorldNewsApiRepository {
         );
         url.searchParams.append("sort", "publish-time");
         url.searchParams.append("sort-direction", "DESC");
+        url.searchParams.append("number", "20");
+        console.log(url.toString());
 
         // Query it
         const response = await fetch(url.toString());
@@ -48,11 +51,6 @@ class WorldNewsApiRepository {
     }
 }
 
-export const getWorldNewsApiRepository = memo(
-    () => new WorldNewsApiRepository(Config.WORLD_NEWS_API_KEY),
-    { key: () => "WorldNewsApiRepository" }
-);
-
 type NewsResponse = {
     offset: number;
     number: number;
@@ -61,7 +59,7 @@ type NewsResponse = {
         id: number;
         title: string;
         text: string;
-        summary: string;
+        summary?: string;
         url: string;
         image: string;
         video?: string;
