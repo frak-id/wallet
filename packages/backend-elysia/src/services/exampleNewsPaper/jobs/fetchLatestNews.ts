@@ -1,22 +1,55 @@
+import cron, { Patterns } from "@elysiajs/cron";
 import { cluster, all } from "radash";
 import { Config } from "sst/node/config";
-import type { NewsPaperContext } from "../context";
-import { LlmFormatterRepository } from "../repository/LlmFormatterRepository";
-import { WorldNewsApiRepository } from "../repository/WorldNewsApiRepository";
+import type { NewsPaperContextApp } from "../context";
+import { LlmFormatterRepository } from "../repositories/LlmFormatterRepository";
+import type { NewsRepository } from "../repositories/NewsRepository";
+import { WorldNewsApiRepository } from "../repositories/WorldNewsApiRepository";
 
 /**
- * Fetch the latest news
- * @param context
+ * Cron to fetch the latest news
+ *   - We are tricking a bit elysia here to access the singleton store from the cron
  */
-export async function fetchLatestNew({ newsDbRepository }: NewsPaperContext) {
-    console.log("Fetching latest news");
+export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
+    app
+        // Cron to automatically fetch the latest news every 6 hours
+        .use(
+            cron({
+                name: "fetchNews",
+                pattern: Patterns.everyHours(6),
+                run: async () => {
+                    // Get the repository we will use
+                    const newsDbRepository = app.decorator.newsDbRepository;
+                    const worldNewsApiRepository = new WorldNewsApiRepository(
+                        Config.WORLD_NEWS_API_KEY
+                    );
+                    const llmRepository = new LlmFormatterRepository();
 
-    // Build the repository we will use
-    const worldNewsApiRepository = new WorldNewsApiRepository(
-        Config.WORLD_NEWS_API_KEY
-    );
-    const llmRepository = new LlmFormatterRepository();
+                    // Perform the logic
+                    await fetchLatestNew({
+                        newsDbRepository,
+                        llmRepository,
+                        worldNewsApiRepository,
+                    });
+                },
+            })
+        );
 
+/**
+ * Core function of the job
+ * @param newsDbRepository
+ * @param llmRepository
+ * @param worldNewsApiRepository
+ */
+async function fetchLatestNew({
+    newsDbRepository,
+    llmRepository,
+    worldNewsApiRepository,
+}: {
+    newsDbRepository: NewsRepository;
+    llmRepository: LlmFormatterRepository;
+    worldNewsApiRepository: WorldNewsApiRepository;
+}) {
     // Fetch the latest news
     const latestNews = await worldNewsApiRepository.getYesterdayArticles();
     if (!latestNews?.length) {

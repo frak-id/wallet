@@ -16,6 +16,7 @@ export class WorldNewsApiRepository {
         // Build the url we will query
         const url = new URL("https://api.worldnewsapi.com/search-news");
         url.searchParams.append("api-key", this.apiKey);
+        url.searchParams.append("source-countries", "us,eu");
         url.searchParams.append("language", "en");
         url.searchParams.append(
             "categories",

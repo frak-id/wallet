@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import { Config, type SecretTypes } from "sst/node/config";
 
 /**
- * Get the mongo db client
+ * Get a mongo db client
  * @param urlKey
  * @param db
  */

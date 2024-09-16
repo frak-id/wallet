@@ -1,5 +1,5 @@
 import type { Collection, Db, WithId } from "mongodb";
-import type { NewsDocument } from "../dto/NewsDocument";
+import type { NewsDocument } from "../models/dto/NewsDocument";
 
 /**
  * Repository used to access the news repository

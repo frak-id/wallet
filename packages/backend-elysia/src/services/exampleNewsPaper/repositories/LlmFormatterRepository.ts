@@ -36,8 +36,7 @@ export class LlmFormatterRepository {
         summary?: string;
     }): Promise<string> {
         const basePrompt = `${newsReformatingPrompt}
-        title:${news.text}
-        content:${news.text}`;
+        ${news.text}`;
         const promptCommand = `<s>[INST] ${basePrompt} [/INST]`;
 
         const payload = {

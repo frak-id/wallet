@@ -1,3 +1,6 @@
+/**
+ * Representing a news document in our mongo database
+ */
 export type NewsDocument = {
     _id?: string;
     title: string;

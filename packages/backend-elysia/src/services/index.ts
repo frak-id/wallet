@@ -1,0 +1,1 @@
+export { exampleNewsPaper } from "./exampleNewsPaper";
