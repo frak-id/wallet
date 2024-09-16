@@ -1,8 +1,15 @@
 .columns {
     display: flex;
-    align-items: center;
     gap: 10px;
     width: 100%;
+}
+
+.columns--align-start {
+    align-items: flex-start;
+}
+
+.columns--align-center {
+    align-items: center;
 }
 
 .columns + .columns {
