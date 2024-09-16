@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - dev
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -41,6 +42,16 @@ jobs:
               - 'packages/**'
               - 'example/**'
 
+      - name: "🔧 Setup environment"
+        if: steps.changes.outputs.deployRequired == 'true'
+        shell: bash
+        run: |
+          if [[ "${{ inputs.ref }}" == "refs/heads/main" ]]; then
+            echo "STAGE=prod" >> $GITHUB_ENV
+          elif [[ "${{ inputs.ref }}" == "refs/heads/dev" ]]; then
+            echo "STAGE=dev" >> $GITHUB_ENV
+          fi
+
       - name: Set up QEMU
         if: steps.changes.outputs.deployRequired == 'true'
         uses: docker/setup-qemu-action@v3
@@ -73,5 +84,5 @@ jobs:
       - name: "🚀 SST Deploy"
         if: steps.changes.outputs.deployRequired == 'true'
         run: |
-          echo "Deploying with stage: dev"
-          bun sst deploy --stage dev
+          echo "Deploying with stage: $STAGE"
+          bun sst deploy --stage $STAGE
