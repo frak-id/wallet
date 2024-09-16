@@ -188,7 +188,9 @@ function filterOutUndefined(obj: FormMembersFiltering): string[] {
         const value = obj[key];
 
         // Check if min/max are defined, or if the value is an array and not empty
-        if (value && typeof value === "object") {
+        if (Array.isArray(value) && value.length > 0) {
+            result.push(key);
+        } else if (value && typeof value === "object") {
             // Check if min/max are defined and not undefined
             if (
                 ("min" in value && value.min !== undefined) ||
@@ -196,8 +198,6 @@ function filterOutUndefined(obj: FormMembersFiltering): string[] {
             ) {
                 result.push(key);
             }
-        } else if (Array.isArray(value) && value.length > 0) {
-            result.push(key);
         }
     }
 
