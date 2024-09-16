@@ -22,3 +22,16 @@
 .filters__popoverContent {
     padding: 16px;
 }
+
+.filters__count {
+    display: block;
+    width: 18px;
+    height: 18px;
+    padding: 2px 6px;
+    border-radius: 100px;
+    background: var(--frak-color-royal-blue);
+    color: var(--frak-color-white);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 14px;
+}

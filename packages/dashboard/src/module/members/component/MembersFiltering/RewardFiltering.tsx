@@ -38,6 +38,7 @@ export function RewardFiltering() {
                             weight={"medium"}
                             variant={"checkbox"}
                             selected={!!field.value}
+                            htmlFor={"reward-filters"}
                         >
                             Rewards
                         </FormLabel>

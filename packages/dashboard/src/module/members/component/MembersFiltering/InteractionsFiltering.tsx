@@ -38,6 +38,7 @@ export function InteractionsFiltering() {
                             weight={"medium"}
                             variant={"checkbox"}
                             selected={!!field.value}
+                            htmlFor={"interaction-filters"}
                         >
                             Interactions
                         </FormLabel>

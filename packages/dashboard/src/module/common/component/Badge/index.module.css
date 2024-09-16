@@ -2,7 +2,6 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    padding: 4px 12px;
     border-radius: 100px;
     font-weight: 600;
     line-height: 20px;
@@ -33,7 +32,24 @@
     color: var(--frak-color-royal-blue);
 }
 
+.informationReverse {
+    background: var(--frak-button-submit-background-color);
+    color: var(--frak-button-submit-text-color);
+}
+
 .warning {
     background-color: #fdf1e8;
     color: #e46a11;
+}
+
+.size--none {
+    padding: 0;
+}
+
+.size--small {
+    padding: 2px 6px;
+}
+
+.size--medium {
+    padding: 4px 12px;
 }

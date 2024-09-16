@@ -1,12 +1,15 @@
 "use client";
 
 import type { GetMembersParam } from "@/context/members/action/getProductMembers";
+import { Row } from "@/module/common/component/Row";
 import { Form } from "@/module/forms/Form";
+import { tableMembersFiltersCountAtom } from "@/module/members/atoms/tableMembers";
 import { InteractionsFiltering } from "@/module/members/component/MembersFiltering/InteractionsFiltering";
 import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
 import { ProductFiltering } from "@/module/members/component/MembersFiltering/ProductFiltering";
 import { RewardFiltering } from "@/module/members/component/MembersFiltering/RewardFiltering";
 import { Button } from "@module/component/Button";
+import { useSetAtom } from "jotai";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { type Hex, formatEther, parseEther, toHex } from "viem";
@@ -23,14 +26,18 @@ export function MembersFiltering({
     onFilterSet,
     initialValue,
     disabled,
+    showResetButton,
 }: {
     onFilterSet: (filter: FormMembersFiltering) => void;
     initialValue?: FormMembersFiltering;
     disabled?: boolean;
+    showResetButton?: boolean;
 }) {
+    const setFiltersDirtyCount = useSetAtom(tableMembersFiltersCountAtom);
+
     // Map the initial values if any
     const mappedInitialValue = useMemo(() => {
-        if (!initialValue?.rewards) return undefined;
+        if (!initialValue?.rewards) return initialValue;
 
         // Map min and mnax rewards if present
         const { min, max } = initialValue.rewards;
@@ -50,8 +57,23 @@ export function MembersFiltering({
         disabled,
     });
 
+    function resetForm() {
+        const defaultValues = {
+            productIds: undefined,
+            interactions: undefined,
+            firstInteractionTimestamp: undefined,
+            rewards: undefined,
+        };
+        form.reset(defaultValues);
+        onFilterSet(defaultValues);
+        setFiltersDirtyCount(0);
+    }
+
     const onSubmit = useCallback(
         async (data: FormMembersFiltering) => {
+            const allValues = filterOutUndefined(form.getValues());
+            setFiltersDirtyCount(allValues.length);
+
             // Fix rewards min and max if needed
             if (data.rewards) {
                 const { min, max } = data.rewards;
@@ -78,7 +100,7 @@ export function MembersFiltering({
 
             onFilterSet(data);
         },
-        [onFilterSet]
+        [onFilterSet, form.getValues, setFiltersDirtyCount]
     );
 
     return (
@@ -88,15 +110,50 @@ export function MembersFiltering({
             <InteractionsFiltering />
             <RewardFiltering />
 
-            {!disabled && (
-                <Button
-                    type={"button"}
-                    variant={"secondary"}
-                    onClick={form.handleSubmit(onSubmit)}
-                >
-                    Validate filter
-                </Button>
-            )}
+            <Row>
+                {!disabled && (
+                    <Button
+                        type={"button"}
+                        variant={"secondary"}
+                        onClick={form.handleSubmit(onSubmit)}
+                    >
+                        Validate filter
+                    </Button>
+                )}
+                {showResetButton && (
+                    <Button
+                        type={"button"}
+                        variant={"secondary"}
+                        onClick={resetForm}
+                    >
+                        Reset filter
+                    </Button>
+                )}
+            </Row>
         </Form>
     );
+}
+
+function filterOutUndefined(obj: FormMembersFiltering): string[] {
+    const result: string[] = [];
+
+    for (const key in obj) {
+        // @ts-ignore
+        const value = obj[key];
+
+        // Check if min/max are defined, or if the value is an array and not empty
+        if (value && typeof value === "object") {
+            // Check if min/max are defined and not undefined
+            if (
+                ("min" in value && value.min !== undefined) ||
+                ("max" in value && value.max !== undefined)
+            ) {
+                result.push(key);
+            }
+        } else if (Array.isArray(value) && value.length > 0) {
+            result.push(key);
+        }
+    }
+
+    return result;
 }

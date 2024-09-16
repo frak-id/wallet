@@ -26,6 +26,7 @@ export const buttonVariants = cva(styles.button, {
             submit: styles.submit,
             danger: styles.danger,
             information: styles.information,
+            informationReverse: styles.informationReverse,
             informationOutline: styles.informationOutline,
             trigger: styles.trigger,
         },

@@ -12,11 +12,18 @@ export const badgeVariants = cva(styles.badge, {
             success: styles.success,
             danger: styles.danger,
             information: styles.information,
+            informationReverse: styles.informationReverse,
             warning: styles.warning,
+        },
+        size: {
+            none: styles["size--none"],
+            small: styles["size--small"],
+            medium: styles["size--medium"],
         },
     },
     defaultVariants: {
         variant: "primary",
+        size: "medium",
     },
 });
 
@@ -25,12 +32,14 @@ export interface BadgeProps
         VariantProps<typeof badgeVariants> {}
 
 export const Badge = forwardRef<HTMLDivElement, BadgeProps>(
-    ({ className, variant, ...props }, ref) => {
+    ({ className, variant, size, ...props }, ref) => {
         return (
             <span
-                className={`${badgeVariants({
+                className={badgeVariants({
                     variant,
-                })} ${className}`}
+                    size,
+                    className,
+                })}
                 ref={ref}
                 {...props}
             />
