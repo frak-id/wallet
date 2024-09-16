@@ -25,14 +25,12 @@ import { isProdStack } from "./utils";
  */
 export function BackendStack(ctx: StackContext) {
     const { interactionQueue, readPubKeyFunction } = interactionsResources(ctx);
-    const { reloadCampaignQueue } = campaignResources(ctx);
 
     // Add the elysia backend
     elysiaBackend(ctx);
 
     return {
         interactionQueue,
-        reloadCampaignQueue,
         readPubKeyFunction,
     };
 }
@@ -130,44 +128,6 @@ function interactionsResources({ stack }: StackContext) {
 }
 
 /**
- * Define all of our campaign resources
- * @param stack
- */
-function campaignResources({ stack }: StackContext) {
-    const { airdropPrivateKey, alchemyApiKey, nexusRpcSecret } =
-        use(ConfigStack);
-    // Interaction handling stuff
-    const reloadCampaignQueue = new Queue(stack, "ReloadCampaignQueue", {
-        consumer: {
-            function: {
-                handler: "packages/backend/src/campaign/reloadQueue.handler",
-                timeout: "15 minutes",
-                bind: [airdropPrivateKey, alchemyApiKey, nexusRpcSecret],
-            },
-            cdk: {
-                eventSource: {
-                    // Maximum amount of item sent to the function (at most 200 interactions)
-                    batchSize: 200,
-                    // Wait at most 2min to push the interactions
-                    maxBatchingWindow: Duration.seconds(5),
-                    // Don't allow more than 4 parallel executions
-                    maxConcurrency: 4,
-                },
-            },
-        },
-        cdk: {
-            queue: {
-                visibilityTimeout: Duration.minutes(60),
-            },
-        },
-    });
-    stack.addOutputs({
-        ReloadCampaignQueueId: reloadCampaignQueue.id,
-    });
-    return { reloadCampaignQueue };
-}
-
-/**
  * Create our elysia backend
  * @param stack
  */
@@ -180,7 +140,8 @@ function elysiaBackend({ stack }: StackContext) {
     const { vpc, cluster, alb } = services;
 
     // A few secrets we will be using
-    const { mongoExampleUri, worldNewsApiKey } = use(ConfigStack);
+    const { mongoExampleUri, worldNewsApiKey, airdropPrivateKey } =
+        use(ConfigStack);
 
     // The service itself
     const elysiaService = new Service(stack, "ElysiaService", {
@@ -194,7 +155,7 @@ function elysiaBackend({ stack }: StackContext) {
             memoryUtilization: 80,
         },
         // Bind the secret we will be using
-        bind: [mongoExampleUri, worldNewsApiKey],
+        bind: [mongoExampleUri, worldNewsApiKey, airdropPrivateKey],
         // Allow llm calls (used for the news-example part)
         permissions: [
             new PolicyStatement({

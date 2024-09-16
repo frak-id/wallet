@@ -29,7 +29,7 @@ export function DashboardWebApp({ stack }: StackContext) {
     ];
 
     // Get a few backend resources we will bind to the frontend
-    const { reloadCampaignQueue, readPubKeyFunction } = use(BackendStack);
+    const { readPubKeyFunction } = use(BackendStack);
 
     // Base domain for our whole app
     const subDomain = isProdStack(stack)
@@ -50,7 +50,7 @@ export function DashboardWebApp({ stack }: StackContext) {
             staticImageOptimization: true,
         },
         // Bind to the configs
-        bind: [...configs, reloadCampaignQueue, readPubKeyFunction],
+        bind: [...configs, readPubKeyFunction],
         openNextVersion: openNextVersion,
     });
 

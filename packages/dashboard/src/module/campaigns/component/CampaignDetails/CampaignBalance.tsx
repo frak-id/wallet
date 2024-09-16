@@ -1,6 +1,6 @@
 import { getOnChainCampaignsDetails } from "@/context/campaigns/action/getDetails";
-import { addCampaignFund } from "@/context/campaigns/action/reload";
 import { Title } from "@/module/common/component/Title";
+import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { Button } from "@module/component/Button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { sleep } from "radash";
@@ -29,7 +29,9 @@ export function CampaignBalance({
         mutationKey: ["campaign", "add-fund", campaignAddress],
         mutationFn: async () => {
             // Launch the request
-            await addCampaignFund({ campaignAddress });
+            await backendApi.business.funding.freeReload.post({
+                campaign: campaignAddress,
+            });
             // Wait a bit
             await sleep(5_000);
             // Refresh on chain info
