@@ -18,7 +18,7 @@ export function ExampleAppStack({ stack }: StackContext) {
     // The configs required to run the app
     const { mongoExampleUri, nexusUrl } = use(ConfigStack);
 
-    // Declare the next js site on example-news-paper.xyz
+    // Declare the next js site on news-paper.xyz
     // Use it for the ETH-CC demo
     const ethCCDemo = new NextjsSite(stack, "walletExampleEthCC", {
         path: "example/wallet-ethcc",
@@ -27,8 +27,8 @@ export function ExampleAppStack({ stack }: StackContext) {
         openNextVersion: openNextVersion,
         // Set the custom domain
         customDomain: {
-            domainName: "ethcc.example-news-paper.xyz",
-            hostedZone: "example-news-paper.xyz",
+            domainName: "ethcc.news-paper.xyz",
+            hostedZone: "news-paper.xyz",
         },
         // Enable image optimization
         imageOptimization: {
@@ -37,7 +37,7 @@ export function ExampleAppStack({ stack }: StackContext) {
         },
     });
 
-    // Declare the next js site on example-news-paper.xyz
+    // Declare the next js site on news-paper.xyz
     // Use it for the ETH-CC demo
     const newsInteractionDemo = new NextjsSite(stack, "newsInteractionDemo", {
         path: "example/news-interactions",
@@ -46,8 +46,8 @@ export function ExampleAppStack({ stack }: StackContext) {
         openNextVersion: openNextVersion,
         // Set the custom domain
         customDomain: {
-            domainName: "example-news-paper.xyz",
-            hostedZone: "example-news-paper.xyz",
+            domainName: "news-paper.xyz",
+            hostedZone: "news-paper.xyz",
         },
         // Enable image optimization
         imageOptimization: {

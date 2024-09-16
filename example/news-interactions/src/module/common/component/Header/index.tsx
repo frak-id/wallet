@@ -1,4 +1,3 @@
-import { Lottie } from "@/module/common/component/Lottie";
 import { Link } from "next-view-transitions";
 import Image from "next/image";
 import logo from "./assets/logo-good-vibes.svg";
@@ -12,7 +11,8 @@ export function Header() {
                     <Image priority={true} src={logo} alt="Good Vibes" />
                 </Link>
             </h1>
-            <Lottie className={styles.header__lottie} />
+            {/*todo: Disabled for now since it's fcking up deployment idk why*/}
+            {/*<Lottie className={styles.header__lottie} />*/}
         </header>
     );
 }

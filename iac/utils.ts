@@ -15,7 +15,15 @@ export function isProdStack(stack: Stack): boolean {
  * @param stack
  */
 export function isDevStack(stack: Stack): boolean {
-    return ["dev" /*, "rodolphe"*/].includes(stack.stage);
+    return stack.stage === "dev";
+}
+
+/**
+ * Check if we are running a distant stack
+ * @param stack
+ */
+export function isDistantStack(stack: Stack): boolean {
+    return isProdStack(stack) || isDevStack(stack);
 }
 
 /**

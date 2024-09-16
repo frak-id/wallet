@@ -7,10 +7,16 @@ import {
 } from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
-import { Service, type StackContext } from "sst/constructs";
-import { Config, Queue, Function as SstFunction, use } from "sst/constructs";
+import {
+    Config,
+    Queue,
+    Service,
+    Function as SstFunction,
+    type StackContext,
+    use,
+} from "sst/constructs";
 import { ConfigStack } from "./Config";
-import { ServiceStack } from "./Service";
+import { buildEcsService } from "./builder/ServiceBuilder";
 
 /**
  * Define backend stack
@@ -22,9 +28,14 @@ export function BackendStack(ctx: StackContext) {
     const { reloadCampaignQueue } = campaignResources(ctx);
 
     // Add the elysia backend
-    elysiaBackend(ctx);
+    const { backendUrlConfig } = elysiaBackend(ctx);
 
-    return { interactionQueue, reloadCampaignQueue, readPubKeyFunction };
+    return {
+        interactionQueue,
+        reloadCampaignQueue,
+        readPubKeyFunction,
+        backendUrlConfig,
+    };
 }
 
 /**
@@ -163,7 +174,14 @@ function campaignResources({ stack }: StackContext) {
  */
 function elysiaBackend({ stack }: StackContext) {
     // Create a new ecs service that will host our elysia backend
-    const { vpc, cluster, alb } = use(ServiceStack);
+    const services = buildEcsService({ stack });
+    const backendUrlConfig = new Config.Parameter(stack, "BACKEND_URL", {
+        value: services?.alb?.loadBalancerDnsName ?? "http://localhost:3030",
+    });
+    if (!services) {
+        return { backendUrlConfig };
+    }
+    const { vpc, cluster, alb } = services;
 
     // A few secrets we will be using
     const { mongoExampleUri, worldNewsApiKey } = use(ConfigStack);
@@ -175,12 +193,19 @@ function elysiaBackend({ stack }: StackContext) {
         // Setup some capacity options
         scaling: {
             minContainers: 1,
-            maxContainers: 10,
+            maxContainers: 5,
             cpuUtilization: 80,
             memoryUtilization: 80,
         },
         // Bind the secret we will be using
         bind: [mongoExampleUri, worldNewsApiKey],
+        // Allow llm calls (used for the news-example part)
+        permissions: [
+            new PolicyStatement({
+                actions: ["bedrock:InvokeModel"],
+                resources: ["*"],
+            }),
+        ],
         // Arm architecture (lower cost)
         architecture: "arm64",
         // Hardware config
@@ -206,7 +231,10 @@ function elysiaBackend({ stack }: StackContext) {
 
     // Ensure we got a fargate service set up
     if (!elysiaService.cdk?.fargateService) {
-        throw new Error("Missing fargate service configuration");
+        console.error(
+            "No fargate service found for elysia service, skipping ALB setup"
+        );
+        return { backendUrlConfig };
     }
 
     // Create the target group for a potential alb usage
@@ -215,7 +243,7 @@ function elysiaBackend({ stack }: StackContext) {
         "ElysiaTargetGroup",
         {
             vpc: vpc,
-            port: 8080,
+            port: 3030,
             protocol: ApplicationProtocol.HTTP,
             targets: [elysiaService.cdk.fargateService],
             deregistrationDelay: Duration.seconds(10),
@@ -242,4 +270,8 @@ function elysiaBackend({ stack }: StackContext) {
         protocol: ApplicationProtocol.HTTP,
         defaultTargetGroups: [elysiaTargetGroup],
     });
+
+    return {
+        backendUrlConfig,
+    };
 }

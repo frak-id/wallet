@@ -1,3 +1,5 @@
+"use client";
+
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { useIntersectionObserver } from "@/module/common/hooks/useIntersectionObserver";
 import { Hero } from "@/module/news/component/Hero";
