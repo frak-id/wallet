@@ -7,7 +7,6 @@ import { NewsRepository } from "./repositories/NewsRepository";
  * @param app
  */
 export async function newsPaperContext(app: Elysia) {
-    console.log("Creating news paper context");
     // Get the db repositories
     const db = await getMongoDb({
         urlKey: "MONGODB_EXAMPLE_URI",
@@ -15,8 +14,7 @@ export async function newsPaperContext(app: Elysia) {
     });
     const newsDbRepository = new NewsRepository(db);
 
-    console.log("News paper context created");
-
+    // Decorate the app
     return app.decorate({
         newsDbRepository,
     });

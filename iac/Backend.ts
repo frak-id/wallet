@@ -1,10 +1,16 @@
 import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
+import { Port } from "aws-cdk-lib/aws-ec2";
+import {
+    ApplicationProtocol,
+    ApplicationTargetGroup,
+} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
-import type { StackContext } from "sst/constructs";
+import { Service, type StackContext } from "sst/constructs";
 import { Config, Queue, Function as SstFunction, use } from "sst/constructs";
 import { ConfigStack } from "./Config";
+import { ServiceStack } from "./Service";
 
 /**
  * Define backend stack
@@ -14,6 +20,9 @@ import { ConfigStack } from "./Config";
 export function BackendStack(ctx: StackContext) {
     const { interactionQueue, readPubKeyFunction } = interactionsResources(ctx);
     const { reloadCampaignQueue } = campaignResources(ctx);
+
+    // Add the elysia backend
+    elysiaBackend(ctx);
 
     return { interactionQueue, reloadCampaignQueue, readPubKeyFunction };
 }
@@ -146,4 +155,91 @@ function campaignResources({ stack }: StackContext) {
         ReloadCampaignQueueId: reloadCampaignQueue.id,
     });
     return { reloadCampaignQueue };
+}
+
+/**
+ * Create our elysia backend
+ * @param stack
+ */
+function elysiaBackend({ stack }: StackContext) {
+    // Create a new ecs service that will host our elysia backend
+    const { vpc, cluster, alb } = use(ServiceStack);
+
+    // A few secrets we will be using
+    const { mongoExampleUri, worldNewsApiKey } = use(ConfigStack);
+
+    // The service itself
+    const elysiaService = new Service(stack, "ElysiaService", {
+        path: "packages/backend-elysia",
+        port: 3030,
+        // Setup some capacity options
+        scaling: {
+            minContainers: 1,
+            maxContainers: 10,
+            cpuUtilization: 80,
+            memoryUtilization: 80,
+        },
+        // Bind the secret we will be using
+        bind: [mongoExampleUri, worldNewsApiKey],
+        // Arm architecture (lower cost)
+        architecture: "arm64",
+        // Hardware config
+        cpu: "0.25 vCPU",
+        memory: "0.5 GB",
+        storage: "20 GB",
+        // Log retention
+        logRetention: "three_days",
+        cdk: {
+            vpc,
+            cluster,
+            // Don't auto setup the ALB since we will be using the global one
+            applicationLoadBalancer: false,
+            // Customise fargate service to enable circuit breaker (if the new deployment is failing)
+            fargateService: {
+                enableExecuteCommand: true,
+                circuitBreaker: {
+                    enable: true,
+                },
+            },
+        },
+    });
+
+    // Ensure we got a fargate service set up
+    if (!elysiaService.cdk?.fargateService) {
+        throw new Error("Missing fargate service configuration");
+    }
+
+    // Create the target group for a potential alb usage
+    const elysiaTargetGroup = new ApplicationTargetGroup(
+        stack,
+        "ElysiaTargetGroup",
+        {
+            vpc: vpc,
+            port: 8080,
+            protocol: ApplicationProtocol.HTTP,
+            targets: [elysiaService.cdk.fargateService],
+            deregistrationDelay: Duration.seconds(10),
+            healthCheck: {
+                path: "/",
+                interval: Duration.seconds(30),
+                healthyThresholdCount: 2,
+                unhealthyThresholdCount: 5,
+                healthyHttpCodes: "200",
+            },
+        }
+    );
+
+    // Allow connections to the applications ports
+    alb.connections.allowTo(
+        elysiaService.cdk.fargateService,
+        Port.tcp(3030),
+        "Allow connection from ALB to elysia"
+    );
+
+    // Create the listener on port 80
+    alb.addListener("ElysiaListener", {
+        port: 80,
+        protocol: ApplicationProtocol.HTTP,
+        defaultTargetGroups: [elysiaTargetGroup],
+    });
 }

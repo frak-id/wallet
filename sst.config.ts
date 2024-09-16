@@ -3,6 +3,7 @@ import { BackendStack } from "./iac/Backend";
 import { ConfigStack } from "./iac/Config";
 import { DashboardWebApp } from "./iac/DashboardWebApp";
 import { ExampleAppStack } from "./iac/ExampleWebApp";
+import { ServiceStack } from "./iac/Service";
 import { WalletAppStack } from "./iac/WalletWebApp";
 
 export default {
@@ -44,6 +45,8 @@ export default {
         });
 
         app.stack(ConfigStack);
+
+        app.stack(ServiceStack);
 
         app.stack(BackendStack);
 

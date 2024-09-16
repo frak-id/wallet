@@ -7,6 +7,8 @@
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "dev": "sst bind bun dev:watch",
+    "dev:docker": "sst bind \"env | grep -E 'SST_|AWS_' > .env.tmp && docker run --env-file .env.tmp --expose 3030 elysia-dev\"",
+    "build:docker": "docker build --tag \"elysia-dev\" .",
     "dev:watch": "bun run --watch src/index.ts"
   },
   "dependencies": {
@@ -18,11 +20,11 @@
     "mongodb": "^6.9.0",
     "radash": "^12.1.0",
     "solady": "^0.0.238",
-    "viem": "^2.21.6"
+    "viem": "^2.21.6",
+    "sst": "2.43.6"
   },
   "devDependencies": {
-    "bun-types": "latest",
-    "sst": "2.43.6"
+    "bun-types": "latest"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"
