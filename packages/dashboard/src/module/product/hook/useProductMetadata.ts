@@ -1,6 +1,5 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { productRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { addresses, productRegistryAbi } from "@frak-labs/constant";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";

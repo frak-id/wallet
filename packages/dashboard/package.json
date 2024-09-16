@@ -21,6 +21,7 @@
     "@aws-sdk/client-sqs": "^3.650.0",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
+    "@frak-labs/constant": "workspace:*",
     "@lucasmogari/react-pagination": "^1.2.0",
     "@radix-ui/react-collapsible": "^1.1.0",
     "@radix-ui/react-label": "^2.1.0",

@@ -20,6 +20,7 @@
     "@aws-sdk/client-sqs": "^3.650.0",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
+    "@frak-labs/constant": "workspace:*",
     "@peculiar/asn1-ecc": "2.3.13",
     "@peculiar/asn1-schema": "^2.3.13",
     "@radix-ui/react-accordion": "^1.2.0",

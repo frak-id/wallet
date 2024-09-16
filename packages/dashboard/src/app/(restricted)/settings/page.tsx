@@ -2,10 +2,9 @@
 
 import { deleteSession } from "@/context/auth/actions/session";
 import { sendPushNotification } from "@/context/crm/actions/sendPush";
+import { addresses, productInteractionManagerAbi } from "@frak-labs/constant";
 import type { SendTransactionReturnType } from "@frak-labs/nexus-sdk/core";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Button } from "@module/component/Button";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";

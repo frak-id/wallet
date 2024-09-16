@@ -5,9 +5,11 @@ import { viemClient } from "@/context/blockchain/provider";
 import { roles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import type { CampaignWithState } from "@/types/Campaign";
-import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
-import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import {
+    addresses,
+    interactionCampaignAbi,
+    productAdministratorRegistryAbi,
+} from "@frak-labs/constant";
 import ky from "ky";
 import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";

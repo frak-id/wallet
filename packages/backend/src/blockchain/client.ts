@@ -1,4 +1,4 @@
-import { getViemClientFromChain } from "@frak-labs/shared/context/blockchain/provider";
+import { getViemClientFromChain } from "@frak-labs/constant/blockchain";
 import type { Chain } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 

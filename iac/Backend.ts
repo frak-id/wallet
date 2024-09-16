@@ -1,4 +1,3 @@
-import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { Port } from "aws-cdk-lib/aws-ec2";
 import {
@@ -17,6 +16,7 @@ import {
 } from "sst/constructs";
 import { ConfigStack } from "./Config";
 import { buildEcsService } from "./builder/ServiceBuilder";
+import { isProdStack } from "./utils";
 
 /**
  * Define backend stack
@@ -90,7 +90,7 @@ function interactionsResources({ stack }: StackContext) {
                     // Maximum amount of item sent to the function (at most 200 interactions)
                     batchSize: 200,
                     // Wait at most 2min to push the interactions
-                    maxBatchingWindow: isRunningInProd
+                    maxBatchingWindow: isProdStack(stack)
                         ? Duration.minutes(2)
                         : Duration.seconds(10),
                     // Allow partial failures

@@ -1,14 +1,13 @@
 import { interactionValidatorRoles } from "@/context/blockchain/roles";
 import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import { addresses, productInteractionManagerAbi } from "@frak-labs/constant";
 import type { SendTransactionModalStepType } from "@frak-labs/nexus-sdk/core";
 import {
     useSendTransactionAction,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
 import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
-import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
 import { type Hex, encodeFunctionData } from "viem";
 import { generatePrivateKey } from "viem/accounts";

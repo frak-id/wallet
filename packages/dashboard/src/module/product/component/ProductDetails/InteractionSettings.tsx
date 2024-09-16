@@ -8,15 +8,15 @@ import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
+    addresses,
+    productAdministratorRegistryAbi,
+    productInteractionDiamondAbi,
+    productInteractionManagerAbi,
+} from "@frak-labs/constant";
+import {
     useSendTransactionAction,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
-import {
-    productInteractionDiamondAbi,
-    productInteractionManagerAbi,
-} from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { AlertDialog } from "@module/component/AlertDialog";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";

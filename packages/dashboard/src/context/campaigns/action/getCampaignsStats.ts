@@ -3,7 +3,7 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
+import { interactionCampaignAbi } from "@frak-labs/constant";
 import ky from "ky";
 import {
     type Address,

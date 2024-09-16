@@ -1,4 +1,4 @@
-import { productInteractionDiamondAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
+import { productInteractionDiamondAbi } from "@frak-labs/constant";
 import { type Address, type Hex, concatHex, keccak256 } from "viem";
 import { readContract, signTypedData } from "viem/actions";
 import { getViemClient } from "../../blockchain/client";

@@ -2,12 +2,12 @@ import { pushInteraction } from "@/context/interaction/action/pushInteraction";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
+import { isRunningLocally } from "@frak-labs/constant";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
     RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
-import { isRunningLocally } from "@frak-labs/shared/context/utils/env";
 import { jotaiStore } from "@module/atoms/store";
 import { tryit } from "radash";
 import { useCallback } from "react";
