@@ -51,5 +51,5 @@ export function getBackendUrl(stack: Stack): string {
     if (isDevStack(stack)) {
         return "https://backend-dev.frak.id";
     }
-    return "https://localhost:3030";
+    return "http://localhost:3030";
 }

@@ -16,12 +16,13 @@
     "@aws-sdk/client-secrets-manager": "^3.650.0",
     "@elysiajs/cors": "^1.1.1",
     "@elysiajs/cron": "^1.1.1",
+    "@tusbar/cache-control": "^1.0.2",
     "elysia": "1.1.12",
     "mongodb": "^6.9.0",
     "radash": "^12.1.0",
     "solady": "^0.0.238",
-    "viem": "^2.21.6",
-    "sst": "2.43.6"
+    "sst": "2.43.6",
+    "viem": "^2.21.6"
   },
   "devDependencies": {
     "bun-types": "latest"

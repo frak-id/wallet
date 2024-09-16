@@ -1,3 +1,4 @@
+import { format } from "@tusbar/cache-control";
 import { t } from "elysia";
 import type { NewsPaperContextApp } from "../context";
 import { FullNewsDto, LightNewsDto } from "../models/NewsModel";
@@ -57,6 +58,14 @@ export const newsRoutes = (app: NewsPaperContextApp) =>
                     quickByte: LightNewsDto,
                     hero: LightNewsDto,
                 }),
+                // Add cache control headers
+                afterHandle: ({ set }) => {
+                    set.headers["Cache-Control"] = format({
+                        public: true,
+                        immutable: false,
+                        maxAge: 24 * 60 * 60,
+                    });
+                },
             }
         )
         // Get news from its id
@@ -76,5 +85,13 @@ export const newsRoutes = (app: NewsPaperContextApp) =>
                     id: t.String(),
                 }),
                 response: t.Union([FullNewsDto, t.Null()]),
+                // Add cache control headers
+                afterHandle: ({ set }) => {
+                    set.headers["Cache-Control"] = format({
+                        public: true,
+                        immutable: true,
+                        maxAge: 30 * 24 * 60 * 60,
+                    });
+                },
             }
         );
