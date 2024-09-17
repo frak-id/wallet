@@ -2,10 +2,12 @@ import {
     sendPushForFilter,
     sendPushNotification,
 } from "@/context/crm/actions/sendPush";
+import { ActionsMessageError } from "@/module/campaigns/component/Actions";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
+import { FormLayout } from "@/module/forms/Form";
 import { currentPushCreationForm } from "@/module/members/atoms/pushCreationForm";
 import { PushRecap } from "@/module/members/component/CreatePushConfirmation/PushRecap";
 import { Button } from "@module/component/Button";
@@ -42,7 +44,9 @@ export function CreatePushNotificationConfirmation() {
                     />
                 }
             />
-            <ConfirmationContent />
+            <FormLayout>
+                <ConfirmationContent />
+            </FormLayout>
         </>
     );
 }
@@ -118,7 +122,7 @@ function ConfirmationContent() {
                             }}
                             disabled={isPending}
                         />
-                        {error && <span>{error.message}</span>}
+                        {error && <ActionsMessageError error={error} />}
                     </>
                 }
                 right={
@@ -135,7 +139,7 @@ function ConfirmationContent() {
                         </Button>
                         <Button
                             type={"button"}
-                            variant={"information"}
+                            variant={"submit"}
                             disabled={isPending}
                             onClick={() => {
                                 publishPushCampaign();

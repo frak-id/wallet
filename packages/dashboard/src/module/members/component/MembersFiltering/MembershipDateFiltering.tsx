@@ -5,29 +5,43 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
+import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering/index";
-import { Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { format, startOfDay } from "date-fns";
 import { useFormContext, useWatch } from "react-hook-form";
+import styles from "./index.module.css";
 
-export function MembershipDateFiltering() {
-    const { control, formState } = useFormContext<FormMembersFiltering>();
-    const currentInteractions = useWatch({
+export function MembershipDateFiltering({
+    onSubmit,
+}: { onSubmit: (data: FormMembersFiltering) => void }) {
+    const { control, formState, handleSubmit } =
+        useFormContext<FormMembersFiltering>();
+    const currentFirstInteractionTimestamp = useWatch({
         control,
         name: "firstInteractionTimestamp",
     });
-    const inputDisabled = currentInteractions === undefined;
+    const inputDisabled = currentFirstInteractionTimestamp === undefined;
+    const isAllUndefined =
+        currentFirstInteractionTimestamp?.min === undefined &&
+        currentFirstInteractionTimestamp?.max === undefined;
+
+    /**
+     * If form is disabled and all values are undefined, return null to hide the component
+     */
+    if (formState.disabled && isAllUndefined) return null;
 
     return (
         <div>
+            <FormDescription title={"Segment"} />
             <FormField
                 control={control}
                 name={"firstInteractionTimestamp"}
@@ -46,6 +60,7 @@ export function MembershipDateFiltering() {
                                           }
                                         : undefined
                                 );
+                                !checked && handleSubmit(onSubmit)();
                             }}
                         />
                         <FormLabel
@@ -59,7 +74,7 @@ export function MembershipDateFiltering() {
                     </FormItem>
                 )}
             />
-            <Columns>
+            <Row className={styles.formFromTo__row}>
                 <FormField
                     control={control}
                     name={"firstInteractionTimestamp.min"}
@@ -68,7 +83,9 @@ export function MembershipDateFiltering() {
                         const { value, ...rest } = field;
                         return (
                             <FormItem>
-                                <FormLabel weight={"medium"}>From</FormLabel>
+                                <FormLabel variant={"light"} weight={"medium"}>
+                                    From
+                                </FormLabel>
                                 <Popover>
                                     <PopoverTrigger {...rest} asChild>
                                         <FormControl>
@@ -100,6 +117,7 @@ export function MembershipDateFiltering() {
                                                     (value.getTime() ?? 0) /
                                                         1000
                                                 );
+                                                handleSubmit(onSubmit)();
                                             }}
                                             startMonth={startOfDay(new Date())}
                                         />
@@ -118,7 +136,9 @@ export function MembershipDateFiltering() {
                         const { value, ...rest } = field;
                         return (
                             <FormItem>
-                                <FormLabel weight={"medium"}>To</FormLabel>
+                                <FormLabel variant={"light"} weight={"medium"}>
+                                    To
+                                </FormLabel>
                                 <Popover>
                                     <PopoverTrigger {...rest} asChild>
                                         <FormControl>
@@ -146,14 +166,11 @@ export function MembershipDateFiltering() {
                                             }
                                             onSelect={(value) => {
                                                 if (!value) return;
-                                                // const huhu =
-                                                //     (value.getTime() ?? 0) /
-                                                //     1000;
-                                                // console.log("huhu", huhu);
                                                 field.onChange(
                                                     (value.getTime() ?? 0) /
                                                         1000
                                                 );
+                                                handleSubmit(onSubmit)();
                                             }}
                                             startMonth={startOfDay(new Date())}
                                         />
@@ -164,7 +181,7 @@ export function MembershipDateFiltering() {
                         );
                     }}
                 />
-            </Columns>
+            </Row>
         </div>
     );
 }

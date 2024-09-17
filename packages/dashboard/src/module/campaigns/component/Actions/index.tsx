@@ -10,7 +10,7 @@ import {
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Button } from "@module/component/Button";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect } from "react";
 import styles from "./index.module.css";
@@ -117,6 +117,17 @@ export function ActionsMessageSuccess() {
         >
             <Check />
             All changes have been saved
+        </span>
+    );
+}
+
+export function ActionsMessageError({ error }: { error: Error }) {
+    return (
+        <span
+            className={`${styles.action__message} ${styles["action__message--error"]}`}
+        >
+            <X />
+            {error.message}
         </span>
     );
 }

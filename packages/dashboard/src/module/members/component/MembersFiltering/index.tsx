@@ -95,21 +95,12 @@ export function MembersFiltering({
 
     return (
         <Form {...form}>
-            <ProductFiltering />
-            <MembershipDateFiltering />
-            <InteractionsFiltering />
-            <RewardFiltering />
+            <ProductFiltering onSubmit={onSubmit} />
+            <MembershipDateFiltering onSubmit={onSubmit} />
+            <InteractionsFiltering onSubmit={onSubmit} />
+            <RewardFiltering onSubmit={onSubmit} />
 
             <Row>
-                {!disabled && (
-                    <Button
-                        type={"button"}
-                        variant={"secondary"}
-                        onClick={form.handleSubmit(onSubmit)}
-                    >
-                        Validate filter
-                    </Button>
-                )}
                 {showResetButton && (
                     <Button
                         type={"button"}

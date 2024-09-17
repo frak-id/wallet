@@ -1,3 +1,4 @@
+import { Row } from "@/module/common/component/Row";
 import {
     FormField,
     FormItem,
@@ -5,15 +6,25 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering/index";
-import { Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { Input } from "@module/component/forms/Input";
 import { useFormContext, useWatch } from "react-hook-form";
+import styles from "./index.module.css";
 
-export function RewardFiltering() {
-    const { control, formState } = useFormContext<FormMembersFiltering>();
+export function RewardFiltering({
+    onSubmit,
+}: { onSubmit: (data: FormMembersFiltering) => void }) {
+    const { control, formState, handleSubmit } =
+        useFormContext<FormMembersFiltering>();
     const currentRewards = useWatch({ control, name: "rewards" });
     const rewardsInputDisabled = currentRewards === undefined;
+    const isAllUndefined =
+        currentRewards?.min === undefined && currentRewards?.max === undefined;
+
+    /**
+     * If form is disabled and all values are undefined, return null to hide the component
+     */
+    if (formState.disabled && isAllUndefined) return null;
 
     return (
         <div>
@@ -32,6 +43,7 @@ export function RewardFiltering() {
                                         ? { min: 1, max: undefined }
                                         : undefined
                                 );
+                                !checked && handleSubmit(onSubmit)();
                             }}
                         />
                         <FormLabel
@@ -45,7 +57,7 @@ export function RewardFiltering() {
                     </FormItem>
                 )}
             />
-            <Columns>
+            <Row className={styles.formFromTo__row}>
                 <FormField
                     control={control}
                     name={"rewards.min"}
@@ -59,7 +71,9 @@ export function RewardFiltering() {
                     }}
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel weight={"medium"}>From</FormLabel>
+                            <FormLabel variant={"light"} weight={"medium"}>
+                                From
+                            </FormLabel>
                             <Input
                                 type={"number"}
                                 {...field}
@@ -69,6 +83,9 @@ export function RewardFiltering() {
                                         : field.value ?? ""
                                 }
                                 placeholder={"Min reward"}
+                                length={"small"}
+                                rightSection={"EUR"}
+                                onBlur={handleSubmit(onSubmit)}
                             />
                             <FormMessage />
                         </FormItem>
@@ -103,7 +120,9 @@ export function RewardFiltering() {
                     }}
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel weight={"medium"}>To</FormLabel>
+                            <FormLabel variant={"light"} weight={"medium"}>
+                                To
+                            </FormLabel>
                             <Input
                                 type={"number"}
                                 {...field}
@@ -113,12 +132,15 @@ export function RewardFiltering() {
                                         : field.value ?? ""
                                 }
                                 placeholder={"Max reward"}
+                                length={"small"}
+                                rightSection={"EUR"}
+                                onBlur={handleSubmit(onSubmit)}
                             />
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-            </Columns>
+            </Row>
         </div>
     );
 }

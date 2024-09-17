@@ -27,6 +27,7 @@ export type FormCreatePushNotification = {
         | {
               filter: FormMembersFiltering;
           };
+    targetCount: number;
 };
 
 /**
@@ -56,6 +57,10 @@ export function CreatePushNotification() {
     const onSubmit = useCallback(
         async (data: FormCreatePushNotification) => {
             console.log("Submitting push data", { data });
+
+            // If no target is selected, we can't go to the next step
+            if (data.targetCount === 0) return;
+
             // Save the form in the push creation form
             setCurrentPushCreationForm(data);
             // And go to the confirmation page

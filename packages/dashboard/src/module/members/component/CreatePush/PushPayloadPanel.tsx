@@ -3,9 +3,9 @@
 import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
-    FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
 import { PushPreview } from "@/module/members/component/CreatePush/PushPreview";
@@ -51,7 +51,7 @@ export function PushPayloadPanel() {
                         }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel weight={"medium"}>Title</FormLabel>
+                                <FormDescription title={"Title"} />
                                 <FormControl>
                                     <Input
                                         length={"medium"}
@@ -82,7 +82,7 @@ export function PushPayloadPanel() {
                         }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel weight={"medium"}>Message</FormLabel>
+                                <FormDescription title={"Message"} />
                                 <FormControl>
                                     <TextArea
                                         length={"medium"}
@@ -106,7 +106,7 @@ export function PushPayloadPanel() {
                         }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel weight={"medium"}>Image</FormLabel>
+                                <FormDescription title={"Image"} />
                                 <FormControl>
                                     <Input
                                         length={"medium"}
@@ -129,9 +129,7 @@ export function PushPayloadPanel() {
                         }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel weight={"medium"}>
-                                    Launch URL
-                                </FormLabel>
+                                <FormDescription title={"Launch URL"} />
                                 <FormControl>
                                     <Input
                                         length={"medium"}
@@ -147,7 +145,7 @@ export function PushPayloadPanel() {
                 <Column>
                     <PushPreview
                         title={title !== "" ? title : "Brand new shoes"}
-                        text={
+                        message={
                             message !== ""
                                 ? message
                                 : "Discover our brand new product dedicated for Marathon"

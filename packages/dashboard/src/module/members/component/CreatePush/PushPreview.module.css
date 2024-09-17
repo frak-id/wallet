@@ -11,6 +11,7 @@
 }
 
 .pushPreview__notification {
+    position: relative;
     margin: 0 23px;
     background: #f5f5f54d;
     color: #fff;
@@ -34,7 +35,7 @@
 .pushPreview__date {
     position: absolute;
     top: 12px;
-    right: 33px;
+    right: 12px;
     font-size: 9px;
     letter-spacing: -0.20000000298023224px;
     text-align: right;

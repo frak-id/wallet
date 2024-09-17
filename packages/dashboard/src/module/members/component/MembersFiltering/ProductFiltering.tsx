@@ -1,22 +1,24 @@
 import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import {
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
-    FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
 import { MultiSelect } from "@/module/forms/MultiSelect";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering/index";
 import { useFormContext } from "react-hook-form";
 
-export function ProductFiltering() {
+export function ProductFiltering({
+    onSubmit,
+}: { onSubmit: (data: FormMembersFiltering) => void }) {
     const { isEmpty, products, isPending } = useMyProducts();
     const productsOptions = [
         ...(products?.operator ?? []),
         ...(products?.owner ?? []),
     ];
-    const { control } = useFormContext<FormMembersFiltering>();
+    const { control, handleSubmit } = useFormContext<FormMembersFiltering>();
 
     if (isEmpty || !products || isPending) {
         return null;
@@ -28,9 +30,7 @@ export function ProductFiltering() {
             name="productIds"
             render={({ field }) => (
                 <FormItem>
-                    <FormLabel variant={"dark"} weight={"medium"}>
-                        Filter by products
-                    </FormLabel>
+                    <FormDescription title={"Product"} />
                     <FormControl>
                         <MultiSelect
                             options={productsOptions.map((product) => ({
@@ -42,6 +42,7 @@ export function ProductFiltering() {
                                     .map((v) => v.value)
                                     .filter(Boolean);
                                 field.onChange(productIds);
+                                handleSubmit(onSubmit)();
                             }}
                             placeholder="Products"
                             {...field}
