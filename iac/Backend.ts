@@ -150,7 +150,8 @@ function elysiaBackend(
 
     // The service itself
     const elysiaService = new Service(stack, "ElysiaService", {
-        path: "packages/backend-elysia",
+        path: "./",
+        file: "iac/docker/ElysiaDockerfile",
         port: 3030,
         // Setup some capacity options
         scaling: {

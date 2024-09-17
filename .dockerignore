@@ -1,0 +1,30 @@
+# Ignore node_modules in all subdirectories
+**/node_modules
+
+# Ignore build outputs
+**/dist
+**/build
+**/.turbo
+
+# Ignore version control systems
+.git
+.svn
+
+# Ignore editor-specific files
+.vscode
+.idea
+
+# Ignore logs
+**/*.log
+
+# Ignore test files
+**/__tests__
+**/*.test.js
+**/*.spec.js
+
+# Ignore documentation
+**/docs
+
+# Ignore any other non-essential directories or files
+**/tmp
+**/.DS_Store

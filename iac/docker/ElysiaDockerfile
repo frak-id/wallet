@@ -1,0 +1,29 @@
+# Use a multi-stage build
+FROM --platform=$BUILDPLATFORM node:lts AS builder
+
+# Set the working directory to the root of the monorepo
+WORKDIR /monorepo
+
+# Copy the entire monorepo
+COPY . .
+
+# Setup bun (since we are on a node image)
+RUN npm i -g bun
+
+# Install dependencies and build the project
+RUN bun install --frozen-lockfile
+RUN cd packages/backend-elysia && bun run build
+
+# Start a new stage for the final image
+FROM oven/bun
+
+WORKDIR /app
+
+# Copy the built application from the builder stage
+COPY --from=builder /monorepo/packages/backend-elysia/package.json .
+COPY --from=builder /monorepo/packages/backend-elysia/dist ./dist
+
+ENV NODE_ENV=production
+CMD ["bun", "run", "start"]
+
+EXPOSE 3030

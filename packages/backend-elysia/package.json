@@ -10,7 +10,10 @@
     "dev": "sst bind bun dev:watch",
     "dev:docker": "sst bind \"env | grep -E 'SST_|AWS_' > .env.tmp && docker run --env-file .env.tmp --expose 3030 elysia-dev\"",
     "build:docker": "docker build --tag \"elysia-dev\" .",
-    "dev:watch": "bun run --watch src/index.ts"
+    "dev:watch": "bun run --watch src/index.ts",
+    "build": "bun build:package",
+    "build:package": "bun build src/index.ts --target bun --outdir ./dist",
+    "start": "NODE_ENV=production bun dist/index.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.650.0",
