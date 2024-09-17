@@ -19,7 +19,7 @@ import {
  */
 const sessionOptions: SessionOptions = {
     password: process.env.SESSION_ENCRYPTION_KEY ?? "",
-    cookieName: "business.frak.session",
+    cookieName: "businessSession",
     ttl: 60 * 60 * 24 * 7, // 1 week
     cookieOptions: {
         secure: true,

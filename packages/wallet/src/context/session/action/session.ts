@@ -11,7 +11,7 @@ import { cookies } from "next/headers";
  */
 const sessionOptions: SessionOptions = {
     password: process.env.SESSION_ENCRYPTION_KEY ?? "",
-    cookieName: "nexus.session",
+    cookieName: "nexusSession",
     ttl: 60 * 60 * 24 * 7, // 1 week
     cookieOptions: {
         secure: true,

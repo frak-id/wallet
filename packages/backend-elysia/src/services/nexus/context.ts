@@ -26,10 +26,10 @@ export const authNexusUser = new Elysia({
     .use(nexusContext)
     .guard({
         cookie: t.Object({
-            "nexus.session": t.Optional(t.String()),
+            nexusSession: t.Optional(t.String()),
         }),
     })
-    .resolve(async ({ cookie: { "nexus.session": nexusSession } }) => {
+    .resolve(async ({ cookie: { nexusSession } }) => {
         // If we got no session cookie
         if (!nexusSession?.value) {
             return { session: undefined };
