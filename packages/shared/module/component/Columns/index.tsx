@@ -51,15 +51,23 @@ const columnVariants = cva(styles.column, {
             threeQuarter: styles["column--3-4"],
             oneQuarter: styles["column--1-4"],
         },
+        justify: {
+            start: styles["column--justify-start"],
+            end: styles["column--justify-end"],
+        },
+    },
+    defaultVariants: {
+        justify: "end",
     },
 });
 
 export const Column = forwardRef<HTMLDivElement, ColumnProps>(
-    ({ className, size, ...props }, ref) => {
+    ({ className, size, justify, ...props }, ref) => {
         return (
             <div
                 className={columnVariants({
                     size,
+                    justify,
                     className,
                 })}
                 ref={ref}

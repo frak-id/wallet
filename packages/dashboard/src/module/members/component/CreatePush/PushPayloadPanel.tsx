@@ -30,7 +30,6 @@ export function PushPayloadPanel() {
         "payload.body",
         "payload.icon",
     ]);
-    console.log(title, message, icon);
 
     return (
         <Panel title={"Message"}>
@@ -160,7 +159,7 @@ export function PushPayloadPanel() {
                         )}
                     />
                 </Column>
-                <Column>
+                <Column justify={"start"}>
                     <PushPreview
                         title={title !== "" ? title : "Brand new shoes"}
                         message={

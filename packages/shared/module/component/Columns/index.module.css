@@ -22,8 +22,15 @@
 
 .column + .column {
     display: flex;
-    justify-content: flex-end;
     gap: 8px;
+}
+
+.column + .column.column--justify-start {
+    justify-content: flex-start;
+}
+
+.column + .column.column--justify-end {
+    justify-content: flex-end;
 }
 
 .column--1-4 {
