@@ -14,6 +14,7 @@ const wantedFromConfig = [
     "SESSION_ENCRYPTION_KEY",
     "VAPID_PUBLIC_KEY",
     "VAPID_PRIVATE_KEY",
+    "BACKEND_URL",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 

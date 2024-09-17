@@ -21,6 +21,7 @@ export function WalletAppStack({ stack }: StackContext) {
         nexusRpcSecret,
         vapidPublicKey,
         vapidPrivateKey,
+        backendUrl
     } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
@@ -31,6 +32,7 @@ export function WalletAppStack({ stack }: StackContext) {
         nexusRpcSecret,
         vapidPublicKey,
         vapidPrivateKey,
+        backendUrl
     ];
 
     // Get the interaction queue
