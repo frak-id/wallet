@@ -2,7 +2,7 @@ import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import { getFullSessionStatus } from "@/context/interaction/action/interactionSession";
 import { SetPresenceCookie } from "@/module/authentication/component/SetPresenceCookie";
-import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";

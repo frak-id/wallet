@@ -1,10 +1,10 @@
 "use client";
 
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import {
     NexusConfigProvider,
     NexusIFrameClientProvider,
 } from "@frak-labs/nexus-sdk/react";
-import { isRunningLocally } from "@frak-labs/shared/context/utils/env";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";

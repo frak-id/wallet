@@ -18,8 +18,8 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { referralCampaignAbi } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";

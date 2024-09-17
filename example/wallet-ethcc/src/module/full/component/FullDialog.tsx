@@ -1,6 +1,10 @@
 "use client";
 
 import { Panel } from "@/module/common/component/Panel";
+import {
+    addresses,
+    productInteractionManagerAbi,
+} from "@frak-labs/app-essentials";
 import type {
     LoginModalStepType,
     ModalRpcStepsResultType,
@@ -9,8 +13,6 @@ import type {
 } from "@frak-labs/nexus-sdk/core";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { useDisplayModal } from "@frak-labs/nexus-sdk/react";
-import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Button } from "@module/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";

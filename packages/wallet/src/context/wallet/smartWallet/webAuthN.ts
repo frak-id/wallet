@@ -1,6 +1,6 @@
 import { appUrl } from "@/context/common/env";
 import type { P256Signature, WebAuthNSignature } from "@/types/WebAuthN";
-import { isRunningLocally } from "@frak-labs/shared/context/utils/env";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import { base64URLStringToBuffer } from "@simplewebauthn/browser";

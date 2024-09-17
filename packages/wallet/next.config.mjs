@@ -25,7 +25,7 @@ const nextConfig = {
         APP_URL: Config.NEXUS_WALLET_URL,
         INTERACTION_QUEUE_URL: Queue.InteractionQueue.queueUrl,
     },
-    transpilePackages: ["lucide-react"],
+    transpilePackages: ["lucide-react", "@frak-labs/app-essentials"],
     compiler: {
         removeConsole: Config.STAGE === "prod",
     },

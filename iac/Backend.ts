@@ -1,4 +1,3 @@
-import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { Port } from "aws-cdk-lib/aws-ec2";
 import {
@@ -17,6 +16,7 @@ import {
 } from "sst/constructs";
 import { ConfigStack } from "./Config";
 import { buildEcsService } from "./builder/ServiceBuilder";
+import { isProdStack } from "./utils";
 
 /**
  * Define backend stack
@@ -24,27 +24,8 @@ import { buildEcsService } from "./builder/ServiceBuilder";
  * @constructor
  */
 export function BackendStack(ctx: StackContext) {
-    const { interactionQueue, readPubKeyFunction } = interactionsResources(ctx);
-    const { reloadCampaignQueue } = campaignResources(ctx);
-
-    // Add the elysia backend
-    elysiaBackend(ctx);
-
-    return {
-        interactionQueue,
-        reloadCampaignQueue,
-        readPubKeyFunction,
-    };
-}
-
-/**
- * Define all of our interactions resources
- *  todo: expose an api to get the signer public key for a given productId
- * @param stack
- */
-function interactionsResources({ stack }: StackContext) {
     // Generate our master private key secret for product key derivation
-    const masterKeySecret = new AwsSecret(stack, "MasterPrivateKey", {
+    const masterKeySecret = new AwsSecret(ctx.stack, "MasterPrivateKey", {
         generateSecretString: {
             secretStringTemplate: JSON.stringify({ masterPrivateKey: "" }),
             generateStringKey: "masterPrivateKey",
@@ -60,10 +41,39 @@ function interactionsResources({ stack }: StackContext) {
     });
 
     // Create a new config parameter to store the secret ARN
-    const masterSecretId = new Config.Parameter(stack, "MASTER_KEY_SECRET_ID", {
-        value: masterKeySecret.secretFullArn ?? masterKeySecret.secretArn,
+    const masterSecretId = new Config.Parameter(
+        ctx.stack,
+        "MASTER_KEY_SECRET_ID",
+        {
+            value: masterKeySecret.secretFullArn ?? masterKeySecret.secretArn,
+        }
+    );
+
+    const { interactionQueue } = interactionsResources(ctx, {
+        masterKeySecret,
+        masterSecretId,
     });
 
+    // Add the elysia backend
+    elysiaBackend(ctx, { masterKeySecret, masterSecretId });
+
+    return {
+        interactionQueue,
+    };
+}
+
+/**
+ * Define all of our interactions resources
+ *  todo: expose an api to get the signer public key for a given productId
+ * @param stack
+ */
+function interactionsResources(
+    { stack }: StackContext,
+    {
+        masterKeySecret,
+        masterSecretId,
+    }: { masterKeySecret: AwsSecret; masterSecretId: Config.Parameter }
+) {
     const { alchemyApiKey } = use(ConfigStack);
     const interactionConsumerFunction = new SstFunction(
         stack,
@@ -90,7 +100,7 @@ function interactionsResources({ stack }: StackContext) {
                     // Maximum amount of item sent to the function (at most 200 interactions)
                     batchSize: 200,
                     // Wait at most 2min to push the interactions
-                    maxBatchingWindow: isRunningInProd
+                    maxBatchingWindow: isProdStack(stack)
                         ? Duration.minutes(2)
                         : Duration.seconds(10),
                     // Allow partial failures
@@ -107,71 +117,26 @@ function interactionsResources({ stack }: StackContext) {
         },
     });
 
-    const readPubKeyFunction = new SstFunction(stack, "ReadPubKeyFunction", {
-        handler: "packages/backend/src/interaction/readPubKey.handler",
-        timeout: "30 seconds",
-        bind: [masterSecretId],
-        permissions: [
-            new PolicyStatement({
-                actions: ["secretsmanager:GetSecretValue"],
-                resources: [masterKeySecret.secretArn],
-            }),
-        ],
-    });
-
     // Grant the read access on this secret for the consumer function
     masterKeySecret.grantRead(interactionConsumerFunction);
 
     stack.addOutputs({
         InteractionQueueId: interactionQueue.id,
-        ReadPubKeyFunctionId: readPubKeyFunction.id,
     });
-    return { interactionQueue, readPubKeyFunction };
-}
-
-/**
- * Define all of our campaign resources
- * @param stack
- */
-function campaignResources({ stack }: StackContext) {
-    const { airdropPrivateKey, alchemyApiKey, nexusRpcSecret } =
-        use(ConfigStack);
-    // Interaction handling stuff
-    const reloadCampaignQueue = new Queue(stack, "ReloadCampaignQueue", {
-        consumer: {
-            function: {
-                handler: "packages/backend/src/campaign/reloadQueue.handler",
-                timeout: "15 minutes",
-                bind: [airdropPrivateKey, alchemyApiKey, nexusRpcSecret],
-            },
-            cdk: {
-                eventSource: {
-                    // Maximum amount of item sent to the function (at most 200 interactions)
-                    batchSize: 200,
-                    // Wait at most 2min to push the interactions
-                    maxBatchingWindow: Duration.seconds(5),
-                    // Don't allow more than 4 parallel executions
-                    maxConcurrency: 4,
-                },
-            },
-        },
-        cdk: {
-            queue: {
-                visibilityTimeout: Duration.minutes(60),
-            },
-        },
-    });
-    stack.addOutputs({
-        ReloadCampaignQueueId: reloadCampaignQueue.id,
-    });
-    return { reloadCampaignQueue };
+    return { interactionQueue };
 }
 
 /**
  * Create our elysia backend
  * @param stack
  */
-function elysiaBackend({ stack }: StackContext) {
+function elysiaBackend(
+    { stack }: StackContext,
+    {
+        masterKeySecret,
+        masterSecretId,
+    }: { masterKeySecret: AwsSecret; masterSecretId: Config.Parameter }
+) {
     // Create a new ecs service that will host our elysia backend
     const services = buildEcsService({ stack });
     if (!services) {
@@ -180,7 +145,8 @@ function elysiaBackend({ stack }: StackContext) {
     const { vpc, cluster, alb } = services;
 
     // A few secrets we will be using
-    const { mongoExampleUri, worldNewsApiKey } = use(ConfigStack);
+    const { mongoExampleUri, worldNewsApiKey, airdropPrivateKey } =
+        use(ConfigStack);
 
     // The service itself
     const elysiaService = new Service(stack, "ElysiaService", {
@@ -194,12 +160,21 @@ function elysiaBackend({ stack }: StackContext) {
             memoryUtilization: 80,
         },
         // Bind the secret we will be using
-        bind: [mongoExampleUri, worldNewsApiKey],
+        bind: [
+            mongoExampleUri,
+            worldNewsApiKey,
+            airdropPrivateKey,
+            masterSecretId,
+        ],
         // Allow llm calls (used for the news-example part)
         permissions: [
             new PolicyStatement({
                 actions: ["bedrock:InvokeModel"],
                 resources: ["*"],
+            }),
+            new PolicyStatement({
+                actions: ["secretsmanager:GetSecretValue"],
+                resources: [masterKeySecret.secretArn],
             }),
         ],
         // Arm architecture (lower cost)
@@ -232,6 +207,11 @@ function elysiaBackend({ stack }: StackContext) {
         );
         return;
     }
+
+    // Grant the read access on this secret for the consumer function
+    masterKeySecret.grantRead(
+        elysiaService.cdk.fargateService.taskDefinition.taskRole
+    );
 
     // Create the target group for a potential alb usage
     const elysiaTargetGroup = new ApplicationTargetGroup(

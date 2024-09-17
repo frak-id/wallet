@@ -3,9 +3,11 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import { getAttachedCampaigns } from "@/context/campaigns/action/getAttachedCampaigns";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
-import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import {
+    addresses,
+    productInteractionManagerAbi,
+    referralCampaignAbi,
+} from "@frak-labs/app-essentials";
 import { ObjectId } from "mongodb";
 import { encodeFunctionData, isAddressEqual } from "viem";
 

@@ -1,5 +1,4 @@
-import { interactionDelegatorAbi } from "@frak-labs/shared/context/blockchain/abis/kernel-v2-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { addresses, interactionDelegatorAbi } from "@frak-labs/app-essentials";
 import type { SQSEvent } from "aws-lambda";
 import type { SQSBatchResponse } from "aws-lambda/trigger/sqs";
 import { all, parallel, sift, tryit } from "radash";

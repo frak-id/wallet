@@ -1,8 +1,8 @@
 import {
+    addresses,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
-} from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+} from "@frak-labs/app-essentials";
 import type { SQSRecord } from "aws-lambda";
 import { memo } from "radash";
 import {

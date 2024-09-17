@@ -5,11 +5,11 @@ import { viemClient } from "@/context/blockchain/provider";
 import { roles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
+    addresses,
     interactionCampaignAbi,
+    productAdministratorRegistryAbi,
     referralCampaignAbi,
-} from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
-import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+} from "@frak-labs/app-essentials";
 import { ObjectId } from "mongodb";
 import { type Address, erc20Abi } from "viem";
 import { multicall, readContract } from "viem/actions";

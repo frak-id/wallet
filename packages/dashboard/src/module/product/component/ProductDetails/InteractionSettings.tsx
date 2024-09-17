@@ -1,6 +1,5 @@
 import { viemClient } from "@/context/blockchain/provider";
 import { interactionValidatorRoles, roles } from "@/context/blockchain/roles";
-import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
 import { Badge } from "@/module/common/component/Badge";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
@@ -8,15 +7,16 @@ import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
+    addresses,
+    productAdministratorRegistryAbi,
+    productInteractionDiamondAbi,
+    productInteractionManagerAbi,
+} from "@frak-labs/app-essentials";
+import {
     useSendTransactionAction,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
-import {
-    productInteractionDiamondAbi,
-    productInteractionManagerAbi,
-} from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { AlertDialog } from "@module/component/AlertDialog";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
@@ -24,7 +24,7 @@ import { WalletAddress } from "@module/component/HashDisplay";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { tryit } from "radash";
+import { all, tryit } from "radash";
 import { useState } from "react";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 import { readContract } from "viem/actions";
@@ -201,15 +201,20 @@ function ManagedInteractionValidator({
             productId,
         ],
         queryFn: async () => {
-            const {
-                productPubKey: validatorPublicKey,
-                interactionExecutorPubKey,
-            } = await getManagedValidatorPublicKey({
-                productId,
+            const { productResult, interactionExecutorResult } = await all({
+                productResult: backendApi.interactions.validatorPublicKey.get({
+                    query: { productId },
+                }),
+                interactionExecutorResult:
+                    backendApi.interactions.validatorPublicKey.get({
+                        query: { key: "interaction-executor" },
+                    }),
             });
-            if (!validatorPublicKey) {
+
+            if (!productResult?.data?.pubKey) {
                 return null;
             }
+            const validatorPublicKey = productResult.data.pubKey as Address;
             const hasValidatorRoles = await readContract(viemClient, {
                 abi: productInteractionDiamondAbi,
                 address: interactionContract,
@@ -218,7 +223,8 @@ function ManagedInteractionValidator({
             });
             return {
                 validatorPublicKey,
-                interactionExecutorPubKey,
+                interactionExecutorPubKey: interactionExecutorResult?.data
+                    ?.pubKey as Address | undefined,
                 hasValidatorRoles,
             };
         },
