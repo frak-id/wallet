@@ -1,3 +1,4 @@
+import { viemClient } from "@/context/blockchain/provider";
 import { interactionValidatorRoles } from "@/context/blockchain/roles";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
@@ -9,7 +10,6 @@ import {
     useSendTransactionAction,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
-import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, encodeFunctionData } from "viem";
@@ -53,7 +53,7 @@ export function useSetupInteractionContract() {
             if (directAllowValidator) {
                 // Predicate final address
                 const { result: predictedInteractionAddress } =
-                    await simulateContract(currentViemClient, {
+                    await simulateContract(viemClient, {
                         account: walletStatus.wallet,
                         address: addresses.productInteractionManager,
                         abi: productInteractionManagerAbi,

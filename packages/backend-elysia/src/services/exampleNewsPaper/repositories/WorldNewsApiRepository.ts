@@ -35,7 +35,6 @@ export class WorldNewsApiRepository {
         url.searchParams.append("sort", "publish-time");
         url.searchParams.append("sort-direction", "DESC");
         url.searchParams.append("number", "20");
-        console.log(url.toString());
 
         // Query it
         const response = await fetch(url.toString());

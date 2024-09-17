@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "esnext",
-        "lib": ["es2023", "esnext", "dom", "dom.iterable"],
+        "lib": ["es2023", "esnext"],
         "allowJs": true,
         "skipLibCheck": true,
         "strict": true,
@@ -11,14 +11,9 @@
         "moduleResolution": "bundler",
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "jsx": "preserve",
         "incremental": true,
-        "plugins": [{"name": "next"}],
-        "paths": {
-            "@module/*": ["./module/*"]
-        },
         "verbatimModuleSyntax": true
     },
-    "include": ["./next-env.d.ts", "**/*.ts", "**/*.tsx"],
+    "include": ["**/*.ts"],
     "exclude": ["node_modules"]
 }

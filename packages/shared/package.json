@@ -15,7 +15,6 @@
     "jotai": "^2.9.3",
     "lucide-react": "^0.441.0",
     "next": "14.2.11",
-    "radash": "^12.1.0",
     "react-hook-form": "^7.53.0",
     "react-loading-skeleton": "^3.4.0",
     "viem": "^2.21.6"

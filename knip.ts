@@ -23,6 +23,10 @@ const config: KnipConfig = {
             entry: "src/**/*.ts",
             project: "src/**/*.ts",
         },
+        "packages/backend-elysia": {
+            entry: "src/index.ts",
+            project: "src/**/*.ts",
+        },
     },
     // Ignore SDK for knip for now
     ignoreWorkspaces: ["packages/sdk"],
