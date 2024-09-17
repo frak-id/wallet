@@ -17,6 +17,7 @@ export const notificationRoutes = new Elysia({ prefix: "notification" })
         "/send",
         async ({ body: { wallets, payload }, nexusDb, sendNotifMutex }) =>
             sendNotifMutex.runExclusive(async () => {
+                // todo: 1. Secure 2. Notification tracking (send, received, clicked)
                 // Remove every push tokens expired
                 await nexusDb
                     .delete(pushTokens)
@@ -40,9 +41,9 @@ export const notificationRoutes = new Elysia({ prefix: "notification" })
                     Config.VAPID_PRIVATE_KEY
                 );
 
-                // Send all the notification in //
+                // Send all the notification in parallel, by batch of 100
                 await parallel(
-                    200,
+                    100,
                     tokens,
                     async (token) =>
                         await sendNotification(
