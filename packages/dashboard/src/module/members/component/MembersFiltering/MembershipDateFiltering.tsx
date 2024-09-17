@@ -41,7 +41,7 @@ export function MembershipDateFiltering({
 
     return (
         <div>
-            <FormDescription title={"Segment"} />
+            <FormDescription label={"Segment"} />
             <FormField
                 control={control}
                 name={"firstInteractionTimestamp"}

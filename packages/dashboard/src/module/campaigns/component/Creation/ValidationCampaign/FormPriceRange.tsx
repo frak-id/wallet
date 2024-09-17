@@ -9,7 +9,7 @@ export function FormPriceRange(
     const { disabled } = form;
     return (
         <FormItem>
-            <FormDescription title={"Price Range"} />
+            <FormDescription label={"Price Range"} />
             <FormFromTo
                 id={"click"}
                 label={"Click"}

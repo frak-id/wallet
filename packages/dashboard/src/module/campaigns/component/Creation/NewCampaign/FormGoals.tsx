@@ -132,7 +132,7 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                                 optimizes the delivery to ensure the best
                                 performance.
                             </FormDescription>
-                            <FormDescription title={"Type of order"} />
+                            <FormDescription label={"Type of order"} />
                             <FormControl>
                                 <Select
                                     name={field.name}
@@ -167,7 +167,7 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                     rules={{ required: "Select a goal" }}
                     render={({ field }) => (
                         <FormItem>
-                            <FormDescription title={"Campaign goal"} />
+                            <FormDescription label={"Campaign goal"} />
                             <Row align={"start"}>
                                 <div>
                                     <FormControl>

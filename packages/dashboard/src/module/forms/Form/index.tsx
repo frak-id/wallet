@@ -174,16 +174,17 @@ FormControl.displayName = "FormControl";
 const FormDescription = forwardRef<
     HTMLParagraphElement,
     HTMLAttributes<HTMLParagraphElement> & {
+        label?: string | ReactNode;
         classNameTitle?: string;
     }
->(({ title, classNameTitle = "", className = "", children, ...props }, ref) => {
+>(({ label, classNameTitle = "", className = "", children, ...props }, ref) => {
     const { formDescriptionId } = useFormField();
 
     return (
         <>
-            {title && (
+            {label && (
                 <h3 className={`${styles.form__title} ${classNameTitle}`}>
-                    {title}
+                    {label}
                 </h3>
             )}
             <p

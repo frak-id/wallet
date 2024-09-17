@@ -30,7 +30,7 @@ export function ProductFiltering({
             name="productIds"
             render={({ field }) => (
                 <FormItem>
-                    <FormDescription title={"Product"} />
+                    <FormDescription label={"Product"} />
                     <FormControl>
                         <MultiSelect
                             options={productsOptions.map((product) => ({

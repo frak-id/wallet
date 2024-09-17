@@ -4,6 +4,7 @@
 export type NotificationPayload = Readonly<
     {
         title: string;
+        icon?: string;
         data?: {
             url?: string;
         };
@@ -12,7 +13,6 @@ export type NotificationPayload = Readonly<
         actions?: {
             action: string;
             title: string;
-            icon?: string;
         }[];
     } & Omit<NotificationOptions, "data">
 >;

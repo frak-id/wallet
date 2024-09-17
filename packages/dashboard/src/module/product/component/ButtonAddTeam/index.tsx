@@ -205,7 +205,7 @@ function FormPermissions({ disabled }: { disabled: boolean }) {
                 render={({ field }) => (
                     <FormItem>
                         <FormDescription
-                            title={"Permissions"}
+                            label={"Permissions"}
                             className={styles.formPermission__description}
                             classNameTitle={
                                 styles.formPermission__descriptionTitle

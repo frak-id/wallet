@@ -14,7 +14,7 @@ export function FormCheck(form: UseFormReturn<Campaign>) {
     return (
         <Panel title="Check your campaign">
             <FormItem>
-                <FormDescription title={"Campaign Title"} />
+                <FormDescription label={"Campaign Title"} />
                 <Input disabled={true} {...form.control.register("title")} />
             </FormItem>
             <FormAdvertising {...form} />

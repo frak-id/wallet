@@ -11,7 +11,7 @@ export function FormAdvertising(form: UseFormReturn<Campaign>) {
     const advertising = form.getValues("specialCategories");
     return (
         <FormItem>
-            <FormDescription title={"Special advertising category"} />
+            <FormDescription label={"Special advertising category"} />
             {advertising.length === 0 && (
                 <p>
                     My campaign doesn’t belong to any special advertising

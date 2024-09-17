@@ -25,8 +25,12 @@ import { useFormContext } from "react-hook-form";
  */
 export function PushPayloadPanel() {
     const { control, watch } = useFormContext<FormCreatePushNotification>();
-    const title = watch("payload.title");
-    const message = watch("payload.body");
+    const [title, message, icon] = watch([
+        "payload.title",
+        "payload.body",
+        "payload.icon",
+    ]);
+    console.log(title, message, icon);
 
     return (
         <Panel title={"Message"}>
@@ -51,7 +55,14 @@ export function PushPayloadPanel() {
                         }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormDescription title={"Title"} />
+                                <FormDescription
+                                    label={
+                                        <>
+                                            Title
+                                            <span className={"error"}>*</span>
+                                        </>
+                                    }
+                                />
                                 <FormControl>
                                     <Input
                                         length={"medium"}
@@ -82,7 +93,14 @@ export function PushPayloadPanel() {
                         }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormDescription title={"Message"} />
+                                <FormDescription
+                                    label={
+                                        <>
+                                            Message
+                                            <span className={"error"}>*</span>
+                                        </>
+                                    }
+                                />
                                 <FormControl>
                                     <TextArea
                                         length={"medium"}
@@ -106,7 +124,7 @@ export function PushPayloadPanel() {
                         }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormDescription title={"Image"} />
+                                <FormDescription label={"Image"} />
                                 <FormControl>
                                     <Input
                                         length={"medium"}
@@ -129,7 +147,7 @@ export function PushPayloadPanel() {
                         }}
                         render={({ field }) => (
                             <FormItem>
-                                <FormDescription title={"Launch URL"} />
+                                <FormDescription label={"Launch URL"} />
                                 <FormControl>
                                     <Input
                                         length={"medium"}
@@ -150,6 +168,7 @@ export function PushPayloadPanel() {
                                 ? message
                                 : "Discover our brand new product dedicated for Marathon"
                         }
+                        icon={icon}
                     />
                 </Column>
             </Columns>

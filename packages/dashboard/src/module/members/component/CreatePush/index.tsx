@@ -47,6 +47,7 @@ export function CreatePushNotification() {
             payload: {
                 title: "",
                 body: "",
+                icon: "",
                 data: {
                     url: "",
                 },

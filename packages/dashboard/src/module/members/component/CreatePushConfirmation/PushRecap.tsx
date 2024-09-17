@@ -26,7 +26,7 @@ export function PushRecap({
     return (
         <Form {...form}>
             <FormItem>
-                <FormDescription title={"Push Title"} />
+                <FormDescription label={"Push Title"} />
                 <Input
                     length={"big"}
                     disabled={true}
@@ -34,11 +34,12 @@ export function PushRecap({
                 />
             </FormItem>
             <FormItem>
-                <FormDescription title={"Message"} />
+                <FormDescription label={"Message"} />
                 <div className={styles.pushRecap__notificationWrapper}>
                     <PushPreviewNotification
                         title={pushForm.payload.title}
                         message={pushForm.payload.body}
+                        icon={pushForm.payload.icon}
                         className={styles.pushRecap__notification}
                         classNameDate={styles.pushRecap__notificationDate}
                     />
