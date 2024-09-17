@@ -1,6 +1,5 @@
 import { pick } from "radash";
 import { Config } from "sst/node/config";
-import { Function as SstFunction } from "sst/node/function";
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
@@ -35,8 +34,6 @@ const nextConfig = {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
         // APP_URL: Config.NEXUS_DASHBOARD_URL,
-        READ_PUBLIC_KEY_FUNCTION_NAME:
-            SstFunction.ReadPubKeyFunction.functionName,
     },
     transpilePackages: ["lucide-react", "@frak-labs/app-essentials"],
     compiler: {

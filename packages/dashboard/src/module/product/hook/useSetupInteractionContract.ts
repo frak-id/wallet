@@ -1,5 +1,4 @@
 import { interactionValidatorRoles } from "@/context/blockchain/roles";
-import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
     addresses,
@@ -11,8 +10,9 @@ import {
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
 import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
+import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useMutation } from "@tanstack/react-query";
-import { type Hex, encodeFunctionData } from "viem";
+import { type Address, type Hex, encodeFunctionData } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import { simulateContract } from "viem/actions";
 
@@ -62,16 +62,20 @@ export function useSetupInteractionContract() {
                     });
 
                 // Get the manager validator address
-                const { productPubKey } = await getManagedValidatorPublicKey({
-                    productId: productId,
-                });
-                if (!(productPubKey && predictedInteractionAddress)) {
+                const result =
+                    await backendApi.interactions.validatorPublicKey.get({
+                        query: {
+                            productId: productId,
+                        },
+                    });
+                if (!(result?.data?.pubKey && predictedInteractionAddress)) {
                     console.log(
                         "Error getting the product pub key or the predicted interaction address",
-                        { productPubKey, predictedInteractionAddress }
+                        { result, predictedInteractionAddress }
                     );
                     return;
                 }
+                const productPubKey = result.data.pubKey as Address;
 
                 // Add the second tx to allow the managed validator
                 tx.push({
