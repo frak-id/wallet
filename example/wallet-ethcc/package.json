@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@frak-labs/nexus-sdk": "workspace:*",
-    "@frak-labs/shared": "workspace:*",
     "@frak-labs/app-essentials": "workspace:*",
     "lucide-react": "^0.441.0",
     "@radix-ui/react-slot": "^1.1.0",

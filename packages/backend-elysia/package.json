@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "bun-types": "latest",
+    "@types/web-push": "^3.6.3",
     "drizzle-kit": "^0.24.2"
   },
   "module": "src/index.ts",

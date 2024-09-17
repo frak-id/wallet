@@ -1,5 +1,4 @@
 import { addresses, isRunningInProd } from "@frak-labs/app-essentials";
-import { getViemClient } from "@frak-labs/nexus-backend/src/blockchain/client";
 import { Mutex } from "async-mutex";
 import { Elysia, t } from "elysia";
 import { Config } from "sst/node/config";
@@ -52,7 +51,7 @@ export const fundingRoutes = new Elysia({ prefix: "funding" })
                 const executorAccount = privateKeyToAccount(
                     Config.AIRDROP_PRIVATE_KEY as Hex
                 );
-                const txHash = await sendTransaction(getViemClient(), {
+                const txHash = await sendTransaction(client, {
                     account: executorAccount,
                     to: addresses.mUsdToken,
                     data: encodeFunctionData({
