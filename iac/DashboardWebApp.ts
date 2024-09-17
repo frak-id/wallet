@@ -17,7 +17,7 @@ export function DashboardWebApp({ stack }: StackContext) {
         sessionEncryptionKey,
         mongoBusinessUri,
         contentMinterPrivateKey,
-        backendUrl
+        backendUrl,
     } = use(ConfigStack);
     const configs = [
         alchemyApiKey,
@@ -26,7 +26,7 @@ export function DashboardWebApp({ stack }: StackContext) {
         sessionEncryptionKey,
         mongoBusinessUri,
         contentMinterPrivateKey,
-        backendUrl
+        backendUrl,
     ];
 
     // Base domain for our whole app

@@ -47,11 +47,10 @@ export class NewsRepository {
     /**
      * Get a random news
      */
-    public async getRandomNews() {
-        const documents = await this.collection
-            .aggregate<WithId<NewsDocument>>([{ $sample: { size: 1 } }])
+    public async getRandomNews({ count }: { count: number }) {
+        return await this.collection
+            .aggregate<WithId<NewsDocument>>([{ $sample: { size: count } }])
             .toArray();
-        return documents[0];
     }
 
     /**

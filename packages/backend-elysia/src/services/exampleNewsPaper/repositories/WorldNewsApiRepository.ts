@@ -20,7 +20,7 @@ export class WorldNewsApiRepository {
         url.searchParams.append("language", "en");
         url.searchParams.append(
             "categories",
-            "sports,business,technology,science,environment,health"
+            "sports,technology,science,environment,health"
         );
         url.searchParams.append("min-sentiment", "-0.2");
         url.searchParams.append("max-sentiment", "0.9");

@@ -28,7 +28,7 @@ export const newsRoutes = (app: NewsPaperContextApp) =>
                 // Get top 10 positive news
                 const latestPositiveNews =
                     await newsDbRepository.getMostPositiveNews({
-                        limit: 5,
+                        limit: 10,
                         offset: 0,
                     });
 
@@ -37,17 +37,20 @@ export const newsRoutes = (app: NewsPaperContextApp) =>
                 const featuredNews = latestPositiveNews.slice(5, 10);
 
                 // Get a random news
-                const randomNews = await newsDbRepository.getRandomNews();
+                const randomNews = await newsDbRepository.getRandomNews({
+                    count: 2,
+                });
 
-                // Get a hero news
-                const heroNews = await newsDbRepository.getRandomNews();
+                // Get a hero news + quick bytes one
+                const hero = newsDocumentToLightNews(randomNews[0]);
+                const quickByte = newsDocumentToLightNews(randomNews[1]);
 
                 return {
                     positives: positiveNews.map(newsDocumentToLightNews),
                     featured: featuredNews.map(newsDocumentToLightNews),
                     latest: latestNews.map(newsDocumentToLightNews),
-                    quickByte: newsDocumentToLightNews(randomNews),
-                    hero: newsDocumentToLightNews(heroNews),
+                    quickByte,
+                    hero,
                 };
             },
             {
