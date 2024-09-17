@@ -34,7 +34,8 @@
     "radash": "^12.1.0",
     "solady": "^0.0.238",
     "sst": "2.43.6",
-    "viem": "^2.21.6"
+    "viem": "^2.21.6",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "bun-types": "latest",

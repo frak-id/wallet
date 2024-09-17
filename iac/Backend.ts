@@ -151,6 +151,8 @@ function elysiaBackend(
         airdropPrivateKey,
         postgres,
         sessionEncryptionKey,
+        vapidPrivateKey,
+        vapidPublicKey,
     } = use(ConfigStack);
 
     // The service itself
@@ -167,15 +169,21 @@ function elysiaBackend(
         },
         // Bind the secret we will be using
         bind: [
-            sessionEncryptionKey,
+            // some api keys
             mongoExampleUri,
             worldNewsApiKey,
+            // some secrets
+            sessionEncryptionKey,
             airdropPrivateKey,
             masterSecretId,
+            // postgres
             postgres.db,
             postgres.user,
             postgres.host,
             postgres.password,
+            // notif secrets
+            vapidPrivateKey,
+            vapidPublicKey,
         ],
         // Allow llm calls (used for the news-example part)
         permissions: [
