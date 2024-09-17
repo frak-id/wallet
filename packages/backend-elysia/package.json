@@ -13,7 +13,10 @@
     "dev:watch": "bun run --watch src/index.ts",
     "build": "bun build:package",
     "build:package": "bun build src/index.ts --target bun --outdir ./dist",
-    "start": "NODE_ENV=production bun dist/index.js"
+    "start": "NODE_ENV=production bun dist/index.js",
+    "db:studio": "sst bind drizzle-kit studio",
+    "db:generate": "sst bind drizzle-kit generate",
+    "db:migrate": "sst bind drizzle-kit migrate"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.650.0",
@@ -23,15 +26,19 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@tusbar/cache-control": "^1.0.2",
     "async-mutex": "^0.5.0",
+    "drizzle-orm": "^0.33.0",
     "elysia": "1.1.12",
+    "iron-session": "^8.0.3",
     "mongodb": "^6.9.0",
+    "postgres": "^3.4.4",
     "radash": "^12.1.0",
     "solady": "^0.0.238",
     "sst": "2.43.6",
     "viem": "^2.21.6"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "drizzle-kit": "^0.24.2"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"

@@ -1,6 +1,6 @@
 import { Config } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
-import { getBackendUrl, getWalletUrl } from "./utils";
+import { getBackendUrl, getWalletUrl, isProdStack } from "./utils";
 
 /**
  * Define the app wide configs
@@ -36,6 +36,17 @@ export function ConfigStack({ stack }: StackContext) {
         value: getBackendUrl(stack),
     });
 
+    const postgres = {
+        host: new Config.Secret(stack, "POSTGRES_HOST"),
+        user: new Config.Parameter(stack, "POSTGRES_USER", {
+            value: isProdStack(stack) ? "backend" : "backend-dev",
+        }),
+        password: new Config.Secret(stack, "POSTGRES_PASSWORD"),
+        db: new Config.Parameter(stack, "POSTGRES_DB", {
+            value: isProdStack(stack) ? "backend" : "backend_dev",
+        }),
+    };
+
     return {
         sessionEncryptionKey,
         mongoExampleUri,
@@ -52,5 +63,6 @@ export function ConfigStack({ stack }: StackContext) {
         vapidPublicKey,
         vapidPrivateKey,
         backendUrl,
+        postgres,
     };
 }

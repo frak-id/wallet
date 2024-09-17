@@ -1,8 +1,7 @@
 "use client";
-
-import { savePushToken } from "@/context/notification/action/save";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
+import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
 
@@ -49,7 +48,20 @@ export function useSubscribeToPushNotification(
                 subscription.toJSON()
             );
             setSubscription(subscription);
-            await savePushToken({ subscription: subscription.toJSON() });
+
+            // Save this new subscription
+            const jsonSubscription = subscription.toJSON();
+            await backendApi.nexus.pushToken.save.post({
+                subscription: {
+                    endpoint: jsonSubscription.endpoint ?? "no-endpoint",
+                    keys: {
+                        p256dh: jsonSubscription.keys?.p256dh ?? "no-p256",
+                        auth: jsonSubscription.keys?.auth ?? "no-auth",
+                    },
+                    expirationTime:
+                        jsonSubscription.expirationTime ?? undefined,
+                },
+            });
         },
     });
 

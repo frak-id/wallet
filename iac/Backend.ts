@@ -145,8 +145,13 @@ function elysiaBackend(
     const { vpc, cluster, alb } = services;
 
     // A few secrets we will be using
-    const { mongoExampleUri, worldNewsApiKey, airdropPrivateKey } =
-        use(ConfigStack);
+    const {
+        mongoExampleUri,
+        worldNewsApiKey,
+        airdropPrivateKey,
+        postgres,
+        sessionEncryptionKey,
+    } = use(ConfigStack);
 
     // The service itself
     const elysiaService = new Service(stack, "ElysiaService", {
@@ -162,10 +167,15 @@ function elysiaBackend(
         },
         // Bind the secret we will be using
         bind: [
+            sessionEncryptionKey,
             mongoExampleUri,
             worldNewsApiKey,
             airdropPrivateKey,
             masterSecretId,
+            postgres.db,
+            postgres.user,
+            postgres.host,
+            postgres.password,
         ],
         // Allow llm calls (used for the news-example part)
         permissions: [

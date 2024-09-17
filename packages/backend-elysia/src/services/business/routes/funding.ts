@@ -1,7 +1,7 @@
 import { addresses, isRunningInProd } from "@frak-labs/app-essentials";
 import { getViemClient } from "@frak-labs/nexus-backend/src/blockchain/client";
 import { Mutex } from "async-mutex";
-import { t } from "elysia";
+import { Elysia, t } from "elysia";
 import { Config } from "sst/node/config";
 import {
     type Hex,
@@ -12,21 +12,20 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { readContract, sendTransaction } from "viem/actions";
-import type { BlockchainContextApp } from "../../../common/context";
-
-/**
- * Mutex for funding reload
- */
-const fundingReloadMutex = new Mutex();
+import { blockchainContext } from "../../../common/context";
 
 /**
  * Funding related routes
  * @param app
  */
-export const fundingRoutes = (app: BlockchainContextApp) =>
-    app.post(
-        "/funding/freeReload",
-        async ({ body: { campaign }, client }) => {
+export const fundingRoutes = new Elysia({ prefix: "funding" })
+    .use(blockchainContext())
+    .decorate({
+        fundingReloadMutex: new Mutex(),
+    })
+    .post(
+        "/freeReload",
+        async ({ body: { campaign }, client, fundingReloadMutex }) => {
             // Check if we are in production
             if (isRunningInProd) {
                 throw new Error("Not allowed in production");

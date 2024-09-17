@@ -2,6 +2,7 @@
 
 import { viemClient } from "@/context/blockchain/provider";
 import type { AuthSession, AuthSessionClient } from "@/types/AuthSession";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import { getIronSession } from "iron-session";
 import type { SessionOptions } from "iron-session";
 import { cookies, headers } from "next/headers";
@@ -22,6 +23,7 @@ const sessionOptions: SessionOptions = {
     ttl: 60 * 60 * 24 * 7, // 1 week
     cookieOptions: {
         secure: true,
+        domain: isRunningLocally ? "localhost" : ".frak.id",
     },
 };
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { currentChain } from "@/context/blockchain/provider";
-import { savePushToken } from "@/context/notification/action/save";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
@@ -10,6 +9,7 @@ import { ThemeListener } from "@/module/settings/atoms/theme";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type { InteractionSession, Session } from "@/types/Session";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
+import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
@@ -128,8 +128,20 @@ function SetupServiceWorker() {
                 return;
             }
             jotaiStore.set(subscriptionAtom, subscription);
+
             // Save this new subscription
-            await savePushToken({ subscription: subscription.toJSON() });
+            const jsonSubscription = subscription.toJSON();
+            await backendApi.nexus.pushToken.save.post({
+                subscription: {
+                    endpoint: jsonSubscription.endpoint ?? "no-endpoint",
+                    keys: {
+                        p256dh: jsonSubscription.keys?.p256dh ?? "no-p256",
+                        auth: jsonSubscription.keys?.auth ?? "no-auth",
+                    },
+                    expirationTime:
+                        jsonSubscription.expirationTime ?? undefined,
+                },
+            });
         };
 
         loadServiceWorker();

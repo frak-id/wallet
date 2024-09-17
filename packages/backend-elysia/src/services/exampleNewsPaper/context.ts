@@ -4,7 +4,6 @@ import { NewsRepository } from "./repositories/NewsRepository";
 
 /**
  * Elysia plugin with the news paper context
- * @param app
  */
 export async function newsPaperContext(app: Elysia) {
     // Get the db repositories

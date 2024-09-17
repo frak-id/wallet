@@ -1,6 +1,7 @@
 "use server";
 
 import type { Session } from "@/types/Session";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import { getIronSession } from "iron-session";
 import type { SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
@@ -15,6 +16,7 @@ const sessionOptions: SessionOptions = {
     cookieOptions: {
         secure: true,
         sameSite: "none",
+        domain: isRunningLocally ? "localhost" : ".frak.id",
     },
 };
 

@@ -1,6 +1,6 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
-import { business, exampleNewsPaper, interactions } from "./services";
+import { business, exampleNewsPaper, interactions, nexus } from "./services";
 
 const app = new Elysia()
     .use(cors())
@@ -9,6 +9,7 @@ const app = new Elysia()
     .use(exampleNewsPaper)
     // Business logics
     .use(business)
+    .use(nexus)
     .use(interactions)
     .listen(Number.parseInt(process.env.PORT ?? "3030"));
 
