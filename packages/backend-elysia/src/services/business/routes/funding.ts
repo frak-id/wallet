@@ -13,7 +13,7 @@ import { blockchainContext } from "../../../common/context";
  * @param app
  */
 export const fundingRoutes = new Elysia({ prefix: "funding" })
-    .use(blockchainContext())
+    .use(blockchainContext)
     .decorate({
         fundingReloadMutex: new Mutex(),
     })
