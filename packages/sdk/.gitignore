@@ -119,7 +119,6 @@ out
 
 .nuxt
 dist
-dist-bundle
 
 # Gatsby files
 

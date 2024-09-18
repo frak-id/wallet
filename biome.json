@@ -6,7 +6,6 @@
             "_esm",
             "_types",
             "dist",
-            "dist-bundle",
             "node_modules/**",
             ".sst/**",
             ".open-next/**",
