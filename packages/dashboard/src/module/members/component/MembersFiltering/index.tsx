@@ -84,12 +84,9 @@ export function MembersFiltering({
                 data.firstInteractionTimestamp
             );
 
-            const allValues = filterOutUndefined(form.getValues());
-            setFiltersDirtyCount(allValues.length);
-
             onFilterSet(data);
         },
-        [onFilterSet, form, setFiltersDirtyCount]
+        [onFilterSet]
     );
 
     const commonProps = {
@@ -170,31 +167,3 @@ const fixFirstInteractionTimestamp = (
     }
     return firstInteractionTimestamp;
 };
-
-/**
- * Filter out undefined values from the object
- * @param obj
- */
-function filterOutUndefined(obj: FormMembersFiltering): string[] {
-    const result: string[] = [];
-
-    for (const key in obj) {
-        // @ts-ignore
-        const value = obj[key];
-
-        // Check if min/max are defined, or if the value is an array and not empty
-        if (Array.isArray(value) && value.length > 0) {
-            result.push(key);
-        } else if (value && typeof value === "object") {
-            // Check if min/max are defined and not undefined
-            if (
-                ("min" in value && value.min !== undefined) ||
-                ("max" in value && value.max !== undefined)
-            ) {
-                result.push(key);
-            }
-        }
-    }
-
-    return result;
-}
