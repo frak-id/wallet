@@ -39,7 +39,7 @@ export function MembersFiltering({
     const mappedInitialValue = useMemo(() => {
         if (!initialValue?.rewards) return initialValue;
 
-        // Map min and mnax rewards if present
+        // Map min and max rewards if present
         const { min, max } = initialValue.rewards;
         return {
             ...initialValue,
@@ -54,7 +54,6 @@ export function MembersFiltering({
     const form = useForm<FormMembersFiltering>({
         values: mappedInitialValue,
         defaultValues: {},
-        disabled,
     });
 
     function resetForm() {
@@ -93,12 +92,17 @@ export function MembersFiltering({
         [onFilterSet, form, setFiltersDirtyCount]
     );
 
+    const commonProps = {
+        disabled,
+        onSubmit,
+    };
+
     return (
         <Form {...form}>
-            <ProductFiltering onSubmit={onSubmit} />
-            <MembershipDateFiltering onSubmit={onSubmit} />
-            <InteractionsFiltering onSubmit={onSubmit} />
-            <RewardFiltering onSubmit={onSubmit} />
+            <ProductFiltering {...commonProps} />
+            <MembershipDateFiltering {...commonProps} />
+            <InteractionsFiltering {...commonProps} />
+            <RewardFiltering {...commonProps} />
 
             <Row>
                 {showResetButton && (

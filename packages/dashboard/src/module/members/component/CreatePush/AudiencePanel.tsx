@@ -7,12 +7,11 @@ import {
 import { Panel } from "@/module/common/component/Panel";
 import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
 import { selectedMembersAtom } from "@/module/members/atoms/selectedMembers";
-import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/index";
+import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
 import { Button } from "@module/component/Button";
 import { useMutation } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
-import { useSetAtom } from "jotai/index";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import type { Address } from "viem";

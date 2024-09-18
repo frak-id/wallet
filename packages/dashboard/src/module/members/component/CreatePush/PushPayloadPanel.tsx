@@ -8,8 +8,8 @@ import {
     FormItem,
     FormMessage,
 } from "@/module/forms/Form";
+import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 import { PushPreview } from "@/module/members/component/CreatePush/PushPreview";
-import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/index";
 import { Column, Columns } from "@module/component/Columns";
 import { Input } from "@module/component/forms/Input";
 import { TextArea } from "@module/component/forms/TextArea";

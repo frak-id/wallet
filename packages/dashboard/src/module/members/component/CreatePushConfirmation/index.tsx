@@ -1,3 +1,5 @@
+"use client";
+
 import {
     sendPushForFilter,
     sendPushNotification,
@@ -13,8 +15,7 @@ import { PushRecap } from "@/module/members/component/CreatePushConfirmation/Pus
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
-import { useAtom } from "jotai";
-import { useSetAtom } from "jotai/index";
+import { useAtom, useSetAtom } from "jotai";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 

@@ -7,12 +7,13 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { MultiSelect } from "@/module/forms/MultiSelect";
-import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering/index";
+import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import { useFormContext } from "react-hook-form";
 
 export function ProductFiltering({
+    disabled,
     onSubmit,
-}: { onSubmit: (data: FormMembersFiltering) => void }) {
+}: { disabled?: boolean; onSubmit: (data: FormMembersFiltering) => void }) {
     const { isEmpty, products, isPending } = useMyProducts();
     const productsOptions = [
         ...(products?.operator ?? []),
@@ -33,6 +34,7 @@ export function ProductFiltering({
                     <FormDescription label={"Product"} />
                     <FormControl>
                         <MultiSelect
+                            disabled={disabled}
                             options={productsOptions.map((product) => ({
                                 name: product.name,
                                 value: product.id.toString(),

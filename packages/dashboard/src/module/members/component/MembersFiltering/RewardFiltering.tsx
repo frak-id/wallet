@@ -5,63 +5,67 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering/index";
+import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { Input } from "@module/component/forms/Input";
+import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import styles from "./index.module.css";
 
 export function RewardFiltering({
+    disabled,
     onSubmit,
-}: { onSubmit: (data: FormMembersFiltering) => void }) {
-    const { control, formState, handleSubmit } =
+}: { disabled?: boolean; onSubmit: (data: FormMembersFiltering) => void }) {
+    const { control, handleSubmit, setValue } =
         useFormContext<FormMembersFiltering>();
     const currentRewards = useWatch({ control, name: "rewards" });
     const rewardsInputDisabled = currentRewards === undefined;
     const isAllUndefined =
         currentRewards?.min === undefined && currentRewards?.max === undefined;
+    const [checked, setIsChecked] = useState<boolean | "indeterminate">(
+        "indeterminate"
+    );
+
+    useEffect(() => {
+        setIsChecked(!rewardsInputDisabled);
+    }, [rewardsInputDisabled]);
 
     /**
      * If form is disabled and all values are undefined, return null to hide the component
      */
-    if (formState.disabled && isAllUndefined) return null;
+    if (disabled && isAllUndefined) return null;
 
     return (
-        <div>
-            <FormField
-                control={control}
-                name={"rewards"}
-                render={({ field }) => (
-                    <FormItem variant={"checkbox"}>
-                        <Checkbox
-                            checked={!rewardsInputDisabled}
-                            disabled={formState.disabled}
-                            id={"reward-filters"}
-                            onCheckedChange={(checked) => {
-                                field.onChange(
-                                    checked
-                                        ? { min: 1, max: undefined }
-                                        : undefined
-                                );
-                                !checked && handleSubmit(onSubmit)();
-                            }}
-                        />
-                        <FormLabel
-                            weight={"medium"}
-                            variant={"checkbox"}
-                            selected={!!field.value}
-                            htmlFor={"reward-filters"}
-                        >
-                            Rewards
-                        </FormLabel>
-                    </FormItem>
-                )}
-            />
+        <>
+            <FormItem variant={"checkbox"}>
+                <Checkbox
+                    checked={checked === true}
+                    disabled={disabled}
+                    id={"reward-filters"}
+                    onCheckedChange={(checked) => {
+                        setValue(
+                            "rewards",
+                            checked
+                                ? { min: undefined, max: undefined }
+                                : undefined
+                        );
+                        !checked && handleSubmit(onSubmit)();
+                    }}
+                />
+                <FormLabel
+                    weight={"medium"}
+                    variant={"checkbox"}
+                    selected={checked === true}
+                    htmlFor={"reward-filters"}
+                >
+                    Rewards
+                </FormLabel>
+            </FormItem>
             <Row className={styles.formFromTo__row}>
                 <FormField
                     control={control}
                     name={"rewards.min"}
-                    disabled={rewardsInputDisabled || formState.disabled}
+                    disabled={rewardsInputDisabled || disabled}
                     rules={{
                         required: false,
                         min: {
@@ -94,7 +98,7 @@ export function RewardFiltering({
                 <FormField
                     control={control}
                     name={"rewards.max"}
-                    disabled={rewardsInputDisabled || formState.disabled}
+                    disabled={rewardsInputDisabled || disabled}
                     rules={{
                         required: false,
                         min: {
@@ -141,6 +145,6 @@ export function RewardFiltering({
                     )}
                 />
             </Row>
-        </div>
+        </>
     );
 }
