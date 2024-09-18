@@ -2,6 +2,7 @@
   "name": "@frak-labs/backend-elysia",
   "description": "Elysia Backend for the nexus api",
   "version": "0.0.1",
+  "type": "module",
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",

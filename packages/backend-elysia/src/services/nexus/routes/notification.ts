@@ -1,10 +1,10 @@
 import { Mutex } from "async-mutex";
 import { inArray, lt } from "drizzle-orm";
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
 import { parallel } from "radash";
 import { Config } from "sst/node/config";
-import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
+import { t } from "../../../common";
 import { nexusContext } from "../context";
 import { pushTokens } from "../db/schema";
 
@@ -26,7 +26,7 @@ export const notificationRoutes = new Elysia({ prefix: "notification" })
 
                 // Find every push tokens for the given wallets
                 const tokens = await nexusDb.query.pushTokens.findMany({
-                    where: inArray(pushTokens.wallet, wallets as Address[]),
+                    where: inArray(pushTokens.wallet, wallets),
                 });
                 if (tokens.length === 0) {
                     console.log("No push tokens found for the given wallets");
@@ -60,7 +60,7 @@ export const notificationRoutes = new Elysia({ prefix: "notification" })
             }),
         {
             body: t.Object({
-                wallets: t.Array(t.String()),
+                wallets: t.Array(t.Address()),
                 payload: t.Object({
                     title: t.String(),
                     body: t.String(),

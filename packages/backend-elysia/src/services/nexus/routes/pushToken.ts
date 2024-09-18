@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { Elysia, t } from "elysia";
-import type { Address } from "viem";
+import { Elysia } from "elysia";
+import { t } from "../../../common";
 import { authNexusUser } from "../context";
 import { pushTokens } from "../db/schema";
 
@@ -16,7 +16,7 @@ export const pushTokenRoutes = new Elysia({ prefix: "pushToken" })
             await nexusDb
                 .insert(pushTokens)
                 .values({
-                    wallet: session.wallet.address as Address,
+                    wallet: session.wallet.address,
                     endpoint: body.subscription.endpoint,
                     keyP256dh: body.subscription.keys.p256dh,
                     keyAuth: body.subscription.keys.auth,

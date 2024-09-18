@@ -214,7 +214,7 @@ function ManagedInteractionValidator({
             if (!productResult?.data?.pubKey) {
                 return null;
             }
-            const validatorPublicKey = productResult.data.pubKey as Address;
+            const validatorPublicKey = productResult.data.pubKey;
             const hasValidatorRoles = await readContract(viemClient, {
                 abi: productInteractionDiamondAbi,
                 address: interactionContract,
@@ -223,8 +223,8 @@ function ManagedInteractionValidator({
             });
             return {
                 validatorPublicKey,
-                interactionExecutorPubKey: interactionExecutorResult?.data
-                    ?.pubKey as Address | undefined,
+                interactionExecutorPubKey:
+                    interactionExecutorResult?.data?.pubKey,
                 hasValidatorRoles,
             };
         },

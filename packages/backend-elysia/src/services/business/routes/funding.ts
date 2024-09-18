@@ -1,16 +1,11 @@
 import { addresses, isRunningInProd } from "@frak-labs/app-essentials";
 import { Mutex } from "async-mutex";
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
 import { Config } from "sst/node/config";
-import {
-    type Hex,
-    encodeFunctionData,
-    erc20Abi,
-    isAddress,
-    parseEther,
-} from "viem";
+import { type Hex, encodeFunctionData, erc20Abi, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { readContract, sendTransaction } from "viem/actions";
+import { t } from "../../../common";
 import { blockchainContext } from "../../../common/context";
 
 /**
@@ -28,11 +23,6 @@ export const fundingRoutes = new Elysia({ prefix: "funding" })
             // Check if we are in production
             if (isRunningInProd) {
                 throw new Error("Not allowed in production");
-            }
-
-            // Check if the campaign is a valid address
-            if (!isAddress(campaign)) {
-                throw new Error("Invalid campaign");
             }
 
             // Check the current campaign balance (if more than 1000 ether don't reload it)
@@ -67,7 +57,7 @@ export const fundingRoutes = new Elysia({ prefix: "funding" })
         },
         {
             body: t.Object({
-                campaign: t.String(),
+                campaign: t.Address(),
             }),
         }
     );

@@ -12,7 +12,7 @@ import {
 } from "@frak-labs/nexus-sdk/react";
 import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useMutation } from "@tanstack/react-query";
-import { type Address, type Hex, encodeFunctionData } from "viem";
+import { type Hex, encodeFunctionData } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import { simulateContract } from "viem/actions";
 
@@ -75,7 +75,7 @@ export function useSetupInteractionContract() {
                     );
                     return;
                 }
-                const productPubKey = result.data.pubKey as Address;
+                const productPubKey = result.data.pubKey;
 
                 // Add the second tx to allow the managed validator
                 tx.push({

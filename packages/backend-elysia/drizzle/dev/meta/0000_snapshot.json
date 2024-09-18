@@ -1,5 +1,5 @@
 {
-    "id": "a7a92f22-6f91-4bd2-b462-94ca363c5bbe",
+    "id": "d6a9ca4a-b16c-4770-aeab-3f6b7fb3d130",
     "prevId": "00000000-0000-0000-0000-000000000000",
     "version": "7",
     "dialect": "postgresql",
@@ -16,7 +16,7 @@
                 },
                 "wallet": {
                     "name": "wallet",
-                    "type": "varchar(255)",
+                    "type": "bytea",
                     "primaryKey": false,
                     "notNull": true
                 },
@@ -71,7 +71,13 @@
             },
             "foreignKeys": {},
             "compositePrimaryKeys": {},
-            "uniqueConstraints": {}
+            "uniqueConstraints": {
+                "unique_push_token": {
+                    "name": "unique_push_token",
+                    "nullsNotDistinct": false,
+                    "columns": ["wallet", "endpoint", "key_p256dh"]
+                }
+            }
         }
     },
     "enums": {},

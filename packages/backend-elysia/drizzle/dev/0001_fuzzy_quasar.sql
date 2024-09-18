@@ -1,1 +1,0 @@
-ALTER TABLE "push_tokens" ADD CONSTRAINT "unique_push_token" UNIQUE("wallet","endpoint","key_p256dh");

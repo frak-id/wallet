@@ -21,6 +21,7 @@ export async function sendPushNotification({
     if (wallets.length === 0) {
         throw new Error("No wallets given");
     }
+
     // Send the push request
     await backendApi.nexus.notification.send.post({
         wallets,
