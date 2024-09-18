@@ -69,6 +69,7 @@
     "format": "biome check --write .",
     "clean": "rimraf dist",
     "build": "tsup --splitting",
+    "build:bundle": "tsup --config tsup.config.bundle.ts",
     "build:watch": "tsup --watch --splitting --format esm"
   },
   "peerDependencies": {
