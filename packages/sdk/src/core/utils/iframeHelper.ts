@@ -6,13 +6,13 @@ export const baseIframeProps = {
     name: "nexus-wallet",
     allow: "publickey-credentials-get *; clipboard-write; web-share *",
     style: {
-        width: "100%",
-        height: "100%",
+        width: "0",
+        height: "0",
         border: "0",
-        position: "fixed",
+        position: "absolute",
         zIndex: 1000,
-        top: "-10000px",
-        left: "-10000px",
+        top: "-1000px",
+        left: "-1000px",
     },
 };
 
@@ -57,12 +57,19 @@ export function changeIframeVisibility({
     isVisible,
 }: { iframe: HTMLIFrameElement; isVisible: boolean }) {
     if (!isVisible) {
-        iframe.style.top = "-10000px";
-        iframe.style.left = "-10000px";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+        iframe.style.position = "fixed";
+        iframe.style.top = "-1000px";
+        iframe.style.left = "-1000px";
         return;
     }
 
+    iframe.style.position = "fixed";
     iframe.style.top = "0";
     iframe.style.left = "0";
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
     iframe.style.pointerEvents = "auto";
 }
