@@ -15,6 +15,9 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { MultiSelect } from "@/module/forms/MultiSelect";
+import { productTypesLabel } from "@/module/product/utils/productTypes";
+import { productTypesMask } from "@frak-labs/nexus-sdk/core";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
@@ -32,6 +35,7 @@ import styles from "./index.module.css";
 type ProductNew = {
     name: string;
     domain: string;
+    productTypes: string[];
 };
 
 const isModalOpenAtom = atom(false);
@@ -54,6 +58,7 @@ export function ButtonAddProduct() {
         defaultValues: {
             name: "",
             domain: "",
+            productTypes: [],
         },
     });
 
@@ -93,6 +98,7 @@ export function ButtonAddProduct() {
                                 <NewProductVerify
                                     name={form.getValues().name}
                                     domain={form.getValues().domain}
+                                    productTypes={form.getValues().productTypes}
                                 />
                             )}
                         </>
@@ -115,7 +121,7 @@ export function ButtonAddProduct() {
                         step === 1 ? (
                             <Button
                                 variant={"information"}
-                                disabled={!success}
+                                disabled={!(success && form.formState.isValid)}
                                 onClick={() => setStep(2)}
                             >
                                 Next
@@ -224,6 +230,38 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
             />
             <FormField
                 control={form.control}
+                name="productTypes"
+                rules={{
+                    required: "Select a product type",
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Select a product type
+                        </FormLabel>
+                        <MultiSelect
+                            options={Object.keys(productTypesMask).map(
+                                (key) => ({
+                                    name: productTypesLabel[
+                                        key as keyof typeof productTypesLabel
+                                    ].name,
+                                    value: key,
+                                })
+                            )}
+                            onValueChange={(value) => {
+                                const values = value
+                                    .map((v) => v.value)
+                                    .filter((v) => v !== undefined);
+                                field.onChange(values);
+                            }}
+                            placeholder="Select a product type"
+                            {...field}
+                        />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
                 name="domain"
                 rules={{
                     required: "Missing domain name",
@@ -280,9 +318,14 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
  * Form post creation, once everything is verified
  * @param name
  * @param domain
+ * @param productTypes
  * @constructor
  */
-function NewProductVerify({ name, domain }: { name: string; domain: string }) {
+function NewProductVerify({
+    name,
+    domain,
+    productTypes,
+}: { name: string; domain: string; productTypes: string[] }) {
     const parsedDomain = parseUrl(domain);
     const queryClient = useQueryClient();
     const setIsMinting = useSetAtom(isMintingAtom);
@@ -342,8 +385,9 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
                     triggerMintMyContent({
                         name,
                         domain: parsedDomain.hostname,
-                        // todo: hardcoded type, should be in the sdk
-                        productTypes: 1n << 2n,
+                        productTypes: productTypes.map(
+                            (productType) => productTypesMask[productType]
+                        ),
                     });
                 }}
                 disabled={!isIdle}
