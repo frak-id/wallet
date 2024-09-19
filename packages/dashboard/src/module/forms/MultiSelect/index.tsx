@@ -25,7 +25,8 @@ type Option = {
     value?: string;
 };
 
-interface MultiSelectProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface MultiSelectProps
+    extends ButtonHTMLAttributes<HTMLButtonElement> {
     options: Option[];
     onValueChange: (value: Option[]) => void;
     placeholder?: string;
