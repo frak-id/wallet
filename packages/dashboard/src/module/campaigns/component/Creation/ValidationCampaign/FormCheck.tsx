@@ -1,4 +1,3 @@
-import { CampaignPromotedContent } from "@/module/campaigns/component/CampaignDetails/CampaignPromotedContent";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
@@ -22,9 +21,6 @@ export function FormCheck(form: UseFormReturn<Campaign>) {
             <FormGoal {...form} />
             <FormBudgetRow {...form} isCheckCampaign={true} />
             <FormPriceRange {...form} disabled={true} />
-            <CampaignPromotedContent
-                promotedContents={form.getValues("promotedContents") ?? []}
-            />
         </Panel>
     );
 }

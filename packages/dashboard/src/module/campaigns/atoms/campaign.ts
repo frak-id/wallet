@@ -26,7 +26,6 @@ const initialValues: Campaign = {
         registration: { from: 0, to: 0 },
         purchase: { from: 0, to: 0 },
     },
-    promotedContents: [],
 };
 
 /**

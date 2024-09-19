@@ -3,7 +3,6 @@ import type { Address, Hex } from "viem";
 
 type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
 type SpecialCategory = "credit" | "jobs" | "housing" | "social";
-type ContentType = "text" | "video" | "product" | "others";
 type Budget = "daily" | "weekly" | "monthly" | "global";
 
 /**
@@ -30,7 +29,6 @@ export type Campaign = {
         registration: { from: number; to: number };
         purchase: { from: number; to: number };
     };
-    promotedContents: ContentType[];
 };
 
 /**
