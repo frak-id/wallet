@@ -10,9 +10,11 @@ export const productTypes = {
     // content type
     dapp: 1,
     press: 2,
+    webshop: 3,
 
     // feature type
     referral: 30,
+    purchase: 31,
 };
 
 /**

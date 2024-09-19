@@ -1,14 +1,7 @@
 import { type Hex, concatHex, pad, toHex } from "viem";
+import { interactionTypes } from "../constants/interactionTypes";
 import { productTypes } from "../constants/productTypes";
 import type { PreparedInteraction } from "../types";
-
-/**
- * All the press interactions actions
- */
-export const PressActionsSelector = {
-    OpenArticle: "0xc0a24ffb",
-    ReadArticle: "0xd5bd0fbe",
-} as const;
 
 /**
  * Encode an open article interaction
@@ -16,7 +9,7 @@ export const PressActionsSelector = {
  */
 function openArticle({ articleId }: { articleId: Hex }): PreparedInteraction {
     const interactionData = concatHex([
-        PressActionsSelector.OpenArticle,
+        interactionTypes.press.openArticle,
         pad(articleId, { size: 32 }),
     ]);
     return {
@@ -31,7 +24,7 @@ function openArticle({ articleId }: { articleId: Hex }): PreparedInteraction {
  */
 function readArticle({ articleId }: { articleId: Hex }): PreparedInteraction {
     const interactionData = concatHex([
-        PressActionsSelector.ReadArticle,
+        interactionTypes.press.readArticle,
         pad(articleId, { size: 32 }),
     ]);
     return {

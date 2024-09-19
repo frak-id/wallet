@@ -37,8 +37,17 @@ export const productTypesLabel: Record<
         name: "Press",
         description: "Track reader engagement with articles and content.",
     },
+    webshop: {
+        name: "WebShop",
+        description:
+            "Track user engagement with product view and basket actions.",
+    },
     referral: {
         name: "Referral",
         description: "Enable and measure user referral activities.",
+    },
+    purchase: {
+        name: "Purchase",
+        description: "Enable purchase tracking.",
     },
 };
