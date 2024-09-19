@@ -52,7 +52,7 @@
     "react-drag-drop-files": "^2.3.10",
     "react-hook-form": "^7.53.0",
     "react-loading-skeleton": "^3.4.0",
-    "vaul": "^0.9.3",
+    "vaul": "^0.9.4",
     "viem": "^2.21.6",
     "wagmi": "^2.12.11"
   },
