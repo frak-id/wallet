@@ -1,6 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
+    target: "es2022",
     // All of our entry-points
     entry: ["src/bundle.ts"],
     outDir: "dist/bundle",
