@@ -20,6 +20,13 @@ export function decodeProductTypesMask(mask: bigint): ProductTypesKey[] {
 }
 
 /**
+ * Encode an array of product types keys into a bit mask
+ */
+export function encodeProductTypesMask(types: ProductTypesKey[]): bigint {
+    return types.reduce((acc, type) => acc | productTypesMask[type], 0n);
+}
+
+/**
  * The keys for each product types
  */
 export const productTypesLabel: Record<
