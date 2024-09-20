@@ -164,6 +164,10 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                                                 key as keyof typeof productTypesLabel
                                             ].name,
                                             value: key,
+                                            tooltip:
+                                                productTypesLabel[
+                                                    key as keyof typeof productTypesLabel
+                                                ].description,
                                         }))}
                                         onValueChange={(value) => {
                                             const values = value
