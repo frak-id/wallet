@@ -78,19 +78,20 @@ export async function getCreationData(campaign: Campaign) {
         throw new Error("Product id is required");
     }
 
-    const clickRewards = campaign?.rewards?.click;
-    if (!clickRewards) {
-        throw new Error("Click reward is required");
-    }
-    if (clickRewards.from > clickRewards.to) {
-        throw new Error("Click reward from must be lower than to");
-    }
-    if (clickRewards.from < 0) {
-        throw new Error("Click reward from must be positive");
-    }
+    // const clickRewards = campaign?.rewards?.click;
+    // if (!clickRewards) {
+    //     throw new Error("Click reward is required");
+    // }
+    // if (clickRewards.from > clickRewards.to) {
+    //     throw new Error("Click reward from must be lower than to");
+    // }
+    // if (clickRewards.from < 0) {
+    //     throw new Error("Click reward from must be positive");
+    // }
 
     // Compute the initial reward for a referral (avg between min and max)
-    const initialReward = Math.floor((clickRewards.from + clickRewards.to) / 2);
+    // const initialReward = Math.floor((clickRewards.from + clickRewards.to) / 2);
+    const initialReward = 0;
 
     // Compute the cap period
     let capPeriod = 0;

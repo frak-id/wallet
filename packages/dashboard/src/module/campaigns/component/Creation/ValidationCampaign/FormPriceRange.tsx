@@ -1,4 +1,3 @@
-import { FormFromTo } from "@/module/campaigns/component/Creation/MetricsCampaign/FormFromTo";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
@@ -10,7 +9,7 @@ export function FormPriceRange(
     return (
         <FormItem>
             <FormDescription label={"Price Range"} />
-            <FormFromTo
+            {/*<FormFromTo
                 id={"click"}
                 label={"Click"}
                 form={form}
@@ -66,7 +65,7 @@ export function FormPriceRange(
                 }}
                 hideIfAllZero={true}
                 disabled={disabled}
-            />
+            />*/}
         </FormItem>
     );
 }

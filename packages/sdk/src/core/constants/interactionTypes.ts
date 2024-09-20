@@ -1,4 +1,11 @@
 /**
+ * The keys for each interaction types
+ */
+export type InteractionTypesKey = {
+    [K in keyof typeof interactionTypes]: keyof (typeof interactionTypes)[K];
+}[keyof typeof interactionTypes];
+
+/**
  * Each interactions types according to the product types
  */
 export const interactionTypes = {

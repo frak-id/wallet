@@ -1,3 +1,4 @@
+import type { InteractionTypesKey } from "@frak-labs/nexus-sdk/core";
 import type { TCountryCode } from "countries-list";
 import type { Address, Hex } from "viem";
 
@@ -24,11 +25,7 @@ export type Campaign = {
         dateStart: Date;
         dateEnd?: Date;
     };
-    rewards: {
-        click: { from: number; to: number };
-        registration: { from: number; to: number };
-        purchase: { from: number; to: number };
-    };
+    rewards: Record<InteractionTypesKey, { from: number; to: number }>;
 };
 
 /**

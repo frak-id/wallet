@@ -8,10 +8,11 @@ import { readContract } from "viem/actions";
 /**
  * Hook to get the product metadata
  */
-export function useProductMetadata({ productId }: { productId: Hex }) {
+export function useProductMetadata({ productId }: { productId?: Hex }) {
     return useQuery({
         queryKey: ["product", "metadata", productId],
         queryFn: async () => {
+            if (!productId) return;
             const metadata = await readContract(viemClient, {
                 address: addresses.productRegistry,
                 abi: productRegistryAbi,
@@ -23,5 +24,6 @@ export function useProductMetadata({ productId }: { productId: Hex }) {
                 productTypes: decodeProductTypesMask(metadata.productTypes),
             };
         },
+        enabled: !!productId,
     });
 }
