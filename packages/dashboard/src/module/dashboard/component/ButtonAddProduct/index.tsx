@@ -249,6 +249,10 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
                                         key as keyof typeof productTypesLabel
                                     ].name,
                                     value: key,
+                                    tooltip:
+                                        productTypesLabel[
+                                            key as keyof typeof productTypesLabel
+                                        ].description,
                                 })
                             )}
                             onValueChange={(value) => {
