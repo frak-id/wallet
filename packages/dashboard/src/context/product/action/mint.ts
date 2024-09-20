@@ -2,7 +2,9 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import { isDnsTxtRecordSet } from "@/context/product/action/verifyDomain";
+import { encodeProductTypesMask } from "@/module/product/utils/productTypes";
 import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
+import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
 import { type Hex, encodeFunctionData, keccak256, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
@@ -25,7 +27,7 @@ export async function mintProduct({
 }: {
     name: string;
     domain: string;
-    productTypes: bigint;
+    productTypes: ProductTypesKey[];
 }) {
     const session = await getSafeSession();
 
@@ -65,7 +67,12 @@ export async function mintProduct({
         data: encodeFunctionData({
             abi: productRegistryAbi,
             functionName: "mint",
-            args: [productTypes, name, domain, session.wallet],
+            args: [
+                encodeProductTypesMask(productTypes),
+                name,
+                domain,
+                session.wallet,
+            ],
         }),
     });
     const mintTxHash = await sendTransaction(viemClient, mintTxPreparation);

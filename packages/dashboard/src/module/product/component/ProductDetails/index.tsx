@@ -19,7 +19,10 @@ import { ManageProductTeam } from "@/module/product/component/ProductDetails/Man
 import { useEditProduct } from "@/module/product/hook/useEditProduct";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import { productTypesLabel } from "@/module/product/utils/productTypes";
-import { productTypesMask } from "@frak-labs/nexus-sdk/core";
+import {
+    type ProductTypesKey,
+    productTypesMask,
+} from "@frak-labs/nexus-sdk/core";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { Input, type InputProps } from "@module/component/forms/Input";
@@ -33,7 +36,7 @@ import styles from "./index.module.css";
 type FormProduct = {
     name: string;
     domain: string;
-    productTypes: string[];
+    productTypes: ProductTypesKey[];
 };
 
 export function ProductDetails({ productId }: { productId: Hex }) {
@@ -75,9 +78,7 @@ export function ProductDetails({ productId }: { productId: Hex }) {
     function onSubmit(values: FormProduct) {
         editProduct({
             name: values.name,
-            productTypes: values.productTypes.map(
-                (v) => productTypesMask[v as keyof typeof productTypesMask]
-            ),
+            productTypes: values.productTypes,
         });
     }
 

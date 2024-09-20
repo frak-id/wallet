@@ -17,7 +17,10 @@ import {
 } from "@/module/forms/Form";
 import { MultiSelect } from "@/module/forms/MultiSelect";
 import { productTypesLabel } from "@/module/product/utils/productTypes";
-import { productTypesMask } from "@frak-labs/nexus-sdk/core";
+import {
+    type ProductTypesKey,
+    productTypesMask,
+} from "@frak-labs/nexus-sdk/core";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
@@ -35,7 +38,7 @@ import styles from "./index.module.css";
 type ProductNew = {
     name: string;
     domain: string;
-    productTypes: string[];
+    productTypes: ProductTypesKey[];
 };
 
 const isModalOpenAtom = atom(false);
@@ -325,7 +328,7 @@ function NewProductVerify({
     name,
     domain,
     productTypes,
-}: { name: string; domain: string; productTypes: string[] }) {
+}: { name: string; domain: string; productTypes: ProductTypesKey[] }) {
     const parsedDomain = parseUrl(domain);
     const queryClient = useQueryClient();
     const setIsMinting = useSetAtom(isMintingAtom);
@@ -385,9 +388,7 @@ function NewProductVerify({
                     triggerMintMyContent({
                         name,
                         domain: parsedDomain.hostname,
-                        productTypes: productTypes.map(
-                            (productType) => productTypesMask[productType]
-                        ),
+                        productTypes,
                     });
                 }}
                 disabled={!isIdle}

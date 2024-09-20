@@ -1,5 +1,6 @@
 import { mintProduct } from "@/context/product/action/mint";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
+import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
 import { useMutation } from "@tanstack/react-query";
 
 /**
@@ -14,7 +15,7 @@ export function useMintMyProduct() {
         mutationFn: async (args: {
             name: string;
             domain: string;
-            productTypes: bigint;
+            productTypes: ProductTypesKey[];
             setupInteractions?: boolean;
         }) => {
             // Perform the backend side of the mint
