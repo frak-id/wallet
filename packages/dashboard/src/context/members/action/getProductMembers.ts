@@ -1,8 +1,8 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import { indexerApi } from "@/context/common/indexerApi";
 import type { MembersPageItem } from "@/types/Members";
-import ky from "ky";
 import type { Address, Hex } from "viem";
 
 type GetMembersRequest = {
@@ -57,8 +57,8 @@ type GetMembersResponse = {
 export async function getProductMembers(params: GetMembersParam) {
     const session = await getSafeSession();
 
-    return await ky
-        .post(`${process.env.INDEXER_URL}/members/${session.wallet}`, {
+    return await indexerApi
+        .post(`/members/${session.wallet}`, {
             json: params,
         })
         .json<GetMembersResponse>();
@@ -73,8 +73,8 @@ export async function getProductsMembersCount(
 ) {
     const session = await getSafeSession();
 
-    const result = await ky
-        .post(`${process.env.INDEXER_URL}/members/${session.wallet}`, {
+    const result = await indexerApi
+        .post(`/members/${session.wallet}`, {
             json: { ...params, noData: true },
         })
         .json<Omit<GetMembersResponse, "members">>();
@@ -88,8 +88,8 @@ export async function getProductsMembersCount(
 export async function getProductsMembersAddress(params: GetMembersParam) {
     const session = await getSafeSession();
 
-    const result = await ky
-        .post(`${process.env.INDEXER_URL}/members/${session.wallet}`, {
+    const result = await indexerApi
+        .post(`/members/${session.wallet}`, {
             json: { ...params, onlyAddress: true },
         })
         .json<Omit<GetMembersResponse, "members"> & { users: Address[] }>();

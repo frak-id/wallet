@@ -531,6 +531,11 @@ export const referralCampaignAbi = [
                     { name: "end", internalType: "uint48", type: "uint48" },
                 ],
             },
+            {
+                name: "bank",
+                internalType: "contract CampaignBank",
+                type: "address",
+            },
         ],
         stateMutability: "view",
     },

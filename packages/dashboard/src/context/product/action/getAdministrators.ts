@@ -1,6 +1,6 @@
 "use server";
 import { type RolesKeys, roles } from "@/context/blockchain/roles";
-import ky from "ky";
+import { indexerApi } from "@/context/common/indexerApi";
 import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {
@@ -18,8 +18,8 @@ export async function getProductAdministrators({
 }: { productId: Hex }) {
     console.log(productId);
     // Get our api results
-    const json = await ky
-        .get(`${process.env.INDEXER_URL}/products/${productId}/administrators`)
+    const json = await indexerApi
+        .get(`/products/${productId}/administrators`)
         .json<ApiResult>();
 
     // Parse the roles
