@@ -1,6 +1,6 @@
 "use server";
 import type { Token } from "@/types/Token";
-import { referralCampaignAbi } from "@frak-labs/app-essentials";
+import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import ky from "ky";
 import { type Address, encodeFunctionData, formatEther } from "viem";
 
@@ -28,7 +28,7 @@ export async function getPendingRewards({ user }: { user: Address }) {
     }
 
     const claimTx = encodeFunctionData({
-        abi: referralCampaignAbi,
+        abi: campaignBankAbi,
         functionName: "pullReward",
         args: [user],
     });

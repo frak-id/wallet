@@ -10,23 +10,27 @@ export {
     campaignFactoryAbi,
     interactionCampaignAbi,
     referralCampaignAbi,
-} from "./abis/frak-campaign-abis";
+    campaignBankAbi,
+    campaignBankFactoryAbi,
+} from "./abis/campaignAbis";
 export {
     dappInteractionFacetAbi,
     pressInteractionFacetAbi,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
     referralFeatureFacetAbi,
-} from "./abis/frak-interaction-abis";
+    purchaseFeatureFacetAbi,
+} from "./abis/interactionAbis";
 export {
     productAdministratorRegistryAbi,
     productRegistryAbi,
     referralRegistryAbi,
-} from "./abis/frak-registry-abis";
+    purchaseOracleAbi,
+} from "./abis/registryAbis";
 export {
     interactionDelegatorAbi,
     interactionDelegatorActionAbi,
     interactionDelegatorValidatorAbi,
     multiWebAuthNRecoveryActionAbi,
     multiWebAuthNValidatorV2Abi,
-} from "./abis/kernel-v2-abis";
+} from "./abis/kernelV2Abis";
