@@ -15,6 +15,7 @@ const wantedFromConfig = [
     "VAPID_PUBLIC_KEY",
     "VAPID_PRIVATE_KEY",
     "BACKEND_URL",
+    "INDEXER_URL",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 

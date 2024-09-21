@@ -29,7 +29,7 @@ export async function getRewardHistory({
 }): Promise<RewardHistory[]> {
     // Perform the request to our api
     const rewardsHistory = await ky
-        .get(`https://indexer.frak.id/rewards/${account}/history`)
+        .get(`${process.env.INDEXER_URL}/rewards/${account}/history`)
         .json<ApiResult>();
 
     // Merge both array into one

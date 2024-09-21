@@ -24,7 +24,7 @@ type GetProductResult = {
 async function getProducts({ wallet }: { wallet: Address }) {
     // Get our api results
     const json = await ky
-        .get(`https://indexer.frak.id/admin/${wallet}/products`)
+        .get(`${process.env.INDEXER_URL}/admin/${wallet}/products`)
         .json<ApiResult>();
 
     // Map it to the form: { owner: [contents], operator: [contents] }

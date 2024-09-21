@@ -58,7 +58,7 @@ export async function getProductMembers(params: GetMembersParam) {
     const session = await getSafeSession();
 
     return await ky
-        .post(`https://indexer.frak.id/members/${session.wallet}`, {
+        .post(`${process.env.INDEXER_URL}/members/${session.wallet}`, {
             json: params,
         })
         .json<GetMembersResponse>();
@@ -74,7 +74,7 @@ export async function getProductsMembersCount(
     const session = await getSafeSession();
 
     const result = await ky
-        .post(`https://indexer.frak.id/members/${session.wallet}`, {
+        .post(`${process.env.INDEXER_URL}/members/${session.wallet}`, {
             json: { ...params, noData: true },
         })
         .json<Omit<GetMembersResponse, "members">>();
@@ -89,7 +89,7 @@ export async function getProductsMembersAddress(params: GetMembersParam) {
     const session = await getSafeSession();
 
     const result = await ky
-        .post(`https://indexer.frak.id/members/${session.wallet}`, {
+        .post(`${process.env.INDEXER_URL}/members/${session.wallet}`, {
             json: { ...params, onlyAddress: true },
         })
         .json<Omit<GetMembersResponse, "members"> & { users: Address[] }>();

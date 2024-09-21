@@ -38,7 +38,7 @@ export async function getInteractionHistory({
 }): Promise<InteractionHistory[]> {
     // Perform the request to our api
     const interactionsHistory = await ky
-        .get(`https://indexer.frak.id/interactions/${account}`)
+        .get(`${process.env.INDEXER_URL}/interactions/${account}`)
         .json<ApiResult>();
 
     // Map our result

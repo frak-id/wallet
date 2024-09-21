@@ -20,7 +20,7 @@ type ApiResult = {
 export async function getPendingRewards({ user }: { user: Address }) {
     // Perform the request to our api
     const { rewards } = await ky
-        .get(`https://indexer.frak.id/rewards/${user}`)
+        .get(`${process.env.INDEXER_URL}/rewards/${user}`)
         .json<ApiResult>();
 
     if (!rewards.length) {

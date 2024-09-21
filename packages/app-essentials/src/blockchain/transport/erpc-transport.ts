@@ -12,7 +12,7 @@ export function getErpcTransport({ chain }: { chain: Chain }) {
     }
 
     // Build the ercp rpc url depending on the chain
-    const rpcUrl = `https://indexer.frak.id/nexus-rpc/evm/${chain.id}?token=${nexusRpcSecret}`;
+    const rpcUrl = `https://rpc.frak.id/nexus-rpc/evm/${chain.id}?token=${nexusRpcSecret}`;
 
     // Build the alchemy client
     return http(rpcUrl, {

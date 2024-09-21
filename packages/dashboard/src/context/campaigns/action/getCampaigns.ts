@@ -36,7 +36,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     // Perform the request to our api, and fallback to empty array
     const blockchainCampaigns =
         (await ky
-            .get(`https://indexer.frak.id/admin/${session.wallet}/campaigns`)
+            .get(`${process.env.INDEXER_URL}/admin/${session.wallet}/campaigns`)
             .json<ApiResult>()) ?? [];
 
     // Find the campaigns in the database

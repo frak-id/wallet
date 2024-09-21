@@ -19,7 +19,7 @@ export async function getProductAdministrators({
     console.log(productId);
     // Get our api results
     const json = await ky
-        .get(`https://indexer.frak.id/products/${productId}/administrators`)
+        .get(`${process.env.INDEXER_URL}/products/${productId}/administrators`)
         .json<ApiResult>();
 
     // Parse the roles

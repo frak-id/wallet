@@ -34,7 +34,9 @@ export async function getMyCampaignsStats() {
 
     // Perform the request to our api
     const campaignStats = await ky
-        .get(`https://indexer.frak.id/admin/${session.wallet}/campaigns/stats`)
+        .get(
+            `${process.env.INDEXER_URL}/admin/${session.wallet}/campaigns/stats`
+        )
         .json<ApiResult>();
 
     if (!campaignStats) {
