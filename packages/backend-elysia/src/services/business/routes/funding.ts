@@ -28,7 +28,7 @@ export const fundingRoutes = new Elysia({ prefix: "funding" })
             // Check the current campaign balance (if more than 1000 ether don't reload it)
             const balance = await readContract(client, {
                 abi: erc20Abi,
-                address: addresses.mUsdToken,
+                address: addresses.mUSDToken,
                 functionName: "balanceOf",
                 args: [campaign],
             });
@@ -43,7 +43,7 @@ export const fundingRoutes = new Elysia({ prefix: "funding" })
                 );
                 const txHash = await sendTransaction(client, {
                     account: executorAccount,
-                    to: addresses.mUsdToken,
+                    to: addresses.mUSDToken,
                     data: encodeFunctionData({
                         abi: [mintAbi],
                         functionName: "mint",

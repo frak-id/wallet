@@ -27,8 +27,6 @@ async function getProducts({ wallet }: { wallet: Address }) {
         .get(`admin/${wallet}/products`)
         .json<ApiResult>();
 
-    console.log("Output", json);
-
     // Map it to the form: { owner: [contents], operator: [contents] }
     return (
         json.reduce(
