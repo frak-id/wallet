@@ -13,19 +13,32 @@ import {
     addresses,
     productInteractionManagerAbi,
 } from "@frak-labs/app-essentials";
+import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import { interactionTypes } from "@frak-labs/nexus-sdk/core";
 import { ObjectId } from "mongodb";
 import { first } from "radash";
 import {
+    type Address,
     type Hex,
     encodeAbiParameters,
     encodeFunctionData,
-    maxUint256,
     parseAbi,
     parseEther,
     parseEventLogs,
     stringToHex,
 } from "viem";
 import { getTransactionReceipt, simulateContract } from "viem/actions";
+
+const productIdToBanks = [
+    {
+        pid: 33953649417576654953995537313820306697747390492794311279756157547821320957282n,
+        bank: "0xd0d3E757626d221f2Fd1ddA62da46CcA67622C99" as Address,
+    },
+    {
+        pid: 20376791661718660580662410765070640284736320707848823176694931891585259913409n,
+        bank: "0xdc473FB7f56004bBD6AD019090e9BdD57e885242" as Address,
+    },
+];
 
 /**
  * Save a campaign draft
@@ -79,15 +92,16 @@ export async function getCreationData(campaign: Campaign) {
     const initialReward = Math.floor((clickRewards.from + clickRewards.to) / 2);
 
     // Compute the cap period
-    let capPeriod = 0n;
+    let capPeriod = 0;
     if (campaign.budget.type === "daily") {
-        capPeriod = BigInt(24 * 60 * 60);
+        capPeriod = 24 * 60 * 60;
     } else if (campaign.budget.type === "weekly") {
-        capPeriod = BigInt(7 * 24 * 60 * 60);
+        capPeriod = 7 * 24 * 60 * 60;
     } else if (campaign.budget.type === "monthly") {
-        capPeriod = BigInt(30 * 24 * 60 * 60);
+        capPeriod = 30 * 24 * 60 * 60;
     } else if (campaign.budget.type === "global") {
-        capPeriod = maxUint256;
+        // Max uint48
+        capPeriod = 281474976710655;
     }
 
     // The start and end period
@@ -110,33 +124,57 @@ export async function getCreationData(campaign: Campaign) {
         }
     );
 
+    // todo: bank from frontend config
+    const bank = productIdToBanks.find(
+        (b) => b.pid === BigInt(campaign.productId)
+    )?.bank;
+    if (!bank) {
+        throw new Error("No bank found for the given product id");
+    }
+
     // Build the tx to be sent by the creator to create the given campaign
+    // todo: it's fcking up the order during encoding, why?
+    // todo: We got name -> bank -> cap -> activation -> triggers with encodeAbiParameters
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
-        addresses.mUSDToken,
-        parseEther(initialReward.toString()), // initial reward
-        5_000n, // user reward percent (on 1/10_000 so 50%), todo: should be campaign param
-        capPeriod,
-        campaign.budget.maxEuroDaily
-            ? parseEther(campaign.budget.maxEuroDaily.toString())
-            : 0n,
-        start,
-        end,
         blockchainName,
+        bank,
+        // Triggers (todo: from frontend)
+        [
+            {
+                interactionType: interactionTypes.referral.referred,
+                baseReward: parseEther(initialReward.toString()),
+                userPercent: 5_000n, // user reward percent (on 1/10_000 so 50%), todo: should be campaign param
+                deperditionPerLevel: 8_000n, // 80% deperdition per level
+                maxCountPerUser: 1n, // Max 1 trigger per user
+            },
+        ],
+        // Cap config
+        {
+            period: capPeriod,
+            amount: campaign.budget.maxEuroDaily
+                ? parseEther(campaign.budget.maxEuroDaily.toString())
+                : 0n,
+        },
+        // Activation period
+        { start, end },
     ]);
 
     // Perform a contract simulation
     //  this will fail if the tx will fail
-    await simulateContract(viemClient, {
-        account: session.wallet,
-        address: addresses.productInteractionManager,
-        abi: productInteractionManagerAbi,
-        functionName: "deployCampaign",
-        args: [
-            BigInt(campaign.productId),
-            referralCampaignId,
-            campaignInitData,
-        ],
-    });
+    const { result: determinedCampaignAddress } = await simulateContract(
+        viemClient,
+        {
+            account: session.wallet,
+            address: addresses.productInteractionManager,
+            abi: productInteractionManagerAbi,
+            functionName: "deployCampaign",
+            args: [
+                BigInt(campaign.productId),
+                referralCampaignId,
+                campaignInitData,
+            ],
+        }
+    );
 
     // Return the encoded calldata to deploy and attach this campaign
     const creationData = encodeFunctionData({
@@ -149,7 +187,24 @@ export async function getCreationData(campaign: Campaign) {
         ],
     });
 
-    return { creationData };
+    const allowRewardData = encodeFunctionData({
+        abi: campaignBankAbi,
+        functionName: "updateCampaignAuthorisation",
+        args: [determinedCampaignAddress, true],
+    });
+
+    return {
+        tx: [
+            {
+                to: addresses.productInteractionManager,
+                data: creationData as Hex,
+            },
+            {
+                to: bank,
+                data: allowRewardData as Hex,
+            },
+        ],
+    };
 }
 
 /**
