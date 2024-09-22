@@ -20,6 +20,7 @@ import { first } from "radash";
 import {
     type Address,
     type Hex,
+    concatHex,
     encodeAbiParameters,
     encodeFunctionData,
     parseAbi,
@@ -133,8 +134,6 @@ export async function getCreationData(campaign: Campaign) {
     }
 
     // Build the tx to be sent by the creator to create the given campaign
-    // todo: it's fcking up the order during encoding, why?
-    // todo: We got name -> bank -> cap -> activation -> triggers with encodeAbiParameters
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
         blockchainName,
         bank,
@@ -158,6 +157,11 @@ export async function getCreationData(campaign: Campaign) {
         // Activation period
         { start, end },
     ]);
+    // Add offset to the data
+    const initDataWithOffset = concatHex([
+        "0x0000000000000000000000000000000000000000000000000000000000000020",
+        campaignInitData,
+    ]);
 
     // Perform a contract simulation
     //  this will fail if the tx will fail
@@ -171,7 +175,7 @@ export async function getCreationData(campaign: Campaign) {
             args: [
                 BigInt(campaign.productId),
                 referralCampaignId,
-                campaignInitData,
+                initDataWithOffset,
             ],
         }
     );
@@ -183,7 +187,7 @@ export async function getCreationData(campaign: Campaign) {
         args: [
             BigInt(campaign.productId),
             referralCampaignId,
-            campaignInitData,
+            initDataWithOffset,
         ],
     });
 
