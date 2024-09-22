@@ -1,10 +1,9 @@
 "use server";
-
-import { kernelAddresses } from "@/context/blockchain/addresses";
 import { currentViemClient } from "@/context/blockchain/provider";
 import { getExecutionAbi, setExecutionAbi } from "@/context/recover/utils/abi";
 import { getSession } from "@/context/session/action/session";
 import type { InteractionSession } from "@/types/Session";
+import { addresses } from "@frak-labs/app-essentials";
 import { tryit } from "radash";
 import {
     type Address,
@@ -97,17 +96,14 @@ export async function getSessionStatus({
 
     // If it's not on the latest executor or validator, return null
     if (
-        !isAddressEqual(
-            status.executor,
-            kernelAddresses.interactionDelegatorAction
-        )
+        !isAddressEqual(status.executor, addresses.interactionDelegatorAction)
     ) {
         return null;
     }
     if (
         !isAddressEqual(
             status.validator,
-            kernelAddresses.interactionDelegatorValidator
+            addresses.interactionDelegatorValidator
         )
     ) {
         return null;
@@ -149,9 +145,9 @@ export async function getSessionEnableData({
                 // The current selector we want to allow
                 selector,
                 // The interaction action address
-                kernelAddresses.interactionDelegatorAction,
+                addresses.interactionDelegatorAction,
                 // The address of the interaction session validator
-                kernelAddresses.interactionDelegatorValidator,
+                addresses.interactionDelegatorValidator,
                 // Valid until timestamps, in seconds
                 end,
                 // Valid after timestamp, in seconds
@@ -179,7 +175,7 @@ export async function getSessionDisableData(): Promise<Hex[]> {
             args: [
                 selector,
                 zeroAddress,
-                kernelAddresses.interactionDelegatorValidator,
+                addresses.interactionDelegatorValidator,
                 0,
                 0,
                 "0x00",

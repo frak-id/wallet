@@ -1,6 +1,6 @@
 "use server";
 import { type RolesKeys, roles } from "@/context/blockchain/roles";
-import { indexerApi } from "@/context/common/indexerApi";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {
@@ -19,7 +19,7 @@ export async function getProductAdministrators({
     console.log(productId);
     // Get our api results
     const json = await indexerApi
-        .get(`/products/${productId}/administrators`)
+        .get(`products/${productId}/administrators`)
         .json<ApiResult>();
 
     // Parse the roles

@@ -4,13 +4,13 @@ import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import { roles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { indexerApi } from "@/context/common/indexerApi";
 import type { CampaignWithState } from "@/types/Campaign";
 import {
     addresses,
     interactionCampaignAbi,
     productAdministratorRegistryAbi,
 } from "@frak-labs/app-essentials";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
@@ -36,7 +36,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     // Perform the request to our api, and fallback to empty array
     const blockchainCampaigns =
         (await indexerApi
-            .get(`/admin/${session.wallet}/campaigns`)
+            .get(`admin/${session.wallet}/campaigns`)
             .json<ApiResult>()) ?? [];
 
     // Find the campaigns in the database

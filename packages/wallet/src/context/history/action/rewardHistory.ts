@@ -1,7 +1,7 @@
 "use server";
 import type { RewardHistory } from "@/types/RewardHistory";
 import type { Token } from "@/types/Token";
-import ky from "ky";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import { type Address, type Hex, formatEther } from "viem";
 
 type ApiResult = {
@@ -28,8 +28,8 @@ export async function getRewardHistory({
     account: Address;
 }): Promise<RewardHistory[]> {
     // Perform the request to our api
-    const rewardsHistory = await ky
-        .get(`${process.env.INDEXER_URL}/rewards/${account}/history`)
+    const rewardsHistory = await indexerApi
+        .get(`rewards/${account}/history`)
         .json<ApiResult>();
 
     // Merge both array into one

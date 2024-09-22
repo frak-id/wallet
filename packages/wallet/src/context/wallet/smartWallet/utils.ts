@@ -4,6 +4,7 @@ import {
     KernelInitAbi,
 } from "@/context/wallet/abi/kernel-account-abis";
 import type { P256PubKey } from "@/types/WebAuthN";
+import { addresses } from "@frak-labs/app-essentials";
 import { getSenderAddress } from "permissionless/actions";
 import {
     type Address,
@@ -97,7 +98,7 @@ export function getAccountInitCode({
     const initialisationData = encodeFunctionData({
         abi: KernelInitAbi,
         functionName: "initialize",
-        args: [kernelAddresses.multiWebAuthnValidator, encodedPublicKey],
+        args: [addresses.webAuthNValidator, encodedPublicKey],
     });
 
     // Build the account init code

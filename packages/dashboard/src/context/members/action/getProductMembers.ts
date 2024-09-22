@@ -1,8 +1,8 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
-import { indexerApi } from "@/context/common/indexerApi";
 import type { MembersPageItem } from "@/types/Members";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import type { Address, Hex } from "viem";
 
 type GetMembersRequest = {
@@ -58,7 +58,7 @@ export async function getProductMembers(params: GetMembersParam) {
     const session = await getSafeSession();
 
     return await indexerApi
-        .post(`/members/${session.wallet}`, {
+        .post(`members/${session.wallet}`, {
             json: params,
         })
         .json<GetMembersResponse>();
@@ -74,7 +74,7 @@ export async function getProductsMembersCount(
     const session = await getSafeSession();
 
     const result = await indexerApi
-        .post(`/members/${session.wallet}`, {
+        .post(`members/${session.wallet}`, {
             json: { ...params, noData: true },
         })
         .json<Omit<GetMembersResponse, "members">>();
@@ -89,7 +89,7 @@ export async function getProductsMembersAddress(params: GetMembersParam) {
     const session = await getSafeSession();
 
     const result = await indexerApi
-        .post(`/members/${session.wallet}`, {
+        .post(`members/${session.wallet}`, {
             json: { ...params, onlyAddress: true },
         })
         .json<Omit<GetMembersResponse, "members"> & { users: Address[] }>();
