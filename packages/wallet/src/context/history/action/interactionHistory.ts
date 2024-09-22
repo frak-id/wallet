@@ -1,6 +1,6 @@
 "use server";
 import type { InteractionHistory } from "@/types/InteractionHistory";
-import ky from "ky";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import type { Address } from "viem";
 
 type ApiResult = Array<
@@ -37,8 +37,8 @@ export async function getInteractionHistory({
     account: Address;
 }): Promise<InteractionHistory[]> {
     // Perform the request to our api
-    const interactionsHistory = await ky
-        .get(`https://indexer.frak.id/interactions/${account}`)
+    const interactionsHistory = await indexerApi
+        .get(`interactions/${account}`)
         .json<ApiResult>();
 
     // Map our result

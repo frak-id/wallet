@@ -22,6 +22,7 @@ export function WalletAppStack({ stack }: StackContext) {
         vapidPublicKey,
         vapidPrivateKey,
         backendUrl,
+        indexerUrl,
     } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
@@ -33,6 +34,7 @@ export function WalletAppStack({ stack }: StackContext) {
         vapidPublicKey,
         vapidPrivateKey,
         backendUrl,
+        indexerUrl,
     ];
 
     // Get the interaction queue

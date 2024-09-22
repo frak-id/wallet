@@ -1,4 +1,4 @@
-import { kernelAddresses } from "@frak-labs/nexus-wallet/src/context/blockchain/addresses";
+import { addresses } from "@frak-labs/app-essentials";
 import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
 import { getExecutionAbi } from "@frak-labs/nexus-wallet/src/context/recover/utils/abi";
 import { memo, tryit } from "radash";
@@ -50,11 +50,11 @@ export const walletHasValidSession = memo(
             !(
                 isAddressEqual(
                     status.executor,
-                    kernelAddresses.interactionDelegatorAction
+                    addresses.interactionDelegatorAction
                 ) &&
                 isAddressEqual(
                     status.validator,
-                    kernelAddresses.interactionDelegatorValidator
+                    addresses.interactionDelegatorValidator
                 )
             )
         ) {

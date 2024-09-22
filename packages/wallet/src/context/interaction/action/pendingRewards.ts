@@ -1,7 +1,7 @@
 "use server";
 import type { Token } from "@/types/Token";
-import { referralCampaignAbi } from "@frak-labs/app-essentials";
-import ky from "ky";
+import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import { type Address, encodeFunctionData, formatEther } from "viem";
 
 type ApiResult = {
@@ -19,8 +19,8 @@ type ApiResult = {
  */
 export async function getPendingRewards({ user }: { user: Address }) {
     // Perform the request to our api
-    const { rewards } = await ky
-        .get(`https://indexer.frak.id/rewards/${user}`)
+    const { rewards } = await indexerApi
+        .get(`rewards/${user}`)
         .json<ApiResult>();
 
     if (!rewards.length) {
@@ -28,7 +28,7 @@ export async function getPendingRewards({ user }: { user: Address }) {
     }
 
     const claimTx = encodeFunctionData({
-        abi: referralCampaignAbi,
+        abi: campaignBankAbi,
         functionName: "pullReward",
         args: [user],
     });

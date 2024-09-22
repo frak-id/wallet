@@ -77,7 +77,7 @@ export async function getOnChainCampaignsDetails({
                 } as const,
                 {
                     abi: erc20Abi,
-                    address: addresses.mUsdToken,
+                    address: addresses.mUSDToken,
                     functionName: "balanceOf",
                     args: [campaignAddress],
                 } as const,

@@ -1,7 +1,7 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
-import ky from "ky";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import type { Address } from "viem";
 
 type ApiResult = {
@@ -23,8 +23,8 @@ type GetProductResult = {
  */
 async function getProducts({ wallet }: { wallet: Address }) {
     // Get our api results
-    const json = await ky
-        .get(`https://indexer.frak.id/admin/${wallet}/products`)
+    const json = await indexerApi
+        .get(`admin/${wallet}/products`)
         .json<ApiResult>();
 
     // Map it to the form: { owner: [contents], operator: [contents] }

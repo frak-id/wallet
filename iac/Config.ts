@@ -47,7 +47,14 @@ export function ConfigStack({ stack }: StackContext) {
         }),
     };
 
+    const indexerUrl = new Config.Parameter(stack, "INDEXER_URL", {
+        value: isProdStack(stack)
+            ? "https://indexer.frak.id"
+            : "https://indexer-dev.frak.id",
+    });
+
     return {
+        indexerUrl,
         sessionEncryptionKey,
         mongoExampleUri,
         mongoNexusUri,

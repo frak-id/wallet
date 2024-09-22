@@ -69,8 +69,8 @@ export function CampaignDates({
             // Build the function data
             const calldata = encodeFunctionData({
                 abi: referralCampaignAbi,
-                functionName: "setActivationDate",
-                args: [start, end],
+                functionName: "updateActivationPeriod",
+                args: [{ start, end }],
             });
 
             // Send the transaction
@@ -91,9 +91,9 @@ export function CampaignDates({
 
     const setInitialValues = useCallback(() => {
         if (!onChainInfos) return;
-        const dateStart = new Date(onChainInfos.config.startDate * 1000);
-        const dateEnd = onChainInfos.config.endDate
-            ? new Date(onChainInfos.config.endDate * 1000)
+        const dateStart = new Date(onChainInfos.config[1].start * 1000);
+        const dateEnd = onChainInfos.config[1].end
+            ? new Date(onChainInfos.config[1].end * 1000)
             : undefined;
         return {
             scheduled: {

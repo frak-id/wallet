@@ -1,15 +1,26 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import { viemClient } from "@/context/blockchain/provider";
+import { roles } from "@/context/blockchain/roles";
 import { getAttachedCampaigns } from "@/context/campaigns/action/getAttachedCampaigns";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
     addresses,
     productInteractionManagerAbi,
-    referralCampaignAbi,
 } from "@frak-labs/app-essentials";
+import {
+    campaignBankAbi,
+    productAdministratorRegistryAbi,
+} from "@frak-labs/app-essentials/blockchain";
 import { ObjectId } from "mongodb";
-import { encodeFunctionData, isAddressEqual } from "viem";
+import {
+    type Address,
+    type Hex,
+    encodeFunctionData,
+    isAddressEqual,
+} from "viem";
+import { readContract } from "viem/actions";
 
 /**
  * Function used to delete a campaign
@@ -56,29 +67,42 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
 
     // If it's active, return the call-data required to detach the campaign
     if (isActive) {
+        // Check if the user is a product manager (if yes disallow banking from the campaign)
+        const isProductManager = await readContract(viemClient, {
+            address: addresses.productAdministratorRegistry,
+            abi: productAdministratorRegistryAbi,
+            functionName: "hasAllRolesOrAdmin",
+            args: [BigInt(productId), session.wallet, roles.productManager],
+        });
+
+        const calls = [
+            // Detach the campaign
+            {
+                to: addresses.productInteractionManager as Address,
+                data: encodeFunctionData({
+                    abi: productInteractionManagerAbi,
+                    functionName: "detachCampaigns",
+                    args: [BigInt(productId), [campaignAddress]],
+                }),
+                value: "0x00" as Hex,
+            },
+        ];
+
+        if (isProductManager) {
+            calls.push({
+                to: campaignAddress,
+                data: encodeFunctionData({
+                    abi: campaignBankAbi,
+                    functionName: "updateCampaignAuthorisation",
+                    args: [campaignAddress, false],
+                }),
+                value: "0x00",
+            });
+        }
+
         return {
             key: "require-onchain-delete",
-            calls: [
-                // Withdraw tokens from the campaigns
-                {
-                    to: campaignAddress,
-                    data: encodeFunctionData({
-                        abi: referralCampaignAbi,
-                        functionName: "withdraw",
-                    }),
-                    value: "0x00",
-                },
-                // Detach the campaign
-                {
-                    to: addresses.productInteractionManager,
-                    data: encodeFunctionData({
-                        abi: productInteractionManagerAbi,
-                        functionName: "detachCampaigns",
-                        args: [BigInt(productId), [campaignAddress]],
-                    }),
-                    value: "0x00",
-                },
-            ],
+            calls,
         } as const;
     }
 

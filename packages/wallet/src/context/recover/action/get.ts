@@ -8,7 +8,10 @@ import {
     getExecutionAbi,
 } from "@/context/recover/utils/abi";
 import type { CurrentRecovery } from "@/types/Recovery";
-import { multiWebAuthNValidatorV2Abi } from "@frak-labs/app-essentials";
+import {
+    addresses,
+    multiWebAuthNValidatorV2Abi,
+} from "@frak-labs/app-essentials";
 import { tryit } from "radash";
 import {
     type Address,
@@ -48,7 +51,7 @@ export async function getCurrentRecoveryOption({
     if (
         !isAddressEqual(
             recoveryOption.executor,
-            kernelAddresses.multiWebAuthnRecovery
+            addresses.webAuthNRecoveryAction
         )
     ) {
         return null;
@@ -110,7 +113,7 @@ export async function getRecoveryAvailability({
     }
     const [, potentiallyExistingPasskey] = await tryit(() =>
         readContract(currentViemClient, {
-            address: kernelAddresses.multiWebAuthnValidator,
+            address: addresses.webAuthNValidator,
             abi: multiWebAuthNValidatorV2Abi,
             functionName: "getPasskey",
             args: [wallet, keccak256(toHex(newAuthenticatorId))],

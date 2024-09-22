@@ -10,7 +10,7 @@ import {
     interactionCampaignAbi,
     productAdministratorRegistryAbi,
 } from "@frak-labs/app-essentials";
-import ky from "ky";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
@@ -35,8 +35,8 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
 
     // Perform the request to our api, and fallback to empty array
     const blockchainCampaigns =
-        (await ky
-            .get(`https://indexer.frak.id/admin/${session.wallet}/campaigns`)
+        (await indexerApi
+            .get(`admin/${session.wallet}/campaigns`)
             .json<ApiResult>()) ?? [];
 
     // Find the campaigns in the database

@@ -19,7 +19,6 @@ import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { addresses } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
@@ -61,7 +60,7 @@ export function ValidationCampaign() {
                 // Update the atom
                 setCampaign(newCampaign);
                 // Build the creation data
-                const { creationData } = await getCreationData(newCampaign);
+                const { tx } = await getCreationData(newCampaign);
 
                 // Send the campaign creation transaction
                 const [, result] = await tryit(() =>
@@ -69,11 +68,7 @@ export function ValidationCampaign() {
                         metadata: {
                             context: `Create campaign ${campaign.title}`,
                         },
-                        tx: {
-                            to: addresses.productInteractionManager,
-                            value: "0x00",
-                            data: creationData,
-                        },
+                        tx,
                     })
                 )();
                 await updateCampaignState({
