@@ -4,6 +4,7 @@ import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import { Spinner } from "@module/component/Spinner";
 import Link from "next/link";
+import { toHex } from "viem";
 import styles from "./index.module.css";
 
 /**
@@ -59,7 +60,7 @@ function ProductListItem({
     product,
 }: { product: { id: bigint; name: string; domain: string } }) {
     return (
-        <Link href={`/product/${product.id}`}>
+        <Link href={`/product/${toHex(product.id)}`}>
             <ProductItem>
                 {product.name}
                 <br />
