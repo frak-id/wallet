@@ -36,7 +36,7 @@ export type ProductBank = {
     };
 };
 
-export function useGetProductFunding({ productId }: { productId: Hex }) {
+export function useGetProductFunding({ productId }: { productId?: Hex }) {
     return useQuery({
         queryKey: ["product", "funding", productId],
         queryFn: async () => {
@@ -80,5 +80,6 @@ export function useGetProductFunding({ productId }: { productId: Hex }) {
                 },
             }));
         },
+        enabled: !!productId,
     });
 }
