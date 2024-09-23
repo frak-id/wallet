@@ -12,7 +12,7 @@ import type { UseFormReturn } from "react-hook-form";
 
 export function FormPriceRange({
     form,
-    productTypes,
+    productTypes = [],
 }: {
     form: UseFormReturn<Campaign["triggers"]>;
     productTypes: ProductTypesKey[];
