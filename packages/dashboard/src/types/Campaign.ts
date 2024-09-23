@@ -6,6 +6,16 @@ type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
 type SpecialCategory = "credit" | "jobs" | "housing" | "social";
 type Budget = "daily" | "weekly" | "monthly" | "global";
 
+type CampaignTrigger = {
+    // Reward range
+    from: number;
+    to: number;
+    // Reward distribution config
+    userPercent?: number; // Between 0 and 1
+    deperditionPerLevel?: number; // Between 0 and 1
+    maxCountPerUser?: number;
+};
+
 /**
  * Direct campaign type
  */
@@ -16,16 +26,21 @@ export type Campaign = {
     productId: Hex | "";
     type: Goal | "" | undefined;
     specialCategories: SpecialCategory[];
+    // The distribution cap of the campaign
     budget: {
         type: Budget | "" | undefined;
         maxEuroDaily: number;
     };
     territories: TCountryCode[];
+    // The campaign bank address (that will distribute rewards to the end users)
+    bank: Address | "";
+    // The activation period of the campaign
     scheduled?: {
         dateStart: Date;
         dateEnd?: Date;
     };
-    rewards: Record<InteractionTypesKey, { from: number; to: number }>;
+    // Trigger for the campaign
+    triggers: Partial<Record<InteractionTypesKey, CampaignTrigger>>;
 };
 
 /**

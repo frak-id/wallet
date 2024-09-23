@@ -14,32 +14,24 @@ import {
     productInteractionManagerAbi,
 } from "@frak-labs/app-essentials";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
-import { interactionTypes } from "@frak-labs/nexus-sdk/core";
+import {
+    type InteractionTypesKey,
+    interactionTypes,
+} from "@frak-labs/nexus-sdk/core";
 import { ObjectId } from "mongodb";
 import { first } from "radash";
 import {
-    type Address,
     type Hex,
     concatHex,
     encodeAbiParameters,
     encodeFunctionData,
+    isAddress,
     parseAbi,
     parseEther,
     parseEventLogs,
     stringToHex,
 } from "viem";
 import { getTransactionReceipt, simulateContract } from "viem/actions";
-
-const productIdToBanks = [
-    {
-        pid: 33953649417576654953995537313820306697747390492794311279756157547821320957282n,
-        bank: "0xd0d3E757626d221f2Fd1ddA62da46CcA67622C99" as Address,
-    },
-    {
-        pid: 20376791661718660580662410765070640284736320707848823176694931891585259913409n,
-        bank: "0xdc473FB7f56004bBD6AD019090e9BdD57e885242" as Address,
-    },
-];
 
 /**
  * Save a campaign draft
@@ -78,20 +70,15 @@ export async function getCreationData(campaign: Campaign) {
         throw new Error("Product id is required");
     }
 
-    // const clickRewards = campaign?.rewards?.click;
-    // if (!clickRewards) {
-    //     throw new Error("Click reward is required");
-    // }
-    // if (clickRewards.from > clickRewards.to) {
-    //     throw new Error("Click reward from must be lower than to");
-    // }
-    // if (clickRewards.from < 0) {
-    //     throw new Error("Click reward from must be positive");
-    // }
+    // If the triggers record is empty early exit
+    if (!campaign.triggers || Object.keys(campaign.triggers).length === 0) {
+        throw new Error("Triggers are required");
+    }
 
-    // Compute the initial reward for a referral (avg between min and max)
-    // const initialReward = Math.floor((clickRewards.from + clickRewards.to) / 2);
-    const initialReward = 0;
+    // If the bank address isn't set, early exit
+    if (!(campaign.bank && isAddress(campaign.bank))) {
+        throw new Error("Bank is required");
+    }
 
     // Compute the cap period
     let capPeriod = 0;
@@ -126,28 +113,50 @@ export async function getCreationData(campaign: Campaign) {
         }
     );
 
-    // todo: bank from frontend config
-    const bank = productIdToBanks.find(
-        (b) => b.pid === BigInt(campaign.productId)
-    )?.bank;
-    if (!bank) {
-        throw new Error("No bank found for the given product id");
-    }
+    // Rebuild the triggers
+    const triggers = Object.entries(campaign.triggers).map(
+        ([interactionTypeKey, trigger]) => {
+            // The initial reward is just the avg of from and to for now
+            const initialReward = Math.floor((trigger.from + trigger.to) / 2);
+
+            // Find the matching interaction types (into the sub-keys of interaction types)
+            const interactionType = getHexValueForKey(
+                interactionTypeKey as InteractionTypesKey
+            );
+            if (!interactionType) {
+                throw new Error(
+                    `No interaction type found for the key ${interactionTypeKey}`
+                );
+            }
+
+            // Create the user percent (number between 0 and 1, should be a bigint between 0 and 10_000 after mapping, with no decimals)
+            const userPercent = trigger.userPercent
+                ? BigInt(Math.floor(trigger.userPercent * 10_000))
+                : 5_000n; // default to 50%
+
+            // Same wise for the deperdition level
+            const deperditionPerLevel = trigger.deperditionPerLevel
+                ? BigInt(Math.floor(trigger.deperditionPerLevel * 10_000))
+                : 8_000n; // default to 80%%
+
+            return {
+                interactionType: interactionType,
+                baseReward: parseEther(initialReward.toString()),
+                userPercent: userPercent,
+                deperditionPerLevel: deperditionPerLevel,
+                maxCountPerUser: trigger.maxCountPerUser
+                    ? BigInt(trigger.maxCountPerUser)
+                    : 1n, // Max 1 trigger per user
+            };
+        }
+    );
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
         blockchainName,
-        bank,
+        campaign.bank,
         // Triggers (todo: from frontend)
-        [
-            {
-                interactionType: interactionTypes.referral.referred,
-                baseReward: parseEther(initialReward.toString()),
-                userPercent: 5_000n, // user reward percent (on 1/10_000 so 50%), todo: should be campaign param
-                deperditionPerLevel: 8_000n, // 80% deperdition per level
-                maxCountPerUser: 1n, // Max 1 trigger per user
-            },
-        ],
+        triggers,
         // Cap config
         {
             period: capPeriod,
@@ -205,11 +214,24 @@ export async function getCreationData(campaign: Campaign) {
                 data: creationData as Hex,
             },
             {
-                to: bank,
+                to: campaign.bank,
                 data: allowRewardData as Hex,
             },
         ],
     };
+}
+
+// todo: Ugly, should be reviewed after
+function getHexValueForKey(key: InteractionTypesKey): Hex | undefined {
+    for (const category in interactionTypes) {
+        const categoryTypped = category as keyof typeof interactionTypes;
+        // biome-ignore lint/suspicious/noExplicitAny: Will be refacto
+        if ((interactionTypes[categoryTypped] as any)[key]) {
+            // biome-ignore lint/suspicious/noExplicitAny: Will be refacto
+            return (interactionTypes[categoryTypped] as any)[key];
+        }
+    }
+    return undefined;
 }
 
 /**
