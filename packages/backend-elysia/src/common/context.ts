@@ -1,6 +1,7 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { getViemClientFromChain } from "@frak-labs/app-essentials/blockchain";
 import { Elysia } from "elysia";
+import { LRUCache } from "lru-cache";
 import postgres from "postgres";
 import { Config } from "sst/node/config";
 import { arbitrum, arbitrumSepolia } from "viem/chains";
@@ -40,3 +41,16 @@ export const postgresContext = new Elysia({
 );
 
 export type PostgresContextApp = typeof postgresContext;
+
+export const cacheContext = new Elysia({
+    name: "cache-context",
+}).decorate(
+    { as: "append" },
+    {
+        cache: new LRUCache({
+            max: 1024,
+            // biome-ignore lint/complexity/noBannedTypes: <explanation>
+        }) as LRUCache<string, {}>,
+    }
+);
+export type CacheContextApp = typeof cacheContext;

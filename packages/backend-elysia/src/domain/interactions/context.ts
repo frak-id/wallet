@@ -1,5 +1,5 @@
 import type { Elysia } from "elysia";
-import { blockchainContext } from "../../common/context";
+import { blockchainContext, cacheContext } from "../../common/context";
 import { ProductSignerRepository } from "./repositories/ProductSignerRepository";
 
 /**
@@ -7,11 +7,12 @@ import { ProductSignerRepository } from "./repositories/ProductSignerRepository"
  * @param app
  */
 export function interactionsContext(app: Elysia) {
-    const productSignerRepository = new ProductSignerRepository();
-
-    return app.use(blockchainContext).decorate({
-        productSignerRepository,
-    });
+    return app
+        .use(cacheContext)
+        .use(blockchainContext)
+        .decorate(({ cache }) => ({
+            productSignerRepository: new ProductSignerRepository(cache),
+        }));
 }
 
 export type InteractionsContextApp = ReturnType<typeof interactionsContext>;
