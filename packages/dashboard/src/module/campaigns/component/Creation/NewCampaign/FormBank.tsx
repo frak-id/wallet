@@ -15,15 +15,16 @@ import {
 import { useGetProductFunding } from "@/module/product/hook/useGetProductFunding";
 import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
+import { toHex } from "viem";
 
 export function FormBank(form: UseFormReturn<Campaign>) {
     const productId = form.getValues("productId");
 
     const { data, isLoading } = useGetProductFunding({
-        productId: productId !== "" ? productId : undefined,
+        productId: productId !== "" ? toHex(BigInt(productId)) : undefined,
     });
 
-    if (isLoading || !data) return null;
+    if (isLoading || !data || data.length === 0) return null;
 
     return (
         <Panel title="Bank">
