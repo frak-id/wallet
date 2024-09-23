@@ -22,11 +22,10 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
         ...(products?.operator ?? []),
         ...(products?.owner ?? []),
     ];
-
-    if (isEmpty) return null;
+    const isDisabled = isEmpty || !products || contentList.length === 0;
 
     return (
-        <Panel title="Product">
+        <Panel title="Product" aria-disabled={isDisabled}>
             <FormField
                 control={form.control}
                 name="productId"
@@ -41,6 +40,7 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
                                     field.onChange(value);
                                 }}
                                 value={field.value}
+                                disabled={isDisabled}
                             >
                                 <SelectTrigger length={"medium"} {...field}>
                                     <SelectValue placeholder="Select a product" />

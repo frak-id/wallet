@@ -5,6 +5,11 @@
     box-shadow: 0 2px 2px 0 #1018281a;
     color: var(--frak-panel-text-color);
     font-weight: 400;
+
+    &[aria-disabled="true"] {
+        opacity: 0.64;
+        cursor: not-allowed;
+    }
 }
 
 .panel + .panel {

@@ -23,11 +23,10 @@ export function FormBank(form: UseFormReturn<Campaign>) {
     const { data, isLoading } = useGetProductFunding({
         productId: productId !== "" ? toHex(BigInt(productId)) : undefined,
     });
-
-    if (isLoading || !data || data.length === 0) return null;
+    const isDisabled = isLoading || !data || data.length === 0;
 
     return (
-        <Panel title="Bank">
+        <Panel title="Funding bank" aria-disabled={isDisabled}>
             <FormField
                 control={form.control}
                 name="bank"
@@ -42,12 +41,13 @@ export function FormBank(form: UseFormReturn<Campaign>) {
                                     field.onChange(value);
                                 }}
                                 value={field.value}
+                                disabled={isDisabled}
                             >
                                 <SelectTrigger length={"medium"} {...field}>
                                     <SelectValue placeholder="Select a bank" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {data.map((bank) => (
+                                    {(data ?? []).map((bank) => (
                                         <SelectItem
                                             key={bank.address}
                                             value={bank.address}
