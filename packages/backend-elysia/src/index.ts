@@ -1,6 +1,6 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
-import { business, exampleNewsPaper, interactions, nexus } from "./services";
+import { business, exampleNewsPaper, interactions, nexus } from "./domain";
 
 const app = new Elysia()
     .use(cors())

@@ -4,6 +4,7 @@ import { isHex } from "viem";
 import { blockchainContext, t } from "../../../common";
 import { businessOracleContext } from "../context";
 import { productOracle } from "../db/schema";
+import type { ShopifyOrderUpdateWebhookDto } from "../dto/ShopifyWebhook";
 
 export const oracleRoutes = new Elysia({ prefix: "oracle" })
     .use(blockchainContext)
@@ -17,6 +18,10 @@ export const oracleRoutes = new Elysia({ prefix: "oracle" })
                 body: JSON.stringify(body),
                 headers: JSON.stringify(headers),
             });
+
+            // Try to parse the body as a shopify webhook type and ensure the type validity
+            const webhookData = body as ShopifyOrderUpdateWebhookDto;
+
             // Ensure the product id is valid and in hex format
             if (!(productId && isHex(productId))) {
                 return error(400, "Invalid product id");
@@ -31,6 +36,7 @@ export const oracleRoutes = new Elysia({ prefix: "oracle" })
             // }
         }
     )
+    .get("/history", () => webhookHistory)
     .get(
         "/:productId/status",
         async ({ params: { productId }, oracleDb, error }) => {
@@ -93,7 +99,10 @@ export const oracleRoutes = new Elysia({ prefix: "oracle" })
                 }
             );
             if (!existingOracle) {
-                return error(404, `Product ${productId} have no current oracle setup`);
+                return error(
+                    404,
+                    `Product ${productId} have no current oracle setup`
+                );
             }
 
             // Remove it

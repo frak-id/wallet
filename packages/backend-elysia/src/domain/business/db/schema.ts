@@ -35,9 +35,9 @@ export const purchaseStatus = pgTable(
         totalPrice: decimal("total_price").notNull(),
         // ISO 4217 currency code, so 3 char, we take 4 char to be safe
         currencyCode: varchar("currency_code", { length: 4 }).notNull(),
-        // todo: What would be the form of the status??
+        // Status, can be "pending", "confirmed", "cancelled" or "refunded"
         status: varchar("status").notNull(),
-        // The computed leaf for this order, usefull for fastly rebuilding the merkle tree
+        // The computed leaf for this order, usefull for fastly rebuilding the merkle tree (order_id + status)
         leaf: customHex("leaf").notNull(),
         // Update infos
         createdAt: timestamp("created_at").defaultNow(),
