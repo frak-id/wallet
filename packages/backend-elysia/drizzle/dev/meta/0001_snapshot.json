@@ -1,0 +1,261 @@
+{
+    "id": "973e43d3-f431-4bfc-8619-0ddf66e3e3dd",
+    "prevId": "d6a9ca4a-b16c-4770-aeab-3f6b7fb3d130",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.push_tokens": {
+            "name": "push_tokens",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "endpoint": {
+                    "name": "endpoint",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "key_p256dh": {
+                    "name": "key_p256dh",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "key_auth": {
+                    "name": "key_auth",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "expire_at": {
+                    "name": "expire_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "wallet_idx": {
+                    "name": "wallet_idx",
+                    "columns": [
+                        {
+                            "expression": "wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "unique_push_token": {
+                    "name": "unique_push_token",
+                    "nullsNotDistinct": false,
+                    "columns": ["wallet", "endpoint", "key_p256dh"]
+                }
+            }
+        },
+        "public.product_purchase_oracle": {
+            "name": "product_purchase_oracle",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "product_id": {
+                    "name": "product_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_app_id": {
+                    "name": "external_app_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "unique_product_id": {
+                    "name": "unique_product_id",
+                    "columns": [
+                        {
+                            "expression": "product_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "external_app_id": {
+                    "name": "external_app_id",
+                    "columns": [
+                        {
+                            "expression": "external_app_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {}
+        },
+        "public.product_purchase_status": {
+            "name": "product_purchase_status",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "oracle_id": {
+                    "name": "oracle_id",
+                    "type": "serial",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_id": {
+                    "name": "external_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "total_price": {
+                    "name": "total_price",
+                    "type": "numeric",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "currency_code": {
+                    "name": "currency_code",
+                    "type": "varchar(4)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "leaf": {
+                    "name": "leaf",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "unique_external_id": {
+                    "name": "unique_external_id",
+                    "columns": [
+                        {
+                            "expression": "external_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "oracle_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "product_purchase_status_oracle_id_product_purchase_oracle_id_fk": {
+                    "name": "product_purchase_status_oracle_id_product_purchase_oracle_id_fk",
+                    "tableFrom": "product_purchase_status",
+                    "tableTo": "product_purchase_oracle",
+                    "columnsFrom": ["oracle_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "unique_status": {
+                    "name": "unique_status",
+                    "nullsNotDistinct": false,
+                    "columns": ["status"]
+                }
+            }
+        }
+    },
+    "enums": {},
+    "schemas": {},
+    "sequences": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
+}

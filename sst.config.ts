@@ -1,5 +1,6 @@
 import type { SSTConfig } from "sst";
 import { BackendStack } from "./iac/Backend";
+import { ClusterStack } from "./iac/Cluster";
 import { ConfigStack } from "./iac/Config";
 import { DashboardWebApp } from "./iac/DashboardWebApp";
 import { ExampleAppStack } from "./iac/ExampleWebApp";
@@ -43,12 +44,11 @@ export default {
             tracing: "disabled",
         });
 
-        app.stack(ConfigStack);
-
-        app.stack(BackendStack);
-
-        app.stack(WalletAppStack);
-        app.stack(ExampleAppStack);
-        app.stack(DashboardWebApp);
+        app.stack(ConfigStack)
+            .stack(ClusterStack)
+            .stack(BackendStack)
+            .stack(WalletAppStack)
+            .stack(ExampleAppStack)
+            .stack(DashboardWebApp);
     },
 } satisfies SSTConfig;

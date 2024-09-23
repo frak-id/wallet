@@ -1,9 +1,4 @@
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
-import { Port } from "aws-cdk-lib/aws-ec2";
-import {
-    ApplicationProtocol,
-    ApplicationTargetGroup,
-} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
 import {
@@ -14,9 +9,9 @@ import {
     type StackContext,
     use,
 } from "sst/constructs";
+import { ClusterStack } from "./Cluster";
 import { ConfigStack } from "./Config";
-import { buildEcsService } from "./builder/ServiceBuilder";
-import { isProdStack } from "./utils";
+import { isDevStack, isDistantStack, isProdStack } from "./utils";
 
 /**
  * Define backend stack
@@ -137,12 +132,13 @@ function elysiaBackend(
         masterSecretId,
     }: { masterKeySecret: AwsSecret; masterSecretId: Config.Parameter }
 ) {
-    // Create a new ecs service that will host our elysia backend
-    const services = buildEcsService({ stack });
-    if (!services) {
+    if (!isDistantStack(stack)) {
+        console.error("Services can only be used in distant stacks");
         return;
     }
-    const { vpc, cluster, alb } = services;
+
+    // Fetch VPC + cluster
+    const { vpc, cluster } = use(ClusterStack);
 
     // A few secrets we will be using
     const {
@@ -160,6 +156,13 @@ function elysiaBackend(
         path: "./",
         file: "iac/docker/ElysiaDockerfile",
         port: 3030,
+        // Deployment domain
+        customDomain: {
+            domainName: isDevStack(stack)
+                ? "backend-dev.frak.id"
+                : "backend.frak.id",
+            hostedZone: "frak.id",
+        },
         // Setup some capacity options
         scaling: {
             minContainers: 1,
@@ -207,13 +210,21 @@ function elysiaBackend(
         cdk: {
             vpc,
             cluster,
-            // Don't auto setup the ALB since we will be using the global one
-            applicationLoadBalancer: false,
             // Customise fargate service to enable circuit breaker (if the new deployment is failing)
             fargateService: {
                 enableExecuteCommand: true,
                 circuitBreaker: {
                     enable: true,
+                },
+            },
+            // Custom alb target group
+            applicationLoadBalancerTargetGroup: {
+                healthCheck: {
+                    path: "/",
+                    interval: Duration.seconds(60),
+                    healthyThresholdCount: 2,
+                    unhealthyThresholdCount: 5,
+                    healthyHttpCodes: "200",
                 },
             },
         },
@@ -226,43 +237,4 @@ function elysiaBackend(
         );
         return;
     }
-
-    // Grant the read access on this secret for the consumer function
-    masterKeySecret.grantRead(
-        elysiaService.cdk.fargateService.taskDefinition.taskRole
-    );
-
-    // Create the target group for a potential alb usage
-    const elysiaTargetGroup = new ApplicationTargetGroup(
-        stack,
-        "ElysiaTargetGroup",
-        {
-            vpc: vpc,
-            port: 3030,
-            protocol: ApplicationProtocol.HTTP,
-            targets: [elysiaService.cdk.fargateService],
-            deregistrationDelay: Duration.seconds(10),
-            healthCheck: {
-                path: "/",
-                interval: Duration.seconds(30),
-                healthyThresholdCount: 2,
-                unhealthyThresholdCount: 5,
-                healthyHttpCodes: "200",
-            },
-        }
-    );
-
-    // Allow connections to the applications ports
-    alb.connections.allowTo(
-        elysiaService.cdk.fargateService,
-        Port.tcp(3030),
-        "Allow connection from ALB to elysia"
-    );
-
-    // Create the listener on port 80
-    alb.addListener("ElysiaListener", {
-        port: 80,
-        protocol: ApplicationProtocol.HTTP,
-        defaultTargetGroups: [elysiaTargetGroup],
-    });
 }
