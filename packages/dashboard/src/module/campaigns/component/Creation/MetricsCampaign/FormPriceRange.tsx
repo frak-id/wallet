@@ -26,44 +26,48 @@ export function FormPriceRange({
                 management fee to support the campaign delivery and to cover
                 operational costs.
             </FormDescription>
-            {productTypes.map((productType) => (
-                <div key={productType}>
-                    {Object.keys(interactionTypes[productType]).map((key) => (
-                        <FormFromTo
-                            key={key}
-                            id={key}
-                            label={
-                                interactionTypesLabel[
-                                    key as InteractionTypesKey
-                                ].name
-                            }
-                            form={form}
-                            from={{
-                                name: `${key as InteractionTypesKey}.from`,
-                                label: "From",
-                                placeholder: "25,00 €",
-                                rightSection: "EUR",
-                                rules: {
-                                    validate: {
-                                        required: (value) => value > 0,
-                                    },
-                                },
-                            }}
-                            to={{
-                                name: `${key as InteractionTypesKey}.to`,
-                                label: "To",
-                                placeholder: "25,00 €",
-                                rightSection: "EUR",
-                                rules: {
-                                    validate: {
-                                        required: (value) => value > 0,
-                                    },
-                                },
-                            }}
-                        />
-                    ))}
-                </div>
-            ))}
+            {productTypes
+                .filter((productType) => productType !== "dapp")
+                .map((productType) => (
+                    <div key={productType}>
+                        {Object.keys(interactionTypes[productType]).map(
+                            (key) => (
+                                <FormFromTo
+                                    key={key}
+                                    id={key}
+                                    label={
+                                        interactionTypesLabel[
+                                            key as InteractionTypesKey
+                                        ].name
+                                    }
+                                    form={form}
+                                    from={{
+                                        name: `${key as InteractionTypesKey}.from`,
+                                        label: "From",
+                                        placeholder: "25,00 €",
+                                        rightSection: "EUR",
+                                        rules: {
+                                            validate: {
+                                                required: (value) => value > 0,
+                                            },
+                                        },
+                                    }}
+                                    to={{
+                                        name: `${key as InteractionTypesKey}.to`,
+                                        label: "To",
+                                        placeholder: "25,00 €",
+                                        rightSection: "EUR",
+                                        rules: {
+                                            validate: {
+                                                required: (value) => value > 0,
+                                            },
+                                        },
+                                    }}
+                                />
+                            )
+                        )}
+                    </div>
+                ))}
         </Panel>
     );
 }
