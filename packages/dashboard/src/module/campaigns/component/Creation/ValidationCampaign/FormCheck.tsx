@@ -20,7 +20,7 @@ export function FormCheck(form: UseFormReturn<Campaign>) {
             <FormOrder {...form} />
             <FormGoal {...form} />
             <FormBudgetRow {...form} isCheckCampaign={true} />
-            <FormPriceRange {...form} disabled={true} />
+            <FormPriceRange form={form} disabled={true} />
         </Panel>
     );
 }

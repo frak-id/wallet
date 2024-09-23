@@ -73,7 +73,7 @@ export function CampaignDetails({
                         disabled={true}
                     />
                     <CampaignTerritory campaign={campaign} />
-                    <FormPriceRange {...form} disabled={true} />
+                    <FormPriceRange form={form} disabled={true} />
                 </Form>
             </Panel>
             <ActionsWrapper

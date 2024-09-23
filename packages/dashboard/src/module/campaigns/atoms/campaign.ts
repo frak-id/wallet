@@ -29,10 +29,11 @@ const initialValues: Campaign = {
         maxEuroDaily: 0,
     },
     territories: [],
+    bank: "",
     scheduled: {
         dateStart: new Date(),
     },
-    rewards: Object.fromEntries(
+    triggers: Object.fromEntries(
         flattenedKeys.map((key) => [key, { from: 0, to: 0 }])
     ) as Record<InteractionTypesKey, { from: number; to: number }>,
 };

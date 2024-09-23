@@ -14,7 +14,7 @@ export function FormPriceRange({
     form,
     productTypes,
 }: {
-    form: UseFormReturn<Campaign["rewards"]>;
+    form: UseFormReturn<Campaign["triggers"]>;
     productTypes: ProductTypesKey[];
 }) {
     return (
@@ -46,22 +46,12 @@ export function FormPriceRange({
                                         label: "From",
                                         placeholder: "25,00 €",
                                         rightSection: "EUR",
-                                        rules: {
-                                            validate: {
-                                                required: (value) => value > 0,
-                                            },
-                                        },
                                     }}
                                     to={{
                                         name: `${key as InteractionTypesKey}.to`,
                                         label: "To",
                                         placeholder: "25,00 €",
                                         rightSection: "EUR",
-                                        rules: {
-                                            validate: {
-                                                required: (value) => value > 0,
-                                            },
-                                        },
                                     }}
                                 />
                             )

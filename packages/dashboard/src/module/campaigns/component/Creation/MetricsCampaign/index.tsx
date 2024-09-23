@@ -27,12 +27,12 @@ export function MetricsCampaign() {
         productId: pId,
     });
 
-    const form = useForm<Campaign["rewards"]>({
-        values: useMemo(() => campaign.rewards, [campaign.rewards]),
+    const form = useForm<Campaign["triggers"]>({
+        values: useMemo(() => campaign.triggers, [campaign.triggers]),
     });
 
-    async function onSubmit(values: Campaign["rewards"]) {
-        await saveCampaign({ ...campaign, rewards: values });
+    async function onSubmit(values: Campaign["triggers"]) {
+        await saveCampaign({ ...campaign, triggers: values });
     }
 
     return (
@@ -41,7 +41,7 @@ export function MetricsCampaign() {
                 title={{ content: "Campaign Metrics", size: "small" }}
                 rightSection={
                     <ButtonCancel
-                        onClick={() => form.reset(campaign.rewards)}
+                        onClick={() => form.reset(campaign.triggers)}
                     />
                 }
             />
