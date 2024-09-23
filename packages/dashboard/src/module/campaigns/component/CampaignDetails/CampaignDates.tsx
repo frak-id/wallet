@@ -1,6 +1,6 @@
-import { getOnChainCampaignsDetails } from "@/context/campaigns/action/getDetails";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import styles from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule.module.css";
+import { useGetOnChainCampaignDetails } from "@/module/campaigns/hook/useGetOnChainDetails";
 import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
 import {
@@ -23,7 +23,7 @@ import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { format, isBefore, startOfDay } from "date-fns";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -48,9 +48,8 @@ export function CampaignDates({
 }) {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
 
-    const { data: onChainInfos, isLoading } = useQuery({
-        queryKey: ["campaign", "on-chain-details", campaignAddress],
-        queryFn: () => getOnChainCampaignsDetails({ campaignAddress }),
+    const { data: onChainInfos, isLoading } = useGetOnChainCampaignDetails({
+        campaignAddress,
     });
 
     const {

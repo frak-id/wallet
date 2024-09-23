@@ -31,7 +31,10 @@ function ProductFundingBanks({ banks }: { banks: ProductBank[] }) {
             {banks.map((bank, index) => (
                 <>
                     Bank {index + 1}
-                    <ProductFundingBank bank={bank} key={`bank-${bank.address}`} />
+                    <ProductFundingBank
+                        bank={bank}
+                        key={`bank-${bank.address}`}
+                    />
                 </>
             ))}
         </div>

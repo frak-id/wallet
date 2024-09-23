@@ -11,7 +11,7 @@ import {
     referralCampaignAbi,
 } from "@frak-labs/app-essentials";
 import { ObjectId } from "mongodb";
-import { type Address, erc20Abi } from "viem";
+import { type Address, toHex } from "viem";
 import { multicall, readContract } from "viem/actions";
 
 /**
@@ -44,7 +44,7 @@ export async function getOnChainCampaignsDetails({
     });
 
     // Fetch a few onchain information
-    const [metadata, isActive, isRunning, isAllowedToEdit, balance, config] =
+    const [metadata, isActive, isRunning, isAllowedToEdit, config] =
         await multicall(viemClient, {
             contracts: [
                 {
@@ -76,12 +76,6 @@ export async function getOnChainCampaignsDetails({
                     ],
                 } as const,
                 {
-                    abi: erc20Abi,
-                    address: addresses.mUSDToken,
-                    functionName: "balanceOf",
-                    args: [campaignAddress],
-                } as const,
-                {
                     abi: referralCampaignAbi,
                     address: campaignAddress,
                     functionName: "getConfig",
@@ -93,11 +87,11 @@ export async function getOnChainCampaignsDetails({
 
     // Return the data
     return {
+        productId: toHex(productId),
         metadata,
         isActive,
         isRunning,
         isAllowedToEdit,
-        balance,
         config,
     };
 }
