@@ -12,7 +12,7 @@ import { customHex } from "../../../common/drizzle/customTypes";
 /**
  * Table storing the push tokens used for the notifications
  */
-export const pushTokens = pgTable(
+export const pushTokensTable = pgTable(
     "push_tokens",
     {
         id: serial("id").primaryKey(),

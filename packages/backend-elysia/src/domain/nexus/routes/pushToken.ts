@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { t } from "../../../common";
 import { nexusContext } from "../context";
-import { pushTokens } from "../db/schema";
+import { pushTokensTable } from "../db/schema";
 
 export const pushTokenRoutes = new Elysia({ prefix: "pushToken" })
     .use(nexusContext)
@@ -14,7 +14,7 @@ export const pushTokenRoutes = new Elysia({ prefix: "pushToken" })
             }
             // Insert our push token
             await nexusDb
-                .insert(pushTokens)
+                .insert(pushTokensTable)
                 .values({
                     wallet: session.wallet.address,
                     endpoint: body.subscription.endpoint,
@@ -50,8 +50,8 @@ export const pushTokenRoutes = new Elysia({ prefix: "pushToken" })
 
         // Remove all the push tokens for this wallet
         await nexusDb
-            .delete(pushTokens)
-            .where(eq(pushTokens.wallet, session.wallet.address))
+            .delete(pushTokensTable)
+            .where(eq(pushTokensTable.wallet, session.wallet.address))
             .execute();
     })
     .get(
@@ -61,8 +61,8 @@ export const pushTokenRoutes = new Elysia({ prefix: "pushToken" })
                 return false;
             }
             // Try to find the first push token
-            const item = await nexusDb.query.pushTokens.findFirst({
-                where: eq(pushTokens.wallet, session.wallet.address),
+            const item = await nexusDb.query.pushTokensTable.findFirst({
+                where: eq(pushTokensTable.wallet, session.wallet.address),
             });
             // Return if we found something
             return !!item;

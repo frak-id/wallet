@@ -1,18 +1,27 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import { blockchainContext, postgresContext } from "../../common/context";
-import * as dbSchema from "./db/schema";
+import {
+    productOracleTable,
+    purchaseStatusEnum,
+    purchaseStatusTable,
+} from "./db/schema";
 
-export const businessOracleContext = new Elysia({
-    name: "business-oracle-context",
+export const businessContext = new Elysia({
+    name: "business-context",
 })
     .use(blockchainContext)
     .use(postgresContext)
     .decorate(({ postgresDb, ...decorators }) => ({
         ...decorators,
-        oracleDb: drizzle(postgresDb, {
-            schema: dbSchema,
+        businessDb: drizzle(postgresDb, {
+            schema: {
+                productOracleTable,
+                purchaseStatusEnum,
+                purchaseStatusTable,
+            },
         }),
-    }));
+    }))
+    .as("plugin");
 
-export type BusinessOracleContextApp = typeof businessOracleContext;
+export type BusinessContextApp = typeof businessContext;

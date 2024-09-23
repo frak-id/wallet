@@ -6,7 +6,7 @@ import { Config } from "sst/node/config";
 import { sendNotification, setVapidDetails } from "web-push";
 import { t } from "../../../common";
 import { nexusContext } from "../context";
-import { pushTokens } from "../db/schema";
+import { pushTokensTable } from "../db/schema";
 
 export const notificationRoutes = new Elysia({ prefix: "notification" })
     .use(nexusContext)
@@ -20,13 +20,13 @@ export const notificationRoutes = new Elysia({ prefix: "notification" })
                 // todo: 1. Secure 2. Notification tracking (send, received, clicked)
                 // Remove every push tokens expired
                 await nexusDb
-                    .delete(pushTokens)
-                    .where(lt(pushTokens.expireAt, new Date()))
+                    .delete(pushTokensTable)
+                    .where(lt(pushTokensTable.expireAt, new Date()))
                     .execute();
 
                 // Find every push tokens for the given wallets
-                const tokens = await nexusDb.query.pushTokens.findMany({
-                    where: inArray(pushTokens.wallet, wallets),
+                const tokens = await nexusDb.query.pushTokensTable.findMany({
+                    where: inArray(pushTokensTable.wallet, wallets),
                 });
                 if (tokens.length === 0) {
                     console.log("No push tokens found for the given wallets");

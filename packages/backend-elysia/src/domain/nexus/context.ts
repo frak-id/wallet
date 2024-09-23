@@ -4,7 +4,7 @@ import { unsealData } from "iron-session";
 import { Config } from "sst/node/config";
 import type { Address } from "viem";
 import { blockchainContext, postgresContext } from "../../common/context";
-import * as dbSchema from "./db/schema";
+import { pushTokensTable } from "./db/schema";
 
 export const nexusContext = new Elysia({
     name: "nexus-context",
@@ -14,7 +14,7 @@ export const nexusContext = new Elysia({
     .decorate(({ postgresDb, ...decorators }) => ({
         ...decorators,
         nexusDb: drizzle(postgresDb, {
-            schema: dbSchema,
+            schema: { pushTokensTable },
         }),
     }))
     // Potential nexus cookie session

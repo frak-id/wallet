@@ -1,34 +1,45 @@
 import {
     decimal,
+    index,
+    integer,
+    pgEnum,
     pgTable,
     serial,
     timestamp,
-    unique,
     uniqueIndex,
     varchar,
 } from "drizzle-orm/pg-core";
 import { customHex } from "../../../common/drizzle/customTypes";
 
-export const productOracle = pgTable(
-    "product_purchase_oracle",
+export const productOracleTable = pgTable(
+    "product_oracle",
     {
         id: serial("id").primaryKey(),
-        productId: customHex("product_id").notNull(),
+        productId: customHex("product_id").unique().notNull(),
         // The signing key that will be used for the hooks
         hookSignatureKey: varchar("hook_signature_key").notNull(),
         // Date infos
         createdAt: timestamp("created_at").defaultNow(),
     },
     (table) => ({
-        productIdIdx: uniqueIndex("unique_product_id").on(table.productId),
+        productIdIdx: index("unique_product_id").on(table.productId),
     })
 );
 
-export const purchaseStatus = pgTable(
-    "product_purchase_status",
+export const purchaseStatusEnum = pgEnum("purchase_status", [
+    "pending",
+    "confirmed",
+    "cancelled",
+    "refunded",
+]);
+
+export const purchaseStatusTable = pgTable(
+    "product_oracle_purchase",
     {
         id: serial("id").primaryKey(),
-        oracleId: serial("oracle_id").references(() => productOracle.id),
+        oracleId: integer("oracle_id").references(() => productOracleTable.id),
+        // The encoded purchase id for this purchase
+        purchaseId: customHex("purchase_id").unique().notNull(),
         // External id from the external app
         externalId: varchar("external_id").notNull(),
         // The total price of the order
@@ -36,9 +47,9 @@ export const purchaseStatus = pgTable(
         // ISO 4217 currency code, so 3 char, we take 4 char to be safe
         currencyCode: varchar("currency_code", { length: 4 }).notNull(),
         // Status, can be "pending", "confirmed", "cancelled" or "refunded"
-        status: varchar("status").notNull(),
+        status: purchaseStatusEnum("status"),
         // The computed leaf for this order, usefull for fastly rebuilding the merkle tree (order_id + status)
-        leaf: customHex("leaf").notNull(),
+        leaf: customHex("leaf"),
         // Update infos
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
@@ -48,9 +59,6 @@ export const purchaseStatus = pgTable(
             table.externalId,
             table.oracleId
         ),
-        unqStatus: unique("unique_status").on(table.status),
+        purchaseIdIdx: index("purchase_id_idx").on(table.purchaseId),
     })
 );
-
-// topics: orders/* (orders/paid orders/fulfilled orders/cancelled orders/create)
-//
