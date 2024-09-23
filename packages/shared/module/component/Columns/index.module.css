@@ -47,3 +47,8 @@
     flex-grow: initial;
     flex-basis: 100%;
 }
+
+.column--none {
+    flex-grow: initial;
+    flex-basis: auto;
+}

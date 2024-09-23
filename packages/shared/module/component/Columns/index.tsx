@@ -47,6 +47,7 @@ interface ColumnProps
 const columnVariants = cva(styles.column, {
     variants: {
         size: {
+            none: styles["column--none"],
             full: styles["column--full"],
             threeQuarter: styles["column--3-4"],
             oneQuarter: styles["column--1-4"],

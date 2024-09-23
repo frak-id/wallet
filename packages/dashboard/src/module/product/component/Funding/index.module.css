@@ -1,0 +1,7 @@
+.productFundingBank + .productFundingBank {
+    margin-top: 20px;
+}
+
+.productFundingBank__columns {
+    gap: 40px;
+}
