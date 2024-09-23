@@ -1,4 +1,4 @@
-import { addresses, isRunningInProd } from "@frak-labs/app-essentials";
+import { addresses } from "@frak-labs/app-essentials";
 import { Mutex } from "async-mutex";
 import { Elysia } from "elysia";
 import { Config } from "sst/node/config";
@@ -18,19 +18,14 @@ export const fundingRoutes = new Elysia({ prefix: "funding" })
         fundingReloadMutex: new Mutex(),
     })
     .post(
-        "/freeReload",
-        async ({ body: { campaign }, client, fundingReloadMutex }) => {
-            // Check if we are in production
-            if (isRunningInProd) {
-                throw new Error("Not allowed in production");
-            }
-
+        "/getTestToken",
+        async ({ body: { bank }, client, fundingReloadMutex }) => {
             // Check the current campaign balance (if more than 1000 ether don't reload it)
             const balance = await readContract(client, {
                 abi: erc20Abi,
                 address: addresses.mUSDToken,
                 functionName: "balanceOf",
-                args: [campaign],
+                args: [bank],
             });
             if (balance > parseEther("1000")) {
                 return;
@@ -47,17 +42,15 @@ export const fundingRoutes = new Elysia({ prefix: "funding" })
                     data: encodeFunctionData({
                         abi: [mintAbi],
                         functionName: "mint",
-                        args: [campaign, parseEther("1000")],
+                        args: [bank, parseEther("1000")],
                     }),
                 });
-                console.log(
-                    `Reloaded campaign ${campaign} with tx hash ${txHash}`
-                );
+                console.log(`Reloaded campaign ${bank} with tx hash ${txHash}`);
             });
         },
         {
             body: t.Object({
-                campaign: t.Address(),
+                bank: t.Address(),
             }),
         }
     );

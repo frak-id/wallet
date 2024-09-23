@@ -14,16 +14,13 @@ export const productOracle = pgTable(
     {
         id: serial("id").primaryKey(),
         productId: customHex("product_id").notNull(),
-        // External app id
-        externalAppId: varchar("external_app_id").notNull(),
+        // The signing key that will be used for the hooks
+        hookSignatureKey: varchar("hook_signature_key").notNull(),
         // Date infos
         createdAt: timestamp("created_at").defaultNow(),
     },
     (table) => ({
         productIdIdx: uniqueIndex("unique_product_id").on(table.productId),
-        externalAppIdIdx: uniqueIndex("external_app_id").on(
-            table.externalAppId
-        ),
     })
 );
 

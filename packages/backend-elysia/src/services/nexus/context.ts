@@ -16,19 +16,14 @@ export const nexusContext = new Elysia({
         nexusDb: drizzle(postgresDb, {
             schema: dbSchema,
         }),
-    }));
-
-export type NexusContextApp = typeof nexusContext;
-
-export const authNexusUser = new Elysia({
-    name: "nexus-context-authenticated-user",
-})
-    .use(nexusContext)
+    }))
+    // Potential nexus cookie session
     .guard({
         cookie: t.Object({
             nexusSession: t.Optional(t.String()),
         }),
     })
+    // Resolve the session if present
     .resolve(async ({ cookie: { nexusSession } }) => {
         // If we got no session cookie
         if (!nexusSession?.value) {
@@ -48,5 +43,19 @@ export const authNexusUser = new Elysia({
             },
         };
     })
+    // Macro to enforce nexus authentication if needed
+    .macro(({ onBeforeHandle }) => ({
+        isNexusAuthenticated(enabled?: boolean) {
+            if (!enabled) {
+                return;
+            }
+
+            // If no session present, exit with unauthorized
+            return onBeforeHandle(async ({ session, error }) => {
+                if (!session) {
+                    return error(401);
+                }
+            });
+        },
+    }))
     .as("plugin");
-export type AuthenticatedNexusContextApp = typeof authNexusUser;

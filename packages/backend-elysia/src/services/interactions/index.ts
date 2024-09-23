@@ -32,7 +32,7 @@ export const interactions = new Elysia().use(interactionsContext).get(
             return { pubKey: account.address };
         }
 
-        throw new Error("Invalid event");
+        throw new Error("Invalid query");
     },
     {
         query: t.Object({

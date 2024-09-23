@@ -1,16 +1,16 @@
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { t } from "../../../common";
-import { authNexusUser } from "../context";
+import { nexusContext } from "../context";
 import { pushTokens } from "../db/schema";
 
 export const pushTokenRoutes = new Elysia({ prefix: "pushToken" })
-    .use(authNexusUser)
+    .use(nexusContext)
     .post(
         "/save",
-        async ({ body, nexusDb, session }) => {
+        async ({ body, nexusDb, session, error }) => {
             if (!session) {
-                throw new Error("No session found");
+                return error(401);
             }
             // Insert our push token
             await nexusDb
@@ -27,6 +27,10 @@ export const pushTokenRoutes = new Elysia({ prefix: "pushToken" })
                 .onConflictDoNothing();
         },
         {
+            // Enforce nexus authentication
+            isNexusAuthenticated: true,
+
+            // Body schema
             body: t.Object({
                 subscription: t.Object({
                     endpoint: t.String(),
