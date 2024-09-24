@@ -1,5 +1,5 @@
 {
-    "id": "973e43d3-f431-4bfc-8619-0ddf66e3e3dd",
+    "id": "5ef8a9f1-e6f0-45d8-9d4f-8515edc4dbf8",
     "prevId": "d6a9ca4a-b16c-4770-aeab-3f6b7fb3d130",
     "version": "7",
     "dialect": "postgresql",
@@ -79,8 +79,8 @@
                 }
             }
         },
-        "public.product_purchase_oracle": {
-            "name": "product_purchase_oracle",
+        "public.product_oracle": {
+            "name": "product_oracle",
             "schema": "",
             "columns": {
                 "id": {
@@ -95,8 +95,8 @@
                     "primaryKey": false,
                     "notNull": true
                 },
-                "external_app_id": {
-                    "name": "external_app_id",
+                "hook_signature_key": {
+                    "name": "hook_signature_key",
                     "type": "varchar",
                     "primaryKey": false,
                     "notNull": true
@@ -107,6 +107,12 @@
                     "primaryKey": false,
                     "notNull": false,
                     "default": "now()"
+                },
+                "merkle_root": {
+                    "name": "merkle_root",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
                 }
             },
             "indexes": {
@@ -120,22 +126,7 @@
                             "nulls": "last"
                         }
                     ],
-                    "isUnique": true,
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
-                },
-                "external_app_id": {
-                    "name": "external_app_id",
-                    "columns": [
-                        {
-                            "expression": "external_app_id",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": true,
+                    "isUnique": false,
                     "concurrently": false,
                     "method": "btree",
                     "with": {}
@@ -143,10 +134,16 @@
             },
             "foreignKeys": {},
             "compositePrimaryKeys": {},
-            "uniqueConstraints": {}
+            "uniqueConstraints": {
+                "product_oracle_product_id_unique": {
+                    "name": "product_oracle_product_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["product_id"]
+                }
+            }
         },
-        "public.product_purchase_status": {
-            "name": "product_purchase_status",
+        "public.product_oracle_purchase": {
+            "name": "product_oracle_purchase",
             "schema": "",
             "columns": {
                 "id": {
@@ -157,7 +154,13 @@
                 },
                 "oracle_id": {
                     "name": "oracle_id",
-                    "type": "serial",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "purchase_id": {
+                    "name": "purchase_id",
+                    "type": "bytea",
                     "primaryKey": false,
                     "notNull": true
                 },
@@ -181,15 +184,16 @@
                 },
                 "status": {
                     "name": "status",
-                    "type": "varchar",
+                    "type": "purchase_status",
+                    "typeSchema": "public",
                     "primaryKey": false,
-                    "notNull": true
+                    "notNull": false
                 },
                 "leaf": {
                     "name": "leaf",
                     "type": "bytea",
                     "primaryKey": false,
-                    "notNull": true
+                    "notNull": false
                 },
                 "created_at": {
                     "name": "created_at",
@@ -227,13 +231,28 @@
                     "concurrently": false,
                     "method": "btree",
                     "with": {}
+                },
+                "purchase_id_idx": {
+                    "name": "purchase_id_idx",
+                    "columns": [
+                        {
+                            "expression": "purchase_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
                 }
             },
             "foreignKeys": {
-                "product_purchase_status_oracle_id_product_purchase_oracle_id_fk": {
-                    "name": "product_purchase_status_oracle_id_product_purchase_oracle_id_fk",
-                    "tableFrom": "product_purchase_status",
-                    "tableTo": "product_purchase_oracle",
+                "product_oracle_purchase_oracle_id_product_oracle_id_fk": {
+                    "name": "product_oracle_purchase_oracle_id_product_oracle_id_fk",
+                    "tableFrom": "product_oracle_purchase",
+                    "tableTo": "product_oracle",
                     "columnsFrom": ["oracle_id"],
                     "columnsTo": ["id"],
                     "onDelete": "no action",
@@ -242,15 +261,21 @@
             },
             "compositePrimaryKeys": {},
             "uniqueConstraints": {
-                "unique_status": {
-                    "name": "unique_status",
+                "product_oracle_purchase_purchase_id_unique": {
+                    "name": "product_oracle_purchase_purchase_id_unique",
                     "nullsNotDistinct": false,
-                    "columns": ["status"]
+                    "columns": ["purchase_id"]
                 }
             }
         }
     },
-    "enums": {},
+    "enums": {
+        "public.purchase_status": {
+            "name": "purchase_status",
+            "schema": "public",
+            "values": ["pending", "confirmed", "cancelled", "refunded"]
+        }
+    },
     "schemas": {},
     "sequences": {},
     "_meta": {

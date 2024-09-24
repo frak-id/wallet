@@ -1,0 +1,41 @@
+{
+    "folders": [
+        {
+            "name": "ROOT",
+            "path": "../"
+        },
+        {
+            "name": "SDK",
+            "path": "../packages/sdk"
+        },
+        {
+            "name": "Elysia - backend",
+            "path": "../packages/backend-elysia"
+        },
+        {
+            "name": "App - Dashboard",
+            "path": "../packages/dashboard"
+        },
+        {
+            "name": "App - Nexus",
+            "path": "../packages/nexus"
+        },
+        {
+            "name": "Common - App essentgials",
+            "path": "../packages/app-essentials"
+        },
+        {
+            "name": "Common - shared",
+            "path": "../packages/shared"
+        },
+        {
+            "name": "Example - News Paper",
+            "path": "../example/news-interactions"
+        },
+        {
+            "name": "Example - Wallet EthCC",
+            "path": "../example/wallet-ethcc"
+        }
+    ],
+    "settings": {}
+}

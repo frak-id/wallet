@@ -3,8 +3,8 @@ import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
     schema: [
-        "src/services/nexus/db/schema.ts",
-        "src/services/business/db/schema.ts",
+        "src/domain/nexus/db/schema.ts",
+        "src/domain/business/db/schema.ts",
     ],
     dialect: "postgresql",
     dbCredentials: {
