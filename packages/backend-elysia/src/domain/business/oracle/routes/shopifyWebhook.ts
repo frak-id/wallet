@@ -78,7 +78,7 @@ export const shopifyWebhook = new Elysia({ prefix: "shopify" })
                 where: eq(productOracleTable.productId, productId),
             });
             if (!oracle) {
-                throw new Error("Product oracle not found");
+                return error(404, "Product oracle not found");
             }
 
             // Prebuild some data before insert

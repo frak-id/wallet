@@ -8,11 +8,11 @@ import { interactionsContext } from "./context";
  */
 export const interactions = new Elysia().use(interactionsContext).get(
     "/interactions/validatorPublicKey",
-    async ({ productSignerRepository, query }) => {
+    async ({ productSignerRepository, query, error }) => {
         // Case of a product id
         if (query.productId) {
             if (!isHex(query.productId)) {
-                throw new Error("Invalid productId");
+                return error(400, "Invalid productId");
             }
 
             const account =
@@ -32,15 +32,18 @@ export const interactions = new Elysia().use(interactionsContext).get(
             return { pubKey: account.address };
         }
 
-        throw new Error("Invalid query");
+        return error(400, "Invalid query");
     },
     {
         query: t.Object({
             productId: t.Optional(t.Hex()),
             key: t.Optional(t.String()),
         }),
-        response: t.Object({
-            pubKey: t.Address(),
-        }),
+        response: {
+            200: t.Object({
+                pubKey: t.Address(),
+            }),
+            400: t.String(),
+        },
     }
 );

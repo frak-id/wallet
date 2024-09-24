@@ -1,5 +1,5 @@
 {
-    "id": "3763ecab-ccff-46bf-9e28-b5e2a37f688a",
+    "id": "5ef8a9f1-e6f0-45d8-9d4f-8515edc4dbf8",
     "prevId": "d6a9ca4a-b16c-4770-aeab-3f6b7fb3d130",
     "version": "7",
     "dialect": "postgresql",
@@ -107,6 +107,12 @@
                     "primaryKey": false,
                     "notNull": false,
                     "default": "now()"
+                },
+                "merkle_root": {
+                    "name": "merkle_root",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
                 }
             },
             "indexes": {
@@ -150,7 +156,7 @@
                     "name": "oracle_id",
                     "type": "integer",
                     "primaryKey": false,
-                    "notNull": false
+                    "notNull": true
                 },
                 "purchase_id": {
                     "name": "purchase_id",

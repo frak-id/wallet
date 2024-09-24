@@ -9,12 +9,13 @@ CREATE TABLE IF NOT EXISTS "product_oracle" (
 	"product_id" "bytea" NOT NULL,
 	"hook_signature_key" varchar NOT NULL,
 	"created_at" timestamp DEFAULT now(),
+	"merkle_root" "bytea",
 	CONSTRAINT "product_oracle_product_id_unique" UNIQUE("product_id")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "product_oracle_purchase" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"oracle_id" integer,
+	"oracle_id" integer NOT NULL,
 	"purchase_id" "bytea" NOT NULL,
 	"external_id" varchar NOT NULL,
 	"total_price" numeric NOT NULL,

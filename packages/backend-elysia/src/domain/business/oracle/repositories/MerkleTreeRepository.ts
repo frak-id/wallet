@@ -1,7 +1,7 @@
 import { and, eq, isNotNull } from "drizzle-orm";
-import type { LRUCache } from "lru-cache";
+import { LRUCache } from "lru-cache";
 import MerkleTree from "merkletreejs";
-import { type Hex, keccak256 } from "viem";
+import { type Hex, hexToBytes, keccak256 } from "viem";
 import type { BusinessDb } from "../../context";
 import { productOracleTable, purchaseStatusTable } from "../../db/schema";
 
@@ -9,14 +9,12 @@ import { productOracleTable, purchaseStatusTable } from "../../db/schema";
  * Repository used to manage the merkle tree
  */
 export class MerkleTreeRepository {
-    constructor(
-        private readonly cache: LRUCache<string, MerkleTree>,
-        private readonly businessDb: BusinessDb
-    ) {}
+    // Since merklee tree can be super heavy, only keep max 32 in memory
+    private readonly cache = new LRUCache<Hex, MerkleTree>({
+        max: 32,
+    });
 
-    private productCacheKey(productId: Hex) {
-        return `MerkleTreeRepository-tree-${productId}`;
-    }
+    constructor(private readonly businessDb: BusinessDb) {}
 
     /**
      * Build the merkle tree for a product
@@ -53,13 +51,12 @@ export class MerkleTreeRepository {
      * Get or build a merklee tree for a product
      */
     private async getMerkleTreeFromCacheOrBuild(productId: Hex) {
-        const cacheKey = this.productCacheKey(productId);
-        const cachedTree = this.cache.get(cacheKey);
+        const cachedTree = this.cache.get(productId);
         if (cachedTree) {
-            return cachedTree;
+            return cachedTree as MerkleTree;
         }
         const tree = await this.buildMerkleTreeForProduct(productId);
-        this.cache.set(cacheKey, tree);
+        this.cache.set(productId, tree);
         return tree;
     }
 
@@ -79,9 +76,14 @@ export class MerkleTreeRepository {
     public async getMerkleProof({
         productId,
         purchaseLeaf,
-    }: { productId: Hex; purchaseLeaf: Hex }): Promise<Hex[]> {
+    }: { productId: Hex; purchaseLeaf: Hex }): Promise<Hex[] | undefined> {
         const tree = await this.getMerkleTreeFromCacheOrBuild(productId);
-        return tree.getHexProof(purchaseLeaf) as Hex[];
+        const hashedLeaf = keccak256(purchaseLeaf);
+        const index = tree.getLeafIndex(hexToBytes(hashedLeaf) as Buffer);
+        if (index === -1) {
+            return undefined;
+        }
+        return tree.getHexProof(hashedLeaf) as Hex[];
     }
 
     /**
@@ -89,7 +91,18 @@ export class MerkleTreeRepository {
      */
     public invalidateProductTrees({ productIds }: { productIds: Hex[] }) {
         for (const productId of productIds) {
-            this.cache.delete(this.productCacheKey(productId));
+            this.cache.delete(productId);
         }
+    }
+
+    /**
+     * Get the cache size
+     */
+    get cacheSize() {
+        return this.cache.size;
+    }
+
+    get cachedTrees() {
+        return this.cache.keys();
     }
 }
