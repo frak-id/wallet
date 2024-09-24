@@ -5,6 +5,7 @@ import { LRUCache } from "lru-cache";
 import postgres from "postgres";
 import { Config } from "sst/node/config";
 import { arbitrum, arbitrumSepolia } from "viem/chains";
+import { AdminWalletsRepository } from "../shared/repositories/AdminWalletsRepository";
 
 function getChainAndClient() {
     const chain = isRunningInProd ? arbitrum : arbitrumSepolia;
@@ -54,3 +55,14 @@ export const cacheContext = new Elysia({
     }
 );
 export type CacheContextApp = typeof cacheContext;
+
+export const adminWalletContext = new Elysia({
+    name: "admin-wallet-context",
+})
+    .use(cacheContext)
+    .decorate(({ cache, ...decorators }) => ({
+        ...decorators,
+        cache,
+        adminWalletsRepository: new AdminWalletsRepository(cache),
+    }));
+export type AdminWalletContextApp = typeof adminWalletContext;

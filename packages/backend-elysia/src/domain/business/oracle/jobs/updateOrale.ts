@@ -1,7 +1,18 @@
 import cron, { Patterns } from "@elysiajs/cron";
+import {
+    addresses,
+    purchaseOracleAbi,
+} from "@frak-labs/app-essentials/blockchain";
 import { Mutex } from "async-mutex";
 import { eq, inArray, isNull } from "drizzle-orm";
-import { type Hex, encodePacked } from "viem";
+import { type Client, type Hex, type LocalAccount, encodePacked } from "viem";
+import {
+    readContract,
+    simulateContract,
+    waitForTransactionReceipt,
+    writeContract,
+} from "viem/actions";
+import type { AdminWalletsRepository } from "../../../../shared/repositories/AdminWalletsRepository";
 import type { BusinessDb } from "../../context";
 import { productOracleTable, purchaseStatusTable } from "../../db/schema";
 import type { BusinessOracleContextApp } from "../context";
@@ -16,9 +27,17 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
             pattern: Patterns.everyMinutes(2),
             run: async () => {
                 merkleeRootUpdateMutex.runExclusive(async () => {
+                    // Extract a few stuff from the app
+                    const {
+                        businessDb,
+                        merkleRepository,
+                        adminWalletsRepository,
+                        client,
+                    } = app.decorator;
+
                     // Update the empty leafs
                     const updatedOracleIds = await updateEmptyLeafs({
-                        businessDb: app.decorator.businessDb,
+                        businessDb,
                     });
                     if (updatedOracleIds.size === 0) {
                         console.log("No oracle to update");
@@ -28,18 +47,18 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
                     // Invalidate the merkle tree
                     const productIds = await invalidateOracleTree({
                         oracleIds: updatedOracleIds,
-                        businessDb: app.decorator.businessDb,
-                        merkleRepository: app.decorator.merkleRepository,
+                        businessDb,
+                        merkleRepository,
                     });
 
                     // Then update each products merkle root
                     await updateProductsMerkleRoot({
                         productIds: productIds,
-                        businessDb: app.decorator.businessDb,
-                        merkleRepository: app.decorator.merkleRepository,
+                        businessDb,
+                        merkleRepository,
+                        adminRepository: adminWalletsRepository,
+                        client,
                     });
-
-                    // todo: Should also push them on-chain
                 });
             },
         })
@@ -153,11 +172,19 @@ async function updateProductsMerkleRoot({
     productIds,
     businessDb,
     merkleRepository,
+    adminRepository,
+    client,
 }: {
     productIds: Hex[];
     businessDb: BusinessDb;
     merkleRepository: MerkleTreeRepository;
+    adminRepository: AdminWalletsRepository;
+    client: Client;
 }) {
+    const oracleUpdater = await adminRepository.getKeySpecificAccount({
+        key: "oracle-updater",
+    });
+
     for (const productId of productIds) {
         // Build the merkle root
         const root = await merkleRepository.getMerkleRoot({ productId });
@@ -167,5 +194,71 @@ async function updateProductsMerkleRoot({
             .set({ merkleRoot: root })
             .where(eq(productOracleTable.productId, productId));
         console.log(`Updated merkle root for product ${productId}`);
+
+        // Blockchain update
+        await safeMerkleeRootBlockchainUpdate({
+            productId,
+            merkleRoot: root,
+            oracleUpdater,
+            client,
+        });
+    }
+}
+
+/**
+ * Perform a blockchain update of the merkle root
+ * @returns
+ */
+async function safeMerkleeRootBlockchainUpdate({
+    productId,
+    merkleRoot,
+    oracleUpdater,
+    client,
+}: {
+    productId: Hex;
+    merkleRoot: Hex;
+    oracleUpdater: LocalAccount;
+    client: Client;
+}) {
+    // Get the current merklee root (and early exit if it's the same)
+    const currentRoot = await readContract(client, {
+        abi: purchaseOracleAbi,
+        address: addresses.purchaseOracle,
+        functionName: "getMerkleRoot",
+        args: [BigInt(productId)],
+    });
+
+    if (currentRoot === merkleRoot) {
+        console.log(
+            `Merkle root for product ${productId} is already up to date`
+        );
+        return;
+    }
+
+    try {
+        // Simulate the tx first
+        const { request } = await simulateContract(client, {
+            account: oracleUpdater,
+            abi: purchaseOracleAbi,
+            address: addresses.purchaseOracle,
+            functionName: "updateMerkleRoot",
+            args: [BigInt(productId), merkleRoot],
+        });
+
+        // Call the update function
+        const txHash = await writeContract(client, request);
+
+        // Wait for the tx to be mined
+        await waitForTransactionReceipt(client, {
+            hash: txHash,
+            confirmations: 4,
+            retryCount: 8,
+        });
+        console.log("Merkle update finalised");
+    } catch (e) {
+        console.error(
+            `Failed to update the merkle root on chain for ${productId}`,
+            e
+        );
     }
 }

@@ -8,7 +8,7 @@ import { interactionsContext } from "./context";
  */
 export const interactions = new Elysia().use(interactionsContext).get(
     "/interactions/validatorPublicKey",
-    async ({ productSignerRepository, query, error }) => {
+    async ({ adminWalletsRepository, query, error }) => {
         // Case of a product id
         if (query.productId) {
             if (!isHex(query.productId)) {
@@ -16,7 +16,7 @@ export const interactions = new Elysia().use(interactionsContext).get(
             }
 
             const account =
-                await productSignerRepository.getProductSpecificAccount({
+                await adminWalletsRepository.getProductSpecificAccount({
                     productId: BigInt(query.productId),
                 });
             return { pubKey: account.address };
@@ -24,21 +24,21 @@ export const interactions = new Elysia().use(interactionsContext).get(
 
         // Case of a requested type
         if (query.key) {
-            const account = await productSignerRepository.getKeySpecificAccount(
-                {
-                    key: query.key,
-                }
-            );
+            const account = await adminWalletsRepository.getKeySpecificAccount({
+                key: query.key,
+            });
             return { pubKey: account.address };
         }
 
         return error(400, "Invalid query");
     },
     {
-        query: t.Object({
-            productId: t.Optional(t.Hex()),
-            key: t.Optional(t.String()),
-        }),
+        query: t.Partial(
+            t.Object({
+                productId: t.Hex(),
+                key: t.String(),
+            })
+        ),
         response: {
             200: t.Object({
                 pubKey: t.Address(),

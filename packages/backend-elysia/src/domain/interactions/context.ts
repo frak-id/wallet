@@ -1,6 +1,9 @@
 import { Elysia } from "elysia";
-import { blockchainContext, cacheContext } from "../../common/context";
-import { ProductSignerRepository } from "./repositories/ProductSignerRepository";
+import {
+    adminWalletContext,
+    blockchainContext,
+    cacheContext,
+} from "../../common/context";
 
 /**
  * Context for the interactions service
@@ -9,10 +12,7 @@ import { ProductSignerRepository } from "./repositories/ProductSignerRepository"
 export const interactionsContext = new Elysia({ name: "interactions-context" })
     .use(cacheContext)
     .use(blockchainContext)
-    .decorate(({ cache, ...decorators }) => ({
-        ...decorators,
-        productSignerRepository: new ProductSignerRepository(cache),
-    }))
+    .use(adminWalletContext)
     .as("plugin");
 
 export type InteractionsContextApp = typeof interactionsContext;

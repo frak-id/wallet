@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import Elysia from "elysia";
-import { isHex } from "viem";
+import { type Hex, isHex } from "viem";
 import { t } from "../../../../common";
+import type { BusinessDb } from "../../context";
 import { productOracleTable, purchaseStatusTable } from "../../db/schema";
 import { businessOracleContext } from "../context";
 import type { UpdateMerkleRootAppJob } from "../jobs/updateOrale";
@@ -37,40 +38,22 @@ export const proofRoutes = new Elysia({
             store,
             error,
         }) => {
-            let purchases: (typeof purchaseStatusTable.$inferSelect)[];
-            if (isHex(purchaseId)) {
-                // Case when it's a pre computed purchase id
-                purchases = await businessDb
-                    .select()
-                    .from(purchaseStatusTable)
-                    .where(eq(purchaseStatusTable.purchaseId, purchaseId))
-                    .limit(1);
-            } else {
-                // Case when it's an external purchase id
-                const tmp = await businessDb
-                    .select()
-                    .from(purchaseStatusTable)
-                    .innerJoin(
-                        productOracleTable,
-                        eq(purchaseStatusTable.oracleId, productOracleTable.id)
-                    )
-                    .where(
-                        and(
-                            eq(purchaseStatusTable.externalId, purchaseId),
-                            eq(productOracleTable.productId, productId)
-                        )
-                    )
-                    .limit(1);
-                purchases = tmp.map((p) => p.product_oracle_purchase);
-            }
             // Get the purchase
-            const purchase = purchases[0];
+            const purchase = await getPurchaseStatus({
+                productId,
+                purchaseId,
+                businessDb,
+            });
+            if (!purchase) {
+                return error(404, "Purchase not found");
+            }
+
             // Case where the purchase hasn't been processed yet
             if (!purchase?.leaf) {
                 await (
                     store as UpdateMerkleRootAppJob["store"]
                 ).cron.updateMerkleRoot.trigger();
-                return error(423, `Purchase ${purchaseId} not processed yet`);
+                return error(423, "Purchase not processed yet");
             }
 
             // Otherwise, return the merklee proof for it
@@ -81,13 +64,16 @@ export const proofRoutes = new Elysia({
             if (!proof) {
                 return error(404, "No proof found");
             }
+            console.log("Purchase", { purchase });
             return {
+                root: await merkleRepository.getMerkleRoot({ productId }),
                 proof,
             };
         },
         {
             response: {
                 200: t.Object({
+                    root: t.Hex(),
                     proof: t.Array(t.Hex()),
                 }),
                 404: t.String(),
@@ -95,3 +81,43 @@ export const proofRoutes = new Elysia({
             },
         }
     );
+
+/**
+ * Get a purchase status
+ */
+async function getPurchaseStatus({
+    productId,
+    purchaseId,
+    businessDb,
+}: { productId: Hex; purchaseId: string; businessDb: BusinessDb }): Promise<
+    typeof purchaseStatusTable.$inferSelect | undefined
+> {
+    let purchases: (typeof purchaseStatusTable.$inferSelect)[];
+    if (isHex(purchaseId)) {
+        // Case when it's a pre computed purchase id
+        purchases = await businessDb
+            .select()
+            .from(purchaseStatusTable)
+            .where(eq(purchaseStatusTable.purchaseId, purchaseId))
+            .limit(1);
+    } else {
+        // Case when it's an external purchase id
+        const tmp = await businessDb
+            .select()
+            .from(purchaseStatusTable)
+            .innerJoin(
+                productOracleTable,
+                eq(purchaseStatusTable.oracleId, productOracleTable.id)
+            )
+            .where(
+                and(
+                    eq(purchaseStatusTable.externalId, purchaseId),
+                    eq(productOracleTable.productId, productId)
+                )
+            )
+            .limit(1);
+        purchases = tmp.map((p) => p.product_oracle_purchase);
+    }
+    // Return the first item
+    return purchases[0];
+}

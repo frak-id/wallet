@@ -9,9 +9,9 @@ import { type Hex, hexToBytes, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 /**
- * Build the repository that we will use to interface with our product signer
+ * Build the repository that we will use to interface with our different wallets
  */
-export class ProductSignerRepository {
+export class AdminWalletsRepository {
     private secretManager: SecretsManagerClient;
 
     // biome-ignore lint/complexity/noBannedTypes: idk how to type this
@@ -97,7 +97,7 @@ export class ProductSignerRepository {
      */
     public async getKeySpecificAccount({
         key,
-    }: { key: "interaction-executor" | (string & {}) }) {
+    }: { key: "interaction-executor" | "oracle-updater" | (string & {}) }) {
         const pkey = await this.getDerivedKey(key);
         return privateKeyToAccount(pkey);
     }

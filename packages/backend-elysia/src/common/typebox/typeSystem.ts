@@ -16,7 +16,7 @@ export const FrakType = {
         return t
             .Transform(schema)
             .Decode((value) => {
-                if (!isAddress(value)) {
+                if (value && !isAddress(value)) {
                     throw new ValidationError("property", schema, value);
                 }
                 return value as Address;
@@ -32,7 +32,7 @@ export const FrakType = {
         return t
             .Transform(schema)
             .Decode((value) => {
-                if (!isHex(value)) {
+                if (value && !isHex(value)) {
                     throw new ValidationError("property", schema, value);
                 }
                 return value as Hex;
