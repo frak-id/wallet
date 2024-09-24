@@ -35,7 +35,7 @@ export function useEditProduct({ productId }: { productId: Hex }) {
             // Send the transaction
             const { hash } = await sendTransaction({
                 tx: {
-                    to: addresses.productAdministratorRegistry,
+                    to: addresses.productRegistry,
                     data: txData,
                 },
                 metadata: {

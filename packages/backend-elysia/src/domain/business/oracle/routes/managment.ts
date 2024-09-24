@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { count, eq, max, min } from "drizzle-orm";
 import Elysia from "elysia";
 import { t } from "../../../../common";
-import { productOracleTable } from "../../db/schema";
+import { productOracleTable, purchaseStatusTable } from "../../db/schema";
 import { businessOracleContext } from "../context";
 
 export const managmentRoutes = new Elysia()
@@ -18,18 +18,53 @@ export const managmentRoutes = new Elysia()
         ":productId/status",
         async ({ productId, businessDb }) => {
             // Get the current oracle
-            const currentOracle =
-                await businessDb.query.productOracleTable.findFirst({
-                    with: { productId },
-                });
+            const currentOracles = await businessDb
+                .select()
+                .from(productOracleTable)
+                .where(eq(productOracleTable.productId, productId))
+                .limit(1);
+            const currentOracle = currentOracles[0];
             if (!currentOracle) {
-                return "not-ok";
+                return { setup: false };
             }
 
-            return "ok";
+            // Get some stats about the oracle
+            const stats = await businessDb
+                .select({
+                    firstPurchase: min(purchaseStatusTable.createdAt),
+                    lastPurchase: max(purchaseStatusTable.createdAt),
+                    lastUpdate: max(purchaseStatusTable.updatedAt),
+                    totalPurchaseHandled: count(),
+                })
+                .from(purchaseStatusTable)
+                .where(eq(purchaseStatusTable.oracleId, 1))
+                .execute();
+
+            // Return the oracle status
+            return {
+                setup: true,
+                webhookSigninKey: currentOracle.hookSignatureKey,
+                stats: stats[0],
+            };
         },
         {
-            response: t.Union([t.Literal("ok"), t.Literal("not-ok")]),
+            response: t.Union([
+                t.Object({
+                    setup: t.Literal(false),
+                }),
+                t.Object({
+                    setup: t.Literal(true),
+                    webhookSigninKey: t.String(),
+                    stats: t.Optional(
+                        t.Object({
+                            firstPurchase: t.Date(),
+                            lastPurchase: t.Date(),
+                            lastUpdate: t.Date(),
+                            totalPurchaseHandled: t.Number(),
+                        })
+                    ),
+                }),
+            ]),
         }
     )
     // Setup of an oracle for a product

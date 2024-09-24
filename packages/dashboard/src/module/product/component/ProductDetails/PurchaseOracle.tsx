@@ -1,14 +1,18 @@
 import { viemClient } from "@/context/blockchain/provider";
 import { purcheOracleUpdaterRoles } from "@/context/blockchain/roles";
+import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import {
     addresses,
     productAdministratorRegistryAbi,
 } from "@frak-labs/app-essentials";
+import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { backendApi } from "@frak-labs/shared/context/server";
+import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { Hex } from "viem";
+import { useState } from "react";
+import { type Address, type Hex, encodeFunctionData } from "viem";
 import { readContract } from "viem/actions";
 import { useProductMetadata } from "../../hook/useProductMetadata";
 
@@ -41,7 +45,7 @@ export function PurchaseOracleSetup({ productId }: { productId: Hex }) {
  */
 function ProductOracleSetupInner({ productId }: { productId: Hex }) {
     // Fetch some data about the current oracle setup
-    const { data: oracleSetupData } = useQuery({
+    const { data: oracleSetupData, refetch: refresh } = useQuery({
         queryKey: ["product", "oracle-setup-data"],
         queryFn: async () => {
             // Get the oracle updater address
@@ -51,12 +55,12 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
                         key: "oracle-updater",
                     },
                 });
-            if (!oracleUpdater) {
+            if (!oracleUpdater?.pubKey) {
                 return null;
             }
 
             // Get the current backend setup status
-            const { data: backendStatus } = await backendApi.business
+            const { data: webhookStatus } = await backendApi.business
                 .oracle({ productId })
                 .status.get();
 
@@ -73,21 +77,12 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
             });
 
             return {
-                oracleUpdater,
+                oracleUpdater: oracleUpdater.pubKey,
                 isOracleUpdaterAllowed,
-                isWebhookSetup: backendStatus === "ok",
+                isWebhookSetup: webhookStatus?.setup,
                 webhookUrl: `${process.env.BACKEND_URL}/business/oracle/shopify/${productId}/hook`,
+                webhookStatus,
             };
-        },
-    });
-
-    // Setup the oracle on the backend side
-    useMutation({
-        mutationKey: ["product", "oracle", "setup"],
-        mutationFn: async ({ webhookKey }: { webhookKey: string }) => {
-            await backendApi.business
-                .oracle({ productId })
-                .setup.post({ hookSignatureKey: webhookKey });
         },
     });
 
@@ -96,16 +91,221 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
     }
 
     return (
-        <div>
-            <p>Oracle updater: {oracleSetupData.oracleUpdater.pubKey}</p>
+        <>
+            <br />
+            <h3>Oracle</h3>
+            <Badge
+                variant={
+                    oracleSetupData.isOracleUpdaterAllowed
+                        ? "success"
+                        : "warning"
+                }
+            >
+                {oracleSetupData.isOracleUpdaterAllowed
+                    ? "Allowed"
+                    : "Disallowed"}
+            </Badge>
+
+            <ToggleOracleUpdaterRole
+                {...oracleSetupData}
+                productId={productId}
+                refresh={refresh}
+            />
+
+            <br />
+            <h3>Webhook status</h3>
+
+            <Badge
+                variant={oracleSetupData.isWebhookSetup ? "success" : "warning"}
+            >
+                {oracleSetupData.isWebhookSetup
+                    ? "Webhook registered on Frak"
+                    : "Webhook not registered on Frak"}
+            </Badge>
+
             <p>
-                Oracle updater allowed:{" "}
-                {oracleSetupData.isOracleUpdaterAllowed ? "yes" : "no"}
+                Webhook URL to use in your shopify notification centers:{" "}
+                <pre>{oracleSetupData.webhookUrl}</pre>
             </p>
-            <p>
-                Webhook setup: {oracleSetupData.isWebhookSetup ? "yes" : "no"}
-            </p>
-            <p>Webhook URL: {oracleSetupData.webhookUrl}</p>
-        </div>
+
+            <br />
+            <h3>Webhook registration</h3>
+            <WebhookRegistrationForm
+                productId={productId}
+                currentSigninKey={
+                    oracleSetupData.webhookStatus?.setup
+                        ? oracleSetupData.webhookStatus.webhookSigninKey
+                        : undefined
+                }
+                refresh={refresh}
+            />
+
+            <br />
+            <WebhookStats stats={oracleSetupData.webhookStatus} />
+        </>
+    );
+}
+
+/**
+ * Some webhook stats
+ */
+function WebhookStats({
+    stats,
+}: {
+    stats?:
+        | { setup: false }
+        | {
+              setup: true;
+              webhookSigninKey: string;
+              stats?: {
+                  firstPurchase: Date;
+                  lastPurchase: Date;
+                  lastUpdate: Date;
+                  totalPurchaseHandled: number;
+              };
+          }
+        | null;
+}) {
+    if (!stats?.setup) {
+        return null;
+    }
+
+    if (!stats.stats) {
+        return (
+            <>
+                <h3>Stats</h3>
+                <p>No stats currently available</p>
+            </>
+        );
+    }
+
+    return (
+        <>
+            <h3>Stats</h3>
+            <p>First purchase: {stats.stats.firstPurchase.toString()}</p>
+            <p>Last purchase: {stats.stats.lastPurchase.toString()}</p>
+            <p>Last update: {stats.stats.lastUpdate.toString()}</p>
+            <p>Total purchase handled: {stats.stats.totalPurchaseHandled}</p>
+        </>
+    );
+}
+
+/**
+ * Toggle the oracle updater role
+ *  todo: Should only be possible for product admin
+ *  todo: review contract to also allow product manager?
+ */
+function ToggleOracleUpdaterRole({
+    productId,
+    oracleUpdater,
+    isOracleUpdaterAllowed,
+    refresh,
+}: {
+    productId: Hex;
+    oracleUpdater: Address;
+    isOracleUpdaterAllowed: boolean;
+    refresh: () => Promise<unknown>;
+}) {
+    const { mutate: sendTx } = useSendTransactionAction({
+        mutations: {
+            onSuccess: async () => {
+                await refresh();
+            },
+        },
+    });
+
+    if (isOracleUpdaterAllowed) {
+        return (
+            <Button
+                variant={"danger"}
+                onClick={() =>
+                    sendTx({
+                        tx: {
+                            to: addresses.productAdministratorRegistry,
+                            data: encodeFunctionData({
+                                abi: productAdministratorRegistryAbi,
+                                functionName: "revokeRoles",
+                                args: [
+                                    BigInt(productId),
+                                    oracleUpdater,
+                                    purcheOracleUpdaterRoles,
+                                ],
+                            }),
+                        },
+                    })
+                }
+            >
+                Disallow oracle updater
+            </Button>
+        );
+    }
+
+    return (
+        <Button
+            variant={"submit"}
+            onClick={() =>
+                sendTx({
+                    tx: {
+                        to: addresses.productAdministratorRegistry,
+                        data: encodeFunctionData({
+                            abi: productAdministratorRegistryAbi,
+                            functionName: "grantRoles",
+                            args: [
+                                BigInt(productId),
+                                oracleUpdater,
+                                purcheOracleUpdaterRoles,
+                            ],
+                        }),
+                    },
+                })
+            }
+        >
+            Allow oracle updater
+        </Button>
+    );
+}
+
+function WebhookRegistrationForm({
+    productId,
+    currentSigninKey,
+    refresh,
+}: {
+    productId: Hex;
+    currentSigninKey?: string;
+    refresh: () => Promise<unknown>;
+}) {
+    const { mutate: setupWebhook, isPending } = useMutation({
+        mutationKey: ["product", "oracle-webhook", "setup"],
+        mutationFn: async ({ webhookKey }: { webhookKey: string }) => {
+            await backendApi.business
+                .oracle({ productId })
+                .setup.post({ hookSignatureKey: webhookKey });
+        },
+        onSettled: async () => {
+            await refresh();
+        },
+    });
+
+    const [key, setKey] = useState(currentSigninKey ?? "");
+
+    return (
+        <form
+            onSubmit={(e) => {
+                e.preventDefault();
+                setupWebhook({ webhookKey: key });
+            }}
+        >
+            <p>The webhook signin key from your shopify admin panel</p>
+            <input
+                type="text"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                disabled={isPending}
+                placeholder="Webhook signin key"
+            />
+            <Button type="submit" variant="information" disabled={isPending}>
+                {currentSigninKey ? "Setup webhook" : "Register webhook"}
+            </Button>
+        </form>
     );
 }
