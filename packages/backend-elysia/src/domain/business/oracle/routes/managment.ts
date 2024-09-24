@@ -44,7 +44,12 @@ export const managmentRoutes = new Elysia()
             return {
                 setup: true,
                 webhookSigninKey: currentOracle.hookSignatureKey,
-                stats: stats[0],
+                stats: {
+                    firstPurchase: stats[0]?.firstPurchase ?? undefined,
+                    lastPurchase: stats[0]?.lastPurchase ?? undefined,
+                    lastUpdate: stats[0]?.lastUpdate ?? undefined,
+                    totalPurchaseHandled: stats[0]?.totalPurchaseHandled,
+                },
             };
         },
         {
@@ -56,12 +61,14 @@ export const managmentRoutes = new Elysia()
                     setup: t.Literal(true),
                     webhookSigninKey: t.String(),
                     stats: t.Optional(
-                        t.Object({
-                            firstPurchase: t.Date(),
-                            lastPurchase: t.Date(),
-                            lastUpdate: t.Date(),
-                            totalPurchaseHandled: t.Number(),
-                        })
+                        t.Partial(
+                            t.Object({
+                                firstPurchase: t.Date(),
+                                lastPurchase: t.Date(),
+                                lastUpdate: t.Date(),
+                                totalPurchaseHandled: t.Number(),
+                            })
+                        )
                     ),
                 }),
             ]),

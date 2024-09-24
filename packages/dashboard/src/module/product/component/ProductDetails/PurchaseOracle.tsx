@@ -158,10 +158,10 @@ function WebhookStats({
               setup: true;
               webhookSigninKey: string;
               stats?: {
-                  firstPurchase: Date;
-                  lastPurchase: Date;
-                  lastUpdate: Date;
-                  totalPurchaseHandled: number;
+                  firstPurchase?: Date;
+                  lastPurchase?: Date;
+                  lastUpdate?: Date;
+                  totalPurchaseHandled?: number;
               };
           }
         | null;
@@ -182,10 +182,17 @@ function WebhookStats({
     return (
         <>
             <h3>Stats</h3>
-            <p>First purchase: {stats.stats.firstPurchase.toString()}</p>
-            <p>Last purchase: {stats.stats.lastPurchase.toString()}</p>
-            <p>Last update: {stats.stats.lastUpdate.toString()}</p>
-            <p>Total purchase handled: {stats.stats.totalPurchaseHandled}</p>
+            <p>
+                First purchase: {stats.stats.firstPurchase?.toString() ?? "N/A"}
+            </p>
+            <p>
+                Last purchase: {stats.stats.lastPurchase?.toString() ?? "N/A"}
+            </p>
+            <p>Last update: {stats.stats.lastUpdate?.toString() ?? "N/A"}</p>
+            <p>
+                Total purchase handled:{" "}
+                {stats.stats?.totalPurchaseHandled ?? "N/A"}
+            </p>
         </>
     );
 }
