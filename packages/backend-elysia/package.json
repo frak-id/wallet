@@ -32,6 +32,7 @@
     "elysia": "1.1.12",
     "iron-session": "^8.0.3",
     "lru-cache": "^11.0.1",
+    "merkletreejs": "^0.4.0",
     "mongodb": "^6.9.0",
     "postgres": "^3.4.4",
     "solady": "^0.0.238",

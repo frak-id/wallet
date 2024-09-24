@@ -110,7 +110,7 @@ export const shopifyWebhook = new Elysia({ prefix: "shopify" })
                     },
                 });
 
-            return oracle;
+            return "ok";
         }
     );
 

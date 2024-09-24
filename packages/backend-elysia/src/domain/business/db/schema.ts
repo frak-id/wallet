@@ -20,6 +20,8 @@ export const productOracleTable = pgTable(
         hookSignatureKey: varchar("hook_signature_key").notNull(),
         // Date infos
         createdAt: timestamp("created_at").defaultNow(),
+        // The current merkle root for this oracle
+        merkleRoot: customHex("merkle_root"),
     },
     (table) => ({
         productIdIdx: index("unique_product_id").on(table.productId),
@@ -37,7 +39,9 @@ export const purchaseStatusTable = pgTable(
     "product_oracle_purchase",
     {
         id: serial("id").primaryKey(),
-        oracleId: integer("oracle_id").references(() => productOracleTable.id),
+        oracleId: integer("oracle_id")
+            .references(() => productOracleTable.id)
+            .notNull(),
         // The encoded purchase id for this purchase
         purchaseId: customHex("purchase_id").unique().notNull(),
         // External id from the external app

@@ -25,3 +25,5 @@ export const businessContext = new Elysia({
     .as("plugin");
 
 export type BusinessContextApp = typeof businessContext;
+
+export type BusinessDb = BusinessContextApp["decorator"]["businessDb"];

@@ -12,3 +12,5 @@ export const businessOracleContext = new Elysia({
         }),
     })
     .as("plugin");
+
+export type BusinessOracleContextApp = typeof businessOracleContext;

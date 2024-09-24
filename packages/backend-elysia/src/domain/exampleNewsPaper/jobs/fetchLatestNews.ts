@@ -1,5 +1,4 @@
 import cron, { Patterns } from "@elysiajs/cron";
-import { cluster, all } from "radash";
 import { Config } from "sst/node/config";
 import type { NewsPaperContextApp } from "../context";
 import { LlmFormatterRepository } from "../repositories/LlmFormatterRepository";
@@ -61,7 +60,11 @@ async function fetchLatestNew({
     });
 
     // We will make cluster of 2 news, to process in //
-    const clusters = cluster(latestNews, 2);
+    const clusterCount = Math.ceil(latestNews.length / 2);
+    const clusters = new Array(clusterCount).fill(0).map((_, i) => {
+        const start = i * 2;
+        return latestNews.slice(start, start + 2);
+    });
 
     // Process each cluster
     for (const cluster of clusters) {
@@ -71,7 +74,7 @@ async function fetchLatestNew({
         });
         try {
             // For each news, format the text
-            const formattedNews = await all(
+            const formattedNews = await Promise.all(
                 cluster.map(async (news) => {
                     const llmText = await llmRepository.formatNews({
                         title: news.title,

@@ -25,13 +25,14 @@ export class ProductSignerRepository {
     private async getFromCacheOrFetch(
         key: string,
         fetcher: () => Promise<Hex>
-    ) : Promise<Hex> {
-        const cachedValue = this.cache.get(`ProductSignerRepository-${key}`);
+    ): Promise<Hex> {
+        const cacheKey = `ProductSignerRepository-${key}`;
+        const cachedValue = this.cache.get(cacheKey);
         if (cachedValue) {
             return cachedValue as Hex;
         }
         const fetchedValue = await fetcher();
-        this.cache.set(key, fetchedValue);
+        this.cache.set(cacheKey, fetchedValue);
         return fetchedValue;
     }
 
