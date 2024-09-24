@@ -14,18 +14,24 @@ export const managmentRoutes = new Elysia()
         return { productId };
     })
     // Status of the oracle around a product
-    .get(":productId/status", async ({ productId, businessDb, error }) => {
-        // Get the current oracle
-        const currentOracle =
-            await businessDb.query.productOracleTable.findFirst({
-                with: { productId },
-            });
-        if (!currentOracle) {
-            return error(404, `Product ${productId} have no oracle setup`);
-        }
+    .get(
+        ":productId/status",
+        async ({ productId, businessDb }) => {
+            // Get the current oracle
+            const currentOracle =
+                await businessDb.query.productOracleTable.findFirst({
+                    with: { productId },
+                });
+            if (!currentOracle) {
+                return "not-ok";
+            }
 
-        return "ok";
-    })
+            return "ok";
+        },
+        {
+            response: t.Union([t.Literal("ok"), t.Literal("not-ok")]),
+        }
+    )
     // Setup of an oracle for a product
     .post(
         ":productId/setup",

@@ -12,3 +12,8 @@ export type RolesKeys = keyof typeof roles;
  * Role specific for the interaction validator
  */
 export const interactionValidatorRoles = BigInt(1 << 4);
+
+/**
+ * Role specific for the purchase oracle updater
+ */
+export const purcheOracleUpdaterRoles = BigInt(1 << 5);

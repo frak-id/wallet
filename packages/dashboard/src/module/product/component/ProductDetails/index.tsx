@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex } from "viem";
+import { PurchaseOracleSetup } from "./PurchaseOracle";
 import styles from "./index.module.css";
 
 type FormProduct = {
@@ -218,6 +219,7 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                     </Panel>
                 )}
                 <ManageProductTeam productId={productId} />
+                <PurchaseOracleSetup productId={productId} />
                 <InteractionSettings productId={productId} />
             </Form>
         </FormLayout>
