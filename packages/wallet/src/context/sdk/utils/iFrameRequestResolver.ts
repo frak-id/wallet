@@ -87,9 +87,9 @@ export function createIFrameRequestResolver(
                     // Check if the user has already visited
                     // if so, we don't want to restore the backup
                     // because we can access the session cookie
-                    if (document.cookie.includes("hasVisited=true")) {
-                        return;
-                    }
+                    // if (document.cookie.includes("hasVisited=true")) {
+                    //     return;
+                    // }
 
                     // Restore the backup
                     await restoreBackupData({
