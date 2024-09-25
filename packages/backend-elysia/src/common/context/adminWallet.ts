@@ -1,5 +1,5 @@
 import { AdminWalletsRepository } from "@backend-common/repositories";
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import { cacheContext } from "./cache";
 
 export const adminWalletContext = new Elysia({

@@ -1,4 +1,4 @@
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import postgres from "postgres";
 import { Config } from "sst/node/config";
 

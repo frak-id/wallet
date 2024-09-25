@@ -202,11 +202,11 @@ function ManagedInteractionValidator({
         ],
         queryFn: async () => {
             const { productResult, interactionExecutorResult } = await all({
-                productResult: backendApi.interactions.validatorPublicKey.get({
+                productResult: backendApi.common.adminWallet.get({
                     query: { productId },
                 }),
                 interactionExecutorResult:
-                    backendApi.interactions.validatorPublicKey.get({
+                    backendApi.common.adminWallet.get({
                         query: { key: "interaction-executor" },
                     }),
             });

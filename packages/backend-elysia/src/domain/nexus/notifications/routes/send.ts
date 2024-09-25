@@ -5,29 +5,37 @@ import { Elysia } from "elysia";
 import { parallel } from "radash";
 import { Config } from "sst/node/config";
 import { sendNotification, setVapidDetails } from "web-push";
-import { nexusContext } from "../context";
-import { pushTokensTable } from "../db/schema";
+import { pushTokensTable } from "../../db/schema";
+import { notificationContext } from "../context";
 
-export const notificationRoutes = new Elysia({ prefix: "notification" })
-    .use(nexusContext)
+export const sendRoutes = new Elysia()
+    .use(notificationContext)
     .decorate({
         sendNotifMutex: new Mutex(),
     })
+    // External endpoint to send notification to a list of wallets
     .post(
         "/send",
-        async ({ body: { wallets, payload }, nexusDb, sendNotifMutex }) =>
+        async ({
+            body: { wallets, payload },
+            notificationDb,
+            sendNotifMutex,
+        }) =>
             sendNotifMutex.runExclusive(async () => {
-                // todo: 1. Secure 2. Notification tracking (send, received, clicked)
+                // todo: Secure stuff here
+                // todo: Notification tracking (send, received, clicked)
+
                 // Remove every push tokens expired
-                await nexusDb
+                await notificationDb
                     .delete(pushTokensTable)
                     .where(lt(pushTokensTable.expireAt, new Date()))
                     .execute();
 
                 // Find every push tokens for the given wallets
-                const tokens = await nexusDb.query.pushTokensTable.findMany({
-                    where: inArray(pushTokensTable.wallet, wallets),
-                });
+                const tokens =
+                    await notificationDb.query.pushTokensTable.findMany({
+                        where: inArray(pushTokensTable.wallet, wallets),
+                    });
                 if (tokens.length === 0) {
                     console.log("No push tokens found for the given wallets");
                     return;

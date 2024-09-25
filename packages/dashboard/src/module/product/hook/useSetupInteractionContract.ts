@@ -63,7 +63,7 @@ export function useSetupInteractionContract() {
 
                 // Get the manager validator address
                 const result =
-                    await backendApi.interactions.validatorPublicKey.get({
+                    await backendApi.common.adminWallet.get({
                         query: {
                             productId: productId,
                         },

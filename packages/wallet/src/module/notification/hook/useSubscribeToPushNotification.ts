@@ -51,7 +51,7 @@ export function useSubscribeToPushNotification(
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();
-            await backendApi.nexus.pushToken.save.post({
+            await backendApi.nexus.notification.pushToken.put({
                 subscription: {
                     endpoint: jsonSubscription.endpoint ?? "no-endpoint",
                     keys: {

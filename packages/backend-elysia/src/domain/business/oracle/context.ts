@@ -1,6 +1,6 @@
 import { adminWalletContext } from "@backend-common";
 import { t } from "@backend-utils";
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import { businessContext } from "../context";
 import { MerkleTreeRepository } from "./repositories/MerkleTreeRepository";
 

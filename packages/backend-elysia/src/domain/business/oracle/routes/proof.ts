@@ -1,6 +1,6 @@
 import { t } from "@backend-utils";
 import { and, eq } from "drizzle-orm";
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import { type Hex, isHex } from "viem";
 import type { BusinessDb } from "../../context";
 import { productOracleTable, purchaseStatusTable } from "../../db/schema";

@@ -1,22 +1,14 @@
 import { blockchainContext, postgresContext } from "@backend-common";
-import { drizzle } from "drizzle-orm/postgres-js";
 import { Elysia, t } from "elysia";
 import { unsealData } from "iron-session";
 import { Config } from "sst/node/config";
 import type { Address } from "viem";
-import { pushTokensTable } from "./db/schema";
 
 export const nexusContext = new Elysia({
     name: "nexus-context",
 })
     .use(blockchainContext)
     .use(postgresContext)
-    .decorate(({ postgresDb, ...decorators }) => ({
-        ...decorators,
-        nexusDb: drizzle(postgresDb, {
-            schema: { pushTokensTable },
-        }),
-    }))
     // Potential nexus cookie session
     .guard({
         cookie: t.Object({

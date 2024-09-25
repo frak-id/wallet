@@ -1,6 +1,6 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { getViemClientFromChain } from "@frak-labs/app-essentials/blockchain";
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import { arbitrum, arbitrumSepolia } from "viem/chains";
 
 /**

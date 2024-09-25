@@ -5,6 +5,7 @@ export default defineConfig({
     schema: [
         "src/domain/nexus/db/schema.ts",
         "src/domain/business/db/schema.ts",
+        "src/domain/interactions/db/schema.ts",
     ],
     dialect: "postgresql",
     dbCredentials: {

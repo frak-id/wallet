@@ -12,7 +12,7 @@ import { readContract, sendTransaction } from "viem/actions";
  * Funding related routes
  * @param app
  */
-export const fundingRoutes = new Elysia({ prefix: "funding" })
+export const fundingRoutes = new Elysia({ prefix: "/funding" })
     .use(blockchainContext)
     .decorate({
         fundingReloadMutex: new Mutex(),

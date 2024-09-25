@@ -1,7 +1,7 @@
 import { t } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import {
     productOracleTable,
@@ -14,7 +14,7 @@ import type {
     ShopifyOrderUpdateWebhookDto,
 } from "../dto/ShopifyWebhook";
 
-export const shopifyWebhook = new Elysia({ prefix: "shopify" })
+export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     .use(businessOracleContext)
     .guard({
         // todo: Partial to be removed after testing
