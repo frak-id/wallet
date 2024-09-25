@@ -1,3 +1,4 @@
+import type { AdminWalletsRepository } from "@backend-common/repositories";
 import cron, { Patterns } from "@elysiajs/cron";
 import {
     addresses,
@@ -12,7 +13,6 @@ import {
     waitForTransactionReceipt,
     writeContract,
 } from "viem/actions";
-import type { AdminWalletsRepository } from "../../../../shared/repositories/AdminWalletsRepository";
 import type { BusinessDb } from "../../context";
 import { productOracleTable, purchaseStatusTable } from "../../db/schema";
 import type { BusinessOracleContextApp } from "../context";

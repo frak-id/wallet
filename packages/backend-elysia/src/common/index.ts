@@ -4,10 +4,8 @@ export {
     postgresContext,
     cacheContext,
     adminWalletContext,
-} from "./context";
-export type {
-    BlockchainContextApp,
-    PostgresContextApp,
-    CacheContextApp,
-    AdminWalletContextApp,
+    type BlockchainContextApp,
+    type PostgresContextApp,
+    type CacheContextApp,
+    type AdminWalletContextApp,
 } from "./context";
