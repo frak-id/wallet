@@ -37,7 +37,7 @@ export const managmentRoutes = new Elysia()
                     totalPurchaseHandled: count(),
                 })
                 .from(purchaseStatusTable)
-                .where(eq(purchaseStatusTable.oracleId, 1))
+                .where(eq(purchaseStatusTable.oracleId, currentOracle.id))
                 .execute();
 
             // Return the oracle status
