@@ -1,6 +1,6 @@
 import { and, eq, isNotNull } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
-import MerkleTree from "merkletreejs";
+import { MerkleTree } from "merkletreejs";
 import { type Hex, hexToBytes, keccak256 } from "viem";
 import type { BusinessDb } from "../../context";
 import { productOracleTable, purchaseStatusTable } from "../../db/schema";

@@ -64,7 +64,6 @@ export const proofRoutes = new Elysia({
             if (!proof) {
                 return error(404, "No proof found");
             }
-            console.log("Purchase", { purchase });
             return {
                 root: await merkleRepository.getMerkleRoot({ productId }),
                 proof,

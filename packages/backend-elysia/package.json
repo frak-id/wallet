@@ -9,7 +9,7 @@
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "dev": "sst bind bun dev:watch",
-    "dev:docker": "sst bind \"env | grep -E 'SST_|AWS_' > .env.tmp && docker run --env-file .env.tmp --expose 3030 elysia-dev\"",
+    "dev:docker": "sst bind \"env | grep -E 'SST_|AWS_' > .env.tmp && docker run --env-file .env.tmp -P elysia-dev\"",
     "build:docker": "docker build --tag \"elysia-dev\" .",
     "dev:watch": "bun run --watch src/index.ts",
     "build": "bun build:package",

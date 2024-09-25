@@ -89,6 +89,14 @@ export const shopifyWebhook = new Elysia({ prefix: "shopify" })
                 concatHex([oracle.productId, toHex(webhookData.id)])
             );
 
+            console.log("Handling new webhook", {
+                productId,
+                purchaseId,
+                purchaseStatus,
+                purchaseExternalId: webhookData.id,
+                status: webhookData.financial_status,
+            });
+
             // Insert the purchase in the database
             await businessDb
                 .insert(purchaseStatusTable)
