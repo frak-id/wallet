@@ -1,6 +1,6 @@
+import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { isHex } from "viem";
-import { t } from "../../common";
 import { interactionsContext } from "./context";
 
 /**

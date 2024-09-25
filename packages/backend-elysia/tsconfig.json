@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": "src",
     "target": "esnext",
     "lib": ["es2023", "esnext"],
     "module": "esnext",
@@ -8,6 +9,12 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "paths": {
+      "@backend-utils": ["utils/index.ts"],
+      "@backend-utils/*": ["utils/*"],
+      "@backend-common": ["common/index.ts"],
+      "@backend-common/*": ["common/*"]
+    }
+  },
 }

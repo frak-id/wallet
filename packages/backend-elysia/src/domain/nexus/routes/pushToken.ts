@@ -1,6 +1,6 @@
+import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { t } from "../../../common";
 import { nexusContext } from "../context";
 import { pushTokensTable } from "../db/schema";
 

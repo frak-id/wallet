@@ -1,5 +1,5 @@
+import { getMongoDb } from "@backend-common/mongo";
 import type { Elysia } from "elysia";
-import { getMongoDb } from "../../common/mongo";
 import { NewsRepository } from "./repositories/NewsRepository";
 
 /**

@@ -1,9 +1,9 @@
-import { Elysia } from "elysia";
 import {
     adminWalletContext,
     blockchainContext,
     cacheContext,
-} from "../../common/context";
+} from "@backend-common";
+import { Elysia } from "elysia";
 
 /**
  * Context for the interactions service

@@ -1,8 +1,8 @@
+import { t } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import Elysia from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
-import { t } from "../../../../common";
 import {
     productOracleTable,
     type purchaseStatusEnum,
