@@ -16,11 +16,15 @@
     "plugins": [{"name": "next"}],
     "paths": {
       "@/*": ["./src/*"],
-      "@module/*": ["../shared/module/*"]
+      "@module/*": ["../shared/module/*"],
+      "@backend-utils": ["../backend-elysia/src/utils/index.ts"],
+      "@backend-utils/*": ["../backend-elysia/src/utils/*"],
+      "@backend-common": ["../backend-elysia/src/common/index.ts"],
+      "@backend-common/*": ["../backend-elysia/src/common/*"]
     },
     "verbatimModuleSyntax": true
   },
   "include": [
     "./next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "public/sw.js"]
+  "exclude": ["node_modules", "public/sw.js"],
 }

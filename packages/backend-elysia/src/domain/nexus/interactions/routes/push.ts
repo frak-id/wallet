@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { interactionsContext} from "../context"
+import { interactionsContext } from "../context";
 
 export const pushInteractionsRoutes = new Elysia()
     .use(interactionsContext)

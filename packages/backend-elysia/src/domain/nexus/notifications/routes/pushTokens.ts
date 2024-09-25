@@ -7,7 +7,7 @@ import { notificationContext } from "../context";
 export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
     .use(notificationContext)
     .put(
-        "/",
+        "",
         async ({ body, notificationDb, session }) => {
             if (!session) return;
             // Insert our push token
@@ -42,7 +42,7 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
         }
     )
     .delete(
-        "/",
+        "",
         async ({ notificationDb, session }) => {
             if (!session) return;
 
