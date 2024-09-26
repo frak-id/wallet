@@ -1,8 +1,4 @@
-import {
-    type AppSpecificSsoMetadata,
-    ssoMetadataAtom,
-} from "@/module/authentication/atoms/sso";
-import { jotaiStore } from "@module/atoms/store";
+import type { AppSpecificSsoMetadata } from "@/module/authentication/atoms/sso";
 import { useCallback } from "react";
 import type { Hex } from "viem";
 
@@ -26,12 +22,6 @@ export function useOpenSsoPopup() {
                 return;
             }
 
-            // Set the SSO metadata
-            jotaiStore.set(ssoMetadataAtom, (prev) => ({
-                ...prev,
-                [productId]: metadata,
-            }));
-
             // Build the SSO url
             const ssoUrl = new URL(window.location.origin);
             ssoUrl.pathname = "/sso";
@@ -42,6 +32,13 @@ export function useOpenSsoPopup() {
             if (redirectUrl !== undefined) {
                 ssoUrl.searchParams.set("redirectUrl", redirectUrl);
             }
+
+            // Add metadata
+            const { name, logoUrl, homepageLink } = metadata;
+            if (logoUrl) ssoUrl.searchParams.set("logoUrl", logoUrl);
+            if (homepageLink)
+                ssoUrl.searchParams.set("homepageLink", homepageLink);
+            if (name) ssoUrl.searchParams.set("name", name);
 
             // Open the popup
             const windowFeatures =
