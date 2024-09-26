@@ -12,7 +12,6 @@
     "skipLibCheck": true,
     "paths": {
       "@backend-utils": ["utils/index.ts"],
-      "@backend-utils/*": ["utils/*"],
       "@backend-common": ["common/index.ts"],
       "@backend-common/*": ["common/*"]
     }

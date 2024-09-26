@@ -18,7 +18,6 @@
       "@/*": ["./src/*"],
       "@module/*": ["../../packages/shared/module/*"],
       "@backend-utils": ["../../packages/backend-elysia/src/utils/index.ts"],
-      "@backend-utils/*": ["../../packages/backend-elysia/src/utils/*"],
       "@backend-common": ["../../packages/backend-elysia/src/common/index.ts"],
       "@backend-common/*": ["../../packages/backend-elysia/src/common/*"]
     },

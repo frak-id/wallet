@@ -1,5 +1,6 @@
 import { customHex } from "@backend-utils";
 import {
+    boolean,
     index,
     pgEnum,
     pgTable,
@@ -36,7 +37,7 @@ export const pushTokensTable = pgTable(
 
 export const interactionSimulationStatus = pgEnum(
     "interactions_simulation_status",
-    ["pending", "failed", "succeeded"]
+    ["pending", "no_session", "failed", "succeeded"]
 );
 
 /**
@@ -54,9 +55,17 @@ export const pendingInteractionsTable = pgTable(
         status: interactionSimulationStatus("simulation_status"),
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
+        locked: boolean("locked").default(false),
     },
     (table) => ({
         walletIdx: index("wallet_idx").on(table.wallet),
+        productIdx: index("product_idx").on(table.productId),
+        uniqueInteractionPerStatus: unique("unique_interaction_per_status").on(
+            table.wallet,
+            table.productId,
+            table.interactionData,
+            table.status
+        ),
     })
 );
 

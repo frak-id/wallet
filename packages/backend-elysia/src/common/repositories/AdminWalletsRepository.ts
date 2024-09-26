@@ -3,7 +3,7 @@ import {
     GetSecretValueCommand,
     SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
-import type { LRUCache } from "lru-cache";
+import { LRUCache } from "lru-cache";
 import { Config } from "sst/node/config";
 import { type Hex, hexToBytes, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -13,10 +13,13 @@ import { privateKeyToAccount } from "viem/accounts";
  */
 export class AdminWalletsRepository {
     private secretManager: SecretsManagerClient;
+    private cache: LRUCache<string, Hex>;
 
-    // biome-ignore lint/complexity/noBannedTypes: idk how to type this
-    constructor(private readonly cache: LRUCache<string, {}>) {
+    constructor() {
         this.secretManager = new SecretsManagerClient({ region: "eu-west-1" });
+        this.cache = new LRUCache({
+            max: 1024,
+        });
     }
 
     /**
@@ -29,7 +32,7 @@ export class AdminWalletsRepository {
         const cacheKey = `ProductSignerRepository-${key}`;
         const cachedValue = this.cache.get(cacheKey);
         if (cachedValue) {
-            return cachedValue as Hex;
+            return cachedValue;
         }
         const fetchedValue = await fetcher();
         this.cache.set(cacheKey, fetchedValue);

@@ -205,10 +205,9 @@ function ManagedInteractionValidator({
                 productResult: backendApi.common.adminWallet.get({
                     query: { productId },
                 }),
-                interactionExecutorResult:
-                    backendApi.common.adminWallet.get({
-                        query: { key: "interaction-executor" },
-                    }),
+                interactionExecutorResult: backendApi.common.adminWallet.get({
+                    query: { key: "interaction-executor" },
+                }),
             });
 
             if (!productResult?.data?.pubKey) {

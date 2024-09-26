@@ -1,8 +1,4 @@
-import {
-    blockchainContext,
-    cacheContext,
-    postgresContext,
-} from "@backend-common";
+import { blockchainContext, postgresContext } from "@backend-common";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import {
@@ -14,7 +10,6 @@ import {
 export const businessContext = new Elysia({
     name: "business-context",
 })
-    .use(cacheContext)
     .use(blockchainContext)
     .use(postgresContext)
     .decorate(({ postgresDb, ...decorators }) => ({

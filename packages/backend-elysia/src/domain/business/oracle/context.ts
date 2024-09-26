@@ -9,9 +9,8 @@ export const businessOracleContext = new Elysia({
 })
     .use(businessContext)
     .use(adminWalletContext)
-    .decorate(({ cache, businessDb, ...decorators }) => ({
+    .decorate(({ businessDb, ...decorators }) => ({
         ...decorators,
-        cache,
         businessDb,
         merkleRepository: new MerkleTreeRepository(businessDb),
     }))

@@ -25,9 +25,9 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
         cron({
             name: "updateMerkleRoot",
             pattern: Patterns.everyMinutes(2),
-            run: async () => {
+            run: () =>
                 merkleeRootUpdateMutex.runExclusive(async () => {
-                    // Extract a few stuff from the app
+                    // Extract some stuff from the app
                     const {
                         businessDb,
                         merkleRepository,
@@ -59,8 +59,7 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
                         adminRepository: adminWalletsRepository,
                         client,
                     });
-                });
-            },
+                }),
         })
     );
 }
