@@ -13,7 +13,8 @@
             "tsconfig.json",
             "tsconfig.*.json",
             "package.json",
-            "sw.js"
+            "sw.js",
+            "bundle.js"
         ]
     },
     "organizeImports": {
