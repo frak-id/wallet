@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs/backend-elysia",
-  "description": "Elysia Backend for the nexus api",
+  "description": "Elysia Backend for the frak ecosystem",
   "version": "0.0.1",
   "type": "module",
   "scripts": {
