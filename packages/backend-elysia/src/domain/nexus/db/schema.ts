@@ -26,7 +26,7 @@ export const pushTokensTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
     },
     (table) => ({
-        walletIdx: index("wallet_idx").on(table.wallet),
+        walletIdx: index("wallet_push_tokens_idx").on(table.wallet),
         unqPushToken: unique("unique_push_token").on(
             table.wallet,
             table.endpoint,
@@ -58,7 +58,7 @@ export const pendingInteractionsTable = pgTable(
         locked: boolean("locked").default(false),
     },
     (table) => ({
-        walletIdx: index("wallet_idx").on(table.wallet),
+        walletIdx: index("wallet_pending_interactions_idx").on(table.wallet),
         productIdx: index("product_idx").on(table.productId),
         uniqueInteractionPerStatus: unique("unique_interaction_per_status").on(
             table.wallet,
@@ -86,6 +86,6 @@ export const pushedInteractionsTable = pgTable(
         updatedAt: timestamp("updated_at").defaultNow(),
     },
     (table) => ({
-        walletIdx: index("wallet_idx").on(table.wallet),
+        walletIdx: index("wallet_pushed_interactions_idx").on(table.wallet),
     })
 );

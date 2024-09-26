@@ -15,6 +15,13 @@
             "when": 1727181656293,
             "tag": "0001_soft_phil_sheldon",
             "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1727358193923,
+            "tag": "0002_breezy_forge",
+            "breakpoints": true
         }
     ]
 }

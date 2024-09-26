@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { executeInteractionJob } from "./jobs/execute";
 import { simulateInteractionJob } from "./jobs/simulate";
+import { purchaseInteractionsRoutes } from "./routes/purchase";
 import { pushInteractionsRoutes } from "./routes/push";
 
 export const interactionRoutes = new Elysia({
@@ -9,6 +10,7 @@ export const interactionRoutes = new Elysia({
     .use(executeInteractionJob)
     .use(simulateInteractionJob)
     .use(pushInteractionsRoutes)
+    .use(purchaseInteractionsRoutes)
     .get(
         "/status",
         ({

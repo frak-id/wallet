@@ -90,12 +90,11 @@ export function useSendInteractionListener(): OnInteractionRequest {
         )();
 
         if (!delegationId) {
-            // todo: Check if the error is about no session or not
             // Send the response
             await emitter({
                 error: {
-                    code: RpcErrorCodes.noInteractionSession,
-                    message: "User doesn't have an interaction session",
+                    code: RpcErrorCodes.serverErrorForInteractionDelegation,
+                    message: "Unable to push the interaction",
                 },
             });
             return;

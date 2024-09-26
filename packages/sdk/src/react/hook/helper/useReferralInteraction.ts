@@ -187,7 +187,7 @@ function mapErrorToState(error: unknown): ReferralState {
         switch (error.code) {
             case RpcErrorCodes.walletNotConnected:
                 return "no-wallet";
-            case RpcErrorCodes.noInteractionSession:
+            case RpcErrorCodes.serverErrorForInteractionDelegation:
                 return "no-session";
             default:
                 return "error";
