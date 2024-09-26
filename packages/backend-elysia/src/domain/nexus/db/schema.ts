@@ -44,7 +44,7 @@ export const interactionSimulationStatus = pgEnum(
  * Table for all the pending interactions
  */
 export const pendingInteractionsTable = pgTable(
-    "pending_interactions",
+    "interactions_pending",
     {
         id: serial("id").primaryKey(),
         wallet: customHex("wallet").notNull().$type<Address>(),
@@ -73,7 +73,7 @@ export const pendingInteractionsTable = pgTable(
  * Table for all the pushed interactions
  */
 export const pushedInteractionsTable = pgTable(
-    "pushed_interactions",
+    "interactions_pushed",
     {
         id: serial("id").primaryKey(),
         wallet: customHex("wallet").notNull().$type<Address>(),

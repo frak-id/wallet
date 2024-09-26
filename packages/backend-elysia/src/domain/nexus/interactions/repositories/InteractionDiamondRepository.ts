@@ -21,7 +21,7 @@ import type { InteractionData } from "../types/interactions";
  *  - Used to simulate transaction
  */
 export class InteractionDiamondRepository {
-    private addressCache = new LRUCache<string, Address>({
+    private addressCache = new LRUCache<string, { address?: Address }>({
         max: 256,
         // TTL of 2 hours in prod, 10min in dev
         ttl: isRunningInProd ? 2 * 60 * 60 * 1000 : 10 * 60 * 1000,
@@ -33,23 +33,29 @@ export class InteractionDiamondRepository {
      * Get the diamond address for a given product
      * @param productId
      */
-    async getDiamondContract(productId: Hex): Promise<Address> {
+    async getDiamondContract(productId: Hex): Promise<Address | undefined> {
         const cached = this.addressCache.get(productId);
         if (cached) {
-            return cached;
+            return cached.address;
         }
 
-        const address = await readContract(this.client, {
-            address: addresses.productInteractionManager,
-            abi: productInteractionManagerAbi,
-            functionName: "getInteractionContract",
-            args: [BigInt(productId)],
-        });
-        this.addressCache.set(productId, address, {
-            // Keep diamond contract in cache for 2 hours
-            ttl: 4 * 60 * 60 * 1000,
-        });
-        return address;
+        try {
+            const address = await readContract(this.client, {
+                address: addresses.productInteractionManager,
+                abi: productInteractionManagerAbi,
+                functionName: "getInteractionContract",
+                args: [BigInt(productId)],
+            });
+            this.addressCache.set(productId, { address });
+            return address;
+        } catch (e) {
+            console.error("Failed to get diamond contract", {
+                productId,
+                error: e,
+            });
+            this.addressCache.set(productId, { address: undefined });
+        }
+        return undefined;
     }
 
     /**
@@ -68,6 +74,12 @@ export class InteractionDiamondRepository {
         interactionData: InteractionData;
     }) {
         const diamondContract = await this.getDiamondContract(productId);
+        if (!diamondContract) {
+            return {
+                isSimulationSuccess: false,
+            };
+        }
+
         try {
             await simulateContract(this.client, {
                 account: wallet,

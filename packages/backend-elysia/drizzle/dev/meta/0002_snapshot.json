@@ -1,11 +1,11 @@
 {
-    "id": "d22ce011-647f-45cd-a47e-cd5eac8b61c9",
+    "id": "212b4502-d179-4117-9c3b-c45659d270f0",
     "prevId": "5ef8a9f1-e6f0-45d8-9d4f-8515edc4dbf8",
     "version": "7",
     "dialect": "postgresql",
     "tables": {
-        "public.pending_interactions": {
-            "name": "pending_interactions",
+        "public.interactions_pending": {
+            "name": "interactions_pending",
             "schema": "",
             "columns": {
                 "id": {
@@ -195,8 +195,8 @@
                 }
             }
         },
-        "public.pushed_interactions": {
-            "name": "pushed_interactions",
+        "public.interactions_pushed": {
+            "name": "interactions_pushed",
             "schema": "",
             "columns": {
                 "id": {

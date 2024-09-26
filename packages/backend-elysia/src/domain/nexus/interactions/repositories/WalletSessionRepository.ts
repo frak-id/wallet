@@ -133,7 +133,7 @@ export class WalletSessionRepository {
         const sessionEnd = new Date(sessionStatus.validUntil * 1000);
         const now = new Date();
 
-        if (now > sessionStart || sessionEnd > now) {
+        if (sessionStart > now || now > sessionEnd) {
             this.sessionValidityCache.set(wallet, false);
             return false;
         }

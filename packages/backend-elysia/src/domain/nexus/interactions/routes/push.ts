@@ -55,8 +55,8 @@ export const pushInteractionsRoutes = new Elysia()
                 .onConflictDoNothing()
                 .returning({ insertedId: pendingInteractionsTable.id });
 
-            // Trigger the simulation job
-            await (
+            // Trigger the simulation job (and don't wait for it)
+            (
                 store as SimulateInteractionAppJob["store"]
             ).cron.simulateInteraction.trigger();
 

@@ -51,7 +51,7 @@ export function simulateInteractionJob(app: InteractionsContextApp) {
                     // Trigger the execution job
                     const store =
                         app.store as ExecuteInteractionAppJob["store"];
-                    await store.cron.executeInteraction.trigger();
+                    store.cron.executeInteraction.trigger();
                 }),
         })
     );

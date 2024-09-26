@@ -4,7 +4,6 @@ import {
     interactionDelegatorAbi,
     productInteractionDiamondAbi,
 } from "@frak-labs/app-essentials";
-import { getViemClient } from "@frak-labs/nexus-backend/src/blockchain/client";
 import { LRUCache } from "lru-cache";
 import * as solady from "solady";
 import {
@@ -210,29 +209,33 @@ export class InteractionSignerRepository {
                 key: "interaction-executor",
             });
 
-        // Estimate the gas consumption and price
-        const [gas, { maxFeePerGas, maxPriorityFeePerGas }] = await Promise.all(
-            [
-                estimateGas(this.client, {
-                    account: executorAccount,
-                    to: addresses.interactionDelegator,
-                    data: compressedExecute,
-                }),
-                estimateFeesPerGas(this.client),
-            ]
-        );
+        try {
+            // Estimate the gas consumption and price
+            const gas = await estimateGas(this.client, {
+                account: executorAccount,
+                to: addresses.interactionDelegator,
+                data: compressedExecute,
+            });
+            const { maxFeePerGas, maxPriorityFeePerGas } =
+                await estimateFeesPerGas(this.client);
 
-        // And send it
-        return await sendTransaction(getViemClient(), {
-            account: executorAccount,
-            to: addresses.interactionDelegator,
-            data: compressedExecute,
-            // We will provide 50% more gas than the estimation, to ensure proper inclusion
-            gas: (gas * 150n) / 100n,
-            // We will pay 40% more gas than the estimation, to ensure proper inclusion
-            maxFeePerGas: (maxFeePerGas * 140n) / 100n,
-            // We will pay 25% more priority fee than the estimation, to ensure proper inclusion
-            maxPriorityFeePerGas: (maxPriorityFeePerGas * 125n) / 100n,
-        });
+            // And send it
+            return await sendTransaction(this.client, {
+                account: executorAccount,
+                to: addresses.interactionDelegator,
+                data: compressedExecute,
+                // We will provide 50% more gas than the estimation, to ensure proper inclusion
+                gas: (gas * 150n) / 100n,
+                // We will pay 40% more gas than the estimation, to ensure proper inclusion
+                maxFeePerGas: (maxFeePerGas * 140n) / 100n,
+                // We will pay 25% more priority fee than the estimation, to ensure proper inclusion
+                maxPriorityFeePerGas: (maxPriorityFeePerGas * 125n) / 100n,
+            });
+        } catch (e) {
+            console.error("Unable to push interactions", {
+                error: e,
+            });
+            return undefined;
+        }
     }
 }

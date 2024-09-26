@@ -34,6 +34,9 @@ export function executeInteractionJob(app: InteractionsContextApp) {
                         console.log("No interactions to execute");
                         return;
                     }
+                    console.log("Will execute interactions", {
+                        interactions: interactions.length,
+                    });
 
                     // Execute them
                     const txHash = await executeInteractions({
@@ -96,6 +99,9 @@ async function executeInteractions({
             await interactionDiamondRepository.getDiamondContract(
                 interaction.productId
             );
+        if (!interactionContract) {
+            return null;
+        }
 
         // Get the signature
         const signature =
@@ -135,17 +141,26 @@ async function executeInteractions({
         console.log("No interactions to execute post preparation");
         return undefined;
     }
+    console.log("Prepared interactions", {
+        interactions: preparedInteractions.length,
+    });
 
     // Once all prepared, send them
     const txHash =
         await interactionSignerRepository.pushPreparedInteractions(
             preparedInteractions
         );
+    if (!txHash) {
+        console.error("Failed to push interactions", {
+            preparedInteractions: preparedInteractions.length,
+        });
+        return undefined;
+    }
     console.log("Pushed all the interactions on txs", { txHash });
 
     // Update the db
     await interactionsDb.transaction(async (trx) => {
-        // Insert all of the pushed one in the pushed table
+        // Insert all the pushed one in the pushed table
         for (const { interaction, signature } of preparedInteractions) {
             await trx.insert(pushedInteractionsTable).values({
                 ...interaction,
@@ -153,7 +168,7 @@ async function executeInteractions({
                 txHash,
             });
         }
-        // Delete all of the pending ones
+        // Delete all the pending ones
         await trx.delete(pendingInteractionsTable).where(
             inArray(
                 pendingInteractionsTable.id,
