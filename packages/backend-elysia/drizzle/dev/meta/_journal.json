@@ -15,6 +15,13 @@
             "when": 1727181656293,
             "tag": "0001_soft_phil_sheldon",
             "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1727362677583,
+            "tag": "0002_left_nitro",
+            "breakpoints": true
         }
     ]
 }

@@ -62,12 +62,11 @@ export function useSetupInteractionContract() {
                     });
 
                 // Get the manager validator address
-                const result =
-                    await backendApi.interactions.validatorPublicKey.get({
-                        query: {
-                            productId: productId,
-                        },
-                    });
+                const result = await backendApi.common.adminWallet.get({
+                    query: {
+                        productId: productId,
+                    },
+                });
                 if (!(result?.data?.pubKey && predictedInteractionAddress)) {
                     console.log(
                         "Error getting the product pub key or the predicted interaction address",

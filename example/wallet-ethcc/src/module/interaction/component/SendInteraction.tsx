@@ -6,6 +6,7 @@ import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
 import { BadgeCheck } from "lucide-react";
+import { generatePrivateKey } from "viem/accounts";
 
 export function SendInteraction() {
     const {
@@ -33,8 +34,10 @@ export function SendInteraction() {
                 onClick={() =>
                     sendInteraction({
                         interaction: PressInteractionEncoder.openArticle({
-                            articleId: "0xdeadbeef",
+                            articleId: generatePrivateKey(),
                         }),
+                        productId:
+                            "0x4b1115a4946079f8d83c63061f5c49c2f351a054d8dfb284b197f54dbfa8ed62",
                     })
                 }
                 type={"button"}

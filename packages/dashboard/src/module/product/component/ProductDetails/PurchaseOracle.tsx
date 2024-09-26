@@ -50,7 +50,7 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
         queryFn: async () => {
             // Get the oracle updater address
             const { data: oracleUpdater } =
-                await backendApi.interactions.validatorPublicKey.get({
+                await backendApi.common.adminWallet.get({
                     query: {
                         key: "oracle-updater",
                     },

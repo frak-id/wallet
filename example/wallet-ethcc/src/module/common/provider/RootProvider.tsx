@@ -50,6 +50,7 @@ const frakWalletSdkConfig = {
     metadata: {
         name: "Demo - EthCC",
     },
+    domain: "ethcc.news-paper.xyz",
 };
 
 export function RootProvider({ children }: PropsWithChildren) {

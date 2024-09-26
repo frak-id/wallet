@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
-import { notificationRoutes } from "./routes/notification";
-import { pushTokenRoutes } from "./routes/pushToken";
+import { interactionRoutes } from "./interactions";
+import { notificationRoutes } from "./notifications";
 
 export const nexus = new Elysia({ prefix: "/nexus" })
-    .use(pushTokenRoutes)
-    .use(notificationRoutes);
+    .use(notificationRoutes)
+    .use(interactionRoutes);

@@ -1,6 +1,6 @@
-import Elysia from "elysia";
-import { t } from "../../../common";
-import { adminWalletContext } from "../../../common/context";
+import { adminWalletContext } from "@backend-common";
+import { t } from "@backend-utils";
+import { Elysia } from "elysia";
 import { businessContext } from "../context";
 import { MerkleTreeRepository } from "./repositories/MerkleTreeRepository";
 
@@ -9,9 +9,8 @@ export const businessOracleContext = new Elysia({
 })
     .use(businessContext)
     .use(adminWalletContext)
-    .decorate(({ cache, businessDb, ...decorators }) => ({
+    .decorate(({ businessDb, ...decorators }) => ({
         ...decorators,
-        cache,
         businessDb,
         merkleRepository: new MerkleTreeRepository(businessDb),
     }))

@@ -1,19 +1,17 @@
+import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { t } from "../../../common";
-import { nexusContext } from "../context";
-import { pushTokensTable } from "../db/schema";
+import { pushTokensTable } from "../../db/schema";
+import { notificationContext } from "../context";
 
-export const pushTokenRoutes = new Elysia({ prefix: "pushToken" })
-    .use(nexusContext)
-    .post(
-        "/save",
-        async ({ body, nexusDb, session, error }) => {
-            if (!session) {
-                return error(401);
-            }
+export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
+    .use(notificationContext)
+    .put(
+        "",
+        async ({ body, notificationDb, session }) => {
+            if (!session) return;
             // Insert our push token
-            await nexusDb
+            await notificationDb
                 .insert(pushTokensTable)
                 .values({
                     wallet: session.wallet.address,
@@ -43,31 +41,35 @@ export const pushTokenRoutes = new Elysia({ prefix: "pushToken" })
             }),
         }
     )
-    .post("/unsubscribe", async ({ nexusDb, session }) => {
-        if (!session) {
-            return false;
-        }
+    .delete(
+        "",
+        async ({ notificationDb, session }) => {
+            if (!session) return;
 
-        // Remove all the push tokens for this wallet
-        await nexusDb
-            .delete(pushTokensTable)
-            .where(eq(pushTokensTable.wallet, session.wallet.address))
-            .execute();
-    })
+            // Remove all the push tokens for this wallet
+            await notificationDb
+                .delete(pushTokensTable)
+                .where(eq(pushTokensTable.wallet, session.wallet.address))
+                .execute();
+        },
+        {
+            isNexusAuthenticated: true,
+        }
+    )
     .get(
         "/hasAny",
-        async ({ nexusDb, session }) => {
-            if (!session) {
-                return false;
-            }
+        async ({ notificationDb, session }) => {
+            if (!session) return false;
+
             // Try to find the first push token
-            const item = await nexusDb.query.pushTokensTable.findFirst({
+            const item = await notificationDb.query.pushTokensTable.findFirst({
                 where: eq(pushTokensTable.wallet, session.wallet.address),
             });
             // Return if we found something
             return !!item;
         },
         {
+            isNexusAuthenticated: true,
             response: t.Boolean(),
         }
     );

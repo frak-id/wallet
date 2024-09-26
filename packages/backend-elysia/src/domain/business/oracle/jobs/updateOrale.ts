@@ -1,3 +1,4 @@
+import type { AdminWalletsRepository } from "@backend-common/repositories";
 import cron, { Patterns } from "@elysiajs/cron";
 import {
     addresses,
@@ -12,7 +13,6 @@ import {
     waitForTransactionReceipt,
     writeContract,
 } from "viem/actions";
-import type { AdminWalletsRepository } from "../../../../shared/repositories/AdminWalletsRepository";
 import type { BusinessDb } from "../../context";
 import { productOracleTable, purchaseStatusTable } from "../../db/schema";
 import type { BusinessOracleContextApp } from "../context";
@@ -25,9 +25,9 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
         cron({
             name: "updateMerkleRoot",
             pattern: Patterns.everyMinutes(2),
-            run: async () => {
+            run: () =>
                 merkleeRootUpdateMutex.runExclusive(async () => {
-                    // Extract a few stuff from the app
+                    // Extract some stuff from the app
                     const {
                         businessDb,
                         merkleRepository,
@@ -59,8 +59,7 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
                         adminRepository: adminWalletsRepository,
                         client,
                     });
-                });
-            },
+                }),
         })
     );
 }
