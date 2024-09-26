@@ -13,11 +13,7 @@ import {
     encodePacked,
 } from "viem";
 import { readContract, simulateContract } from "viem/actions";
-
-type InteractionData = {
-    handlerTypeDenominator: Hex;
-    interactionData: Hex;
-};
+import type { InteractionData } from "../types/interactions";
 
 /**
  * The interaction diamonds repositories

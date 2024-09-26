@@ -53,7 +53,7 @@ export const pendingInteractionsTable = pgTable(
         interactionData: customHex("interaction_data").notNull(),
         signature: customHex("signature"),
         status: interactionSimulationStatus("simulation_status"),
-        createdAt: timestamp("created_at").defaultNow(),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at").defaultNow(),
         locked: boolean("locked").default(false),
     },

@@ -1,3 +1,4 @@
+import { adminWalletContext } from "@backend-common";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import { nexusContext } from "../context";
@@ -7,6 +8,7 @@ import {
     pushedInteractionsTable,
 } from "../db/schema";
 import { InteractionDiamondRepository } from "./repositories/InteractionDiamondRepository";
+import { InteractionSignerRepository } from "./repositories/InteractionSignerRepository";
 import { WalletSessionRepository } from "./repositories/WalletSessionRepository";
 /**
  * Context for the interactions service
@@ -16,32 +18,37 @@ export const interactionsContext = new Elysia({
     name: "nexus-interactions-context",
 })
     .use(nexusContext)
-    .decorate(({ client, postgresDb, ...decorators }) => {
-        // Build our drizzle DB
-        const interactionsDb = drizzle(postgresDb, {
-            schema: {
-                pendingInteractionsTable,
-                interactionSimulationStatus,
-                pushedInteractionsTable,
-            },
-        });
+    .use(adminWalletContext)
+    .decorate(
+        ({ client, postgresDb, adminWalletsRepository, ...decorators }) => {
+            // Build our drizzle DB
+            const interactionsDb = drizzle(postgresDb, {
+                schema: {
+                    pendingInteractionsTable,
+                    interactionSimulationStatus,
+                    pushedInteractionsTable,
+                },
+            });
 
-        // Build our interaction diamond repository
-        const interactionDiamondRepository = new InteractionDiamondRepository(
-            client
-        );
+            // Build our repositories
+            const interactionDiamondRepository =
+                new InteractionDiamondRepository(client);
+            const walletSessionRepository = new WalletSessionRepository(client);
+            const interactionSignerRepository = new InteractionSignerRepository(
+                client,
+                adminWalletsRepository
+            );
 
-        // Build our wallet session repository
-        const walletSessionRepository = new WalletSessionRepository(client);
-
-        return {
-            ...decorators,
-            client,
-            interactionsDb,
-            interactionDiamondRepository,
-            walletSessionRepository,
-        };
-    })
+            return {
+                ...decorators,
+                client,
+                interactionsDb,
+                interactionDiamondRepository,
+                walletSessionRepository,
+                interactionSignerRepository,
+            };
+        }
+    )
     .as("plugin");
 
 export type InteractionsContextApp = typeof interactionsContext;

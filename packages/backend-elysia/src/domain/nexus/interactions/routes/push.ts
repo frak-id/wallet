@@ -3,12 +3,13 @@ import { Elysia } from "elysia";
 import { isAddressEqual } from "viem";
 import { pendingInteractionsTable } from "../../db/schema";
 import { interactionsContext } from "../context";
+import type { SimulateInteractionAppJob } from "../jobs/simulate";
 
 export const pushInteractionsRoutes = new Elysia()
     .use(interactionsContext)
     .post(
         "/push",
-        async ({ body, session, error, interactionsDb }) => {
+        async ({ body, session, error, interactionsDb, store }) => {
             if (!session) return;
 
             // Ensure the address matches
@@ -26,15 +27,10 @@ export const pushInteractionsRoutes = new Elysia()
                 status: "pending",
             });
 
-            // todo: generate a signature if needed
-            // todo: save it
-            // todo: trigger simulation job
-            // todo: build interaction tx
-
-            // todo: simulation job, iterate over every pending interaction and check them
-            // todo: pusher job, iterate over every simulated tx and push them (checking if compression gain gas or not??)
-
-            console.log("Pushing interaction", { body });
+            // Trigger the simulation job
+            await (
+                store as SimulateInteractionAppJob["store"]
+            ).cron.simulateInteraction.trigger();
         },
         {
             isNexusAuthenticated: true,

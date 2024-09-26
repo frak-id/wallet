@@ -6,6 +6,7 @@ import { pendingInteractionsTable } from "../../db/schema";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
 import type { InteractionDiamondRepository } from "../repositories/InteractionDiamondRepository";
 import type { WalletSessionRepository } from "../repositories/WalletSessionRepository";
+import type { ExecuteInteractionAppJob } from "./execute";
 
 export function simulateInteractionJob(app: InteractionsContextApp) {
     const simulationMutex = new Mutex();
@@ -46,6 +47,11 @@ export function simulateInteractionJob(app: InteractionsContextApp) {
                         interactions: interactions.length,
                         hasSuccessInteractions,
                     });
+
+                    // Trigger the execution job
+                    const store =
+                        app.store as ExecuteInteractionAppJob["store"];
+                    await store.cron.executeInteraction.trigger();
                 }),
         })
     );
@@ -59,13 +65,13 @@ export type SimulateInteractionAppJob = ReturnType<
  * Get list of interactions to simulate
  * todo:
  *  - Use the locked bool
- *  - Min 10 or 1 if older than 5min
+ *  - Condition should be in SQL directly
  * @param interactionsDb
  */
-function getInteractionsToSimulate({
+async function getInteractionsToSimulate({
     interactionsDb,
 }: { interactionsDb: InteractionsDb }) {
-    return interactionsDb
+    const interactions = await interactionsDb
         .select()
         .from(pendingInteractionsTable)
         .where(
@@ -74,6 +80,20 @@ function getInteractionsToSimulate({
                 eq(pendingInteractionsTable.locked, false)
             )
         );
+
+    if (interactions.length > 10) {
+        return interactions;
+    }
+
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const hasInteractions5MinOld = interactions.some((interaction) => {
+        return interaction.createdAt < fiveMinutesAgo;
+    });
+    if (hasInteractions5MinOld) {
+        return interactions;
+    }
+
+    return [];
 }
 
 /**
