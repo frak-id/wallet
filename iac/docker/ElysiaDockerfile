@@ -12,21 +12,21 @@ RUN npm i -g bun
 
 # Install dependencies and build the project
 RUN bun install --frozen-lockfile
-RUN cd packages/backend-elysia && bun run build:binary
+RUN cd packages/backend-elysia && bun run build
 
 # Start a new stage for the final image
 FROM oven/bun
 
 WORKDIR /app
 
-# Copy the built application from the builder stage
-COPY --from=builder /monorepo/packages/backend-elysia/server ./server
+# Build in a compiled way
+# COPY --from=builder /monorepo/packages/backend-elysia/server ./server
 
-# Not needed since we are building directly in the binary format
-# COPY --from=builder /monorepo/packages/backend-elysia/package.json .
-# COPY --from=builder /monorepo/packages/backend-elysia/dist ./dist
+# Build in a bun ways
+COPY --from=builder /monorepo/packages/backend-elysia/package.json .
+COPY --from=builder /monorepo/packages/backend-elysia/dist ./dist
 
 EXPOSE 3030
 
 ENV NODE_ENV=production
-CMD ["./server"]
+CMD ["bun", "run", "start"]
