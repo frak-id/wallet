@@ -44,82 +44,10 @@ export function BackendStack(ctx: StackContext) {
         }
     );
 
-    const { interactionQueue } = interactionsResources(ctx, {
-        masterKeySecret,
-        masterSecretId,
-    });
-
     // Add the elysia backend
     elysiaBackend(ctx, { masterKeySecret, masterSecretId });
-
-    return {
-        interactionQueue,
-    };
 }
 
-/**
- * Define all of our interactions resources
- *  todo: expose an api to get the signer public key for a given productId
- * @param stack
- */
-function interactionsResources(
-    { stack }: StackContext,
-    {
-        masterKeySecret,
-        masterSecretId,
-    }: { masterKeySecret: AwsSecret; masterSecretId: Config.Parameter }
-) {
-    const { alchemyApiKey } = use(ConfigStack);
-    const interactionConsumerFunction = new SstFunction(
-        stack,
-        "InteractionQueueConsumer",
-        {
-            handler: "packages/backend/src/interaction/queue.handler",
-            timeout: "15 minutes",
-            bind: [masterSecretId, alchemyApiKey],
-            permissions: [
-                new PolicyStatement({
-                    actions: ["secretsmanager:GetSecretValue"],
-                    resources: [masterKeySecret.secretArn],
-                }),
-            ],
-        }
-    );
-
-    // Interaction handling stuff
-    const interactionQueue = new Queue(stack, "InteractionQueue", {
-        consumer: {
-            function: interactionConsumerFunction,
-            cdk: {
-                eventSource: {
-                    // Maximum amount of item sent to the function (at most 200 interactions)
-                    batchSize: 200,
-                    // Wait at most 2min to push the interactions
-                    maxBatchingWindow: isProdStack(stack)
-                        ? Duration.minutes(2)
-                        : Duration.seconds(10),
-                    // Allow partial failures
-                    reportBatchItemFailures: true,
-                    // Don't allow more than 4 parallel executions
-                    maxConcurrency: 4,
-                },
-            },
-        },
-        cdk: {
-            queue: {
-                visibilityTimeout: Duration.minutes(60),
-            },
-        },
-    });
-
-    // Grant the read access on this secret for the consumer function
-    masterKeySecret.grantRead(interactionConsumerFunction);
-
-    stack.addOutputs({
-        InteractionQueueId: interactionQueue.id,
-    });
-    return { interactionQueue };
-}
 
 /**
  * Create our elysia backend

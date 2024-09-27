@@ -1,5 +1,5 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { purcheOracleUpdaterRoles } from "@/context/blockchain/roles";
+import { purchaseOracleUpdaterRoles } from "@/context/blockchain/roles";
 import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
@@ -80,7 +80,7 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
                 args: [
                     BigInt(productId),
                     oracleUpdater.pubKey,
-                    purcheOracleUpdaterRoles,
+                    purchaseOracleUpdaterRoles,
                 ],
             });
 
@@ -264,7 +264,7 @@ function ToggleOracleUpdaterRole({
                                 args: [
                                     BigInt(productId),
                                     oracleUpdater,
-                                    purcheOracleUpdaterRoles,
+                                    purchaseOracleUpdaterRoles,
                                 ],
                             }),
                         },
@@ -289,7 +289,7 @@ function ToggleOracleUpdaterRole({
                             args: [
                                 BigInt(productId),
                                 oracleUpdater,
-                                purcheOracleUpdaterRoles,
+                                purchaseOracleUpdaterRoles,
                             ],
                         }),
                     },
