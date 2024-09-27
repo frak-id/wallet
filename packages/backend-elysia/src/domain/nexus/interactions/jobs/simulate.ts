@@ -14,6 +14,7 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
             name: "simulateInteraction",
             pattern: Patterns.everyMinutes(10),
             protect: true,
+            catch: true,
             interval: 60,
             run: async () => {
                 // Get some stuff from the app

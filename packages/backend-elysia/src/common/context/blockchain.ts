@@ -7,7 +7,7 @@ import { arbitrum, arbitrumSepolia } from "viem/chains";
  * Build the common context for the app
  */
 export const blockchainContext = new Elysia({
-    name: "blockchain-context",
+    name: "Context.blockchain",
 }).decorate((decorators) => {
     const chain = isRunningInProd ? arbitrum : arbitrumSepolia;
     const client = getViemClientFromChain({ chain });

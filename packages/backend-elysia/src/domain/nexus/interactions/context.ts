@@ -16,7 +16,7 @@ import { WalletSessionRepository } from "./repositories/WalletSessionRepository"
  * @param app
  */
 export const interactionsContext = new Elysia({
-    name: "nexus-interactions-context",
+    name: "Context.nexus.interactions",
 })
     .use(nexusContext)
     .use(adminWalletContext)

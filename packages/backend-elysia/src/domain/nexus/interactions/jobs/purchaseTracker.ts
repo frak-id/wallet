@@ -22,6 +22,7 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
             name: "purchaseTracker",
             pattern: Patterns.everyMinutes(5),
             protect: true,
+            catch: true,
             interval: 60,
             run: async () => {
                 // Get stuff from the app

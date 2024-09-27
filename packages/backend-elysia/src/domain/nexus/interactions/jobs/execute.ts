@@ -16,6 +16,7 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
             name: "executeInteraction",
             pattern: Patterns.everyMinutes(30),
             protect: true,
+            catch: true,
             interval: 60,
             run: async () => {
                 // Get some stuff from the app

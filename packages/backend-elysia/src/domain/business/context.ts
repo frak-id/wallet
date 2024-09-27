@@ -8,7 +8,7 @@ import {
 } from "./db/schema";
 
 export const businessContext = new Elysia({
-    name: "business-context",
+    name: "Context.business",
 })
     .use(blockchainContext)
     .use(postgresContext)

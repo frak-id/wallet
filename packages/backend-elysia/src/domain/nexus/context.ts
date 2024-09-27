@@ -5,7 +5,7 @@ import { Config } from "sst/node/config";
 import type { Address } from "viem";
 
 export const nexusContext = new Elysia({
-    name: "nexus-context",
+    name: "Context.nexus",
 })
     .use(blockchainContext)
     .use(postgresContext)

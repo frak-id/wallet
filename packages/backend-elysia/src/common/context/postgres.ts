@@ -6,7 +6,7 @@ import { Config } from "sst/node/config";
  * Build the common context for the app
  */
 export const postgresContext = new Elysia({
-    name: "postgres-context",
+    name: "Context.postgres",
 }).decorate(
     { as: "append" },
     {

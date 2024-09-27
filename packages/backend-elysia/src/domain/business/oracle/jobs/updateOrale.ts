@@ -24,6 +24,7 @@ export const updateMerkleRootJob = (app: BusinessOracleContextApp) =>
             name: "updateMerkleRoot",
             pattern: Patterns.everyMinutes(5),
             protect: true,
+            catch: true,
             interval: 30,
             run: async () => {
                 // Extract some stuff from the app
