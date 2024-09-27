@@ -2,6 +2,8 @@ import { viemClient } from "@/context/blockchain/provider";
 import { purcheOracleUpdaterRoles } from "@/context/blockchain/roles";
 import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
+import { Title } from "@/module/common/component/Title";
+import { FormLabel } from "@/module/forms/Form";
 import {
     addresses,
     productAdministratorRegistryAbi,
@@ -9,12 +11,15 @@ import {
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { backendApi } from "@frak-labs/shared/context/server";
 import { Button } from "@module/component/Button";
+import { Column, Columns } from "@module/component/Columns";
 import { Spinner } from "@module/component/Spinner";
+import { Input } from "@module/component/forms/Input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 import { readContract } from "viem/actions";
 import { useProductMetadata } from "../../hook/useProductMetadata";
+import styles from "./PurchaseOracle.module.css";
 
 /**
  * Setup data for the purchase oracle
@@ -28,8 +33,11 @@ export function PurchaseOracleSetup({ productId }: { productId: Hex }) {
     }
 
     return (
-        <PanelAccordion title="Purchase Tracker">
-            <p>
+        <PanelAccordion
+            title="Purchase Tracker"
+            className={styles.purchaseOracleSetup}
+        >
+            <p className={styles.purchaseOracleSetup__description}>
                 The purchase tracker will permit to create campaigns and
                 distribute rewards based on user purchase on your website.
             </p>
@@ -92,55 +100,70 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
 
     return (
         <>
-            <br />
-            <h3>Oracle</h3>
-            <Badge
-                variant={
-                    oracleSetupData.isOracleUpdaterAllowed
-                        ? "success"
-                        : "warning"
-                }
-            >
-                {oracleSetupData.isOracleUpdaterAllowed
-                    ? "Allowed"
-                    : "Disallowed"}
-            </Badge>
+            <Columns>
+                <Column size={"full"}>
+                    <Title as={"h3"}>Oracle</Title>
+                    <p>
+                        <Badge
+                            variant={
+                                oracleSetupData.isOracleUpdaterAllowed
+                                    ? "success"
+                                    : "warning"
+                            }
+                        >
+                            {oracleSetupData.isOracleUpdaterAllowed
+                                ? "Allowed"
+                                : "Disallowed"}
+                        </Badge>
+                    </p>
 
-            <ToggleOracleUpdaterRole
-                {...oracleSetupData}
-                productId={productId}
-                refresh={refresh}
-            />
+                    <p>
+                        <ToggleOracleUpdaterRole
+                            {...oracleSetupData}
+                            productId={productId}
+                            refresh={refresh}
+                        />
+                    </p>
+                </Column>
+            </Columns>
+            <Columns>
+                <Column size={"full"}>
+                    <Title as={"h3"}>Webhook status</Title>
+                    <p>
+                        <Badge
+                            variant={
+                                oracleSetupData.isWebhookSetup
+                                    ? "success"
+                                    : "warning"
+                            }
+                        >
+                            {oracleSetupData.isWebhookSetup
+                                ? "Webhook registered on Frak"
+                                : "Webhook not registered on Frak"}
+                        </Badge>
+                    </p>
 
-            <br />
-            <h3>Webhook status</h3>
+                    <p>
+                        Webhook URL to use in your shopify notification centers:{" "}
+                    </p>
+                    <pre>{oracleSetupData.webhookUrl}</pre>
+                </Column>
+            </Columns>
+            <Columns>
+                <Column size={"full"}>
+                    <Title as={"h3"}>Webhook registration</Title>
+                    <WebhookRegistrationForm
+                        productId={productId}
+                        currentSigninKey={
+                            oracleSetupData.webhookStatus?.setup
+                                ? oracleSetupData.webhookStatus.webhookSigninKey
+                                : undefined
+                        }
+                        refresh={refresh}
+                    />
+                </Column>
+            </Columns>
 
-            <Badge
-                variant={oracleSetupData.isWebhookSetup ? "success" : "warning"}
-            >
-                {oracleSetupData.isWebhookSetup
-                    ? "Webhook registered on Frak"
-                    : "Webhook not registered on Frak"}
-            </Badge>
-
-            <p>
-                Webhook URL to use in your shopify notification centers:{" "}
-                <pre>{oracleSetupData.webhookUrl}</pre>
-            </p>
-
-            <br />
-            <h3>Webhook registration</h3>
-            <WebhookRegistrationForm
-                productId={productId}
-                currentSigninKey={
-                    oracleSetupData.webhookStatus?.setup
-                        ? oracleSetupData.webhookStatus.webhookSigninKey
-                        : undefined
-                }
-                refresh={refresh}
-            />
-
-            <br />
             <WebhookStats stats={oracleSetupData.webhookStatus} />
         </>
     );
@@ -180,20 +203,26 @@ function WebhookStats({
     }
 
     return (
-        <>
-            <h3>Stats</h3>
-            <p>
-                First purchase: {stats.stats.firstPurchase?.toString() ?? "N/A"}
-            </p>
-            <p>
-                Last purchase: {stats.stats.lastPurchase?.toString() ?? "N/A"}
-            </p>
-            <p>Last update: {stats.stats.lastUpdate?.toString() ?? "N/A"}</p>
-            <p>
-                Total purchase handled:{" "}
-                {stats.stats?.totalPurchaseHandled ?? "N/A"}
-            </p>
-        </>
+        <Columns>
+            <Column size={"full"}>
+                <Title as={"h3"}>Stats</Title>
+                <p>
+                    First purchase:{" "}
+                    {stats.stats.firstPurchase?.toString() ?? "N/A"}
+                </p>
+                <p>
+                    Last purchase:{" "}
+                    {stats.stats.lastPurchase?.toString() ?? "N/A"}
+                </p>
+                <p>
+                    Last update: {stats.stats.lastUpdate?.toString() ?? "N/A"}
+                </p>
+                <p>
+                    Total purchase handled:{" "}
+                    {stats.stats?.totalPurchaseHandled ?? "N/A"}
+                </p>
+            </Column>
+        </Columns>
     );
 }
 
@@ -294,22 +323,32 @@ function WebhookRegistrationForm({
     });
 
     const [key, setKey] = useState(currentSigninKey ?? "");
+    const [error, setError] = useState<string | undefined>();
 
     return (
         <form
             onSubmit={(e) => {
                 e.preventDefault();
+                setError(undefined);
+                if (key === "") {
+                    setError("Missing signin key");
+                    return;
+                }
                 setupWebhook({ webhookKey: key });
             }}
         >
-            <p>The webhook signin key from your shopify admin panel</p>
-            <input
-                type="text"
+            <FormLabel weight={"medium"} htmlFor={"webhook-signin-key"}>
+                The webhook signin key from your shopify admin panel
+            </FormLabel>
+            <Input
+                id={"webhook-signin-key"}
+                length={"medium"}
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
                 disabled={isPending}
                 placeholder="Webhook signin key"
             />
+            {error && <p className={"error"}>{error}</p>}
             <Button type="submit" variant="information" disabled={isPending}>
                 {currentSigninKey ? "Setup webhook" : "Register webhook"}
             </Button>

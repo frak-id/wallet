@@ -1,0 +1,12 @@
+.purchaseOracleSetup {
+    & p,
+    & form,
+    & button {
+        margin-top: 10px;
+    }
+}
+
+p.purchaseOracleSetup__description {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
