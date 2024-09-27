@@ -1,9 +1,8 @@
-import { addresses } from "@frak-labs/app-essentials";
-import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
-import { getExecutionAbi } from "@frak-labs/nexus-wallet/src/context/recover/utils/abi";
+import { addresses, getExecutionAbi } from "@frak-labs/app-essentials";
 import { memo, tryit } from "radash";
 import { type Address, isAddressEqual, toFunctionSelector } from "viem";
 import { readContract } from "viem/actions";
+import { getViemClient } from "../../blockchain/client";
 
 const sendInteractionSelector = toFunctionSelector({
     type: "function",
@@ -34,7 +33,7 @@ export const walletHasValidSession = memo(
     async ({ wallet }: { wallet: Address }) => {
         // Ensure that the wallet as an active session
         const [, status] = await tryit(() =>
-            readContract(currentViemClient, {
+            readContract(getViemClient(), {
                 address: wallet,
                 abi: [getExecutionAbi],
                 functionName: "getExecution",

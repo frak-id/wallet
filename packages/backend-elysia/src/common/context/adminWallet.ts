@@ -9,4 +9,3 @@ export const adminWalletContext = new Elysia({
         adminWalletsRepository: new AdminWalletsRepository(),
     }
 );
-export type AdminWalletContextApp = typeof adminWalletContext;

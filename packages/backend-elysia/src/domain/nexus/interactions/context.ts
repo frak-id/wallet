@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { nexusContext } from "../context";
 import {
     interactionSimulationStatus,
+    interactionsPurchaseMapTable,
     pendingInteractionsTable,
     pushedInteractionsTable,
 } from "../db/schema";
@@ -27,6 +28,7 @@ export const interactionsContext = new Elysia({
                     pendingInteractionsTable,
                     interactionSimulationStatus,
                     pushedInteractionsTable,
+                    interactionsPurchaseMapTable,
                 },
             });
 

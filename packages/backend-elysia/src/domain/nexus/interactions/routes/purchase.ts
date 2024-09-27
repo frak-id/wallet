@@ -7,6 +7,9 @@ export const purchaseInteractionsRoutes = new Elysia()
     .post(
         "/listenForPurchase",
         async () => {
+            // todo: Store mapping
+            // todo: Precheck current status (if all good directly build and submit stuff)
+            // todo: Otherwise expose endpoint to be called by business part? Or how to do the link between the two cleanly?
             return "ok";
         },
         {

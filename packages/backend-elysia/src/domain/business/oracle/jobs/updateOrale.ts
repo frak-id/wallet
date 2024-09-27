@@ -1,5 +1,8 @@
 import { log } from "@backend-common";
-import type { AdminWalletsRepository } from "@backend-common/repositories";
+import type {
+    AdminWalletsRepository,
+    PubSubRepository,
+} from "@backend-common/repositories";
 import cron, { Patterns } from "@elysiajs/cron";
 import {
     addresses,
@@ -34,6 +37,7 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
                         merkleRepository,
                         adminWalletsRepository,
                         client,
+                        pubSubRepository,
                     } = app.decorator;
 
                     // Update the empty leafs
@@ -62,6 +66,7 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
                         merkleRepository,
                         adminRepository: adminWalletsRepository,
                         client,
+                        pubSubRepository,
                     });
                 }),
         })
@@ -177,35 +182,64 @@ async function updateProductsMerkleRoot({
     merkleRepository,
     adminRepository,
     client,
+    pubSubRepository,
 }: {
     productIds: Hex[];
     businessDb: BusinessDb;
     merkleRepository: MerkleTreeRepository;
     adminRepository: AdminWalletsRepository;
     client: Client;
+    pubSubRepository: PubSubRepository;
 }) {
     const oracleUpdater = await adminRepository.getKeySpecificAccount({
         key: "oracle-updater",
     });
 
+    const pubSubEmitEvents: Promise<void>[] = [];
+
     for (const productId of productIds) {
         // Build the merkle root
         const root = await merkleRepository.getMerkleRoot({ productId });
-        // Update it in the database
+        // Update it in the database (and tell it's not synced yet)
         await businessDb
             .update(productOracleTable)
-            .set({ merkleRoot: root })
+            .set({ merkleRoot: root, synced: false })
             .where(eq(productOracleTable.productId, productId));
         log.debug(`Updated merkle root for product ${productId}`);
 
         // Blockchain update
-        await safeMerkleeRootBlockchainUpdate({
+        const { isSuccess, txHash } = await safeMerkleeRootBlockchainUpdate({
             productId,
             merkleRoot: root,
             oracleUpdater,
             client,
         });
+
+        // Update the synced status if it's a success
+        if (isSuccess) {
+            await businessDb
+                .update(productOracleTable)
+                .set(
+                    txHash
+                        ? { synced: true, lastSyncTxHash: txHash }
+                        : { synced: true }
+                )
+                .where(eq(productOracleTable.productId, productId));
+        }
+
+        // Emit the event
+        pubSubEmitEvents.push(
+            pubSubRepository.publish({
+                topic: "purchaseOracleSync",
+                args: {
+                    productId,
+                },
+            })
+        );
     }
+
+    // Wait for all the event to be handled
+    await Promise.allSettled(pubSubEmitEvents);
 }
 
 /**
@@ -233,7 +267,7 @@ async function safeMerkleeRootBlockchainUpdate({
 
     if (currentRoot === merkleRoot) {
         log.debug(`Merkle root for product ${productId} is already up to date`);
-        return;
+        return { isSuccess: true };
     }
 
     try {
@@ -256,10 +290,12 @@ async function safeMerkleeRootBlockchainUpdate({
             retryCount: 8,
         });
         log.info({ productId }, "Merkle update finalised");
+        return { isSuccess: true, txHash };
     } catch (e) {
         log.error(
             { error: e },
             `Failed to update the merkle root on chain for ${productId}`
         );
+        return { isSuccess: false };
     }
 }

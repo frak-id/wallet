@@ -19,5 +19,3 @@ export const postgresContext = new Elysia({
         }),
     }
 );
-
-export type PostgresContextApp = typeof postgresContext;

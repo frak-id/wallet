@@ -20,6 +20,7 @@ export {
     productInteractionManagerAbi,
     referralFeatureFacetAbi,
     purchaseFeatureFacetAbi,
+    webShopInteractionFacetAbi,
 } from "./abis/interactionAbis";
 export {
     productAdministratorRegistryAbi,
@@ -34,3 +35,8 @@ export {
     multiWebAuthNRecoveryActionAbi,
     multiWebAuthNValidatorV2Abi,
 } from "./abis/kernelV2Abis";
+export { getExecutionAbi } from "./abis/custom";
+export {
+    sendInteractionsSelector,
+    sendInteractionSelector,
+} from "./abis/selectors";

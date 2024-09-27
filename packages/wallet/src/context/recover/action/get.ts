@@ -5,11 +5,11 @@ import { currentViemClient } from "@/context/blockchain/provider";
 import {
     doAddPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
-    getExecutionAbi,
 } from "@/context/recover/utils/abi";
 import type { CurrentRecovery } from "@/types/Recovery";
 import {
     addresses,
+    getExecutionAbi,
     multiWebAuthNValidatorV2Abi,
 } from "@frak-labs/app-essentials";
 import { tryit } from "radash";

@@ -18,5 +18,3 @@ export const blockchainContext = new Elysia({
         client,
     };
 });
-
-export type BlockchainContextApp = typeof blockchainContext;

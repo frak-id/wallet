@@ -6,6 +6,10 @@ export type ShopifyOrderUpdateWebhookDto = Readonly<{
     test?: boolean; // Whether the order is a test order
     created_at: string; // The creation date of the order
     updated_at?: string; // The date when the order was last updated
+    customer: {
+        id: number; // The customer id
+    };
+    token: string; // The token of the order
 }>;
 
 export type OrderFinancialStatus =
