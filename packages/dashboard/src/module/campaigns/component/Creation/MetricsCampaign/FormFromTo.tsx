@@ -67,7 +67,7 @@ export function FormFromTo<
 
     useEffect(() => {
         if (defaultChecked) return;
-        setIsChecked(!isAllZero ?? "indeterminate");
+        setIsChecked(!isAllZero);
     }, [isAllZero, defaultChecked]);
 
     function checkingCheckbox(value: boolean | "indeterminate") {
