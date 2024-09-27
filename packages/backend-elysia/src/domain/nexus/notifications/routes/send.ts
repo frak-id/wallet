@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import { t } from "@backend-utils";
 import { Mutex } from "async-mutex";
 import { inArray, lt } from "drizzle-orm";
@@ -37,10 +38,10 @@ export const sendRoutes = new Elysia()
                         where: inArray(pushTokensTable.wallet, wallets),
                     });
                 if (tokens.length === 0) {
-                    console.log("No push tokens found for the given wallets");
+                    log.debug("No push tokens found for the given wallets");
                     return;
                 }
-                console.log(`Sending notification to ${tokens.length} wallets`);
+                log.info(`Sending notification to ${tokens.length} wallets`);
 
                 // Set the vapid details for the notification
                 setVapidDetails(

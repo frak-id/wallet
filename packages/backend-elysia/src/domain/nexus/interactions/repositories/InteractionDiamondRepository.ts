@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import {
     addresses,
     isRunningInProd,
@@ -49,10 +50,13 @@ export class InteractionDiamondRepository {
             this.addressCache.set(productId, { address });
             return address;
         } catch (e) {
-            console.error("Failed to get diamond contract", {
-                productId,
-                error: e,
-            });
+            log.error(
+                {
+                    productId,
+                    error: e,
+                },
+                "Failed to get diamond contract"
+            );
             this.addressCache.set(productId, { address: undefined });
         }
         return undefined;
@@ -95,12 +99,15 @@ export class InteractionDiamondRepository {
                 isSimulationSuccess: true,
             };
         } catch (e) {
-            console.error("Interaction simulation failed", {
-                wallet,
-                productId,
-                interactionData,
-                error: e,
-            });
+            log.error(
+                {
+                    wallet,
+                    productId,
+                    interactionData,
+                    error: e,
+                },
+                "Interaction simulation failed"
+            );
             return {
                 isSimulationSuccess: false,
             };

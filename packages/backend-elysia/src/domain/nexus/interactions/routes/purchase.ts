@@ -6,15 +6,17 @@ export const purchaseInteractionsRoutes = new Elysia()
     .use(interactionsContext)
     .post(
         "/listenForPurchase",
-        async ({ session }) => {
-            if (!session) return;
+        async () => {
+            return "ok";
         },
         {
-            isNexusAuthenticated: true,
+            isNexusAuthenticated: false,
 
             body: t.Object({
+                wallet: t.Address(),
                 customerId: t.String(),
                 orderId: t.String(),
+                token: t.String(),
             }),
         }
     );

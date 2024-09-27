@@ -1,4 +1,4 @@
-import { blockchainContext } from "@backend-common";
+import { blockchainContext, log } from "@backend-common";
 import { t } from "@backend-utils";
 import { addresses } from "@frak-labs/app-essentials";
 import { Mutex } from "async-mutex";
@@ -45,7 +45,10 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" })
                         args: [bank, parseEther("1000")],
                     }),
                 });
-                console.log(`Reloaded campaign ${bank} with tx hash ${txHash}`);
+                log.info(
+                    { txHash },
+                    `Reloaded campaign ${bank} with tx hash ${txHash}`
+                );
             });
         },
         {

@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
 import cron, { Patterns } from "@elysiajs/cron";
 import {
@@ -40,7 +41,7 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
                         businessDb,
                     });
                     if (updatedOracleIds.size === 0) {
-                        console.log("No oracle to update");
+                        log.debug("No oracle to update");
                         return;
                     }
 
@@ -50,6 +51,9 @@ export function updateMerkleRootJob(app: BusinessOracleContextApp) {
                         businessDb,
                         merkleRepository,
                     });
+                    log.debug(
+                        `Invalidating oracle for ${productIds.length} products`
+                    );
 
                     // Then update each products merkle root
                     await updateProductsMerkleRoot({
@@ -113,7 +117,7 @@ async function updateEmptyLeafs({
             leaf,
         };
     });
-    console.log(
+    log.debug(
         `Generated ${purchaseWithLeafs.length} new leafs for ${oracleIds.size} oracles`
     );
     if (purchaseWithLeafs.length === 0) {
@@ -154,7 +158,7 @@ async function invalidateOracleTree({
         .from(productOracleTable)
         .where(inArray(productOracleTable.id, Array.from(oracleIds)));
     const productIds = productIdsFromDb.map((product) => product.productId);
-    console.log(`Invalidate ${productIds.length} product trees`);
+    log.debug(`Invalidate ${productIds.length} product trees`);
 
     // Invalidate the merkle tree
     merkleRepository.invalidateProductTrees({
@@ -192,7 +196,7 @@ async function updateProductsMerkleRoot({
             .update(productOracleTable)
             .set({ merkleRoot: root })
             .where(eq(productOracleTable.productId, productId));
-        console.log(`Updated merkle root for product ${productId}`);
+        log.debug(`Updated merkle root for product ${productId}`);
 
         // Blockchain update
         await safeMerkleeRootBlockchainUpdate({
@@ -228,9 +232,7 @@ async function safeMerkleeRootBlockchainUpdate({
     });
 
     if (currentRoot === merkleRoot) {
-        console.log(
-            `Merkle root for product ${productId} is already up to date`
-        );
+        log.debug(`Merkle root for product ${productId} is already up to date`);
         return;
     }
 
@@ -253,11 +255,11 @@ async function safeMerkleeRootBlockchainUpdate({
             confirmations: 4,
             retryCount: 8,
         });
-        console.log("Merkle update finalised");
+        log.info({ productId }, "Merkle update finalised");
     } catch (e) {
-        console.error(
-            `Failed to update the merkle root on chain for ${productId}`,
-            e
+        log.error(
+            { error: e },
+            `Failed to update the merkle root on chain for ${productId}`
         );
     }
 }

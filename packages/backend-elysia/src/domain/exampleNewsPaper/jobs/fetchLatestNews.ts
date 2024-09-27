@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import cron, { Patterns } from "@elysiajs/cron";
 import { Config } from "sst/node/config";
 import type { NewsPaperContextApp } from "../context";
@@ -54,10 +55,13 @@ async function fetchLatestNew({
     if (!latestNews?.length) {
         return;
     }
-    console.log("Fetched news", {
-        length: latestNews.length,
-        ids: latestNews.map((news) => news.id),
-    });
+    log.debug(
+        {
+            length: latestNews.length,
+            ids: latestNews.map((news) => news.id),
+        },
+        "Fetched news"
+    );
 
     // We will make cluster of 2 news, to process in //
     const clusterCount = Math.ceil(latestNews.length / 2);
@@ -68,10 +72,13 @@ async function fetchLatestNew({
 
     // Process each cluster
     for (const cluster of clusters) {
-        console.log("Processing news cluster", {
-            length: cluster.length,
-            ids: cluster.map((news) => news.id),
-        });
+        log.debug(
+            {
+                length: cluster.length,
+                ids: cluster.map((news) => news.id),
+            },
+            "Processing news cluster"
+        );
         try {
             // For each news, format the text
             const formattedNews = await Promise.all(
@@ -114,12 +121,15 @@ async function fetchLatestNew({
 
             // Then insert them
             const insertResult = await newsDbRepository.insertMany(documents);
-            console.log("Inserted news", {
-                amount: insertResult.insertedCount,
-                ids: insertResult.insertedIds,
-            });
+            log.info(
+                {
+                    amount: insertResult.insertedCount,
+                    ids: insertResult.insertedIds,
+                },
+                "Inserted news"
+            );
         } catch (error) {
-            console.error("Error while processing news cluster", error);
+            log.warn({ error }, "Error while processing news cluster");
         }
     }
 }

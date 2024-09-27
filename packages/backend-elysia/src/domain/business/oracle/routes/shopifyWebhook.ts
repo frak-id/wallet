@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import { t } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
@@ -89,13 +90,16 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                 concatHex([oracle.productId, toHex(webhookData.id)])
             );
 
-            console.log("Handling new webhook", {
-                productId,
-                purchaseId,
-                purchaseStatus,
-                purchaseExternalId: webhookData.id,
-                status: webhookData.financial_status,
-            });
+            log.debug(
+                {
+                    productId,
+                    purchaseId,
+                    purchaseStatus,
+                    purchaseExternalId: webhookData.id,
+                    status: webhookData.financial_status,
+                },
+                "Handling new webhook"
+            );
 
             // Insert the purchase in the database
             await businessDb

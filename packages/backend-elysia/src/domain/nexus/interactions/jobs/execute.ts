@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import cron, { Patterns } from "@elysiajs/cron";
 import { Mutex } from "async-mutex";
 import { and, eq, inArray } from "drizzle-orm";
@@ -31,12 +32,12 @@ export function executeInteractionJob(app: InteractionsContextApp) {
                         interactionsDb,
                     });
                     if (interactions.length === 0) {
-                        console.log("No interactions to execute");
+                        log.debug("No interactions to execute");
                         return;
                     }
-                    console.log("Will execute interactions", {
-                        interactions: interactions.length,
-                    });
+                    log.debug(
+                        `Will execute ${interactions.length} interactions`
+                    );
 
                     // Execute them
                     const txHash = await executeInteractions({
@@ -46,10 +47,12 @@ export function executeInteractionJob(app: InteractionsContextApp) {
                         interactionSignerRepository,
                     });
 
-                    console.log("Executed interactions", {
-                        interactions: interactions.length,
-                        txHash,
-                    });
+                    log.info(
+                        {
+                            txHash,
+                        },
+                        `Executed ${interactions.length}  interactions`
+                    );
                 }),
         })
     );
@@ -113,9 +116,12 @@ async function executeInteractions({
                 interactionContract,
             }));
         if (!signature) {
-            console.error("Failed to get signature for interaction", {
-                interaction,
-            });
+            log.error(
+                {
+                    interaction,
+                },
+                "Failed to get signature for interaction"
+            );
             return null;
         }
 
@@ -138,12 +144,15 @@ async function executeInteractions({
         await Promise.all(preparedInteractionsAsync)
     ).filter((out) => out !== null) as PreparedInteraction[];
     if (preparedInteractions.length === 0) {
-        console.log("No interactions to execute post preparation");
+        log.debug("No interactions to execute post preparation");
         return undefined;
     }
-    console.log("Prepared interactions", {
-        interactions: preparedInteractions.length,
-    });
+    log.debug(
+        {
+            interactions: preparedInteractions.length,
+        },
+        "Prepared interactions"
+    );
 
     // Once all prepared, send them
     const txHash =
@@ -151,12 +160,15 @@ async function executeInteractions({
             preparedInteractions
         );
     if (!txHash) {
-        console.error("Failed to push interactions", {
-            preparedInteractions: preparedInteractions.length,
-        });
+        log.error(
+            {
+                preparedInteractions: preparedInteractions.length,
+            },
+            "Failed to push interactions"
+        );
         return undefined;
     }
-    console.log("Pushed all the interactions on txs", { txHash });
+    log.info({ txHash }, "Pushed all the interactions on txs");
 
     // Update the db
     await interactionsDb.transaction(async (trx) => {

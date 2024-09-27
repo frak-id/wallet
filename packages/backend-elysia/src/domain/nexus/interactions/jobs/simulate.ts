@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import cron, { Patterns } from "@elysiajs/cron";
 import { Mutex } from "async-mutex";
 import { and, eq } from "drizzle-orm";
@@ -29,7 +30,7 @@ export function simulateInteractionJob(app: InteractionsContextApp) {
                         interactionsDb,
                     });
                     if (interactions.length === 0) {
-                        console.log("No interactions to simulate");
+                        log.debug("No interactions to simulate");
                         return;
                     }
 
@@ -42,8 +43,7 @@ export function simulateInteractionJob(app: InteractionsContextApp) {
                             walletSessionRepository,
                         });
 
-                    // todo: trigger execute job if we got success interactions
-                    console.log("Simulated interactions", {
+                    log.debug("Simulated interactions", {
                         interactions: interactions.length,
                         hasSuccessInteractions,
                     });

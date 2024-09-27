@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { isAddressEqual } from "viem";
@@ -31,7 +32,7 @@ export const pushInteractionsRoutes = new Elysia()
             ) {
                 return error(403, "Invalid wallet address");
             }
-            console.log("Pushing interactions", interactions);
+            log.debug(`Received ${interactions.length} interactions`);
 
             // Map the interaction for the db insertion
             const interactionsForInsert = interactions.map(

@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
 import {
     addresses,
@@ -232,9 +233,12 @@ export class InteractionSignerRepository {
                 maxPriorityFeePerGas: (maxPriorityFeePerGas * 125n) / 100n,
             });
         } catch (e) {
-            console.error("Unable to push interactions", {
-                error: e,
-            });
+            log.error(
+                {
+                    error: e,
+                },
+                "Unable to push interactions"
+            );
             return undefined;
         }
     }

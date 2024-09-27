@@ -7,3 +7,4 @@ export {
     type PostgresContextApp,
     type AdminWalletContextApp,
 } from "./context";
+export { log } from "./logger";
