@@ -5,7 +5,7 @@ import {
     addresses,
     purchaseOracleAbi,
 } from "@frak-labs/app-essentials/blockchain";
-import { eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { type Client, type Hex, type LocalAccount, encodePacked } from "viem";
 import {
     readContract,
@@ -35,11 +35,30 @@ export const updateMerkleRootJob = (app: BusinessOracleContextApp) =>
                     client,
                 } = app.decorator;
 
+                // Get some unsynced products
+                const notSyncedProductIds = await businessDb
+                    .select({
+                        productId: productOracleTable.productId,
+                    })
+                    .from(productOracleTable)
+                    .where(
+                        and(
+                            eq(productOracleTable.synced, false),
+                            isNotNull(productOracleTable.merkleRoot)
+                        )
+                    );
+                log.debug(
+                    `${notSyncedProductIds.length} products are not synced`
+                );
+
                 // Update the empty leafs
                 const updatedOracleIds = await updateEmptyLeafs({
                     businessDb,
                 });
-                if (updatedOracleIds.size === 0) {
+                if (
+                    updatedOracleIds.size === 0 &&
+                    notSyncedProductIds.length === 0
+                ) {
                     log.debug("No oracle to update");
                     return;
                 }
@@ -54,9 +73,17 @@ export const updateMerkleRootJob = (app: BusinessOracleContextApp) =>
                     `Invalidating oracle for ${productIds.length} products`
                 );
 
-                // Then update each products merkle root
+                const finalProductIds = new Set(
+                    productIds.concat(
+                        notSyncedProductIds.map((product) => product.productId)
+                    )
+                );
+                log.debug(
+                    `Will update ${finalProductIds.size} products merkle tree`
+                );
+                // Then update each product ids merkle root
                 await updateProductsMerkleRoot({
-                    productIds: productIds,
+                    productIds: [...finalProductIds],
                     businessDb,
                     merkleRepository,
                     adminRepository: adminWalletsRepository,
@@ -148,6 +175,9 @@ async function invalidateOracleTree({
     businessDb: BusinessDb;
     merkleRepository: MerkleTreeRepository;
 }) {
+    if (oracleIds.size === 0) {
+        return [];
+    }
     // Get the product id from the oracle ids
     const productIdsFromDb = await businessDb
         .select({
