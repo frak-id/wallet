@@ -1,17 +1,10 @@
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
-import {
-    Config,
-    Queue,
-    Service,
-    Function as SstFunction,
-    type StackContext,
-    use,
-} from "sst/constructs";
+import { Config, Service, type StackContext, use } from "sst/constructs";
 import { ClusterStack } from "./Cluster";
 import { ConfigStack } from "./Config";
-import { isDevStack, isDistantStack, isProdStack } from "./utils";
+import { isDevStack, isDistantStack } from "./utils";
 
 /**
  * Define backend stack
@@ -47,7 +40,6 @@ export function BackendStack(ctx: StackContext) {
     // Add the elysia backend
     elysiaBackend(ctx, { masterKeySecret, masterSecretId });
 }
-
 
 /**
  * Create our elysia backend

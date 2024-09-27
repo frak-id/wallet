@@ -36,6 +36,7 @@
     "merkletreejs": "^0.4.0",
     "mongodb": "^6.9.0",
     "postgres": "^3.4.4",
+    "radash": "^12.1.0",
     "solady": "^0.0.238",
     "sst": "2.43.6",
     "viem": "^2.21.6",
