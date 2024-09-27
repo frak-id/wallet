@@ -1,5 +1,6 @@
 import { customHex } from "@backend-utils";
 import {
+    boolean,
     decimal,
     index,
     integer,
@@ -22,6 +23,9 @@ export const productOracleTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
         // The current merkle root for this oracle
         merkleRoot: customHex("merkle_root"),
+        // If the oracle is synced with the blockchain
+        synced: boolean("synced").default(false),
+        lastSyncTxHash: customHex("last_sync_tx_hash"),
     },
     (table) => ({
         productIdIdx: index("unique_product_id").on(table.productId),
@@ -46,6 +50,10 @@ export const purchaseStatusTable = pgTable(
         purchaseId: customHex("purchase_id").unique().notNull(),
         // External id from the external app
         externalId: varchar("external_id").notNull(),
+        // External customer id from the external app
+        externalCustomerId: varchar("external_customer_id").notNull(),
+        // A custom purchase token
+        purchaseToken: varchar("purchase_token"),
         // The total price of the order
         totalPrice: decimal("total_price").notNull(),
         // ISO 4217 currency code, so 3 char, we take 4 char to be safe
@@ -64,5 +72,9 @@ export const purchaseStatusTable = pgTable(
             table.oracleId
         ),
         purchaseIdIdx: index("purchase_id_idx").on(table.purchaseId),
+        externalListenerIdx: uniqueIndex("external_listener_id").on(
+            table.externalId,
+            table.purchaseToken
+        ),
     })
 );

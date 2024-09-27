@@ -14,7 +14,6 @@ import {
     type Hex,
     type LocalAccount,
     type Transport,
-    concatHex,
     encodeFunctionData,
     keccak256,
 } from "viem";
@@ -35,9 +34,6 @@ const interactionValidatorRoles = 1n << 4n;
  *  - Used to simulate transaction
  */
 export class InteractionSignerRepository {
-    private nonceCache = new LRUCache<Hex, bigint>({
-        max: 1024,
-    });
     private signerAllowedCache = new LRUCache<Address, boolean>({
         max: 64,
         // Cache of 10min
@@ -79,11 +75,6 @@ export class InteractionSignerRepository {
 
         // Get the nonce
         const interactionHash = keccak256(facetData);
-        const nonce = await this.getNonce({
-            interactionHash,
-            user,
-            interactionContract,
-        });
 
         // Build the typed data
         const typedData = {
@@ -98,7 +89,6 @@ export class InteractionSignerRepository {
                     { name: "productId", type: "uint256" },
                     { name: "interactionData", type: "bytes32" },
                     { name: "user", type: "address" },
-                    { name: "nonce", type: "uint256" },
                 ],
             },
             primaryType: "ValidateInteraction",
@@ -106,7 +96,6 @@ export class InteractionSignerRepository {
                 productId: BigInt(productId),
                 interactionData: interactionHash,
                 user,
-                nonce,
             },
         } as const;
 
@@ -143,36 +132,6 @@ export class InteractionSignerRepository {
         });
         this.signerAllowedCache.set(signerAccount.address, isAllowed);
         return isAllowed;
-    }
-
-    /**
-     * Get the current nonce for a signature
-     * @param interactionHash
-     * @param user
-     * @param interactionContract
-     * @private
-     */
-    private async getNonce({
-        interactionHash,
-        user,
-        interactionContract,
-    }: { interactionHash: Hex; user: Address; interactionContract: Address }) {
-        const cacheKey = concatHex([
-            interactionHash,
-            user,
-            interactionContract,
-        ]);
-        const cachedNonce = this.nonceCache.get(cacheKey) ?? 0n;
-        const onChainNonce = await readContract(this.client, {
-            address: interactionContract,
-            abi: productInteractionDiamondAbi,
-            functionName: "getNonceForInteraction",
-            args: [interactionHash, user],
-        });
-        const currentNonce =
-            onChainNonce > cachedNonce ? onChainNonce : cachedNonce + 1n;
-        this.nonceCache.set(cacheKey, currentNonce);
-        return currentNonce;
     }
 
     /**

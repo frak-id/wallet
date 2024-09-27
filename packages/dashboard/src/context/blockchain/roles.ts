@@ -16,4 +16,4 @@ export const interactionValidatorRoles = BigInt(1 << 4);
 /**
  * Role specific for the purchase oracle updater
  */
-export const purcheOracleUpdaterRoles = BigInt(1 << 5);
+export const purchaseOracleUpdaterRoles = BigInt(1 << 5);

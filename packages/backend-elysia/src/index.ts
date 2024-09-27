@@ -6,11 +6,7 @@ import { business, exampleNewsPaper, nexus } from "./domain";
 
 const app = new Elysia()
     .use(cors())
-    .use(
-        log.into({
-            autoLogging: true,
-        })
-    )
+    .use(log.into({ autoLogging: false }))
     .get("/", () => ({ status: "ok" }))
     .use(commonRoutes)
     // Example news paper logics

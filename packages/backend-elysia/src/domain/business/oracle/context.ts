@@ -5,7 +5,7 @@ import { businessContext } from "../context";
 import { MerkleTreeRepository } from "./repositories/MerkleTreeRepository";
 
 export const businessOracleContext = new Elysia({
-    name: "business-oracle-context",
+    name: "Context.business.oracle",
 })
     .use(businessContext)
     .use(adminWalletContext)

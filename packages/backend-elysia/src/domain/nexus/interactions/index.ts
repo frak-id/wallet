@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { executeInteractionJob } from "./jobs/execute";
+import { purchaseTrackerJob } from "./jobs/purchaseTracker";
 import { simulateInteractionJob } from "./jobs/simulate";
 import { purchaseInteractionsRoutes } from "./routes/purchase";
 import { pushInteractionsRoutes } from "./routes/push";
@@ -11,11 +12,16 @@ export const interactionRoutes = new Elysia({
     .use(simulateInteractionJob)
     .use(pushInteractionsRoutes)
     .use(purchaseInteractionsRoutes)
+    .use(purchaseTrackerJob)
     .get(
         "/status",
         ({
             store: {
-                cron: { simulateInteraction, executeInteraction },
+                cron: {
+                    simulateInteraction,
+                    executeInteraction,
+                    purchaseTracker,
+                },
             },
         }) => ({
             simulateInteractionCron: {
@@ -37,6 +43,16 @@ export const interactionRoutes = new Elysia({
                 isBusy: executeInteraction.isBusy(),
                 isRunning: executeInteraction.isRunning(),
                 isStopped: executeInteraction.isStopped(),
+            },
+            purchaseTrackerCron: {
+                run: {
+                    prevRun: purchaseTracker.previousRun(),
+                    currRun: purchaseTracker.currentRun(),
+                    planning: purchaseTracker.nextRuns(10),
+                },
+                isBusy: purchaseTracker.isBusy(),
+                isRunning: purchaseTracker.isRunning(),
+                isStopped: purchaseTracker.isStopped(),
             },
         })
     );

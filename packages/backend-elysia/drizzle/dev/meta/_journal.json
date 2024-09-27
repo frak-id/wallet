@@ -12,15 +12,8 @@
         {
             "idx": 1,
             "version": "7",
-            "when": 1727181656293,
-            "tag": "0001_soft_phil_sheldon",
-            "breakpoints": true
-        },
-        {
-            "idx": 2,
-            "version": "7",
-            "when": 1727362677583,
-            "tag": "0002_left_nitro",
+            "when": 1727455472009,
+            "tag": "0001_nappy_namor",
             "breakpoints": true
         }
     ]

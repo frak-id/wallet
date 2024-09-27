@@ -8,7 +8,7 @@ import {
 } from "./db/schema";
 
 export const businessContext = new Elysia({
-    name: "business-context",
+    name: "Context.business",
 })
     .use(blockchainContext)
     .use(postgresContext)
@@ -24,6 +24,4 @@ export const businessContext = new Elysia({
     }))
     .as("plugin");
 
-export type BusinessContextApp = typeof businessContext;
-
-export type BusinessDb = BusinessContextApp["decorator"]["businessDb"];
+export type BusinessDb = typeof businessContext.decorator.businessDb;

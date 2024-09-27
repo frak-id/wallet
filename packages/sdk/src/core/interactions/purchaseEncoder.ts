@@ -1,4 +1,4 @@
-import { type Hex, concatHex, pad, toHex } from "viem";
+import { type Hex, concatHex, encodeAbiParameters, pad, toHex } from "viem";
 import { interactionTypes } from "../constants/interactionTypes";
 import { productTypes } from "../constants/productTypes";
 import type { PreparedInteraction } from "../types";
@@ -24,10 +24,15 @@ function startPurchase({
  */
 function completedPurchase({
     purchaseId,
-}: { purchaseId: Hex }): PreparedInteraction {
+    proof,
+}: { purchaseId: Hex; proof: Hex[] }): PreparedInteraction {
+    const innerData = encodeAbiParameters(
+        [{ type: "uint256" }, { type: "bytes32[]" }],
+        [BigInt(purchaseId), proof]
+    );
     const interactionData = concatHex([
         interactionTypes.purchase.completed,
-        pad(purchaseId, { size: 32 }),
+        innerData,
     ]);
     return {
         handlerTypeDenominator: toHex(productTypes.referral),

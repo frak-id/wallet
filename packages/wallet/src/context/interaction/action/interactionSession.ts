@@ -1,64 +1,23 @@
 "use server";
 import { currentViemClient } from "@/context/blockchain/provider";
-import { getExecutionAbi, setExecutionAbi } from "@/context/recover/utils/abi";
+import { setExecutionAbi } from "@/context/recover/utils/abi";
 import { getSession } from "@/context/session/action/session";
 import type { InteractionSession } from "@/types/Session";
-import { addresses } from "@frak-labs/app-essentials";
+import {
+    addresses,
+    getExecutionAbi,
+    sendInteractionSelector,
+    sendInteractionsSelector,
+} from "@frak-labs/app-essentials";
 import { tryit } from "radash";
 import {
     type Address,
     type Hex,
     encodeFunctionData,
     isAddressEqual,
-    toFunctionSelector,
     zeroAddress,
 } from "viem";
 import { readContract } from "viem/actions";
-
-// Get the recovery selector
-const sendInteractionSelector = toFunctionSelector({
-    type: "function",
-    inputs: [
-        {
-            name: "_interaction",
-            internalType: "struct Interaction",
-            type: "tuple",
-            components: [
-                {
-                    name: "productId",
-                    internalType: "uint256",
-                    type: "uint256",
-                },
-                { name: "data", internalType: "bytes", type: "bytes" },
-            ],
-        },
-    ],
-    name: "sendInteraction",
-    outputs: [],
-    stateMutability: "nonpayable",
-});
-// Get the recovery selector
-const sendInteractionsSelector = toFunctionSelector({
-    type: "function",
-    inputs: [
-        {
-            name: "_interactions",
-            internalType: "struct Interaction[]",
-            type: "tuple[]",
-            components: [
-                {
-                    name: "productId",
-                    internalType: "uint256",
-                    type: "uint256",
-                },
-                { name: "data", internalType: "bytes", type: "bytes" },
-            ],
-        },
-    ],
-    name: "sendInteractions",
-    outputs: [],
-    stateMutability: "nonpayable",
-});
 
 /**
  * Get the full sessions

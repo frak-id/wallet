@@ -1,6 +1,5 @@
 import { log } from "@backend-common";
 import cron, { Patterns } from "@elysiajs/cron";
-import { Mutex } from "async-mutex";
 import { and, eq } from "drizzle-orm";
 import type { Address } from "viem";
 import { pendingInteractionsTable } from "../../db/schema";
@@ -9,53 +8,51 @@ import type { InteractionDiamondRepository } from "../repositories/InteractionDi
 import type { WalletSessionRepository } from "../repositories/WalletSessionRepository";
 import type { ExecuteInteractionAppJob } from "./execute";
 
-export function simulateInteractionJob(app: InteractionsContextApp) {
-    const simulationMutex = new Mutex();
-
-    return app.use(
+export const simulateInteractionJob = (app: InteractionsContextApp) =>
+    app.use(
         cron({
             name: "simulateInteraction",
             pattern: Patterns.everyMinutes(10),
-            run: () =>
-                simulationMutex.runExclusive(async () => {
-                    // Get some stuff from the app
-                    const {
+            protect: true,
+            catch: true,
+            interval: 60,
+            run: async () => {
+                // Get some stuff from the app
+                const {
+                    interactionsDb,
+                    interactionDiamondRepository,
+                    walletSessionRepository,
+                } = app.decorator;
+
+                // Get interactions to simulate
+                const interactions = await getInteractionsToSimulate({
+                    interactionsDb,
+                });
+                if (interactions.length === 0) {
+                    log.debug("No interactions to simulate");
+                    return;
+                }
+
+                // Perform the simulation and update the interactions
+                const hasSuccessInteractions =
+                    await simulateAndUpdateInteractions({
+                        interactions,
                         interactionsDb,
                         interactionDiamondRepository,
                         walletSessionRepository,
-                    } = app.decorator;
-
-                    // Get interactions to simulate
-                    const interactions = await getInteractionsToSimulate({
-                        interactionsDb,
-                    });
-                    if (interactions.length === 0) {
-                        log.debug("No interactions to simulate");
-                        return;
-                    }
-
-                    // Perform the simulation and update the interactions
-                    const hasSuccessInteractions =
-                        await simulateAndUpdateInteractions({
-                            interactions,
-                            interactionsDb,
-                            interactionDiamondRepository,
-                            walletSessionRepository,
-                        });
-
-                    log.debug("Simulated interactions", {
-                        interactions: interactions.length,
-                        hasSuccessInteractions,
                     });
 
-                    // Trigger the execution job
-                    const store =
-                        app.store as ExecuteInteractionAppJob["store"];
-                    store.cron.executeInteraction.trigger();
-                }),
+                log.debug("Simulated interactions", {
+                    interactions: interactions.length,
+                    hasSuccessInteractions,
+                });
+
+                // Trigger the execution job
+                const store = app.store as ExecuteInteractionAppJob["store"];
+                await store.cron.executeInteraction.trigger();
+            },
         })
     );
-}
 
 export type SimulateInteractionAppJob = ReturnType<
     typeof simulateInteractionJob

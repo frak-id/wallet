@@ -1,3 +1,3 @@
-export { blockchainContext, type BlockchainContextApp } from "./blockchain";
-export { postgresContext, type PostgresContextApp } from "./postgres";
-export { adminWalletContext, type AdminWalletContextApp } from "./adminWallet";
+export { blockchainContext } from "./blockchain";
+export { postgresContext } from "./postgres";
+export { adminWalletContext } from "./adminWallet";

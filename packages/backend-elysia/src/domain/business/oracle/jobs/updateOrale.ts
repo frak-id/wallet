@@ -5,7 +5,6 @@ import {
     addresses,
     purchaseOracleAbi,
 } from "@frak-labs/app-essentials/blockchain";
-import { Mutex } from "async-mutex";
 import { eq, inArray, isNull } from "drizzle-orm";
 import { type Client, type Hex, type LocalAccount, encodePacked } from "viem";
 import {
@@ -19,54 +18,53 @@ import { productOracleTable, purchaseStatusTable } from "../../db/schema";
 import type { BusinessOracleContextApp } from "../context";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 
-export function updateMerkleRootJob(app: BusinessOracleContextApp) {
-    const merkleeRootUpdateMutex = new Mutex();
-
-    return app.use(
+export const updateMerkleRootJob = (app: BusinessOracleContextApp) =>
+    app.use(
         cron({
             name: "updateMerkleRoot",
-            pattern: Patterns.everyMinutes(2),
-            run: () =>
-                merkleeRootUpdateMutex.runExclusive(async () => {
-                    // Extract some stuff from the app
-                    const {
-                        businessDb,
-                        merkleRepository,
-                        adminWalletsRepository,
-                        client,
-                    } = app.decorator;
+            pattern: Patterns.everyMinutes(5),
+            protect: true,
+            catch: true,
+            interval: 30,
+            run: async () => {
+                // Extract some stuff from the app
+                const {
+                    businessDb,
+                    merkleRepository,
+                    adminWalletsRepository,
+                    client,
+                } = app.decorator;
 
-                    // Update the empty leafs
-                    const updatedOracleIds = await updateEmptyLeafs({
-                        businessDb,
-                    });
-                    if (updatedOracleIds.size === 0) {
-                        log.debug("No oracle to update");
-                        return;
-                    }
+                // Update the empty leafs
+                const updatedOracleIds = await updateEmptyLeafs({
+                    businessDb,
+                });
+                if (updatedOracleIds.size === 0) {
+                    log.debug("No oracle to update");
+                    return;
+                }
 
-                    // Invalidate the merkle tree
-                    const productIds = await invalidateOracleTree({
-                        oracleIds: updatedOracleIds,
-                        businessDb,
-                        merkleRepository,
-                    });
-                    log.debug(
-                        `Invalidating oracle for ${productIds.length} products`
-                    );
+                // Invalidate the merkle tree
+                const productIds = await invalidateOracleTree({
+                    oracleIds: updatedOracleIds,
+                    businessDb,
+                    merkleRepository,
+                });
+                log.debug(
+                    `Invalidating oracle for ${productIds.length} products`
+                );
 
-                    // Then update each products merkle root
-                    await updateProductsMerkleRoot({
-                        productIds: productIds,
-                        businessDb,
-                        merkleRepository,
-                        adminRepository: adminWalletsRepository,
-                        client,
-                    });
-                }),
+                // Then update each products merkle root
+                await updateProductsMerkleRoot({
+                    productIds: productIds,
+                    businessDb,
+                    merkleRepository,
+                    adminRepository: adminWalletsRepository,
+                    client,
+                });
+            },
         })
     );
-}
 
 export type UpdateMerkleRootAppJob = ReturnType<typeof updateMerkleRootJob>;
 
@@ -191,20 +189,32 @@ async function updateProductsMerkleRoot({
     for (const productId of productIds) {
         // Build the merkle root
         const root = await merkleRepository.getMerkleRoot({ productId });
-        // Update it in the database
+        // Update it in the database (and tell it's not synced yet)
         await businessDb
             .update(productOracleTable)
-            .set({ merkleRoot: root })
+            .set({ merkleRoot: root, synced: false })
             .where(eq(productOracleTable.productId, productId));
         log.debug(`Updated merkle root for product ${productId}`);
 
         // Blockchain update
-        await safeMerkleeRootBlockchainUpdate({
+        const { isSuccess, txHash } = await safeMerkleeRootBlockchainUpdate({
             productId,
             merkleRoot: root,
             oracleUpdater,
             client,
         });
+
+        // Update the synced status if it's a success
+        if (isSuccess) {
+            await businessDb
+                .update(productOracleTable)
+                .set(
+                    txHash
+                        ? { synced: true, lastSyncTxHash: txHash }
+                        : { synced: true }
+                )
+                .where(eq(productOracleTable.productId, productId));
+        }
     }
 }
 
@@ -233,7 +243,7 @@ async function safeMerkleeRootBlockchainUpdate({
 
     if (currentRoot === merkleRoot) {
         log.debug(`Merkle root for product ${productId} is already up to date`);
-        return;
+        return { isSuccess: true };
     }
 
     try {
@@ -256,10 +266,12 @@ async function safeMerkleeRootBlockchainUpdate({
             retryCount: 8,
         });
         log.info({ productId }, "Merkle update finalised");
+        return { isSuccess: true, txHash };
     } catch (e) {
         log.error(
             { error: e },
             `Failed to update the merkle root on chain for ${productId}`
         );
+        return { isSuccess: false };
     }
 }

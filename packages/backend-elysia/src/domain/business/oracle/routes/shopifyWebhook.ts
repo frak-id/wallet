@@ -98,7 +98,7 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                     purchaseExternalId: webhookData.id,
                     status: webhookData.financial_status,
                 },
-                "Handling new webhook"
+                "Handling new shopify webhook event"
             );
 
             // Insert the purchase in the database
@@ -108,6 +108,8 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                     oracleId: oracle.id,
                     purchaseId,
                     externalId: webhookData.id.toString(),
+                    externalCustomerId: webhookData.customer.id.toString(),
+                    purchaseToken: webhookData.token,
                     status: purchaseStatus,
                     totalPrice: webhookData.total_price,
                     currencyCode: webhookData.currency,

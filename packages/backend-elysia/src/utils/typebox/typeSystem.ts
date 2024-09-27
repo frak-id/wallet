@@ -6,7 +6,7 @@ import { type Address, type Hex, isAddress, isHex } from "viem";
  */
 const t = Object.assign({}, elysiaTypes);
 
-export const FrakType = {
+const FrakType = {
     /**
      * Custom address type
      */

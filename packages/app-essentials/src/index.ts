@@ -8,6 +8,8 @@ export {
     pressInteractionFacetAbi,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
+    purchaseFeatureFacetAbi,
+    webShopInteractionFacetAbi,
     referralFeatureFacetAbi,
     productAdministratorRegistryAbi,
     productRegistryAbi,
@@ -17,6 +19,9 @@ export {
     interactionDelegatorValidatorAbi,
     multiWebAuthNRecoveryActionAbi,
     multiWebAuthNValidatorV2Abi,
+    getExecutionAbi,
+    sendInteractionsSelector,
+    sendInteractionSelector,
 } from "./blockchain";
 export {
     isRunningInProd,

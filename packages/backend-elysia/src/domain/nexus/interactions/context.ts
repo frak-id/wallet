@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { nexusContext } from "../context";
 import {
     interactionSimulationStatus,
+    interactionsPurchaseTrackerTable,
     pendingInteractionsTable,
     pushedInteractionsTable,
 } from "../db/schema";
@@ -15,7 +16,7 @@ import { WalletSessionRepository } from "./repositories/WalletSessionRepository"
  * @param app
  */
 export const interactionsContext = new Elysia({
-    name: "nexus-interactions-context",
+    name: "Context.nexus.interactions",
 })
     .use(nexusContext)
     .use(adminWalletContext)
@@ -27,6 +28,8 @@ export const interactionsContext = new Elysia({
                     pendingInteractionsTable,
                     interactionSimulationStatus,
                     pushedInteractionsTable,
+                    interactionsPurchaseMapTable:
+                        interactionsPurchaseTrackerTable,
                 },
             });
 

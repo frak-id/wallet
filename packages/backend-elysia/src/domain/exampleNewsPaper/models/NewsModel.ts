@@ -1,4 +1,4 @@
-import { type Static, t } from "elysia";
+import { t } from "elysia";
 
 export const LightNewsDto = t.Object({
     id: t.String(),
@@ -10,7 +10,7 @@ export const LightNewsDto = t.Object({
     publishDate: t.Date(),
     category: t.Optional(t.String()),
 });
-export type LightNews = Static<typeof LightNewsDto>;
+export type LightNews = typeof LightNewsDto.static;
 
 export const FullNewsDto = t.Intersect([
     LightNewsDto,
@@ -19,4 +19,4 @@ export const FullNewsDto = t.Intersect([
         url: t.String(),
     }),
 ]);
-export type FullNews = Static<typeof FullNewsDto>;
+export type FullNews = typeof FullNewsDto.static;
