@@ -72,5 +72,9 @@ export const purchaseStatusTable = pgTable(
             table.oracleId
         ),
         purchaseIdIdx: index("purchase_id_idx").on(table.purchaseId),
+        externalListenerIdx: uniqueIndex("external_listener_id").on(
+            table.externalId,
+            table.purchaseToken
+        ),
     })
 );

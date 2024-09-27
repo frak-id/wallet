@@ -3,5 +3,5 @@ export {
     interactionSimulationStatus,
     pushedInteractionsTable,
     pendingInteractionsTable,
-    interactionsPurchaseMapTable,
+    interactionsPurchaseTrackerTable,
 } from "./interactions";

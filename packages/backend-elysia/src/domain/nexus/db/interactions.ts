@@ -69,14 +69,15 @@ export const pushedInteractionsTable = pgTable(
 /**
  * Table for all the pushed interactions
  */
-export const interactionsPurchaseMapTable = pgTable(
-    "interactions_purchase_mapping",
+export const interactionsPurchaseTrackerTable = pgTable(
+    "interactions_purchase_tracker",
     {
         id: serial("id").primaryKey(),
         wallet: customHex("wallet").notNull().$type<Address>(),
         externalPurchaseId: varchar("external_purchase_id").notNull(),
         externalCustomerId: varchar("external_customer_id").notNull(),
         token: varchar("token").notNull(),
+        pushed: boolean("pushed").default(false),
         createdAt: timestamp("created_at").defaultNow(),
     },
     (table) => ({

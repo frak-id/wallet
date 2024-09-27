@@ -1,4 +1,4 @@
-import { adminWalletContext, pubSubContext } from "@backend-common";
+import { adminWalletContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { businessContext } from "../context";
@@ -9,7 +9,6 @@ export const businessOracleContext = new Elysia({
 })
     .use(businessContext)
     .use(adminWalletContext)
-    .use(pubSubContext)
     .decorate(({ businessDb, ...decorators }) => ({
         ...decorators,
         businessDb,

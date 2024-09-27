@@ -30,7 +30,7 @@ export const proofRoutes = new Elysia({
         ":productId/purchase/:purchaseId",
         async ({ productId, purchaseId, store, error, getPurchaseProof }) => {
             // Get the purchase proof
-            const result = await getPurchaseProof(productId, purchaseId);
+            const result = await getPurchaseProof({ productId, purchaseId });
             if (result.status === "purchase-not-found") {
                 return error(404, "Purchase not found");
             }
@@ -42,6 +42,9 @@ export const proofRoutes = new Elysia({
             }
             if (result.status === "no-proof-found") {
                 return error(404, "No proof found");
+            }
+            if (result.status === "oracle-not-synced") {
+                return error(423, "Oracle not synced");
             }
 
             return {

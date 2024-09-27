@@ -1,14 +1,10 @@
 import { log } from "@backend-common";
-import type {
-    AdminWalletsRepository,
-    PubSubRepository,
-} from "@backend-common/repositories";
+import type { AdminWalletsRepository } from "@backend-common/repositories";
 import cron, { Patterns } from "@elysiajs/cron";
 import {
     addresses,
     purchaseOracleAbi,
 } from "@frak-labs/app-essentials/blockchain";
-import { Mutex } from "async-mutex";
 import { eq, inArray, isNull } from "drizzle-orm";
 import { type Client, type Hex, type LocalAccount, encodePacked } from "viem";
 import {
@@ -22,56 +18,52 @@ import { productOracleTable, purchaseStatusTable } from "../../db/schema";
 import type { BusinessOracleContextApp } from "../context";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 
-export function updateMerkleRootJob(app: BusinessOracleContextApp) {
-    const merkleeRootUpdateMutex = new Mutex();
-
-    return app.use(
+export const updateMerkleRootJob = (app: BusinessOracleContextApp) =>
+    app.use(
         cron({
             name: "updateMerkleRoot",
-            pattern: Patterns.everyMinutes(2),
-            run: () =>
-                merkleeRootUpdateMutex.runExclusive(async () => {
-                    // Extract some stuff from the app
-                    const {
-                        businessDb,
-                        merkleRepository,
-                        adminWalletsRepository,
-                        client,
-                        pubSubRepository,
-                    } = app.decorator;
+            pattern: Patterns.everyMinutes(5),
+            protect: true,
+            interval: 30,
+            run: async () => {
+                // Extract some stuff from the app
+                const {
+                    businessDb,
+                    merkleRepository,
+                    adminWalletsRepository,
+                    client,
+                } = app.decorator;
 
-                    // Update the empty leafs
-                    const updatedOracleIds = await updateEmptyLeafs({
-                        businessDb,
-                    });
-                    if (updatedOracleIds.size === 0) {
-                        log.debug("No oracle to update");
-                        return;
-                    }
+                // Update the empty leafs
+                const updatedOracleIds = await updateEmptyLeafs({
+                    businessDb,
+                });
+                if (updatedOracleIds.size === 0) {
+                    log.debug("No oracle to update");
+                    return;
+                }
 
-                    // Invalidate the merkle tree
-                    const productIds = await invalidateOracleTree({
-                        oracleIds: updatedOracleIds,
-                        businessDb,
-                        merkleRepository,
-                    });
-                    log.debug(
-                        `Invalidating oracle for ${productIds.length} products`
-                    );
+                // Invalidate the merkle tree
+                const productIds = await invalidateOracleTree({
+                    oracleIds: updatedOracleIds,
+                    businessDb,
+                    merkleRepository,
+                });
+                log.debug(
+                    `Invalidating oracle for ${productIds.length} products`
+                );
 
-                    // Then update each products merkle root
-                    await updateProductsMerkleRoot({
-                        productIds: productIds,
-                        businessDb,
-                        merkleRepository,
-                        adminRepository: adminWalletsRepository,
-                        client,
-                        pubSubRepository,
-                    });
-                }),
+                // Then update each products merkle root
+                await updateProductsMerkleRoot({
+                    productIds: productIds,
+                    businessDb,
+                    merkleRepository,
+                    adminRepository: adminWalletsRepository,
+                    client,
+                });
+            },
         })
     );
-}
 
 export type UpdateMerkleRootAppJob = ReturnType<typeof updateMerkleRootJob>;
 
@@ -182,20 +174,16 @@ async function updateProductsMerkleRoot({
     merkleRepository,
     adminRepository,
     client,
-    pubSubRepository,
 }: {
     productIds: Hex[];
     businessDb: BusinessDb;
     merkleRepository: MerkleTreeRepository;
     adminRepository: AdminWalletsRepository;
     client: Client;
-    pubSubRepository: PubSubRepository;
 }) {
     const oracleUpdater = await adminRepository.getKeySpecificAccount({
         key: "oracle-updater",
     });
-
-    const pubSubEmitEvents: Promise<void>[] = [];
 
     for (const productId of productIds) {
         // Build the merkle root
@@ -226,20 +214,7 @@ async function updateProductsMerkleRoot({
                 )
                 .where(eq(productOracleTable.productId, productId));
         }
-
-        // Emit the event
-        pubSubEmitEvents.push(
-            pubSubRepository.publish({
-                topic: "purchaseOracleSync",
-                args: {
-                    productId,
-                },
-            })
-        );
     }
-
-    // Wait for all the event to be handled
-    await Promise.allSettled(pubSubEmitEvents);
 }
 
 /**
