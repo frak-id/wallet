@@ -1,8 +1,8 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { interactionValidatorRoles } from "@/context/blockchain/roles";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
     addresses,
+    interactionValidatorRoles,
     productInteractionManagerAbi,
 } from "@frak-labs/app-essentials";
 import type { SendTransactionModalStepType } from "@frak-labs/nexus-sdk/core";

@@ -5,6 +5,11 @@ export {
     getAlchemyTransportNoBatch,
     getAlchemyTransport,
 } from "./transport/alchemy-transport";
+export {
+    productRoles,
+    interactionValidatorRoles,
+    type ProductRolesKey,
+} from "./roles";
 // Abis
 export {
     campaignFactoryAbi,

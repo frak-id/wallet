@@ -3,6 +3,7 @@ import type { AdminWalletsRepository } from "@backend-common/repositories";
 import {
     addresses,
     interactionDelegatorAbi,
+    interactionValidatorRoles,
     productInteractionDiamondAbi,
 } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
@@ -25,8 +26,6 @@ import {
     signTypedData,
 } from "viem/actions";
 import type { PreparedInteraction } from "../types/interactions";
-
-const interactionValidatorRoles = 1n << 4n;
 
 /**
  * The interaction diamonds repositories

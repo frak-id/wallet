@@ -1,9 +1,9 @@
-import type { RolesKeys } from "@/context/blockchain/roles";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Label } from "@/module/forms/Label";
 import type { ManageTeamTableData } from "@/module/product/component/TableTeam/index";
 import { useRemoveProductMember } from "@/module/product/hook/useRemoveProductMember";
 import { permissionLabelsArray } from "@/module/product/utils/permissions";
+import type { ProductRolesKey } from "@frak-labs/app-essentials";
 import { Button } from "@module/component/Button";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { Tooltip } from "@module/component/Tooltip";
@@ -114,10 +114,10 @@ export function UpdateRoleTeamMemberModal({
     // List of the initial permissions
     const initialPermissions = useMemo(
         () =>
-            Object.entries(row.original.roleDetails).reduce<RolesKeys[]>(
+            Object.entries(row.original.roleDetails).reduce<ProductRolesKey[]>(
                 (acc, [role, value]) => {
                     if (role === "admin" || !value) return acc;
-                    acc.push(role as RolesKeys);
+                    acc.push(role as ProductRolesKey);
                     return acc;
                 },
                 []
@@ -127,7 +127,7 @@ export function UpdateRoleTeamMemberModal({
 
     // List of roles picked
     const [pickedRoles, setPickedRoles] =
-        useState<RolesKeys[]>(initialPermissions);
+        useState<ProductRolesKey[]>(initialPermissions);
 
     return (
         <AlertDialog

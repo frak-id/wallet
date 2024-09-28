@@ -1,8 +1,9 @@
-import { type RolesKeys, roles } from "@/context/blockchain/roles";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
+    type ProductRolesKey,
     addresses,
     productAdministratorRegistryAbi,
+    productRoles,
 } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { useMutation } from "@tanstack/react-query";
@@ -12,7 +13,7 @@ type RemoveProductMemberArg = {
     productId: Hex;
 } & (
     | { fullRemoval: true }
-    | { fullRemoval: false; rolesToDelete: RolesKeys[] }
+    | { fullRemoval: false; rolesToDelete: ProductRolesKey[] }
 ) &
     ({ isRenouncing: true } | { isRenouncing: false; wallet: Address });
 
@@ -44,7 +45,7 @@ export function useRemoveProductMember() {
             } else {
                 // Otherwise, build our roles bitmap
                 const rolesMaskToDelete = args.rolesToDelete
-                    .map((roleKey) => roles[roleKey])
+                    .map((roleKey) => productRoles[roleKey])
                     .reduce((acc, role) => acc | role, 0n);
                 // And craft the tx based on that
                 txData = args.isRenouncing
