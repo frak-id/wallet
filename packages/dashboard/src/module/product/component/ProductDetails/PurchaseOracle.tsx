@@ -2,6 +2,7 @@ import { viemClient } from "@/context/blockchain/provider";
 import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
+import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
 import { FormLabel } from "@/module/forms/Form";
 import {
     addresses,
@@ -52,6 +53,7 @@ export function PurchaseOracleSetup({ productId }: { productId: Hex }) {
  * @returns
  */
 function ProductOracleSetupInner({ productId }: { productId: Hex }) {
+    const { isAdministrator } = useHasRoleOnProduct({ productId });
     // Fetch some data about the current oracle setup
     const { data: oracleSetupData, refetch: refresh } = useQuery({
         queryKey: ["product", "oracle-setup-data"],
@@ -120,6 +122,7 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
                     <p>
                         <ToggleOracleUpdaterRole
                             {...oracleSetupData}
+                            disabled={!isAdministrator}
                             productId={productId}
                             refresh={refresh}
                         />
@@ -235,11 +238,13 @@ function ToggleOracleUpdaterRole({
     productId,
     oracleUpdater,
     isOracleUpdaterAllowed,
+    disabled,
     refresh,
 }: {
     productId: Hex;
     oracleUpdater: Address;
     isOracleUpdaterAllowed: boolean;
+    disabled?: boolean;
     refresh: () => Promise<unknown>;
 }) {
     const { mutate: sendTx } = useSendTransactionAction({
@@ -254,6 +259,7 @@ function ToggleOracleUpdaterRole({
         return (
             <Button
                 variant={"danger"}
+                disabled={disabled}
                 onClick={() =>
                     sendTx({
                         tx: {

@@ -44,46 +44,62 @@ export async function getOnChainCampaignsDetails({
     });
 
     // Fetch a few onchain information
-    const [metadata, isActive, isRunning, isAllowedToEdit, config] =
-        await multicall(viemClient, {
-            contracts: [
-                {
-                    abi: interactionCampaignAbi,
-                    address: campaignAddress,
-                    functionName: "getMetadata",
-                    args: [],
-                } as const,
-                {
-                    abi: interactionCampaignAbi,
-                    address: campaignAddress,
-                    functionName: "isActive",
-                    args: [],
-                } as const,
-                {
-                    abi: interactionCampaignAbi,
-                    address: campaignAddress,
-                    functionName: "isRunning",
-                    args: [],
-                } as const,
-                {
-                    abi: productAdministratorRegistryAbi,
-                    address: addresses.productAdministratorRegistry,
-                    functionName: "hasAllRolesOrOwner",
-                    args: [
-                        BigInt(productId),
-                        session.wallet,
-                        productRoles.campaignManager,
-                    ],
-                } as const,
-                {
-                    abi: referralCampaignAbi,
-                    address: campaignAddress,
-                    functionName: "getConfig",
-                    args: [],
-                } as const,
-            ],
-            allowFailure: false,
-        });
+    const [
+        metadata,
+        isActive,
+        isRunning,
+        isCampaignManager,
+        isProductAdministrator,
+        config,
+    ] = await multicall(viemClient, {
+        contracts: [
+            {
+                abi: interactionCampaignAbi,
+                address: campaignAddress,
+                functionName: "getMetadata",
+                args: [],
+            } as const,
+            {
+                abi: interactionCampaignAbi,
+                address: campaignAddress,
+                functionName: "isActive",
+                args: [],
+            } as const,
+            {
+                abi: interactionCampaignAbi,
+                address: campaignAddress,
+                functionName: "isRunning",
+                args: [],
+            } as const,
+            {
+                abi: productAdministratorRegistryAbi,
+                address: addresses.productAdministratorRegistry,
+                functionName: "hasAllRolesOrOwner",
+                args: [
+                    BigInt(productId),
+                    session.wallet,
+                    productRoles.campaignManager,
+                ],
+            } as const,
+            {
+                abi: productAdministratorRegistryAbi,
+                address: addresses.productAdministratorRegistry,
+                functionName: "hasAllRolesOrOwner",
+                args: [
+                    BigInt(productId),
+                    session.wallet,
+                    productRoles.productAdministrator,
+                ],
+            } as const,
+            {
+                abi: referralCampaignAbi,
+                address: campaignAddress,
+                functionName: "getConfig",
+                args: [],
+            } as const,
+        ],
+        allowFailure: false,
+    });
 
     // Return the data
     return {
@@ -91,7 +107,7 @@ export async function getOnChainCampaignsDetails({
         metadata,
         isActive,
         isRunning,
-        isAllowedToEdit,
+        isAllowedToEdit: isCampaignManager || isProductAdministrator,
         config,
     };
 }

@@ -4,19 +4,16 @@ import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
+import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
     addresses,
     interactionValidatorRoles,
-    productAdministratorRegistryAbi,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
     productRoles,
 } from "@frak-labs/app-essentials";
-import {
-    useSendTransactionAction,
-    useWalletStatus,
-} from "@frak-labs/nexus-sdk/react";
+import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { AlertDialog } from "@module/component/AlertDialog";
 import { Button } from "@module/component/Button";
@@ -36,7 +33,9 @@ import styles from "./InteractionSettings.module.css";
  * @constructor
  */
 export function InteractionSettings({ productId }: { productId: Hex }) {
-    const { data: walletStatus } = useWalletStatus();
+    const { rolesReady, hasRolesOrAdminOrOwner } = useHasRoleOnProduct({
+        productId,
+    });
     const { mutateAsync: setupInteractionContract } =
         useSetupInteractionContract();
 
@@ -45,29 +44,13 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
         isLoading: isFetchingInteractionContract,
         refetch: refreshDetails,
     } = useQuery({
-        enabled: !!productId,
-        queryKey: [
-            "product",
-            "details",
-            walletStatus?.key,
-            productId.toString(),
-        ],
+        enabled: !!productId && rolesReady,
+        queryKey: ["product", "interaction-details", productId.toString()],
         queryFn: async () => {
-            if (walletStatus?.key !== "connected") {
-                return null;
-            }
-
             // Check if the user is allowed on the product
-            const isAllowed = await readContract(viemClient, {
-                abi: productAdministratorRegistryAbi,
-                functionName: "hasAllRolesOrOwner",
-                address: addresses.productAdministratorRegistry,
-                args: [
-                    BigInt(productId),
-                    walletStatus.wallet,
-                    productRoles.interactionManager,
-                ],
-            });
+            const isAllowed = hasRolesOrAdminOrOwner(
+                productRoles.interactionManager
+            );
 
             // Fetch the on chain interaction contract
             const [, interactionContract] = await tryit(() =>
