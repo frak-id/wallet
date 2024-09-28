@@ -1,4 +1,3 @@
-import type { RolesKeys } from "@/context/blockchain/roles";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -13,6 +12,7 @@ import {
 } from "@/module/forms/Form";
 import { useAddProductMember } from "@/module/product/hook/useAddProductMember";
 import { permissionLabelsArray } from "@/module/product/utils/permissions";
+import type { ProductRolesKey } from "@frak-labs/app-essentials";
 import { Button } from "@module/component/Button";
 import { Tooltip } from "@module/component/Tooltip";
 import { Checkbox } from "@module/component/forms/Checkbox";
@@ -30,7 +30,7 @@ import styles from "./index.module.css";
 
 type FormAddTeamMembers = {
     wallet?: Address;
-    permissions: RolesKeys[];
+    permissions: ProductRolesKey[];
 };
 
 export function ButtonAddTeam({
@@ -46,7 +46,7 @@ export function ButtonAddTeam({
 
     const form = useForm<FormAddTeamMembers>({
         defaultValues: {
-            permissions: ["productManager", "campaignManager"],
+            permissions: ["interactionManager", "campaignManager"],
         },
     });
 

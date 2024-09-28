@@ -2,12 +2,12 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
-import { roles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
     addresses,
     interactionCampaignAbi,
     productAdministratorRegistryAbi,
+    productRoles,
     referralCampaignAbi,
 } from "@frak-labs/app-essentials";
 import { ObjectId } from "mongodb";
@@ -68,11 +68,11 @@ export async function getOnChainCampaignsDetails({
                 {
                     abi: productAdministratorRegistryAbi,
                     address: addresses.productAdministratorRegistry,
-                    functionName: "hasAllRolesOrAdmin",
+                    functionName: "hasAllRolesOrOwner",
                     args: [
                         BigInt(productId),
                         session.wallet,
-                        roles.campaignManager,
+                        productRoles.campaignManager,
                     ],
                 } as const,
                 {

@@ -1,8 +1,9 @@
-import { type RolesKeys, roles } from "@/context/blockchain/roles";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
+    type ProductRolesKey,
     addresses,
     productAdministratorRegistryAbi,
+    productRoles,
 } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { useMutation } from "@tanstack/react-query";
@@ -11,7 +12,7 @@ import { type Address, type Hex, encodeFunctionData } from "viem";
 type AddProductMemberArg = {
     productId: Hex;
     wallet: Address;
-    roles: RolesKeys[];
+    roles: ProductRolesKey[];
 };
 
 export function useAddProductMember() {
@@ -23,7 +24,7 @@ export function useAddProductMember() {
         mutationFn: async (args: AddProductMemberArg) => {
             // Create the map of role keys to roles
             const rolesToAdd = args.roles
-                .map((roleKey) => roles[roleKey])
+                .map((roleKey) => productRoles[roleKey])
                 .reduce((acc, role) => acc | role, 0n);
 
             // Craft the transaction

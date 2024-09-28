@@ -2,12 +2,12 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
-import { roles } from "@/context/blockchain/roles";
 import { getAttachedCampaigns } from "@/context/campaigns/action/getAttachedCampaigns";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
     addresses,
     productInteractionManagerAbi,
+    productRoles,
 } from "@frak-labs/app-essentials";
 import {
     campaignBankAbi,
@@ -71,8 +71,12 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
         const isProductManager = await readContract(viemClient, {
             address: addresses.productAdministratorRegistry,
             abi: productAdministratorRegistryAbi,
-            functionName: "hasAllRolesOrAdmin",
-            args: [BigInt(productId), session.wallet, roles.productManager],
+            functionName: "hasAllRolesOrOwner",
+            args: [
+                BigInt(productId),
+                session.wallet,
+                productRoles.interactionManager,
+            ],
         });
 
         const calls = [

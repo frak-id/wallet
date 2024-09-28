@@ -1,5 +1,4 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { interactionValidatorRoles, roles } from "@/context/blockchain/roles";
 import { Badge } from "@/module/common/component/Badge";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
@@ -8,9 +7,11 @@ import { Title } from "@/module/common/component/Title";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
     addresses,
+    interactionValidatorRoles,
     productAdministratorRegistryAbi,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
+    productRoles,
 } from "@frak-labs/app-essentials";
 import {
     useSendTransactionAction,
@@ -59,12 +60,12 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
             // Check if the user is allowed on the product
             const isAllowed = await readContract(viemClient, {
                 abi: productAdministratorRegistryAbi,
-                functionName: "hasAllRolesOrAdmin",
+                functionName: "hasAllRolesOrOwner",
                 address: addresses.productAdministratorRegistry,
                 args: [
                     BigInt(productId),
                     walletStatus.wallet,
-                    roles.productManager,
+                    productRoles.interactionManager,
                 ],
             });
 

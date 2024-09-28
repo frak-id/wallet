@@ -2,13 +2,13 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
-import { roles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import type { CampaignWithState } from "@/types/Campaign";
 import {
     addresses,
     interactionCampaignAbi,
     productAdministratorRegistryAbi,
+    productRoles,
 } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/shared/context/server";
 import { all, sift, unique } from "radash";
@@ -202,8 +202,8 @@ async function getOnChainStateForCampaigns({
                     ({
                         abi: productAdministratorRegistryAbi,
                         address: addresses.productAdministratorRegistry,
-                        functionName: "hasAllRolesOrAdmin",
-                        args: [productId, wallet, roles.campaignManager],
+                        functionName: "hasAllRolesOrOwner",
+                        args: [productId, wallet, productRoles.campaignManager],
                     }) as const
             ),
             allowFailure: false,

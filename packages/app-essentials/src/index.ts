@@ -1,5 +1,9 @@
 export {
     addresses,
+    // Roles
+    productRoles,
+    interactionValidatorRoles,
+    type ProductRolesKey,
     // Abis
     campaignFactoryAbi,
     interactionCampaignAbi,

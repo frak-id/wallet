@@ -1,5 +1,4 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { purchaseOracleUpdaterRoles } from "@/context/blockchain/roles";
 import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
@@ -7,6 +6,7 @@ import { FormLabel } from "@/module/forms/Form";
 import {
     addresses,
     productAdministratorRegistryAbi,
+    productRoles,
 } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { backendApi } from "@frak-labs/shared/context/server";
@@ -76,11 +76,11 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
             const isOracleUpdaterAllowed = await readContract(viemClient, {
                 abi: productAdministratorRegistryAbi,
                 address: addresses.productAdministratorRegistry,
-                functionName: "hasAllRolesOrAdmin",
+                functionName: "hasAllRolesOrOwner",
                 args: [
                     BigInt(productId),
                     oracleUpdater.pubKey,
-                    purchaseOracleUpdaterRoles,
+                    productRoles.purchaseOracleUpdater,
                 ],
             });
 
@@ -264,7 +264,7 @@ function ToggleOracleUpdaterRole({
                                 args: [
                                     BigInt(productId),
                                     oracleUpdater,
-                                    purchaseOracleUpdaterRoles,
+                                    productRoles.purchaseOracleUpdater,
                                 ],
                             }),
                         },
@@ -289,7 +289,7 @@ function ToggleOracleUpdaterRole({
                             args: [
                                 BigInt(productId),
                                 oracleUpdater,
-                                purchaseOracleUpdaterRoles,
+                                productRoles.purchaseOracleUpdater,
                             ],
                         }),
                     },

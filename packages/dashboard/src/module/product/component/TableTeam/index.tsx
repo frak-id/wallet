@@ -185,23 +185,14 @@ function PermissionsBadge({
 
     const badges = [];
 
-    if (roleDetails.productManager) {
+    for (const [role, value] of Object.entries(roleDetails)) {
+        if (role === "admin" || !value) continue;
         badges.push(
             <Tooltip
-                content={permissionLabels.productManager.description}
-                key={"productManager"}
+                content={permissionLabels[role as keyof typeof permissionLabels].description}
+                key={role}
             >
-                <Badge variant={"warning"}>Product</Badge>
-            </Tooltip>
-        );
-    }
-    if (roleDetails.campaignManager) {
-        badges.push(
-            <Tooltip
-                content={permissionLabels.campaignManager.description}
-                key={"campaignManager"}
-            >
-                <Badge variant={"warning"}>Campaign</Badge>
+                <Badge variant={"warning"}>{role}</Badge>
             </Tooltip>
         );
     }
