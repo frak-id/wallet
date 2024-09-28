@@ -9,21 +9,25 @@ export const permissionLabels: Record<
 > = {
     productAdministrator: {
         label: "Product administrator",
+        shortLabel: "Product",
         description:
             "Product administrator can do anything except transferring or changing product metadata.",
     },
     interactionManager: {
         label: "Interaction manager",
+        shortLabel: "Interaction",
         description:
             "Interaction manager can manage the interaction contract and update it.",
     },
     campaignManager: {
         label: "Campaign manager",
+        shortLabel: "Campaign",
         description:
             "Campaign manager can deploy campaigns, put them on standby, and delete them.",
     },
     purchaseOracleUpdater: {
         label: "Purchase oracle updater",
+        shortLabel: "Purchase Oracle",
         description:
             "Purchase oracle updater can update the purchase oracle contract.",
     },

@@ -186,16 +186,11 @@ function PermissionsBadge({
     const badges = [];
 
     for (const [role, value] of Object.entries(roleDetails)) {
-        if (role === "admin" || !value) continue;
+        const info = permissionLabels[role as keyof typeof permissionLabels];
+        if (role === "admin" || !value || !info) continue;
         badges.push(
-            <Tooltip
-                content={
-                    permissionLabels[role as keyof typeof permissionLabels]
-                        .description
-                }
-                key={role}
-            >
-                <Badge variant={"warning"}>{permissionLabels[role as keyof typeof permissionLabels].label}</Badge>
+            <Tooltip content={info.description} key={role}>
+                <Badge variant={"warning"}>{info.shortLabel}</Badge>
             </Tooltip>
         );
     }
