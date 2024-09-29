@@ -1,7 +1,10 @@
-import { adminWalletContext } from "@backend-common";
+import {
+    adminWalletContext,
+    blockchainContext,
+    postgresContext,
+} from "@backend-common";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
-import { nexusContext } from "../context";
 import {
     interactionSimulationStatus,
     interactionsPurchaseTrackerTable,
@@ -18,7 +21,8 @@ import { WalletSessionRepository } from "./repositories/WalletSessionRepository"
 export const interactionsContext = new Elysia({
     name: "Context.nexus.interactions",
 })
-    .use(nexusContext)
+    .use(blockchainContext)
+    .use(postgresContext)
     .use(adminWalletContext)
     .decorate(
         ({ client, postgresDb, adminWalletsRepository, ...decorators }) => {
