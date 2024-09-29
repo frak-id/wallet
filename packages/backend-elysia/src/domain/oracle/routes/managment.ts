@@ -1,3 +1,4 @@
+import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia } from "elysia";
@@ -6,6 +7,7 @@ import { productOracleTable, purchaseStatusTable } from "../db/schema";
 
 export const managmentRoutes = new Elysia()
     .use(oracleContext)
+    .use(nextSessionContext)
     .resolve(({ params: { productId }, error }) => {
         if (!productId) {
             return error(400, "Invalid product id");
@@ -53,6 +55,7 @@ export const managmentRoutes = new Elysia()
             };
         },
         {
+            isAuthenticated: "business",
             response: t.Union([
                 t.Object({
                     setup: t.Literal(false),
@@ -84,8 +87,6 @@ export const managmentRoutes = new Elysia()
 
             const { hookSignatureKey } = body;
 
-            // todo: Check that the business cookie is set
-            // todo: Wallet signature with a custom message
             // todo: Role check for the wallet
             // todo: Oracle merkle update authorisation setup
 
@@ -105,32 +106,37 @@ export const managmentRoutes = new Elysia()
                 .execute();
         },
         {
+            isAuthenticated: "business",
             body: t.Object({
                 hookSignatureKey: t.String(),
             }),
         }
     )
-    .post(":productId/delete", async ({ productId, oracleDb, error }) => {
-        // todo: Check that the business cookie is set
-        // todo: Wallet signature with a custom message
-        // todo: Role check for the wallet
-        // todo: Oracle merkle update authorisation setup
+    .post(
+        ":productId/delete",
+        async ({ productId, oracleDb, error }) => {
+            // todo: Role check for the wallet
+            // todo: Oracle merkle update authorisation setup
 
-        // Check if we already got a setup for this product (we could only have one)
-        const existingOracle =
-            await oracleDb.query.productOracleTable.findFirst({
-                with: { productId },
-            });
-        if (!existingOracle) {
-            return error(
-                404,
-                `Product ${productId} have no current oracle setup`
-            );
+            // Check if we already got a setup for this product (we could only have one)
+            const existingOracle =
+                await oracleDb.query.productOracleTable.findFirst({
+                    with: { productId },
+                });
+            if (!existingOracle) {
+                return error(
+                    404,
+                    `Product ${productId} have no current oracle setup`
+                );
+            }
+
+            // Remove it
+            await oracleDb
+                .delete(productOracleTable)
+                .where(eq(productOracleTable.productId, productId))
+                .execute();
+        },
+        {
+            isAuthenticated: "business",
         }
-
-        // Remove it
-        await oracleDb
-            .delete(productOracleTable)
-            .where(eq(productOracleTable.productId, productId))
-            .execute();
-    });
+    );
