@@ -190,7 +190,9 @@ function PermissionsBadge({
         if (role === "admin" || !value || !info) continue;
         badges.push(
             <Tooltip content={info.description} key={role}>
-                <Badge variant={"warning"}>{info.shortLabel}</Badge>
+                <Badge variant={info.color ?? "warning"}>
+                    {info.shortLabel}
+                </Badge>
             </Tooltip>
         );
     }

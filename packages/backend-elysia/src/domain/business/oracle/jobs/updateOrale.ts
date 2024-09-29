@@ -5,6 +5,7 @@ import {
     addresses,
     purchaseOracleAbi,
 } from "@frak-labs/app-essentials/blockchain";
+import { Mutex } from "async-mutex";
 import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { type Client, type Hex, type LocalAccount, encodePacked } from "viem";
 import {
@@ -18,6 +19,8 @@ import { productOracleTable, purchaseStatusTable } from "../../db/schema";
 import type { BusinessOracleContextApp } from "../context";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 
+const oracleMutex = new Mutex();
+
 export const updateMerkleRootJob = (app: BusinessOracleContextApp) =>
     app.use(
         cron({
@@ -26,70 +29,73 @@ export const updateMerkleRootJob = (app: BusinessOracleContextApp) =>
             protect: true,
             catch: true,
             interval: 30,
-            run: async () => {
-                // Extract some stuff from the app
-                const {
-                    businessDb,
-                    merkleRepository,
-                    adminWalletsRepository,
-                    client,
-                } = app.decorator;
+            run: () =>
+                oracleMutex.runExclusive(async () => {
+                    // Extract some stuff from the app
+                    const {
+                        businessDb,
+                        merkleRepository,
+                        adminWalletsRepository,
+                        client,
+                    } = app.decorator;
 
-                // Get some unsynced products
-                const notSyncedProductIds = await businessDb
-                    .select({
-                        productId: productOracleTable.productId,
-                    })
-                    .from(productOracleTable)
-                    .where(
-                        and(
-                            eq(productOracleTable.synced, false),
-                            isNotNull(productOracleTable.merkleRoot)
+                    // Get some unsynced products
+                    const notSyncedProductIds = await businessDb
+                        .select({
+                            productId: productOracleTable.productId,
+                        })
+                        .from(productOracleTable)
+                        .where(
+                            and(
+                                eq(productOracleTable.synced, false),
+                                isNotNull(productOracleTable.merkleRoot)
+                            )
+                        );
+                    log.debug(
+                        `${notSyncedProductIds.length} products are not synced`
+                    );
+
+                    // Update the empty leafs
+                    const updatedOracleIds = await updateEmptyLeafs({
+                        businessDb,
+                    });
+                    if (
+                        updatedOracleIds.size === 0 &&
+                        notSyncedProductIds.length === 0
+                    ) {
+                        log.debug("No oracle to update");
+                        return;
+                    }
+
+                    // Invalidate the merkle tree
+                    const productIds = await invalidateOracleTree({
+                        oracleIds: updatedOracleIds,
+                        businessDb,
+                        merkleRepository,
+                    });
+                    log.debug(
+                        `Invalidating oracle for ${productIds.length} products`
+                    );
+
+                    const finalProductIds = new Set(
+                        productIds.concat(
+                            notSyncedProductIds.map(
+                                (product) => product.productId
+                            )
                         )
                     );
-                log.debug(
-                    `${notSyncedProductIds.length} products are not synced`
-                );
-
-                // Update the empty leafs
-                const updatedOracleIds = await updateEmptyLeafs({
-                    businessDb,
-                });
-                if (
-                    updatedOracleIds.size === 0 &&
-                    notSyncedProductIds.length === 0
-                ) {
-                    log.debug("No oracle to update");
-                    return;
-                }
-
-                // Invalidate the merkle tree
-                const productIds = await invalidateOracleTree({
-                    oracleIds: updatedOracleIds,
-                    businessDb,
-                    merkleRepository,
-                });
-                log.debug(
-                    `Invalidating oracle for ${productIds.length} products`
-                );
-
-                const finalProductIds = new Set(
-                    productIds.concat(
-                        notSyncedProductIds.map((product) => product.productId)
-                    )
-                );
-                log.debug(
-                    `Will update ${finalProductIds.size} products merkle tree`
-                );
-                // Then update each product ids merkle root
-                await updateProductsMerkleRoot({
-                    productIds: [...finalProductIds],
-                    businessDb,
-                    merkleRepository,
-                    adminRepository: adminWalletsRepository,
-                    client,
-                });
-            },
+                    log.debug(
+                        `Will update ${finalProductIds.size} products merkle tree`
+                    );
+                    // Then update each product ids merkle root
+                    await updateProductsMerkleRoot({
+                        productIds: [...finalProductIds],
+                        businessDb,
+                        merkleRepository,
+                        adminRepository: adminWalletsRepository,
+                        client,
+                    });
+                }),
         })
     );
 

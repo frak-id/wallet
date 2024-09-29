@@ -33,7 +33,7 @@ export function SendInteraction() {
             <Button
                 onClick={() =>
                     sendInteraction({
-                        interaction: PressInteractionEncoder.openArticle({
+                        interaction: PressInteractionEncoder.readArticle({
                             articleId: generatePrivateKey(),
                         }),
                         productId:

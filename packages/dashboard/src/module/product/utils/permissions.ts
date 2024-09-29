@@ -5,13 +5,19 @@ import type { ProductRolesKey } from "@frak-labs/app-essentials";
  */
 export const permissionLabels: Record<
     ProductRolesKey,
-    { label: string; description: string; shortLabel: string }
+    {
+        label: string;
+        description: string;
+        shortLabel: string;
+        color?: "success" | "secondary";
+    }
 > = {
     productAdministrator: {
         label: "Product administrator",
-        shortLabel: "Product",
+        shortLabel: "Administrator",
         description:
             "Product administrator can do anything except transferring or changing product metadata.",
+        color: "success",
     },
     interactionManager: {
         label: "Interaction manager",
@@ -30,6 +36,7 @@ export const permissionLabels: Record<
         shortLabel: "Purchase Oracle",
         description:
             "Purchase oracle updater can update the purchase oracle contract.",
+        color: "secondary",
     },
 };
 
