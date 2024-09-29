@@ -2,7 +2,7 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { indexerApi } from "@frak-labs/shared/context/server";
-import type { Address } from "viem";
+import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {
     id: string; // bigint
@@ -14,8 +14,8 @@ type ApiResult = {
 }[];
 
 type GetProductResult = {
-    owner: { id: bigint; name: string; domain: string }[];
-    operator: { id: bigint; name: string; domain: string }[];
+    owner: { id: Hex; name: string; domain: string }[];
+    operator: { id: Hex; name: string; domain: string }[];
 };
 
 /**
@@ -33,7 +33,7 @@ async function getProducts({ wallet }: { wallet: Address }) {
             (acc: GetProductResult, item: ApiResult[number]) => {
                 // Map our product
                 const mappedProduct = {
-                    id: BigInt(item.id),
+                    id: toHex(BigInt(item.id)),
                     name: item.name,
                     domain: item.domain,
                 };

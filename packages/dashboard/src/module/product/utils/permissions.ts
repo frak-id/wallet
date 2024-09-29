@@ -5,7 +5,7 @@ import type { ProductRolesKey } from "@frak-labs/app-essentials";
  */
 export const permissionLabels: Record<
     ProductRolesKey,
-    { label: string; description: string }
+    { label: string; description: string; shortLabel: string }
 > = {
     productAdministrator: {
         label: "Product administrator",

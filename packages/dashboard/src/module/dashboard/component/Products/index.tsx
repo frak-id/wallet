@@ -4,7 +4,7 @@ import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import { Spinner } from "@module/component/Spinner";
 import Link from "next/link";
-import { toHex } from "viem";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**
@@ -45,7 +45,7 @@ function NoContents() {
 
 function ProductListSection({
     products,
-}: { products: { id: bigint; name: string; domain: string }[] }) {
+}: { products: { id: Hex; name: string; domain: string }[] }) {
     return (
         <div className={styles.contentListSection}>
             <ButtonAddProduct />
@@ -58,9 +58,9 @@ function ProductListSection({
 
 function ProductListItem({
     product,
-}: { product: { id: bigint; name: string; domain: string } }) {
+}: { product: { id: Hex; name: string; domain: string } }) {
     return (
-        <Link href={`/product/${toHex(product.id)}`}>
+        <Link href={`/product/${product.id}`}>
             <ProductItem>
                 {product.name}
                 <br />

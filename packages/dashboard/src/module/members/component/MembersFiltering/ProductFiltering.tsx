@@ -9,6 +9,7 @@ import {
 import { MultiSelect } from "@/module/forms/MultiSelect";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import { useFormContext } from "react-hook-form";
+import type { Hex } from "viem";
 
 export function ProductFiltering({
     disabled,
@@ -37,11 +38,11 @@ export function ProductFiltering({
                             disabled={disabled}
                             options={productsOptions.map((product) => ({
                                 name: product.name,
-                                value: product.id.toString(),
+                                value: product.id,
                             }))}
                             onValueChange={(value) => {
                                 const productIds = value
-                                    .map((v) => v.value)
+                                    .map((v) => v.value as Hex | undefined)
                                     .filter(Boolean);
                                 field.onChange(productIds);
                                 handleSubmit(onSubmit)();

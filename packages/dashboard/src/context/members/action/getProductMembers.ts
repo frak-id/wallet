@@ -12,7 +12,7 @@ type GetMembersRequest = {
     onlyAddress?: boolean;
     // Some filters to apply to the query
     filter?: {
-        productIds?: string[];
+        productIds?: Hex[];
         interactions?: {
             min?: number;
             max?: number;
