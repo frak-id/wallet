@@ -1,11 +1,11 @@
 import { t } from "@backend-utils";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { productOracleTable, purchaseStatusTable } from "../../db/schema";
-import { businessOracleContext } from "../context";
+import { oracleContext } from "../context";
+import { productOracleTable, purchaseStatusTable } from "../db/schema";
 
 export const managmentRoutes = new Elysia()
-    .use(businessOracleContext)
+    .use(oracleContext)
     .resolve(({ params: { productId }, error }) => {
         if (!productId) {
             return error(400, "Invalid product id");
@@ -16,9 +16,9 @@ export const managmentRoutes = new Elysia()
     // Status of the oracle around a product
     .get(
         ":productId/status",
-        async ({ productId, businessDb }) => {
+        async ({ productId, oracleDb }) => {
             // Get the current oracle
-            const currentOracles = await businessDb
+            const currentOracles = await oracleDb
                 .select()
                 .from(productOracleTable)
                 .where(eq(productOracleTable.productId, productId))
@@ -29,7 +29,7 @@ export const managmentRoutes = new Elysia()
             }
 
             // Get some stats about the oracle
-            const stats = await businessDb
+            const stats = await oracleDb
                 .select({
                     firstPurchase: min(purchaseStatusTable.createdAt),
                     lastPurchase: max(purchaseStatusTable.createdAt),
@@ -77,7 +77,7 @@ export const managmentRoutes = new Elysia()
     // Setup of an oracle for a product
     .post(
         ":productId/setup",
-        async ({ body, businessDb, productId, error }) => {
+        async ({ body, oracleDb, productId, error }) => {
             if (!productId) {
                 return error(400, "Invalid product id");
             }
@@ -90,7 +90,7 @@ export const managmentRoutes = new Elysia()
             // todo: Oracle merkle update authorisation setup
 
             // Insert or update it
-            await businessDb
+            await oracleDb
                 .insert(productOracleTable)
                 .values({
                     productId,
@@ -110,7 +110,7 @@ export const managmentRoutes = new Elysia()
             }),
         }
     )
-    .post(":productId/delete", async ({ productId, businessDb, error }) => {
+    .post(":productId/delete", async ({ productId, oracleDb, error }) => {
         // todo: Check that the business cookie is set
         // todo: Wallet signature with a custom message
         // todo: Role check for the wallet
@@ -118,7 +118,7 @@ export const managmentRoutes = new Elysia()
 
         // Check if we already got a setup for this product (we could only have one)
         const existingOracle =
-            await businessDb.query.productOracleTable.findFirst({
+            await oracleDb.query.productOracleTable.findFirst({
                 with: { productId },
             });
         if (!existingOracle) {
@@ -129,7 +129,7 @@ export const managmentRoutes = new Elysia()
         }
 
         // Remove it
-        await businessDb
+        await oracleDb
             .delete(productOracleTable)
             .where(eq(productOracleTable.productId, productId))
             .execute();

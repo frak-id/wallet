@@ -4,7 +4,7 @@ import { PurchaseInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { Mutex } from "async-mutex";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { PurchaseProofService } from "../../business/oracle/services/proofService";
+import { PurchaseProofService } from "../../oracle/services/proofService";
 import { interactionsContext } from "../context";
 import {
     interactionsPurchaseTrackerTable,

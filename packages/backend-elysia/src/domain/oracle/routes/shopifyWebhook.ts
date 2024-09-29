@@ -4,19 +4,19 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
+import { oracleContext } from "../context";
 import {
     productOracleTable,
     type purchaseStatusEnum,
     purchaseStatusTable,
-} from "../../db/schema";
-import { businessOracleContext } from "../context";
+} from "../db/schema";
 import type {
     OrderFinancialStatus,
     ShopifyOrderUpdateWebhookDto,
 } from "../dto/ShopifyWebhook";
 
 export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
-    .use(businessOracleContext)
+    .use(oracleContext)
     .guard({
         // todo: Partial to be removed after testing
         headers: t.Partial(
@@ -54,7 +54,7 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     //   here we should just validate the request and save it
     .post(
         ":productId/hook",
-        async ({ params: { productId }, body, headers, businessDb, error }) => {
+        async ({ params: { productId }, body, headers, oracleDb, error }) => {
             // todo: hmac validation
 
             // Try to parse the body as a shopify webhook type and ensure the type validity
@@ -75,7 +75,7 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             if (!productId) {
                 return error(400, "Missing product id");
             }
-            const oracle = await businessDb.query.productOracleTable.findFirst({
+            const oracle = await oracleDb.query.productOracleTable.findFirst({
                 where: eq(productOracleTable.productId, productId),
             });
             if (!oracle) {
@@ -102,7 +102,7 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             );
 
             // Insert the purchase in the database
-            await businessDb
+            await oracleDb
                 .insert(purchaseStatusTable)
                 .values({
                     oracleId: oracle.id,

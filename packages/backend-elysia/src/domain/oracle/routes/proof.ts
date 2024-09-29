@@ -1,13 +1,13 @@
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import { businessOracleContext } from "../context";
+import { oracleContext } from "../context";
 import type { UpdateMerkleRootAppJob } from "../jobs/updateOrale";
 import { PurchaseProofService } from "../services/proofService";
 
 export const proofRoutes = new Elysia({
     prefix: "/proof",
 })
-    .use(businessOracleContext)
+    .use(oracleContext)
     .use(PurchaseProofService)
     .guard({
         params: t.Object({

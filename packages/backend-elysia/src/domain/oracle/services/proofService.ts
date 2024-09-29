@@ -1,9 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { type Hex, isHex } from "viem";
-import type { BusinessDb } from "../../context";
-import { productOracleTable, purchaseStatusTable } from "../../db/schema";
-import { businessOracleContext } from "../context";
+import { type OracleDb, oracleContext } from "../context";
+import { productOracleTable, purchaseStatusTable } from "../db/schema";
 
 type PurchaseSelector =
     | {
@@ -18,17 +17,17 @@ type PurchaseSelector =
 export const PurchaseProofService = new Elysia({
     name: "Service.PurchaseProof",
 })
-    .use(businessOracleContext)
-    .decorate(({ merkleRepository, businessDb, ...decorators }) => ({
+    .use(oracleContext)
+    .decorate(({ merkleRepository, oracleDb, ...decorators }) => ({
         ...decorators,
         merkleRepository,
-        businessDb,
+        oracleDb,
         // Service methods
         getPurchaseProof: async (selector: PurchaseSelector) => {
             // Get the purchase
             const purchase = await getPurchaseStatus({
                 selector,
-                businessDb,
+                oracleDb,
             });
             if (!purchase) {
                 return { status: "purchase-not-found" } as const;
@@ -40,7 +39,7 @@ export const PurchaseProofService = new Elysia({
             }
 
             // Then get the oracle for this purchase
-            const oracles = await businessDb
+            const oracles = await oracleDb
                 .select()
                 .from(productOracleTable)
                 .where(eq(productOracleTable.id, purchase.oracleId))
@@ -80,14 +79,14 @@ export const PurchaseProofService = new Elysia({
  */
 async function getPurchaseStatus({
     selector,
-    businessDb,
-}: { selector: PurchaseSelector; businessDb: BusinessDb }): Promise<
+    oracleDb,
+}: { selector: PurchaseSelector; oracleDb: OracleDb }): Promise<
     typeof purchaseStatusTable.$inferSelect | undefined
 > {
     let purchases: (typeof purchaseStatusTable.$inferSelect)[];
     if ("token" in selector) {
         // Case when it's a token
-        purchases = await businessDb
+        purchases = await oracleDb
             .select()
             .from(purchaseStatusTable)
             .where(
@@ -101,14 +100,14 @@ async function getPurchaseStatus({
         const { productId, purchaseId } = selector;
         if (isHex(purchaseId)) {
             // Case when it's a pre computed purchase id
-            purchases = await businessDb
+            purchases = await oracleDb
                 .select()
                 .from(purchaseStatusTable)
                 .where(eq(purchaseStatusTable.purchaseId, purchaseId))
                 .limit(1);
         } else {
             // Case when it's an external purchase id
-            const tmp = await businessDb
+            const tmp = await oracleDb
                 .select()
                 .from(purchaseStatusTable)
                 .innerJoin(

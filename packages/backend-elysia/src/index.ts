@@ -7,6 +7,7 @@ import {
     exampleNewsPaper,
     interactions,
     notifications,
+    oracle,
 } from "./domain";
 
 const app = new Elysia()
@@ -17,6 +18,7 @@ const app = new Elysia()
     // Example news paper logics
     .use(exampleNewsPaper)
     // Business logics
+    .use(oracle)
     .use(interactions)
     .use(notifications)
     .use(business)

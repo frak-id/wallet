@@ -5,7 +5,7 @@ import { managmentRoutes } from "./routes/managment";
 import { proofRoutes } from "./routes/proof";
 import { shopifyWebhook } from "./routes/shopifyWebhook";
 
-export const oracleRoutes = new Elysia({ prefix: "/oracle" })
+export const oracle = new Elysia({ prefix: "/oracle" })
     .use(managmentRoutes)
     .use(shopifyWebhook)
     .use(updateMerkleRootJob)

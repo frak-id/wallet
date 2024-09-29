@@ -2,8 +2,8 @@ import { and, eq, isNotNull } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import { MerkleTree } from "merkletreejs";
 import { type Hex, hexToBytes, keccak256 } from "viem";
-import type { BusinessDb } from "../../context";
-import { productOracleTable, purchaseStatusTable } from "../../db/schema";
+import type { OracleDb } from "../context";
+import { productOracleTable, purchaseStatusTable } from "../db/schema";
 
 /**
  * Repository used to manage the merkle tree
@@ -14,7 +14,7 @@ export class MerkleTreeRepository {
         max: 32,
     });
 
-    constructor(private readonly businessDb: BusinessDb) {}
+    constructor(private readonly oracleDb: OracleDb) {}
 
     /**
      * Build the merkle tree for a product
@@ -23,7 +23,7 @@ export class MerkleTreeRepository {
      */
     private async buildMerkleTreeForProduct(productId: Hex) {
         // Fetch every leaf from the databases
-        const leavesFromDb = await this.businessDb
+        const leavesFromDb = await this.oracleDb
             .select({
                 leaf: purchaseStatusTable.leaf,
             })
