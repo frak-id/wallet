@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import type { pendingInteractionsTable } from "../../db/schema";
+import type { pendingInteractionsTable } from "../db/schema";
 
 export type InteractionData = {
     handlerTypeDenominator: Hex;

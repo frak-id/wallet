@@ -14,7 +14,7 @@ export function useUnsubscribeFromPushNotification() {
         queryKey: ["push", "token-count"],
         queryFn: async () => {
             const result =
-                await backendApi.nexus.notifications.pushToken.hasAny.get();
+                await backendApi.notifications.pushToken.hasAny.get();
             return result.data ?? false;
         },
     });
@@ -36,7 +36,7 @@ export function useUnsubscribeFromPushNotification() {
             }
 
             // Remove every subscription related to this user
-            await backendApi.nexus.notifications.pushToken.delete();
+            await backendApi.notifications.pushToken.delete();
 
             // Refetch the push token count
             await refetch();

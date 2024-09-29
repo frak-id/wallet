@@ -2,8 +2,8 @@ import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { pushTokensTable } from "../../db/schema";
 import { notificationContext } from "../context";
+import { pushTokensTable } from "../db/schema";
 
 export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
     .use(notificationContext)

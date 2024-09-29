@@ -1,8 +1,8 @@
 import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import { interactionsPurchaseTrackerTable } from "../../db/interactions";
 import { interactionsContext } from "../context";
+import { interactionsPurchaseTrackerTable } from "../db/schema";
 
 export const purchaseInteractionsRoutes = new Elysia()
     .use(interactionsContext)

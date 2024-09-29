@@ -1,10 +1,10 @@
 import { postgresContext } from "@backend-common";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
-import { pushTokensTable } from "../db/schema";
+import { pushTokensTable } from "./db/schema";
 
 export const notificationContext = new Elysia({
-    name: "Context.nexus.notification",
+    name: "Context.notification",
 })
     .use(postgresContext)
     .decorate(({ postgresDb, ...decorators }) => ({

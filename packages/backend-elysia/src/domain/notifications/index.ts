@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 import { pushTokensRoutes } from "./routes/pushTokens";
 import { sendRoutes } from "./routes/send";
 
-export const notificationRoutes = new Elysia({
+export const notifications = new Elysia({
     prefix: "/notifications",
 })
     .use(pushTokensRoutes)

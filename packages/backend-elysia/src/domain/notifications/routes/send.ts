@@ -6,8 +6,8 @@ import { Elysia } from "elysia";
 import { parallel } from "radash";
 import { Config } from "sst/node/config";
 import { sendNotification, setVapidDetails } from "web-push";
-import { pushTokensTable } from "../../db/schema";
 import { notificationContext } from "../context";
+import { pushTokensTable } from "../db/schema";
 
 export const sendRoutes = new Elysia()
     .use(notificationContext)

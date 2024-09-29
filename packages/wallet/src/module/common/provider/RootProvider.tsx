@@ -131,7 +131,7 @@ function SetupServiceWorker() {
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();
-            await backendApi.nexus.notifications.pushToken.put({
+            await backendApi.notifications.pushToken.put({
                 subscription: {
                     endpoint: jsonSubscription.endpoint ?? "no-endpoint",
                     keys: {

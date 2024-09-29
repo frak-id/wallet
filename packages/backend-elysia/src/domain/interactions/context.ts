@@ -10,7 +10,7 @@ import {
     interactionsPurchaseTrackerTable,
     pendingInteractionsTable,
     pushedInteractionsTable,
-} from "../db/schema";
+} from "./db/schema";
 import { InteractionDiamondRepository } from "./repositories/InteractionDiamondRepository";
 import { InteractionSignerRepository } from "./repositories/InteractionSignerRepository";
 import { WalletSessionRepository } from "./repositories/WalletSessionRepository";
@@ -19,7 +19,7 @@ import { WalletSessionRepository } from "./repositories/WalletSessionRepository"
  * @param app
  */
 export const interactionsContext = new Elysia({
-    name: "Context.nexus.interactions",
+    name: "Context.interactions",
 })
     .use(blockchainContext)
     .use(postgresContext)

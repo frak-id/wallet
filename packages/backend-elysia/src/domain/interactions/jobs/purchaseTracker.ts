@@ -4,12 +4,12 @@ import { PurchaseInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { Mutex } from "async-mutex";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { PurchaseProofService } from "../../../business/oracle/services/proofService";
+import { PurchaseProofService } from "../../business/oracle/services/proofService";
+import { interactionsContext } from "../context";
 import {
     interactionsPurchaseTrackerTable,
     pendingInteractionsTable,
-} from "../../db/interactions";
-import { interactionsContext } from "../context";
+} from "../db/schema";
 
 const outerPurchaseTracker = new Elysia({ name: "Job.OuterPurchaseTracker" })
     .use(interactionsContext)

@@ -2,11 +2,11 @@ import { log } from "@backend-common";
 import cron, { Patterns } from "@elysiajs/cron";
 import { Mutex } from "async-mutex";
 import { and, eq, inArray } from "drizzle-orm";
+import type { InteractionsContextApp, InteractionsDb } from "../context";
 import {
     pendingInteractionsTable,
     pushedInteractionsTable,
-} from "../../db/schema";
-import type { InteractionsContextApp, InteractionsDb } from "../context";
+} from "../db/schema";
 import type { InteractionDiamondRepository } from "../repositories/InteractionDiamondRepository";
 import type { InteractionSignerRepository } from "../repositories/InteractionSignerRepository";
 import type { PreparedInteraction } from "../types/interactions";

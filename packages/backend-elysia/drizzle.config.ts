@@ -2,11 +2,7 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
-    schema: [
-        "src/domain/nexus/db/schema.ts",
-        "src/domain/business/db/schema.ts",
-        "src/domain/interactions/db/schema.ts",
-    ],
+    schema: ["src/domain/*/db/schema.ts"],
     dialect: "postgresql",
     dbCredentials: {
         host:

@@ -5,7 +5,7 @@ import { simulateInteractionJob } from "./jobs/simulate";
 import { purchaseInteractionsRoutes } from "./routes/purchase";
 import { pushInteractionsRoutes } from "./routes/push";
 
-export const interactionRoutes = new Elysia({
+export const interactions = new Elysia({
     prefix: "/interactions",
 })
     .use(executeInteractionJob)

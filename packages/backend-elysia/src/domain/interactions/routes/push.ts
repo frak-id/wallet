@@ -2,8 +2,8 @@ import { log, nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { isAddressEqual } from "viem";
-import { pendingInteractionsTable } from "../../db/schema";
 import { interactionsContext } from "../context";
+import { pendingInteractionsTable } from "../db/schema";
 import { InteractionRequestDto } from "../dto/InteractionDto";
 import type { SimulateInteractionAppJob } from "../jobs/simulate";
 
