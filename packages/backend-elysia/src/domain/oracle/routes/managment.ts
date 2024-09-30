@@ -105,8 +105,7 @@ export const managmentRoutes = new Elysia()
                 .execute();
         },
         {
-            // todo: Business cookie isn't there, why?
-            isAuthenticated: "nexus",
+            isAuthenticated: "business",
             body: t.Object({
                 hookSignatureKey: t.String(),
             }),
@@ -137,7 +136,6 @@ export const managmentRoutes = new Elysia()
                 .execute();
         },
         {
-            // todo: Business cookie isn't there, why?
-            isAuthenticated: "nexus",
+            isAuthenticated: "business",
         }
     );
