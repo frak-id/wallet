@@ -1,4 +1,3 @@
-import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { interactionsContext } from "../context";
@@ -6,7 +5,6 @@ import { interactionsPurchaseTrackerTable } from "../db/schema";
 
 export const purchaseInteractionsRoutes = new Elysia()
     .use(interactionsContext)
-    .use(nextSessionContext)
     .post(
         "/listenForPurchase",
         async ({ body, interactionsDb }) => {
@@ -22,8 +20,6 @@ export const purchaseInteractionsRoutes = new Elysia()
                 });
         },
         {
-            isAuthenticated: "nexus",
-
             body: t.Object({
                 wallet: t.Address(),
                 customerId: t.String(),
