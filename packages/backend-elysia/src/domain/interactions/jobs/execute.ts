@@ -118,7 +118,7 @@ async function executeInteractions({
                 interactionContract,
             }));
         if (!signature) {
-            log.error(
+            log.warn(
                 {
                     interaction,
                 },

@@ -12,11 +12,7 @@ import {
 
 const app = new Elysia()
     .use(log.into({ autoLogging: false }))
-    .use(
-        cors({
-            origin: ["*.frak.id", "localhost"],
-        })
-    )
+    .use(cors())
     .get("/", () => ({ status: "ok" }))
     .use(commonRoutes)
     // Example news paper logics

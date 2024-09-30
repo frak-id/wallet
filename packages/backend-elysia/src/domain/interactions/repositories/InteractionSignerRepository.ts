@@ -18,13 +18,7 @@ import {
     encodeFunctionData,
     keccak256,
 } from "viem";
-import {
-    estimateFeesPerGas,
-    estimateGas,
-    readContract,
-    sendTransaction,
-    signTypedData,
-} from "viem/actions";
+import { readContract, sendTransaction, signTypedData } from "viem/actions";
 import type { PreparedInteraction } from "../types/interactions";
 
 /**
@@ -69,6 +63,10 @@ export class InteractionSignerRepository {
             signerAccount,
         });
         if (!isAllowed) {
+            log.warn("Signer not allowed on product", {
+                productId,
+                signer: signerAccount.address,
+            });
             return undefined;
         }
 
@@ -140,6 +138,12 @@ export class InteractionSignerRepository {
     async pushPreparedInteractions(
         preparedInteractions: PreparedInteraction[]
     ) {
+        // The executor that will submit the interactions
+        const executorAccount =
+            await this.adminWalletRepository.getKeySpecificAccount({
+                key: "interaction-executor",
+            });
+
         // Prepare the execution data
         const executeNoBatchData = encodeFunctionData({
             abi: interactionDelegatorAbi,
@@ -162,33 +166,25 @@ export class InteractionSignerRepository {
             executeNoBatchData
         ) as Hex;
 
-        // The executor that will submit the interactions
-        const executorAccount =
-            await this.adminWalletRepository.getKeySpecificAccount({
-                key: "interaction-executor",
-            });
-
         try {
-            // Estimate the gas consumption and price
-            const gas = await estimateGas(this.client, {
-                account: executorAccount,
-                to: addresses.interactionDelegator,
-                data: compressedExecute,
-            });
-            const { maxFeePerGas, maxPriorityFeePerGas } =
-                await estimateFeesPerGas(this.client);
+            // Determine the data to use (if compressed is less than 30% of the original, or if the original is more than 4kb)
+            const useCompressed =
+                executeNoBatchData.length * 0.3 > compressedExecute.length ||
+                executeNoBatchData.length > 4096;
+            log.debug(
+                {
+                    original: executeNoBatchData.length,
+                    compressed: compressedExecute.length,
+                    useCompressed,
+                },
+                "Data sizes for interactions execution"
+            );
 
             // And send it
             return await sendTransaction(this.client, {
                 account: executorAccount,
                 to: addresses.interactionDelegator,
-                data: compressedExecute,
-                // We will provide 50% more gas than the estimation, to ensure proper inclusion
-                gas: (gas * 150n) / 100n,
-                // We will pay 40% more gas than the estimation, to ensure proper inclusion
-                maxFeePerGas: (maxFeePerGas * 140n) / 100n,
-                // We will pay 25% more priority fee than the estimation, to ensure proper inclusion
-                maxPriorityFeePerGas: (maxPriorityFeePerGas * 125n) / 100n,
+                data: useCompressed ? compressedExecute : executeNoBatchData,
             });
         } catch (e) {
             log.error(
