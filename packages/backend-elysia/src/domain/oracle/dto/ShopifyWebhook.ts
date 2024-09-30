@@ -10,6 +10,7 @@ export type ShopifyOrderUpdateWebhookDto = Readonly<{
         id: number; // The customer id
     };
     token: string; // The token of the order
+    checkout_token?: string; // The token of the order
 }>;
 
 export type OrderFinancialStatus =

@@ -34,9 +34,9 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     // Request pre validation hook
     .onBeforeHandle(({ headers, error }) => {
         // If it's a test and not running in prod, early exit
-        // todo: Maybe accept them but not save the order in the merklee tree?
+        // todo: Maybe accept them but not save the order in the merkle tree?
         if (headers["x-shopify-test"] && isRunningInProd) {
-            return error(400, "Shopify test arn't accepted in production");
+            return error(400, "Shopify test aren't accepted in production");
         }
         // If it's an unsported shopify version, early exit
         if (headers["x-shopify-api-version"] !== "2024-10") {
@@ -55,7 +55,7 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     .post(
         ":productId/hook",
         async ({ params: { productId }, body, headers, oracleDb, error }) => {
-            // todo: hmac validation
+            // todo: hmac validation: https://shopify.dev/docs/apps/build/webhooks/subscribe/https#step-2-validate-the-origin-of-your-webhook-to-ensure-its-coming-from-shopify
 
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = body as ShopifyOrderUpdateWebhookDto;
@@ -109,7 +109,8 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                     purchaseId,
                     externalId: webhookData.id.toString(),
                     externalCustomerId: webhookData.customer.id.toString(),
-                    purchaseToken: webhookData.token,
+                    purchaseToken:
+                        webhookData.checkout_token ?? webhookData.token,
                     status: purchaseStatus,
                     totalPrice: webhookData.total_price,
                     currencyCode: webhookData.currency,
@@ -121,9 +122,16 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                         totalPrice: webhookData.total_price,
                         currencyCode: webhookData.currency,
                         updatedAt: new Date(),
+                        // Update the checkout token only if we got one
+                        ...(webhookData.checkout_token
+                            ? {
+                                  purchaseToken: webhookData.checkout_token,
+                              }
+                            : {}),
                     },
                 });
 
+            // Return the success state
             return "ok";
         }
     );
