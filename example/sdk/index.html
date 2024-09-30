@@ -39,6 +39,14 @@
 
             window.NexusSDK.watchWalletStatus(client, (status) => {
                 statusElement.textContent = `Wallet status: ${status.key === 'connected' ? 'Connected' : 'Not connected'}`;
+
+                if(status.key === 'connected') {
+                    // Update Nexus context with wallet status
+                    window.NexusSDK.NexusContextManager.replaceUrl({
+                        url: window.location.href,
+                        context: { r: status.wallet }
+                    });
+                }
             }).catch((error) => {
                 statusElement.textContent = `Error: ${error.message}`;
             });
