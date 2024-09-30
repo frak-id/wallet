@@ -38,7 +38,7 @@ export async function getProductAdministrators({
     };
 
     // Return that mapped with the right types
-    return json.map((result) => ({
+    const administrators = json.map((result) => ({
         wallet: result.wallet,
         isOwner: result.isOwner === 1,
         roles: toHex(BigInt(result.roles)),
@@ -48,4 +48,9 @@ export async function getProductAdministrators({
             ...buildRolesMap(BigInt(result.roles)),
         } as Record<"admin" | ProductRolesKey, boolean>,
     }));
+
+    // Filter out the people when they are only the purchaseOracleUpdater
+    return administrators.filter((admin) => {
+        return !admin.roleDetails.purchaseOracleUpdater;
+    });
 }
