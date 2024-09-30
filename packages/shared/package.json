@@ -22,10 +22,14 @@
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc",
     "react": "^18",
     "elysia": "^1.1.12",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc"
   }
 }

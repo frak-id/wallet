@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.650.0",
+    "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
-    "@frak-labs/app-essentials": "workspace:*",
     "@peculiar/asn1-ecc": "2.3.13",
     "@peculiar/asn1-schema": "^2.3.13",
     "@radix-ui/react-accordion": "^1.2.0",
@@ -40,14 +40,14 @@
     "jotai": "^2.10.0",
     "lucide-react": "^0.445.0",
     "mongodb": "^6.9.0",
-    "next": "14.2.13",
+    "next": "^15.0.0-rc.0",
     "next-qrcode": "^2.5.1",
     "nextjs-toploader": "^3.6.15",
     "normalize.css": "^8.0.1",
     "permissionless": "0.2.1",
     "radash": "^12.1.0",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "^19.0.0-rc-67fee58b-20240926",
+    "react-dom": "^19.0.0-rc-67fee58b-20240926",
     "react-drag-drop-files": "^2.3.10",
     "react-hook-form": "^7.53.0",
     "react-loading-skeleton": "^3.5.0",
@@ -61,9 +61,13 @@
     "@types/dom-view-transitions": "^1.0.5",
     "@types/node": "^22",
     "@types/nprogress": "^0.2.3",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc",
     "sst": "2.43.6",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc"
   }
 }

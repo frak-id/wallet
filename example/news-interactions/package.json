@@ -17,28 +17,32 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
+    "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
-    "@frak-labs/app-essentials": "workspace:*",
     "@lottiefiles/react-lottie-player": "^3.5.4",
     "@tanstack/query-sync-storage-persister": "^5.56.2",
     "@tanstack/react-query": "^5.56.2",
     "@tanstack/react-query-devtools": "^5.56.2",
     "@tanstack/react-query-persist-client": "^5.56.2",
-    "next": "14.2.13",
+    "next": "^15.0.0-rc.0",
     "next-view-transitions": "^0.3.2",
     "radash": "^12.1.0",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "^19.0.0-rc-67fee58b-20240926",
+    "react-dom": "^19.0.0-rc-67fee58b-20240926",
     "react-markdown": "^9.0.1",
     "swiper": "^11.1.14",
     "viem": "^2.21.6"
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc",
     "sst": "2.43.6",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc"
   }
 }
