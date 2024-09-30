@@ -21,7 +21,7 @@ export async function pushInteraction({
 }) {
     console.log("Pushing interaction", toPush);
     const { data, error, response, ...other } =
-        await backendApi.nexus.interactions.push.post({
+        await backendApi.interactions.push.post({
             interactions: [
                 {
                     wallet,
@@ -57,7 +57,7 @@ export async function pushInteractions({
     toPush: InteractionToPush[];
 }): Promise<string[]> {
     // Craft every interactions events message
-    const { data } = await backendApi.nexus.interactions.push.post({
+    const { data } = await backendApi.interactions.push.post({
         interactions: toPush.map((interaction) => ({
             wallet,
             productId: interaction.productId,

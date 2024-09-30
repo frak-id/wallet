@@ -70,7 +70,7 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
             }
 
             // Get the current backend setup status
-            const { data: webhookStatus } = await backendApi.business
+            const { data: webhookStatus } = await backendApi
                 .oracle({ productId })
                 .status.get();
 
@@ -90,7 +90,7 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
                 oracleUpdater: oracleUpdater.pubKey,
                 isOracleUpdaterAllowed,
                 isWebhookSetup: webhookStatus?.setup,
-                webhookUrl: `${process.env.BACKEND_URL}/business/oracle/shopify/${productId}/hook`,
+                webhookUrl: `${process.env.BACKEND_URL}/oracle/shopify/${productId}/hook`,
                 webhookStatus,
             };
         },
@@ -319,7 +319,7 @@ function WebhookRegistrationForm({
     const { mutate: setupWebhook, isPending } = useMutation({
         mutationKey: ["product", "oracle-webhook", "setup"],
         mutationFn: async ({ webhookKey }: { webhookKey: string }) => {
-            await backendApi.business
+            await backendApi
                 .oracle({ productId })
                 .setup.post({ hookSignatureKey: webhookKey });
         },

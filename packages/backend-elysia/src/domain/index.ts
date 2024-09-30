@@ -1,3 +1,5 @@
 export { exampleNewsPaper } from "./exampleNewsPaper";
 export { business } from "./business";
-export { nexus } from "./nexus";
+export { notifications } from "./notifications";
+export { oracle } from "./oracle";
+export { interactions } from "./interactions";

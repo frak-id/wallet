@@ -23,7 +23,7 @@ export async function sendPushNotification({
     }
 
     // Send the push request
-    await backendApi.nexus.notifications.send.post({
+    await backendApi.notifications.send.post({
         wallets,
         payload: {
             ...payload,
