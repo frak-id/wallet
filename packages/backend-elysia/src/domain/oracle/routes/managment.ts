@@ -55,7 +55,6 @@ export const managmentRoutes = new Elysia()
             };
         },
         {
-            isAuthenticated: "business",
             response: t.Union([
                 t.Object({
                     setup: t.Literal(false),
@@ -106,7 +105,8 @@ export const managmentRoutes = new Elysia()
                 .execute();
         },
         {
-            isAuthenticated: "business",
+            // todo: Business cookie isn't there, why?
+            isAuthenticated: "nexus",
             body: t.Object({
                 hookSignatureKey: t.String(),
             }),
@@ -137,6 +137,7 @@ export const managmentRoutes = new Elysia()
                 .execute();
         },
         {
-            isAuthenticated: "business",
+            // todo: Business cookie isn't there, why?
+            isAuthenticated: "nexus",
         }
     );

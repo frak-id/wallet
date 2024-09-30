@@ -38,27 +38,31 @@ export const nextSessionContext = new Elysia({
         async ({
             cookie: { nexusSession, businessSession },
             decodeNextSessionCookie,
-        }) => ({
-            // Decode the session if present
-            nexusSession: await decodeNextSessionCookie<{
-                wallet: {
-                    address: Address;
-                    authenticatorId: string;
-                };
-            }>({
-                token: nexusSession.value,
-            }),
-            // Decode the business session if present
-            businessSession: await decodeNextSessionCookie<{
-                wallet: Address;
-                siwe: {
-                    message: string;
-                    signature: Hex;
-                };
-            }>({
-                token: businessSession.value,
-            }),
-        })
+        }) => {
+            console.log("nexusSession", nexusSession?.value);
+            console.log("businessSession", businessSession?.value);
+            return {
+                // Decode the session if present
+                nexusSession: await decodeNextSessionCookie<{
+                    wallet: {
+                        address: Address;
+                        authenticatorId: string;
+                    };
+                }>({
+                    token: nexusSession.value,
+                }),
+                // Decode the business session if present
+                businessSession: await decodeNextSessionCookie<{
+                    wallet: Address;
+                    siwe: {
+                        message: string;
+                        signature: Hex;
+                    };
+                }>({
+                    token: businessSession.value,
+                }),
+            };
+        }
     )
     // Macro to enforce a session or throw an error
     .macro(({ onBeforeHandle }) => ({
