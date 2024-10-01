@@ -14,7 +14,7 @@ function startPurchase({
         pad(purchaseId, { size: 32 }),
     ]);
     return {
-        handlerTypeDenominator: toHex(productTypes.referral),
+        handlerTypeDenominator: toHex(productTypes.purchase),
         interactionData,
     };
 }
@@ -35,7 +35,7 @@ function completedPurchase({
         innerData,
     ]);
     return {
-        handlerTypeDenominator: toHex(productTypes.referral),
+        handlerTypeDenominator: toHex(productTypes.purchase),
         interactionData,
     };
 }

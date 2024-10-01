@@ -164,15 +164,18 @@ async function simulateAndUpdateInteractions({
     const simulationResults = await Promise.all(simulationResultsAsync);
 
     // Then perform the db update accordingly to the simulation results
-    await interactionsDb.transaction(async (trx) => {
-        for (const { interaction, simulationStatus } of simulationResults) {
-            await trx
-                .update(pendingInteractionsTable)
-                .set({ status: simulationStatus })
-                .where(eq(pendingInteractionsTable.id, interaction.id))
-                .execute();
-        }
-    });
+    try {
+        await interactionsDb.transaction(async (trx) => {
+            for (const { interaction, simulationStatus } of simulationResults) {
+                await trx
+                    .update(pendingInteractionsTable)
+                    .set({ status: simulationStatus })
+                    .where(eq(pendingInteractionsTable.id, interaction.id));
+            }
+        });
+    } catch (e) {
+        log.error({ error: e }, "Error updating interactions");
+    }
 
     // Return if we got success interactions (to know if we should trigger the push job)
     return simulationResults.some(

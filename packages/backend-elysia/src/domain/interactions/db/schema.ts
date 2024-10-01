@@ -36,12 +36,6 @@ export const pendingInteractionsTable = pgTable(
     (table) => ({
         walletIdx: index("wallet_pending_interactions_idx").on(table.wallet),
         productIdx: index("product_idx").on(table.productId),
-        uniqueInteractionPerStatus: unique("unique_interaction_per_status").on(
-            table.wallet,
-            table.productId,
-            table.interactionData,
-            table.status
-        ),
     })
 );
 

@@ -15,6 +15,13 @@
             "when": 1727455472009,
             "tag": "0001_nappy_namor",
             "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1727795633012,
+            "tag": "0002_bizarre_alex_power",
+            "breakpoints": true
         }
     ]
 }
