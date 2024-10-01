@@ -100,7 +100,13 @@ export class AdminWalletsRepository {
      */
     public async getKeySpecificAccount({
         key,
-    }: { key: "interaction-executor" | "oracle-updater" | (string & {}) }) {
+    }: {
+        key:
+            | "interaction-executor"
+            | "oracle-updater"
+            | "product-minter"
+            | (string & {});
+    }) {
         const pkey = await this.getDerivedKey(key);
         return privateKeyToAccount(pkey);
     }

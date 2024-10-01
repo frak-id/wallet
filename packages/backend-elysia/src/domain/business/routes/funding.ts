@@ -4,9 +4,9 @@ import { addresses } from "@frak-labs/app-essentials";
 import { Mutex } from "async-mutex";
 import { Elysia } from "elysia";
 import { Config } from "sst/node/config";
-import { type Hex, encodeFunctionData, erc20Abi, parseEther } from "viem";
+import { type Hex, erc20Abi, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { readContract, sendTransaction } from "viem/actions";
+import { readContract, writeContract } from "viem/actions";
 
 /**
  * Funding related routes
@@ -36,14 +36,12 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" })
                 const executorAccount = privateKeyToAccount(
                     Config.AIRDROP_PRIVATE_KEY as Hex
                 );
-                const txHash = await sendTransaction(client, {
+                const txHash = await writeContract(client, {
                     account: executorAccount,
-                    to: addresses.mUSDToken,
-                    data: encodeFunctionData({
-                        abi: [mintAbi],
-                        functionName: "mint",
-                        args: [bank, parseEther("1000")],
-                    }),
+                    address: addresses.mUSDToken,
+                    abi: [mintAbi],
+                    functionName: "mint",
+                    args: [bank, parseEther("1000")],
                 });
                 log.info(
                     { txHash },
