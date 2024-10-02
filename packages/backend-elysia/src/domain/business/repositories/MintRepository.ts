@@ -76,28 +76,29 @@ export class MintRepository {
 
         // Get our minter account
         const minter = await this.adminRepository.getKeySpecificAccount({
-            key: "product-minter",
+            key: "minter",
         });
         // Prepare the mint tx and send it
-        const simulatedRequest = await simulateContract(viemClient, {
-            account: minter,
-            address: addresses.productRegistry,
-            abi: productRegistryAbi,
-            functionName: "mint",
-            args: [
-                this.encodeProductTypesMask(productTypes),
-                name,
-                domain,
-                owner,
-            ],
+        const lock = this.adminRepository.getMutexForAccount({ key: "minter" });
+        const mintTxHash = await lock.runExclusive(async () => {
+            const simulatedRequest = await simulateContract(viemClient, {
+                account: minter,
+                address: addresses.productRegistry,
+                abi: productRegistryAbi,
+                functionName: "mint",
+                args: [
+                    this.encodeProductTypesMask(productTypes),
+                    name,
+                    domain,
+                    owner,
+                ],
+            });
+            if (simulatedRequest.result !== precomputedProductId) {
+                throw new Error("Invalid product id");
+            }
+            return await writeContract(viemClient, simulatedRequest.request);
         });
-        if (simulatedRequest.result !== precomputedProductId) {
-            throw new Error("Invalid product id");
-        }
-        const mintTxHash = await writeContract(
-            viemClient,
-            simulatedRequest.request
-        );
+
         // Wait for the mint to be done before proceeding to the transfer
         await waitForTransactionReceipt(viemClient, {
             hash: mintTxHash,

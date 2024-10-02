@@ -29,7 +29,7 @@ import { validateUrl } from "@module/utils/validateUrl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import type { Hex, TransactionReceipt } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
@@ -147,14 +147,10 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
     const [success, setSuccess] = useAtom(successAtom);
     const [error, setError] = useState<string | undefined>();
 
-    const rawDomain = form.watch("domain");
-    const parsedDomain = useMemo(
-        () => parseUrl(rawDomain)?.hostname,
-        [rawDomain]
-    );
+    const domain = form.watch("domain");
 
     const { data: dnsRecord, isLoading } = useDnsTxtRecordToSet({
-        domain: parsedDomain,
+        domain,
         enabled: isModalOpen,
     });
 
@@ -179,22 +175,20 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         if (!isFormValid) return;
 
         // Ensure we got a domain
-        if (!parsedDomain) {
+        if (!domain) {
             setError("Invalid domain name");
             return;
         }
 
         // Check the validity of the domain
         const { isAlreadyMinted, isRecordSet } = await checkDomainSetup({
-            domain: parsedDomain,
+            domain,
         });
 
         if (isAlreadyMinted) {
-            setError(`A product already exists for the domain ${parsedDomain}`);
+            setError(`A product already exists for the domain ${domain}`);
         } else if (!isRecordSet) {
-            setError(
-                `The DNS txt record is not set for the domain ${parsedDomain}`
-            );
+            setError(`The DNS txt record is not set for the domain ${domain}`);
         } else {
             setSuccess(true);
         }
@@ -331,7 +325,6 @@ function NewProductVerify({
     domain,
     productTypes,
 }: { name: string; domain: string; productTypes: ProductTypesKey[] }) {
-    const parsedDomain = parseUrl(domain);
     const queryClient = useQueryClient();
     const setIsMinting = useSetAtom(isMintingAtom);
 
@@ -369,7 +362,7 @@ function NewProductVerify({
             .then(() => setIsMinting(false));
     }, [transactionReceipt, queryClient, setIsMinting]);
 
-    if (!parsedDomain) return null;
+    if (!domain) return null;
 
     return (
         <div>
@@ -379,9 +372,9 @@ function NewProductVerify({
             <p className={styles.newProductForm__verify}>
                 I confirm that I want to list "{name}" on the following domain :
                 <br />
-                <strong>{parsedDomain.hostname}</strong>
+                <strong>{domain}</strong>
                 <br />
-                Uri: <strong>{parsedDomain.href}</strong>
+                Uri: <strong>{domain}</strong>
             </p>
             <AuthFingerprint
                 className={styles.newProductForm__fingerprint}
@@ -389,7 +382,7 @@ function NewProductVerify({
                     setIsMinting(true);
                     triggerMintMyContent({
                         name,
-                        domain: parsedDomain.hostname,
+                        domain,
                         productTypes,
                     });
                 }}
@@ -441,17 +434,4 @@ function ProductSuccessInfo({
             {txHash && <p>Transaction hash: {txHash}</p>}
         </>
     );
-}
-
-function parseUrl(domain: string) {
-    if (!domain || domain.length === 0) {
-        return undefined;
-    }
-    try {
-        // Try to parse the URL as-is
-        return new URL(domain);
-    } catch {
-        // If parsing fails, try adding 'https://' prefix
-        return new URL(`https://${domain}`);
-    }
 }

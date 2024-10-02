@@ -3,24 +3,31 @@ import {
     GetSecretValueCommand,
     SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
+import { Mutex } from "async-mutex";
 import { LRUCache } from "lru-cache";
 import { Config } from "sst/node/config";
 import { type Hex, hexToBytes, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
+type AccountPredefinedKeys =
+    | "interaction-executor"
+    | "oracle-updater"
+    | "minter"
+    | (string & {});
+
 /**
  * Build the repository that we will use to interface with our different wallets
  */
 export class AdminWalletsRepository {
-    private secretManager: SecretsManagerClient;
-    private cache: LRUCache<string, Hex>;
-
-    constructor() {
-        this.secretManager = new SecretsManagerClient({ region: "eu-west-1" });
-        this.cache = new LRUCache({
-            max: 1024,
-        });
-    }
+    private secretManager: SecretsManagerClient = new SecretsManagerClient({
+        region: "eu-west-1",
+    });
+    private cache: LRUCache<string, Hex> = new LRUCache({
+        max: 1024,
+    });
+    private mutexLocks: LRUCache<string, Mutex> = new LRUCache({
+        max: 64,
+    });
 
     /**
      * Get a value from cache or fetch it
@@ -101,13 +108,26 @@ export class AdminWalletsRepository {
     public async getKeySpecificAccount({
         key,
     }: {
-        key:
-            | "interaction-executor"
-            | "oracle-updater"
-            | "product-minter"
-            | (string & {});
+        key: AccountPredefinedKeys;
     }) {
         const pkey = await this.getDerivedKey(key);
         return privateKeyToAccount(pkey);
+    }
+
+    /**
+     * Get an account specific to a key
+     */
+    public getMutexForAccount({
+        key,
+    }: {
+        key: AccountPredefinedKeys;
+    }) {
+        const lock = this.mutexLocks.get(key);
+        if (lock) {
+            return lock;
+        }
+        const newLock = new Mutex();
+        this.mutexLocks.set(key, newLock);
+        return newLock;
     }
 }

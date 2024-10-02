@@ -13,7 +13,10 @@ export class DnsCheckRepository {
      * Get the normalized domain from a given domain
      */
     getNormalizedDomain(domain: string) {
-        return new URL(domain).host;
+        const baseDomainUrl = domain.startsWith("https://")
+            ? domain
+            : `https://${domain}`;
+        return new URL(baseDomainUrl).host;
     }
 
     /**
@@ -31,6 +34,7 @@ export class DnsCheckRepository {
     /**
      * Check if the DNS txt record is set for the given domain
      * @param domain
+     * @param owner
      */
     async isDnsTxtRecordSet({
         domain,

@@ -1,11 +1,8 @@
-import { blockchainContext, log } from "@backend-common";
+import { adminWalletContext, blockchainContext, log } from "@backend-common";
 import { t } from "@backend-utils";
 import { addresses } from "@frak-labs/app-essentials";
-import { Mutex } from "async-mutex";
 import { Elysia } from "elysia";
-import { Config } from "sst/node/config";
-import { type Hex, erc20Abi, parseEther } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { erc20Abi, parseEther } from "viem";
 import { readContract, writeContract } from "viem/actions";
 
 /**
@@ -14,12 +11,10 @@ import { readContract, writeContract } from "viem/actions";
  */
 export const fundingRoutes = new Elysia({ prefix: "/funding" })
     .use(blockchainContext)
-    .decorate({
-        fundingReloadMutex: new Mutex(),
-    })
+    .use(adminWalletContext)
     .post(
         "/getTestToken",
-        async ({ body: { bank }, client, fundingReloadMutex }) => {
+        async ({ body: { bank }, client, adminWalletsRepository }) => {
             // Check the current campaign balance (if more than 1000 ether don't reload it)
             const balance = await readContract(client, {
                 abi: erc20Abi,
@@ -31,13 +26,17 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" })
                 return;
             }
 
+            const account = await adminWalletsRepository.getKeySpecificAccount({
+                key: "minter",
+            });
+            const lock = adminWalletsRepository.getMutexForAccount({
+                key: "minter",
+            });
+
             // Prepare and send our reload transaction
-            await fundingReloadMutex.runExclusive(async () => {
-                const executorAccount = privateKeyToAccount(
-                    Config.AIRDROP_PRIVATE_KEY as Hex
-                );
+            await lock.runExclusive(async () => {
                 const txHash = await writeContract(client, {
-                    account: executorAccount,
+                    account,
                     address: addresses.mUSDToken,
                     abi: [mintAbi],
                     functionName: "mint",
