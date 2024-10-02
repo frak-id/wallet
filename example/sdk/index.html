@@ -33,23 +33,24 @@
 
         // wallet-status.js
         function displayWalletStatus() {
-            const client = window.NexusSetup.nexusClient;
             const statusElement = document.getElementById('wallet-status');
             statusElement.textContent = 'Checking wallet status...';
 
-            window.NexusSDK.watchWalletStatus(client, (status) => {
+            window.NexusSDK.watchWalletStatus(window.NexusSetup.nexusClient, (status) => {
                 statusElement.textContent = `Wallet status: ${status.key === 'connected' ? 'Connected' : 'Not connected'}`;
+                const loginButton = document.getElementById('login-button');
+                loginButton.disabled = status.key === 'connected';
             }).catch((error) => {
                 statusElement.textContent = `Error: ${error.message}`;
             });
         }
 
         async function handleLogin() {
-            // const client = await window.NexusSetup.setupNexusClient();
-            // if (!client) {
-            //   console.error('Nexus client not initialized');
-            //   return;
-            // }
+            const client = await window.NexusSetup.setupNexusClient();
+            if (!client) {
+                console.error('Nexus client not initialized');
+                return;
+            }
 
             const loginButton = document.getElementById('login-button');
             loginButton.disabled = true;

@@ -26,9 +26,9 @@ export function createIframe({
     // Check if the iframe is already created
     const alreadyCreatedIFrame = document.querySelector("#nexus-wallet");
 
-    // If the iframe is already created, return undefined
+    // If the iframe is already created, return it
     if (alreadyCreatedIFrame) {
-        return Promise.resolve(undefined);
+        return Promise.resolve(alreadyCreatedIFrame as HTMLIFrameElement);
     }
 
     const iframe = document.createElement("iframe");
