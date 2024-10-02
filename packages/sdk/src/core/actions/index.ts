@@ -11,3 +11,4 @@ export {
     sendTransaction,
     type SendTransactionParams,
 } from "./wrapper/sendTransaction";
+export { walletStatus } from "./wrapper/walletStatus";
