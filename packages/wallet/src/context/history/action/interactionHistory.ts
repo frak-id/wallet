@@ -1,7 +1,7 @@
 "use server";
 import type { InteractionHistory } from "@/types/InteractionHistory";
 import { indexerApi } from "@frak-labs/shared/context/server";
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 
 type ApiResult = Array<
     {
@@ -23,6 +23,12 @@ type ApiResult = Array<
         | {
               type: "CREATE_REFERRAL_LINK";
               data: null;
+          }
+        | {
+              type: "PURCHASE_STARTED" | "PURCHASE_COMPLETED";
+              data: {
+                  purchaseId: Hex;
+              };
           }
     )
 >;
