@@ -49,6 +49,7 @@ export class MintRepository {
      * @param name
      * @param domain
      * @param productTypes
+     * @param owner
      */
     async mintProduct({
         name,

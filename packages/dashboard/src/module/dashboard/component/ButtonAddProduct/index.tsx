@@ -154,7 +154,6 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
     );
 
     const { data: dnsRecord, isLoading } = useDnsTxtRecordToSet({
-        name: form.watch("name"),
         domain: parsedDomain,
         enabled: isModalOpen,
     });
@@ -186,12 +185,11 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         }
 
         // Check the validity of the domain
-        const { alreadyExist, isRecordSet } = await checkDomainSetup({
-            name: form.getValues().name,
+        const { isAlreadyMinted, isRecordSet } = await checkDomainSetup({
             domain: parsedDomain,
         });
 
-        if (alreadyExist) {
+        if (isAlreadyMinted) {
             setError(`A product already exists for the domain ${parsedDomain}`);
         } else if (!isRecordSet) {
             setError(

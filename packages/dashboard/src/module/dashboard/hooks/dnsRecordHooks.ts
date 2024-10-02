@@ -1,7 +1,4 @@
-import {
-    getDnsTxtString,
-    verifyDomainName,
-} from "@/context/product/action/verifyDomain";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { sleep } from "radash";
 
@@ -12,12 +9,11 @@ import { sleep } from "radash";
  * @param enabled
  */
 export function useDnsTxtRecordToSet({
-    name,
     domain,
     enabled,
-}: { name: string; domain?: string; enabled: boolean }) {
+}: { domain?: string; enabled: boolean }) {
     return useQuery({
-        queryKey: ["mint", "dns-record", name, domain],
+        queryKey: ["mint", "dns-record", domain],
         queryFn: async ({ signal }) => {
             if (!domain) return "";
 
@@ -26,10 +22,10 @@ export function useDnsTxtRecordToSet({
             if (signal.aborted) return "";
 
             // Fetch the dns txt string
-            return await getDnsTxtString({
-                name,
-                domain,
+            const { data } = await backendApi.business.mint.dnsTxt.get({
+                query: { domain },
             });
+            return data ?? "";
         },
         enabled: enabled && !!domain,
     });
@@ -43,13 +39,13 @@ export function useDnsTxtRecordToSet({
 export function useCheckDomainName() {
     return useMutation({
         mutationKey: ["mint", "check-domain-name"],
-        mutationFn: async ({
-            name,
-            domain,
-        }: { name: string; domain: string }) =>
-            await verifyDomainName({
-                name,
-                domain,
-            }),
+        mutationFn: async ({ domain }: { domain: string }) => {
+            const { data, error } = await backendApi.business.mint.verify.get({
+                query: { domain },
+            });
+            if (error) throw error;
+
+            return data;
+        },
     });
 }
