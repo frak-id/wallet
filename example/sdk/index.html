@@ -39,14 +39,6 @@
 
             window.NexusSDK.watchWalletStatus(client, (status) => {
                 statusElement.textContent = `Wallet status: ${status.key === 'connected' ? 'Connected' : 'Not connected'}`;
-
-                if(status.key === 'connected') {
-                    // Update Nexus context with wallet status
-                    window.NexusSDK.NexusContextManager.replaceUrl({
-                        url: window.location.href,
-                        context: { r: status.wallet }
-                    });
-                }
             }).catch((error) => {
                 statusElement.textContent = `Error: ${error.message}`;
             });
@@ -89,6 +81,25 @@
                 }
 
                 window.NexusSetup.nexusClient = nexusClient;
+
+                window.NexusSDK.referralInteraction(nexusClient, {
+                    modalConfig: {
+                        steps: {
+                            openSession: {
+                                metadata: {
+                                    title: "Open reward session",
+                                    description:
+                                        "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Nexus ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                                    primaryActionText: "Being rewarded with Nexus",
+                                },
+                            },
+                            login: {},
+                            success: {sharing: {text: 'Successfully logged in!'}}
+                        }
+                    }
+                }).then((referral) => {
+                    console.log("referral", referral);
+                });
 
                 displayWalletStatus();
 
