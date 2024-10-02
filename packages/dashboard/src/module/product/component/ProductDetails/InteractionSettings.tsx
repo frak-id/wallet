@@ -25,6 +25,7 @@ import Link from "next/link";
 import { all, tryit } from "radash";
 import { useState } from "react";
 import { type Address, type Hex, encodeFunctionData } from "viem";
+import { generatePrivateKey } from "viem/accounts";
 import { readContract } from "viem/actions";
 import styles from "./InteractionSettings.module.css";
 
@@ -122,6 +123,7 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                                         setupInteractionContract({
                                             productId,
                                             directAllowValidator: true,
+                                            salt: generatePrivateKey(),
                                         })
                                     }
                                     className={

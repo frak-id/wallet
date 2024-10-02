@@ -1,12 +1,10 @@
-import { blockchainContext, log } from "@backend-common";
+import { adminWalletContext, blockchainContext, log } from "@backend-common";
 import { t } from "@backend-utils";
 import { addresses } from "@frak-labs/app-essentials";
-import { Mutex } from "async-mutex";
+import { mintAbi } from "@frak-labs/app-essentials/blockchain";
 import { Elysia } from "elysia";
-import { Config } from "sst/node/config";
-import { type Hex, encodeFunctionData, erc20Abi, parseEther } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { readContract, sendTransaction } from "viem/actions";
+import { erc20Abi, parseEther } from "viem";
+import { readContract, writeContract } from "viem/actions";
 
 /**
  * Funding related routes
@@ -14,12 +12,10 @@ import { readContract, sendTransaction } from "viem/actions";
  */
 export const fundingRoutes = new Elysia({ prefix: "/funding" })
     .use(blockchainContext)
-    .decorate({
-        fundingReloadMutex: new Mutex(),
-    })
+    .use(adminWalletContext)
     .post(
         "/getTestToken",
-        async ({ body: { bank }, client, fundingReloadMutex }) => {
+        async ({ body: { bank }, client, adminWalletsRepository }) => {
             // Check the current campaign balance (if more than 1000 ether don't reload it)
             const balance = await readContract(client, {
                 abi: erc20Abi,
@@ -31,19 +27,21 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" })
                 return;
             }
 
+            const account = await adminWalletsRepository.getKeySpecificAccount({
+                key: "minter",
+            });
+            const lock = adminWalletsRepository.getMutexForAccount({
+                key: "minter",
+            });
+
             // Prepare and send our reload transaction
-            await fundingReloadMutex.runExclusive(async () => {
-                const executorAccount = privateKeyToAccount(
-                    Config.AIRDROP_PRIVATE_KEY as Hex
-                );
-                const txHash = await sendTransaction(client, {
-                    account: executorAccount,
-                    to: addresses.mUSDToken,
-                    data: encodeFunctionData({
-                        abi: [mintAbi],
-                        functionName: "mint",
-                        args: [bank, parseEther("1000")],
-                    }),
+            await lock.runExclusive(async () => {
+                const txHash = await writeContract(client, {
+                    account,
+                    address: addresses.mUSDToken,
+                    abi: [mintAbi],
+                    functionName: "mint",
+                    args: [bank, parseEther("1000")],
                 });
                 log.info(
                     { txHash },
@@ -57,14 +55,3 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" })
             }),
         }
     );
-
-const mintAbi = {
-    type: "function",
-    inputs: [
-        { name: "_to", internalType: "address", type: "address" },
-        { name: "_amount", internalType: "uint256", type: "uint256" },
-    ],
-    name: "mint",
-    outputs: [],
-    stateMutability: "nonpayable",
-} as const;

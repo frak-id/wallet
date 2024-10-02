@@ -13,7 +13,6 @@ import {
 import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useMutation } from "@tanstack/react-query";
 import { type Hex, encodeFunctionData } from "viem";
-import { generatePrivateKey } from "viem/accounts";
 import { simulateContract } from "viem/actions";
 
 /**
@@ -30,12 +29,10 @@ export function useSetupInteractionContract() {
         mutationFn: async ({
             directAllowValidator,
             productId,
-        }: { productId: Hex; directAllowValidator: boolean }) => {
+            salt,
+        }: { productId: Hex; directAllowValidator: boolean; salt?: Hex }) => {
             // early exit if user not logged in
             if (walletStatus?.key !== "connected") return;
-
-            // Generate a random bytes32
-            const randomBytes32 = generatePrivateKey();
 
             // First tx to deploy the interaction contract
             const tx: SendTransactionModalStepType["params"]["tx"] = [
@@ -44,7 +41,9 @@ export function useSetupInteractionContract() {
                     data: encodeFunctionData({
                         abi: productInteractionManagerAbi,
                         functionName: "deployInteractionContract",
-                        args: [BigInt(productId), randomBytes32],
+                        args: salt
+                            ? [BigInt(productId), salt]
+                            : [BigInt(productId)],
                     }),
                 },
             ];
@@ -58,7 +57,9 @@ export function useSetupInteractionContract() {
                         address: addresses.productInteractionManager,
                         abi: productInteractionManagerAbi,
                         functionName: "deployInteractionContract",
-                        args: [BigInt(productId), randomBytes32],
+                        args: salt
+                            ? [BigInt(productId), salt]
+                            : [BigInt(productId)],
                     });
 
                 // Get the manager validator address
