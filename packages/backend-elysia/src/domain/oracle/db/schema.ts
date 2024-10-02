@@ -78,3 +78,28 @@ export const purchaseStatusTable = pgTable(
         ),
     })
 );
+
+export const purchaseItemTable = pgTable(
+    "product_oracle_purchase_item",
+    {
+        id: serial("id").primaryKey(),
+        purchaseId: customHex("purchase_id")
+            .references(() => purchaseStatusTable.purchaseId)
+            .notNull(),
+        // The external item id
+        externalId: varchar("external_id").notNull(),
+        // The price of the product
+        price: decimal("price").notNull(),
+        // The name of the product
+        name: varchar("name").notNull(),
+        // The title of the product
+        title: varchar("title").notNull(),
+        // The quantity of the product
+        quantity: integer("quantity").notNull(),
+        // Update infos
+        createdAt: timestamp("created_at").defaultNow(),
+    },
+    (table) => ({
+        purchaseIdIdx: index("item_purchase_id_idx").on(table.purchaseId),
+    })
+);

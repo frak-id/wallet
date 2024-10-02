@@ -11,6 +11,13 @@ export type ShopifyOrderUpdateWebhookDto = Readonly<{
     };
     token: string; // The token of the order
     checkout_token?: string; // The token of the order
+    line_items: {
+        product_id: number; // The product id
+        quantity: number; // The quantity of the product
+        price: string; // The price of the product
+        name: string; // The name of the product
+        title: string; // The title of the product
+    }[];
 }>;
 
 export type OrderFinancialStatus =

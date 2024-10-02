@@ -9,6 +9,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js/driver";
 import { Elysia } from "elysia";
 import {
     productOracleTable,
+    purchaseItemTable,
     purchaseStatusEnum,
     purchaseStatusTable,
 } from "./db/schema";
@@ -26,6 +27,7 @@ export const oracleContext = new Elysia({
                 productOracleTable,
                 purchaseStatusEnum,
                 purchaseStatusTable,
+                purchaseItemTable,
             },
         });
         return {
@@ -47,4 +49,5 @@ export type OracleDb = PostgresJsDatabase<{
     productOracleTable: typeof productOracleTable;
     purchaseStatusEnum: typeof purchaseStatusEnum;
     purchaseStatusTable: typeof purchaseStatusTable;
+    purchaseItemTable: typeof purchaseItemTable;
 }>;

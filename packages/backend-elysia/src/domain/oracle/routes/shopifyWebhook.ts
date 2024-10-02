@@ -7,6 +7,7 @@ import { concatHex, keccak256, toHex } from "viem";
 import { oracleContext } from "../context";
 import {
     productOracleTable,
+    purchaseItemTable,
     type purchaseStatusEnum,
     purchaseStatusTable,
 } from "../db/schema";
@@ -101,35 +102,50 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                 "Handling new shopify webhook event"
             );
 
-            // Insert the purchase in the database
-            await oracleDb
-                .insert(purchaseStatusTable)
-                .values({
-                    oracleId: oracle.id,
-                    purchaseId,
-                    externalId: webhookData.id.toString(),
-                    externalCustomerId: webhookData.customer.id.toString(),
-                    purchaseToken:
-                        webhookData.checkout_token ?? webhookData.token,
-                    status: purchaseStatus,
-                    totalPrice: webhookData.total_price,
-                    currencyCode: webhookData.currency,
-                })
-                .onConflictDoUpdate({
-                    target: [purchaseStatusTable.purchaseId],
-                    set: {
+            // Insert purchase and items
+            await oracleDb.transaction(async (trx) => {
+                // Insert the purchase first
+                await trx
+                    .insert(purchaseStatusTable)
+                    .values({
+                        oracleId: oracle.id,
+                        purchaseId,
+                        externalId: webhookData.id.toString(),
+                        externalCustomerId: webhookData.customer.id.toString(),
+                        purchaseToken:
+                            webhookData.checkout_token ?? webhookData.token,
                         status: purchaseStatus,
                         totalPrice: webhookData.total_price,
                         currencyCode: webhookData.currency,
-                        updatedAt: new Date(),
-                        // Update the checkout token only if we got one
-                        ...(webhookData.checkout_token
-                            ? {
-                                  purchaseToken: webhookData.checkout_token,
-                              }
-                            : {}),
-                    },
-                });
+                    })
+                    .onConflictDoUpdate({
+                        target: [purchaseStatusTable.purchaseId],
+                        set: {
+                            status: purchaseStatus,
+                            totalPrice: webhookData.total_price,
+                            currencyCode: webhookData.currency,
+                            updatedAt: new Date(),
+                            ...(webhookData.checkout_token
+                                ? {
+                                      purchaseToken: webhookData.checkout_token,
+                                  }
+                                : {}),
+                        },
+                    });
+                // Insert the items if needed
+                if (webhookData.line_items.length === 0) {
+                    return;
+                }
+                const mappedItems = webhookData.line_items.map((item) => ({
+                    purchaseId,
+                    externalId: item.product_id.toString(),
+                    price: item.price,
+                    name: item.name,
+                    title: item.title,
+                    quantity: item.quantity,
+                }));
+                await trx.insert(purchaseItemTable).values(mappedItems);
+            });
 
             // Return the success state
             return "ok";
