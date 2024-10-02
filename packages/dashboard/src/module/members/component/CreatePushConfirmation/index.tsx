@@ -1,9 +1,4 @@
 "use client";
-
-import {
-    sendPushForFilter,
-    sendPushNotification,
-} from "@/context/crm/actions/sendPush";
 import { ActionsMessageError } from "@/module/campaigns/component/Actions";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
@@ -12,6 +7,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { FormLayout } from "@/module/forms/Form";
 import { currentPushCreationForm } from "@/module/members/atoms/pushCreationForm";
 import { PushRecap } from "@/module/members/component/CreatePushConfirmation/PushRecap";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
@@ -66,20 +62,19 @@ function ConfirmationContent() {
         mutationKey: ["push", "publish"],
         mutationFn: async () => {
             if (!currentPushCreation?.target) {
-                throw new Error("No push campaign found");
+                throw new Error("No target specified");
             }
 
-            if ("wallets" in currentPushCreation.target) {
-                await sendPushNotification({
-                    wallets: currentPushCreation.target.wallets,
-                    payload: currentPushCreation.payload,
-                });
-            } else if ("filter" in currentPushCreation.target) {
-                await sendPushForFilter({
-                    filter: currentPushCreation.target.filter,
-                    payload: currentPushCreation.payload,
-                });
-            }
+            const { payload, target } = currentPushCreation;
+
+            await backendApi.notifications.send.post({
+                targets: target,
+                payload: {
+                    ...payload,
+                    body: payload.body ?? "",
+                    silent: payload.silent ?? false,
+                },
+            });
 
             console.log("Push submitted, resetting everything");
             setCurrentPushCreation(undefined);

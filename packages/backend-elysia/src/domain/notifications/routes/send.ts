@@ -1,16 +1,24 @@
-import { log } from "@backend-common";
+import { indexerApiContext, log, nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Mutex } from "async-mutex";
-import { inArray, lt } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { Elysia } from "elysia";
+import type { KyInstance } from "ky";
 import { parallel } from "radash";
 import { Config } from "sst/node/config";
+import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
 import { notificationContext } from "../context";
 import { pushTokensTable } from "../db/schema";
+import {
+    SendNotificationPayloadDto,
+    SendNotificationTargetsDto,
+} from "../dto/SendNotificationDto";
 
 export const sendRoutes = new Elysia()
     .use(notificationContext)
+    .use(nextSessionContext)
+    .use(indexerApiContext)
     .decorate({
         sendNotifMutex: new Mutex(),
     })
@@ -18,21 +26,26 @@ export const sendRoutes = new Elysia()
     .post(
         "/send",
         async ({
-            body: { wallets, payload },
+            body: { targets, payload },
             notificationDb,
             sendNotifMutex,
+            cleanupExpiredTokens,
+            indexerApi,
+            businessSession,
         }) =>
             sendNotifMutex.runExclusive(async () => {
-                // todo: Secure stuff here
+                if (!businessSession) return;
+
+                await cleanupExpiredTokens();
+
                 // todo: Notification tracking (send, received, clicked)
 
-                // Remove every push tokens expired
-                await notificationDb
-                    .delete(pushTokensTable)
-                    .where(lt(pushTokensTable.expireAt, new Date()))
-                    .execute();
-
                 // Find every push tokens for the given wallets
+                const wallets = await getWalletsTargets({
+                    targets: targets,
+                    wallet: businessSession.wallet,
+                    indexerApi,
+                });
                 const tokens =
                     await notificationDb.query.pushTokensTable.findMany({
                         where: inArray(pushTokensTable.wallet, wallets),
@@ -50,9 +63,9 @@ export const sendRoutes = new Elysia()
                     Config.VAPID_PRIVATE_KEY
                 );
 
-                // Send all the notification in parallel, by batch of 100
+                // Send all the notification in parallel, by batch of 30
                 await parallel(
-                    100,
+                    30,
                     tokens,
                     async (token) =>
                         await sendNotification(
@@ -68,32 +81,36 @@ export const sendRoutes = new Elysia()
                 );
             }),
         {
+            isAuthenticated: "business",
             body: t.Object({
-                wallets: t.Array(t.Address()),
-                payload: t.Object({
-                    title: t.String(),
-                    body: t.String(),
-                    badge: t.Optional(t.String()),
-                    icon: t.Optional(t.String()),
-                    lang: t.Optional(t.String()),
-                    requireInteraction: t.Optional(t.Boolean()),
-                    silent: t.Optional(t.Boolean()),
-                    tag: t.Optional(t.String()),
-                    data: t.Optional(
-                        t.Object({
-                            url: t.Optional(t.String()),
-                        })
-                    ),
-                    actions: t.Optional(
-                        t.Array(
-                            t.Object({
-                                action: t.String(),
-                                title: t.String(),
-                                icon: t.Optional(t.String()),
-                            })
-                        )
-                    ),
-                }),
+                targets: SendNotificationTargetsDto,
+                payload: SendNotificationPayloadDto,
             }),
         }
     );
+
+/**
+ * Get a list of wallets depending on the notification target
+ */
+async function getWalletsTargets({
+    targets,
+    indexerApi,
+    wallet,
+}: {
+    targets: typeof SendNotificationTargetsDto.static;
+    indexerApi: KyInstance;
+    wallet: Address;
+}): Promise<Address[]> {
+    if ("wallets" in targets) {
+        return targets.wallets as Address[];
+    }
+
+    // Otherwise, query the indexer to fetch the wallets
+    const result = await indexerApi
+        .post(`members/${wallet}`, {
+            json: { filter: targets.filter, onlyAddress: true },
+        })
+        .json<{ totalResult: number; users: Address[] }>();
+    log.debug(`Found ${result.users.length} wallets for the given filter`);
+    return result.users;
+}

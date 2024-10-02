@@ -32,6 +32,7 @@
     "drizzle-orm": "^0.33.0",
     "elysia": "1.1.12",
     "iron-session": "^8.0.3",
+    "ky": "^1.7.2",
     "lru-cache": "^11.0.1",
     "merkletreejs": "^0.4.0",
     "mongodb": "^6.9.0",

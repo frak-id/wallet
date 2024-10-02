@@ -30,6 +30,9 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
             // Enforce nexus authentication
             isAuthenticated: "nexus",
 
+            // Cleanup expired tokens
+            cleanupExpiredTokens: true,
+
             // Body schema
             body: t.Object({
                 subscription: t.Object({
@@ -54,7 +57,10 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
                 .where(eq(pushTokensTable.wallet, nexusSession.wallet.address))
                 .execute();
         },
-        { isAuthenticated: "nexus" }
+        {
+            isAuthenticated: "nexus",
+            cleanupExpiredTokens: true,
+        }
     )
     .get(
         "/hasAny",

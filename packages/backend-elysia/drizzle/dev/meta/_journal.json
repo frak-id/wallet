@@ -1,34 +1,34 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1726618882176,
-      "tag": "0000_lively_mastermind",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1727455472009,
-      "tag": "0001_nappy_namor",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1727795633012,
-      "tag": "0002_bizarre_alex_power",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1727879604990,
-      "tag": "0003_whole_randall",
-      "breakpoints": true
-    }
-  ]
+    "version": "7",
+    "dialect": "postgresql",
+    "entries": [
+        {
+            "idx": 0,
+            "version": "7",
+            "when": 1726618882176,
+            "tag": "0000_lively_mastermind",
+            "breakpoints": true
+        },
+        {
+            "idx": 1,
+            "version": "7",
+            "when": 1727455472009,
+            "tag": "0001_nappy_namor",
+            "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1727795633012,
+            "tag": "0002_bizarre_alex_power",
+            "breakpoints": true
+        },
+        {
+            "idx": 3,
+            "version": "7",
+            "when": 1727879604990,
+            "tag": "0003_whole_randall",
+            "breakpoints": true
+        }
+    ]
 }

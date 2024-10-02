@@ -4,5 +4,6 @@ export {
     postgresContext,
     adminWalletContext,
     nextSessionContext,
+    indexerApiContext,
 } from "./context";
 export { log } from "./logger";
