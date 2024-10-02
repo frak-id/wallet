@@ -32,7 +32,7 @@ export function useSaveCampaign() {
                     queryKey: ["campaign", id],
                 });
             }
-            router.push("/campaigns/list");
+            setTimeout(() => router.push("/campaigns/list"), 0);
             return;
         }
 
