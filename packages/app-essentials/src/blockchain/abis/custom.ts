@@ -36,3 +36,17 @@ export const getExecutionAbi = {
     ],
     stateMutability: "view",
 } as const;
+
+/**
+ * Abi used to mint a few test tokens
+ */
+export const mintAbi = {
+    type: "function",
+    inputs: [
+        { name: "_to", internalType: "address", type: "address" },
+        { name: "_amount", internalType: "uint256", type: "uint256" },
+    ],
+    name: "mint",
+    outputs: [],
+    stateMutability: "nonpayable",
+} as const;

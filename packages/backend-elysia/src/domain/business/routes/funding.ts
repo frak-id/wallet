@@ -1,6 +1,7 @@
 import { adminWalletContext, blockchainContext, log } from "@backend-common";
 import { t } from "@backend-utils";
 import { addresses } from "@frak-labs/app-essentials";
+import { mintAbi } from "@frak-labs/app-essentials/blockchain";
 import { Elysia } from "elysia";
 import { erc20Abi, parseEther } from "viem";
 import { readContract, writeContract } from "viem/actions";
@@ -54,14 +55,3 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" })
             }),
         }
     );
-
-const mintAbi = {
-    type: "function",
-    inputs: [
-        { name: "_to", internalType: "address", type: "address" },
-        { name: "_amount", internalType: "uint256", type: "uint256" },
-    ],
-    name: "mint",
-    outputs: [],
-    stateMutability: "nonpayable",
-} as const;

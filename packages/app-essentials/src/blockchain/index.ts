@@ -40,7 +40,7 @@ export {
     multiWebAuthNRecoveryActionAbi,
     multiWebAuthNValidatorV2Abi,
 } from "./abis/kernelV2Abis";
-export { getExecutionAbi } from "./abis/custom";
+export { getExecutionAbi, mintAbi } from "./abis/custom";
 export {
     sendInteractionsSelector,
     sendInteractionSelector,

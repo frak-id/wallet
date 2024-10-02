@@ -109,8 +109,6 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                         owner: businessSession.wallet,
                     });
 
-                // todo: prefund banking contract
-                // todo: Prepare interaction + bank transactions data
                 return { txHash: mintTxHash, productId: toHex(productId) };
             } catch (e) {
                 return error(400, (e as Error)?.message ?? "An error occurred");

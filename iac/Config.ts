@@ -18,7 +18,6 @@ export function ConfigStack({ stack }: StackContext) {
     const alchemyApiKey = new Config.Secret(stack, "ALCHEMY_API_KEY");
     const pimlicoApiKey = new Config.Secret(stack, "PIMLICO_API_KEY");
     const nexusRpcSecret = new Config.Secret(stack, "NEXUS_RPC_SECRET");
-    const airdropPrivateKey = new Config.Secret(stack, "AIRDROP_PRIVATE_KEY");
     const contentMinterPrivateKey = new Config.Secret(
         stack,
         "CONTENT_MINTER_PRIVATE_KEY"
@@ -62,7 +61,6 @@ export function ConfigStack({ stack }: StackContext) {
         alchemyApiKey,
         pimlicoApiKey,
         nexusRpcSecret,
-        airdropPrivateKey,
         contentMinterPrivateKey,
         adminPassword,
         nexusUrl,
