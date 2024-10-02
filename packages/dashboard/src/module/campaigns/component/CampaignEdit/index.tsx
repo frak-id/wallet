@@ -1,66 +1,53 @@
 "use client";
 
-import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
-import {
-    campaignActionAtom,
-    campaignAtom,
-    isFetchedCampaignAtom,
-} from "@/module/campaigns/atoms/campaign";
+import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
+import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
+import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
+import { Head } from "@/module/common/component/Head";
+import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Spinner } from "@module/component/Spinner";
-import { useQuery } from "@tanstack/react-query";
-import { useAtom, useSetAtom } from "jotai";
-import { type PropsWithChildren, useEffect } from "react";
+import { Button } from "@module/component/Button";
+import { useAtomValue } from "jotai";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
 
 /**
  * Campaign edit component
- * @param params
  * @constructor
  */
-export function CampaignEdit({
-    campaignId,
-    children,
-}: PropsWithChildren<{
-    campaignId: string;
-}>) {
-    const setCampaign = useSetAtom(campaignAtom);
-    const setCampaignAction = useSetAtom(campaignActionAtom);
-    const [isFetchedCampaign, setIsFetchedCampaign] = useAtom(
-        isFetchedCampaignAtom
-    );
-    const {
-        data: campaign,
-        isLoading,
-        isPending,
-    } = useQuery({
-        queryKey: ["campaign", campaignId],
-        queryFn: () => getCampaignDetails({ campaignId }),
+export function CampaignEdit() {
+    const campaign = useAtomValue(campaignAtom);
+
+    const form = useForm<Campaign>({
+        values: useMemo(() => campaign, [campaign]),
     });
 
-    useEffect(() => {
-        setCampaignAction("edit");
-    }, [setCampaignAction]);
-
-    useEffect(() => {
-        if (!isFetchedCampaign && campaign) {
-            setCampaign({ ...campaign, id: campaignId } as Campaign);
-            setIsFetchedCampaign(true);
-        }
-    }, [
-        isFetchedCampaign,
-        setIsFetchedCampaign,
-        campaign,
-        setCampaign,
-        campaignId,
-    ]);
-
-    if (isLoading || isPending) {
-        return <Spinner />;
+    async function onSubmit(values: Campaign) {
+        console.log(values);
     }
 
-    if (!campaign) {
-        return <p>Campaign not found</p>;
-    }
-
-    return children;
+    return (
+        <FormLayout>
+            <Head
+                title={{
+                    content: "Edit campaign",
+                    size: "small",
+                }}
+            />
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <FormBudget {...form} />
+                    <FormSchedule {...form} />
+                    <ActionsWrapper
+                        right={
+                            <Button type={"submit"} variant={"submit"}>
+                                Publish
+                            </Button>
+                        }
+                    />
+                </form>
+            </Form>
+        </FormLayout>
+    );
 }

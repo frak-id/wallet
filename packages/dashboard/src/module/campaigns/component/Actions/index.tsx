@@ -34,11 +34,11 @@ export const Actions = memo(function Actions({
                     "/campaigns/validation",
                 ];
             }
-            if (campaignAction === "edit") {
+            if (campaignAction === "draft") {
                 return [
-                    `/campaigns/edit/${campaignId}`,
-                    `/campaigns/edit/${campaignId}/metrics`,
-                    `/campaigns/edit/${campaignId}/validation`,
+                    `/campaigns/draft/${campaignId}`,
+                    `/campaigns/draft/${campaignId}/metrics`,
+                    `/campaigns/draft/${campaignId}/validation`,
                 ];
             }
         },

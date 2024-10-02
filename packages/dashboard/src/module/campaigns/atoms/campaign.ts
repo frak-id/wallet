@@ -54,7 +54,7 @@ export const isFetchedCampaignAtom = atom(false);
 /**
  * Atom to know if we create or edit a campaign
  */
-export const campaignActionAtom = atom<"create" | "edit" | undefined>(
+export const campaignActionAtom = atom<"create" | "draft" | undefined>(
     undefined
 );
 

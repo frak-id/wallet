@@ -1,5 +1,5 @@
 import { CampaignEdit } from "@/module/campaigns/component/CampaignEdit";
-import { NewCampaign } from "@/module/campaigns/component/Creation/NewCampaign";
+import { CampaignLoad } from "@/module/campaigns/component/CampaignLoad";
 
 export default function CampaignsEditPage({
     params,
@@ -7,8 +7,8 @@ export default function CampaignsEditPage({
     params: { campaignId: string };
 }) {
     return (
-        <CampaignEdit campaignId={params.campaignId}>
-            <NewCampaign title={"Edit campaign"} />
-        </CampaignEdit>
+        <CampaignLoad campaignId={params.campaignId}>
+            <CampaignEdit />
+        </CampaignLoad>
     );
 }
