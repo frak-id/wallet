@@ -64,7 +64,7 @@ function elysiaBackend(
     const {
         mongoExampleUri,
         worldNewsApiKey,
-        airdropPrivateKey,
+        indexerUrl,
         postgres,
         sessionEncryptionKey,
         vapidPrivateKey,
@@ -92,12 +92,13 @@ function elysiaBackend(
         },
         // Bind the secret we will be using
         bind: [
+            // Some generic env
+            indexerUrl,
             // some api keys
             mongoExampleUri,
             worldNewsApiKey,
             // some secrets
             sessionEncryptionKey,
-            airdropPrivateKey,
             masterSecretId,
             // postgres
             postgres.db,
