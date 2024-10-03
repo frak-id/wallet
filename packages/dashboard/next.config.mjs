@@ -5,7 +5,7 @@ import { Config } from "sst/node/config";
 const wantedFromConfig = [
     "ALCHEMY_API_KEY",
     "NEXUS_RPC_SECRET",
-    "NEXUS_WALLET_URL",
+    "FRAK_WALLET_URL",
     "SESSION_ENCRYPTION_KEY",
     "MONGODB_BUSINESS_URI",
     "CONTENT_MINTER_PRIVATE_KEY",

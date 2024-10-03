@@ -29,7 +29,7 @@ export function SendTransaction() {
             <h2>Send transaction</h2>
 
             <p>
-                On click, the SDK will ask the Nexus Wallet to perform a
+                On click, the SDK will ask the Frak Wallet to perform a
                 transaction on arbitrum sepolia.
             </p>
             <p>

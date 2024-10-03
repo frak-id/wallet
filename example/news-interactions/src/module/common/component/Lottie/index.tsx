@@ -28,7 +28,7 @@ export function Lottie({ className }: { className?: string }) {
             className={`${className} ${playerState === "complete" ? styles.lottie__complete : ""}`}
         >
             <Link
-                href={process.env.NEXUS_WALLET_URL as string}
+                href={process.env.FRAK_WALLET_URL as string}
                 target={"_blank"}
             >
                 <Player

@@ -13,7 +13,7 @@ export function LoginList() {
             <AccordionLogin
                 trigger={
                     <>
-                        <HardDrive /> Nexus used on this device
+                        <HardDrive /> Wallets used on this device
                     </>
                 }
             >

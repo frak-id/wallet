@@ -44,11 +44,6 @@ export async function processReferral(
         productId?: Hex;
     }
 ) {
-    console.log("Nexus context info for referral interactions", {
-        walletStatus,
-        nexusContext,
-    });
-
     try {
         // Get the current wallet, without auto displaying the modal
         let currentWallet = getCurrentWallet(walletStatus);

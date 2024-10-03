@@ -32,10 +32,10 @@ export function isDistantStack(stack: Stack): boolean {
  */
 export function getWalletUrl(stack: Stack): string {
     if (isProdStack(stack)) {
-        return "https://nexus.frak.id";
+        return "https://wallet.frak.id";
     }
     if (isDevStack(stack)) {
-        return "https://nexus-dev.frak.id";
+        return "https://wallet-dev.frak.id";
     }
     return "https://localhost:3000";
 }

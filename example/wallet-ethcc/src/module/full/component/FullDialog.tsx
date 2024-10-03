@@ -33,7 +33,7 @@ export function FullDialog() {
             <h2>Full Dialog</h2>
 
             <p>
-                When the btn is clicked, the SDK will ask the Nexus Wallet to
+                When the btn is clicked, the SDK will ask the Frak Wallet to
                 perform all the available actions
             </p>
             <br />
@@ -51,7 +51,7 @@ export function FullDialog() {
                                 },
                                 siwe: {
                                     domain: "example.com",
-                                    uri: "https://nexus.frak.id/",
+                                    uri: "https://wallet.frak.id/",
                                     statement: "Please authenticate",
                                     nonce: "0123456789",
                                     version: "1",

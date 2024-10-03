@@ -26,7 +26,7 @@ export function WalletLogin() {
             <h2>SIWE Authentication</h2>
 
             <p>
-                When the btn is clicked, the SDK will ask the Nexus Wallet to
+                When the btn is clicked, the SDK will ask the Frak Wallet to
                 sign a SIWE Authentication message.
             </p>
             <p>
@@ -46,7 +46,7 @@ export function WalletLogin() {
                             siweAuthenticate: {
                                 siwe: {
                                     domain: "example.com",
-                                    uri: "https://nexus.frak.id/",
+                                    uri: "https://ethcc.news-paper.xyz/",
                                     statement: "Please authenticate",
                                     nonce: "0123456789",
                                     version: "1",

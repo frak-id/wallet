@@ -28,7 +28,7 @@ export function ConfigStack({ stack }: StackContext) {
     const vapidPublicKey = new Config.Secret(stack, "VAPID_PUBLIC_KEY");
     const vapidPrivateKey = new Config.Secret(stack, "VAPID_PRIVATE_KEY");
 
-    const nexusUrl = new Config.Parameter(stack, "NEXUS_WALLET_URL", {
+    const frakWalletUrl = new Config.Parameter(stack, "FRAK_WALLET_URL", {
         value: getWalletUrl(stack),
     });
     const backendUrl = new Config.Parameter(stack, "BACKEND_URL", {
@@ -63,7 +63,7 @@ export function ConfigStack({ stack }: StackContext) {
         nexusRpcSecret,
         contentMinterPrivateKey,
         adminPassword,
-        nexusUrl,
+        frakWalletUrl,
         worldNewsApiKey,
         vapidPublicKey,
         vapidPrivateKey,

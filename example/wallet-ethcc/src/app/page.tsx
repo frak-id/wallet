@@ -8,7 +8,7 @@ import { WalletStatus } from "@/module/wallet/component/WalletStatus";
 export default function HomePage() {
     return (
         <div>
-            <h1>Nexus Demo Eth-CC @Frak-labs</h1>
+            <h1>Frak Wallet Demo Eth-CC @Frak-labs</h1>
 
             <WalletStatus />
             <FullDialog />

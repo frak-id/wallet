@@ -27,7 +27,7 @@ export async function siweAuthenticate(
 ): Promise<SiweAuthenticateReturnType> {
     const realStatement =
         siwe?.statement ??
-        `I confirm that I want to use my Nexus wallet on: ${client.config.metadata.name}`;
+        `I confirm that I want to use my Frak wallet on: ${client.config.metadata.name}`;
 
     // Fill up the siwe request params
     const builtSiwe: SiweAuthenticationParams = {

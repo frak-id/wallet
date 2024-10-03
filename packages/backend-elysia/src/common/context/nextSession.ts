@@ -29,24 +29,24 @@ export const nextSessionContext = new Elysia({
     // Potential nexus cookie session
     .guard({
         cookie: t.Object({
-            nexusSession: t.Optional(t.String()),
+            walletSession: t.Optional(t.String()),
             businessSession: t.Optional(t.String()),
         }),
     })
     // Resolve the session if provided
     .resolve(
         async ({
-            cookie: { nexusSession, businessSession },
+            cookie: { walletSession, businessSession },
             decodeNextSessionCookie,
         }) => ({
             // Decode the session if present
-            nexusSession: await decodeNextSessionCookie<{
+            walletSession: await decodeNextSessionCookie<{
                 wallet: {
                     address: Address;
                     authenticatorId: string;
                 };
             }>({
-                token: nexusSession.value,
+                token: walletSession.value,
             }),
             // Decode the business session if present
             businessSession: await decodeNextSessionCookie<{
@@ -62,13 +62,13 @@ export const nextSessionContext = new Elysia({
     )
     // Macro to enforce a session or throw an error
     .macro(({ onBeforeHandle }) => ({
-        isAuthenticated(wanted?: "nexus" | "business") {
+        isAuthenticated(wanted?: "wallet" | "business") {
             if (!wanted) return;
 
             // If no session present, exit with unauthorized
             return onBeforeHandle(
-                async ({ nexusSession, businessSession, error }) => {
-                    if (wanted === "nexus" && !nexusSession) {
+                async ({ walletSession, businessSession, error }) => {
+                    if (wanted === "wallet" && !walletSession) {
                         return error(401);
                     }
                     if (wanted === "business" && !businessSession) {

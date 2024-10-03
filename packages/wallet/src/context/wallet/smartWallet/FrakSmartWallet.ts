@@ -89,7 +89,7 @@ function formatSignature({
  * @param signatureProvider
  * @param deployedAccountAddress
  */
-export async function nexusSmartAccount<
+export async function frakWalletSmartAccount<
     TTransport extends Transport,
     TChain extends Chain,
 >(

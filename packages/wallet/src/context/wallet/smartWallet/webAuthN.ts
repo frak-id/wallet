@@ -19,7 +19,7 @@ export const rpOrigin = appUrl;
 /**
  * The default user name
  */
-export const defaultUsername = "Nexus Wallet";
+export const defaultUsername = "Frak Wallet";
 
 /**
  * Decode the public key from the attestation object

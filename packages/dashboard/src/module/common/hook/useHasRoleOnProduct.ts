@@ -7,14 +7,41 @@ import {
 } from "@frak-labs/app-essentials";
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
-import { type Hex, isAddressEqual } from "viem";
+import { type Address, type Hex, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
+
+function hasRoles({
+    onChainRoles,
+    role,
+}: { onChainRoles: bigint; role: bigint }) {
+    return (onChainRoles & role) !== 0n;
+}
+
+function hasRolesOrAdmin({
+    onChainRoles,
+    role,
+}: { onChainRoles: bigint; role: bigint }) {
+    return hasRoles({
+        onChainRoles,
+        role: role | productRoles.productAdministrator,
+    });
+}
+
+const defaultRoles = {
+    roles: 0n,
+    isOwner: false,
+    isAdministrator: false,
+    isInteractionManager: false,
+    isCampaignManager: false,
+};
 
 /**
  * Check the wallet roles on a given product
  */
-export function useHasRoleOnProduct({ productId }: { productId: Hex }) {
+export function useHasRoleOnProduct({
+    productId,
+    wallet,
+}: { productId: Hex; wallet?: Address }) {
     const { data: walletStatus } = useWalletStatus();
 
     // Query fetching all the roles of a user
@@ -24,16 +51,14 @@ export function useHasRoleOnProduct({ productId }: { productId: Hex }) {
         refetch: refresh,
     } = useQuery({
         enabled: !!walletStatus,
-        queryKey: ["product", productId, "roles", walletStatus?.key],
+        queryKey: ["product", productId, "roles", walletStatus?.key, wallet],
         queryFn: async () => {
-            if (walletStatus?.key !== "connected") {
-                return {
-                    isOwner: false,
-                    isAdministrator: false,
-                    roles: 0n,
-                };
+            if (!wallet || walletStatus?.key !== "connected") {
+                return defaultRoles;
             }
+            const walletToQuery = wallet ?? walletStatus.wallet;
 
+            // Fetch the roles of the user on the product
             const [productOwner, walletRoles] = await multicall(viemClient, {
                 contracts: [
                     {
@@ -46,47 +71,51 @@ export function useHasRoleOnProduct({ productId }: { productId: Hex }) {
                         abi: productAdministratorRegistryAbi,
                         address: addresses.productAdministratorRegistry,
                         functionName: "rolesOf",
-                        args: [BigInt(productId), walletStatus.wallet],
+                        args: [BigInt(productId), walletToQuery],
                     },
                 ],
                 allowFailure: false,
             });
-            const isOwner = isAddressEqual(productOwner, walletStatus.wallet);
 
+            // Build our role maps
+            const isOwner = isAddressEqual(productOwner, walletToQuery);
+            const isAdministrator =
+                isOwner ||
+                hasRoles({
+                    onChainRoles: walletRoles,
+                    role: productRoles.productAdministrator,
+                });
+            const isInteractionManager =
+                isOwner ||
+                hasRolesOrAdmin({
+                    onChainRoles: walletRoles,
+                    role: productRoles.interactionManager,
+                });
+            const isCampaignManager =
+                isOwner ||
+                hasRolesOrAdmin({
+                    onChainRoles: walletRoles,
+                    role: productRoles.campaignManager,
+                });
+
+            // Return the roles
             return {
-                isOwner,
-                isAdministrator:
-                    isOwner ||
-                    (walletRoles & productRoles.productAdministrator) !== 0n,
                 roles: walletRoles,
+                // Can do anything
+                isOwner,
+                // Can't update product metadata, but can otherwise do anything (even manage team members)
+                isAdministrator,
+                // Can update, deploy and delete interaction contracts
+                isInteractionManager,
+                // Can update, deploy, and delete campaigns
+                isCampaignManager,
             };
         },
     });
 
-    // Helper checking if the current user has the given role or is the owner
-    const hasRolesOrOwner = useCallback(
-        (role: bigint) => {
-            if (!rolesResult) return false;
-
-            return rolesResult.isOwner || (rolesResult.roles & role) !== 0n;
-        },
-        [rolesResult]
-    );
-
-    // Helper checking if the current user has the given role or is the owner
-    const hasRolesOrAdminOrOwner = useCallback(
-        (role: bigint) => {
-            // If he is not the owner, check if he has the given role, or the admin roles
-            return hasRolesOrOwner(role | productRoles.productAdministrator);
-        },
-        [hasRolesOrOwner]
-    );
-
     return {
         refresh,
         rolesReady: isSuccess,
-        isAdministrator: rolesResult?.isAdministrator ?? false,
-        hasRolesOrOwner,
-        hasRolesOrAdminOrOwner,
+        ...(rolesResult ?? defaultRoles),
     };
 }

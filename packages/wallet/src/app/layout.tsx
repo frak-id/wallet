@@ -17,10 +17,10 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-    title: "Nexus Wallet | Your Web3 Identity & Reward Hub",
-    applicationName: "Nexus Wallet",
+    title: "Frak Wallet | Your Web3 Identity & Reward Hub",
+    applicationName: "Frak Wallet",
     description:
-        "Nexus Wallet: Your passkey-first smart wallet for a unified web identity. Earn rewards through website interactions, seamlessly integrate with partner sites, and manage your digital assets securely.",
+        "Frak Wallet: Your passkey-first smart wallet for a unified web identity. Earn rewards through website interactions, seamlessly integrate with partner sites, and manage your digital assets securely.",
     authors: [
         { name: "Frak labs", url: "https://frak.id/" },
         { name: "Rodolphe Stoclin", url: "https://github.com/srod" },
@@ -42,36 +42,35 @@ export const metadata: Metadata = {
     publisher: "Frak labs",
     manifest: "/manifest.json",
     keywords: [
+        "frak",
+        "frak-wallet",
         "blockchain wallet",
         "smart wallet",
         "web3 identity",
         "passkey",
         "digital rewards",
         "user engagement",
-        "blockchain integration",
-        "frak",
-        "nexus",
     ],
     openGraph: {
         type: "website",
         url: isRunningInProd
-            ? "https://nexus.frak.id"
-            : "https://nexus-dev.frak.id",
-        title: "Nexus Wallet | Your Web3 Identity & Reward Hub",
+            ? "https://wallet.frak.id"
+            : "https://wallet-dev.frak.id",
+        title: "Frak Wallet | Your Web3 Identity & Reward Hub",
         description:
             "Manage your unified web identity, earn rewards, and interact seamlessly with partner websites using our passkey-first blockchain smart wallet.",
-        siteName: "Nexus Wallet",
+        siteName: "Frak Wallet",
     },
     twitter: {
         card: "summary_large_image",
         site: "@frak_defi",
-        title: "Nexus Wallet | Your Web3 Identity & Reward Hub",
+        title: "Frak Wallet | Your Web3 Identity & Reward Hub",
         description:
             "Manage your unified web identity, earn rewards, and interact seamlessly with partner websites using our passkey-first blockchain smart wallet.",
     },
     appleWebApp: {
         capable: true,
-        title: "Nexus Wallet",
+        title: "Frak Wallet",
         statusBarStyle: "default",
     },
 };
