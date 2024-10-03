@@ -36,9 +36,15 @@ export function CampaignEdit() {
         const capPeriod = getCapPeriod(budget.type);
 
         onEditCampaign({
-            campaign: "", // todo
-            period: capPeriod,
-            amount: budget.maxEuroDaily,
+            campaign: "", // todo,
+            activationPeriod: {
+                start: values.scheduled.dateStart,
+                end: values.scheduled.dateEnd,
+            },
+            capConfig: {
+                period: capPeriod,
+                amount: budget.maxEuroDaily,
+            },
         });
     }
 
