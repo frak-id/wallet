@@ -4,7 +4,7 @@ import {
 } from "@/context/blockchain/aa-provider";
 import { currentChain, currentViemClient } from "@/context/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/sign";
-import { nexusSmartAccount } from "@/context/wallet/smartWallet/NexusSmartWallet";
+import { frakWalletSmartAccount } from "@/context/wallet/smartWallet/FrakSmartWallet";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
@@ -142,7 +142,7 @@ async function buildSmartAccount<
     SmartAccountClient<transport, typeof currentChain, SmartAccount<account>>
 > {
     // Get the smart wallet client
-    const smartAccount = await nexusSmartAccount(currentViemClient, {
+    const smartAccount = await frakWalletSmartAccount(currentViemClient, {
         authenticatorId: wallet.authenticatorId,
         signerPubKey: wallet.publicKey,
         signatureProvider: async (message) => {

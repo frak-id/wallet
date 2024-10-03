@@ -23,7 +23,7 @@ const nextConfig = {
     env: {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
-        APP_URL: Config.NEXUS_WALLET_URL,
+        APP_URL: Config.FRAK_WALLET_URL,
     },
     transpilePackages: ["lucide-react", "@frak-labs/app-essentials"],
     compiler: {

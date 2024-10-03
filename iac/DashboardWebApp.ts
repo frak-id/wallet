@@ -13,7 +13,7 @@ export function DashboardWebApp({ stack }: StackContext) {
     const {
         alchemyApiKey,
         nexusRpcSecret,
-        nexusUrl,
+        frakWalletUrl,
         sessionEncryptionKey,
         mongoBusinessUri,
         contentMinterPrivateKey,
@@ -23,7 +23,7 @@ export function DashboardWebApp({ stack }: StackContext) {
     const configs = [
         alchemyApiKey,
         nexusRpcSecret,
-        nexusUrl,
+        frakWalletUrl,
         sessionEncryptionKey,
         mongoBusinessUri,
         contentMinterPrivateKey,

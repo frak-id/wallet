@@ -32,6 +32,8 @@ export const metadata: Metadata = {
     publisher: "Frak labs",
     manifest: "/manifest.json",
     keywords: [
+        "frak",
+        "frak-wallet",
         "web3",
         "blockchain",
         "product management",
@@ -39,8 +41,6 @@ export const metadata: Metadata = {
         "business dashboard",
         "campaign management",
         "community building",
-        "nexus",
-        "frak",
     ],
     openGraph: {
         type: "website",

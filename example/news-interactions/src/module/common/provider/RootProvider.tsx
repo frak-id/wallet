@@ -47,7 +47,7 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 };
 
 const frakWalletSdkConfig = {
-    walletUrl: process.env.NEXUS_WALLET_URL as string,
+    walletUrl: process.env.FRAK_WALLET_URL as string,
     metadata: {
         name: "Good Vibes - Frak",
         css: isRunningLocally

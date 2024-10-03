@@ -13,7 +13,7 @@ class WalletDB extends Dexie {
     notification!: Table<NotificationModel>;
 
     constructor() {
-        super("nexus-db");
+        super("frak-wallet-db");
         this.version(1).stores({
             previousAuthenticator: "&wallet,authenticatorId",
             notification: "&id",

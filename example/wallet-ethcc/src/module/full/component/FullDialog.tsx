@@ -33,7 +33,7 @@ export function FullDialog() {
             <h2>Full Dialog</h2>
 
             <p>
-                When the btn is clicked, the SDK will ask the Nexus Wallet to
+                When the btn is clicked, the SDK will ask the Frak Wallet to
                 perform all the available actions
             </p>
             <br />

@@ -16,14 +16,14 @@ export function ExampleAppStack({ stack }: StackContext) {
     }
 
     // The configs required to run the app
-    const { nexusUrl, backendUrl } = use(ConfigStack);
+    const { frakWalletUrl, backendUrl } = use(ConfigStack);
 
     // Declare the next js site on news-paper.xyz
     // Use it for the ETH-CC demo
     const ethCCDemo = new NextjsSite(stack, "walletExampleEthCC", {
         path: "example/wallet-ethcc",
         // Bind to the configs
-        bind: [nexusUrl],
+        bind: [frakWalletUrl],
         openNextVersion: openNextVersion,
         // Set the custom domain
         customDomain: {
@@ -42,7 +42,7 @@ export function ExampleAppStack({ stack }: StackContext) {
     const newsInteractionDemo = new NextjsSite(stack, "newsInteractionDemo", {
         path: "example/news-interactions",
         // Bind to the configs
-        bind: [nexusUrl, backendUrl],
+        bind: [frakWalletUrl, backendUrl],
         openNextVersion: openNextVersion,
         // Set the custom domain
         customDomain: {

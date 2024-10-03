@@ -14,19 +14,19 @@ export const pushInteractionsRoutes = new Elysia()
         "/push",
         async ({
             body: { interactions },
-            nexusSession,
+            walletSession,
             error,
             interactionsDb,
             store,
         }) => {
-            if (!nexusSession) return;
+            if (!walletSession) return;
 
             // Ensure no wallet mismatch
             if (
                 interactions.some(
                     (interaction) =>
                         !isAddressEqual(
-                            nexusSession.wallet.address,
+                            walletSession.wallet.address,
                             interaction.wallet
                         )
                 )
@@ -66,7 +66,7 @@ export const pushInteractionsRoutes = new Elysia()
             return results.map((result) => result.insertedId.toString());
         },
         {
-            isAuthenticated: "nexus",
+            isAuthenticated: "wallet",
             body: t.Object({
                 interactions: t.Array(InteractionRequestDto),
             }),

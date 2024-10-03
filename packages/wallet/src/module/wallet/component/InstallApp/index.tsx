@@ -17,8 +17,8 @@ export function InstallApp() {
                     onClick={launchInstallation}
                 >
                     <Title icon={<ArrowDownToLine width={32} height={32} />}>
-                        Install <strong>Nexus Wallet</strong> on your phone for
-                        a better experience!
+                        Install <strong>Frak Wallet</strong> on your phone for a
+                        better experience!
                     </Title>
                 </ButtonRipple>
             </Panel>
