@@ -10,6 +10,7 @@ import type { Campaign } from "@/types/Campaign";
 import { Spinner } from "@module/component/Spinner";
 import { useQuery } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
+import { usePathname, useRouter } from "next/navigation";
 import { type PropsWithChildren, useEffect } from "react";
 
 /**
@@ -19,12 +20,12 @@ import { type PropsWithChildren, useEffect } from "react";
  */
 export function CampaignLoad({
     campaignId,
-    campaignAction,
     children,
 }: PropsWithChildren<{
     campaignId: string;
-    campaignAction?: "create" | "draft";
 }>) {
+    const router = useRouter();
+    const pathname = usePathname();
     const setCampaign = useSetAtom(campaignAtom);
     const setCampaignAction = useSetAtom(campaignActionAtom);
     const [isFetchedCampaign, setIsFetchedCampaign] = useAtom(
@@ -40,9 +41,26 @@ export function CampaignLoad({
     });
 
     useEffect(() => {
-        if (!campaignAction) return;
+        if (!campaign) return;
+
+        const isDraftPage = pathname.includes("/campaigns/draft/");
+        const isEditPage = pathname.includes("/campaigns/edit/");
+        const campaignAction =
+            campaign.state.key === "created" ? "edit" : "draft";
+
+        // Set the campaign action
         setCampaignAction(campaignAction);
-    }, [setCampaignAction, campaignAction]);
+
+        // Redirect in case of draft page and campaign is created
+        if (campaignAction === "edit" && isDraftPage) {
+            router.push(`/campaigns/edit/${campaignId}`);
+        }
+
+        // Redirect in case of edit page and campaign is draft
+        if (campaignAction === "draft" && isEditPage) {
+            router.push(`/campaigns/draft/${campaignId}`);
+        }
+    }, [setCampaignAction, campaign, pathname, router, campaignId]);
 
     useEffect(() => {
         if (!isFetchedCampaign && campaign) {

@@ -7,7 +7,7 @@ export default function CampaignsDraftMetricsPage({
     params: { campaignId: string };
 }) {
     return (
-        <CampaignLoad campaignId={params.campaignId} campaignAction={"draft"}>
+        <CampaignLoad campaignId={params.campaignId}>
             <MetricsCampaign />
         </CampaignLoad>
     );

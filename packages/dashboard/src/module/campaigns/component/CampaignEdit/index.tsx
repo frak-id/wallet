@@ -8,7 +8,7 @@ import { useEditCampaign } from "@/module/campaigns/hook/useEditCampaign";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
+import type { Campaign, FinalizedCampaignWithState } from "@/types/Campaign";
 import { Button } from "@module/component/Button";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
@@ -29,17 +29,18 @@ export function CampaignEdit() {
     });
 
     async function onSubmit(values: Campaign) {
-        console.log(values);
-        const { budget } = values;
+        const { budget, state } = values as FinalizedCampaignWithState;
+
+        if (state.key !== "created") return;
 
         // Compute the cap period
         const capPeriod = getCapPeriod(budget.type);
 
         onEditCampaign({
-            campaign: "", // todo,
+            campaign: state.address,
             activationPeriod: {
-                start: values.scheduled.dateStart,
-                end: values.scheduled.dateEnd,
+                start: values.scheduled?.dateStart,
+                end: values.scheduled?.dateEnd,
             },
             capConfig: {
                 period: capPeriod,

@@ -7,7 +7,7 @@ export default function CampaignsDraftValidationPage({
     params: { campaignId: string };
 }) {
     return (
-        <CampaignLoad campaignId={params.campaignId} campaignAction={"draft"}>
+        <CampaignLoad campaignId={params.campaignId}>
             <ValidationCampaign />
         </CampaignLoad>
     );

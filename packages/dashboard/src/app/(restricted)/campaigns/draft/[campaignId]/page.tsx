@@ -7,7 +7,7 @@ export default function CampaignsDraftPage({
     params: { campaignId: string };
 }) {
     return (
-        <CampaignLoad campaignId={params.campaignId} campaignAction={"draft"}>
+        <CampaignLoad campaignId={params.campaignId}>
             <NewCampaign title={"Edit campaign"} />
         </CampaignLoad>
     );

@@ -54,9 +54,7 @@ export const isFetchedCampaignAtom = atom(false);
 /**
  * Atom to know if we create or edit a campaign
  */
-export const campaignActionAtom = atom<"create" | "draft" | undefined>(
-    undefined
-);
+export const campaignActionAtom = atom<"create" | "edit" | "draft">("create");
 
 /**
  * Atom to reset the recovery
@@ -67,5 +65,5 @@ export const campaignResetAtom = atom(null, (_get, set) => {
     set(campaignIsClosingAtom, false);
     set(campaignStepAtom, 1);
     set(isFetchedCampaignAtom, false);
-    set(campaignActionAtom, undefined);
+    set(campaignActionAtom, "create");
 });
