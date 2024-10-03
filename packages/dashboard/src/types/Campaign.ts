@@ -4,7 +4,7 @@ import type { Address, Hex } from "viem";
 
 type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
 type SpecialCategory = "credit" | "jobs" | "housing" | "social";
-type Budget = "daily" | "weekly" | "monthly" | "global";
+export type Budget = "daily" | "weekly" | "monthly" | "global";
 
 type CampaignTrigger = {
     // Reward range

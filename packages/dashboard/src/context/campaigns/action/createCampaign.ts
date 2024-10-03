@@ -4,6 +4,7 @@ import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import type { DraftCampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
 import {
     referralCampaignId,
     referralConfigStruct,
@@ -81,17 +82,7 @@ export async function getCreationData(campaign: Campaign) {
     }
 
     // Compute the cap period
-    let capPeriod = 0;
-    if (campaign.budget.type === "daily") {
-        capPeriod = 24 * 60 * 60;
-    } else if (campaign.budget.type === "weekly") {
-        capPeriod = 7 * 24 * 60 * 60;
-    } else if (campaign.budget.type === "monthly") {
-        capPeriod = 30 * 24 * 60 * 60;
-    } else if (campaign.budget.type === "global") {
-        // Max uint48
-        capPeriod = 281474976710655;
-    }
+    const capPeriod = getCapPeriod(campaign.budget.type);
 
     // The start and end period
     let start = 0;
