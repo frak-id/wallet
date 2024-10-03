@@ -11,6 +11,7 @@ import type {
     SsoMetadata,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
+import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
@@ -84,6 +85,7 @@ export function LoginModalStep({
                         disabled={isLoading}
                         onClick={() => login({})}
                     >
+                        {isLoading && <Spinner />}
                         {metadata?.primaryActionText ?? "Login"}
                     </button>
                 </div>

@@ -100,7 +100,7 @@ export function AlertDialog({
                             {title}
                             {showProvidedBy && (
                                 <span className={styles.alertDialog__provided}>
-                                    Provided by Nexus{" "}
+                                    Provided by Frak{" "}
                                     <LogoFrak
                                         sizes={14}
                                         className={styles.alertDialog__logo}

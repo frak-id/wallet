@@ -10,9 +10,42 @@
             walletUrl: 'https://localhost:3000', // Replace with the actual wallet URL
             metadata: {
                 name: 'Your App Name',
-                // Add any custom CSS if needed
+                css: "https://localhost:3000/shopify/nexus-modals.css"
             },
             domain: window.location.host
+        };
+
+        const modalConfig = {
+            steps: {
+                openSession: {
+                    metadata: {
+                        title: "Open reward session",
+                        description:
+                            "We have set up Frak Wallet, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Frak ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                        primaryActionText: "Being rewarded with Frak Wallet",
+                    },
+                },
+                login: {
+                    metadata: {
+                        title: "Login",
+                        description:
+                            "We have set up Frak Wallet, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Frak ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                        primaryActionText: "Login with Frak Wallet",
+                        secondaryActionText: "Create a Frak Wallet",
+                    },
+                    allowSso: true,
+                    ssoMetadata: {
+                        logoUrl: "https://gapianne.com/cdn/shop/files/gapianne_vulva_shop.png?v=1701946066&width=635",
+                        homepageLink: "https://gapianne.com",
+                    },
+                },
+                success: {sharing: {text: 'Successfully logged in!'}}
+            },
+            metadata: {
+                header: {
+                    title: "Payment for your data",
+                },
+            },
         };
 
         function setupNexusClient() {
@@ -57,12 +90,7 @@
             loginButton.textContent = 'Logging in...';
 
             try {
-                await window.NexusSDK.displayModal(window.NexusSetup.nexusClient, {
-                    steps: {
-                        login: {},
-                        success: {sharing: {text: 'Successfully logged in!'}}
-                    }
-                });
+                await window.NexusSDK.displayModal(window.NexusSetup.nexusClient, modalConfig);
                 loginButton.textContent = 'Logged In';
             } catch (error) {
                 console.error('Login error:', error);
@@ -84,20 +112,7 @@
                 window.NexusSetup.nexusClient = nexusClient;
 
                 window.NexusSDK.referralInteraction(nexusClient, {
-                    modalConfig: {
-                        steps: {
-                            openSession: {
-                                metadata: {
-                                    title: "Open reward session",
-                                    description:
-                                        "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Frak ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
-                                    primaryActionText: "Being rewarded with Nexus",
-                                },
-                            },
-                            login: {},
-                            success: {sharing: {text: 'Successfully logged in!'}}
-                        }
-                    }
+                    modalConfig
                 }).then((referral) => {
                     console.log("referral", referral);
                 });

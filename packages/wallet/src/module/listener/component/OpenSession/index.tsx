@@ -4,6 +4,7 @@ import { requestAndCheckStorageAccess } from "@/module/listener/utils/thirdParti
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
+import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAccount } from "wagmi";
 
@@ -96,6 +97,7 @@ export function OpenSessionModalStep({
                             openSession();
                         }}
                     >
+                        {isPending && <Spinner />}
                         {metadata?.primaryActionText ??
                             "Being rewarded with Nexus"}
                     </button>
