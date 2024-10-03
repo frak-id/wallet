@@ -16,7 +16,7 @@ export function useEnforceWagmiConnection() {
     /**
      * Extract the nexus connector
      */
-    const nexusConnector = useMemo(
+    const frakConnector = useMemo(
         () =>
             connectors.find(
                 (connector) => connector.type === smartAccountConnector.type
@@ -33,7 +33,7 @@ export function useEnforceWagmiConnection() {
         // If we are not disconnected, early exit
         if (
             state.status !== "disconnected" &&
-            state.current === nexusConnector?.uid
+            state.current === frakConnector?.uid
         ) {
             return;
         }
@@ -43,16 +43,16 @@ export function useEnforceWagmiConnection() {
             return;
         }
 
-        // If the nexus connector isn't found, do nothing
-        if (!nexusConnector) {
+        // If the frak connector isn't found, do nothing
+        if (!frakConnector) {
             return;
         }
 
         // And then connect to it
-        console.log("Manually connecting to nexus connector", {
+        console.log("Manually connecting to frak wallet connector", {
             status: state.status,
             current: state.current,
         });
-        connect({ connector: nexusConnector });
-    }, [connect, nexusConnector, isPending, state.current, state.status]);
+        connect({ connector: frakConnector });
+    }, [connect, frakConnector, isPending, state.current, state.status]);
 }

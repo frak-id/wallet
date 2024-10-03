@@ -1,106 +1,103 @@
-# Frak-Ecosystem ERC-4337 POC
+# Frak Wallet - Streamlining Web3 Integration
 
-This repository contains a Proof of Concept (POC) that demonstrates the potential unlocked by ERC-4337 within the Frak-Ecosystem. 
+This repository contains the **Frak Wallet SDK**, designed to help web2 corporations create mouth-to-mouth acquisition campaigns through seamless Web3 integration. It provides tools for implementing referral tracking and reward systems, leveraging blockchain technology under the hood.
 
-It showcases the future of paywalls across various Web2 spectrums through secure and transparent Web3 technologies like account abstraction, paymasters, and more.
+## Try It Out
 
-Try it the wallet directly here: [wallet.frak.id](https://wallet.frak.id).
-
-Try the flow using a newspaper article here: [news-example.frak.id](https://news-example.frak.id/).
-
-Or even, try real life flow by following some article shared via the demo X account here: [Frak Demo account](https://twitter.com/FrakDemo). 
+- **Wallet**: [wallet.frak.id](https://wallet.frak.id)
+- **Example Website**: [news-paper.xyz](https://news-paper.xyz)
+- **ERPC and Ponder Deployment**: [GitHub - frak-id/wallet](https://github.com/frak-id/wallet)
 
 ## Overview
 
-This POC enables users to quickly create a wallet, unlock access to premium newspaper articles, and read them in seconds using the advancements of ERC-4337. 
-It's built on the Arbitrum sepolia blockchain and utilizes a range of cutting-edge libraries and frameworks to demonstrate the integration of Web3 technologies into Web2 interfaces.
+Frak Wallet enables developers to integrate blockchain-based referral and reward systems into their applications, facilitating mouth-to-mouth acquisition campaigns. By tracking interactions on-chain, it allows for transparent and verifiable referral programs and user engagement metrics.
 
-If you are brave enough and have an overview of how it works under the hood, you can check a few sequence flow graph here: [Sequence Flow Graph](https://twitter.com/FrakDemo)
+## Key Features
 
-### Features
+- **Referral Tracking**: Implement and monitor referral campaigns with automatic on-chain tracking and reward distribution.
+- **Reward Systems**: Set up campaigns that incentivize user interactions and sharing.
+- **Seamless Integration**: Easily integrate with both React and vanilla JavaScript applications.
+- **Gasless Transactions**: Enable delegated user sessions for improved user experience.
+- **Advanced Authentication**: Utilize Sign-In with Ethereum (SIWE) for secure authentication.
 
-- Instant wallet creation via account abstraction.
-- Gas fees sponsoring via pimlico paymaster.
-- Secure and transparent access to premium content.
-- Built with Domain-Driven Design (DDD) architecture.
-- Utilizes modern JavaScript and Web3 libraries for an enhanced development experience.
+## Use Cases
 
-## Folder Architecture Overview
+### For Web2 Corporations
 
-The project is built using a monorepo structure to further enhance modularity and scalability, incorporating Domain-Driven Design (DDD) principles and Infrastructure as Code (IaC) for efficient deployment and management. 
+- **Mouth-to-Mouth Acquisition**: Boost user acquisition through blockchain-powered referral programs.
+- **Engagement Tracking**: Record user interactions on-chain when they engage with your content or services.
+- **Reward Programs**: Automatically distribute rewards based on user referrals and engagement.
+- **Community Building**: Foster a verifiable community with transparent interaction records.
 
-This new structure allows for multiple projects, such as POCs and example applications, to coexist within the same repository while maintaining their individual architectures. Below is the revised directory structure:
+### For dApp Developers
 
-### Monorepo Structure
+- **Smooth Onboarding**: Simplify user onboarding with account abstraction.
+- **Flexible Reward Mechanisms**: Implement custom token or NFT-based rewards tied to user actions.
+- **Interaction Tracking**: Maintain transparent records of user activity on-chain.
 
-- `packages/`: Root directory for all projects within the monorepo, each project contained within its own subdirectory.
-  - `wallet/`: The wallet proof of concept (POC), demonstrating the core functionalities.
-  - `example/`: An example application interacting with the wallet POC.
+## Integration Benefits
 
-- `iac/`: Infrastructure as Code (IaC) setup using Serverless Stack (SST), located at the root of each project within the `packages/` directory. It houses definitions and configurations for cloud infrastructure deployment on AWS.
+By integrating the Frak Wallet SDK, you can:
 
-- `sst.config.ts`: Located at the root of each project within the `packages/` directory, this is the root SST configuration file. It specifies global settings and resource definitions for deploying the project's infrastructure.
-
-Each project within the `packages/` directory follows the same internal architecture, as detailed below:
-
-### Project Structure (Applicable to Both `wallet` and `example`)
-
-- `src/app/`: Main Next.js entry point for the project, encompassing all routing logic and pages. It orchestrates user navigation throughout the application.
-
-- `src/types/`: Holds all shared TypeScript types and interfaces between the client and server for the project, ensuring type safety and consistency across the application.
-
-- `src/module/`: Organized by domains, with each domain representing a specific area of functionality within the project. For each domain (e.g., `wallet`, `login`), the structure includes:
-  - `hook/`: React hooks specific to the domain, encapsulating logic and side effects.
-  - `component/`: React components related to the domain, used to construct the user interface.
-  - `store/`: State management logic for the domain, managing relevant application state.
-  - `provider/`: Context providers for the domain, enabling state and functionality to be accessed globally.
-  - `style/`: CSS or styled components for the domain, defining its visual appearance.
-
-- `src/context/`: Manages global context and server-side logic for the project, structured per domain with:
-  - `action/`: Defines server-side actions for the domain, such as database operations or external API calls.
-  - `dto/`: Data Transfer Objects (DTOs) for structuring data exchanged with the server.
-  - `repository/`: Repository patterns for abstracting data access and manipulation.
-
-- `public/`: Contains public static assets like images, fonts, accessible without authentication and served directly by the web server.
-
-This architecture not only supports the separation of concerns and modularity but also facilitates scalability and ease of deployment through automated infrastructure management across multiple projects within the monorepo.
+- **Enhance User Experience**: Provide a seamless Web3 experience without blockchain complexities.
+- **Increase Engagement**: Encourage user participation and sharing through incentivized programs.
+- **Build Trust**: Utilize transparent blockchain technology for verifiable interactions.
+- **Easy Implementation**: Integrate the Frak Wallet SDK into your existing setup with minimal effort.
+- **Future-Proof**: Stay ahead with the latest in blockchain technology, including Account Abstraction and WebAuthn.
 
 ## Getting Started
 
-To get started with this POC, you need to have Bun installed on your machine, and have an AWS account setup using AWS CLI. The AWS account will be used to store the config and upload each websites.
+### Prerequisites
+
+- **Bun**: Install [Bun](https://bun.sh/) on your machine.
+- **AWS Account**: Set up an AWS account using AWS CLI for configuration storage and website deployments.
 
 ### Installation
 
-1. Clone the repository and navigate to the project directory.
-2. Run `bun install` to install dependencies.
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/frak-id/wallet.git
+   ```
+2. **Navigate to the Project Directory**:
+   ```bash
+   cd wallet
+   ```
+3. **Install Dependencies**:
+   ```bash
+   bun install
+   ```
 
 ### Running the Development Server
 
-- Execute `bun dev` to start the development server.
+- **Start the Server**:
+  ```bash
+  bun dev
+  ```
 
 ## Built With
 
-- [Bun](https://bun.sh/) - The JS toolkit for maximum efficiency.
-- [Kernel SDK](https://github.com/zerodevapp/sdk) - For smart wallet compatibility.
-- [Permissionless](https://github.com/pimlicolabs/permissionless.js) - For account abstraction (ERC-4337) SDK.
-- [NextJS](https://nextjs.org/) - The React framework for server-side rendering.
-- [Biome](https://biomejs.dev/) - For ultra-fast linting/formatting.
-- [TanStack Query](https://tanstack.com/) - For efficient data fetching and async state management.
-- [Wagmi 2.0](https://wagmi.sh/) - For Ethereum hooks.
-- [Viem 2.0](https://viem.sh/) - For blockchain communication.
-- [Lucid](https://lucide.dev/) - For beautiful icons.
+- **[Bun](https://bun.sh/)**: JavaScript toolkit for performance and efficiency.
+- **[Elysia.js](https://elysiajs.com/)**: Fast and scalable backend framework.
+- **[Next.js](https://nextjs.org/)**: React framework for server-side rendering.
+- **[Biome](https://biomejs.dev/)**: Ultra-fast linting and formatting.
+- **[TanStack Query](https://tanstack.com/)**: Efficient data fetching and async state management.
+- **[Wagmi](https://wagmi.sh/)**: Ethereum hooks for React.
+- **[Viem](https://viem.sh/)**: Blockchain communication library.
+- **[Lucide](https://lucide.dev/)**: Beautiful and consistent icons.
 
 ### Infrastructure
 
-- [SST](https://sst.dev/): Simple Infrastructure as Code (IaC) on AWS.
-- [OpenNext](https://open-next.js.org/): By SST team, for easy NextJS SSR outside of Vercel.
-- [Pimlico](https://www.pimlico.io/): For Paymaster and bundler operations.
-- [ZeroDev](https://zerodev.app/): For smart account solutions.
+- **[SST](https://sst.dev/)**: Infrastructure as Code (IaC) on AWS.
+- **[OpenNext](https://open-next.js.org/)**: Deploy Next.js apps outside of Vercel.
+- **[Pimlico](https://www.pimlico.io/)**: Paymaster and bundler operations.
+- **[ZeroDev](https://zerodev.app/)**: Smart account solutions.
+- **[ERPC](https://www.erpc.cloud/)**: RPC load balancing and caching. [Deployment Repository](https://github.com/frak-id/wallet)
+- **[Ponder](https://ponder.sh/)**: Blockchain event indexing. [Deployment Repository](https://github.com/frak-id/wallet)
 
 ## Contributing
 
-We welcome contributions! Don't hesitate to submit PR :)
+We welcome contributions! Feel free to submit a pull request.
 
 ## License
 
-This project is licensed under the GNU GPLv3 License - see the LICENSE file for details.
+This project is licensed under the **GNU GPLv3 License**. See the [LICENSE](LICENSE) file for details.

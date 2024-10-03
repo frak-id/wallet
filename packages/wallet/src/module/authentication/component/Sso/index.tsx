@@ -128,11 +128,11 @@ export function Sso() {
                 <>
                     <Notice>
                         Avant de continuer, assurez vous d’utiliser un appareil
-                        vous appartenant. Nexus est une solution permettant à
+                        vous appartenant. Frak est une solution permettant à
                         Asics de récompenser sa communauté pour participer à
                         faire connaître ses offres.{" "}
                         <strong>
-                            Nexus est une solution décentralisée et open source
+                            Frak est une solution décentralisée et open source
                             et ne stocke aucune donnée personnelle ou
                             biométrique.
                         </strong>{" "}

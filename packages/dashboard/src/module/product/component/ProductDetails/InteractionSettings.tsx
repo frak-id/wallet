@@ -301,7 +301,7 @@ function ManagedInteractionValidator({
             )}
 
             <CallOut variant={"secondary"}>
-                The Managed Interaction Validator simplifies Nexus SDK
+                The Managed Interaction Validator simplifies Frak Wallet SDK
                 integration by handling interaction validation.
                 <br /> When allowed, you can submit user interactions without
                 generating ECDSA signatures.

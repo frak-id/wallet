@@ -7,10 +7,10 @@ import "../polyfill/bigint-serialization";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 
 export const metadata: Metadata = {
-    title: "Nexus Business Hub | Manage Your Web3 Products",
-    applicationName: "Nexus Business Hub",
+    title: "Frak Business Hub | Manage Your Web3 Products",
+    applicationName: "Frak Business Hub",
     description:
-        "Nexus Business Hub: Deploy, manage, and optimize your Web3 products. Create blockchain-based campaigns, track interactions, and grow your community in the decentralized ecosystem.",
+        "Frak Business Hub: Deploy, manage, and optimize your Web3 products. Create blockchain-based campaigns, track interactions, and grow your community in the decentralized ecosystem.",
     authors: [
         { name: "Frak labs", url: "https://frak.id/" },
         { name: "Rodolphe Stoclin", url: "https://github.com/srod" },
@@ -47,17 +47,17 @@ export const metadata: Metadata = {
         url: isRunningInProd
             ? "https://business.frak.id"
             : "https://business-dev.frak.id",
-        title: "Nexus Business Hub | Manage Your Web3 Products",
+        title: "Frak Business Hub | Manage Your Web3 Products",
         description:
-            "Deploy, manage, and optimize your Web3 products with Nexus Business Hub. Create blockchain-based campaigns and grow your community.",
-        siteName: "Nexus Business Hub",
+            "Deploy, manage, and optimize your Web3 products with Frak Business Hub. Create blockchain-based campaigns and grow your community.",
+        siteName: "Frak Business Hub",
     },
     twitter: {
         card: "summary_large_image",
         site: "@frak_defi",
-        title: "Nexus Business Hub | Manage Your Web3 Products",
+        title: "Frak Business Hub | Manage Your Web3 Products",
         description:
-            "Deploy, manage, and optimize your Web3 products with Nexus Business Hub. Create blockchain-based campaigns and grow your community.",
+            "Deploy, manage, and optimize your Web3 products with Frak Business Hub. Create blockchain-based campaigns and grow your community.",
     },
 };
 

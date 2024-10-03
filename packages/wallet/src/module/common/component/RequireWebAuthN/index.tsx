@@ -27,8 +27,8 @@ export function RequireWebAuthN({ children }: PropsWithChildren) {
     // Otherwise, simple message telling that webauthn isn't supported
     return (
         <p>
-            Open this page on your default web browser to enjoy Nexus rewards
-            and benefits.
+            Open this page on your default web browser to enjoy Frak rewards and
+            benefits.
         </p>
     );
 }
