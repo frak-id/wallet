@@ -11,7 +11,6 @@ import {
     interactionValidatorRoles,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
-    productRoles,
 } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { backendApi } from "@frak-labs/shared/context/server/backendClient";
@@ -34,7 +33,7 @@ import styles from "./InteractionSettings.module.css";
  * @constructor
  */
 export function InteractionSettings({ productId }: { productId: Hex }) {
-    const { rolesReady, hasRolesOrAdminOrOwner } = useHasRoleOnProduct({
+    const { rolesReady, isInteractionManager } = useHasRoleOnProduct({
         productId,
     });
     const { mutateAsync: setupInteractionContract } =
@@ -48,11 +47,6 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
         enabled: !!productId && rolesReady,
         queryKey: ["product", "interaction-details", productId.toString()],
         queryFn: async () => {
-            // Check if the user is allowed on the product
-            const isAllowed = hasRolesOrAdminOrOwner(
-                productRoles.interactionManager
-            );
-
             // Fetch the on chain interaction contract
             const [, interactionContract] = await tryit(() =>
                 readContract(viemClient, {
@@ -64,7 +58,6 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
             )();
 
             return {
-                isAllowed,
                 interactionContract,
             };
         },
@@ -106,7 +99,7 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                         )}
 
                         {detailsData?.interactionContract &&
-                            detailsData?.isAllowed && (
+                            isInteractionManager && (
                                 <ModalDelete
                                     productId={productId}
                                     refreshDetails={async () => {
@@ -116,7 +109,7 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                             )}
 
                         {!detailsData?.interactionContract &&
-                            detailsData?.isAllowed && (
+                            isInteractionManager && (
                                 <Button
                                     variant={"submit"}
                                     onClick={() =>
