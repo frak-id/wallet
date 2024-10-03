@@ -2,6 +2,7 @@
 
 import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
 import { useEditCampaign } from "@/module/campaigns/hook/useEditCampaign";
@@ -21,8 +22,11 @@ import { useForm } from "react-hook-form";
 export function CampaignEdit() {
     const campaign = useAtomValue(campaignAtom);
 
-    const { mutate: onEditCampaign, isPending: isEditingCampaign } =
-        useEditCampaign();
+    const {
+        mutate: onEditCampaign,
+        isPending: isEditingCampaign,
+        isSuccess: isSuccessCampaign,
+    } = useEditCampaign();
 
     const form = useForm<Campaign>({
         values: useMemo(() => campaign, [campaign]),
@@ -62,6 +66,7 @@ export function CampaignEdit() {
                     <FormBudget {...form} />
                     <FormSchedule {...form} />
                     <ActionsWrapper
+                        left={isSuccessCampaign && <ActionsMessageSuccess />}
                         right={
                             <Button
                                 type={"submit"}
