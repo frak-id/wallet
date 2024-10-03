@@ -128,7 +128,7 @@ export function PushPayloadPanel() {
                                     <Input
                                         length={"medium"}
                                         placeholder={
-                                            "https://nexus.frak.id/image.jpg"
+                                            "https://wallet.frak.id/image.jpg"
                                         }
                                         {...field}
                                     />
@@ -150,7 +150,7 @@ export function PushPayloadPanel() {
                                 <FormControl>
                                     <Input
                                         length={"medium"}
-                                        placeholder={"https://nexus.frak.id"}
+                                        placeholder={"https://wallet.frak.id"}
                                         {...field}
                                     />
                                 </FormControl>

@@ -54,8 +54,8 @@ export const metadata: Metadata = {
     openGraph: {
         type: "website",
         url: isRunningInProd
-            ? "https://nexus.frak.id"
-            : "https://nexus-dev.frak.id",
+            ? "https://wallet.frak.id"
+            : "https://wallet-dev.frak.id",
         title: "Frak Wallet | Your Web3 Identity & Reward Hub",
         description:
             "Manage your unified web identity, earn rewards, and interact seamlessly with partner websites using our passkey-first blockchain smart wallet.",

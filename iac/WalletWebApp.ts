@@ -38,8 +38,8 @@ export function WalletAppStack({ stack }: StackContext) {
 
     // Base domain for our whole app
     const subDomain = isProdStack(stack)
-        ? "nexus"
-        : `nexus-${stack.stage.toLowerCase()}`;
+        ? "wallet"
+        : `wallet-${stack.stage.toLowerCase()}`;
 
     // Declare the Next.js site
     const site = new NextjsSite(stack, "wallet", {

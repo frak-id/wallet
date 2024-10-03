@@ -4,7 +4,7 @@ This repository contains a Proof of Concept (POC) that demonstrates the potentia
 
 It showcases the future of paywalls across various Web2 spectrums through secure and transparent Web3 technologies like account abstraction, paymasters, and more.
 
-Try it the wallet directly here: [nexus.frak.id](https://nexus.frak.id).
+Try it the wallet directly here: [wallet.frak.id](https://wallet.frak.id).
 
 Try the flow using a newspaper article here: [news-example.frak.id](https://news-example.frak.id/).
 

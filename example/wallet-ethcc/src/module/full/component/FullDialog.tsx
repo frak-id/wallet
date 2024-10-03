@@ -51,7 +51,7 @@ export function FullDialog() {
                                 },
                                 siwe: {
                                     domain: "example.com",
-                                    uri: "https://nexus.frak.id/",
+                                    uri: "https://wallet.frak.id/",
                                     statement: "Please authenticate",
                                     nonce: "0123456789",
                                     version: "1",

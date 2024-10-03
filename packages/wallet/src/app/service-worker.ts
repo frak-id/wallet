@@ -81,7 +81,7 @@ self.addEventListener("notificationclick", (event) => {
     event.notification.close();
 
     // Get the url to open
-    const url = event.notification.data?.url || "https://nexus.frak.id/";
+    const url = event.notification.data?.url || "https://wallet.frak.id/";
     event.waitUntil(
         // @ts-ignore
         self.clients
