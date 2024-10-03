@@ -75,13 +75,25 @@
     gap: 16px;
     margin-top: 40px;
 }
+.nexus-modal-buttons-wrapper > div {
+    flex: 1;
+    width: 100%;
+    text-align: center;
+}
 .nexus-modal-button-primary,
 .nexus-modal-button-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 80%;
     border: none;
-    padding: 8px 14px;
-    min-width: 200px;
+    padding: 5px 10px;
     border-radius: 16px;
     cursor: pointer;
+    line-height: 24px;
+    text-align: center;
 
     &:disabled {
         cursor: not-allowed;

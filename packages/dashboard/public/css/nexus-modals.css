@@ -7,6 +7,10 @@
 }
 .nexus-modal-button-primary,
 .nexus-modal-button-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     border: none;
     padding: 11px 14px;
     border-radius: 8px;
