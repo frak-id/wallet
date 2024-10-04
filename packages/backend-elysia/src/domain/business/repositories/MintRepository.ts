@@ -5,12 +5,14 @@ import {
     campaignBankFactoryAbi,
     mintAbi,
 } from "@frak-labs/app-essentials/blockchain";
-import { viemClient } from "@frak-labs/nexus-dashboard/src/context/blockchain/provider";
 import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
 import { productTypesMask } from "@frak-labs/nexus-sdk/core";
 import {
     type Address,
+    type Chain,
+    type Client,
     type LocalAccount,
+    type Transport,
     isAddressEqual,
     keccak256,
     parseEther,
@@ -29,7 +31,10 @@ import {
  * Repository used to mint a product
  */
 export class MintRepository {
-    constructor(private readonly adminRepository: AdminWalletsRepository) {}
+    constructor(
+        private readonly adminRepository: AdminWalletsRepository,
+        private readonly client: Client<Transport, Chain>
+    ) {}
 
     /**
      * Precompute the product id from a domain
@@ -45,7 +50,7 @@ export class MintRepository {
      */
     async isExistingProduct(productId: bigint) {
         try {
-            const existingMetadata = await readContract(viemClient, {
+            const existingMetadata = await readContract(this.client, {
                 address: addresses.productRegistry,
                 abi: productRegistryAbi,
                 functionName: "getMetadata",
@@ -95,7 +100,7 @@ export class MintRepository {
         // Prepare the mint tx and send it
         const lock = this.adminRepository.getMutexForAccount({ key: "minter" });
         const mintTxHash = await lock.runExclusive(async () => {
-            const simulatedRequest = await simulateContract(viemClient, {
+            const simulatedRequest = await simulateContract(this.client, {
                 account: minter,
                 address: addresses.productRegistry,
                 abi: productRegistryAbi,
@@ -110,11 +115,11 @@ export class MintRepository {
             if (simulatedRequest.result !== precomputedProductId) {
                 throw new Error("Invalid product id");
             }
-            return await writeContract(viemClient, simulatedRequest.request);
+            return await writeContract(this.client, simulatedRequest.request);
         });
 
         // Wait for the mint to be done before proceeding to the transfer
-        await waitForTransactionReceipt(viemClient, {
+        await waitForTransactionReceipt(this.client, {
             hash: mintTxHash,
             confirmations: 1,
         });
@@ -152,26 +157,29 @@ export class MintRepository {
         try {
             await lock.runExclusive(async () => {
                 // Get the current nonce
-                const nonce = await getTransactionCount(viemClient, minter);
+                const nonce = await getTransactionCount(this.client, minter);
 
                 // Prepare the deployment data
-                const { request, result } = await simulateContract(viemClient, {
-                    account: minter,
-                    abi: campaignBankFactoryAbi,
-                    address: addresses.campaignBankFactory,
-                    functionName: "deployCampaignBank",
-                    args: [productId, addresses.mUSDToken],
-                    nonce,
-                });
+                const { request, result } = await simulateContract(
+                    this.client,
+                    {
+                        account: minter,
+                        abi: campaignBankFactoryAbi,
+                        address: addresses.campaignBankFactory,
+                        functionName: "deployCampaignBank",
+                        args: [productId, addresses.mUSDToken],
+                        nonce,
+                    }
+                );
                 if (!result || isAddressEqual(result, zeroAddress)) {
                     return;
                 }
 
                 // Trigger the deployment
-                await writeContract(viemClient, request);
+                await writeContract(this.client, request);
 
                 // Then mint a few test tokens to this bank
-                await writeContract(viemClient, {
+                await writeContract(this.client, {
                     account: minter,
                     address: addresses.mUSDToken,
                     abi: [mintAbi],

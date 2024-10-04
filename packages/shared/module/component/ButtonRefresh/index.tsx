@@ -19,9 +19,7 @@ export function ButtonRefresh({ className = "" }: { className?: string }) {
             title={"Force refresh"}
             onClick={() => {
                 setIsRefreshing(true);
-                queryClient
-                    .resetQueries()
-                    .then(() => setIsRefreshing(false));
+                queryClient.resetQueries().then(() => setIsRefreshing(false));
             }}
         >
             <RefreshCcw size={20} />

@@ -1,4 +1,8 @@
-import { adminWalletContext, nextSessionContext } from "@backend-common";
+import {
+    adminWalletContext,
+    blockchainContext,
+    nextSessionContext,
+} from "@backend-common";
 import { t } from "@backend-utils";
 import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
 import { productTypes } from "@frak-labs/nexus-sdk/core";
@@ -10,9 +14,10 @@ import { MintRepository } from "../repositories/MintRepository";
 export const mintRoutes = new Elysia({ prefix: "/mint" })
     .use(adminWalletContext)
     .use(nextSessionContext)
-    .decorate(({ adminWalletsRepository, ...decorators }) => ({
+    .use(blockchainContext)
+    .decorate(({ adminWalletsRepository, client, ...decorators }) => ({
         dnsCheckRepository: new DnsCheckRepository(),
-        mintRepository: new MintRepository(adminWalletsRepository),
+        mintRepository: new MintRepository(adminWalletsRepository, client),
         adminWalletsRepository,
         ...decorators,
     }))
