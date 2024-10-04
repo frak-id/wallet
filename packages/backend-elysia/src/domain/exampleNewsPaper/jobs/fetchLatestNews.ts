@@ -1,5 +1,6 @@
 import { log } from "@backend-common";
-import cron, { Patterns } from "@elysiajs/cron";
+import { mutexCron } from "@backend-utils";
+import { Patterns } from "@elysiajs/cron";
 import { cluster } from "radash";
 import { Config } from "sst/node/config";
 import type { NewsPaperContextApp } from "../context";
@@ -15,8 +16,9 @@ export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
     app
         // Cron to automatically fetch the latest news every 6 hours
         .use(
-            cron({
+            mutexCron({
                 name: "fetchNews",
+                skipIfLocked: true,
                 pattern: Patterns.everyHours(6),
                 run: async () => {
                     // Get the repository we will use

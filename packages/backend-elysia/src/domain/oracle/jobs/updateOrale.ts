@@ -1,11 +1,11 @@
 import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
-import cron, { Patterns } from "@elysiajs/cron";
+import { mutexCron } from "@backend-utils";
+import { Patterns } from "@elysiajs/cron";
 import {
     addresses,
     purchaseOracleAbi,
 } from "@frak-labs/app-essentials/blockchain";
-import { Mutex } from "async-mutex";
 import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { type Client, type Hex, type LocalAccount, encodePacked } from "viem";
 import {
@@ -18,83 +18,78 @@ import type { OracleContextApp, OracleDb } from "../context";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 
-const oracleMutex = new Mutex();
-
 export const updateMerkleRootJob = (app: OracleContextApp) =>
     app.use(
-        cron({
+        mutexCron({
             name: "updateMerkleRoot",
             pattern: Patterns.everyMinutes(5),
             protect: true,
             catch: true,
             interval: 30,
-            run: () =>
-                oracleMutex.runExclusive(async () => {
-                    // Extract some stuff from the app
-                    const {
-                        oracleDb,
-                        merkleRepository,
-                        adminWalletsRepository,
-                        client,
-                    } = app.decorator;
+            run: async () => {
+                // Extract some stuff from the app
+                const {
+                    oracleDb,
+                    merkleRepository,
+                    adminWalletsRepository,
+                    client,
+                } = app.decorator;
 
-                    // Get some unsynced products
-                    const notSyncedProductIds = await oracleDb
-                        .select({
-                            productId: productOracleTable.productId,
-                        })
-                        .from(productOracleTable)
-                        .where(
-                            and(
-                                eq(productOracleTable.synced, false),
-                                isNotNull(productOracleTable.merkleRoot)
-                            )
-                        );
-                    log.debug(
-                        `${notSyncedProductIds.length} products are not synced`
-                    );
-
-                    // Update the empty leafs
-                    const updatedOracleIds = await updateEmptyLeafs({
-                        oracleDb,
-                    });
-                    if (
-                        updatedOracleIds.size === 0 &&
-                        notSyncedProductIds.length === 0
-                    ) {
-                        log.debug("No oracle to update");
-                        return;
-                    }
-
-                    // Invalidate the merkle tree
-                    const productIds = await invalidateOracleTree({
-                        oracleIds: updatedOracleIds,
-                        oracleDb,
-                        merkleRepository,
-                    });
-                    log.debug(
-                        `Invalidating oracle for ${productIds.length} products`
-                    );
-
-                    const finalProductIds = new Set(
-                        productIds.concat(
-                            notSyncedProductIds.map(
-                                (product) => product.productId
-                            )
+                // Get some unsynced products
+                const notSyncedProductIds = await oracleDb
+                    .select({
+                        productId: productOracleTable.productId,
+                    })
+                    .from(productOracleTable)
+                    .where(
+                        and(
+                            eq(productOracleTable.synced, false),
+                            isNotNull(productOracleTable.merkleRoot)
                         )
                     );
-                    log.debug(
-                        `Will update ${finalProductIds.size} products merkle tree`
-                    );
-                    // Then update each product ids merkle root
-                    await updateProductsMerkleRoot({
-                        productIds: [...finalProductIds],
-                        oracleDb,
-                        merkleRepository,
-                        adminRepository: adminWalletsRepository,
-                        client,
-                    });
-                }),
+                log.debug(
+                    `${notSyncedProductIds.length} products are not synced`
+                );
+
+                // Update the empty leafs
+                const updatedOracleIds = await updateEmptyLeafs({
+                    oracleDb,
+                });
+                if (
+                    updatedOracleIds.size === 0 &&
+                    notSyncedProductIds.length === 0
+                ) {
+                    log.debug("No oracle to update");
+                    return;
+                }
+
+                // Invalidate the merkle tree
+                const productIds = await invalidateOracleTree({
+                    oracleIds: updatedOracleIds,
+                    oracleDb,
+                    merkleRepository,
+                });
+                log.debug(
+                    `Invalidating oracle for ${productIds.length} products`
+                );
+
+                const finalProductIds = new Set(
+                    productIds.concat(
+                        notSyncedProductIds.map((product) => product.productId)
+                    )
+                );
+                log.debug(
+                    `Will update ${finalProductIds.size} products merkle tree`
+                );
+                // Then update each product ids merkle root
+                await updateProductsMerkleRoot({
+                    productIds: [...finalProductIds],
+                    oracleDb,
+                    merkleRepository,
+                    adminRepository: adminWalletsRepository,
+                    client,
+                });
+            },
         })
     );
 

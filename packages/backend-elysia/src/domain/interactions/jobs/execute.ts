@@ -1,6 +1,6 @@
 import { log } from "@backend-common";
-import cron, { Patterns } from "@elysiajs/cron";
-import { Mutex } from "async-mutex";
+import { mutexCron } from "@backend-utils";
+import { Patterns } from "@elysiajs/cron";
 import { and, eq, inArray } from "drizzle-orm";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
 import {
@@ -11,52 +11,49 @@ import type { InteractionDiamondRepository } from "../repositories/InteractionDi
 import type { InteractionSignerRepository } from "../repositories/InteractionSignerRepository";
 import type { PreparedInteraction } from "../types/interactions";
 
-const executionMutex = new Mutex();
-
 export const executeInteractionJob = (app: InteractionsContextApp) =>
     app.use(
-        cron({
+        mutexCron({
             name: "executeInteraction",
             pattern: Patterns.everyMinutes(30),
+            skipIfLocked: true,
+            coolDownInMs: 2_000,
             protect: true,
             catch: true,
             interval: 60,
-            run: () =>
-                executionMutex.runExclusive(async () => {
-                    // Get some stuff from the app
-                    const {
-                        interactionsDb,
-                        interactionDiamondRepository,
-                        interactionSignerRepository,
-                    } = app.decorator;
+            run: async () => {
+                // Get some stuff from the app
+                const {
+                    interactionsDb,
+                    interactionDiamondRepository,
+                    interactionSignerRepository,
+                } = app.decorator;
 
-                    // Get interactions to simulate
-                    const interactions = await getInteractionsToExecute({
-                        interactionsDb,
-                    });
-                    if (interactions.length === 0) {
-                        log.debug("No interactions to execute");
-                        return;
-                    }
-                    log.debug(
-                        `Will execute ${interactions.length} interactions`
-                    );
+                // Get interactions to simulate
+                const interactions = await getInteractionsToExecute({
+                    interactionsDb,
+                });
+                if (interactions.length === 0) {
+                    log.debug("No interactions to execute");
+                    return;
+                }
+                log.debug(`Will execute ${interactions.length} interactions`);
 
-                    // Execute them
-                    const txHash = await executeInteractions({
-                        interactions,
-                        interactionsDb,
-                        interactionDiamondRepository,
-                        interactionSignerRepository,
-                    });
+                // Execute them
+                const txHash = await executeInteractions({
+                    interactions,
+                    interactionsDb,
+                    interactionDiamondRepository,
+                    interactionSignerRepository,
+                });
 
-                    log.info(
-                        {
-                            txHash,
-                        },
-                        `Executed ${interactions.length}  interactions`
-                    );
-                }),
+                log.info(
+                    {
+                        txHash,
+                    },
+                    `Executed ${interactions.length}  interactions`
+                );
+            },
         })
     );
 
