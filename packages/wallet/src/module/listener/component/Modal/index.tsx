@@ -169,15 +169,26 @@ function ListenerModalDialog({
     /**
      * The inner component to display
      */
-    const { title } = useMemo(() => {
+    const { title, icon } = useMemo(() => {
         return {
-            title: currentRequest.metadata?.header?.title ?? "",
+            title: currentRequest.metadata?.header?.title,
+            icon: currentRequest?.metadata?.header?.icon,
         };
-    }, [currentRequest?.metadata?.header?.title]);
+    }, [
+        currentRequest?.metadata?.header?.title,
+        currentRequest?.metadata?.header?.icon,
+    ]);
 
     return (
         <ModalComponent title={title} open={true} onOpenChange={onOpenChange}>
             <>
+                {icon && (
+                    <img
+                        src={icon}
+                        alt={""}
+                        className={styles.modalListener__icon}
+                    />
+                )}
                 <ModalStepIndicator />
                 <CurrentModalStepComponent
                     currentRequest={currentRequest}

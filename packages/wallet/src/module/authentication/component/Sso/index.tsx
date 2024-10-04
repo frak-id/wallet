@@ -183,7 +183,7 @@ function Header() {
                 <img
                     src={currentMetadata.logoUrl}
                     alt={currentMetadata.name}
-                    height={50}
+                    className={styles.login__icon}
                 />
             )}
             <h2>Create your Wallet</h2>

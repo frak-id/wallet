@@ -71,3 +71,9 @@
 .modalListener__context {
     margin-bottom: 10px;
 }
+
+.modalListener__icon {
+    display: block;
+    margin: 0 auto 28px auto;
+    max-width: 50%;
+}
