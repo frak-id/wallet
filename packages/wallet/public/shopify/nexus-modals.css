@@ -33,14 +33,18 @@
     letter-spacing: -.04em;
 }
 .nexus-modal-steps {
-    gap: 12px;
+    gap: 30px;
     background-color: transparent;
 }
 .nexus-modal-step {
     flex: initial;
+    position: relative;
 
     &::after {
+        position: absolute;
+        width: 15px;
         content: "---";
+        margin-top: 3px;
         margin-left: 12px;
         font-size: 10px;
         letter-spacing: -.02em;
