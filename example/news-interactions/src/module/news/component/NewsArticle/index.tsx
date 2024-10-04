@@ -21,21 +21,23 @@ import { keccak256, toHex } from "viem";
 import forward from "./assets/forward.svg";
 import styles from "./index.module.css";
 
+const description = `We have set up Frak, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services.
+                
+Your choice will only be valid on the digital support you are currently using. If you log in to your account, your Frak ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.`;
+
 const modalConfig = {
     steps: {
         openSession: {
             metadata: {
                 title: "Open reward session",
-                description:
-                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Frak ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                description,
                 primaryActionText: "Being rewarded with Nexus",
             },
         },
         login: {
             metadata: {
                 title: "Login",
-                description:
-                    "We have set up Nexus, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services. Your choice will only be valid on the digital support you are currently using. If you log in to your Asics account, your Frak ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.",
+                description,
                 primaryActionText: "Login with Nexus",
                 secondaryActionText: "Create a Nexus",
             },
