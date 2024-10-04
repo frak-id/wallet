@@ -1,11 +1,11 @@
 import type { Hex } from "viem";
-import { walletStatus } from "../actions";
+import { walletStatus } from "../";
 import type {
     DisplayModalParamsType,
     ModalStepTypes,
     NexusClient,
-} from "../types";
-import { NexusContextManager } from "../utils";
+} from "../../types";
+import { NexusContextManager } from "../../utils";
 import { processReferral } from "./processReferral";
 
 export async function referralInteraction(

@@ -1,6 +1,7 @@
 import { type Hex, isAddressEqual } from "viem";
-import type { NexusContext } from "../../react/types/NexusContext";
-import { displayModal, sendInteraction } from "../actions";
+import { displayModal, sendInteraction } from "../";
+import type { NexusContext } from "../../../react/types/NexusContext";
+import { ReferralInteractionEncoder } from "../../interactions";
 import {
     type DisplayModalParamsType,
     FrakRpcError,
@@ -8,9 +9,8 @@ import {
     type NexusClient,
     RpcErrorCodes,
     type WalletStatusReturnType,
-} from "../types";
-import { NexusContextManager } from "../utils";
-import { ReferralInteractionEncoder } from "./referralEncoder";
+} from "../../types";
+import { NexusContextManager } from "../../utils";
 
 type ReferralState =
     | "idle"

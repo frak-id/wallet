@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 import type { DisplayModalParamsType, ModalStepTypes } from "../../../core";
-import { processReferral } from "../../../core/interactions";
+import { processReferral } from "../../../core/actions";
 import { ClientNotFound } from "../../../core/types/rpc/error";
 import { useNexusClient } from "../useNexusClient";
 import { useWalletStatus } from "../useWalletStatus";

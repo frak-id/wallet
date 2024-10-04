@@ -12,3 +12,6 @@ export {
     type SendTransactionParams,
 } from "./wrapper/sendTransaction";
 export { walletStatus } from "./wrapper/walletStatus";
+// Referral interaction
+export { referralInteraction } from "./referral/referralInteraction";
+export { processReferral } from "./referral/processReferral";
