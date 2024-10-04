@@ -3,7 +3,6 @@ import { ButtonAddProduct } from "@/module/dashboard/component/ButtonAddProduct"
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import { Spinner } from "@module/component/Spinner";
-import Link from "next/link";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
 
@@ -48,10 +47,10 @@ function ProductListSection({
 }: { products: { id: Hex; name: string; domain: string }[] }) {
     return (
         <div className={styles.contentListSection}>
-            <ButtonAddProduct />
             {products.map((content) => (
                 <ProductListItem key={content.id} product={content} />
             ))}
+            <ButtonAddProduct />
         </div>
     );
 }
@@ -59,13 +58,6 @@ function ProductListSection({
 function ProductListItem({
     product,
 }: { product: { id: Hex; name: string; domain: string } }) {
-    return (
-        <Link href={`/product/${product.id}`}>
-            <ProductItem>
-                {product.name}
-                <br />
-                {product.domain}
-            </ProductItem>
-        </Link>
-    );
+    const { id, name, domain } = product;
+    return <ProductItem id={id} name={name} domain={domain} />;
 }

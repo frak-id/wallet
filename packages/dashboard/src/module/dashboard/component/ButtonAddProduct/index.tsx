@@ -28,7 +28,7 @@ import { Input } from "@module/component/forms/Input";
 import { validateUrl } from "@module/utils/validateUrl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import type { Hex, TransactionReceipt } from "viem";
@@ -87,10 +87,17 @@ export function ButtonAddProduct() {
                     }
                     buttonElement={
                         <Button size={"none"} variant={"ghost"}>
-                            <ProductItem>
-                                +<br />
-                                List a Product
-                            </ProductItem>
+                            <ProductItem
+                                name={
+                                    <>
+                                        <Plus />
+                                        List a Product
+                                    </>
+                                }
+                                domain={"domain.com"}
+                                showActions={false}
+                                isLink={false}
+                            />
                         </Button>
                     }
                     showCloseButton={false}
