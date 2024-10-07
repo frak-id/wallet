@@ -31,4 +31,5 @@ export {
     isRunningInProd,
     isRunningLocally,
     stringToBytes32,
+    bytesToString,
 } from "./utils";

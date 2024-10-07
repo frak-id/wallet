@@ -1,6 +1,10 @@
 import { viemClient } from "@/context/blockchain/provider";
 import { decodeProductTypesMask } from "@/module/product/utils/productTypes";
-import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
+import {
+    addresses,
+    bytesToString,
+    productRegistryAbi,
+} from "@frak-labs/app-essentials";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
@@ -19,8 +23,11 @@ export function useProductMetadata({ productId }: { productId?: Hex }) {
                 functionName: "getMetadata",
                 args: [BigInt(productId)],
             });
+            console.log({ metadata }, "Product metadata");
+
             return {
                 ...metadata,
+                name: bytesToString(metadata.name),
                 productTypes: decodeProductTypesMask(metadata.productTypes),
             };
         },

@@ -1,2 +1,2 @@
 export { isRunningInProd, isRunningLocally } from "./env";
-export { stringToBytes32 } from "./stringToBytes32";
+export { stringToBytes32, bytesToString } from "./stringToBytes32";
