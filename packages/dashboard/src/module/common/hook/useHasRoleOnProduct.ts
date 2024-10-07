@@ -51,12 +51,22 @@ export function useHasRoleOnProduct({
         refetch: refresh,
     } = useQuery({
         enabled: !!walletStatus,
-        queryKey: ["product", productId, "roles", walletStatus?.key, wallet],
+        queryKey: [
+            "product",
+            productId,
+            "roles",
+            walletStatus?.key,
+            wallet ?? "no-given-wallet",
+        ],
         queryFn: async () => {
-            if (!wallet || walletStatus?.key !== "connected") {
+            const walletToQuery =
+                wallet ??
+                (walletStatus?.key === "connected"
+                    ? walletStatus.wallet
+                    : undefined);
+            if (!walletToQuery) {
                 return defaultRoles;
             }
-            const walletToQuery = wallet ?? walletStatus.wallet;
 
             // Fetch the roles of the user on the product
             const [productOwner, walletRoles] = await multicall(viemClient, {

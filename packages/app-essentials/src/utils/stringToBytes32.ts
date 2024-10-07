@@ -18,5 +18,7 @@ export function bytesToString(bytes: Hex) {
     if (!isHex(bytes)) {
         return bytes;
     }
-    return hexToString(bytes).trim();
+    return hexToString(bytes)
+        .replace(/[^\x20-\x7F]/g, "")
+        .trim();
 }
