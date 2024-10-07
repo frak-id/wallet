@@ -12,17 +12,33 @@ import {
     type ProductBank,
     useGetProductFunding,
 } from "@/module/product/hook/useGetProductFunding";
+import { useSetBankDistributionStatus } from "@/module/product/hook/useSetBankDistributionStatus";
 import { addresses } from "@frak-labs/app-essentials";
 import { Switch } from "@frak-labs/nexus-wallet/src/module/common/component/Switch";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { Spinner } from "@module/component/Spinner";
+import { atom, useAtomValue, useSetAtom } from "jotai";
 import { CheckCircle, XCircle } from "lucide-react";
+import { useEffect } from "react";
 import { type Hex, isAddressEqual } from "viem";
 import styles from "./index.module.css";
 
+/**
+ * Store product id locally
+ */
+const productIdAtom = atom<Hex | null>(null);
+
+/**
+ * Product funding page
+ * @param productId
+ * @returns
+ */
 export function ProductFunding({ productId }: { productId: Hex }) {
+    const setProductId = useSetAtom(productIdAtom);
     const { data, isLoading, isPending } = useGetProductFunding({ productId });
+
+    useEffect(() => setProductId(productId), [productId, setProductId]);
 
     return (
         <FormLayout>
@@ -38,8 +54,15 @@ export function ProductFunding({ productId }: { productId: Hex }) {
     );
 }
 
+/**
+ * List of banks for the product
+ * @param banks
+ * @returns
+ */
 function ProductFundingBanks({ banks }: { banks: ProductBank[] }) {
-    if (banks.length === 0) {
+    const productId = useAtomValue(productIdAtom);
+
+    if (banks.length === 0 || !productId) {
         return <div>No banks</div>;
     }
 
@@ -48,6 +71,11 @@ function ProductFundingBanks({ banks }: { banks: ProductBank[] }) {
     ));
 }
 
+/**
+ * Bank informations
+ * @param bank
+ * @returns
+ */
 function ProductFundingBank({ bank }: { bank: ProductBank }) {
     return (
         <div className={styles.productFundingBank}>
@@ -61,12 +89,7 @@ function ProductFundingBank({ bank }: { bank: ProductBank }) {
                         Campaigns funding status
                     </Title>
                     <Row align={"center"}>
-                        <Switch
-                            // checked={!!sessionStatus}
-                            onCheckedChange={(checked) => {
-                                console.log(checked);
-                            }}
-                        />
+                        <ToggleFundingStatus bank={bank} />
                         <Badge
                             size={"small"}
                             variant={bank.isDistributing ? "success" : "danger"}
@@ -135,12 +158,42 @@ function BankAmount({
 }
 
 /**
+ * Toggle the funding status of the bank
+ * @param bank
+ * @returns
+ */
+function ToggleFundingStatus({ bank }: { bank: ProductBank }) {
+    const productId = useAtomValue(productIdAtom);
+
+    const { canUpdate, isSettingDistributionStatus, setDistributionStatus } =
+        useSetBankDistributionStatus({
+            productId: productId ?? "0x0",
+            bank: bank.address,
+        });
+
+    if (!canUpdate) return null;
+
+    return (
+        <>
+            <Switch
+                disabled={isSettingDistributionStatus}
+                checked={bank.isDistributing}
+                onCheckedChange={(checked) =>
+                    setDistributionStatus({ isDistributing: checked })
+                }
+            />
+            {isSettingDistributionStatus && <Spinner />}
+        </>
+    );
+}
+
+/**
  * Fund the balance of the bank
  * @param bank
  * @returns
  */
 function FundBalance({ bank }: { bank: ProductBank }) {
-    const { mutate, isPending } = useFundBank();
+    const { mutate: fundBank, isPending } = useFundBank();
 
     return (
         <Columns>
@@ -150,7 +203,7 @@ function FundBalance({ bank }: { bank: ProductBank }) {
                         variant={"submit"}
                         disabled={isPending}
                         isLoading={isPending}
-                        onClick={() => mutate({ bank: bank.token.address })}
+                        onClick={() => fundBank({ bank: bank.address })}
                     >
                         Fund Balance
                     </Button>
