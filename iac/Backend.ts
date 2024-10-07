@@ -71,6 +71,11 @@ function elysiaBackend(
         vapidPublicKey,
     } = use(ConfigStack);
 
+    // The domain name we will be using
+    const domainName = isDevStack(stack)
+        ? "backend-dev.frak.id"
+        : "backend.frak.id";
+
     // The service itself
     const elysiaService = new Service(stack, "ElysiaService", {
         path: "./",
@@ -78,9 +83,7 @@ function elysiaBackend(
         port: 3030,
         // Deployment domain
         customDomain: {
-            domainName: isDevStack(stack)
-                ? "backend-dev.frak.id"
-                : "backend.frak.id",
+            domainName: domainName,
             hostedZone: "frak.id",
         },
         // Setup some capacity options
@@ -141,15 +144,19 @@ function elysiaBackend(
             // Custom alb target group
             applicationLoadBalancerTargetGroup: {
                 healthCheck: {
-                    path: "/",
+                    path: "/health",
                     interval: Duration.seconds(60),
                     healthyThresholdCount: 2,
                     unhealthyThresholdCount: 5,
                     healthyHttpCodes: "200",
                 },
+                deregistrationDelay: Duration.seconds(60),
             },
         },
     });
+
+    elysiaService.addEnvironment("HOSTNAME", domainName);
+    elysiaService.addEnvironment("STAGE", stack.stage);
 
     // Ensure we got a fargate service set up
     if (!elysiaService.cdk?.fargateService) {

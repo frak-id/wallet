@@ -27,6 +27,7 @@ WORKDIR /app
 COPY --from=builder /monorepo/packages/backend-elysia/package.json .
 COPY --from=builder /monorepo/packages/backend-elysia/dist ./dist
 
+# Runtime port
 EXPOSE 3030
 
 ENV NODE_ENV=production
