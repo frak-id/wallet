@@ -1,7 +1,6 @@
 "use client";
 
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
-import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -15,7 +14,8 @@ import {
 } from "@/module/forms/Form";
 import { MultiSelect, type MultiSelectProps } from "@/module/forms/MultiSelect";
 import { InteractionSettings } from "@/module/product/component/ProductDetails/InteractionSettings";
-import { ManageProductTeam } from "@/module/product/component/ProductDetails/ManageTeam";
+import { PurchaseOracleSetup } from "@/module/product/component/ProductDetails/PurchaseOracle";
+import { ProductHead } from "@/module/product/component/ProductHead";
 import { useEditProduct } from "@/module/product/hook/useEditProduct";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import { productTypesLabel } from "@/module/product/utils/productTypes";
@@ -26,12 +26,10 @@ import {
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { Input, type InputProps } from "@module/component/forms/Input";
-import { Pencil, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex } from "viem";
-import { PurchaseOracleSetup } from "./PurchaseOracle";
 import styles from "./index.module.css";
 
 type FormProduct = {
@@ -41,7 +39,6 @@ type FormProduct = {
 };
 
 export function ProductDetails({ productId }: { productId: Hex }) {
-    const router = useRouter();
     const {
         data: product,
         isLoading: productIsLoading,
@@ -85,18 +82,7 @@ export function ProductDetails({ productId }: { productId: Hex }) {
 
     return (
         <FormLayout>
-            <Head
-                title={{ content: product?.name ?? "", size: "small" }}
-                rightSection={
-                    <Button
-                        variant={"outline"}
-                        leftIcon={<X size={20} />}
-                        onClick={() => router.push("/dashboard")}
-                    >
-                        Cancel
-                    </Button>
-                }
-            />
+            <ProductHead productId={productId} />
             <Form {...form}>
                 {!(productIsLoading || productIsPending) && (
                     <Panel title={"Details of the product"}>
@@ -218,7 +204,6 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                         </Columns>
                     </Panel>
                 )}
-                <ManageProductTeam productId={productId} />
                 <PurchaseOracleSetup productId={productId} />
                 <InteractionSettings productId={productId} />
             </Form>

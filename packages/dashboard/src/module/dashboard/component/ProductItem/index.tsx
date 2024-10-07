@@ -1,4 +1,4 @@
-import { FolderPlus, Pen, Users } from "lucide-react";
+import { Pen, Users, WalletMinimal } from "lucide-react";
 import Link from "next/link";
 import type { HTMLAttributes, PropsWithChildren, ReactElement } from "react";
 import type { Hex } from "viem";
@@ -51,15 +51,22 @@ function ProductActions({ id }: { id?: Hex }) {
     return (
         <ul className={styles.productItem__actions}>
             <li>
-                <FolderPlus />
+                <Link
+                    href={`/product/${id}/funding`}
+                    title={"Manage the product balance"}
+                >
+                    <WalletMinimal />
+                </Link>
             </li>
             <li>
-                <Link href={`/product/${id}`}>
+                <Link href={`/product/${id}`} title={"Edit your product"}>
                     <Pen />
                 </Link>
             </li>
             <li>
-                <Users />
+                <Link href={`/product/${id}/team`} title={"Manage your team"}>
+                    <Users />
+                </Link>
             </li>
             {/* <li>
             <Trash2 />

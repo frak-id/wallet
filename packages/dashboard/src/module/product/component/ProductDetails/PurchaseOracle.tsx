@@ -3,7 +3,7 @@ import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
 import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
-import { FormLabel } from "@/module/forms/Form";
+import { Form, FormLabel } from "@/module/forms/Form";
 import {
     addresses,
     productAdministratorRegistryAbi,
@@ -16,7 +16,8 @@ import { Column, Columns } from "@module/component/Columns";
 import { Spinner } from "@module/component/Spinner";
 import { Input } from "@module/component/forms/Input";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 import { readContract } from "viem/actions";
 import { useProductMetadata } from "../../hook/useProductMetadata";
@@ -101,7 +102,7 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
     }
 
     return (
-        <>
+        <div className={styles.purchaseOracleSetup__inner}>
             <Columns>
                 <Column size={"full"}>
                     <Title as={"h3"}>Oracle</Title>
@@ -168,7 +169,7 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
             </Columns>
 
             <WebhookStats stats={oracleSetupData.webhookStatus} />
-        </>
+        </div>
     );
 }
 
@@ -328,36 +329,47 @@ function WebhookRegistrationForm({
         },
     });
 
-    const [key, setKey] = useState(currentSigninKey ?? "");
     const [error, setError] = useState<string | undefined>();
 
+    const form = useForm({
+        values: useMemo(() => ({ key: currentSigninKey }), [currentSigninKey]),
+        defaultValues: {
+            key: currentSigninKey,
+        },
+    });
+
     return (
-        <form
-            onSubmit={(e) => {
-                e.preventDefault();
-                setError(undefined);
-                if (key === "") {
-                    setError("Missing signin key");
-                    return;
-                }
-                setupWebhook({ webhookKey: key });
-            }}
-        >
-            <FormLabel weight={"medium"} htmlFor={"webhook-signin-key"}>
-                The webhook signin key from your shopify admin panel
-            </FormLabel>
-            <Input
-                id={"webhook-signin-key"}
-                length={"medium"}
-                value={key}
-                onChange={(e) => setKey(e.target.value)}
-                disabled={isPending}
-                placeholder="Webhook signin key"
-            />
-            {error && <p className={"error"}>{error}</p>}
-            <Button type="submit" variant="information" disabled={isPending}>
-                {currentSigninKey ? "Setup webhook" : "Register webhook"}
-            </Button>
-        </form>
+        <Form {...form}>
+            <form
+                onSubmit={form.handleSubmit((values) => {
+                    const { key } = values;
+                    setError(undefined);
+                    if (!key || key === "") {
+                        setError("Missing signin key");
+                        return;
+                    }
+                    setupWebhook({ webhookKey: key });
+                })}
+            >
+                <FormLabel weight={"medium"} htmlFor={"webhook-signin-key"}>
+                    The webhook signin key from your shopify admin panel
+                </FormLabel>
+                <Input
+                    id={"webhook-signin-key"}
+                    length={"medium"}
+                    disabled={isPending}
+                    placeholder="Webhook signin key"
+                    {...form.register("key")}
+                />
+                {error && <p className={"error"}>{error}</p>}
+                <Button
+                    type="submit"
+                    variant="information"
+                    disabled={isPending}
+                >
+                    {currentSigninKey ? "Setup webhook" : "Register webhook"}
+                </Button>
+            </form>
+        </Form>
     );
 }

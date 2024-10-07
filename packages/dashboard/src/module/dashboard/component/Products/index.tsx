@@ -11,14 +11,10 @@ import styles from "./index.module.css";
  * @constructor
  */
 export function MyProducts() {
-    const { isEmpty, products, isPending } = useMyProducts();
+    const { products, isPending } = useMyProducts();
 
     if (isPending) {
         return <Spinner />;
-    }
-
-    if (isEmpty || !products) {
-        return <NoContents />;
     }
 
     return (
@@ -30,15 +26,6 @@ export function MyProducts() {
                 ]}
             />
         </Panel>
-    );
-}
-
-function NoContents() {
-    return (
-        <div>
-            You don't have any content yet.
-            <ButtonAddProduct />
-        </div>
     );
 }
 
