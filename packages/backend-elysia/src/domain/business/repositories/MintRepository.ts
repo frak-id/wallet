@@ -1,6 +1,10 @@
 import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
-import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
+import {
+    addresses,
+    productRegistryAbi,
+    stringToBytes32,
+} from "@frak-labs/app-essentials";
 import {
     campaignBankFactoryAbi,
     mintAbi,
@@ -107,7 +111,7 @@ export class MintRepository {
                 functionName: "mint",
                 args: [
                     this.encodeProductTypesMask(productTypes),
-                    name,
+                    stringToBytes32(name),
                     domain,
                     owner,
                 ],

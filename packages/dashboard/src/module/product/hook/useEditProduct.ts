@@ -1,6 +1,10 @@
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { encodeProductTypesMask } from "@/module/product/utils/productTypes";
-import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
+import {
+    addresses,
+    productRegistryAbi,
+    stringToBytes32,
+} from "@frak-labs/app-essentials";
 import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { useMutation } from "@tanstack/react-query";
@@ -28,7 +32,8 @@ export function useEditProduct({ productId }: { productId: Hex }) {
                 args: [
                     BigInt(productId),
                     encodeProductTypesMask(productTypes),
-                    name,
+                    stringToBytes32(name),
+                    "",
                 ],
             });
 

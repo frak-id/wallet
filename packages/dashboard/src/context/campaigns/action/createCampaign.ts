@@ -13,6 +13,7 @@ import type { Campaign } from "@/types/Campaign";
 import {
     addresses,
     productInteractionManagerAbi,
+    stringToBytes32,
 } from "@frak-labs/app-essentials";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import {
@@ -30,7 +31,6 @@ import {
     parseAbi,
     parseEther,
     parseEventLogs,
-    stringToHex,
 } from "viem";
 import { getTransactionReceipt, simulateContract } from "viem/actions";
 
@@ -96,14 +96,6 @@ export async function getCreationData(campaign: Campaign) {
         end = Math.floor(new Date(campaign.scheduled.dateEnd).getTime() / 1000);
     }
 
-    // The blockchain name of the campaign is fitted on a bytes32
-    const blockchainName = stringToHex(
-        campaign.title.replace(/[^a-zA-Z0-9]/g, "").substring(0, 32),
-        {
-            size: 32,
-        }
-    );
-
     // Rebuild the triggers
     const triggers = Object.entries(campaign.triggers).map(
         ([interactionTypeKey, trigger]) => {
@@ -144,7 +136,7 @@ export async function getCreationData(campaign: Campaign) {
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
-        blockchainName,
+        stringToBytes32(campaign.title),
         campaign.bank,
         // Triggers (todo: from frontend)
         triggers,
