@@ -352,11 +352,22 @@ function NewProductVerify({
             if (!mintTxHash) return null;
             // We are waiting for the block with the tx hash to have at least 32 confirmations,
             //  it will leave the time for the indexer to process it + the time for the block to be finalised
-            return await waitForTransactionReceipt(viemClient, {
-                hash: mintTxHash,
-                confirmations: 32,
-                retryCount: 32,
+            const transactionReceipt = await waitForTransactionReceipt(
+                viemClient,
+                {
+                    hash: mintTxHash,
+                    confirmations: 32,
+                    retryCount: 32,
+                }
+            );
+
+            // Invalidate the product related cache
+            await queryClient.invalidateQueries({
+                queryKey: ["my-products"],
+                exact: false,
             });
+
+            return transactionReceipt;
         },
     });
 
