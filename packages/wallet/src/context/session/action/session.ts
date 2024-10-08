@@ -29,7 +29,6 @@ async function getFullSession() {
 
 /**
  * Set the session for the user
- * TODO: Should be protected so it can only be called from the server
  * @param wallet
  */
 export async function setSession({ wallet }: Session) {

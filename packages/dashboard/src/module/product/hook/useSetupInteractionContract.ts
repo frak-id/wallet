@@ -17,7 +17,6 @@ import { simulateContract } from "viem/actions";
 
 /**
  * Hook used to setup the interaction contract on the given productId
- * todo: Should have a simulation and a precise deployed address to avoid the need of 2 tw, and instead just send one batched tx
  */
 export function useSetupInteractionContract() {
     const { data: walletStatus } = useWalletStatus();

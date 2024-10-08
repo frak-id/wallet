@@ -10,7 +10,6 @@ import { useAccount } from "wagmi";
 
 /**
  * The component for the login step of a modal
- *  todo: Autoskip instead of click when session is present
  * @param onClose
  * @constructor
  */

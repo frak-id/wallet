@@ -87,7 +87,6 @@ export const managmentRoutes = new Elysia()
             const { hookSignatureKey } = body;
 
             // todo: Role check for the wallet
-            // todo: Oracle merkle update authorisation setup
 
             // Insert or update it
             await oracleDb

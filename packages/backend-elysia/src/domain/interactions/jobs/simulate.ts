@@ -1,8 +1,7 @@
 import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { Patterns } from "@elysiajs/cron";
-import { isRunningLocally } from "@frak-labs/app-essentials";
-import { and, eq } from "drizzle-orm";
+import { and, eq, lt, or, sql } from "drizzle-orm";
 import type { Address } from "viem";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
 import { pendingInteractionsTable } from "../db/schema";
@@ -36,6 +35,9 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     log.debug("No interactions to simulate");
                     return;
                 }
+                log.debug(
+                    `Got ${interactions.length} interactions to simulate`
+                );
 
                 // Perform the simulation and update the interactions
                 const hasSuccessInteractions =
@@ -64,15 +66,13 @@ export type SimulateInteractionAppJob = ReturnType<
 
 /**
  * Get list of interactions to simulate
- * todo:
- *  - Use the locked bool
- *  - Condition should be in SQL directly
  * @param interactionsDb
  */
 async function getInteractionsToSimulate({
     interactionsDb,
 }: { interactionsDb: InteractionsDb }) {
-    const interactions = await interactionsDb
+    // Create a subquery to pre-select interactions that are pending and not locked
+    const preFilteredInteractions = interactionsDb
         .select()
         .from(pendingInteractionsTable)
         .where(
@@ -80,23 +80,21 @@ async function getInteractionsToSimulate({
                 eq(pendingInteractionsTable.status, "pending"),
                 eq(pendingInteractionsTable.locked, false)
             )
-        );
-    // Locally, directly return the interactions
-    if (isRunningLocally) return interactions;
-
-    if (interactions.length > 10) {
-        return interactions;
-    }
+        )
+        .as("preFilteredInteractions");
 
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const hasInteractions5MinOld = interactions.some((interaction) => {
-        return interaction.createdAt < fiveMinutesAgo;
-    });
-    if (hasInteractions5MinOld) {
-        return interactions;
-    }
 
-    return [];
+    // Main query using the subquery to apply additional conditions
+    return await interactionsDb
+        .select()
+        .from(preFilteredInteractions)
+        .where(
+            or(
+                lt(preFilteredInteractions.createdAt, fiveMinutesAgo),
+                sql`(SELECT COUNT(*) FROM ${preFilteredInteractions}) > 10`
+            )
+        );
 }
 
 /**

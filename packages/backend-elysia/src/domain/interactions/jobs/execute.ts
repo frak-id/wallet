@@ -63,7 +63,6 @@ export type ExecuteInteractionAppJob = ReturnType<typeof executeInteractionJob>;
  * Get list of interactions to execute
  * todo:
  *  - Use the locked bool
- *  - Min 10 or 1 if older than 5min
  * @param interactionsDb
  */
 function getInteractionsToExecute({
