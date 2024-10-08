@@ -1,4 +1,4 @@
-import { type StackContext, use } from "sst/constructs";
+import { Config, type StackContext, use } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
 import { isProdStack, openNextVersion } from "./utils";
@@ -29,6 +29,7 @@ export function DashboardWebApp({ stack }: StackContext) {
         contentMinterPrivateKey,
         backendUrl,
         indexerUrl,
+        new Config.Secret(stack, "FUNDING_ON_RAMP_URL"),
     ];
 
     // Base domain for our whole app

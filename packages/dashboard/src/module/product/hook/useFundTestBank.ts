@@ -5,7 +5,7 @@ import type { Hex } from "viem";
 /**
  * Hook to fund a bank
  */
-export function useFundBank() {
+export function useFundTestBank() {
     const queryClient = useQueryClient();
 
     return useMutation({
