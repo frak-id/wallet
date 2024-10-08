@@ -17,7 +17,9 @@ import { addresses } from "@frak-labs/app-essentials";
 import { Switch } from "@frak-labs/nexus-wallet/src/module/common/component/Switch";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
+import { IconInfo } from "@module/component/IconInfo";
 import { Spinner } from "@module/component/Spinner";
+import { Tooltip } from "@module/component/Tooltip";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { CheckCircle, XCircle } from "lucide-react";
 import { useEffect } from "react";
@@ -101,6 +103,7 @@ function ProductFundingBank({ bank }: { bank: ProductBank }) {
                             )}
                             {bank.isDistributing ? "Active" : "Inactive"}
                         </Badge>
+                        <StatusTooltip />
                     </Row>
                 </Column>
             </Columns>
@@ -149,9 +152,15 @@ function BankAmount({
     amount,
     symbol,
 }: { title: string; amount: string; symbol: string }) {
+    const amountInEuros = Number.parseFloat(amount) * 0.91; // Assuming 1 USD = 0.91 EUR
+    const formattedEuros = formatPrice(
+        amountInEuros.toString(),
+        undefined,
+        "EUR"
+    );
     return (
         <p>
-            {title} <strong>{formatPrice(amount, undefined, "EUR")}</strong> (
+            {title} <strong>{formattedEuros}</strong> (
             {formatPrice(amount)?.replace("$", `${symbol} `)})
         </p>
     );
@@ -210,5 +219,21 @@ function FundBalance({ bank }: { bank: ProductBank }) {
                 </p>
             </Column>
         </Columns>
+    );
+}
+
+/**
+ * Funding status tooltip
+ * @returns
+ */
+function StatusTooltip() {
+    return (
+        <Tooltip
+            content={
+                "When active, the bank will distribute the funds to the campaigns."
+            }
+        >
+            <IconInfo />
+        </Tooltip>
     );
 }
