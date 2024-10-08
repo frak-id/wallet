@@ -1,6 +1,6 @@
 "use server";
-import { type RolesKeys, roles } from "@/context/blockchain/roles";
-import ky from "ky";
+import { type ProductRolesKey, productRoles } from "@frak-labs/app-essentials";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {
@@ -18,25 +18,27 @@ export async function getProductAdministrators({
 }: { productId: Hex }) {
     console.log(productId);
     // Get our api results
-    const json = await ky
-        .get(`https://indexer.frak.id/products/${productId}/administrators`)
+    const json = await indexerApi
+        .get(`products/${productId}/administrators`)
         .json<ApiResult>();
 
     // Parse the roles
     // the roles bigint is bitmasked with every roles repesented on one bit, the list of know roles is stored on roles
     const buildRolesMap = (rolesMask: bigint) => {
-        const rolesMap: Record<RolesKeys, boolean> = {
-            productManager: false,
+        const rolesMap: Record<ProductRolesKey, boolean> = {
+            productAdministrator: false,
+            interactionManager: false,
             campaignManager: false,
+            purchaseOracleUpdater: false,
         };
-        for (const [role, value] of Object.entries(roles)) {
-            rolesMap[role as RolesKeys] = (rolesMask & value) === value;
+        for (const [role, value] of Object.entries(productRoles)) {
+            rolesMap[role as ProductRolesKey] = (rolesMask & value) === value;
         }
         return rolesMap;
     };
 
     // Return that mapped with the right types
-    return json.map((result) => ({
+    const administrators = json.map((result) => ({
         wallet: result.wallet,
         isOwner: result.isOwner === 1,
         roles: toHex(BigInt(result.roles)),
@@ -44,6 +46,11 @@ export async function getProductAdministrators({
         roleDetails: {
             admin: result.isOwner === 1,
             ...buildRolesMap(BigInt(result.roles)),
-        } as Record<"admin" | RolesKeys, boolean>,
+        } as Record<"admin" | ProductRolesKey, boolean>,
     }));
+
+    // Filter out the people when they are only the purchaseOracleUpdater
+    return administrators.filter((admin) => {
+        return !admin.roleDetails.purchaseOracleUpdater;
+    });
 }

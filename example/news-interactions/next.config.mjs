@@ -3,7 +3,7 @@ import { Config } from "sst/node/config";
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
-    "NEXUS_WALLET_URL",
+    "FRAK_WALLET_URL",
     "MONGODB_FRAK_POC_URI",
     "BACKEND_URL",
 ];

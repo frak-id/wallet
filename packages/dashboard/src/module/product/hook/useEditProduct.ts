@@ -1,12 +1,17 @@
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import { encodeProductTypesMask } from "@/module/product/utils/productTypes";
+import {
+    addresses,
+    productRegistryAbi,
+    stringToBytes32,
+} from "@frak-labs/app-essentials";
+import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { productRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { useMutation } from "@tanstack/react-query";
 import { type Hex, encodeFunctionData } from "viem";
 
 type ProductEditParams = {
-    productTypes: string;
+    productTypes: ProductTypesKey[];
     name: string;
 };
 
@@ -24,13 +29,18 @@ export function useEditProduct({ productId }: { productId: Hex }) {
             const txData = encodeFunctionData({
                 abi: productRegistryAbi,
                 functionName: "updateMetadata",
-                args: [BigInt(productId), BigInt(productTypes), name],
+                args: [
+                    BigInt(productId),
+                    encodeProductTypesMask(productTypes),
+                    stringToBytes32(name),
+                    "",
+                ],
             });
 
             // Send the transaction
             const { hash } = await sendTransaction({
                 tx: {
-                    to: addresses.productAdministratorRegistry,
+                    to: addresses.productRegistry,
                     data: txData,
                 },
                 metadata: {

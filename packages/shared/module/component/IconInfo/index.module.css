@@ -1,0 +1,12 @@
+.iconInfo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    border: 1px solid #818c9c;
+    border-radius: 50%;
+    color: var(--frak-color-grayText);
+    font-size: 10px;
+    cursor: default;
+}

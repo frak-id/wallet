@@ -1,8 +1,8 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
-import ky from "ky";
-import type { Address } from "viem";
+import { indexerApi } from "@frak-labs/shared/context/server";
+import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {
     id: string; // bigint
@@ -14,8 +14,8 @@ type ApiResult = {
 }[];
 
 type GetProductResult = {
-    owner: { id: bigint; name: string; domain: string }[];
-    operator: { id: bigint; name: string; domain: string }[];
+    owner: { id: Hex; name: string; domain: string }[];
+    operator: { id: Hex; name: string; domain: string }[];
 };
 
 /**
@@ -23,8 +23,8 @@ type GetProductResult = {
  */
 async function getProducts({ wallet }: { wallet: Address }) {
     // Get our api results
-    const json = await ky
-        .get(`https://indexer.frak.id/admin/${wallet}/products`)
+    const json = await indexerApi
+        .get(`admin/${wallet}/products`)
         .json<ApiResult>();
 
     // Map it to the form: { owner: [contents], operator: [contents] }
@@ -33,7 +33,7 @@ async function getProducts({ wallet }: { wallet: Address }) {
             (acc: GetProductResult, item: ApiResult[number]) => {
                 // Map our product
                 const mappedProduct = {
-                    id: BigInt(item.id),
+                    id: toHex(BigInt(item.id)),
                     name: item.name,
                     domain: item.domain,
                 };

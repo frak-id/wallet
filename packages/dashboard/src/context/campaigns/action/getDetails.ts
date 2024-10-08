@@ -2,16 +2,16 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
-import { roles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
+    addresses,
     interactionCampaignAbi,
+    productAdministratorRegistryAbi,
+    productRoles,
     referralCampaignAbi,
-} from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
-import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+} from "@frak-labs/app-essentials";
 import { ObjectId } from "mongodb";
-import { type Address, erc20Abi } from "viem";
+import { type Address, toHex } from "viem";
 import { multicall, readContract } from "viem/actions";
 
 /**
@@ -44,60 +44,70 @@ export async function getOnChainCampaignsDetails({
     });
 
     // Fetch a few onchain information
-    const [metadata, isActive, isRunning, isAllowedToEdit, balance, config] =
-        await multicall(viemClient, {
-            contracts: [
-                {
-                    abi: interactionCampaignAbi,
-                    address: campaignAddress,
-                    functionName: "getMetadata",
-                    args: [],
-                } as const,
-                {
-                    abi: interactionCampaignAbi,
-                    address: campaignAddress,
-                    functionName: "isActive",
-                    args: [],
-                } as const,
-                {
-                    abi: interactionCampaignAbi,
-                    address: campaignAddress,
-                    functionName: "isRunning",
-                    args: [],
-                } as const,
-                {
-                    abi: productAdministratorRegistryAbi,
-                    address: addresses.productAdministratorRegistry,
-                    functionName: "hasAllRolesOrAdmin",
-                    args: [
-                        BigInt(productId),
-                        session.wallet,
-                        roles.campaignManager,
-                    ],
-                } as const,
-                {
-                    abi: erc20Abi,
-                    address: addresses.mUsdToken,
-                    functionName: "balanceOf",
-                    args: [campaignAddress],
-                } as const,
-                {
-                    abi: referralCampaignAbi,
-                    address: campaignAddress,
-                    functionName: "getConfig",
-                    args: [],
-                } as const,
-            ],
-            allowFailure: false,
-        });
-
-    // Return the data
-    return {
+    const [
         metadata,
         isActive,
         isRunning,
-        isAllowedToEdit,
-        balance,
+        isCampaignManager,
+        isProductAdministrator,
+        config,
+    ] = await multicall(viemClient, {
+        contracts: [
+            {
+                abi: interactionCampaignAbi,
+                address: campaignAddress,
+                functionName: "getMetadata",
+                args: [],
+            } as const,
+            {
+                abi: interactionCampaignAbi,
+                address: campaignAddress,
+                functionName: "isActive",
+                args: [],
+            } as const,
+            {
+                abi: interactionCampaignAbi,
+                address: campaignAddress,
+                functionName: "isRunning",
+                args: [],
+            } as const,
+            {
+                abi: productAdministratorRegistryAbi,
+                address: addresses.productAdministratorRegistry,
+                functionName: "hasAllRolesOrOwner",
+                args: [
+                    BigInt(productId),
+                    session.wallet,
+                    productRoles.campaignManager,
+                ],
+            } as const,
+            {
+                abi: productAdministratorRegistryAbi,
+                address: addresses.productAdministratorRegistry,
+                functionName: "hasAllRolesOrOwner",
+                args: [
+                    BigInt(productId),
+                    session.wallet,
+                    productRoles.productAdministrator,
+                ],
+            } as const,
+            {
+                abi: referralCampaignAbi,
+                address: campaignAddress,
+                functionName: "getConfig",
+                args: [],
+            } as const,
+        ],
+        allowFailure: false,
+    });
+
+    // Return the data
+    return {
+        productId: toHex(productId),
+        metadata,
+        isActive,
+        isRunning,
+        isAllowedToEdit: isCampaignManager || isProductAdministrator,
         config,
     };
 }

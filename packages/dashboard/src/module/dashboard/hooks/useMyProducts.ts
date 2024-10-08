@@ -7,7 +7,7 @@ import { useMemo } from "react";
  */
 export function useMyProducts() {
     const { data, isPending } = useQuery({
-        queryKey: ["my-products"],
+        queryKey: ["product", "get-mine"],
         queryFn: () => getMyProducts(),
     });
 

@@ -1,31 +1,55 @@
 {
   "name": "@frak-labs/backend-elysia",
+  "description": "Elysia Backend for the frak ecosystem",
   "version": "0.0.1",
+  "type": "module",
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "dev": "sst bind bun dev:watch",
-    "dev:docker": "sst bind \"env | grep -E 'SST_|AWS_' > .env.tmp && docker run --env-file .env.tmp --expose 3030 elysia-dev\"",
+    "dev:docker": "sst bind \"env | grep -E 'SST_|AWS_' > .env.tmp && docker run --env-file .env.tmp -P elysia-dev\"",
     "build:docker": "docker build --tag \"elysia-dev\" .",
-    "dev:watch": "bun run --watch src/index.ts"
+    "dev:watch": "bun run --watch src/index.ts",
+    "build": "bun build:package",
+    "build:package": "bun build --minify --target bun --outfile ./dist/index.js src/index.ts",
+    "build:binary": "bun build --compile --minify --target bun --outfile ./server src/index.ts",
+    "start": "NODE_ENV=production bun dist/index.js",
+    "db:studio": "sst bind drizzle-kit studio",
+    "db:generate": "sst bind drizzle-kit generate",
+    "db:migrate": "sst bind drizzle-kit migrate"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.650.0",
     "@aws-sdk/client-secrets-manager": "^3.650.0",
+    "@bogeychan/elysia-logger": "^0.1.2",
     "@elysiajs/cors": "^1.1.1",
     "@elysiajs/cron": "^1.1.1",
+    "@frak-labs/app-essentials": "workspace:*",
+    "@frak-labs/nexus-sdk": "workspace:*",
     "@tusbar/cache-control": "^1.0.2",
+    "async-mutex": "^0.5.0",
+    "croner": "^8.1.2",
+    "drizzle-orm": "^0.33.0",
     "elysia": "1.1.12",
+    "iron-session": "^8.0.3",
+    "ky": "^1.7.2",
+    "lru-cache": "^11.0.1",
+    "merkletreejs": "^0.4.0",
     "mongodb": "^6.9.0",
+    "postgres": "^3.4.4",
     "radash": "^12.1.0",
     "solady": "^0.0.238",
     "sst": "2.43.6",
-    "viem": "^2.21.6"
+    "viem": "^2.21.6",
+    "web-push": "^3.6.7",
+    "whatwg-url": "^14.0.0"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "@types/web-push": "^3.6.3",
+    "drizzle-kit": "^0.24.2"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"

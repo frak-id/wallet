@@ -1,12 +1,11 @@
-import { getOnChainCampaignsDetails } from "@/context/campaigns/action/getDetails";
 import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
-import { CampaignBalance } from "@/module/campaigns/component/CampaignDetails/CampaignBalance";
+import { CampaignBank } from "@/module/campaigns/component/CampaignDetails/CampaignBank";
 import { CampaignDates } from "@/module/campaigns/component/CampaignDetails/CampaignDates";
+import { useGetOnChainCampaignDetails } from "@/module/campaigns/hook/useGetOnChainDetails";
 import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { TransactionHash, WalletAddress } from "@module/component/HashDisplay";
-import { useQuery } from "@tanstack/react-query";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 import { useMemo } from "react";
@@ -82,9 +81,8 @@ function OnChainCampaignStatus({
     campaignAddress,
     deploymentTxHash,
 }: { campaignAddress: Address; deploymentTxHash: Hex }) {
-    const { data: onChainInfos, isLoading } = useQuery({
-        queryKey: ["campaign", "on-chain-details", campaignAddress],
-        queryFn: () => getOnChainCampaignsDetails({ campaignAddress }),
+    const { data: onChainInfos, isLoading } = useGetOnChainCampaignDetails({
+        campaignAddress,
     });
 
     const status = useMemo<{
@@ -160,7 +158,7 @@ function OnChainCampaignStatus({
                 </div>
             </Column>
             <Column fullWidth={true}>
-                <CampaignBalance campaignAddress={campaignAddress} />
+                <CampaignBank campaignAddress={campaignAddress} />
             </Column>
             <Column fullWidth={true}>
                 <CampaignDates campaignAddress={campaignAddress} />

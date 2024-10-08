@@ -2,7 +2,6 @@ import path from "node:path";
 import { ChildCompilationPlugin } from "@serwist/webpack-plugin/internal";
 import { pick } from "radash";
 import { Config } from "sst/node/config";
-import { Queue } from "sst/node/queue";
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
@@ -14,6 +13,8 @@ const wantedFromConfig = [
     "SESSION_ENCRYPTION_KEY",
     "VAPID_PUBLIC_KEY",
     "VAPID_PRIVATE_KEY",
+    "BACKEND_URL",
+    "INDEXER_URL",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
@@ -22,10 +23,9 @@ const nextConfig = {
     env: {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
-        APP_URL: Config.NEXUS_WALLET_URL,
-        INTERACTION_QUEUE_URL: Queue.InteractionQueue.queueUrl,
+        APP_URL: Config.FRAK_WALLET_URL,
     },
-    transpilePackages: ["lucide-react"],
+    transpilePackages: ["lucide-react", "@frak-labs/app-essentials"],
     compiler: {
         removeConsole: Config.STAGE === "prod",
     },

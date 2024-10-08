@@ -1,22 +1,26 @@
 import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import {
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
-    FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
 import { MultiSelect } from "@/module/forms/MultiSelect";
-import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering/index";
+import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import { useFormContext } from "react-hook-form";
+import type { Hex } from "viem";
 
-export function ProductFiltering() {
+export function ProductFiltering({
+    disabled,
+    onSubmit,
+}: { disabled?: boolean; onSubmit: (data: FormMembersFiltering) => void }) {
     const { isEmpty, products, isPending } = useMyProducts();
     const productsOptions = [
         ...(products?.operator ?? []),
         ...(products?.owner ?? []),
     ];
-    const { control } = useFormContext<FormMembersFiltering>();
+    const { control, handleSubmit } = useFormContext<FormMembersFiltering>();
 
     if (isEmpty || !products || isPending) {
         return null;
@@ -28,20 +32,20 @@ export function ProductFiltering() {
             name="productIds"
             render={({ field }) => (
                 <FormItem>
-                    <FormLabel variant={"dark"} weight={"medium"}>
-                        Filter by products
-                    </FormLabel>
+                    <FormDescription label={"Product"} />
                     <FormControl>
                         <MultiSelect
+                            disabled={disabled}
                             options={productsOptions.map((product) => ({
                                 name: product.name,
-                                value: product.id.toString(),
+                                value: product.id,
                             }))}
                             onValueChange={(value) => {
                                 const productIds = value
-                                    .map((v) => v.value)
+                                    .map((v) => v.value as Hex | undefined)
                                     .filter(Boolean);
                                 field.onChange(productIds);
+                                handleSubmit(onSubmit)();
                             }}
                             placeholder="Products"
                             {...field}

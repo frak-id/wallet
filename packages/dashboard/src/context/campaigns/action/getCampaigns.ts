@@ -2,13 +2,15 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
-import { roles } from "@/context/blockchain/roles";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import type { CampaignWithState } from "@/types/Campaign";
-import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
-import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
-import ky from "ky";
+import {
+    addresses,
+    interactionCampaignAbi,
+    productAdministratorRegistryAbi,
+    productRoles,
+} from "@frak-labs/app-essentials";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
@@ -33,8 +35,8 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
 
     // Perform the request to our api, and fallback to empty array
     const blockchainCampaigns =
-        (await ky
-            .get(`https://indexer.frak.id/admin/${session.wallet}/campaigns`)
+        (await indexerApi
+            .get(`admin/${session.wallet}/campaigns`)
             .json<ApiResult>()) ?? [];
 
     // Find the campaigns in the database
@@ -200,8 +202,8 @@ async function getOnChainStateForCampaigns({
                     ({
                         abi: productAdministratorRegistryAbi,
                         address: addresses.productAdministratorRegistry,
-                        functionName: "hasAllRolesOrAdmin",
-                        args: [productId, wallet, roles.campaignManager],
+                        functionName: "hasAllRolesOrOwner",
+                        args: [productId, wallet, productRoles.campaignManager],
                     }) as const
             ),
             allowFailure: false,

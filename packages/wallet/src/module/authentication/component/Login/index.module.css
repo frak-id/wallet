@@ -11,3 +11,8 @@
     margin-bottom: 10px;
     text-decoration: none;
 }
+
+.login__icon {
+    margin-bottom: 28px;
+    max-width: 50%;
+}

@@ -34,20 +34,10 @@ export function useNexusContext() {
             mutationFn: async (newContext: Partial<NexusContext>) => {
                 console.log("Updating context", { newContext });
 
-                // If no window here early exit
-                if (!location?.href || typeof window === "undefined") {
-                    console.error("No window found, can't update context");
-                    return;
-                }
-
-                // Get our new url with the nexus context
-                const newUrl = await NexusContextManager.update({
-                    url: location.href,
+                await NexusContextManager.replaceUrl({
+                    url: location?.href,
                     context: newContext,
                 });
-
-                // Update the url
-                window.history.replaceState(null, "", newUrl);
             },
         });
 

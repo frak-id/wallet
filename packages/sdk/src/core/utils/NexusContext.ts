@@ -32,7 +32,7 @@ async function parse({ url }: { url: string }) {
 async function update({
     url,
     context,
-}: { url: string; context: Partial<NexusContext> }) {
+}: { url?: string; context: Partial<NexusContext> }) {
     if (!url) return null;
 
     // Parse the current context
@@ -55,10 +55,33 @@ async function update({
     return urlObj.toString();
 }
 
+async function replaceUrl({
+    url,
+    context,
+}: { url?: string; context: Partial<NexusContext> }) {
+    // If no window here early exit
+    if (!window.location?.href || typeof window === "undefined") {
+        console.error("No window found, can't update context");
+        return;
+    }
+
+    // Get our new url with the nexus context
+    const newUrl = await update({
+        url,
+        context,
+    });
+
+    if (!newUrl) return;
+
+    // Update the url
+    window.history.replaceState(null, "", newUrl.toString());
+}
+
 /**
  * Export our nexus context "class"
  */
 export const NexusContextManager = {
     parse,
     update,
+    replaceUrl,
 };

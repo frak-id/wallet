@@ -1,7 +1,6 @@
 import type { StackContext } from "sst/constructs";
 import { use } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
-import { BackendStack } from "./Backend";
 import { ConfigStack } from "./Config";
 import { isProdStack, openNextVersion } from "./utils";
 
@@ -17,29 +16,30 @@ export function WalletAppStack({ stack }: StackContext) {
         mongoNexusUri,
         alchemyApiKey,
         pimlicoApiKey,
-        nexusUrl,
+        frakWalletUrl,
         nexusRpcSecret,
         vapidPublicKey,
         vapidPrivateKey,
+        backendUrl,
+        indexerUrl,
     } = use(ConfigStack);
     const configs = [
         sessionEncryptionKey,
         mongoNexusUri,
         alchemyApiKey,
         pimlicoApiKey,
-        nexusUrl,
+        frakWalletUrl,
         nexusRpcSecret,
         vapidPublicKey,
         vapidPrivateKey,
+        backendUrl,
+        indexerUrl,
     ];
-
-    // Get the interaction queue
-    const { interactionQueue } = use(BackendStack);
 
     // Base domain for our whole app
     const subDomain = isProdStack(stack)
-        ? "nexus"
-        : `nexus-${stack.stage.toLowerCase()}`;
+        ? "wallet"
+        : `wallet-${stack.stage.toLowerCase()}`;
 
     // Declare the Next.js site
     const site = new NextjsSite(stack, "wallet", {
@@ -55,7 +55,7 @@ export function WalletAppStack({ stack }: StackContext) {
             staticImageOptimization: true,
         },
         // Bind to the configs
-        bind: [...configs, interactionQueue],
+        bind: configs,
         openNextVersion: openNextVersion,
         // Number of server side instance to keep warm
         warm: 1,

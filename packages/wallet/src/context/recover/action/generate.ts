@@ -6,7 +6,7 @@ import {
     setExecutionAbi,
 } from "@/context/recover/utils/abi";
 import type { GeneratedRecoveryData } from "@/types/Recovery";
-import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
+import { addresses, isRunningInProd } from "@frak-labs/app-essentials";
 import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
 
 /**
@@ -33,7 +33,7 @@ export async function generateRecoveryData({
             // The passkey addition method
             addPasskeySelector,
             // The webauthn recovery address
-            kernelAddresses.multiWebAuthnRecovery,
+            addresses.webAuthNRecoveryAction,
             // The address of the ecdsa validator
             kernelAddresses.ecdsaValidator,
             // Valid until timestamps, in seconds

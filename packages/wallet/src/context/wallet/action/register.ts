@@ -77,7 +77,9 @@ export async function validateRegistration({
         _id: credentialID,
         smartWalletAddress: wallet.address,
         userAgent,
-        credentialPublicKey: bufferToBase64URLString(credentialPublicKey),
+        credentialPublicKey: bufferToBase64URLString(
+            credentialPublicKey.buffer as ArrayBuffer
+        ),
         counter,
         credentialDeviceType,
         credentialBackedUp,

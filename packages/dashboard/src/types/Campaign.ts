@@ -1,10 +1,20 @@
+import type { InteractionTypesKey } from "@frak-labs/nexus-sdk/core";
 import type { TCountryCode } from "countries-list";
 import type { Address, Hex } from "viem";
 
 type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
 type SpecialCategory = "credit" | "jobs" | "housing" | "social";
-type ContentType = "text" | "video" | "product" | "others";
-type Budget = "daily" | "weekly" | "monthly" | "global";
+export type Budget = "daily" | "weekly" | "monthly" | "global";
+
+type CampaignTrigger = {
+    // Reward range
+    from: number;
+    to: number;
+    // Reward distribution config
+    userPercent?: number; // Between 0 and 1
+    deperditionPerLevel?: number; // Between 0 and 1
+    maxCountPerUser?: number;
+};
 
 /**
  * Direct campaign type
@@ -16,21 +26,21 @@ export type Campaign = {
     productId: Hex | "";
     type: Goal | "" | undefined;
     specialCategories: SpecialCategory[];
+    // The distribution cap of the campaign
     budget: {
         type: Budget | "" | undefined;
         maxEuroDaily: number;
     };
     territories: TCountryCode[];
+    // The campaign bank address (that will distribute rewards to the end users)
+    bank: Address | "";
+    // The activation period of the campaign
     scheduled?: {
         dateStart: Date;
         dateEnd?: Date;
     };
-    rewards: {
-        click: { from: number; to: number };
-        registration: { from: number; to: number };
-        purchase: { from: number; to: number };
-    };
-    promotedContents: ContentType[];
+    // Trigger for the campaign
+    triggers: Partial<Record<InteractionTypesKey, CampaignTrigger>>;
 };
 
 /**

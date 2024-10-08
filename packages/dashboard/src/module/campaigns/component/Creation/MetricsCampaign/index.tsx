@@ -7,21 +7,32 @@ import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
+import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import type { Campaign } from "@/types/Campaign";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { toHex } from "viem";
 
 export function MetricsCampaign() {
     const campaign = useAtomValue(campaignAtom);
     const saveCampaign = useSaveCampaign();
 
-    const form = useForm<Campaign["rewards"]>({
-        values: useMemo(() => campaign.rewards, [campaign.rewards]),
+    const pId = useMemo(() => {
+        if (!campaign.productId) return;
+        return toHex(BigInt(campaign.productId));
+    }, [campaign.productId]);
+
+    const { data: product, isPending: productIsPending } = useProductMetadata({
+        productId: pId,
     });
 
-    async function onSubmit(values: Campaign["rewards"]) {
-        await saveCampaign({ ...campaign, rewards: values });
+    const form = useForm<Campaign["triggers"]>({
+        values: useMemo(() => campaign.triggers, [campaign.triggers]),
+    });
+
+    async function onSubmit(values: Campaign["triggers"]) {
+        await saveCampaign({ ...campaign, triggers: values });
     }
 
     return (
@@ -30,13 +41,18 @@ export function MetricsCampaign() {
                 title={{ content: "Campaign Metrics", size: "small" }}
                 rightSection={
                     <ButtonCancel
-                        onClick={() => form.reset(campaign.rewards)}
+                        onClick={() => form.reset(campaign.triggers)}
                     />
                 }
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormPriceRange {...form} />
+                    {!productIsPending && product?.productTypes && (
+                        <FormPriceRange
+                            form={form}
+                            productTypes={product?.productTypes}
+                        />
+                    )}
                     <Actions />
                 </form>
             </Form>

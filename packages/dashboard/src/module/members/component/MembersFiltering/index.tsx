@@ -39,7 +39,7 @@ export function MembersFiltering({
     const mappedInitialValue = useMemo(() => {
         if (!initialValue?.rewards) return initialValue;
 
-        // Map min and mnax rewards if present
+        // Map min and max rewards if present
         const { min, max } = initialValue.rewards;
         return {
             ...initialValue,
@@ -54,7 +54,6 @@ export function MembersFiltering({
     const form = useForm<FormMembersFiltering>({
         values: mappedInitialValue,
         defaultValues: {},
-        disabled,
     });
 
     function resetForm() {
@@ -85,31 +84,24 @@ export function MembersFiltering({
                 data.firstInteractionTimestamp
             );
 
-            const allValues = filterOutUndefined(form.getValues());
-            setFiltersDirtyCount(allValues.length);
-
             onFilterSet(data);
         },
-        [onFilterSet, form, setFiltersDirtyCount]
+        [onFilterSet]
     );
+
+    const commonProps = {
+        disabled,
+        onSubmit,
+    };
 
     return (
         <Form {...form}>
-            <ProductFiltering />
-            <MembershipDateFiltering />
-            <InteractionsFiltering />
-            <RewardFiltering />
+            <ProductFiltering {...commonProps} />
+            <MembershipDateFiltering {...commonProps} />
+            <InteractionsFiltering {...commonProps} />
+            <RewardFiltering {...commonProps} />
 
             <Row>
-                {!disabled && (
-                    <Button
-                        type={"button"}
-                        variant={"secondary"}
-                        onClick={form.handleSubmit(onSubmit)}
-                    >
-                        Validate filter
-                    </Button>
-                )}
                 {showResetButton && (
                     <Button
                         type={"button"}
@@ -175,31 +167,3 @@ const fixFirstInteractionTimestamp = (
     }
     return firstInteractionTimestamp;
 };
-
-/**
- * Filter out undefined values from the object
- * @param obj
- */
-function filterOutUndefined(obj: FormMembersFiltering): string[] {
-    const result: string[] = [];
-
-    for (const key in obj) {
-        // @ts-ignore
-        const value = obj[key];
-
-        // Check if min/max are defined, or if the value is an array and not empty
-        if (value && typeof value === "object") {
-            // Check if min/max are defined and not undefined
-            if (
-                ("min" in value && value.min !== undefined) ||
-                ("max" in value && value.max !== undefined)
-            ) {
-                result.push(key);
-            }
-        } else if (Array.isArray(value) && value.length > 0) {
-            result.push(key);
-        }
-    }
-
-    return result;
-}

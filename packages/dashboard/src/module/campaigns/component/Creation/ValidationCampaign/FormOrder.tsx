@@ -12,7 +12,7 @@ import type { UseFormReturn } from "react-hook-form";
 export function FormOrder(form: UseFormReturn<Campaign>) {
     return (
         <FormItem>
-            <FormDescription title={"Type of order"} />
+            <FormDescription label={"Type of order"} />
             <Input
                 length={"medium"}
                 disabled={true}

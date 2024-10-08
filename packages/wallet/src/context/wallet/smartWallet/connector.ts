@@ -4,7 +4,7 @@ import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
 import type { Transport } from "viem";
 import { createConnector } from "wagmi";
 
-smartAccountConnector.type = "nexusSmartAccountConnector" as const;
+smartAccountConnector.type = "frakSmartAccountConnector" as const;
 
 /**
  * Create a connector for the smart account
@@ -23,7 +23,7 @@ export function smartAccountConnector<
 
     // Create the wagmi connector itself
     return createConnector<Provider>((config) => ({
-        id: "nexus-connector",
+        id: "frak-wallet-connector",
         name: "Nexus Smart Account",
         type: smartAccountConnector.type,
         supportsSimulation: true,

@@ -1,6 +1,6 @@
-import { viemClient } from "@/context/blockchain/provider";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Row } from "@/module/common/component/Row";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import {
     useCheckDomainName,
@@ -15,23 +15,29 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { MultiSelect } from "@/module/forms/MultiSelect";
+import { productTypesLabel } from "@/module/product/utils/productTypes";
+import {
+    type ProductTypesKey,
+    productTypesMask,
+} from "@frak-labs/nexus-sdk/core";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
 import { Input } from "@module/component/forms/Input";
 import { validateUrl } from "@module/utils/validateUrl";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
-import { BadgeCheck } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { BadgeCheck, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
-import type { Hex, TransactionReceipt } from "viem";
-import { waitForTransactionReceipt } from "viem/actions";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 type ProductNew = {
     name: string;
     domain: string;
+    productTypes: ProductTypesKey[];
 };
 
 const isModalOpenAtom = atom(false);
@@ -54,6 +60,7 @@ export function ButtonAddProduct() {
         defaultValues: {
             name: "",
             domain: "",
+            productTypes: [],
         },
     });
 
@@ -79,10 +86,17 @@ export function ButtonAddProduct() {
                     }
                     buttonElement={
                         <Button size={"none"} variant={"ghost"}>
-                            <ProductItem>
-                                +<br />
-                                List a Product
-                            </ProductItem>
+                            <ProductItem
+                                name={
+                                    <>
+                                        <Plus />
+                                        List a Product
+                                    </>
+                                }
+                                domain={"domain.com"}
+                                showActions={false}
+                                isLink={false}
+                            />
                         </Button>
                     }
                     showCloseButton={false}
@@ -93,6 +107,7 @@ export function ButtonAddProduct() {
                                 <NewProductVerify
                                     name={form.getValues().name}
                                     domain={form.getValues().domain}
+                                    productTypes={form.getValues().productTypes}
                                 />
                             )}
                         </>
@@ -115,7 +130,7 @@ export function ButtonAddProduct() {
                         step === 1 ? (
                             <Button
                                 variant={"information"}
-                                disabled={!success}
+                                disabled={!(success && form.formState.isValid)}
                                 onClick={() => setStep(2)}
                             >
                                 Next
@@ -138,15 +153,10 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
     const [success, setSuccess] = useAtom(successAtom);
     const [error, setError] = useState<string | undefined>();
 
-    const rawDomain = form.watch("domain");
-    const parsedDomain = useMemo(
-        () => parseUrl(rawDomain)?.hostname,
-        [rawDomain]
-    );
+    const domain = form.watch("domain");
 
     const { data: dnsRecord, isLoading } = useDnsTxtRecordToSet({
-        name: form.watch("name"),
-        domain: parsedDomain,
+        domain,
         enabled: isModalOpen,
     });
 
@@ -171,23 +181,20 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         if (!isFormValid) return;
 
         // Ensure we got a domain
-        if (!parsedDomain) {
+        if (!domain) {
             setError("Invalid domain name");
             return;
         }
 
         // Check the validity of the domain
-        const { alreadyExist, isRecordSet } = await checkDomainSetup({
-            name: form.getValues().name,
-            domain: parsedDomain,
+        const { isAlreadyMinted, isRecordSet } = await checkDomainSetup({
+            domain,
         });
 
-        if (alreadyExist) {
-            setError(`A product already exists for the domain ${parsedDomain}`);
+        if (isAlreadyMinted) {
+            setError(`A product already exists for the domain ${domain}`);
         } else if (!isRecordSet) {
-            setError(
-                `The DNS txt record is not set for the domain ${parsedDomain}`
-            );
+            setError(`The DNS txt record is not set for the domain ${domain}`);
         } else {
             setSuccess(true);
         }
@@ -219,6 +226,42 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
                             />
                         </FormControl>
                         <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="productTypes"
+                rules={{
+                    required: "Select a product type",
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Select a product type
+                        </FormLabel>
+                        <MultiSelect
+                            options={Object.keys(productTypesMask).map(
+                                (key) => ({
+                                    name: productTypesLabel[
+                                        key as keyof typeof productTypesLabel
+                                    ].name,
+                                    value: key,
+                                    tooltip:
+                                        productTypesLabel[
+                                            key as keyof typeof productTypesLabel
+                                        ].description,
+                                })
+                            )}
+                            onValueChange={(value) => {
+                                const values = value
+                                    .map((v) => v.value)
+                                    .filter((v) => v !== undefined);
+                                field.onChange(values);
+                            }}
+                            placeholder="Select a product type"
+                            {...field}
+                        />
                     </FormItem>
                 )}
             />
@@ -280,12 +323,16 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
  * Form post creation, once everything is verified
  * @param name
  * @param domain
+ * @param productTypes
  * @constructor
  */
-function NewProductVerify({ name, domain }: { name: string; domain: string }) {
-    const parsedDomain = parseUrl(domain);
-    const queryClient = useQueryClient();
+function NewProductVerify({
+    name,
+    domain,
+    productTypes,
+}: { name: string; domain: string; productTypes: ProductTypesKey[] }) {
     const setIsMinting = useSetAtom(isMintingAtom);
+    const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
 
     const {
         mutate: triggerMintMyContent,
@@ -294,34 +341,24 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
         data: { mintTxHash } = {},
     } = useMintMyProduct();
 
-    const {
-        isLoading: isWaitingForFinalisedCreation,
-        data: transactionReceipt,
-    } = useQuery({
-        queryKey: ["mint", "wait-for-finalised-deployment"],
-        enabled: !!mintTxHash,
-        queryFn: async () => {
-            if (!mintTxHash) return null;
-            // We are waiting for the block with the tx hash to have at least 32 confirmations,
-            //  it will leave the time for the indexer to process it + the time for the block to be finalised
-            return await waitForTransactionReceipt(viemClient, {
-                hash: mintTxHash,
-                confirmations: 32,
-                retryCount: 32,
-            });
-        },
-    });
+    const { isLoading: isWaitingForFinalisedCreation, data: isConfirmed } =
+        useQuery({
+            queryKey: ["mint", "wait-for-finalised-deployment"],
+            enabled: !!mintTxHash,
+            queryFn: async () => {
+                if (!mintTxHash) return false;
 
-    useEffect(() => {
-        if (!transactionReceipt) return;
-        queryClient
-            .invalidateQueries({
-                queryKey: ["my-contents"],
-            })
-            .then(() => setIsMinting(false));
-    }, [transactionReceipt, queryClient, setIsMinting]);
+                // Invalidate the product related cache
+                await waitForTxAndInvalidateQueries({
+                    hash: mintTxHash,
+                    queryKey: ["product"],
+                });
+                setIsMinting(false);
+                return true;
+            },
+        });
 
-    if (!parsedDomain) return null;
+    if (!domain) return null;
 
     return (
         <div>
@@ -331,9 +368,9 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
             <p className={styles.newProductForm__verify}>
                 I confirm that I want to list "{name}" on the following domain :
                 <br />
-                <strong>{parsedDomain.hostname}</strong>
+                <strong>{domain}</strong>
                 <br />
-                Uri: <strong>{parsedDomain.href}</strong>
+                Uri: <strong>{domain}</strong>
             </p>
             <AuthFingerprint
                 className={styles.newProductForm__fingerprint}
@@ -341,9 +378,8 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
                     setIsMinting(true);
                     triggerMintMyContent({
                         name,
-                        domain: parsedDomain.hostname,
-                        // todo: hardcoded type, should be in the sdk
-                        productTypes: 1n << 2n,
+                        domain,
+                        productTypes,
                     });
                 }}
                 disabled={!isIdle}
@@ -355,7 +391,7 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
             <ProductSuccessInfo
                 txHash={mintTxHash}
                 isWaitingForFinalisedCreation={isWaitingForFinalisedCreation}
-                receipt={transactionReceipt}
+                isConfirmed={isConfirmed}
             />
         </div>
     );
@@ -368,15 +404,15 @@ function NewProductVerify({ name, domain }: { name: string; domain: string }) {
 function ProductSuccessInfo({
     txHash,
     isWaitingForFinalisedCreation,
-    receipt,
+    isConfirmed,
 }: {
     txHash?: Hex;
     isWaitingForFinalisedCreation: boolean;
-    receipt?: TransactionReceipt | null;
+    isConfirmed?: boolean | null;
 }) {
     if (!txHash) return null;
 
-    if (txHash && isWaitingForFinalisedCreation && !receipt) {
+    if (txHash && isWaitingForFinalisedCreation && !isConfirmed) {
         return (
             <p>
                 Setting all the right blockchain data
@@ -394,17 +430,4 @@ function ProductSuccessInfo({
             {txHash && <p>Transaction hash: {txHash}</p>}
         </>
     );
-}
-
-function parseUrl(domain: string) {
-    if (!domain || domain.length === 0) {
-        return undefined;
-    }
-    try {
-        // Try to parse the URL as-is
-        return new URL(domain);
-    } catch {
-        // If parsing fails, try adding 'https://' prefix
-        return new URL(`https://${domain}`);
-    }
 }

@@ -42,16 +42,6 @@ jobs:
               - 'packages/**'
               - 'example/**'
 
-      - name: "🔧 Setup environment"
-        if: steps.changes.outputs.deployRequired == 'true'
-        shell: bash
-        run: |
-          if [[ "${{ inputs.ref }}" == "refs/heads/main" ]]; then
-            echo "STAGE=prod" >> $GITHUB_ENV
-          elif [[ "${{ inputs.ref }}" == "refs/heads/dev" ]]; then
-            echo "STAGE=dev" >> $GITHUB_ENV
-          fi
-
       - name: Set up QEMU
         if: steps.changes.outputs.deployRequired == 'true'
         uses: docker/setup-qemu-action@v3
@@ -81,8 +71,20 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: "🔧 Setup environment"
+        if: steps.changes.outputs.deployRequired == 'true'
+        shell: bash
+        run: |
+          if [[ "${{ inputs.ref }}" == "refs/heads/main" ]]; then
+            echo "STAGE=prod" >> $GITHUB_ENV
+          else
+            echo "STAGE=dev" >> $GITHUB_ENV
+          fi
+          echo "Deployment stage : $STAGE"
+          
       - name: "🚀 SST Deploy"
         if: steps.changes.outputs.deployRequired == 'true'
         run: |
+          STAGE=${STAGE_OVERRIDE:-$STAGE}
           echo "Deploying with stage: $STAGE"
           bun sst deploy --stage $STAGE

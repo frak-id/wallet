@@ -1,8 +1,15 @@
 .columns {
     display: flex;
-    align-items: center;
     gap: 10px;
     width: 100%;
+}
+
+.columns--align-start {
+    align-items: flex-start;
+}
+
+.columns--align-center {
+    align-items: center;
 }
 
 .columns + .columns {
@@ -15,8 +22,15 @@
 
 .column + .column {
     display: flex;
-    justify-content: flex-end;
     gap: 8px;
+}
+
+.column + .column.column--justify-start {
+    justify-content: flex-start;
+}
+
+.column + .column.column--justify-end {
+    justify-content: flex-end;
 }
 
 .column--1-4 {
@@ -32,4 +46,9 @@
 .column--full {
     flex-grow: initial;
     flex-basis: 100%;
+}
+
+.column--none {
+    flex-grow: initial;
+    flex-basis: auto;
 }

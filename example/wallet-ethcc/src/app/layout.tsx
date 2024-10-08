@@ -6,9 +6,9 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-    title: "Nexus Wallet Demo by Frak",
-    applicationName: "Nexus Demo",
-    description: "Simple nexus wallet demo for the EthCC.",
+    title: "Frak Wallet Demo",
+    applicationName: "Frak Wallet Demo",
+    description: "Simple frak wallet demo for the EthCC.",
     authors: [
         { name: "Frak labs", url: "https://frak.id/" },
         { name: "Rodolphe Stoclin", url: "https://github.com/srod" },
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     creator: "Frak labs",
     publisher: "Frak labs",
     manifest: "/manifest.json",
-    keywords: ["frak", "blockchain", "nexus", "wallet", "ethcc"],
+    keywords: ["frak", "wallet", "frak-wallet", "blockchain", "ethcc"],
 };
 
 export const viewport: Viewport = {

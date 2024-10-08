@@ -3,8 +3,8 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { interactionCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
-import ky from "ky";
+import { interactionCampaignAbi } from "@frak-labs/app-essentials";
+import { indexerApi } from "@frak-labs/shared/context/server";
 import {
     type Address,
     formatEther,
@@ -33,8 +33,8 @@ export async function getMyCampaignsStats() {
     const session = await getSafeSession();
 
     // Perform the request to our api
-    const campaignStats = await ky
-        .get(`https://indexer.frak.id/admin/${session.wallet}/campaigns/stats`)
+    const campaignStats = await indexerApi
+        .get(`admin/${session.wallet}/campaigns/stats`)
         .json<ApiResult>();
 
     if (!campaignStats) {

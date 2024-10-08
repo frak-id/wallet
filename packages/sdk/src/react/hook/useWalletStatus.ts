@@ -1,9 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { WalletStatusReturnType } from "../../core";
-import { watchWalletStatus } from "../../core/actions";
+import { walletStatus } from "../../core/actions";
 import { ClientNotFound } from "../../core/types/rpc/error";
-import { Deferred } from "../../core/utils/Deferred";
 import { useNexusClient } from "./useNexusClient";
 
 /**
@@ -37,23 +36,7 @@ export function useWalletStatus() {
                 throw new ClientNotFound();
             }
 
-            // Our first result deferred
-            const firstResult = new Deferred<WalletStatusReturnType>();
-            let hasResolved = false;
-
-            // Setup the listener, with a callback request that will resolve the first result
-            await watchWalletStatus(client, (status) => {
-                newStatusUpdated(status);
-
-                // If the promise hasn't resolved yet, resolve it
-                if (!hasResolved) {
-                    firstResult.resolve(status);
-                    hasResolved = true;
-                }
-            });
-
-            // Wait for the first response
-            return firstResult.promise;
+            return walletStatus(client, newStatusUpdated);
         },
         enabled: !!client,
     });

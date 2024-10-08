@@ -3,7 +3,7 @@ import { ButtonAddProduct } from "@/module/dashboard/component/ButtonAddProduct"
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import { Spinner } from "@module/component/Spinner";
-import Link from "next/link";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**
@@ -11,14 +11,10 @@ import styles from "./index.module.css";
  * @constructor
  */
 export function MyProducts() {
-    const { isEmpty, products, isPending } = useMyProducts();
+    const { products, isPending } = useMyProducts();
 
     if (isPending) {
         return <Spinner />;
-    }
-
-    if (isEmpty || !products) {
-        return <NoContents />;
     }
 
     return (
@@ -33,38 +29,22 @@ export function MyProducts() {
     );
 }
 
-function NoContents() {
-    return (
-        <div>
-            You don't have any content yet.
-            <ButtonAddProduct />
-        </div>
-    );
-}
-
 function ProductListSection({
     products,
-}: { products: { id: bigint; name: string; domain: string }[] }) {
+}: { products: { id: Hex; name: string; domain: string }[] }) {
     return (
         <div className={styles.contentListSection}>
-            <ButtonAddProduct />
             {products.map((content) => (
                 <ProductListItem key={content.id} product={content} />
             ))}
+            <ButtonAddProduct />
         </div>
     );
 }
 
 function ProductListItem({
     product,
-}: { product: { id: bigint; name: string; domain: string } }) {
-    return (
-        <Link href={`/product/${product.id}`}>
-            <ProductItem>
-                {product.name}
-                <br />
-                {product.domain}
-            </ProductItem>
-        </Link>
-    );
+}: { product: { id: Hex; name: string; domain: string } }) {
+    const { id, name, domain } = product;
+    return <ProductItem id={id} name={name} domain={domain} />;
 }

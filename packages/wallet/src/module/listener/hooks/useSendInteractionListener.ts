@@ -2,12 +2,12 @@ import { pushInteraction } from "@/context/interaction/action/pushInteraction";
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
     RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
-import { isRunningLocally } from "@frak-labs/shared/context/utils/env";
 import { jotaiStore } from "@module/atoms/store";
 import { tryit } from "radash";
 import { useCallback } from "react";
@@ -90,12 +90,11 @@ export function useSendInteractionListener(): OnInteractionRequest {
         )();
 
         if (!delegationId) {
-            // todo: Check if the error is about no session or not
             // Send the response
             await emitter({
                 error: {
-                    code: RpcErrorCodes.noInteractionSession,
-                    message: "User doesn't have an interaction session",
+                    code: RpcErrorCodes.serverErrorForInteractionDelegation,
+                    message: "Unable to push the interaction",
                 },
             });
             return;

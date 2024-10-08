@@ -1,6 +1,7 @@
 import { TextData } from "@/module/common/component/TextData";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type { SiweAuthenticateModalStepType } from "@frak-labs/nexus-sdk/core";
+import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMemo } from "react";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
@@ -85,6 +86,7 @@ export function SiweAuthenticateModalStep({
                             });
                         }}
                     >
+                        {isPending && <Spinner />}
                         {metadata?.primaryActionText ?? "Authenticate"}
                     </button>
                 </div>

@@ -1,6 +1,10 @@
 "use client";
 
 import { Panel } from "@/module/common/component/Panel";
+import {
+    addresses,
+    productInteractionManagerAbi,
+} from "@frak-labs/app-essentials";
 import type {
     LoginModalStepType,
     ModalRpcStepsResultType,
@@ -9,8 +13,6 @@ import type {
 } from "@frak-labs/nexus-sdk/core";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { useDisplayModal } from "@frak-labs/nexus-sdk/react";
-import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
 import { Button } from "@module/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";
@@ -31,7 +33,7 @@ export function FullDialog() {
             <h2>Full Dialog</h2>
 
             <p>
-                When the btn is clicked, the SDK will ask the Nexus Wallet to
+                When the btn is clicked, the SDK will ask the Frak Wallet to
                 perform all the available actions
             </p>
             <br />
@@ -49,7 +51,7 @@ export function FullDialog() {
                                 },
                                 siwe: {
                                     domain: "example.com",
-                                    uri: "https://nexus.frak.id/",
+                                    uri: "https://wallet.frak.id/",
                                     statement: "Please authenticate",
                                     nonce: "0123456789",
                                     version: "1",

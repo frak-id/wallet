@@ -1,18 +1,17 @@
-import {
-    sendPushForFilter,
-    sendPushNotification,
-} from "@/context/crm/actions/sendPush";
+"use client";
+import { ActionsMessageError } from "@/module/campaigns/component/Actions";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
+import { FormLayout } from "@/module/forms/Form";
 import { currentPushCreationForm } from "@/module/members/atoms/pushCreationForm";
 import { PushRecap } from "@/module/members/component/CreatePushConfirmation/PushRecap";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
-import { useAtom } from "jotai";
-import { useSetAtom } from "jotai/index";
+import { useAtom, useSetAtom } from "jotai";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -42,7 +41,9 @@ export function CreatePushNotificationConfirmation() {
                     />
                 }
             />
-            <ConfirmationContent />
+            <FormLayout>
+                <ConfirmationContent />
+            </FormLayout>
         </>
     );
 }
@@ -61,20 +62,19 @@ function ConfirmationContent() {
         mutationKey: ["push", "publish"],
         mutationFn: async () => {
             if (!currentPushCreation?.target) {
-                throw new Error("No push campaign found");
+                throw new Error("No target specified");
             }
 
-            if ("wallets" in currentPushCreation.target) {
-                await sendPushNotification({
-                    wallets: currentPushCreation.target.wallets,
-                    payload: currentPushCreation.payload,
-                });
-            } else if ("filter" in currentPushCreation.target) {
-                await sendPushForFilter({
-                    filter: currentPushCreation.target.filter,
-                    payload: currentPushCreation.payload,
-                });
-            }
+            const { payload, target } = currentPushCreation;
+
+            await backendApi.notifications.send.post({
+                targets: target,
+                payload: {
+                    ...payload,
+                    body: payload.body ?? "",
+                    silent: payload.silent ?? false,
+                },
+            });
 
             console.log("Push submitted, resetting everything");
             setCurrentPushCreation(undefined);
@@ -118,7 +118,7 @@ function ConfirmationContent() {
                             }}
                             disabled={isPending}
                         />
-                        {error && <span>{error.message}</span>}
+                        {error && <ActionsMessageError error={error} />}
                     </>
                 }
                 right={
@@ -135,7 +135,7 @@ function ConfirmationContent() {
                         </Button>
                         <Button
                             type={"button"}
-                            variant={"information"}
+                            variant={"submit"}
                             disabled={isPending}
                             onClick={() => {
                                 publishPushCampaign();

@@ -54,7 +54,7 @@ export function Navigation() {
                     </NavigationLabel>
                 </NavigationItem>
                 <NavigationItem
-                    url={process.env.NEXUS_WALLET_URL}
+                    url={process.env.FRAK_WALLET_URL}
                     className={styles.navigation__itemToBottom}
                 >
                     <NavigationLabel icon={<Wallet />}>Wallet</NavigationLabel>

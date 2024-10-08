@@ -1,11 +1,18 @@
 "use client";
 
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
-import { Player } from "@lottiefiles/react-lottie-player";
 import { Link } from "next-view-transitions";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import lottie from "./assets/lottie.json";
 import styles from "./index.module.css";
+
+/**
+ * Import Lottie component dynamically to avoid loading it on the server side
+ */
+const Player = dynamic(() =>
+    import("@lottiefiles/react-lottie-player").then((mod) => mod.Player)
+);
 
 export function Lottie({ className }: { className?: string }) {
     const [playerState, setPlayerState] = useState<"complete" | undefined>();
@@ -21,7 +28,7 @@ export function Lottie({ className }: { className?: string }) {
             className={`${className} ${playerState === "complete" ? styles.lottie__complete : ""}`}
         >
             <Link
-                href={process.env.NEXUS_WALLET_URL as string}
+                href={process.env.FRAK_WALLET_URL as string}
                 target={"_blank"}
             >
                 <Player

@@ -88,6 +88,6 @@ export async function encryptPrivateKey({
             toBytes(saltLength),
             salt,
             new Uint8Array(encyptedPrivKey),
-        ])
+        ]).buffer as ArrayBuffer
     );
 }

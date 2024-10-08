@@ -5,74 +5,100 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
+import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering/index";
-import { Columns } from "@module/component/Columns";
+import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { format, startOfDay } from "date-fns";
+import { memo, useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import styles from "./index.module.css";
 
-export function MembershipDateFiltering() {
-    const { control, formState } = useFormContext<FormMembersFiltering>();
-    const currentInteractions = useWatch({
+export const MembershipDateFiltering = memo(function MembershipDateFiltering({
+    disabled,
+    onSubmit,
+}: { disabled?: boolean; onSubmit: (data: FormMembersFiltering) => void }) {
+    const { control, handleSubmit, setValue } =
+        useFormContext<FormMembersFiltering>();
+    const currentFirstInteractionTimestamp = useWatch({
         control,
         name: "firstInteractionTimestamp",
     });
-    const inputDisabled = currentInteractions === undefined;
+    const inputDisabled = currentFirstInteractionTimestamp === undefined;
+    const isAllUndefined =
+        currentFirstInteractionTimestamp?.min === undefined &&
+        currentFirstInteractionTimestamp?.max === undefined;
+    const [checked, setIsChecked] = useState<boolean | "indeterminate">(
+        "indeterminate"
+    );
+
+    useEffect(() => {
+        setIsChecked(!inputDisabled);
+    }, [inputDisabled]);
+
+    /**
+     * If form is disabled and all values are undefined, return null to hide the component
+     */
+    if (disabled && isAllUndefined) return null;
 
     return (
-        <div>
-            <FormField
-                control={control}
-                name={"firstInteractionTimestamp"}
-                render={({ field }) => (
-                    <FormItem variant={"checkbox"}>
-                        <Checkbox
-                            checked={!inputDisabled}
-                            id={"date-filters"}
-                            disabled={formState.disabled}
-                            onCheckedChange={(checked) => {
-                                field.onChange(
-                                    checked
-                                        ? {
-                                              min: startOfDay(new Date()),
-                                              max: undefined,
-                                          }
-                                        : undefined
-                                );
-                            }}
-                        />
-                        <FormLabel
-                            weight={"medium"}
-                            variant={"checkbox"}
-                            selected={!!field.value}
-                            htmlFor={"date-filters"}
-                        >
-                            Membership Date
-                        </FormLabel>
-                    </FormItem>
-                )}
-            />
-            <Columns>
+        <>
+            <FormDescription label={"Segment"} />
+            <FormItem variant={"checkbox"}>
+                <Checkbox
+                    checked={checked === true}
+                    disabled={disabled}
+                    id={"date-filters"}
+                    onCheckedChange={(checked) => {
+                        setValue(
+                            "firstInteractionTimestamp",
+                            checked
+                                ? {
+                                      min: new Date().getTime() / 1000,
+                                      max: undefined,
+                                  }
+                                : undefined
+                        );
+                        setIsChecked(checked);
+                        handleSubmit(onSubmit)();
+                    }}
+                />
+                <FormLabel
+                    weight={"medium"}
+                    variant={"checkbox"}
+                    selected={checked === true}
+                    htmlFor={"date-filters"}
+                >
+                    Membership Date
+                </FormLabel>
+            </FormItem>
+            <Row className={styles.formFromTo__row}>
                 <FormField
                     control={control}
                     name={"firstInteractionTimestamp.min"}
-                    disabled={inputDisabled || formState.disabled}
                     render={({ field }) => {
                         const { value, ...rest } = field;
                         return (
                             <FormItem>
-                                <FormLabel weight={"medium"}>From</FormLabel>
+                                <FormLabel variant={"light"} weight={"medium"}>
+                                    From
+                                </FormLabel>
                                 <Popover>
                                     <PopoverTrigger {...rest} asChild>
                                         <FormControl>
-                                            <ButtonCalendar>
+                                            <ButtonCalendar
+                                                disabled={
+                                                    checked === false ||
+                                                    disabled
+                                                }
+                                            >
                                                 {field.value ? (
                                                     format(
                                                         field.value * 1000,
@@ -100,6 +126,7 @@ export function MembershipDateFiltering() {
                                                     (value.getTime() ?? 0) /
                                                         1000
                                                 );
+                                                handleSubmit(onSubmit)();
                                             }}
                                             startMonth={startOfDay(new Date())}
                                         />
@@ -113,16 +140,22 @@ export function MembershipDateFiltering() {
                 <FormField
                     control={control}
                     name={"firstInteractionTimestamp.max"}
-                    disabled={inputDisabled || formState.disabled}
                     render={({ field }) => {
                         const { value, ...rest } = field;
                         return (
                             <FormItem>
-                                <FormLabel weight={"medium"}>To</FormLabel>
+                                <FormLabel variant={"light"} weight={"medium"}>
+                                    To
+                                </FormLabel>
                                 <Popover>
                                     <PopoverTrigger {...rest} asChild>
                                         <FormControl>
-                                            <ButtonCalendar>
+                                            <ButtonCalendar
+                                                disabled={
+                                                    checked === false ||
+                                                    disabled
+                                                }
+                                            >
                                                 {field.value ? (
                                                     format(
                                                         field.value * 1000,
@@ -146,14 +179,11 @@ export function MembershipDateFiltering() {
                                             }
                                             onSelect={(value) => {
                                                 if (!value) return;
-                                                // const huhu =
-                                                //     (value.getTime() ?? 0) /
-                                                //     1000;
-                                                // console.log("huhu", huhu);
                                                 field.onChange(
                                                     (value.getTime() ?? 0) /
                                                         1000
                                                 );
+                                                handleSubmit(onSubmit)();
                                             }}
                                             startMonth={startOfDay(new Date())}
                                         />
@@ -164,7 +194,7 @@ export function MembershipDateFiltering() {
                         );
                     }}
                 />
-            </Columns>
-        </div>
+            </Row>
+        </>
     );
-}
+});

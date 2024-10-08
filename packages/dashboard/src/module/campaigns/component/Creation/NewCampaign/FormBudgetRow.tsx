@@ -35,7 +35,7 @@ export function FormBudgetRow(
                 render={({ field }) => (
                     <FormItem>
                         {isCheckCampaign ? (
-                            <FormDescription title={"Campaign budget"} />
+                            <FormDescription label={"Campaign budget"} />
                         ) : (
                             <FormLabel>Campaign budget</FormLabel>
                         )}

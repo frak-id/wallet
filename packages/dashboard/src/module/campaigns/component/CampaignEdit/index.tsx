@@ -1,66 +1,85 @@
 "use client";
 
-import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
-import {
-    campaignActionAtom,
-    campaignAtom,
-    isFetchedCampaignAtom,
-} from "@/module/campaigns/atoms/campaign";
-import type { Campaign } from "@/types/Campaign";
-import { Spinner } from "@module/component/Spinner";
-import { useQuery } from "@tanstack/react-query";
-import { useAtom, useSetAtom } from "jotai";
-import { type PropsWithChildren, useEffect } from "react";
+import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
+import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
+import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
+import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
+import { useEditCampaign } from "@/module/campaigns/hook/useEditCampaign";
+import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
+import { Head } from "@/module/common/component/Head";
+import { Form, FormLayout } from "@/module/forms/Form";
+import type { Campaign, FinalizedCampaignWithState } from "@/types/Campaign";
+import { Button } from "@module/component/Button";
+import { useAtomValue } from "jotai";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
 
 /**
  * Campaign edit component
- * @param params
  * @constructor
  */
-export function CampaignEdit({
-    campaignId,
-    children,
-}: PropsWithChildren<{
-    campaignId: string;
-}>) {
-    const setCampaign = useSetAtom(campaignAtom);
-    const setCampaignAction = useSetAtom(campaignActionAtom);
-    const [isFetchedCampaign, setIsFetchedCampaign] = useAtom(
-        isFetchedCampaignAtom
-    );
+export function CampaignEdit() {
+    const campaign = useAtomValue(campaignAtom);
+
     const {
-        data: campaign,
-        isLoading,
-        isPending,
-    } = useQuery({
-        queryKey: ["campaign", campaignId],
-        queryFn: () => getCampaignDetails({ campaignId }),
+        mutate: onEditCampaign,
+        isPending: isEditingCampaign,
+        isSuccess: isSuccessCampaign,
+    } = useEditCampaign();
+
+    const form = useForm<Campaign>({
+        values: useMemo(() => campaign, [campaign]),
     });
 
-    useEffect(() => {
-        setCampaignAction("edit");
-    }, [setCampaignAction]);
+    async function onSubmit(values: Campaign) {
+        const { budget, state } = values as FinalizedCampaignWithState;
 
-    useEffect(() => {
-        if (!isFetchedCampaign && campaign) {
-            setCampaign({ ...campaign, id: campaignId } as Campaign);
-            setIsFetchedCampaign(true);
-        }
-    }, [
-        isFetchedCampaign,
-        setIsFetchedCampaign,
-        campaign,
-        setCampaign,
-        campaignId,
-    ]);
+        if (state.key !== "created") return;
 
-    if (isLoading || isPending) {
-        return <Spinner />;
+        // Compute the cap period
+        const capPeriod = getCapPeriod(budget.type);
+
+        onEditCampaign({
+            campaign: state.address,
+            activationPeriod: {
+                start: values.scheduled?.dateStart,
+                end: values.scheduled?.dateEnd,
+            },
+            capConfig: {
+                period: capPeriod,
+                amount: budget.maxEuroDaily,
+            },
+        });
     }
 
-    if (!campaign) {
-        return <p>Campaign not found</p>;
-    }
-
-    return children;
+    return (
+        <FormLayout>
+            <Head
+                title={{
+                    content: "Edit campaign",
+                    size: "small",
+                }}
+            />
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <FormBudget {...form} />
+                    <FormSchedule {...form} />
+                    <ActionsWrapper
+                        left={isSuccessCampaign && <ActionsMessageSuccess />}
+                        right={
+                            <Button
+                                type={"submit"}
+                                variant={"submit"}
+                                disabled={isEditingCampaign}
+                                isLoading={isEditingCampaign}
+                            >
+                                Publish
+                            </Button>
+                        }
+                    />
+                </form>
+            </Form>
+        </FormLayout>
+    );
 }

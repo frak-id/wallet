@@ -11,7 +11,7 @@ export function SsoLoginComponent({ onSuccess }: { onSuccess: () => void }) {
 
     return (
         <button onClick={() => login({})} type={"button"}>
-            Connecter un portefeuille Nexus existant
+            Connecter un portefeuille existant
         </button>
     );
 }

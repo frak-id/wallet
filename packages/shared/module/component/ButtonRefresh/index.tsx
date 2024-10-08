@@ -9,7 +9,7 @@ export function ButtonRefresh({ className = "" }: { className?: string }) {
 
     useEffect(() => {
         if (!isRefreshing) return;
-        setTimeout(() => setIsRefreshing(false), 1000);
+        setTimeout(() => setIsRefreshing(false), 2_000);
     }, [isRefreshing]);
 
     return (
@@ -19,7 +19,7 @@ export function ButtonRefresh({ className = "" }: { className?: string }) {
             title={"Force refresh"}
             onClick={() => {
                 setIsRefreshing(true);
-                queryClient.clear();
+                queryClient.resetQueries().then(() => setIsRefreshing(false));
             }}
         >
             <RefreshCcw size={20} />

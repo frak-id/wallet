@@ -1,8 +1,6 @@
-"use server";
-
-import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+"use client";
 import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
-import { memo, parallel } from "radash";
+import { backendApi } from "@frak-labs/shared/context/server";
 import type { Address, Hex } from "viem";
 
 type InteractionToPush = {
@@ -10,14 +8,6 @@ type InteractionToPush = {
     interaction: PreparedInteraction;
     submittedSignature?: Hex;
 };
-
-const getSqsClient = memo(
-    () =>
-        new SQSClient({
-            region: "eu-west-1",
-        }),
-    { key: () => "sqs-client" }
-);
 
 /**
  * Try to push an interaction for the given wallet via an interaction
@@ -29,12 +19,31 @@ export async function pushInteraction({
     wallet: Address;
     toPush: InteractionToPush;
 }) {
-    // Build the SQS message and send it
-    const message = mapToMessage({ wallet, toPush });
-    const queueResult = await getSqsClient().send(message);
-
-    // Return the queue id
-    return queueResult.MessageId;
+    console.log("Pushing interaction", toPush);
+    const { data, error, response, ...other } =
+        await backendApi.interactions.push.post({
+            interactions: [
+                {
+                    wallet,
+                    productId: toPush.productId,
+                    interaction: toPush.interaction,
+                    signature: toPush.submittedSignature,
+                },
+            ],
+        });
+    console.log("body", {
+        body: {
+            wallet,
+            productId: toPush.productId,
+            interaction: toPush.interaction,
+            signature: toPush.submittedSignature,
+        },
+    });
+    console.log("Pushed interaction", {
+        data,
+        other,
+    });
+    return data?.[0];
 }
 
 /**
@@ -48,53 +57,13 @@ export async function pushInteractions({
     toPush: InteractionToPush[];
 }): Promise<string[]> {
     // Craft every interactions events message
-    const messages: SendMessageCommand[] = toPush.map((toPush) =>
-        mapToMessage({ wallet, toPush })
-    );
-
-    // Get our SQS client
-    const sqsClient = getSqsClient();
-
-    // And send every the messages to the queue
-    const results = await parallel(4, messages, async (message) =>
-        sqsClient.send(message)
-    );
-    console.log("Pushed interactions", results);
-
-    // Return the queue id
-    return results.map((result) => result.MessageId) as string[];
-}
-
-/**
- * Type of an interaction event, waited by the queue
- */
-type InteractionEvent = {
-    wallet: Address;
-    productId: Hex;
-    interaction: {
-        handlerTypeDenominator: Hex;
-        interactionData: Hex;
-    };
-    signature?: Hex;
-};
-
-/**
- * Map an interaction to a SQS Message
- * @param wallet
- * @param toPush
- */
-function mapToMessage({
-    wallet,
-    toPush,
-}: { wallet: Address; toPush: InteractionToPush }): SendMessageCommand {
-    const event: InteractionEvent = {
-        wallet,
-        productId: toPush.productId,
-        interaction: toPush.interaction,
-        signature: toPush.submittedSignature,
-    };
-    return new SendMessageCommand({
-        MessageBody: JSON.stringify(event),
-        QueueUrl: process.env.INTERACTION_QUEUE_URL,
+    const { data } = await backendApi.interactions.push.post({
+        interactions: toPush.map((interaction) => ({
+            wallet,
+            productId: interaction.productId,
+            interaction: interaction.interaction,
+            signature: interaction.submittedSignature,
+        })),
     });
+    return data ?? [];
 }

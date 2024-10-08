@@ -13,7 +13,6 @@ import type {
     FieldPath,
     FieldValues,
     PathValue,
-    RegisterOptions,
     UseFormReturn,
 } from "react-hook-form";
 import styles from "./FormFromTo.module.css";
@@ -29,20 +28,12 @@ type FormFromToProps<
         label: string;
         placeholder: string;
         rightSection: string;
-        rules?: Omit<
-            RegisterOptions<TFieldValues, TName>,
-            "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
-        >;
     };
     to: {
         name: TName;
         label: string;
         placeholder: string;
         rightSection: string;
-        rules?: Omit<
-            RegisterOptions<TFieldValues, TName>,
-            "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
-        >;
     };
     form: UseFormReturn<TFieldValues>;
     hideIfAllZero?: boolean;
@@ -66,7 +57,9 @@ export function FormFromTo<
     type FieldValue = PathValue<TFieldValues, TName>;
 
     const values = form.getValues([from.name, to.name]);
-    const isAllZero = values.every((value) => value === 0);
+    const isAllZero = values.every(
+        (value) => value === 0 || value === undefined
+    );
 
     const [checked, setIsChecked] = useState<boolean | "indeterminate">(
         defaultChecked
@@ -74,7 +67,7 @@ export function FormFromTo<
 
     useEffect(() => {
         if (defaultChecked) return;
-        setIsChecked(!isAllZero ?? "indeterminate");
+        setIsChecked(!isAllZero);
     }, [isAllZero, defaultChecked]);
 
     function checkingCheckbox(value: boolean | "indeterminate") {
@@ -109,7 +102,12 @@ export function FormFromTo<
                 <FormField
                     control={form.control}
                     name={from.name}
-                    rules={from.rules}
+                    rules={{
+                        validate: (value) => {
+                            if (checked) return value > 0;
+                            return true;
+                        },
+                    }}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel variant={"light"}>
@@ -131,7 +129,12 @@ export function FormFromTo<
                 <FormField
                     control={form.control}
                     name={to.name}
-                    rules={to.rules}
+                    rules={{
+                        validate: (value) => {
+                            if (checked) return value > 0;
+                            return true;
+                        },
+                    }}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel variant={"light"}>{to.label}</FormLabel>

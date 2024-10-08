@@ -29,8 +29,8 @@ export function SsoRegisterComponent({ onSuccess }: { onSuccess: () => void }) {
         if (isPreviouslyUsedAuthenticatorError) {
             return (
                 <>
-                    Vous avez deja un portfeuille Nexus enregistré. Cliquer su r
-                    le bouton de connexion ci-dessous pour vous connecter.
+                    Vous avez deja un portfeuille enregistré. Cliquer su r le
+                    bouton de connexion ci-dessous pour vous connecter.
                 </>
             );
         }
@@ -40,7 +40,7 @@ export function SsoRegisterComponent({ onSuccess }: { onSuccess: () => void }) {
         if (isRegisterInProgress) {
             return (
                 <>
-                    Creation de votre portefeuille Nexus en cours
+                    Creation de votre portefeuille en cours
                     <span className={"dotsLoading"}>...</span>
                 </>
             );

@@ -1,7 +1,7 @@
 {
-    "name": "Nexus Wallet Demo by Frak",
-    "short_name": "Nexus Demo",
-    "description": "Simple nexus wallet demo for the EthCC.",
+    "name": "Frak Wallet Demo",
+    "short_name": "Frak Wallet Demo",
+    "description": "Simple frak wallet demo for the EthCC.",
     "version": "0.0.1",
     "icons": [
         {

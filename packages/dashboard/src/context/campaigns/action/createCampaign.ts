@@ -4,24 +4,33 @@ import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
 import type { DraftCampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
 import {
     referralCampaignId,
     referralConfigStruct,
 } from "@/context/campaigns/utils/constants";
 import type { Campaign } from "@/types/Campaign";
-import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import {
+    addresses,
+    productInteractionManagerAbi,
+    stringToBytes32,
+} from "@frak-labs/app-essentials";
+import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import {
+    type InteractionTypesKey,
+    interactionTypes,
+} from "@frak-labs/nexus-sdk/core";
 import { ObjectId } from "mongodb";
 import { first } from "radash";
 import {
     type Hex,
+    concatHex,
     encodeAbiParameters,
     encodeFunctionData,
-    maxUint256,
+    isAddress,
     parseAbi,
     parseEther,
     parseEventLogs,
-    stringToHex,
 } from "viem";
 import { getTransactionReceipt, simulateContract } from "viem/actions";
 
@@ -62,31 +71,18 @@ export async function getCreationData(campaign: Campaign) {
         throw new Error("Product id is required");
     }
 
-    const clickRewards = campaign?.rewards?.click;
-    if (!clickRewards) {
-        throw new Error("Click reward is required");
-    }
-    if (clickRewards.from > clickRewards.to) {
-        throw new Error("Click reward from must be lower than to");
-    }
-    if (clickRewards.from < 0) {
-        throw new Error("Click reward from must be positive");
+    // If the triggers record is empty early exit
+    if (!campaign.triggers || Object.keys(campaign.triggers).length === 0) {
+        throw new Error("Triggers are required");
     }
 
-    // Compute the initial reward for a referral (avg between min and max)
-    const initialReward = Math.floor((clickRewards.from + clickRewards.to) / 2);
+    // If the bank address isn't set, early exit
+    if (!(campaign.bank && isAddress(campaign.bank))) {
+        throw new Error("Bank is required");
+    }
 
     // Compute the cap period
-    let capPeriod = 0n;
-    if (campaign.budget.type === "daily") {
-        capPeriod = BigInt(24 * 60 * 60);
-    } else if (campaign.budget.type === "weekly") {
-        capPeriod = BigInt(7 * 24 * 60 * 60);
-    } else if (campaign.budget.type === "monthly") {
-        capPeriod = BigInt(30 * 24 * 60 * 60);
-    } else if (campaign.budget.type === "global") {
-        capPeriod = maxUint256;
-    }
+    const capPeriod = getCapPeriod(campaign.budget.type);
 
     // The start and end period
     let start = 0;
@@ -100,41 +96,82 @@ export async function getCreationData(campaign: Campaign) {
         end = Math.floor(new Date(campaign.scheduled.dateEnd).getTime() / 1000);
     }
 
-    // The blockchain name of the campaign is fitted on a bytes32
-    const blockchainName = stringToHex(
-        campaign.title.replace(/[^a-zA-Z0-9]/g, "").substring(0, 32),
-        {
-            size: 32,
+    // Rebuild the triggers
+    const triggers = Object.entries(campaign.triggers).map(
+        ([interactionTypeKey, trigger]) => {
+            // The initial reward is just the avg of from and to for now
+            const initialReward = Math.floor((trigger.from + trigger.to) / 2);
+
+            // Find the matching interaction types (into the sub-keys of interaction types)
+            const interactionType = getHexValueForKey(
+                interactionTypeKey as InteractionTypesKey
+            );
+            if (!interactionType) {
+                throw new Error(
+                    `No interaction type found for the key ${interactionTypeKey}`
+                );
+            }
+
+            // Create the user percent (number between 0 and 1, should be a bigint between 0 and 10_000 after mapping, with no decimals)
+            const userPercent = trigger.userPercent
+                ? BigInt(Math.floor(trigger.userPercent * 10_000))
+                : 5_000n; // default to 50%
+
+            // Same wise for the deperdition level
+            const deperditionPerLevel = trigger.deperditionPerLevel
+                ? BigInt(Math.floor(trigger.deperditionPerLevel * 10_000))
+                : 8_000n; // default to 80%%
+
+            return {
+                interactionType: interactionType,
+                baseReward: parseEther(initialReward.toString()),
+                userPercent: userPercent,
+                deperditionPerLevel: deperditionPerLevel,
+                maxCountPerUser: trigger.maxCountPerUser
+                    ? BigInt(trigger.maxCountPerUser)
+                    : 0n, // No max triggers
+            };
         }
     );
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
-        addresses.mUsdToken,
-        parseEther(initialReward.toString()), // initial reward
-        5_000n, // user reward percent (on 1/10_000 so 50%), todo: should be campaign param
-        capPeriod,
-        campaign.budget.maxEuroDaily
-            ? parseEther(campaign.budget.maxEuroDaily.toString())
-            : 0n,
-        start,
-        end,
-        blockchainName,
+        stringToBytes32(campaign.title),
+        campaign.bank,
+        // Triggers (todo: from frontend)
+        triggers,
+        // Cap config
+        {
+            period: capPeriod,
+            amount: campaign.budget.maxEuroDaily
+                ? parseEther(campaign.budget.maxEuroDaily.toString())
+                : 0n,
+        },
+        // Activation period
+        { start, end },
+    ]);
+    // Add offset to the data
+    const initDataWithOffset = concatHex([
+        "0x0000000000000000000000000000000000000000000000000000000000000020",
+        campaignInitData,
     ]);
 
     // Perform a contract simulation
     //  this will fail if the tx will fail
-    await simulateContract(viemClient, {
-        account: session.wallet,
-        address: addresses.productInteractionManager,
-        abi: productInteractionManagerAbi,
-        functionName: "deployCampaign",
-        args: [
-            BigInt(campaign.productId),
-            referralCampaignId,
-            campaignInitData,
-        ],
-    });
+    const { result: determinedCampaignAddress } = await simulateContract(
+        viemClient,
+        {
+            account: session.wallet,
+            address: addresses.productInteractionManager,
+            abi: productInteractionManagerAbi,
+            functionName: "deployCampaign",
+            args: [
+                BigInt(campaign.productId),
+                referralCampaignId,
+                initDataWithOffset,
+            ],
+        }
+    );
 
     // Return the encoded calldata to deploy and attach this campaign
     const creationData = encodeFunctionData({
@@ -143,11 +180,41 @@ export async function getCreationData(campaign: Campaign) {
         args: [
             BigInt(campaign.productId),
             referralCampaignId,
-            campaignInitData,
+            initDataWithOffset,
         ],
     });
 
-    return { creationData };
+    const allowRewardData = encodeFunctionData({
+        abi: campaignBankAbi,
+        functionName: "updateCampaignAuthorisation",
+        args: [determinedCampaignAddress, true],
+    });
+
+    return {
+        tx: [
+            {
+                to: addresses.productInteractionManager,
+                data: creationData as Hex,
+            },
+            {
+                to: campaign.bank,
+                data: allowRewardData as Hex,
+            },
+        ],
+    };
+}
+
+// todo: Ugly, should be reviewed after
+function getHexValueForKey(key: InteractionTypesKey): Hex | undefined {
+    for (const category in interactionTypes) {
+        const categoryTypped = category as keyof typeof interactionTypes;
+        // biome-ignore lint/suspicious/noExplicitAny: Will be refacto
+        if ((interactionTypes[categoryTypped] as any)[key]) {
+            // biome-ignore lint/suspicious/noExplicitAny: Will be refacto
+            return (interactionTypes[categoryTypped] as any)[key];
+        }
+    }
+    return undefined;
 }
 
 /**

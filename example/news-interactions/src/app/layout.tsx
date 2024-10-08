@@ -7,9 +7,9 @@ import { ViewTransitions } from "next-view-transitions";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-    title: "Good Vibes with Nexus Wallet by Frak",
+    title: "Good Vibes by Frak",
     applicationName: "Good Vibes - Frak",
-    description: "Good Vibes website using Nexus Wallet by Frak.",
+    description: "Good Vibes website using Frak Wallet.",
     authors: [
         { name: "Frak labs", url: "https://frak.id/" },
         { name: "Rodolphe Stoclin", url: "https://github.com/srod" },
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     creator: "Frak labs",
     publisher: "Frak labs",
     manifest: "/manifest.json",
-    keywords: ["frak", "blockchain", "nexus", "wallet", "ethcc"],
+    keywords: ["frak", "wallet", "frak-wallet", "blockchain"],
 };
 
 export const viewport: Viewport = {

@@ -50,7 +50,7 @@ export async function restoreBackupData({
     }
 
     // If the backup is older than a week ago, ask to remove it and return
-    if (data.expireAtTimestamp > Date.now()) {
+    if (data.expireAtTimestamp < Date.now()) {
         emitLifecycleEvent({
             iframeLifecycle: "remove-backup",
         });

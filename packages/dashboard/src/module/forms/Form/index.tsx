@@ -1,7 +1,7 @@
 import { Label } from "@/module/forms/Label";
 import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
-import { type VariantProps, cva } from "class-variance-authority";
+import { type VariantProps, cva, cx } from "class-variance-authority";
 import { createContext, forwardRef, useContext, useId } from "react";
 import type {
     ComponentPropsWithoutRef,
@@ -15,8 +15,11 @@ import styles from "./index.module.css";
 
 const Form = FormProvider;
 
-function FormLayout({ children }: { children: ReactNode }) {
-    return <div className={styles.form__layout}>{children}</div>;
+function FormLayout({
+    children,
+    className,
+}: { children: ReactNode; className?: string }) {
+    return <div className={cx(styles.form__layout, className)}>{children}</div>;
 }
 
 type FormFieldContextValue<
@@ -174,16 +177,17 @@ FormControl.displayName = "FormControl";
 const FormDescription = forwardRef<
     HTMLParagraphElement,
     HTMLAttributes<HTMLParagraphElement> & {
+        label?: string | ReactNode;
         classNameTitle?: string;
     }
->(({ title, classNameTitle = "", className = "", children, ...props }, ref) => {
+>(({ label, classNameTitle = "", className = "", children, ...props }, ref) => {
     const { formDescriptionId } = useFormField();
 
     return (
         <>
-            {title && (
+            {label && (
                 <h3 className={`${styles.form__title} ${classNameTitle}`}>
-                    {title}
+                    {label}
                 </h3>
             )}
             <p

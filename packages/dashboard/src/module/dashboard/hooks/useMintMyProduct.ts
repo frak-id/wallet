@@ -1,5 +1,6 @@
-import { mintProduct } from "@/context/product/action/mint";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
+import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { useMutation } from "@tanstack/react-query";
 
 /**
@@ -11,23 +12,30 @@ export function useMintMyProduct() {
 
     return useMutation({
         mutationKey: ["product", "launch-mint"],
-        mutationFn: async (args: {
+        mutationFn: async ({
+            name,
+            domain,
+            productTypes,
+        }: {
             name: string;
             domain: string;
-            productTypes: bigint;
-            setupInteractions?: boolean;
+            productTypes: ProductTypesKey[];
         }) => {
-            // Perform the backend side of the mint
-            const { mintTxHash, productId } = await mintProduct(args);
+            const { data, error } = await backendApi.business.mint.put({
+                name,
+                domain,
+                productTypes,
+            });
+            if (error) throw error;
 
-            // Setup the interaction contract
+            // Setup the interaction contract if needed
             await deployInteractionContract({
-                productId,
+                productId: data.productId,
                 directAllowValidator: true,
             });
 
             return {
-                mintTxHash,
+                mintTxHash: data.txHash,
             };
         },
     });

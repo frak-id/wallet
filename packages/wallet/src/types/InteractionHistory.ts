@@ -1,4 +1,4 @@
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 
 type BaseInteraction = {
     productId: string;
@@ -9,6 +9,12 @@ type OpenOrReadInteraction = BaseInteraction & {
     type: "OPEN_ARTICLE" | "READ_ARTICLE";
     data: {
         articleId: string;
+    };
+};
+type PurchasesInteraction = BaseInteraction & {
+    type: "PURCHASE_STARTED" | "PURCHASE_COMPLETED";
+    data: {
+        purchaseId: Hex;
     };
 };
 type ReferredInteraction = BaseInteraction & {
@@ -25,4 +31,5 @@ type CreateReferralLinkInteraction = BaseInteraction & {
 export type InteractionHistory =
     | OpenOrReadInteraction
     | ReferredInteraction
-    | CreateReferralLinkInteraction;
+    | CreateReferralLinkInteraction
+    | PurchasesInteraction;

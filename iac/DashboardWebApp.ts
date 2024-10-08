@@ -1,6 +1,5 @@
 import { type StackContext, use } from "sst/constructs";
 import { NextjsSite } from "sst/constructs";
-import { BackendStack } from "./Backend";
 import { ConfigStack } from "./Config";
 import { isProdStack, openNextVersion } from "./utils";
 
@@ -14,22 +13,23 @@ export function DashboardWebApp({ stack }: StackContext) {
     const {
         alchemyApiKey,
         nexusRpcSecret,
-        nexusUrl,
+        frakWalletUrl,
         sessionEncryptionKey,
         mongoBusinessUri,
         contentMinterPrivateKey,
+        backendUrl,
+        indexerUrl,
     } = use(ConfigStack);
     const configs = [
         alchemyApiKey,
         nexusRpcSecret,
-        nexusUrl,
+        frakWalletUrl,
         sessionEncryptionKey,
         mongoBusinessUri,
         contentMinterPrivateKey,
+        backendUrl,
+        indexerUrl,
     ];
-
-    // Get a few backend resources we will bind to the frontend
-    const { reloadCampaignQueue, readPubKeyFunction } = use(BackendStack);
 
     // Base domain for our whole app
     const subDomain = isProdStack(stack)
@@ -50,7 +50,7 @@ export function DashboardWebApp({ stack }: StackContext) {
             staticImageOptimization: true,
         },
         // Bind to the configs
-        bind: [...configs, reloadCampaignQueue, readPubKeyFunction],
+        bind: configs,
         openNextVersion: openNextVersion,
     });
 

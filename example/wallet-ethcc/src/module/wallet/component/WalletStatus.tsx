@@ -12,8 +12,8 @@ export function WalletStatus() {
         <Panel variant={"primary"}>
             <h2>Wallet Status</h2>
             <InnerStatus status={walletStatus} />
-            <Link href={process.env.NEXUS_WALLET_URL ?? ""}>
-                Check on Nexus
+            <Link href={process.env.FRAK_WALLET_URL ?? ""}>
+                Check on Frak Wallet
             </Link>
         </Panel>
     );
@@ -29,12 +29,12 @@ function InnerStatus({
     }
 
     if (status.key === "not-connected") {
-        return <div>You are not connected with a Nexus Wallet</div>;
+        return <div>You are not connected with a Frak Wallet</div>;
     }
 
     return (
         <div>
-            Currently connected with the Nexus: <b>{status.wallet}</b>
+            Currently connected with the wallet: <b>{status.wallet}</b>
         </div>
     );
 }

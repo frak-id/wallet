@@ -177,7 +177,11 @@ function CellActions({
                     type={"button"}
                     onClick={() => {
                         campaignReset();
-                        router.push(`/campaigns/edit/${row.original._id}`);
+                        const action =
+                            row.original.state.key === "draft"
+                                ? "draft"
+                                : "edit";
+                        router.push(`/campaigns/${action}/${row.original._id}`);
                     }}
                 >
                     <Pencil size={20} absoluteStrokeWidth={true} />

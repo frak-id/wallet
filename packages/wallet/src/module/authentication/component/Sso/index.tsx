@@ -3,6 +3,7 @@
 import {
     currentSsoMetadataAtom,
     ssoContextAtom,
+    ssoMetadataAtom,
 } from "@/module/authentication/atoms/sso";
 import styles from "@/module/authentication/component/Login/index.module.css";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
@@ -13,7 +14,7 @@ import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScree
 import { InstallApp } from "@/module/wallet/component/InstallApp";
 import { jotaiStore } from "@module/atoms/store";
 import { ButtonRipple } from "@module/component/ButtonRipple";
-import { useAtomValue } from "jotai/index";
+import { useAtomValue, useSetAtom } from "jotai";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -28,6 +29,11 @@ export function Sso() {
      * The current metadata
      */
     const currentMetadata = useAtomValue(currentSsoMetadataAtom);
+
+    /**
+     * Set the sso metadata atom
+     */
+    const setSsoMetadata = useSetAtom(ssoMetadataAtom);
 
     /**
      * The success state after login or register
@@ -57,7 +63,24 @@ export function Sso() {
             redirectUrl: redirectUrl ?? undefined,
             directExit: directExit ? directExit === "true" : undefined,
         });
-    }, [searchParams]);
+
+        if (!productId) return;
+
+        /**
+         * Set the metadata from the search params
+         */
+        const logoUrl = searchParams.get("logoUrl");
+        const homepageLink = searchParams.get("homepageLink");
+        const metadata = {
+            name: searchParams.get("name") ?? "",
+            ...(logoUrl && { logoUrl }),
+            ...(homepageLink && { homepageLink }),
+        };
+        setSsoMetadata((prev) => ({
+            ...prev,
+            [productId]: metadata,
+        }));
+    }, [searchParams, setSsoMetadata]);
 
     /**
      * The on success callback
@@ -105,11 +128,11 @@ export function Sso() {
                 <>
                     <Notice>
                         Avant de continuer, assurez vous d’utiliser un appareil
-                        vous appartenant. Nexus est une solution permettant à
+                        vous appartenant. Frak est une solution permettant à
                         Asics de récompenser sa communauté pour participer à
                         faire connaître ses offres.{" "}
                         <strong>
-                            Nexus est une solution décentralisée et open source
+                            Frak est une solution décentralisée et open source
                             et ne stocke aucune donnée personnelle ou
                             biométrique.
                         </strong>{" "}
@@ -156,22 +179,30 @@ function Header() {
 
     return (
         <>
-            <img
-                src={currentMetadata.logoUrl}
-                alt={currentMetadata.name}
-                height={50}
-            />
+            {currentMetadata.logoUrl && (
+                <img
+                    src={currentMetadata.logoUrl}
+                    alt={currentMetadata.name}
+                    className={styles.login__icon}
+                />
+            )}
             <h2>Create your Wallet</h2>
-            <p>
-                to receive your rewards immediately from{" "}
-                <a
-                    href={currentMetadata.homepageLink}
-                    target={"_blank"}
-                    rel={"noreferrer"}
-                >
-                    {currentMetadata.name}
-                </a>
-            </p>
+            {currentMetadata.name !== "" && (
+                <p>
+                    to receive your rewards immediately from{" "}
+                    {currentMetadata.homepageLink ? (
+                        <a
+                            href={currentMetadata.homepageLink}
+                            target={"_blank"}
+                            rel={"noreferrer"}
+                        >
+                            {currentMetadata.name}
+                        </a>
+                    ) : (
+                        currentMetadata.name
+                    )}
+                </p>
+            )}
         </>
     );
 }

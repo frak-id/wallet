@@ -2,7 +2,6 @@
 
 import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
-import { CampaignPromotedContent } from "@/module/campaigns/component/CampaignDetails/CampaignPromotedContent";
 import { CampaignStatus } from "@/module/campaigns/component/CampaignDetails/CampaignStatus";
 import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/CampaignTerritory";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
@@ -74,10 +73,7 @@ export function CampaignDetails({
                         disabled={true}
                     />
                     <CampaignTerritory campaign={campaign} />
-                    <FormPriceRange {...form} disabled={true} />
-                    <CampaignPromotedContent
-                        promotedContents={campaign?.promotedContents ?? []}
-                    />
+                    <FormPriceRange form={form} disabled={true} />
                 </Form>
             </Panel>
             <ActionsWrapper

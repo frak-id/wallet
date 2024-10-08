@@ -1,22 +1,19 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { interactionValidatorRoles, roles } from "@/context/blockchain/roles";
-import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
 import { Badge } from "@/module/common/component/Badge";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
+import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
-    useSendTransactionAction,
-    useWalletStatus,
-} from "@frak-labs/nexus-sdk/react";
-import {
+    addresses,
+    interactionValidatorRoles,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
-} from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { productAdministratorRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+} from "@frak-labs/app-essentials";
+import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { AlertDialog } from "@module/component/AlertDialog";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
@@ -24,9 +21,10 @@ import { WalletAddress } from "@module/component/HashDisplay";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { tryit } from "radash";
+import { all, tryit } from "radash";
 import { useState } from "react";
 import { type Address, type Hex, encodeFunctionData } from "viem";
+import { generatePrivateKey } from "viem/accounts";
 import { readContract } from "viem/actions";
 import styles from "./InteractionSettings.module.css";
 
@@ -35,7 +33,9 @@ import styles from "./InteractionSettings.module.css";
  * @constructor
  */
 export function InteractionSettings({ productId }: { productId: Hex }) {
-    const { data: walletStatus } = useWalletStatus();
+    const { rolesReady, isInteractionManager } = useHasRoleOnProduct({
+        productId,
+    });
     const { mutateAsync: setupInteractionContract } =
         useSetupInteractionContract();
 
@@ -44,30 +44,9 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
         isLoading: isFetchingInteractionContract,
         refetch: refreshDetails,
     } = useQuery({
-        enabled: !!productId,
-        queryKey: [
-            "product",
-            "details",
-            walletStatus?.key,
-            productId.toString(),
-        ],
+        enabled: !!productId && rolesReady,
+        queryKey: ["product", "interaction-details", productId.toString()],
         queryFn: async () => {
-            if (walletStatus?.key !== "connected") {
-                return null;
-            }
-
-            // Check if the user is allowed on the product
-            const isAllowed = await readContract(viemClient, {
-                abi: productAdministratorRegistryAbi,
-                functionName: "hasAllRolesOrAdmin",
-                address: addresses.productAdministratorRegistry,
-                args: [
-                    BigInt(productId),
-                    walletStatus.wallet,
-                    roles.productManager,
-                ],
-            });
-
             // Fetch the on chain interaction contract
             const [, interactionContract] = await tryit(() =>
                 readContract(viemClient, {
@@ -79,7 +58,6 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
             )();
 
             return {
-                isAllowed,
                 interactionContract,
             };
         },
@@ -121,7 +99,7 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                         )}
 
                         {detailsData?.interactionContract &&
-                            detailsData?.isAllowed && (
+                            isInteractionManager && (
                                 <ModalDelete
                                     productId={productId}
                                     refreshDetails={async () => {
@@ -131,13 +109,14 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                             )}
 
                         {!detailsData?.interactionContract &&
-                            detailsData?.isAllowed && (
+                            isInteractionManager && (
                                 <Button
                                     variant={"submit"}
                                     onClick={() =>
                                         setupInteractionContract({
                                             productId,
                                             directAllowValidator: true,
+                                            salt: generatePrivateKey(),
                                         })
                                     }
                                     className={
@@ -201,15 +180,19 @@ function ManagedInteractionValidator({
             productId,
         ],
         queryFn: async () => {
-            const {
-                productPubKey: validatorPublicKey,
-                interactionExecutorPubKey,
-            } = await getManagedValidatorPublicKey({
-                productId,
+            const { productResult, interactionExecutorResult } = await all({
+                productResult: backendApi.common.adminWallet.get({
+                    query: { productId },
+                }),
+                interactionExecutorResult: backendApi.common.adminWallet.get({
+                    query: { key: "interaction-executor" },
+                }),
             });
-            if (!validatorPublicKey) {
+
+            if (!productResult?.data?.pubKey) {
                 return null;
             }
+            const validatorPublicKey = productResult.data.pubKey;
             const hasValidatorRoles = await readContract(viemClient, {
                 abi: productInteractionDiamondAbi,
                 address: interactionContract,
@@ -218,7 +201,8 @@ function ManagedInteractionValidator({
             });
             return {
                 validatorPublicKey,
-                interactionExecutorPubKey,
+                interactionExecutorPubKey:
+                    interactionExecutorResult?.data?.pubKey,
                 hasValidatorRoles,
             };
         },
@@ -310,7 +294,7 @@ function ManagedInteractionValidator({
             )}
 
             <CallOut variant={"secondary"}>
-                The Managed Interaction Validator simplifies Nexus SDK
+                The Managed Interaction Validator simplifies Frak Wallet SDK
                 integration by handling interaction validation.
                 <br /> When allowed, you can submit user interactions without
                 generating ECDSA signatures.

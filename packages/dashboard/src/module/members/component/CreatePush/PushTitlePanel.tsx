@@ -5,10 +5,9 @@ import {
     FormControl,
     FormField,
     FormItem,
-    FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/index";
+import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 import { Input } from "@module/component/forms/Input";
 import { useFormContext } from "react-hook-form";
 
@@ -38,9 +37,6 @@ export function PushTitlePanel() {
                 }}
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel weight={"medium"}>
-                            Enter the title of your push campaign
-                        </FormLabel>
                         <FormControl>
                             <Input
                                 length={"medium"}

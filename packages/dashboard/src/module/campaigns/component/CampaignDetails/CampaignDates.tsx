@@ -1,6 +1,6 @@
-import { getOnChainCampaignsDetails } from "@/context/campaigns/action/getDetails";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import styles from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule.module.css";
+import { useGetOnChainCampaignDetails } from "@/module/campaigns/hook/useGetOnChainDetails";
 import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
 import {
@@ -18,12 +18,12 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { referralCampaignAbi } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { referralCampaignAbi } from "@frak-labs/shared/context/blockchain/abis/frak-campaign-abis";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { Checkbox } from "@module/component/forms/Checkbox";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { format, isBefore, startOfDay } from "date-fns";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -48,9 +48,8 @@ export function CampaignDates({
 }) {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
 
-    const { data: onChainInfos, isLoading } = useQuery({
-        queryKey: ["campaign", "on-chain-details", campaignAddress],
-        queryFn: () => getOnChainCampaignsDetails({ campaignAddress }),
+    const { data: onChainInfos, isLoading } = useGetOnChainCampaignDetails({
+        campaignAddress,
     });
 
     const {
@@ -69,8 +68,8 @@ export function CampaignDates({
             // Build the function data
             const calldata = encodeFunctionData({
                 abi: referralCampaignAbi,
-                functionName: "setActivationDate",
-                args: [start, end],
+                functionName: "updateActivationPeriod",
+                args: [{ start, end }],
             });
 
             // Send the transaction
@@ -91,9 +90,9 @@ export function CampaignDates({
 
     const setInitialValues = useCallback(() => {
         if (!onChainInfos) return;
-        const dateStart = new Date(onChainInfos.config.startDate * 1000);
-        const dateEnd = onChainInfos.config.endDate
-            ? new Date(onChainInfos.config.endDate * 1000)
+        const dateStart = new Date(onChainInfos.config[1].start * 1000);
+        const dateEnd = onChainInfos.config[1].end
+            ? new Date(onChainInfos.config[1].end * 1000)
             : undefined;
         return {
             scheduled: {

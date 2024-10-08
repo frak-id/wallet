@@ -3,7 +3,14 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import type { InteractionHistory } from "@/types/InteractionHistory";
-import { BookText, Forward, Link, MailOpen } from "lucide-react";
+import {
+    BookText,
+    Forward,
+    Link,
+    MailOpen,
+    ShoppingBasket,
+    ShoppingCart,
+} from "lucide-react";
 import styles from "./index.module.css";
 
 type InteractionProps = {
@@ -15,6 +22,8 @@ const mapLabels = {
     READ_ARTICLE: "Read article",
     REFERRED: "Referred",
     CREATE_REFERRAL_LINK: "Create share link",
+    PURCHASE_STARTED: "Started purchase",
+    PURCHASE_COMPLETED: "Completed purchase",
 };
 
 const mapIcons = {
@@ -22,6 +31,8 @@ const mapIcons = {
     READ_ARTICLE: <BookText size={30} />,
     REFERRED: <Forward size={30} />,
     CREATE_REFERRAL_LINK: <Link size={30} />,
+    PURCHASE_STARTED: <ShoppingBasket size={30} />,
+    PURCHASE_COMPLETED: <ShoppingCart size={30} />,
 };
 
 export function Interaction({ article }: InteractionProps) {

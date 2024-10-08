@@ -15,6 +15,7 @@ import {
 } from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
 import type { UseFormReturn } from "react-hook-form";
+import type { Hex } from "viem";
 
 export function FormProduct(form: UseFormReturn<Campaign>) {
     const { isEmpty, products } = useMyProducts();
@@ -22,11 +23,10 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
         ...(products?.operator ?? []),
         ...(products?.owner ?? []),
     ];
-
-    if (isEmpty) return null;
+    const isDisabled = isEmpty || !products || contentList.length === 0;
 
     return (
-        <Panel title="Product">
+        <Panel title="Product" aria-disabled={isDisabled}>
             <FormField
                 control={form.control}
                 name="productId"
@@ -38,9 +38,10 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
                                 name={field.name}
                                 onValueChange={(value) => {
                                     if (value === "") return;
-                                    field.onChange(value);
+                                    field.onChange(value as Hex);
                                 }}
                                 value={field.value}
+                                disabled={isDisabled}
                             >
                                 <SelectTrigger length={"medium"} {...field}>
                                     <SelectValue placeholder="Select a product" />
@@ -49,7 +50,7 @@ export function FormProduct(form: UseFormReturn<Campaign>) {
                                     {contentList.map((content) => (
                                         <SelectItem
                                             key={content.id}
-                                            value={content.id.toString()}
+                                            value={content.id}
                                         >
                                             {content.name}
                                         </SelectItem>

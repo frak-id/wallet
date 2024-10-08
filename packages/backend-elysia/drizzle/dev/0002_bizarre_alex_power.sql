@@ -1,0 +1,1 @@
+ALTER TABLE "interactions_pending" DROP CONSTRAINT "unique_interaction_per_status";

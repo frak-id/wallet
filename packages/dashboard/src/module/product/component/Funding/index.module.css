@@ -1,0 +1,8 @@
+.productFundingBank + .productFundingBank {
+    margin-top: 20px;
+}
+
+.productFundingBank__title {
+    margin-bottom: 8px;
+    font-weight: 700;
+}

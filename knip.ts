@@ -19,8 +19,8 @@ const config: KnipConfig = {
         "packages/shared": {
             entry: "**/*.{ts,tsx}",
         },
-        "packages/backend": {
-            entry: "src/**/*.ts",
+        "packages/backend-elysia": {
+            entry: "src/index.ts",
             project: "src/**/*.ts",
         },
     },

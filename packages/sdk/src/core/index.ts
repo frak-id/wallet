@@ -15,6 +15,10 @@ export {
     productTypes,
     productTypesMask,
 } from "./constants/productTypes";
+export {
+    interactionTypes,
+    type InteractionTypesKey,
+} from "./constants/interactionTypes";
 
 // Types
 export type {

@@ -2,8 +2,8 @@
  * SSO Metadata
  */
 export type SsoMetadata = {
-    logoUrl: string;
-    homepageLink: string;
+    logoUrl?: string;
+    homepageLink?: string;
 
     links?: {
         confidentialityLink?: string;

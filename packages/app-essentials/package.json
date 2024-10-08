@@ -1,0 +1,27 @@
+{
+  "name": "@frak-labs/app-essentials",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "GNU GPL 3.0",
+  "module": "src/index.ts",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "viem": "^2.21.6"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./blockchain": {
+      "types": "./src/blockchain/index.ts",
+      "import": "./src/blockchain/index.ts",
+      "default": "./src/blockchain/index.ts"
+    }
+  }
+}

@@ -1,16 +1,16 @@
 import { pick } from "radash";
 import { Config } from "sst/node/config";
-import { Function as SstFunction } from "sst/node/function";
-import { Queue } from "sst/node/queue";
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
     "ALCHEMY_API_KEY",
     "NEXUS_RPC_SECRET",
-    "NEXUS_WALLET_URL",
+    "FRAK_WALLET_URL",
     "SESSION_ENCRYPTION_KEY",
     "MONGODB_BUSINESS_URI",
     "CONTENT_MINTER_PRIVATE_KEY",
+    "BACKEND_URL",
+    "INDEXER_URL",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
@@ -36,11 +36,8 @@ const nextConfig = {
         ...envFromSstConfig,
         STAGE: Config.STAGE,
         // APP_URL: Config.NEXUS_DASHBOARD_URL,
-        CAMPAIGN_RELOAD_QUEUE_URL: Queue.ReloadCampaignQueue.queueUrl,
-        READ_PUBLIC_KEY_FUNCTION_NAME:
-            SstFunction.ReadPubKeyFunction.functionName,
     },
-    transpilePackages: ["lucide-react"],
+    transpilePackages: ["lucide-react", "@frak-labs/app-essentials"],
     compiler: {
         removeConsole: isDistant,
     },

@@ -1,17 +1,18 @@
-import { interactionValidatorRoles } from "@/context/blockchain/roles";
-import { getManagedValidatorPublicKey } from "@/context/product/action/getValidator";
+import { viemClient } from "@/context/blockchain/provider";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import {
+    addresses,
+    interactionValidatorRoles,
+    productInteractionManagerAbi,
+} from "@frak-labs/app-essentials";
 import type { SendTransactionModalStepType } from "@frak-labs/nexus-sdk/core";
 import {
     useSendTransactionAction,
     useWalletStatus,
 } from "@frak-labs/nexus-sdk/react";
-import { currentViemClient } from "@frak-labs/nexus-wallet/src/context/blockchain/provider";
-import { productInteractionManagerAbi } from "@frak-labs/shared/context/blockchain/abis/frak-interaction-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useMutation } from "@tanstack/react-query";
 import { type Hex, encodeFunctionData } from "viem";
-import { generatePrivateKey } from "viem/accounts";
 import { simulateContract } from "viem/actions";
 
 /**
@@ -28,12 +29,10 @@ export function useSetupInteractionContract() {
         mutationFn: async ({
             directAllowValidator,
             productId,
-        }: { productId: Hex; directAllowValidator: boolean }) => {
+            salt,
+        }: { productId: Hex; directAllowValidator: boolean; salt?: Hex }) => {
             // early exit if user not logged in
             if (walletStatus?.key !== "connected") return;
-
-            // Generate a random bytes32
-            const randomBytes32 = generatePrivateKey();
 
             // First tx to deploy the interaction contract
             const tx: SendTransactionModalStepType["params"]["tx"] = [
@@ -42,7 +41,9 @@ export function useSetupInteractionContract() {
                     data: encodeFunctionData({
                         abi: productInteractionManagerAbi,
                         functionName: "deployInteractionContract",
-                        args: [BigInt(productId), randomBytes32],
+                        args: salt
+                            ? [BigInt(productId), salt]
+                            : [BigInt(productId)],
                     }),
                 },
             ];
@@ -51,25 +52,30 @@ export function useSetupInteractionContract() {
             if (directAllowValidator) {
                 // Predicate final address
                 const { result: predictedInteractionAddress } =
-                    await simulateContract(currentViemClient, {
+                    await simulateContract(viemClient, {
                         account: walletStatus.wallet,
                         address: addresses.productInteractionManager,
                         abi: productInteractionManagerAbi,
                         functionName: "deployInteractionContract",
-                        args: [BigInt(productId), randomBytes32],
+                        args: salt
+                            ? [BigInt(productId), salt]
+                            : [BigInt(productId)],
                     });
 
                 // Get the manager validator address
-                const { productPubKey } = await getManagedValidatorPublicKey({
-                    productId: productId,
+                const result = await backendApi.common.adminWallet.get({
+                    query: {
+                        productId: productId,
+                    },
                 });
-                if (!(productPubKey && predictedInteractionAddress)) {
+                if (!(result?.data?.pubKey && predictedInteractionAddress)) {
                     console.log(
                         "Error getting the product pub key or the predicted interaction address",
-                        { productPubKey, predictedInteractionAddress }
+                        { result, predictedInteractionAddress }
                     );
                     return;
                 }
+                const productPubKey = result.data.pubKey;
 
                 // Add the second tx to allow the managed validator
                 tx.push({

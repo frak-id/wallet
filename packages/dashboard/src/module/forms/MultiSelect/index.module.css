@@ -5,6 +5,7 @@
     min-width: 320px;
     min-height: 40px;
     gap: 5px;
+    padding: 0 14px !important;
 }
 
 .multiSelect__triggerInner {

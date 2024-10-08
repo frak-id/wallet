@@ -1,16 +1,10 @@
 import { ProductDetails } from "@/module/product/component/ProductDetails";
-import { useMemo } from "react";
-import { toHex } from "viem";
+import type { Hex } from "viem";
 
 export default function ProductDetailPage({
-    params,
+    params: { productId },
 }: {
-    params: { productId: string };
+    params: { productId: Hex };
 }) {
-    const pId = useMemo(
-        () => toHex(BigInt(params.productId)),
-        [params.productId]
-    );
-
-    return <ProductDetails productId={pId} />;
+    return <ProductDetails productId={productId} />;
 }

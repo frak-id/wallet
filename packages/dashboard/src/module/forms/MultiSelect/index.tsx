@@ -15,6 +15,7 @@ import {
 } from "@/module/common/component/Popover";
 import { Separator } from "@/module/common/component/Separator";
 import { Button } from "@module/component/Button";
+import { Tooltip } from "@module/component/Tooltip";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
 import { forwardRef, useState } from "react";
 import type { ButtonHTMLAttributes } from "react";
@@ -23,9 +24,11 @@ import styles from "./index.module.css";
 type Option = {
     name: string;
     value?: string;
+    tooltip?: string;
 };
 
-interface MultiSelectProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface MultiSelectProps
+    extends ButtonHTMLAttributes<HTMLButtonElement> {
     options: Option[];
     onValueChange: (value: Option[]) => void;
     placeholder?: string;
@@ -276,7 +279,9 @@ function OptionsList({
                 >
                     <CheckIcon size={12} />
                 </div>
-                <span>{option.name}</span>
+                <Tooltip content={option.tooltip} hidden={!option.tooltip}>
+                    <span>{option.name}</span>
+                </Tooltip>
             </CommandItem>
         );
     });

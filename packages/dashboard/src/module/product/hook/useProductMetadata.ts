@@ -1,6 +1,10 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { productRegistryAbi } from "@frak-labs/shared/context/blockchain/abis/frak-registry-abis";
-import { addresses } from "@frak-labs/shared/context/blockchain/addresses";
+import { decodeProductTypesMask } from "@/module/product/utils/productTypes";
+import {
+    addresses,
+    bytesToString,
+    productRegistryAbi,
+} from "@frak-labs/app-essentials";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
@@ -8,15 +12,25 @@ import { readContract } from "viem/actions";
 /**
  * Hook to get the product metadata
  */
-export function useProductMetadata({ productId }: { productId: Hex }) {
+export function useProductMetadata({ productId }: { productId?: Hex }) {
     return useQuery({
         queryKey: ["product", "metadata", productId],
-        queryFn: () =>
-            readContract(viemClient, {
+        queryFn: async () => {
+            if (!productId) return;
+            const metadata = await readContract(viemClient, {
                 address: addresses.productRegistry,
                 abi: productRegistryAbi,
                 functionName: "getMetadata",
                 args: [BigInt(productId)],
-            }),
+            });
+            console.log({ metadata }, "Product metadata");
+
+            return {
+                ...metadata,
+                name: bytesToString(metadata.name),
+                productTypes: decodeProductTypesMask(metadata.productTypes),
+            };
+        },
+        enabled: !!productId,
     });
 }

@@ -11,10 +11,13 @@ import type {
     SsoMetadata,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
+import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect } from "react";
+import Markdown from "react-markdown";
+import rehypeExternalLinks from "rehype-external-links";
 
 /**
  * The component for the login step of a modal
@@ -73,7 +76,13 @@ export function LoginModalStep({
         <RequireWebAuthN>
             {metadata?.description && (
                 <div className={prefixModalCss("text")}>
-                    <p>{metadata.description}</p>
+                    <Markdown
+                        rehypePlugins={[
+                            [rehypeExternalLinks, { target: "_blank" }],
+                        ]}
+                    >
+                        {metadata.description}
+                    </Markdown>
                 </div>
             )}
             <div className={prefixModalCss("buttons-wrapper")}>
@@ -84,6 +93,7 @@ export function LoginModalStep({
                         disabled={isLoading}
                         onClick={() => login({})}
                     >
+                        {isLoading && <Spinner />}
                         {metadata?.primaryActionText ?? "Login"}
                     </button>
                 </div>

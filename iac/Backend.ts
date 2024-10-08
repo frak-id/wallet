@@ -1,22 +1,10 @@
-import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
-import { Port } from "aws-cdk-lib/aws-ec2";
-import {
-    ApplicationProtocol,
-    ApplicationTargetGroup,
-} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
-import {
-    Config,
-    Queue,
-    Service,
-    Function as SstFunction,
-    type StackContext,
-    use,
-} from "sst/constructs";
+import { Config, Service, type StackContext, use } from "sst/constructs";
+import { ClusterStack } from "./Cluster";
 import { ConfigStack } from "./Config";
-import { buildEcsService } from "./builder/ServiceBuilder";
+import { isDevStack, isDistantStack } from "./utils";
 
 /**
  * Define backend stack
@@ -24,27 +12,8 @@ import { buildEcsService } from "./builder/ServiceBuilder";
  * @constructor
  */
 export function BackendStack(ctx: StackContext) {
-    const { interactionQueue, readPubKeyFunction } = interactionsResources(ctx);
-    const { reloadCampaignQueue } = campaignResources(ctx);
-
-    // Add the elysia backend
-    elysiaBackend(ctx);
-
-    return {
-        interactionQueue,
-        reloadCampaignQueue,
-        readPubKeyFunction,
-    };
-}
-
-/**
- * Define all of our interactions resources
- *  todo: expose an api to get the signer public key for a given productId
- * @param stack
- */
-function interactionsResources({ stack }: StackContext) {
     // Generate our master private key secret for product key derivation
-    const masterKeySecret = new AwsSecret(stack, "MasterPrivateKey", {
+    const masterKeySecret = new AwsSecret(ctx.stack, "MasterPrivateKey", {
         generateSecretString: {
             secretStringTemplate: JSON.stringify({ masterPrivateKey: "" }),
             generateStringKey: "masterPrivateKey",
@@ -60,132 +29,63 @@ function interactionsResources({ stack }: StackContext) {
     });
 
     // Create a new config parameter to store the secret ARN
-    const masterSecretId = new Config.Parameter(stack, "MASTER_KEY_SECRET_ID", {
-        value: masterKeySecret.secretFullArn ?? masterKeySecret.secretArn,
-    });
-
-    const { alchemyApiKey } = use(ConfigStack);
-    const interactionConsumerFunction = new SstFunction(
-        stack,
-        "InteractionQueueConsumer",
+    const masterSecretId = new Config.Parameter(
+        ctx.stack,
+        "MASTER_KEY_SECRET_ID",
         {
-            handler: "packages/backend/src/interaction/queue.handler",
-            timeout: "15 minutes",
-            bind: [masterSecretId, alchemyApiKey],
-            permissions: [
-                new PolicyStatement({
-                    actions: ["secretsmanager:GetSecretValue"],
-                    resources: [masterKeySecret.secretArn],
-                }),
-            ],
+            value: masterKeySecret.secretFullArn ?? masterKeySecret.secretArn,
         }
     );
 
-    // Interaction handling stuff
-    const interactionQueue = new Queue(stack, "InteractionQueue", {
-        consumer: {
-            function: interactionConsumerFunction,
-            cdk: {
-                eventSource: {
-                    // Maximum amount of item sent to the function (at most 200 interactions)
-                    batchSize: 200,
-                    // Wait at most 2min to push the interactions
-                    maxBatchingWindow: isRunningInProd
-                        ? Duration.minutes(2)
-                        : Duration.seconds(10),
-                    // Allow partial failures
-                    reportBatchItemFailures: true,
-                    // Don't allow more than 4 parallel executions
-                    maxConcurrency: 4,
-                },
-            },
-        },
-        cdk: {
-            queue: {
-                visibilityTimeout: Duration.minutes(60),
-            },
-        },
-    });
-
-    const readPubKeyFunction = new SstFunction(stack, "ReadPubKeyFunction", {
-        handler: "packages/backend/src/interaction/readPubKey.handler",
-        timeout: "30 seconds",
-        bind: [masterSecretId],
-        permissions: [
-            new PolicyStatement({
-                actions: ["secretsmanager:GetSecretValue"],
-                resources: [masterKeySecret.secretArn],
-            }),
-        ],
-    });
-
-    // Grant the read access on this secret for the consumer function
-    masterKeySecret.grantRead(interactionConsumerFunction);
-
-    stack.addOutputs({
-        InteractionQueueId: interactionQueue.id,
-        ReadPubKeyFunctionId: readPubKeyFunction.id,
-    });
-    return { interactionQueue, readPubKeyFunction };
-}
-
-/**
- * Define all of our campaign resources
- * @param stack
- */
-function campaignResources({ stack }: StackContext) {
-    const { airdropPrivateKey, alchemyApiKey, nexusRpcSecret } =
-        use(ConfigStack);
-    // Interaction handling stuff
-    const reloadCampaignQueue = new Queue(stack, "ReloadCampaignQueue", {
-        consumer: {
-            function: {
-                handler: "packages/backend/src/campaign/reloadQueue.handler",
-                timeout: "15 minutes",
-                bind: [airdropPrivateKey, alchemyApiKey, nexusRpcSecret],
-            },
-            cdk: {
-                eventSource: {
-                    // Maximum amount of item sent to the function (at most 200 interactions)
-                    batchSize: 200,
-                    // Wait at most 2min to push the interactions
-                    maxBatchingWindow: Duration.seconds(5),
-                    // Don't allow more than 4 parallel executions
-                    maxConcurrency: 4,
-                },
-            },
-        },
-        cdk: {
-            queue: {
-                visibilityTimeout: Duration.minutes(60),
-            },
-        },
-    });
-    stack.addOutputs({
-        ReloadCampaignQueueId: reloadCampaignQueue.id,
-    });
-    return { reloadCampaignQueue };
+    // Add the elysia backend
+    elysiaBackend(ctx, { masterKeySecret, masterSecretId });
 }
 
 /**
  * Create our elysia backend
  * @param stack
  */
-function elysiaBackend({ stack }: StackContext) {
-    // Create a new ecs service that will host our elysia backend
-    const services = buildEcsService({ stack });
-    if (!services) {
+function elysiaBackend(
+    { stack }: StackContext,
+    {
+        masterKeySecret,
+        masterSecretId,
+    }: { masterKeySecret: AwsSecret; masterSecretId: Config.Parameter }
+) {
+    if (!isDistantStack(stack)) {
+        console.error("Services can only be used in distant stacks");
         return;
     }
-    const { vpc, cluster, alb } = services;
+
+    // Fetch VPC + cluster
+    const { vpc, cluster } = use(ClusterStack);
 
     // A few secrets we will be using
-    const { mongoExampleUri, worldNewsApiKey } = use(ConfigStack);
+    const {
+        mongoExampleUri,
+        worldNewsApiKey,
+        indexerUrl,
+        postgres,
+        sessionEncryptionKey,
+        vapidPrivateKey,
+        vapidPublicKey,
+    } = use(ConfigStack);
+
+    // The domain name we will be using
+    const domainName = isDevStack(stack)
+        ? "backend-dev.frak.id"
+        : "backend.frak.id";
 
     // The service itself
     const elysiaService = new Service(stack, "ElysiaService", {
-        path: "packages/backend-elysia",
+        path: "./",
+        file: "iac/docker/ElysiaDockerfile",
         port: 3030,
+        // Deployment domain
+        customDomain: {
+            domainName: domainName,
+            hostedZone: "frak.id",
+        },
         // Setup some capacity options
         scaling: {
             minContainers: 1,
@@ -194,12 +94,33 @@ function elysiaBackend({ stack }: StackContext) {
             memoryUtilization: 80,
         },
         // Bind the secret we will be using
-        bind: [mongoExampleUri, worldNewsApiKey],
+        bind: [
+            // Some generic env
+            indexerUrl,
+            // some api keys
+            mongoExampleUri,
+            worldNewsApiKey,
+            // some secrets
+            sessionEncryptionKey,
+            masterSecretId,
+            // postgres
+            postgres.db,
+            postgres.user,
+            postgres.host,
+            postgres.password,
+            // notif secrets
+            vapidPrivateKey,
+            vapidPublicKey,
+        ],
         // Allow llm calls (used for the news-example part)
         permissions: [
             new PolicyStatement({
                 actions: ["bedrock:InvokeModel"],
                 resources: ["*"],
+            }),
+            new PolicyStatement({
+                actions: ["secretsmanager:GetSecretValue"],
+                resources: [masterKeySecret.secretArn],
             }),
         ],
         // Arm architecture (lower cost)
@@ -213,8 +134,6 @@ function elysiaBackend({ stack }: StackContext) {
         cdk: {
             vpc,
             cluster,
-            // Don't auto setup the ALB since we will be using the global one
-            applicationLoadBalancer: false,
             // Customise fargate service to enable circuit breaker (if the new deployment is failing)
             fargateService: {
                 enableExecuteCommand: true,
@@ -222,8 +141,22 @@ function elysiaBackend({ stack }: StackContext) {
                     enable: true,
                 },
             },
+            // Custom alb target group
+            applicationLoadBalancerTargetGroup: {
+                healthCheck: {
+                    path: "/health",
+                    interval: Duration.seconds(60),
+                    healthyThresholdCount: 2,
+                    unhealthyThresholdCount: 5,
+                    healthyHttpCodes: "200",
+                },
+                deregistrationDelay: Duration.seconds(60),
+            },
         },
     });
+
+    elysiaService.addEnvironment("HOSTNAME", domainName);
+    elysiaService.addEnvironment("STAGE", stack.stage);
 
     // Ensure we got a fargate service set up
     if (!elysiaService.cdk?.fargateService) {
@@ -232,38 +165,4 @@ function elysiaBackend({ stack }: StackContext) {
         );
         return;
     }
-
-    // Create the target group for a potential alb usage
-    const elysiaTargetGroup = new ApplicationTargetGroup(
-        stack,
-        "ElysiaTargetGroup",
-        {
-            vpc: vpc,
-            port: 3030,
-            protocol: ApplicationProtocol.HTTP,
-            targets: [elysiaService.cdk.fargateService],
-            deregistrationDelay: Duration.seconds(10),
-            healthCheck: {
-                path: "/",
-                interval: Duration.seconds(30),
-                healthyThresholdCount: 2,
-                unhealthyThresholdCount: 5,
-                healthyHttpCodes: "200",
-            },
-        }
-    );
-
-    // Allow connections to the applications ports
-    alb.connections.allowTo(
-        elysiaService.cdk.fargateService,
-        Port.tcp(3030),
-        "Allow connection from ALB to elysia"
-    );
-
-    // Create the listener on port 80
-    alb.addListener("ElysiaListener", {
-        port: 80,
-        protocol: ApplicationProtocol.HTTP,
-        defaultTargetGroups: [elysiaTargetGroup],
-    });
 }

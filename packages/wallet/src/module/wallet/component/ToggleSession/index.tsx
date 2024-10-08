@@ -4,6 +4,7 @@ import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { InteractionSession } from "@/types/Session";
+import { IconInfo } from "@module/component/IconInfo";
 import { Spinner } from "@module/component/Spinner";
 import { Tooltip } from "@module/component/Tooltip";
 import { X } from "lucide-react";
@@ -110,7 +111,7 @@ function SessionTooltip({
                 )
             }
         >
-            <span className={styles.sessionClosed__iconInfo}>i</span>
+            <IconInfo />
         </Tooltip>
     );
 }

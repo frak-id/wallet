@@ -1,16 +1,15 @@
 "use client";
+
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
-import {
-    tableMembersFiltersAtom,
-    tableMembersFiltersCountAtom,
-} from "@/module/members/atoms/tableMembers";
+import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
+import { FiltersCount } from "@/module/members/component/TableMembers/FiltersCount";
 import { Button } from "@module/component/Button";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import styles from "./Filters.module.css";
@@ -20,7 +19,6 @@ export function TableMembersFilters() {
     const [tableMembersFilters, setTableMembersFilters] = useAtom(
         tableMembersFiltersAtom
     );
-    const filtersCount = useAtomValue(tableMembersFiltersCountAtom);
 
     return (
         <div className={styles.filters}>
@@ -38,11 +36,7 @@ export function TableMembersFilters() {
                             leftIcon={<SlidersHorizontal size={20} />}
                         >
                             Filters{" "}
-                            {filtersCount > 0 && (
-                                <span className={styles.filters__count}>
-                                    {filtersCount}
-                                </span>
-                            )}
+                            <FiltersCount filter={tableMembersFilters.filter} />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent

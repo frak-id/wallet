@@ -4,7 +4,7 @@ import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { isConvertToEuroEnableAtom } from "@/module/settings/atoms/betaOptions";
-import { isRunningInProd } from "@frak-labs/shared/context/utils/env";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/shared/module/component/Button";
 import {
     Accordion,
