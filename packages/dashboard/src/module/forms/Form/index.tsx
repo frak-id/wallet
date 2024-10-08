@@ -174,6 +174,8 @@ const FormControl = forwardRef<
 });
 FormControl.displayName = "FormControl";
 
+export const formDescriptionVariants = cva(styles.form__description);
+
 const FormDescription = forwardRef<
     HTMLParagraphElement,
     HTMLAttributes<HTMLParagraphElement> & {
@@ -193,7 +195,7 @@ const FormDescription = forwardRef<
             <p
                 ref={ref}
                 id={formDescriptionId}
-                className={`${styles.form__description} ${className}`}
+                className={formDescriptionVariants({ className })}
                 {...props}
             >
                 {children}
