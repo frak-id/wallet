@@ -25,7 +25,7 @@
 
 .alertDialog__content {
     background-color: var(--frak-alertDialog-background-color);
-    backdrop-filter: blur(85px);
+    backdrop-filter: blur(6px);
     position: fixed;
     top: 50%;
     left: 50%;
