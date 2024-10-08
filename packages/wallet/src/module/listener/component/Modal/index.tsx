@@ -23,12 +23,14 @@ import {
     type SiweAuthenticateModalStepType,
     type SuccessModalStepType,
 } from "@frak-labs/nexus-sdk/core";
+import { LogoFrak } from "@module/asset/icons/LogoFrak";
 import { jotaiStore } from "@module/atoms/store";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
 import { useAtomValue } from "jotai";
 import {
     type Dispatch,
     type PropsWithChildren,
+    type ReactNode,
     useCallback,
     useEffect,
     useMemo,
@@ -168,8 +170,20 @@ function ListenerModalDialog({
     /**
      * The inner component to display
      */
-    const { title, icon } = useMemo(() => {
+    const { titleComponent, icon } = useMemo(() => {
+        // Build the title component we will display
+        const titleComponent = (
+            <>
+                {currentRequest.metadata?.header?.title ?? "Frak rewards"}
+                <span className={styles.motalTitle__provided}>
+                    Provided by Frak{" "}
+                    <LogoFrak sizes={14} className={styles.modalTitle__logo} />
+                </span>
+            </>
+        );
+
         return {
+            titleComponent,
             title: currentRequest.metadata?.header?.title,
             icon: currentRequest?.metadata?.header?.icon,
         };
@@ -179,7 +193,11 @@ function ListenerModalDialog({
     ]);
 
     return (
-        <ModalComponent title={title} open={true} onOpenChange={onOpenChange}>
+        <ModalComponent
+            title={titleComponent}
+            open={true}
+            onOpenChange={onOpenChange}
+        >
             <>
                 {icon && (
                     <img
@@ -213,7 +231,7 @@ function ModalComponent({
     onOpenChange,
     children,
 }: PropsWithChildren<{
-    title?: string;
+    title?: ReactNode;
     open: boolean;
     onOpenChange: Dispatch<boolean>;
 }>) {

@@ -1,5 +1,5 @@
 .alertDialog__overlay {
-    background: rgba(0, 0, 0, 0.36);
+    background: rgba(0, 0, 0, 0.2);
     position: fixed;
     z-index: 10;
     inset: 0;
@@ -25,7 +25,7 @@
 
 .alertDialog__content {
     background-color: var(--frak-alertDialog-background-color);
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(10px);
     position: fixed;
     top: 50%;
     left: 50%;
@@ -58,19 +58,6 @@
     font-weight: 700;
     font-size: 16px;
 }
-
-.alertDialog__provided {
-    margin-left: 10px;
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: -.02em;
-}
-
-.alertDialog__logo {
-    margin-left: 2px;
-    vertical-align: middle;
-}
-
 .alertDialog__footer {
     display: flex;
     justify-content: flex-end;

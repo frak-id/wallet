@@ -122,3 +122,15 @@
     background-color: var(--frak-alertDialog-button-secondary-background-color);
     color: var(--frak-alertDialog-button-secondary-text-color);
 }
+
+.motalTitle__provided {
+    margin-left: 10px;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: -.02em;
+}
+
+.modalTitle__logo {
+    margin-left: 2px;
+    vertical-align: middle;
+}
