@@ -1,6 +1,6 @@
-import { viemClient } from "@/context/blockchain/provider";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Row } from "@/module/common/component/Row";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import {
     useCheckDomainName,
@@ -26,13 +26,12 @@ import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
 import { Input } from "@module/component/forms/Input";
 import { validateUrl } from "@module/utils/validateUrl";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
-import type { Hex, TransactionReceipt } from "viem";
-import { waitForTransactionReceipt } from "viem/actions";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 type ProductNew = {
@@ -332,8 +331,8 @@ function NewProductVerify({
     domain,
     productTypes,
 }: { name: string; domain: string; productTypes: ProductTypesKey[] }) {
-    const queryClient = useQueryClient();
     const setIsMinting = useSetAtom(isMintingAtom);
+    const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
 
     const {
         mutate: triggerMintMyContent,
@@ -342,43 +341,22 @@ function NewProductVerify({
         data: { mintTxHash } = {},
     } = useMintMyProduct();
 
-    const {
-        isLoading: isWaitingForFinalisedCreation,
-        data: transactionReceipt,
-    } = useQuery({
-        queryKey: ["mint", "wait-for-finalised-deployment"],
-        enabled: !!mintTxHash,
-        queryFn: async () => {
-            if (!mintTxHash) return null;
-            // We are waiting for the block with the tx hash to have at least 32 confirmations,
-            //  it will leave the time for the indexer to process it + the time for the block to be finalised
-            const transactionReceipt = await waitForTransactionReceipt(
-                viemClient,
-                {
+    const { isLoading: isWaitingForFinalisedCreation, data: isConfirmed } =
+        useQuery({
+            queryKey: ["mint", "wait-for-finalised-deployment"],
+            enabled: !!mintTxHash,
+            queryFn: async () => {
+                if (!mintTxHash) return false;
+
+                // Invalidate the product related cache
+                await waitForTxAndInvalidateQueries({
                     hash: mintTxHash,
-                    confirmations: 32,
-                    retryCount: 32,
-                }
-            );
-
-            // Invalidate the product related cache
-            await queryClient.invalidateQueries({
-                queryKey: ["my-products"],
-                exact: false,
-            });
-
-            return transactionReceipt;
-        },
-    });
-
-    useEffect(() => {
-        if (!transactionReceipt) return;
-        queryClient
-            .invalidateQueries({
-                queryKey: ["my-contents"],
-            })
-            .then(() => setIsMinting(false));
-    }, [transactionReceipt, queryClient, setIsMinting]);
+                    queryKey: ["product"],
+                });
+                setIsMinting(false);
+                return true;
+            },
+        });
 
     if (!domain) return null;
 
@@ -413,7 +391,7 @@ function NewProductVerify({
             <ProductSuccessInfo
                 txHash={mintTxHash}
                 isWaitingForFinalisedCreation={isWaitingForFinalisedCreation}
-                receipt={transactionReceipt}
+                isConfirmed={isConfirmed}
             />
         </div>
     );
@@ -426,15 +404,15 @@ function NewProductVerify({
 function ProductSuccessInfo({
     txHash,
     isWaitingForFinalisedCreation,
-    receipt,
+    isConfirmed,
 }: {
     txHash?: Hex;
     isWaitingForFinalisedCreation: boolean;
-    receipt?: TransactionReceipt | null;
+    isConfirmed?: boolean | null;
 }) {
     if (!txHash) return null;
 
-    if (txHash && isWaitingForFinalisedCreation && !receipt) {
+    if (txHash && isWaitingForFinalisedCreation && !isConfirmed) {
         return (
             <p>
                 Setting all the right blockchain data
