@@ -3,7 +3,7 @@ import {
     blockchainContext,
     postgresContext,
 } from "@backend-common";
-import { drizzle } from "drizzle-orm/postgres-js";
+import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import {
     interactionSimulationStatus,
@@ -13,6 +13,7 @@ import {
 } from "./db/schema";
 import { InteractionDiamondRepository } from "./repositories/InteractionDiamondRepository";
 import { InteractionSignerRepository } from "./repositories/InteractionSignerRepository";
+import { PendingInteractionsRepository } from "./repositories/PendingInteractionsRepository";
 import { WalletSessionRepository } from "./repositories/WalletSessionRepository";
 /**
  * Context for the interactions service
@@ -32,12 +33,15 @@ export const interactionsContext = new Elysia({
                     pendingInteractionsTable,
                     interactionSimulationStatus,
                     pushedInteractionsTable,
-                    interactionsPurchaseMapTable:
-                        interactionsPurchaseTrackerTable,
+                    interactionsPurchaseTrackerTable,
                 },
             });
 
-            // Build our repositories
+            // Build our db repositories
+            const pendingInteractionsRepository =
+                new PendingInteractionsRepository(interactionsDb);
+
+            // Build our blockchain repositories
             const interactionDiamondRepository =
                 new InteractionDiamondRepository(client);
             const walletSessionRepository = new WalletSessionRepository(client);
@@ -50,6 +54,8 @@ export const interactionsContext = new Elysia({
                 ...decorators,
                 client,
                 interactionsDb,
+                // Repos
+                pendingInteractionsRepository,
                 interactionDiamondRepository,
                 walletSessionRepository,
                 interactionSignerRepository,
@@ -60,5 +66,9 @@ export const interactionsContext = new Elysia({
 
 export type InteractionsContextApp = typeof interactionsContext;
 
-export type InteractionsDb =
-    InteractionsContextApp["decorator"]["interactionsDb"];
+export type InteractionsDb = PostgresJsDatabase<{
+    pendingInteractionsTable: typeof pendingInteractionsTable;
+    interactionSimulationStatus: typeof interactionSimulationStatus;
+    pushedInteractionsTable: typeof pushedInteractionsTable;
+    interactionsPurchaseTrackerTable: typeof interactionsPurchaseTrackerTable;
+}>;

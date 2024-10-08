@@ -1,7 +1,7 @@
 import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { Patterns } from "@elysiajs/cron";
-import { and, eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
 import {
     pendingInteractionsTable,
@@ -27,12 +27,14 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
                     interactionsDb,
                     interactionDiamondRepository,
                     interactionSignerRepository,
+                    pendingInteractionsRepository,
                 } = app.decorator;
 
                 // Get interactions to simulate
-                const interactions = await getAndLockInteractionsToExecute({
-                    interactionsDb,
-                });
+                const interactions =
+                    await pendingInteractionsRepository.getAndLock({
+                        status: "succeeded",
+                    });
                 if (interactions.length === 0) {
                     log.debug("No interactions to execute");
                     return;
@@ -41,93 +43,21 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
 
                 try {
                     // Execute them
-                    const txHash = await executeInteractions({
+                    await executeInteractions({
                         interactions,
                         interactionsDb,
                         interactionDiamondRepository,
                         interactionSignerRepository,
                     });
-
-                    log.info(
-                        {
-                            txHash,
-                        },
-                        `Executed ${interactions.length}  interactions`
-                    );
                 } finally {
                     // Unlock them
-                    await unlockInteractions({
-                        interactionsDb,
-                        interactions,
-                    });
+                    await pendingInteractionsRepository.unlock(interactions);
                 }
             },
         })
     );
 
 export type ExecuteInteractionAppJob = ReturnType<typeof executeInteractionJob>;
-
-/**
- * Get list of interactions to execute
- * @param interactionsDb
- */
-function getAndLockInteractionsToExecute({
-    interactionsDb,
-}: { interactionsDb: InteractionsDb }) {
-    return interactionsDb.transaction(async (trx) => {
-        // Get all the interactions to simulate
-        const interactions = await trx
-            .select()
-            .from(pendingInteractionsTable)
-            .where(
-                and(
-                    eq(pendingInteractionsTable.status, "succeeded"),
-                    eq(pendingInteractionsTable.locked, false)
-                )
-            );
-        if (interactions.length === 0) {
-            return [];
-        }
-
-        // Lock them
-        await trx
-            .update(pendingInteractionsTable)
-            .set({
-                locked: true,
-            })
-            .where(
-                inArray(
-                    pendingInteractionsTable.id,
-                    interactions.map((out) => out.id)
-                )
-            );
-
-        return interactions;
-    });
-}
-
-/**
- * Unlock some interactions post execution
- */
-function unlockInteractions({
-    interactionsDb,
-    interactions,
-}: {
-    interactionsDb: InteractionsDb;
-    interactions: (typeof pendingInteractionsTable.$inferSelect)[];
-}) {
-    return interactionsDb
-        .update(pendingInteractionsTable)
-        .set({
-            locked: false,
-        })
-        .where(
-            inArray(
-                pendingInteractionsTable.id,
-                interactions.map((out) => out.id)
-            )
-        );
-}
 
 /**
  * Execute a list of interactions
@@ -236,7 +166,4 @@ async function executeInteractions({
             )
         );
     });
-
-    // Return the tx hash
-    return txHash;
 }

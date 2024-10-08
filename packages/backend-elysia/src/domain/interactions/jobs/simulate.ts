@@ -1,7 +1,7 @@
 import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { Patterns } from "@elysiajs/cron";
-import { and, eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { Address } from "viem";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
 import { pendingInteractionsTable } from "../db/schema";
@@ -25,12 +25,28 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     interactionsDb,
                     interactionDiamondRepository,
                     walletSessionRepository,
+                    pendingInteractionsRepository,
                 } = app.decorator;
 
                 // Get interactions to simulate
-                const interactions = await getAndLockInteractionsToSimulate({
-                    interactionsDb,
-                });
+                const interactions =
+                    await pendingInteractionsRepository.getAndLock({
+                        status: "pending",
+                        skipProcess: (interactions) => {
+                            // Dismiss interactions if we got less than 10 and if we didn't have any interactions older than 5 minutes
+                            const fiveMinutesAgo = new Date(
+                                Date.now() - 5 * 60 * 1000
+                            );
+                            const hasInteractions5MinOld = interactions.some(
+                                (interaction) =>
+                                    interaction.createdAt < fiveMinutesAgo
+                            );
+                            return (
+                                interactions.length < 3 &&
+                                !hasInteractions5MinOld
+                            );
+                        },
+                    });
                 if (interactions.length === 0) {
                     log.debug("No interactions to simulate");
                     return;
@@ -60,10 +76,7 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     await store.cron.executeInteraction.trigger();
                 } finally {
                     // Unlock the interactions
-                    await unlockInteractions({
-                        interactionsDb,
-                        interactions,
-                    });
+                    pendingInteractionsRepository.unlock(interactions);
                 }
             },
         })
@@ -72,71 +85,6 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
 export type SimulateInteractionAppJob = ReturnType<
     typeof simulateInteractionJob
 >;
-
-/**
- * Get list of interactions to simulate
- * @param interactionsDb
- */
-async function getAndLockInteractionsToSimulate({
-    interactionsDb,
-}: { interactionsDb: InteractionsDb }) {
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    // Run the selection within a transaction to ensure proper lockin
-    return await interactionsDb.transaction(async (trx) => {
-        // Get the interactions
-        const interactions = await trx
-            .select()
-            .from(pendingInteractionsTable)
-            .where(
-                and(
-                    eq(pendingInteractionsTable.status, "pending"),
-                    eq(pendingInteractionsTable.locked, false)
-                )
-            );
-
-        // If none match our criteria early exit with empty array
-        const hasInteractions5MinOld = interactions.some((interaction) => {
-            return interaction.createdAt < fiveMinutesAgo;
-        });
-        if (interactions.length < 10 || !hasInteractions5MinOld) {
-            return [];
-        }
-
-        // Lock them
-        await trx
-            .update(pendingInteractionsTable)
-            .set({ locked: true })
-            .where(
-                inArray(
-                    pendingInteractionsTable.id,
-                    interactions.map((i) => i.id)
-                )
-            );
-
-        return interactions;
-    });
-}
-
-/**
- * Unlock interactions post simulation
- */
-async function unlockInteractions({
-    interactionsDb,
-    interactions,
-}: {
-    interactionsDb: InteractionsDb;
-    interactions: (typeof pendingInteractionsTable.$inferSelect)[];
-}) {
-    await interactionsDb
-        .update(pendingInteractionsTable)
-        .set({ locked: false })
-        .where(
-            inArray(
-                pendingInteractionsTable.id,
-                interactions.map((i) => i.id)
-            )
-        );
-}
 
 /**
  * Simulate a list of transaction and update their state
