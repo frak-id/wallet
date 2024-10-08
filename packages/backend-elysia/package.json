@@ -21,9 +21,9 @@
     "db:migrate": "sst bind drizzle-kit migrate"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.650.0",
-    "@aws-sdk/client-secrets-manager": "^3.650.0",
-    "@bogeychan/elysia-logger": "^0.1.2",
+    "@aws-sdk/client-bedrock-runtime": "^3.666.0",
+    "@aws-sdk/client-secrets-manager": "^3.666.0",
+    "@bogeychan/elysia-logger": "^0.1.4",
     "@elysiajs/cors": "^1.1.1",
     "@elysiajs/cron": "^1.1.1",
     "@frak-labs/app-essentials": "workspace:*",
@@ -31,8 +31,8 @@
     "@tusbar/cache-control": "^1.0.2",
     "async-mutex": "^0.5.0",
     "croner": "^8.1.2",
-    "drizzle-orm": "^0.33.0",
-    "elysia": "1.1.12",
+    "drizzle-orm": "^0.34.1",
+    "elysia": "1.1.19",
     "iron-session": "^8.0.3",
     "ky": "^1.7.2",
     "lru-cache": "^11.0.1",
@@ -40,16 +40,16 @@
     "mongodb": "^6.9.0",
     "postgres": "^3.4.4",
     "radash": "^12.1.0",
-    "solady": "^0.0.238",
+    "solady": "^0.0.251",
     "sst": "2.43.6",
-    "viem": "^2.21.6",
+    "viem": "^2.21.19",
     "web-push": "^3.6.7",
     "whatwg-url": "^14.0.0"
   },
   "devDependencies": {
     "bun-types": "latest",
     "@types/web-push": "^3.6.3",
-    "drizzle-kit": "^0.24.2"
+    "drizzle-kit": "^0.25.0"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"
