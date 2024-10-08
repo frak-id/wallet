@@ -30,7 +30,7 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
                 } = app.decorator;
 
                 // Get interactions to simulate
-                const interactions = await getInteractionsToExecute({
+                const interactions = await getAndLockInteractionsToExecute({
                     interactionsDb,
                 });
                 if (interactions.length === 0) {
@@ -39,20 +39,28 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
                 }
                 log.debug(`Will execute ${interactions.length} interactions`);
 
-                // Execute them
-                const txHash = await executeInteractions({
-                    interactions,
-                    interactionsDb,
-                    interactionDiamondRepository,
-                    interactionSignerRepository,
-                });
+                try {
+                    // Execute them
+                    const txHash = await executeInteractions({
+                        interactions,
+                        interactionsDb,
+                        interactionDiamondRepository,
+                        interactionSignerRepository,
+                    });
 
-                log.info(
-                    {
-                        txHash,
-                    },
-                    `Executed ${interactions.length}  interactions`
-                );
+                    log.info(
+                        {
+                            txHash,
+                        },
+                        `Executed ${interactions.length}  interactions`
+                    );
+                } finally {
+                    // Unlock them
+                    await unlockInteractions({
+                        interactionsDb,
+                        interactions,
+                    });
+                }
             },
         })
     );
@@ -61,20 +69,62 @@ export type ExecuteInteractionAppJob = ReturnType<typeof executeInteractionJob>;
 
 /**
  * Get list of interactions to execute
- * todo:
- *  - Use the locked bool
  * @param interactionsDb
  */
-function getInteractionsToExecute({
+function getAndLockInteractionsToExecute({
     interactionsDb,
 }: { interactionsDb: InteractionsDb }) {
+    return interactionsDb.transaction(async (trx) => {
+        // Get all the interactions to simulate
+        const interactions = await trx
+            .select()
+            .from(pendingInteractionsTable)
+            .where(
+                and(
+                    eq(pendingInteractionsTable.status, "succeeded"),
+                    eq(pendingInteractionsTable.locked, false)
+                )
+            );
+        if (interactions.length === 0) {
+            return [];
+        }
+
+        // Lock them
+        await trx
+            .update(pendingInteractionsTable)
+            .set({
+                locked: true,
+            })
+            .where(
+                inArray(
+                    pendingInteractionsTable.id,
+                    interactions.map((out) => out.id)
+                )
+            );
+
+        return interactions;
+    });
+}
+
+/**
+ * Unlock some interactions post execution
+ */
+function unlockInteractions({
+    interactionsDb,
+    interactions,
+}: {
+    interactionsDb: InteractionsDb;
+    interactions: (typeof pendingInteractionsTable.$inferSelect)[];
+}) {
     return interactionsDb
-        .select()
-        .from(pendingInteractionsTable)
+        .update(pendingInteractionsTable)
+        .set({
+            locked: false,
+        })
         .where(
-            and(
-                eq(pendingInteractionsTable.status, "succeeded"),
-                eq(pendingInteractionsTable.locked, false)
+            inArray(
+                pendingInteractionsTable.id,
+                interactions.map((out) => out.id)
             )
         );
 }

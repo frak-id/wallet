@@ -84,7 +84,7 @@ async function getAndLockInteractionsToSimulate({
     // Run the selection within a transaction to ensure proper lockin
     return await interactionsDb.transaction(async (trx) => {
         // Get the interactions
-        const interactions = await interactionsDb
+        const interactions = await trx
             .select()
             .from(pendingInteractionsTable)
             .where(
