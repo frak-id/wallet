@@ -75,7 +75,9 @@ export function LoginModalStep({
     return (
         <RequireWebAuthN>
             {metadata?.description && (
-                <div className={prefixModalCss("text")}>
+                <div
+                    className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
+                >
                     <Markdown
                         rehypePlugins={[
                             [rehypeExternalLinks, { target: "_blank" }],
@@ -85,11 +87,13 @@ export function LoginModalStep({
                     </Markdown>
                 </div>
             )}
-            <div className={prefixModalCss("buttons-wrapper")}>
+            <div
+                className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
+            >
                 <div>
                     <button
                         type={"button"}
-                        className={prefixModalCss("button-primary")}
+                        className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
                         disabled={isLoading}
                         onClick={() => login({})}
                     >
@@ -167,7 +171,7 @@ function SsoButton({
     return (
         <button
             type={"button"}
-            className={prefixModalCss("button-secondary")}
+            className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
             onClick={async () => {
                 await requestAndCheckStorageAccess();
                 openRegister();

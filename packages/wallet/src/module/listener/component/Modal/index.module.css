@@ -77,3 +77,48 @@
     margin: 0 auto 28px auto;
     max-width: 50%;
 }
+
+.modalListener__buttonsWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    margin-top: 40px;
+}
+
+.modalListener__buttonsWrapper > div {
+    flex: 1;
+    width: 100%;
+    text-align: center;
+}
+
+.modalListener__buttonPrimary,
+.modalListener__buttonSecondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 80%;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    line-height: 24px;
+    text-align: center;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+}
+
+.modalListener__buttonPrimary {
+    background-color: var(--frak-alertDialog-button-primary-background-color);
+    color: var(--frak-alertDialog-button-primary-text-color);
+}
+
+.modalListener__buttonSecondary {
+    background-color: var(--frak-alertDialog-button-secondary-background-color);
+    color: var(--frak-alertDialog-button-secondary-text-color);
+}

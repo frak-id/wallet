@@ -1,26 +1,3 @@
-.nexus-modal-buttons-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    margin-top: 40px;
-}
-.nexus-modal-button-primary,
-.nexus-modal-button-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border: none;
-    padding: 11px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-
-    &:disabled {
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-}
 .nexus-modal-button-primary {
     background: rgba(245, 245, 245, 0.37);
     border: 1px solid transparent;

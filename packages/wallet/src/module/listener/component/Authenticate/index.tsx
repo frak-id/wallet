@@ -63,7 +63,9 @@ export function SiweAuthenticateModalStep({
     return (
         <>
             {metadata?.description && (
-                <div className={prefixModalCss("text")}>
+                <div
+                    className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
+                >
                     <p>{metadata.description}</p>
                 </div>
             )}
@@ -74,11 +76,13 @@ export function SiweAuthenticateModalStep({
                 <p>Uri: {siweMessage?.uri}</p>
             </TextData>
 
-            <div className={prefixModalCss("buttons-wrapper")}>
+            <div
+                className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
+            >
                 <div>
                     <button
                         type={"button"}
-                        className={prefixModalCss("button-primary")}
+                        className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
                         disabled={isPending}
                         onClick={() => {
                             signMessage({
