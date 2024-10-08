@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.15
+
+### Patch Changes
+
+- [`cdacb66`](https://github.com/frak-id/wallet/commit/cdacb6685516e9a1a6e7a3c4d87abd3f888853ef) Thanks [@KONFeature](https://github.com/KONFeature)! - Expose a bundle for vanilla js usage
+
 ## 0.0.14
 
 ### Patch Changes
