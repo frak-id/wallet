@@ -47,7 +47,7 @@ export function FullDialog() {
                         steps: {
                             siweAuthenticate: {
                                 metadata: {
-                                    title: "AUTH",
+                                    title: "EthCC SIWE",
                                 },
                                 siwe: {
                                     domain: "example.com",
@@ -59,7 +59,7 @@ export function FullDialog() {
                             },
                             sendTransaction: {
                                 metadata: {
-                                    title: "TX",
+                                    title: "EthCC Transaction",
                                 },
                                 tx: {
                                     to: addresses.productInteractionManager,

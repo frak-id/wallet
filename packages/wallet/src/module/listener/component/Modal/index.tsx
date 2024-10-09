@@ -172,19 +172,22 @@ function ListenerModalDialog({
      */
     const { titleComponent, icon } = useMemo(() => {
         // Build the title component we will display
-        const titleComponent = (
+        const titleComponent = currentRequest.metadata?.header?.title ? (
             <>
-                {currentRequest.metadata?.header?.title ?? "Frak rewards"}
+                {currentRequest.metadata.header.title}
                 <span className={styles.motalTitle__provided}>
                     Provided by Frak{" "}
                     <LogoFrak sizes={14} className={styles.modalTitle__logo} />
                 </span>
             </>
+        ) : (
+            <>
+                Frak <LogoFrak sizes={14} className={styles.modalTitle__logo} />
+            </>
         );
 
         return {
             titleComponent,
-            title: currentRequest.metadata?.header?.title,
             icon: currentRequest?.metadata?.header?.icon,
         };
     }, [
@@ -254,7 +257,10 @@ function ModalComponent({
     // Otherwise, return bottom drawer
     return (
         <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerContent>{children}</DrawerContent>
+            <DrawerContent>
+                <div className={styles.drawerTitle__container}>{title}</div>
+                {children}
+            </DrawerContent>
         </Drawer>
     );
 }

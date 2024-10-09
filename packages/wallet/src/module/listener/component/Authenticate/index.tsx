@@ -6,6 +6,7 @@ import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMemo } from "react";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
+import { MetadataInfo } from "../Generic";
 
 /**
  * The component for the siwe authentication step of a modal
@@ -62,13 +63,12 @@ export function SiweAuthenticateModalStep({
 
     return (
         <>
-            {metadata?.description && (
-                <div
-                    className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
-                >
-                    <p>{metadata.description}</p>
-                </div>
-            )}
+            <MetadataInfo
+                metadata={metadata}
+                defaultTitle="Secure wallet authentication"
+                defaultDescription="Please authenticate with your wallet to proceed securely. Your
+                signature confirms your identity."
+            />
 
             <TextData>
                 <p>{siweMessage?.statement}</p>

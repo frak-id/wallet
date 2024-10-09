@@ -7,6 +7,7 @@ import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/c
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAccount } from "wagmi";
+import { MetadataInfo } from "../Generic";
 
 /**
  * The component for the login step of a modal
@@ -81,13 +82,19 @@ export function OpenSessionModalStep({
 
     return (
         <RequireWebAuthN>
-            {metadata?.description && (
-                <div
-                    className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
-                >
-                    <p>{metadata.description}</p>
-                </div>
-            )}
+            <MetadataInfo
+                metadata={metadata}
+                defaultDescription={
+                    <>
+                        Start a rewarding session to earn as you interact
+                        anonymously on this site. Enjoy benefits without sharing
+                        personal details.
+                        <br />
+                        Learn more in our privacy policy.
+                    </>
+                }
+            />
+
             <div
                 className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
             >

@@ -16,8 +16,7 @@ import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect } from "react";
-import Markdown from "react-markdown";
-import rehypeExternalLinks from "rehype-external-links";
+import { MetadataInfo } from "../Generic";
 
 /**
  * The component for the login step of a modal
@@ -74,19 +73,12 @@ export function LoginModalStep({
 
     return (
         <RequireWebAuthN>
-            {metadata?.description && (
-                <div
-                    className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
-                >
-                    <Markdown
-                        rehypePlugins={[
-                            [rehypeExternalLinks, { target: "_blank" }],
-                        ]}
-                    >
-                        {metadata.description}
-                    </Markdown>
-                </div>
-            )}
+            <MetadataInfo
+                metadata={metadata}
+                defaultDescription="Connect to your Frak account to get the best experience on this
+                platform. See our privacy policy for details."
+            />
+
             <div
                 className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
             >
