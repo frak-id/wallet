@@ -1,0 +1,34 @@
+{
+    "sdk": {
+        "modal": {
+            "authenticate": {
+                "default": {
+                    "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
+                    "primaryAction": "Authenticate",
+                    "title": "Secure wallet authentication"
+                }
+            },
+            "login": {
+                "default": {
+                    "description": "Connect to your Frak account to get the best experience on this platform. See our privacy policy for details.",
+                    "primaryAction": "Register",
+                    "secondaryAction": "Login"
+                }
+            },
+            "session": {
+                "default": {
+                    "description": "Start a rewarding session to earn as you interact anonymously on this site. Enjoy benefits without sharing personal details. \nLearn more in our privacy policy.",
+                    "primaryAction": "Being rewarded with Frak"
+                }
+            },
+            "transaction": {
+                "default": {
+                    "description": "To complete, authorize this transaction in your wallet. This ensures secure processing.",
+                    "primaryAction_one": "Send transaction",
+                    "primaryAction_other": "Send transactions",
+                    "title": "Confirm your transaction"
+                }
+            }
+        }
+    }
+}

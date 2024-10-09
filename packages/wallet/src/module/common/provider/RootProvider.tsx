@@ -22,6 +22,9 @@ import { type PropsWithChildren, useEffect, useMemo } from "react";
 import { createClient } from "viem";
 import { WagmiProvider, createConfig } from "wagmi";
 
+// Import i18n config to initialize the i18n library
+import "@/i18n/config";
+
 /**
  * The query client that will be used by tanstack/react-query
  */

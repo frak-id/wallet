@@ -5,6 +5,7 @@ import { AccordionTransactions } from "@/module/listener/component/Transaction/A
 import type { SendTransactionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useAccount, useSendTransaction } from "wagmi";
 import { MetadataInfo } from "../Generic";
 
@@ -22,6 +23,8 @@ export function TransactionModalStep({
     onFinish: (result: SendTransactionModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { t } = useTranslation();
+
     const { metadata } = params;
     const { sendTransaction, isPending, isError, error } = useSendTransaction({
         mutation: {
@@ -45,9 +48,10 @@ export function TransactionModalStep({
         <RequireWebAuthN>
             <MetadataInfo
                 metadata={metadata}
-                defaultTitle="Confirm your transaction"
-                defaultDescription="To complete, authorize this transaction in your wallet. This
-                ensures secure processing."
+                defaultTitle={t("sdk.modal.transaction.default.title")}
+                defaultDescription={t(
+                    "sdk.modal.transaction.default.description"
+                )}
             />
             <AccordionTransactions txs={txs} />
 
@@ -59,7 +63,9 @@ export function TransactionModalStep({
                     sendTransaction(toSendTx);
                 }}
             >
-                Send transaction{txs.length > 1 ? "s" : ""}
+                {t("sdk.modal.transaction.default.primaryAction", {
+                    count: txs.length,
+                })}
             </AuthFingerprint>
 
             {isError && (
