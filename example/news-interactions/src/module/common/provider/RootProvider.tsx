@@ -48,7 +48,7 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 const frakWalletSdkConfig = {
     walletUrl: process.env.FRAK_WALLET_URL as string,
     metadata: {
-        name: "Good Vibes - Frak",
+        name: "Good Vibes",
     },
     // Specify domain for valid test on localhost
     domain: "news-paper.xyz",

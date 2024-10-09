@@ -10,15 +10,13 @@ import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogi
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
-import { InstallApp } from "@/module/wallet/component/InstallApp";
 import { jotaiStore } from "@module/atoms/store";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useAtomValue, useSetAtom } from "jotai";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * The SSO page itself
@@ -41,11 +39,6 @@ export function Sso() {
     const [success, setSuccess] = useState(false);
 
     /**
-     * The PWA prompt and installed state
-     */
-    const { prompt, isInstalled } = useAddToHomeScreenPrompt();
-
-    /**
      * Get the search params and set stuff in the sso context
      */
     const searchParams = useSearchParams();
@@ -66,19 +59,14 @@ export function Sso() {
 
         if (!productId) return;
 
-        /**
-         * Set the metadata from the search params
-         */
-        const logoUrl = searchParams.get("logoUrl");
-        const homepageLink = searchParams.get("homepageLink");
-        const metadata = {
-            name: searchParams.get("name") ?? "",
-            ...(logoUrl && { logoUrl }),
-            ...(homepageLink && { homepageLink }),
-        };
+        // Set the metadata
         setSsoMetadata((prev) => ({
             ...prev,
-            [productId]: metadata,
+            [productId]: {
+                name: searchParams.get("name") ?? "",
+                logoUrl: searchParams.get("logoUrl") ?? undefined,
+                homepageLink: searchParams.get("homepageLink") ?? undefined,
+            },
         }));
     }, [searchParams, setSsoMetadata]);
 
@@ -86,14 +74,12 @@ export function Sso() {
      * The on success callback
      */
     const onSuccess = useCallback(() => {
-        // If PWA can be installed, show the button to propose to install it
-        if (prompt) {
-            setSuccess(true);
-            return;
-        }
-
-        redirectOrClose();
-    }, [prompt]);
+        // Redirect the user in 2seconds
+        setSuccess(true);
+        setTimeout(() => {
+            redirectOrClose();
+        }, 2000);
+    }, []);
 
     /**
      * Redirect or close after success
@@ -112,15 +98,6 @@ export function Sso() {
             return;
         }
     }, []);
-
-    /**
-     * Redirect to the wallet's homepage if the app is installed
-     */
-    useMemo(() => {
-        if (isInstalled) {
-            redirectOrClose();
-        }
-    }, [isInstalled, redirectOrClose]);
 
     return (
         <Grid
@@ -157,12 +134,13 @@ export function Sso() {
             )}
             {success && (
                 <>
-                    <p>You are successfully connected to your wallet.</p>
-                    <br />
-                    <InstallApp />
+                    <p>
+                        You will be redirected to {currentMetadata?.name} in a
+                        few seconds.<span className={"dotsLoading"}>...</span>
+                    </p>
                     <br />
                     <ButtonRipple onClick={redirectOrClose}>
-                        Continue to {currentMetadata?.name}
+                        Redirect now
                     </ButtonRipple>
                 </>
             )}
