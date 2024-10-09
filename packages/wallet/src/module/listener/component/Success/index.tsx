@@ -19,7 +19,6 @@ import { useAccount } from "wagmi";
 export function SuccessModalStep({
     appName,
     params,
-    onFinish,
 }: {
     appName: string;
     params: SuccessModalStepType["params"];
@@ -95,18 +94,6 @@ export function SuccessModalStep({
                         </button>
                     </div>
                 )}
-
-                <div>
-                    <button
-                        type={"button"}
-                        className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
-                        onClick={() => {
-                            onFinish({});
-                        }}
-                    >
-                        {metadata?.secondaryActionText ?? "Close"}
-                    </button>
-                </div>
             </div>
         </>
     );
