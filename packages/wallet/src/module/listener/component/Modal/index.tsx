@@ -10,6 +10,7 @@ import {
 } from "@/module/listener/atoms/modalEvents";
 import { SiweAuthenticateModalStep } from "@/module/listener/component/Authenticate";
 import { LoginModalStep } from "@/module/listener/component/Login";
+import { NotRewardedModalStep } from "@/module/listener/component/NotRewarded";
 import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
 import { SuccessModalStep } from "@/module/listener/component/Success";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
@@ -17,6 +18,7 @@ import {
     type LoginModalStepType,
     type ModalRpcStepsResultType,
     type ModalStepTypes,
+    type NotRewardedModalStepType,
     type OpenInteractionSessionModalStepType,
     RpcErrorCodes,
     type SendTransactionModalStepType,
@@ -374,6 +376,16 @@ function CurrentModalStepComponent({
                         appName={currentRequest.appName}
                         params={
                             currentStep.params as SuccessModalStepType["params"]
+                        }
+                        onFinish={onStepFinished}
+                    />
+                );
+            case "notRewarded":
+                return (
+                    <NotRewardedModalStep
+                        appName={currentRequest.appName}
+                        params={
+                            currentStep.params as NotRewardedModalStepType["params"]
                         }
                         onFinish={onStepFinished}
                     />

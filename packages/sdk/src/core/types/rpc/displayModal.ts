@@ -1,5 +1,6 @@
 import type {
     LoginModalStepType,
+    NotRewardedModalStepType,
     OpenInteractionSessionModalStepType,
     SendTransactionModalStepType,
     SiweAuthenticateModalStepType,
@@ -14,7 +15,8 @@ export type ModalStepTypes =
     | SiweAuthenticateModalStepType
     | SendTransactionModalStepType
     | OpenInteractionSessionModalStepType
-    | SuccessModalStepType;
+    | SuccessModalStepType
+    | NotRewardedModalStepType;
 
 /**
  * Type for the result of a modal request

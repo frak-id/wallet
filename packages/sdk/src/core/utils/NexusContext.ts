@@ -55,6 +55,20 @@ async function update({
     return urlObj.toString();
 }
 
+/**
+ * Remove Nexus context from current url
+ */
+function remove(url: string) {
+    const urlObj = new URL(url);
+    urlObj.searchParams.delete(contextKey);
+    return urlObj.toString();
+}
+
+/**
+ * Replace the current url with the given Nexus context
+ * @param url
+ * @param context
+ */
 async function replaceUrl({
     url,
     context,
@@ -83,5 +97,6 @@ async function replaceUrl({
 export const NexusContextManager = {
     parse,
     update,
+    remove,
     replaceUrl,
 };

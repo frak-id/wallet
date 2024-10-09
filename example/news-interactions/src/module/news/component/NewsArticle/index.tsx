@@ -47,6 +47,16 @@ const modalConfig = {
                 primaryActionText: "Being rewarded with Nexus",
             },
         },
+        notRewarded: {
+            metadata: {
+                description: "Share this article with your friends",
+            },
+            sharing: {
+                popupTitle: "Share this article with your friends",
+                text: "Discover this awesome article",
+                link: typeof window !== "undefined" ? window.location.href : "",
+            },
+        },
     },
     metadata: {
         header: {

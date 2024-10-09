@@ -15,3 +15,4 @@ export type {
 } from "./openSession";
 export type { ModalStepMetadata } from "./generic";
 export type { SuccessModalStepType } from "./success";
+export type { NotRewardedModalStepType } from "./notRewarded";

@@ -5,6 +5,7 @@ import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
+import { NotRewardedModalStepButton } from "@/module/listener/component/NotRewarded";
 import { requestAndCheckStorageAccess } from "@/module/listener/utils/thirdParties";
 import type {
     LoginModalStepType,
@@ -104,13 +105,10 @@ export function LoginModalStep({
                     </button>
                 </div>
                 <div>
-                    <button
-                        type={"button"}
-                        className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
-                        onClick={() => {}}
-                    >
-                        {"Continue without being rewarded"}
-                    </button>
+                    <NotRewardedModalStepButton>
+                        {metadata?.primaryActionText ??
+                            "Continue without being rewarded"}
+                    </NotRewardedModalStepButton>
                 </div>
             </div>
 
