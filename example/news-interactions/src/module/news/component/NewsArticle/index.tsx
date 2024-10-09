@@ -27,13 +27,6 @@ Your choice will only be valid on the digital support you are currently using. I
 
 const modalConfig = {
     steps: {
-        openSession: {
-            metadata: {
-                title: "Open reward session",
-                description,
-                primaryActionText: "Being rewarded with Nexus",
-            },
-        },
         login: {
             metadata: {
                 title: "Login",
@@ -47,9 +40,11 @@ const modalConfig = {
                 homepageLink: "https://news-paper.xyz/",
             },
         },
-        success: {
+        openSession: {
             metadata: {
-                description: "You have successfully been rewarded",
+                title: "Open reward session",
+                description,
+                primaryActionText: "Being rewarded with Nexus",
             },
         },
     },
