@@ -31,8 +31,8 @@ const modalConfig = {
             metadata: {
                 title: "Login",
                 description,
-                primaryActionText: "Login with Nexus",
-                secondaryActionText: "Create a Nexus",
+                primaryActionText: "Be rewarded with Frak",
+                secondaryActionText: "I have already an account",
             },
             allowSso: true,
             ssoMetadata: {

@@ -175,7 +175,7 @@ function ListenerModalDialog({
         const titleComponent = currentRequest.metadata?.header?.title ? (
             <>
                 {currentRequest.metadata.header.title}
-                <span className={styles.motalTitle__provided}>
+                <span className={styles.modalTitle__provided}>
                     Provided by Frak{" "}
                     <LogoFrak sizes={14} className={styles.modalTitle__logo} />
                 </span>

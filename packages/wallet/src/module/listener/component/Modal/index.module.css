@@ -129,7 +129,13 @@
     color: var(--frak-alertDialog-button-secondary-text-color);
 }
 
-.motalTitle__provided {
+.modalListener__buttonLink {
+    all: unset;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.modalTitle__provided {
     margin-left: 10px;
     font-size: 12px;
     font-weight: 400;
@@ -142,5 +148,5 @@
 }
 
 .drawerTitle__container {
-    margin: 12px 0px;
+    margin: 12px 0;
 }

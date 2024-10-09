@@ -82,27 +82,36 @@ export function LoginModalStep({
             <div
                 className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
             >
-                <div>
-                    <button
-                        type={"button"}
-                        className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
-                        disabled={isLoading}
-                        onClick={() => login({})}
-                    >
-                        {isLoading && <Spinner />}
-                        {metadata?.primaryActionText ?? "Login"}
-                    </button>
-                </div>
                 {params.allowSso && (
                     <div>
                         <SsoButton
                             appName={appName}
                             context={context}
                             ssoMetadata={params.ssoMetadata}
-                            alternateText={metadata?.secondaryActionText}
+                            alternateText={metadata?.primaryActionText}
                         />
                     </div>
                 )}
+                <div>
+                    <button
+                        type={"button"}
+                        className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
+                        disabled={isLoading}
+                        onClick={() => login({})}
+                    >
+                        {isLoading && <Spinner />}
+                        {metadata?.secondaryActionText ?? "Login"}
+                    </button>
+                </div>
+                <div>
+                    <button
+                        type={"button"}
+                        className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
+                        onClick={() => {}}
+                    >
+                        {"Continue without being rewarded"}
+                    </button>
+                </div>
             </div>
 
             {isSuccess && (
@@ -163,7 +172,7 @@ function SsoButton({
     return (
         <button
             type={"button"}
-            className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
+            className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
             onClick={async () => {
                 await requestAndCheckStorageAccess();
                 openRegister();
