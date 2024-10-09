@@ -10,6 +10,11 @@
 
 .modalListener__subTitle {
     margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.modalListener__text {
+    margin: 4px 0px;
 }
 
 .modalListener__error {
@@ -69,7 +74,8 @@
 }
 
 .modalListener__context {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    font-size: 12px;
 }
 
 .modalListener__icon {

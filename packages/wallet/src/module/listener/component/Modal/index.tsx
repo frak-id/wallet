@@ -170,7 +170,7 @@ function ListenerModalDialog({
     /**
      * The inner component to display
      */
-    const { titleComponent, icon } = useMemo(() => {
+    const { titleComponent, icon, context } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = currentRequest.metadata?.header?.title ? (
             <>
@@ -188,12 +188,10 @@ function ListenerModalDialog({
 
         return {
             titleComponent,
+            context: currentRequest?.metadata?.context,
             icon: currentRequest?.metadata?.header?.icon,
         };
-    }, [
-        currentRequest?.metadata?.header?.title,
-        currentRequest?.metadata?.header?.icon,
-    ]);
+    }, [currentRequest?.metadata]);
 
     return (
         <ModalComponent
@@ -208,6 +206,11 @@ function ListenerModalDialog({
                         alt={""}
                         className={styles.modalListener__icon}
                     />
+                )}
+                {context && (
+                    <div className={styles.modalListener__context}>
+                        {context}
+                    </div>
                 )}
                 {/* <ModalStepIndicator /> */}
                 <CurrentModalStepComponent

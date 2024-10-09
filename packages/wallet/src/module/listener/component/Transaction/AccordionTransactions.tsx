@@ -13,7 +13,12 @@ export function AccordionTransactions({
     txs,
 }: { txs: SendTransactionTxType[] }) {
     return (
-        <Accordion type={"single"} collapsible defaultValue={"transaction-0"}>
+        <Accordion
+            type={"single"}
+            collapsible
+            defaultValue={"transaction-0"}
+            className={styles.accordionTransactions__container}
+        >
             {txs.map((tx, index) => (
                 <AccordionItem
                     key={`${index}-${tx.to}`}
