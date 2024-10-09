@@ -50,6 +50,7 @@ const modalConfig = {
         notRewarded: {
             metadata: {
                 description: "Share this article with your friends",
+                primaryActionText: "Continue without being rewarded",
             },
             sharing: {
                 popupTitle: "Share this article with your friends",

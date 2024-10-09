@@ -105,10 +105,7 @@ export function LoginModalStep({
                     </button>
                 </div>
                 <div>
-                    <NotRewardedModalStepButton>
-                        {metadata?.primaryActionText ??
-                            "Continue without being rewarded"}
-                    </NotRewardedModalStepButton>
+                    <NotRewardedModalStepButton />
                 </div>
             </div>
 

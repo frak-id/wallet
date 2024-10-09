@@ -8,7 +8,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useCopyToClipboard } from "@uidotdev/usehooks";
 import { useAtomValue } from "jotai";
 import { tryit } from "radash";
-import type { PropsWithChildren } from "react";
 
 /**
  * The component for the not rewarded step of a modal
@@ -97,16 +96,20 @@ export function NotRewardedModalStep({
 
 /**
  * The button for the not rewarded step of a modal
- * @param children
  * @constructor
  */
-export function NotRewardedModalStepButton({ children }: PropsWithChildren) {
+export function NotRewardedModalStepButton() {
     const modalSteps = useAtomValue(modalStepsAtom);
     const notRewardedIndex = modalSteps?.steps?.findIndex(
         (step) => step.key === "notRewarded"
     );
 
-    if (!notRewardedIndex) return null;
+    if (!(modalSteps && notRewardedIndex) || notRewardedIndex === -1)
+        return null;
+
+    const {
+        params: { metadata },
+    } = modalSteps.steps[notRewardedIndex];
 
     return (
         <button
@@ -123,7 +126,7 @@ export function NotRewardedModalStepButton({ children }: PropsWithChildren) {
                 });
             }}
         >
-            {children}
+            {metadata?.primaryActionText ?? "Continue without being rewarded"}
         </button>
     );
 }
