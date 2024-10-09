@@ -64,6 +64,7 @@ export function AlertDialog({
             </AlertDialogPrimitive.Trigger>
             <AlertDialogPrimitive.Portal>
                 <AlertDialogPrimitive.Overlay
+                    onClick={() => onOpenChange?.(false)}
                     className={`${prefixModalCss("overlay")} ${styles.alertDialog__overlay}`}
                 />
                 <AlertDialogPrimitive.Content
