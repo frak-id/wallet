@@ -67,6 +67,7 @@ export function AlertDialog({
                     className={`${prefixModalCss("overlay")} ${styles.alertDialog__overlay}`}
                 />
                 <AlertDialogPrimitive.Content
+                    onEscapeKeyDown={() => onOpenChange?.(false)}
                     className={`${prefixModalCss("content")} ${styles.alertDialog__content} ${
                         showCloseButton
                             ? styles.alertDialog__withCloseButton
