@@ -282,22 +282,23 @@ function CurrentModalStepComponent({
     currentRequest: ModalDisplayedRequest;
 }) {
     const modalSteps = useAtomValue(modalStepsAtom);
-    const currentStep = useMemo(
-        () => modalSteps?.steps?.[modalSteps.currentStep] ?? undefined,
-        [modalSteps]
-    );
 
     /**
-     * Action when the step is finished
+     * Return the right modal depending on the state
      */
-    const onStepFinished = useCallback(
-        (result: ModalStepTypes["returns"]) => {
+    return useMemo(() => {
+        // Extract some info about the current modal step
+        const currentStepIndex = modalSteps?.currentStep ?? 0;
+        const currentStep =
+            modalSteps?.steps?.[modalSteps.currentStep] ?? undefined;
+        if (!currentStep) return null;
+
+        // Build the on finish method
+        const onStepFinished = (result: ModalStepTypes["returns"]) => {
             if (!modalSteps) {
                 onModalFinish();
                 return;
             }
-
-            const currentStepIndex = modalSteps.currentStep;
 
             // Our new result array
             const newResults = modalSteps.results;
@@ -311,25 +312,17 @@ function CurrentModalStepComponent({
                 if (!current) return null;
                 return {
                     ...current,
-                    currentStep: current.currentStep + 1,
+                    currentStep: currentStepIndex + 1,
                     results: newResults,
                 };
             });
 
             // If we reached the end of the steps, we close the modal
-            if (modalSteps.currentStep + 1 >= modalSteps.steps.length) {
+            if (currentStepIndex + 1 >= modalSteps.steps.length) {
                 onModalFinish();
                 return;
             }
-        },
-        [onModalFinish, modalSteps]
-    );
-
-    /**
-     * Return the right modal depending on the state
-     */
-    return useMemo(() => {
-        if (!currentStep) return null;
+        };
 
         // Display the right component depending on the step
         switch (currentStep.key) {
@@ -389,8 +382,8 @@ function CurrentModalStepComponent({
                 return <>Can't handle {currentStep} yet</>;
         }
     }, [
-        currentStep,
-        onStepFinished,
+        onModalFinish,
+        modalSteps,
         onError,
         currentRequest.context,
         currentRequest.appName,

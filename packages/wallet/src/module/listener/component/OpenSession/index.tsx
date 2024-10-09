@@ -6,6 +6,7 @@ import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { MetadataInfo } from "../Generic";
 
@@ -40,6 +41,7 @@ export function OpenSessionModalStep({
 
     const {
         mutate: openSession,
+        isIdle,
         isPending,
         isError,
         error,
@@ -79,6 +81,20 @@ export function OpenSessionModalStep({
             },
         },
     });
+
+    // Small effect to auto skip this step if a session is already set
+    useEffect(() => {
+        // If the open session isn't idle, it mean that we doing some shenanigans there
+        if (!isIdle) return;
+
+        // If we already got a session, directly exit
+        if (currentSession) {
+            onFinish({
+                startTimestamp: currentSession.sessionStart,
+                endTimestamp: currentSession.sessionEnd,
+            });
+        }
+    }, [currentSession, onFinish, isIdle]);
 
     return (
         <RequireWebAuthN>
