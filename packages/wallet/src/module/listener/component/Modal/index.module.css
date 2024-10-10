@@ -76,9 +76,10 @@
     text-align: center;
     color: #818c9c;
     font-weight: 500;
+    font-size: 12px;
 }
 
-.modalListener__stepItem--active {
+.modalListener__stepItem--done {
     color: #0171ec;
 
     .modalListener__stepNumber {

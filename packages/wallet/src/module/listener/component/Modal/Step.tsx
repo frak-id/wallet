@@ -44,10 +44,6 @@ function getStepIcon(step: ModalStepTypes) {
 const stepsNameAtom = atom((get) => {
     const currentSteps = get(modalStepsAtom);
     if (!currentSteps) return [];
-    // Filter out the success step, if any
-    // const visibleSteps = currentSteps.steps.filter(
-    //     (step) => step.key !== "final"
-    // );
     return currentSteps.steps.map((step) => {
         return {
             name:
