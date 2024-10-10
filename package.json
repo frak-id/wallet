@@ -39,6 +39,7 @@
     "example/*"
   ],
   "dependencies": {
+    "i18next-browser-languagedetector": "^8.0.0",
     "turbo": "^2.1.2"
   },
   "packageManager": "bun@1.1.26"

@@ -17,6 +17,7 @@ import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { MetadataInfo } from "../Generic";
 
 /**
@@ -37,6 +38,7 @@ export function LoginModalStep({
     onFinish: (args: LoginModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { t } = useTranslation();
     const { metadata } = params;
     const { login, isSuccess, isLoading, isError, error } = useLogin({
         // On mutation, request access to the storage and update context if granted
@@ -76,8 +78,7 @@ export function LoginModalStep({
         <RequireWebAuthN>
             <MetadataInfo
                 metadata={metadata}
-                defaultDescription="Connect to your Frak account to get the best experience on this
-                platform. See our privacy policy for details."
+                defaultDescription={t("sdk.modal.login.default.description")}
             />
 
             <div
@@ -101,7 +102,8 @@ export function LoginModalStep({
                         onClick={() => login({})}
                     >
                         {isLoading && <Spinner />}
-                        {metadata?.secondaryActionText ?? "Login"}
+                        {metadata?.secondaryActionText ??
+                            t("sdk.modal.login.default.secondaryAction")}
                     </button>
                 </div>
                 <div>
@@ -111,7 +113,7 @@ export function LoginModalStep({
 
             {isSuccess && (
                 <p className={styles.modalListener__success}>
-                    Connection successful
+                    {t("sdk.modal.login.default.success")}
                 </p>
             )}
 
@@ -143,6 +145,7 @@ function SsoButton({
     ssoMetadata: SsoMetadata;
     alternateText?: string;
 }) {
+    const { t } = useTranslation();
     const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
     const openSsoPopup = useOpenSsoPopup();
 
@@ -176,7 +179,7 @@ function SsoButton({
                 await mutateAsyncUpdateSessionStatus();
             }}
         >
-            {alternateText ?? "Register"}
+            {alternateText ?? t("sdk.modal.login.default.primaryAction")}
         </button>
     );
 }

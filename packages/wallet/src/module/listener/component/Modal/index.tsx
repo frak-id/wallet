@@ -37,6 +37,8 @@ import {
     useEffect,
     useMemo,
 } from "react";
+import { useTranslation } from "react-i18next";
+import { MetadataInfo } from "../Generic";
 import styles from "./index.module.css";
 
 /**
@@ -268,6 +270,51 @@ function ModalComponent({
             </DrawerContent>
         </Drawer>
     );
+}
+
+/**
+ * Get the current modal metadata info component
+ */
+function CurrentModalMetadataInfo() {
+    const { t, i18n } = useTranslation();
+    const modalSteps = useAtomValue(modalStepsAtom);
+
+    // Extract step key and metadata
+    const { stepKey, metadata } = useMemo(() => {
+        const currentStep =
+            modalSteps?.steps?.[modalSteps.currentStep] ?? undefined;
+
+        if (!currentStep) return { stepKey: undefined, metadata: undefined };
+
+        return {
+            stepKey: currentStep.key,
+            metadata: currentStep.params.metadata,
+        };
+    }, [modalSteps]);
+
+    // Get the right message depending on the step
+    return useMemo(() => {
+        if (!stepKey) return null;
+
+        const baseDefaultTranslationKey = `sdk.modal.${stepKey}.default`;
+        const defaultTitleKey = `${baseDefaultTranslationKey}.title`;
+        const defaultDescriptionKey = `${baseDefaultTranslationKey}.description`;
+
+        // Check if i18n contain the keys
+        const hasTitle = i18n.exists(defaultTitleKey);
+        const hasDescription = i18n.exists(defaultDescriptionKey);
+
+        // Return the matching component
+        return (
+            <MetadataInfo
+                metadata={metadata}
+                defaultDescription={
+                    hasDescription ? t(defaultDescriptionKey) : undefined
+                }
+                defaultTitle={hasTitle ? t(defaultTitleKey) : undefined}
+            />
+        );
+    }, [stepKey, metadata, i18n, t]);
 }
 
 /**

@@ -1,0 +1,46 @@
+{
+    "authent": {
+        "sso": {
+            "btn": {
+                "create": "Use biometrics to prove you're not a robot",
+                "login": "Connect an existing wallet"
+            },
+            "description": "Before continuing, please make sure you are using a device that belongs to you.<br />Frak is a solution allowing <strong>{{productName}}</strong> to reward its community for the help provided in promoting its offers. <strong>Frak is a decentralized and open-source solution, which does not store any personal or biometric data.</strong><br />To learn more about <strong>{{productName}}</strong>, please review our Privacy Policy and Terms of Use.",
+            "subTitle": "to immediately receive your winnings from <pLink>{{productName}}</pLink>.",
+            "title": "Create your wallet"
+        }
+    },
+    "sdk": {
+        "modal": {
+            "login": {
+                "default": {
+                    "description": "Connect to your Frak account to get the best experience on this platform. See our privacy policy for details.",
+                    "primaryAction": "Register",
+                    "secondaryAction": "Login",
+                    "success": "Connection successful"
+                }
+            },
+            "openSession": {
+                "default": {
+                    "description": "Start a rewarding session to earn as you interact anonymously on this site. Enjoy benefits without sharing personal details. \nLearn more in our privacy policy.",
+                    "primaryAction": "Being rewarded with Frak"
+                }
+            },
+            "sendTransaction": {
+                "default": {
+                    "description": "To complete, authorize this transaction in your wallet. This ensures secure processing.",
+                    "primaryAction_one": "Send transaction",
+                    "primaryAction_other": "Send transactions",
+                    "title": "Confirm your transaction"
+                }
+            },
+            "siweAuthenticate": {
+                "default": {
+                    "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
+                    "primaryAction": "Authenticate",
+                    "title": "Secure wallet authentication"
+                }
+            }
+        }
+    }
+}
