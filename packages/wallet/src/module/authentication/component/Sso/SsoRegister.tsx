@@ -1,12 +1,15 @@
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { useRegister } from "@/module/authentication/hook/useRegister";
+import { Notice } from "@/module/common/component/Notice";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * The register component
  * @constructor
  */
 export function SsoRegisterComponent({ onSuccess }: { onSuccess: () => void }) {
+    const { t } = useTranslation();
     const { register, error, isRegisterInProgress } = useRegister({
         onSuccess: () => onSuccess(),
     });
@@ -23,39 +26,31 @@ export function SsoRegisterComponent({ onSuccess }: { onSuccess: () => void }) {
     );
 
     /**
-     * Get the message that will be displayed inside the button
+     * The status component
      */
-    const message = useMemo(() => {
+    const statusComponent = useMemo(() => {
         if (isPreviouslyUsedAuthenticatorError) {
-            return (
-                <>
-                    Vous avez deja un portfeuille enregistré. Cliquer su r le
-                    bouton de connexion ci-dessous pour vous connecter.
-                </>
-            );
-        }
-        if (error) {
-            return <>Error during registration, please try again</>;
+            return <Notice>{t("authent.create.inProgress")}</Notice>;
         }
         if (isRegisterInProgress) {
-            return (
-                <>
-                    Creation de votre portefeuille en cours
-                    <span className={"dotsLoading"}>...</span>
-                </>
-            );
+            return <Notice>{t("authent.create.inProgress")}</Notice>;
         }
-        return (
-            <>Utiliser votre biométrie pour prouver que vous êtes un humain</>
-        );
-    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress]);
+        if (error) {
+            return <Notice>{t("authent.create.error")}</Notice>;
+        }
+
+        return null;
+    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress, t]);
 
     return (
-        <ButtonAuth
-            trigger={register}
-            disabled={isPreviouslyUsedAuthenticatorError}
-        >
-            {message}
-        </ButtonAuth>
+        <>
+            <ButtonAuth
+                trigger={register}
+                disabled={isPreviouslyUsedAuthenticatorError}
+            >
+                {t("authent.sso.btn.create")}
+            </ButtonAuth>
+            {statusComponent}
+        </>
     );
 }

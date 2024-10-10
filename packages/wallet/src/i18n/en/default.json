@@ -1,5 +1,10 @@
 {
     "authent": {
+        "create": {
+            "alreadyRegistered": "You already have a registered wallet. Click the login button below to log in.",
+            "error": "Error during registration, please try again",
+            "inProgress": "Wallet creation in progress"
+        },
         "sso": {
             "btn": {
                 "create": "Use biometrics to prove you're not a robot",

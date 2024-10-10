@@ -1,5 +1,10 @@
 {
     "authent": {
+        "create": {
+            "alreadyRegistered": "Vous avez déjà un portefeuille enregistré. Cliquez sur le bouton de connexion ci-dessous pour vous connecter.",
+            "error": "Erreur lors de l'inscription, veuillez réessayer",
+            "inProgress": "Création du portefeuille en cours"
+        },
         "sso": {
             "btn": {
                 "create": "Utilisez la biométrie pour prouver que vous n'êtes pas un robot",
