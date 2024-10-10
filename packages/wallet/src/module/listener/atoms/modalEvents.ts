@@ -29,8 +29,6 @@ export const modalDisplayedRequestAtom = atom<ModalDisplayedRequest | null>(
  * The modal steps
  */
 export const modalStepsAtom = atom<{
-    // Global modal context
-    metadata?: ModalRpcMetadata;
     // Key of the current step
     currentStep: number;
     // All the step but in a table, for easier management
@@ -46,3 +44,40 @@ export const clearRpcModalAtom = atom(null, (_get, set) => {
     set(modalDisplayedRequestAtom, null);
     set(modalStepsAtom, null);
 });
+
+/**
+ * Go to the dismissed step in the modal
+ */
+export const dismissBtnAtom = atom(
+    (get) => {
+        // Get some info for the dismiss btn
+        const modalSteps = get(modalStepsAtom);
+        const modalRequest = get(modalDisplayedRequestAtom);
+        if (!(modalSteps && modalRequest)) return null;
+
+        const metadata = modalRequest.metadata;
+        const dismissStepIndex = modalSteps.steps.findIndex(
+            (step) => step.key === "dismissed"
+        );
+        if (!metadata?.isDismissible || dismissStepIndex === -1) return null;
+        if (dismissStepIndex === modalSteps.currentStep) return null;
+
+        return {
+            customLbl: metadata.dismissActionTxt,
+            index: dismissStepIndex,
+        };
+    },
+    (get, set) => {
+        // Go to the dismissed step
+        const modalSteps = get(modalStepsAtom);
+        if (!modalSteps) return null;
+        const dismissStepIndex = modalSteps.steps.findIndex(
+            (step) => step.key === "dismissed"
+        );
+        if (dismissStepIndex === -1) return null;
+        set(modalStepsAtom, {
+            ...modalSteps,
+            currentStep: dismissStepIndex,
+        });
+    }
+);

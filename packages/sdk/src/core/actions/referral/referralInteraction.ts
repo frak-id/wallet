@@ -5,7 +5,7 @@ import type {
     ModalStepTypes,
     NexusClient,
 } from "../../types";
-import { NexusContextManager } from "../../utils";
+import { FrakContextManager } from "../../utils";
 import { processReferral } from "./processReferral";
 
 export async function referralInteraction(
@@ -18,8 +18,8 @@ export async function referralInteraction(
         modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
     } = {}
 ) {
-    // Get the current nexus context
-    const nexusContext = await NexusContextManager.parse({
+    // Get the current frak context
+    const frakContext = await FrakContextManager.parse({
         url: window.location.href,
     });
 
@@ -29,7 +29,7 @@ export async function referralInteraction(
     try {
         return await processReferral(client, {
             walletStatus: currentWalletStatus,
-            nexusContext,
+            frakContext,
             modalConfig,
             productId,
         });

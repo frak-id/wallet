@@ -1,11 +1,35 @@
 import styles from "@/module/listener/component/Modal/index.module.css";
-import { NexusContextManager } from "@frak-labs/nexus-sdk/core";
+import {
+    type FinalActionType,
+    FrakContextManager,
+} from "@frak-labs/nexus-sdk/core";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { tryit } from "radash";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+
+export function FinalModalComponent({
+    appName,
+    action,
+    isSuccess,
+}: { appName: string; action: FinalActionType; isSuccess: boolean }) {
+    if (action.key === "sharing") {
+        return (
+            <SharingButtons
+                appName={appName}
+                useFrakContext={isSuccess}
+                popupTitle={action?.options?.popupTitle}
+                text={action?.options?.text}
+                link={action?.options?.link}
+            />
+        );
+    }
+
+    // todo: Display some stuff for the reward? Or autoskip it?
+    return null;
+}
 
 /**
  * Sharing buttons component
@@ -16,13 +40,13 @@ import { useAccount } from "wagmi";
  * @param text
  */
 export function SharingButtons({
-    shareWithFrak = true,
+    useFrakContext,
     appName,
     link,
     popupTitle,
     text,
 }: {
-    shareWithFrak?: boolean;
+    useFrakContext: boolean;
     appName: string;
     link?: string;
     popupTitle?: string;
@@ -31,27 +55,38 @@ export function SharingButtons({
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
 
+    // Get our final sharing link
+    const { data: finalSharingLink } = useQuery({
+        queryKey: ["final-modal", "sharing", link, useFrakContext],
+        queryFn: async () => {
+            if (!link) return null;
+            return await getSharingLink({
+                useFrakContext,
+                link: link,
+                address: address,
+            });
+        },
+    });
+
     const {
         data: shareResult,
         mutate: triggerSharing,
         isPending: isSharing,
     } = useMutation({
-        mutationKey: ["modal-notRewarded-sharing"],
+        mutationKey: [
+            "final-modal",
+            "sharing",
+            "system-sharing",
+            finalSharingLink,
+        ],
         mutationFn: async () => {
-            if (!link) return;
-
-            const sharingLink = await getSharingLink(
-                shareWithFrak,
-                link,
-                address
-            );
-            if (!sharingLink) return;
+            if (!finalSharingLink) return;
 
             // Build our sharing data
             const shareData = {
                 title: popupTitle ?? `${appName} invite link`,
                 text: text ?? "Discover this awesome product!",
-                url: sharingLink,
+                url: finalSharingLink,
             };
 
             // Trigger copy to clipboard if no native sharing
@@ -73,14 +108,8 @@ export function SharingButtons({
                 type={"button"}
                 className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
                 onClick={async () => {
-                    if (!link) return;
-                    const sharingLink = await getSharingLink(
-                        shareWithFrak,
-                        link,
-                        address
-                    );
-                    if (!sharingLink) return;
-                    copy(sharingLink);
+                    if (!finalSharingLink) return;
+                    copy(finalSharingLink);
                 }}
             >
                 {copied ? "Copied!" : "Copy link"}
@@ -100,18 +129,18 @@ export function SharingButtons({
 /**
  * Get the sharing link with the current nexus wallet as referrer
  * or remove the referrer from the sharing link
- * @param shareWithFrak
+ * @param useFrakContext
  * @param link
  * @param address
  */
-async function getSharingLink(
-    shareWithFrak: boolean,
-    link: string,
-    address?: Hex
-) {
-    if (shareWithFrak) {
+async function getSharingLink({
+    useFrakContext,
+    link,
+    address,
+}: { useFrakContext: boolean; link: string; address?: Hex }) {
+    if (useFrakContext) {
         // Ensure the sharing link contain the current nexus wallet as referrer
-        return await NexusContextManager.update({
+        return await FrakContextManager.update({
             url: link,
             context: {
                 r: address,
@@ -120,5 +149,5 @@ async function getSharingLink(
     }
 
     // Remove the referrer from the sharing link
-    return NexusContextManager.remove(link);
+    return FrakContextManager.remove(link);
 }

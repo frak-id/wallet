@@ -1,26 +1,26 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { NexusContextManager } from "../../../core";
-import type { NexusContext } from "../../types/NexusContext";
+import { FrakContextManager } from "../../../core";
+import type { FrakContext } from "../../types/FrakContext";
 import { useWindowLocation } from "./useWindowLocation";
 
 /**
  * Extract the current nexus context from the url
  */
-export function useNexusContext() {
+export function useFrakContext() {
     // Get the current window location
     const { location } = useWindowLocation();
 
     /**
      * Query fetching and parsing the current nexus context
      */
-    const { data: nexusContext } = useQuery({
+    const { data: frakContext } = useQuery({
         queryKey: ["nexus-sdk", "context", location?.href ?? "no-href"],
         queryFn: async () => {
             // If no url extracted yet, early exit
             if (!location?.href) return null;
 
             // Parse the current context
-            return NexusContextManager.parse({ url: location.href });
+            return FrakContextManager.parse({ url: location.href });
         },
         enabled: !!location?.href,
     });
@@ -31,10 +31,10 @@ export function useNexusContext() {
     const { mutate: updateContext, mutateAsync: updateContextAsync } =
         useMutation({
             mutationKey: ["nexus-sdk", "update-context"],
-            mutationFn: async (newContext: Partial<NexusContext>) => {
+            mutationFn: async (newContext: Partial<FrakContext>) => {
                 console.log("Updating context", { newContext });
 
-                await NexusContextManager.replaceUrl({
+                await FrakContextManager.replaceUrl({
                     url: location?.href,
                     context: newContext,
                 });
@@ -42,7 +42,7 @@ export function useNexusContext() {
         });
 
     return {
-        nexusContext,
+        frakContext,
         updateContext,
         updateContextAsync,
     };

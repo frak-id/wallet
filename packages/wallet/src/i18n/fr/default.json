@@ -12,6 +12,7 @@
     },
     "sdk": {
         "modal": {
+            "default": { "dismissBtn": "Continuer sans Frak" },
             "login": {
                 "default": {
                     "description": "Connectez-vous à votre compte Frak pour profiter de la meilleure expérience sur cette plateforme. Consultez notre politique de confidentialité pour plus de détails.",

@@ -17,7 +17,7 @@ const defaultStepTitlesMap: Record<ModalStepTypes["key"], string> = {
     openSession: "Open Session",
     sendTransaction: "Transaction",
     success: "Success",
-    notRewarded: "Share without reward",
+    dismissed: "Dismissed",
 };
 
 /**

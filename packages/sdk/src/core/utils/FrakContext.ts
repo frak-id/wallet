@@ -1,10 +1,10 @@
-import type { NexusContext } from "../../react/types/NexusContext";
+import type { FrakContext } from "../../react/types/FrakContext";
 import { compressJson, decompressJson } from "./compression";
 
 /**
  * The context key
  */
-const contextKey = "nCtx";
+const contextKey = "fCtx";
 
 /**
  * Parse the current Nexus context in the given url
@@ -19,7 +19,7 @@ async function parse({ url }: { url: string }) {
     if (!nexusContext) return null;
 
     // Parse the nexus context
-    const parsedContext = await decompressJson<NexusContext>(nexusContext);
+    const parsedContext = await decompressJson<FrakContext>(nexusContext);
     if (!parsedContext) return null;
 
     // Return the parsed context
@@ -32,7 +32,7 @@ async function parse({ url }: { url: string }) {
 async function update({
     url,
     context,
-}: { url?: string; context: Partial<NexusContext> }) {
+}: { url?: string; context: Partial<FrakContext> }) {
     if (!url) return null;
 
     // Parse the current context
@@ -72,7 +72,7 @@ function remove(url: string) {
 async function replaceUrl({
     url,
     context,
-}: { url?: string; context: Partial<NexusContext> }) {
+}: { url?: string; context: Partial<FrakContext> }) {
     // If no window here early exit
     if (!window.location?.href || typeof window === "undefined") {
         console.error("No window found, can't update context");
@@ -92,9 +92,9 @@ async function replaceUrl({
 }
 
 /**
- * Export our nexus context "class"
+ * Export our frak context "class"
  */
-export const NexusContextManager = {
+export const FrakContextManager = {
     parse,
     update,
     remove,

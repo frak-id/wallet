@@ -9,21 +9,21 @@ import {
     modalStepsAtom,
 } from "@/module/listener/atoms/modalEvents";
 import { SiweAuthenticateModalStep } from "@/module/listener/component/Authenticate";
+import { DismissedModalStep } from "@/module/listener/component/Dismissed";
 import { LoginModalStep } from "@/module/listener/component/Login";
-import { NotRewardedModalStep } from "@/module/listener/component/NotRewarded";
 import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
 import { SuccessModalStep } from "@/module/listener/component/Success";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
 import {
+    type FinalDismissedModalStepType,
+    type FinalSuccessModalStepType,
     type LoginModalStepType,
     type ModalRpcStepsResultType,
     type ModalStepTypes,
-    type NotRewardedModalStepType,
     type OpenInteractionSessionModalStepType,
     RpcErrorCodes,
     type SendTransactionModalStepType,
     type SiweAuthenticateModalStepType,
-    type SuccessModalStepType,
 } from "@frak-labs/nexus-sdk/core";
 import { LogoFrak } from "@module/asset/icons/LogoFrak";
 import { jotaiStore } from "@module/atoms/store";
@@ -422,17 +422,17 @@ function CurrentModalStepComponent({
                     <SuccessModalStep
                         appName={currentRequest.appName}
                         params={
-                            currentStep.params as SuccessModalStepType["params"]
+                            currentStep.params as FinalSuccessModalStepType["params"]
                         }
                         onFinish={onStepFinished}
                     />
                 );
-            case "notRewarded":
+            case "dismissed":
                 return (
-                    <NotRewardedModalStep
+                    <DismissedModalStep
                         appName={currentRequest.appName}
                         params={
-                            currentStep.params as NotRewardedModalStepType["params"]
+                            currentStep.params as FinalDismissedModalStepType["params"]
                         }
                         onFinish={onStepFinished}
                     />

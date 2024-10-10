@@ -156,6 +156,7 @@ const stepImportanceMap: Record<ModalStepTypes["key"], number> = {
     // Normal steps
     siweAuthenticate: 5,
     sendTransaction: 10,
+    // Final steps
     success: 100,
-    notRewarded: 110,
+    dismissed: 110,
 };

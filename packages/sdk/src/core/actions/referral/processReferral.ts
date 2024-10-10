@@ -1,6 +1,6 @@
 import { type Hex, isAddressEqual } from "viem";
 import { displayModal, sendInteraction } from "../";
-import type { NexusContext } from "../../../react/types/NexusContext";
+import type { FrakContext } from "../../../react/types/FrakContext";
 import { ReferralInteractionEncoder } from "../../interactions";
 import {
     type DisplayModalParamsType,
@@ -10,7 +10,7 @@ import {
     RpcErrorCodes,
     type WalletStatusReturnType,
 } from "../../types";
-import { NexusContextManager } from "../../utils";
+import { FrakContextManager } from "../../utils";
 
 type ReferralState =
     | "idle"
@@ -34,12 +34,12 @@ export async function processReferral(
     client: NexusClient,
     {
         walletStatus,
-        nexusContext,
+        frakContext,
         modalConfig,
         productId,
     }: {
         walletStatus?: WalletStatusReturnType;
-        nexusContext?: Partial<NexusContext> | null;
+        frakContext?: Partial<FrakContext> | null;
         modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
         productId?: Hex;
     }
@@ -48,9 +48,9 @@ export async function processReferral(
         // Get the current wallet, without auto displaying the modal
         let currentWallet = getCurrentWallet(walletStatus);
 
-        if (!nexusContext?.r) {
+        if (!frakContext?.r) {
             if (currentWallet) {
-                await NexusContextManager.replaceUrl({
+                await FrakContextManager.replaceUrl({
                     url: window.location?.href,
                     context: { r: currentWallet },
                 });
@@ -66,20 +66,20 @@ export async function processReferral(
             });
         }
 
-        if (currentWallet && isAddressEqual(nexusContext.r, currentWallet)) {
+        if (currentWallet && isAddressEqual(frakContext.r, currentWallet)) {
             return "self-referral";
         }
 
         // If we got one now, create a promise that will update the context
         if (currentWallet) {
-            await NexusContextManager.replaceUrl({
+            await FrakContextManager.replaceUrl({
                 url: window.location?.href,
                 context: { r: currentWallet },
             });
         }
 
         const interaction = ReferralInteractionEncoder.referred({
-            referrer: nexusContext.r,
+            referrer: frakContext.r,
         });
 
         await sendInteraction(client, { productId, interaction });

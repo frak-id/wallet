@@ -47,17 +47,6 @@ const modalConfig = {
                 primaryActionText: "Being rewarded with Nexus",
             },
         },
-        notRewarded: {
-            metadata: {
-                description: "Share this article with your friends",
-                primaryActionText: "Continue without being rewarded",
-            },
-            sharing: {
-                popupTitle: "Share this article with your friends",
-                text: "Discover this awesome article",
-                link: typeof window !== "undefined" ? window.location.href : "",
-            },
-        },
     },
     metadata: {
         header: {
@@ -148,26 +137,43 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                     <button
                         type={"button"}
                         className={`button ${styles.article__social}`}
-                        onClick={() =>
+                        onClick={() => {
+                            const finalAction = {
+                                key: "sharing",
+                                options: {
+                                    popupTitle:
+                                        "Share this article with your friends",
+                                    text: "Discover this awesome article",
+                                    link:
+                                        typeof window !== "undefined"
+                                            ? window.location.href
+                                            : "",
+                                },
+                            } as const;
+
                             displayModal({
                                 ...modalConfig,
+                                metadata: {
+                                    ...modalConfig.metadata,
+                                    isDismissible: true,
+                                    dismissActionTxt:
+                                        "Continue without being rewarded",
+                                },
                                 steps: {
                                     ...modalConfig.steps,
+                                    dismissed: {
+                                        action: finalAction,
+                                    },
                                     success: {
                                         metadata: {
                                             description:
                                                 "Get rewarded for sharing this article with your friends",
                                         },
-                                        sharing: {
-                                            popupTitle:
-                                                "Share this article with your friends",
-                                            text: `Discover this awesome article from ${article?.author ?? "A Positive World"}!`,
-                                            link: window.location.href,
-                                        },
+                                        action: finalAction,
                                     },
                                 },
-                            })
-                        }
+                            });
+                        }}
                     >
                         <Image src={forward} alt="Share" />
                     </button>

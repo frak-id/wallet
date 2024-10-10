@@ -5,7 +5,6 @@ import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
-import { NotRewardedModalStepButton } from "@/module/listener/component/NotRewarded";
 import { requestAndCheckStorageAccess } from "@/module/listener/utils/thirdParties";
 import type {
     LoginModalStepType,
@@ -18,7 +17,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { MetadataInfo } from "../Generic";
+import { DismissButton, MetadataInfo } from "../Generic";
 
 /**
  * The component for the login step of a modal
@@ -107,7 +106,7 @@ export function LoginModalStep({
                     </button>
                 </div>
                 <div>
-                    <NotRewardedModalStepButton />
+                    <DismissButton />
                 </div>
             </div>
 

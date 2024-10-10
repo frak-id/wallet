@@ -6,7 +6,7 @@ export {
     hashAndCompressData,
     decompressDataAndCheckHash,
     createIframe,
-    NexusContextManager,
+    FrakContextManager,
 } from "./utils";
 
 // Constants
@@ -28,8 +28,6 @@ export type {
     PreparedInteraction,
     SendInteractionParamsType,
     SendInteractionReturnType,
-    SuccessModalStepType,
-    NotRewardedModalStepType,
     SsoMetadata,
     OpenSsoParamsType,
     // RPC Modal generics
@@ -49,6 +47,9 @@ export type {
     SendTransactionReturnType,
     OpenInteractionSessionReturnType,
     OpenInteractionSessionModalStepType,
+    FinalSuccessModalStepType,
+    FinalDismissedModalStepType,
+    FinalActionType,
     // Client
     NexusClient,
     // Transport

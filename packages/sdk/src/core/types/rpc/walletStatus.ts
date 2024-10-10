@@ -15,4 +15,6 @@ export type WalletConnected = {
 
 export type WalletNotConnected = {
     key: "not-connected";
+    wallet?: never;
+    interactionSession?: never;
 };

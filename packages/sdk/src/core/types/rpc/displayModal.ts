@@ -1,10 +1,10 @@
 import type {
+    FinalDismissedModalStepType,
+    FinalSuccessModalStepType,
     LoginModalStepType,
-    NotRewardedModalStepType,
     OpenInteractionSessionModalStepType,
     SendTransactionModalStepType,
     SiweAuthenticateModalStepType,
-    SuccessModalStepType,
 } from "./modal";
 
 /**
@@ -15,8 +15,8 @@ export type ModalStepTypes =
     | SiweAuthenticateModalStepType
     | SendTransactionModalStepType
     | OpenInteractionSessionModalStepType
-    | SuccessModalStepType
-    | NotRewardedModalStepType;
+    | FinalSuccessModalStepType
+    | FinalDismissedModalStepType;
 
 /**
  * Type for the result of a modal request
@@ -38,13 +38,24 @@ export type ModalRpcStepsInput<T extends ModalStepTypes[] = ModalStepTypes[]> =
 /**
  * RPC metadata for the modal
  */
-export type ModalRpcMetadata = Readonly<{
-    header?: {
-        title?: string;
-        icon?: string;
-    };
-    context?: string;
-}>;
+export type ModalRpcMetadata = Readonly<
+    {
+        header?: {
+            title?: string;
+            icon?: string;
+        };
+        context?: string;
+    } & (
+        | {
+              isDismissible: true;
+              dismissActionTxt?: string;
+          }
+        | {
+              isDismissible?: false;
+              dismissActionTxt?: never;
+          }
+    )
+>;
 
 /**
  * Generic params used to display modals
