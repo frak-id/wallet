@@ -26,13 +26,20 @@ export const modalDisplayedRequestAtom = atom<ModalDisplayedRequest | null>(
 );
 
 /**
+ * Distributed pick type to keep type inference
+ */
+export type DistributePick<T, K extends keyof T> = T extends object
+    ? Pick<T, K>
+    : never;
+
+/**
  * The modal steps
  */
 export const modalStepsAtom = atom<{
     // Key of the current step
     currentStep: number;
     // All the step but in a table, for easier management
-    steps: Pick<ModalStepTypes, "key" | "params">[];
+    steps: DistributePick<ModalStepTypes, "key" | "params">[];
     // All the steps results in an array
     results: Pick<ModalStepTypes, "key" | "returns">[];
     // Was the modal dismissed or not?

@@ -1,25 +1,31 @@
-import { modalStepsAtom } from "@/module/listener/atoms/modalEvents";
+import {
+    type DistributePick,
+    modalStepsAtom,
+} from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import type { ModalStepTypes } from "@frak-labs/nexus-sdk/core";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { atom, useAtomValue } from "jotai/index";
-import { Fingerprint, SendHorizonal, Share, WalletMinimal } from "lucide-react";
-import type { PropsWithChildren } from "react";
+import {
+    Fingerprint,
+    HandCoins,
+    SendHorizonal,
+    Share,
+    WalletMinimal,
+} from "lucide-react";
+import { type PropsWithChildren, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Get the active steps atom
  */
 const activeStepAtom = atom((get) => get(modalStepsAtom)?.currentStep ?? 0);
 
-const defaultStepTitlesMap: Record<ModalStepTypes["key"], string> = {
-    login: "Login",
-    siweAuthenticate: "Authenticate",
-    openSession: "Open Session",
-    sendTransaction: "Transaction",
-    final: "Success",
-};
-
-function getStepIcon(step: ModalStepTypes) {
+/**
+ * Get the right icon for the given step
+ * @param step
+ */
+function getStepIcon(step: DistributePick<ModalStepTypes, "key" | "params">) {
     switch (step.key) {
         case "login":
         case "siweAuthenticate":
@@ -29,47 +35,57 @@ function getStepIcon(step: ModalStepTypes) {
         case "sendTransaction":
             return <SendHorizonal size={20} />;
         case "final":
-            if (step.params.action.key === "sharing") {
-                return <Share size={20} />;
+            // For the final step, check the type of action
+            switch (step.params.action.key) {
+                case "sharing":
+                    return <Share size={20} />;
+                case "reward":
+                    return <HandCoins size={20} />;
+                default:
+                    return null;
             }
-            return null;
         default:
             return null;
     }
 }
 
 /**
- * Get the steps to displayed name atoms
- */
-const stepsNameAtom = atom((get) => {
-    const currentSteps = get(modalStepsAtom);
-    if (!currentSteps) return [];
-    return currentSteps.steps.map((step) => {
-        return {
-            name:
-                step.params.metadata?.title ??
-                defaultStepTitlesMap[step.key] ??
-                "Unknown",
-            icon: getStepIcon(step as ModalStepTypes),
-        };
-    });
-});
-
-/**
  * Display the current modal step indicator
  * @constructor
  */
 export function ModalStepIndicator() {
-    const stepsName = useAtomValue(stepsNameAtom);
+    const { t } = useTranslation();
     const activeStep = useAtomValue(activeStepAtom);
+    const currentSteps = useAtomValue(modalStepsAtom)?.steps;
 
-    if (stepsName.length <= 1) return null;
+    // Compute the steps data to be displayed
+    const stepsData = useMemo(() => {
+        if (!currentSteps) return [];
+        return currentSteps.map((step) => {
+            // Get the name
+            let name = step.params.metadata?.title;
+            if (!name) {
+                const context =
+                    step.key === "final" ? step.params.action.key : undefined;
+                name = t(`sdk.modal.${step.key}.default.title`, {
+                    context,
+                });
+            }
+
+            return {
+                name,
+                icon: getStepIcon(step as ModalStepTypes),
+            };
+        });
+    }, [currentSteps, t]);
+
+    if (stepsData.length <= 1) return null;
 
     return (
-        <Steps>
-            {stepsName.map((name, index) => (
+        <StepsContainer>
+            {stepsData.map(({ name, icon }, index) => (
                 <StepItem
-                    key={name.name}
+                    key={name}
                     isActive={index === activeStep}
                     isDone={index < activeStep}
                 >
@@ -78,16 +94,16 @@ export function ModalStepIndicator() {
                             styles.modalListener__stepNumber
                         }`}
                     >
-                        {name.icon}
+                        {icon}
                     </span>
-                    {name.name}
+                    {name}
                 </StepItem>
             ))}
-        </Steps>
+        </StepsContainer>
     );
 }
 
-function Steps({ children }: PropsWithChildren) {
+function StepsContainer({ children }: PropsWithChildren) {
     return (
         <div
             className={`${prefixModalCss("steps")} ${styles.modalListener__steps}`}

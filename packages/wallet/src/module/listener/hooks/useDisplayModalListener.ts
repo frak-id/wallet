@@ -1,6 +1,7 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import {
+    type DistributePick,
     modalDisplayedRequestAtom,
     modalStepsAtom,
 } from "@/module/listener/atoms/modalEvents";
@@ -138,7 +139,7 @@ function prepareInputStepsArray(steps: ModalRpcStepsInput) {
     const inputSteps = Object.entries(steps).map(([key, params]) => ({
         key,
         params,
-    })) as Pick<ModalStepTypes, "key" | "params">[];
+    })) as DistributePick<ModalStepTypes, "key" | "params">[];
 
     // Sort the steps by importance
     inputSteps.sort(

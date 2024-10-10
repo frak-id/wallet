@@ -14,14 +14,9 @@ import { LoginModalStep } from "@/module/listener/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
 import {
-    type FinalModalStepType,
-    type LoginModalStepType,
     type ModalRpcStepsResultType,
     type ModalStepTypes,
-    type OpenInteractionSessionModalStepType,
     RpcErrorCodes,
-    type SendTransactionModalStepType,
-    type SiweAuthenticateModalStepType,
 } from "@frak-labs/nexus-sdk/core";
 import { LogoFrak } from "@module/asset/icons/LogoFrak";
 import { jotaiStore } from "@module/atoms/store";
@@ -216,6 +211,7 @@ function ListenerModalDialog({
                         {context}
                     </div>
                 )}
+                <CurrentModalMetadataInfo />
                 <ModalStepIndicator />
                 <CurrentModalStepComponent
                     currentRequest={currentRequest}
@@ -290,8 +286,8 @@ function CurrentModalMetadataInfo() {
         let metadata = currentStep.params.metadata;
         if (currentStep.key === "final" && modalSteps?.dismissed) {
             metadata =
-                (currentStep.params as FinalModalStepType["params"])
-                    .dismissedMetadata ?? currentStep.params.metadata;
+                currentStep.params.dismissedMetadata ??
+                currentStep.params.metadata;
         }
 
         return {
@@ -305,11 +301,9 @@ function CurrentModalMetadataInfo() {
         if (!stepKey) return null;
 
         const baseDefaultTranslationKey = `sdk.modal.${stepKey}.default`;
-        const defaultTitleKey = `${baseDefaultTranslationKey}.title`;
         const defaultDescriptionKey = `${baseDefaultTranslationKey}.description`;
 
         // Check if i18n contain the keys
-        const hasTitle = i18n.exists(defaultTitleKey);
         const hasDescription = i18n.exists(defaultDescriptionKey);
 
         // Return the matching component
@@ -319,7 +313,6 @@ function CurrentModalMetadataInfo() {
                 defaultDescription={
                     hasDescription ? t(defaultDescriptionKey) : undefined
                 }
-                defaultTitle={hasTitle ? t(defaultTitleKey) : undefined}
             />
         );
     }, [stepKey, metadata, i18n, t]);
@@ -384,10 +377,7 @@ function CurrentModalStepComponent({
 
             // If the next step is the final one, with autoskip at true, we can early exit
             const nextStep = modalSteps.steps[nextStepIndex];
-            if (
-                nextStep.key === "final" &&
-                (nextStep.params as FinalModalStepType["params"]).autoSkip
-            ) {
+            if (nextStep.key === "final" && nextStep.params.autoSkip) {
                 onModalFinish();
                 return;
             }
@@ -400,9 +390,7 @@ function CurrentModalStepComponent({
                     <LoginModalStep
                         appName={currentRequest.appName}
                         context={currentRequest.context}
-                        params={
-                            currentStep.params as LoginModalStepType["params"]
-                        }
+                        params={currentStep.params}
                         onFinish={onStepFinished}
                         onError={onError}
                     />
@@ -410,9 +398,7 @@ function CurrentModalStepComponent({
             case "siweAuthenticate":
                 return (
                     <SiweAuthenticateModalStep
-                        params={
-                            currentStep.params as SiweAuthenticateModalStepType["params"]
-                        }
+                        params={currentStep.params}
                         onFinish={onStepFinished}
                         onError={onError}
                     />
@@ -420,9 +406,7 @@ function CurrentModalStepComponent({
             case "sendTransaction":
                 return (
                     <TransactionModalStep
-                        params={
-                            currentStep.params as SendTransactionModalStepType["params"]
-                        }
+                        params={currentStep.params}
                         onFinish={onStepFinished}
                         onError={onError}
                     />
@@ -430,9 +414,7 @@ function CurrentModalStepComponent({
             case "openSession":
                 return (
                     <OpenSessionModalStep
-                        params={
-                            currentStep.params as OpenInteractionSessionModalStepType["params"]
-                        }
+                        params={currentStep.params}
                         onFinish={onStepFinished}
                         onError={onError}
                     />
@@ -441,9 +423,7 @@ function CurrentModalStepComponent({
                 return (
                     <FinalModalStep
                         appName={currentRequest.appName}
-                        params={
-                            currentStep.params as FinalModalStepType["params"]
-                        }
+                        params={currentStep.params}
                         onFinish={onStepFinished}
                     />
                 );

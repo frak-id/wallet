@@ -20,16 +20,18 @@
             "default": { "dismissBtn": "Continue without Frak" },
             "login": {
                 "default": {
-                    "description": "Connect to your Frak account to get the best experience on this platform. See our privacy policy for details.",
+                    "description": "Connect to your Frak account to get the best experience on this platform.",
                     "primaryAction": "Register",
                     "secondaryAction": "Login",
-                    "success": "Connection successful"
-                }
+                    "title": "Connection"
+                },
+                "success": "Connection successful"
             },
             "openSession": {
                 "default": {
                     "description": "Start a rewarding session to earn as you interact anonymously on this site. Enjoy benefits without sharing personal details. \nLearn more in our privacy policy.",
-                    "primaryAction": "Being rewarded with Frak"
+                    "primaryAction": "Being rewarded with Frak",
+                    "title": "Activation"
                 }
             },
             "sendTransaction": {
@@ -37,15 +39,31 @@
                     "description": "To complete, authorize this transaction in your wallet. This ensures secure processing.",
                     "primaryAction_one": "Send transaction",
                     "primaryAction_other": "Send transactions",
-                    "title": "Confirm your transaction"
+                    "title": "Transaction"
                 }
             },
             "siweAuthenticate": {
                 "default": {
                     "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
                     "primaryAction": "Authenticate",
-                    "title": "Secure wallet authentication"
+                    "title": "Authentication"
                 }
+            },
+            "final": {
+                "default": {
+                    "title": "Success",
+                    "title_sharing": "Share",
+                    "title_reward": "Gains"
+                }
+            },
+            "stepper": {
+                "login": "Connection",
+                "openSession": "Activation",
+                "sendTransaction": "Transaction",
+                "siweAuthenticate": "Authentication",
+                "final": "Success",
+                "final_sharing": "Share",
+                "final_reward": "Gains"
             }
         }
     }

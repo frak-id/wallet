@@ -7,7 +7,6 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
-import { MetadataInfo } from "../Generic";
 
 /**
  * The component for the siwe authentication step of a modal
@@ -65,14 +64,6 @@ export function SiweAuthenticateModalStep({
 
     return (
         <>
-            <MetadataInfo
-                metadata={metadata}
-                defaultTitle={t("sdk.modal.siweAuthenticate.default.title")}
-                defaultDescription={t(
-                    "sdk.modal.siweAuthenticate.default.description"
-                )}
-            />
-
             <TextData>
                 <p>{siweMessage?.statement}</p>
                 <p>Domain: {siweMessage?.domain}</p>

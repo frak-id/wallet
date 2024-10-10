@@ -17,7 +17,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { DismissButton, MetadataInfo } from "../Generic";
+import { DismissButton } from "../Generic";
 
 /**
  * The component for the login step of a modal
@@ -75,11 +75,6 @@ export function LoginModalStep({
 
     return (
         <RequireWebAuthN>
-            <MetadataInfo
-                metadata={metadata}
-                defaultDescription={t("sdk.modal.login.default.description")}
-            />
-
             <div
                 className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
             >
@@ -112,7 +107,7 @@ export function LoginModalStep({
 
             {isSuccess && (
                 <p className={styles.modalListener__success}>
-                    {t("sdk.modal.login.default.success")}
+                    {t("sdk.modal.login.success")}
                 </p>
             )}
 

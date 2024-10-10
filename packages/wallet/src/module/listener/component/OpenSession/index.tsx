@@ -9,7 +9,6 @@ import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
-import { MetadataInfo } from "../Generic";
 
 /**
  * The component for the login step of a modal
@@ -100,13 +99,6 @@ export function OpenSessionModalStep({
 
     return (
         <RequireWebAuthN>
-            <MetadataInfo
-                metadata={metadata}
-                defaultDescription={t(
-                    "sdk.modal.openSession.default.description"
-                )}
-            />
-
             <div
                 className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
             >

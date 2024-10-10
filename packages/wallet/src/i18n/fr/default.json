@@ -18,18 +18,27 @@
     "sdk": {
         "modal": {
             "default": { "dismissBtn": "Continuer sans Frak" },
+            "final": {
+                "default": {
+                    "title": "Succès",
+                    "title_reward": "Gains",
+                    "title_sharing": "Partager"
+                }
+            },
             "login": {
                 "default": {
-                    "description": "Connectez-vous à votre compte Frak pour profiter de la meilleure expérience sur cette plateforme. Consultez notre politique de confidentialité pour plus de détails.",
+                    "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur cette plateforme.",
                     "primaryAction": "Registre",
                     "secondaryAction": "Se connecter",
-                    "success": "Connexion réussie"
-                }
+                    "title": "Connexion"
+                },
+                "success": "Connexion réussie"
             },
             "openSession": {
                 "default": {
                     "description": "Démarrez une session enrichissante pour gagner de l'argent en interagissant de manière anonyme sur ce site. Bénéficiez d'avantages sans partager vos informations personnelles. Pour en savoir plus, consultez notre politique de confidentialité.",
-                    "primaryAction": "Être récompensé par Frak"
+                    "primaryAction": "Être récompensé par Frak",
+                    "title": "Activation"
                 }
             },
             "sendTransaction": {
@@ -37,15 +46,24 @@
                     "description": "Pour terminer, autorisez cette transaction dans votre portefeuille. Cela garantit un traitement sécurisé.",
                     "primaryAction_one": "Envoyer une transaction",
                     "primaryAction_other": "Envoyer des transactions",
-                    "title": "Confirmez votre transaction"
+                    "title": "Transaction"
                 }
             },
             "siweAuthenticate": {
                 "default": {
                     "description": "Veuillez vous authentifier avec votre portefeuille pour continuer en toute sécurité. Votre signature confirme votre identité.",
                     "primaryAction": "Authentifier",
-                    "title": "Authentification sécurisée du portefeuille"
+                    "title": "Authentification"
                 }
+            },
+            "stepper": {
+                "final": "Succès",
+                "final_reward": "Gains",
+                "final_sharing": "Partager",
+                "login": "Connexion",
+                "openSession": "Activation",
+                "sendTransaction": "Transaction",
+                "siweAuthenticate": "Authentification"
             }
         }
     }
