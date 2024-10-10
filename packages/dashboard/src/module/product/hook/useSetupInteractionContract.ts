@@ -31,7 +31,7 @@ export function useSetupInteractionContract() {
             salt,
         }: { productId: Hex; directAllowValidator: boolean; salt?: Hex }) => {
             // early exit if user not logged in
-            if (walletStatus?.key !== "connected") return;
+            if (!walletStatus?.wallet) return;
 
             // First tx to deploy the interaction contract
             const tx: SendTransactionModalStepType["params"]["tx"] = [
@@ -52,7 +52,7 @@ export function useSetupInteractionContract() {
                 // Predicate final address
                 const { result: predictedInteractionAddress } =
                     await simulateContract(viemClient, {
-                        account: walletStatus.wallet,
+                        account: walletStatus?.wallet,
                         address: addresses.productInteractionManager,
                         abi: productInteractionManagerAbi,
                         functionName: "deployInteractionContract",

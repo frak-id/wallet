@@ -26,7 +26,7 @@ type ReferralState =
  * Automatically submit a referral interaction when detected
  *   -> And automatically set the referral context in the url
  * @param walletStatus
- * @param nexusContext
+ * @param frakContext
  * @param modalConfig
  * @param productId
  */
@@ -46,8 +46,7 @@ export async function processReferral(
 ) {
     try {
         // Get the current wallet, without auto displaying the modal
-        let currentWallet = getCurrentWallet(walletStatus);
-
+        let currentWallet = walletStatus?.wallet;
         if (!frakContext?.r) {
             if (currentWallet) {
                 await FrakContextManager.replaceUrl({
@@ -91,13 +90,6 @@ export async function processReferral(
 }
 
 /**
- * Helper to get the current wallet
- */
-function getCurrentWallet(walletStatus: WalletStatusReturnType | undefined) {
-    return walletStatus?.key === "connected" ? walletStatus.wallet : undefined;
-}
-
-/**
  * Helper to ensure a wallet is connected, and display a modal if we got everything needed
  */
 async function ensureWalletConnected(
@@ -111,7 +103,7 @@ async function ensureWalletConnected(
     }
 ) {
     // If wallet not connected, or no interaction session
-    if (walletStatus?.key !== "connected" || !walletStatus.interactionSession) {
+    if (!walletStatus?.interactionSession) {
         // If we don't have any modal setup, or we don't want to auto display it, do nothing
         if (!modalConfig) {
             return undefined;

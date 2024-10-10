@@ -55,15 +55,11 @@ export function useHasRoleOnProduct({
             "product",
             productId,
             "roles",
-            walletStatus?.key,
+            walletStatus?.wallet,
             wallet ?? "no-given-wallet",
         ],
         queryFn: async () => {
-            const walletToQuery =
-                wallet ??
-                (walletStatus?.key === "connected"
-                    ? walletStatus.wallet
-                    : undefined);
+            const walletToQuery = wallet ?? walletStatus?.wallet;
             if (!walletToQuery) {
                 return defaultRoles;
             }
