@@ -47,8 +47,7 @@ export type {
     SendTransactionReturnType,
     OpenInteractionSessionReturnType,
     OpenInteractionSessionModalStepType,
-    FinalSuccessModalStepType,
-    FinalDismissedModalStepType,
+    FinalModalStepType,
     FinalActionType,
     // Client
     NexusClient,

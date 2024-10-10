@@ -161,13 +161,14 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                                 },
                                 steps: {
                                     ...modalConfig.steps,
-                                    dismissed: {
-                                        action: finalAction,
-                                    },
-                                    success: {
+                                    final: {
                                         metadata: {
                                             description:
                                                 "Get rewarded for sharing this article with your friends",
+                                        },
+                                        dismissedMetadata: {
+                                            description:
+                                                "Share this article with your friends",
                                         },
                                         action: finalAction,
                                     },

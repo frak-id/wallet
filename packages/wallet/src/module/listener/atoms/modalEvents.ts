@@ -35,7 +35,13 @@ export const modalStepsAtom = atom<{
     steps: Pick<ModalStepTypes, "key" | "params">[];
     // All the steps results in an array
     results: Pick<ModalStepTypes, "key" | "returns">[];
+    // Was the modal dismissed or not?
+    dismissed?: boolean;
 } | null>(null);
+
+export const isDismissedAtom = atom(
+    (get) => get(modalStepsAtom)?.dismissed ?? true
+);
 
 /**
  * Clear a received rpc modal
@@ -55,29 +61,35 @@ export const dismissBtnAtom = atom(
         const modalRequest = get(modalDisplayedRequestAtom);
         if (!(modalSteps && modalRequest)) return null;
 
+        // Ensure it's dismissable and we got a final modal
         const metadata = modalRequest.metadata;
-        const dismissStepIndex = modalSteps.steps.findIndex(
-            (step) => step.key === "dismissed"
+        const finalStepIndex = modalSteps.steps.findIndex(
+            (step) => step.key === "final"
         );
-        if (!metadata?.isDismissible || dismissStepIndex === -1) return null;
-        if (dismissStepIndex === modalSteps.currentStep) return null;
+        if (!metadata?.isDismissible || finalStepIndex === -1) return null;
+        if (finalStepIndex === modalSteps.currentStep) return null;
 
         return {
             customLbl: metadata.dismissActionTxt,
-            index: dismissStepIndex,
+            index: finalStepIndex,
         };
     },
     (get, set) => {
-        // Go to the dismissed step
+        // Check if we can dismiss the current modal
         const modalSteps = get(modalStepsAtom);
         if (!modalSteps) return null;
-        const dismissStepIndex = modalSteps.steps.findIndex(
-            (step) => step.key === "dismissed"
+        const finalStepIndex = modalSteps.steps.findIndex(
+            (step) => step.key === "final"
         );
-        if (dismissStepIndex === -1) return null;
+
+        // If not dismissible, or no dismiss step, return null
+        if (finalStepIndex === -1 || finalStepIndex === modalSteps.currentStep)
+            return;
+
         set(modalStepsAtom, {
             ...modalSteps,
-            currentStep: dismissStepIndex,
+            currentStep: finalStepIndex,
+            dismissed: true,
         });
     }
 );

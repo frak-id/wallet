@@ -1,22 +1,14 @@
-import type { GenericModalStepType } from "./generic";
+import type { GenericModalStepType, ModalStepMetadata } from "./generic";
 
 /**
- * The final modal step type (displayed on success)
+ * The final modal step type (displayed on success or dimissed)
  */
-export type FinalSuccessModalStepType = GenericModalStepType<
-    "success",
+export type FinalModalStepType = GenericModalStepType<
+    "final",
     {
-        action: FinalActionType;
-    },
-    object
->;
-
-/**
- * The final modal step type (displayed on dismiss)
- */
-export type FinalDismissedModalStepType = GenericModalStepType<
-    "dismissed",
-    {
+        // Custom metadata in the case it was dismissed
+        dismissedMetadata?: ModalStepMetadata["metadata"];
+        // Action to perform on this final step
         action: FinalActionType;
     },
     object

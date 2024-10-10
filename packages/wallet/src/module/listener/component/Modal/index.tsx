@@ -9,14 +9,12 @@ import {
     modalStepsAtom,
 } from "@/module/listener/atoms/modalEvents";
 import { SiweAuthenticateModalStep } from "@/module/listener/component/Authenticate";
-import { DismissedModalStep } from "@/module/listener/component/Dismissed";
+import { FinalModalStep } from "@/module/listener/component/Final";
 import { LoginModalStep } from "@/module/listener/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
-import { SuccessModalStep } from "@/module/listener/component/Success";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
 import {
-    type FinalDismissedModalStepType,
-    type FinalSuccessModalStepType,
+    type FinalModalStepType,
     type LoginModalStepType,
     type ModalRpcStepsResultType,
     type ModalStepTypes,
@@ -140,11 +138,12 @@ function ListenerModalDialog({
 
             // Get the expected results and the current results
             const expectedResults =
-                steps?.steps?.filter((step) => step.key !== "success")
-                    ?.length ?? 0;
+                steps?.steps?.filter((step) => step.key !== "final")?.length ??
+                0;
             const resultsLength = steps?.results?.length ?? 0;
 
             // If we don't have enough results, we can tell the requester that the modal was cancelled
+            // In the case that the modal was dismissed, the result array won't contain all the value so we are good
             if (!results || expectedResults !== resultsLength) {
                 onError(
                     "User cancelled the request",
@@ -286,9 +285,17 @@ function CurrentModalMetadataInfo() {
 
         if (!currentStep) return { stepKey: undefined, metadata: undefined };
 
+        // If we are in the final step, and the modal was dismissed, used the dismissed metadata
+        let metadata = currentStep.params.metadata;
+        if (currentStep.key === "final" && modalSteps?.dismissed) {
+            metadata =
+                (currentStep.params as FinalModalStepType["params"])
+                    .dismissedMetadata ?? currentStep.params.metadata;
+        }
+
         return {
             stepKey: currentStep.key,
-            metadata: currentStep.params.metadata,
+            metadata,
         };
     }, [modalSteps]);
 
@@ -417,22 +424,12 @@ function CurrentModalStepComponent({
                         onError={onError}
                     />
                 );
-            case "success":
+            case "final":
                 return (
-                    <SuccessModalStep
+                    <FinalModalStep
                         appName={currentRequest.appName}
                         params={
-                            currentStep.params as FinalSuccessModalStepType["params"]
-                        }
-                        onFinish={onStepFinished}
-                    />
-                );
-            case "dismissed":
-                return (
-                    <DismissedModalStep
-                        appName={currentRequest.appName}
-                        params={
-                            currentStep.params as FinalDismissedModalStepType["params"]
+                            currentStep.params as FinalModalStepType["params"]
                         }
                         onFinish={onStepFinished}
                     />

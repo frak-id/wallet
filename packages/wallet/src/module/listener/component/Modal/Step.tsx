@@ -16,8 +16,7 @@ const defaultStepTitlesMap: Record<ModalStepTypes["key"], string> = {
     siweAuthenticate: "Authenticate",
     openSession: "Open Session",
     sendTransaction: "Transaction",
-    success: "Success",
-    dismissed: "Dismissed",
+    final: "Success",
 };
 
 /**
@@ -28,7 +27,7 @@ const stepsNameAtom = atom((get) => {
     if (!currentSteps) return [];
     // Filter out the success step, if any
     const visibleSteps = currentSteps.steps.filter(
-        (step) => step.key !== "success"
+        (step) => step.key !== "final"
     );
     return visibleSteps.map(
         (step) =>

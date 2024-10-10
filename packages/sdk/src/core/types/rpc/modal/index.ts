@@ -15,7 +15,6 @@ export type {
 } from "./openSession";
 export type { ModalStepMetadata } from "./generic";
 export type {
-    FinalSuccessModalStepType,
-    FinalDismissedModalStepType,
+    FinalModalStepType,
     FinalActionType,
 } from "./final";

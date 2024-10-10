@@ -7,10 +7,9 @@ import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWith
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { tryit } from "radash";
-import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 
-export function FinalModalComponent({
+export function FinalModalActionComponent({
     appName,
     action,
     isSuccess,
@@ -39,7 +38,7 @@ export function FinalModalComponent({
  * @param popupTitle
  * @param text
  */
-export function SharingButtons({
+function SharingButtons({
     useFrakContext,
     appName,
     link,
@@ -60,11 +59,19 @@ export function SharingButtons({
         queryKey: ["final-modal", "sharing", link, useFrakContext],
         queryFn: async () => {
             if (!link) return null;
-            return await getSharingLink({
-                useFrakContext,
-                link: link,
-                address: address,
-            });
+
+            if (useFrakContext) {
+                // Ensure the sharing link contain the current nexus wallet as referrer
+                return await FrakContextManager.update({
+                    url: link,
+                    context: {
+                        r: address,
+                    },
+                });
+            }
+
+            // Remove the referrer from the sharing link
+            return FrakContextManager.remove(link);
         },
     });
 
@@ -124,30 +131,4 @@ export function SharingButtons({
             </button>
         </>
     );
-}
-
-/**
- * Get the sharing link with the current nexus wallet as referrer
- * or remove the referrer from the sharing link
- * @param useFrakContext
- * @param link
- * @param address
- */
-async function getSharingLink({
-    useFrakContext,
-    link,
-    address,
-}: { useFrakContext: boolean; link: string; address?: Hex }) {
-    if (useFrakContext) {
-        // Ensure the sharing link contain the current nexus wallet as referrer
-        return await FrakContextManager.update({
-            url: link,
-            context: {
-                r: address,
-            },
-        });
-    }
-
-    // Remove the referrer from the sharing link
-    return FrakContextManager.remove(link);
 }
