@@ -41,6 +41,14 @@
 .modalListener__stepNumber {
     position: relative;
     display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalListener__stepNumber .modalListener__stepNumberInnerIcon {
+    position: relative;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 32px;
@@ -51,20 +59,17 @@
     border: 2px solid #818c9c;
 }
 
-.modalListener__stepNumber:after {
+.modalListener__stepItem:not(:last-child) .modalListener__stepNumber:after {
     content: "";
     position: absolute;
     top: 50%;
-    right: -81px;
-    width: 65px;
+    left: calc(50% + 20px); /* Start after the icon + margin */
+    width: calc(100% - 44px); /* Full width minus the icon width and margin */
     height: 3px;
     background: radial-gradient(circle, #a1aebe 50%, transparent 50%) repeat-x;
     background-size: 6px 3px;
     transform: translateY(-50%);
-}
-
-.modalListener__stepItem:last-child .modalListener__stepNumber:after {
-    display: none;
+    z-index: 0; /* Keeps the line below the step number */
 }
 
 .modalListener__stepItem {

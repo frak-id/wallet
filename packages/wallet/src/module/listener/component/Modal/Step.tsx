@@ -94,7 +94,13 @@ export function ModalStepIndicator() {
                             styles.modalListener__stepNumber
                         }`}
                     >
-                        {icon}
+                        <span
+                            className={
+                                styles.modalListener__stepNumberInnerIcon
+                            }
+                        >
+                            {icon}
+                        </span>
                     </span>
                     {name}
                 </StepItem>
