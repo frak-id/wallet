@@ -24,7 +24,7 @@ import { Trans, useTranslation } from "react-i18next";
  * @constructor
  */
 export function Sso() {
-    const { t, i18n } = useTranslation();
+    const { i18n } = useTranslation();
     /**
      * The current metadata
      */

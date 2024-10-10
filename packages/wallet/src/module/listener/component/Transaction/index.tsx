@@ -48,9 +48,9 @@ export function TransactionModalStep({
         <RequireWebAuthN>
             <MetadataInfo
                 metadata={metadata}
-                defaultTitle={t("sdk.modal.transaction.default.title")}
+                defaultTitle={t("sdk.modal.sendTransaction.default.title")}
                 defaultDescription={t(
-                    "sdk.modal.transaction.default.description"
+                    "sdk.modal.sendTransaction.default.description"
                 )}
             />
             <AccordionTransactions txs={txs} />
@@ -63,7 +63,7 @@ export function TransactionModalStep({
                     sendTransaction(toSendTx);
                 }}
             >
-                {t("sdk.modal.transaction.default.primaryAction", {
+                {t("sdk.modal.sendTransaction.default.primaryAction", {
                     count: txs.length,
                 })}
             </AuthFingerprint>

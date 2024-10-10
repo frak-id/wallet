@@ -102,7 +102,9 @@ export function OpenSessionModalStep({
         <RequireWebAuthN>
             <MetadataInfo
                 metadata={metadata}
-                defaultDescription={t("sdk.modal.session.default.description")}
+                defaultDescription={t(
+                    "sdk.modal.openSession.default.description"
+                )}
             />
 
             <div
@@ -119,7 +121,7 @@ export function OpenSessionModalStep({
                     >
                         {isPending && <Spinner />}
                         {metadata?.primaryActionText ??
-                            t("sdk.modal.session.default.primaryAction")}
+                            t("sdk.modal.openSession.default.primaryAction")}
                     </button>
                 </div>
             </div>

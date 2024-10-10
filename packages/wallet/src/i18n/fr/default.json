@@ -5,20 +5,13 @@
                 "create": "Utilisez la biométrie pour prouver que vous n'êtes pas un robot",
                 "login": "Connecter un portefeuille existant"
             },
-            "description": "Avant de continuer, assurez-vous que vous utilisez un appareil qui vous appartient.<br> Frak est une solution permettant<bold> {{productName}}</bold> Paris récompense sa communauté pour l'aide apportée à la promotion de ses offres.<bold> Frak est une solution décentralisée et open source, qui ne stocke aucune donnée personnelle ou biométrique.</bold><br> Pour en savoir plus sur<bold> Lancôme Paris</bold> , veuillez consulter notre politique de confidentialité et nos conditions d'utilisation.",
-            "subTitle": "pour recevoir immédiatement vos gains de {{productName}}.",
+            "description": "Avant de continuer, assurez-vous que vous utilisez un appareil qui vous appartient.<br /> Frak est une solution permettant à <strong>{{productName}}</strong> de récompenser sa communauté pour l'aide apportée à la promotion de ses offres. <strong>Frak est une solution décentralisée et open-source, qui ne stocke aucune donnée personnelle ou biométrique.</strong><br /> Pour en savoir plus sur <strong>{{productName}}</strong> , veuillez consulter notre politique de confidentialité et nos conditions d'utilisation.",
+            "subTitle": "pour recevoir immédiatement vos gains de<pLink> {{productName}}</pLink> .",
             "title": "Créez votre portefeuille"
         }
     },
     "sdk": {
         "modal": {
-            "authenticate": {
-                "default": {
-                    "description": "Veuillez vous authentifier avec votre portefeuille pour continuer en toute sécurité. Votre signature confirme votre identité.",
-                    "primaryAction": "Authentifier",
-                    "title": "Authentification sécurisée du portefeuille"
-                }
-            },
             "login": {
                 "default": {
                     "description": "Connectez-vous à votre compte Frak pour profiter de la meilleure expérience sur cette plateforme. Consultez notre politique de confidentialité pour plus de détails.",
@@ -27,19 +20,25 @@
                     "success": "Connexion réussie"
                 }
             },
-            "session": {
+            "openSession": {
                 "default": {
                     "description": "Démarrez une session enrichissante pour gagner de l'argent en interagissant de manière anonyme sur ce site. Bénéficiez d'avantages sans partager vos informations personnelles. Pour en savoir plus, consultez notre politique de confidentialité.",
                     "primaryAction": "Être récompensé par Frak"
                 }
             },
-            "transaction": {
+            "sendTransaction": {
                 "default": {
                     "description": "Pour terminer, autorisez cette transaction dans votre portefeuille. Cela garantit un traitement sécurisé.",
                     "primaryAction_one": "Envoyer une transaction",
-                    "primaryAction_many": "Envoyer des transactions",
                     "primaryAction_other": "Envoyer des transactions",
                     "title": "Confirmez votre transaction"
+                }
+            },
+            "siweAuthenticate": {
+                "default": {
+                    "description": "Veuillez vous authentifier avec votre portefeuille pour continuer en toute sécurité. Votre signature confirme votre identité.",
+                    "primaryAction": "Authentifier",
+                    "title": "Authentification sécurisée du portefeuille"
                 }
             }
         }

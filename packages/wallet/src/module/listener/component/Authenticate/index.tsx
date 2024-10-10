@@ -67,9 +67,9 @@ export function SiweAuthenticateModalStep({
         <>
             <MetadataInfo
                 metadata={metadata}
-                defaultTitle={t("sdk.modal.authenticate.default.title")}
+                defaultTitle={t("sdk.modal.siweAuthenticate.default.title")}
                 defaultDescription={t(
-                    "sdk.modal.authenticate.default.description"
+                    "sdk.modal.siweAuthenticate.default.description"
                 )}
             />
 
@@ -95,7 +95,9 @@ export function SiweAuthenticateModalStep({
                     >
                         {isPending && <Spinner />}
                         {metadata?.primaryActionText ??
-                            t("sdk.modal.authenticate.default.primaryAction")}
+                            t(
+                                "sdk.modal.siweAuthenticate.default.primaryAction"
+                            )}
                     </button>
                 </div>
             </div>
