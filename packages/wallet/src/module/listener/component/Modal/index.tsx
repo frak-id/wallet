@@ -364,18 +364,30 @@ function CurrentModalStepComponent({
                 returns: result,
             };
 
+            const nextStepIndex = currentStepIndex + 1;
+
             // Otherwise, we move to the next step
             jotaiStore.set(modalStepsAtom, (current) => {
                 if (!current) return null;
                 return {
                     ...current,
-                    currentStep: currentStepIndex + 1,
+                    currentStep: nextStepIndex,
                     results: newResults,
                 };
             });
 
             // If we reached the end of the steps, we close the modal
-            if (currentStepIndex + 1 >= modalSteps.steps.length) {
+            if (nextStepIndex >= modalSteps.steps.length) {
+                onModalFinish();
+                return;
+            }
+
+            // If the next step is the final one, with autoskip at true, we can early exit
+            const nextStep = modalSteps.steps[nextStepIndex];
+            if (
+                nextStep.key === "final" &&
+                (nextStep.params as FinalModalStepType["params"]).autoSkip
+            ) {
                 onModalFinish();
                 return;
             }

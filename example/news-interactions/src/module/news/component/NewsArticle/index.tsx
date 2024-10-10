@@ -56,7 +56,18 @@ const modalConfig = {
 } as const;
 
 export function NewsArticle({ articleId }: { articleId: string }) {
-    useReferralInteraction({ modalConfig });
+    useReferralInteraction({
+        modalConfig: {
+            ...modalConfig,
+            steps: {
+                ...modalConfig.steps,
+                final: {
+                    action: { key: "reward" },
+                    autoSkip: true,
+                },
+            },
+        },
+    });
 
     const blockchainArticleId = useMemo(
         () => keccak256(toHex(articleId)),

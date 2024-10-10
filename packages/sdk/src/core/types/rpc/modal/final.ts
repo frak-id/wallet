@@ -10,6 +10,8 @@ export type FinalModalStepType = GenericModalStepType<
         dismissedMetadata?: ModalStepMetadata["metadata"];
         // Action to perform on this final step
         action: FinalActionType;
+        // Do we want to auto skip this step (don't display anything to the user, once we reached it we exit)
+        autoSkip?: boolean;
     },
     object
 >;
