@@ -33,38 +33,58 @@
 .modalListener__steps {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 20px;
     padding: 4px;
-    background-color: var(--frak-panel-background-color);
-    border-radius: 8px;
 }
 
 .modalListener__stepNumber {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-right: 8px;
-    width: 20px;
-    height: 20px;
-    background-color: #818c9c;
-    color: #fff;
+    width: 32px;
+    height: 32px;
+    background-color: #fff;
+    color: #818c9c;
     border-radius: 50%;
+    border: 2px solid #818c9c;
+}
+
+.modalListener__stepNumber:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -81px;
+    width: 65px;
+    height: 3px;
+    background: radial-gradient(circle, #a1aebe 50%, transparent 50%) repeat-x;
+    background-size: 6px 3px;
+    transform: translateY(-50%);
+}
+
+.modalListener__stepItem:last-child .modalListener__stepNumber:after {
+    display: none;
 }
 
 .modalListener__stepItem {
     flex: 1;
-    padding: 4px;
-    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
     text-align: center;
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.15s;
+    color: #818c9c;
+    font-weight: 500;
 }
 
 .modalListener__stepItem--active {
-    background-color: #f5f5f51a;
-    color: var(--frak-color-white);
+    color: #0171ec;
+
+    .modalListener__stepNumber {
+        border-color: #0171ec;
+        color: #0171ec;
+    }
 }
 
 .modalListener__help {
@@ -106,9 +126,9 @@
     gap: 8px;
     width: 100%;
     max-width: 80%;
-    border: none;
+    border: 1px solid transparent;
     padding: 5px 10px;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     line-height: 24px;
     text-align: center;
@@ -127,6 +147,13 @@
 .modalListener__buttonSecondary {
     background-color: var(--frak-alertDialog-button-secondary-background-color);
     color: var(--frak-alertDialog-button-secondary-text-color);
+    border-color: var(--frak-alertDialog-button-secondary-border-color);
+}
+
+.modalListener__sharingButtons {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
 }
 
 .modalListener__buttonLink {

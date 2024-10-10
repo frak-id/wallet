@@ -37,6 +37,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { MetadataInfo } from "../Generic";
+import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
 
 /**
@@ -215,7 +216,7 @@ function ListenerModalDialog({
                         {context}
                     </div>
                 )}
-                {/* <ModalStepIndicator /> */}
+                <ModalStepIndicator />
                 <CurrentModalStepComponent
                     currentRequest={currentRequest}
                     onModalFinish={onFinished}

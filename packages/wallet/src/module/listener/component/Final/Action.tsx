@@ -1,11 +1,12 @@
+import { ButtonAction } from "@/module/listener/component/ButtonAction";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import {
     type FinalActionType,
     FrakContextManager,
 } from "@frak-labs/nexus-sdk/core";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
-import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
 import { useAccount } from "wagmi";
 
@@ -110,25 +111,20 @@ function SharingButtons({
     });
 
     return (
-        <>
-            <button
-                type={"button"}
-                className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
+        <div className={styles.modalListener__sharingButtons}>
+            <ButtonAction
                 onClick={async () => {
                     if (!finalSharingLink) return;
                     copy(finalSharingLink);
                 }}
             >
-                {copied ? "Copied!" : "Copy link"}
-            </button>
-            <button
-                type={"button"}
-                className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
-                disabled={isSharing}
-                onClick={() => triggerSharing()}
-            >
+                <Copy size={32} absoluteStrokeWidth={true} />
+                {copied ? "Copied!" : "Copy Link"}
+            </ButtonAction>
+            <ButtonAction disabled={isSharing} onClick={() => triggerSharing()}>
+                <Share size={32} absoluteStrokeWidth={true} />{" "}
                 {shareResult ?? "Share"}
-            </button>
-        </>
+            </ButtonAction>
+        </div>
     );
 }

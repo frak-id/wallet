@@ -19,12 +19,13 @@
     --frak-accordion-trigger-color: var(--frak-color-black);
     --frak-notice-text-color: var(--frak-color-dark);
     --frak-alertDialog-background-color: rgba(0, 0, 0, 0.5);
-    --frak-alertDialog-button-primary-background-color: var(--frak-color-black);
-    --frak-alertDialog-button-primary-text-color: var(--frak-color-white);
+    --frak-alertDialog-button-primary-background-color: var(--frak-color-white);
+    --frak-alertDialog-button-primary-text-color: var(--frak-color-black);
     --frak-alertDialog-button-secondary-background-color: var(
-        --frak-color-white
+        --frak-color-black
     );
-    --frak-alertDialog-button-secondary-text-color: var(--frak-color-black);
+    --frak-alertDialog-button-secondary-text-color: var(--frak-color-white);
+    --frak-alertDialog-button-secondary-border-color: var(--frak-color-white);
     --frak-button-primary-background-color: var(--frak-color-white);
     --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
     --frak-button-disabled-text-color: var(--frak-color-grayText);
@@ -67,12 +68,13 @@
     --frak-accordion-trigger-color: var(--frak-color-white);
     --frak-notice-text-color: var(--frak-color-grayText);
     --frak-alertDialog-background-color: rgba(0, 0, 0, 0.5);
-    --frak-alertDialog-button-primary-background-color: var(--frak-color-black);
-    --frak-alertDialog-button-primary-text-color: var(--frak-color-white);
+    --frak-alertDialog-button-primary-background-color: var(--frak-color-white);
+    --frak-alertDialog-button-primary-text-color: var(--frak-color-black);
     --frak-alertDialog-button-secondary-background-color: var(
-        --frak-color-white
+        --frak-color-black
     );
-    --frak-alertDialog-button-secondary-text-color: var(--frak-color-black);
+    --frak-alertDialog-button-secondary-text-color: var(--frak-color-white);
+    --frak-alertDialog-button-secondary-border-color: var(--frak-color-white);
     --frak-button-primary-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
     --frak-button-disabled-text-color: var(--frak-color-grayText);

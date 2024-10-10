@@ -3,7 +3,7 @@ import styles from "@/module/listener/component/Modal/index.module.css";
 import type { ModalStepTypes } from "@frak-labs/nexus-sdk/core";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { atom, useAtomValue } from "jotai/index";
-import { Check } from "lucide-react";
+import { Fingerprint, SendHorizonal, Share, WalletMinimal } from "lucide-react";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -19,6 +19,25 @@ const defaultStepTitlesMap: Record<ModalStepTypes["key"], string> = {
     final: "Success",
 };
 
+function getStepIcon(step: ModalStepTypes) {
+    switch (step.key) {
+        case "login":
+        case "siweAuthenticate":
+            return <Fingerprint size={20} />;
+        case "openSession":
+            return <WalletMinimal size={20} />;
+        case "sendTransaction":
+            return <SendHorizonal size={20} />;
+        case "final":
+            if (step.params.action.key === "sharing") {
+                return <Share size={20} />;
+            }
+            return null;
+        default:
+            return null;
+    }
+}
+
 /**
  * Get the steps to displayed name atoms
  */
@@ -26,15 +45,18 @@ const stepsNameAtom = atom((get) => {
     const currentSteps = get(modalStepsAtom);
     if (!currentSteps) return [];
     // Filter out the success step, if any
-    const visibleSteps = currentSteps.steps.filter(
-        (step) => step.key !== "final"
-    );
-    return visibleSteps.map(
-        (step) =>
-            step.params.metadata?.title ??
-            defaultStepTitlesMap[step.key] ??
-            "Unknown"
-    );
+    // const visibleSteps = currentSteps.steps.filter(
+    //     (step) => step.key !== "final"
+    // );
+    return currentSteps.steps.map((step) => {
+        return {
+            name:
+                step.params.metadata?.title ??
+                defaultStepTitlesMap[step.key] ??
+                "Unknown",
+            icon: getStepIcon(step as ModalStepTypes),
+        };
+    });
 });
 
 /**
@@ -51,7 +73,7 @@ export function ModalStepIndicator() {
         <Steps>
             {stepsName.map((name, index) => (
                 <StepItem
-                    key={name}
+                    key={name.name}
                     isActive={index === activeStep}
                     isDone={index < activeStep}
                 >
@@ -60,13 +82,9 @@ export function ModalStepIndicator() {
                             styles.modalListener__stepNumber
                         }`}
                     >
-                        {index < activeStep ? (
-                            <Check size={14} absoluteStrokeWidth={true} />
-                        ) : (
-                            index + 1
-                        )}
+                        {name.icon}
                     </span>
-                    {name}
+                    {name.name}
                 </StepItem>
             ))}
         </Steps>
