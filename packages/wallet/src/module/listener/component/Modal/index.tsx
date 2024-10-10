@@ -192,6 +192,15 @@ function ListenerModalDialog({
         };
     }, [currentRequest?.metadata]);
 
+    // Update the language depending on the request
+    const { i18n } = useTranslation();
+    useEffect(() => {
+        const lang = currentRequest?.metadata?.lang;
+        if (lang) {
+            i18n.changeLanguage(lang);
+        }
+    }, [currentRequest?.metadata?.lang, i18n]);
+
     return (
         <ModalComponent
             title={titleComponent}

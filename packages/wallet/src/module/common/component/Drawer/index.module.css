@@ -18,8 +18,7 @@
     flex-direction: column;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
-    background-color: var(--frak-alertDialog-background-color);
-    backdrop-filter: blur(10px);
+    background-color: var(--frak-drawer-background-color);
 }
 
 .drawer__content {

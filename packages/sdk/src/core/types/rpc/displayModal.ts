@@ -43,6 +43,7 @@ export type ModalRpcMetadata = Readonly<
             icon?: string;
         };
         context?: string;
+        lang?: "en" | "fr";
     } & (
         | {
               isDismissible: true;

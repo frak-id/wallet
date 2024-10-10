@@ -21,18 +21,14 @@ import { keccak256, toHex } from "viem";
 import forward from "./assets/forward.svg";
 import styles from "./index.module.css";
 
-const description = `We have set up Frak, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services.
-                
-Your choice will only be valid on the digital support you are currently using. If you log in to your account, your Frak ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.`;
-
 const modalConfig = {
     steps: {
         login: {
             metadata: {
-                title: "Login",
-                description,
-                primaryActionText: "Be rewarded with Frak",
-                secondaryActionText: "I have already an account",
+                description:
+                    "Je souhaite percevoir mes gains par Good Vibes directement dans mon porte monnaie en partageant ce produit  ",
+                primaryActionText: "Je crée mon porte-monnaie en 30 sec",
+                secondaryActionText: "J’ai déja un porte-monnaie",
             },
             allowSso: true,
             ssoMetadata: {
@@ -42,16 +38,17 @@ const modalConfig = {
         },
         openSession: {
             metadata: {
-                title: "Open reward session",
-                description,
-                primaryActionText: "Being rewarded with Nexus",
+                description:
+                    "Mon porte-monnaie est désormais créé. Cliquez sur le bouton ci-dessous pour l’activer et recevoir vos gains.",
+                primaryActionText: "J’active mon porte-monnaie",
             },
         },
     },
     metadata: {
         header: {
-            title: "Payment for your data",
+            title: "Good Vibes",
         },
+        lang: "fr",
     },
 } as const;
 
@@ -168,18 +165,18 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                                     ...modalConfig.metadata,
                                     isDismissible: true,
                                     dismissActionTxt:
-                                        "Continue without being rewarded",
+                                        "Partager sans être rémunéré(e)",
                                 },
                                 steps: {
                                     ...modalConfig.steps,
                                     final: {
                                         metadata: {
                                             description:
-                                                "Get rewarded for sharing this article with your friends",
+                                                "Votre porte-monnaie a été créé pour recevoir votre récompense de Lancôme Paris en cas de partage.\nPour retrouver votre porte-monnaie, allez sur wallet.frak.id ou entrez votre adresse email ci-dessous.",
                                         },
                                         dismissedMetadata: {
                                             description:
-                                                "Share this article with your friends",
+                                                "Partager cette article",
                                         },
                                         action: finalAction,
                                     },
