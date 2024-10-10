@@ -4,6 +4,7 @@ import type { SiweAuthenticateModalStepType } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
 import { MetadataInfo } from "../Generic";
@@ -22,6 +23,7 @@ export function SiweAuthenticateModalStep({
     onFinish: (result: SiweAuthenticateModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { t } = useTranslation();
     const { metadata } = params;
     const { address, chainId } = useAccount();
     const siweMessage: SiweMessage | undefined = useMemo(() => {
@@ -65,9 +67,10 @@ export function SiweAuthenticateModalStep({
         <>
             <MetadataInfo
                 metadata={metadata}
-                defaultTitle="Secure wallet authentication"
-                defaultDescription="Please authenticate with your wallet to proceed securely. Your
-                signature confirms your identity."
+                defaultTitle={t("sdk.modal.authenticate.default.title")}
+                defaultDescription={t(
+                    "sdk.modal.authenticate.default.description"
+                )}
             />
 
             <TextData>
@@ -91,7 +94,8 @@ export function SiweAuthenticateModalStep({
                         }}
                     >
                         {isPending && <Spinner />}
-                        {metadata?.primaryActionText ?? "Authenticate"}
+                        {metadata?.primaryActionText ??
+                            t("sdk.modal.authenticate.default.primaryAction")}
                     </button>
                 </div>
             </div>

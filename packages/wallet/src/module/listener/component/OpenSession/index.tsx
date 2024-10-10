@@ -7,6 +7,7 @@ import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/c
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 import { MetadataInfo } from "../Generic";
 
@@ -24,6 +25,7 @@ export function OpenSessionModalStep({
     onFinish: (args: OpenInteractionSessionModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { t } = useTranslation();
     const { metadata } = params;
     const { address } = useAccount();
     const {
@@ -100,15 +102,7 @@ export function OpenSessionModalStep({
         <RequireWebAuthN>
             <MetadataInfo
                 metadata={metadata}
-                defaultDescription={
-                    <>
-                        Start a rewarding session to earn as you interact
-                        anonymously on this site. Enjoy benefits without sharing
-                        personal details.
-                        <br />
-                        Learn more in our privacy policy.
-                    </>
-                }
+                defaultDescription={t("sdk.modal.session.default.description")}
             />
 
             <div
@@ -125,7 +119,7 @@ export function OpenSessionModalStep({
                     >
                         {isPending && <Spinner />}
                         {metadata?.primaryActionText ??
-                            "Being rewarded with Nexus"}
+                            t("sdk.modal.session.default.primaryAction")}
                     </button>
                 </div>
             </div>
