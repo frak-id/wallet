@@ -66,5 +66,17 @@
                 "siweAuthenticate": "Authentification"
             }
         }
+    },
+    "sharing": {
+        "btn": {
+            "copy": "Copier le lien",
+            "copySuccess": "Lien copié",
+            "share": "Partager",
+            "shareSuccess": "Partagé"
+        },
+        "default": {
+            "text": "Découvrez ce produit incroyable !",
+            "title": "Lien d'invitation {{productName}}"
+        }
     }
 }

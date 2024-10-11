@@ -8,6 +8,7 @@ import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWith
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
+import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 
 export function FinalModalActionComponent({
@@ -54,6 +55,7 @@ function SharingButtons({
 }) {
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
+    const { t } = useTranslation();
 
     // Get our final sharing link
     const { data: finalSharingLink } = useQuery({
@@ -92,8 +94,10 @@ function SharingButtons({
 
             // Build our sharing data
             const shareData = {
-                title: popupTitle ?? `${appName} invite link`,
-                text: text ?? "Discover this awesome product!",
+                title:
+                    popupTitle ??
+                    t("sharing.default.title", { productName: appName }),
+                text: text ?? t("sharing.default.text"),
                 url: finalSharingLink,
             };
 
@@ -105,7 +109,7 @@ function SharingButtons({
             ) {
                 const [err] = await tryit(() => navigator.share(shareData))();
                 // If no error, return the shared state
-                if (!err) return "Shared!";
+                if (!err) return t("sharing.btn.shareSuccess");
             }
         },
     });
@@ -119,11 +123,11 @@ function SharingButtons({
                 }}
             >
                 <Copy size={32} absoluteStrokeWidth={true} />
-                {copied ? "Copied!" : "Copy Link"}
+                {t(copied ? "sharing.btn.copySuccess" : "sharing.btn.copy")}
             </ButtonAction>
             <ButtonAction disabled={isSharing} onClick={() => triggerSharing()}>
                 <Share size={32} absoluteStrokeWidth={true} />{" "}
-                {shareResult ?? "Share"}
+                {shareResult ?? t("sharing.btn.share")}
             </ButtonAction>
         </div>
     );

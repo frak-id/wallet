@@ -18,6 +18,13 @@
     "sdk": {
         "modal": {
             "default": { "dismissBtn": "Continue without Frak" },
+            "final": {
+                "default": {
+                    "title": "Success",
+                    "title_reward": "Gains",
+                    "title_sharing": "Share"
+                }
+            },
             "login": {
                 "default": {
                     "description": "Connect to your Frak account to get the best experience on this platform.",
@@ -49,22 +56,27 @@
                     "title": "Authentication"
                 }
             },
-            "final": {
-                "default": {
-                    "title": "Success",
-                    "title_sharing": "Share",
-                    "title_reward": "Gains"
-                }
-            },
             "stepper": {
+                "final": "Success",
+                "final_reward": "Gains",
+                "final_sharing": "Share",
                 "login": "Connection",
                 "openSession": "Activation",
                 "sendTransaction": "Transaction",
-                "siweAuthenticate": "Authentication",
-                "final": "Success",
-                "final_sharing": "Share",
-                "final_reward": "Gains"
+                "siweAuthenticate": "Authentication"
             }
+        }
+    },
+    "sharing": {
+        "btn": {
+            "copy": "Copy link",
+            "copySuccess": "Link copied",
+            "share": "Share",
+            "shareSuccess": "Shared"
+        },
+        "default": {
+            "text": "Discover this amazing product!",
+            "title": "{{productName}} invite link"
         }
     }
 }
