@@ -87,7 +87,7 @@
 .modalListener__stepItem--done {
     color: #0171ec;
 
-    .modalListener__stepNumber {
+    .modalListener__stepNumberInnerIcon {
         border-color: #0171ec;
         color: #0171ec;
     }
