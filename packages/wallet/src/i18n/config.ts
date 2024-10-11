@@ -20,7 +20,7 @@ export default i18next
             escapeValue: false, // not needed for react as it escapes by default
         },
         debug: !isRunningInProd,
-        defaultNS: "default",
+        defaultNS: "translation",
         backend: {
             loadPath: "/locales/{{lng}}/{{ns}}.json",
         },

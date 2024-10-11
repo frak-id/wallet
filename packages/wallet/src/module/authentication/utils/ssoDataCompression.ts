@@ -18,7 +18,7 @@ export function ssoParamsToCompressed(params: FullSsoParams) {
     return {
         r: params.redirectUrl,
         d: params.directExit,
-        l: params.metadata,
+        l: params.lang,
         p: params.productId,
         m: {
             n: params.metadata.name,

@@ -76,6 +76,8 @@ export function Sso() {
             if (lang && i18n.language !== lang) {
                 await i18n.changeLanguage(lang);
             }
+            // Return no data
+            return null;
         },
     });
 
