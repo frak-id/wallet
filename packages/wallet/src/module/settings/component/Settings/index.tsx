@@ -4,7 +4,6 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { RemoveAllNotification } from "@/module/notification/component/RemoveAllNotification";
-import { BetaOptions } from "@/module/settings/component/BetaOptions";
 import { RecoveryLink } from "@/module/settings/component/Recovery";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { useAtomValue } from "jotai";
@@ -19,7 +18,6 @@ export function Settings() {
             <BiometryInfo />
             <RecoveryLink />
             <RemoveAllNotification />
-            <BetaOptions />
         </>
     );
 }
