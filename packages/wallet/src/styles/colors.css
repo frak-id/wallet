@@ -55,4 +55,10 @@
         #02e6d5 86.33%
     );
     --frak-color-malachite: #0ddb84;
+    --frak-color-gradient-blue: radial-gradient(
+        297.34% 103.75% at 0% 91.53%,
+        #00246a 0%,
+        #436dc4 52.26%,
+        #ffffff 92.85%
+    );
 }

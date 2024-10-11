@@ -9,9 +9,9 @@ html {
     font-style: normal;
     font-weight: 400;
     font-size: 16px;
-    background-position: center;
+    /* background-position: center;
     background-repeat: no-repeat;
-    background-size: cover;
+    background-size: cover; */
     color: var(--frak-text-color);
     scroll-behavior: smooth;
     height: 100dvh;
@@ -43,7 +43,7 @@ html {
             height: 805px;
             min-height: auto;
             overflow: auto;
-            background-size: cover;
+            /* background-size: cover; */
             transition: background .3s;
         }
     }
@@ -53,16 +53,18 @@ html {
  * Light mode
  */
 :root[data-theme="light"] {
-    background-image: var(--frak-background-image-light);
+    /* background-image: var(--frak-background-image-light); */
+    background: var(--frak-contrast-background-color);
 }
 
 @media (min-width: 600px) {
     :root[data-theme="light"] {
-        background-image: none;
-        background-color: var(--frak-contrast-background-color);
+        background: none;
+        /* background: var(--frak-contrast-background-color); */
 
         & .desktop {
-            background-image: var(--frak-background-image-light);
+            /* background-image: var(--frak-background-image-light); */
+            background: var(--frak-contrast-background-color);
         }
     }
 }
@@ -71,17 +73,18 @@ html {
  * Dark mode
  */
 :root[data-theme="dark"] {
-    background-color: var(--frak-contrast-background-color);
-    background-image: var(--frak-background-image-dark);
+    background: var(--frak-contrast-background-color);
+    /* background-image: var(--frak-background-image-dark); */
 }
 
 @media (min-width: 600px) {
     :root[data-theme="dark"] {
-        background-image: none;
-        background-color: var(--frak-contrast-background-color);
+        background: none;
+        /* background: var(--frak-contrast-background-color); */
 
         & .desktop {
-            background-image: var(--frak-background-image-dark);
+            /* background-image: var(--frak-background-image-dark); */
+            background: var(--frak-contrast-background-color);
         }
     }
 }

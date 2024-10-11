@@ -8,7 +8,7 @@
     --frak-text-color: var(--frak-color-black);
     --frak-link-color: var(--frak-color-black);
     --frak-background-color: var(--frak-color-mystic);
-    --frak-contrast-background-color: var(--frak-color-white);
+    --frak-contrast-background-color: var(--frak-color-gradient-blue);
     --frak-panel-background-color: var(--frak-color-mystic2);
     --frak-panel-outlined-border-color: var(--frak-color-white);
     --frak-panel-shadow-color: var(--frak-shadow-color);
@@ -55,7 +55,7 @@
     --frak-text-color: var(--frak-color-white);
     --frak-link-color: var(--frak-color-white);
     --frak-background-color: var(--frak-color-dark);
-    --frak-contrast-background-color: var(--frak-color-blue-zodiac-darker);
+    --frak-contrast-background-color: var(--frak-color-gradient-blue);
     --frak-panel-background-color: var(--frak-color-tangaroa);
     --frak-panel-outlined-border-color: var(--frak-color-blue-zodiac-darker);
     --frak-panel-shadow-color: var(--frak-shadow-color);

@@ -27,11 +27,6 @@
     left: 12px;
 }
 
-.header__title {
-    display: flex;
-    margin: 0;
-}
-
 .header__buttonRefresh {
     position: absolute;
     margin-top: -10px;
@@ -40,5 +35,5 @@
 }
 
 .header__buttonRefresh > svg {
-    stroke: var(--frak-color-grayText);
+    stroke: var(--frak-color-white);
 }
