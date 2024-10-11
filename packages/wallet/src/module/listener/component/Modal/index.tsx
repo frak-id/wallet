@@ -173,13 +173,7 @@ function ListenerModalDialog({
     const { titleComponent, icon, context } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = currentRequest.metadata?.header?.title ? (
-            <>
-                {currentRequest.metadata.header.title}
-                <span className={styles.modalTitle__provided}>
-                    Provided by Frak{" "}
-                    <LogoFrak sizes={14} className={styles.modalTitle__logo} />
-                </span>
-            </>
+            <>{currentRequest.metadata.header.title}</>
         ) : (
             <>
                 Frak <LogoFrak sizes={14} className={styles.modalTitle__logo} />
