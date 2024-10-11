@@ -6,7 +6,7 @@ import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 
@@ -40,6 +40,16 @@ export function OpenSessionModalStep({
         },
     });
 
+    const hasCalledOnFinish = useRef(false);
+    const safeOnFinish = useCallback(
+        (args: OpenInteractionSessionModalStepType["returns"]) => {
+            if (hasCalledOnFinish.current) return;
+            hasCalledOnFinish.current = true;
+            onFinish(args);
+        },
+        [onFinish]
+    );
+
     const {
         mutate: openSession,
         isIdle,
@@ -51,7 +61,7 @@ export function OpenSessionModalStep({
             onMutate: async () => {
                 // If we already got a session, directly exit
                 if (currentSession) {
-                    onFinish({
+                    safeOnFinish({
                         startTimestamp: currentSession.sessionStart,
                         endTimestamp: currentSession.sessionEnd,
                     });
@@ -69,7 +79,7 @@ export function OpenSessionModalStep({
                 }
 
                 // Finish the step
-                onFinish({
+                safeOnFinish({
                     startTimestamp: status.data.sessionStart,
                     endTimestamp: status.data.sessionEnd,
                 });
@@ -85,17 +95,17 @@ export function OpenSessionModalStep({
 
     // Small effect to auto skip this step if a session is already set
     useEffect(() => {
-        // If the open session isn't idle, it mean that we doing some shenanigans there
+        // If the open session isn't idle, it mean that we are doing some shenanigans there
         if (!isIdle) return;
 
         // If we already got a session, directly exit
         if (currentSession) {
-            onFinish({
+            safeOnFinish({
                 startTimestamp: currentSession.sessionStart,
                 endTimestamp: currentSession.sessionEnd,
             });
         }
-    }, [currentSession, onFinish, isIdle]);
+    }, [currentSession, safeOnFinish, isIdle]);
 
     return (
         <RequireWebAuthN>

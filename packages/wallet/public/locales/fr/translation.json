@@ -32,8 +32,8 @@
             "login": {
                 "default": {
                     "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur cette plateforme.",
-                    "primaryAction": "Registre",
-                    "secondaryAction": "Se connecter",
+                    "primaryAction": "Je crée mon portefeuille en moins de 30 secondes",
+                    "secondaryAction": "J'ai déjà un portefeuille",
                     "title": "Connexion"
                 },
                 "success": "Connexion réussie"
@@ -41,7 +41,7 @@
             "openSession": {
                 "default": {
                     "description": "Démarrez une session enrichissante pour gagner de l'argent en interagissant de manière anonyme sur ce site. Bénéficiez d'avantages sans partager vos informations personnelles. Pour en savoir plus, consultez notre politique de confidentialité.",
-                    "primaryAction": "Être récompensé par Frak",
+                    "primaryAction": "J'active mon portefeuille",
                     "title": "Activation"
                 }
             },

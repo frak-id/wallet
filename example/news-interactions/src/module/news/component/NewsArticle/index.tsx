@@ -21,46 +21,42 @@ import { keccak256, toHex } from "viem";
 import forward from "./assets/forward.svg";
 import styles from "./index.module.css";
 
-const modalConfig = {
-    steps: {
-        login: {
-            metadata: {
-                description:
-                    "Je souhaite percevoir mes gains par Good Vibes directement dans mon porte monnaie en partageant ce produit  ",
-                primaryActionText: "Je crée mon porte-monnaie en 30 sec",
-                secondaryActionText: "J’ai déja un porte-monnaie",
-            },
-            allowSso: true,
-            ssoMetadata: {
-                logoUrl: "https://news-paper.xyz/assets/logo-good-vibes.svg",
-                homepageLink: "https://news-paper.xyz/",
-            },
-        },
-        openSession: {
-            metadata: {
-                description:
-                    "Mon porte-monnaie est désormais créé. Cliquez sur le bouton ci-dessous pour l’activer et recevoir vos gains.",
-                primaryActionText: "J’active mon porte-monnaie",
-            },
-        },
-    },
+const loginModalStep = {
     metadata: {
-        header: {
-            title: "Good Vibes",
-        },
-        lang: "fr",
+        description:
+            "Je souhaite percevoir mes gains par **Good Vibes** directement dans mon porte monnaie en partageant ce produit",
+        primaryActionText: "Je crée mon porte-monnaie en 30 sec",
+        secondaryActionText: "J’ai déja un porte-monnaie",
+    },
+    allowSso: true,
+    ssoMetadata: {
+        logoUrl: "https://news-paper.xyz/assets/logo-good-vibes.svg",
+        homepageLink: "https://news-paper.xyz/",
     },
 } as const;
 
 export function NewsArticle({ articleId }: { articleId: string }) {
     useReferralInteraction({
         modalConfig: {
-            ...modalConfig,
             steps: {
-                ...modalConfig.steps,
+                login: loginModalStep,
+                openSession: {
+                    metadata: {
+                        description:
+                            "Je souhaite recevoir mes gains de **Good Vibes** directement dans mon porte monnaie en partageant ce produit",
+                    },
+                },
                 final: {
+                    metadata: {
+                        description:
+                            "Votre porte-monnaie a été créé pour recevoir votre récompense de **Good Vibes** en cas d’achat.\n" +
+                            "Pour retrouver votre porte-monnaie, allez sur [wallet.frak.id](https://wallet.frak.id) ou entrez votre adresse email ci-dessous.",
+                    },
                     action: { key: "reward" },
                 },
+            },
+            metadata: {
+                lang: "fr",
             },
         },
     });
@@ -159,19 +155,24 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                             } as const;
 
                             displayModal({
-                                ...modalConfig,
                                 metadata: {
-                                    ...modalConfig.metadata,
+                                    lang: "fr",
                                     isDismissible: true,
                                     dismissActionTxt:
                                         "Partager sans être rémunéré(e)",
                                 },
                                 steps: {
-                                    ...modalConfig.steps,
+                                    login: loginModalStep,
+                                    openSession: {
+                                        metadata: {
+                                            description:
+                                                "Mon porte-monnaie est désormais créé. Cliquez sur le bouton ci-dessous pour l’activer et recevoir vos gains.",
+                                        },
+                                    },
                                     final: {
                                         metadata: {
                                             description:
-                                                "Votre porte-monnaie a été créé pour recevoir votre récompense de Lancôme Paris en cas de partage.\nPour retrouver votre porte-monnaie, allez sur wallet.frak.id ou entrez votre adresse email ci-dessous.",
+                                                "Votre porte-monnaie a été créé pour recevoir votre récompense de **Good Vibes** en cas de partage.\nPour retrouver votre porte-monnaie, allez sur [wallet.frak.id](https://wallet.frak.id) ou entrez votre adresse email ci-dessous.",
                                         },
                                         dismissedMetadata: {
                                             description:
