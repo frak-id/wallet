@@ -63,6 +63,7 @@ function elysiaBackend(
     // A few secrets we will be using
     const {
         mongoExampleUri,
+        alchemyApiKey,
         worldNewsApiKey,
         indexerUrl,
         postgres,
@@ -102,6 +103,7 @@ function elysiaBackend(
             mongoExampleUri,
             worldNewsApiKey,
             coinGeckoApiKey,
+            alchemyApiKey,
             // some secrets
             sessionEncryptionKey,
             masterSecretId,

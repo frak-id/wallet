@@ -44,9 +44,12 @@ export function getAlchemyTransport({ chain }: { chain: Chain }) {
  * Get the alchemy http transport
  * @param chainId
  */
-export function getAlchemyTransportNoBatch({ chain }: { chain: Chain }) {
+export function getAlchemyTransportNoBatch({
+    chain,
+    apiKey,
+}: { chain: Chain; apiKey?: string }) {
     // Build the alchemy rpc url depending on the chain
-    const rpcUrl = getAlchemyRpcUrl({ chain });
+    const rpcUrl = getAlchemyRpcUrl({ chain, apiKey });
     if (!rpcUrl) {
         throw new Error(`No alchemy rpc url for chain ${chain.id}`);
     }
@@ -64,9 +67,13 @@ export function getAlchemyTransportNoBatch({ chain }: { chain: Chain }) {
  * @param chain
  * @param version
  */
-function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
+function getAlchemyRpcUrl({
+    chain,
+    apiKey,
+}: { chain: Chain; apiKey?: string }) {
     // Ensure we got an api key
-    if (!process.env.ALCHEMY_API_KEY) {
+    const finalApiKey = apiKey ?? process.env.ALCHEMY_API_KEY;
+    if (!finalApiKey) {
         return undefined;
     }
 
@@ -78,5 +85,5 @@ function getAlchemyRpcUrl({ chain }: { chain: Chain }) {
     // Build the alchemy rpc url depending on the chain
     return `https://${
         AlchemyNetworkName[chain.id]
-    }.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+    }.g.alchemy.com/v2/${finalApiKey}`;
 }

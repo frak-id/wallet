@@ -19,30 +19,20 @@ export async function pushInteraction({
     wallet: Address;
     toPush: InteractionToPush;
 }) {
-    console.log("Pushing interaction", toPush);
-    const { data, error, response, ...other } =
-        await backendApi.interactions.push.post({
-            interactions: [
-                {
-                    wallet,
-                    productId: toPush.productId,
-                    interaction: toPush.interaction,
-                    signature: toPush.submittedSignature,
-                },
-            ],
-        });
-    console.log("body", {
-        body: {
-            wallet,
-            productId: toPush.productId,
-            interaction: toPush.interaction,
-            signature: toPush.submittedSignature,
-        },
+    const { data, error } = await backendApi.interactions.push.post({
+        interactions: [
+            {
+                wallet,
+                productId: toPush.productId,
+                interaction: toPush.interaction,
+                signature: toPush.submittedSignature,
+            },
+        ],
     });
-    console.log("Pushed interaction", {
-        data,
-        other,
-    });
+    if (error) {
+        console.error("Unable to push the interactions", error);
+        return undefined;
+    }
     return data?.[0];
 }
 
