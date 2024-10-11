@@ -56,12 +56,8 @@ export function Sso() {
             if (!compressedString) {
                 return null;
             }
-
-            console.time("Decompression");
             const compressedParam =
                 await decompressJson<CompressedSsoData>(compressedString);
-            console.timeEnd("Decompression");
-
             if (!compressedParam) {
                 return null;
             }

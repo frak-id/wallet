@@ -116,7 +116,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                 });
                 const rawBalance = BigInt(reward.amount);
                 const balance = Number.parseFloat(
-                    formatUnits(rawBalance, token.decimal)
+                    formatUnits(rawBalance, token.decimals)
                 );
 
                 return {
@@ -124,7 +124,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                     token: reward.token,
                     name: token.name,
                     symbol: token.symbol,
-                    decimals: token.decimal,
+                    decimals: token.decimals,
                     balance: balance,
                     eurBalance: balance * eur,
                     rawBalance: toHex(rawBalance),
@@ -174,7 +174,7 @@ type RewardApiResult = {
     }[];
     tokens: {
         address: Address;
-        decimal: number;
+        decimals: number;
         name: string;
         symbol: string;
     }[];
