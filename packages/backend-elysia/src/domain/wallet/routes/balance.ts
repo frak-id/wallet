@@ -5,7 +5,8 @@ import {
 } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import { toHex } from "viem";
+import { sift } from "radash";
+import { type Address, formatUnits, isAddressEqual, toHex } from "viem";
 import { BalancesRepository } from "../repositories/BalancesRepository";
 import { PricingRepository } from "../repositories/PricingRepository";
 
@@ -61,10 +62,8 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             );
 
             return {
-                eurBalance: eurBalance,
+                eurBalance,
                 balances: mappedBalances,
-                eurClaimable: 0,
-                claimables: [],
             };
         },
         {
@@ -84,14 +83,81 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                             rawBalance: t.Hex(),
                         })
                     ),
+                }),
+            },
+        }
+    )
+    .get(
+        "/claimable",
+        async ({ indexerApi, pricingRepository, walletSession, error }) => {
+            if (!walletSession) return error(401, "Unauthorized");
+
+            // Fetch the pending rewards for this user
+            const { rewards, tokens } = await indexerApi
+                .get(`rewards/${walletSession.wallet.address}`)
+                .json<RewardApiResult>();
+            if (!rewards.length) {
+                return {
+                    eurClaimable: 0,
+                    claimables: [],
+                };
+            }
+
+            // Map rewards with tokens and eur price
+            const claimablesAsync = rewards.map(async (reward) => {
+                const token = tokens.find((token) =>
+                    isAddressEqual(token.address, reward.token)
+                );
+                if (!token) return null;
+
+                // Get the eur price of the token
+                const { eur } = await pricingRepository.getTokenPrice({
+                    token: reward.token,
+                });
+                const rawBalance = BigInt(reward.amount);
+                const balance = Number.parseFloat(
+                    formatUnits(rawBalance, token.decimal)
+                );
+
+                return {
+                    contract: reward.address,
+                    token: reward.token,
+                    name: token.name,
+                    symbol: token.symbol,
+                    decimal: token.decimal,
+                    balance: balance,
+                    eurBalance: balance * eur,
+                    rawBalance: toHex(rawBalance),
+                };
+            });
+            const claimables = sift(await Promise.all(claimablesAsync));
+
+            // Get the total eur claimable
+            const eurClaimable = claimables.reduce(
+                (acc, { eurBalance }) => acc + eurBalance,
+                0
+            );
+
+            return {
+                eurClaimable,
+                claimables,
+            };
+        },
+        {
+            isAuthenticated: "wallet",
+            response: {
+                401: t.String(),
+                200: t.Object({
                     eurClaimable: t.Number(),
                     claimables: t.Array(
                         t.Object({
+                            contract: t.Address(),
                             token: t.Address(),
                             name: t.String(),
                             symbol: t.String(),
                             decimal: t.Number(),
                             balance: t.Number(),
+                            eurBalance: t.Number(),
                             rawBalance: t.Hex(),
                         })
                     ),
@@ -99,3 +165,17 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             },
         }
     );
+
+type RewardApiResult = {
+    rewards: {
+        amount: string;
+        address: Address;
+        token: Address;
+    }[];
+    tokens: {
+        address: Address;
+        decimal: number;
+        name: string;
+        symbol: string;
+    }[];
+};

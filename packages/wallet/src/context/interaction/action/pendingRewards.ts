@@ -8,6 +8,7 @@ type ApiResult = {
     rewards: {
         amount: string;
         address: Address;
+        token: Address;
     }[];
     tokens: Token[];
 };
