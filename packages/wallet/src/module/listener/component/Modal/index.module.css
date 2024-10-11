@@ -93,6 +93,25 @@
     }
 }
 
+.modalListener__stepItem:last-child.modalListener__stepItem--active {
+    animation: highlightLastStep 2s forwards;
+
+    .modalListener__stepNumberInnerIcon {
+        animation: highlightLastStep 2s forwards;
+    }
+}
+
+@keyframes highlightLastStep {
+    60% {
+        color: #818c9c;
+        border-color: #818c9c;
+    }
+    100% {
+        color: #0171ec;
+        border-color: #0171ec;
+    }
+}
+
 .modalListener__help {
     margin-top: 20px;
     font-size: 12px;

@@ -15,7 +15,7 @@
             "recover": "Récupérer le portefeuille à partir du fichier",
             "redirect": "Vous serez redirigé vers {{ productName }} dans quelques secondes.",
             "redirectNow": "Rediriger maintenant",
-            "subTitle": "pour recevoir immédiatement vos gains de<pLink> {{productName}}</pLink> .",
+            "subTitle": "pour recevoir immédiatement vos gains de <pLink>{{productName}}</pLink> .",
             "title": "Créez votre portefeuille"
         }
     },
