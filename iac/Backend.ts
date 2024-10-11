@@ -69,6 +69,7 @@ function elysiaBackend(
         sessionEncryptionKey,
         vapidPrivateKey,
         vapidPublicKey,
+        coinGeckoApiKey,
     } = use(ConfigStack);
 
     // The domain name we will be using
@@ -100,6 +101,7 @@ function elysiaBackend(
             // some api keys
             mongoExampleUri,
             worldNewsApiKey,
+            coinGeckoApiKey,
             // some secrets
             sessionEncryptionKey,
             masterSecretId,

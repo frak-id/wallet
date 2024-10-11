@@ -9,6 +9,7 @@ import {
     interactions,
     notifications,
     oracle,
+    wallet,
 } from "./domain";
 
 // Full on service app
@@ -40,6 +41,7 @@ const app = new Elysia()
     .use(oracle)
     .use(interactions)
     .use(notifications)
+    .use(wallet)
     .use(business)
     // Setup bun serve options
     .listen({

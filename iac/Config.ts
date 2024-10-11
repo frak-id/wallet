@@ -16,6 +16,7 @@ export function ConfigStack({ stack }: StackContext) {
     const mongoNexusUri = new Config.Secret(stack, "MONGODB_NEXUS_URI");
     const mongoBusinessUri = new Config.Secret(stack, "MONGODB_BUSINESS_URI");
     const alchemyApiKey = new Config.Secret(stack, "ALCHEMY_API_KEY");
+    const coinGeckoApiKey = new Config.Secret(stack, "COIN_GECKO_API_KEY");
     const pimlicoApiKey = new Config.Secret(stack, "PIMLICO_API_KEY");
     const nexusRpcSecret = new Config.Secret(stack, "NEXUS_RPC_SECRET");
     const contentMinterPrivateKey = new Config.Secret(
@@ -59,6 +60,7 @@ export function ConfigStack({ stack }: StackContext) {
         mongoNexusUri,
         mongoBusinessUri,
         alchemyApiKey,
+        coinGeckoApiKey,
         pimlicoApiKey,
         nexusRpcSecret,
         contentMinterPrivateKey,

@@ -10,6 +10,17 @@ export {
     interactionValidatorRoles,
     type ProductRolesKey,
 } from "./roles";
+// Actions
+export type {
+    AlchemyRpcSchema,
+    GetTokenMetadataResponse,
+    GetTokenBalancesRawResponse,
+} from "./actions/AlchemyRpcSchema";
+export {
+    getTokenMetadata,
+    type GetTokenMetadataParams,
+} from "./actions/getTokenMetadata";
+export { getTokenBalances } from "./actions/getTokenBalances";
 // Abis
 export {
     campaignFactoryAbi,
