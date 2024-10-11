@@ -1,8 +1,10 @@
-import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Notice } from "@/module/common/component/Notice";
+import { Fingerprint } from "@module/asset/icons/Fingerprint";
+import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import styles from "./index.module.css";
 
 /**
  * The register component
@@ -43,14 +45,17 @@ export function SsoRegisterComponent({ onSuccess }: { onSuccess: () => void }) {
     }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress, t]);
 
     return (
-        <>
-            <ButtonAuth
-                trigger={register}
+        <p className={styles.sso__buttonRegisterWrapper}>
+            <AuthFingerprint
+                icon={<Fingerprint color={"#000"} sizes={57} />}
+                isShiny={false}
+                action={register}
                 disabled={isPreviouslyUsedAuthenticatorError}
+                className={styles.sso__buttonRegister}
             >
                 {t("authent.sso.btn.create")}
-            </ButtonAuth>
+            </AuthFingerprint>
             {statusComponent}
-        </>
+        </p>
     );
 }

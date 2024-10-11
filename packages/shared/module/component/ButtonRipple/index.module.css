@@ -1,11 +1,5 @@
 .buttonRipple__button {
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    padding: 25px 8px;
     border-radius: 8px;
     box-shadow: 4px 4px 4px 0 var(--frak-button-ripple-shadow-color);
     position: relative;
@@ -14,6 +8,15 @@
     color: var(--frak-button-ripple-color);
     background: center no-repeat var(--frak-button-ripple-background-image);
     background-size: cover;
+
+    & > span {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 25px 8px;
+    }
 }
 
 .buttonRipple__button:disabled {
@@ -48,15 +51,21 @@
 }
 
 .size--small {
-    padding: 8px;
+    & > span {
+        padding: 8px;
+    }
 }
 
 .size--normal {
-    padding: 17px 8px;
+    & > span {
+        padding: 17px 8px;
+    }
 }
 
 .size--big {
-    padding: 25px 8px;
+    & > span {
+        padding: 25px 8px;
+    }
 }
 
 .isLoading {

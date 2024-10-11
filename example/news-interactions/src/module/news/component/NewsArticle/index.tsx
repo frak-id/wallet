@@ -32,7 +32,7 @@ const modalConfig = {
             },
             allowSso: true,
             ssoMetadata: {
-                logoUrl: "https://news-paper.xyz/favicons/icon-192.png",
+                logoUrl: "https://news-paper.xyz/assets/logo-good-vibes.svg",
                 homepageLink: "https://news-paper.xyz/",
             },
         },

@@ -1,6 +1,6 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { useLogin } from "@/module/authentication/hook/useLogin";
-import { Fingerprint } from "@module/asset/icons/Fingerprint";
+import { FingerprintFrak } from "@module/asset/icons/FingerprintFrak";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { formatHash } from "@module/component/HashDisplay";
 import { SquareUser } from "lucide-react";
@@ -39,7 +39,7 @@ export function LoginItem({
                     })}
                 </span>
                 <span>
-                    <Fingerprint
+                    <FingerprintFrak
                         width={36}
                         className={styles.loginItem__icon}
                     />

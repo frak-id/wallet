@@ -1,4 +1,6 @@
 import { Sso } from "@/module/authentication/component/Sso";
+import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
+import "./page.global.css";
 
 /**
  * SSO page exposing:
@@ -9,5 +11,10 @@ import { Sso } from "@/module/authentication/component/Sso";
  * @constructor
  */
 export default function SsoPage() {
-    return <Sso />;
+    return (
+        <>
+            <SsoHeader />
+            <Sso />
+        </>
+    );
 }

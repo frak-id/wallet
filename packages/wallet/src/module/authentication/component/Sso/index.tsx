@@ -5,7 +5,6 @@ import {
     ssoContextAtom,
     ssoMetadataAtom,
 } from "@/module/authentication/atoms/sso";
-import styles from "@/module/authentication/component/Login/index.module.css";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { Grid } from "@/module/common/component/Grid";
@@ -18,6 +17,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import styles from "./index.module.css";
 
 /**
  * The SSO page itself
@@ -79,6 +79,20 @@ export function Sso() {
     }, [searchParams, setSsoMetadata, i18n]);
 
     /**
+     * Add a data attribute to the root element to style the layout
+     */
+    useEffect(() => {
+        const rootElement = document.querySelector(":root") as HTMLElement;
+        if (rootElement) {
+            rootElement.dataset.page = "sso";
+        }
+
+        return () => {
+            rootElement.removeAttribute("data-page");
+        };
+    }, []);
+
+    /**
      * The on success callback
      */
     const onSuccess = useCallback(() => {
@@ -109,9 +123,10 @@ export function Sso() {
 
     return (
         <Grid
+            className={styles.sso__grid}
             footer={
                 <>
-                    <Notice>
+                    <Notice className={styles.sso__notice}>
                         <Trans
                             i18nKey={"authent.sso.description"}
                             values={{
@@ -120,18 +135,16 @@ export function Sso() {
                             }}
                         />
                     </Notice>
-                    <Link href={"/recovery"} className={styles.login__link}>
+                    <Link href={"/recovery"} className={styles.sso__recover}>
                         <CloudUpload /> Recover wallet from file
                     </Link>
                 </>
             }
         >
             <Header />
-            <br />
             {!success && (
                 <>
                     <SsoRegisterComponent onSuccess={onSuccess} />
-                    <br />
                     <SsoLoginComponent onSuccess={onSuccess} />
                 </>
             )}
@@ -141,7 +154,6 @@ export function Sso() {
                         You will be redirected to {currentMetadata?.name} in a
                         few seconds.<span className={"dotsLoading"}>...</span>
                     </p>
-                    <br />
                     <ButtonRipple onClick={redirectOrClose}>
                         Redirect now
                     </ButtonRipple>
@@ -165,31 +177,34 @@ function Header() {
                 <img
                     src={currentMetadata.logoUrl}
                     alt={currentMetadata.name}
-                    className={styles.login__icon}
+                    className={styles.sso__logo}
                 />
             )}
-            <h2>{t("authent.sso.title")}</h2>
+            <h2 className={styles.sso__title}>{t("authent.sso.title")}</h2>
             {currentMetadata.name !== "" && (
-                <Trans
-                    i18nKey={"authent.sso.subTitle"}
-                    values={{
-                        productName: currentMetadata.name,
-                        productLink: currentMetadata.homepageLink,
-                    }}
-                    components={{
-                        pLink: currentMetadata.homepageLink ? (
-                            <a
-                                href={currentMetadata.homepageLink}
-                                target={"_blank"}
-                                rel={"noreferrer"}
-                            >
-                                {currentMetadata.name}
-                            </a>
-                        ) : (
-                            <u>{currentMetadata.name}</u>
-                        ),
-                    }}
-                />
+                <p className={styles.sso__ahead}>
+                    <Trans
+                        i18nKey={"authent.sso.subTitle"}
+                        values={{
+                            productName: currentMetadata.name,
+                            productLink: currentMetadata.homepageLink,
+                        }}
+                        components={{
+                            pLink: currentMetadata.homepageLink ? (
+                                <a
+                                    href={currentMetadata.homepageLink}
+                                    target={"_blank"}
+                                    rel={"noreferrer"}
+                                    className={styles.sso__link}
+                                >
+                                    {currentMetadata.name}
+                                </a>
+                            ) : (
+                                <u>{currentMetadata.name}</u>
+                            ),
+                        }}
+                    />
+                </p>
             )}
         </>
     );
