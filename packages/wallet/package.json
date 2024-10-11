@@ -69,7 +69,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "i18next-resources-for-ts": "^1.5.0",
-    "sst": "2.43.6",
+    "sst": "2.44.0",
     "typescript": "^5"
   }
 }
