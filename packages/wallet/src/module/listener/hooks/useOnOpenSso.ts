@@ -44,6 +44,7 @@ export function useOnOpenSso(): OnOpenSso {
                 },
                 directExit: ssoInfo.directExit,
                 redirectUrl: ssoInfo.redirectUrl,
+                lang: ssoInfo.lang,
             });
 
             // Emit the end

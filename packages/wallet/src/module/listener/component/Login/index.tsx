@@ -4,6 +4,7 @@ import { useLogin } from "@/module/authentication/hook/useLogin";
 import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
+import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { requestAndCheckStorageAccess } from "@/module/listener/utils/thirdParties";
 import type {
@@ -139,10 +140,7 @@ function SsoButton({
     ssoMetadata: SsoMetadata;
     alternateText?: string;
 }) {
-    const {
-        t,
-        i18n: { language },
-    } = useTranslation();
+    const { t } = useTranslation();
     const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
     const openSsoPopup = useOpenSsoPopup();
 
@@ -161,9 +159,9 @@ function SsoButton({
                 ...ssoMetadata,
             },
             directExit: true,
-            lang: language as "en" | "fr",
+            lang: jotaiStore.get(modalDisplayedRequestAtom)?.metadata?.lang,
         });
-    }, [appName, ssoMetadata, context, openSsoPopup, language]);
+    }, [appName, ssoMetadata, context, openSsoPopup]);
 
     return (
         <button
