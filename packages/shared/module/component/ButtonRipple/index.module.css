@@ -1,5 +1,7 @@
 .buttonRipple__button {
     box-sizing: border-box;
+    display: block;
+    width: 100%;
     border-radius: 8px;
     box-shadow: 4px 4px 4px 0 var(--frak-button-ripple-shadow-color);
     position: relative;
