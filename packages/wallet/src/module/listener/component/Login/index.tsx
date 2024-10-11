@@ -139,27 +139,31 @@ function SsoButton({
     ssoMetadata: SsoMetadata;
     alternateText?: string;
 }) {
-    const { t } = useTranslation();
+    const {
+        t,
+        i18n: { language },
+    } = useTranslation();
     const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
     const openSsoPopup = useOpenSsoPopup();
 
     /**
      * Small hook to open the registration page
      */
-    const openRegister = useCallback(() => {
+    const openRegister = useCallback(async () => {
         // If we are on the server side do nothing
         if (window === undefined) return;
 
         // Open the SSO popup
-        openSsoPopup({
+        await openSsoPopup({
             productId: context.productId,
             metadata: {
                 name: appName,
                 ...ssoMetadata,
             },
             directExit: true,
+            lang: language as "en" | "fr",
         });
-    }, [appName, ssoMetadata, context, openSsoPopup]);
+    }, [appName, ssoMetadata, context, openSsoPopup, language]);
 
     return (
         <button
@@ -167,7 +171,7 @@ function SsoButton({
             className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
             onClick={async () => {
                 await requestAndCheckStorageAccess();
-                openRegister();
+                await openRegister();
             }}
             onFocus={async () => {
                 await mutateAsyncUpdateSessionStatus();

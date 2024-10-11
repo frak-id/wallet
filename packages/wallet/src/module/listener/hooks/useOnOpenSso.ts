@@ -35,7 +35,7 @@ export function useOnOpenSso(): OnOpenSso {
                 return;
             }
 
-            openSsoPopup({
+            await openSsoPopup({
                 productId: context.productId,
                 metadata: {
                     ...ssoInfo.metadata,

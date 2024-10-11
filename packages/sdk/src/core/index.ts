@@ -5,6 +5,8 @@ export { createIFrameNexusClient } from "./clients";
 export {
     hashAndCompressData,
     decompressDataAndCheckHash,
+    compressJson,
+    decompressJson,
     createIframe,
     FrakContextManager,
 } from "./utils";

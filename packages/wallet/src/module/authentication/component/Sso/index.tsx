@@ -3,15 +3,21 @@
 import {
     currentSsoMetadataAtom,
     ssoContextAtom,
-    ssoMetadataAtom,
 } from "@/module/authentication/atoms/sso";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
+import {
+    type CompressedSsoData,
+    compressedSsoToParams,
+} from "@/module/authentication/utils/ssoDataCompression";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
+import { decompressJson } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
-import { useAtomValue, useSetAtom } from "jotai";
+import { Spinner } from "@module/component/Spinner";
+import { useQuery } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -31,11 +37,6 @@ export function Sso() {
     const currentMetadata = useAtomValue(currentSsoMetadataAtom);
 
     /**
-     * Set the sso metadata atom
-     */
-    const setSsoMetadata = useSetAtom(ssoMetadataAtom);
-
-    /**
      * The success state after login or register
      */
     const [success, setSuccess] = useState(false);
@@ -48,35 +49,39 @@ export function Sso() {
     /**
      * Set the sso context atom directly
      */
-    useEffect(() => {
-        const productId = searchParams.get("productId");
-        const redirectUrl = searchParams.get("redirectUrl");
-        const directExit = searchParams.get("directExit");
-        const lang = searchParams.get("lng");
+    useQuery({
+        queryKey: ["sso", "params-decompression", searchParams.toString()],
+        queryFn: async () => {
+            const compressedString = searchParams.get("p");
+            if (!compressedString) {
+                return null;
+            }
 
-        // If we got a language, change the i18n language
-        if (lang) {
-            i18n.changeLanguage(lang);
-        }
+            console.time("Decompression");
+            const compressedParam =
+                await decompressJson<CompressedSsoData>(compressedString);
+            console.timeEnd("Decompression");
 
-        jotaiStore.set(ssoContextAtom, {
-            productId: productId ?? undefined,
-            redirectUrl: redirectUrl ?? undefined,
-            directExit: directExit ? directExit === "true" : undefined,
-        });
+            if (!compressedParam) {
+                return null;
+            }
+            const { productId, redirectUrl, directExit, lang, metadata } =
+                compressedSsoToParams(compressedParam);
 
-        if (!productId) return;
+            // Save the current sso context
+            jotaiStore.set(ssoContextAtom, {
+                productId: productId ?? undefined,
+                redirectUrl: redirectUrl ?? undefined,
+                directExit: directExit ?? undefined,
+                metadata: metadata ?? undefined,
+            });
 
-        // Set the metadata
-        setSsoMetadata((prev) => ({
-            ...prev,
-            [productId]: {
-                name: searchParams.get("name") ?? "",
-                logoUrl: searchParams.get("logoUrl") ?? undefined,
-                homepageLink: searchParams.get("homepageLink") ?? undefined,
-            },
-        }));
-    }, [searchParams, setSsoMetadata, i18n]);
+            // If we got a language, change the i18n language
+            if (lang && i18n.language !== lang) {
+                await i18n.changeLanguage(lang);
+            }
+        },
+    });
 
     /**
      * Add a data attribute to the root element to style the layout
@@ -121,6 +126,10 @@ export function Sso() {
         }
     }, []);
 
+    if (!currentMetadata) {
+        return <Spinner />;
+    }
+
     return (
         <>
             <SsoHeader />
@@ -132,8 +141,7 @@ export function Sso() {
                             <Trans
                                 i18nKey={"authent.sso.description"}
                                 values={{
-                                    productName:
-                                        currentMetadata?.name ?? "companies",
+                                    productName: currentMetadata.name,
                                 }}
                             />
                         </Notice>
@@ -159,7 +167,7 @@ export function Sso() {
                             <Trans
                                 i18nKey={"authent.sso.redirect"}
                                 values={{
-                                    productName: currentMetadata?.name,
+                                    productName: currentMetadata.name,
                                 }}
                             />
                             <span className={"dotsLoading"}>...</span>
