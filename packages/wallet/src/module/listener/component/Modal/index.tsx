@@ -21,6 +21,7 @@ import {
 import { LogoFrak } from "@module/asset/icons/LogoFrak";
 import { jotaiStore } from "@module/atoms/store";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
+import type { ParseKeys } from "i18next";
 import { useAtomValue } from "jotai";
 import {
     type Dispatch,
@@ -309,10 +310,9 @@ function CurrentModalMetadataInfo() {
     return useMemo(() => {
         if (!stepKey) return null;
 
-        const baseDefaultTranslationKey = `sdk.modal.${stepKey}.default`;
-        const defaultDescriptionKey = `${baseDefaultTranslationKey}.description`;
-
         // Check if i18n contain the keys
+        const defaultDescriptionKey =
+            `sdk.modal.${stepKey}.default.description` as ParseKeys;
         const hasDescription = i18n.exists(defaultDescriptionKey);
 
         // Return the matching component
