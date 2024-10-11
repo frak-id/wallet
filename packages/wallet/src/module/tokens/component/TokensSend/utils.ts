@@ -1,27 +1,22 @@
-import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
+import type { BalanceItem } from "@/types/Token";
+import { isAddressEqual, zeroAddress } from "viem";
 
 export function getUpdatedToken({
     tokens,
     selectedToken,
-}: { tokens: GetUserErc20Token[]; selectedToken: GetUserErc20Token }) {
+}: { tokens: BalanceItem[]; selectedToken: BalanceItem }) {
     return tokens.find(
-        ({ contractAddress, formattedBalance }) =>
-            contractAddress === selectedToken?.contractAddress &&
-            formattedBalance !== selectedToken?.formattedBalance
+        ({ token, balance }) =>
+            isAddressEqual(token, selectedToken?.token ?? zeroAddress) &&
+            balance !== selectedToken?.balance
     );
 }
 
-export const validateAmount = (
-    value: string,
-    selectedToken: GetUserErc20Token
-) => {
+export const validateAmount = (value: string, selectedToken: BalanceItem) => {
     if (Number.parseFloat(value) <= 0) {
         return "Amount must be positive";
     }
-    if (
-        Number.parseFloat(value) >
-        Number.parseFloat(selectedToken.formattedBalance)
-    ) {
+    if (Number.parseFloat(value) > selectedToken.balance) {
         return "Amount must be less than balance";
     }
     return true;

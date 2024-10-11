@@ -1,7 +1,7 @@
-import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { TokenList } from "@/module/tokens/component/TokenList";
 import { TokenLogo } from "@/module/tokens/component/TokenLogo";
+import type { BalanceItem } from "@/types/Token";
 import { useState } from "react";
 import styles from "./index.module.css";
 
@@ -9,8 +9,8 @@ export function TokenModalList({
     token,
     setSelectedToken,
 }: {
-    token: GetUserErc20Token;
-    setSelectedToken?: (value: GetUserErc20Token) => void;
+    token: BalanceItem;
+    setSelectedToken?: (value: BalanceItem) => void;
 }) {
     const [openModal, setOpenModal] = useState(false);
 
@@ -29,7 +29,7 @@ export function TokenModalList({
                 label: (
                     <>
                         <TokenLogo token={token} />
-                        <span>{token?.metadata.symbol}</span>
+                        <span>{token?.symbol}</span>
                     </>
                 ),
                 className: styles.tokenModalList__trigger,

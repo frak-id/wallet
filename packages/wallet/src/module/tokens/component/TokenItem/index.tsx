@@ -1,13 +1,13 @@
-import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { TokenLogo } from "@/module/tokens/component/TokenLogo";
+import type { BalanceItem } from "@/types/Token";
 import styles from "./index.module.css";
 
 export function TokenItem({
     token,
     setSelectedValue,
 }: {
-    token: GetUserErc20Token;
-    setSelectedValue?: (value: GetUserErc20Token) => void;
+    token: BalanceItem;
+    setSelectedValue?: (value: BalanceItem) => void;
 }) {
     return (
         <li className={`${styles.tokenItem}`}>
@@ -15,12 +15,11 @@ export function TokenItem({
                 type={"button"}
                 className={styles.tokenItem__button}
                 onClick={() => setSelectedValue?.(token)}
-                aria-label={`Select ${token.metadata.symbol}`}
+                aria-label={`Select ${token.symbol}`}
             >
                 <TokenLogo token={token} size={32} />{" "}
                 <span>
-                    <strong>{token.formattedBalance}</strong>{" "}
-                    {token.metadata.symbol}
+                    <strong>{token.balance}</strong> {token.symbol}
                 </span>
             </button>
         </li>
