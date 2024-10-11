@@ -11,6 +11,10 @@
                 "login": "Connect an existing wallet"
             },
             "description": "Before continuing, please make sure you are using a device that belongs to you.<br />Frak is a solution allowing <strong>{{productName}}</strong> to reward its community for the help provided in promoting its offers. <strong>Frak is a decentralized and open-source solution, which does not store any personal or biometric data.</strong><br />To learn more about <strong>{{productName}}</strong>, please review our Privacy Policy and Terms of Use.",
+            "header": { "title": "Login with Frak Wallet" },
+            "recover": "Recover wallet from file",
+            "redirect": "You will be redirected to {{ productName }} in a few seconds.",
+            "redirectNow": "Redirect now",
             "subTitle": "to immediately receive your winnings from <pLink>{{productName}}</pLink>.",
             "title": "Create your wallet"
         }

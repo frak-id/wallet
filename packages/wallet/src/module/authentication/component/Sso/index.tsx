@@ -5,6 +5,7 @@ import {
     ssoContextAtom,
     ssoMetadataAtom,
 } from "@/module/authentication/atoms/sso";
+import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { Grid } from "@/module/common/component/Grid";
@@ -23,7 +24,7 @@ import styles from "./index.module.css";
  * @constructor
  */
 export function Sso() {
-    const { i18n } = useTranslation();
+    const { i18n, t } = useTranslation();
     /**
      * The current metadata
      */
@@ -121,48 +122,59 @@ export function Sso() {
     }, []);
 
     return (
-        <Grid
-            className={styles.sso__grid}
-            footer={
-                <>
-                    <Notice className={styles.sso__notice}>
-                        <Trans
-                            i18nKey={"authent.sso.description"}
-                            values={{
-                                productName:
-                                    currentMetadata?.name ?? "companies",
-                            }}
-                        />
-                    </Notice>
-                    <Link href={"/recovery"} className={styles.sso__recover}>
-                        <CloudUpload /> Recover wallet from file
-                    </Link>
-                </>
-            }
-        >
-            <Header />
-            {!success && (
-                <>
-                    <SsoRegisterComponent onSuccess={onSuccess} />
-                    <SsoLoginComponent onSuccess={onSuccess} />
-                </>
-            )}
-            {success && (
-                <>
-                    <p className={styles.sso__redirect}>
-                        You will be redirected to {currentMetadata?.name} in a
-                        few seconds.<span className={"dotsLoading"}>...</span>
-                    </p>
-                    <button
-                        className={styles.sso__buttonLink}
-                        onClick={redirectOrClose}
-                        type={"button"}
-                    >
-                        Redirect now
-                    </button>
-                </>
-            )}
-        </Grid>
+        <>
+            <SsoHeader />
+            <Grid
+                className={styles.sso__grid}
+                footer={
+                    <>
+                        <Notice className={styles.sso__notice}>
+                            <Trans
+                                i18nKey={"authent.sso.description"}
+                                values={{
+                                    productName:
+                                        currentMetadata?.name ?? "companies",
+                                }}
+                            />
+                        </Notice>
+                        <Link
+                            href={"/recovery"}
+                            className={styles.sso__recover}
+                        >
+                            <CloudUpload /> {t("authent.sso.recover")}
+                        </Link>
+                    </>
+                }
+            >
+                <Header />
+                {!success && (
+                    <>
+                        <SsoRegisterComponent onSuccess={onSuccess} />
+                        <SsoLoginComponent onSuccess={onSuccess} />
+                    </>
+                )}
+                {success && (
+                    <>
+                        <p className={styles.sso__redirect}>
+                            <Trans
+                                i18nKey={"authent.sso.redirect"}
+                                values={{
+                                    productName: currentMetadata?.name,
+                                }}
+                            />
+                            <span className={"dotsLoading"}>...</span>
+                        </p>
+                        <button
+                            className={styles.sso__buttonLink}
+                            onClick={redirectOrClose}
+                            type={"button"}
+                        >
+                            {t("authent.sso.redirectNow")}
+                        </button>
+                    </>
+                )}
+            </Grid>
+        </>
     );
 }
 
