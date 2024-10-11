@@ -10,7 +10,6 @@ import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoR
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { jotaiStore } from "@module/atoms/store";
-import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useAtomValue, useSetAtom } from "jotai";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
@@ -150,13 +149,17 @@ export function Sso() {
             )}
             {success && (
                 <>
-                    <p>
+                    <p className={styles.sso__redirect}>
                         You will be redirected to {currentMetadata?.name} in a
                         few seconds.<span className={"dotsLoading"}>...</span>
                     </p>
-                    <ButtonRipple onClick={redirectOrClose}>
+                    <button
+                        className={styles.sso__buttonLink}
+                        onClick={redirectOrClose}
+                        type={"button"}
+                    >
                         Redirect now
-                    </ButtonRipple>
+                    </button>
                 </>
             )}
         </Grid>

@@ -68,3 +68,7 @@
     color: #4d4d4d;
     font-size: 11px;
 }
+
+.sso__redirect {
+    margin-top: 20px;
+}
