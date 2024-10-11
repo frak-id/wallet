@@ -1,6 +1,4 @@
 "use client";
-
-import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
@@ -11,7 +9,8 @@ import {
 } from "@/module/tokens/component/TokensSend/utils";
 import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
-import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
+import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
+import type { BalanceItem } from "@/types/Token";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { Input } from "@module/component/forms/Input";
 import { useEffect, useState } from "react";
@@ -39,11 +38,11 @@ export function TokensSend() {
     } = useForm<FormInput>();
 
     // Get the user tokens
-    const { tokens, refetch } = useGetUserTokens();
+    const { userBalance, refetch } = useGetUserBalance();
 
     // Set the selected token
     const [selectedToken, setSelectedToken] = useState<
-        GetUserErc20Token | undefined
+        BalanceItem | undefined
     >();
 
     // Get the write contract function
@@ -60,18 +59,21 @@ export function TokensSend() {
      * When the tokens change, check if the selected token has been updated
      */
     useEffect(() => {
-        if (!tokens) return;
+        if (!userBalance) return;
 
         // If no token is selected, select the FRK token by default
         if (!selectedToken) {
-            setSelectedToken(tokens[0]);
+            setSelectedToken(userBalance.balances[0]);
             return;
         }
 
         // If the selected token has been updated, update the selected token
-        const findTokenUpdated = getUpdatedToken({ tokens, selectedToken });
+        const findTokenUpdated = getUpdatedToken({
+            tokens: userBalance.balances,
+            selectedToken,
+        });
         if (findTokenUpdated) setSelectedToken(findTokenUpdated);
-    }, [tokens, selectedToken]);
+    }, [userBalance, selectedToken]);
 
     // Submit handler that launches the transaction
     const onSubmit: SubmitHandler<FormInput> = async (data) => {
@@ -81,12 +83,9 @@ export function TokensSend() {
         // Launch the transaction
         await writeContractAsync({
             abi: erc20Abi,
-            address: selectedToken.contractAddress,
+            address: selectedToken.token,
             functionName: "transfer",
-            args: [
-                toAddress,
-                parseUnits(amount, selectedToken.metadata.decimals),
-            ],
+            args: [toAddress, parseUnits(amount, selectedToken.decimals)],
         });
 
         // Reset the form
@@ -135,12 +134,12 @@ export function TokensSend() {
                                     htmlFor="amount"
                                     className={styles.tokensSend__label}
                                 >
-                                    Balance: {selectedToken.formattedBalance}
+                                    Balance: {selectedToken.balance}
                                     <TokenMax
                                         onClick={() => {
                                             setValue(
                                                 "amount",
-                                                selectedToken?.formattedBalance,
+                                                selectedToken?.balance.toString(),
                                                 {
                                                     shouldValidate: true,
                                                 }

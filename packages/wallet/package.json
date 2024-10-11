@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit",
     "deploy": "sst deploy --stage prod",
     "i18n:types": "bun run i18next-resources-for-ts interface -i ./public/locales/en/ -o src/types/i18n/resources.d.ts",
-    "i18n:pull": "i18nexus pull "
+    "i18n:pull": ""
   },
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",

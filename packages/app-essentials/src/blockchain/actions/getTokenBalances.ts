@@ -1,8 +1,8 @@
+import type { Account, Address, Chain, Client, Transport } from "viem";
 import type {
     AlchemyRpcSchema,
     GetTokenBalancesRawResponse,
-} from "@/context/blockchain/viemActions/AlchemyTypes";
-import type { Account, Address, Chain, Client, Transport } from "viem";
+} from "./AlchemyRpcSchema";
 
 /**
  * Get all the balances of an account parameters

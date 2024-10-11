@@ -17,7 +17,7 @@ export const newsRoutes = (app: NewsPaperContextApp) =>
         .get(
             "/news/home",
             async () => {
-                // Fetching the repository from the decorator, since idk why it's not populated inside the context
+                // Fetching the repositories from the decorator, since idk why it's not populated inside the context
                 const { newsDbRepository } = app.decorator;
                 // Get the 3 latest news
                 const latestNews = await newsDbRepository.getLatestNews({
@@ -75,7 +75,7 @@ export const newsRoutes = (app: NewsPaperContextApp) =>
         .get(
             "/news/:id",
             async ({ params: { id } }) => {
-                // Fetching the repository from the decorator, since idk why it's not populated inside the context
+                // Fetching the repositories from the decorator, since idk why it's not populated inside the context
                 const { newsDbRepository } = app.decorator;
 
                 const document = await newsDbRepository.getNewsById(id);

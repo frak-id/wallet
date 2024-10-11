@@ -16,7 +16,7 @@ type AccountPredefinedKeys =
     | (string & {});
 
 /**
- * Build the repository that we will use to interface with our different wallets
+ * Build the repositories that we will use to interface with our different wallets
  */
 export class AdminWalletsRepository {
     private secretManager: SecretsManagerClient = new SecretsManagerClient({

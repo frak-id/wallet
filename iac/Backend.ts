@@ -63,12 +63,14 @@ function elysiaBackend(
     // A few secrets we will be using
     const {
         mongoExampleUri,
+        alchemyApiKey,
         worldNewsApiKey,
         indexerUrl,
         postgres,
         sessionEncryptionKey,
         vapidPrivateKey,
         vapidPublicKey,
+        coinGeckoApiKey,
     } = use(ConfigStack);
 
     // The domain name we will be using
@@ -100,6 +102,8 @@ function elysiaBackend(
             // some api keys
             mongoExampleUri,
             worldNewsApiKey,
+            coinGeckoApiKey,
+            alchemyApiKey,
             // some secrets
             sessionEncryptionKey,
             masterSecretId,

@@ -60,7 +60,6 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                 ...modalConfig.steps,
                 final: {
                     action: { key: "reward" },
-                    autoSkip: true,
                 },
             },
         },

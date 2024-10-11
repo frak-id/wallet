@@ -1,8 +1,8 @@
+import type { Account, Address, Chain, Client, Transport } from "viem";
 import type {
     AlchemyRpcSchema,
     GetTokenMetadataResponse,
-} from "@/context/blockchain/viemActions/AlchemyTypes";
-import type { Account, Address, Chain, Client, Transport } from "viem";
+} from "./AlchemyRpcSchema";
 
 /**
  * Get the token metadata parameters
