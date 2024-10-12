@@ -59,7 +59,7 @@ function SharingButtons({
 
     // Get our final sharing link
     const { data: finalSharingLink } = useQuery({
-        queryKey: ["final-modal", "sharing", link, useFrakContext],
+        queryKey: ["final-modal", "sharing", link, useFrakContext, address],
         queryFn: async () => {
             if (!link) return null;
 
