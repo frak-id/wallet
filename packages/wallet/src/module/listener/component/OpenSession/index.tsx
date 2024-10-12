@@ -6,7 +6,7 @@ import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 
@@ -40,16 +40,6 @@ export function OpenSessionModalStep({
         },
     });
 
-    const hasCalledOnFinish = useRef(false);
-    const safeOnFinish = useCallback(
-        (args: OpenInteractionSessionModalStepType["returns"]) => {
-            if (hasCalledOnFinish.current) return;
-            hasCalledOnFinish.current = true;
-            onFinish(args);
-        },
-        [onFinish]
-    );
-
     const {
         mutate: openSession,
         isIdle,
@@ -61,7 +51,7 @@ export function OpenSessionModalStep({
             onMutate: async () => {
                 // If we already got a session, directly exit
                 if (currentSession) {
-                    safeOnFinish({
+                    onFinish({
                         startTimestamp: currentSession.sessionStart,
                         endTimestamp: currentSession.sessionEnd,
                     });
@@ -79,7 +69,7 @@ export function OpenSessionModalStep({
                 }
 
                 // Finish the step
-                safeOnFinish({
+                onFinish({
                     startTimestamp: status.data.sessionStart,
                     endTimestamp: status.data.sessionEnd,
                 });
@@ -100,12 +90,12 @@ export function OpenSessionModalStep({
 
         // If we already got a session, directly exit
         if (currentSession) {
-            safeOnFinish({
+            onFinish({
                 startTimestamp: currentSession.sessionStart,
                 endTimestamp: currentSession.sessionEnd,
             });
         }
-    }, [currentSession, safeOnFinish, isIdle]);
+    }, [currentSession, onFinish, isIdle]);
 
     return (
         <RequireWebAuthN>

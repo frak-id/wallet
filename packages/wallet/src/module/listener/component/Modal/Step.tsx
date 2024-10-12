@@ -1,11 +1,12 @@
 import {
-    type DistributePick,
-    modalStepsAtom,
+    type AnyModalKey,
+    type DisplayedModalStep,
+    displayedRpcModalStepsAtom,
 } from "@/module/listener/atoms/modalEvents";
+import { activeStepAtom } from "@/module/listener/atoms/modalUtils";
 import styles from "@/module/listener/component/Modal/index.module.css";
-import type { ModalStepTypes } from "@frak-labs/nexus-sdk/core";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { atom, useAtomValue } from "jotai/index";
+import { useAtomValue } from "jotai/index";
 import {
     Fingerprint,
     HandCoins,
@@ -17,15 +18,10 @@ import { type PropsWithChildren, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 /**
- * Get the active steps atom
- */
-const activeStepAtom = atom((get) => get(modalStepsAtom)?.currentStep ?? 0);
-
-/**
  * Get the right icon for the given step
  * @param step
  */
-function getStepIcon(step: DistributePick<ModalStepTypes, "key" | "params">) {
+function getStepIcon(step: DisplayedModalStep<AnyModalKey>) {
     switch (step.key) {
         case "login":
         case "siweAuthenticate":
@@ -56,7 +52,7 @@ function getStepIcon(step: DistributePick<ModalStepTypes, "key" | "params">) {
 export function ModalStepIndicator() {
     const { t } = useTranslation();
     const activeStep = useAtomValue(activeStepAtom);
-    const currentSteps = useAtomValue(modalStepsAtom)?.steps;
+    const currentSteps = useAtomValue(displayedRpcModalStepsAtom)?.steps;
 
     // Compute the steps data to be displayed
     const stepsData = useMemo(() => {
@@ -74,7 +70,7 @@ export function ModalStepIndicator() {
 
             return {
                 name,
-                icon: getStepIcon(step as ModalStepTypes),
+                icon: getStepIcon(step),
             };
         });
     }, [currentSteps, t]);

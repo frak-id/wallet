@@ -3,11 +3,15 @@ import type {
     IFrameRpcSchema,
     ModalRpcMetadata,
     ModalRpcStepsInput,
+    ModalRpcStepsResultType,
     ModalStepTypes,
     RpcResponse,
 } from "@frak-labs/nexus-sdk/core";
 import { atom } from "jotai";
 
+/**
+ * Top level atom storing the current received request
+ */
 export type ModalDisplayedRequest = {
     appName: string;
     context: IFrameResolvingContext;
@@ -25,78 +29,99 @@ export const modalDisplayedRequestAtom = atom<ModalDisplayedRequest | null>(
     null
 );
 
+export type AnyModalKey = ModalStepTypes["key"];
+
 /**
- * Distributed pick type to keep type inference
+ * Atom with the displayed modal rpc steps
  */
-export type DistributePick<T, K extends keyof T> = T extends object
-    ? Pick<T, K>
+export type DisplayedModalStep<
+    T extends ModalStepTypes["key"] | undefined = undefined,
+> = T extends ModalStepTypes["key"]
+    ? {
+          // Key and params of the step
+          key: T;
+          params: Extract<ModalStepTypes, { key: T }>["params"];
+          // On response
+          onResponse: (
+              response: Extract<ModalStepTypes, { key: T }>["returns"]
+          ) => void;
+      }
     : never;
 
 /**
- * The modal steps
+ * The currently displayed modal steps
  */
-export const modalStepsAtom = atom<{
-    // Key of the current step
-    currentStep: number;
-    // All the step but in a table, for easier management
-    steps: DistributePick<ModalStepTypes, "key" | "params">[];
-    // All the steps results in an array
-    results: Pick<ModalStepTypes, "key" | "returns">[];
-    // Was the modal dismissed or not?
-    dismissed?: boolean;
-} | null>(null);
+export const displayedRpcModalStepsAtom = atom<
+    | {
+          currentStep: number;
+          steps: DisplayedModalStep<AnyModalKey>[];
+          // Was the modal dismissed or not?
+          dismissed?: boolean;
+      }
+    | undefined
+>();
 
-export const isDismissedAtom = atom(
-    (get) => get(modalStepsAtom)?.dismissed ?? true
+/**
+ * The current modal result
+ */
+export const modalRpcResultsAtom = atom<ModalRpcStepsResultType | undefined>(
+    undefined
 );
 
 /**
- * Clear a received rpc modal
+ * Atom to store everything for a new modal
  */
-export const clearRpcModalAtom = atom(null, (_get, set) => {
-    set(modalDisplayedRequestAtom, null);
-    set(modalStepsAtom, null);
-});
+export const setNewModalAtom = atom(
+    null,
+    (
+        get,
+        set,
+        {
+            request,
+            currentStep,
+            initialResult,
+            steps,
+        }: {
+            request: ModalDisplayedRequest;
+            currentStep: number;
+            initialResult: ModalRpcStepsResultType;
+            steps: Omit<DisplayedModalStep<AnyModalKey>, "onResponse">[];
+        }
+    ) => {
+        // Store the request
+        set(modalDisplayedRequestAtom, request);
+        // Store the initial result
+        set(modalRpcResultsAtom, initialResult);
 
-/**
- * Go to the dismissed step in the modal
- */
-export const dismissBtnAtom = atom(
-    (get) => {
-        // Get some info for the dismiss btn
-        const modalSteps = get(modalStepsAtom);
-        const modalRequest = get(modalDisplayedRequestAtom);
-        if (!(modalSteps && modalRequest)) return null;
+        // Append the on onResponse callback to the each steps
+        const stepsWithOnResponse = steps.map((step, index) => ({
+            ...step,
+            onResponse: (
+                response: Extract<
+                    ModalStepTypes,
+                    { key: typeof step.key }
+                >["returns"]
+            ) => {
+                const currentResults = get(modalRpcResultsAtom);
+                if (!currentResults) return;
 
-        // Ensure it's dismissable and we got a final modal
-        const metadata = modalRequest.metadata;
-        const finalStepIndex = modalSteps.steps.findIndex(
-            (step) => step.key === "final"
-        );
-        if (!metadata?.isDismissible || finalStepIndex === -1) return null;
-        if (finalStepIndex === modalSteps.currentStep) return null;
+                // Update the current results
+                set(modalRpcResultsAtom, {
+                    ...currentResults,
+                    [step.key]: response,
+                });
 
-        return {
-            customLbl: metadata.dismissActionTxt,
-            index: finalStepIndex,
-        };
-    },
-    (get, set) => {
-        // Check if we can dismiss the current modal
-        const modalSteps = get(modalStepsAtom);
-        if (!modalSteps) return null;
-        const finalStepIndex = modalSteps.steps.findIndex(
-            (step) => step.key === "final"
-        );
-
-        // If not dismissible, or no dismiss step, return null
-        if (finalStepIndex === -1 || finalStepIndex === modalSteps.currentStep)
-            return;
-
-        set(modalStepsAtom, {
-            ...modalSteps,
-            currentStep: finalStepIndex,
-            dismissed: true,
+                // Update the displayed step index
+                set(displayedRpcModalStepsAtom, (current) => ({
+                    steps: current?.steps ?? [],
+                    currentStep: index + 1,
+                }));
+            },
+        })) as DisplayedModalStep<AnyModalKey>[];
+        // Then save it
+        set(displayedRpcModalStepsAtom, {
+            currentStep,
+            steps: stepsWithOnResponse,
         });
     }
 );

@@ -1,4 +1,4 @@
-import { isDismissedAtom } from "@/module/listener/atoms/modalEvents";
+import { isModalDismissedAtom } from "@/module/listener/atoms/modalUtils";
 import { FinalModalActionComponent } from "@/module/listener/component/Final/Action";
 import type { FinalModalStepType } from "@frak-labs/nexus-sdk/core";
 import { useAtomValue } from "jotai";
@@ -19,7 +19,7 @@ export function FinalModalStep({
     onFinish: (args: object) => void;
 }) {
     // Check if it was dismissed or not
-    const isDismissed = useAtomValue(isDismissedAtom);
+    const isDismissed = useAtomValue(isModalDismissedAtom);
 
     return (
         <FinalModalActionComponent

@@ -4,20 +4,21 @@ import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import {
     type ModalDisplayedRequest,
-    clearRpcModalAtom,
+    displayedRpcModalStepsAtom,
     modalDisplayedRequestAtom,
-    modalStepsAtom,
+    modalRpcResultsAtom,
 } from "@/module/listener/atoms/modalEvents";
+import {
+    clearRpcModalAtom,
+    currentDisplayedStepAtom,
+    onFinishResultAtom,
+} from "@/module/listener/atoms/modalUtils";
 import { SiweAuthenticateModalStep } from "@/module/listener/component/Authenticate";
 import { FinalModalStep } from "@/module/listener/component/Final";
 import { LoginModalStep } from "@/module/listener/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
-import {
-    type ModalRpcStepsResultType,
-    type ModalStepTypes,
-    RpcErrorCodes,
-} from "@frak-labs/nexus-sdk/core";
+import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
 import { LogoFrak } from "@module/asset/icons/LogoFrak";
 import { jotaiStore } from "@module/atoms/store";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
@@ -64,18 +65,14 @@ function ListenerModalDialog({
      * Display the iframe
      */
     useEffect(() => {
-        emitLifecycleEvent({
-            iframeLifecycle: "show",
-        });
+        emitLifecycleEvent({ iframeLifecycle: "show" });
     }, []);
 
     /**
      * Method to close the modal
      */
     const onClose = useCallback(() => {
-        emitLifecycleEvent({
-            iframeLifecycle: "hide",
-        });
+        emitLifecycleEvent({ iframeLifecycle: "hide" });
         jotaiStore.set(clearRpcModalAtom);
     }, []);
 
@@ -100,27 +97,16 @@ function ListenerModalDialog({
     /**
      * Method when the user reached the end of the modal
      */
-    const onFinished = useCallback(() => {
-        const results = jotaiStore.get(modalStepsAtom)?.results;
-        if (!results) {
-            onError("No result following the modal", RpcErrorCodes.serverError);
-            return;
-        }
+    const onFinishResult = useAtomValue(onFinishResultAtom);
+    useEffect(() => {
+        if (!onFinishResult) return;
 
-        // Format the results from [{key, returns}] to {key: returns}
-        const formattedResults = results.reduce(
-            (acc, { key, returns }) => {
-                acc[key] = returns;
-                return acc;
-            },
-            {} as Record<string, unknown>
-        ) as ModalRpcStepsResultType;
-
+        // Emit the result and exit
         currentRequest.emitter({
-            result: formattedResults,
+            result: onFinishResult,
         });
         onClose();
-    }, [onClose, onError, currentRequest]);
+    }, [onFinishResult, currentRequest.emitter, onClose]);
 
     /**
      * When the modal visibility changes
@@ -130,14 +116,14 @@ function ListenerModalDialog({
             if (isVisible) return;
 
             // Get the current results
-            const steps = jotaiStore.get(modalStepsAtom);
-            const results = steps?.results;
+            const results = jotaiStore.get(modalRpcResultsAtom);
+            const steps = jotaiStore.get(displayedRpcModalStepsAtom);
 
             // Get the expected results and the current results
             const expectedResults =
                 steps?.steps?.filter((step) => step.key !== "final")?.length ??
                 0;
-            const resultsLength = steps?.results?.length ?? 0;
+            const resultsLength = Object.keys(results ?? {}).length;
 
             // If we don't have enough results, we can tell the requester that the modal was cancelled
             // In the case that the modal was dismissed, the result array won't contain all the value so we are good
@@ -149,18 +135,9 @@ function ListenerModalDialog({
                 return;
             }
 
-            // Otherwise, we can tell the requester that the modal was cancelled
-            // Format the results from [{key, returns}] to {key: returns}
-            const formattedResults = results.reduce(
-                (acc, { key, returns }) => {
-                    acc[key] = returns;
-                    return acc;
-                },
-                {} as Record<string, unknown>
-            ) as ModalRpcStepsResultType;
-
+            // If every steps completed, return the result
             currentRequest.emitter({
-                result: formattedResults,
+                result: results,
             });
             onClose();
         },
@@ -219,7 +196,6 @@ function ListenerModalDialog({
                 <ModalStepIndicator />
                 <CurrentModalStepComponent
                     currentRequest={currentRequest}
-                    onModalFinish={onFinished}
                     onError={onError}
                 />
             </>
@@ -277,7 +253,7 @@ function ModalComponent({
  */
 function CurrentModalMetadataInfo() {
     const { t, i18n } = useTranslation();
-    const modalSteps = useAtomValue(modalStepsAtom);
+    const modalSteps = useAtomValue(displayedRpcModalStepsAtom);
 
     // Extract step key and metadata
     const { stepKey, metadata } = useMemo(() => {
@@ -326,65 +302,20 @@ function CurrentModalMetadataInfo() {
  * @constructor
  */
 function CurrentModalStepComponent({
-    onModalFinish,
     onError,
     currentRequest,
 }: {
-    onModalFinish: () => void;
     onError: (reason?: string) => void;
     currentRequest: ModalDisplayedRequest;
 }) {
-    const modalSteps = useAtomValue(modalStepsAtom);
+    const currentStep = useAtomValue(currentDisplayedStepAtom);
 
     /**
      * Return the right modal depending on the state
      */
     return useMemo(() => {
         // Extract some info about the current modal step
-        const currentStepIndex = modalSteps?.currentStep ?? 0;
-        const currentStep =
-            modalSteps?.steps?.[modalSteps.currentStep] ?? undefined;
         if (!currentStep) return null;
-
-        // Build the on finish method
-        const onStepFinished = (result: ModalStepTypes["returns"]) => {
-            if (!modalSteps) {
-                onModalFinish();
-                return;
-            }
-
-            // Our new result array
-            const newResults = modalSteps.results;
-            newResults[currentStepIndex] = {
-                key: modalSteps.steps[currentStepIndex].key,
-                returns: result,
-            };
-
-            const nextStepIndex = currentStepIndex + 1;
-
-            // Otherwise, we move to the next step
-            jotaiStore.set(modalStepsAtom, (current) => {
-                if (!current) return null;
-                return {
-                    ...current,
-                    currentStep: nextStepIndex,
-                    results: newResults,
-                };
-            });
-
-            // If we reached the end of the steps, we close the modal
-            if (nextStepIndex >= modalSteps.steps.length) {
-                onModalFinish();
-                return;
-            }
-
-            // If the next step is the final one, with autoskip at true, we can early exit
-            const nextStep = modalSteps.steps[nextStepIndex];
-            if (nextStep.key === "final" && nextStep.params.autoSkip) {
-                onModalFinish();
-                return;
-            }
-        };
 
         // Display the right component depending on the step
         switch (currentStep.key) {
@@ -394,7 +325,7 @@ function CurrentModalStepComponent({
                         appName={currentRequest.appName}
                         context={currentRequest.context}
                         params={currentStep.params}
-                        onFinish={onStepFinished}
+                        onFinish={currentStep.onResponse}
                         onError={onError}
                     />
                 );
@@ -402,7 +333,7 @@ function CurrentModalStepComponent({
                 return (
                     <SiweAuthenticateModalStep
                         params={currentStep.params}
-                        onFinish={onStepFinished}
+                        onFinish={currentStep.onResponse}
                         onError={onError}
                     />
                 );
@@ -410,7 +341,7 @@ function CurrentModalStepComponent({
                 return (
                     <TransactionModalStep
                         params={currentStep.params}
-                        onFinish={onStepFinished}
+                        onFinish={currentStep.onResponse}
                         onError={onError}
                     />
                 );
@@ -418,7 +349,7 @@ function CurrentModalStepComponent({
                 return (
                     <OpenSessionModalStep
                         params={currentStep.params}
-                        onFinish={onStepFinished}
+                        onFinish={currentStep.onResponse}
                         onError={onError}
                     />
                 );
@@ -427,17 +358,11 @@ function CurrentModalStepComponent({
                     <FinalModalStep
                         appName={currentRequest.appName}
                         params={currentStep.params}
-                        onFinish={onStepFinished}
+                        onFinish={currentStep.onResponse}
                     />
                 );
             default:
                 return <>Can't handle {currentStep} yet</>;
         }
-    }, [
-        onModalFinish,
-        modalSteps,
-        onError,
-        currentRequest.context,
-        currentRequest.appName,
-    ]);
+    }, [onError, currentRequest.context, currentRequest.appName, currentStep]);
 }

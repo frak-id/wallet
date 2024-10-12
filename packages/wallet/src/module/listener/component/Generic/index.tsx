@@ -1,4 +1,4 @@
-import { dismissBtnAtom } from "@/module/listener/atoms/modalEvents";
+import { dismissModalBtnAtom } from "@/module/listener/atoms/modalUtils";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAtom } from "jotai";
@@ -43,7 +43,7 @@ export function MetadataInfo({
  */
 export function DismissButton() {
     const { t } = useTranslation();
-    const [info, goToDismiss] = useAtom(dismissBtnAtom);
+    const [info, goToDismiss] = useAtom(dismissModalBtnAtom);
     // If not dismissible, or no dismiss step, return null
     if (!info) return null;
 
