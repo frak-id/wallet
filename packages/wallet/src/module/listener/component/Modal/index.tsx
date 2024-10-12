@@ -168,7 +168,7 @@ function ListenerModalDialog({
     const { i18n } = useTranslation();
     useEffect(() => {
         const lang = currentRequest?.metadata?.lang;
-        if (lang) {
+        if (lang && i18n.language !== lang) {
             i18n.changeLanguage(lang);
         }
     }, [currentRequest?.metadata?.lang, i18n]);

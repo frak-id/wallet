@@ -69,6 +69,14 @@ export async function processReferral(
             return "self-referral";
         }
 
+        // If the current wallet doesn't have an interaction session, display the modal
+        if (!walletStatus?.interactionSession) {
+            currentWallet = await ensureWalletConnected(client, {
+                modalConfig,
+                walletStatus,
+            });
+        }
+
         // If we got one now, create a promise that will update the context
         if (currentWallet) {
             await FrakContextManager.replaceUrl({
