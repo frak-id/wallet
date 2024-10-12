@@ -16,7 +16,6 @@ export function DashboardWebApp({ stack }: StackContext) {
         frakWalletUrl,
         sessionEncryptionKey,
         mongoBusinessUri,
-        contentMinterPrivateKey,
         backendUrl,
         indexerUrl,
     } = use(ConfigStack);
@@ -26,7 +25,6 @@ export function DashboardWebApp({ stack }: StackContext) {
         frakWalletUrl,
         sessionEncryptionKey,
         mongoBusinessUri,
-        contentMinterPrivateKey,
         backendUrl,
         indexerUrl,
         new Config.Secret(stack, "FUNDING_ON_RAMP_URL"),

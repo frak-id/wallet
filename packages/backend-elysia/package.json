@@ -26,6 +26,7 @@
     "@bogeychan/elysia-logger": "^0.1.4",
     "@elysiajs/cors": "^1.1.1",
     "@elysiajs/cron": "^1.1.1",
+    "@elysiajs/jwt": "^1.1.1",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@tusbar/cache-control": "^1.0.2",

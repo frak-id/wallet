@@ -5,5 +5,6 @@ export {
     adminWalletContext,
     nextSessionContext,
     indexerApiContext,
+    sessionContext,
 } from "./context";
 export { log } from "./logger";

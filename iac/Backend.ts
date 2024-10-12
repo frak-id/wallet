@@ -68,6 +68,7 @@ function elysiaBackend(
         indexerUrl,
         postgres,
         sessionEncryptionKey,
+        jwtSecret,
         vapidPrivateKey,
         vapidPublicKey,
         coinGeckoApiKey,
@@ -106,6 +107,7 @@ function elysiaBackend(
             alchemyApiKey,
             // some secrets
             sessionEncryptionKey,
+            jwtSecret,
             masterSecretId,
             // postgres
             postgres.db,
