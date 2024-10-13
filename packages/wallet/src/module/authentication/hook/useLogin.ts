@@ -1,9 +1,9 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
-import { validateAuthentication } from "@/context/wallet/action/authenticate";
 import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { sessionAtom } from "@/module/common/atoms/session";
 import type { Session } from "@/types/Session";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
@@ -64,10 +64,17 @@ export function useLogin(
             );
 
             // Verify it
-            const { wallet } = await validateAuthentication({
-                expectedChallenge: authenticationOptions.challenge,
-                authenticationResponse,
-            });
+            const encodedResponse = Buffer.from(
+                JSON.stringify(authenticationResponse)
+            ).toString("base64");
+            const { data: wallet, error } =
+                await backendApi.auth.wallet.login.post({
+                    expectedChallenge: authenticationOptions.challenge,
+                    authenticatorResponse: encodedResponse,
+                });
+            if (error) {
+                throw error;
+            }
 
             // Save this to the last authenticator
             await addLastAuthentication({

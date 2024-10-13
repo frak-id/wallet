@@ -50,9 +50,9 @@ export const sessionContext = new Elysia({
             walletAuth: t.Optional(t.String()),
             businessAuth: t.Optional(t.String()),
         }),
-        headers: t.Object({
-            "x-wallet-sdk-auth": t.Optional(t.String()),
-        }),
+        // headers: t.Partial(t.Object({
+        //     "x-wallet-sdk-auth": t.String(),
+        // })),
     })
     .macro(({ onBeforeHandle }) => ({
         authenticated(target?: true | "wallet" | "business" | "wallet-sdk") {

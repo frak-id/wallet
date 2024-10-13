@@ -1,5 +1,6 @@
 import {
     blockchainContext,
+    getMongoDb,
     nextSessionContext,
     sessionContext,
 } from "@backend-common";
@@ -21,11 +22,10 @@ import { Elysia } from "elysia";
 import { getSenderAddress } from "permissionless/actions";
 import { type Hex, concatHex, keccak256, toHex } from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
-import { authContext } from "../context";
+import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 import { decodePublicKey } from "../utils/webauthnDecode";
 
 export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
-    .use(authContext)
     .use(blockchainContext)
     .use(nextSessionContext)
     .use(sessionContext)
@@ -48,13 +48,18 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 entryPointAddress: entryPoint06Address,
             });
         },
+        // Authenticator repository access
+        getAuthenticatorDb: getMongoDb({
+            urlKey: "MONGODB_NEXUS_URI",
+            db: "nexus",
+        }).then((db) => new AuthenticatorRepository(db)),
         ...decorators,
     }))
     // Login
     .post(
         "/login",
         async ({
-            authenticatorDbRepository,
+            getAuthenticatorDb,
             walletJwt,
             error,
             body: {
@@ -70,6 +75,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             ) as AuthenticationResponseJSON;
 
             // Try to find the authenticator for this user
+            const authenticatorDbRepository = await getAuthenticatorDb;
             const authenticator =
                 await authenticatorDbRepository.getByCredentialId(
                     authenticationResponse.id
@@ -135,6 +141,12 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 secure: true,
                 domain: isRunningLocally ? "localhost" : ".frak.id",
             });
+
+            return {
+                address: walletAddress,
+                authenticatorId: authenticator._id,
+                publicKey: authenticator.publicKey,
+            };
         },
         {
             body: t.Object({
@@ -143,13 +155,24 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 // b64 + stringified version of the authenticator response
                 authenticatorResponse: t.String(),
             }),
+            response: {
+                404: t.String(),
+                200: t.Object({
+                    address: t.Address(),
+                    authenticatorId: t.String(),
+                    publicKey: t.Object({
+                        x: t.Hex(),
+                        y: t.Hex(),
+                    }),
+                }),
+            },
         }
     )
     // Registration
     .post(
         "/register",
         async ({
-            authenticatorDbRepository,
+            getAuthenticatorDb,
             walletJwt,
             error,
             body: {
@@ -200,6 +223,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     authenticatorId: credentialID,
                     pubKey: publicKey,
                 }));
+            const authenticatorDbRepository = await getAuthenticatorDb;
             await authenticatorDbRepository.createAuthenticator({
                 _id: credentialID,
                 smartWalletAddress: walletAddress,
