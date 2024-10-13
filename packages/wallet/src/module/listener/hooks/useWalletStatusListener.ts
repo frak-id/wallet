@@ -54,7 +54,7 @@ export function useWalletStatusListener(): OnListenToWallet {
 
             // And then fetch the interaction session
             const interactionSession = await getSessionStatus({
-                wallet: currentSession.wallet.address,
+                wallet: currentSession.address,
             });
 
             const formattedInteractionSession = interactionSession
@@ -68,7 +68,7 @@ export function useWalletStatusListener(): OnListenToWallet {
             await emitter({
                 result: {
                     key: "connected",
-                    wallet: currentSession.wallet.address,
+                    wallet: currentSession.address,
                     interactionSession: formattedInteractionSession,
                 },
             });

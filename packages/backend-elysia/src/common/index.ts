@@ -6,5 +6,6 @@ export {
     nextSessionContext,
     indexerApiContext,
     sessionContext,
+    walletSessionContext,
 } from "./context";
 export { log } from "./logger";

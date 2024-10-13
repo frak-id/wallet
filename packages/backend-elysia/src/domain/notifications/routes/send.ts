@@ -102,7 +102,7 @@ async function getWalletsTargets({
     wallet: Address;
 }): Promise<Address[]> {
     if ("wallets" in targets) {
-        return targets.wallets as Address[];
+        return targets.wallets;
     }
 
     // Otherwise, query the indexer to fetch the wallets

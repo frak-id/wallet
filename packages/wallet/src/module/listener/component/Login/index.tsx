@@ -1,5 +1,4 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
-import { getSession } from "@/context/session/action/session";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
@@ -11,6 +10,7 @@ import type {
     LoginModalStepType,
     SsoMetadata,
 } from "@frak-labs/nexus-sdk/core";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
@@ -49,7 +49,7 @@ export function LoginModalStep({
                 const session = await mutateAsyncUpdateSessionStatus();
                 if (session) {
                     onFinish({
-                        wallet: session.wallet.address,
+                        wallet: session.address,
                     });
                     return;
                 }
@@ -58,7 +58,7 @@ export function LoginModalStep({
         // On error, transmit the error up a level
         onError: (error) => onError(error.message),
         // On success, transmit the wallet address up a level
-        onSuccess: (session) => onFinish({ wallet: session.wallet.address }),
+        onSuccess: (session) => onFinish({ wallet: session.address }),
     });
     const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
 
@@ -70,7 +70,7 @@ export function LoginModalStep({
      */
     useEffect(() => {
         if (session) {
-            onFinish({ wallet: session.wallet.address });
+            onFinish({ wallet: session.address });
         }
     }, [onFinish, session]);
 
@@ -192,7 +192,8 @@ function useUpdateSessionStatus() {
             }
 
             // Otherwise we fetch the session
-            const session = await getSession();
+            const { data: session } =
+                await backendApi.auth.wallet.session.get();
             if (session) {
                 jotaiStore.set(sessionAtom, session);
             }

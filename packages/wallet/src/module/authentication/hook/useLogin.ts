@@ -67,7 +67,7 @@ export function useLogin(
             const encodedResponse = Buffer.from(
                 JSON.stringify(authenticationResponse)
             ).toString("base64");
-            const { data: wallet, error } =
+            const { data: session, error } =
                 await backendApi.auth.wallet.login.post({
                     expectedChallenge: authenticationOptions.challenge,
                     authenticatorResponse: encodedResponse,
@@ -77,14 +77,12 @@ export function useLogin(
             }
 
             // Save this to the last authenticator
-            await addLastAuthentication({
-                wallet,
-            });
+            await addLastAuthentication(session);
 
             // Set the session
-            setSession({ wallet });
+            setSession(session);
 
-            return { wallet };
+            return session;
         },
     });
 

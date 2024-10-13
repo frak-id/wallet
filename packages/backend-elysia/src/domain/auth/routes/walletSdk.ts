@@ -21,8 +21,6 @@ export const walletSdkAuthRoutes = new Elysia({ prefix: "/walletSdk" })
                 iss: "frak.id",
                 sub: walletSession.wallet.address,
                 iat: Date.now(),
-                // Expire in 7 days
-                exp: Date.now() + 60_000 * 60 * 24 * 7,
             });
 
             return { token: jwtToken };

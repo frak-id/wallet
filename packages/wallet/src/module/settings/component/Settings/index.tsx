@@ -24,7 +24,7 @@ export function Settings() {
 
 function BiometryInfo() {
     const { address } = useAccount();
-    const { wallet } = useAtomValue(sessionAtom) ?? {};
+    const wallet = useAtomValue(sessionAtom);
 
     return (
         <Panel size={"small"}>

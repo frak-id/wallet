@@ -55,7 +55,7 @@ export function useRegister(mutations?: UseMutationOptions<Session>) {
             const encodedResponse = Buffer.from(
                 JSON.stringify(registrationResponse)
             ).toString("base64");
-            const { data: wallet, error } =
+            const { data: session, error } =
                 await backendApi.auth.wallet.register.post({
                     userAgent: navigator.userAgent,
                     expectedChallenge: registrationOptions.challenge,
@@ -68,14 +68,13 @@ export function useRegister(mutations?: UseMutationOptions<Session>) {
 
             // Save this to the last authenticator
             await addLastAuthentication({
-                wallet,
                 transports: registrationResponse.response.transports,
+                ...session,
             });
 
-            // Set the session
-            setSession({ wallet });
-
-            return { wallet };
+            // Set the session and return it
+            setSession(session);
+            return session;
         },
     });
 

@@ -55,7 +55,7 @@ export function useSendInteractionListener(): OnInteractionRequest {
             }
         }
 
-        const userAddress = jotaiStore.get(sessionAtom)?.wallet?.address;
+        const userAddress = jotaiStore.get(sessionAtom)?.address;
 
         // If no current wallet present
         if (!userAddress) {

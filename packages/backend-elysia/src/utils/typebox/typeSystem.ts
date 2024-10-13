@@ -1,3 +1,4 @@
+import type { TUnsafe } from "@sinclair/typebox";
 import { ValidationError, t as elysiaTypes } from "elysia";
 import { type Address, type Hex, isAddress, isHex } from "viem";
 
@@ -21,7 +22,7 @@ const FrakType = {
                 }
                 return value as Address;
             })
-            .Encode((value) => value as string);
+            .Encode((value) => value as string) as TUnsafe<Address>;
     },
     /**
      * Custom hex type
@@ -37,7 +38,7 @@ const FrakType = {
                 }
                 return value as Hex;
             })
-            .Encode((value) => value as string);
+            .Encode((value) => value as string) as TUnsafe<Hex>;
     },
 };
 

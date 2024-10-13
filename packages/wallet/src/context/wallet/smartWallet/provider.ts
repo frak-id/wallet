@@ -23,10 +23,10 @@ import type { SmartAccount } from "viem/account-abstraction";
  * Get the current authenticated wallet
  */
 const getAuthenticatedWallet = () => {
-    // If non SSR, direct return
+    // If on SSR, direct return
     if (typeof window === "undefined") return undefined;
     // Return the session atom
-    return jotaiStore.get(sessionAtom)?.wallet;
+    return jotaiStore.get(sessionAtom) ?? undefined;
 };
 
 /**

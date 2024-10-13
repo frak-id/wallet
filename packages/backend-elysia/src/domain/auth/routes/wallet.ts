@@ -22,7 +22,7 @@ import type {
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
 import { getSenderAddress } from "permissionless/actions";
-import { type Address, type Hex, concatHex, keccak256, toHex } from "viem";
+import { type Hex, concatHex, keccak256, toHex } from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
 import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 import { decodePublicKey } from "../utils/webauthnDecode";
@@ -39,7 +39,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     .get(
         "/session",
         async ({ cookie: { walletAuth }, walletJwt, error }) => {
-            console.log("Cookie received", { walletAuth: walletAuth.value });
             if (!walletAuth.value) {
                 return error(404, "No wallet session found");
             }
@@ -50,15 +49,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 console.log("Error decoding session", { decodedSession });
                 return error(404, "Invalid wallet session");
             }
-            console.log("Decoded session", decodedSession);
-            return {
-                address: decodedSession.address as Address,
-                authenticatorId: decodedSession.authenticatorId,
-                publicKey: {
-                    x: decodedSession.publicKey.x as Hex,
-                    y: decodedSession.publicKey.y as Hex,
-                },
-            };
+            return decodedSession;
         },
         {
             response: {
@@ -185,13 +176,12 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 iss: "frak.id",
                 sub: walletAddress,
                 iat: Date.now(),
-                // Expire in a week
-                exp: Date.now() + 60_000 * 60 * 24 * 7,
             });
+            console.log("Setting cookie", { token });
             walletAuth.set({
                 value: token,
                 sameSite: "none",
-                maxAge: 60_000 * 60 * 24 * 7, // 1 week
+                maxAge: 60 * 60 * 24 * 7, // 1 week
                 secure: true,
                 domain: isRunningLocally ? "localhost" : ".frak.id",
             });
@@ -321,13 +311,11 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 iss: "frak.id",
                 sub: walletAddress,
                 iat: Date.now(),
-                // Expire in a week
-                exp: Date.now() + 60_000 * 60 * 24 * 7,
             });
             walletAuth.set({
                 value: token,
                 sameSite: "none",
-                maxAge: 60_000 * 60 * 24 * 7, // 1 week
+                maxAge: 60 * 60 * 24 * 7, // 1 week
                 secure: true,
                 domain: isRunningLocally ? "localhost" : ".frak.id",
             });

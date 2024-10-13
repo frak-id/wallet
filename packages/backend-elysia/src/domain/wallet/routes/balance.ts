@@ -1,7 +1,7 @@
 import {
     blockchainContext,
     indexerApiContext,
-    nextSessionContext,
+    walletSessionContext,
 } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
@@ -11,7 +11,7 @@ import { BalancesRepository } from "../repositories/BalancesRepository";
 import { PricingRepository } from "../repositories/PricingRepository";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
-    .use(nextSessionContext)
+    .use(walletSessionContext)
     .use(indexerApiContext)
     .use(blockchainContext)
     .decorate(({ client, ...decorators }) => ({
@@ -31,7 +31,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
 
             // Get all the user balances
             const balances = await balancesRepository.getUserBalance({
-                address: walletSession.wallet.address,
+                address: walletSession.address,
             });
 
             // For each balances, get the eur price
@@ -67,7 +67,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             };
         },
         {
-            isAuthenticated: "wallet",
+            authenticated: "wallet",
             response: {
                 401: t.String(),
                 200: t.Object({
@@ -94,7 +94,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
 
             // Fetch the pending rewards for this user
             const { rewards, tokens } = await indexerApi
-                .get(`rewards/${walletSession.wallet.address}`)
+                .get(`rewards/${walletSession.address}`)
                 .json<RewardApiResult>();
             if (!rewards.length) {
                 return {
@@ -144,7 +144,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             };
         },
         {
-            isAuthenticated: "wallet",
+            authenticated: "wallet",
             response: {
                 401: t.String(),
                 200: t.Object({
