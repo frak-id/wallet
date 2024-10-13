@@ -17,7 +17,7 @@ const rpOrigin = isRunningInProd
  */
 const defaultUsername = "Frak Wallet";
 
-export const WebAuthN = {
+export const WebauthN = {
     rpId,
     rpName,
     rpOrigin,
