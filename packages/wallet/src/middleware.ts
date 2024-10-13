@@ -1,4 +1,4 @@
-import { getSession } from "@/context/session/action/session";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -16,7 +16,11 @@ export const config = {
 
 export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
-    const session = await getSession();
+    const { data: session } = await backendApi.auth.wallet.session.get({
+        headers: {
+            cookie: req.headers.get("cookie") ?? undefined,
+        },
+    });
 
     /**
      * Redirect to wallet if the user is authenticated

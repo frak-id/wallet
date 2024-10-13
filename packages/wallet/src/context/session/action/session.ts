@@ -28,26 +28,6 @@ async function getFullSession() {
 }
 
 /**
- * Set the session for the user
- * @param wallet
- */
-export async function setSession({ wallet }: Session) {
-    const session = await getFullSession();
-
-    session.wallet = wallet;
-
-    await session.save();
-}
-
-/**
- * Delete the current session
- */
-export async function deleteSession() {
-    const session = await getFullSession();
-    session.destroy();
-}
-
-/**
  * Get the current session
  */
 export async function getSession(): Promise<Session | null> {

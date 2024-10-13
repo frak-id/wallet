@@ -1,6 +1,7 @@
 import {
     blockchainContext,
     getMongoDb,
+    log,
     nextSessionContext,
     sessionContext,
 } from "@backend-common";
@@ -19,8 +20,9 @@ import type {
     RegistrationResponseJSON,
 } from "@simplewebauthn/types";
 import { Elysia } from "elysia";
+import { Binary } from "mongodb";
 import { getSenderAddress } from "permissionless/actions";
-import { type Hex, concatHex, keccak256, toHex } from "viem";
+import { type Address, type Hex, concatHex, keccak256, toHex } from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
 import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 import { decodePublicKey } from "../utils/webauthnDecode";
@@ -29,6 +31,50 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     .use(blockchainContext)
     .use(nextSessionContext)
     .use(sessionContext)
+    // Logout
+    .post("/logout", async ({ cookie: { walletAuth } }) => {
+        walletAuth.remove();
+    })
+    // Decode token
+    .get(
+        "/session",
+        async ({ cookie: { walletAuth }, walletJwt, error }) => {
+            console.log("Cookie received", { walletAuth: walletAuth.value });
+            if (!walletAuth.value) {
+                return error(404, "No wallet session found");
+            }
+
+            // Decode it
+            const decodedSession = await walletJwt.verify(walletAuth.value);
+            if (!decodedSession) {
+                console.log("Error decoding session", { decodedSession });
+                return error(404, "Invalid wallet session");
+            }
+            console.log("Decoded session", decodedSession);
+            return {
+                address: decodedSession.address as Address,
+                authenticatorId: decodedSession.authenticatorId,
+                publicKey: {
+                    x: decodedSession.publicKey.x as Hex,
+                    y: decodedSession.publicKey.y as Hex,
+                },
+            };
+        },
+        {
+            response: {
+                404: t.String(),
+                200: t.Object({
+                    address: t.Address(),
+                    authenticatorId: t.String(),
+                    publicKey: t.Object({
+                        x: t.Hex(),
+                        y: t.Hex(),
+                    }),
+                }),
+            },
+        }
+    )
+    // A few helpers for login + registration
     .decorate(({ client, ...decorators }) => ({
         // Helper function to get a wallet address from an authenticator
         async getAuthenticatorWalletAddress({
@@ -81,6 +127,10 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     authenticationResponse.id
                 );
             if (!authenticator) {
+                log.warn(
+                    { id: authenticationResponse.id },
+                    "Trying to login with an unknown authenticator id"
+                );
                 return error(404, "No authenticator found for this id");
             }
 
@@ -93,10 +143,14 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     counter: authenticator.counter,
                     credentialID: authenticator._id,
                     // todo: Auto mapping of string to Uint8Array
-                    credentialPublicKey: authenticator.credentialPublicKey,
+                    credentialPublicKey:
+                        authenticator.credentialPublicKey.buffer,
                 },
                 expectedChallenge,
             });
+            if (!verification) {
+                return error(404, "Verification failed");
+            }
 
             // Update this authenticator counter (if the counter has changed, not the case with touch id)
             if (
@@ -124,7 +178,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             }
 
             // Create the token and set the cookie
-            const token = walletJwt.sign({
+            const token = await walletJwt.sign({
                 address: walletAddress,
                 authenticatorId: authenticator._id,
                 publicKey: authenticator.publicKey,
@@ -198,6 +252,16 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 expectedRPID: WebAuthN.rpId,
             });
             if (!verification.registrationInfo) {
+                log.error(
+                    {
+                        verification,
+                        expectedChallenge,
+                        response: registrationResponse,
+                        rpOrigin: WebAuthN.rpOrigin,
+                        rpId: WebAuthN.rpId,
+                    },
+                    "Registration of a new authenticator failed"
+                );
                 return error(400, "Registration failed");
             }
 
@@ -228,7 +292,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 _id: credentialID,
                 smartWalletAddress: walletAddress,
                 userAgent,
-                credentialPublicKey: credentialPublicKey,
+                credentialPublicKey: new Binary(credentialPublicKey),
                 counter,
                 credentialDeviceType,
                 credentialBackedUp,
@@ -238,6 +302,10 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
 
             // If we don't want to set the session cookie, return the wallet
             if (!setSessionCookie) {
+                log.debug(
+                    { walletAddress },
+                    "Skipping session cookie registration"
+                );
                 return {
                     address: walletAddress,
                     authenticatorId: credentialID,
@@ -246,7 +314,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             }
 
             // Create the token and set the cookie
-            const token = walletJwt.sign({
+            const token = await walletJwt.sign({
                 address: walletAddress,
                 authenticatorId: credentialID,
                 publicKey: publicKey,
