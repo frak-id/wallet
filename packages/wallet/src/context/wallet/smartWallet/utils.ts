@@ -1,10 +1,5 @@
-import { kernelAddresses } from "@/context/blockchain/addresses";
-import {
-    KernelExecuteAbi,
-    KernelInitAbi,
-} from "@/context/wallet/abi/kernel-account-abis";
-import type { P256PubKey } from "@/types/WebAuthN";
-import { addresses } from "@frak-labs/app-essentials";
+import { KernelExecuteAbi } from "@frak-labs/app-essentials";
+import { kernelAddresses } from "@frak-labs/app-essentials";
 import { getSenderAddress } from "permissionless/actions";
 import {
     type Address,
@@ -13,8 +8,6 @@ import {
     type Hex,
     type Transport,
     concatHex,
-    encodeAbiParameters,
-    encodeFunctionData,
     isAddressEqual,
     slice,
     toFunctionSelector,
@@ -30,84 +23,6 @@ import { formatAbiItem } from "viem/utils";
 export type SmartAccountV06 = SmartAccount<
     SmartAccountImplementation<typeof entryPoint06Abi, "0.6">
 >;
-
-/**
- * The account creation ABI for a kernel smart account (from the KernelFactory)
- */
-const createAccountAbi = [
-    {
-        inputs: [
-            {
-                internalType: "address",
-                name: "_implementation",
-                type: "address",
-            },
-            {
-                internalType: "bytes",
-                name: "_data",
-                type: "bytes",
-            },
-            {
-                internalType: "uint256",
-                name: "_index",
-                type: "uint256",
-            },
-        ],
-        name: "createAccount",
-        outputs: [
-            {
-                internalType: "address",
-                name: "proxy",
-                type: "address",
-            },
-        ],
-        stateMutability: "payable",
-        type: "function",
-    },
-] as const;
-
-/**
- * Represent the layout of the calldata used for a webauthn signature
- */
-const webAuthNValidatorEnablingLayout = [
-    { name: "authenticatorIdHash", type: "bytes32" },
-    { name: "x", type: "uint256" },
-    { name: "y", type: "uint256" },
-] as const;
-
-/**
- * Get the account initialization code for a kernel smart account
- * @param authenticatorId
- * @param signerPubKey
- */
-export function getAccountInitCode({
-    authenticatorIdHash,
-    signerPubKey,
-}: {
-    authenticatorIdHash: Hex;
-    signerPubKey: P256PubKey;
-}): Hex {
-    if (!signerPubKey) throw new Error("Owner account not found");
-
-    const encodedPublicKey = encodeAbiParameters(
-        webAuthNValidatorEnablingLayout,
-        [authenticatorIdHash, BigInt(signerPubKey.x), BigInt(signerPubKey.y)]
-    );
-
-    // Build the account initialization data
-    const initialisationData = encodeFunctionData({
-        abi: KernelInitAbi,
-        functionName: "initialize",
-        args: [addresses.webAuthNValidator, encodedPublicKey],
-    });
-
-    // Build the account init code
-    return encodeFunctionData({
-        abi: createAccountAbi,
-        functionName: "createAccount",
-        args: [kernelAddresses.accountLogic, initialisationData, 0n],
-    }) as Hex;
-}
 
 /**
  * Check the validity of an existing account address, or fetch the pre-deterministic account address for a kernel smart wallet

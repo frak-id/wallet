@@ -1,4 +1,4 @@
-export { addresses } from "./addresses";
+export { addresses, kernelAddresses } from "./addresses";
 export { getTransport, getViemClientFromChain } from "./provider";
 export { getErpcTransport } from "./transport/erpc-transport";
 export {
@@ -51,6 +51,10 @@ export {
     multiWebAuthNRecoveryActionAbi,
     multiWebAuthNValidatorV2Abi,
 } from "./abis/kernelV2Abis";
+export {
+    KernelExecuteAbi,
+    KernelInitAbi,
+} from "./abis/kernelAccountAbis";
 export { getExecutionAbi, mintAbi } from "./abis/custom";
 export {
     sendInteractionsSelector,

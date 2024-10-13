@@ -83,7 +83,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             walletAuth.set({
                 value: token,
                 sameSite: "none",
-                maxAge: 60 * 60 * 24 * 7, // 1 week
+                maxAge: 60_000 * 60 * 24 * 7, // 1 week
                 secure: true,
                 domain: isRunningLocally ? "localhost" : ".frak.id",
             });

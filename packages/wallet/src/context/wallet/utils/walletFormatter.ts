@@ -1,9 +1,7 @@
 import { currentViemClient } from "@/context/blockchain/provider";
-import {
-    getAccountAddress,
-    getAccountInitCode,
-} from "@/context/wallet/smartWallet/utils";
+import { getAccountAddress } from "@/context/wallet/smartWallet/utils";
 import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
+import { WebAuthN } from "@frak-labs/app-essentials";
 import { type Address, keccak256, toHex } from "viem";
 
 /**
@@ -52,7 +50,7 @@ async function predicateSmartWalletAddress({
     return getAccountAddress({
         client: currentViemClient,
         initCodeProvider: () =>
-            getAccountInitCode({
+            WebAuthN.getWebAuthNSmartWalletInitCode({
                 authenticatorIdHash,
                 signerPubKey: publicKey,
             }),
