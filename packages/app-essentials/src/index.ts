@@ -33,3 +33,6 @@ export {
     stringToBytes32,
     bytesToString,
 } from "./utils";
+export {
+    WebauthN
+} from "./webauthn"
