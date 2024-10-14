@@ -17,8 +17,8 @@
             "path": "../packages/dashboard"
         },
         {
-            "name": "App - Nexus",
-            "path": "../packages/nexus"
+            "name": "App - Wallet",
+            "path": "../packages/wallet"
         },
         {
             "name": "Common - App essentgials",

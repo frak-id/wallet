@@ -1,4 +1,11 @@
-import { Elysia, ValidationError, getSchemaValidator } from "elysia";
+import { t } from "@backend-utils";
+import {
+    Elysia,
+    type Static,
+    type TSchema,
+    ValidationError,
+    getSchemaValidator,
+} from "elysia";
 
 import {
     type JWSHeaderParameters,
@@ -7,9 +14,6 @@ import {
     SignJWT,
     jwtVerify,
 } from "jose";
-
-import { Type as t } from "@sinclair/typebox";
-import type { Static, TSchema } from "@sinclair/typebox";
 
 type UnwrapSchema<
     Schema extends TSchema | undefined,
@@ -185,5 +189,3 @@ JWTOption<Name, Schema>) => {
         },
     });
 };
-
-export default jwt;
