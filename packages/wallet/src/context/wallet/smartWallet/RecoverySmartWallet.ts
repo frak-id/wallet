@@ -1,10 +1,8 @@
-import { kernelAddresses } from "@/context/blockchain/addresses";
 import type { currentViemClient } from "@/context/blockchain/provider";
-import {
-    type SmartAccountV06,
-    getAccountInitCode,
-} from "@/context/wallet/smartWallet/utils";
+import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
+import { kernelAddresses } from "@frak-labs/app-essentials";
+import { WebAuthN } from "@frak-labs/app-essentials";
 import { isSmartAccountDeployed } from "permissionless";
 import { getAccountNonce } from "permissionless/actions";
 import { memo, tryit } from "radash";
@@ -83,7 +81,7 @@ export function recoverySmartAccount<
             }
             return {
                 factory: kernelAddresses.factory,
-                factoryData: getAccountInitCode({
+                factoryData: WebAuthN.getWebAuthNSmartWalletInitCode({
                     authenticatorIdHash: keccak256(
                         toHex(initialWallet.authenticatorId)
                     ),

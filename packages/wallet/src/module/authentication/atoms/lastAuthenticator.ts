@@ -27,8 +27,8 @@ export const addLastAuthenticationAtom = atom(
 
         // Add it to the last authentications
         await dexieDb.previousAuthenticator.put({
-            wallet: authentication.wallet.address,
-            authenticatorId: authentication.wallet.authenticatorId,
+            wallet: authentication.address,
+            authenticatorId: authentication.authenticatorId,
             transports: authentication.transports,
         });
     }

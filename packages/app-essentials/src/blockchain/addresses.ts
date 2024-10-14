@@ -20,3 +20,13 @@ export const addresses = {
     webAuthNRecoveryAction: "0x000000000093c960bC9F9Dc93509E394a96c7FD9",
     webAuthNValidator: "0x0000000000Fb9604350a25E826B050D859FE7b77",
 } as const;
+
+/**
+ * The kernel related addresses
+ */
+export const kernelAddresses = {
+    // Kernel stuff
+    ecdsaValidator: "0xd9AB5096a832b9ce79914329DAEE236f8Eea0390",
+    accountLogic: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
+    factory: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",
+} as const;

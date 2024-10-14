@@ -15,20 +15,29 @@ type InteractionToPush = {
 export async function pushInteraction({
     wallet,
     toPush,
+    sdkToken,
 }: {
     wallet: Address;
     toPush: InteractionToPush;
+    sdkToken: string;
 }) {
-    const { data, error } = await backendApi.interactions.push.post({
-        interactions: [
-            {
-                wallet,
-                productId: toPush.productId,
-                interaction: toPush.interaction,
-                signature: toPush.submittedSignature,
+    const { data, error } = await backendApi.interactions.push.post(
+        {
+            interactions: [
+                {
+                    wallet,
+                    productId: toPush.productId,
+                    interaction: toPush.interaction,
+                    signature: toPush.submittedSignature,
+                },
+            ],
+        },
+        {
+            headers: {
+                "x-wallet-sdk-auth": sdkToken,
             },
-        ],
-    });
+        }
+    );
     if (error) {
         console.error("Unable to push the interactions", error);
         return undefined;
@@ -42,18 +51,27 @@ export async function pushInteraction({
 export async function pushInteractions({
     wallet,
     toPush,
+    sdkToken,
 }: {
     wallet: Address;
     toPush: InteractionToPush[];
+    sdkToken: string;
 }): Promise<string[]> {
     // Craft every interactions events message
-    const { data } = await backendApi.interactions.push.post({
-        interactions: toPush.map((interaction) => ({
-            wallet,
-            productId: interaction.productId,
-            interaction: interaction.interaction,
-            signature: interaction.submittedSignature,
-        })),
-    });
+    const { data } = await backendApi.interactions.push.post(
+        {
+            interactions: toPush.map((interaction) => ({
+                wallet,
+                productId: interaction.productId,
+                interaction: interaction.interaction,
+                signature: interaction.submittedSignature,
+            })),
+        },
+        {
+            headers: {
+                "x-wallet-sdk-auth": sdkToken,
+            },
+        }
+    );
     return data ?? [];
 }

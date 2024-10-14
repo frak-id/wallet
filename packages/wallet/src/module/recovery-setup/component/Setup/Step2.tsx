@@ -28,12 +28,12 @@ export function Step2() {
     const { generateRecoveryOptionsAsync } = useGenerateRecoveryOptions();
 
     useEffect(() => {
-        if (step !== ACTUAL_STEP || !session?.wallet || !password) return;
+        if (step !== ACTUAL_STEP || !session || !password) return;
 
         // Generate recovery data
         // and mark the step as completed
         const recoveryOptions = generateRecoveryOptionsAsync({
-            wallet: session.wallet,
+            wallet: session,
             pass: password,
         });
         recoveryOptions.then((resRecoveryOptions) => {
@@ -46,7 +46,7 @@ export function Step2() {
         });
     }, [
         generateRecoveryOptionsAsync,
-        session?.wallet,
+        session,
         password,
         step,
         setRecoveryOptions,

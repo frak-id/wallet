@@ -1,9 +1,8 @@
 "use client";
-
-import { deleteSession } from "@/context/session/action/session";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useQueryClient } from "@tanstack/react-query";
@@ -28,7 +27,7 @@ export function Logout() {
                 size={"small"}
                 onClick={async () => {
                     // Session deletion
-                    await deleteSession();
+                    await backendApi.auth.wallet.logout.post();
                     jotaiStore.set(sessionAtom, null);
                     // Query cache
                     queryClient.removeQueries();

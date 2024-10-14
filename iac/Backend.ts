@@ -63,11 +63,13 @@ function elysiaBackend(
     // A few secrets we will be using
     const {
         mongoExampleUri,
+        mongoNexusUri,
         alchemyApiKey,
         worldNewsApiKey,
         indexerUrl,
         postgres,
         sessionEncryptionKey,
+        jwtSecret,
         vapidPrivateKey,
         vapidPublicKey,
         coinGeckoApiKey,
@@ -100,13 +102,16 @@ function elysiaBackend(
             // Some generic env
             indexerUrl,
             // some api keys
-            mongoExampleUri,
             worldNewsApiKey,
             coinGeckoApiKey,
             alchemyApiKey,
             // some secrets
             sessionEncryptionKey,
+            jwtSecret,
             masterSecretId,
+            // mongo
+            mongoExampleUri,
+            mongoNexusUri,
             // postgres
             postgres.db,
             postgres.user,

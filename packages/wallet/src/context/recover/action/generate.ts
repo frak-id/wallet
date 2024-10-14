@@ -1,12 +1,15 @@
 "use server";
 
-import { kernelAddresses } from "@/context/blockchain/addresses";
 import {
     doAddPassKeyFnAbi,
     setExecutionAbi,
 } from "@/context/recover/utils/abi";
 import type { GeneratedRecoveryData } from "@/types/Recovery";
-import { addresses, isRunningInProd } from "@frak-labs/app-essentials";
+import {
+    addresses,
+    isRunningInProd,
+    kernelAddresses,
+} from "@frak-labs/app-essentials";
 import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
 
 /**

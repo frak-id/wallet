@@ -1,4 +1,4 @@
-import { KernelExecuteAbi } from "@/context/wallet/abi/kernel-account-abis";
+import { KernelExecuteAbi } from "@frak-labs/app-essentials";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 
 /**

@@ -37,7 +37,7 @@ export function Step2() {
             return;
 
         try {
-            const { wallet } = await login({
+            const wallet = await login({
                 lastAuthentication: {
                     wallet: fileContent?.initialWallet?.address,
                     authenticatorId:

@@ -132,7 +132,7 @@ function filterStepsToDo({
         // Add the login result
         currentResult = {
             ...currentResult,
-            login: { wallet: session.wallet.address },
+            login: { wallet: session.address },
         };
         currentStep++;
     }

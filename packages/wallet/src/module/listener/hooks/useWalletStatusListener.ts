@@ -5,7 +5,7 @@ import type {
     IFrameResolvingContext,
     IFrameResponseEmitter,
 } from "@/context/sdk/utils/iFrameRequestResolver";
-import { sessionAtom } from "@/module/common/atoms/session";
+import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
@@ -52,24 +52,26 @@ export function useWalletStatusListener(): OnListenToWallet {
                 return;
             }
 
-            // And then fetch the interaction session
+            // Get the on chain status
             const interactionSession = await getSessionStatus({
-                wallet: currentSession.wallet.address,
-            });
-
-            const formattedInteractionSession = interactionSession
-                ? {
-                      startTimestamp: interactionSession.sessionStart,
-                      endTimestamp: interactionSession.sessionEnd,
-                  }
-                : undefined;
+                wallet: currentSession.address,
+            }).then((interactionSession) =>
+                interactionSession
+                    ? {
+                          startTimestamp: interactionSession.sessionStart,
+                          endTimestamp: interactionSession.sessionEnd,
+                      }
+                    : undefined
+            );
 
             // Emit the event
             await emitter({
                 result: {
                     key: "connected",
-                    wallet: currentSession.wallet.address,
-                    interactionSession: formattedInteractionSession,
+                    wallet: currentSession.address,
+                    interactionToken:
+                        jotaiStore.get(sdkSessionAtom)?.token ?? undefined,
+                    interactionSession,
                 },
             });
 
@@ -93,6 +95,9 @@ export function useWalletStatusListener(): OnListenToWallet {
 
             // Listen to jotai store update
             jotaiStore.sub(sessionAtom, () => {
+                emitCurrentStatus(context, emitter);
+            });
+            jotaiStore.sub(sdkSessionAtom, () => {
                 emitCurrentStatus(context, emitter);
             });
         },
