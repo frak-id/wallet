@@ -37,10 +37,26 @@ export const buttonVariants = cva(styles.button, {
             big: styles["size--big"],
             icon: styles["size--icon"],
         },
+        blur: {
+            none: styles["blur--none"],
+            blur: styles.blur,
+        },
+        width: {
+            auto: styles["width--auto"],
+            full: styles["width--full"],
+        },
+        align: {
+            left: styles["align--left"],
+            center: styles["align--center"],
+            right: styles["align--right"],
+        },
     },
     defaultVariants: {
         variant: "primary",
         size: "medium",
+        blur: "none",
+        width: "auto",
+        align: "center",
     },
 });
 
@@ -50,6 +66,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             variant,
             className = "",
             size,
+            blur,
+            width,
+            align,
             isLoading,
             leftIcon,
             rightIcon,
@@ -63,7 +82,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         const Comp = asChild ? Slot : "button";
         return (
             <Comp
-                className={buttonVariants({ variant, size, className })}
+                className={buttonVariants({
+                    variant,
+                    size,
+                    blur,
+                    width,
+                    align,
+                    className,
+                })}
                 ref={ref}
                 type={type}
                 {...props}

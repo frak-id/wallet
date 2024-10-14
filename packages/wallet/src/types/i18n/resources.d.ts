@@ -104,6 +104,8 @@ interface Resources {
             };
         };
         wallet: {
+            activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
+            installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
             session: {
                 closed: "Your wallet is not activated. You can’t be rewarded.";
                 open: "Your wallet is activated";

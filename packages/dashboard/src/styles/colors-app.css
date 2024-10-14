@@ -15,6 +15,7 @@
     --frak-navigation-item-hover-color: rgba(0, 20, 50, 1);
     --frak-navigation-item-hover-background-color: rgba(245, 245, 245, 0.5);
     --frak-button-color: var(--frak-color-white);
+    --frak-button-border-radius: 8px;
     --frak-button-primary-background-color: rgba(245, 245, 245, 0.37);
     --frak-button-secondary-background-color: var(--frak-color-white);
     --frak-button-secondary-border-color: var(--frak-color-mischka);

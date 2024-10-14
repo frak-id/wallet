@@ -1,13 +1,13 @@
 .button {
+    box-sizing: border-box;
     padding: 0;
     text-align: center;
     cursor: pointer;
-    white-space: nowrap;
     outline: none;
     display: flex;
     align-items: center;
-    gap: 8px;
-    border-radius: 8px;
+    gap: 22px;
+    border-radius: var(--frak-button-border-radius);
 
     &:focus-visible {
         box-shadow: 0 0 0 1px var(--frak-focus-border-color);
@@ -36,11 +36,25 @@
 }
 
 .leftIcon {
-    margin-right: 8px;
 }
 
 .rightIcon {
-    margin-left: 8px;
+}
+
+.blur--none {
+    backdrop-filter: none;
+}
+
+.blur {
+    backdrop-filter: blur(80px);
+}
+
+.width--auto {
+    width: auto;
+}
+
+.width--full {
+    width: 100%;
 }
 
 .primary {
@@ -123,4 +137,16 @@
 
 .fontSize--big {
     font-size: 16px;
+}
+
+.align--left {
+    text-align: left;
+}
+
+.align--center {
+    text-align: center;
+}
+
+.align--right {
+    text-align: right;
 }

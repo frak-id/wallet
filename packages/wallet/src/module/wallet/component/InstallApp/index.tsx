@@ -1,26 +1,27 @@
+import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
 import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
-import { ButtonRipple } from "@module/component/ButtonRipple";
-import { ArrowDownToLine } from "lucide-react";
-import styles from "./index.module.css";
+import { WebApp } from "@module/asset/icons/WebApp";
+import { Button } from "@module/component/Button";
+import { Trans } from "react-i18next";
 
 export function InstallApp() {
     const { prompt, launchInstallation } = useAddToHomeScreenPrompt();
 
     return (
         prompt && (
-            <Panel variant={"empty"} size={"none"}>
-                <ButtonRipple
-                    size={"small"}
-                    className={`button ${styles.wallet__install}`}
-                    onClick={launchInstallation}
+            <Panel variant={"invisible"} size={"none"}>
+                <Button
+                    blur={"blur"}
+                    width={"full"}
+                    align={"left"}
+                    onClick={() => launchInstallation()}
+                    leftIcon={<WebApp />}
                 >
-                    <Title icon={<ArrowDownToLine width={32} height={32} />}>
-                        Install <strong>Frak Wallet</strong> on your phone for a
-                        better experience!
-                    </Title>
-                </ButtonRipple>
+                    <ButtonLabel>
+                        <Trans i18nKey={"wallet.installWebApp"} />
+                    </ButtonLabel>
+                </Button>
             </Panel>
         )
     );

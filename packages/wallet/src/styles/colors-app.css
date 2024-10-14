@@ -22,7 +22,8 @@
     );
     --frak-alertDialog-button-secondary-text-color: var(--frak-color-white);
     --frak-alertDialog-button-secondary-border-color: var(--frak-color-white);
-    --frak-button-primary-background-color: var(--frak-color-blue-zodiac-darker);
+    --frak-button-border-radius: 16px;
+    --frak-button-primary-background-color: rgba(0, 0, 0, 0.35);
     --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
     --frak-button-disabled-text-color: var(--frak-color-grayText);
     --frak-navigation-color: var(--frak-color-white);

@@ -1,11 +1,12 @@
 "use client";
 
+import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
-import { ButtonRipple } from "@module/component/ButtonRipple";
-import { BellRing } from "lucide-react";
+import { Notifications } from "@module/asset/icons/Notifications";
+import { Button } from "@module/component/Button";
+import { Trans } from "react-i18next";
 
 export function EnableNotification() {
     const { isSupported, subscription } = useNotificationSetupStatus();
@@ -19,18 +20,20 @@ export function EnableNotification() {
 
     // Otherwise, button to subscribe to the notification
     return (
-        <Panel variant={"empty"} size={"none"}>
-            <ButtonRipple
-                size={"small"}
-                onClick={subscribeToPush}
+        <Panel variant={"invisible"} size={"none"}>
+            <Button
+                blur={"blur"}
+                width={"full"}
+                align={"left"}
+                onClick={() => subscribeToPush()}
                 disabled={isPending}
                 isLoading={isPending}
+                leftIcon={<Notifications />}
             >
-                <Title icon={<BellRing width={32} height={32} />}>
-                    Enable <strong>Notification</strong> for a better
-                    experience!
-                </Title>
-            </ButtonRipple>
+                <ButtonLabel>
+                    <Trans i18nKey={"wallet.activateNotifications"} />
+                </ButtonLabel>
+            </Button>
         </Panel>
     );
 }

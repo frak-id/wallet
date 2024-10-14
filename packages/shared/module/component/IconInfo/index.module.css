@@ -4,9 +4,9 @@
     justify-content: center;
     width: 12px;
     height: 12px;
-    border: 1px solid #818c9c;
+    border: 1px solid #bbbec2;
     border-radius: 50%;
-    color: var(--frak-color-grayText);
+    color: #bbbec2;
     font-size: 10px;
     cursor: default;
 }

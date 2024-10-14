@@ -32,7 +32,7 @@
         "transactionLink": "Lien de transaction",
         "transactionSuccess": "Transaction réussie !",
         "walletAddressRequired": "L'adresse du porte-monnaie est requise",
-        "walletInvalid": "Adresse de portefeuille invalide"
+        "walletInvalid": "Adresse de porte-monnaie invalide"
     },
     "sdk": {
         "modal": {
@@ -99,6 +99,8 @@
         }
     },
     "wallet": {
+        "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
+        "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
         "session": {
             "closed": "Votre porte-monnaie n’est pas activé. Vous ne pouvez pas recevoir vos gains",
             "open": "Votre porte-monnaie est activé",
