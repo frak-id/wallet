@@ -9,14 +9,12 @@ html {
     font-style: normal;
     font-weight: 400;
     font-size: 16px;
-    /* background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover; */
     color: var(--frak-text-color);
     scroll-behavior: smooth;
     height: 100dvh;
     transition: background .3s;
     overflow: hidden;
+    background: var(--frak-contrast-background-color);
 
     & body {
         height: 100dvh;
@@ -31,20 +29,24 @@ html {
 }
 
 @media (min-width: 600px) {
-    html body {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
+    html {
+        background: none;
 
-        & .desktop {
-            margin: auto;
-            width: 430px;
-            height: 805px;
-            min-height: auto;
-            overflow: auto;
-            /* background-size: cover; */
-            transition: background .3s;
+        & body {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+
+            & .desktop {
+                margin: auto;
+                width: 430px;
+                height: 805px;
+                min-height: auto;
+                overflow: auto;
+                transition: background .3s;
+                background: var(--frak-contrast-background-color);
+            }
         }
     }
 }
@@ -52,42 +54,36 @@ html {
 /**
  * Light mode
  */
-:root[data-theme="light"] {
-    /* background-image: var(--frak-background-image-light); */
+/*:root[data-theme="light"] {
     background: var(--frak-contrast-background-color);
 }
 
 @media (min-width: 600px) {
     :root[data-theme="light"] {
         background: none;
-        /* background: var(--frak-contrast-background-color); */
 
         & .desktop {
-            /* background-image: var(--frak-background-image-light); */
             background: var(--frak-contrast-background-color);
         }
     }
-}
+}*/
 
 /**
  * Dark mode
  */
-:root[data-theme="dark"] {
+/*:root[data-theme="dark"] {
     background: var(--frak-contrast-background-color);
-    /* background-image: var(--frak-background-image-dark); */
 }
 
 @media (min-width: 600px) {
     :root[data-theme="dark"] {
         background: none;
-        /* background: var(--frak-contrast-background-color); */
 
         & .desktop {
-            /* background-image: var(--frak-background-image-dark); */
             background: var(--frak-contrast-background-color);
         }
     }
-}
+}*/
 
 /**
  * When in listener page, remove the background image
