@@ -1,7 +1,7 @@
 "use server";
 
 import { getAuthenticatorRepository } from "@/context/wallet/repository/AuthenticatorRepository";
-import { rpId } from "@/context/wallet/smartWallet/webAuthN";
+import { WebAuthN } from "@frak-labs/app-essentials";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import type { Hex } from "viem";
 
@@ -25,7 +25,7 @@ export async function getSignOptions({
 
     // Build the options
     return await generateAuthenticationOptions({
-        rpID: rpId,
+        rpID: WebAuthN.rpId,
         allowCredentials: [
             {
                 id: authenticator._id,

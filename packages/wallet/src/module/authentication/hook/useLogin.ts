@@ -1,8 +1,8 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
-import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { sessionAtom } from "@/module/common/atoms/session";
 import type { Session } from "@/types/Session";
+import { WebAuthN } from "@frak-labs/app-essentials";
 import { backendApi } from "@frak-labs/shared/context/server";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
@@ -51,7 +51,7 @@ export function useLogin(
 
             // Get the authenticate options
             const authenticationOptions = await generateAuthenticationOptions({
-                rpID: rpId,
+                rpID: WebAuthN.rpId,
                 userVerification: "required",
                 allowCredentials,
                 // timeout in ms (3min, can be useful for mobile phone linking)

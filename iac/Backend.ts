@@ -70,6 +70,7 @@ function elysiaBackend(
         postgres,
         sessionEncryptionKey,
         jwtSecret,
+        jwtSdkSecret,
         vapidPrivateKey,
         vapidPublicKey,
         coinGeckoApiKey,
@@ -108,6 +109,7 @@ function elysiaBackend(
             // some secrets
             sessionEncryptionKey,
             jwtSecret,
+            jwtSdkSecret,
             masterSecretId,
             // mongo
             mongoExampleUri,

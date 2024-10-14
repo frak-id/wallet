@@ -2,7 +2,9 @@
   "name": "@frak-labs/backend-elysia",
   "description": "Elysia Backend for the frak ecosystem",
   "version": "0.0.2",
+  "private": true,
   "type": "module",
+  "license": "GNU GPL 3.0",
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",

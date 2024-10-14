@@ -1,10 +1,5 @@
 "use client";
-
-import {
-    defaultUsername,
-    rpId,
-    rpName,
-} from "@/context/wallet/smartWallet/webAuthN";
+import { WebAuthN } from "@frak-labs/app-essentials";
 import { generateRegistrationOptions } from "@simplewebauthn/server";
 import type {
     AuthenticatorTransportFuture,
@@ -34,7 +29,7 @@ export async function getRegisterOptions({
     const year = date.getFullYear().toString();
 
     // Get the username
-    const username = `${defaultUsername}-${day}-${month}-${year}`;
+    const username = `${WebAuthN.defaultUsername}-${day}-${month}-${year}`;
 
     // Get the user id
     const randomBytes = window.crypto.getRandomValues(new Uint8Array(16));
@@ -42,8 +37,8 @@ export async function getRegisterOptions({
 
     // Generate the registration options
     return await generateRegistrationOptions({
-        rpName,
-        rpID: rpId,
+        rpName: WebAuthN.rpName,
+        rpID: WebAuthN.rpId,
         userID: fromHex(userId, "bytes"),
         userName: username,
         userDisplayName: username,
