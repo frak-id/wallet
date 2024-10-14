@@ -9,13 +9,10 @@
     align-items: center;
     margin-bottom: 10px;
     padding: 9px 12px;
-    border-radius: 12px;
-    background: radial-gradient(
-        89.19% 46.06% at 25.7% 45.27%,
-        #ffffff 0%,
-        #d9b6d4 100%
-    );
-    color: var(--frak-color-dark);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(80px);
+    color: var(--frak-color-white);
     font-size: 13px;
 }
 
@@ -23,6 +20,7 @@
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
         "Android Emoji", "EmojiOne Mozilla", "Twemoji Mozilla", "Noto Emoji",
         "Segoe UI Symbol", EmojiSymbols, emoji;
+    font-size: 12px;
 }
 
 .sessionClosed__close {
@@ -30,24 +28,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
     margin-left: auto;
-    background: #818c9c66;
-    color: #707781;
     cursor: pointer;
-}
-
-.sessionClosed__iconInfo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 12px;
-    height: 12px;
-    border: 1px solid #818c9c;
-    border-radius: 50%;
-    color: var(--frak-color-grayText);
-    font-size: 10px;
-    cursor: default;
 }

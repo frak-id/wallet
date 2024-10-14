@@ -1,5 +1,5 @@
 interface Resources {
-    default: {
+    translation: {
         authent: {
             create: {
                 alreadyRegistered: "You already have a registered wallet. Click the login button below to log in.";
@@ -37,8 +37,8 @@ interface Resources {
                 login: {
                     default: {
                         description: "Connect to your Frak account to get the best experience on this platform.";
-                        primaryAction: "Register";
-                        secondaryAction: "Login";
+                        primaryAction: "I create my wallet under 30sec";
+                        secondaryAction: "I already have a wallet";
                         title: "Connection";
                     };
                     success: "Connection successful";
@@ -46,7 +46,7 @@ interface Resources {
                 openSession: {
                     default: {
                         description: "Start a rewarding session to earn as you interact anonymously on this site. Enjoy benefits without sharing personal details. \nLearn more in our privacy policy.";
-                        primaryAction: "Being rewarded with Frak";
+                        primaryAction: "I activate my wallet";
                         title: "Activation";
                     };
                 };
@@ -86,6 +86,17 @@ interface Resources {
             default: {
                 text: "Discover this amazing product!";
                 title: "{{productName}} invite link";
+            };
+        };
+        wallet: {
+            session: {
+                closed: "Your wallet is not activated. You can’t be rewarded.";
+                open: "Your wallet is activated";
+                openSession: "Activate your wallet";
+                tooltip: {
+                    active: "You got an active wallet since {{sessionStart}} and until {{sessionEnd}}";
+                    inactive: "The wallet activation will permit us to send interaction data";
+                };
             };
         };
     };

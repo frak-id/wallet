@@ -9,10 +9,12 @@ import { Spinner } from "@module/component/Spinner";
 import { Tooltip } from "@module/component/Tooltip";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
 export function ToggleSession() {
+    const { t } = useTranslation();
     const { address } = useAccount();
 
     const { data: sessionStatus, isPending: sessionStatusIsPending } =
@@ -49,8 +51,8 @@ export function ToggleSession() {
                         }}
                     />{" "}
                     {sessionStatus
-                        ? "Your session is open. You can be rewarded"
-                        : "Open a session to get reward"}{" "}
+                        ? t("wallet.session.open")
+                        : t("wallet.session.openSession")}{" "}
                     <SessionTooltip sessionStatus={sessionStatus} />
                     {(isOpeningSession || isClosingSession) && <Spinner />}
                 </div>
@@ -60,6 +62,7 @@ export function ToggleSession() {
 }
 
 function SessionClosed({ isClosed }: { isClosed: boolean }) {
+    const { t } = useTranslation();
     const [closed, setClosed] = useState(false);
 
     useEffect(() => {
@@ -73,14 +76,14 @@ function SessionClosed({ isClosed }: { isClosed: boolean }) {
                     <span className={styles.sessionClosed__warning}>
                         &#9888;
                     </span>{" "}
-                    Your session is closed. You can’t be rewarded.
+                    {t("wallet.session.closed")}
                 </p>
                 <button
                     type={"button"}
                     className={styles.sessionClosed__close}
                     onClick={() => setClosed(false)}
                 >
-                    <X size={10} />
+                    <X size={16} />
                 </button>
             </div>
         )
@@ -92,23 +95,20 @@ function SessionTooltip({
 }: {
     sessionStatus?: InteractionSession | null;
 }) {
+    const { t } = useTranslation();
     return (
         <Tooltip
             content={
-                sessionStatus ? (
-                    <>
-                        You got an active session since{" "}
-                        {new Date(
-                            sessionStatus?.sessionStart
-                        )?.toLocaleDateString()}{" "}
-                        and until{" "}
-                        {new Date(
-                            sessionStatus?.sessionEnd
-                        )?.toLocaleDateString()}
-                    </>
-                ) : (
-                    "The session creation will permit us to send interaction data on chain for your wallet"
-                )
+                sessionStatus
+                    ? t("wallet.session.tooltip.active", {
+                          sessionStart: new Date(
+                              sessionStatus?.sessionStart
+                          )?.toLocaleDateString(),
+                          sessionEnd: new Date(
+                              sessionStatus?.sessionEnd
+                          )?.toLocaleDateString(),
+                      })
+                    : t("wallet.session.tooltip.inactive")
             }
         >
             <IconInfo />

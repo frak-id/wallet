@@ -82,5 +82,16 @@
             "text": "Découvrez ce produit incroyable !",
             "title": "Lien d'invitation {{productName}}"
         }
+    },
+    "wallet": {
+        "session": {
+            "closed": "Votre porte-monnaie n’est pas activé. Vous ne pouvez pas recevoir vos gains",
+            "open": "Votre porte-monnaie est activé",
+            "openSession": "Activez votre porte-monnaie",
+            "tooltip": {
+                "active": "Vous avez un porte-monnaie actif depuis {{sessionStart}} et jusqu'à {{sessionEnd}}",
+                "inactive": "L'activation du porte-monnaie nous permettra d'envoyer des données d'interaction"
+            }
+        }
     }
 }
