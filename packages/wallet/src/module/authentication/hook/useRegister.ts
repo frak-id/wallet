@@ -1,23 +1,19 @@
 import { getRegisterOptions } from "@/context/wallet/action/registerOptions";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
-import { sessionAtom } from "@/module/common/atoms/session";
+import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import type { Session } from "@/types/Session";
 import { backendApi } from "@frak-labs/shared/context/server";
+import { jotaiStore } from "@module/atoms/store";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import { useSetAtom } from "jotai/index";
 
 /**
  * Hook that handle the registration process
  */
 export function useRegister(mutations?: UseMutationOptions<Session>) {
-    // Setter for the session
-    const setSession = useSetAtom(sessionAtom);
-
     // Setter for the last authentication
-    const addLastAuthentication = useSetAtom(addLastAuthenticationAtom);
     const { data: previousAuthenticators } = usePreviousAuthenticators();
 
     /**
@@ -55,25 +51,29 @@ export function useRegister(mutations?: UseMutationOptions<Session>) {
             const encodedResponse = Buffer.from(
                 JSON.stringify(registrationResponse)
             ).toString("base64");
-            const { data: session, error } =
-                await backendApi.auth.wallet.register.post({
-                    userAgent: navigator.userAgent,
-                    expectedChallenge: registrationOptions.challenge,
-                    registrationResponse: encodedResponse,
-                    setSessionCookie: true,
-                });
+            const { data, error } = await backendApi.auth.wallet.register.post({
+                userAgent: navigator.userAgent,
+                expectedChallenge: registrationOptions.challenge,
+                registrationResponse: encodedResponse,
+                setSessionCookie: true,
+            });
             if (error) {
                 throw error;
             }
 
+            // Extract a few data
+            const { sdkJwt, ...session } = data;
+
             // Save this to the last authenticator
-            await addLastAuthentication({
+            await jotaiStore.set(addLastAuthenticationAtom, {
                 transports: registrationResponse.response.transports,
                 ...session,
             });
 
-            // Set the session and return it
-            setSession(session);
+            // Store the session
+            jotaiStore.set(sessionAtom, session);
+            jotaiStore.set(sdkSessionAtom, sdkJwt);
+
             return session;
         },
     });

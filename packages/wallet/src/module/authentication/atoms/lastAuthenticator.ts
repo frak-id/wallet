@@ -12,7 +12,7 @@ type LastAuthentication = Session & {
  * Atom with our last authenticator
  */
 const lastAuthenticatorAtom = atomWithStorage<LastAuthentication | null>(
-    "lastAuthentication",
+    "frak_lastAuthentication",
     null
 );
 

@@ -1,34 +1,70 @@
 import { walletSdkSessionContext, walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
+import { isAddressEqual } from "viem";
+import { walletSdkSessionService } from "../services/WalletSdkSessionService";
+import { webAuthNService } from "../services/WebAuthNService";
 
 export const walletSdkAuthRoutes = new Elysia({ prefix: "/walletSdk" })
     .use(walletSessionContext)
+    .use(webAuthNService)
+    .use(walletSdkSessionService)
     // Generate a new token
     .get(
         "/generate",
-        async ({ walletSession, walletSdkJwt, error }) => {
+        async ({ walletSession, error, generateSdkJwt }) => {
             if (!walletSession) {
                 return error(401, "Unauthorized");
             }
-
-            const jwtToken = await walletSdkJwt.sign({
-                // Global payload
-                address: walletSession.address,
-                scopes: ["interaction"],
-                // Some JWT specific infos
-                sub: walletSession.address,
-                iat: Date.now(),
-            });
-
-            return {
-                token: jwtToken,
-                // Tell when the token expires
-                expires: Date.now() + 60_000 * 60 * 24 * 7,
-            };
+            return await generateSdkJwt({ wallet: walletSession.address });
         },
         {
             authenticated: "wallet",
+            response: {
+                401: t.String(),
+                200: t.Object({
+                    token: t.String(),
+                    expires: t.Number(),
+                }),
+            },
+        }
+    )
+    // Generate a new token from a previous webauthn signature
+    .post(
+        "/fromWebAuthNSignature",
+        async ({
+            body: { signature, msg, wallet },
+            isValidWebAuthNSignature,
+            generateSdkJwt,
+            error,
+        }) => {
+            // Check the validity of the webauthn signature
+            const verificationnResult = await isValidWebAuthNSignature({
+                compressedSignature: signature,
+                msg,
+            });
+
+            // If not valid, return an error
+            if (!verificationnResult) {
+                return error(401, "Invalid signature");
+            }
+
+            // If it's not the same wallet, return an error
+            if (!isAddressEqual(verificationnResult.address, wallet)) {
+                return error(401, "Invalid signature");
+            }
+
+            // Otherwise generate a new token
+            return await generateSdkJwt({
+                wallet: verificationnResult.address,
+            });
+        },
+        {
+            body: t.Object({
+                msg: t.String(),
+                signature: t.String(),
+                wallet: t.Address(),
+            }),
             response: {
                 401: t.String(),
                 200: t.Object({

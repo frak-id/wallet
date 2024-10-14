@@ -2,6 +2,7 @@ import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import { sdkSessionAtom } from "../atoms/session";
+import { lastWebAuthNActionAtom } from "../atoms/webauthn";
 
 /**
  * Get a safe SDK token
@@ -26,7 +27,31 @@ export function useGetSafeSdkSession() {
                 }
             }
 
-            // Otherwise, craft a new token
+            // Otherwise, try to craft a new token from the last webauthn action
+            const lastWebAuthnAction = jotaiStore.get(lastWebAuthNActionAtom);
+            if (lastWebAuthnAction) {
+                const encodedSignature = Buffer.from(
+                    JSON.stringify(lastWebAuthnAction.signature)
+                ).toString("base64");
+                const { data: session, error } =
+                    await backendApi.auth.walletSdk.fromWebAuthNSignature.post({
+                        signature: encodedSignature,
+                        msg: lastWebAuthnAction.msg,
+                        wallet: lastWebAuthnAction.wallet,
+                    });
+                if (error) {
+                    console.error(
+                        "Unable to generate a new token from previous signature",
+                        error
+                    );
+                }
+                if (session) {
+                    jotaiStore.set(sdkSessionAtom, session);
+                    return session;
+                }
+            }
+
+            // Otherwise, craft a new token from the cookie (can fail in third parties context)
             const { data, error } =
                 await backendApi.auth.walletSdk.generate.get();
             if (error) {

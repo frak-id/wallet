@@ -10,7 +10,15 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 function cleanLocalStorage() {
-    const localStorageItems = ["theme", "REACT_QUERY_OFFLINE_CACHE"];
+    // Clear static local storage items
+    const localStorageItems = [
+        "REACT_QUERY_OFFLINE_CACHE",
+        "frak_theme",
+        "frak_session",
+        "frak_sdkSession",
+        "frak_interactionSession",
+        "frak_lastWebAuthNAction",
+    ];
     localStorageItems.map((item) => window.localStorage.removeItem(item));
 }
 

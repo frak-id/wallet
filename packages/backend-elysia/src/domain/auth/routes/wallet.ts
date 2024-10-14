@@ -1,30 +1,19 @@
-import {
-    blockchainContext,
-    getMongoDb,
-    log,
-    sessionContext,
-} from "@backend-common";
+import { blockchainContext, log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { WebAuthN, kernelAddresses } from "@frak-labs/app-essentials";
-import {
-    verifyAuthenticationResponse,
-    verifyRegistrationResponse,
-} from "@simplewebauthn/server";
-import type {
-    AuthenticationResponseJSON,
-    RegistrationResponseJSON,
-} from "@simplewebauthn/types";
+import { WebAuthN } from "@frak-labs/app-essentials";
+import { verifyRegistrationResponse } from "@simplewebauthn/server";
+import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
-import { getSenderAddress } from "permissionless/actions";
-import { type Hex, concatHex, keccak256, toHex } from "viem";
-import { entryPoint06Address } from "viem/account-abstraction";
-import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
+import { walletSdkSessionService } from "../services/WalletSdkSessionService";
+import { webAuthNService } from "../services/WebAuthNService";
 import { decodePublicKey } from "../utils/webauthnDecode";
 
 export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     .use(blockchainContext)
     .use(sessionContext)
+    .use(webAuthNService)
+    .use(walletSdkSessionService)
     // Logout
     .post("/logout", async ({ cookie: { walletAuth, businessAuth } }) => {
         walletAuth.update({
@@ -63,125 +52,55 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             },
         }
     )
-    // A few helpers for login + registration
-    .decorate(({ client, ...decorators }) => ({
-        // Helper function to get a wallet address from an authenticator
-        async getAuthenticatorWalletAddress({
-            authenticatorId,
-            pubKey,
-        }: { authenticatorId: string; pubKey: { x: Hex; y: Hex } }) {
-            // Compute base stuff to fetch the smart wallet address
-            const authenticatorIdHash = keccak256(toHex(authenticatorId));
-            const initCode = WebAuthN.getWebAuthNSmartWalletInitCode({
-                authenticatorIdHash,
-                signerPubKey: pubKey,
-            });
-
-            // Get the sender address based on the init code
-            return getSenderAddress(client, {
-                initCode: concatHex([kernelAddresses.factory, initCode]),
-                entryPointAddress: entryPoint06Address,
-            });
-        },
-        // Authenticator repository access
-        getAuthenticatorDb: getMongoDb({
-            urlKey: "MONGODB_NEXUS_URI",
-            db: "nexus",
-        }).then((db) => new AuthenticatorRepository(db)),
-        ...decorators,
-    }))
     // Login
     .post(
         "/login",
         async ({
-            getAuthenticatorDb,
-            walletJwt,
-            error,
+            // Request
             body: {
                 authenticatorResponse: rawAuthenticatorResponse,
                 expectedChallenge,
             },
             cookie: { walletAuth },
-            getAuthenticatorWalletAddress,
+            // Response
+            error,
+            // Context
+            isValidWebAuthNSignature,
+            walletJwt,
+            generateSdkJwt,
         }) => {
-            // Decode the authenticator response
-            const authenticationResponse = JSON.parse(
-                Buffer.from(rawAuthenticatorResponse, "base64").toString()
-            ) as AuthenticationResponseJSON;
-
-            // Try to find the authenticator for this user
-            const authenticatorDbRepository = await getAuthenticatorDb;
-            const authenticator =
-                await authenticatorDbRepository.getByCredentialId(
-                    authenticationResponse.id
-                );
-            if (!authenticator) {
-                log.warn(
-                    { id: authenticationResponse.id },
-                    "Trying to login with an unknown authenticator id"
-                );
-                return error(404, "No authenticator found for this id");
-            }
-
-            // Find a challenges in the user matching the one performed
-            const verification = await verifyAuthenticationResponse({
-                response: authenticationResponse,
-                expectedOrigin: WebAuthN.rpOrigin,
-                expectedRPID: WebAuthN.rpId,
-                authenticator: {
-                    counter: authenticator.counter,
-                    credentialID: authenticator._id,
-                    // todo: Auto mapping of string to Uint8Array
-                    credentialPublicKey:
-                        authenticator.credentialPublicKey.buffer,
-                },
-                expectedChallenge,
+            // Check if that's a valid webauthn signature
+            const verificationnResult = await isValidWebAuthNSignature({
+                compressedSignature: rawAuthenticatorResponse,
+                msg: expectedChallenge,
             });
-            if (!verification) {
-                return error(404, "Verification failed");
+            if (!verificationnResult) {
+                return error(404, "Invalid signature");
             }
 
-            // Update this authenticator counter (if the counter has changed, not the case with touch id)
-            if (
-                verification.authenticationInfo.newCounter !==
-                authenticator.counter
-            ) {
-                await authenticatorDbRepository.updateCounter({
-                    credentialId: authenticator._id,
-                    counter: verification.authenticationInfo.newCounter + 1,
-                });
-            }
-
-            // Get the wallet address
-            const walletAddress = await getAuthenticatorWalletAddress({
-                authenticatorId: authenticator._id,
-                pubKey: authenticator.publicKey,
-            });
-
-            // If the wallet didn't have any predicated smart wallet address, set it
-            if (authenticator.smartWalletAddress === undefined) {
-                await authenticatorDbRepository.updateSmartWalletAddress({
-                    credentialId: authenticator._id,
-                    smartWalletAddress: walletAddress,
-                });
-            }
+            // Otherwise all good, extract a few info
+            const { address, authenticatorId, publicKey } = verificationnResult;
 
             // Create the token and set the cookie
             const token = await walletJwt.sign({
-                address: walletAddress,
-                authenticatorId: authenticator._id,
-                publicKey: authenticator.publicKey,
-                sub: walletAddress,
+                address,
+                authenticatorId,
+                publicKey,
+                sub: address,
                 iat: Date.now(),
             });
             walletAuth.update({
                 value: token,
             });
 
+            // Finally, generate a JWT token for the SDK
+            const sdkJwt = await generateSdkJwt({ wallet: address });
+
             return {
-                address: walletAddress,
-                authenticatorId: authenticator._id,
-                publicKey: authenticator.publicKey,
+                address,
+                authenticatorId,
+                publicKey,
+                sdkJwt,
             };
         },
         {
@@ -200,6 +119,10 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                         x: t.Hex(),
                         y: t.Hex(),
                     }),
+                    sdkJwt: t.Object({
+                        token: t.String(),
+                        expires: t.Number(),
+                    }),
                 }),
             },
         }
@@ -208,9 +131,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     .post(
         "/register",
         async ({
-            getAuthenticatorDb,
-            walletJwt,
-            error,
+            // Request
             body: {
                 registrationResponse: rawRegistrationResponse,
                 expectedChallenge,
@@ -219,12 +140,20 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 previousWallet,
             },
             cookie: { walletAuth },
+            // Response
+            error,
+            // Context
+            generateSdkJwt,
+            getAuthenticatorDb,
+            walletJwt,
             getAuthenticatorWalletAddress,
+            parseCompressedWebAuthNResponse,
         }) => {
             // Decode the registration response
-            const registrationResponse = JSON.parse(
-                Buffer.from(rawRegistrationResponse, "base64").toString()
-            ) as RegistrationResponseJSON;
+            const registrationResponse =
+                parseCompressedWebAuthNResponse<RegistrationResponseJSON>(
+                    rawRegistrationResponse
+                );
 
             // Verify the registration response
             const verification = await verifyRegistrationResponse({
@@ -269,7 +198,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     authenticatorId: credentialID,
                     pubKey: publicKey,
                 }));
-            const authenticatorDbRepository = await getAuthenticatorDb;
+            const authenticatorDbRepository = await getAuthenticatorDb();
             await authenticatorDbRepository.createAuthenticator({
                 _id: credentialID,
                 smartWalletAddress: walletAddress,
@@ -282,6 +211,9 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 transports: registrationResponse.response.transports,
             });
 
+            // Finally, generate a JWT token for the SDK
+            const sdkJwt = await generateSdkJwt({ wallet: walletAddress });
+
             // If we don't want to set the session cookie, return the wallet
             if (!setSessionCookie) {
                 log.debug(
@@ -292,6 +224,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     address: walletAddress,
                     authenticatorId: credentialID,
                     publicKey,
+                    sdkJwt,
                 };
             }
 
@@ -311,6 +244,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 address: walletAddress,
                 authenticatorId: credentialID,
                 publicKey,
+                sdkJwt,
             };
         },
         {
@@ -331,6 +265,10 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     publicKey: t.Object({
                         x: t.Hex(),
                         y: t.Hex(),
+                    }),
+                    sdkJwt: t.Object({
+                        token: t.String(),
+                        expires: t.Number(),
                     }),
                 }),
             },
