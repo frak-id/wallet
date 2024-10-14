@@ -14,7 +14,13 @@ export function LoginItem({
 }: { lastAuthentication: PreviousAuthenticatorModel }) {
     const router = useRouter();
     const [, startTransition] = useTransition();
-    const { login } = useLogin();
+    const { login } = useLogin({
+        onSuccess: () => {
+            startTransition(() => {
+                router.push("/wallet");
+            });
+        },
+    });
 
     return (
         <li className={styles.loginItem}>
@@ -23,9 +29,6 @@ export function LoginItem({
                 className={styles.loginItem__button}
                 onClick={async () => {
                     await login({ lastAuthentication });
-                    startTransition(() => {
-                        router.push("/wallet");
-                    });
                 }}
             >
                 <span>

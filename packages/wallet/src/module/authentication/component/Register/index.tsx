@@ -10,7 +10,11 @@ import styles from "./index.module.css";
 
 export function Register() {
     const router = useRouter();
-    const { register, error, isRegisterInProgress } = useRegister();
+    const { register, error, isRegisterInProgress } = useRegister({
+        onSuccess: () => {
+            router.push("/wallet");
+        },
+    });
     const [disabled, setDisabled] = useState(false);
 
     /**

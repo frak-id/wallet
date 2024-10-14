@@ -5,11 +5,7 @@ import {
     sessionContext,
 } from "@backend-common";
 import { t } from "@backend-utils";
-import {
-    WebAuthN,
-    isRunningLocally,
-    kernelAddresses,
-} from "@frak-labs/app-essentials";
+import { WebAuthN, kernelAddresses } from "@frak-labs/app-essentials";
 import {
     verifyAuthenticationResponse,
     verifyRegistrationResponse,
@@ -30,8 +26,12 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     .use(blockchainContext)
     .use(sessionContext)
     // Logout
-    .post("/logout", async ({ cookie: { walletAuth } }) => {
-        walletAuth.remove();
+    .post("/logout", async ({ cookie: { walletAuth, businessAuth } }) => {
+        walletAuth.update({
+            value: "",
+            maxAge: 0,
+        });
+        businessAuth.remove();
     })
     // Decode token
     .get(
@@ -44,7 +44,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Decode it
             const decodedSession = await walletJwt.verify(walletAuth.value);
             if (!decodedSession) {
-                console.log("Error decoding session", { decodedSession });
+                log.error({ decodedSession }, "Error decoding session");
                 return error(404, "Invalid wallet session");
             }
             return decodedSession;
@@ -174,13 +174,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 sub: walletAddress,
                 iat: Date.now(),
             });
-            console.log("Setting cookie", { token });
-            walletAuth.set({
+            walletAuth.update({
                 value: token,
-                sameSite: "none",
-                maxAge: 60 * 60 * 24 * 7, // 1 week
-                secure: true,
-                domain: isRunningLocally ? "localhost" : ".frak.id",
             });
 
             return {
@@ -308,12 +303,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 sub: walletAddress,
                 iat: Date.now(),
             });
-            walletAuth.set({
+            walletAuth.update({
                 value: token,
-                sameSite: "none",
-                maxAge: 60 * 60 * 24 * 7, // 1 week
-                secure: true,
-                domain: isRunningLocally ? "localhost" : ".frak.id",
             });
 
             return {

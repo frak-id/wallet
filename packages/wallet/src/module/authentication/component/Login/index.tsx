@@ -7,6 +7,8 @@ import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import styles from "./index.module.css";
 
 /**
@@ -14,7 +16,15 @@ import styles from "./index.module.css";
  * @constructor
  */
 export function Login() {
-    const { login } = useLogin();
+    const router = useRouter();
+    const [, startTransition] = useTransition();
+    const { login } = useLogin({
+        onSuccess: () => {
+            startTransition(() => {
+                router.push("/wallet");
+            });
+        },
+    });
 
     return (
         <>

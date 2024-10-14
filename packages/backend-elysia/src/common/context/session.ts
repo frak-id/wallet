@@ -1,9 +1,21 @@
 import { jwt, t } from "@backend-utils";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { Config } from "sst/node/config";
 
+/**
+ * Some default auth cookies props 
+ */
+const defaultCookiesProps = {
+    domain: isRunningLocally ? "localhost" : ".frak.id",
+    sameSite: "none",
+    maxAge: 60 * 60 * 24 * 7, // 1 week
+    secure: true,
+} as const;
+
 export const sessionContext = new Elysia({
     name: "Context.session",
+    cookie: defaultCookiesProps,
 })
     // Wallet JWT
     .use(
@@ -62,6 +74,12 @@ export const sessionContext = new Elysia({
             businessAuth: t.Optional(t.String()),
         }),
     })
+    .onBeforeHandle(({ cookie: { walletAuth, businessAuth } }) => {
+        // Set default properties for walletAuth cookie
+        walletAuth.update(defaultCookiesProps);
+        // Set default properties for businessAuth cookie
+        businessAuth.update(defaultCookiesProps);
+    })
     .macro(({ onBeforeHandle }) => ({
         authenticated(target?: true | "wallet" | "business" | "wallet-sdk") {
             if (!target) return;
@@ -75,7 +93,7 @@ export const sessionContext = new Elysia({
                             error,
                             businessJwt,
                         }) => {
-                            if (!businessAuth) {
+                            if (!businessAuth?.value) {
                                 return error(
                                     "Unauthorized",
                                     "Missing business JWT"
@@ -136,7 +154,7 @@ export const sessionContext = new Elysia({
                             error,
                             walletJwt,
                         }) => {
-                            if (!walletAuth) {
+                            if (!walletAuth?.value) {
                                 return error(401, "Missing wallet JWT");
                             }
                             const auth = await walletJwt.verify(
@@ -168,8 +186,10 @@ export const walletSessionContext = new Elysia({
         }),
     })
     .resolve(async ({ cookie: { walletAuth }, walletJwt }) => {
+        const value = walletAuth?.value;
+        if (!value) return {};
         return {
-            walletSession: await walletJwt.verify(walletAuth.value),
+            walletSession: await walletJwt.verify(value),
         };
     })
     .as("plugin");

@@ -1,5 +1,5 @@
 "use client";
-import { sessionAtom } from "@/module/common/atoms/session";
+import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { backendApi } from "@frak-labs/shared/context/server";
@@ -29,6 +29,7 @@ export function Logout() {
                     // Session deletion
                     await backendApi.auth.wallet.logout.post();
                     jotaiStore.set(sessionAtom, null);
+                    jotaiStore.set(sdkSessionAtom, null);
                     // Query cache
                     queryClient.removeQueries();
                     // Local storage cleanup
