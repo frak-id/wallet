@@ -19,6 +19,7 @@
             "title": "Créez votre portefeuille"
         }
     },
+    "common": { "balance": "Solde" },
     "sdk": {
         "modal": {
             "default": { "dismissBtn": "Continuer sans Frak" },

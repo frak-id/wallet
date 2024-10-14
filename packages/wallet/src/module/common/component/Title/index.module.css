@@ -2,8 +2,24 @@
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.size--medium {
     font-size: 14px;
     font-weight: 500;
+}
+
+.size--big {
+    font-size: 21px;
+    font-weight: 600;
+}
+
+.align--left {
+    justify-content: flex-start;
+}
+
+.align--center {
+    justify-content: center;
 }
 
 .title__text {

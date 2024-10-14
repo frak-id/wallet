@@ -22,6 +22,9 @@ interface Resources {
                 title: "Create your wallet";
             };
         };
+        common: {
+            balance: "Balance";
+        };
         sdk: {
             modal: {
                 default: {

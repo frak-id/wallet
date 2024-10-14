@@ -19,6 +19,7 @@
             "title": "Create your wallet"
         }
     },
+    "common": { "balance": "Balance" },
     "sdk": {
         "modal": {
             "default": { "dismissBtn": "Continue without Frak" },
