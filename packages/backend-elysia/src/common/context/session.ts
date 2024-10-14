@@ -20,6 +20,8 @@ export const sessionContext = new Elysia({
             }),
             // One week
             expirationDelayInSecond: 60 * 60 * 24 * 7,
+            // Default jwt payload
+            iss: "frak.id",
         })
     )
     // Wallet SDK JWT
@@ -28,11 +30,13 @@ export const sessionContext = new Elysia({
             name: "walletSdkJwt",
             secret: Config.JWT_SDK_SECRET,
             schema: t.Object({
-                wallet: t.Address(),
+                address: t.Address(),
                 scopes: t.Array(t.Literal("interaction")),
             }),
             // One week
             expirationDelayInSecond: 60 * 60 * 24 * 7,
+            // Default jwt payload
+            iss: "frak.id",
         })
     )
     // Business JWT
@@ -47,6 +51,8 @@ export const sessionContext = new Elysia({
             }),
             // One week
             expirationDelayInSecond: 60 * 60 * 24 * 7,
+            // Default jwt payload
+            iss: "frak.id",
         })
     )
     // Then some helpers for potential cookies / headers
@@ -55,9 +61,6 @@ export const sessionContext = new Elysia({
             walletAuth: t.Optional(t.String()),
             businessAuth: t.Optional(t.String()),
         }),
-        // headers: t.Partial(t.Object({
-        //     "x-wallet-sdk-auth": t.String(),
-        // })),
     })
     .macro(({ onBeforeHandle }) => ({
         authenticated(target?: true | "wallet" | "business" | "wallet-sdk") {
@@ -169,4 +172,27 @@ export const walletSessionContext = new Elysia({
             walletSession: await walletJwt.verify(walletAuth.value),
         };
     })
+    .as("plugin");
+
+export const walletSdkSessionContext = new Elysia({
+    name: "Context.walletSdkSession",
+})
+    .use(sessionContext)
+    .guard({
+        headers: t.Partial(
+            t.Object({
+                "x-wallet-sdk-auth": t.String(),
+            })
+        ),
+    })
+    .resolve(
+        async ({
+            headers: { "x-wallet-sdk-auth": walletSdkAuth },
+            walletSdkJwt,
+        }) => {
+            return {
+                walletSdkSession: await walletSdkJwt.verify(walletSdkAuth),
+            };
+        }
+    )
     .as("plugin");

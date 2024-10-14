@@ -7,5 +7,6 @@ export {
     indexerApiContext,
     sessionContext,
     walletSessionContext,
+    walletSdkSessionContext,
 } from "./context";
 export { log } from "./logger";

@@ -1,4 +1,4 @@
-import { log, walletSessionContext } from "@backend-common";
+import { log, walletSdkSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { isAddressEqual } from "viem";
@@ -9,24 +9,24 @@ import type { SimulateInteractionAppJob } from "../jobs/simulate";
 
 export const pushInteractionsRoutes = new Elysia()
     .use(interactionsContext)
-    .use(walletSessionContext)
+    .use(walletSdkSessionContext)
     .post(
         "/push",
         async ({
             body: { interactions },
-            walletSession,
+            walletSdkSession,
             error,
             interactionsDb,
             store,
         }) => {
-            if (!walletSession) return;
+            if (!walletSdkSession) return;
 
             // Ensure no wallet mismatch
             if (
                 interactions.some(
                     (interaction) =>
                         !isAddressEqual(
-                            walletSession.address,
+                            walletSdkSession.address,
                             interaction.wallet
                         )
                 )
@@ -66,7 +66,7 @@ export const pushInteractionsRoutes = new Elysia()
             return results.map((result) => result.insertedId.toString());
         },
         {
-            authenticated: "wallet",
+            authenticated: "wallet-sdk",
             body: t.Object({
                 interactions: t.Array(InteractionRequestDto),
             }),

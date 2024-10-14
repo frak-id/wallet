@@ -3,4 +3,8 @@ export { postgresContext } from "./postgres";
 export { adminWalletContext } from "./adminWallet";
 export { nextSessionContext } from "./nextSession";
 export { indexerApiContext } from "./indexerApi";
-export { sessionContext, walletSessionContext } from "./session";
+export {
+    sessionContext,
+    walletSessionContext,
+    walletSdkSessionContext,
+} from "./session";

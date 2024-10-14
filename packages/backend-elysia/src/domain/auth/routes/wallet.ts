@@ -2,7 +2,6 @@ import {
     blockchainContext,
     getMongoDb,
     log,
-    nextSessionContext,
     sessionContext,
 } from "@backend-common";
 import { t } from "@backend-utils";
@@ -29,7 +28,6 @@ import { decodePublicKey } from "../utils/webauthnDecode";
 
 export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     .use(blockchainContext)
-    .use(nextSessionContext)
     .use(sessionContext)
     // Logout
     .post("/logout", async ({ cookie: { walletAuth } }) => {
@@ -173,7 +171,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 address: walletAddress,
                 authenticatorId: authenticator._id,
                 publicKey: authenticator.publicKey,
-                iss: "frak.id",
                 sub: walletAddress,
                 iat: Date.now(),
             });
@@ -308,7 +305,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 address: walletAddress,
                 authenticatorId: credentialID,
                 publicKey: publicKey,
-                iss: "frak.id",
                 sub: walletAddress,
                 iat: Date.now(),
             });
