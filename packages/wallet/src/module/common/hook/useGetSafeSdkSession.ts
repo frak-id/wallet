@@ -1,6 +1,7 @@
 import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { sdkSessionAtom } from "../atoms/session";
 import { lastWebAuthNActionAtom } from "../atoms/webauthn";
 
@@ -8,13 +9,15 @@ import { lastWebAuthNActionAtom } from "../atoms/webauthn";
  * Get a safe SDK token
  */
 export function useGetSafeSdkSession() {
+    // Using jotai hook since it's seem to struggle reading from storage directly in some cases
+    const currentSession = useAtomValue(sdkSessionAtom);
+    const lastWebAuthnAction = useAtomValue(lastWebAuthNActionAtom);
+
     const query = useQuery({
         // keep in mem for 2min
         gcTime: 2 * 60 * 1000,
         queryKey: ["sdk-token", "get-safe"],
         queryFn: async () => {
-            const currentSession = jotaiStore.get(sdkSessionAtom);
-
             // If we got a current token, check it's validity
             if (currentSession) {
                 const isValid = await backendApi.auth.walletSdk.isValid.get({
@@ -28,7 +31,6 @@ export function useGetSafeSdkSession() {
             }
 
             // Otherwise, try to craft a new token from the last webauthn action
-            const lastWebAuthnAction = jotaiStore.get(lastWebAuthNActionAtom);
             if (lastWebAuthnAction) {
                 const encodedSignature = Buffer.from(
                     JSON.stringify(lastWebAuthnAction.signature)

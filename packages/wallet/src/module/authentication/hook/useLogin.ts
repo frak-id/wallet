@@ -1,6 +1,7 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import type { Session } from "@/types/Session";
 import { WebAuthN } from "@frak-labs/app-essentials";
 import { backendApi } from "@frak-labs/shared/context/server";
@@ -68,6 +69,13 @@ export function useLogin(
             if (error) {
                 throw error;
             }
+
+            // Store this last webauthn action
+            jotaiStore.set(lastWebAuthNActionAtom, {
+                wallet: data.address,
+                signature: authenticationResponse,
+                msg: authenticationOptions.challenge,
+            });
 
             // Extract a few data
             const { sdkJwt, ...session } = data;
