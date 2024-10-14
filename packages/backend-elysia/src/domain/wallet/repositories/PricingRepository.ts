@@ -1,4 +1,4 @@
-import { addresses } from "@frak-labs/app-essentials";
+import { addresses, usdcArbitrumAddress } from "@frak-labs/app-essentials";
 import { Mutex } from "async-mutex";
 import ky, { type KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
@@ -51,7 +51,7 @@ export class PricingRepository {
     private async _getTokenPrice({ token }: { token: Address }) {
         // Replaced mocked USD token address with the usdc address
         const finalToken = isAddressEqual(token, addresses.mUSDToken)
-            ? "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+            ? usdcArbitrumAddress
             : token;
 
         // Check if we have the token in cache

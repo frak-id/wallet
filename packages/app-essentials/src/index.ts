@@ -1,6 +1,7 @@
 export {
     addresses,
     kernelAddresses,
+    usdcArbitrumAddress,
     // Roles
     productRoles,
     interactionValidatorRoles,

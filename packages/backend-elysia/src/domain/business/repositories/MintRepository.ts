@@ -2,12 +2,14 @@ import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
 import {
     addresses,
+    isRunningInProd,
     productRegistryAbi,
     stringToBytes32,
 } from "@frak-labs/app-essentials";
 import {
     campaignBankFactoryAbi,
     mintAbi,
+    usdcArbitrumAddress,
 } from "@frak-labs/app-essentials/blockchain";
 import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
 import { productTypesMask } from "@frak-labs/nexus-sdk/core";
@@ -129,10 +131,17 @@ export class MintRepository {
         });
 
         // Then deploy a mocked usd bank for this product
-        await this.deployMockedUsdBank({
-            productId: precomputedProductId,
-            minter,
-        });
+        if (isRunningInProd) {
+            await this.deployUsdcBank({
+                productId: precomputedProductId,
+                minter,
+            });
+        } else {
+            await this.deployMockedUsdBank({
+                productId: precomputedProductId,
+                minter,
+            });
+        }
 
         return {
             productId: precomputedProductId,
@@ -197,6 +206,42 @@ export class MintRepository {
                 { productId, error: e },
                 "Failed to deploy the mocked usd bank"
             );
+        }
+    }
+
+    /**
+     * Automatically deploy a mocked usd bank for the given product
+     * @param productId
+     * @param minter
+     * @private
+     */
+    private async deployUsdcBank({
+        productId,
+        minter,
+    }: { productId: bigint; minter: LocalAccount }) {
+        const lock = this.adminRepository.getMutexForAccount({ key: "minter" });
+        try {
+            await lock.runExclusive(async () => {
+                // Prepare the deployment data
+                const { request, result } = await simulateContract(
+                    this.client,
+                    {
+                        account: minter,
+                        abi: campaignBankFactoryAbi,
+                        address: addresses.campaignBankFactory,
+                        functionName: "deployCampaignBank",
+                        args: [productId, usdcArbitrumAddress],
+                    }
+                );
+                if (!result || isAddressEqual(result, zeroAddress)) {
+                    return;
+                }
+
+                // Trigger the deployment
+                await writeContract(this.client, request);
+            });
+        } catch (e) {
+            log.warn({ productId, error: e }, "Failed to deploy the usdc bank");
         }
     }
 }

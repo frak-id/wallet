@@ -30,3 +30,8 @@ export const kernelAddresses = {
     accountLogic: "0xd3082872F8B06073A021b4602e022d5A070d7cfC",
     factory: "0x5de4839a76cf55d0c90e2061ef4386d962E15ae3",
 } as const;
+
+/**
+ * The usdc address on arbitrum
+ */
+export const usdcArbitrumAddress = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";

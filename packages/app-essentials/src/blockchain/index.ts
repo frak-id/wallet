@@ -1,4 +1,4 @@
-export { addresses, kernelAddresses } from "./addresses";
+export { addresses, kernelAddresses, usdcArbitrumAddress } from "./addresses";
 export { getTransport, getViemClientFromChain } from "./provider";
 export { getErpcTransport } from "./transport/erpc-transport";
 export {
