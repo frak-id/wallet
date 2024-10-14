@@ -27,9 +27,14 @@ type CreateReferralLinkInteraction = BaseInteraction & {
     type: "CREATE_REFERRAL_LINK";
     data: null;
 };
+type WebShopOpenInteraction = BaseInteraction & {
+    type: "WEBSHOP_OPENNED";
+    data: null;
+};
 
 export type InteractionHistory =
     | OpenOrReadInteraction
     | ReferredInteraction
     | CreateReferralLinkInteraction
-    | PurchasesInteraction;
+    | PurchasesInteraction
+    | WebShopOpenInteraction;

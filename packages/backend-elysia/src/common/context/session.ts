@@ -4,7 +4,7 @@ import { Elysia } from "elysia";
 import { Config } from "sst/node/config";
 
 /**
- * Some default auth cookies props 
+ * Some default auth cookies props
  */
 const defaultCookiesProps = {
     domain: isRunningLocally ? "localhost" : ".frak.id",

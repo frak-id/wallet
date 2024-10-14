@@ -24,6 +24,7 @@ const mapLabels = {
     CREATE_REFERRAL_LINK: "Create share link",
     PURCHASE_STARTED: "Started purchase",
     PURCHASE_COMPLETED: "Completed purchase",
+    WEBSHOP_OPENNED: "Openned webshop",
 };
 
 const mapIcons = {
@@ -33,6 +34,7 @@ const mapIcons = {
     CREATE_REFERRAL_LINK: <Link size={30} />,
     PURCHASE_STARTED: <ShoppingBasket size={30} />,
     PURCHASE_COMPLETED: <ShoppingCart size={30} />,
+    WEBSHOP_OPENNED: <ShoppingCart size={30} />,
 };
 
 export function Interaction({ article }: InteractionProps) {

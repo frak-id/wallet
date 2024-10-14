@@ -17,7 +17,9 @@ export const interactionTypes = {
         proofVerifiableStorageUpdate: "0x2ab2aeef",
         callableVerifiableStorageUpdate: "0xa07da986",
     },
-    webshop: {},
+    webshop: {
+        open: "0xb311798f",
+    },
     referral: {
         referred: "0x010cc3b9",
         createLink: "0xb2c0f17c",
