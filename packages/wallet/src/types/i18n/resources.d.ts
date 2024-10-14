@@ -23,7 +23,19 @@ interface Resources {
             };
         };
         common: {
+            amountRequired: "Amount is required";
             balance: "Balance";
+            copied: "Copied!";
+            copyAddress: "Copy address";
+            enterAddress: "Enter address";
+            receive: "Receive";
+            send: "Send";
+            to: "To";
+            transactionHash: "Transaction Hash:";
+            transactionLink: "Transaction Link";
+            transactionSuccess: "Transaction Success!";
+            walletAddressRequired: "Wallet address is required";
+            walletInvalid: "Invalid wallet address";
         };
         sdk: {
             modal: {
@@ -99,6 +111,15 @@ interface Resources {
                 tooltip: {
                     active: "You got an active wallet since {{sessionStart}} and until {{sessionEnd}}";
                     inactive: "The wallet activation will permit us to send interaction data";
+                };
+            };
+            tokens: {
+                amountLessThanBalance: "Amount must be less than balance";
+                amountPositive: "Amount must be positive";
+                amountToSend: "Amount to send";
+                backToWallet: "Back to wallet page";
+                receive: {
+                    title: "Receive assets on <strong>Testnets</strong>";
                 };
             };
         };

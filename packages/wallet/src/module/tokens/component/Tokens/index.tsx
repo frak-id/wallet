@@ -2,9 +2,11 @@ import { Panel } from "@/module/common/component/Panel";
 import { Balance } from "@/module/tokens/component/Balance";
 import { HandCoins, Send } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
 export function Tokens() {
+    const { t } = useTranslation();
     return (
         <Panel size={"small"}>
             <Balance />
@@ -14,14 +16,14 @@ export function Tokens() {
                     className={`button ${styles.tokens__button}`}
                 >
                     <HandCoins size={56} absoluteStrokeWidth={true} />
-                    Receive
+                    {t("common.receive")}
                 </Link>
                 <Link
                     href={"/tokens/send"}
                     className={`button ${styles.tokens__button}`}
                 >
                     <Send size={56} absoluteStrokeWidth={true} />
-                    Send
+                    {t("common.send")}
                 </Link>
             </div>
         </Panel>

@@ -1,4 +1,5 @@
 import type { BalanceItem } from "@/types/Token";
+import { t } from "i18next";
 import { isAddressEqual, zeroAddress } from "viem";
 
 export function getUpdatedToken({
@@ -14,10 +15,10 @@ export function getUpdatedToken({
 
 export const validateAmount = (value: string, selectedToken: BalanceItem) => {
     if (Number.parseFloat(value) <= 0) {
-        return "Amount must be positive";
+        return t("wallet.tokens.amountPositive");
     }
     if (Number.parseFloat(value) > selectedToken.balance) {
-        return "Amount must be less than balance";
+        return t("wallet.tokens.amountLessThanBalance");
     }
     return true;
 };

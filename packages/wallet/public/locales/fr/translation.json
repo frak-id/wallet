@@ -19,7 +19,21 @@
             "title": "Créez votre portefeuille"
         }
     },
-    "common": { "balance": "Solde" },
+    "common": {
+        "amountRequired": "Le montant est requis",
+        "balance": "Solde",
+        "copied": "Copié!",
+        "copyAddress": "Copier l'adresse",
+        "enterAddress": "Entrez l'adresse",
+        "receive": "Recevoir",
+        "send": "Envoyer",
+        "to": "À",
+        "transactionHash": "Hash de transaction :",
+        "transactionLink": "Lien de transaction",
+        "transactionSuccess": "Transaction réussie !",
+        "walletAddressRequired": "L'adresse du porte-monnaie est requise",
+        "walletInvalid": "Adresse de portefeuille invalide"
+    },
     "sdk": {
         "modal": {
             "default": { "dismissBtn": "Continuer sans Frak" },
@@ -92,6 +106,15 @@
             "tooltip": {
                 "active": "Vous avez un porte-monnaie actif depuis {{sessionStart}} et jusqu'à {{sessionEnd}}",
                 "inactive": "L'activation du porte-monnaie nous permettra d'envoyer des données d'interaction"
+            }
+        },
+        "tokens": {
+            "amountLessThanBalance": "Le montant doit être inférieur au solde",
+            "amountPositive": "Le montant doit être positif",
+            "amountToSend": "Montant à envoyer",
+            "backToWallet": "Retour au porte-monnaie",
+            "receive": {
+                "title": "Recevoir des actifs sur <strong>les réseaux de test</strong>"
             }
         }
     }

@@ -16,6 +16,7 @@ import { Input } from "@module/component/forms/Input";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { erc20Abi, parseUnits } from "viem";
 import type { Hex } from "viem";
 import { useWriteContract } from "wagmi";
@@ -27,6 +28,8 @@ type FormInput = {
 };
 
 export function TokensSend() {
+    const { t } = useTranslation();
+
     // Form control and validation
     const {
         register,
@@ -97,7 +100,7 @@ export function TokensSend() {
 
     return (
         <>
-            <Back href={"/wallet"}>Back to wallet page</Back>
+            <Back href={"/wallet"}>{t("wallet.tokens.backToWallet")}</Back>
             <Grid>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <p className={styles.tokensSend__inputWrapper}>
@@ -105,19 +108,19 @@ export function TokensSend() {
                             htmlFor="toAddress"
                             className={styles.tokensSend__label}
                         >
-                            To
+                            {t("common.to")}
                         </label>
                         <Input
                             type={"text"}
                             id={"toAddress"}
-                            aria-label="Enter address"
-                            placeholder="Enter address"
+                            aria-label={t("common.enterAddress")}
+                            placeholder={t("common.enterAddress")}
                             aria-invalid={errors.toAddress ? "true" : "false"}
                             {...register("toAddress", {
-                                required: "Wallet address is required",
+                                required: t("common.walletAddressRequired"),
                                 pattern: {
                                     value: /^0x[0-9A-Fa-f]{40}$/,
-                                    message: "Invalid wallet address",
+                                    message: t("common.walletInvalid"),
                                 },
                             })}
                         />
@@ -134,7 +137,8 @@ export function TokensSend() {
                                     htmlFor="amount"
                                     className={styles.tokensSend__label}
                                 >
-                                    Balance: {selectedToken.balance}
+                                    {t("common.balance")}:{" "}
+                                    {selectedToken.balance}
                                     <TokenMax
                                         onClick={() => {
                                             setValue(
@@ -160,10 +164,12 @@ export function TokensSend() {
                                     type={"number"}
                                     step={"any"}
                                     id={"amount"}
-                                    aria-label="Amount to send"
-                                    placeholder="Amount to send"
+                                    aria-label={t("wallet.tokens.amountToSend")}
+                                    placeholder={t(
+                                        "wallet.tokens.amountToSend"
+                                    )}
                                     {...register("amount", {
-                                        required: "Amount is required",
+                                        required: t("common.amountRequired"),
                                         validate: (value) =>
                                             validateAmount(
                                                 value,

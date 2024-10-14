@@ -4,10 +4,12 @@ import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { ArrowDownToLine, Copy } from "lucide-react";
 import { useQRCode } from "next-qrcode";
+import { Trans, useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
 export function QRCodeWallet() {
+    const { t } = useTranslation();
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
     const { Canvas } = useQRCode();
@@ -17,7 +19,7 @@ export function QRCodeWallet() {
             <>
                 <Panel size={"small"}>
                     <Title icon={<ArrowDownToLine width={32} height={32} />}>
-                        Receive assets on <b>Testnets</b>
+                        <Trans i18nKey={"wallet.tokens.receive.title"} />
                     </Title>
                     {address && (
                         <div className={styles.QRCodeWallet__code}>
@@ -45,7 +47,7 @@ export function QRCodeWallet() {
                         className={styles.QRCodeWallet__button}
                     >
                         <Copy />
-                        {copied ? <>Copied!</> : "Copy address"}
+                        {copied ? t("common.copied") : t("common.copyAddress")}
                     </ButtonRipple>
                 </Panel>
             </>
