@@ -8,6 +8,7 @@ import { RecoveryLink } from "@/module/settings/component/Recovery";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { useAtomValue } from "jotai";
 import { Fingerprint } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toHex } from "viem";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
@@ -23,24 +24,26 @@ export function Settings() {
 }
 
 function BiometryInfo() {
+    const { t } = useTranslation();
     const { address } = useAccount();
     const wallet = useAtomValue(sessionAtom);
 
     return (
         <Panel size={"small"}>
             <Title icon={<Fingerprint size={32} />}>
-                Biometry informations
+                {t("wallet.biometryInfos")}
             </Title>
             <ul className={styles.settings__list}>
                 <li>
-                    Authenticator:{" "}
+                    {t("common.authenticator")}{" "}
                     <WalletAddress
                         wallet={toHex(wallet?.authenticatorId ?? "0")}
                     />
                 </li>
 
                 <li>
-                    Wallet: <WalletAddress wallet={address ?? "0x"} />
+                    {t("common.wallet")}{" "}
+                    <WalletAddress wallet={address ?? "0x"} />
                 </li>
             </ul>
         </Panel>

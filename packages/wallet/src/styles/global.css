@@ -144,7 +144,8 @@ sup {
 .react-loading-skeleton {
     --base-color: var(--frak-skeleton-base-color);
     --highlight-color: var(--frak-skeleton-highlight-color);
-    border-radius: 8px;
+    border-radius: 12px;
+    opacity: 0.35;
 }
 
 .scrollbars {

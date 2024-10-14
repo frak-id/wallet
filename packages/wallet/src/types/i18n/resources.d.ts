@@ -24,17 +24,23 @@ interface Resources {
         };
         common: {
             amountRequired: "Amount is required";
+            at: "at";
+            authenticator: "Authenticator:";
             balance: "Balance";
             copied: "Copied!";
             copyAddress: "Copy address";
             enterAddress: "Enter address";
+            interactions: "Interactions";
             logout: "Logout";
+            notifications: "Notifications";
             receive: "Receive";
+            rewards: "Rewards";
             send: "Send";
             to: "To";
             transactionHash: "Transaction Hash:";
             transactionLink: "Transaction Link";
             transactionSuccess: "Transaction Success!";
+            wallet: "Wallet:";
             walletAddressRequired: "Wallet address is required";
             walletInvalid: "Invalid wallet address";
         };
@@ -106,7 +112,17 @@ interface Resources {
         };
         wallet: {
             activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
+            biometryInfos: "Biometry informations";
             installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
+            interaction: {
+                CREATE_REFERRAL_LINK: "Created share link";
+                OPEN_ARTICLE: "Opened article";
+                PURCHASE_COMPLETED: "Completed purchase";
+                PURCHASE_STARTED: "Started purchase";
+                READ_ARTICLE: "Read article";
+                REFERRED: "Referred";
+                WEBSHOP_OPENNED: "Opened webshop";
+            };
             session: {
                 closed: "Your wallet is not activated. You can’t be rewarded.";
                 open: "Your wallet is activated";

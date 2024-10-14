@@ -7,13 +7,22 @@
     align-items: center;
     justify-content: center;
     gap: 5px;
-    color: var(--frak-color-grayText);
 }
 
-:root[data-theme="dark"] .history__active {
+.history__inactive {
+    padding: 3px 5px;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.history__active {
+    background: rgba(0, 0, 0, 0.35);
+}
+
+/*:root[data-theme="dark"] .history__active {
     color: var(--frak-color-white);
 }
 
 :root[data-theme="light"] .history__active {
     color: var(--frak-color-black);
-}
+}*/
