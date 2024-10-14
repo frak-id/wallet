@@ -28,6 +28,7 @@ interface Resources {
             copied: "Copied!";
             copyAddress: "Copy address";
             enterAddress: "Enter address";
+            logout: "Logout";
             receive: "Receive";
             send: "Send";
             to: "To";
