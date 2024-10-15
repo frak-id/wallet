@@ -4,15 +4,20 @@ import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**
  * The register component
  * @constructor
  */
-export function SsoRegisterComponent({ onSuccess }: { onSuccess: () => void }) {
+export function SsoRegisterComponent({
+    onSuccess,
+    ssoId,
+}: { onSuccess: () => void; ssoId?: Hex }) {
     const { t } = useTranslation();
     const { register, error, isRegisterInProgress } = useRegister({
+        ssoId,
         onSuccess: () => onSuccess(),
     });
 

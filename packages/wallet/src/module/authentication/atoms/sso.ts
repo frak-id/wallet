@@ -1,11 +1,13 @@
 import type { SsoMetadata } from "@frak-labs/nexus-sdk/core";
 import { atom } from "jotai";
+import type { Hex } from "viem";
 
 type SsoContext = {
     productId?: string;
     redirectUrl?: string;
     directExit?: boolean;
     metadata?: AppSpecificSsoMetadata;
+    id?: Hex;
 };
 
 /**
