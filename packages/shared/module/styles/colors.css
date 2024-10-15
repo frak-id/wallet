@@ -6,7 +6,7 @@
     --frak-color-grayText: #818c9c;
     --frak-color-black: #000;
     --frak-color-white: #fff;
-    --frak-color-red: #ff0000;
+    --frak-color-red: #f04438;
     --frak-color-red-34: #65253b;
     --frak-color-dark: #001432;
     --frak-color-light: #dcdcdc;
@@ -62,5 +62,12 @@
     --frak-color-royal-blue: #5c59e8;
     --frak-color-moon-raker: #dedefa;
     --frak-color-malachite: #0ddb84;
+    --frak-color-gradient-blue: radial-gradient(
+        297.34% 103.75% at 0% 91.53%,
+        #00246a 0%,
+        #436dc4 52.26%,
+        #ffffff 98.85%
+    );
     --frak-color-trout: #4d5464;
+    --frak-color-cerulean: #13b2e4;
 }
