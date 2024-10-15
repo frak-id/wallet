@@ -22,7 +22,6 @@ import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
 import { LogoFrak } from "@module/asset/icons/LogoFrak";
 import { jotaiStore } from "@module/atoms/store";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
-import type { ParseKeys } from "i18next";
 import { useAtomValue } from "jotai";
 import {
     type Dispatch,
