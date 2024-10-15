@@ -1,4 +1,3 @@
-import { backendApi } from "@frak-labs/shared/context/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -16,23 +15,20 @@ export const config = {
 
 export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
-    const { data: session } = await backendApi.auth.wallet.session.get({
-        headers: {
-            cookie: req.headers.get("cookie") ?? undefined,
-        },
-    });
+    const walletCookie = req.cookies.get("walletAuth");
+    const isAuthenticated = walletCookie !== undefined;
 
     /**
      * Redirect to wallet if the user is authenticated
      */
-    if (AUTH_ROUTES.includes(pathname) && session) {
+    if (AUTH_ROUTES.includes(pathname) && isAuthenticated) {
         return NextResponse.redirect(new URL("/wallet", req.url));
     }
 
     /**
      * Redirect to register if the user is not authenticated
      */
-    if (RESTRICTED_ROUTES.includes(pathname) && !session) {
+    if (RESTRICTED_ROUTES.includes(pathname) && !isAuthenticated) {
         return NextResponse.redirect(new URL("/register", req.url));
     }
 
@@ -41,7 +37,7 @@ export async function middleware(req: NextRequest) {
      */
     if (pathname === "/") {
         return NextResponse.redirect(
-            new URL(session ? "/wallet" : "/register", req.url)
+            new URL(isAuthenticated ? "/wallet" : "/register", req.url)
         );
     }
 }

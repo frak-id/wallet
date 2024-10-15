@@ -3,7 +3,6 @@ import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import ChainedBackend from "i18next-chained-backend";
 import HttpBackend from "i18next-http-backend";
-import LocalStorageBackend from "i18next-localstorage-backend";
 import { initReactI18next } from "react-i18next";
 
 /**
@@ -25,12 +24,16 @@ export default i18next
         defaultNS: "translation",
         backend: {
             // Local storage backend for caching + regular http one to fetch from public folder
-            backends: [LocalStorageBackend, HttpBackend],
+            backends: [
+                // LocalStorageBackend,
+                HttpBackend,
+            ],
             backendOptions: [
-                {
-                    expirationTime: 24 * 60 * 60 * 1000,
-                    prefix: "frak_i18n_res_",
-                },
+                // todo: Local storage chain disabled for now
+                // {
+                //     expirationTime: 24 * 60 * 60 * 1000,
+                //     prefix: "frak_i18n_res_",
+                // },
                 {
                     loadPath: "/locales/{{lng}}/{{ns}}.json",
                 },
