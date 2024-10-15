@@ -24,6 +24,7 @@
         "at": "à",
         "authenticator": "Authentificateur :",
         "balance": "Solde",
+        "claim": "Réclamer",
         "copied": "Copié!",
         "copyAddress": "Copier l'adresse",
         "enterAddress": "Entrez l'adresse",
@@ -123,6 +124,11 @@
             "button": "Récupérez votre <strong>porte-monnaie</strong>",
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil"
+        },
+        "pendingReferral": {
+            "success": "Vous avez réclamé votre récompense avec succès !",
+            "text": "Vous avez obtenu {{eurClaimable}} EUR en attente grâce à vos activités de parrainage !",
+            "title": "Récompense de parrainage en attente"
         },
         "register": {
             "button": {

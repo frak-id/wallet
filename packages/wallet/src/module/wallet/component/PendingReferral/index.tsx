@@ -6,11 +6,13 @@ import { backendApi } from "@frak-labs/shared/context/server";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { encodeFunctionData } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
 
 export function PendingReferral() {
+    const { t } = useTranslation();
     // Get the user wallet address
     const { address } = useAccount();
 
@@ -73,18 +75,19 @@ export function PendingReferral() {
     return (
         <Panel size={"small"}>
             <Title icon={<CircleDollarSign width={32} height={32} />}>
-                Pending referral reward
+                {t("wallet.pendingReferral.title")}
             </Title>
             {isSuccess && (
                 <p className={styles.pendingReferral__success}>
-                    You have claimed your reward successfully!
+                    {t("wallet.pendingReferral.success")}
                 </p>
             )}
             {!isSuccess && (
                 <>
                     <p>
-                        You got {pendingReward?.eurClaimable} EUR pending thanks
-                        to your referral activities!
+                        {t("wallet.pendingReferral.text", {
+                            eurClaimable: pendingReward?.eurClaimable,
+                        })}
                     </p>
                     <ButtonRipple
                         className={styles.pendingReferral__button}
@@ -95,7 +98,7 @@ export function PendingReferral() {
                             await sendClaimTxs();
                         }}
                     >
-                        Claim
+                        {t("common.claim")}
                     </ButtonRipple>
                 </>
             )}

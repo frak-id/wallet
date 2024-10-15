@@ -27,6 +27,7 @@ interface Resources {
             at: "at";
             authenticator: "Authenticator:";
             balance: "Balance";
+            claim: "Claim";
             copied: "Copied!";
             copyAddress: "Copy address";
             enterAddress: "Enter address";
@@ -128,6 +129,11 @@ interface Resources {
                 button: "Recover your <strong>wallet</strong>";
                 recover: "Recover wallet from file";
                 walletsOnDevice: "Wallets used on this device";
+            };
+            pendingReferral: {
+                success: "You have claimed your reward successfully!";
+                text: "You got {{eurClaimable}} EUR pending thanks to your referral activities!";
+                title: "Pending referral reward";
             };
             register: {
                 button: {
