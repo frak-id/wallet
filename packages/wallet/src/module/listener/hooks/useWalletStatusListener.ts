@@ -57,7 +57,7 @@ export function useWalletStatusListener(): OnListenToWallet {
             const { wallet, sdk } = current;
 
             // If no wallet present, just return the not logged in status
-            if (!wallet) {
+            if (!wallet?.address) {
                 await emitter({
                     result: {
                         key: "not-connected",

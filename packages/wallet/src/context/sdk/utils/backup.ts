@@ -119,8 +119,8 @@ const backupDataAtom = atom((get) => {
     const sdkSession = get(sdkSessionAtom);
     const pendingInteractions = get(pendingInteractionAtom).interactions;
     return {
-        session: session ?? undefined,
-        sdkSession: sdkSession ?? undefined,
+        session: session?.address ? session : undefined,
+        sdkSession: sdkSession?.token ? sdkSession : undefined,
         pendingInteractions,
     };
 });
