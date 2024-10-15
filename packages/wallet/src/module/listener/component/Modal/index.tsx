@@ -283,8 +283,7 @@ function CurrentModalMetadataInfo() {
         if (!stepKey) return null;
 
         // Check if i18n contain the keys
-        const defaultDescriptionKey =
-            `sdk.modal.${stepKey}.default.description` as ParseKeys;
+        const defaultDescriptionKey = `sdk.modal.${stepKey}.default.description`;
         const hasDescription = i18n.exists(defaultDescriptionKey);
 
         // Return the matching component
