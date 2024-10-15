@@ -7,7 +7,7 @@
   "module": "src/index.ts",
   "main": "./src/index.ts",
   "dependencies": {
-    "viem": "^2.21.19"
+    "viem": "^2.21.26"
   },
   "devDependencies": {
     "bun-types": "latest"
