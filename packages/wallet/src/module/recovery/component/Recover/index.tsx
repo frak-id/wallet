@@ -14,6 +14,7 @@ import {
 import { Accordion } from "@module/component/Accordion";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const MAX_STEPS = 6;
 
@@ -22,6 +23,7 @@ const MAX_STEPS = 6;
  * @constructor
  */
 export function RecoverWallet() {
+    const { t } = useTranslation();
     const recoveryReset = useSetAtom(recoveryResetAtom);
     const step = useAtomValue(recoveryStepAtom);
 
@@ -35,7 +37,7 @@ export function RecoverWallet() {
 
     return (
         <>
-            <Title>Recover a wallet</Title>
+            <Title>{t("wallet.recovery.title")}</Title>
             <Accordion type={"single"} collapsible value={`step-${step}`}>
                 <Step1 />
                 <Step2 />

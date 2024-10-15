@@ -8,11 +8,13 @@ import {
 import { Button } from "@module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./Step4.module.css";
 
 const ACTUAL_STEP = 4;
 
 export function Step4() {
+    const { t } = useTranslation();
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
 
@@ -43,16 +45,17 @@ export function Step4() {
     return (
         <AccordionRecoveryItem
             actualStep={ACTUAL_STEP}
-            title={"Create new passkey"}
+            title={t("wallet.recovery.step4")}
         >
-            <p>You need to create a new passkey on your device</p>
+            <p>{t("wallet.recovery.needCreatePasskey")}</p>
             <Button
+                width={"full"}
                 onClick={triggerAction}
                 disabled={isPending}
                 isLoading={isPending}
                 className={styles.step4__button}
             >
-                create passkey
+                {t("wallet.recovery.createPasskey")}
             </Button>
             {error && <span className="error">{error.message}</span>}
         </AccordionRecoveryItem>

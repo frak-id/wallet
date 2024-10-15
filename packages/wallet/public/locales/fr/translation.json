@@ -40,6 +40,7 @@
         "transactionLink": "Lien de transaction",
         "transactionSuccess": "Transaction réussie !",
         "wallet": "Porte-monnaie :",
+        "walletAddress": "Adresse du porte-monnaie :",
         "walletAddressRequired": "L'adresse du porte-monnaie est requise",
         "walletInvalid": "Adresse de porte-monnaie invalide"
     },
@@ -136,6 +137,33 @@
             "success": "Vous avez réclamé votre récompense avec succès !",
             "text": "Vous avez obtenu {{eurClaimable}} EUR en attente grâce à vos activités de parrainage !",
             "title": "Récompense de parrainage en attente"
+        },
+        "recovery": {
+            "title": "Récupérer un porte-monnaie",
+            "step1": "Téléchargez votre fichier de récupération",
+            "step2": "Examiner les données de récupération",
+            "step3": "Décryptage avec mot de passe",
+            "step4": "Créer une nouvelle clé d'accès",
+            "step5": "Exécuter la récupération",
+            "step6": "Succès",
+            "uploadOrDrag": "Téléchargez ou faites glisser le fichier de récupération",
+            "invalidFile": "Fichier invalide",
+            "continue": "Poursuivre la récupération",
+            "invalidPassword": "Mot de passe invalide",
+            "errorLoading": "Erreur lors du chargement du compte de récupération",
+            "needCreatePasskey": "Vous devez créer une nouvelle clé d'accès sur votre appareil",
+            "createPasskey": "créer une clé d'accès",
+            "loadingRecovery": "Chargement de la récupération",
+            "pushPasskey": "Envoyer la nouvelle clé d'accès",
+            "status": {
+                "loading": "Chargement ...",
+                "walletAlready": "Porte-monnaie déjà récupéré",
+                "inProgress": "En cours",
+                "done": "Fait",
+                "error": "Erreur",
+                "pending": "En attente"
+            },
+            "successful": "La récupération est réussie, vous pouvez maintenant vous <pLink>connecter</pLink>"
         },
         "recoverySetup": {
             "currentGuardian": "Gardien actuel :",

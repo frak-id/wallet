@@ -7,11 +7,13 @@ import type { RecoveryFileContent } from "@/types/Recovery";
 import { useAtom, useSetAtom } from "jotai";
 import { useCallback } from "react";
 import { FileUploader } from "react-drag-drop-files";
+import { useTranslation } from "react-i18next";
 import styles from "./Step1.module.css";
 
 const ACTUAL_STEP = 1;
 
 export function Step1() {
+    const { t } = useTranslation();
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
 
@@ -39,24 +41,24 @@ export function Step1() {
             ) {
                 // Should display a user message
                 setFileContent(null);
-                throw new Error("Invalid file product");
+                throw new Error(t("wallet.recovery.invalidFile"));
             }
             // If all good here, should check that the guardian address match the wallet address recovery options
             // A backend actions checking possible recovery chains???
             setFileContent(fileContent);
             setStep(ACTUAL_STEP + 1);
         },
-        [setFileContent, setStep]
+        [setFileContent, setStep, t]
     );
 
     return (
         <AccordionRecoveryItem
             actualStep={ACTUAL_STEP}
-            title={"Upload your recovery file"}
+            title={t("wallet.recovery.step1")}
         >
             <FileUploader
                 handleChange={handleChange}
-                label={"Upload or drag recovery file"}
+                label={t("wallet.recovery.uploadOrDrag")}
                 types={["json"]}
                 disabled={fileContent !== null}
                 classes={`${styles.step1__uploader}`}

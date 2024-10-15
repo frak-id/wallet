@@ -13,19 +13,21 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { SendHorizontal } from "lucide-react";
 import { sleep } from "radash";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import styles from "./Step5.module.css";
 
 const ACTUAL_STEP = 5;
 
 export function Step5() {
+    const { t } = useTranslation();
     // Get the recovery file product
     const recoveryFileContent = useAtomValue(recoveryFileContentAtom);
 
     return (
         <AccordionRecoveryItem
             actualStep={ACTUAL_STEP}
-            title={"Execute recovery"}
+            title={t("wallet.recovery.step5")}
         >
             {recoveryFileContent && (
                 <TriggerRecovery recoveryFileContent={recoveryFileContent} />
@@ -37,6 +39,7 @@ export function Step5() {
 function TriggerRecovery({
     recoveryFileContent,
 }: { recoveryFileContent: RecoveryFileContent }) {
+    const { t } = useTranslation();
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
 
@@ -93,7 +96,7 @@ function TriggerRecovery({
     if (isLoading || !recoveryAvailability) {
         return (
             <p>
-                Loading recovery chains
+                {t("wallet.recovery.loadingRecovery")}
                 <span className={"dotsLoading"}>...</span>
             </p>
         );
@@ -119,7 +122,7 @@ function TriggerRecovery({
                             })
                         }
                     >
-                        Push new passkey on-chain <SendHorizontal />
+                        {t("wallet.recovery.pushPasskey")} <SendHorizontal />
                     </button>
                 </p>
             )}
@@ -138,22 +141,23 @@ function useRecoveryStatus({
     status: "idle" | "pending" | "error" | "success";
     txHash?: Hex;
 }) {
+    const { t } = useTranslation();
     return useMemo(() => {
         if (!recoveryAvailability) {
-            return <p>Loading ...</p>;
+            return <p>{t("wallet.recovery.status.loading")}</p>;
         }
 
         if (recoveryAvailability?.alreadyRecovered) {
             return (
                 <span className={styles.recoverChainStatus__success}>
-                    Wallet already recovered
+                    {t("wallet.recovery.status.walletAlready")}
                 </span>
             );
         }
         if (status === "pending") {
             return (
                 <span className={styles.recoverChainStatus__pending}>
-                    In Progress
+                    {t("wallet.recovery.status.inProgress")}
                     <span className={"dotsLoading"}>...</span>
                 </span>
             );
@@ -161,7 +165,7 @@ function useRecoveryStatus({
         if (status === "success") {
             return (
                 <span className={styles.recoverChainStatus__success}>
-                    Done{" "}
+                    {t("wallet.recovery.status.done")}{" "}
                     <ExplorerLink
                         hash={txHash ?? "0x"}
                         icon={false}
@@ -172,11 +176,15 @@ function useRecoveryStatus({
         }
         if (status === "error") {
             return (
-                <span className={styles.recoverChainStatus__error}>Error</span>
+                <span className={styles.recoverChainStatus__error}>
+                    {t("wallet.recovery.status.error")}
+                </span>
             );
         }
         return (
-            <span className={styles.recoverChainStatus__pending}>Pending</span>
+            <span className={styles.recoverChainStatus__pending}>
+                {t("wallet.recovery.status.pending")}
+            </span>
         );
-    }, [status, txHash, recoveryAvailability]);
+    }, [status, txHash, recoveryAvailability, t]);
 }

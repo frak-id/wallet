@@ -43,6 +43,7 @@ interface Resources {
             transactionLink: "Transaction Link";
             transactionSuccess: "Transaction Success!";
             wallet: "Wallet:";
+            walletAddress: "Wallet address:";
             walletAddressRequired: "Wallet address is required";
             walletInvalid: "Invalid wallet address";
         };
@@ -141,6 +142,33 @@ interface Resources {
                 success: "You have claimed your reward successfully!";
                 text: "You got {{eurClaimable}} EUR pending thanks to your referral activities!";
                 title: "Pending referral reward";
+            };
+            recovery: {
+                title: "Recover a wallet";
+                step1: "Upload your recovery file";
+                step2: "Review recovery data";
+                step3: "Decryption with password";
+                step4: "Create new passkey";
+                step5: "Execute recovery";
+                step6: "Success";
+                uploadOrDrag: "Upload or drag recovery file";
+                invalidFile: "Invalid file";
+                continue: "Continue recovery";
+                invalidPassword: "Invalid password";
+                errorLoading: "Error loading recovery account";
+                needCreatePasskey: "You need to create a new passkey on your device";
+                createPasskey: "create passkey";
+                loadingRecovery: "Loading recovery";
+                pushPasskey: "Push new passkey";
+                status: {
+                    loading: "Loading ...";
+                    walletAlready: "Wallet already recovered";
+                    inProgress: "In progress";
+                    done: "Done";
+                    error: "Error";
+                    pending: "Pending";
+                };
+                successful: "Recovery is successful, you can now <pLink>login</pLink>";
             };
             recoverySetup: {
                 currentGuardian: "Current guardian:";
