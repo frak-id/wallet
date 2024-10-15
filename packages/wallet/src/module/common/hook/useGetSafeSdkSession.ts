@@ -25,7 +25,7 @@ export function useGetSafeSdkSession() {
         queryFn: async () => {
             // If we got a current token, check it's validity
             if (currentSession) {
-                const isValid = await backendApi.auth.walletSdk.isValid.get({
+                const isValid = await backendApi.auth.wallet.sdk.isValid.get({
                     headers: {
                         "x-wallet-sdk-auth": currentSession.token,
                     },
@@ -41,11 +41,13 @@ export function useGetSafeSdkSession() {
                     JSON.stringify(lastWebAuthnAction.signature)
                 ).toString("base64");
                 const { data: session, error } =
-                    await backendApi.auth.walletSdk.fromWebAuthNSignature.post({
-                        signature: encodedSignature,
-                        msg: lastWebAuthnAction.msg,
-                        wallet: lastWebAuthnAction.wallet,
-                    });
+                    await backendApi.auth.wallet.sdk.fromWebAuthNSignature.post(
+                        {
+                            signature: encodedSignature,
+                            msg: lastWebAuthnAction.msg,
+                            wallet: lastWebAuthnAction.wallet,
+                        }
+                    );
                 if (error) {
                     console.error(
                         "Unable to generate a new token from previous signature",
@@ -60,7 +62,7 @@ export function useGetSafeSdkSession() {
 
             // Otherwise, craft a new token from the cookie (can fail in third parties context)
             const { data, error } =
-                await backendApi.auth.walletSdk.generate.get();
+                await backendApi.auth.wallet.sdk.generate.get();
             if (error) {
                 console.error("Unable to generate a new token", error);
                 return null;

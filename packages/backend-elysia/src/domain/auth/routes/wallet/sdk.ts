@@ -2,10 +2,10 @@ import { walletSdkSessionContext, walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { isAddressEqual } from "viem";
-import { walletSdkSessionService } from "../services/WalletSdkSessionService";
-import { webAuthNService } from "../services/WebAuthNService";
+import { walletSdkSessionService } from "../../services/WalletSdkSessionService";
+import { webAuthNService } from "../../services/WebAuthNService";
 
-export const walletSdkAuthRoutes = new Elysia({ prefix: "/walletSdk" })
+export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     .use(walletSessionContext)
     .use(webAuthNService)
     .use(walletSdkSessionService)
