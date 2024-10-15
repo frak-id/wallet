@@ -25,6 +25,7 @@ export function EnableNotification() {
                 blur={"blur"}
                 width={"full"}
                 align={"left"}
+                gap={"big"}
                 onClick={() => subscribeToPush()}
                 disabled={isPending}
                 isLoading={isPending}

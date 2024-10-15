@@ -6,7 +6,6 @@
     outline: none;
     display: flex;
     align-items: center;
-    gap: 22px;
     border-radius: var(--frak-button-border-radius);
 
     &:focus-visible {
@@ -55,6 +54,22 @@
 
 .width--full {
     width: 100%;
+}
+
+.gap--none {
+    gap: 0;
+}
+
+.gap--small {
+    gap: 8px;
+}
+
+.gap--medium {
+    gap: 12px;
+}
+
+.gap--big {
+    gap: 22px;
 }
 
 .primary {
@@ -121,10 +136,6 @@
 
 .fontBold {
     font-weight: 700;
-}
-
-.loader {
-    margin-right: 10px;
 }
 
 .fontSize--small {

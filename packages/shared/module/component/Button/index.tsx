@@ -50,6 +50,12 @@ export const buttonVariants = cva(styles.button, {
             center: styles["align--center"],
             right: styles["align--right"],
         },
+        gap: {
+            none: styles["gap--none"],
+            small: styles["gap--small"],
+            medium: styles["gap--medium"],
+            big: styles["gap--big"],
+        },
     },
     defaultVariants: {
         variant: "primary",
@@ -57,6 +63,7 @@ export const buttonVariants = cva(styles.button, {
         blur: "none",
         width: "auto",
         align: "center",
+        gap: "small",
     },
 });
 
@@ -69,6 +76,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             blur,
             width,
             align,
+            gap,
             isLoading,
             leftIcon,
             rightIcon,
@@ -88,6 +96,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     blur,
                     width,
                     align,
+                    gap,
                     className,
                 })}
                 ref={ref}
@@ -95,7 +104,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 {...props}
             >
                 <>
-                    {isLoading && <Spinner className={styles.loader} />}
+                    {isLoading && <Spinner />}
                     {leftIcon &&
                         mergeElement(leftIcon, { className: styles.leftIcon })}
                     {asChild

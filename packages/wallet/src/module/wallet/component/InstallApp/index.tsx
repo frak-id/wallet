@@ -15,6 +15,7 @@ export function InstallApp() {
                     blur={"blur"}
                     width={"full"}
                     align={"left"}
+                    gap={"big"}
                     onClick={() => launchInstallation()}
                     leftIcon={<WebApp />}
                 >
