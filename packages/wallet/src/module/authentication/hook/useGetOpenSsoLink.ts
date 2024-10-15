@@ -1,6 +1,7 @@
 import type { AppSpecificSsoMetadata } from "@/module/authentication/atoms/sso";
 import { ssoParamsToCompressed } from "@/module/authentication/utils/ssoDataCompression";
 import { compressJson } from "@frak-labs/nexus-sdk/core";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { Hex } from "viem";
@@ -22,12 +23,14 @@ export function useGetOpenSsoLink() {
             metadata,
             directExit,
             redirectUrl,
+            consumeKey,
             lang,
         }: {
             productId: Hex;
             metadata: AppSpecificSsoMetadata;
             directExit?: boolean;
             redirectUrl?: string;
+            consumeKey?: string;
             lang?: "en" | "fr";
         }) => {
             // Build the sso compressed param
@@ -38,6 +41,23 @@ export function useGetOpenSsoLink() {
                 redirectUrl,
                 lang,
             });
+
+            // If we got a consumption key, we want sso tracking, thus we need to call the backend to obtain a trackable link
+            if (consumeKey) {
+                const { data } = await backendApi.auth.wallet.sso.create.post({
+                    productId,
+                    consumeKey,
+                    params: compressedParam,
+                });
+                if (data) {
+                    return {
+                        url: data.link,
+                        trackingId: data.trackingId,
+                    };
+                }
+            }
+
+            // Otherwise, just compress the params and send them
             const compressedString = await compressJson(compressedParam);
 
             // Build the url with the params
@@ -46,7 +66,7 @@ export function useGetOpenSsoLink() {
             ssoUrl.searchParams.set("p", compressedString);
 
             // Return the link
-            return ssoUrl.toString();
+            return { url: ssoUrl.toString() };
         },
         []
     );

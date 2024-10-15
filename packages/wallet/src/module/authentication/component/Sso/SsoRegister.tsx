@@ -4,6 +4,7 @@ import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**
@@ -16,6 +17,7 @@ export function SsoRegisterComponent({
 }: { isPrimary: boolean; onSuccess: () => void }) {
     const { t } = useTranslation();
     const { register, error, isRegisterInProgress } = useRegister({
+        ssoId,
         onSuccess: () => onSuccess(),
     });
 

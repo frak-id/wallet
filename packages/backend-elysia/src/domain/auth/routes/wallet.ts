@@ -120,7 +120,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 // b64 + stringified version of the authenticator response
                 authenticatorResponse: t.String(),
                 // potential sso id
-                ssoId: t.Optional(t.Number()),
+                ssoId: t.Optional(t.Hex()),
             }),
             response: {
                 404: t.String(),
@@ -247,7 +247,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 previousWallet: t.Optional(t.Address()),
                 setSessionCookie: t.Optional(t.Boolean()),
                 // potential sso id
-                ssoId: t.Optional(t.Number()),
+                ssoId: t.Optional(t.Hex()),
             }),
             response: {
                 400: t.String(),

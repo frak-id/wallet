@@ -8,11 +8,14 @@ import { jotaiStore } from "@module/atoms/store";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
+import type { Hex } from "viem";
 
 /**
  * Hook that handle the registration process
  */
-export function useRegister(mutations?: UseMutationOptions<Session>) {
+export function useRegister(
+    options?: UseMutationOptions<Session> & { ssoId?: Hex }
+) {
     // Setter for the last authentication
     const { data: previousAuthenticators } = usePreviousAuthenticators();
 
@@ -26,7 +29,7 @@ export function useRegister(mutations?: UseMutationOptions<Session>) {
         error,
         mutateAsync: register,
     } = useMutation({
-        ...mutations,
+        ...options,
         mutationKey: ["register"],
         mutationFn: async () => {
             // Build the credentials to exclude
@@ -52,12 +55,12 @@ export function useRegister(mutations?: UseMutationOptions<Session>) {
             const encodedResponse = Buffer.from(
                 JSON.stringify(registrationResponse)
             ).toString("base64");
-            const { data, error } =
-                await authenticatedBackendApi.auth.wallet.register.post({
-                    userAgent: navigator.userAgent,
-                    expectedChallenge: registrationOptions.challenge,
-                    registrationResponse: encodedResponse,
-                });
+            const { data, error } = await backendApi.auth.wallet.register.post({
+                userAgent: navigator.userAgent,
+                expectedChallenge: registrationOptions.challenge,
+                registrationResponse: encodedResponse,
+                ssoId: options?.ssoId,
+            });
             if (error) {
                 throw error;
             }

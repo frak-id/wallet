@@ -1,5 +1,6 @@
 import { customHex } from "@backend-utils";
 import {
+    index,
     pgTable,
     serial,
     timestamp,
@@ -24,6 +25,7 @@ export const ssoTable = pgTable(
         authenticatorId: varchar("authenticator_id"),
     },
     (table) => ({
+        ssoIdx: index("sso_idx").on(table.ssoId),
         ssoProductIdx: uniqueIndex("sso_product_idx").on(
             table.ssoId,
             table.productId

@@ -3,6 +3,7 @@ import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useTranslation } from "react-i18next";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**

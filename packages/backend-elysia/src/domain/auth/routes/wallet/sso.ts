@@ -1,4 +1,4 @@
-import { isRunningInProd } from "@frak-labs/app-essentials";
+import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { compressToBase64 } from "async-lz-string";
 import { webAuthNService } from "domain/auth/services/WebAuthNService";
 import { and, eq } from "drizzle-orm";
@@ -20,7 +20,7 @@ export const walletSsoRoutes = new Elysia({
     // Route to create a new sso session
     .post(
         "/sso/create",
-        async ({ body: { productId, consumeKey, params }, ssoDb, error }) => {
+        async ({ body: { productId, consumeKey, params }, ssoDb }) => {
             // Generate the sso id
             const paramHash = keccak256(toHex(JSON.stringify(params)));
             const ssoId = keccak256(
@@ -28,36 +28,37 @@ export const walletSsoRoutes = new Elysia({
             );
 
             // Save this sso session
-            const result = await ssoDb
+            await ssoDb
                 .insert(ssoTable)
                 .values({
                     ssoId,
                     consumeKey,
                     productId,
                 })
-                .returning({ insertedId: ssoTable.id })
                 .execute();
-            const id = result?.[0]?.insertedId;
-            if (!id) {
-                return error(500, "Error creating sso session");
-            }
 
             // Append the id to the final params
             const finalParams = {
                 id: ssoId,
                 ...params,
             };
-            const compressedParams = compressToBase64(
+            const compressedParams = await compressToBase64(
                 JSON.stringify(finalParams)
             );
 
-            // The base url for the sso
-            const baseUrl = isRunningInProd
-                ? "https://wallet.frak.id/sso?p="
-                : "https://wallet-dev.frak.id/sso?p=";
+            // The final url for the sso
+            const url = new URL(
+                isRunningInProd
+                    ? "https://wallet.frak.id"
+                    : isRunningLocally
+                      ? "https://localhost:3000"
+                      : "https://wallet-dev.frak.id"
+            );
+            url.pathname = "/sso";
+            url.searchParams.append("p", compressedParams);
 
             return {
-                link: `${baseUrl}${compressedParams}`,
+                link: url.toString(),
                 trackingId: ssoId,
             };
         },
@@ -68,7 +69,6 @@ export const walletSsoRoutes = new Elysia({
                 params: t.Any(),
             }),
             response: {
-                500: t.String(),
                 200: t.Object({
                     trackingId: t.Hex(),
                     link: t.String(),

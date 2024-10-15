@@ -71,6 +71,7 @@ export function Sso() {
 
             // Save the current sso context
             jotaiStore.set(ssoContextAtom, {
+                id: compressedParam.id ?? undefined,
                 productId: productId ?? undefined,
                 redirectUrl: redirectUrl ?? undefined,
                 directExit: directExit ?? undefined,
@@ -130,6 +131,8 @@ export function Sso() {
             return;
         }
     }, []);
+
+    const ssoId = useAtomValue(ssoContextAtom)?.id;
 
     if (!currentMetadata) {
         return <Spinner />;
