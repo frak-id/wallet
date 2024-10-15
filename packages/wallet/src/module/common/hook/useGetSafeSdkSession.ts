@@ -63,7 +63,7 @@ export function useGetSafeSdkSession() {
                 await backendApi.auth.walletSdk.generate.get();
             if (error) {
                 console.error("Unable to generate a new token", error);
-                return;
+                return null;
             }
 
             // Save the token and return it
@@ -71,7 +71,7 @@ export function useGetSafeSdkSession() {
             return data;
         },
         staleTime: ({ state }) => {
-            if (state.data) {
+            if (state.data?.expires) {
                 // If we got a token, keep it in mem for expiration time less 15min
                 const stale = state.data.expires - 15 * 60 * 1000;
                 if (stale > Date.now()) {

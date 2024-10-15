@@ -9,6 +9,7 @@ export {
     decompressJson,
     createIframe,
     FrakContextManager,
+    Deferred,
 } from "./utils";
 
 // Constants

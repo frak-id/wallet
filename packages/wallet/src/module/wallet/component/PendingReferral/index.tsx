@@ -86,7 +86,8 @@ export function PendingReferral() {
                 <>
                     <p>
                         {t("wallet.pendingReferral.text", {
-                            eurClaimable: pendingReward?.eurClaimable,
+                            eurClaimable:
+                                pendingReward?.eurClaimable?.toFixed(2),
                         })}
                     </p>
                     <ButtonRipple

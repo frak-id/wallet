@@ -50,6 +50,7 @@ export function Sso() {
      * Set the sso context atom directly
      */
     useQuery({
+        gcTime: 0,
         queryKey: ["sso", "params-decompression", searchParams.toString()],
         queryFn: async () => {
             const compressedString = searchParams.get("p");

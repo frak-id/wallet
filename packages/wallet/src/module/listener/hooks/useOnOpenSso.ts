@@ -1,10 +1,14 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
-import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
     RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
+import {
+    ssoPopupFeatures,
+    ssoPopupName,
+} from "@frak-labs/nexus-wallet/src/module/authentication/hook/useGetOpenSsoLink";
+import { useGetOpenSsoLink } from "@frak-labs/nexus-wallet/src/module/authentication/hook/useGetOpenSsoLink";
 import { useCallback } from "react";
 
 type OnOpenSso = IFrameRequestResolver<
@@ -15,7 +19,7 @@ type OnOpenSso = IFrameRequestResolver<
  * Hook use to listen to the wallet status
  */
 export function useOnOpenSso(): OnOpenSso {
-    const openSsoPopup = useOpenSsoPopup();
+    const getOpenSsoLink = useGetOpenSsoLink();
 
     return useCallback(
         async (request, context, emitter) => {
@@ -35,7 +39,7 @@ export function useOnOpenSso(): OnOpenSso {
                 return;
             }
 
-            await openSsoPopup({
+            const link = await getOpenSsoLink({
                 productId: context.productId,
                 metadata: {
                     ...ssoInfo.metadata,
@@ -47,11 +51,31 @@ export function useOnOpenSso(): OnOpenSso {
                 lang: ssoInfo.lang,
             });
 
-            // Emit the end
-            emitter({
-                result: undefined,
-            });
+            try {
+                // Open the popup
+                const openedWindow = window.open(
+                    link,
+                    ssoPopupName,
+                    ssoPopupFeatures
+                );
+                if (openedWindow) {
+                    openedWindow.focus();
+                    // Emit the end
+                    emitter({
+                        result: undefined,
+                    });
+                    return;
+                }
+            } finally {
+                // Otherwise, emit an error
+                emitter({
+                    error: {
+                        code: RpcErrorCodes.internalError,
+                        message: "Failed to open the SSO",
+                    },
+                });
+            }
         },
-        [openSsoPopup]
+        [getOpenSsoLink]
     );
 }

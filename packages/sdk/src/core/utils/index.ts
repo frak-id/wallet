@@ -5,3 +5,4 @@ export {
     decompressJson,
 } from "./compression/decompress";
 export { FrakContextManager } from "./FrakContext";
+export { Deferred } from "./Deferred";

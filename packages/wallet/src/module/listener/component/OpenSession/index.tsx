@@ -1,6 +1,5 @@
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
-import { requestAndCheckStorageAccess } from "@/module/listener/utils/thirdParties";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
@@ -57,8 +56,6 @@ export function OpenSessionModalStep({
                     });
                     throw new Error("session-exit");
                 }
-                // Then, perform a request to access the storage
-                await requestAndCheckStorageAccess();
             },
             onSuccess: async () => {
                 // Fetch the session status
