@@ -16,7 +16,7 @@ import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { DismissButton } from "../Generic";
 
@@ -183,11 +183,18 @@ function SsoButton({
  * This mutation is used to ensure that post SSO we have a session, not automatically updated
  */
 function useUpdateSessionStatus() {
+    // Read from the jotai store
+    const currentSession = useAtomValue(sessionAtom);
+    const sessionsRef = useRef(undefined as typeof currentSession | undefined);
+    useEffect(() => {
+        sessionsRef.current = currentSession;
+    }, [currentSession]);
+
     const { mutateAsync: mutateAsyncUpdateSessionStatus } = useMutation({
         mutationKey: ["session", "force-refetch"],
         mutationFn: async () => {
             // If our jotai store already contain a session, we can early exit
-            if (jotaiStore.get(sessionAtom)) {
+            if (sessionsRef.current) {
                 return;
             }
 

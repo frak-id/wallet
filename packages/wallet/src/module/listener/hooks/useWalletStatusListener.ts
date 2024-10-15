@@ -11,7 +11,8 @@ import type {
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
-import { useCallback } from "react";
+import { atom, useAtomValue } from "jotai";
+import { useCallback, useEffect, useRef } from "react";
 
 type OnListenToWallet = IFrameRequestResolver<
     Extract<
@@ -20,10 +21,22 @@ type OnListenToWallet = IFrameRequestResolver<
     >
 >;
 
+const bothSessionsAtom = atom((get) => ({
+    wallet: get(sessionAtom),
+    sdk: get(sdkSessionAtom),
+}));
+
 /**
  * Hook use to listen to the wallet status
  */
 export function useWalletStatusListener(): OnListenToWallet {
+    // Read from the jotai store
+    const bothSessions = useAtomValue(bothSessionsAtom);
+    const sessionsRef = useRef(undefined as typeof bothSessions | undefined);
+    useEffect(() => {
+        sessionsRef.current = bothSessions;
+    }, [bothSessions]);
+
     /**
      * Emit the current wallet status
      * @param emitter
@@ -35,11 +48,16 @@ export function useWalletStatusListener(): OnListenToWallet {
                 method: "frak_listenToWalletStatus";
             }>
         ) => {
-            // Fetch the current session directly
-            const currentSession = jotaiStore.get(sessionAtom);
+            // If ref not loaded yet, early exit
+            const current = sessionsRef.current;
+            if (!current) {
+                return;
+            }
+
+            const { wallet, sdk } = current;
 
             // If no wallet present, just return the not logged in status
-            if (!currentSession) {
+            if (!wallet) {
                 await emitter({
                     result: {
                         key: "not-connected",
@@ -54,7 +72,7 @@ export function useWalletStatusListener(): OnListenToWallet {
 
             // Get the on chain status
             const interactionSession = await getSessionStatus({
-                wallet: currentSession.address,
+                wallet: wallet.address,
             }).then((interactionSession) =>
                 interactionSession
                     ? {
@@ -68,9 +86,8 @@ export function useWalletStatusListener(): OnListenToWallet {
             await emitter({
                 result: {
                     key: "connected",
-                    wallet: currentSession.address,
-                    interactionToken:
-                        jotaiStore.get(sdkSessionAtom)?.token ?? undefined,
+                    wallet: wallet.address,
+                    interactionToken: sdk?.token,
                     interactionSession,
                 },
             });

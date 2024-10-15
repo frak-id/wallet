@@ -16,7 +16,12 @@ export function useGetSafeSdkSession() {
     const query = useQuery({
         // keep in mem for 2min
         gcTime: 2 * 60 * 1000,
-        queryKey: ["sdk-token", "get-safe"],
+        queryKey: [
+            "sdk-token",
+            "get-safe",
+            currentSession?.token ?? "no-sdk-token",
+            lastWebAuthnAction?.wallet ?? "no-wallet",
+        ],
         queryFn: async () => {
             // If we got a current token, check it's validity
             if (currentSession) {

@@ -3,12 +3,20 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
-import { useCallback } from "react";
+import { useAtomValue } from "jotai";
+import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
 import { addPendingInteractionAtom } from "../atoms/pendingInteraction";
 
 export function usePushInteraction() {
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();
+
+    // Read from the jotai store
+    const currentSession = useAtomValue(sessionAtom);
+    const sessionsRef = useRef(undefined as typeof currentSession | undefined);
+    useEffect(() => {
+        sessionsRef.current = currentSession;
+    }, [currentSession]);
 
     return useCallback(
         async ({
@@ -20,7 +28,7 @@ export function usePushInteraction() {
             interaction: PreparedInteraction;
             signature?: Hex;
         }) => {
-            const userAddress = jotaiStore.get(sessionAtom)?.address;
+            const userAddress = sessionsRef?.current?.address;
             // If no current wallet present
             if (!userAddress) {
                 // Save the pending interaction
