@@ -1,22 +1,22 @@
 {
     "authent": {
         "create": {
-            "alreadyRegistered": "Vous avez déjà un portefeuille enregistré. Cliquez sur le bouton de connexion ci-dessous pour vous connecter.",
+            "alreadyRegistered": "Vous avez déjà un porte-monnaie enregistré. Cliquez sur le bouton de connexion ci-dessous pour vous connecter.",
             "error": "Erreur lors de l'inscription, veuillez réessayer",
-            "inProgress": "Création du portefeuille en cours"
+            "inProgress": "Création du porte-monnaie en cours"
         },
         "sso": {
             "btn": {
                 "create": "Utilisez la biométrie pour prouver que vous n'êtes pas un robot",
-                "login": "Connecter un portefeuille existant"
+                "login": "Connecter un porte-monnaie existant"
             },
             "description": "Avant de continuer, assurez-vous que vous utilisez un appareil qui vous appartient.<br /> Frak est une solution permettant à <strong>{{productName}}</strong> de récompenser sa communauté pour l'aide apportée à la promotion de ses offres. <strong>Frak est une solution décentralisée et open-source, qui ne stocke aucune donnée personnelle ou biométrique.</strong><br /> Pour en savoir plus sur <strong>{{productName}}</strong> , veuillez consulter notre politique de confidentialité et nos conditions d'utilisation.",
             "header": { "title": "Connectez-vous avec Frak Wallet" },
-            "recover": "Récupérer le portefeuille à partir du fichier",
+            "recover": "Récupérer le porte-monnaie à partir du fichier",
             "redirect": "Vous serez redirigé vers {{ productName }} dans quelques secondes.",
             "redirectNow": "Rediriger maintenant",
             "subTitle": "pour recevoir immédiatement vos gains de <pLink>{{productName}}</pLink> .",
-            "title": "Créez votre portefeuille"
+            "title": "Créez votre porte-monnaie"
         }
     },
     "common": {
@@ -25,7 +25,7 @@
         "authenticator": "Authentificateur :",
         "balance": "Solde",
         "claim": "Réclamer",
-        "copied": "Copié!",
+        "copied": "Copié !",
         "copyAddress": "Copier l'adresse",
         "enterAddress": "Entrez l'adresse",
         "interactions": "Interactions",
@@ -57,8 +57,8 @@
             "login": {
                 "default": {
                     "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur cette plateforme.",
-                    "primaryAction": "Je crée mon portefeuille en moins de 30 secondes",
-                    "secondaryAction": "J'ai déjà un portefeuille",
+                    "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
+                    "secondaryAction": "J'ai déjà un porte-monnaie",
                     "title": "Connexion"
                 },
                 "success": "Connexion réussie"
@@ -66,13 +66,13 @@
             "openSession": {
                 "default": {
                     "description": "Démarrez une session enrichissante pour gagner de l'argent en interagissant de manière anonyme sur ce site. Bénéficiez d'avantages sans partager vos informations personnelles. Pour en savoir plus, consultez notre politique de confidentialité.",
-                    "primaryAction": "J'active mon portefeuille",
+                    "primaryAction": "J'active mon porte-monnaie",
                     "title": "Activation"
                 }
             },
             "sendTransaction": {
                 "default": {
-                    "description": "Pour terminer, autorisez cette transaction dans votre portefeuille. Cela garantit un traitement sécurisé.",
+                    "description": "Pour terminer, autorisez cette transaction dans votre porte-monnaie. Cela garantit un traitement sécurisé.",
                     "primaryAction_one": "Envoyer une transaction",
                     "primaryAction_other": "Envoyer des transactions",
                     "title": "Transaction"
@@ -80,7 +80,7 @@
             },
             "siweAuthenticate": {
                 "default": {
-                    "description": "Veuillez vous authentifier avec votre portefeuille pour continuer en toute sécurité. Votre signature confirme votre identité.",
+                    "description": "Veuillez vous authentifier avec votre porte-monnaie pour continuer en toute sécurité. Votre signature confirme votre identité.",
                     "primaryAction": "Authentifier",
                     "title": "Authentification"
                 }
