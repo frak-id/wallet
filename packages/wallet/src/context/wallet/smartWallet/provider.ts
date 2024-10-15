@@ -154,7 +154,9 @@ async function buildSmartAccount<
             });
 
             // Start the client authentication
-            const authenticationResponse = await startAuthentication(options);
+            const authenticationResponse = await startAuthentication({
+                optionsJSON: options,
+            });
 
             // Store that in our last webauthn action atom
             jotaiStore.set(lastWebAuthNActionAtom, {

@@ -1,5 +1,5 @@
 import { sessionContext } from "@backend-common";
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import type { Address } from "viem";
 
 export const walletSdkSessionService = new Elysia({

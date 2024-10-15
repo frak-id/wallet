@@ -44,8 +44,9 @@ export function useRegister(mutations?: UseMutationOptions<Session>) {
             });
 
             // Start the registration
-            const registrationResponse =
-                await startRegistration(registrationOptions);
+            const registrationResponse = await startRegistration({
+                optionsJSON: registrationOptions,
+            });
 
             // Verify it
             const encodedResponse = Buffer.from(

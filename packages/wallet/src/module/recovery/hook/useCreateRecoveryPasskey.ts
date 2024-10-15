@@ -14,8 +14,9 @@ export function useCreateRecoveryPasskey() {
         mutationFn: async ({ file }: { file: RecoveryFileContent }) => {
             // Get the registration options and start the registration
             const registrationOptions = await getRegisterOptions();
-            const registrationResponse =
-                await startRegistration(registrationOptions);
+            const registrationResponse = await startRegistration({
+                optionsJSON: registrationOptions,
+            });
 
             // Verify the registration and return the formatted output
             const encodedResponse = Buffer.from(

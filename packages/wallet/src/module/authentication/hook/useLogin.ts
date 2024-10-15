@@ -54,9 +54,9 @@ export function useLogin(
             });
 
             // Start the authentication
-            const authenticationResponse = await startAuthentication(
-                authenticationOptions
-            );
+            const authenticationResponse = await startAuthentication({
+                optionsJSON: authenticationOptions,
+            });
 
             // Verify it
             const encodedResponse = Buffer.from(

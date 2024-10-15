@@ -1,8 +1,8 @@
 import { log } from "@backend-common";
 import { Mutex } from "async-mutex";
-import { sleep } from "bun";
 import { Cron, type CronOptions } from "croner";
 import { Elysia } from "elysia";
+import { sleep } from "radash";
 
 export interface CronConfig<Name extends string = string> extends CronOptions {
     /**

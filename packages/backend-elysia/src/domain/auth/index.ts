@@ -1,4 +1,4 @@
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import { businessAuthRoutes } from "./routes/business";
 import { walletAuthRoutes } from "./routes/wallet";
 import { walletSdkAuthRoutes } from "./routes/walletSdk";

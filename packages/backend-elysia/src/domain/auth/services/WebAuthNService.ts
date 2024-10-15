@@ -2,7 +2,7 @@ import { blockchainContext, getMongoDb, sessionContext } from "@backend-common";
 import { WebAuthN, kernelAddresses } from "@frak-labs/app-essentials";
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import { getSenderAddress } from "permissionless/actions";
 import { type Hex, concatHex, keccak256, toHex } from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
@@ -90,12 +90,10 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
                 response: signature,
                 expectedOrigin: WebAuthN.rpOrigin,
                 expectedRPID: WebAuthN.rpId,
-                authenticator: {
+                credential: {
                     counter: authenticator.counter,
-                    credentialID: authenticator._id,
-                    // todo: Auto mapping of string to Uint8Array
-                    credentialPublicKey:
-                        authenticator.credentialPublicKey.buffer,
+                    id: authenticator._id,
+                    publicKey: authenticator.credentialPublicKey.buffer,
                 },
                 expectedChallenge: msg,
             });

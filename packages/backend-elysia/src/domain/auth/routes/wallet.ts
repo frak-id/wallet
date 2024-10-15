@@ -179,32 +179,27 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Get the public key
             const publicKey = decodePublicKey({
                 credentialPubKey:
-                    verification.registrationInfo.credentialPublicKey,
+                    verification.registrationInfo.credential.publicKey,
             });
 
             // Extract the info we want to store
-            const {
-                credentialPublicKey,
-                credentialID,
-                counter,
-                credentialDeviceType,
-                credentialBackedUp,
-            } = verification.registrationInfo;
+            const { credential, credentialDeviceType, credentialBackedUp } =
+                verification.registrationInfo;
 
             // Get the wallet address
             const walletAddress =
                 previousWallet ??
                 (await getAuthenticatorWalletAddress({
-                    authenticatorId: credentialID,
+                    authenticatorId: credential.id,
                     pubKey: publicKey,
                 }));
             const authenticatorDbRepository = await getAuthenticatorDb();
             await authenticatorDbRepository.createAuthenticator({
-                _id: credentialID,
+                _id: credential.id,
                 smartWalletAddress: walletAddress,
                 userAgent,
-                credentialPublicKey: new Binary(credentialPublicKey),
-                counter,
+                credentialPublicKey: new Binary(credential.publicKey),
+                counter: credential.counter,
                 credentialDeviceType,
                 credentialBackedUp,
                 publicKey,
@@ -222,7 +217,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 );
                 return {
                     address: walletAddress,
-                    authenticatorId: credentialID,
+                    authenticatorId: credential.id,
                     publicKey,
                     sdkJwt,
                 };
@@ -231,7 +226,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Create the token and set the cookie
             const token = await walletJwt.sign({
                 address: walletAddress,
-                authenticatorId: credentialID,
+                authenticatorId: credential.id,
                 publicKey: publicKey,
                 sub: walletAddress,
                 iat: Date.now(),
@@ -242,7 +237,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
 
             return {
                 address: walletAddress,
-                authenticatorId: credentialID,
+                authenticatorId: credential.id,
                 publicKey,
                 sdkJwt,
             };
