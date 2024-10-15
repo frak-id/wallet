@@ -12,6 +12,7 @@ import { Accordion } from "@module/component/Accordion";
 import { useAtomValue, useSetAtom } from "jotai";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
+import { Trans } from "react-i18next";
 import styles from "./index.module.css";
 
 const MAX_STEPS = 5;
@@ -31,14 +32,8 @@ export function SetupRecovery() {
     return (
         <>
             <p className={styles.setupRecovery__disclaimer}>
-                <TriangleAlert /> Warning
-                <br />- We do not store any information related to your wallet
-                recovery.
-                <br />- You are solely responsible for keeping your recovery
-                file and password secure and private.
-                <br />- The recovery file can be generated now, but the actual
-                recovery process will only be available one week after the file
-                is created to prevent malicious usage.
+                <TriangleAlert />{" "}
+                <Trans i18nKey={"wallet.recoverySetup.disclaimer"} />
             </p>
             <Accordion type={"single"} collapsible value={`step-${step}`}>
                 <Step1 />

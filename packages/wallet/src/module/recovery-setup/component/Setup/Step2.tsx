@@ -8,10 +8,12 @@ import {
 } from "@/module/settings/atoms/recovery";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const ACTUAL_STEP = 2;
 
 export function Step2() {
+    const { t } = useTranslation();
     // Get or set the current step
     const [step, setStep] = useAtom(recoveryStepAtom);
 
@@ -57,10 +59,10 @@ export function Step2() {
         <>
             <AccordionRecoveryItem
                 actualStep={ACTUAL_STEP}
-                title={"Generate recovery data"}
+                title={t("wallet.recoverySetup.step2")}
             >
                 <p>
-                    Generating recovery data
+                    {t("wallet.recoverySetup.generating")}
                     <span className={"dotsLoading"}>...</span>
                 </p>
             </AccordionRecoveryItem>

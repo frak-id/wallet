@@ -37,6 +37,7 @@ interface Resources {
             receive: "Receive";
             rewards: "Rewards";
             send: "Send";
+            submit: "Submit";
             to: "To";
             transactionHash: "Transaction Hash:";
             transactionLink: "Transaction Link";
@@ -130,10 +131,29 @@ interface Resources {
                 recover: "Recover wallet from file";
                 walletsOnDevice: "Wallets used on this device";
             };
+            password: {
+                enter: "Enter password";
+                minimum: "Minimum password length is 5";
+                pleaseEnter: "Please enter a password";
+                required: "Password is required";
+            };
             pendingReferral: {
                 success: "You have claimed your reward successfully!";
                 text: "You got {{eurClaimable}} EUR pending thanks to your referral activities!";
                 title: "Pending referral reward";
+            };
+            recoverySetup: {
+                currentGuardian: "Current guardian:";
+                disclaimer: "Warning<br />- We do not store any information related to your wallet recovery.<br />- You are solely responsible for keeping your recovery file and password secure and private.\n                <br />- The recovery file can be generated now, but the actual recovery process will only be available one week after the file is created to prevent malicious usage.";
+                download: "Download my recovery file";
+                generating: "Generating recovery data";
+                setupNew: "Setup new recovery";
+                setupOn: "Setup recovery on {{name}}";
+                step1: "Encryption password";
+                step2: "Generate recovery data";
+                step3: "Download recovery file";
+                step4: "Enable recovery on-chain";
+                title: "Recovery setup";
             };
             register: {
                 button: {

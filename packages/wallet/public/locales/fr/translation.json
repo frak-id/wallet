@@ -34,6 +34,7 @@
         "receive": "Recevoir",
         "rewards": "Gains",
         "send": "Envoyer",
+        "submit": "Envoyer",
         "to": "À",
         "transactionHash": "Hash de transaction :",
         "transactionLink": "Lien de transaction",
@@ -125,10 +126,29 @@
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil"
         },
+        "password": {
+            "enter": "Entrez le mot de passe",
+            "minimum": "La longueur minimale du mot de passe est de 5",
+            "pleaseEnter": "Veuillez entrer un mot de passe",
+            "required": "Le mot de passe est requis"
+        },
         "pendingReferral": {
             "success": "Vous avez réclamé votre récompense avec succès !",
             "text": "Vous avez obtenu {{eurClaimable}} EUR en attente grâce à vos activités de parrainage !",
             "title": "Récompense de parrainage en attente"
+        },
+        "recoverySetup": {
+            "currentGuardian": "Gardien actuel :",
+            "disclaimer": "Avertissement<br /> - Nous ne stockons aucune information liée à la récupération de votre porte-monnaie.<br /> - Vous êtes seul responsable de la sécurité et de la confidentialité de votre fichier de récupération et de votre mot de passe.<br /> - Le fichier de récupération peut être généré maintenant, mais le processus de récupération réel ne sera disponible qu'une semaine après la création du fichier pour éviter toute utilisation malveillante.",
+            "download": "Télécharger mon fichier de récupération",
+            "generating": "Génération de données de récupération",
+            "setupNew": "Configurer une nouvelle récupération",
+            "setupOn": "Installer sur {{name}}",
+            "step1": "Mot de passe de cryptage",
+            "step2": "Générer les données de récupération",
+            "step3": "Télécharger le fichier de récupération",
+            "step4": "Activer la récupération",
+            "title": "Configuration de récupération"
         },
         "register": {
             "button": {

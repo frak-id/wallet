@@ -1,6 +1,7 @@
-import { ButtonRipple } from "@module/component/ButtonRipple";
+import { Button } from "@module/component/Button";
 import { Input } from "@module/component/forms/Input";
 import { type SubmitHandler, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
 type FormInput = {
@@ -8,6 +9,7 @@ type FormInput = {
 };
 
 export function Password({ onSubmit }: { onSubmit: SubmitHandler<FormInput> }) {
+    const { t } = useTranslation();
     // Form control and validation
     const {
         register,
@@ -18,19 +20,21 @@ export function Password({ onSubmit }: { onSubmit: SubmitHandler<FormInput> }) {
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             <p>
-                <label htmlFor="password">Please enter a password</label>
+                <label htmlFor="password">
+                    {t("wallet.password.pleaseEnter")}
+                </label>
                 <Input
                     type={"password"}
                     id={"password"}
-                    aria-label="Enter password"
-                    placeholder="Enter password"
+                    aria-label={t("wallet.password.enter")}
+                    placeholder={t("wallet.password.enter")}
                     classNameWrapper={styles.password__input}
                     aria-invalid={errors.password ? "true" : "false"}
                     {...register("password", {
-                        required: "Password is required",
+                        required: t("wallet.password.required"),
                         minLength: {
                             value: 5,
-                            message: "Minimum password length is 5",
+                            message: t("wallet.password.minimum"),
                         },
                     })}
                 />
@@ -39,7 +43,9 @@ export function Password({ onSubmit }: { onSubmit: SubmitHandler<FormInput> }) {
                         {errors.password.message}
                     </span>
                 )}
-                <ButtonRipple type={"submit"}>Submit</ButtonRipple>
+                <Button type={"submit"} width={"full"}>
+                    {t("common.submit")}
+                </Button>
             </p>
         </form>
     );
