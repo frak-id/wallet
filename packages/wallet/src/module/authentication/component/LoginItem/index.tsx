@@ -1,17 +1,19 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { FingerprintFrak } from "@module/asset/icons/FingerprintFrak";
-import { ButtonRipple } from "@module/component/ButtonRipple";
+import { Button } from "@module/component/Button";
 import { formatHash } from "@module/component/HashDisplay";
 import { SquareUser } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { toHex } from "viem";
 import styles from "./index.module.css";
 
 export function LoginItem({
     lastAuthentication,
 }: { lastAuthentication: PreviousAuthenticatorModel }) {
+    const { t } = useTranslation();
     const router = useRouter();
     const [, startTransition] = useTransition();
     const { login } = useLogin({
@@ -24,7 +26,7 @@ export function LoginItem({
 
     return (
         <li className={styles.loginItem}>
-            <ButtonRipple
+            <Button
                 size={"small"}
                 className={styles.loginItem__button}
                 onClick={async () => {
@@ -36,7 +38,7 @@ export function LoginItem({
                         <SquareUser />{" "}
                         {formatHash({ hash: lastAuthentication.wallet })}
                     </span>
-                    Authenticator:{" "}
+                    {t("common.authenticator")}{" "}
                     {formatHash({
                         hash: toHex(lastAuthentication.authenticatorId),
                     })}
@@ -47,7 +49,7 @@ export function LoginItem({
                         className={styles.loginItem__icon}
                     />
                 </span>
-            </ButtonRipple>
+            </Button>
         </li>
     );
 }

@@ -2,14 +2,13 @@
     box-sizing: border-box;
     display: block;
     width: 100%;
-    border-radius: 8px;
-    box-shadow: 4px 4px 4px 0 var(--frak-button-ripple-shadow-color);
+    border-radius: 16px;
     position: relative;
     overflow: hidden;
-    transition: background, box-shadow 400ms;
+    transition: background 400ms;
     color: var(--frak-button-ripple-color);
-    background: center no-repeat var(--frak-button-ripple-background-image);
-    background-size: cover;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(80px);
 
     & > span {
         display: flex;
@@ -23,18 +22,7 @@
 
 .buttonRipple__button:disabled {
     color: var(--frak-button-disabled-text-color);
-    box-shadow: none;
     cursor: not-allowed;
-}
-
-.buttonRipple__button:hover {
-    box-shadow: 6px 6px 6px 0 var(--frak-panel-shadow-color);
-}
-
-.buttonRipple__button:active,
-.buttonRipple__button:target,
-.buttonRipple__button:disabled {
-    box-shadow: none;
 }
 
 .buttonRipple__span {

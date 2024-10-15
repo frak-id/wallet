@@ -118,6 +118,22 @@
             "REFERRED": "Referred",
             "WEBSHOP_OPENNED": "Opened webshop"
         },
+        "login": {
+            "accountCreation": "Account creation",
+            "button": "Recover your <strong>wallet</strong>",
+            "recover": "Recover wallet from file",
+            "walletsOnDevice": "Wallets used on this device"
+        },
+        "register": {
+            "button": {
+                "alreadyRegistered": "You already have a wallet on your device<br />Redirecting to the login page",
+                "create": "Create your <strong>wallet</strong> <sup>*</sup> in a second with biometry",
+                "error": "Error during registration, please try again",
+                "inProgress": "Wallet creation in progress<br />Waiting for your biometry validation"
+            },
+            "notice": "<sup>*</sup>encrypted digital account where you can find all the content you own, your consumption data and the rewards you earn",
+            "useExisting": "Use an existing wallet"
+        },
         "session": {
             "closed": "Your wallet is not activated. You can’t be rewarded.",
             "open": "Your wallet is activated",

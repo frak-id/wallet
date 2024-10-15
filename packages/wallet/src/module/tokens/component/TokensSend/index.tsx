@@ -193,7 +193,7 @@ export function TokensSend() {
                                     disabled={isPending}
                                     isLoading={isPending}
                                 >
-                                    Send
+                                    {t("common.send")}
                                 </ButtonRipple>
                             </p>
                             <p className={styles.tokensSend__bottom}>

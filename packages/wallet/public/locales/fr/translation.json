@@ -118,6 +118,22 @@
             "REFERRED": "Référencé",
             "WEBSHOP_OPENNED": "Ouverture de la boutique en ligne"
         },
+        "login": {
+            "accountCreation": "Création de compte",
+            "button": "Récupérez votre <strong>porte-monnaie</strong>",
+            "recover": "Récupérer le porte-monnaie à partir du fichier",
+            "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil"
+        },
+        "register": {
+            "button": {
+                "alreadyRegistered": "Vous avez déjà un porte-monnaie sur votre appareil<br /> Redirection vers la page de connexion",
+                "create": "Créez votre <strong>porte-monnaie</strong> <sup>*</sup> en une seconde grâce à la biométrie",
+                "error": "Erreur lors de l'inscription, veuillez réessayer",
+                "inProgress": "Création du porte-monnaie en cours<br /> En attente de la validation de votre biométrie"
+            },
+            "notice": "<sup>*</sup> compte numérique crypté où vous pouvez retrouver tout le contenu que vous possédez, vos données de consommation et les récompenses que vous gagnez",
+            "useExisting": "Utiliser un porte-monnaie existant"
+        },
         "session": {
             "closed": "Votre porte-monnaie n’est pas activé. Vous ne pouvez pas recevoir vos gains",
             "open": "Votre porte-monnaie est activé",

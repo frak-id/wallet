@@ -1,4 +1,5 @@
 "use client";
+
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
@@ -6,9 +7,11 @@ import { Notice } from "@/module/common/component/Notice";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
 export function Register() {
+    const { t } = useTranslation();
     const router = useRouter();
     const { register, error, isRegisterInProgress } = useRegister({
         onSuccess: () => {
@@ -34,36 +37,24 @@ export function Register() {
     const message = useMemo(() => {
         if (isPreviouslyUsedAuthenticatorError) {
             return (
-                <>
-                    You already have a NEXUS account on your device
-                    <br />
-                    <br />
-                    Redirecting to the login page
-                    <span className={"dotsLoading"}>...</span>
-                </>
+                <Trans i18nKey={"wallet.register.button.alreadyRegistered"} />
             );
         }
         if (error) {
-            return <>Error during registration, please try again</>;
+            return t("wallet.register.button.error");
         }
         if (isRegisterInProgress) {
-            return (
-                <>
-                    NEXUS Account creation in progress
-                    <br />
-                    <br />
-                    Waiting for your biometry validation
-                    <span className={"dotsLoading"}>...</span>
-                </>
-            );
+            return <Trans i18nKey={"wallet.register.button.inProgress"} />;
         }
         return (
-            <>
-                Create your <strong>NEXUS</strong>
-                <sup>*</sup> in a second with biometry
-            </>
+            <Trans
+                i18nKey={"wallet.register.button.create"}
+                components={{
+                    sup: <sup />,
+                }}
+            />
         );
-    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress]);
+    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress, t]);
 
     useEffect(() => {
         if (!error) return;
@@ -84,13 +75,16 @@ export function Register() {
             className={styles.register__grid}
             footer={
                 <>
-                    <Link href={"/login"} title="Login">
-                        Use an existing NEXUS
+                    <Link href={"/login"}>
+                        {t("wallet.register.useExisting")}
                     </Link>
                     <Notice>
-                        <sup>*</sup>encrypted digital account where you can find
-                        all the content you own, your consumption data and the
-                        rewards you earn
+                        <Trans
+                            i18nKey={"wallet.register.notice"}
+                            components={{
+                                sup: <sup />,
+                            }}
+                        />
                     </Notice>
                 </>
             }
