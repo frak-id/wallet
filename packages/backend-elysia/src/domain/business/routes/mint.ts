@@ -72,6 +72,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             isAuthenticated: "business",
             query: t.Object({
                 domain: t.String(),
+                setupCode: t.Optional(t.String()),
             }),
             response: t.Object({
                 isRecordSet: t.Boolean(),
@@ -124,6 +125,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             body: t.Object({
                 name: t.String(),
                 domain: t.String(),
+                setupCode: t.Optional(t.String()),
                 productTypes: t.Array(
                     t.UnionEnum(
                         Object.keys(productTypes) as [

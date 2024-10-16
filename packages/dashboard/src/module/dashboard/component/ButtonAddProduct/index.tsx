@@ -38,6 +38,7 @@ type ProductNew = {
     name: string;
     domain: string;
     productTypes: ProductTypesKey[];
+    setupCode: string;
 };
 
 const isModalOpenAtom = atom(false);
@@ -61,6 +62,7 @@ export function ButtonAddProduct() {
             name: "",
             domain: "",
             productTypes: [],
+            setupCode: "",
         },
     });
 
@@ -108,6 +110,7 @@ export function ButtonAddProduct() {
                                     name={form.getValues().name}
                                     domain={form.getValues().domain}
                                     productTypes={form.getValues().productTypes}
+                                    setupCode={form.getValues().setupCode}
                                 />
                             )}
                         </>
@@ -154,6 +157,7 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
     const [error, setError] = useState<string | undefined>();
 
     const domain = form.watch("domain");
+    const setupCode = form.watch("setupCode");
 
     const { data: dnsRecord, isLoading } = useDnsTxtRecordToSet({
         domain,
@@ -189,6 +193,7 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         // Check the validity of the domain
         const { isAlreadyMinted, isRecordSet } = await checkDomainSetup({
             domain,
+            setupCode,
         });
 
         if (isAlreadyMinted) {
@@ -265,6 +270,27 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
                     </FormItem>
                 )}
             />
+
+            <FormField
+                control={form.control}
+                name="setupCode"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Enter your setup code (optional)
+                        </FormLabel>
+                        <FormControl>
+                            <Input
+                                length={"medium"}
+                                placeholder={"Setup code...."}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
             <FormField
                 control={form.control}
                 name="domain"
@@ -329,8 +355,14 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
 function NewProductVerify({
     name,
     domain,
+    setupCode,
     productTypes,
-}: { name: string; domain: string; productTypes: ProductTypesKey[] }) {
+}: {
+    name: string;
+    domain: string;
+    productTypes: ProductTypesKey[];
+    setupCode: string;
+}) {
     const setIsMinting = useSetAtom(isMintingAtom);
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
 
@@ -380,6 +412,7 @@ function NewProductVerify({
                         name,
                         domain,
                         productTypes,
+                        setupCode,
                     });
                 }}
                 disabled={!isIdle}
