@@ -1,4 +1,4 @@
-import { customHex } from "@backend-utils";
+import { customHex } from "../../../utils/drizzle/customTypes";
 import {
     boolean,
     index,
