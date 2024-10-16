@@ -57,6 +57,10 @@ interface Resources {
                         title: "Success";
                         title_reward: "Gains";
                         title_sharing: "Share";
+                        description: "Now you can share your experience with your friends and earn more rewards.";
+                    };
+                    dismissed: {
+                        description: "You can now share but you will not be able to earn rewards.";
                     };
                 };
                 login: {

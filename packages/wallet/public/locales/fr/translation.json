@@ -51,7 +51,11 @@
                 "default": {
                     "title": "Succès",
                     "title_reward": "Gains",
-                    "title_sharing": "Partager"
+                    "title_sharing": "Partager",
+                    "description": "Vous pouvez maintenant partager votre expérience avec vos amis et gagner plus de récompenses."
+                },
+                "dismissed": {
+                    "description": "Vous pouvez maintenant partager mais vous ne pourrez pas gagner de récompenses."
                 }
             },
             "login": {

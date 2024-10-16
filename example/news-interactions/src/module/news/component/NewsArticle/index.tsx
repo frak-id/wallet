@@ -159,8 +159,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                                                 "Votre porte-monnaie a été créé pour recevoir votre récompense de **Good Vibes** en cas de partage.\nPour retrouver votre porte-monnaie, allez sur [wallet.frak.id](https://wallet.frak.id) ou entrez votre adresse email ci-dessous.",
                                         },
                                         dismissedMetadata: {
-                                            description:
-                                                "Partager cette article",
+                                            description: "Partager cet article",
                                         },
                                         action: finalAction,
                                     },
