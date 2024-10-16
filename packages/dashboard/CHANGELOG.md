@@ -1,5 +1,13 @@
 # @frak-labs/nexus-dashboard
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [[`62e0d41`](https://github.com/frak-id/wallet/commit/62e0d41cffd532cf037fa39a885f8e31f92270cb), [`6780f93`](https://github.com/frak-id/wallet/commit/6780f939a3827ebf05beab74ae1cde2f4bfad16b)]:
+  - @frak-labs/nexus-sdk@0.0.16
+  - @frak-labs/shared@0.0.0
+
 ## 0.0.7
 
 ### Patch Changes

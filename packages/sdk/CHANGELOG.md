@@ -1,5 +1,13 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.16
+
+### Patch Changes
+
+- [`62e0d41`](https://github.com/frak-id/wallet/commit/62e0d41cffd532cf037fa39a885f8e31f92270cb) Thanks [@KONFeature](https://github.com/KONFeature)! - Adding the `interactionToken` to the walletStatus, used to directly push interactions to the delegator
+
+- [`6780f93`](https://github.com/frak-id/wallet/commit/6780f939a3827ebf05beab74ae1cde2f4bfad16b) Thanks [@KONFeature](https://github.com/KONFeature)! - New `final` modal step, replacing previous `success` one. Also handling dismiss case
+
 ## 0.0.15
 
 ### Patch Changes
