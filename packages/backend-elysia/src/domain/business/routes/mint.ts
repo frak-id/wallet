@@ -48,25 +48,26 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
         async ({
             mintRepository,
             dnsCheckRepository,
-            query: { domain },
+            query: { domain, setupCode },
             businessSession,
         }) => {
             if (!businessSession) {
-                return { isRecordSet: false, isAlreadyMinted: false };
+                return { isDomainValid: false, isAlreadyMinted: false };
             }
             // Normalise the domain
             const normalisedDomain =
                 dnsCheckRepository.getNormalizedDomain(domain);
             // Check if the dns txt is set
-            const isRecordSet = await dnsCheckRepository.isDnsTxtRecordSet({
+            const isDomainValid = await dnsCheckRepository.isValidDomain({
                 domain: normalisedDomain,
                 owner: businessSession.wallet,
+                setupCode,
             });
             // Check if the product is already minted
             const isAlreadyMinted = await mintRepository.isExistingProduct(
                 mintRepository.precomputeProductId(normalisedDomain)
             );
-            return { isRecordSet, isAlreadyMinted };
+            return { isDomainValid, isAlreadyMinted };
         },
         {
             isAuthenticated: "business",
@@ -75,16 +76,17 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                 setupCode: t.Optional(t.String()),
             }),
             response: t.Object({
-                isRecordSet: t.Boolean(),
+                isDomainValid: t.Boolean(),
                 isAlreadyMinted: t.Boolean(),
             }),
         }
     )
+    // Register a new product
     .put(
         "",
         async ({
             businessSession,
-            body: { name, domain, productTypes },
+            body: { name, domain, productTypes, setupCode },
             error,
             mintRepository,
             dnsCheckRepository,
@@ -97,12 +99,16 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             const normalisedDomain =
                 dnsCheckRepository.getNormalizedDomain(domain);
             // Check if the dns txt is set
-            const isRecordSet = await dnsCheckRepository.isDnsTxtRecordSet({
+            const isValidDomain = await dnsCheckRepository.isValidDomain({
                 domain: normalisedDomain,
                 owner: businessSession.wallet,
+                setupCode,
             });
-            if (!isRecordSet) {
-                return error(400, "The DNS txt record is not set");
+            if (!isValidDomain) {
+                return error(
+                    400,
+                    "The domain is invalid (either DNS TXT or invalid setup code)"
+                );
             }
 
             // Mint a product

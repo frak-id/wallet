@@ -191,15 +191,17 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
         }
 
         // Check the validity of the domain
-        const { isAlreadyMinted, isRecordSet } = await checkDomainSetup({
+        const { isAlreadyMinted, isDomainValid } = await checkDomainSetup({
             domain,
             setupCode,
         });
 
         if (isAlreadyMinted) {
             setError(`A product already exists for the domain ${domain}`);
-        } else if (!isRecordSet) {
-            setError(`The DNS txt record is not set for the domain ${domain}`);
+        } else if (!isDomainValid) {
+            setError(
+                "The DNS txt record is not set, or the setup code is invalid"
+            );
         } else {
             setSuccess(true);
         }

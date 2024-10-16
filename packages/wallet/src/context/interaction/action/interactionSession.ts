@@ -29,7 +29,6 @@ export async function getFullSessionStatus() {
             cookie: headers().get("cookie") ?? undefined,
         },
     });
-    console.log("session from next action", session);
     if (!session) {
         return { session: null, interactionSession: null };
     }
