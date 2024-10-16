@@ -75,7 +75,7 @@ jobs:
         if: steps.changes.outputs.deployRequired == 'true'
         shell: bash
         run: |
-          if [[ "${{ inputs.ref }}" == "refs/heads/main" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "STAGE=prod" >> $GITHUB_ENV
           else
             echo "STAGE=dev" >> $GITHUB_ENV
