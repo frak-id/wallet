@@ -19,7 +19,6 @@ import type {
 export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     .use(oracleContext)
     .guard({
-        // todo: Partial to be removed after testing
         headers: t.Partial(
             t.Object({
                 "x-shopify-hmac-sha256": t.String(),
@@ -35,7 +34,6 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     // Request pre validation hook
     .onBeforeHandle(({ headers, error }) => {
         // If it's a test and not running in prod, early exit
-        // todo: Maybe accept them but not save the order in the merkle tree?
         if (headers["x-shopify-test"] && isRunningInProd) {
             return error(400, "Shopify test aren't accepted in production");
         }

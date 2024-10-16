@@ -9,12 +9,14 @@ import { WalletAddress } from "@module/component/HashDisplay";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { toHex } from "viem";
 import styles from "./Step2.module.css";
 
 const ACTUAL_STEP = 2;
 
 export function Step2() {
+    const { t } = useTranslation();
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
 
@@ -37,7 +39,7 @@ export function Step2() {
             return;
 
         try {
-            const { wallet } = await login({
+            const wallet = await login({
                 lastAuthentication: {
                     wallet: fileContent?.initialWallet?.address,
                     authenticatorId:
@@ -63,15 +65,15 @@ export function Step2() {
     return (
         <AccordionRecoveryItem
             actualStep={ACTUAL_STEP}
-            title={"Review recovery data"}
+            title={t("wallet.recovery.step2")}
         >
             <p>
-                Wallet address:{" "}
+                {t("common.walletAddress")}{" "}
                 <WalletAddress
                     wallet={fileContent?.initialWallet?.address ?? "0x"}
                 />
                 <br />
-                Authenticator:{" "}
+                {t("common.authenticator")}{" "}
                 <WalletAddress
                     wallet={toHex(
                         fileContent?.initialWallet?.authenticatorId ?? "0"
@@ -80,12 +82,13 @@ export function Step2() {
             </p>
             <p>
                 <Button
+                    width={"full"}
                     className={styles.step2__button}
                     disabled={isLoading}
                     isLoading={isLoading}
                     onClick={triggerContinueRecovery}
                 >
-                    Continue recovery
+                    {t("wallet.recovery.continue")}
                 </Button>
             </p>
         </AccordionRecoveryItem>

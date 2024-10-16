@@ -1,14 +1,18 @@
-import { getPendingRewards } from "@/context/interaction/action/pendingRewards";
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { encodeFunctionData } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
 
 export function PendingReferral() {
+    const { t } = useTranslation();
     // Get the user wallet address
     const { address } = useAccount();
 
@@ -16,12 +20,13 @@ export function PendingReferral() {
 
     // Fetch the pending reward
     const { data: pendingReward, refetch: refetchPendingReward } = useQuery({
-        queryKey: ["referral", "pending-reward", address],
+        queryKey: ["claimable", "pending", address],
         queryFn: async () => {
-            if (!address) return null;
-            return await getPendingRewards({
-                user: address,
-            });
+            const { data, error } =
+                await backendApi.wallet.balance.claimable.get();
+            if (error) throw error;
+
+            return data;
         },
         enabled: !!address,
     });
@@ -32,25 +37,29 @@ export function PendingReferral() {
         isPending,
         isSuccess,
     } = useMutation({
-        mutationKey: ["referral", "claim-reward", address],
+        mutationKey: ["claimable", "do-claim", address],
         mutationFn: async () => {
-            if (!pendingReward?.perContracts) return;
+            if (!(pendingReward?.claimables && address)) return;
+
+            // Build each claim tx
+            const claimTxs = pendingReward.claimables.map((claimable) => ({
+                to: claimable.contract,
+                data: encodeFunctionData({
+                    abi: campaignBankAbi,
+                    functionName: "pullReward",
+                    args: [address],
+                }),
+                value: 0n,
+            }));
 
             // For each pending rewards, launch a tx
-            const txs = encodeWalletMulticall(
-                pendingReward.perContracts.map((contract) => ({
-                    to: contract.address,
-                    data: contract.claimTx,
-                    value: 0n,
-                }))
-            );
+            const txs = encodeWalletMulticall(claimTxs);
 
             // Send the user op
             const txHash = await sendTransactionAsync({
                 to: address,
                 data: txs,
             });
-            console.log("UserOp receipt", txHash);
 
             // Refetch the pending reward
             await refetchPendingReward();
@@ -59,25 +68,27 @@ export function PendingReferral() {
         },
     });
 
-    if (!pendingReward?.pendingRaw) {
+    if (!pendingReward?.eurClaimable) {
         return null;
     }
 
     return (
         <Panel size={"small"}>
             <Title icon={<CircleDollarSign width={32} height={32} />}>
-                Pending referral reward
+                {t("wallet.pendingReferral.title")}
             </Title>
             {isSuccess && (
                 <p className={styles.pendingReferral__success}>
-                    You have claimed your reward successfully!
+                    {t("wallet.pendingReferral.success")}
                 </p>
             )}
             {!isSuccess && (
                 <>
                     <p>
-                        You got {pendingReward?.pendingFormatted} mUSD pending
-                        thanks to your referral activities!
+                        {t("wallet.pendingReferral.text", {
+                            eurClaimable:
+                                pendingReward?.eurClaimable?.toFixed(2),
+                        })}
                     </p>
                     <ButtonRipple
                         className={styles.pendingReferral__button}
@@ -88,7 +99,7 @@ export function PendingReferral() {
                             await sendClaimTxs();
                         }}
                     >
-                        Claim
+                        {t("common.claim")}
                     </ButtonRipple>
                 </>
             )}

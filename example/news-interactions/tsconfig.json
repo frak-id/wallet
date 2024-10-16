@@ -16,6 +16,7 @@
     "plugins": [{"name": "next"}],
     "paths": {
       "@/*": ["./src/*"],
+      "@/public/*": ["./public/*"],
       "@module/*": ["../../packages/shared/module/*"],
       "@backend-utils": ["../../packages/backend-elysia/src/utils/index.ts"],
       "@backend-common": ["../../packages/backend-elysia/src/common/index.ts"],

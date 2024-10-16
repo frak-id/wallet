@@ -4,11 +4,13 @@ import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { commonRoutes } from "./common/routes";
 import {
+    auth,
     business,
     exampleNewsPaper,
     interactions,
     notifications,
     oracle,
+    wallet,
 } from "./domain";
 
 // Full on service app
@@ -37,9 +39,11 @@ const app = new Elysia()
     // Example news paper logics
     .use(exampleNewsPaper)
     // Business logics
+    .use(auth)
     .use(oracle)
     .use(interactions)
     .use(notifications)
+    .use(wallet)
     .use(business)
     // Setup bun serve options
     .listen({

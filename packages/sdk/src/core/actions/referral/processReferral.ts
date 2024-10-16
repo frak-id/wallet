@@ -1,6 +1,6 @@
 import { type Hex, isAddressEqual } from "viem";
 import { displayModal, sendInteraction } from "../";
-import type { NexusContext } from "../../../react/types/NexusContext";
+import type { FrakContext } from "../../../react/types/FrakContext";
 import { ReferralInteractionEncoder } from "../../interactions";
 import {
     type DisplayModalParamsType,
@@ -10,7 +10,7 @@ import {
     RpcErrorCodes,
     type WalletStatusReturnType,
 } from "../../types";
-import { NexusContextManager } from "../../utils";
+import { FrakContextManager } from "../../utils";
 
 type ReferralState =
     | "idle"
@@ -26,7 +26,7 @@ type ReferralState =
  * Automatically submit a referral interaction when detected
  *   -> And automatically set the referral context in the url
  * @param walletStatus
- * @param nexusContext
+ * @param frakContext
  * @param modalConfig
  * @param productId
  */
@@ -34,23 +34,22 @@ export async function processReferral(
     client: NexusClient,
     {
         walletStatus,
-        nexusContext,
+        frakContext,
         modalConfig,
         productId,
     }: {
         walletStatus?: WalletStatusReturnType;
-        nexusContext?: Partial<NexusContext> | null;
+        frakContext?: Partial<FrakContext> | null;
         modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
         productId?: Hex;
     }
 ) {
     try {
         // Get the current wallet, without auto displaying the modal
-        let currentWallet = getCurrentWallet(walletStatus);
-
-        if (!nexusContext?.r) {
+        let currentWallet = walletStatus?.wallet;
+        if (!frakContext?.r) {
             if (currentWallet) {
-                await NexusContextManager.replaceUrl({
+                await FrakContextManager.replaceUrl({
                     url: window.location?.href,
                     context: { r: currentWallet },
                 });
@@ -66,20 +65,28 @@ export async function processReferral(
             });
         }
 
-        if (currentWallet && isAddressEqual(nexusContext.r, currentWallet)) {
+        if (currentWallet && isAddressEqual(frakContext.r, currentWallet)) {
             return "self-referral";
+        }
+
+        // If the current wallet doesn't have an interaction session, display the modal
+        if (!walletStatus?.interactionSession) {
+            currentWallet = await ensureWalletConnected(client, {
+                modalConfig,
+                walletStatus,
+            });
         }
 
         // If we got one now, create a promise that will update the context
         if (currentWallet) {
-            await NexusContextManager.replaceUrl({
+            await FrakContextManager.replaceUrl({
                 url: window.location?.href,
                 context: { r: currentWallet },
             });
         }
 
         const interaction = ReferralInteractionEncoder.referred({
-            referrer: nexusContext.r,
+            referrer: frakContext.r,
         });
 
         await sendInteraction(client, { productId, interaction });
@@ -88,13 +95,6 @@ export async function processReferral(
     } catch (error) {
         return mapErrorToState(error);
     }
-}
-
-/**
- * Helper to get the current wallet
- */
-function getCurrentWallet(walletStatus: WalletStatusReturnType | undefined) {
-    return walletStatus?.key === "connected" ? walletStatus.wallet : undefined;
 }
 
 /**
@@ -111,7 +111,7 @@ async function ensureWalletConnected(
     }
 ) {
     // If wallet not connected, or no interaction session
-    if (walletStatus?.key !== "connected" || !walletStatus.interactionSession) {
+    if (!walletStatus?.interactionSession) {
         // If we don't have any modal setup, or we don't want to auto display it, do nothing
         if (!modalConfig) {
             return undefined;

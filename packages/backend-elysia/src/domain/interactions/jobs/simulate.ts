@@ -1,8 +1,7 @@
 import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { Patterns } from "@elysiajs/cron";
-import { isRunningLocally } from "@frak-labs/app-essentials";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { Address } from "viem";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
 import { pendingInteractionsTable } from "../db/schema";
@@ -26,34 +25,59 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     interactionsDb,
                     interactionDiamondRepository,
                     walletSessionRepository,
+                    pendingInteractionsRepository,
                 } = app.decorator;
 
                 // Get interactions to simulate
-                const interactions = await getInteractionsToSimulate({
-                    interactionsDb,
-                });
+                const interactions =
+                    await pendingInteractionsRepository.getAndLock({
+                        status: "pending",
+                        skipProcess: (interactions) => {
+                            // Dismiss interactions if we got less than 10 and if we didn't have any interactions older than 5 minutes
+                            const fiveMinutesAgo = new Date(
+                                Date.now() - 5 * 60 * 1000
+                            );
+                            const hasInteractions5MinOld = interactions.some(
+                                (interaction) =>
+                                    interaction.createdAt < fiveMinutesAgo
+                            );
+                            return (
+                                interactions.length < 3 &&
+                                !hasInteractions5MinOld
+                            );
+                        },
+                    });
                 if (interactions.length === 0) {
                     log.debug("No interactions to simulate");
                     return;
                 }
+                log.debug(
+                    `Got ${interactions.length} interactions to simulate`
+                );
 
-                // Perform the simulation and update the interactions
-                const hasSuccessInteractions =
-                    await simulateAndUpdateInteractions({
-                        interactions,
-                        interactionsDb,
-                        interactionDiamondRepository,
-                        walletSessionRepository,
+                try {
+                    // Perform the simulation and update the interactions
+                    const hasSuccessInteractions =
+                        await simulateAndUpdateInteractions({
+                            interactions,
+                            interactionsDb,
+                            interactionDiamondRepository,
+                            walletSessionRepository,
+                        });
+
+                    log.debug("Simulated interactions", {
+                        interactions: interactions.length,
+                        hasSuccessInteractions,
                     });
 
-                log.debug("Simulated interactions", {
-                    interactions: interactions.length,
-                    hasSuccessInteractions,
-                });
-
-                // Trigger the execution job
-                const store = app.store as ExecuteInteractionAppJob["store"];
-                await store.cron.executeInteraction.trigger();
+                    // Trigger the execution job
+                    const store =
+                        app.store as ExecuteInteractionAppJob["store"];
+                    await store.cron.executeInteraction.trigger();
+                } finally {
+                    // Unlock the interactions
+                    pendingInteractionsRepository.unlock(interactions);
+                }
             },
         })
     );
@@ -61,43 +85,6 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
 export type SimulateInteractionAppJob = ReturnType<
     typeof simulateInteractionJob
 >;
-
-/**
- * Get list of interactions to simulate
- * todo:
- *  - Use the locked bool
- *  - Condition should be in SQL directly
- * @param interactionsDb
- */
-async function getInteractionsToSimulate({
-    interactionsDb,
-}: { interactionsDb: InteractionsDb }) {
-    const interactions = await interactionsDb
-        .select()
-        .from(pendingInteractionsTable)
-        .where(
-            and(
-                eq(pendingInteractionsTable.status, "pending"),
-                eq(pendingInteractionsTable.locked, false)
-            )
-        );
-    // Locally, directly return the interactions
-    if (isRunningLocally) return interactions;
-
-    if (interactions.length > 10) {
-        return interactions;
-    }
-
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const hasInteractions5MinOld = interactions.some((interaction) => {
-        return interaction.createdAt < fiveMinutesAgo;
-    });
-    if (hasInteractions5MinOld) {
-        return interactions;
-    }
-
-    return [];
-}
 
 /**
  * Simulate a list of transaction and update their state

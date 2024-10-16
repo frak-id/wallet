@@ -9,7 +9,7 @@ export default async function RestrictedLayout({
 }>) {
     return (
         <GlobalLayout>
-            <Header authenticated={true} />
+            <Header />
             {children}
         </GlobalLayout>
     );

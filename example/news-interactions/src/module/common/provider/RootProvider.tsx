@@ -1,6 +1,5 @@
 "use client";
 
-import { isRunningLocally } from "@frak-labs/app-essentials";
 import {
     NexusConfigProvider,
     NexusIFrameClientProvider,
@@ -49,10 +48,7 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 const frakWalletSdkConfig = {
     walletUrl: process.env.FRAK_WALLET_URL as string,
     metadata: {
-        name: "Good Vibes - Frak",
-        css: isRunningLocally
-            ? "https://localhost:3011/css/nexus-modals.css"
-            : "https://news-paper.xyz/css/nexus-modals.css",
+        name: "Good Vibes",
     },
     // Specify domain for valid test on localhost
     domain: "news-paper.xyz",

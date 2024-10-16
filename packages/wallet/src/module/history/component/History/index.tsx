@@ -6,6 +6,7 @@ import { NotificationHistory } from "@/module/history/component/NotificationHist
 import { RewardHistory } from "@/module/history/component/RewardHistory";
 import { atom, useAtom, useAtomValue } from "jotai";
 import type { PropsWithChildren } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
 type HistoryType = "rewards" | "interaction" | "notifications";
@@ -13,17 +14,22 @@ type HistoryType = "rewards" | "interaction" | "notifications";
 const historyTypeAtom = atom<HistoryType>("interaction");
 
 export function History() {
+    const { t } = useTranslation();
     const type = useAtomValue(historyTypeAtom);
     return (
         <>
-            <Panel className={styles.history__panel}>
+            <Panel variant={"invisible"} className={styles.history__panel}>
                 <nav className={styles.history__nav}>
-                    <ButtonType currentType={"interaction"}>
-                        Interaction
+                    <ButtonType currentType={"rewards"}>
+                        {t("common.rewards")}
                     </ButtonType>{" "}
-                    | <ButtonType currentType={"rewards"}>Rewards</ButtonType>|{" "}
+                    |{" "}
+                    <ButtonType currentType={"interaction"}>
+                        {t("common.interactions")}
+                    </ButtonType>
+                    |{" "}
                     <ButtonType currentType={"notifications"}>
-                        Notifications
+                        {t("common.notifications")}
                     </ButtonType>
                 </nav>
             </Panel>
@@ -42,7 +48,7 @@ function ButtonType({
     return (
         <button
             type="button"
-            className={`${currentType === type ? styles.history__active : ""} button`}
+            className={`${currentType === type ? styles.history__active : ""} button ${styles.history__inactive}`}
             onClick={() => setType(currentType)}
         >
             {children}

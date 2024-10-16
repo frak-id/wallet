@@ -33,4 +33,7 @@ export const interactionTypesLabel: Record<
     completed: {
         name: "Purchase completed",
     },
+    open: {
+        name: "Webshop Open",
+    },
 };

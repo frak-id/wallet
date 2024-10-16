@@ -1,11 +1,11 @@
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
-import { Title } from "@/module/common/component/Title";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
 import type { SendTransactionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useAccount, useSendTransaction } from "wagmi";
 
 /**
@@ -22,6 +22,7 @@ export function TransactionModalStep({
     onFinish: (result: SendTransactionModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { t } = useTranslation();
     const { sendTransaction, isPending, isError, error } = useSendTransaction({
         mutation: {
             // Link success and error hooks
@@ -42,9 +43,6 @@ export function TransactionModalStep({
 
     return (
         <RequireWebAuthN>
-            <Title className={styles.modalListener__subTitle}>
-                You need to confirm this transaction
-            </Title>
             <AccordionTransactions txs={txs} />
 
             <AuthFingerprint
@@ -55,7 +53,9 @@ export function TransactionModalStep({
                     sendTransaction(toSendTx);
                 }}
             >
-                Send transaction{txs.length > 1 ? "s" : ""}
+                {t("sdk.modal.sendTransaction.default.primaryAction", {
+                    count: txs.length,
+                })}
             </AuthFingerprint>
 
             {isError && (

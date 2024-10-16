@@ -1,12 +1,12 @@
 "use server";
 
-import { kernelAddresses } from "@/context/blockchain/addresses";
 import { currentViemClient } from "@/context/blockchain/provider";
 import {
     doAddPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
 } from "@/context/recover/utils/abi";
 import type { CurrentRecovery } from "@/types/Recovery";
+import { kernelAddresses } from "@frak-labs/app-essentials";
 import {
     addresses,
     getExecutionAbi,

@@ -1,6 +1,7 @@
 import type { Stack } from "sst/constructs";
 
-export const openNextVersion = "3.1.1";
+// v3.1.4 is at @opennextjs/aws and isn't supported by SST yet
+export const openNextVersion = "3.1.3";
 
 /**
  * Check if we are running in prod or not

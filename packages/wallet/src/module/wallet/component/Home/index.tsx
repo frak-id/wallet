@@ -11,9 +11,9 @@ export function WalletHomePage() {
     return (
         <Grid>
             <ToggleSession />
+            <Tokens />
             <InstallApp />
             <EnableNotification />
-            <Tokens />
             <PendingReferral />
         </Grid>
     );

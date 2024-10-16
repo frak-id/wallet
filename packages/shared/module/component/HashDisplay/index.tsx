@@ -1,4 +1,5 @@
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
+import { t } from "i18next";
 import { useMemo } from "react";
 import { type Address, type Hex, slice } from "viem";
 import styles from "./index.module.css";
@@ -29,7 +30,7 @@ export function WalletAddress({ wallet }: { wallet: Address }) {
             className={styles.walletAddress}
             onClick={() => copy(wallet)}
         >
-            {copied ? "Copied!" : hashedAddress}
+            {copied ? t("common.copied") : hashedAddress}
         </button>
     );
 }
@@ -49,7 +50,7 @@ export function TransactionHash({ hash }: { hash: Hex }) {
             className={styles.walletAddress}
             onClick={() => copy(hash)}
         >
-            {copied ? "Copied!" : hashedAddress}
+            {copied ? t("common.copied") : hashedAddress}
         </button>
     );
 }

@@ -57,10 +57,10 @@ export function ButtonRipple({
                 setTimeout(() => onClick?.(), timeout);
             }}
         >
-            <>
+            <span>
                 {isLoading && <Spinner />}
                 {children}
-            </>
+            </span>
         </button>
     );
 }

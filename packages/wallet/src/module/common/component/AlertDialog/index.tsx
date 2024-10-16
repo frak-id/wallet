@@ -1,4 +1,3 @@
-import { LogoFrak } from "@module/asset/icons/LogoFrak";
 import { mergeElement } from "@module/utils/mergeElement";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
@@ -7,7 +6,7 @@ import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
 type AlertDialogComponentProps = {
-    title?: string;
+    title?: ReactNode;
     description?: string;
     text?: ReactNode | string;
     button?: {
@@ -27,7 +26,6 @@ type AlertDialogComponentProps = {
     onOpenChange?: (open: boolean) => void;
     classNameContent?: string;
     classNameTitle?: string;
-    showProvidedBy?: boolean;
 };
 
 export function AlertDialog({
@@ -46,7 +44,6 @@ export function AlertDialog({
     onOpenChange,
     classNameContent = "",
     classNameTitle = "",
-    showProvidedBy = true,
 }: AlertDialogComponentProps) {
     return (
         <AlertDialogPrimitive.Root
@@ -67,9 +64,11 @@ export function AlertDialog({
             </AlertDialogPrimitive.Trigger>
             <AlertDialogPrimitive.Portal>
                 <AlertDialogPrimitive.Overlay
+                    onClick={() => onOpenChange?.(false)}
                     className={`${prefixModalCss("overlay")} ${styles.alertDialog__overlay}`}
                 />
                 <AlertDialogPrimitive.Content
+                    onEscapeKeyDown={() => onOpenChange?.(false)}
                     className={`${prefixModalCss("content")} ${styles.alertDialog__content} ${
                         showCloseButton
                             ? styles.alertDialog__withCloseButton
@@ -98,15 +97,6 @@ export function AlertDialog({
                             className={`${prefixModalCss("title")} ${styles.alertDialog__title} ${classNameTitle}`}
                         >
                             {title}
-                            {showProvidedBy && (
-                                <span className={styles.alertDialog__provided}>
-                                    Provided by Frak{" "}
-                                    <LogoFrak
-                                        sizes={14}
-                                        className={styles.alertDialog__logo}
-                                    />
-                                </span>
-                            )}
                         </AlertDialogPrimitive.Title>
                     ) : (
                         <AlertDialogPrimitive.Title />

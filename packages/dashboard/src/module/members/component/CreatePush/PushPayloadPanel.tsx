@@ -17,10 +17,6 @@ import { useFormContext } from "react-hook-form";
 
 /**
  *  Build the push payload panel
- *    todo:
- *      - Preview of the push notification on the right side
- *      - Icon url for the push notification
- *      - TextArea for the message?
  * @constructor
  */
 export function PushPayloadPanel() {

@@ -232,8 +232,6 @@ function WebhookStats({
 
 /**
  * Toggle the oracle updater role
- *  todo: Should only be possible for product admin
- *  todo: review contract to also allow product manager?
  */
 function ToggleOracleUpdaterRole({
     productId,

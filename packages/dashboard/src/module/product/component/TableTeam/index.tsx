@@ -18,7 +18,7 @@ import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
-import { type Hex, isAddressEqual, toHex } from "viem";
+import { type Hex, isAddressEqual, toHex, zeroAddress } from "viem";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<ManageTeamTableData>>(
@@ -45,14 +45,11 @@ export function TableTeam({ productId }: { productId: Hex }) {
             const administrators = await getProductAdministrators({
                 productId: toHex(BigInt(productId)),
             });
-            if (walletStatus?.key !== "connected")
-                return administrators.map((admin) => ({
-                    ...admin,
-                    isMe: false,
-                }));
             return administrators.map((admin) => ({
                 ...admin,
-                isMe: isAddressEqual(admin.wallet, walletStatus.wallet),
+                isMe: walletStatus?.wallet
+                    ? isAddressEqual(admin.wallet, walletStatus.wallet)
+                    : false,
             }));
         },
     });
@@ -140,15 +137,9 @@ function CellActions({
             };
 
         // Otherwise, check if the user is the current cell
-        if (wallletStatus?.key !== "connected")
-            return {
-                canDoActions: false,
-                isSelfAction: false,
-            };
-
         const isCurrentUser = isAddressEqual(
             row.original.wallet,
-            wallletStatus.wallet
+            wallletStatus?.wallet ?? zeroAddress
         );
         return {
             canDoActions: isCurrentUser,

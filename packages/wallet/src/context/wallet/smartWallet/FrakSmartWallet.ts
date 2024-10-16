@@ -1,6 +1,4 @@
-import { kernelAddresses } from "@/context/blockchain/addresses";
 import type { currentViemClient } from "@/context/blockchain/provider";
-import { KernelExecuteAbi } from "@/context/wallet/abi/kernel-account-abis";
 import {
     fetchAccountMetadata,
     wrapMessageForSignature,
@@ -8,12 +6,13 @@ import {
 import {
     type SmartAccountV06,
     getAccountAddress,
-    getAccountInitCode,
     isAlreadyFormattedCall,
 } from "@/context/wallet/smartWallet/utils";
 import { isRip7212ChainSupported } from "@/context/wallet/smartWallet/webAuthN";
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
+import { KernelExecuteAbi } from "@frak-labs/app-essentials";
+import { WebAuthN, kernelAddresses } from "@frak-labs/app-essentials";
 import { isSmartAccountDeployed } from "permissionless";
 import { getAccountNonce } from "permissionless/actions";
 import { memo, tryit } from "radash";
@@ -109,7 +108,7 @@ export async function frakWalletSmartAccount<
     const authenticatorIdHash = keccak256(toHex(authenticatorId));
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
-        getAccountInitCode({
+        WebAuthN.getWebAuthNSmartWalletInitCode({
             authenticatorIdHash,
             signerPubKey,
         });

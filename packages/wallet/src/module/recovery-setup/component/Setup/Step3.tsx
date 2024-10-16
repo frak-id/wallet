@@ -4,12 +4,14 @@ import {
     recoveryOptionsAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { ButtonRipple } from "@module/component/ButtonRipple";
+import { Button } from "@module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 
 const ACTUAL_STEP = 3;
 
 export function Step3() {
+    const { t } = useTranslation();
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
 
@@ -22,9 +24,10 @@ export function Step3() {
     return (
         <AccordionRecoveryItem
             actualStep={ACTUAL_STEP}
-            title={"Download recovery file"}
+            title={t("wallet.recoverySetup.step3")}
         >
-            <ButtonRipple
+            <Button
+                width={"full"}
                 onClick={async () => {
                     if (!recoveryOptions) return;
                     await downloadRecoveryFileAsync({
@@ -36,8 +39,8 @@ export function Step3() {
                     }, 1000);
                 }}
             >
-                Download my recovery file
-            </ButtonRipple>
+                {t("wallet.recoverySetup.download")}
+            </Button>
         </AccordionRecoveryItem>
     );
 }

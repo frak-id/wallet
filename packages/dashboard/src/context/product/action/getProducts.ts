@@ -41,8 +41,7 @@ async function getProducts({ wallet }: { wallet: Address }) {
                 // Push it in the right list
                 if (item.isOwner === 1) {
                     acc.owner.push(mappedProduct);
-                } else {
-                    // todo: check roles
+                } else if (BigInt(item.roles) !== 0n) {
                     acc.operator.push(mappedProduct);
                 }
                 return acc;

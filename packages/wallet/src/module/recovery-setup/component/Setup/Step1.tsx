@@ -5,10 +5,12 @@ import {
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import { useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 
 const ACTUAL_STEP = 1;
 
 export function Step1() {
+    const { t } = useTranslation();
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
 
@@ -24,7 +26,7 @@ export function Step1() {
     return (
         <AccordionRecoveryItem
             actualStep={ACTUAL_STEP}
-            title={"Encryption password"}
+            title={t("wallet.recoverySetup.step1")}
         >
             <Password onSubmit={onSubmit} />
         </AccordionRecoveryItem>

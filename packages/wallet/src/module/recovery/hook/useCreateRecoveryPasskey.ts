@@ -1,6 +1,6 @@
-import { validateRegistration } from "@/context/wallet/action/register";
 import { getRegisterOptions } from "@/context/wallet/action/registerOptions";
 import type { RecoveryFileContent } from "@/types/Recovery";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 
@@ -14,17 +14,27 @@ export function useCreateRecoveryPasskey() {
         mutationFn: async ({ file }: { file: RecoveryFileContent }) => {
             // Get the registration options and start the registration
             const registrationOptions = await getRegisterOptions();
-            const registrationResponse =
-                await startRegistration(registrationOptions);
+            const registrationResponse = await startRegistration({
+                optionsJSON: registrationOptions,
+            });
 
             // Verify the registration and return the formatted output
-            return validateRegistration({
-                expectedChallenge: registrationOptions.challenge,
-                registrationResponse,
-                userAgent: navigator.userAgent,
-                previousWallet: file.initialWallet.address,
-                setCookieSession: false,
-            });
+            const encodedResponse = Buffer.from(
+                JSON.stringify(registrationResponse)
+            ).toString("base64");
+            const { data: wallet, error } =
+                await backendApi.auth.wallet.register.post({
+                    userAgent: navigator.userAgent,
+                    expectedChallenge: registrationOptions.challenge,
+                    registrationResponse: encodedResponse,
+                    previousWallet: file.initialWallet.address,
+                    setSessionCookie: false,
+                });
+            if (error) {
+                throw error;
+            }
+
+            return { wallet };
         },
     });
 

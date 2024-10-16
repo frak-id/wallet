@@ -1,4 +1,4 @@
-export { addresses } from "./addresses";
+export { addresses, kernelAddresses, usdcArbitrumAddress } from "./addresses";
 export { getTransport, getViemClientFromChain } from "./provider";
 export { getErpcTransport } from "./transport/erpc-transport";
 export {
@@ -10,6 +10,17 @@ export {
     interactionValidatorRoles,
     type ProductRolesKey,
 } from "./roles";
+// Actions
+export type {
+    AlchemyRpcSchema,
+    GetTokenMetadataResponse,
+    GetTokenBalancesRawResponse,
+} from "./actions/AlchemyRpcSchema";
+export {
+    getTokenMetadata,
+    type GetTokenMetadataParams,
+} from "./actions/getTokenMetadata";
+export { getTokenBalances } from "./actions/getTokenBalances";
 // Abis
 export {
     campaignFactoryAbi,
@@ -40,6 +51,10 @@ export {
     multiWebAuthNRecoveryActionAbi,
     multiWebAuthNValidatorV2Abi,
 } from "./abis/kernelV2Abis";
+export {
+    KernelExecuteAbi,
+    KernelInitAbi,
+} from "./abis/kernelAccountAbis";
 export { getExecutionAbi, mintAbi } from "./abis/custom";
 export {
     sendInteractionsSelector,

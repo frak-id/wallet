@@ -1,23 +1,28 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
-import { getSession } from "@/context/session/action/session";
+import {
+    ssoPopupFeatures,
+    ssoPopupName,
+    useSsoLink,
+} from "@/module/authentication/hook/useGetOpenSsoLink";
 import { useLogin } from "@/module/authentication/hook/useLogin";
-import { useOpenSsoPopup } from "@/module/authentication/hook/useOpenSsoPopup";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
+import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
-import { requestAndCheckStorageAccess } from "@/module/listener/utils/thirdParties";
+import { getSharedStorageAccessStatus } from "@/module/listener/utils/thirdParties";
 import type {
     LoginModalStepType,
     SsoMetadata,
 } from "@frak-labs/nexus-sdk/core";
+import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
-import { useCallback, useEffect } from "react";
-import Markdown from "react-markdown";
-import rehypeExternalLinks from "rehype-external-links";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { DismissButton } from "../Generic";
 
 /**
  * The component for the login step of a modal
@@ -37,27 +42,19 @@ export function LoginModalStep({
     onFinish: (args: LoginModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { t } = useTranslation();
     const { metadata } = params;
     const { login, isSuccess, isLoading, isError, error } = useLogin({
-        // On mutation, request access to the storage and update context if granted
-        onMutate: async () => {
-            const hasStorageAccess = await requestAndCheckStorageAccess();
-
-            if (hasStorageAccess) {
-                const session = await mutateAsyncUpdateSessionStatus();
-                if (session) {
-                    onFinish({
-                        wallet: session.wallet.address,
-                    });
-                    return;
-                }
-            }
-        },
         // On error, transmit the error up a level
         onError: (error) => onError(error.message),
         // On success, transmit the wallet address up a level
-        onSuccess: (session) => onFinish({ wallet: session.wallet.address }),
+        onSuccess: (session) => onFinish({ wallet: session.address }),
     });
+    const { data: hasStorageAccess } = useQuery({
+        queryKey: ["storage", "access"],
+        queryFn: () => getSharedStorageAccessStatus(),
+    });
+
     const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
 
     const session = useAtomValue(sessionAtom);
@@ -68,50 +65,72 @@ export function LoginModalStep({
      */
     useEffect(() => {
         if (session) {
-            onFinish({ wallet: session.wallet.address });
+            onFinish({ wallet: session.address });
         }
     }, [onFinish, session]);
 
     return (
         <RequireWebAuthN>
-            {metadata?.description && (
-                <div className={prefixModalCss("text")}>
-                    <Markdown
-                        rehypePlugins={[
-                            [rehypeExternalLinks, { target: "_blank" }],
-                        ]}
-                    >
-                        {metadata.description}
-                    </Markdown>
-                </div>
-            )}
-            <div className={prefixModalCss("buttons-wrapper")}>
-                <div>
-                    <button
-                        type={"button"}
-                        className={prefixModalCss("button-primary")}
-                        disabled={isLoading}
-                        onClick={() => login({})}
-                    >
-                        {isLoading && <Spinner />}
-                        {metadata?.primaryActionText ?? "Login"}
-                    </button>
-                </div>
+            <div
+                className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
+            >
                 {params.allowSso && (
                     <div>
                         <SsoButton
                             appName={appName}
                             context={context}
                             ssoMetadata={params.ssoMetadata}
-                            alternateText={metadata?.secondaryActionText}
+                            alternateText={metadata?.primaryActionText}
                         />
                     </div>
                 )}
+                <div>
+                    <button
+                        type={"button"}
+                        className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
+                        disabled={isLoading}
+                        onClick={() => {
+                            // If he already accepted storage access, directly login
+                            if (hasStorageAccess) {
+                                login({});
+                                return;
+                            }
+
+                            // Otherwise, ask for storage, then login if needed only
+                            document
+                                .requestStorageAccess()
+                                .then(getSharedStorageAccessStatus)
+                                .then(async (hasAccess) => {
+                                    // Check for sotrage access post request
+                                    if (hasAccess) {
+                                        const session =
+                                            await mutateAsyncUpdateSessionStatus();
+                                        if (session) {
+                                            onFinish({
+                                                wallet: session.address,
+                                            });
+                                            return;
+                                        }
+                                    }
+
+                                    // If we are here, we need to login
+                                    await login({});
+                                });
+                        }}
+                    >
+                        {isLoading && <Spinner />}
+                        {metadata?.secondaryActionText ??
+                            t("sdk.modal.login.default.secondaryAction")}
+                    </button>
+                </div>
+                <div>
+                    <DismissButton />
+                </div>
             </div>
 
             {isSuccess && (
                 <p className={styles.modalListener__success}>
-                    Connection successful
+                    {t("sdk.modal.login.success")}
                 </p>
             )}
 
@@ -143,57 +162,142 @@ function SsoButton({
     ssoMetadata: SsoMetadata;
     alternateText?: string;
 }) {
+    const { t } = useTranslation();
+    // Target language
+    const lang = useAtomValue(modalDisplayedRequestAtom)?.metadata?.lang;
+
+    // Get the link to use with the SSO
+    const { link } = useSsoLink({
+        productId: context.productId,
+        metadata: {
+            name: appName,
+            ...ssoMetadata,
+        },
+        directExit: true,
+        lang,
+    });
+
+    // The text to display on the button
+    const text = useMemo<ReactNode>(
+        () => alternateText ?? t("sdk.modal.login.default.primaryAction"),
+        [alternateText, t]
+    );
+
+    if (!link) {
+        return null;
+    }
+
+    return <RegularSsoButton link={link} text={text} />;
+}
+
+function RegularSsoButton({ link, text }: { link: string; text: ReactNode }) {
     const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
-    const openSsoPopup = useOpenSsoPopup();
+    const [failToOpen, setFailToOpen] = useState(false);
+    const [hasClicked, setHasClicked] = useState(false);
 
-    /**
-     * Small hook to open the registration page
-     */
-    const openRegister = useCallback(() => {
-        // If we are on the server side do nothing
-        if (window === undefined) return;
-
-        // Open the SSO popup
-        openSsoPopup({
-            productId: context.productId,
-            metadata: {
-                name: appName,
-                ...ssoMetadata,
-            },
-            directExit: true,
-        });
-    }, [appName, ssoMetadata, context, openSsoPopup]);
+    // If we failed to open the SSO modal, fallback to a link
+    if (failToOpen) {
+        return (
+            <>
+                <LinkSsoButton link={link} text={text} />
+            </>
+        );
+    }
 
     return (
         <button
             type={"button"}
-            className={prefixModalCss("button-secondary")}
-            onClick={async () => {
-                await requestAndCheckStorageAccess();
-                openRegister();
+            className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
+            onClick={() => {
+                // Try to open the sso window
+                const openedWindow = window.open(
+                    link,
+                    ssoPopupName,
+                    ssoPopupFeatures
+                );
+                // If we got a window, focus it and save the clicked state
+                if (openedWindow) {
+                    openedWindow.focus();
+                    setHasClicked(true);
+                } else {
+                    // Otherwise, mark that we fail to open it
+                    setFailToOpen(true);
+                }
             }}
-            onFocus={async () => {
-                await mutateAsyncUpdateSessionStatus();
+            onFocus={() => {
+                // If the user didn't clicked the button, do nothing
+                if (!hasClicked) return;
+
+                // On refocus, recheck the storage access status
+                getSharedStorageAccessStatus().then(async (hasAccess) => {
+                    // If we have access, we can update the session status
+                    if (hasAccess) {
+                        await mutateAsyncUpdateSessionStatus();
+                    }
+                });
             }}
         >
-            {alternateText ?? "Register"}
+            {text}
         </button>
     );
 }
+
+/**
+ * SSO button using a simple link, with sharing stauts
+ */
+function LinkSsoButton({ link, text }: { link: string; text: ReactNode }) {
+    const { mutateAsyncUpdateSessionStatus } = useUpdateSessionStatus();
+    const [hasClicked, setHasClicked] = useState(false);
+
+    return (
+        <a
+            href={link}
+            onClick={() => {
+                setHasClicked(true);
+            }}
+            className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
+            target="frak-sso"
+            rel="noreferrer"
+            onFocus={() => {
+                // If the user didn't clicked the button, do nothing
+                if (!hasClicked) return;
+
+                // On refocus, recheck the storage access status
+                getSharedStorageAccessStatus().then(async (hasAccess) => {
+                    // If we have access, we can update the session status
+                    if (hasAccess) {
+                        await mutateAsyncUpdateSessionStatus();
+                    }
+                });
+            }}
+        >
+            {text}
+        </a>
+    );
+}
+
 /**
  * This mutation is used to ensure that post SSO we have a session, not automatically updated
  */
 function useUpdateSessionStatus() {
+    // Read from the jotai store
+    const currentSession = useAtomValue(sessionAtom);
+    const sessionsRef = useRef(undefined as typeof currentSession | undefined);
+    useEffect(() => {
+        sessionsRef.current = currentSession;
+    }, [currentSession]);
+
     const { mutateAsync: mutateAsyncUpdateSessionStatus } = useMutation({
         mutationKey: ["session", "force-refetch"],
         mutationFn: async () => {
             // If our jotai store already contain a session, we can early exit
-            if (jotaiStore.get(sessionAtom)) {
-                return;
+            if (sessionsRef.current) {
+                return sessionsRef.current;
             }
 
             // Otherwise we fetch the session
-            const session = await getSession();
+            const { data: session } =
+                await backendApi.auth.wallet.session.get();
             if (session) {
                 jotaiStore.set(sessionAtom, session);
             }

@@ -3,6 +3,7 @@ import type {
     AuthenticatorTransportFuture,
     CredentialDeviceType,
 } from "@simplewebauthn/types";
+import type { Binary } from "mongodb";
 import type { Address } from "viem";
 
 /**
@@ -18,7 +19,7 @@ export type AuthenticatorDocument = Readonly<{
     // The extracted pub key
     publicKey: P256PubKey;
     // The authenticator stuff
-    credentialPublicKey: string;
+    credentialPublicKey: Binary;
     counter: number;
     credentialDeviceType: CredentialDeviceType;
     credentialBackedUp: boolean;

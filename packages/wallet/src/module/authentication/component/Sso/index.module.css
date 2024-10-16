@@ -1,0 +1,75 @@
+.sso__grid {
+    margin-top: 0 !important;
+}
+
+.sso__logo {
+    margin: 0 auto 24px auto;
+    display: block;
+}
+
+.sso__title {
+    font-size: 29px;
+    font-weight: 400;
+    color: #575757;
+}
+
+.sso__ahead {
+    font-size: 10px;
+}
+
+.sso__link {
+    color: #0171ec;
+}
+
+.sso__buttonLink {
+    all: unset;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 13px;
+}
+
+.sso__notice {
+    color: #4d4d4d !important;
+    font-size: 11px !important;
+}
+
+.sso__buttonRegisterWrapper {
+    margin-top: 23px;
+    text-align: center;
+}
+
+.sso__buttonRegister {
+    max-width: 70%;
+    margin: 0 auto;
+    background: none !important;
+    box-shadow: 3px 3px 19px 0 #cacaca66 !important;
+    backdrop-filter: blur(50px);
+    border: 1px solid #ffffff;
+    border-radius: 12px !important;
+    font-size: 12px;
+    color: #000000 !important;
+
+    & > span {
+        gap: 7px !important;
+        padding: 25px 35px !important;
+        box-shadow: 0 -2px 50px 0 #2148933b inset !important;
+    }
+}
+
+.sso__buttonLoginWrapper {
+    margin-top: 18px;
+    text-align: center;
+}
+
+.sso__recover {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+    color: #4d4d4d;
+    font-size: 11px;
+}
+
+.sso__redirect {
+    margin-top: 20px;
+}

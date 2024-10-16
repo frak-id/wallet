@@ -8,6 +8,7 @@ import { frakWalletSmartAccount } from "@/context/wallet/smartWallet/FrakSmartWa
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
+import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
@@ -23,10 +24,10 @@ import type { SmartAccount } from "viem/account-abstraction";
  * Get the current authenticated wallet
  */
 const getAuthenticatedWallet = () => {
-    // If non SSR, direct return
+    // If on SSR, direct return
     if (typeof window === "undefined") return undefined;
     // Return the session atom
-    return jotaiStore.get(sessionAtom)?.wallet;
+    return jotaiStore.get(sessionAtom) ?? undefined;
 };
 
 /**
@@ -153,7 +154,18 @@ async function buildSmartAccount<
             });
 
             // Start the client authentication
-            const authenticationResponse = await startAuthentication(options);
+            const authenticationResponse = await startAuthentication({
+                optionsJSON: options,
+            });
+
+            // Store that in our last webauthn action atom
+            jotaiStore.set(lastWebAuthNActionAtom, {
+                wallet: wallet.address,
+                signature: authenticationResponse,
+                msg: options.challenge,
+            });
+
+            // Store this shit somewhere
 
             // Perform the verification of the signature
             return parseWebAuthNAuthentication(authenticationResponse);

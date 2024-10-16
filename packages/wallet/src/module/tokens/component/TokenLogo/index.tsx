@@ -1,23 +1,16 @@
 import { FrakToken } from "@/assets/icons/FrakToken";
-import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
+import type { BalanceItem } from "@/types/Token";
 import styles from "./index.module.css";
 
 export function TokenLogo({
     token,
     size = 24,
-}: { token?: GetUserErc20Token; size?: number }) {
+}: { token?: BalanceItem; size?: number }) {
     return (
         token && (
             <span className={styles.tokenLogo}>
-                {token.metadata.symbol.indexOf("FRK") >= 0 ? (
+                {token.symbol.indexOf("FRK") >= 0 ? (
                     <FrakToken size={size} />
-                ) : token.metadata.logo ? (
-                    <img
-                        src={token.metadata.logo}
-                        alt={token.metadata.name}
-                        width={size}
-                        height={size}
-                    />
                 ) : null}
             </span>
         )

@@ -1,11 +1,11 @@
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { TokenItemLite } from "@/module/tokens/component/TokenItemLite";
-import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
+import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { useEffect } from "react";
 import styles from "./index.module.css";
 
 export function TokenListLite() {
-    const { tokens, isLoading, refetch } = useGetUserTokens();
+    const { userBalance, isLoading, refetch } = useGetUserBalance();
 
     useEffect(() => {
         refetch();
@@ -16,10 +16,10 @@ export function TokenListLite() {
     }
 
     return (
-        tokens && (
+        userBalance && (
             <ul className={styles.tokenListLite}>
-                {tokens.map((token) => (
-                    <TokenItemLite token={token} key={token.contractAddress} />
+                {userBalance.balances.map((balance) => (
+                    <TokenItemLite token={balance} key={balance.token} />
                 ))}
             </ul>
         )

@@ -1,5 +1,5 @@
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
-import { sessionAtom } from "@/module/common/atoms/session";
+import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import {
     addPendingInteractionsAtom,
     pendingInteractionAtom,
@@ -12,6 +12,7 @@ import {
     hashAndCompressData,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
+import { atom } from "jotai";
 import { tryit } from "radash";
 import type { Hex } from "viem";
 
@@ -22,6 +23,7 @@ type BackupData = {
     productId: Hex;
     session?: Session;
     pendingInteractions?: PendingInteraction[];
+    sdkSession?: { token: string; expires: number };
     expireAtTimestamp: number;
 };
 
@@ -57,16 +59,22 @@ export async function restoreBackupData({
         return;
     }
 
-    // todo: additional security measure
+    // Put everything in the right atoms
+    jotaiStore.set(restoreBackupAtom, data);
+}
 
-    // Put everything in the right jotai stores
+// Atom to restore backup data all at once
+const restoreBackupAtom = atom(null, (_get, set, data: BackupData) => {
     if (data.session) {
-        jotaiStore.set(sessionAtom, data.session);
+        set(sessionAtom, data.session);
+    }
+    if (data.sdkSession) {
+        set(sdkSessionAtom, data.sdkSession);
     }
     if (data.pendingInteractions) {
-        jotaiStore.set(addPendingInteractionsAtom, data.pendingInteractions);
+        set(addPendingInteractionsAtom, data.pendingInteractions);
     }
-}
+});
 
 /**
  * Push new backup data
@@ -77,12 +85,12 @@ export async function pushBackupData({
 }: {
     productId: Hex;
 }) {
+    // Get the current atom backup data
+    const partialBackup = jotaiStore.get(backupDataAtom);
     // Build backup datas
     const backup: BackupData = {
+        ...partialBackup,
         productId,
-        session: jotaiStore.get(sessionAtom) ?? undefined,
-        pendingInteractions: jotaiStore.get(pendingInteractionAtom)
-            .interactions,
         // Backup will expire in a week
         expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
     };
@@ -104,3 +112,15 @@ export async function pushBackupData({
         data: { backup: JSON.stringify(compressedBackup) },
     });
 }
+
+// Read the current data all at once to perform a backup
+const backupDataAtom = atom((get) => {
+    const session = get(sessionAtom);
+    const sdkSession = get(sdkSessionAtom);
+    const pendingInteractions = get(pendingInteractionAtom).interactions;
+    return {
+        session: session?.address ? session : undefined,
+        sdkSession: sdkSession?.token ? sdkSession : undefined,
+        pendingInteractions,
+    };
+});

@@ -1,4 +1,9 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
+import {
+    formDescriptionVariants,
+    formItemVariants,
+    formLabelVariants,
+} from "@/module/forms/Form";
 import { Label } from "@/module/forms/Label";
 import type { ManageTeamTableData } from "@/module/product/component/TableTeam/index";
 import { useRemoveProductMember } from "@/module/product/hook/useRemoveProductMember";
@@ -142,22 +147,29 @@ export function UpdateRoleTeamMemberModal({
             description={
                 <>
                     {isRenouncing ? (
-                        <p>
+                        <p className={formDescriptionVariants()}>
                             Pick the permissions you want to renounce on this
                             product
                         </p>
                     ) : (
                         <>
-                            <p>
+                            <p className={formDescriptionVariants()}>
                                 Pick the permissions you want to remove to the
-                                user{" "}
+                                user
+                                <br />
+                                <WalletAddress wallet={row.original.wallet} />
                             </p>
-                            <WalletAddress wallet={row.original.wallet} />
                         </>
                     )}
                     <br />
                     {permissionLabelsArray.map(({ id, label, description }) => (
-                        <div key={id} style={{ display: "flex" }}>
+                        <div
+                            className={formItemVariants({
+                                variant: "checkbox",
+                            })}
+                            key={id}
+                            style={{ display: "flex" }}
+                        >
                             <Checkbox
                                 id={id}
                                 disabled={
@@ -175,7 +187,14 @@ export function UpdateRoleTeamMemberModal({
                                 }}
                             />
                             <Tooltip content={description}>
-                                <Label htmlFor={id}>{label}</Label>
+                                <Label
+                                    htmlFor={id}
+                                    className={formLabelVariants({
+                                        variant: "checkbox",
+                                    })}
+                                >
+                                    {label}
+                                </Label>
                             </Tooltip>
                         </div>
                     ))}

@@ -1,5 +1,7 @@
 export {
     addresses,
+    kernelAddresses,
+    usdcArbitrumAddress,
     // Roles
     productRoles,
     interactionValidatorRoles,
@@ -26,6 +28,8 @@ export {
     getExecutionAbi,
     sendInteractionsSelector,
     sendInteractionSelector,
+    KernelExecuteAbi,
+    KernelInitAbi,
 } from "./blockchain";
 export {
     isRunningInProd,
@@ -33,3 +37,4 @@ export {
     stringToBytes32,
     bytesToString,
 } from "./utils";
+export { WebAuthN } from "./webauthn";

@@ -1,19 +1,22 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import {
-    modalDisplayedRequestAtom,
-    modalStepsAtom,
+    type DisplayedModalStep,
+    setNewModalAtom,
 } from "@/module/listener/atoms/modalEvents";
+import { clearRpcModalAtom } from "@/module/listener/atoms/modalUtils";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type { InteractionSession, Session } from "@/types/Session";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
     type ModalRpcStepsInput,
+    type ModalRpcStepsResultType,
     type ModalStepTypes,
     RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
-import { useAtomValue, useSetAtom } from "jotai";
+import { jotaiStore } from "@module/atoms/store";
+import { useAtomValue } from "jotai";
 import { useCallback } from "react";
 
 type OnDisplayModalRequest = IFrameRequestResolver<
@@ -29,8 +32,6 @@ type OnDisplayModalRequest = IFrameRequestResolver<
 export function useDisplayModalListener(): OnDisplayModalRequest {
     const session = useAtomValue(sessionAtom);
     const openSession = useAtomValue(interactionSessionAtom);
-    const setModalDisplayedRequest = useSetAtom(modalDisplayedRequestAtom);
-    const setModalStepsAtom = useSetAtom(modalStepsAtom);
 
     return useCallback(
         async (request, context, emitter) => {
@@ -43,7 +44,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
                         message: "No modals to display",
                     },
                 });
-                setModalDisplayedRequest(null);
+                jotaiStore.set(clearRpcModalAtom);
                 return;
             }
 
@@ -59,30 +60,51 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             );
 
             // Build our initial result array
-            const { results, currentStep } = filterStepsToDo({
+            const { currentResult, currentStep } = filterStepsToDo({
                 stepsPrepared,
                 session,
                 openSession,
             });
 
-            // Set steps for the modal
-            setModalStepsAtom({
+            // Save the new modal
+            jotaiStore.set(setNewModalAtom, {
+                // Store the global request
+                request: {
+                    appName: request.params[1],
+                    context,
+                    steps,
+                    metadata: request.params[2],
+                    emitter,
+                },
+                // Current step + formatted steps
                 currentStep,
                 steps: stepsPrepared,
-                results,
-            });
-
-            // Set our modal
-            setModalDisplayedRequest({
-                appName: request.params[1],
-                context,
-                steps,
-                metadata: request.params[2],
-                emitter,
+                // Initial result if any
+                initialResult: currentResult as ModalRpcStepsResultType,
             });
         },
-        [session, openSession, setModalDisplayedRequest, setModalStepsAtom]
+        [session, openSession]
     );
+}
+
+/**
+ * Prepare the input steps array
+ * @param steps
+ */
+function prepareInputStepsArray(steps: ModalRpcStepsInput) {
+    // Build the initial array
+    const inputSteps = Object.entries(steps).map(([key, params]) => ({
+        key,
+        params,
+    })) as DisplayedModalStep<ModalStepTypes["key"]>[];
+
+    // Sort the steps by importance
+    inputSteps.sort(
+        (a, b) => stepImportanceMap[a.key] - stepImportanceMap[b.key]
+    );
+
+    // Return the sorted array
+    return inputSteps;
 }
 
 /**
@@ -100,16 +122,18 @@ function filterStepsToDo({
     session: Session | null;
     openSession: InteractionSession | null;
 }) {
+    // The current result (if already authenticated + session)
+    let currentResult: ModalRpcStepsResultType<[]> = {};
     // Build our initial result array
     let currentStep = 0;
-    const results: Pick<ModalStepTypes, "key" | "returns">[] = [];
 
     // If the steps include login, check if user got a current session
     if (stepsPrepared.find((step) => step.key === "login") && session) {
-        results.push({
-            key: "login",
-            returns: { wallet: session.wallet.address },
-        });
+        // Add the login result
+        currentResult = {
+            ...currentResult,
+            login: { wallet: session.address },
+        };
         currentStep++;
     }
 
@@ -119,34 +143,18 @@ function filterStepsToDo({
         session &&
         openSession
     ) {
-        results.push({
-            key: "openSession",
-            returns: openSession,
-        });
+        // Add the openSession result
+        currentResult = {
+            ...currentResult,
+            openSession: {
+                startTimestamp: openSession.sessionStart,
+                endTimestamp: openSession.sessionEnd,
+            },
+        };
         currentStep++;
     }
 
-    return { results, currentStep };
-}
-
-/**
- * Prepare the input steps array
- * @param steps
- */
-function prepareInputStepsArray(steps: ModalRpcStepsInput) {
-    // Build the initial array
-    const inputSteps = Object.entries(steps).map(([key, params]) => ({
-        key,
-        params,
-    })) as Pick<ModalStepTypes, "key" | "params">[];
-
-    // Sort the steps by importance
-    inputSteps.sort(
-        (a, b) => stepImportanceMap[a.key] - stepImportanceMap[b.key]
-    );
-
-    // Return the sorted array
-    return inputSteps;
+    return { currentStep, currentResult };
 }
 
 const stepImportanceMap: Record<ModalStepTypes["key"], number> = {
@@ -156,5 +164,6 @@ const stepImportanceMap: Record<ModalStepTypes["key"], number> = {
     // Normal steps
     siweAuthenticate: 5,
     sendTransaction: 10,
-    success: 100,
+    // Final step
+    final: 100,
 };

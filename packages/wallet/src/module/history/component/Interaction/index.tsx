@@ -11,19 +11,11 @@ import {
     ShoppingBasket,
     ShoppingCart,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
 type InteractionProps = {
     article: InteractionHistory;
-};
-
-const mapLabels = {
-    OPEN_ARTICLE: "Opened article",
-    READ_ARTICLE: "Read article",
-    REFERRED: "Referred",
-    CREATE_REFERRAL_LINK: "Create share link",
-    PURCHASE_STARTED: "Started purchase",
-    PURCHASE_COMPLETED: "Completed purchase",
 };
 
 const mapIcons = {
@@ -33,9 +25,11 @@ const mapIcons = {
     CREATE_REFERRAL_LINK: <Link size={30} />,
     PURCHASE_STARTED: <ShoppingBasket size={30} />,
     PURCHASE_COMPLETED: <ShoppingCart size={30} />,
+    WEBSHOP_OPENNED: <ShoppingCart size={30} />,
 };
 
 export function Interaction({ article }: InteractionProps) {
+    const { t } = useTranslation();
     return (
         <Panel size={"small"} className={styles.interaction__panel}>
             <Title
@@ -44,9 +38,10 @@ export function Interaction({ article }: InteractionProps) {
                 classNameText={styles.interaction__titleText}
             >
                 <span className={styles.interaction__provider}>
-                    {mapLabels[article.type]}
+                    {t(`wallet.interaction.${article.type}`)}
                 </span>
-                at {new Date(article.timestamp * 1000).toLocaleString()}
+                {t("common.at")}{" "}
+                {new Date(article.timestamp * 1000).toLocaleString()}
             </Title>
         </Panel>
     );

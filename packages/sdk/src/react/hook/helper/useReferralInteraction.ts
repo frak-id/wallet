@@ -6,7 +6,7 @@ import { processReferral } from "../../../core/actions";
 import { ClientNotFound } from "../../../core/types/rpc/error";
 import { useNexusClient } from "../useNexusClient";
 import { useWalletStatus } from "../useWalletStatus";
-import { useNexusContext } from "../utils/useNexusContext";
+import { useFrakContext } from "../utils/useFrakContext";
 
 /**
  * Helper hook to automatically submit a referral interaction when detected
@@ -24,8 +24,8 @@ export function useReferralInteraction({
     // Get the nexus client
     const client = useNexusClient();
 
-    // Get the current nexus context
-    const { nexusContext } = useNexusContext();
+    // Get the current frak context
+    const { frakContext } = useFrakContext();
 
     // Get the wallet status
     const { data: walletStatus } = useWalletStatus();
@@ -41,7 +41,7 @@ export function useReferralInteraction({
         queryKey: [
             "nexus-sdk",
             "auto-referral-interaction",
-            nexusContext?.r ?? "no-referrer",
+            frakContext?.r ?? "no-referrer",
             walletStatus?.key ?? "no-wallet-status",
             productId ?? "no-product-id",
         ],
@@ -52,7 +52,7 @@ export function useReferralInteraction({
 
             return processReferral(client, {
                 walletStatus,
-                nexusContext,
+                frakContext,
                 modalConfig,
                 productId,
             });

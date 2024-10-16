@@ -10,6 +10,8 @@
 }
 
 .QRCodeWallet__button {
-    flex-direction: row !important;
-    justify-content: center !important;
+    & > span {
+        flex-direction: row !important;
+        justify-content: center !important;
+    }
 }

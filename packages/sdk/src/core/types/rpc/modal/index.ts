@@ -14,4 +14,7 @@ export type {
     OpenInteractionSessionModalStepType,
 } from "./openSession";
 export type { ModalStepMetadata } from "./generic";
-export type { SuccessModalStepType } from "./success";
+export type {
+    FinalModalStepType,
+    FinalActionType,
+} from "./final";

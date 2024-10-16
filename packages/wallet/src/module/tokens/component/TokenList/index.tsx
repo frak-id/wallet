@@ -1,27 +1,27 @@
-import type { GetUserErc20Token } from "@/context/tokens/action/getTokenAsset";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { TokenItem } from "@/module/tokens/component/TokenItem";
-import { useGetUserTokens } from "@/module/tokens/hook/useGetUserTokens";
+import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
+import type { BalanceItem } from "@/types/Token";
 import styles from "./index.module.css";
 
 export function TokenList({
     setSelectedValue,
 }: {
-    setSelectedValue?: (value: GetUserErc20Token) => void;
+    setSelectedValue?: (value: BalanceItem) => void;
 }) {
-    const { tokens, isLoading } = useGetUserTokens();
+    const { userBalance, isLoading } = useGetUserBalance();
 
     if (isLoading) {
         return <Skeleton height={100} />;
     }
 
     return (
-        tokens && (
+        userBalance && (
             <ul className={styles.tokenList}>
-                {tokens.map((token) => (
+                {userBalance.balances.map((balance) => (
                     <TokenItem
-                        token={token}
-                        key={token.contractAddress}
+                        token={balance}
+                        key={balance.token}
                         setSelectedValue={setSelectedValue}
                     />
                 ))}

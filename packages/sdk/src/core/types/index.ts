@@ -48,5 +48,6 @@ export type {
     SendTransactionReturnType,
     OpenInteractionSessionReturnType,
     OpenInteractionSessionModalStepType,
-    SuccessModalStepType,
+    FinalModalStepType,
+    FinalActionType,
 } from "./rpc/modal";

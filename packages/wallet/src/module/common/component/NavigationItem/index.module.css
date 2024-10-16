@@ -5,9 +5,10 @@
 }
 
 .navigation__button > svg {
-    stroke: var(--frak-color-grayText);
+    stroke: var(--frak-navigation-color);
+    opacity: 0.5;
 }
 
 .navigation__button--active > svg {
-    stroke: var(--frak-navigation-color);
+    opacity: 1;
 }

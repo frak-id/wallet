@@ -12,7 +12,7 @@ type PendingInteractionsStorage = {
  * Atom representing the pending interactions
  */
 export const pendingInteractionAtom =
-    atomWithStorage<PendingInteractionsStorage>("pendingInteractions", {
+    atomWithStorage<PendingInteractionsStorage>("frak_pendingInteractions", {
         interactions: [],
     });
 

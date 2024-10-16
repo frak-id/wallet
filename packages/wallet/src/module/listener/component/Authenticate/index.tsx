@@ -4,6 +4,7 @@ import type { SiweAuthenticateModalStepType } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
 
@@ -21,6 +22,7 @@ export function SiweAuthenticateModalStep({
     onFinish: (result: SiweAuthenticateModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { t } = useTranslation();
     const { metadata } = params;
     const { address, chainId } = useAccount();
     const siweMessage: SiweMessage | undefined = useMemo(() => {
@@ -62,23 +64,19 @@ export function SiweAuthenticateModalStep({
 
     return (
         <>
-            {metadata?.description && (
-                <div className={prefixModalCss("text")}>
-                    <p>{metadata.description}</p>
-                </div>
-            )}
-
             <TextData>
                 <p>{siweMessage?.statement}</p>
                 <p>Domain: {siweMessage?.domain}</p>
                 <p>Uri: {siweMessage?.uri}</p>
             </TextData>
 
-            <div className={prefixModalCss("buttons-wrapper")}>
+            <div
+                className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
+            >
                 <div>
                     <button
                         type={"button"}
-                        className={prefixModalCss("button-primary")}
+                        className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
                         disabled={isPending}
                         onClick={() => {
                             signMessage({
@@ -87,7 +85,10 @@ export function SiweAuthenticateModalStep({
                         }}
                     >
                         {isPending && <Spinner />}
-                        {metadata?.primaryActionText ?? "Authenticate"}
+                        {metadata?.primaryActionText ??
+                            t(
+                                "sdk.modal.siweAuthenticate.default.primaryAction"
+                            )}
                     </button>
                 </div>
             </div>

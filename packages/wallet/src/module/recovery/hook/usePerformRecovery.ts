@@ -55,8 +55,6 @@ export function usePerformRecovery(
                 throw new Error("No client found");
             }
 
-            // TODO: We should ensure that the new wallet is different from the initial wallet
-
             // Build the recovery account
             const smartAccount = await recoverySmartAccount(client, {
                 localAccount: recoveryAccount,

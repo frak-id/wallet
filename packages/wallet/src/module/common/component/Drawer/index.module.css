@@ -1,5 +1,5 @@
 .drawer__overlay {
-    background-color: rgba(0, 0, 0, 0.44);
+    background: rgba(0, 0, 0, 0.2);
     position: fixed;
     z-index: 10;
     inset: 0;

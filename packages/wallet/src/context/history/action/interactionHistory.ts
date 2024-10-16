@@ -21,7 +21,7 @@ type ApiResult = Array<
               };
           }
         | {
-              type: "CREATE_REFERRAL_LINK";
+              type: "CREATE_REFERRAL_LINK" | "WEBSHOP_OPENNED";
               data: null;
           }
         | {

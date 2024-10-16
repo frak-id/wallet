@@ -1,16 +1,16 @@
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
-import { requestAndCheckStorageAccess } from "@/module/listener/utils/thirdParties";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 
 /**
  * The component for the login step of a modal
- *  todo: Autoskip instead of click when session is present
  * @param onClose
  * @constructor
  */
@@ -23,6 +23,7 @@ export function OpenSessionModalStep({
     onFinish: (args: OpenInteractionSessionModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
+    const { t } = useTranslation();
     const { metadata } = params;
     const { address } = useAccount();
     const {
@@ -40,6 +41,7 @@ export function OpenSessionModalStep({
 
     const {
         mutate: openSession,
+        isIdle,
         isPending,
         isError,
         error,
@@ -54,8 +56,6 @@ export function OpenSessionModalStep({
                     });
                     throw new Error("session-exit");
                 }
-                // Then, perform a request to access the storage
-                await requestAndCheckStorageAccess();
             },
             onSuccess: async () => {
                 // Fetch the session status
@@ -80,18 +80,29 @@ export function OpenSessionModalStep({
         },
     });
 
+    // Small effect to auto skip this step if a session is already set
+    useEffect(() => {
+        // If the open session isn't idle, it mean that we are doing some shenanigans there
+        if (!isIdle) return;
+
+        // If we already got a session, directly exit
+        if (currentSession) {
+            onFinish({
+                startTimestamp: currentSession.sessionStart,
+                endTimestamp: currentSession.sessionEnd,
+            });
+        }
+    }, [currentSession, onFinish, isIdle]);
+
     return (
         <RequireWebAuthN>
-            {metadata?.description && (
-                <div className={prefixModalCss("text")}>
-                    <p>{metadata.description}</p>
-                </div>
-            )}
-            <div className={prefixModalCss("buttons-wrapper")}>
+            <div
+                className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
+            >
                 <div>
                     <button
                         type={"button"}
-                        className={prefixModalCss("button-primary")}
+                        className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
                         disabled={isPending || isFetchingStatus}
                         onClick={() => {
                             openSession();
@@ -99,7 +110,7 @@ export function OpenSessionModalStep({
                     >
                         {isPending && <Spinner />}
                         {metadata?.primaryActionText ??
-                            "Being rewarded with Nexus"}
+                            t("sdk.modal.openSession.default.primaryAction")}
                     </button>
                 </div>
             </div>

@@ -12,7 +12,7 @@ type LastAuthentication = Session & {
  * Atom with our last authenticator
  */
 const lastAuthenticatorAtom = atomWithStorage<LastAuthentication | null>(
-    "lastAuthentication",
+    "frak_lastAuthentication",
     null
 );
 
@@ -27,8 +27,8 @@ export const addLastAuthenticationAtom = atom(
 
         // Add it to the last authentications
         await dexieDb.previousAuthenticator.put({
-            wallet: authentication.wallet.address,
-            authenticatorId: authentication.wallet.authenticatorId,
+            wallet: authentication.address,
+            authenticatorId: authentication.authenticatorId,
             transports: authentication.transports,
         });
     }

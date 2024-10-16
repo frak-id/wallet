@@ -3,47 +3,43 @@
 import {
     currentSsoMetadataAtom,
     ssoContextAtom,
-    ssoMetadataAtom,
 } from "@/module/authentication/atoms/sso";
-import styles from "@/module/authentication/component/Login/index.module.css";
+import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
+import {
+    type CompressedSsoData,
+    compressedSsoToParams,
+} from "@/module/authentication/utils/ssoDataCompression";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
-import { InstallApp } from "@/module/wallet/component/InstallApp";
+import { decompressJson } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
-import { ButtonRipple } from "@module/component/ButtonRipple";
-import { useAtomValue, useSetAtom } from "jotai";
+import { Spinner } from "@module/component/Spinner";
+import { useQuery } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import styles from "./index.module.css";
 
 /**
  * The SSO page itself
  * @constructor
  */
 export function Sso() {
+    const { i18n, t } = useTranslation();
     /**
      * The current metadata
      */
     const currentMetadata = useAtomValue(currentSsoMetadataAtom);
 
     /**
-     * Set the sso metadata atom
-     */
-    const setSsoMetadata = useSetAtom(ssoMetadataAtom);
-
-    /**
      * The success state after login or register
      */
     const [success, setSuccess] = useState(false);
-
-    /**
-     * The PWA prompt and installed state
-     */
-    const { prompt, isInstalled } = useAddToHomeScreenPrompt();
 
     /**
      * Get the search params and set stuff in the sso context
@@ -53,47 +49,63 @@ export function Sso() {
     /**
      * Set the sso context atom directly
      */
+    useQuery({
+        gcTime: 0,
+        queryKey: ["sso", "params-decompression", searchParams.toString()],
+        queryFn: async () => {
+            const compressedString = searchParams.get("p");
+            if (!compressedString) {
+                return null;
+            }
+            const compressedParam =
+                await decompressJson<CompressedSsoData>(compressedString);
+            if (!compressedParam) {
+                return null;
+            }
+            const { productId, redirectUrl, directExit, lang, metadata } =
+                compressedSsoToParams(compressedParam);
+
+            // Save the current sso context
+            jotaiStore.set(ssoContextAtom, {
+                productId: productId ?? undefined,
+                redirectUrl: redirectUrl ?? undefined,
+                directExit: directExit ?? undefined,
+                metadata: metadata ?? undefined,
+            });
+
+            // If we got a language, change the i18n language
+            if (lang && i18n.language !== lang) {
+                await i18n.changeLanguage(lang);
+            }
+            // Return no data
+            return null;
+        },
+    });
+
+    /**
+     * Add a data attribute to the root element to style the layout
+     */
     useEffect(() => {
-        const productId = searchParams.get("productId");
-        const redirectUrl = searchParams.get("redirectUrl");
-        const directExit = searchParams.get("directExit");
+        const rootElement = document.querySelector(":root") as HTMLElement;
+        if (rootElement) {
+            rootElement.dataset.page = "sso";
+        }
 
-        jotaiStore.set(ssoContextAtom, {
-            productId: productId ?? undefined,
-            redirectUrl: redirectUrl ?? undefined,
-            directExit: directExit ? directExit === "true" : undefined,
-        });
-
-        if (!productId) return;
-
-        /**
-         * Set the metadata from the search params
-         */
-        const logoUrl = searchParams.get("logoUrl");
-        const homepageLink = searchParams.get("homepageLink");
-        const metadata = {
-            name: searchParams.get("name") ?? "",
-            ...(logoUrl && { logoUrl }),
-            ...(homepageLink && { homepageLink }),
+        return () => {
+            rootElement.removeAttribute("data-page");
         };
-        setSsoMetadata((prev) => ({
-            ...prev,
-            [productId]: metadata,
-        }));
-    }, [searchParams, setSsoMetadata]);
+    }, []);
 
     /**
      * The on success callback
      */
     const onSuccess = useCallback(() => {
-        // If PWA can be installed, show the button to propose to install it
-        if (prompt) {
-            setSuccess(true);
-            return;
-        }
-
-        redirectOrClose();
-    }, [prompt]);
+        // Redirect the user in 2seconds
+        setSuccess(true);
+        setTimeout(() => {
+            redirectOrClose();
+        }, 2000);
+    }, []);
 
     /**
      * Redirect or close after success
@@ -113,68 +125,72 @@ export function Sso() {
         }
     }, []);
 
-    /**
-     * Redirect to the wallet's homepage if the app is installed
-     */
-    useMemo(() => {
-        if (isInstalled) {
-            redirectOrClose();
-        }
-    }, [isInstalled, redirectOrClose]);
+    if (!currentMetadata) {
+        return <Spinner />;
+    }
 
     return (
-        <Grid
-            footer={
-                <>
-                    <Notice>
-                        Avant de continuer, assurez vous d’utiliser un appareil
-                        vous appartenant. Frak est une solution permettant à
-                        Asics de récompenser sa communauté pour participer à
-                        faire connaître ses offres.{" "}
-                        <strong>
-                            Frak est une solution décentralisée et open source
-                            et ne stocke aucune donnée personnelle ou
-                            biométrique.
-                        </strong>{" "}
-                        Pour en savoir plus sur Asics, vous pouvez consulter les
-                        Règles de confidentialités et les Conditions
-                        d’utilisation.
-                    </Notice>
-                    <Link href={"/recovery"} className={styles.login__link}>
-                        <CloudUpload /> Recover wallet from file
-                    </Link>
-                </>
-            }
-        >
-            <Header />
-            <br />
-            {!success && (
-                <>
-                    <SsoRegisterComponent onSuccess={onSuccess} />
-                    <br />
-                    <SsoLoginComponent onSuccess={onSuccess} />
-                </>
-            )}
-            {success && (
-                <>
-                    <p>You are successfully connected to your wallet.</p>
-                    <br />
-                    <InstallApp />
-                    <br />
-                    <ButtonRipple onClick={redirectOrClose}>
-                        Continue to {currentMetadata?.name}
-                    </ButtonRipple>
-                </>
-            )}
-        </Grid>
+        <>
+            <SsoHeader />
+            <Grid
+                className={styles.sso__grid}
+                footer={
+                    <>
+                        <Notice className={styles.sso__notice}>
+                            <Trans
+                                i18nKey={"authent.sso.description"}
+                                values={{
+                                    productName: currentMetadata.name,
+                                }}
+                            />
+                        </Notice>
+                        <Link
+                            href={"/recovery"}
+                            className={styles.sso__recover}
+                        >
+                            <CloudUpload /> {t("authent.sso.recover")}
+                        </Link>
+                    </>
+                }
+            >
+                <Header />
+                {!success && (
+                    <>
+                        <SsoRegisterComponent onSuccess={onSuccess} />
+                        <SsoLoginComponent onSuccess={onSuccess} />
+                    </>
+                )}
+                {success && (
+                    <>
+                        <p className={styles.sso__redirect}>
+                            <Trans
+                                i18nKey={"authent.sso.redirect"}
+                                values={{
+                                    productName: currentMetadata.name,
+                                }}
+                            />
+                            <span className={"dotsLoading"}>...</span>
+                        </p>
+                        <button
+                            className={styles.sso__buttonLink}
+                            onClick={redirectOrClose}
+                            type={"button"}
+                        >
+                            {t("authent.sso.redirectNow")}
+                        </button>
+                    </>
+                )}
+            </Grid>
+        </>
     );
 }
 
 function Header() {
+    const { t } = useTranslation();
     const currentMetadata = useAtomValue(currentSsoMetadataAtom);
 
     if (!currentMetadata) {
-        return <h2>Create your Wallet</h2>;
+        return <h2>{t("authent.sso.title")}</h2>;
     }
 
     return (
@@ -183,24 +199,33 @@ function Header() {
                 <img
                     src={currentMetadata.logoUrl}
                     alt={currentMetadata.name}
-                    className={styles.login__icon}
+                    className={styles.sso__logo}
                 />
             )}
-            <h2>Create your Wallet</h2>
+            <h2 className={styles.sso__title}>{t("authent.sso.title")}</h2>
             {currentMetadata.name !== "" && (
-                <p>
-                    to receive your rewards immediately from{" "}
-                    {currentMetadata.homepageLink ? (
-                        <a
-                            href={currentMetadata.homepageLink}
-                            target={"_blank"}
-                            rel={"noreferrer"}
-                        >
-                            {currentMetadata.name}
-                        </a>
-                    ) : (
-                        currentMetadata.name
-                    )}
+                <p className={styles.sso__ahead}>
+                    <Trans
+                        i18nKey={"authent.sso.subTitle"}
+                        values={{
+                            productName: currentMetadata.name,
+                            productLink: currentMetadata.homepageLink,
+                        }}
+                        components={{
+                            pLink: currentMetadata.homepageLink ? (
+                                <a
+                                    href={currentMetadata.homepageLink}
+                                    target={"_blank"}
+                                    rel={"noreferrer"}
+                                    className={styles.sso__link}
+                                >
+                                    {currentMetadata.name}
+                                </a>
+                            ) : (
+                                <u>{currentMetadata.name}</u>
+                            ),
+                        }}
+                    />
                 </p>
             )}
         </>

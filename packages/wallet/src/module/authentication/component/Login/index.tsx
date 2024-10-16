@@ -7,6 +7,9 @@ import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
 /**
@@ -14,24 +17,33 @@ import styles from "./index.module.css";
  * @constructor
  */
 export function Login() {
-    const { login } = useLogin();
+    const { t } = useTranslation();
+    const router = useRouter();
+    const [, startTransition] = useTransition();
+    const { login } = useLogin({
+        onSuccess: () => {
+            startTransition(() => {
+                router.push("/wallet");
+            });
+        },
+    });
 
     return (
         <>
-            <Back href={"/register"}>Account creation</Back>
+            <Back href={"/register"}>{t("wallet.login.accountCreation")}</Back>
             <Grid
                 className={styles.login__grid}
                 footer={
                     <>
                         <Link href={"/recovery"} className={styles.login__link}>
-                            <CloudUpload /> Recover wallet from file
+                            <CloudUpload /> {t("wallet.login.recover")}
                         </Link>
                         <LoginList />
                     </>
                 }
             >
                 <ButtonAuth trigger={() => login({})}>
-                    Recover your <strong>NEXUS</strong>
+                    <Trans i18nKey={"wallet.login.button"} />
                 </ButtonAuth>
             </Grid>
         </>

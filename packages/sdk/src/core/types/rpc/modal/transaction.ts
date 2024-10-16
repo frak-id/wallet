@@ -3,7 +3,6 @@ import type { GenericModalStepType } from "./generic";
 
 /**
  * Generic format representing a tx to be sent
- *  todo: exploit the EIP-5792 here? https://eips.ethereum.org/EIPS/eip-5792
  */
 export type SendTransactionTxType = Readonly<{
     to: Address;

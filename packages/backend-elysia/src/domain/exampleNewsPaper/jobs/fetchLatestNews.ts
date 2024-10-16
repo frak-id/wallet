@@ -21,7 +21,7 @@ export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
                 skipIfLocked: true,
                 pattern: Patterns.everyHours(6),
                 run: async () => {
-                    // Get the repository we will use
+                    // Get the repositories we will use
                     const newsDbRepository = app.decorator.newsDbRepository;
                     const worldNewsApiRepository = new WorldNewsApiRepository(
                         Config.WORLD_NEWS_API_KEY

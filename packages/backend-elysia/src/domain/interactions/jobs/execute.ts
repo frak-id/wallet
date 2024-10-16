@@ -1,7 +1,7 @@
 import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { Patterns } from "@elysiajs/cron";
-import { and, eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
 import {
     pendingInteractionsTable,
@@ -27,58 +27,37 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
                     interactionsDb,
                     interactionDiamondRepository,
                     interactionSignerRepository,
+                    pendingInteractionsRepository,
                 } = app.decorator;
 
                 // Get interactions to simulate
-                const interactions = await getInteractionsToExecute({
-                    interactionsDb,
-                });
+                const interactions =
+                    await pendingInteractionsRepository.getAndLock({
+                        status: "succeeded",
+                    });
                 if (interactions.length === 0) {
                     log.debug("No interactions to execute");
                     return;
                 }
                 log.debug(`Will execute ${interactions.length} interactions`);
 
-                // Execute them
-                const txHash = await executeInteractions({
-                    interactions,
-                    interactionsDb,
-                    interactionDiamondRepository,
-                    interactionSignerRepository,
-                });
-
-                log.info(
-                    {
-                        txHash,
-                    },
-                    `Executed ${interactions.length}  interactions`
-                );
+                try {
+                    // Execute them
+                    await executeInteractions({
+                        interactions,
+                        interactionsDb,
+                        interactionDiamondRepository,
+                        interactionSignerRepository,
+                    });
+                } finally {
+                    // Unlock them
+                    await pendingInteractionsRepository.unlock(interactions);
+                }
             },
         })
     );
 
 export type ExecuteInteractionAppJob = ReturnType<typeof executeInteractionJob>;
-
-/**
- * Get list of interactions to execute
- * todo:
- *  - Use the locked bool
- *  - Min 10 or 1 if older than 5min
- * @param interactionsDb
- */
-function getInteractionsToExecute({
-    interactionsDb,
-}: { interactionsDb: InteractionsDb }) {
-    return interactionsDb
-        .select()
-        .from(pendingInteractionsTable)
-        .where(
-            and(
-                eq(pendingInteractionsTable.status, "succeeded"),
-                eq(pendingInteractionsTable.locked, false)
-            )
-        );
-}
 
 /**
  * Execute a list of interactions
@@ -187,7 +166,4 @@ async function executeInteractions({
             )
         );
     });
-
-    // Return the tx hash
-    return txHash;
 }

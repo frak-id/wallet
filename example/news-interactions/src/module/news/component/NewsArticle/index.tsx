@@ -3,10 +3,7 @@
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { useIntersectionObserver } from "@/module/common/hooks/useIntersectionObserver";
 import { Hero } from "@/module/news/component/Hero";
-import {
-    PressInteractionEncoder,
-    ReferralInteractionEncoder,
-} from "@frak-labs/nexus-sdk/interactions";
+import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import {
     useDisplayModal,
     useReferralInteraction,
@@ -21,47 +18,45 @@ import { keccak256, toHex } from "viem";
 import forward from "./assets/forward.svg";
 import styles from "./index.module.css";
 
-const description = `We have set up Frak, a solution to remunerate our users and customers for the value they create by sharing our product. This solution, which is an alternative to cookies, enables us to measure the use and performance of our services.
-                
-Your choice will only be valid on the digital support you are currently using. If you log in to your account, your Frak ID will be associated with it. To find out more about how we and our partners use your personal data please read our privacy policy.`;
-
-const modalConfig = {
-    steps: {
-        openSession: {
-            metadata: {
-                title: "Open reward session",
-                description,
-                primaryActionText: "Being rewarded with Nexus",
-            },
-        },
-        login: {
-            metadata: {
-                title: "Login",
-                description,
-                primaryActionText: "Login with Nexus",
-                secondaryActionText: "Create a Nexus",
-            },
-            allowSso: true,
-            ssoMetadata: {
-                logoUrl: "https://news-paper.xyz/favicons/icon-192.png",
-                homepageLink: "https://news-paper.xyz/",
-            },
-        },
-        success: {
-            metadata: {
-                description: "You have successfully been rewarded",
-            },
-        },
-    },
+const loginModalStep = {
     metadata: {
-        header: {
-            title: "Payment for your data",
-        },
+        description:
+            "Je souhaite percevoir mes gains par **Good Vibes** directement dans mon porte monnaie en partageant ce produit",
+        primaryActionText: "Je crée mon porte-monnaie en 30 sec",
+        secondaryActionText: "J’ai déja un porte-monnaie",
+    },
+    allowSso: true,
+    ssoMetadata: {
+        logoUrl: "https://news-paper.xyz/assets/logo-good-vibes.svg",
+        homepageLink: "https://news-paper.xyz/",
     },
 } as const;
 
 export function NewsArticle({ articleId }: { articleId: string }) {
-    useReferralInteraction({ modalConfig });
+    useReferralInteraction({
+        modalConfig: {
+            steps: {
+                login: loginModalStep,
+                openSession: {
+                    metadata: {
+                        description:
+                            "Je souhaite recevoir mes gains de **Good Vibes** directement dans mon porte monnaie en partageant ce produit",
+                    },
+                },
+                final: {
+                    metadata: {
+                        description:
+                            "Votre porte-monnaie a été créé pour recevoir votre récompense de **Good Vibes** en cas d’achat.\n" +
+                            "Pour retrouver votre porte-monnaie, allez sur [wallet.frak.id](https://wallet.frak.id) ou entrez votre adresse email ci-dessous.",
+                    },
+                    action: { key: "reward" },
+                },
+            },
+            metadata: {
+                lang: "fr",
+            },
+        },
+    });
 
     const blockchainArticleId = useMemo(
         () => keccak256(toHex(articleId)),
@@ -70,20 +65,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
 
     const { mutateAsync: pushInteraction } = useSendInteraction();
 
-    const { mutate: displayModal } = useDisplayModal({
-        mutations: {
-            onSuccess: async () => {
-                // Since this modal is used to create interaction link, send the event after creation
-                const interactionHash = await pushInteraction({
-                    interaction: ReferralInteractionEncoder.createLink(),
-                });
-                console.log(
-                    "Referral link creation interaction",
-                    interactionHash
-                );
-            },
-        },
-    });
+    const { mutate: displayModal } = useDisplayModal();
 
     // Trigger the open article event when title is visible
     const { targetRef: titleRef } = useIntersectionObserver<HTMLHeadingElement>(
@@ -142,26 +124,49 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                     <button
                         type={"button"}
                         className={`button ${styles.article__social}`}
-                        onClick={() =>
+                        onClick={() => {
+                            const finalAction = {
+                                key: "sharing",
+                                options: {
+                                    popupTitle:
+                                        "Share this article with your friends",
+                                    text: "Discover this awesome article",
+                                    link:
+                                        typeof window !== "undefined"
+                                            ? window.location.href
+                                            : "",
+                                },
+                            } as const;
+
                             displayModal({
-                                ...modalConfig,
+                                metadata: {
+                                    lang: "fr",
+                                    isDismissible: true,
+                                    dismissActionTxt:
+                                        "Partager sans être rémunéré(e)",
+                                },
                                 steps: {
-                                    ...modalConfig.steps,
-                                    success: {
+                                    login: loginModalStep,
+                                    openSession: {
                                         metadata: {
                                             description:
-                                                "Get rewarded for sharing this article with your friends",
-                                        },
-                                        sharing: {
-                                            popupTitle:
-                                                "Share this article with your friends",
-                                            text: `Discover this awesome article from ${article?.author ?? "A Positive World"}!`,
-                                            link: window.location.href,
+                                                "Mon porte-monnaie est désormais créé. Cliquez sur le bouton ci-dessous pour l’activer et recevoir vos gains.",
                                         },
                                     },
+                                    final: {
+                                        metadata: {
+                                            description:
+                                                "Votre porte-monnaie a été créé pour recevoir votre récompense de **Good Vibes** en cas de partage.\nPour retrouver votre porte-monnaie, allez sur [wallet.frak.id](https://wallet.frak.id) ou entrez votre adresse email ci-dessous.",
+                                        },
+                                        dismissedMetadata: {
+                                            description:
+                                                "Partager cette article",
+                                        },
+                                        action: finalAction,
+                                    },
                                 },
-                            })
-                        }
+                            });
+                        }}
                     >
                         <Image src={forward} alt="Share" />
                     </button>

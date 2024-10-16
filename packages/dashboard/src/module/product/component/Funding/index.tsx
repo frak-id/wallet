@@ -7,7 +7,7 @@ import { Title } from "@/module/common/component/Title";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { FormLayout } from "@/module/forms/Form";
 import { ProductHead } from "@/module/product/component/ProductHead";
-import { useFundBank } from "@/module/product/hook/useFundBank";
+import { useFundTestBank } from "@/module/product/hook/useFundTestBank";
 import {
     type ProductBank,
     useGetProductFunding,
@@ -22,7 +22,8 @@ import { Spinner } from "@module/component/Spinner";
 import { Tooltip } from "@module/component/Tooltip";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { CheckCircle, XCircle } from "lucide-react";
-import { useEffect } from "react";
+import Link from "next/link";
+import { useEffect, useMemo } from "react";
 import { type Hex, isAddressEqual } from "viem";
 import styles from "./index.module.css";
 
@@ -79,6 +80,11 @@ function ProductFundingBanks({ banks }: { banks: ProductBank[] }) {
  * @returns
  */
 function ProductFundingBank({ bank }: { bank: ProductBank }) {
+    const isTestBank = useMemo(
+        () => isAddressEqual(bank.token.address, addresses.mUSDToken),
+        [bank.token.address]
+    );
+
     return (
         <div className={styles.productFundingBank}>
             <Columns>
@@ -88,6 +94,11 @@ function ProductFundingBank({ bank }: { bank: ProductBank }) {
                         size={"small"}
                         className={styles.productFundingBank__title}
                     >
+                        {isTestBank && (
+                            <Badge size={"small"} variant={"warning"}>
+                                Test
+                            </Badge>
+                        )}
                         Campaigns funding status
                     </Title>
                     <Row align={"center"}>
@@ -133,9 +144,7 @@ function ProductFundingBank({ bank }: { bank: ProductBank }) {
                     />
                 </Column>
             </Columns>
-            {isAddressEqual(bank.token.address, addresses.mUSDToken) && (
-                <FundBalance bank={bank} />
-            )}
+            <FundBalance bank={bank} isTestBank={isTestBank} />
         </div>
     );
 }
@@ -198,24 +207,43 @@ function ToggleFundingStatus({ bank }: { bank: ProductBank }) {
 
 /**
  * Fund the balance of the bank
- * @param bank
  * @returns
  */
-function FundBalance({ bank }: { bank: ProductBank }) {
-    const { mutate: fundBank, isPending } = useFundBank();
+function FundBalance({
+    bank,
+    isTestBank,
+}: { bank: ProductBank; isTestBank: boolean }) {
+    const { mutate: fundTestBank, isPending } = useFundTestBank();
+
+    if (isTestBank) {
+        return (
+            <Columns>
+                <Column>
+                    <p>
+                        <Button
+                            variant={"submit"}
+                            disabled={isPending}
+                            isLoading={isPending}
+                            onClick={() => fundTestBank({ bank: bank.address })}
+                        >
+                            Add funds
+                        </Button>
+                    </p>
+                </Column>
+            </Columns>
+        );
+    }
 
     return (
         <Columns>
             <Column>
                 <p>
-                    <Button
-                        variant={"submit"}
-                        disabled={isPending}
-                        isLoading={isPending}
-                        onClick={() => fundBank({ bank: bank.address })}
+                    <Link
+                        href={process.env.FUNDING_ON_RAMP_URL ?? ""}
+                        target={"_blank"}
                     >
-                        Fund Balance
-                    </Button>
+                        Add funds
+                    </Link>
                 </p>
             </Column>
         </Columns>

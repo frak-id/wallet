@@ -17,7 +17,6 @@ import { simulateContract } from "viem/actions";
 
 /**
  * Hook used to setup the interaction contract on the given productId
- * todo: Should have a simulation and a precise deployed address to avoid the need of 2 tw, and instead just send one batched tx
  */
 export function useSetupInteractionContract() {
     const { data: walletStatus } = useWalletStatus();
@@ -32,7 +31,7 @@ export function useSetupInteractionContract() {
             salt,
         }: { productId: Hex; directAllowValidator: boolean; salt?: Hex }) => {
             // early exit if user not logged in
-            if (walletStatus?.key !== "connected") return;
+            if (!walletStatus?.wallet) return;
 
             // First tx to deploy the interaction contract
             const tx: SendTransactionModalStepType["params"]["tx"] = [
@@ -53,7 +52,7 @@ export function useSetupInteractionContract() {
                 // Predicate final address
                 const { result: predictedInteractionAddress } =
                     await simulateContract(viemClient, {
-                        account: walletStatus.wallet,
+                        account: walletStatus?.wallet,
                         address: addresses.productInteractionManager,
                         abi: productInteractionManagerAbi,
                         functionName: "deployInteractionContract",

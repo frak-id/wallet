@@ -1,4 +1,12 @@
-import type { Session } from "@/types/Session";
+import type { SdkSession, Session } from "@/types/Session";
 import { atomWithStorage } from "jotai/utils";
 
-export const sessionAtom = atomWithStorage<Session | null>("session", null);
+export const sessionAtom = atomWithStorage<Session | null>(
+    "frak_session",
+    null
+);
+
+export const sdkSessionAtom = atomWithStorage<SdkSession | null>(
+    "frak_sdkSession",
+    null
+);

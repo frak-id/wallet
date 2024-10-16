@@ -44,27 +44,12 @@
 }
 
 @keyframes shiny {
-    /*0% {
-        transform: rotate(0deg) translateX(150px) rotate(0deg);
-    }
-    50% {
-        transform: rotate(360deg) translateX(150px) rotate(-360deg);
-    }
-    100% {
-        transform: rotate(0deg) translateX(150px) rotate(0deg);
-    }*/
     0% {
         transform: translateX(-25%);
     }
-    /*25% {
-        transform: translateY(25%);
-    }*/
     50% {
         transform: translateX(25%);
     }
-    /*75% {
-        transform: translateY(-25%);
-    }*/
     100% {
         transform: translateX(-25%);
     }
@@ -101,27 +86,3 @@
     --base-color: #ffffff;
     --highlight-color: #3984ff00 50%;
 }
-
-/*.authFingerprint__shiny::before {
-    product: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 150%;
-    height: 100%;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.2) 80%, rgba(255, 255, 255, 0) 100%);
-    animation: lightMove 5s infinite;
-    transform: translateX(-40%);
-}
-
-@keyframes lightMove {
-    0% {
-        transform: translateX(-40%);
-    }
-    50% {
-        transform: translateX(10%);
-    }
-    100% {
-        transform: translateX(-40%);
-    }
-}*/

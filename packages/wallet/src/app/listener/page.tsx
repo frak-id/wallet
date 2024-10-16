@@ -10,6 +10,15 @@ export default function ListenerPage() {
                     document.querySelector(":root").dataset.theme = "dark";
                 `}
             </Script>
+            <Script id="storageAccessCheck" strategy="beforeInteractive">
+                {`
+                    window.FrakStorageCheck = {};
+                    // Check storage access on load, and place a meta tag with the result
+                    document.hasStorageAccess().then((hasAccess) => {
+                        FrakStorageCheck.hasAccess = hasAccess;
+                    });
+                `}
+            </Script>
         </>
     );
 }

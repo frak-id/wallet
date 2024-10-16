@@ -8,9 +8,9 @@ const wantedFromConfig = [
     "FRAK_WALLET_URL",
     "SESSION_ENCRYPTION_KEY",
     "MONGODB_BUSINESS_URI",
-    "CONTENT_MINTER_PRIVATE_KEY",
     "BACKEND_URL",
     "INDEXER_URL",
+    "FUNDING_ON_RAMP_URL",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 

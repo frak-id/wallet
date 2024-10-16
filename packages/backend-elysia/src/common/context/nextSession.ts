@@ -29,25 +29,12 @@ export const nextSessionContext = new Elysia({
     // Potential nexus cookie session
     .guard({
         cookie: t.Object({
-            walletSession: t.Optional(t.String()),
             businessSession: t.Optional(t.String()),
         }),
     })
     // Resolve the session if provided
     .resolve(
-        async ({
-            cookie: { walletSession, businessSession },
-            decodeNextSessionCookie,
-        }) => ({
-            // Decode the session if present
-            walletSession: await decodeNextSessionCookie<{
-                wallet: {
-                    address: Address;
-                    authenticatorId: string;
-                };
-            }>({
-                token: walletSession.value,
-            }),
+        async ({ cookie: { businessSession }, decodeNextSessionCookie }) => ({
             // Decode the business session if present
             businessSession: await decodeNextSessionCookie<{
                 wallet: Address;
@@ -62,20 +49,15 @@ export const nextSessionContext = new Elysia({
     )
     // Macro to enforce a session or throw an error
     .macro(({ onBeforeHandle }) => ({
-        isAuthenticated(wanted?: "wallet" | "business") {
+        isAuthenticated(wanted?: "business") {
             if (!wanted) return;
 
             // If no session present, exit with unauthorized
-            return onBeforeHandle(
-                async ({ walletSession, businessSession, error }) => {
-                    if (wanted === "wallet" && !walletSession) {
-                        return error(401);
-                    }
-                    if (wanted === "business" && !businessSession) {
-                        return error(401);
-                    }
+            return onBeforeHandle(async ({ businessSession, error }) => {
+                if (wanted === "business" && !businessSession) {
+                    return error(401);
                 }
-            );
+            });
         },
     }))
     .as("plugin");

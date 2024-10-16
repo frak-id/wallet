@@ -1,5 +1,4 @@
 import styles from "@/app/layout.module.css";
-import { LoadTheme } from "@/module/settings/component/LoadTheme";
 import { ClientOnly } from "@module/component/ClientOnly";
 import type { ReactNode } from "react";
 
@@ -17,7 +16,7 @@ export function GlobalLayout({
                     </div>
                 </main>
             </div>
-            <LoadTheme />
+            {/*<LoadTheme />*/}
         </>
     );
 }

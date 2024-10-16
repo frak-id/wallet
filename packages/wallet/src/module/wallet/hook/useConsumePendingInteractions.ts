@@ -1,4 +1,5 @@
 import { pushInteractions } from "@/context/interaction/action/pushInteraction";
+import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import {
     cleanPendingInteractionsAtom,
     pendingInteractionAtom,
@@ -15,6 +16,7 @@ export function useConsumePendingInteractions() {
     const { interactions } = useAtomValue(pendingInteractionAtom);
     const cleanPendingInteractions = useSetAtom(cleanPendingInteractionsAtom);
     const { address } = useAccount();
+    const { sdkSession, getSdkSession } = useGetSafeSdkSession();
 
     return useMutation({
         mutationKey: ["interactions", "consume-pending"],
@@ -29,10 +31,17 @@ export function useConsumePendingInteractions() {
                 return;
             }
 
+            // Fetch the token that will be used to push the interaction
+            const safeSdkSession = sdkSession ?? (await getSdkSession()).data;
+            if (!safeSdkSession) {
+                return;
+            }
+
             // Submit the interactions
             const delegationId = await pushInteractions({
                 wallet: address,
                 toPush: interactions,
+                sdkToken: safeSdkSession.token,
             });
 
             // Clean the pending interactions

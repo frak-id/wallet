@@ -138,7 +138,7 @@ export async function getCreationData(campaign: Campaign) {
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
         stringToBytes32(campaign.title),
         campaign.bank,
-        // Triggers (todo: from frontend)
+        // Triggers
         triggers,
         // Cap config
         {

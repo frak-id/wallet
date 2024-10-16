@@ -1,4 +1,4 @@
-import { nextSessionContext } from "@backend-common";
+import { walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
@@ -7,7 +7,7 @@ import { pushTokensTable } from "../db/schema";
 
 export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
     .use(notificationContext)
-    .use(nextSessionContext)
+    .use(walletSessionContext)
     .put(
         "",
         async ({ body, notificationDb, walletSession }) => {
@@ -16,7 +16,7 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
             await notificationDb
                 .insert(pushTokensTable)
                 .values({
-                    wallet: walletSession.wallet.address,
+                    wallet: walletSession.address,
                     endpoint: body.subscription.endpoint,
                     keyP256dh: body.subscription.keys.p256dh,
                     keyAuth: body.subscription.keys.auth,
@@ -28,7 +28,7 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
         },
         {
             // Enforce nexus authentication
-            isAuthenticated: "wallet",
+            authenticated: "wallet",
 
             // Cleanup expired tokens
             cleanupExpiredTokens: true,
@@ -54,11 +54,11 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
             // Remove all the push tokens for this wallet
             await notificationDb
                 .delete(pushTokensTable)
-                .where(eq(pushTokensTable.wallet, walletSession.wallet.address))
+                .where(eq(pushTokensTable.wallet, walletSession.address))
                 .execute();
         },
         {
-            isAuthenticated: "wallet",
+            authenticated: "wallet",
             cleanupExpiredTokens: true,
         }
     )
@@ -69,13 +69,13 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
 
             // Try to find the first push token
             const item = await notificationDb.query.pushTokensTable.findFirst({
-                where: eq(pushTokensTable.wallet, walletSession.wallet.address),
+                where: eq(pushTokensTable.wallet, walletSession.address),
             });
             // Return if we found something
             return !!item;
         },
         {
-            isAuthenticated: "wallet",
+            authenticated: "wallet",
             response: t.Boolean(),
         }
     );

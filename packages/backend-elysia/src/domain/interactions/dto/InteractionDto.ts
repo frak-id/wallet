@@ -7,5 +7,5 @@ export const InteractionRequestDto = t.Object({
         handlerTypeDenominator: t.Hex(),
         interactionData: t.Hex(),
     }),
-    signature: t.Union([t.Hex(), t.Undefined(), t.Null()]),
+    signature: t.Optional(t.Union([t.Hex(), t.Undefined(), t.Null()])),
 });

@@ -34,11 +34,6 @@ export function Login() {
                             expirationTimeTimestamp:
                                 Date.now() + 1000 * 60 * 60 * 24 * 7,
                         },
-                        metadata: {
-                            header: {
-                                title: "Authentication",
-                            },
-                        },
                     })
                 }
             >

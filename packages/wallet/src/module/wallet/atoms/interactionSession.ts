@@ -4,7 +4,7 @@ import { atomWithStorage, createJSONStorage } from "jotai/utils";
 
 export const interactionSessionAtom =
     atomWithStorage<InteractionSession | null>(
-        "interactionSession",
+        "frak_interactionSession",
         null,
         createJSONStorage(() =>
             typeof window !== "undefined" ? localStorage : noopStorage

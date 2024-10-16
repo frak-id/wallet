@@ -1,14 +1,15 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
-import { validateAuthentication } from "@/context/wallet/action/authenticate";
-import { rpId } from "@/context/wallet/smartWallet/webAuthN";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
-import { sessionAtom } from "@/module/common/atoms/session";
+import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import type { Session } from "@/types/Session";
+import { WebAuthN } from "@frak-labs/app-essentials";
+import { backendApi } from "@frak-labs/shared/context/server";
+import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import { useSetAtom } from "jotai";
 
 /**
  * Hook that handle the registration process
@@ -20,12 +21,6 @@ export function useLogin(
         { lastAuthentication?: PreviousAuthenticatorModel } | undefined
     >
 ) {
-    // Setter for the last authentication
-    const addLastAuthentication = useSetAtom(addLastAuthenticationAtom);
-
-    // Setter for the session
-    const setSession = useSetAtom(sessionAtom);
-
     // The mutation that will be used to perform the registration process
     const {
         isPending: isLoading,
@@ -51,7 +46,7 @@ export function useLogin(
 
             // Get the authenticate options
             const authenticationOptions = await generateAuthenticationOptions({
-                rpID: rpId,
+                rpID: WebAuthN.rpId,
                 userVerification: "required",
                 allowCredentials,
                 // timeout in ms (3min, can be useful for mobile phone linking)
@@ -59,25 +54,40 @@ export function useLogin(
             });
 
             // Start the authentication
-            const authenticationResponse = await startAuthentication(
-                authenticationOptions
-            );
+            const authenticationResponse = await startAuthentication({
+                optionsJSON: authenticationOptions,
+            });
 
             // Verify it
-            const { wallet } = await validateAuthentication({
+            const encodedResponse = Buffer.from(
+                JSON.stringify(authenticationResponse)
+            ).toString("base64");
+            const { data, error } = await backendApi.auth.wallet.login.post({
                 expectedChallenge: authenticationOptions.challenge,
-                authenticationResponse,
+                authenticatorResponse: encodedResponse,
             });
+            if (error) {
+                throw error;
+            }
+
+            // Store this last webauthn action
+            jotaiStore.set(lastWebAuthNActionAtom, {
+                wallet: data.address,
+                signature: authenticationResponse,
+                msg: authenticationOptions.challenge,
+            });
+
+            // Extract a few data
+            const { sdkJwt, ...session } = data;
 
             // Save this to the last authenticator
-            await addLastAuthentication({
-                wallet,
-            });
+            await jotaiStore.set(addLastAuthenticationAtom, session);
 
-            // Set the session
-            setSession({ wallet });
+            // Store the session
+            jotaiStore.set(sessionAtom, session);
+            jotaiStore.set(sdkSessionAtom, sdkJwt);
 
-            return { wallet };
+            return session;
         },
     });
 

@@ -10,10 +10,12 @@ import {
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const ACTUAL_STEP = 3;
 
 export function Step3() {
+    const { t } = useTranslation();
     // Get the recovery file product
     const recoveryFileContent = useAtomValue(recoveryFileContentAtom);
 
@@ -28,7 +30,7 @@ export function Step3() {
     return (
         <AccordionRecoveryItem
             actualStep={ACTUAL_STEP}
-            title={"Decryption with password"}
+            title={t("wallet.recovery.step3")}
         >
             <Password onSubmit={onSubmit} />
             {recoveryFileContent && password && (
@@ -43,6 +45,7 @@ export function Step3() {
 function TriggerPasswordVerification({
     recoveryFileContent,
 }: { recoveryFileContent: RecoveryFileContent }) {
+    const { t } = useTranslation();
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);
 
@@ -72,8 +75,8 @@ function TriggerPasswordVerification({
                 setStep(ACTUAL_STEP + 1);
             } catch (e) {
                 // Password must be wrong
-                console.error("Error loading recovery account", e);
-                setError("Invalid password");
+                console.error(t("wallet.recovery.errorLoading"), e);
+                setError(t("wallet.recovery.invalidPassword"));
             }
         }
         loadGuardianAccount();
@@ -83,6 +86,7 @@ function TriggerPasswordVerification({
         password,
         setStep,
         setGuardianAccount,
+        t,
     ]);
 
     if (error) {

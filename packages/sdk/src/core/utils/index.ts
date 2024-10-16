@@ -1,4 +1,8 @@
 export { createIframe } from "./iframeHelper";
-export { hashAndCompressData } from "./compression/compress";
-export { decompressDataAndCheckHash } from "./compression/decompress";
-export { NexusContextManager } from "./NexusContext";
+export { hashAndCompressData, compressJson } from "./compression/compress";
+export {
+    decompressDataAndCheckHash,
+    decompressJson,
+} from "./compression/decompress";
+export { FrakContextManager } from "./FrakContext";
+export { Deferred } from "./Deferred";

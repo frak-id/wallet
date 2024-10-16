@@ -4,7 +4,6 @@
 export type SsoMetadata = {
     logoUrl?: string;
     homepageLink?: string;
-
     links?: {
         confidentialityLink?: string;
         helpLink?: string;
@@ -18,5 +17,6 @@ export type SsoMetadata = {
 export type OpenSsoParamsType = {
     redirectUrl?: string;
     directExit?: boolean;
+    lang?: "en" | "fr";
     metadata: SsoMetadata;
 };
