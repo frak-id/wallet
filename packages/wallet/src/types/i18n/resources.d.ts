@@ -71,7 +71,7 @@ interface Resources {
                 openSession: {
                     default: {
                         description: "Start a rewarding session to earn as you interact anonymously on this site. Enjoy benefits without sharing personal details. \nLearn more in our privacy policy.";
-                        primaryAction: "I activate my wallet";
+                        primaryAction: "Activate my wallet";
                         title: "Activation";
                     };
                 };
