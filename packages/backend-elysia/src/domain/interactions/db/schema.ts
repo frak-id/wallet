@@ -1,4 +1,3 @@
-import { customHex } from "@backend-utils";
 import {
     boolean,
     index,
@@ -10,6 +9,7 @@ import {
     varchar,
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
+import { customHex } from "../../../utils/drizzle/customTypes";
 
 export const interactionSimulationStatus = pgEnum(
     "interactions_simulation_status",

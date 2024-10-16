@@ -9,7 +9,7 @@ const RESTRICTED_ROUTES = ["/history", "/settings", "/tokens", "/wallet"];
  */
 export const config = {
     matcher: [
-        "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|manifest.json|favicons|listener).*)",
+        "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|manifest.json|favicons|listener|sw.js).*)",
     ],
 };
 

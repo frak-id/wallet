@@ -1,4 +1,3 @@
-import { customHex } from "@backend-utils";
 import {
     boolean,
     decimal,
@@ -11,6 +10,7 @@ import {
     uniqueIndex,
     varchar,
 } from "drizzle-orm/pg-core";
+import { customHex } from "../../../utils/drizzle/customTypes";
 
 export const productOracleTable = pgTable(
     "product_oracle",

@@ -1,4 +1,3 @@
-import { customHex } from "@backend-utils";
 import {
     index,
     pgTable,
@@ -8,6 +7,7 @@ import {
     varchar,
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
+import { customHex } from "../../../utils/drizzle/customTypes";
 
 /**
  * Table storing the push tokens used for the notifications

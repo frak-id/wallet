@@ -257,15 +257,17 @@ function CurrentModalMetadataInfo() {
     const modalSteps = useAtomValue(displayedRpcModalStepsAtom);
 
     // Extract step key and metadata
-    const { stepKey, metadata } = useMemo(() => {
+    const { stepKey, stepAction, metadata } = useMemo(() => {
         const currentStep =
             modalSteps?.steps?.[modalSteps.currentStep] ?? undefined;
+        let stepAction = "default";
 
         if (!currentStep) return { stepKey: undefined, metadata: undefined };
 
         // If we are in the final step, and the modal was dismissed, used the dismissed metadata
         let metadata = currentStep.params.metadata;
         if (currentStep.key === "final" && modalSteps?.dismissed) {
+            stepAction = "dismissed";
             metadata =
                 currentStep.params.dismissedMetadata ??
                 currentStep.params.metadata;
@@ -273,6 +275,7 @@ function CurrentModalMetadataInfo() {
 
         return {
             stepKey: currentStep.key,
+            stepAction,
             metadata,
         };
     }, [modalSteps]);
@@ -282,7 +285,7 @@ function CurrentModalMetadataInfo() {
         if (!stepKey) return null;
 
         // Check if i18n contain the keys
-        const defaultDescriptionKey = `sdk.modal.${stepKey}.default.description`;
+        const defaultDescriptionKey = `sdk.modal.${stepKey}.${stepAction}.description`;
         const hasDescription = i18n.exists(defaultDescriptionKey);
 
         // Return the matching component
@@ -294,7 +297,7 @@ function CurrentModalMetadataInfo() {
                 }
             />
         );
-    }, [stepKey, metadata, i18n, t]);
+    }, [stepKey, stepAction, metadata, i18n, t]);
 }
 
 /**

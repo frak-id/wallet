@@ -62,15 +62,16 @@ function elysiaBackend(
 
     // A few secrets we will be using
     const {
+        sessionEncryptionKey,
+        jwtSecret,
+        jwtSdkSecret,
+        setupCodeSalt,
         mongoExampleUri,
         mongoNexusUri,
         alchemyApiKey,
         worldNewsApiKey,
         indexerUrl,
         postgres,
-        sessionEncryptionKey,
-        jwtSecret,
-        jwtSdkSecret,
         vapidPrivateKey,
         vapidPublicKey,
         coinGeckoApiKey,
@@ -107,6 +108,7 @@ function elysiaBackend(
             coinGeckoApiKey,
             alchemyApiKey,
             // some secrets
+            setupCodeSalt,
             sessionEncryptionKey,
             jwtSecret,
             jwtSdkSecret,

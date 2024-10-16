@@ -57,6 +57,10 @@ interface Resources {
                         title: "Success";
                         title_reward: "Gains";
                         title_sharing: "Share";
+                        description: "Now you can share your experience with your friends and earn more rewards.";
+                    };
+                    dismissed: {
+                        description: "You can now share but you will not be able to earn rewards.";
                     };
                 };
                 login: {
@@ -71,7 +75,7 @@ interface Resources {
                 openSession: {
                     default: {
                         description: "Start a rewarding session to earn as you interact anonymously on this site. Enjoy benefits without sharing personal details. \nLearn more in our privacy policy.";
-                        primaryAction: "I activate my wallet";
+                        primaryAction: "Activate my wallet";
                         title: "Activation";
                     };
                 };

@@ -39,9 +39,12 @@ export function useDnsTxtRecordToSet({
 export function useCheckDomainName() {
     return useMutation({
         mutationKey: ["mint", "check-domain-name"],
-        mutationFn: async ({ domain }: { domain: string }) => {
+        mutationFn: async ({
+            domain,
+            setupCode,
+        }: { domain: string; setupCode?: string }) => {
             const { data, error } = await backendApi.business.mint.verify.get({
-                query: { domain },
+                query: { domain, setupCode },
             });
             if (error) throw error;
 
