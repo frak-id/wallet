@@ -8,12 +8,14 @@ import { getBackendUrl, getWalletUrl, isProdStack } from "./utils";
  * @constructor
  */
 export function ConfigStack({ stack }: StackContext) {
+    // Some secrets
     const sessionEncryptionKey = new Config.Secret(
         stack,
         "SESSION_ENCRYPTION_KEY"
     );
     const jwtSecret = new Config.Secret(stack, "JWT_SECRET");
     const jwtSdkSecret = new Config.Secret(stack, "JWT_SDK_SECRET");
+    const setupCodeSalt = new Config.Secret(stack, "PRODUCT_SETUP_CODE_SALT");
 
     // Db related
     const mongoExampleUri = new Config.Secret(stack, "MONGODB_EXAMPLE_URI");
@@ -59,6 +61,7 @@ export function ConfigStack({ stack }: StackContext) {
 
     return {
         indexerUrl,
+        setupCodeSalt,
         sessionEncryptionKey,
         jwtSecret,
         jwtSdkSecret,

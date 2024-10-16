@@ -2,7 +2,8 @@ import * as dns from "node:dns";
 import { promisify } from "node:util";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { flat } from "radash";
-import { type Address, concatHex, keccak256, toHex } from "viem";
+import { Config } from "sst/node/config";
+import { type Address, concatHex, isHex, keccak256, toHex } from "viem";
 import { URL } from "whatwg-url";
 
 /**
@@ -36,7 +37,36 @@ export class DnsCheckRepository {
      * @param domain
      * @param owner
      */
-    async isDnsTxtRecordSet({
+    async isValidDomain({
+        domain,
+        owner,
+        setupCode,
+    }: { domain: string; owner: Address; setupCode?: string }) {
+        // If we got a setup code
+        if (setupCode && isHex(setupCode)) {
+            // Rebuild the hash
+            const hash = keccak256(
+                concatHex([
+                    toHex(domain),
+                    owner,
+                    toHex(Config.PRODUCT_SETUP_CODE_SALT),
+                ])
+            );
+            // Check if the hash is the same as the setup code
+            const isValidCode = BigInt(hash) === BigInt(setupCode);
+            if (isValidCode) return true;
+        }
+
+        // Otherwise, proceed with dns check
+        return this.isDnsTxtRecordSet({ domain, owner });
+    }
+
+    /**
+     * Check if the DNS txt record is set for the given domain
+     * @param domain
+     * @param owner
+     */
+    private async isDnsTxtRecordSet({
         domain,
         owner,
     }: { domain: string; owner: Address }) {

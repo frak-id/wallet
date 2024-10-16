@@ -15,15 +15,18 @@ export function useMintMyProduct() {
         mutationFn: async ({
             name,
             domain,
+            setupCode,
             productTypes,
         }: {
             name: string;
             domain: string;
+            setupCode: string;
             productTypes: ProductTypesKey[];
         }) => {
             const { data, error } = await backendApi.business.mint.put({
                 name,
                 domain,
+                setupCode,
                 productTypes,
             });
             if (error) throw error;
