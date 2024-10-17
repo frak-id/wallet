@@ -100,9 +100,10 @@ export function NavigationItem({
 
     const buttonProps = url
         ? {
-              onClick: () => {
-                  url && router.push(url);
-              },
+              onClick: () =>
+                  url.startsWith("http")
+                      ? window.open(url, "_blank", "noopener,noreferrer")
+                      : router.push(url),
           }
         : {};
 
