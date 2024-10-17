@@ -19,7 +19,7 @@ import { LoginModalStep } from "@/module/listener/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
 import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
-import { LogoFrak } from "@module/asset/icons/LogoFrak";
+import { LogoFrakWithName } from "@module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@module/atoms/store";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
 import { useAtomValue } from "jotai";
@@ -163,7 +163,15 @@ function ListenerModalDialog({
             <>{currentRequest.metadata.header.title}</>
         ) : (
             <>
-                Frak <LogoFrak sizes={14} className={styles.modalTitle__logo} />
+                {currentRequest?.appName ?? ""}
+                <span className={styles.modalTitle__provided}>
+                    Provided by{" "}
+                    <LogoFrakWithName
+                        className={styles.modalTitle__logo}
+                        width={50}
+                        height={25}
+                    />
+                </span>
             </>
         );
 
@@ -172,7 +180,7 @@ function ListenerModalDialog({
             context: currentRequest?.metadata?.context,
             icon: currentRequest?.metadata?.header?.icon,
         };
-    }, [currentRequest?.metadata]);
+    }, [currentRequest?.metadata, currentRequest?.appName]);
 
     return (
         <ModalComponent

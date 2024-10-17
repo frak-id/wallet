@@ -47,7 +47,7 @@
     "sdk": {
         "modal": {
             "default": {
-                "dismissBtn": "Continuer sans Frak",
+                "dismissBtn": "Je continue ma navigation",
                 "dismissBtn_sharing": "Partager sans être rémunéré(e)"
             },
             "final": {
