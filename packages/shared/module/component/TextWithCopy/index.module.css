@@ -1,0 +1,10 @@
+.textCopy__container {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 14px;
+}
+
+.textCopy__container > :first-child {
+    overflow-x: auto;
+}

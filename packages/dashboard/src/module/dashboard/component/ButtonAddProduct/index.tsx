@@ -24,6 +24,7 @@ import {
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
+import { TextWithCopy } from "@module/component/TextWithCopy";
 import { Input } from "@module/component/forms/Input";
 import { validateUrl } from "@module/utils/validateUrl";
 import { useQuery } from "@tanstack/react-query";
@@ -333,7 +334,13 @@ function NewProductForm(form: UseFormReturn<ProductNew>) {
                     <p>
                         DNS TXT record expected to set for domain validation is:{" "}
                     </p>
-                    {isLoading ? <Spinner /> : <pre>{dnsRecord}</pre>}
+                    {isLoading ? (
+                        <Spinner />
+                    ) : (
+                        <TextWithCopy text={dnsRecord}>
+                            <pre>{dnsRecord}</pre>
+                        </TextWithCopy>
+                    )}
                 </>
             ) : null}
 

@@ -18,6 +18,14 @@ import type {
 
 export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     .use(oracleContext)
+    // Error failsafe, to never fail on shopify webhook
+    .onError(({ error, code, body, path, headers }) => {
+        log.error(
+            { error, code, reqPath: path, reqBody: body, reqHeaders: headers },
+            "Error while handling shopify webhook"
+        );
+        return new Response("ko", { status: 200 });
+    })
     .guard({
         headers: t.Partial(
             t.Object({
@@ -54,7 +62,7 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     .post(
         ":productId/hook",
         async ({ params: { productId }, body, headers, oracleDb, error }) => {
-            // todo: hmac validation: https://shopify.dev/docs/apps/build/webhooks/subscribe/https#step-2-validate-the-origin-of-your-webhook-to-ensure-its-coming-from-shopify
+            // todo: hmac validation in the `onParse` hook? https://shopify.dev/docs/apps/build/webhooks/subscribe/https#step-2-validate-the-origin-of-your-webhook-to-ensure-its-coming-from-shopify
 
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = body as ShopifyOrderUpdateWebhookDto;
