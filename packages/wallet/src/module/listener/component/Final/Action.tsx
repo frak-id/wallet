@@ -12,19 +12,17 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
 import { useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 import { modalDisplayedRequestAtom } from "../../atoms/modalEvents";
+import { useModalTranslation } from "../../hooks/useModalTranslation";
 
 export function FinalModalActionComponent({
-    appName,
     action,
     isSuccess,
-}: { appName: string; action: FinalActionType; isSuccess: boolean }) {
+}: { action: FinalActionType; isSuccess: boolean }) {
     if (action.key === "sharing") {
         return (
             <SharingButtons
-                appName={appName}
                 isModalSuccess={isSuccess}
                 popupTitle={action?.options?.popupTitle}
                 text={action?.options?.text}
@@ -47,20 +45,18 @@ export function FinalModalActionComponent({
  */
 function SharingButtons({
     isModalSuccess,
-    appName,
     link,
     popupTitle,
     text,
 }: {
     isModalSuccess: boolean;
-    appName: string;
     link?: string;
     popupTitle?: string;
     text?: string;
 }) {
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
-    const { t } = useTranslation();
+    const { t } = useModalTranslation();
     const pushInteraction = usePushInteraction();
     const isInteractionPushed = useRef(false);
 
@@ -102,9 +98,7 @@ function SharingButtons({
 
             // Build our sharing data
             const shareData = {
-                title:
-                    popupTitle ??
-                    t("sharing.default.title", { productName: appName }),
+                title: popupTitle ?? t("sharing.default.title"),
                 text: text ?? t("sharing.default.text"),
                 url: finalSharingLink,
             };

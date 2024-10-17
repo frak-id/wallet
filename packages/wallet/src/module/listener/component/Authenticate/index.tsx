@@ -4,9 +4,9 @@ import type { SiweAuthenticateModalStepType } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
+import { useModalTranslation } from "../../hooks/useModalTranslation";
 
 /**
  * The component for the siwe authentication step of a modal
@@ -22,7 +22,7 @@ export function SiweAuthenticateModalStep({
     onFinish: (result: SiweAuthenticateModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
-    const { t } = useTranslation();
+    const { t } = useModalTranslation();
     const { metadata } = params;
     const { address, chainId } = useAccount();
     const siweMessage: SiweMessage | undefined = useMemo(() => {

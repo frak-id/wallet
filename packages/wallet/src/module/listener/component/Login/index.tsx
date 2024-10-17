@@ -21,7 +21,7 @@ import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useModalTranslation } from "../../hooks/useModalTranslation";
 import { DismissButton } from "../Generic";
 
 /**
@@ -42,7 +42,7 @@ export function LoginModalStep({
     onFinish: (args: LoginModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
-    const { t } = useTranslation();
+    const { t } = useModalTranslation();
     const { metadata } = params;
     const { login, isSuccess, isLoading, isError, error } = useLogin({
         // On error, transmit the error up a level
@@ -162,7 +162,7 @@ function SsoButton({
     ssoMetadata: SsoMetadata;
     alternateText?: string;
 }) {
-    const { t } = useTranslation();
+    const { t } = useModalTranslation();
     // Target language
     const lang = useAtomValue(modalDisplayedRequestAtom)?.metadata?.lang;
 

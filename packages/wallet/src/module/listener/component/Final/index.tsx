@@ -11,10 +11,8 @@ import { useAtomValue } from "jotai";
  * @constructor
  */
 export function FinalModalStep({
-    appName,
     params,
 }: {
-    appName: string;
     params: FinalModalStepType["params"];
     onFinish: (args: object) => void;
 }) {
@@ -23,7 +21,6 @@ export function FinalModalStep({
 
     return (
         <FinalModalActionComponent
-            appName={appName}
             action={params.action}
             isSuccess={!isDismissed}
         />

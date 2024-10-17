@@ -5,8 +5,8 @@ import { AccordionTransactions } from "@/module/listener/component/Transaction/A
 import type { SendTransactionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import { useAccount, useSendTransaction } from "wagmi";
+import { useModalTranslation } from "../../hooks/useModalTranslation";
 
 /**
  * The component for the transaction step of a modal
@@ -22,7 +22,7 @@ export function TransactionModalStep({
     onFinish: (result: SendTransactionModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
-    const { t } = useTranslation();
+    const { t } = useModalTranslation();
     const { sendTransaction, isPending, isError, error } = useSendTransaction({
         mutation: {
             // Link success and error hooks
