@@ -31,7 +31,7 @@ import {
     useEffect,
     useMemo,
 } from "react";
-import { useTranslation } from "react-i18next";
+import { useModalTranslation } from "../../hooks/useModalTranslation";
 import { MetadataInfo } from "../Generic";
 import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
@@ -78,7 +78,7 @@ function ListenerModalDialog({
     /**
      * Set the language of the modal
      */
-    const { i18n } = useTranslation();
+    const { i18n } = useModalTranslation();
     useEffect(() => {
         const lang = currentRequest?.metadata?.lang;
         if (lang && i18n.language !== lang) {
@@ -253,7 +253,7 @@ function ModalComponent({
  * Get the current modal metadata info component
  */
 function CurrentModalMetadataInfo() {
-    const { t, i18n } = useTranslation();
+    const { t, i18n } = useModalTranslation();
     const modalSteps = useAtomValue(displayedRpcModalStepsAtom);
 
     // Extract step key and metadata
@@ -359,7 +359,6 @@ function CurrentModalStepComponent({
             case "final":
                 return (
                     <FinalModalStep
-                        appName={currentRequest.appName}
                         params={currentStep.params}
                         onFinish={currentStep.onResponse}
                     />

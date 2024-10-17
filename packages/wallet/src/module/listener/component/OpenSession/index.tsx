@@ -6,8 +6,8 @@ import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/c
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
+import { useModalTranslation } from "../../hooks/useModalTranslation";
 
 /**
  * The component for the login step of a modal
@@ -23,7 +23,7 @@ export function OpenSessionModalStep({
     onFinish: (args: OpenInteractionSessionModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
-    const { t } = useTranslation();
+    const { t } = useModalTranslation();
     const { metadata } = params;
     const { address } = useAccount();
     const {

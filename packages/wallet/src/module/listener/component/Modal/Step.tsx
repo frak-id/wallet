@@ -15,7 +15,7 @@ import {
     WalletMinimal,
 } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { useModalTranslation } from "../../hooks/useModalTranslation";
 
 /**
  * Get the right icon for the given step
@@ -50,7 +50,7 @@ function getStepIcon(step: DisplayedModalStep<AnyModalKey>) {
  * @constructor
  */
 export function ModalStepIndicator() {
-    const { t } = useTranslation();
+    const { t } = useModalTranslation();
     const activeStep = useAtomValue(activeStepAtom);
     const currentSteps = useAtomValue(displayedRpcModalStepsAtom)?.steps;
 

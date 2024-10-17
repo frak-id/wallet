@@ -2,19 +2,18 @@ import { dismissModalBtnAtom } from "@/module/listener/atoms/modalUtils";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAtom } from "jotai";
-import type { ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 import Markdown from "react-markdown";
 import rehypeExternalLinks from "rehype-external-links";
+import { useModalTranslation } from "../../hooks/useModalTranslation";
 
 export function MetadataInfo({
     metadata,
     defaultDescription,
 }: {
     metadata?: { description?: string };
-    defaultDescription: ReactNode;
+    defaultDescription?: string;
 }) {
-    if (metadata?.description) {
+    if (metadata?.description || defaultDescription) {
         return (
             <div
                 className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
@@ -24,25 +23,19 @@ export function MetadataInfo({
                         [rehypeExternalLinks, { target: "_blank" }],
                     ]}
                 >
-                    {metadata?.description}
+                    {metadata?.description ?? defaultDescription}
                 </Markdown>
             </div>
         );
     }
-    return (
-        <div
-            className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
-        >
-            <p>{defaultDescription}</p>
-        </div>
-    );
+    return null;
 }
 
 /**
  * A generic dismiss button, if possible with the current request
  */
 export function DismissButton() {
-    const { t } = useTranslation();
+    const { t } = useModalTranslation();
     const [info, goToDismiss] = useAtom(dismissModalBtnAtom);
     // If not dismissible, or no dismiss step, return null
     if (!info) return null;

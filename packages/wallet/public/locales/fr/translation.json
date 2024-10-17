@@ -46,21 +46,26 @@
     },
     "sdk": {
         "modal": {
-            "default": { "dismissBtn": "Continuer sans Frak" },
+            "default": {
+                "dismissBtn": "Continuer sans Frak",
+                "dismissBtn_sharing": "Partager sans être rémunéré(e)"
+            },
             "final": {
                 "default": {
                     "title": "Succès",
                     "title_reward": "Gains",
                     "title_sharing": "Partager",
-                    "description": "Vous pouvez maintenant partager votre expérience avec vos amis et gagner plus de récompenses."
+                    "description": "Votre porte-monnaie a été créé pour recevoir votre récompense de **{{ productName }}** en cas d’achat. Pour retrouver votre porte-monnaie, allez sur [wallet.frak.id](https://wallet.frak.id)."
                 },
                 "dismissed": {
-                    "description": "Vous pouvez maintenant partager mais vous ne pourrez pas gagner de récompenses."
+                    "description": "Partager cet article."
                 }
             },
             "login": {
                 "default": {
-                    "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur cette plateforme.",
+                    "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**.",
+                    "description_sharing": "Je souhaite percevoir mes gains par **{{ productName }}** directement dans mon porte monnaie en partageant ce produit",
+                    "description_reward": "Grâce à ce partage, **{{ productName }}** me propose de me rémunérer directement dans mon porte monnaie en cas d’achat sur le site.",
                     "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
                     "secondaryAction": "J'ai déjà un porte-monnaie",
                     "title": "Connexion"
@@ -69,7 +74,7 @@
             },
             "openSession": {
                 "default": {
-                    "description": "Démarrez une session enrichissante pour gagner de l'argent en interagissant de manière anonyme sur ce site. Bénéficiez d'avantages sans partager vos informations personnelles. Pour en savoir plus, consultez notre politique de confidentialité.",
+                    "description": "Mon porte-monnaie est désormais créé. Cliquez sur le bouton ci-dessous pour l’activer et recevoir vos gains.",
                     "primaryAction": "J'active mon porte-monnaie",
                     "title": "Activation"
                 }

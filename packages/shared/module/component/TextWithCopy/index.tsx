@@ -7,8 +7,12 @@ import styles from "./index.module.css";
 export function TextWithCopy({
     text,
     children,
-}: PropsWithChildren<{ text: string }>) {
+}: PropsWithChildren<{ text?: string }>) {
     const { copied, copy } = useCopyToClipboardWithState();
+
+    if(!text) {
+        return null;
+    }
 
     return (
         <div className={styles.textCopy__container}>
