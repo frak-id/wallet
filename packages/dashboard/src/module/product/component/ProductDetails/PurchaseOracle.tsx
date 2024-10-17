@@ -14,6 +14,7 @@ import { backendApi } from "@frak-labs/shared/context/server";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { Spinner } from "@module/component/Spinner";
+import { TextWithCopy } from "@module/component/TextWithCopy";
 import { Input } from "@module/component/forms/Input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -131,7 +132,7 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
                 </Column>
             </Columns>
             <Columns>
-                <Column size={"full"}>
+                <Column size={"full"} style={{ width: "100%" }}>
                     <Title as={"h3"}>Webhook status</Title>
                     <p>
                         <Badge
@@ -150,7 +151,9 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
                     <p>
                         Webhook URL to use in your shopify notification centers:{" "}
                     </p>
-                    <pre>{oracleSetupData.webhookUrl}</pre>
+                    <TextWithCopy text={oracleSetupData.webhookUrl}>
+                        <pre>{oracleSetupData.webhookUrl}</pre>
+                    </TextWithCopy>
                 </Column>
             </Columns>
             <Columns>
