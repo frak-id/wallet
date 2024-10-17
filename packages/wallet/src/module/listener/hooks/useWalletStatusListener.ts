@@ -38,8 +38,6 @@ export function useWalletStatusListener(): OnListenToWallet {
             const wallet = jotaiStore.get(sessionAtom);
             const sdk = jotaiStore.get(sdkSessionAtom);
 
-            const { wallet, sdk } = current;
-
             // If no wallet present, just return the not logged in status
             if (!wallet?.address) {
                 await emitter({
