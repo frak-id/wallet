@@ -5,11 +5,11 @@ export default function ListenerPage() {
     return (
         <>
             <ListenerUI />
-            <Script id="theme" strategy="afterInteractive">
+            {/*<Script id="theme" strategy="afterInteractive">
                 {`
                     document.querySelector(":root").dataset.theme = "dark";
                 `}
-            </Script>
+            </Script>*/}
             <Script id="storageAccessCheck" strategy="beforeInteractive">
                 {`
                     window.FrakStorageCheck = {};
