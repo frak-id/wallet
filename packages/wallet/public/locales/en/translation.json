@@ -55,17 +55,20 @@
                     "title": "Success",
                     "title_reward": "Gains",
                     "title_sharing": "Share",
-                    "description": "Your wallet has been created to receive your **{{ productName }}** reward in the event of sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id)."
+                    "description": "You've successfully completed all the steps.",
+                    "description_sharing": "Your wallet has been created to receive your **{{ productName }}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).",
+                    "description_reward": "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!"
                 },
                 "dismissed": {
-                    "description": "Share this article."
+                    "description": "All good",
+                    "description_sharing": "Share this article."
                 }
             },
             "login": {
                 "default": {
-                    "description": "Connect to your Frak account to get the best experience on this platform.",
-                    "description_sharing": "I wish to receive my earnings by **{{ productName }}** directly in my wallet by sharing this product",
-                    "description_reward": "Thanks to this sharing, **{{ productName }}** offers to pay me directly in my wallet when I make a purchase on the site.",
+                    "description": "Login to your Frak account to get the best experience on **{{ productName }}*",
+                    "description_sharing": "{{ productName }} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
+                    "description_reward": "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
                     "primaryAction": "I create my wallet under 30sec",
                     "secondaryAction": "I already have a wallet",
                     "title": "Connection"
@@ -74,7 +77,7 @@
             },
             "openSession": {
                 "default": {
-                    "description": "My wallet is now created. Click on the button below to activate it and receive your winnings.",
+                    "description": "Congratulations, your wallet has been created! Click on the button below to activate it and receive your winnings.",
                     "primaryAction": "Activate my wallet",
                     "title": "Activation"
                 }
@@ -93,15 +96,6 @@
                     "primaryAction": "Authenticate",
                     "title": "Authentication"
                 }
-            },
-            "stepper": {
-                "final": "Success",
-                "final_reward": "Gains",
-                "final_sharing": "Share",
-                "login": "Connection",
-                "openSession": "Activation",
-                "sendTransaction": "Transaction",
-                "siweAuthenticate": "Authentication"
             }
         }
     },
