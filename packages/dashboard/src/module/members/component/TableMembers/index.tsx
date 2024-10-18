@@ -1,6 +1,9 @@
 "use client";
 
-import { getProductMembers } from "@/context/members/action/getProductMembers";
+import {
+    type GetMembersParam,
+    getProductMembers,
+} from "@/context/members/action/getProductMembers";
 import { Row } from "@/module/common/component/Row";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import {
@@ -17,10 +20,14 @@ import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";
 import { Checkbox } from "@module/component/forms/Checkbox";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import {
+    type ColumnDef,
+    type SortingState,
+    createColumnHelper,
+} from "@tanstack/react-table";
+import { useAtom, useSetAtom } from "jotai";
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatEther, isAddressEqual } from "viem";
 import styles from "./index.module.css";
 
@@ -39,7 +46,7 @@ const columnHelper = createColumnHelper<MembersPageItem>();
  *  - filter on top
  */
 export function TableMembers() {
-    const filters = useAtomValue(tableMembersFiltersAtom);
+    const [filters, setFilters] = useAtom(tableMembersFiltersAtom);
     const [selectedMembers, setSelectedMembers] = useAtom(selectedMembersAtom);
     const addSelectedMember = useSetAtom(addSelectedMembersAtom);
     const removeSelectedMember = useSetAtom(removeSelectedMembersAtom);
@@ -60,6 +67,35 @@ export function TableMembers() {
             pageSize: limit ?? 10,
         };
     }, [filters]);
+
+    /**
+     * Current sorting state of the table
+     */
+    const [sortingState, setSorting] = useState<SortingState>([]);
+
+    /**
+     * Every time sorting state changes, update the filters
+     */
+    useEffect(() => {
+        // Remove the sorting from the filters
+        if (sortingState.length === 0) {
+            setFilters((filters) => ({
+                ...filters,
+                sort: undefined,
+            }));
+            return;
+        }
+
+        // Otherwise, pick the first one
+        const [sort] = sortingState;
+        setFilters((filters) => ({
+            ...filters,
+            sort: {
+                by: sort.id,
+                order: sort.desc ? "desc" : "asc",
+            } as GetMembersParam["sort"],
+        }));
+    }, [sortingState, setFilters]);
 
     const { data: page, isPending } = useQuery({
         queryKey: ["members", "page", filters],
@@ -104,7 +140,7 @@ export function TableMembers() {
                     ),
                 }),
                 columnHelper.accessor("productNames", {
-                    enableSorting: true,
+                    enableSorting: false,
                     header: () => "Products",
                     cell: ({ getValue }) => getValue().join(", "),
                 }),
@@ -143,8 +179,11 @@ export function TableMembers() {
                     data={page.members}
                     columns={columns}
                     manualPagination={true}
+                    manualSorting={true}
                     rowCount={page.totalResult}
                     pagination={paginationState}
+                    sorting={sortingState}
+                    onSortingChange={setSorting}
                     postTable={
                         <>
                             {(selectedMembers?.length ?? 0) > 0 && (
