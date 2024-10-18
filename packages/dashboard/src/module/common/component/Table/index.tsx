@@ -25,6 +25,7 @@ export type ReactTableProps<TData> = {
     // Some custom configs
     enableFiltering?: boolean;
     // Some states
+    sorting?: SortingState;
     columnFilters?: ColumnFiltersState;
     rowSelection?: RowSelectionState;
     rowPinning?: RowPinningState;
@@ -41,6 +42,7 @@ export function Table<TData extends object>({
     className = "",
     preTable,
     postTable,
+    sorting,
     enableFiltering = false,
     columnFilters,
     rowSelection,
@@ -48,7 +50,7 @@ export function Table<TData extends object>({
     pagination,
     ...additionalProps
 }: ReactTableProps<TData>) {
-    const [sorting, setSorting] = useState<SortingState>([]);
+    const [sortingInner, setSortingInner] = useState<SortingState>([]);
 
     /**
      * Build the table instance
@@ -57,13 +59,13 @@ export function Table<TData extends object>({
         data,
         columns,
         state: {
-            sorting,
+            sorting: sorting ?? sortingInner,
             columnFilters,
             rowSelection,
             rowPinning,
             pagination,
         },
-        onSortingChange: setSorting,
+        onSortingChange: setSortingInner,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: additionalProps.enableSorting
             ? getSortedRowModel()

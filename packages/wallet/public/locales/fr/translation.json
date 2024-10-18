@@ -21,10 +21,12 @@
     },
     "common": {
         "amountRequired": "Le montant est requis",
+        "added": "ajouté",
         "at": "à",
         "authenticator": "Authentificateur :",
         "balance": "Solde",
         "claim": "Réclamer",
+        "claimed": "réclamé",
         "copied": "Copié !",
         "copyAddress": "Copier l'adresse",
         "enterAddress": "Entrez l'adresse",
@@ -47,7 +49,7 @@
     "sdk": {
         "modal": {
             "default": {
-                "dismissBtn": "Continuer sans Frak",
+                "dismissBtn": "Je continue ma navigation",
                 "dismissBtn_sharing": "Partager sans être rémunéré(e)"
             },
             "final": {
@@ -55,17 +57,20 @@
                     "title": "Succès",
                     "title_reward": "Gains",
                     "title_sharing": "Partager",
-                    "description": "Votre porte-monnaie a été créé pour recevoir votre récompense de **{{ productName }}** en cas d’achat. Pour retrouver votre porte-monnaie, allez sur [wallet.frak.id](https://wallet.frak.id)."
+                    "description_sharing": "Votre porte-monnaie a été créé pour recevoir votre récompense de **{{ productName }}** en cas de partage. Pour retrouver votre porte-monnaie, allez sur [wallet.frak.id](https://wallet.frak.id).",
+                    "description_reward": "Consultez vos gains à tout moment sur [wallet.frak.id](https://wallet.frak.id). Vous aussi partagez à vos amis, tous vos partages qui entraînent des clics, des inscriptions ou des achats génèrent de nouveaux gains !",
+                    "description": "Vous avez effectué toutes les étapes avec succès."
                 },
                 "dismissed": {
-                    "description": "Partager cet article."
+                    "description": "Tout est bon",
+                    "description_sharing": "Partager cet article."
                 }
             },
             "login": {
                 "default": {
                     "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**.",
-                    "description_sharing": "Je souhaite percevoir mes gains par **{{ productName }}** directement dans mon porte monnaie en partageant ce produit",
-                    "description_reward": "Grâce à ce partage, **{{ productName }}** me propose de me rémunérer directement dans mon porte monnaie en cas d’achat sur le site.",
+                    "description_sharing": "{{ productName }} vous rémunère directement sur votre **porte-monnaie** pour la valeur que vous créez si vos partages entraînent des actions comme des clics, des inscriptions ou des achats.",
+                    "description_reward": "{{ productName }} vous rémunère directement sur votre **porte-monnaie** pour la valeur que vous créez en cas d'actions sur ce site, comme des clics, inscriptions ou achats.",
                     "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
                     "secondaryAction": "J'ai déjà un porte-monnaie",
                     "title": "Connexion"
@@ -74,7 +79,7 @@
             },
             "openSession": {
                 "default": {
-                    "description": "Mon porte-monnaie est désormais créé. Cliquez sur le bouton ci-dessous pour l’activer et recevoir vos gains.",
+                    "description": "Bravo, votre porte-monnaie est créé ! Cliquez sur le bouton ci-dessous pour l'activer et recevoir vos gains",
                     "primaryAction": "J'active mon porte-monnaie",
                     "title": "Activation"
                 }
@@ -93,15 +98,6 @@
                     "primaryAction": "Authentifier",
                     "title": "Authentification"
                 }
-            },
-            "stepper": {
-                "final": "Succès",
-                "final_reward": "Gains",
-                "final_sharing": "Partager",
-                "login": "Connexion",
-                "openSession": "Activation",
-                "sendTransaction": "Transaction",
-                "siweAuthenticate": "Authentification"
             }
         }
     },
@@ -127,7 +123,7 @@
             "PURCHASE_COMPLETED": "Achat terminé",
             "PURCHASE_STARTED": "Achat commencé",
             "READ_ARTICLE": "Article lu",
-            "REFERRED": "Référencé",
+            "REFERRED": "Parrainé",
             "WEBSHOP_OPENNED": "Ouverture de la boutique en ligne"
         },
         "login": {

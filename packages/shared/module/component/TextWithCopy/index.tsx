@@ -10,7 +10,7 @@ export function TextWithCopy({
 }: PropsWithChildren<{ text?: string }>) {
     const { copied, copy } = useCopyToClipboardWithState();
 
-    if(!text) {
+    if (!text) {
         return null;
     }
 

@@ -3,7 +3,7 @@ import {
     getPimlicoTransport,
 } from "@/context/blockchain/aa-provider";
 import { currentChain, currentViemClient } from "@/context/blockchain/provider";
-import { getSignOptions } from "@/context/wallet/action/sign";
+import { getSignOptions } from "@/context/wallet/action/signOptions";
 import { frakWalletSmartAccount } from "@/context/wallet/smartWallet/FrakSmartWallet";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
@@ -148,10 +148,12 @@ async function buildSmartAccount<
         signerPubKey: wallet.publicKey,
         signatureProvider: async (message) => {
             // Get the signature options from server
+            console.time("getSignOptions");
             const options = await getSignOptions({
                 authenticatorId: wallet.authenticatorId,
                 toSign: message,
             });
+            console.timeEnd("getSignOptions");
 
             // Start the client authentication
             const authenticationResponse = await startAuthentication({

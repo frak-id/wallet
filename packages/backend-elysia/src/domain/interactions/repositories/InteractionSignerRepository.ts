@@ -18,7 +18,12 @@ import {
     encodeFunctionData,
     keccak256,
 } from "viem";
-import { readContract, sendTransaction, signTypedData } from "viem/actions";
+import {
+    estimateGas,
+    readContract,
+    sendTransaction,
+    signTypedData,
+} from "viem/actions";
 import type { PreparedInteraction } from "../types/interactions";
 
 /**
@@ -167,15 +172,20 @@ export class InteractionSignerRepository {
         ) as Hex;
 
         try {
-            // Determine the data to use (if compressed is less than 30% of the original, or if the original is more than 4kb)
-            const useCompressed =
-                executeNoBatchData.length * 0.3 > compressedExecute.length ||
-                executeNoBatchData.length > 4096;
+            // Get the most efficient call to be done
+            const { data, gas } = await this.getMoreEfficientCall({
+                compressedData: compressedExecute,
+                initialData: executeNoBatchData,
+                account: executorAccount,
+            });
+
+            // Log it
             log.debug(
                 {
                     original: executeNoBatchData.length,
                     compressed: compressedExecute.length,
-                    useCompressed,
+                    data,
+                    gas,
                 },
                 "Data sizes for interactions execution"
             );
@@ -184,7 +194,9 @@ export class InteractionSignerRepository {
             return await sendTransaction(this.client, {
                 account: executorAccount,
                 to: addresses.interactionDelegator,
-                data: useCompressed ? compressedExecute : executeNoBatchData,
+                data,
+                // Provide a 25% more gas than the estimation (in the case of campaign deployed in-between)
+                gas: (gas * 125n) / 100n,
             });
         } catch (e) {
             log.error(
@@ -195,5 +207,36 @@ export class InteractionSignerRepository {
             );
             return undefined;
         }
+    }
+
+    /**
+     * Find the most efficient call to submit interaction
+     * @returns
+     */
+    private async getMoreEfficientCall({
+        compressedData,
+        initialData,
+        account,
+    }: { compressedData: Hex; initialData: Hex; account: LocalAccount }) {
+        // Perform both simulation
+        const [compressedGas, initialGas] = await Promise.all([
+            estimateGas(this.client, {
+                account,
+                to: addresses.interactionDelegator,
+                data: compressedData,
+            }),
+            estimateGas(this.client, {
+                account,
+                to: addresses.interactionDelegator,
+                data: initialData,
+            }),
+        ]);
+
+        // Determine the data to use (most efficient one, or compressed one if initial is more than 8kb)
+        if (compressedGas > initialGas && initialData.length < 8192) {
+            return { data: initialData, gas: initialGas };
+        }
+
+        return { data: compressedData, gas: compressedGas };
     }
 }

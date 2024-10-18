@@ -8,6 +8,7 @@ import {
 import { ReferralInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { jotaiStore } from "@module/atoms/store";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
+import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
@@ -19,7 +20,14 @@ import { useModalTranslation } from "../../hooks/useModalTranslation";
 export function FinalModalActionComponent({
     action,
     isSuccess,
-}: { action: FinalActionType; isSuccess: boolean }) {
+    onFinish,
+}: {
+    action: FinalActionType;
+    isSuccess: boolean;
+    onFinish: (args: object) => void;
+}) {
+    const { t } = useModalTranslation();
+
     if (action.key === "sharing") {
         return (
             <SharingButtons
@@ -31,8 +39,15 @@ export function FinalModalActionComponent({
         );
     }
 
-    // todo: Display some stuff for the reward? Or autoskip it?
-    return null;
+    return (
+        <button
+            type={"button"}
+            className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
+            onClick={() => onFinish({})}
+        >
+            {t("sdk.modal.default.dismissBtn")}
+        </button>
+    );
 }
 
 /**

@@ -11,8 +11,7 @@ import type {
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
-import { atom, useAtomValue } from "jotai";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback } from "react";
 
 type OnListenToWallet = IFrameRequestResolver<
     Extract<
@@ -21,22 +20,10 @@ type OnListenToWallet = IFrameRequestResolver<
     >
 >;
 
-const bothSessionsAtom = atom((get) => ({
-    wallet: get(sessionAtom),
-    sdk: get(sdkSessionAtom),
-}));
-
 /**
  * Hook use to listen to the wallet status
  */
 export function useWalletStatusListener(): OnListenToWallet {
-    // Read from the jotai store
-    const bothSessions = useAtomValue(bothSessionsAtom);
-    const sessionsRef = useRef(undefined as typeof bothSessions | undefined);
-    useEffect(() => {
-        sessionsRef.current = bothSessions;
-    }, [bothSessions]);
-
     /**
      * Emit the current wallet status
      * @param emitter
@@ -48,13 +35,8 @@ export function useWalletStatusListener(): OnListenToWallet {
                 method: "frak_listenToWalletStatus";
             }>
         ) => {
-            // If ref not loaded yet, early exit
-            const current = sessionsRef.current;
-            if (!current) {
-                return;
-            }
-
-            const { wallet, sdk } = current;
+            const wallet = jotaiStore.get(sessionAtom);
+            const sdk = jotaiStore.get(sdkSessionAtom);
 
             // If no wallet present, just return the not logged in status
             if (!wallet?.address) {

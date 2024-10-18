@@ -1,11 +1,13 @@
 import type { SVGProps } from "react";
 
-export const LogoFrakWithName = (props: SVGProps<SVGSVGElement>) => {
+export const LogoFrakWithName = (
+    props: SVGProps<SVGSVGElement> & { height?: number; width?: number }
+) => {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="71"
-            height="30"
+            width={props.width ?? "71"}
+            height={props.height ?? "30"}
             fill="none"
             viewBox="0 0 71 30"
             {...props}

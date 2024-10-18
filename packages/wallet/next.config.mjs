@@ -9,8 +9,6 @@ const wantedFromConfig = [
     "PIMLICO_API_KEY",
     "NEXUS_RPC_SECRET",
     // TODO: Shouldn't be here, but Next is crying all over the place when using SST.Config, to fix
-    "MONGODB_NEXUS_URI",
-    "SESSION_ENCRYPTION_KEY",
     "VAPID_PUBLIC_KEY",
     "VAPID_PRIVATE_KEY",
     "BACKEND_URL",

@@ -129,7 +129,7 @@ export async function getCreationData(campaign: Campaign) {
                 deperditionPerLevel: deperditionPerLevel,
                 maxCountPerUser: trigger.maxCountPerUser
                     ? BigInt(trigger.maxCountPerUser)
-                    : 0n, // No max triggers
+                    : 1n, // Max 1 per user
             };
         }
     );

@@ -11,8 +11,6 @@ const modalTranslationContextAtom = atom((get) => {
     const request = get(modalDisplayedRequestAtom);
     if (!request) return {};
 
-    console.log("Request", request);
-
     // Check if we got a final step context
     const finalStepKey = request.steps?.final?.action?.key;
 

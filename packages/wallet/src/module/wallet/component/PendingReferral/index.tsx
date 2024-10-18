@@ -4,7 +4,7 @@ import { Title } from "@/module/common/component/Title";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { backendApi } from "@frak-labs/shared/context/server";
 import { ButtonRipple } from "@module/component/ButtonRipple";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { encodeFunctionData } from "viem";
@@ -12,6 +12,7 @@ import { useAccount, useSendTransaction } from "wagmi";
 import styles from "./index.module.css";
 
 export function PendingReferral() {
+    const queryClient = useQueryClient();
     const { t } = useTranslation();
     // Get the user wallet address
     const { address } = useAccount();
@@ -63,6 +64,12 @@ export function PendingReferral() {
 
             // Refetch the pending reward
             await refetchPendingReward();
+
+            // And refetch the user balance
+            await queryClient.invalidateQueries({
+                queryKey: ["balance"],
+                exact: false,
+            });
 
             return txHash;
         },

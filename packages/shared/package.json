@@ -18,7 +18,7 @@
     "react-hook-form": "^7.53.0",
     "react-loading-skeleton": "^3.5.0",
     "ky": "^1.7.2",
-    "viem": "^2.21.26"
+    "viem": "^2.21.29"
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",

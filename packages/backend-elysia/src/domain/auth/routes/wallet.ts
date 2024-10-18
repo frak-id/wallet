@@ -5,6 +5,10 @@ import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
+import {
+    WalletAuthResponseDto,
+    WalletTokenDto,
+} from "../models/WalletSessionDto";
 import { walletSdkSessionService } from "../services/WalletSdkSessionService";
 import { webAuthNService } from "../services/WebAuthNService";
 import { decodePublicKey } from "../utils/webauthnDecode";
@@ -41,14 +45,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
         {
             response: {
                 404: t.String(),
-                200: t.Object({
-                    address: t.Address(),
-                    authenticatorId: t.String(),
-                    publicKey: t.Object({
-                        x: t.Hex(),
-                        y: t.Hex(),
-                    }),
-                }),
+                200: WalletTokenDto,
             },
         }
     )
@@ -79,13 +76,15 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             }
 
             // Otherwise all good, extract a few info
-            const { address, authenticatorId, publicKey } = verificationnResult;
+            const { address, authenticatorId, publicKey, transports } =
+                verificationnResult;
 
             // Create the token and set the cookie
             const token = await walletJwt.sign({
                 address,
                 authenticatorId,
                 publicKey,
+                transports,
                 sub: address,
                 iat: Date.now(),
             });
@@ -100,6 +99,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 address,
                 authenticatorId,
                 publicKey,
+                transports,
                 sdkJwt,
             };
         },
@@ -112,18 +112,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             }),
             response: {
                 404: t.String(),
-                200: t.Object({
-                    address: t.Address(),
-                    authenticatorId: t.String(),
-                    publicKey: t.Object({
-                        x: t.Hex(),
-                        y: t.Hex(),
-                    }),
-                    sdkJwt: t.Object({
-                        token: t.String(),
-                        expires: t.Number(),
-                    }),
-                }),
+                200: WalletAuthResponseDto,
             },
         }
     )
@@ -239,6 +228,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 address: walletAddress,
                 authenticatorId: credential.id,
                 publicKey,
+                transports: credential.transports,
                 sdkJwt,
             };
         },
@@ -254,18 +244,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             }),
             response: {
                 400: t.String(),
-                200: t.Object({
-                    address: t.Address(),
-                    authenticatorId: t.String(),
-                    publicKey: t.Object({
-                        x: t.Hex(),
-                        y: t.Hex(),
-                    }),
-                    sdkJwt: t.Object({
-                        token: t.String(),
-                        expires: t.Number(),
-                    }),
-                }),
+                200: WalletAuthResponseDto,
             },
         }
     );

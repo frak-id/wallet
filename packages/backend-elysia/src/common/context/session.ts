@@ -2,6 +2,7 @@ import { jwt, t } from "@backend-utils";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { Config } from "sst/node/config";
+import { WalletTokenDto } from "../../domain/auth/models/WalletSessionDto";
 
 /**
  * Some default auth cookies props
@@ -22,14 +23,7 @@ export const sessionContext = new Elysia({
         jwt({
             name: "walletJwt",
             secret: Config.JWT_SECRET,
-            schema: t.Object({
-                address: t.Address(),
-                authenticatorId: t.String(),
-                publicKey: t.Object({
-                    x: t.Hex(),
-                    y: t.Hex(),
-                }),
-            }),
+            schema: WalletTokenDto,
             // One week
             expirationDelayInSecond: 60 * 60 * 24 * 7,
             // Default jwt payload

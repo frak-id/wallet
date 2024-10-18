@@ -12,6 +12,7 @@ import { useAtomValue } from "jotai";
  */
 export function FinalModalStep({
     params,
+    onFinish,
 }: {
     params: FinalModalStepType["params"];
     onFinish: (args: object) => void;
@@ -22,6 +23,7 @@ export function FinalModalStep({
     return (
         <FinalModalActionComponent
             action={params.action}
+            onFinish={onFinish}
             isSuccess={!isDismissed}
         />
     );

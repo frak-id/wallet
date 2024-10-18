@@ -117,15 +117,16 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
                 authenticatorId: authenticator._id,
                 address: walletAddress,
                 publicKey: authenticator.publicKey,
+                transports: authenticator.transports,
             };
         }
 
         return {
+            ...decorators,
             isValidWebAuthNSignature,
             parseCompressedWebAuthNResponse,
             getAuthenticatorDb,
             getAuthenticatorWalletAddress,
-            ...decorators,
         };
     })
     .as("plugin");
