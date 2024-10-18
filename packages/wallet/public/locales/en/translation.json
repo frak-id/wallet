@@ -21,10 +21,12 @@
     },
     "common": {
         "amountRequired": "Amount is required",
+        "added": "added",
         "at": "at",
         "authenticator": "Authenticator:",
         "balance": "Balance",
         "claim": "Claim",
+        "claimed": "claimed",
         "copied": "Copied!",
         "copyAddress": "Copy address",
         "enterAddress": "Enter address",

@@ -10,12 +10,15 @@ import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
 import type { RewardHistory } from "@/types/RewardHistory";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
 import { HandCoins, Handshake } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type RewardProps = {
     reward: RewardHistory;
 };
 
 export function Reward({ reward }: RewardProps) {
+    const { t } = useTranslation();
+
     // Check if the screen is desktop or mobile
     const isDesktop = useMediaQuery("(min-width : 600px)");
 
@@ -23,7 +26,8 @@ export function Reward({ reward }: RewardProps) {
     const Component = isDesktop ? AlertDialogArticle : DrawerArticle;
 
     const amount = formatMUSD(Number(reward.amount));
-    const label = reward.type === "claim" ? "claimed" : "added";
+    const label =
+        reward.type === "claim" ? t("common.claimed") : t("common.added");
     const icon = reward.type === "claim" ? <Handshake /> : <HandCoins />;
 
     return (

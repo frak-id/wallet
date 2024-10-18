@@ -21,10 +21,12 @@
     },
     "common": {
         "amountRequired": "Le montant est requis",
+        "added": "ajouté",
         "at": "à",
         "authenticator": "Authentificateur :",
         "balance": "Solde",
         "claim": "Réclamer",
+        "claimed": "réclamé",
         "copied": "Copié !",
         "copyAddress": "Copier l'adresse",
         "enterAddress": "Entrez l'adresse",
