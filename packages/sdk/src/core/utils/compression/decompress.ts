@@ -71,7 +71,7 @@ export async function decompressJson<T>(data: string): Promise<T | null> {
     try {
         return JSON.parse(decompressed) as T;
     } catch (e) {
-        console.error("Invalid compressed data", e);
+        console.error("Invalid compressed data", { e, decompressed });
         return null;
     }
 }

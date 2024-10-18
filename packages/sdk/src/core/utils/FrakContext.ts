@@ -19,7 +19,7 @@ async function parse({ url }: { url: string }) {
     if (!nexusContext) return null;
 
     // Parse the nexus context
-    const parsedContext = await decompressJson<FrakContext>(nexusContext);
+    const parsedContext = await decompressJson<FrakContext>(decodeURIComponent(nexusContext));
     if (!parsedContext) return null;
 
     // Return the parsed context
@@ -49,7 +49,7 @@ async function update({
 
     // Build the new url
     const urlObj = new URL(url);
-    urlObj.searchParams.set(contextKey, compressedContext);
+    urlObj.searchParams.set(contextKey, encodeURIComponent(compressedContext));
 
     // And return it
     return urlObj.toString();
