@@ -16,8 +16,8 @@ export const mainI18nInstance = createInstance()
  */
 export const initI18nInstance = () =>
     mainI18nInstance.init({
-        supportedLngs: ["en", "fr"],
-        fallbackLng: "en",
+        supportedLngs: ["fr", "en"],
+        fallbackLng: "fr",
         interpolation: {
             escapeValue: false, // not needed for react as it escapes by default
         },
