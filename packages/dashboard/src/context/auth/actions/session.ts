@@ -100,7 +100,8 @@ export async function getSession(): Promise<AuthSessionClient | null> {
 
     const message = parseSiweMessage(session.siwe.message);
     if (!message) {
-        await deleteSession();
+        // We ensure it won't fail since if fetch in the middleware it wouldn't be valid
+        await guard(() => deleteSession());
         return null;
     }
     if (

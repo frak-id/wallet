@@ -57,7 +57,7 @@
                     "title": "Succès",
                     "title_reward": "Gains",
                     "title_sharing": "Partager",
-                    "description_sharing": "Votre porte-monnaie a été créé pour recevoir votre récompense de **{{ productName }}** en cas de partage. Pour retrouver votre porte-monnaie, allez sur [wallet.frak.id](https://wallet.frak.id).",
+                    "description_sharing": "En partageant ce lien, vous serez récompensé par **{{ productName }}** si ces partages entraînent des actions comme des clics, des inscriptions ou des achats. Consultez vos gains à tout moment sur [wallet.frak.id](https://wallet.frak.id).",
                     "description_reward": "Consultez vos gains à tout moment sur [wallet.frak.id](https://wallet.frak.id). Vous aussi partagez à vos amis, tous vos partages qui entraînent des clics, des inscriptions ou des achats génèrent de nouveaux gains !",
                     "description": "Vous avez effectué toutes les étapes avec succès."
                 },

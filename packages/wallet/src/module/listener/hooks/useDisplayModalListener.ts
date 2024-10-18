@@ -6,7 +6,6 @@ import {
 } from "@/module/listener/atoms/modalEvents";
 import { clearRpcModalAtom } from "@/module/listener/atoms/modalUtils";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
-import type { InteractionSession, Session } from "@/types/Session";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
@@ -16,7 +15,6 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
-import { useAtomValue } from "jotai";
 import { useCallback } from "react";
 
 type OnDisplayModalRequest = IFrameRequestResolver<
@@ -30,61 +28,53 @@ type OnDisplayModalRequest = IFrameRequestResolver<
  * Hook used to listen to the display modal action
  */
 export function useDisplayModalListener(): OnDisplayModalRequest {
-    const session = useAtomValue(sessionAtom);
-    const openSession = useAtomValue(interactionSessionAtom);
-
-    return useCallback(
-        async (request, context, emitter) => {
-            // If no modal to display, early exit
-            const steps = request.params[0];
-            if (Object.keys(steps).length === 0) {
-                await emitter({
-                    error: {
-                        code: RpcErrorCodes.invalidRequest,
-                        message: "No modals to display",
-                    },
-                });
-                jotaiStore.set(clearRpcModalAtom);
-                return;
-            }
-
-            // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
-            const stepsPrepared = prepareInputStepsArray(
-                {
-                    appName: request.params[1],
-                    context,
-                    steps,
-                    metadata: request.params[2],
-                    emitter,
-                }.steps
-            );
-
-            // Build our initial result array
-            const { currentResult, currentStep } = filterStepsToDo({
-                stepsPrepared,
-                session,
-                openSession,
-            });
-
-            // Save the new modal
-            jotaiStore.set(setNewModalAtom, {
-                // Store the global request
-                request: {
-                    appName: request.params[1],
-                    context,
-                    steps,
-                    metadata: request.params[2],
-                    emitter,
+    return useCallback(async (request, context, emitter) => {
+        // If no modal to display, early exit
+        const steps = request.params[0];
+        if (Object.keys(steps).length === 0) {
+            await emitter({
+                error: {
+                    code: RpcErrorCodes.invalidRequest,
+                    message: "No modals to display",
                 },
-                // Current step + formatted steps
-                currentStep,
-                steps: stepsPrepared,
-                // Initial result if any
-                initialResult: currentResult as ModalRpcStepsResultType,
             });
-        },
-        [session, openSession]
-    );
+            jotaiStore.set(clearRpcModalAtom);
+            return;
+        }
+
+        // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
+        const stepsPrepared = prepareInputStepsArray(
+            {
+                appName: request.params[1],
+                context,
+                steps,
+                metadata: request.params[2],
+                emitter,
+            }.steps
+        );
+
+        // Build our initial result array
+        const { currentResult, currentStep } = filterStepsToDo({
+            stepsPrepared,
+        });
+
+        // Save the new modal
+        jotaiStore.set(setNewModalAtom, {
+            // Store the global request
+            request: {
+                appName: request.params[1],
+                context,
+                steps,
+                metadata: request.params[2],
+                emitter,
+            },
+            // Current step + formatted steps
+            currentStep,
+            steps: stepsPrepared,
+            // Initial result if any
+            initialResult: currentResult as ModalRpcStepsResultType,
+        });
+    }, []);
 }
 
 /**
@@ -110,18 +100,15 @@ function prepareInputStepsArray(steps: ModalRpcStepsInput) {
 /**
  * Return the steps to do in the modal
  * @param stepsPrepared
- * @param session
- * @param openSession
  */
 function filterStepsToDo({
     stepsPrepared,
-    session,
-    openSession,
 }: {
     stepsPrepared: Pick<ModalStepTypes, "key" | "params">[];
-    session: Session | null;
-    openSession: InteractionSession | null;
 }) {
+    const session = jotaiStore.get(sessionAtom);
+    const openSession = jotaiStore.get(interactionSessionAtom);
+
     // The current result (if already authenticated + session)
     let currentResult: ModalRpcStepsResultType<[]> = {};
     // Build our initial result array

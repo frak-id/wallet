@@ -2,7 +2,14 @@ import { getSession } from "@/context/auth/actions/session";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const RESTRICTED_ROUTES = ["/campaigns", "/dashboard"];
+const RESTRICTED_ROUTES = [
+    "/campaigns",
+    "/dashboard",
+    "/members",
+    "/product",
+    "/push",
+    "/settings",
+];
 
 /**
  * Middleware configuration, excluding also /listener and /paywall
