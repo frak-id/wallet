@@ -1,6 +1,6 @@
 "use client";
 
-import { formatMUSD } from "@/context/wallet/utils/mUsdFormatter";
+import { formatUsd } from "@/context/wallet/utils/mUsdFormatter";
 import { Panel } from "@/module/common/component/Panel";
 import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
@@ -25,7 +25,7 @@ export function Reward({ reward }: RewardProps) {
     // Use a Drawer for mobile and an AlertDialog for desktop
     const Component = isDesktop ? AlertDialogArticle : DrawerArticle;
 
-    const amount = formatMUSD(Number(reward.amount));
+    const amount = formatUsd(Number(reward.amount));
     const label =
         reward.type === "claim" ? t("common.claimed") : t("common.added");
     const icon = reward.type === "claim" ? <Handshake /> : <HandCoins />;

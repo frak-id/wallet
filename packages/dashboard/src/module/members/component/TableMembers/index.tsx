@@ -161,7 +161,7 @@ export function TableMembers() {
                     enableSorting: true,
                     header: () => "Rewards",
                     cell: ({ getValue }) =>
-                        `${formatEther(BigInt(getValue()))} mUSD`,
+                        `${formatEther(BigInt(getValue()))} $`,
                 }),
             ] as ColumnDef<MembersPageItem>[],
         [selectedMembers, addSelectedMember, removeSelectedMember]
