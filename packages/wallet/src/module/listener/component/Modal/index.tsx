@@ -157,26 +157,49 @@ function ListenerModalDialog({
     /**
      * The inner component to display
      */
-    const { titleComponent, icon, context } = useMemo(() => {
+    const { titleComponent, icon, footer, context } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = currentRequest.metadata?.header?.title ? (
             <>{currentRequest.metadata.header.title}</>
         ) : (
-            <>
-                {currentRequest?.appName ?? ""}
-                <span className={styles.modalTitle__provided}>
-                    Provided by{" "}
-                    <LogoFrakWithName className={styles.modalTitle__logo} />
-                </span>
-            </>
+            <div />
+        );
+
+        // The provided by frak component
+        const providedBy = (
+            <span className={styles.modalTitle__provided}>
+                provided by{" "}
+                <LogoFrakWithName className={styles.modalTitle__logo} />
+            </span>
+        );
+
+        // The icon path
+        const iconPath = currentRequest.metadata?.header?.icon;
+
+        // Build the header icon component (only if we got an icon)
+        const icon = iconPath ? (
+            <div className={styles.modalListener__iconContainer}>
+                <img
+                    src={iconPath}
+                    alt={""}
+                    className={styles.modalListener__icon}
+                />
+                {providedBy}
+            </div>
+        ) : null;
+
+        // Build the footer (only if no icon present)
+        const footer = iconPath ? null : (
+            <div className={styles.modalListener__footer}>{providedBy}</div>
         );
 
         return {
-            titleComponent,
             context: currentRequest?.metadata?.context,
-            icon: currentRequest?.metadata?.header?.icon,
+            titleComponent,
+            footer,
+            icon,
         };
-    }, [currentRequest?.metadata, currentRequest?.appName]);
+    }, [currentRequest?.metadata]);
 
     return (
         <ModalComponent
@@ -185,13 +208,7 @@ function ListenerModalDialog({
             onOpenChange={onOpenChange}
         >
             <>
-                {icon && (
-                    <img
-                        src={icon}
-                        alt={""}
-                        className={styles.modalListener__icon}
-                    />
-                )}
+                {icon}
                 {context && (
                     <div className={styles.modalListener__context}>
                         {context}
@@ -203,6 +220,7 @@ function ListenerModalDialog({
                     currentRequest={currentRequest}
                     onError={onError}
                 />
+                {footer}
             </>
         </ModalComponent>
     );
