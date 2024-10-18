@@ -32,7 +32,7 @@
     "react-dom": "^18",
     "react-markdown": "^9.0.1",
     "swiper": "^11.1.14",
-    "viem": "^2.21.26"
+    "viem": "^2.21.29"
   },
   "devDependencies": {
     "@types/node": "^22",
