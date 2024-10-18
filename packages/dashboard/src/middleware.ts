@@ -30,7 +30,10 @@ export async function middleware(req: NextRequest) {
     }
 
     // Redirect to login if the user is not authenticated
-    if (RESTRICTED_ROUTES.includes(pathname) && !session) {
+    const isRestrictedRoute = RESTRICTED_ROUTES.some((route) =>
+        pathname.includes(route)
+    );
+    if (isRestrictedRoute && !session) {
         return NextResponse.redirect(new URL("/login", req.url));
     }
 
