@@ -10,6 +10,8 @@ export type WebAuthNWallet = Readonly<{
     publicKey: P256PubKey;
     // The authenticator id
     authenticatorId: string;
+    // The transports of this authenticator
+    transports?: string[];
 }>;
 
 /**

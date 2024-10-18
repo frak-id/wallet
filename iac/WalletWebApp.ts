@@ -12,8 +12,6 @@ import { isProdStack, openNextVersion } from "./utils";
 export function WalletAppStack({ stack }: StackContext) {
     // The configs required to run the app
     const {
-        sessionEncryptionKey,
-        mongoNexusUri,
         alchemyApiKey,
         pimlicoApiKey,
         frakWalletUrl,
@@ -24,8 +22,6 @@ export function WalletAppStack({ stack }: StackContext) {
         indexerUrl,
     } = use(ConfigStack);
     const configs = [
-        sessionEncryptionKey,
-        mongoNexusUri,
         alchemyApiKey,
         pimlicoApiKey,
         frakWalletUrl,
