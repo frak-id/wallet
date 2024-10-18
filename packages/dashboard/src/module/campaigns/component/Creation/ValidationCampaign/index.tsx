@@ -56,7 +56,6 @@ export function ValidationCampaign() {
                     ...campaign,
                     id,
                 };
-                console.log(newCampaign);
                 // Update the atom
                 setCampaign(newCampaign);
                 // Build the creation data

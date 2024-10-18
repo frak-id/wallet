@@ -23,7 +23,6 @@ export function useProductMetadata({ productId }: { productId?: Hex }) {
                 functionName: "getMetadata",
                 args: [BigInt(productId)],
             });
-            console.log({ metadata }, "Product metadata");
 
             return {
                 ...metadata,
