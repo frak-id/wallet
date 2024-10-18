@@ -188,6 +188,7 @@
 }
 
 .modalTitle__provided {
+    vertical-align: top;
     margin-left: 10px;
     font-size: 12px;
     font-weight: 400;
@@ -195,8 +196,11 @@
 }
 
 .modalTitle__logo {
+    vertical-align: top;
     margin-left: 2px;
-    vertical-align: middle;
+    margin-top: -1px;
+    height: 16px;
+    width: auto;
 }
 
 .drawerTitle__container {

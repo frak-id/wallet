@@ -166,11 +166,7 @@ function ListenerModalDialog({
                 {currentRequest?.appName ?? ""}
                 <span className={styles.modalTitle__provided}>
                     Provided by{" "}
-                    <LogoFrakWithName
-                        className={styles.modalTitle__logo}
-                        width={50}
-                        height={25}
-                    />
+                    <LogoFrakWithName className={styles.modalTitle__logo} />
                 </span>
             </>
         );
