@@ -1,20 +1,21 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import i18next from "i18next";
+import { createInstance } from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import ChainedBackend from "i18next-chained-backend";
 import HttpBackend from "i18next-http-backend";
-import { initReactI18next } from "react-i18next";
 
 /**
- * The i18n configuration
- *  todo: Maybe a cleaner way possible with a context provider etc?
- *  todo: Typing to fix
+ * Define our main i18n instance
  */
-export default i18next
+export const mainI18nInstance = createInstance()
     .use(ChainedBackend)
-    .use(LanguageDetector)
-    .use(initReactI18next)
-    .init({
+    .use(LanguageDetector);
+
+/**
+ * Function to trigger the i18n instance init
+ */
+export const initI18nInstance = () =>
+    mainI18nInstance.init({
         supportedLngs: ["en", "fr"],
         fallbackLng: "en",
         interpolation: {

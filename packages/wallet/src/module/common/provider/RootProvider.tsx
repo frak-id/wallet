@@ -2,6 +2,7 @@
 
 import { currentChain } from "@/context/blockchain/provider";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
+import { initI18nInstance, mainI18nInstance } from "@/i18n/config";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
@@ -19,11 +20,9 @@ import type { PersistQueryClientProviderProps } from "@tanstack/react-query-pers
 import { Provider } from "jotai/index";
 import { RESET, useHydrateAtoms } from "jotai/utils";
 import { type PropsWithChildren, useEffect, useMemo } from "react";
+import { I18nextProvider } from "react-i18next";
 import { createClient } from "viem";
 import { WagmiProvider, createConfig } from "wagmi";
-
-// Import i18n config to initialize the i18n library
-import "@/i18n/config";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -76,6 +75,13 @@ export function RootProvider({
         }
     );
 
+    // Trigger the i18n instance init on mount
+    useEffect(() => {
+        initI18nInstance().then(() => {
+            console.log("I18n instance initialized");
+        });
+    }, []);
+
     return (
         <>
             <Provider store={jotaiStore}>
@@ -85,7 +91,7 @@ export function RootProvider({
                 >
                     <SetupServiceWorker />
                     <WagmiProviderWithDynamicConfig>
-                        {children}
+                        <LocalisationProvider>{children}</LocalisationProvider>
                     </WagmiProviderWithDynamicConfig>
                     <ReactQueryDevtools initialIsOpen={false} />
                 </PersistQueryClientProvider>
@@ -184,4 +190,10 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
 function EnforceWagmiConnection() {
     useEnforceWagmiConnection();
     return null;
+}
+
+function LocalisationProvider({ children }: PropsWithChildren) {
+    return (
+        <I18nextProvider i18n={mainI18nInstance}>{children}</I18nextProvider>
+    );
 }
