@@ -9,10 +9,10 @@ import { ReferralInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { jotaiStore } from "@module/atoms/store";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useAccount } from "wagmi";
 import { modalDisplayedRequestAtom } from "../../atoms/modalEvents";
 import { useModalTranslation } from "../../hooks/useModalTranslation";
@@ -76,25 +76,22 @@ function SharingButtons({
     const isInteractionPushed = useRef(false);
 
     // Get our final sharing link
-    const { data: finalSharingLink } = useQuery({
-        queryKey: ["final-modal", "sharing", link, isModalSuccess, address],
-        queryFn: async () => {
-            if (!link) return null;
+    const finalSharingLink = useMemo(() => {
+        if (!link) return null;
 
-            if (isModalSuccess) {
-                // Ensure the sharing link contain the current nexus wallet as referrer
-                return await FrakContextManager.update({
-                    url: link,
-                    context: {
-                        r: address,
-                    },
-                });
-            }
+        if (isModalSuccess) {
+            // Ensure the sharing link contain the current nexus wallet as referrer
+            return FrakContextManager.update({
+                url: link,
+                context: {
+                    r: address,
+                },
+            });
+        }
 
-            // Remove the referrer from the sharing link
-            return FrakContextManager.remove(link);
-        },
-    });
+        // Remove the referrer from the sharing link
+        return FrakContextManager.remove(link);
+    }, [link, isModalSuccess, address]);
 
     // Trigger native sharing
     const {

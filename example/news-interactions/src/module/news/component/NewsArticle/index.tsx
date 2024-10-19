@@ -38,6 +38,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
             },
             metadata: {
                 lang: "fr",
+                isDismissible: true,
             },
         },
     });
