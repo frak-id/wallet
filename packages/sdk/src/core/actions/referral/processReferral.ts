@@ -49,7 +49,7 @@ export async function processReferral(
         let currentWallet = walletStatus?.wallet;
         if (!frakContext?.r) {
             if (currentWallet) {
-                await FrakContextManager.replaceUrl({
+                FrakContextManager.replaceUrl({
                     url: window.location?.href,
                     context: { r: currentWallet },
                 });
@@ -79,7 +79,7 @@ export async function processReferral(
 
         // If we got one now, create a promise that will update the context
         if (currentWallet) {
-            await FrakContextManager.replaceUrl({
+            FrakContextManager.replaceUrl({
                 url: window.location?.href,
                 context: { r: currentWallet },
             });
