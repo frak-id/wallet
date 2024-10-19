@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.18
+
+### Patch Changes
+
+- [`ce1ef14`](https://github.com/frak-id/wallet/commit/ce1ef14a920b186e2572c54d685937b47761c221) Thanks [@KONFeature](https://github.com/KONFeature)! - Simplify `FrakContextManager` for to simple b64 encoding
+
 ## 0.0.17
 
 ### Patch Changes
