@@ -98,6 +98,8 @@ function elysiaBackend(
             maxContainers: 5,
             cpuUtilization: 80,
             memoryUtilization: 80,
+            // Start to scale when we handle more than 30k requests on each container
+            requestsPerContainer: 30_000,
         },
         // Bind the secret we will be using
         bind: [
