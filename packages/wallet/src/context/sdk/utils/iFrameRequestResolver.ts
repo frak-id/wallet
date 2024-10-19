@@ -119,6 +119,7 @@ export function createIFrameRequestResolver(
         if (!resolver) {
             return;
         }
+
         // Build the emitter for this call
         const responseEmitter: IFrameResponseEmitter = async (result) => {
             // Hash and compress the results

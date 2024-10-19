@@ -88,6 +88,22 @@ export const dismissModalBtnAtom = atom(
         if (finalStepIndex === -1 || finalStepIndex === modalSteps.currentStep)
             return;
 
+        // If the final step is of type reward, jump to final step + 1 (to close the modal)
+        const finalStep = modalSteps.steps[finalStepIndex];
+        if (
+            finalStep?.key === "final" &&
+            finalStep?.params?.action?.key === "reward"
+        ) {
+            // Update the final step and mark it as autoSkip true
+            set(displayedRpcModalStepsAtom, {
+                ...modalSteps,
+                currentStep: finalStepIndex + 1,
+                dismissed: true,
+            });
+            return;
+        }
+
+        // Otherwise, just jump to the last step
         set(displayedRpcModalStepsAtom, {
             ...modalSteps,
             currentStep: finalStepIndex,

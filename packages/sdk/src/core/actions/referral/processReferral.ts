@@ -58,11 +58,13 @@ export async function processReferral(
         }
 
         // We have a referral, so if we don't have a current wallet, display the modal
+        let walletRequested = false;
         if (!currentWallet) {
             currentWallet = await ensureWalletConnected(client, {
                 modalConfig,
                 walletStatus,
             });
+            walletRequested = true;
         }
 
         if (currentWallet && isAddressEqual(frakContext.r, currentWallet)) {
@@ -70,7 +72,7 @@ export async function processReferral(
         }
 
         // If the current wallet doesn't have an interaction session, display the modal
-        if (!walletStatus?.interactionSession) {
+        if (!(walletStatus?.interactionSession || walletRequested)) {
             currentWallet = await ensureWalletConnected(client, {
                 modalConfig,
                 walletStatus,
