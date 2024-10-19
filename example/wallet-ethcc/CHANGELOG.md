@@ -1,5 +1,12 @@
 # @frak-labs-example/wallet-ethcc
 
+## 0.1.16
+
+### Patch Changes
+
+- Updated dependencies [[`ce1ef14`](https://github.com/frak-id/wallet/commit/ce1ef14a920b186e2572c54d685937b47761c221)]:
+  - @frak-labs/nexus-sdk@0.0.18
+
 ## 0.1.15
 
 ### Patch Changes
