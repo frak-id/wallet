@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.20
+
+### Patch Changes
+
+- [`666a5aa`](https://github.com/frak-id/wallet/commit/666a5aa89cb2d2281a2e88f66cca53a68dcef5d1) Thanks [@KONFeature](https://github.com/KONFeature)! - Don't spam connection request in case of a modal dismiss
+
 ## 0.0.19
 
 ### Patch Changes
