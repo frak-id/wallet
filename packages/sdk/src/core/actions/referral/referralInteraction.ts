@@ -19,7 +19,7 @@ export async function referralInteraction(
     } = {}
 ) {
     // Get the current frak context
-    const frakContext = await FrakContextManager.parse({
+    const frakContext = FrakContextManager.parse({
         url: window.location.href,
     });
 

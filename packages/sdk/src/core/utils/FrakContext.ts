@@ -1,5 +1,5 @@
+import { type Address, bytesToHex, hexToBytes } from "viem";
 import type { FrakContext } from "../../react/types/FrakContext";
-import { compressJson, decompressJson } from "./compression";
 
 /**
  * The context key
@@ -7,51 +7,78 @@ import { compressJson, decompressJson } from "./compression";
 const contextKey = "fCtx";
 
 /**
- * Parse the current Nexus context in the given url
- * @param url
+ * Compress the current Frak context
+ * @param context
  */
-async function parse({ url }: { url: string }) {
-    if (!url) return null;
-
-    // Check if the url contain the nexus context key
-    const urlObj = new URL(url);
-    const nexusContext = urlObj.searchParams.get(contextKey);
-    if (!nexusContext) return null;
-
-    // Parse the nexus context
-    const parsedContext = await decompressJson<FrakContext>(decodeURIComponent(nexusContext));
-    if (!parsedContext) return null;
-
-    // Return the parsed context
-    return parsedContext;
+function compress(context?: Partial<FrakContext>): string | undefined {
+    if (!context?.r) return;
+    try {
+        const bytes = hexToBytes(context.r);
+        return Buffer.from(bytes).toString("base64url");
+    } catch (e) {
+        console.error("Error compressing Frak context", { e, context });
+    }
+    return undefined;
 }
 
 /**
- * Populate the current url with the given Nexus context
+ * Decompress the given Frak context
+ * @param context
  */
-async function update({
+function decompress(context?: string): FrakContext | undefined {
+    if (!context || context.length === 0) return;
+    try {
+        const bytes = Buffer.from(context, "base64url");
+        return { r: bytesToHex(bytes, { size: 20 }) as Address };
+    } catch (e) {
+        console.error("Error decompressing Frak context", { e, context });
+    }
+    return undefined;
+}
+
+/**
+ * Parse the current Frak context in the given url
+ * @param url
+ */
+function parse({ url }: { url: string }) {
+    if (!url) return null;
+
+    // Check if the url contain the frak context key
+    const urlObj = new URL(url);
+    const frakContext = urlObj.searchParams.get(contextKey);
+    if (!frakContext) return null;
+
+    // Decompress and return it
+    return decompress(frakContext);
+}
+
+/**
+ * Populate the current url with the given Frak context
+ */
+function update({
     url,
     context,
 }: { url?: string; context: Partial<FrakContext> }) {
     if (!url) return null;
 
     // Parse the current context
-    const currentContext = await parse({ url });
+    const currentContext = parse({ url });
 
     // Merge the current context with the new context
     const mergedContext = currentContext
         ? { ...currentContext, ...context }
         : context;
 
-    // Compress the updated context
-    const compressedContext = await compressJson(mergedContext);
+    // If we don't have a referrer, early exit
+    if (!mergedContext.r) return;
+
+    // Compress it
+    const compressedContext = compress(mergedContext);
     if (!compressedContext) return;
 
-    // Build the new url
+    // Build the new url and return it
     const urlObj = new URL(url);
-    urlObj.searchParams.set(contextKey, encodeURIComponent(compressedContext));
-
-    // And return it
+    urlObj.searchParams.set(contextKey, compressedContext);
     return urlObj.toString();
 }
 
@@ -69,7 +96,7 @@ function remove(url: string) {
  * @param url
  * @param context
  */
-async function replaceUrl({
+function replaceUrl({
     url,
     context,
 }: { url?: string; context: Partial<FrakContext> }) {
@@ -79,8 +106,8 @@ async function replaceUrl({
         return;
     }
 
-    // Get our new url with the nexus context
-    const newUrl = await update({
+    // Get our new url with the frak context
+    const newUrl = update({
         url,
         context,
     });
@@ -95,6 +122,8 @@ async function replaceUrl({
  * Export our frak context "class"
  */
 export const FrakContextManager = {
+    compress,
+    decompress,
     parse,
     update,
     remove,
