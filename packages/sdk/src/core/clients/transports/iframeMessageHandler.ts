@@ -73,7 +73,7 @@ export function createIFrameMessageHandler({
 
     // Create the function that will handle incoming iframe messages
     const msgHandler = async (event: MessageEvent<IFrameEvent>) => {
-        if (!event.origin) {
+        if (!(event.origin && URL.canParse(event.origin))) {
             return;
         }
         // Check that the origin match the wallet
