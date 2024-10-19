@@ -19,36 +19,43 @@ const modalTranslationContextAtom = atom((get) => {
     const productOrigin = request.context.origin;
 
     return {
-        productName,
-        productOrigin,
-        context: finalStepKey,
+        lang: request.metadata?.lang,
+        context: {
+            productName,
+            productOrigin,
+            context: finalStepKey,
+        },
     };
 });
 
 export function useModalTranslation() {
-    const { t, i18n } = useTranslation();
-    const context = useAtomValue(modalTranslationContextAtom);
-
-    const translationWithContext = useCallback(
-        (key: string, options?: TOptions) => {
-            return t(key, {
-                ...context,
-                ...options,
-            });
-        },
-        [t, context]
-    );
+    const { i18n } = useTranslation();
+    const { lang, context } = useAtomValue(modalTranslationContextAtom);
 
     // Transform the i18n instance to include the context
-    const i18nWithContext = useMemo(() => {
-        return i18n.cloneInstance({
+    const { newI18n, newT } = useMemo(() => {
+        const newI18n = i18n.cloneInstance({
+            lng: lang,
             interpolation: {
                 defaultVariables: {
                     ...context,
                 },
             },
         });
-    }, [i18n, context]);
+        const newT = newI18n.getFixedT(lang ?? "en", null) as typeof newI18n.t;
+        return { newI18n, newT };
+    }, [i18n, lang, context]);
 
-    return { t: translationWithContext, i18n: i18nWithContext };
+    // Build the translation with context function
+    const translationWithContext = useCallback(
+        (key: string, options?: TOptions) => {
+            return newT(key, {
+                ...context,
+                ...options,
+            });
+        },
+        [newT, context]
+    );
+
+    return { t: translationWithContext, i18n: newI18n };
 }

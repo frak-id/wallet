@@ -51,6 +51,7 @@ export function Sso() {
      */
     useQuery({
         gcTime: 0,
+        staleTime: 0,
         queryKey: ["sso", "params-decompression", searchParams.toString()],
         queryFn: async () => {
             const compressedString = searchParams.get("p");
@@ -80,6 +81,8 @@ export function Sso() {
             // Return no data
             return null;
         },
+        refetchOnMount: true,
+        refetchOnWindowFocus: true,
     });
 
     /**

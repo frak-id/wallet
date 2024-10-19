@@ -15,7 +15,7 @@
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "deploy": "sst deploy --stage prod",
-    "i18n:types": "bun run i18next-resources-for-ts interface -i ./public/locales/en/ -o src/types/i18n/resources.d.ts",
+    "i18n:types": "bun run i18next-resources-for-ts interface -i ./src/i18n/locales/en/ -o src/types/i18n/resources.d.ts",
     "i18n:pull": ""
   },
   "dependencies": {
@@ -38,9 +38,6 @@
     "@wagmi/core": "^2.13.8",
     "dexie": "^4.0.8",
     "i18next": "^23.16.0",
-    "i18next-chained-backend": "^4.6.2",
-    "i18next-http-backend": "^2.6.2",
-    "i18next-localstorage-backend": "^4.2.0",
     "jotai": "^2.10.1",
     "lucide-react": "^0.453.0",
     "mongodb": "^6.9.0",

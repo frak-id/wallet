@@ -24,10 +24,12 @@ interface Resources {
         };
         common: {
             amountRequired: "Amount is required";
+            added: "added";
             at: "at";
             authenticator: "Authenticator:";
             balance: "Balance";
             claim: "Claim";
+            claimed: "claimed";
             copied: "Copied!";
             copyAddress: "Copy address";
             enterAddress: "Enter address";
@@ -50,22 +52,28 @@ interface Resources {
         sdk: {
             modal: {
                 default: {
-                    dismissBtn: "Continue without Frak";
+                    dismissBtn: "Continue browsing";
+                    dismissBtn_sharing: "Share without being paid";
                 };
                 final: {
                     default: {
                         title: "Success";
                         title_reward: "Gains";
                         title_sharing: "Share";
-                        description: "Now you can share your experience with your friends and earn more rewards.";
+                        description: "You've successfully completed all the steps.";
+                        description_sharing: "Your wallet has been created to receive your **{{ productName }}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).";
+                        description_reward: "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!";
                     };
                     dismissed: {
-                        description: "You can now share but you will not be able to earn rewards.";
+                        description: "All good";
+                        description_sharing: "Share this article.";
                     };
                 };
                 login: {
                     default: {
-                        description: "Connect to your Frak account to get the best experience on this platform.";
+                        description: "Login to your Frak account to get the best experience on **{{ productName }}*";
+                        description_sharing: "{{ productName }} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.";
+                        description_reward: "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.";
                         primaryAction: "I create my wallet under 30sec";
                         secondaryAction: "I already have a wallet";
                         title: "Connection";
@@ -74,7 +82,7 @@ interface Resources {
                 };
                 openSession: {
                     default: {
-                        description: "Start a rewarding session to earn as you interact anonymously on this site. Enjoy benefits without sharing personal details. \nLearn more in our privacy policy.";
+                        description: "Congratulations, your wallet has been created! Click on the button below to activate it and receive your winnings.";
                         primaryAction: "Activate my wallet";
                         title: "Activation";
                     };
@@ -93,15 +101,6 @@ interface Resources {
                         primaryAction: "Authenticate";
                         title: "Authentication";
                     };
-                };
-                stepper: {
-                    final: "Success";
-                    final_reward: "Gains";
-                    final_sharing: "Share";
-                    login: "Connection";
-                    openSession: "Activation";
-                    sendTransaction: "Transaction";
-                    siweAuthenticate: "Authentication";
                 };
             };
         };

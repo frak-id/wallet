@@ -76,17 +76,6 @@ function ListenerModalDialog({
     }, []);
 
     /**
-     * Set the language of the modal
-     */
-    const { i18n } = useModalTranslation();
-    useEffect(() => {
-        const lang = currentRequest?.metadata?.lang;
-        if (lang && i18n.language !== lang) {
-            i18n.changeLanguage(lang);
-        }
-    }, [currentRequest?.metadata?.lang, i18n]);
-
-    /**
      * Method to close the modal
      */
     const onError = useCallback(
