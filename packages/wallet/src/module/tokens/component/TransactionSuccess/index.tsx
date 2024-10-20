@@ -1,4 +1,4 @@
-import { ExplorerLink } from "@/module/wallet/component/ExplorerLink";
+import { ExplorerTxLink } from "@/module/wallet/component/ExplorerLink";
 import { TransactionHash } from "@module/component/HashDisplay";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
@@ -15,7 +15,7 @@ export function TransactionSuccess({ hash }: { hash: Hex }) {
             <TransactionHash hash={hash} copiedText={t("common.copied")} />
             <br />
             <br />
-            <ExplorerLink
+            <ExplorerTxLink
                 hash={hash}
                 icon={false}
                 className={styles.transactionSuccess__polygonLink}

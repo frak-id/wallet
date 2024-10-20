@@ -9,22 +9,20 @@ const explorerUrl = isRunningInProd
     ? arbitrum.blockExplorers.default.url
     : arbitrumSepolia.blockExplorers.default.url;
 
-export function ExplorerLink({
+export function ExplorerTxLink({
     hash,
-    wallet = false,
     icon = true,
     className = "",
     text = "",
 }: {
     hash: Hex;
-    wallet?: boolean;
     icon?: boolean;
     className?: string;
     text?: string;
 }) {
     return (
         <a
-            href={`${explorerUrl}/${wallet ? "address" : "tx"}/${hash}`}
+            href={`${explorerUrl}/tx/${hash}`}
             target={"_blank"}
             rel={"noreferrer"}
             className={`${styles.explorerLink} ${className}`}

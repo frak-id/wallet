@@ -42,7 +42,7 @@
     "next-qrcode": "^2.5.1",
     "nextjs-toploader": "^3.7.15",
     "normalize.css": "^8.0.1",
-    "permissionless": "0.2.10",
+    "permissionless": "^0.2.10",
     "radash": "^12.1.0",
     "react": "^18",
     "react-dom": "^18",
