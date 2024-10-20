@@ -15,7 +15,11 @@ import {
 
 // Full on service app
 const app = new Elysia()
-    .use(log.into())
+    .use(
+        log.into({
+            autoLogging: isRunningLocally,
+        })
+    )
     .use(cors())
     .onRequest(({ request: { url }, error }) => {
         if (
@@ -25,7 +29,6 @@ const app = new Elysia()
             )
         ) {
             // If it didn't match our url, simulate a DNS error with 523 to prevent bot from abusing our backend
-            log.debug({ url }, "Request didn't target the right hostname");
             return error(523);
         }
     })
