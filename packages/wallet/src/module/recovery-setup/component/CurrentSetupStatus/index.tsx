@@ -17,7 +17,10 @@ export function CurrentRecoverySetupStatus() {
     return (
         <p>
             {t("wallet.recoverySetup.currentGuardian")}{" "}
-            <WalletAddress wallet={recoverySetupStatus.guardianAddress} />
+            <WalletAddress
+                wallet={recoverySetupStatus.guardianAddress}
+                copiedText={t("common.copied")}
+            />
         </p>
     );
 }

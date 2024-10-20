@@ -71,6 +71,7 @@ export function Step2() {
                 {t("common.walletAddress")}{" "}
                 <WalletAddress
                     wallet={fileContent?.initialWallet?.address ?? "0x"}
+                    copiedText={t("common.copied")}
                 />
                 <br />
                 {t("common.authenticator")}{" "}
@@ -78,6 +79,7 @@ export function Step2() {
                     wallet={toHex(
                         fileContent?.initialWallet?.authenticatorId ?? "0"
                     )}
+                    copiedText={t("common.copied")}
                 />
             </p>
             <p>

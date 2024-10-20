@@ -6,12 +6,14 @@ import {
     AccordionTrigger,
 } from "@module/component/Accordion";
 import { WalletAddress } from "@module/component/HashDisplay";
+import { useTranslation } from "react-i18next";
 import { formatEther } from "viem";
 import styles from "./index.module.css";
 
 export function AccordionTransactions({
     txs,
 }: { txs: SendTransactionTxType[] }) {
+    const { t } = useTranslation();
     return (
         <Accordion
             type={"single"}
@@ -33,7 +35,11 @@ export function AccordionTransactions({
                         className={styles.accordionTransactions__content}
                     >
                         <p>
-                            To: <WalletAddress wallet={tx.to} />
+                            To:{" "}
+                            <WalletAddress
+                                wallet={tx.to}
+                                copiedText={t("common.copied")}
+                            />
                         </p>
 
                         {tx.value && BigInt(tx.value) > 0n ? (

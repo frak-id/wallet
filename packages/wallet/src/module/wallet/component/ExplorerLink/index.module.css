@@ -1,10 +1,10 @@
-.polygonLink {
+.explorerLink {
     flex: 1;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.polygonLink__icon {
+.explorerLink__icon {
     margin-left: auto;
 }

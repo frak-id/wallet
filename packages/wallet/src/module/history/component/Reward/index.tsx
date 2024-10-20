@@ -6,7 +6,7 @@ import Row from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { AlertDialogArticle } from "@/module/history/component/AlertDialogArticle";
 import { DrawerArticle } from "@/module/history/component/DrawerArticle";
-import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
+import { ExplorerLink } from "@/module/wallet/component/ExplorerLink";
 import type { RewardHistory } from "@/types/RewardHistory";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
 import { HandCoins, Handshake } from "lucide-react";

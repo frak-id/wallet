@@ -1,5 +1,4 @@
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
-import { t } from "i18next";
 import { useMemo } from "react";
 import { type Address, type Hex, slice } from "viem";
 import styles from "./index.module.css";
@@ -15,13 +14,17 @@ export function formatHash({
     return hash ? shortenHash : undefined;
 }
 
-export function WalletAddress({ wallet }: { wallet: Address }) {
+export function WalletAddress({
+    wallet,
+    copiedText,
+}: { wallet: Address; copiedText?: string }) {
     const { copied, copy } = useCopyToClipboardWithState();
 
     const hashedAddress = useMemo(
         () => formatHash({ hash: wallet, format: { start: 2, end: 3 } }),
         [wallet]
     );
+    const copiedMessage = copiedText ?? "Copied";
 
     if (!wallet) return null;
     return (
@@ -30,18 +33,22 @@ export function WalletAddress({ wallet }: { wallet: Address }) {
             className={styles.walletAddress}
             onClick={() => copy(wallet)}
         >
-            {copied ? t("common.copied") : hashedAddress}
+            {copied ? copiedMessage : hashedAddress}
         </button>
     );
 }
 
-export function TransactionHash({ hash }: { hash: Hex }) {
+export function TransactionHash({
+    hash,
+    copiedText,
+}: { hash: Hex; copiedText?: string }) {
     const { copied, copy } = useCopyToClipboardWithState();
 
     const hashedAddress = useMemo(
         () => formatHash({ hash, format: { start: 4, end: 4 } }),
         [hash]
     );
+    const copiedMessage = copiedText ?? "Copied";
 
     if (!hash) return null;
     return (
@@ -50,7 +57,7 @@ export function TransactionHash({ hash }: { hash: Hex }) {
             className={styles.walletAddress}
             onClick={() => copy(hash)}
         >
-            {copied ? t("common.copied") : hashedAddress}
+            {copied ? copiedMessage : hashedAddress}
         </button>
     );
 }

@@ -7,7 +7,7 @@ import {
     recoveryNewWalletAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
+import { ExplorerLink } from "@/module/wallet/component/ExplorerLink";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useAtomValue, useSetAtom } from "jotai";
 import { SendHorizontal } from "lucide-react";

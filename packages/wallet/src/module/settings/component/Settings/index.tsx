@@ -38,12 +38,16 @@ function BiometryInfo() {
                     {t("common.authenticator")}{" "}
                     <WalletAddress
                         wallet={toHex(wallet?.authenticatorId ?? "0")}
+                        copiedText={t("common.copied")}
                     />
                 </li>
 
                 <li>
                     {t("common.wallet")}{" "}
-                    <WalletAddress wallet={address ?? "0x"} />
+                    <WalletAddress
+                        wallet={address ?? "0x"}
+                        copiedText={t("common.copied")}
+                    />
                 </li>
             </ul>
         </Panel>
