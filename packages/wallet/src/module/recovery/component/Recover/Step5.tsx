@@ -7,7 +7,7 @@ import {
     recoveryNewWalletAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { ExplorerLink } from "@/module/wallet/component/PolygonLink";
+import { ExplorerTxLink } from "@/module/wallet/component/ExplorerLink";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useAtomValue, useSetAtom } from "jotai";
 import { SendHorizontal } from "lucide-react";
@@ -166,7 +166,7 @@ function useRecoveryStatus({
             return (
                 <span className={styles.recoverChainStatus__success}>
                     {t("wallet.recovery.status.done")}{" "}
-                    <ExplorerLink
+                    <ExplorerTxLink
                         hash={txHash ?? "0x"}
                         icon={false}
                         className={styles.recoverChainStatus__link}

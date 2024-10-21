@@ -14,11 +14,11 @@ import {
 } from "@/module/product/hook/useGetProductFunding";
 import { useSetBankDistributionStatus } from "@/module/product/hook/useSetBankDistributionStatus";
 import { addresses } from "@frak-labs/app-essentials";
-import { Switch } from "@frak-labs/nexus-wallet/src/module/common/component/Switch";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { IconInfo } from "@module/component/IconInfo";
 import { Spinner } from "@module/component/Spinner";
+import { Switch } from "@module/component/Switch";
 import { Tooltip } from "@module/component/Tooltip";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { CheckCircle, XCircle } from "lucide-react";

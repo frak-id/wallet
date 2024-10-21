@@ -52,36 +52,6 @@ export function useGetOpenSsoLink() {
     );
 }
 
-export function useOpenSso() {
-    return useCallback((link: string) => {
-        // If we are on the server side do nothing
-        if (window === undefined) return;
-
-        // Promise to wait for the popup to open
-        return new Promise<boolean>((resolve) => {
-            try {
-                // Open the popup (in the main thread via setTimeout)
-                setTimeout(() => {
-                    const openedWindow = window.open(
-                        link,
-                        "frak-sso",
-                        "menubar=no,status=no,scrollbars=no,fullscreen=no,width=500, height=800"
-                    );
-                    if (openedWindow) {
-                        openedWindow.focus();
-                        resolve(true);
-                    } else {
-                        resolve(false);
-                    }
-                }, 50);
-            } catch (e) {
-                console.error("Open SSO error", e);
-                resolve(false);
-            }
-        });
-    }, []);
-}
-
 /**
  * Hook used to get the sso link
  */

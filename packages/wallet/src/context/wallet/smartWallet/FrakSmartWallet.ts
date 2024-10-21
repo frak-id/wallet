@@ -309,9 +309,11 @@ export async function frakWalletSmartAccount<
                 if (!estimation) {
                     return undefined;
                 }
+                // The margin depend on the chain, if testnet 300%, if mainnet 125%
+                const margin = client?.chain?.testnet === true ? 300n : 125n;
                 // Use the estimation with 25% of error margin on the estimation
                 return {
-                    callGasLimit: (estimation * 125n) / 100n,
+                    callGasLimit: (estimation * margin) / 100n,
                 };
             },
         },

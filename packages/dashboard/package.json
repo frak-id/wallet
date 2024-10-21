@@ -17,9 +17,9 @@
     "deploy": "sst deploy --stage prod"
   },
   "dependencies": {
+    "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
-    "@frak-labs/app-essentials": "workspace:*",
     "@lucasmogari/react-pagination": "^1.2.0",
     "@radix-ui/react-collapsible": "^1.1.1",
     "@radix-ui/react-label": "^2.1.0",
@@ -34,7 +34,7 @@
     "@tanstack/react-query-devtools": "^5.59.15",
     "@tanstack/react-query-persist-client": "^5.59.15",
     "@tanstack/react-table": "^8.20.5",
-    "@uidotdev/usehooks": "^2.4.1",
+    "@tanstack/table-core": "^8.20.5",
     "class-variance-authority": "^0.7.0",
     "cmdk": "^1.0.0",
     "countries-list": "^3.1.1",

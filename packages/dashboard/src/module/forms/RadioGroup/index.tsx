@@ -1,40 +1,38 @@
 "use client";
 
-import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
+import { Indicator, Item, Root } from "@radix-ui/react-radio-group";
 import { forwardRef } from "react";
 import type { ComponentPropsWithoutRef, ElementRef } from "react";
 import styles from "./index.module.css";
 
 const RadioGroup = forwardRef<
-    ElementRef<typeof RadioGroupPrimitive.Root>,
-    ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
+    ElementRef<typeof Root>,
+    ComponentPropsWithoutRef<typeof Root>
 >(({ className, ...props }, ref) => {
     return (
-        <RadioGroupPrimitive.Root
+        <Root
             className={`${styles.radioGroup} ${className}`}
             {...props}
             ref={ref}
         />
     );
 });
-RadioGroup.displayName = RadioGroupPrimitive.Root.displayName;
+RadioGroup.displayName = Root.displayName;
 
 const RadioGroupItem = forwardRef<
-    ElementRef<typeof RadioGroupPrimitive.Item>,
-    ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
+    ElementRef<typeof Item>,
+    ComponentPropsWithoutRef<typeof Item>
 >(({ className, ...props }, ref) => {
     return (
-        <RadioGroupPrimitive.Item
+        <Item
             ref={ref}
             className={`${styles.radioGroup__item} ${className}`}
             {...props}
         >
-            <RadioGroupPrimitive.Indicator
-                className={`${styles.radioGroup__indicator}`}
-            />
-        </RadioGroupPrimitive.Item>
+            <Indicator className={`${styles.radioGroup__indicator}`} />
+        </Item>
     );
 });
-RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName;
+RadioGroupItem.displayName = Item.displayName;
 
 export { RadioGroup, RadioGroupItem };

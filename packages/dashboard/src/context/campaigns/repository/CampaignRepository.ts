@@ -6,7 +6,7 @@ import type {
     DraftCampaignDocument,
 } from "@/context/campaigns/dto/CampaignDocument";
 import { getMongoDb } from "@/context/common/mongoDb";
-import { type Collection, ObjectId } from "mongodb";
+import { type Collection, type Filter, ObjectId } from "mongodb";
 import { memo } from "radash";
 import type { Address } from "viem";
 
@@ -78,21 +78,28 @@ class CampaignRepository {
         addresses,
         creator,
     }: { addresses: Address[]; creator?: Address }) {
-        // Build our regex
-        const addressesRegex = new RegExp(addresses.join("|"), "i");
-        const creatorRegex = new RegExp(`^${creator}$`, "i");
+        // Build our or conditions array
+        const conditions: Filter<CampaignDocument>[] = [];
+        if (addresses.length) {
+            conditions.push({
+                "state.address": { $in: addresses },
+            });
+        }
+        if (creator) {
+            conditions.push({
+                creator: { $regex: new RegExp(`^${creator}$`, "i") },
+            });
+        }
+
+        // If we got only one condition, just return it
+        if (conditions.length === 1) {
+            return this.collection.find(conditions[0]).toArray();
+        }
 
         // Perform the query
         return this.collection
             .find({
-                $or: [
-                    {
-                        "state.address": { $regex: addressesRegex },
-                    },
-                    {
-                        creator: { $regex: creatorRegex },
-                    },
-                ],
+                $or: conditions,
             })
             .toArray();
     }

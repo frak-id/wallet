@@ -1,6 +1,13 @@
 "use client";
 
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import {
+    Arrow,
+    Content,
+    Portal,
+    Provider,
+    Root,
+    Trigger,
+} from "@radix-ui/react-tooltip";
 import { forwardRef } from "react";
 import type { ElementRef, ReactNode } from "react";
 import styles from "./index.module.css";
@@ -13,10 +20,7 @@ type TooltipProps = {
     side?: "top" | "bottom" | "left" | "right";
 };
 
-export const Tooltip = forwardRef<
-    ElementRef<typeof TooltipPrimitive.Provider>,
-    TooltipProps
->(
+export const Tooltip = forwardRef<ElementRef<typeof Provider>, TooltipProps>(
     (
         { content, hidden = false, className = "", children, side, ...props },
         ref
@@ -25,17 +29,17 @@ export const Tooltip = forwardRef<
             return children;
         }
         return (
-            <TooltipPrimitive.Provider>
-                <TooltipPrimitive.Root delayDuration={0}>
-                    <TooltipPrimitive.Trigger
+            <Provider>
+                <Root delayDuration={0}>
+                    <Trigger
                         className={styles.tooltip__trigger}
                         onClick={(e) => e.preventDefault()}
                         asChild
                     >
                         {children}
-                    </TooltipPrimitive.Trigger>
-                    <TooltipPrimitive.Portal>
-                        <TooltipPrimitive.Content
+                    </Trigger>
+                    <Portal>
+                        <Content
                             onPointerDownOutside={(e) => e.preventDefault()}
                             className={`${styles.tooltip__content} ${className}`}
                             sideOffset={0}
@@ -45,16 +49,14 @@ export const Tooltip = forwardRef<
                         >
                             <>
                                 {content}
-                                <TooltipPrimitive.Arrow
-                                    className={styles.tooltip__arrow}
-                                />
+                                <Arrow className={styles.tooltip__arrow} />
                             </>
-                        </TooltipPrimitive.Content>
-                    </TooltipPrimitive.Portal>
-                </TooltipPrimitive.Root>
-            </TooltipPrimitive.Provider>
+                        </Content>
+                    </Portal>
+                </Root>
+            </Provider>
         );
     }
 );
 
-Tooltip.displayName = TooltipPrimitive.Provider.displayName;
+Tooltip.displayName = Provider.displayName;
