@@ -148,12 +148,10 @@ async function buildSmartAccount<
         signerPubKey: wallet.publicKey,
         signatureProvider: async (message) => {
             // Get the signature options from server
-            console.time("getSignOptions");
             const options = await getSignOptions({
                 authenticatorId: wallet.authenticatorId,
                 toSign: message,
             });
-            console.timeEnd("getSignOptions");
 
             // Start the client authentication
             const authenticationResponse = await startAuthentication({
@@ -187,7 +185,6 @@ async function buildSmartAccount<
         // Get the right gas fees for the user operation
         userOperation: {
             estimateFeesPerGas: async () => {
-                // Get gas price + direct estimation in //
                 const { standard } =
                     await getUserOperationGasPrice(pimlicoClient);
                 return standard;
