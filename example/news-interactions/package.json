@@ -6,9 +6,9 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "next-dev-https": "next dev --experimental-https --port 3011",
+    "next-dev-https": "next dev --turbo --experimental-https --port 3011",
     "dev": "sst bind bun run next-dev-https",
-    "build": "sst bind next build --experimental-turbo",
+    "build": "sst bind next build",
     "start": "sst bind next start",
     "lint": "biome lint .",
     "format:check": "biome check .",

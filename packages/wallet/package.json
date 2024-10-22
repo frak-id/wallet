@@ -6,7 +6,7 @@
   "type": "module",
   "license": "GNU GPL 3.0",
   "scripts": {
-    "next-dev-https": "next dev --experimental-https --port 3000",
+    "next-dev-https": "next dev --turbo --experimental-https --port 3000",
     "dev": "sst bind bun run next-dev-https",
     "build": "sst bind next build",
     "start": "sst bind next start",
@@ -66,6 +66,7 @@
     "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
     "i18next-resources-for-ts": "^1.5.0",
     "sst": "2.44.0",
+    "tsup": "^8.3.0",
     "typescript": "^5"
   },
   "overrides": {
