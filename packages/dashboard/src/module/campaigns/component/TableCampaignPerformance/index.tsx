@@ -18,7 +18,10 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 const Table = dynamic<ReactTableProps<TableData>>(
-    () => import("@/module/common/component/Table").then((mod) => mod.Table),
+    () =>
+        import("@/module/common/component/Table").then((mod) => ({
+            default: mod.Table,
+        })),
     {
         loading: () => <Skeleton />,
     }

@@ -23,7 +23,9 @@ const NavigationCampaignsSwitcher = dynamic(
     () =>
         import(
             "@/module/common/component/Navigation/NavigationCampaignsSwitcher"
-        ).then((mod) => mod.NavigationCampaignsSwitcher),
+        ).then((mod) => ({
+            default: mod.NavigationCampaignsSwitcher,
+        })),
     {
         ssr: false,
         loading: () => (
