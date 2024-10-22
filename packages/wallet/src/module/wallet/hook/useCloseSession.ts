@@ -1,5 +1,4 @@
-import { getSessionDisableData } from "@/context/interaction/action/interactionSession";
-import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
+import { getDisableSessionData } from "@/context/interaction/utils/getEnableDisableData";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount, useSendTransaction } from "wagmi";
 
@@ -16,22 +15,13 @@ export function useCloseSession() {
             }
 
             // Get the disable data
-            const disableData = await getSessionDisableData();
-
-            // Build the session disable data
-            const txData = encodeWalletMulticall(
-                disableData.map((tx) => ({
-                    to: address,
-                    data: tx,
-                }))
-            );
+            const disableTxData = getDisableSessionData({ wallet: address });
 
             // Send the disable call
             const txHash = await sendTransactionAsync({
                 to: address,
-                data: txData,
+                data: disableTxData,
             });
-
             console.log(`Close session tx hash: ${txHash}`);
 
             // Refresh the interactions stuff
