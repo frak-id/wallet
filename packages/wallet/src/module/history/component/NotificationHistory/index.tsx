@@ -21,9 +21,9 @@ export function NotificationHistory() {
 
     if (!notifications) return <Skeleton count={3} height={110} />;
 
-    return notifications?.map((notificationItem) => (
+    return notifications?.map((notificationItem, index) => (
         <Notification
-            key={notificationItem.id}
+            key={`${notificationItem.timestamp}-${notificationItem.id}-${index}`}
             notification={notificationItem}
         />
     ));
