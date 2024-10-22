@@ -1,8 +1,9 @@
+import type { NextConfig } from "next";
 import { pick } from "radash";
 import { Config } from "sst/node/config";
 
 // Secret env variable from SST we want in the frontend
-const wantedFromConfig = [
+const wantedFromConfig: (keyof typeof Config)[] = [
     "ALCHEMY_API_KEY",
     "PIMLICO_API_KEY",
     "NEXUS_RPC_SECRET",
@@ -14,8 +15,7 @@ const wantedFromConfig = [
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
     env: {
         ...envFromSstConfig,
         STAGE: Config.STAGE,

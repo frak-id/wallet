@@ -1,8 +1,9 @@
+import type { NextConfig } from "next";
 import { pick } from "radash";
 import { Config } from "sst/node/config";
 
 // Secret env variable from SST we want in the frontend
-const wantedFromConfig = [
+const wantedFromConfig: (keyof typeof Config)[] = [
     "ALCHEMY_API_KEY",
     "NEXUS_RPC_SECRET",
     "FRAK_WALLET_URL",
@@ -16,8 +17,7 @@ const envFromSstConfig = pick(Config, wantedFromConfig);
 
 const isDistant = ["prod", "dev"].includes(Config.STAGE);
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
     async redirects() {
         return [
             {
