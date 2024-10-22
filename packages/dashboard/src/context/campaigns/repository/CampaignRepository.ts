@@ -7,7 +7,6 @@ import type {
 } from "@/context/campaigns/dto/CampaignDocument";
 import { getMongoDb } from "@/context/common/mongoDb";
 import { type Collection, type Filter, ObjectId } from "mongodb";
-import { memo } from "radash";
 import type { Address } from "viem";
 
 class CampaignRepository {
@@ -121,12 +120,7 @@ class CampaignRepository {
     }
 }
 
-export const getCampaignRepository = memo(
-    async () => {
-        const db = await getMongoDb();
-        return new CampaignRepository(
-            db.collection<CampaignDocument>("campaigns")
-        );
-    },
-    { key: () => "CampaignRepository" }
-);
+export const getCampaignRepository = async () => {
+    const db = await getMongoDb();
+    return new CampaignRepository(db.collection<CampaignDocument>("campaigns"));
+};
