@@ -11,7 +11,9 @@ import styles from "./index.module.css";
  * Import Lottie component dynamically to avoid loading it on the server side
  */
 const Player = dynamic(() =>
-    import("@lottiefiles/react-lottie-player").then((mod) => mod.Player)
+    import("@lottiefiles/react-lottie-player").then((mod) => ({
+        default: mod.Player,
+    }))
 );
 
 export function Lottie({ className }: { className?: string }) {

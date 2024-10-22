@@ -18,17 +18,22 @@
     "jotai": "^2.10.1",
     "ky": "^1.7.2",
     "lucide-react": "^0.453.0",
-    "next": "14.2.15",
-    "react-hook-form": "^7.53.0",
+    "next": "15.0.0",
+    "react-hook-form": "^7.53.1",
     "react-loading-skeleton": "^3.5.0",
-    "viem": "^2.21.29"
+    "viem": "^2.21.29",
+    "react-dom": "19.0.0-rc-65a56d0e-20241020"
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "react": "^18",
+    "@types/react": "npm:types-react@19.0.0-rc.1",
+    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
+    "react": "19.0.0-rc-65a56d0e-20241020",
     "elysia": "^1.1.22",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@types/react": "npm:types-react@19.0.0-rc.1",
+    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
   }
 }

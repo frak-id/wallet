@@ -1,10 +1,12 @@
 import { Team } from "@/module/product/component/Team";
 import type { Hex } from "viem";
 
-export default function ProductTeamPage({
-    params: { productId },
-}: {
-    params: { productId: Hex };
+export default async function ProductTeamPage(props: {
+    params: Promise<{ productId: Hex }>;
 }) {
+    const params = await props.params;
+
+    const { productId } = params;
+
     return <Team productId={productId} />;
 }

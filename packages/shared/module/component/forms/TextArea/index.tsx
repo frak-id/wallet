@@ -2,15 +2,15 @@ import { mergeElement } from "@module/utils/mergeElement";
 import { cva, cx } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 import { type TextareaHTMLAttributes, forwardRef, isValidElement } from "react";
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import styles from "./index.module.css";
 
 export interface TextAreaProps
     extends TextareaHTMLAttributes<HTMLTextAreaElement>,
         VariantProps<typeof InputVariants> {
     classNameWrapper?: string;
-    leftSection?: string | ReactNode;
-    rightSection?: string | ReactNode;
+    leftSection?: string | ReactElement<{ className?: string }>;
+    rightSection?: string | ReactElement<{ className?: string }>;
 }
 
 export const InputVariants = cva(styles.inputWrapper, {

@@ -22,7 +22,10 @@ import { type Hex, isAddressEqual, toHex, zeroAddress } from "viem";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<ManageTeamTableData>>(
-    () => import("@/module/common/component/Table").then((mod) => mod.Table),
+    () =>
+        import("@/module/common/component/Table").then((mod) => ({
+            default: mod.Table,
+        })),
     {
         loading: () => <Skeleton />,
     }

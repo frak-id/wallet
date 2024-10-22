@@ -31,7 +31,10 @@ import { useMemo, useState } from "react";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<CampaignWithState>>(
-    () => import("@/module/common/component/Table").then((mod) => mod.Table),
+    () =>
+        import("@/module/common/component/Table").then((mod) => ({
+            default: mod.Table,
+        })),
     {
         loading: () => <Skeleton />,
     }

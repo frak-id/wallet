@@ -18,7 +18,7 @@ import { readContract } from "viem/actions";
 export async function getFullSessionStatus() {
     const { data: session } = await backendApi.auth.wallet.session.get({
         headers: {
-            cookie: headers().get("cookie") ?? undefined,
+            cookie: (await headers()).get("cookie") ?? undefined,
         },
     });
     if (!session) {
