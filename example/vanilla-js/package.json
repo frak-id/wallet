@@ -1,0 +1,21 @@
+{
+  "name": "@frak-labs-example/vanilla-js",
+  "version": "0.0.1",
+  "description": "Demo of a website using the Frak SDK with vanilla JS",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@frak-labs/nexus-sdk": "workspace:*",
+    "typescript": "^5",
+    "vite": "^5.4.9"
+  }
+}
