@@ -24,8 +24,6 @@ export const sessionContext = new Elysia({
             name: "walletJwt",
             secret: Config.JWT_SECRET,
             schema: WalletTokenDto,
-            // One week
-            expirationDelayInSecond: 60 * 60 * 24 * 7,
             // Default jwt payload
             iss: "frak.id",
         })
@@ -55,8 +53,6 @@ export const sessionContext = new Elysia({
                 siweMsg: t.String(),
                 siweSignature: t.Hex(),
             }),
-            // One week
-            expirationDelayInSecond: 60 * 60 * 24 * 7,
             // Default jwt payload
             iss: "frak.id",
         })
@@ -102,12 +98,6 @@ export const sessionContext = new Elysia({
                                     "Invalid business JWT"
                                 );
                             }
-                            if (auth.exp && auth.exp < Date.now() / 1000) {
-                                return error(
-                                    "Unauthorized",
-                                    "Expired business JWT"
-                                );
-                            }
                         }
                     );
                 // Wallet SDK case
@@ -132,12 +122,6 @@ export const sessionContext = new Elysia({
                                     "Invalid wallet SDK JWT"
                                 );
                             }
-                            if (auth.exp && auth.exp < Date.now() / 1000) {
-                                return error(
-                                    "Unauthorized",
-                                    "Expired wallet SDK JWT"
-                                );
-                            }
                         }
                     );
                 // True or "wallet" case
@@ -156,12 +140,6 @@ export const sessionContext = new Elysia({
                             );
                             if (!auth) {
                                 return error(401, "Invalid wallet JWT");
-                            }
-                            if (auth.exp && auth.exp < Date.now() / 1000) {
-                                return error(
-                                    "Unauthorized",
-                                    "Expired wallet JWT"
-                                );
                             }
                         }
                     );
