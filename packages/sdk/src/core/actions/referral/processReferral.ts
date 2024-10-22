@@ -1,4 +1,4 @@
-import { type Hex, isAddressEqual } from "viem";
+import { type Address, type Hex, isAddressEqual } from "viem";
 import { displayModal, sendInteraction } from "../";
 import type { FrakContext } from "../../../react/types/FrakContext";
 import { ReferralInteractionEncoder } from "../../interactions";
@@ -21,6 +21,11 @@ type ReferralState =
     | "error"
     | "no-referrer"
     | "self-referral";
+
+export type ProcessReferralOptions = {
+    // If we want to always append the url with the frk context or not
+    alwaysAppendUrl?: boolean;
+};
 
 /**
  * Automatically submit a referral interaction when detected
@@ -45,79 +50,101 @@ export async function processReferral(
         frakContext?: Partial<FrakContext> | null;
         modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
         productId?: Hex;
-        options?: {
-            // If we want to always append the url with the frk coontext or not
-            alwaysAppendUrl?: boolean;
-        };
+        options?: ProcessReferralOptions;
     }
 ) {
-    try {
-        // Get the current wallet, without auto displaying the modal
-        let currentWallet = walletStatus?.wallet;
-        if (!frakContext?.r) {
-            if (currentWallet && options?.alwaysAppendUrl) {
-                FrakContextManager.replaceUrl({
-                    url: window.location?.href,
-                    context: { r: currentWallet },
-                });
-            }
-            return "no-referrer";
+    // Helper to fetch a fresh wallet status
+    let walletRequest = false;
+    async function getFreshWalletStatus() {
+        if (walletRequest) {
+            return;
         }
+        walletRequest = true;
+        return ensureWalletConnected(client, {
+            modalConfig,
+            walletStatus,
+        });
+    }
 
-        // We have a referral, so if we don't have a current wallet, display the modal
-        let walletRequested = false;
-        if (!currentWallet) {
-            currentWallet = await ensureWalletConnected(client, {
-                modalConfig,
-                walletStatus,
-            });
-            walletRequested = true;
-        }
-
-        if (currentWallet && isAddressEqual(frakContext.r, currentWallet)) {
-            return "self-referral";
-        }
-
-        // If the current wallet doesn't have an interaction session, display the modal
-        if (!(walletStatus?.interactionSession || walletRequested)) {
-            currentWallet = await ensureWalletConnected(client, {
-                modalConfig,
-                walletStatus,
-            });
-        }
-
-        // If we got one now, create a promise that will update the context
-        if (currentWallet && options?.alwaysAppendUrl) {
-            FrakContextManager.replaceUrl({
-                url: window.location?.href,
-                context: { r: currentWallet },
-            });
-        }
-
-        // Push the referred interaction
+    // Helper function to push the interaction
+    async function pushReferralInteraction(referrer: Address) {
         const interaction = ReferralInteractionEncoder.referred({
-            referrer: frakContext.r,
+            referrer,
         });
         await sendInteraction(client, { productId, interaction });
+    }
 
-        // If we don't want to append the url, remove the context
-        if (!options?.alwaysAppendUrl) {
-            FrakContextManager.replaceUrl({
-                url: window.location?.href,
-                context: null,
-            });
-        }
+    try {
+        // Do the core processing logic
+        const { status, currentWallet } = await processReferralLogic({
+            initialWalletStatus: walletStatus,
+            getFreshWalletStatus,
+            pushReferralInteraction,
+            frakContext,
+        });
 
-        return "success";
+        // Update the current url with the right data
+        FrakContextManager.replaceUrl({
+            url: window.location?.href,
+            context: options?.alwaysAppendUrl ? { r: currentWallet } : null,
+        });
+
+        return status;
     } catch (error) {
-        if (!options?.alwaysAppendUrl) {
-            FrakContextManager.replaceUrl({
-                url: window.location?.href,
-                context: null,
-            });
-        }
+        console.log("Error processing referral", { error });
+        // Update the current url with the right data
+        FrakContextManager.replaceUrl({
+            url: window.location?.href,
+            context: options?.alwaysAppendUrl
+                ? { r: walletStatus?.wallet }
+                : null,
+        });
+
+        // And map the error a state
         return mapErrorToState(error);
     }
+}
+
+/**
+ * Automatically submit a referral interaction when detected
+ *   -> And automatically set the referral context in the url
+ * @param walletStatus
+ * @param frakContext
+ */
+export async function processReferralLogic({
+    initialWalletStatus,
+    getFreshWalletStatus,
+    pushReferralInteraction,
+    frakContext,
+}: {
+    initialWalletStatus?: WalletStatusReturnType;
+    getFreshWalletStatus: () => Promise<Address | undefined>;
+    pushReferralInteraction: (referrer: Address) => Promise<void>;
+    frakContext?: Partial<FrakContext> | null;
+}) {
+    // Get the current wallet, without auto displaying the modal
+    let currentWallet = initialWalletStatus?.wallet;
+    if (!frakContext?.r) {
+        return { status: "no-referrer", currentWallet } as const;
+    }
+
+    // We have a referral, so if we don't have a current wallet, display the modal
+    if (!currentWallet) {
+        currentWallet = await getFreshWalletStatus();
+    }
+
+    if (currentWallet && isAddressEqual(frakContext.r, currentWallet)) {
+        return { status: "self-referral", currentWallet } as const;
+    }
+
+    // If the current wallet doesn't have an interaction session, display the modal
+    if (!initialWalletStatus?.interactionSession) {
+        currentWallet = await getFreshWalletStatus();
+    }
+
+    // Push the referred interaction
+    await pushReferralInteraction(frakContext.r);
+    return { status: "success", currentWallet } as const;
 }
 
 /**
