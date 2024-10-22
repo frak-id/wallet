@@ -1,5 +1,12 @@
 # @frak-labs/backend-elysia
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [[`548faf9`](https://github.com/frak-id/wallet/commit/548faf907fbe376160c57a882174fb2794bf15cb)]:
+  - @frak-labs/nexus-sdk@0.0.21
+
 ## 0.0.7
 
 ### Patch Changes

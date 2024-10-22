@@ -1,5 +1,13 @@
 # @frak-labs-example/news-interactions
 
+## 0.1.19
+
+### Patch Changes
+
+- Updated dependencies [[`548faf9`](https://github.com/frak-id/wallet/commit/548faf907fbe376160c57a882174fb2794bf15cb)]:
+  - @frak-labs/nexus-sdk@0.0.21
+  - @frak-labs/shared@0.0.0
+
 ## 0.1.18
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.21
+
+### Patch Changes
+
+- [`548faf9`](https://github.com/frak-id/wallet/commit/548faf907fbe376160c57a882174fb2794bf15cb) Thanks [@KONFeature](https://github.com/KONFeature)! - Don't always append the current URL with the FrakContext
+
 ## 0.0.20
 
 ### Patch Changes
