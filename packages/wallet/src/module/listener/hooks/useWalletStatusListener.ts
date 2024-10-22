@@ -35,6 +35,9 @@ export function useWalletStatusListener(): OnListenToWallet {
     // Read from the jotai store
     const bothSessions = useAtomValue(bothSessionsAtom);
     const sessionsRef = useRef(undefined as typeof bothSessions | undefined);
+    const unsubscribeSessionRef = useRef<(() => void) | null>(null);
+    const unsubscribeSdkRef = useRef<(() => void) | null>(null);
+
     useEffect(() => {
         sessionsRef.current = bothSessions;
     }, [bothSessions]);
@@ -128,6 +131,14 @@ export function useWalletStatusListener(): OnListenToWallet {
         []
     );
 
+    // Clean up on unmount
+    useEffect(() => {
+        return () => {
+            unsubscribeSessionRef.current?.();
+            unsubscribeSdkRef.current?.();
+        };
+    }, []);
+
     /**
      * The function that will be called when a wallet status is requested
      * @param _
@@ -135,18 +146,22 @@ export function useWalletStatusListener(): OnListenToWallet {
      */
     return useCallback(
         async (_, context, emitter) => {
+            // Clean up previous subscription if it exists
+            unsubscribeSessionRef.current?.();
+            unsubscribeSdkRef.current?.();
+
             let abortController = new AbortController();
 
             // Emit the first status
             await emitCurrentStatus(context, emitter, abortController.signal);
 
             // Listen to jotai store update
-            jotaiStore.sub(sessionAtom, () => {
+            unsubscribeSessionRef.current = jotaiStore.sub(sessionAtom, () => {
                 abortController.abort();
                 abortController = new AbortController();
                 emitCurrentStatus(context, emitter, abortController.signal);
             });
-            jotaiStore.sub(sdkSessionAtom, () => {
+            unsubscribeSdkRef.current = jotaiStore.sub(sdkSessionAtom, () => {
                 abortController.abort();
                 abortController = new AbortController();
                 emitCurrentStatus(context, emitter, abortController.signal);
