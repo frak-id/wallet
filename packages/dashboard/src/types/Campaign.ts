@@ -2,7 +2,12 @@ import type { InteractionTypesKey } from "@frak-labs/nexus-sdk/core";
 import type { TCountryCode } from "countries-list";
 import type { Address, Hex } from "viem";
 
-type Goal = "awareness" | "traffic" | "registration" | "sales" | "retention";
+export type Goal =
+    | "awareness"
+    | "traffic"
+    | "registration"
+    | "sales"
+    | "retention";
 type SpecialCategory = "credit" | "jobs" | "housing" | "social";
 export type Budget = "daily" | "weekly" | "monthly" | "global";
 

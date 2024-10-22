@@ -39,20 +39,10 @@ type ItemGoals = {
         description: string;
         badges: string[];
     };
+    disabled?: boolean;
 };
 
 const itemsGoals: ItemGoals[] = [
-    {
-        id: "awareness",
-        label: "Awareness",
-        icon: <Volume2 />,
-        information: {
-            title: "Awareness",
-            description:
-                "Show your ads to the people most likely to remember them.",
-            badges: ["Coverage", "Brand awareness", "Video views"],
-        },
-    },
     {
         id: "traffic",
         label: "Traffic",
@@ -87,6 +77,18 @@ const itemsGoals: ItemGoals[] = [
         },
     },
     {
+        id: "awareness",
+        label: "Awareness",
+        icon: <Volume2 />,
+        information: {
+            title: "Awareness",
+            description:
+                "Show your ads to the people most likely to remember them.",
+            badges: ["Coverage", "Brand awareness", "Video views"],
+        },
+        disabled: true,
+    },
+    {
         id: "retention",
         label: "Retention",
         icon: <RotateCw />,
@@ -96,6 +98,7 @@ const itemsGoals: ItemGoals[] = [
                 "Make your users want to come back to your website or app. Stand out from the crowd.",
             badges: ["Retention", "Loyalty", "Membership"],
         },
+        disabled: true,
     },
 ] as const;
 
@@ -192,12 +195,17 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                                                     <FormControl>
                                                         <RadioGroupItem
                                                             value={item.id}
+                                                            disabled={
+                                                                item.disabled
+                                                            }
                                                         />
                                                     </FormControl>
                                                     <FormLabel
                                                         variant={"radio"}
                                                         className={
-                                                            styles.formGoals__label
+                                                            item.disabled
+                                                                ? styles.formGoals__label_disabled
+                                                                : styles.formGoals__label
                                                         }
                                                     >
                                                         {item.icon}
