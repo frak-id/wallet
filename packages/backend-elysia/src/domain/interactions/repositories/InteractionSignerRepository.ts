@@ -184,7 +184,6 @@ export class InteractionSignerRepository {
                 {
                     original: executeNoBatchData.length,
                     compressed: compressedExecute.length,
-                    data,
                     gas,
                 },
                 "Data sizes for interactions execution"

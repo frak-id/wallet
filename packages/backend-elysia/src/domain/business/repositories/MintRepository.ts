@@ -3,6 +3,7 @@ import type { AdminWalletsRepository } from "@backend-common/repositories";
 import {
     addresses,
     isRunningInProd,
+    productInteractionManagerAbi,
     productRegistryAbi,
     stringToBytes32,
 } from "@frak-labs/app-essentials";
@@ -13,6 +14,7 @@ import {
 } from "@frak-labs/app-essentials/blockchain";
 import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
 import { productTypesMask } from "@frak-labs/nexus-sdk/core";
+import type { Mutex } from "async-mutex";
 import {
     type Address,
     type Chain,
@@ -106,7 +108,9 @@ export class MintRepository {
         // Prepare the mint tx and send it
         const lock = this.adminRepository.getMutexForAccount({ key: "minter" });
         const mintTxHash = await lock.runExclusive(async () => {
-            const simulatedRequest = await simulateContract(this.client, {
+            const nonce = await getTransactionCount(this.client, minter);
+            // Perform the mint transaction
+            const mintSimulation = await simulateContract(this.client, {
                 account: minter,
                 address: addresses.productRegistry,
                 abi: productRegistryAbi,
@@ -117,11 +121,12 @@ export class MintRepository {
                     domain,
                     owner,
                 ],
+                nonce,
             });
-            if (simulatedRequest.result !== precomputedProductId) {
+            if (mintSimulation.result !== precomputedProductId) {
                 throw new Error("Invalid product id");
             }
-            return await writeContract(this.client, simulatedRequest.request);
+            return await writeContract(this.client, mintSimulation.request);
         });
 
         // Wait for the mint to be done before proceeding to the transfer
@@ -130,16 +135,25 @@ export class MintRepository {
             confirmations: 1,
         });
 
+        // Deploy the matching interaction contract
+        await this.deployInteractionContract({
+            productId: precomputedProductId,
+            minter,
+            lock,
+        });
+
         // Then deploy a mocked usd bank for this product
         if (isRunningInProd) {
             await this.deployUsdcBank({
                 productId: precomputedProductId,
                 minter,
+                lock,
             });
         } else {
             await this.deployMockedUsdBank({
                 productId: precomputedProductId,
                 minter,
+                lock,
             });
         }
 
@@ -156,6 +170,45 @@ export class MintRepository {
         return types.reduce((acc, type) => acc | productTypesMask[type], 0n);
     }
 
+    private async deployInteractionContract({
+        productId,
+        minter,
+        lock,
+    }: { productId: bigint; minter: LocalAccount; lock: Mutex }) {
+        try {
+            const hash = await lock.runExclusive(async () => {
+                // Prepare the deployment data
+                const { request, result } = await simulateContract(
+                    this.client,
+                    {
+                        account: minter,
+                        address: addresses.productInteractionManager,
+                        abi: productInteractionManagerAbi,
+                        functionName: "deployInteractionContract",
+                        args: [productId],
+                    }
+                );
+                if (!result || isAddressEqual(result, zeroAddress)) {
+                    return;
+                }
+
+                // Trigger the deployment
+                return await writeContract(this.client, request);
+            });
+            if (!hash) return;
+            // Ensure it's included before proceeding
+            await waitForTransactionReceipt(this.client, {
+                hash,
+                confirmations: 1,
+            });
+        } catch (e) {
+            log.warn(
+                { productId, error: e },
+                "Failed to deploy the interaction contract"
+            );
+        }
+    }
+
     /**
      * Automatically deploy a mocked usd bank for the given product
      * @param productId
@@ -165,8 +218,8 @@ export class MintRepository {
     private async deployMockedUsdBank({
         productId,
         minter,
-    }: { productId: bigint; minter: LocalAccount }) {
-        const lock = this.adminRepository.getMutexForAccount({ key: "minter" });
+        lock,
+    }: { productId: bigint; minter: LocalAccount; lock: Mutex }) {
         try {
             await lock.runExclusive(async () => {
                 // Get the current nonce
@@ -218,8 +271,8 @@ export class MintRepository {
     private async deployUsdcBank({
         productId,
         minter,
-    }: { productId: bigint; minter: LocalAccount }) {
-        const lock = this.adminRepository.getMutexForAccount({ key: "minter" });
+        lock,
+    }: { productId: bigint; minter: LocalAccount; lock: Mutex }) {
         try {
             await lock.runExclusive(async () => {
                 // Prepare the deployment data
