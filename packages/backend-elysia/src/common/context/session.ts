@@ -92,7 +92,12 @@ export const sessionContext = new Elysia({
                             const auth = await businessJwt.verify(
                                 businessAuth.value
                             );
+                            // Throw an error and remove the token
                             if (!auth) {
+                                businessAuth.update({
+                                    value: "",
+                                    maxAge: 0,
+                                });
                                 return error(
                                     "Unauthorized",
                                     "Invalid business JWT"
@@ -138,7 +143,12 @@ export const sessionContext = new Elysia({
                             const auth = await walletJwt.verify(
                                 walletAuth.value
                             );
+                            // Throw an error and remove the token
                             if (!auth) {
+                                walletAuth.update({
+                                    value: "",
+                                    maxAge: 0,
+                                });
                                 return error(401, "Invalid wallet JWT");
                             }
                         }
