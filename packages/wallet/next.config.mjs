@@ -26,6 +26,9 @@ const nextConfig = {
         removeConsole: Config.STAGE === "prod",
     },
     output: "standalone",
+    experimental: {
+        reactCompiler: true,
+    },
 };
 
 export default nextConfig;
