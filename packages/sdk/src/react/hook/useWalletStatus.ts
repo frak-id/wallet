@@ -30,6 +30,7 @@ export function useWalletStatus() {
      */
     return useQuery<WalletStatusReturnType>({
         gcTime: 0,
+        staleTime: 0,
         queryKey: ["nexus-sdk", "wallet-status-listener"],
         queryFn: async () => {
             if (!client) {

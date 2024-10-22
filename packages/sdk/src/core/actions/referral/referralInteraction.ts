@@ -6,16 +6,21 @@ import type {
     NexusClient,
 } from "../../types";
 import { FrakContextManager } from "../../utils";
-import { processReferral } from "./processReferral";
+import {
+    type ProcessReferralOptions,
+    processReferral,
+} from "./processReferral";
 
 export async function referralInteraction(
     client: NexusClient,
     {
         productId,
         modalConfig,
+        options,
     }: {
         productId?: Hex;
         modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
+        options?: ProcessReferralOptions;
     } = {}
 ) {
     // Get the current frak context
@@ -32,6 +37,7 @@ export async function referralInteraction(
             frakContext,
             modalConfig,
             productId,
+            options,
         });
     } catch (error) {
         return error;

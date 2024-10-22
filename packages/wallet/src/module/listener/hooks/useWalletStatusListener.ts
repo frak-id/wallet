@@ -48,8 +48,15 @@ export function useWalletStatusListener(): OnListenToWallet {
             context: IFrameResolvingContext,
             emitter: IFrameResponseEmitter<{
                 method: "frak_listenToWalletStatus";
-            }>
+            }>,
+            signal?: AbortSignal
         ) => {
+            // Check if the operation has been aborted
+            if (signal?.aborted) {
+                console.info("emitCurrentStatus operation aborted");
+                return;
+            }
+
             // If ref not loaded yet, early exit
             const current = sessionsRef.current;
             if (!current) {
@@ -91,6 +98,12 @@ export function useWalletStatusListener(): OnListenToWallet {
                     : undefined
             );
 
+            // Check again if aborted before emitting
+            if (signal?.aborted) {
+                console.info("emitCurrentStatus operation aborted");
+                return;
+            }
+
             // Emit the event
             await emitter({
                 result: {
@@ -100,6 +113,12 @@ export function useWalletStatusListener(): OnListenToWallet {
                     interactionSession,
                 },
             });
+
+            // Check again if aborted before pushing backup data
+            if (signal?.aborted) {
+                console.info("emitCurrentStatus operation aborted");
+                return;
+            }
 
             // And push some backup data if we got ones
             await pushBackupData({
@@ -116,15 +135,21 @@ export function useWalletStatusListener(): OnListenToWallet {
      */
     return useCallback(
         async (_, context, emitter) => {
+            let abortController = new AbortController();
+
             // Emit the first status
-            await emitCurrentStatus(context, emitter);
+            await emitCurrentStatus(context, emitter, abortController.signal);
 
             // Listen to jotai store update
             jotaiStore.sub(sessionAtom, () => {
-                emitCurrentStatus(context, emitter);
+                abortController.abort();
+                abortController = new AbortController();
+                emitCurrentStatus(context, emitter, abortController.signal);
             });
             jotaiStore.sub(sdkSessionAtom, () => {
-                emitCurrentStatus(context, emitter);
+                abortController.abort();
+                abortController = new AbortController();
+                emitCurrentStatus(context, emitter, abortController.signal);
             });
         },
         [emitCurrentStatus]

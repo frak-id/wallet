@@ -41,6 +41,9 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                 isDismissible: true,
             },
         },
+        options: {
+            alwaysAppendUrl: true,
+        },
     });
 
     const blockchainArticleId = useMemo(
