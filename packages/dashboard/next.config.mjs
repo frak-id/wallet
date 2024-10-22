@@ -42,6 +42,9 @@ const nextConfig = {
         removeConsole: isDistant,
     },
     output: "standalone",
+    experimental: {
+        reactCompiler: true,
+    },
 };
 
 export default nextConfig;
