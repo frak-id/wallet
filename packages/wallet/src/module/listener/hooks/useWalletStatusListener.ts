@@ -92,9 +92,9 @@ export function useWalletStatusListener(): OnListenToWallet {
             }).then((interactionSession) =>
                 interactionSession
                     ? {
-                        startTimestamp: interactionSession.sessionStart,
-                        endTimestamp: interactionSession.sessionEnd,
-                    }
+                          startTimestamp: interactionSession.sessionStart,
+                          endTimestamp: interactionSession.sessionEnd,
+                      }
                     : undefined
             );
 

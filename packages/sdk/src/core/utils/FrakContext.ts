@@ -90,11 +90,11 @@ function update({
         : context;
 
     // If we don't have a referrer, early exit
-    if (!mergedContext.r) return;
+    if (!mergedContext.r) return null;
 
     // Compress it
     const compressedContext = compress(mergedContext);
-    if (!compressedContext) return;
+    if (!compressedContext) return null;
 
     // Build the new url and return it
     const urlObj = new URL(url);
@@ -117,21 +117,30 @@ function remove(url: string) {
  * @param context
  */
 function replaceUrl({
-    url,
+    url: baseUrl,
     context,
-}: { url?: string; context: Partial<FrakContext> }) {
+}: { url?: string; context: Partial<FrakContext> | null }) {
     // If no window here early exit
     if (!window.location?.href || typeof window === "undefined") {
         console.error("No window found, can't update context");
         return;
     }
 
-    // Get our new url with the frak context
-    const newUrl = update({
-        url,
-        context,
-    });
+    // If no url, try to use the current one
+    const url = baseUrl ?? window.location.href;
 
+    // Get our new url with the frak context
+    let newUrl: string | null;
+    if (context !== null) {
+        newUrl = update({
+            url,
+            context,
+        });
+    } else {
+        newUrl = remove(url);
+    }
+
+    // If no new url, early exit
     if (!newUrl) return;
 
     // Update the url

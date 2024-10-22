@@ -25,10 +25,12 @@ type ReferralState =
 /**
  * Automatically submit a referral interaction when detected
  *   -> And automatically set the referral context in the url
+ * @param client
  * @param walletStatus
  * @param frakContext
  * @param modalConfig
  * @param productId
+ * @param options
  */
 export async function processReferral(
     client: NexusClient,
@@ -37,18 +39,23 @@ export async function processReferral(
         frakContext,
         modalConfig,
         productId,
+        options,
     }: {
         walletStatus?: WalletStatusReturnType;
         frakContext?: Partial<FrakContext> | null;
         modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
         productId?: Hex;
+        options?: {
+            // If we want to always append the url with the frk coontext or not
+            alwaysAppendUrl?: boolean;
+        };
     }
 ) {
     try {
         // Get the current wallet, without auto displaying the modal
         let currentWallet = walletStatus?.wallet;
         if (!frakContext?.r) {
-            if (currentWallet) {
+            if (currentWallet && options?.alwaysAppendUrl) {
                 FrakContextManager.replaceUrl({
                     url: window.location?.href,
                     context: { r: currentWallet },
@@ -80,21 +87,35 @@ export async function processReferral(
         }
 
         // If we got one now, create a promise that will update the context
-        if (currentWallet) {
+        if (currentWallet && options?.alwaysAppendUrl) {
             FrakContextManager.replaceUrl({
                 url: window.location?.href,
                 context: { r: currentWallet },
             });
         }
 
+        // Push the referred interaction
         const interaction = ReferralInteractionEncoder.referred({
             referrer: frakContext.r,
         });
-
         await sendInteraction(client, { productId, interaction });
+
+        // If we don't want to append the url, remove the context
+        if (!options?.alwaysAppendUrl) {
+            FrakContextManager.replaceUrl({
+                url: window.location?.href,
+                context: null,
+            });
+        }
 
         return "success";
     } catch (error) {
+        if (!options?.alwaysAppendUrl) {
+            FrakContextManager.replaceUrl({
+                url: window.location?.href,
+                context: null,
+            });
+        }
         return mapErrorToState(error);
     }
 }
