@@ -13,12 +13,12 @@ export const useDeleteCampaign = () => {
             let result = await deleteCampaign({ campaignId });
 
             // If it's requiring an on-chain deletion, execute the transaction
-            if (result.key !== "success") {
+            if (result.key === "require-onchain-delete") {
                 const { hash } = await sendTxAsync({
                     metadata: {
                         context: `Deleting the campaign ${campaignId}`,
                     },
-                    tx: [...result.calls],
+                    tx: result.tx,
                 });
                 console.log("Submitted campaign deletion transaction", {
                     hash,
@@ -26,11 +26,10 @@ export const useDeleteCampaign = () => {
                 // Refresh the result
                 result = await deleteCampaign({ campaignId });
             }
+            console.log(result);
 
             if (result.key !== "success") {
-                console.error(
-                    "Unable to delete the campaign successfully, aborting"
-                );
+                console.error("Unable to delete the campaign, aborting");
                 throw new Error("Campaign deletion failed");
             }
 

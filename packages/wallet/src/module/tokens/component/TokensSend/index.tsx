@@ -11,7 +11,7 @@ import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import type { BalanceItem } from "@/types/Token";
-import { ButtonRipple } from "@module/component/ButtonRipple";
+import { Button } from "@module/component/Button";
 import { Input } from "@module/component/forms/Input";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -187,14 +187,14 @@ export function TokensSend() {
                                 )}
                             </p>
                             <p>
-                                <ButtonRipple
+                                <Button
                                     type={"submit"}
-                                    size={"small"}
+                                    width={"full"}
                                     disabled={isPending}
                                     isLoading={isPending}
                                 >
                                     {t("common.send")}
-                                </ButtonRipple>
+                                </Button>
                             </p>
                             <p className={styles.tokensSend__bottom}>
                                 {isSuccess && hash && (

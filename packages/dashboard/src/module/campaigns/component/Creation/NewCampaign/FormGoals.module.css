@@ -2,6 +2,14 @@
     display: flex !important;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
+}
+
+.formGoals__label_disabled {
+    display: flex !important;
+    align-items: center;
+    color: var(--frak-color-grayText);
+    gap: 8px;
 }
 
 .formGoals__badges {

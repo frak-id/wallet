@@ -9,7 +9,10 @@ export function InteractionHistory() {
 
     if (!history) return <Skeleton count={3} height={110} />;
 
-    return history?.map((historyItem) => (
-        <Interaction key={historyItem.timestamp} article={historyItem} />
+    return history?.map((interactionItem, index) => (
+        <Interaction
+            key={`${interactionItem.timestamp}-${interactionItem.type}-${index}`}
+            article={interactionItem}
+        />
     ));
 }

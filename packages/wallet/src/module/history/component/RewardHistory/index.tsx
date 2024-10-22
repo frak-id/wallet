@@ -9,10 +9,10 @@ export function RewardHistory() {
 
     if (!history) return <Skeleton count={3} height={110} />;
 
-    return history?.map((historyItem) => (
+    return history?.map((rewardItem, index) => (
         <Reward
-            key={`${historyItem.timestamp} ${historyItem.amount}`}
-            reward={historyItem}
+            key={`${rewardItem.timestamp}-${rewardItem.type}-${index}`}
+            reward={rewardItem}
         />
     ));
 }

@@ -1,6 +1,6 @@
 import { FormFromTo } from "@/module/campaigns/component/Creation/MetricsCampaign/FormFromTo";
 import { FormDescription, FormItem } from "@/module/forms/Form";
-import { interactionTypesLabel } from "@/module/product/utils/interactionTypes";
+import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
 import type { Campaign } from "@/types/Campaign";
 import type { InteractionTypesKey } from "@frak-labs/nexus-sdk/core";
 import type { UseFormReturn } from "react-hook-form";
@@ -22,9 +22,8 @@ export function FormPriceRange({
                         key={trigger}
                         id={trigger}
                         label={
-                            interactionTypesLabel[
-                                trigger as InteractionTypesKey
-                            ].name
+                            interactionTypesInfo[trigger as InteractionTypesKey]
+                                .name
                         }
                         form={form}
                         from={{

@@ -3,7 +3,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { backendApi } from "@frak-labs/shared/context/server";
-import { ButtonRipple } from "@module/component/ButtonRipple";
+import { Button } from "@module/component/Button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -97,9 +97,10 @@ export function PendingReferral() {
                                 pendingReward?.eurClaimable?.toFixed(2),
                         })}
                     </p>
-                    <ButtonRipple
+                    <Button
                         className={styles.pendingReferral__button}
                         size={"small"}
+                        width={"full"}
                         isLoading={isPending}
                         disabled={isPending || isSuccess}
                         onClick={async () => {
@@ -107,7 +108,7 @@ export function PendingReferral() {
                         }}
                     >
                         {t("common.claim")}
-                    </ButtonRipple>
+                    </Button>
                 </>
             )}
         </Panel>

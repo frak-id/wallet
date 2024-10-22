@@ -97,8 +97,8 @@ export async function getCreationData(campaign: Campaign) {
     }
 
     // Rebuild the triggers
-    const triggers = Object.entries(campaign.triggers).map(
-        ([interactionTypeKey, trigger]) => {
+    const triggers = Object.entries(campaign.triggers)
+        .map(([interactionTypeKey, trigger]) => {
             // The initial reward is just the avg of from and to for now
             const initialReward = Math.floor((trigger.from + trigger.to) / 2);
 
@@ -120,7 +120,7 @@ export async function getCreationData(campaign: Campaign) {
             // Same wise for the deperdition level
             const deperditionPerLevel = trigger.deperditionPerLevel
                 ? BigInt(Math.floor(trigger.deperditionPerLevel * 10_000))
-                : 8_000n; // default to 80%%
+                : 8_000n; // default to 80%
 
             return {
                 interactionType: interactionType,
@@ -131,8 +131,9 @@ export async function getCreationData(campaign: Campaign) {
                     ? BigInt(trigger.maxCountPerUser)
                     : 1n, // Max 1 per user
             };
-        }
-    );
+        })
+        // Filter out trigger with no rewards
+        .filter((trigger) => trigger.baseReward > 0n);
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [

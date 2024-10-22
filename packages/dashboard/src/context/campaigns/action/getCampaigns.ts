@@ -131,6 +131,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
 
         // Update the edit state depending on it
         mappedCampaign.actions.canEdit = onChainState?.canEdit ?? false;
+        mappedCampaign.actions.canDelete = onChainState?.canEdit ?? false;
 
         // And return it
         return {

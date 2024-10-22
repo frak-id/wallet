@@ -82,7 +82,9 @@ class CampaignRepository {
         const conditions: Filter<CampaignDocument>[] = [];
         if (addresses.length) {
             conditions.push({
-                "state.address": { $in: addresses },
+                "state.address": {
+                    $regex: new RegExp(addresses.join("|"), "i"),
+                },
             });
         }
         if (creator) {

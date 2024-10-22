@@ -115,7 +115,6 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                                     onClick={() =>
                                         setupInteractionContract({
                                             productId,
-                                            directAllowValidator: true,
                                             salt: generatePrivateKey(),
                                         })
                                     }

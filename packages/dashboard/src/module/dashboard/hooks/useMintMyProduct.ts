@@ -34,7 +34,6 @@ export function useMintMyProduct() {
             // Setup the interaction contract if needed
             await deployInteractionContract({
                 productId: data.productId,
-                directAllowValidator: true,
             });
 
             return {
