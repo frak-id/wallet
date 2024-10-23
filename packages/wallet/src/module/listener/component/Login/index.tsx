@@ -1,3 +1,4 @@
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import {
     ssoPopupFeatures,
@@ -9,12 +10,12 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
+import { getSafeSession } from "@/module/listener/utils/localStorage";
 import { getSharedStorageAccessStatus } from "@/module/listener/utils/thirdParties";
 import type {
     LoginModalStepType,
     SsoMetadata,
 } from "@frak-labs/nexus-sdk/core";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
@@ -291,13 +292,14 @@ function useUpdateSessionStatus() {
         mutationKey: ["session", "force-refetch"],
         mutationFn: async () => {
             // If our jotai store already contain a session, we can early exit
-            if (sessionsRef.current) {
-                return sessionsRef.current;
+            const currentSession = getSafeSession();
+            if (currentSession) {
+                return currentSession;
             }
 
             // Otherwise we fetch the session
             const { data: session } =
-                await backendApi.auth.wallet.session.get();
+                await authenticatedBackendApi.auth.wallet.session.get();
             if (session) {
                 jotaiStore.set(sessionAtom, session);
             }

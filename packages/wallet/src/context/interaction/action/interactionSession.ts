@@ -6,29 +6,9 @@ import {
     getExecutionAbi,
     sendInteractionSelector,
 } from "@frak-labs/app-essentials";
-import { backendApi } from "@frak-labs/shared/context/server";
-import { headers } from "next/headers";
 import { tryit } from "radash";
 import { type Address, isAddressEqual } from "viem";
 import { readContract } from "viem/actions";
-
-/**
- * Get the full sessions
- */
-export async function getFullSessionStatus() {
-    const { data: session } = await backendApi.auth.wallet.session.get({
-        headers: {
-            cookie: headers().get("cookie") ?? undefined,
-        },
-    });
-    if (!session) {
-        return { session: null, interactionSession: null };
-    }
-    const interactionSession = await getSessionStatus({
-        wallet: session.address,
-    });
-    return { session, interactionSession };
-}
 
 /**
  * Get the current session status

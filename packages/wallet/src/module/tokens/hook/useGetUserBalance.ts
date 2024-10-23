@@ -1,5 +1,5 @@
 "use client";
-import { backendApi } from "@frak-labs/shared/context/server";
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 
@@ -12,7 +12,8 @@ export function useGetUserBalance() {
             if (!address) {
                 return null;
             }
-            const { data, error } = await backendApi.wallet.balance.get();
+            const { data, error } =
+                await authenticatedBackendApi.wallet.balance.get();
             if (error) throw error;
 
             return data;

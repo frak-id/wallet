@@ -6,8 +6,10 @@ import type {
     IFrameResponseEmitter,
 } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
-import { getFromLocalStorage } from "@/module/listener/utils/localStorage";
-import type { SdkSession, Session } from "@/types/Session";
+import {
+    getSafeSdkSession,
+    getSafeSession,
+} from "@/module/listener/utils/localStorage";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
@@ -66,14 +68,8 @@ export function useWalletStatusListener(): OnListenToWallet {
                 return;
             }
 
-            const wallet =
-                current.wallet ??
-                jotaiStore.get(sessionAtom) ??
-                getFromLocalStorage<Session>("frak_session");
-            const sdk =
-                current.sdk ??
-                jotaiStore.get(sdkSessionAtom) ??
-                getFromLocalStorage<SdkSession>("frak_sdkSession");
+            const wallet = current.wallet ?? getSafeSession();
+            const sdk = current.sdk ?? getSafeSdkSession();
 
             // If no wallet present, just return the not logged in status
             if (!wallet?.address) {

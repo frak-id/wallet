@@ -1,4 +1,4 @@
-import { pushInteraction } from "@/context/interaction/action/pushInteraction";
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
@@ -49,16 +49,20 @@ export function usePushInteraction() {
 
             // Otherwise, just set the user referred on product
             try {
-                const delegationId = await pushInteraction({
-                    wallet: userAddress,
-                    toPush: {
-                        productId,
-                        interaction,
-                        submittedSignature: signature,
-                    },
-                    sdkToken: safeSession.token,
-                });
-                if (!delegationId) {
+                const { data, error } =
+                    await authenticatedBackendApi.interactions.push.post({
+                        interactions: [
+                            {
+                                wallet: userAddress,
+                                productId,
+                                interaction,
+                                signature,
+                            },
+                        ],
+                    });
+                const delegationId = data?.[0];
+                if (error || !delegationId) {
+                    console.error("Unable to push the interactions", error);
                     return { status: "push-error" } as const;
                 }
                 return { status: "success", delegationId } as const;

@@ -5,7 +5,7 @@ import {
     pendingInteractionAtom,
 } from "@/module/wallet/atoms/pendingInteraction";
 import type { PendingInteraction } from "@/types/Interaction";
-import type { Session } from "@/types/Session";
+import type { SdkSession, Session } from "@/types/Session";
 import {
     type CompressedData,
     decompressDataAndCheckHash,
@@ -23,7 +23,7 @@ type BackupData = {
     productId: Hex;
     session?: Session;
     pendingInteractions?: PendingInteraction[];
-    sdkSession?: { token: string; expires: number };
+    sdkSession?: SdkSession;
     expireAtTimestamp: number;
 };
 
@@ -65,7 +65,7 @@ export async function restoreBackupData({
 
 // Atom to restore backup data all at once
 const restoreBackupAtom = atom(null, (_get, set, data: BackupData) => {
-    if (data.session) {
+    if (data.session?.token) {
         set(sessionAtom, data.session);
     }
     if (data.sdkSession) {

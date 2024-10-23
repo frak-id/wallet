@@ -9,6 +9,7 @@ import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
+import { getSafeSession } from "@/module/listener/utils/localStorage";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
@@ -19,16 +20,6 @@ import {
 import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
 import type { Transport } from "viem";
 import type { SmartAccount } from "viem/account-abstraction";
-
-/**
- * Get the current authenticated wallet
- */
-const getAuthenticatedWallet = () => {
-    // If on SSR, direct return
-    if (typeof window === "undefined") return undefined;
-    // Return the session atom
-    return jotaiStore.get(sessionAtom) ?? undefined;
-};
 
 /**
  * Properties
@@ -61,11 +52,11 @@ export function getSmartAccountProvider<
     let currentSmartAccountClient: ConnectorClient | undefined;
 
     // The current session
-    let currentWebAuthNWallet = getAuthenticatedWallet();
+    let currentWebAuthNWallet = getSafeSession();
 
     // Subscribe to the session atom, to refresh the wallet and emit a few stuff?
     jotaiStore.sub(sessionAtom, () => {
-        const newWallet = getAuthenticatedWallet();
+        const newWallet = getSafeSession();
         // If the session hasn't changed, do nothing
         if (
             newWallet?.authenticatorId ===
