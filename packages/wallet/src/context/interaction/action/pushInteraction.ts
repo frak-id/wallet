@@ -1,4 +1,5 @@
 "use client";
+
 import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
 import { backendApi } from "@frak-labs/shared/context/server";
 import type { Address, Hex } from "viem";

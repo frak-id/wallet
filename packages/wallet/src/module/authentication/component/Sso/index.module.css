@@ -5,6 +5,7 @@
 .sso__logo {
     margin: 0 auto 24px auto;
     display: block;
+    max-width: 70%;
 }
 
 .sso__title {

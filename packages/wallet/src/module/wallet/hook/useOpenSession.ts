@@ -1,5 +1,4 @@
-import { getSessionEnableData } from "@/context/interaction/action/interactionSession";
-import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
+import { getEnableSessionData } from "@/context/interaction/utils/getEnableDisableData";
 import { useConsumePendingInteractions } from "@/module/wallet/hook/useConsumePendingInteractions";
 import {
     type UseMutationOptions,
@@ -37,20 +36,15 @@ export function useOpenSession({
             sessionEnd.setDate(sessionEnd.getDate() + 7);
 
             // Get the session open data
-            const sessionSetupTxs = await getSessionEnableData({ sessionEnd });
-
-            // Encode all of that in a multicall
-            const txData = encodeWalletMulticall(
-                sessionSetupTxs.map((tx) => ({
-                    to: address,
-                    data: tx,
-                }))
-            );
+            const sessionSetupTx = getEnableSessionData({
+                sessionEnd,
+                wallet: address,
+            });
 
             // Send the open session calldata
             const openSessionTxHash = await sendTransactionAsync({
                 to: address,
-                data: txData,
+                data: sessionSetupTx,
             });
 
             console.log(`Open session tx hash: ${openSessionTxHash}`);

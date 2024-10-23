@@ -5,7 +5,6 @@ export default defineConfig([
     {
         // All of our entry-points
         entry: [
-            "src/index.ts",
             "src/core/index.ts",
             "src/core/actions/index.ts",
             "src/core/interactions/index.ts",

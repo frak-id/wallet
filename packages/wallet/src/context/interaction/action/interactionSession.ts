@@ -1,23 +1,15 @@
 "use server";
 import { currentViemClient } from "@/context/blockchain/provider";
-import { setExecutionAbi } from "@/context/recover/utils/abi";
 import type { InteractionSession } from "@/types/Session";
 import {
     addresses,
     getExecutionAbi,
     sendInteractionSelector,
-    sendInteractionsSelector,
 } from "@frak-labs/app-essentials";
 import { backendApi } from "@frak-labs/shared/context/server";
 import { headers } from "next/headers";
 import { tryit } from "radash";
-import {
-    type Address,
-    type Hex,
-    encodeFunctionData,
-    isAddressEqual,
-    zeroAddress,
-} from "viem";
+import { type Address, isAddressEqual } from "viem";
 import { readContract } from "viem/actions";
 
 /**
@@ -88,67 +80,4 @@ export async function getSessionStatus({
         sessionStart: sessionStart.getTime(),
         sessionEnd: sessionEnd.getTime(),
     };
-}
-
-/**
- * Get an interaction session enable data
- * @param sessionEnd
- */
-export async function getSessionEnableData({
-    sessionEnd,
-}: { sessionEnd: Date }): Promise<Hex[]> {
-    // Get allowed after (date.now / 1000) and  until
-    const start = Math.floor(Date.now() / 1000);
-    const end = Math.floor(sessionEnd.getTime() / 1000);
-
-    const enableTxForSelector = (selector: Hex) =>
-        encodeFunctionData({
-            abi: [setExecutionAbi],
-            functionName: "setExecution",
-            args: [
-                // The current selector we want to allow
-                selector,
-                // The interaction action address
-                addresses.interactionDelegatorAction,
-                // The address of the interaction session validator
-                addresses.interactionDelegatorValidator,
-                // Valid until timestamps, in seconds
-                end,
-                // Valid after timestamp, in seconds
-                start,
-                // Data used to enable our session validator
-                "0x00",
-            ],
-        });
-
-    // Return the txs data
-    return [
-        enableTxForSelector(sendInteractionSelector),
-        enableTxForSelector(sendInteractionsSelector),
-    ];
-}
-
-/**
- * Get an interaction session enable data
- */
-export async function getSessionDisableData(): Promise<Hex[]> {
-    const disableTxForSelector = (selector: Hex) =>
-        encodeFunctionData({
-            abi: [setExecutionAbi],
-            functionName: "setExecution",
-            args: [
-                selector,
-                zeroAddress,
-                addresses.interactionDelegatorValidator,
-                0,
-                0,
-                "0x00",
-            ],
-        });
-
-    // Return the txs data
-    return [
-        disableTxForSelector(sendInteractionSelector),
-        disableTxForSelector(sendInteractionsSelector),
-    ];
 }
