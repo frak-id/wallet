@@ -3,7 +3,7 @@ import type {
     WalletStatusReturnType,
 } from "@frak-labs/nexus-sdk/core";
 
-const nexusConfig = {
+const frakConfig = {
     walletUrl: "https://localhost:3000",
     metadata: {
         name: "Your App Name",
@@ -19,15 +19,15 @@ const loginModalStep = {
     },
 };
 
-function setupNexusClient(): Promise<NexusClient | null> {
+function setupFrakClient(): Promise<NexusClient | null> {
     return new Promise((resolve) => {
         window.NexusSDK.createIframe({
-            walletBaseUrl: nexusConfig.walletUrl,
+            walletBaseUrl: frakConfig.walletUrl,
         }).then((iframe) => {
             if (iframe) {
                 resolve(
                     window.NexusSDK.createIFrameNexusClient({
-                        config: nexusConfig,
+                        config: frakConfig,
                         iframe,
                     })
                 );
@@ -47,11 +47,11 @@ function modalShare() {
             link: typeof window !== "undefined" ? window.location.href : "",
         },
     } as const;
-    if (!window.NexusSetup.nexusClient) {
-        console.error("Nexus client not initialized");
+    if (!window.FrakSetup.frakClient) {
+        console.error("Frak client not initialized");
         return;
     }
-    window.NexusSDK.displayModal(window.NexusSetup.nexusClient, {
+    window.NexusSDK.displayModal(window.FrakSetup.frakClient, {
         metadata: {
             lang: "fr",
             isDismissible: true,
@@ -67,7 +67,7 @@ function modalShare() {
 }
 
 // Export the setup function and config for use in other files
-window.NexusSetup = { nexusConfig, nexusClient: null, modalShare };
+window.FrakSetup = { frakConfig, frakClient: null, modalShare };
 
 // wallet-status.js
 function displayWalletStatus() {
@@ -78,12 +78,12 @@ function displayWalletStatus() {
     }
     statusElement.textContent = "Checking wallet status...";
 
-    if (!window.NexusSetup.nexusClient) {
-        console.error("Nexus client not initialized");
+    if (!window.FrakSetup.frakClient) {
+        console.error("Frak client not initialized");
         return;
     }
     window.NexusSDK.watchWalletStatus(
-        window.NexusSetup.nexusClient,
+        window.FrakSetup.frakClient,
         (status: WalletStatusReturnType) => {
             console.log("Wallet status:", status);
 
@@ -115,9 +115,9 @@ function displayWalletStatus() {
 }
 
 async function handleLogin() {
-    const client = await setupNexusClient();
+    const client = await setupFrakClient();
     if (!client) {
-        console.error("Nexus client not initialized");
+        console.error("Frak client not initialized");
         return;
     }
 
@@ -134,11 +134,11 @@ async function handleLogin() {
     loginButton.textContent = "Logging in...";
 
     try {
-        if (!window.NexusSetup.nexusClient) {
-            console.error("Nexus client not initialized");
+        if (!window.FrakSetup.frakClient) {
+            console.error("Frak client not initialized");
             return;
         }
-        await window.NexusSDK.displayModal(window.NexusSetup.nexusClient, {
+        await window.NexusSDK.displayModal(window.FrakSetup.frakClient, {
             metadata: {
                 lang: "fr",
                 isDismissible: true,
@@ -159,16 +159,16 @@ async function handleLogin() {
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("NexusSDK", window.NexusSDK);
-    setupNexusClient().then((nexusClient) => {
-        console.log("nexusClient", nexusClient);
-        if (!nexusClient) {
-            console.error("Failed to create Nexus client");
+    setupFrakClient().then((frakClient) => {
+        console.log("frakClient", frakClient);
+        if (!frakClient) {
+            console.error("Failed to create Frak client");
             return;
         }
 
-        window.NexusSetup.nexusClient = nexusClient;
+        window.FrakSetup.frakClient = frakClient;
 
-        window.NexusSDK.referralInteraction(nexusClient, {
+        window.NexusSDK.referralInteraction(frakClient, {
             modalConfig: {
                 steps: {
                     login: loginModalStep,

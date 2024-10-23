@@ -19,9 +19,9 @@ declare global {
             referralInteraction: typeof referralInteraction;
             watchWalletStatus: typeof watchWalletStatus;
         };
-        NexusSetup: {
-            nexusConfig: NexusWalletSdkConfig;
-            nexusClient: NexusClient | null;
+        FrakSetup: {
+            frakConfig: NexusWalletSdkConfig;
+            frakClient: NexusClient | null;
             modalShare: () => void;
         };
     }
