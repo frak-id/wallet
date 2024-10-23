@@ -19,23 +19,23 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     .use(webAuthNService)
     .use(walletSdkSessionService)
     // Logout
-    .post("/logout", async ({ cookie: { walletAuth, businessAuth } }) => {
-        walletAuth.update({
-            value: "",
-            maxAge: 0,
-        });
+    .post("/logout", async ({ cookie: { businessAuth } }) => {
         businessAuth.remove();
     })
     // Decode token
     .get(
         "/session",
-        async ({ cookie: { walletAuth }, walletJwt, error }) => {
-            if (!walletAuth.value) {
+        async ({
+            headers: { "x-wallet-auth": walletAuth },
+            walletJwt,
+            error,
+        }) => {
+            if (!walletAuth) {
                 return error(404, "No wallet session found");
             }
 
             // Decode it
-            const decodedSession = await walletJwt.verify(walletAuth.value);
+            const decodedSession = await walletJwt.verify(walletAuth);
             if (!decodedSession) {
                 log.error({ decodedSession }, "Error decoding session");
                 return error(404, "Invalid wallet session");
@@ -58,7 +58,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 authenticatorResponse: rawAuthenticatorResponse,
                 expectedChallenge,
             },
-            cookie: { walletAuth },
             // Response
             error,
             // Context
@@ -88,14 +87,12 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 sub: address,
                 iat: Date.now(),
             });
-            walletAuth.update({
-                value: token,
-            });
 
             // Finally, generate a JWT token for the SDK
             const sdkJwt = await generateSdkJwt({ wallet: address });
 
             return {
+                token,
                 address,
                 authenticatorId,
                 publicKey,
@@ -125,10 +122,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 registrationResponse: rawRegistrationResponse,
                 expectedChallenge,
                 userAgent,
-                setSessionCookie,
                 previousWallet,
             },
-            cookie: { walletAuth },
             // Response
             error,
             // Context
@@ -198,20 +193,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Finally, generate a JWT token for the SDK
             const sdkJwt = await generateSdkJwt({ wallet: walletAddress });
 
-            // If we don't want to set the session cookie, return the wallet
-            if (!setSessionCookie) {
-                log.debug(
-                    { walletAddress },
-                    "Skipping session cookie registration"
-                );
-                return {
-                    address: walletAddress,
-                    authenticatorId: credential.id,
-                    publicKey,
-                    sdkJwt,
-                };
-            }
-
             // Create the token and set the cookie
             const token = await walletJwt.sign({
                 address: walletAddress,
@@ -220,11 +201,9 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 sub: walletAddress,
                 iat: Date.now(),
             });
-            walletAuth.update({
-                value: token,
-            });
 
             return {
+                token,
                 address: walletAddress,
                 authenticatorId: credential.id,
                 publicKey,

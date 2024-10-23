@@ -1,6 +1,8 @@
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 
-export type Session = WebAuthNWallet;
+export type Session = WebAuthNWallet & {
+    token: string;
+};
 
 export type InteractionSession = {
     sessionStart: number;

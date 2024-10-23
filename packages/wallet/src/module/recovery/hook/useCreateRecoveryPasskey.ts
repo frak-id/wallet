@@ -28,7 +28,6 @@ export function useCreateRecoveryPasskey() {
                     expectedChallenge: registrationOptions.challenge,
                     registrationResponse: encodedResponse,
                     previousWallet: file.initialWallet.address,
-                    setSessionCookie: false,
                 });
             if (error) {
                 throw error;

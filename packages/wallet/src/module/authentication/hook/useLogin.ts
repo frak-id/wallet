@@ -78,10 +78,11 @@ export function useLogin(
             });
 
             // Extract a few data
-            const { sdkJwt, ...session } = data;
+            const { token, sdkJwt, ...authentication } = data;
+            const session = { ...authentication, token };
 
             // Save this to the last authenticator
-            await jotaiStore.set(addLastAuthenticationAtom, session);
+            await jotaiStore.set(addLastAuthenticationAtom, authentication);
 
             // Store the session
             jotaiStore.set(sessionAtom, session);

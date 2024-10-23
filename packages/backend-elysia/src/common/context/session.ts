@@ -60,13 +60,10 @@ export const sessionContext = new Elysia({
     // Then some helpers for potential cookies / headers
     .guard({
         cookie: t.Object({
-            walletAuth: t.Optional(t.String()),
             businessAuth: t.Optional(t.String()),
         }),
     })
-    .onBeforeHandle(({ cookie: { walletAuth, businessAuth } }) => {
-        // Set default properties for walletAuth cookie
-        walletAuth.update(defaultCookiesProps);
+    .onBeforeHandle(({ cookie: { businessAuth } }) => {
         // Set default properties for businessAuth cookie
         businessAuth.update(defaultCookiesProps);
     })
@@ -133,22 +130,16 @@ export const sessionContext = new Elysia({
                 default:
                     return onBeforeHandle(
                         async ({
-                            cookie: { walletAuth },
+                            headers: { "x-wallet-auth": walletAuth },
                             error,
                             walletJwt,
                         }) => {
-                            if (!walletAuth?.value) {
+                            if (!walletAuth) {
                                 return error(401, "Missing wallet JWT");
                             }
-                            const auth = await walletJwt.verify(
-                                walletAuth.value
-                            );
+                            const auth = await walletJwt.verify(walletAuth);
                             // Throw an error and remove the token
                             if (!auth) {
-                                walletAuth.update({
-                                    value: "",
-                                    maxAge: 0,
-                                });
                                 return error(401, "Invalid wallet JWT");
                             }
                         }
@@ -163,17 +154,20 @@ export const walletSessionContext = new Elysia({
 })
     .use(sessionContext)
     .guard({
-        cookie: t.Object({
-            walletAuth: t.Optional(t.String()),
-        }),
+        headers: t.Partial(
+            t.Object({
+                "x-wallet-auth": t.String(),
+            })
+        ),
     })
-    .resolve(async ({ cookie: { walletAuth }, walletJwt }) => {
-        const value = walletAuth?.value;
-        if (!value) return {};
-        return {
-            walletSession: await walletJwt.verify(value),
-        };
-    })
+    .resolve(
+        async ({ headers: { "x-wallet-auth": walletAuth }, walletJwt }) => {
+            if (!walletAuth) return {};
+            return {
+                walletSession: await walletJwt.verify(walletAuth),
+            };
+        }
+    )
     .as("plugin");
 
 export const walletSdkSessionContext = new Elysia({
