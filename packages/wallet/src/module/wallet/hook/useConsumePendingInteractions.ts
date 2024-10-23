@@ -1,4 +1,5 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
+import { pushBackupData } from "@/context/sdk/utils/backup";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import {
     cleanPendingInteractionsAtom,
@@ -51,6 +52,7 @@ export function useConsumePendingInteractions() {
             // Clean the pending interactions
             if (data) {
                 cleanPendingInteractions();
+                await pushBackupData();
             }
 
             return {

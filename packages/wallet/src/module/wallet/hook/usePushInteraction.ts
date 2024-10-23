@@ -1,4 +1,5 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
+import { pushBackupData } from "@/context/sdk/utils/backup";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
@@ -38,6 +39,7 @@ export function usePushInteraction() {
                     signature,
                     timestamp: Date.now(),
                 });
+                await pushBackupData({ productId });
                 return { status: "pending-wallet" } as const;
             }
 

@@ -1,5 +1,6 @@
 import { restoreBackupData } from "@/context/sdk/utils/backup";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
+import { listenerContextAtom } from "@/module/listener/atoms/listenerContext";
 import {
     type ExtractedParametersFromRpc,
     type IFrameEvent,
@@ -8,6 +9,7 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/nexus-sdk/core";
+import { jotaiStore } from "@module/atoms/store";
 import { type Hex, keccak256, toHex } from "viem";
 
 /**
@@ -70,6 +72,9 @@ export function createIFrameRequestResolver(
             productId: keccak256(toHex(url.hostname)),
             origin: message.origin,
         };
+
+        // And store it
+        jotaiStore.set(listenerContextAtom, resolvingContext);
 
         // Check if that's a client lifecycle request event
         if ("clientLifecycle" in message.data) {
@@ -145,6 +150,7 @@ export function createIFrameRequestResolver(
     // Small cleanup function
     function destroy() {
         window.removeEventListener("message", onMessage);
+        jotaiStore.set(listenerContextAtom, null);
     }
 
     // Helper to tell when we are ready to process message

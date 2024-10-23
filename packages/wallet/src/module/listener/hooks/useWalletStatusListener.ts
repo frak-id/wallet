@@ -79,9 +79,7 @@ export function useWalletStatusListener(): OnListenToWallet {
                     },
                 });
                 // And push fresh backup data with no session
-                await pushBackupData({
-                    productId: context.productId,
-                });
+                await pushBackupData({ productId: context.productId });
                 return;
             }
 
@@ -120,9 +118,7 @@ export function useWalletStatusListener(): OnListenToWallet {
             }
 
             // And push some backup data if we got ones
-            await pushBackupData({
-                productId: context.productId,
-            });
+            await pushBackupData({ productId: context.productId });
         },
         []
     );
