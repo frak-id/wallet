@@ -4,12 +4,9 @@ import { currentChain } from "@/context/blockchain/provider";
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { initI18nInstance, mainI18nInstance } from "@/i18n/config";
-import { sessionAtom } from "@/module/common/atoms/session";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { ThemeListener } from "@/module/settings/atoms/theme";
-import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
-import type { InteractionSession, Session } from "@/types/Session";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -18,7 +15,6 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai/index";
-import { RESET, useHydrateAtoms } from "jotai/utils";
 import { type PropsWithChildren, useEffect, useMemo } from "react";
 import { I18nextProvider } from "react-i18next";
 import { createClient } from "viem";
@@ -56,25 +52,7 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     },
 };
 
-export function RootProvider({
-    session,
-    interactionSession,
-    children,
-}: PropsWithChildren<{
-    session: Session | null;
-    interactionSession: InteractionSession | null;
-}>) {
-    // Hydrate the session atoms
-    useHydrateAtoms(
-        [
-            [sessionAtom, session ?? RESET],
-            [interactionSessionAtom, interactionSession ?? RESET],
-        ],
-        {
-            store: jotaiStore,
-        }
-    );
-
+export function RootProvider({ children }: PropsWithChildren) {
     // Trigger the i18n instance init on mount
     useEffect(() => {
         initI18nInstance().then(() => {

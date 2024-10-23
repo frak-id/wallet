@@ -1,7 +1,9 @@
-import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import {
+    getSafeSdkSession,
+    getSafeSession,
+} from "@/module/listener/utils/localStorage";
 import { treaty } from "@elysiajs/eden";
 import type { App } from "@frak-labs/backend-elysia";
-import { jotaiStore } from "@module/atoms/store";
 
 /**
  * Treaty client with authentication tokens if present
@@ -11,10 +13,12 @@ export const authenticatedBackendApi = treaty<App>(
     {
         fetch: { credentials: "include" },
         // Auto add the authentication related header if present
-        onRequest(path, options) {
+        onRequest(_, options) {
+            // todo: check if auth related path
+
             // Get shit from our tokens
-            const token = jotaiStore.get(sessionAtom)?.token;
-            const sdkToken = jotaiStore.get(sdkSessionAtom)?.token;
+            const token = getSafeSession()?.token;
+            const sdkToken = getSafeSdkSession()?.token;
 
             // Build our new headers
             const headers = new Headers(options.headers);
@@ -24,13 +28,6 @@ export const authenticatedBackendApi = treaty<App>(
             if (sdkToken && !headers.has("x-wallet-sdk-auth")) {
                 headers.append("x-wallet-sdk-auth", sdkToken);
             }
-
-            // todo: check if auth related path
-            console.log("Headers update", {
-                path,
-                initial: options.headers,
-                final: headers,
-            });
 
             // Set them on the options and return
             options.headers = headers;

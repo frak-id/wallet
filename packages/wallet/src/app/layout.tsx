@@ -1,6 +1,5 @@
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
-import { getFullSessionStatus } from "@/context/interaction/action/interactionSession";
 import { SetPresenceCookie } from "@/module/authentication/component/SetPresenceCookie";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import type { Metadata, Viewport } from "next";
@@ -84,19 +83,11 @@ export default async function RootLayout({
 }: Readonly<{
     children: ReactNode;
 }>) {
-    // Check if a user is logged in or not
-    const { session, interactionSession } = await getFullSessionStatus();
-
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`scrollbars ${sora.className}`}>
                 <NextTopLoader showSpinner={false} />
-                <RootProvider
-                    session={session}
-                    interactionSession={interactionSession}
-                >
-                    {children}
-                </RootProvider>
+                <RootProvider>{children}</RootProvider>
                 <SetPresenceCookie />
             </body>
         </html>
