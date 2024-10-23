@@ -15,6 +15,6 @@ export async function middleware(req: NextRequest) {
      * Redirect to wallet by default
      */
     if (req.nextUrl.pathname === "/") {
-        return NextResponse.redirect(new URL("/wallet"));
+        return NextResponse.redirect(new URL("/wallet", req.url));
     }
 }

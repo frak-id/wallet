@@ -1,7 +1,7 @@
 "use client";
 
 import { sessionAtom } from "@/module/common/atoms/session";
-import { jotaiStore } from "@module/atoms/store";
+import { useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { type PropsWithChildren, useEffect } from "react";
 
@@ -16,21 +16,20 @@ export function AuthRestricted({
     requireAuthenticated,
 }: PropsWithChildren<{ requireAuthenticated: boolean }>) {
     const router = useRouter();
+    const session = useAtomValue(sessionAtom);
     useEffect(() => {
-        const token = jotaiStore.get(sessionAtom)?.token;
-
         // If require an auth but no token, redirect to registration
-        if (requireAuthenticated && !token) {
+        if (requireAuthenticated && !session?.token) {
             console.log("Redirecting to registration");
             router.replace("/register");
         }
 
         // If don't require an auth but have token, redirect to wallet
-        if (!requireAuthenticated && token) {
+        if (!requireAuthenticated && session?.token) {
             console.log("Redirecting to wallet");
             router.replace("/wallet");
         }
-    }, [router, requireAuthenticated]);
+    }, [router, requireAuthenticated, session?.token]);
 
     return children;
 }

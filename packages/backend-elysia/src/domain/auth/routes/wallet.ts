@@ -5,10 +5,7 @@ import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
-import {
-    WalletAuthResponseDto,
-    WalletTokenDto,
-} from "../models/WalletSessionDto";
+import { WalletAuthResponseDto } from "../models/WalletSessionDto";
 import { walletSdkSessionService } from "../services/WalletSdkSessionService";
 import { webAuthNService } from "../services/WebAuthNService";
 import { decodePublicKey } from "../utils/webauthnDecode";
@@ -40,12 +37,12 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 log.error({ decodedSession }, "Error decoding session");
                 return error(404, "Invalid wallet session");
             }
-            return decodedSession;
+            return { ...decodedSession, token: walletAuth };
         },
         {
             response: {
                 404: t.String(),
-                200: WalletTokenDto,
+                200: t.Omit(WalletAuthResponseDto, ["sdkJwt"]),
             },
         }
     )
