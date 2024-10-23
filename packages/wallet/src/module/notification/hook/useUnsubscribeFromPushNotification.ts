@@ -1,6 +1,6 @@
 "use client";
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
-import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 
@@ -14,7 +14,7 @@ export function useUnsubscribeFromPushNotification() {
         queryKey: ["push", "token-count"],
         queryFn: async () => {
             const result =
-                await backendApi.notifications.pushToken.hasAny.get();
+                await authenticatedBackendApi.notifications.pushToken.hasAny.get();
             return result.data ?? false;
         },
     });
@@ -36,7 +36,7 @@ export function useUnsubscribeFromPushNotification() {
             }
 
             // Remove every subscription related to this user
-            await backendApi.notifications.pushToken.delete();
+            await authenticatedBackendApi.notifications.pushToken.delete();
 
             // Refetch the push token count
             await refetch();

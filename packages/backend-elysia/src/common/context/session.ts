@@ -153,13 +153,6 @@ export const walletSessionContext = new Elysia({
     name: "Context.walletSession",
 })
     .use(sessionContext)
-    .guard({
-        headers: t.Partial(
-            t.Object({
-                "x-wallet-auth": t.String(),
-            })
-        ),
-    })
     .resolve(
         async ({ headers: { "x-wallet-auth": walletAuth }, walletJwt }) => {
             if (!walletAuth) return {};
@@ -174,13 +167,6 @@ export const walletSdkSessionContext = new Elysia({
     name: "Context.walletSdkSession",
 })
     .use(sessionContext)
-    .guard({
-        headers: t.Partial(
-            t.Object({
-                "x-wallet-sdk-auth": t.String(),
-            })
-        ),
-    })
     .resolve(
         async ({
             headers: { "x-wallet-sdk-auth": walletSdkAuth },

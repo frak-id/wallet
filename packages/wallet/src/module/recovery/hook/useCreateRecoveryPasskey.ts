@@ -1,6 +1,6 @@
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { getRegisterOptions } from "@/context/wallet/action/registerOptions";
 import type { RecoveryFileContent } from "@/types/Recovery";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 
@@ -23,7 +23,7 @@ export function useCreateRecoveryPasskey() {
                 JSON.stringify(registrationResponse)
             ).toString("base64");
             const { data: wallet, error } =
-                await backendApi.auth.wallet.register.post({
+                await authenticatedBackendApi.auth.wallet.register.post({
                     userAgent: navigator.userAgent,
                     expectedChallenge: registrationOptions.challenge,
                     registrationResponse: encodedResponse,

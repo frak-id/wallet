@@ -1,3 +1,4 @@
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import {
     ssoPopupFeatures,
@@ -14,7 +15,6 @@ import type {
     LoginModalStepType,
     SsoMetadata,
 } from "@frak-labs/nexus-sdk/core";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
@@ -297,7 +297,7 @@ function useUpdateSessionStatus() {
 
             // Otherwise we fetch the session
             const { data: session } =
-                await backendApi.auth.wallet.session.get();
+                await authenticatedBackendApi.auth.wallet.session.get();
             if (session) {
                 jotaiStore.set(sessionAtom, session);
             }

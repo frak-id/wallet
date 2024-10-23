@@ -1,12 +1,12 @@
 "use server";
 import { currentViemClient } from "@/context/blockchain/provider";
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import type { InteractionSession } from "@/types/Session";
 import {
     addresses,
     getExecutionAbi,
     sendInteractionSelector,
 } from "@frak-labs/app-essentials";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { headers } from "next/headers";
 import { tryit } from "radash";
 import { type Address, isAddressEqual } from "viem";
@@ -16,11 +16,12 @@ import { readContract } from "viem/actions";
  * Get the full sessions
  */
 export async function getFullSessionStatus() {
-    const { data: session } = await backendApi.auth.wallet.session.get({
-        headers: {
-            cookie: headers().get("cookie") ?? undefined,
-        },
-    });
+    const { data: session } =
+        await authenticatedBackendApi.auth.wallet.session.get({
+            headers: {
+                cookie: headers().get("cookie") ?? undefined,
+            },
+        });
     if (!session) {
         return { session: null, interactionSession: null };
     }

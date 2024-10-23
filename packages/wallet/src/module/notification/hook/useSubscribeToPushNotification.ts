@@ -1,7 +1,7 @@
 "use client";
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
-import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
 
@@ -51,7 +51,7 @@ export function useSubscribeToPushNotification(
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();
-            await backendApi.notifications.pushToken.put({
+            await authenticatedBackendApi.notifications.pushToken.put({
                 subscription: {
                     endpoint: jsonSubscription.endpoint ?? "no-endpoint",
                     keys: {

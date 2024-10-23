@@ -1,8 +1,8 @@
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { Button } from "@module/component/Button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
@@ -24,7 +24,7 @@ export function PendingReferral() {
         queryKey: ["claimable", "pending", address],
         queryFn: async () => {
             const { data, error } =
-                await backendApi.wallet.balance.claimable.get();
+                await authenticatedBackendApi.wallet.balance.claimable.get();
             if (error) throw error;
 
             return data;

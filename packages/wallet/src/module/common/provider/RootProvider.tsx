@@ -1,6 +1,7 @@
 "use client";
 
 import { currentChain } from "@/context/blockchain/provider";
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { initI18nInstance, mainI18nInstance } from "@/i18n/config";
 import { sessionAtom } from "@/module/common/atoms/session";
@@ -10,7 +11,6 @@ import { ThemeListener } from "@/module/settings/atoms/theme";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type { InteractionSession, Session } from "@/types/Session";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
-import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
@@ -140,7 +140,7 @@ function SetupServiceWorker() {
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();
-            await backendApi.notifications.pushToken.put({
+            await authenticatedBackendApi.notifications.pushToken.put({
                 subscription: {
                     endpoint: jsonSubscription.endpoint ?? "no-endpoint",
                     keys: {

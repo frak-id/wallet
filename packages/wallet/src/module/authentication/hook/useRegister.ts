@@ -1,9 +1,9 @@
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { getRegisterOptions } from "@/context/wallet/action/registerOptions";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import type { Session } from "@/types/Session";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
@@ -52,11 +52,12 @@ export function useRegister(mutations?: UseMutationOptions<Session>) {
             const encodedResponse = Buffer.from(
                 JSON.stringify(registrationResponse)
             ).toString("base64");
-            const { data, error } = await backendApi.auth.wallet.register.post({
-                userAgent: navigator.userAgent,
-                expectedChallenge: registrationOptions.challenge,
-                registrationResponse: encodedResponse,
-            });
+            const { data, error } =
+                await authenticatedBackendApi.auth.wallet.register.post({
+                    userAgent: navigator.userAgent,
+                    expectedChallenge: registrationOptions.challenge,
+                    registrationResponse: encodedResponse,
+                });
             if (error) {
                 throw error;
             }
