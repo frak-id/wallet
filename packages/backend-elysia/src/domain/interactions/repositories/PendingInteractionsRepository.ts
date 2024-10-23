@@ -29,7 +29,8 @@ export class PendingInteractionsRepository {
                         eq(pendingInteractionsTable.status, status),
                         eq(pendingInteractionsTable.locked, false)
                     )
-                ).limit(limit);
+                )
+                .limit(limit);
 
             if (skipProcess(interactions)) {
                 return [];

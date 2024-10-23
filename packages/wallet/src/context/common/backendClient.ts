@@ -16,10 +16,8 @@ export const authenticatedBackendApi = treaty<App>(
     {
         fetch: { credentials: "include" },
         // Auto add the authentication related header if present
-        headers(_, options) {
-            // todo: check if auth related path
-
-            // Get shit from our tokens
+        headers(_path, options) {
+            // Get our tokens
             const token = getSafeSession()?.token;
             const sdkToken = getSafeSdkSession()?.token;
 

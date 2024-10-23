@@ -1,6 +1,10 @@
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import {
+    getSafeSdkSession,
+    getSafeSession,
+} from "@/module/listener/utils/localStorage";
+import {
     addPendingInteractionsAtom,
     pendingInteractionAtom,
 } from "@/module/wallet/atoms/pendingInteraction";
@@ -115,11 +119,11 @@ export async function pushBackupData({
 
 // Read the current data all at once to perform a backup
 const backupDataAtom = atom((get) => {
-    const session = get(sessionAtom);
-    const sdkSession = get(sdkSessionAtom);
+    const session = getSafeSession();
+    const sdkSession = getSafeSdkSession();
     const pendingInteractions = get(pendingInteractionAtom).interactions;
     return {
-        session: session?.address ? session : undefined,
+        session: session?.token ? session : undefined,
         sdkSession: sdkSession?.token ? sdkSession : undefined,
         pendingInteractions,
     };
