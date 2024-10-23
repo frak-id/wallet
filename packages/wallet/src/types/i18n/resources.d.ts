@@ -8,8 +8,14 @@ interface Resources {
             };
             sso: {
                 btn: {
-                    create: "Use biometrics to prove you're not a robot";
-                    login: "Connect an existing wallet";
+                    new: {
+                        create: "Use biometrics to prove you're not a robot";
+                        login: "Connect an existing wallet";
+                    };
+                    existing: {
+                        create: "Create a new wallet";
+                        login: "Connect with your wallet";
+                    };
                 };
                 description: "Before continuing, please make sure you are using a device that belongs to you.<br />Frak is a solution allowing <strong>{{productName}}</strong> to reward its community for the help provided in promoting its offers. <strong>Frak is a decentralized and open-source solution, which does not store any personal or biometric data.</strong><br />To learn more about <strong>{{productName}}</strong>, please review our Privacy Policy and Terms of Use.";
                 header: {
@@ -20,6 +26,9 @@ interface Resources {
                 redirectNow: "Redirect now";
                 subTitle: "to immediately receive your winnings from <pLink>{{productName}}</pLink>.";
                 title: "Create your wallet";
+                title_new: "Create your wallet";
+                title_existing: "Connect to your wallet";
+                previousWallet: "Your wallet: <strong>{{ wallet }}</strong>";
             };
         };
         common: {

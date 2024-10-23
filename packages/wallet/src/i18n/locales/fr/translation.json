@@ -7,8 +7,14 @@
         },
         "sso": {
             "btn": {
-                "create": "Utilisez la biométrie pour prouver que vous n'êtes pas un robot",
-                "login": "Connecter un porte-monnaie existant"
+                "new": {
+                    "create": "Utilisez la biométrie pour prouver que vous n'êtes pas un robot",
+                    "login": "Connecter un porte-monnaie existant"
+                },
+                "existing": {
+                    "create": "Créer un nouveau porte-monnaie",
+                    "login": "Connectez-vous avec votre porte-monnaie"
+                }
             },
             "description": "Avant de continuer, assurez-vous que vous utilisez un appareil qui vous appartient.<br /> Frak est une solution permettant à <strong>{{productName}}</strong> de récompenser sa communauté pour l'aide apportée à la promotion de ses offres. <strong>Frak est une solution décentralisée et open-source, qui ne stocke aucune donnée personnelle ou biométrique.</strong><br /> Pour en savoir plus sur <strong>{{productName}}</strong> , veuillez consulter notre politique de confidentialité et nos conditions d'utilisation.",
             "header": { "title": "Connectez-vous avec Frak Wallet" },
@@ -16,7 +22,10 @@
             "redirect": "Vous serez redirigé vers {{ productName }} dans quelques secondes.",
             "redirectNow": "Rediriger maintenant",
             "subTitle": "pour recevoir immédiatement vos gains de <pLink>{{productName}}</pLink> .",
-            "title": "Créez votre porte-monnaie"
+            "title": "Créez votre porte-monnaie",
+            "title_new": "Créez votre porte-monnaie",
+            "title_existing": "Utiliser votre porte-monnaie",
+            "previousWallet": "Votre compte : <strong>{{ wallet }}</strong>"
         }
     },
     "common": {

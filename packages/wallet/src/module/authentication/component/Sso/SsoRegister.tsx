@@ -10,7 +10,10 @@ import styles from "./index.module.css";
  * The register component
  * @constructor
  */
-export function SsoRegisterComponent({ onSuccess }: { onSuccess: () => void }) {
+export function SsoRegisterComponent({
+    isPrimary,
+    onSuccess,
+}: { isPrimary: boolean; onSuccess: () => void }) {
     const { t } = useTranslation();
     const { register, error, isRegisterInProgress } = useRegister({
         onSuccess: () => onSuccess(),
@@ -44,17 +47,38 @@ export function SsoRegisterComponent({ onSuccess }: { onSuccess: () => void }) {
         return null;
     }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress, t]);
 
+    if (isPrimary) {
+        return (
+            <p className={styles.sso__primaryButtonWrapper}>
+                <AuthFingerprint
+                    icon={<Fingerprint color={"#000"} sizes={57} />}
+                    isShiny={false}
+                    action={register}
+                    disabled={
+                        isRegisterInProgress ||
+                        isPreviouslyUsedAuthenticatorError
+                    }
+                    className={styles.sso__buttonPrimary}
+                >
+                    {t("authent.sso.btn.new.create")}
+                </AuthFingerprint>
+                {statusComponent}
+            </p>
+        );
+    }
+
     return (
-        <p className={styles.sso__buttonRegisterWrapper}>
-            <AuthFingerprint
-                icon={<Fingerprint color={"#000"} sizes={57} />}
-                isShiny={false}
-                action={register}
-                disabled={isPreviouslyUsedAuthenticatorError}
-                className={styles.sso__buttonRegister}
+        <p className={styles.sso__secondaryButtonWrapper}>
+            <button
+                className={styles.sso__buttonLink}
+                disabled={
+                    isRegisterInProgress || isPreviouslyUsedAuthenticatorError
+                }
+                onClick={() => register()}
+                type={"button"}
             >
-                {t("authent.sso.btn.create")}
-            </AuthFingerprint>
+                {t("authent.sso.btn.existing.create")}
+            </button>
             {statusComponent}
         </p>
     );

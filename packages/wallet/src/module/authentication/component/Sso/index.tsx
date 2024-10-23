@@ -1,5 +1,6 @@
 "use client";
 
+import { lastAuthenticatorAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import {
     currentSsoMetadataAtom,
     ssoContextAtom,
@@ -15,13 +16,14 @@ import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { decompressJson } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
+import { formatHash } from "@module/component/HashDisplay";
 import { Spinner } from "@module/component/Spinner";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { CloudUpload } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
@@ -31,6 +33,12 @@ import styles from "./index.module.css";
  */
 export function Sso() {
     const { i18n, t } = useTranslation();
+
+    /**
+     * The last authenticator used
+     */
+    const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
+
     /**
      * The current metadata
      */
@@ -128,6 +136,50 @@ export function Sso() {
         }
     }, []);
 
+    /**
+     * The button component we will display
+     */
+    const actions = useMemo(() => {
+        // If previous wallet known
+        if (lastAuthenticator) {
+            return (
+                <>
+                    <p className={styles.sso__previousWallet}>
+                        <Trans
+                            i18nKey={"authent.sso.previousWallet"}
+                            values={{
+                                wallet: formatHash({
+                                    hash: lastAuthenticator.address,
+                                }),
+                            }}
+                        />
+                    </p>
+                    <SsoLoginComponent
+                        onSuccess={onSuccess}
+                        isPrimary={true}
+                        lastAuthentication={{
+                            wallet: lastAuthenticator.address,
+                            authenticatorId: lastAuthenticator.authenticatorId,
+                            transports: lastAuthenticator.transports,
+                        }}
+                    />
+                    <SsoRegisterComponent
+                        onSuccess={onSuccess}
+                        isPrimary={false}
+                    />
+                </>
+            );
+        }
+
+        // If no previous wallet
+        return (
+            <>
+                <SsoRegisterComponent onSuccess={onSuccess} isPrimary={true} />
+                <SsoLoginComponent onSuccess={onSuccess} isPrimary={false} />
+            </>
+        );
+    }, [onSuccess, lastAuthenticator]);
+
     if (!currentMetadata) {
         return <Spinner />;
     }
@@ -156,13 +208,8 @@ export function Sso() {
                     </>
                 }
             >
-                <Header />
-                {!success && (
-                    <>
-                        <SsoRegisterComponent onSuccess={onSuccess} />
-                        <SsoLoginComponent onSuccess={onSuccess} />
-                    </>
-                )}
+                <Header isLogin={!!lastAuthenticator} />
+                {!success && actions}
                 {success && (
                     <>
                         <p className={styles.sso__redirect}>
@@ -188,12 +235,20 @@ export function Sso() {
     );
 }
 
-function Header() {
+function Header({ isLogin }: { isLogin: boolean }) {
     const { t } = useTranslation();
     const currentMetadata = useAtomValue(currentSsoMetadataAtom);
+    const title = useMemo(
+        () =>
+            // @ts-ignore
+            t("authent.sso.title", {
+                context: isLogin ? "existing" : "new",
+            }),
+        [t, isLogin]
+    );
 
     if (!currentMetadata) {
-        return <h2>{t("authent.sso.title")}</h2>;
+        return <h2>{title}</h2>;
     }
 
     return (
@@ -205,7 +260,7 @@ function Header() {
                     className={styles.sso__logo}
                 />
             )}
-            <h2 className={styles.sso__title}>{t("authent.sso.title")}</h2>
+            <h2 className={styles.sso__title}>{title}</h2>
             {currentMetadata.name !== "" && (
                 <p className={styles.sso__ahead}>
                     <Trans

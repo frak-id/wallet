@@ -11,7 +11,7 @@ type LastAuthentication = WebAuthNWallet & {
 /**
  * Atom with our last authenticator
  */
-const lastAuthenticatorAtom = atomWithStorage<LastAuthentication | null>(
+export const lastAuthenticatorAtom = atomWithStorage<LastAuthentication | null>(
     "frak_lastAuthentication",
     null
 );
