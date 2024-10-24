@@ -35,11 +35,6 @@ export function Sso() {
     const { i18n, t } = useTranslation();
 
     /**
-     * The last authenticator used
-     */
-    const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
-
-    /**
      * The current metadata
      */
     const currentMetadata = useAtomValue(currentSsoMetadataAtom);
@@ -136,50 +131,6 @@ export function Sso() {
         }
     }, []);
 
-    /**
-     * The button component we will display
-     */
-    const actions = useMemo(() => {
-        // If previous wallet known
-        if (lastAuthenticator) {
-            return (
-                <>
-                    <p className={styles.sso__previousWallet}>
-                        <Trans
-                            i18nKey={"authent.sso.previousWallet"}
-                            values={{
-                                wallet: formatHash({
-                                    hash: lastAuthenticator.address,
-                                }),
-                            }}
-                        />
-                    </p>
-                    <SsoLoginComponent
-                        onSuccess={onSuccess}
-                        isPrimary={true}
-                        lastAuthentication={{
-                            wallet: lastAuthenticator.address,
-                            authenticatorId: lastAuthenticator.authenticatorId,
-                            transports: lastAuthenticator.transports,
-                        }}
-                    />
-                    <SsoRegisterComponent
-                        onSuccess={onSuccess}
-                        isPrimary={false}
-                    />
-                </>
-            );
-        }
-
-        // If no previous wallet
-        return (
-            <>
-                <SsoRegisterComponent onSuccess={onSuccess} isPrimary={true} />
-                <SsoLoginComponent onSuccess={onSuccess} isPrimary={false} />
-            </>
-        );
-    }, [onSuccess, lastAuthenticator]);
-
     if (!currentMetadata) {
         return <Spinner />;
     }
@@ -208,8 +159,8 @@ export function Sso() {
                     </>
                 }
             >
-                <Header isLogin={!!lastAuthenticator} />
-                {!success && actions}
+                <Header />
+                {!success && <Actions onSuccess={onSuccess} />}
                 {success && (
                     <>
                         <p className={styles.sso__redirect}>
@@ -235,16 +186,17 @@ export function Sso() {
     );
 }
 
-function Header({ isLogin }: { isLogin: boolean }) {
+function Header() {
     const { t } = useTranslation();
     const currentMetadata = useAtomValue(currentSsoMetadataAtom);
+    const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
     const title = useMemo(
         () =>
             // @ts-ignore
             t("authent.sso.title", {
-                context: isLogin ? "existing" : "new",
+                context: lastAuthenticator ? "existing" : "new",
             }),
-        [t, isLogin]
+        [t, lastAuthenticator]
     );
 
     if (!currentMetadata) {
@@ -286,6 +238,46 @@ function Header({ isLogin }: { isLogin: boolean }) {
                     />
                 </p>
             )}
+        </>
+    );
+}
+
+function Actions({ onSuccess }: { onSuccess: () => void }) {
+    const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
+
+    // If previous wallet known
+    if (lastAuthenticator) {
+        return (
+            <>
+                <p className={styles.sso__previousWallet}>
+                    <Trans
+                        i18nKey={"authent.sso.previousWallet"}
+                        values={{
+                            wallet: formatHash({
+                                hash: lastAuthenticator.address,
+                            }),
+                        }}
+                    />
+                </p>
+                <SsoLoginComponent
+                    onSuccess={onSuccess}
+                    isPrimary={true}
+                    lastAuthentication={{
+                        wallet: lastAuthenticator.address,
+                        authenticatorId: lastAuthenticator.authenticatorId,
+                        transports: lastAuthenticator.transports,
+                    }}
+                />
+                <SsoRegisterComponent onSuccess={onSuccess} isPrimary={false} />
+            </>
+        );
+    }
+
+    // If no previous wallet
+    return (
+        <>
+            <SsoRegisterComponent onSuccess={onSuccess} isPrimary={true} />
+            <SsoLoginComponent onSuccess={onSuccess} isPrimary={false} />
         </>
     );
 }
