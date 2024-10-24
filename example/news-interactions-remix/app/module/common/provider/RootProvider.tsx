@@ -3,25 +3,14 @@ import {
     NexusIFrameClientProvider,
 } from "@frak-labs/nexus-sdk/react";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { QueryClient } from "@tanstack/react-query";
+import { HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
     PersistQueryClientProvider,
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
-import type { PropsWithChildren } from "react";
-
-/**
- * The query client that will be used by tanstack/react-query
- */
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            gcTime: Number.POSITIVE_INFINITY,
-            staleTime: 60 * 1000, // 1 minute
-        },
-    },
-});
+import { type PropsWithChildren, useState } from "react";
+import { useDehydratedState } from "use-dehydrated-state";
 
 /**
  * The storage persister to cache our query data's
@@ -53,17 +42,34 @@ const frakWalletSdkConfig = {
 };
 
 export function RootProvider({ children }: PropsWithChildren) {
+    /**
+     * The query client that will be used by tanstack/react-query
+     */
+    const [queryClient] = useState(
+        () =>
+            new QueryClient({
+                defaultOptions: {
+                    queries: {
+                        gcTime: Number.POSITIVE_INFINITY,
+                        staleTime: 60 * 1000, // 1 minute
+                    },
+                },
+            })
+    );
+    const dehydratedState = useDehydratedState();
     return (
         <PersistQueryClientProvider
             client={queryClient}
             persistOptions={persistOptions}
         >
-            <NexusConfigProvider config={frakWalletSdkConfig}>
-                <NexusIFrameClientProvider>
-                    <ReactQueryDevtools initialIsOpen={false} />
-                    {children}
-                </NexusIFrameClientProvider>
-            </NexusConfigProvider>
+            <HydrationBoundary state={dehydratedState}>
+                <NexusConfigProvider config={frakWalletSdkConfig}>
+                    <NexusIFrameClientProvider>
+                        <ReactQueryDevtools initialIsOpen={false} />
+                        {children}
+                    </NexusIFrameClientProvider>
+                </NexusConfigProvider>
+            </HydrationBoundary>
         </PersistQueryClientProvider>
     );
 }
