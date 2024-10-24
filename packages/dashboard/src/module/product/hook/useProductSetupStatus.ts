@@ -104,7 +104,16 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
             const hasRunningFunding =
                 fundings?.some((funding) => funding.isDistributing) ?? false;
 
-            const hasCampaign = true;
+            // Check if the product has a campaign or not
+            let hasCampaign = false;
+            if (interactionContract) {
+                const campaigns = await readContract(viemClient, {
+                    abi: productInteractionDiamondAbi,
+                    address: interactionContract,
+                    functionName: "getCampaigns",
+                });
+                hasCampaign = campaigns.length > 0;
+            }
 
             // Build the output steps
             const steps: ProductSetupStatusItem[] = [
@@ -185,7 +194,7 @@ const baseSteps: Record<
     "add-funding": {
         key: "add-funding",
         position: 4,
-        name: "Add funding",
+        name: "Add funds for your product",
         description:
             "Add funding to your product to create your first campaigns",
         documentationLink:
@@ -204,8 +213,8 @@ const baseSteps: Record<
     "add-campaign": {
         key: "add-campaign",
         position: 6,
-        name: "Create your first campaign",
-        description: "Create your first word-of-mouth acquisition campaign",
+        name: "Launch a campaign",
+        description: "Launch a word-of-mouth acquisition campaign",
         documentationLink: "https://docs.frak.id/business/campaign/create",
         resolvingPage: "/campaigns/new",
     },
