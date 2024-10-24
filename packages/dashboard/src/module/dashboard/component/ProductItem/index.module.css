@@ -43,3 +43,15 @@
         display: flex;
     }
 }
+
+.productItem__status {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    gap: 10px;
+
+    & svg {
+        cursor: pointer;
+    }
+}

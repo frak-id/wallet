@@ -1,4 +1,14 @@
-import { Pen, Users, WalletMinimal } from "lucide-react";
+import { useProductSetupStatus } from "@/module/product/hook/useProductSetupStatus";
+import { useAnimatedRouter } from "@frak-labs/nexus-wallet/src/module/common/hook/useAnimatedRouter";
+import { Spinner } from "@module/component/Spinner";
+import { Tooltip } from "@module/component/Tooltip";
+import {
+    AlertCircle,
+    BadgeCheck,
+    Pen,
+    Users,
+    WalletMinimal,
+} from "lucide-react";
 import Link from "next/link";
 import type { HTMLAttributes, PropsWithChildren, ReactElement } from "react";
 import type { Hex } from "viem";
@@ -41,6 +51,7 @@ export function ProductItem({
                 )}
             </p>
             {showActions && <ProductActions id={id} />}
+            <ProductStatus id={id} />
         </span>
     );
 }
@@ -68,9 +79,51 @@ function ProductActions({ id }: { id?: Hex }) {
                     <Users />
                 </Link>
             </li>
-            {/* <li>
-            <Trash2 />
-        </li> */}
         </ul>
+    );
+}
+
+function ProductStatus({ id }: { id?: Hex }) {
+    if (!id) return null;
+
+    return (
+        <span className={styles.productItem__status}>
+            <ProductStatusInner id={id} />
+        </span>
+    );
+}
+
+function ProductStatusInner({ id }: { id: Hex }) {
+    const { data } = useProductSetupStatus({ productId: id });
+    const { navigateWithTransition } = useAnimatedRouter();
+
+    if (!data) return <Spinner />;
+
+    if (data.hasWarning) {
+        return (
+            <Tooltip
+                content={
+                    "Finish your product configuration to provide your customer the best experience."
+                }
+            >
+                <AlertCircle
+                    color={"#ff7a00"}
+                    onClick={() =>
+                        navigateWithTransition(`/product/${id}/setup-status`)
+                    }
+                />
+            </Tooltip>
+        );
+    }
+
+    return (
+        <Tooltip content={"Product functional."}>
+            <BadgeCheck
+                color={"#0ddb84"}
+                onClick={() =>
+                    navigateWithTransition(`/product/${id}/setup-status`)
+                }
+            />
+        </Tooltip>
     );
 }
