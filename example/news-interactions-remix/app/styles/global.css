@@ -1,3 +1,11 @@
+:root {
+    --font-family-sans: "-apple-system", "BlinkMacSystemFont", "system-ui",
+        "Segoe UI", "Roboto", "Ubuntu", "sans-serif";
+    --font-family: "Roboto", sans-serif;
+    --font-family-merriWeather: "Merriweather", serif;
+    --font-family-timesNewRoman: "Times New Roman", "Times", "serif";
+}
+
 html {
     font-family: var(--font-family), sans-serif;
     font-style: normal;
