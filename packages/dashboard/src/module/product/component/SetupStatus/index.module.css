@@ -1,0 +1,13 @@
+.stepItemAccordion {
+    width: 100%;
+}
+
+.stepItemAccordion__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    & > h2 {
+        margin-bottom: 0;
+    }
+}

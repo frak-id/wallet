@@ -1,4 +1,4 @@
-import { getProductAdministrators } from "@/context/product/action/getAdministrators";
+import type { getProductAdministrators } from "@/context/product/action/getAdministrators";
 import { Badge } from "@/module/common/component/Badge";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
@@ -7,18 +7,18 @@ import {
     DeleteTeamMemberModal,
     UpdateRoleTeamMemberModal,
 } from "@/module/product/component/TableTeam/Modal";
+import { useGetProductAdministrators } from "@/module/product/hook/useGetProductAdministrators";
 import { permissionLabels } from "@/module/product/utils/permissions";
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";
 import { Tooltip } from "@module/component/Tooltip";
-import { useQuery } from "@tanstack/react-query";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
-import { type Hex, isAddressEqual, toHex, zeroAddress } from "viem";
+import { type Hex, isAddressEqual, zeroAddress } from "viem";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<ManageTeamTableData>>(
@@ -35,23 +35,10 @@ export type ManageTeamTableData = Awaited<
 const columnHelper = createColumnHelper<ManageTeamTableData>();
 
 export function TableTeam({ productId }: { productId: Hex }) {
-    const { data: walletStatus } = useWalletStatus();
     const { isAdministrator } = useHasRoleOnProduct({ productId });
 
-    const { data: administrators, isLoading } = useQuery({
-        queryKey: ["product", "team", productId.toString(), walletStatus?.key],
-        queryFn: async () => {
-            console.log("productId", productId);
-            const administrators = await getProductAdministrators({
-                productId: toHex(BigInt(productId)),
-            });
-            return administrators.map((admin) => ({
-                ...admin,
-                isMe: walletStatus?.wallet
-                    ? isAddressEqual(admin.wallet, walletStatus.wallet)
-                    : false,
-            }));
-        },
+    const { data: administrators, isLoading } = useGetProductAdministrators({
+        productId,
     });
 
     const columns = useMemo(
@@ -123,13 +110,13 @@ function CellActions({
     // Check if the user can do actions
     const { canDoActions, isSelfAction } = useMemo(() => {
         // If it's the admin role, disable permissions
-        if (row.original.roleDetails.admin)
+        if (row.original.isOwner)
             return {
                 canDoActions: false,
                 isSelfAction: false,
             };
 
-        // If we are the product owner, we can do everything
+        // If we are the product admin, we can do everything
         if (isAdministrator)
             return {
                 canDoActions: true,

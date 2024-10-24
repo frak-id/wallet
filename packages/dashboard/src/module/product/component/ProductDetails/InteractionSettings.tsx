@@ -5,6 +5,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
 import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
+import { useProductInteractionContract } from "@/module/product/hook/useProductInteractionContract";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
     addresses,
@@ -21,7 +22,7 @@ import { WalletAddress } from "@module/component/HashDisplay";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { all, tryit } from "radash";
+import { all } from "radash";
 import { useState } from "react";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 import { generatePrivateKey } from "viem/accounts";
@@ -33,7 +34,7 @@ import styles from "./InteractionSettings.module.css";
  * @constructor
  */
 export function InteractionSettings({ productId }: { productId: Hex }) {
-    const { rolesReady, isInteractionManager } = useHasRoleOnProduct({
+    const { isInteractionManager } = useHasRoleOnProduct({
         productId,
     });
     const { mutateAsync: setupInteractionContract } =
@@ -43,25 +44,7 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
         data: detailsData,
         isLoading: isFetchingInteractionContract,
         refetch: refreshDetails,
-    } = useQuery({
-        enabled: !!productId && rolesReady,
-        queryKey: ["product", "interaction-details", productId.toString()],
-        queryFn: async () => {
-            // Fetch the on chain interaction contract
-            const [, interactionContract] = await tryit(() =>
-                readContract(viemClient, {
-                    abi: productInteractionManagerAbi,
-                    functionName: "getInteractionContract",
-                    address: addresses.productInteractionManager,
-                    args: [BigInt(productId)],
-                })
-            )();
-
-            return {
-                interactionContract,
-            };
-        },
-    });
+    } = useProductInteractionContract({ productId });
 
     if (isFetchingInteractionContract) {
         return (
