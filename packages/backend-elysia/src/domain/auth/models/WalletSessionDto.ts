@@ -1,6 +1,7 @@
 import { t } from "@backend-utils";
 
 export const WalletAuthResponseDto = t.Object({
+    token: t.String(),
     address: t.Address(),
     authenticatorId: t.String(),
     publicKey: t.Object({

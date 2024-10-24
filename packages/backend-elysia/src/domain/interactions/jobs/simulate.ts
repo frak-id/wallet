@@ -1,6 +1,7 @@
 import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { Patterns } from "@elysiajs/cron";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import type { Address } from "viem";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
@@ -13,9 +14,14 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
     app.use(
         mutexCron({
             name: "simulateInteraction",
-            pattern: Patterns.everyMinutes(10),
+            pattern: isRunningInProd
+                ? // Every minute on prod
+                  Patterns.everyMinute()
+                : // Every 30sec on dev
+                  Patterns.everySenconds(30),
             skipIfLocked: true,
-            coolDownInMs: 500,
+            // 5 sec of cooldown
+            coolDownInMs: 5_000,
             protect: true,
             catch: true,
             interval: 5,
@@ -33,17 +39,14 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     await pendingInteractionsRepository.getAndLock({
                         status: "pending",
                         skipProcess: (interactions) => {
-                            // Dismiss interactions if we got less than 10 and if we didn't have any interactions older than 5 minutes
-                            const fiveMinutesAgo = new Date(
-                                Date.now() - 5 * 60 * 1000
-                            );
-                            const hasInteractions5MinOld = interactions.some(
+                            // Only execute if we got an interaction older than one min
+                            const minimumDate = new Date(Date.now() - 60_000);
+                            const hasOldInteractions = interactions.some(
                                 (interaction) =>
-                                    interaction.createdAt < fiveMinutesAgo
+                                    interaction.createdAt < minimumDate
                             );
                             return (
-                                interactions.length < 3 &&
-                                !hasInteractions5MinOld
+                                interactions.length < 2 && !hasOldInteractions
                             );
                         },
                     });

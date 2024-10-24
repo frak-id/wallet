@@ -1,17 +1,17 @@
 import { dexieDb } from "@/context/common/dexie/dexieDb";
-import type { Session } from "@/types/Session";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
-type LastAuthentication = Session & {
+type LastAuthentication = WebAuthNWallet & {
     transports?: AuthenticatorTransportFuture[];
 };
 
 /**
  * Atom with our last authenticator
  */
-const lastAuthenticatorAtom = atomWithStorage<LastAuthentication | null>(
+export const lastAuthenticatorAtom = atomWithStorage<LastAuthentication | null>(
     "frak_lastAuthentication",
     null
 );

@@ -12,9 +12,11 @@ export class PendingInteractionsRepository {
      */
     async getAndLock({
         status,
+        limit = 50,
         skipProcess = (arr) => arr.length === 0,
     }: {
         status: "pending" | "succeeded";
+        limit?: number;
         skipProcess?: (interactions: SelectedInteraction[]) => boolean;
     }) {
         return this.interactionsDb.transaction(async (trx) => {
@@ -27,7 +29,8 @@ export class PendingInteractionsRepository {
                         eq(pendingInteractionsTable.status, status),
                         eq(pendingInteractionsTable.locked, false)
                     )
-                );
+                )
+                .limit(limit);
 
             if (skipProcess(interactions)) {
                 return [];

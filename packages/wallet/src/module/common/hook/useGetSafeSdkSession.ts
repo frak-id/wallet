@@ -1,8 +1,9 @@
-import { backendApi } from "@frak-labs/shared/context/server";
+import { authenticatedBackendApi } from "@/context/common/backendClient";
+import { getSafeSession } from "@/module/listener/utils/localStorage";
 import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { sdkSessionAtom } from "../atoms/session";
+import { sdkSessionAtom, sessionAtom } from "../atoms/session";
 import { lastWebAuthNActionAtom } from "../atoms/webauthn";
 
 /**
@@ -10,7 +11,8 @@ import { lastWebAuthNActionAtom } from "../atoms/webauthn";
  */
 export function useGetSafeSdkSession() {
     // Using jotai hook since it's seem to struggle reading from storage directly in some cases
-    const currentSession = useAtomValue(sdkSessionAtom);
+    const currentSdkSession = useAtomValue(sdkSessionAtom);
+    const currentSession = useAtomValue(sessionAtom);
     const lastWebAuthnAction = useAtomValue(lastWebAuthNActionAtom);
 
     const query = useQuery({
@@ -19,19 +21,17 @@ export function useGetSafeSdkSession() {
         queryKey: [
             "sdk-token",
             "get-safe",
-            currentSession?.token ?? "no-sdk-token",
-            lastWebAuthnAction?.wallet ?? "no-wallet",
+            currentSdkSession?.expires?.toString() ?? "no-sdk-token",
+            currentSession?.address ?? "no-session",
+            lastWebAuthnAction?.wallet ?? "no-last-action",
         ],
         queryFn: async () => {
             // If we got a current token, check it's validity
-            if (currentSession) {
-                const isValid = await backendApi.auth.walletSdk.isValid.get({
-                    headers: {
-                        "x-wallet-sdk-auth": currentSession.token,
-                    },
-                });
+            if (currentSdkSession) {
+                const isValid =
+                    await authenticatedBackendApi.auth.walletSdk.isValid.get();
                 if (isValid) {
-                    return currentSession;
+                    return currentSdkSession;
                 }
             }
 
@@ -41,11 +41,13 @@ export function useGetSafeSdkSession() {
                     JSON.stringify(lastWebAuthnAction.signature)
                 ).toString("base64");
                 const { data: session, error } =
-                    await backendApi.auth.walletSdk.fromWebAuthNSignature.post({
-                        signature: encodedSignature,
-                        msg: lastWebAuthnAction.msg,
-                        wallet: lastWebAuthnAction.wallet,
-                    });
+                    await authenticatedBackendApi.auth.walletSdk.fromWebAuthNSignature.post(
+                        {
+                            signature: encodedSignature,
+                            msg: lastWebAuthnAction.msg,
+                            wallet: lastWebAuthnAction.wallet,
+                        }
+                    );
                 if (error) {
                     console.error(
                         "Unable to generate a new token from previous signature",
@@ -58,9 +60,15 @@ export function useGetSafeSdkSession() {
                 }
             }
 
+            // Otherwise, if we don't have any current session, we can early exit (since we won't have any token for the generation)
+            const session = getSafeSession();
+            if (!session) {
+                return null;
+            }
+
             // Otherwise, craft a new token from the cookie (can fail in third parties context)
             const { data, error } =
-                await backendApi.auth.walletSdk.generate.get();
+                await authenticatedBackendApi.auth.walletSdk.generate.get();
             if (error) {
                 console.error("Unable to generate a new token", error);
                 return null;

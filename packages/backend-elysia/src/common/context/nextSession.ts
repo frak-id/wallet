@@ -55,7 +55,7 @@ export const nextSessionContext = new Elysia({
             // If no session present, exit with unauthorized
             return onBeforeHandle(async ({ businessSession, error }) => {
                 if (wanted === "business" && !businessSession) {
-                    return error(401);
+                    return error(401, "Missing business auth cookie");
                 }
             });
         },

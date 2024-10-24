@@ -1,4 +1,5 @@
-import { pushInteractions } from "@/context/interaction/action/pushInteraction";
+import { authenticatedBackendApi } from "@/context/common/backendClient";
+import { pushBackupData } from "@/context/sdk/utils/backup";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import {
     cleanPendingInteractionsAtom,
@@ -38,17 +39,24 @@ export function useConsumePendingInteractions() {
             }
 
             // Submit the interactions
-            const delegationId = await pushInteractions({
-                wallet: address,
-                toPush: interactions,
-                sdkToken: safeSdkSession.token,
-            });
+            const { data } =
+                await authenticatedBackendApi.interactions.push.post({
+                    interactions: interactions.map((interaction) => ({
+                        wallet: address,
+                        productId: interaction.productId,
+                        interaction: interaction.interaction,
+                        signature: interaction.signature,
+                    })),
+                });
 
             // Clean the pending interactions
-            cleanPendingInteractions();
+            if (data) {
+                cleanPendingInteractions();
+                await pushBackupData();
+            }
 
             return {
-                delegationId,
+                delegationId: data ?? [],
                 submittedInteractions: interactions.length,
             };
         },

@@ -1,11 +1,12 @@
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import { listenerContextAtom } from "@/module/listener/atoms/listenerContext";
 import {
     addPendingInteractionsAtom,
     pendingInteractionAtom,
 } from "@/module/wallet/atoms/pendingInteraction";
 import type { PendingInteraction } from "@/types/Interaction";
-import type { Session } from "@/types/Session";
+import type { SdkSession, Session } from "@/types/Session";
 import {
     type CompressedData,
     decompressDataAndCheckHash,
@@ -23,7 +24,7 @@ type BackupData = {
     productId: Hex;
     session?: Session;
     pendingInteractions?: PendingInteraction[];
-    sdkSession?: { token: string; expires: number };
+    sdkSession?: SdkSession;
     expireAtTimestamp: number;
 };
 
@@ -65,7 +66,7 @@ export async function restoreBackupData({
 
 // Atom to restore backup data all at once
 const restoreBackupAtom = atom(null, (_get, set, data: BackupData) => {
-    if (data.session) {
+    if (data.session?.token) {
         set(sessionAtom, data.session);
     }
     if (data.sdkSession) {
@@ -78,13 +79,15 @@ const restoreBackupAtom = atom(null, (_get, set, data: BackupData) => {
 
 /**
  * Push new backup data
- * @param productId
  */
-export async function pushBackupData({
-    productId,
-}: {
-    productId: Hex;
-}) {
+export async function pushBackupData(args?: { productId?: Hex }) {
+    // Check if we got an iframe resolving context
+    const productId =
+        args?.productId ?? jotaiStore.get(listenerContextAtom)?.productId;
+    if (!productId) {
+        console.log("No context to push backup data to");
+        return;
+    }
     // Get the current atom backup data
     const partialBackup = jotaiStore.get(backupDataAtom);
     // Build backup datas
@@ -94,9 +97,16 @@ export async function pushBackupData({
         // Backup will expire in a week
         expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
     };
+    console.log("Pushing new backup data to parent client", { backup });
 
-    // If nothing to backup, just remove it
-    if (!(backup.session || backup.pendingInteractions?.length)) {
+    // If nothing to back up, just remove it
+    if (
+        !(
+            backup.session?.token ||
+            backup.sdkSession?.token ||
+            backup.pendingInteractions?.length
+        )
+    ) {
         emitLifecycleEvent({
             iframeLifecycle: "remove-backup",
         });
@@ -119,7 +129,7 @@ const backupDataAtom = atom((get) => {
     const sdkSession = get(sdkSessionAtom);
     const pendingInteractions = get(pendingInteractionAtom).interactions;
     return {
-        session: session?.address ? session : undefined,
+        session: session?.token ? session : undefined,
         sdkSession: sdkSession?.token ? sdkSession : undefined,
         pendingInteractions,
     };

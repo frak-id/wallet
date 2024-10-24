@@ -1,10 +1,10 @@
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import type { Session } from "@/types/Session";
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
@@ -62,10 +62,11 @@ export function useLogin(
             const encodedResponse = Buffer.from(
                 JSON.stringify(authenticationResponse)
             ).toString("base64");
-            const { data, error } = await backendApi.auth.wallet.login.post({
-                expectedChallenge: authenticationOptions.challenge,
-                authenticatorResponse: encodedResponse,
-            });
+            const { data, error } =
+                await authenticatedBackendApi.auth.wallet.login.post({
+                    expectedChallenge: authenticationOptions.challenge,
+                    authenticatorResponse: encodedResponse,
+                });
             if (error) {
                 throw error;
             }
@@ -78,10 +79,11 @@ export function useLogin(
             });
 
             // Extract a few data
-            const { sdkJwt, ...session } = data;
+            const { token, sdkJwt, ...authentication } = data;
+            const session = { ...authentication, token };
 
             // Save this to the last authenticator
-            await jotaiStore.set(addLastAuthenticationAtom, session);
+            await jotaiStore.set(addLastAuthenticationAtom, authentication);
 
             // Store the session
             jotaiStore.set(sessionAtom, session);

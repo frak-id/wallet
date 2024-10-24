@@ -2,10 +2,10 @@
 
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { Button } from "@module/component/Button";
 import { useQueryClient } from "@tanstack/react-query";
+import { RESET } from "jotai/utils";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -39,9 +39,8 @@ export function Logout() {
                 align={"left"}
                 onClick={async () => {
                     // Session deletion
-                    await backendApi.auth.wallet.logout.post();
-                    jotaiStore.set(sessionAtom, null);
-                    jotaiStore.set(sdkSessionAtom, null);
+                    jotaiStore.set(sessionAtom, RESET);
+                    jotaiStore.set(sdkSessionAtom, RESET);
                     // Query cache
                     queryClient.removeQueries();
                     // Local storage cleanup

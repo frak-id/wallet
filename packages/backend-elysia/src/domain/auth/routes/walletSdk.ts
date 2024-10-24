@@ -46,12 +46,12 @@ export const walletSdkAuthRoutes = new Elysia({ prefix: "/walletSdk" })
 
             // If not valid, return an error
             if (!verificationnResult) {
-                return error(401, "Invalid signature");
+                return error(403, "Invalid signature");
             }
 
             // If it's not the same wallet, return an error
             if (!isAddressEqual(verificationnResult.address, wallet)) {
-                return error(401, "Invalid signature");
+                return error(403, "Invalid signature");
             }
 
             // Otherwise generate a new token
@@ -66,7 +66,7 @@ export const walletSdkAuthRoutes = new Elysia({ prefix: "/walletSdk" })
                 wallet: t.Address(),
             }),
             response: {
-                401: t.String(),
+                403: t.String(),
                 200: t.Object({
                     token: t.String(),
                     expires: t.Number(),

@@ -18,6 +18,13 @@
     font-size: 10px;
 }
 
+.sso__previousWallet {
+    font-size: 12px;
+    max-width: 70%;
+    margin: 18px auto 0;
+    text-align: center;
+}
+
 .sso__link {
     color: #0171ec;
 }
@@ -34,12 +41,12 @@
     font-size: 11px !important;
 }
 
-.sso__buttonRegisterWrapper {
+.sso__primaryButtonWrapper {
     margin-top: 23px;
     text-align: center;
 }
 
-.sso__buttonRegister {
+.sso__buttonPrimary {
     max-width: 70%;
     margin: 0 auto;
     background: none !important;
@@ -57,7 +64,7 @@
     }
 }
 
-.sso__buttonLoginWrapper {
+.sso__secondaryButtonWrapper {
     margin-top: 18px;
     text-align: center;
 }

@@ -15,7 +15,7 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
     app.use(
         mutexCron({
             name: "executeInteraction",
-            pattern: Patterns.everyMinutes(30),
+            pattern: Patterns.everyMinutes(3),
             skipIfLocked: true,
             coolDownInMs: 2_000,
             protect: true,
@@ -34,6 +34,7 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
                 const interactions =
                     await pendingInteractionsRepository.getAndLock({
                         status: "succeeded",
+                        limit: 200,
                     });
                 if (interactions.length === 0) {
                     log.debug("No interactions to execute");

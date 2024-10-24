@@ -1,3 +1,4 @@
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import {
     ssoPopupFeatures,
@@ -9,18 +10,18 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
+import { getSafeSession } from "@/module/listener/utils/localStorage";
 import { getSharedStorageAccessStatus } from "@/module/listener/utils/thirdParties";
 import type {
     LoginModalStepType,
     SsoMetadata,
 } from "@frak-labs/nexus-sdk/core";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { jotaiStore } from "@module/atoms/store";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useModalTranslation } from "../../hooks/useModalTranslation";
 import { DismissButton } from "../Generic";
 
@@ -280,24 +281,18 @@ function LinkSsoButton({ link, text }: { link: string; text: ReactNode }) {
  * This mutation is used to ensure that post SSO we have a session, not automatically updated
  */
 function useUpdateSessionStatus() {
-    // Read from the jotai store
-    const currentSession = useAtomValue(sessionAtom);
-    const sessionsRef = useRef(undefined as typeof currentSession | undefined);
-    useEffect(() => {
-        sessionsRef.current = currentSession;
-    }, [currentSession]);
-
     const { mutateAsync: mutateAsyncUpdateSessionStatus } = useMutation({
         mutationKey: ["session", "force-refetch"],
         mutationFn: async () => {
             // If our jotai store already contain a session, we can early exit
-            if (sessionsRef.current) {
-                return sessionsRef.current;
+            const currentSession = getSafeSession();
+            if (currentSession) {
+                return currentSession;
             }
 
             // Otherwise we fetch the session
             const { data: session } =
-                await backendApi.auth.wallet.session.get();
+                await authenticatedBackendApi.auth.wallet.session.get();
             if (session) {
                 jotaiStore.set(sessionAtom, session);
             }
