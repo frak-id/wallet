@@ -1,10 +1,12 @@
 import { Lottie } from "@/module/common/component/Lottie/index.client";
 import { Link } from "@remix-run/react";
-import { ClientOnly } from "remix-utils/client-only";
+import { useHydrated } from "remix-utils/use-hydrated";
 import logo from "/assets/logo-good-vibes.svg?url";
 import styles from "./index.module.css";
 
 export function Header() {
+    const isHydrated = useHydrated();
+
     return (
         <header className={styles.header}>
             <h1 className={styles.header__title}>
@@ -12,9 +14,7 @@ export function Header() {
                     <img src={logo} alt="Good Vibes" />
                 </Link>
             </h1>
-            <ClientOnly>
-                {() => <Lottie className={styles.header__lottie} />}
-            </ClientOnly>
+            {isHydrated && <Lottie className={styles.header__lottie} />}
         </header>
     );
 }

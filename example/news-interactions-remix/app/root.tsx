@@ -7,7 +7,7 @@ import {
     Scripts,
     ScrollRestoration,
     json,
-    useLoaderData,
+    useRouteLoaderData,
 } from "@remix-run/react";
 import type { ReactNode } from "react";
 import { MainLayout } from "./module/common/component/MainLayout";
@@ -106,7 +106,7 @@ export async function loader() {
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-    const data = useLoaderData<typeof loader>();
+    const data = useRouteLoaderData<typeof loader>("root");
     return (
         <html lang="en">
             <head>
@@ -123,12 +123,14 @@ export function Layout({ children }: { children: ReactNode }) {
                     <MainLayout>{children}</MainLayout>
                 </RootProvider>
                 <ScrollRestoration />
-                <script
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
-                    dangerouslySetInnerHTML={{
-                        __html: `process = { env: ${JSON.stringify(data.ENV)} }`,
-                    }}
-                />
+                {data?.ENV && (
+                    <script
+                        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+                        dangerouslySetInnerHTML={{
+                            __html: `process = { env: ${JSON.stringify(data.ENV)} }`,
+                        }}
+                    />
+                )}
                 <Scripts />
             </body>
         </html>
