@@ -99,8 +99,8 @@ export const links: LinksFunction = () => [
 export async function loader() {
     return json({
         ENV: {
+            FRAK_WALLET_URL: process.env.FRAK_WALLET_URL,
             BACKEND_URL: process.env.BACKEND_URL,
-            FRAK_WALLET_URL: "https://localhost:3000",
         },
     });
 }

@@ -1,6 +1,6 @@
 import { use } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
-import { NextjsSite } from "sst/constructs";
+import { NextjsSite, RemixSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
 import { isProdStack, openNextVersion } from "./utils";
 
@@ -56,8 +56,26 @@ export function ExampleAppStack({ stack }: StackContext) {
         },
     });
 
+    const newsInteractionDemoRemix = new RemixSite(
+        stack,
+        "newsInteractionDemoRemix",
+        {
+            path: "example/news-interactions-remix",
+            // Set the custom domain
+            customDomain: {
+                domainName: "news-paper-remix.frak.id",
+                hostedZone: "frak.id",
+            },
+            environment: {
+                FRAK_WALLET_URL: frakWalletUrl,
+                BACKEND_URL: backendUrl,
+            },
+        }
+    );
+
     stack.addOutputs({
         NewsSiteUrl: ethCCDemo.url,
         NewsInteractionSiteUrl: newsInteractionDemo.url,
+        NewsInteractionRemixSiteUrl: newsInteractionDemoRemix.url,
     });
 }
