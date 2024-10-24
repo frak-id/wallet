@@ -1,0 +1,22 @@
+.footer {
+    margin-bottom: 20px;
+    font-size: 9px;
+    text-align: center;
+    color: #7a7a7a;
+
+    & a {
+        color: #7a7a7a;
+    }
+}
+
+.preFooter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    margin: 19px;
+    padding: 10px 0;
+    color: #7a7a7a;
+    border-top: 1px solid #ececec;
+    border-bottom: 1px solid #ececec;
+}
