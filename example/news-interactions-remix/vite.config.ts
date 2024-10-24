@@ -7,5 +7,6 @@ export default defineConfig({
     server: {
         port: 3013,
     },
-    plugins: [remix() /*, viteCommonjs()*/, tsconfigPaths()],
+    plugins: [remix() /*,  viteCommonjs()*/, tsconfigPaths()],
+    build: { target: 'ES2022' },
 });

@@ -66,10 +66,8 @@ export function ExampleAppStack({ stack }: StackContext) {
                 domainName: "news-paper-remix.frak.id",
                 hostedZone: "frak.id",
             },
-            environment: {
-                FRAK_WALLET_URL: frakWalletUrl,
-                BACKEND_URL: backendUrl,
-            },
+            // Bind to the configs
+            bind: [frakWalletUrl, backendUrl],
         }
     );
 
