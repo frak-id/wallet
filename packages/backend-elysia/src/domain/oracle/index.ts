@@ -4,10 +4,12 @@ import { updateMerkleRootJob } from "./jobs/updateOrale";
 import { managmentRoutes } from "./routes/managment";
 import { proofRoutes } from "./routes/proof";
 import { shopifyWebhook } from "./routes/shopifyWebhook";
+import { stripeWebhook } from "./routes/stripeWebhook";
 
 export const oracle = new Elysia({ prefix: "/oracle" })
     .use(managmentRoutes)
     .use(shopifyWebhook)
+    .use(stripeWebhook)
     .use(updateMerkleRootJob)
     .use(proofRoutes)
     .get(
