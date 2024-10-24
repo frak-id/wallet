@@ -33,7 +33,7 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 };
 
 const frakWalletSdkConfig = {
-    walletUrl: "https://localhost:3000",
+    walletUrl: process.env.FRAK_WALLET_URL as string,
     metadata: {
         name: "Good Vibes",
     },

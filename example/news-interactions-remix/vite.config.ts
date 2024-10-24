@@ -7,5 +7,4 @@ export default defineConfig({
         port: 3013,
     },
     plugins: [remix(), tsconfigPaths()],
-    optimizeDeps: { esbuildOptions: { target: "es2022" } },
 });

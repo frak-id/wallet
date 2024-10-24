@@ -10,7 +10,6 @@ import {
     useRouteLoaderData,
 } from "@remix-run/react";
 import type { ReactNode } from "react";
-import { Config } from "sst/node/config";
 import { MainLayout } from "./module/common/component/MainLayout";
 import { RootProvider } from "./module/common/provider/RootProvider";
 
@@ -100,9 +99,8 @@ export const links: LinksFunction = () => [
 export async function loader() {
     return json({
         ENV: {
-            FRAK_WALLET_URL:
-                Config.FRAK_WALLET_URL ?? "https://wallet-dev.frak.id",
-            BACKEND_URL: Config.BACKEND_URL ?? "https://backend-dev.frak.id",
+            FRAK_WALLET_URL: process.env.FRAK_WALLET_URL,
+            BACKEND_URL: process.env.BACKEND_URL,
         },
     });
 }
