@@ -1,25 +1,19 @@
 "use client";
-
-import { Badge } from "@/module/common/component/Badge";
+import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
-import { Title } from "@/module/common/component/Title";
 import { FormLayout } from "@/module/forms/Form";
 import { ProductHead } from "@/module/product/component/ProductHead";
 import {
     type ProductSetupStatusItem,
     useProductSetupStatus,
 } from "@/module/product/hook/useProductSetupStatus";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@module/component/Accordion";
+import { useAnimatedRouter } from "@frak-labs/nexus-wallet/src/module/common/hook/useAnimatedRouter";
+import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
+import { AlertCircle, BadgeCheck } from "lucide-react";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
-import {AlertCircle, BadgeCheck} from "lucide-react";
 
 /**
  * Page containing basic product setup status overview
@@ -36,20 +30,24 @@ export function ProductSetupStatus({ productId }: { productId: Hex }) {
                 {!data ? (
                     <Spinner />
                 ) : (
-                        <SetupStatusItems items={data.items ?? []} hasWarning={data.hasWarning} />
+                    <SetupStatusItems
+                        items={data.items ?? []}
+                        hasWarning={data.hasWarning}
+                    />
                 )}
             </Panel>
         </FormLayout>
     );
 }
 
-function SetupStatusItems({ items, hasWarning }: { items: ProductSetupStatusItem[], hasWarning: boolean }) {
+function SetupStatusItems({
+    items,
+    hasWarning,
+}: { items: ProductSetupStatusItem[]; hasWarning: boolean }) {
     return (
         <div>
             <Row>
-                {hasWarning
-                    ? "Some items need your attention. Please review and resolve the warnings."
-                    : "Great job! Your product is set up correctly."}
+                <OverallStatus hasWarning={hasWarning} />
 
                 {items.map((item) => (
                     <SetupStatusItem key={item.key} item={item} />
@@ -59,36 +57,76 @@ function SetupStatusItems({ items, hasWarning }: { items: ProductSetupStatusItem
     );
 }
 
-function SetupStatusItem({ item }: { item: ProductSetupStatusItem }) {
+function OverallStatus({ hasWarning }: { hasWarning: boolean }) {
+    if (!hasWarning) {
+        return (
+            <CallOut variant={"success"}>
+                Great job! Your product is set up correctly.
+            </CallOut>
+        );
+    }
+
     return (
-        <>
-            <Accordion
-                type={"single"}
-                collapsible
-                className={styles.stepItemAccordion}
-            >
-                <AccordionItem value={"item-1"}>
-                    <AccordionTrigger
-                        className={styles.stepItemAccordion__trigger}
+        <CallOut variant={"warning"}>
+            Some items need your attention.
+            <br />
+            Please review them and resolve the warnings before going live.
+        </CallOut>
+    );
+}
+
+function SetupStatusItem({ item }: { item: ProductSetupStatusItem }) {
+    if (item.isGood) {
+        return <SuccessStatusItem item={item} />;
+    }
+
+    return <WarningStatusItem item={item} />;
+}
+
+function SuccessStatusItem({ item }: { item: ProductSetupStatusItem }) {
+    return (
+        <div className={styles.stepItem}>
+            <div className={styles.header}>
+                <span className={styles.stepPosition}>{item.position}</span>
+                <span className={styles.stepName}>
+                    {item.name}
+                    <BadgeCheck className={styles.icon} />
+                </span>
+            </div>
+            <p className={styles.description}>{item.description}</p>
+        </div>
+    );
+}
+
+function WarningStatusItem({ item }: { item: ProductSetupStatusItem }) {
+    const { navigateWithTransition } = useAnimatedRouter();
+    return (
+        <div className={styles.stepItem}>
+            <div className={styles.header}>
+                <span className={styles.stepPosition}>{item.position}</span>
+                <span className={styles.stepName}>
+                    {item.name}
+                    <AlertCircle className={styles.iconWarning} />
+                </span>
+            </div>
+            <p className={styles.description}>{item.description}</p>
+            <div className={styles.actions}>
+                <Button
+                    variant={"information"}
+                    onClick={() => navigateWithTransition(item.resolvingPage)}
+                >
+                    Resolve Issue
+                </Button>
+                {item.documentationLink && (
+                    <a
+                        href={item.documentationLink}
+                        target={"_blank"}
+                        rel={"noreferrer"}
                     >
-                        <Title
-                            size={"small"}
-                            icon={
-                                item.status === "ok" ? (
-                                    <BadgeCheck color={"#0DDB84"} />
-                                ) : (
-                                    <AlertCircle color={"#db960d"} />
-                                )
-                            }
-                        >
-                            {item.name}
-                        </Title>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <p>{item.description}</p>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
-        </>
+                        <Button variant={"secondary"}>Documentation</Button>
+                    </a>
+                )}
+            </div>
+        </div>
     );
 }

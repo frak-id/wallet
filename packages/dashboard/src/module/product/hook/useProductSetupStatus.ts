@@ -8,16 +8,6 @@ import {
 } from "@frak-labs/app-essentials";
 import { backendApi } from "@frak-labs/shared/context/server";
 import { useQuery } from "@tanstack/react-query";
-import {
-    CircleDollarSign,
-    Crosshair,
-    Database,
-    type LucideProps,
-    Signature,
-    Users,
-} from "lucide-react";
-import type { JSXElementConstructor } from "react";
-import type * as react from "react";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
 
@@ -30,6 +20,8 @@ type SetupStatusItemKey =
     | "delegated-interaction"
     // Does the product has funding?
     | "add-funding"
+    // Does the product has a running funding bank?
+    | "running-bank"
     // Does the product has a campaign
     | "add-campaign";
 
@@ -38,10 +30,8 @@ export type ProductSetupStatusItem = {
     key: SetupStatusItemKey;
     name: string;
     description: string;
-    logo: JSXElementConstructor<
-        Omit<LucideProps, "ref"> & react.RefAttributes<SVGSVGElement>
-    >;
-    status: "ok" | "warning";
+    isGood: boolean;
+    documentationLink?: string;
     // Page to resolve this issue
     resolvingPage: string;
 };
@@ -111,6 +101,8 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
             // Check if at least one of the banks is good
             const hasFunding =
                 fundings?.some((funding) => funding.balance > 0n) ?? false;
+            const hasRunningFunding =
+                fundings?.some((funding) => funding.isDistributing) ?? false;
 
             const hasCampaign = true;
 
@@ -118,29 +110,39 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
             const steps: ProductSetupStatusItem[] = [
                 {
                     ...baseSteps["other-admin"],
-                    status: hasOtherAdmin ? "ok" : "warning",
+                    isGood: hasOtherAdmin,
                 },
                 {
                     ...baseSteps["interaction-setup"],
-                    status: hasInteractionContract ? "ok" : "warning",
+                    isGood: hasInteractionContract,
                 },
                 {
                     ...baseSteps["delegated-interaction"],
-                    status: isDelegatedSignerApproved ? "ok" : "warning",
+                    isGood: isDelegatedSignerApproved,
                 },
                 {
                     ...baseSteps["add-funding"],
-                    status: hasFunding ? "ok" : "warning",
+                    isGood: hasFunding,
+                },
+                {
+                    ...baseSteps["running-bank"],
+                    isGood: hasRunningFunding,
                 },
                 {
                     ...baseSteps["add-campaign"],
-                    status: hasCampaign ? "ok" : "warning",
+                    isGood: hasCampaign,
                 },
-            ];
+            ].map((step) => ({
+                ...step,
+                resolvingPage: step.resolvingPage.replace(
+                    "[productId]",
+                    productId
+                ),
+            }));
 
             return {
                 items: steps,
-                hasWarning: steps.some((step) => step.status === "warning"),
+                hasWarning: steps.some((step) => !step.isGood),
             };
         },
     });
@@ -151,14 +153,15 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
  */
 const baseSteps: Record<
     SetupStatusItemKey,
-    Omit<ProductSetupStatusItem, "status">
+    Omit<ProductSetupStatusItem, "isGood">
 > = {
     "other-admin": {
         key: "other-admin",
         position: 1,
         name: "Add another admin",
         description: "Add another admin to the product for better security",
-        logo: Users,
+        documentationLink:
+            "https://docs.frak.id/business/product/config/team#adding-a-new-member",
         resolvingPage: "/product/[productId]/team",
     },
     "interaction-setup": {
@@ -166,7 +169,8 @@ const baseSteps: Record<
         position: 2,
         name: "Create the interaction/CRM event contract",
         description: "Create an on-chain CRM receiver for your Product",
-        logo: Database,
+        documentationLink:
+            "https://docs.frak.id/business/product/config/edit#interaction-settings",
         resolvingPage: "/product/[productId]#deployInteraction",
     },
     "delegated-interaction": {
@@ -174,7 +178,8 @@ const baseSteps: Record<
         position: 3,
         name: "Allow Interaction/CRM validator",
         description: "Allow Frak to submit user interactions for your Product",
-        logo: Signature,
+        documentationLink:
+            "https://docs.frak.id/business/product/config/edit#interaction-settings",
         resolvingPage: "/product/[productId]#allowInteractionDelegator",
     },
     "add-funding": {
@@ -183,15 +188,25 @@ const baseSteps: Record<
         name: "Add funding",
         description:
             "Add funding to your product to create your first campaigns",
-        logo: CircleDollarSign,
+        documentationLink:
+            "https://docs.frak.id/business/product/config/funds#adding-funds",
+        resolvingPage: "/product/[productId]/funding",
+    },
+    "running-bank": {
+        key: "running-bank",
+        position: 5,
+        name: "Start your funding bank",
+        description: "Start up your funding bank to let campaigns reward users",
+        documentationLink:
+            "https://docs.frak.id/business/product/config/funds#campaigns-funding-status",
         resolvingPage: "/product/[productId]/funding",
     },
     "add-campaign": {
         key: "add-campaign",
-        position: 5,
-        name: "Add a campaign",
-        description: "Create your first mouth to mouth campaign",
-        logo: Crosshair,
+        position: 6,
+        name: "Create your first campaign",
+        description: "Create your first word-of-mouth acquisition campaign",
+        documentationLink: "https://docs.frak.id/business/campaign/create",
         resolvingPage: "/campaigns/new",
     },
 };

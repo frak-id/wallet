@@ -94,6 +94,7 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                         {!detailsData?.interactionContract &&
                             isInteractionManager && (
                                 <Button
+                                    id={"deployInteraction"}
                                     variant={"submit"}
                                     onClick={() =>
                                         setupInteractionContract({
@@ -270,6 +271,7 @@ function ManagedInteractionValidator({
                     variant={"submit"}
                     onClick={() => changeValidatorAllowance({ allow: true })}
                     className={styles.interactionSettings__button}
+                    id={"allowInteractionDelegator"}
                 >
                     Grant permissions
                 </Button>
