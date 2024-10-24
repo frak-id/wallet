@@ -11,7 +11,7 @@ export function Header() {
         <header className={styles.header}>
             <h1 className={styles.header__title}>
                 <Link to={"/"} viewTransition className={styles.header__link}>
-                    <img src={logo} alt="Good Vibes" />
+                    <img src={logo} alt="Good Vibes" width={221} height={31} />
                 </Link>
             </h1>
             {isHydrated && <Lottie className={styles.header__lottie} />}
