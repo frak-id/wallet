@@ -37,7 +37,11 @@ List.Item = ListItem;
 function ItemTop({ news }: { news: LightNews }) {
     const { id, title } = news;
     return (
-        <Link className={styles.listItem__link} to={`/article?id=${id}`}>
+        <Link
+            viewTransition
+            className={styles.listItem__link}
+            to={`/article?id=${id}`}
+        >
             <h2 className={styles.listItem__titleTop}>{title}</h2>
         </Link>
     );
@@ -46,7 +50,11 @@ function ItemTop({ news }: { news: LightNews }) {
 function ItemWithoutSummary({ news }: { news: LightNews }) {
     const { id, image, title } = news;
     return (
-        <Link className={styles.listItem__link} to={`/article?id=${id}`}>
+        <Link
+            className={styles.listItem__link}
+            to={`/article?id=${id}`}
+            viewTransition
+        >
             <ImageRemote
                 image={image}
                 title={title}
@@ -62,7 +70,11 @@ function ItemWithoutSummary({ news }: { news: LightNews }) {
 function ItemWithSummary({ news }: { news: LightNews }) {
     const { id, image, title, summary } = news;
     return (
-        <Link className={styles.listItem__linkSummary} to={`/article?id=${id}`}>
+        <Link
+            className={styles.listItem__linkSummary}
+            to={`/article?id=${id}`}
+            viewTransition
+        >
             <h2 className={styles.listItem__title}>{title}</h2>
             <span className={styles.listItem__contentSummary}>
                 <p className={styles.listItem__textSummary}>{summary}</p>
@@ -81,7 +93,11 @@ function ItemWithSummary({ news }: { news: LightNews }) {
 export function ItemSwiper({ news }: { news: LightNews }) {
     const { id, title, image } = news;
     return (
-        <Link to={`/article?id=${id}`} className={styles.listItemSwiper}>
+        <Link
+            to={`/article?id=${id}`}
+            viewTransition
+            className={styles.listItemSwiper}
+        >
             <ImageRemote
                 image={image}
                 title={title}

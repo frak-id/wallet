@@ -27,7 +27,9 @@ export const Hero = forwardRef<
             {isArticle ? (
                 <span>{Content}</span>
             ) : (
-                <Link to={`/article?id=${id}`}>{Content}</Link>
+                <Link to={`/article?id=${id}`} viewTransition>
+                    {Content}
+                </Link>
             )}
         </div>
     );

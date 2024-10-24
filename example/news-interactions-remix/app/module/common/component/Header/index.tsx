@@ -8,7 +8,7 @@ export function Header() {
     return (
         <header className={styles.header}>
             <h1 className={styles.header__title}>
-                <Link to={"/"} className={styles.header__link}>
+                <Link to={"/"} viewTransition className={styles.header__link}>
                     <img src={logo} alt="Good Vibes" />
                 </Link>
             </h1>
