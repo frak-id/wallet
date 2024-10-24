@@ -1,4 +1,5 @@
-import type { LinksFunction } from "@remix-run/node";
+import allCssUrl from "@/styles/all.css?url";
+import type { LinksFunction, MetaFunction } from "@remix-run/node";
 import {
     Links,
     Meta,
@@ -11,9 +12,74 @@ import {
 import type { ReactNode } from "react";
 import { MainLayout } from "./module/common/component/MainLayout";
 import { RootProvider } from "./module/common/provider/RootProvider";
-import "@/styles/all.css";
+
+export const meta: MetaFunction = () => {
+    return [
+        { title: "Good Vibes by Frak" },
+        { name: "application-name", content: "Good Vibes - Frak" },
+        {
+            name: "description",
+            content: "Good Vibes website using Frak Wallet.",
+        },
+        {
+            name: "author",
+            content: "Frak labs",
+        },
+        {
+            name: "author",
+            content: "Rodolphe Stoclin",
+        },
+        {
+            name: "author",
+            content: "Quentin Nivelais",
+        },
+        {
+            name: "creator",
+            content: "Frak labs",
+        },
+        {
+            name: "publisher",
+            content: "Frak labs",
+        },
+        {
+            name: "theme-color",
+            content: "#ffffff",
+        },
+        {
+            name: "keywords",
+            content: "frak, wallet, frak-wallet, blockchain",
+        },
+    ];
+};
 
 export const links: LinksFunction = () => [
+    {
+        rel: "icon",
+        href: "/favicons/favicon.ico",
+        sizes: "48x48",
+    },
+    {
+        rel: "apple-touch-icon",
+        href: "/favicons/icon-192.png",
+        type: "image/png",
+    },
+    {
+        rel: "manifest",
+        href: "/manifest.json",
+        crossOrigin: "use-credentials",
+    },
+    {
+        rel: "author",
+        href: "https://frak.id/",
+    },
+    {
+        rel: "author",
+        href: "https://github.com/srod",
+    },
+    {
+        rel: "author",
+        href: "https://github.com/KONFeature",
+    },
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
     {
         rel: "preconnect",
@@ -22,7 +88,11 @@ export const links: LinksFunction = () => [
     },
     {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap",
+    },
+    {
+        rel: "stylesheet",
+        href: allCssUrl,
     },
 ];
 
