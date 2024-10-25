@@ -1,5 +1,5 @@
 import type { NexusWalletSdkConfig } from "../types";
-import { hideButtonShare } from "./buttonShare";
+import { disableButtonShare } from "./buttonShare";
 
 /**
  * Base props for the iframe
@@ -31,7 +31,7 @@ export function createIframe({
     HTMLIFrameElement | undefined
 > {
     // Hide the share button by default until the iframe is loaded and connected
-    hideButtonShare(config);
+    disableButtonShare(config);
 
     // Check if the iframe is already created
     const alreadyCreatedIFrame = document.querySelector("#nexus-wallet");

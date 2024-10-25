@@ -4,33 +4,39 @@ import type { NexusWalletSdkConfig } from "../types";
  * Get the button share element
  * @param selector
  */
-const getButtonShare = (selector = "#nexus-wallet-button"): Element | null =>
-    document.querySelector(selector);
+const getButtonShare = (
+    selector = "#nexus-share-button > button"
+): Element | null => document.querySelector(selector);
 
 /**
- * Set the button opacity
- * @param opacity
+ * Set the button disabled
+ * @param disabled
  * @param button
  */
-const setButtonOpacity = (opacity: number, button: Element | null) =>
-    button?.setAttribute("style", `opacity: ${opacity};`);
+const setButtonDisabled = (disabled: boolean, button: Element | null) => {
+    if (disabled) {
+        button?.removeAttribute("disabled");
+        return;
+    }
+    button?.setAttribute("disabled", "");
+};
 
 /**
- * Toggle the button visibility
- * @param opacity
+ * Toggle the button attribute disabled
+ * @param disabled
  */
-const toggleButtonVisibility =
-    (opacity: number) => (config?: NexusWalletSdkConfig) => {
+const toggleButtonDisabled =
+    (disabled: boolean) => (config?: NexusWalletSdkConfig) => {
         const button = getButtonShare(config?.metadata?.buttonShare);
-        setButtonOpacity(opacity, button);
+        setButtonDisabled(disabled, button);
     };
 
 /**
- * Show the button share
+ * Enable the button share
  */
-export const showButtonShare = toggleButtonVisibility(1);
+export const enableButtonShare = toggleButtonDisabled(true);
 
 /**
- * Hide the button share
+ * Disable the button share
  */
-export const hideButtonShare = toggleButtonVisibility(0);
+export const disableButtonShare = toggleButtonDisabled(false);

@@ -9,7 +9,7 @@ import type {
     RpcResponse,
 } from "../types/transport";
 import { Deferred } from "../utils/Deferred";
-import { showButtonShare } from "../utils/buttonShare";
+import { enableButtonShare } from "../utils/buttonShare";
 import {
     decompressDataAndCheckHash,
     hashAndCompressData,
@@ -188,7 +188,7 @@ export async function postConnectionSetup({
     await lifecycleManager.isConnected;
 
     // Show the share button
-    showButtonShare(config);
+    enableButtonShare(config);
 
     // Push raw CSS if needed
     const pushCss = async () => {
