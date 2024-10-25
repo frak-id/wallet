@@ -10,6 +10,8 @@ export type NexusWalletSdkConfig = Readonly<{
         name: string;
         // Your app styles to skin modals / sso
         css?: string;
+        // Your button to trigger the wallet share modal
+        buttonShare?: string;
     };
     // Your domain (will be retrieved automatically if not provided)
     domain: string;

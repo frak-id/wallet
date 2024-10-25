@@ -9,6 +9,7 @@ import type {
     RpcResponse,
 } from "../types/transport";
 import { Deferred } from "../utils/Deferred";
+import { showButtonShare } from "../utils/buttonShare";
 import {
     decompressDataAndCheckHash,
     hashAndCompressData,
@@ -157,6 +158,9 @@ export function createIFrameNexusClient({
         messageHandler,
         lifecycleManager,
     });
+
+    // Show the share button when connected
+    lifecycleManager.isConnected.then(() => showButtonShare(config));
 
     return {
         config,
