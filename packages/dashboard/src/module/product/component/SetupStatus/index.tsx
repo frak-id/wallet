@@ -51,7 +51,7 @@ function SetupStatusItems({
 
                 {items.map((item, index) => (
                     <SetupStatusItem
-                        key={item.key}
+                        key={item.key + index.toString()}
                         item={item}
                         position={index + 1}
                     />
@@ -74,7 +74,7 @@ function OverallStatus({ hasWarning }: { hasWarning: boolean }) {
         <CallOut variant={"warning"}>
             Some items need your attention.
             <br />
-            Please review them and resolve the warnings before going live.
+            Please review and complete them.
         </CallOut>
     );
 }
@@ -128,7 +128,7 @@ function WarningStatusItem({
                     variant={"information"}
                     onClick={() => navigateWithTransition(item.resolvingPage)}
                 >
-                    Resolve Issue
+                    Complete this step
                 </Button>
                 {item.documentationLink && (
                     <a

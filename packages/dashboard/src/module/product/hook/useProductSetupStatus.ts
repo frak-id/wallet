@@ -23,6 +23,10 @@ type SetupStatusItemKey =
     | "interaction-setup"
     // Is the managed interaction validation allowed?
     | "delegated-interaction"
+    // Is the oracle updater allowed?
+    | "oracle-updater-allowed"
+    // Is the purchase webhook setup correctly?
+    | "webhook-setup"
     // Does the product has funding?
     | "add-funding"
     // Does the product has a running funding bank?
@@ -109,14 +113,16 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
     });
 
     // Query fetching the setup steps around a purchase product
-    const { data: oracleUpdater } = useGetAdminWallet({
-        key: "oracle-updater",
-    });
+    const { data: oracleUpdater, isSuccess: isOracleUpdaterSuccess } =
+        useGetAdminWallet({
+            key: "oracle-updater",
+        });
     const {
         data: purchaseRelatedSteps,
         isSuccess: isPurchaseRelatedStepsSuccess,
     } = useQuery({
-        enabled: !!productId && isProductMetadataSuccess,
+        enabled:
+            !!productId && isProductMetadataSuccess && isOracleUpdaterSuccess,
         queryKey: ["product", "setup-status", "purchase", productId],
         queryFn: async () => {
             // If it doesn't include purchase type, early exit
@@ -134,20 +140,22 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
             });
 
             // Check if the updater is allowed on this product
-            const isOracleUpdaterAllowed = await readContract(viemClient, {
-                abi: productAdministratorRegistryAbi,
-                address: addresses.productAdministratorRegistry,
-                functionName: "hasAllRolesOrOwner",
-                args: [
-                    BigInt(productId),
-                    oracleUpdater,
-                    productRoles.purchaseOracleUpdater,
-                ],
-            });
-            steps.push({
-                isGood: isOracleUpdaterAllowed,
-                ...baseSteps["oracle-updater-allowed"],
-            });
+            if (oracleUpdater) {
+                const isOracleUpdaterAllowed = await readContract(viemClient, {
+                    abi: productAdministratorRegistryAbi,
+                    address: addresses.productAdministratorRegistry,
+                    functionName: "hasAllRolesOrOwner",
+                    args: [
+                        BigInt(productId),
+                        oracleUpdater,
+                        productRoles.purchaseOracleUpdater,
+                    ],
+                });
+                steps.push({
+                    isGood: isOracleUpdaterAllowed,
+                    ...baseSteps["oracle-updater-allowed"],
+                });
+            }
             return steps;
         },
     });
@@ -232,67 +240,72 @@ const baseSteps: Record<
 > = {
     "other-admin": {
         key: "other-admin",
-        name: "Add another admin",
-        description: "Add another admin to the product for better security",
+        name: "Add an Additional Admin",
+        description:
+            "Enhance your product's security and manageability by adding another admin. This will help ensure multiple team members can oversee the product's settings, campaigns, and integrations, maintaining continuity and strengthening access control.",
         documentationLink:
             "https://docs.frak.id/business/product/config/team#adding-a-new-member",
         resolvingPage: "/product/[productId]/team",
     },
     "interaction-setup": {
         key: "interaction-setup",
-        name: "Create the interaction/CRM event contract",
-        description: "Create an on-chain CRM receiver for your Product",
+        name: "Create Interaction/CRM Event Contract",
+        description:
+            "Deploy an on-chain CRM event contract to enable this product to record and manage interactions securely on the blockchain. This setup allows you to capture real-time user engagement data, facilitating insights for targeted campaigns and rewards.",
         documentationLink:
             "https://docs.frak.id/business/product/config/edit#interaction-settings",
-        resolvingPage: "/product/[productId]#deployInteraction",
+        resolvingPage: "/product/[productId]#interactionSettings",
     },
     "delegated-interaction": {
         key: "delegated-interaction",
-        name: "Allow Interaction/CRM validator",
-        description: "Allow Frak to submit user interactions for your Product",
+        name: "Authorize Interaction/CRM Validator",
+        description:
+            "Grant Frak the ability to log and manage interactions on your behalf, simplifying the process of tracking engagement for this product. By authorizing Frak as an Interaction/CRM validator, you’ll streamline data management for your campaigns.",
         documentationLink:
             "https://docs.frak.id/business/product/config/edit#interaction-settings",
-        resolvingPage: "/product/[productId]#allowInteractionDelegator",
+        resolvingPage: "/product/[productId]#interactionSettings",
     },
     "oracle-updater-allowed": {
         key: "oracle-updater-allowed",
-        name: "Allow Frak to validate Purchase",
+        name: "Authorize Purchase Validation",
         description:
-            "Allow the Frak system to validate the purchase made by your users on the blockchain.",
+            "Enable Frak to validate each purchase made by users on the blockchain. By authorizing purchase validation, you can automate reward distribution and ensure secure, tamper-proof tracking of user transactions for your product.",
         documentationLink:
             "https://docs.frak.id/business/product/config/edit#interaction-settings",
-        resolvingPage: "/product/[productId]#allowOracleUpdater",
+        resolvingPage: "/product/[productId]#purchaseTracker",
     },
     "webhook-setup": {
-        key: "delegated-interaction",
-        name: "Webhook setup with your purchase platform",
+        key: "webhook-setup",
+        name: "Setup Purchase Webhook",
         description:
-            "Setup a webhook to let Frak receive and validate purchase events, to be able to reward users upon purchase",
+            "Configure a webhook between your purchase platform and Frak to seamlessly relay purchase events. This setup lets Frak validate purchases and initiate rewards, ensuring a smooth experience for your users when they make qualifying purchases.",
         documentationLink:
             "https://docs.frak.id/business/product/config/edit#interaction-settings",
-        resolvingPage: "/product/[productId]#setupWebhook",
+        resolvingPage: "/product/[productId]#purchaseTracker",
     },
     "add-funding": {
         key: "add-funding",
-        name: "Add funds for your product",
+        name: "Add Product Funding",
         description:
-            "Add funding to your product to create your first campaigns",
+            "Fund your product to activate campaigns and provide rewards for successful engagements. By adding funds, you set up the financial backbone for your campaigns, ensuring users are rewarded for their interactions and contributions.",
         documentationLink:
             "https://docs.frak.id/business/product/config/funds#adding-funds",
         resolvingPage: "/product/[productId]/funding",
     },
     "running-bank": {
         key: "running-bank",
-        name: "Start your funding bank",
-        description: "Start up your funding bank to let campaigns reward users",
+        name: "Activate Funding Bank",
+        description:
+            "Initialize the funding bank to make funds available for campaigns, allowing the system to allocate rewards automatically. Activating your funding bank ensures that your campaigns are ready to incentivize users as soon as they engage with your product.",
         documentationLink:
             "https://docs.frak.id/business/product/config/funds#campaigns-funding-status",
         resolvingPage: "/product/[productId]/funding",
     },
     "add-campaign": {
         key: "add-campaign",
-        name: "Launch a campaign",
-        description: "Launch a word-of-mouth acquisition campaign",
+        name: "Launch Campaign",
+        description:
+            "Kick off a word-of-mouth acquisition campaign to drive user engagement and expand product reach. Campaigns let you harness the power of referrals by rewarding users for sharing your product, turning satisfied customers into active promoters.",
         documentationLink: "https://docs.frak.id/business/campaign/create",
         resolvingPage: "/campaigns/new",
     },

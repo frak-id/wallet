@@ -39,6 +39,7 @@ export function PurchaseOracleSetup({ productId }: { productId: Hex }) {
     return (
         <PanelAccordion
             title="Purchase Tracker"
+            id={"purchaseTracker"}
             className={styles.purchaseOracleSetup}
         >
             <p className={styles.purchaseOracleSetup__description}>
@@ -131,9 +132,7 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
             </Columns>
             <Columns>
                 <Column size={"full"} style={{ width: "100%" }}>
-                    <Title as={"h3"} id={"setupWebhook"}>
-                        Webhook status
-                    </Title>
+                    <Title as={"h3"}>Webhook status</Title>
                     <p>
                         <Badge
                             variant={
@@ -286,7 +285,6 @@ function ToggleOracleUpdaterRole({
 
     return (
         <Button
-            id={"allowOracleUpdater"}
             variant={"submit"}
             onClick={() =>
                 sendTx({
