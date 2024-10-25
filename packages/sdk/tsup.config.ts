@@ -5,10 +5,10 @@ export default defineConfig([
     {
         // All of our entry-points
         entry: [
-            "src/core/index.tsx",
-            "src/core/actions/index.tsx",
-            "src/core/interactions/index.tsx",
-            "src/react/index.tsx",
+            "src/core/index.ts",
+            "src/core/actions/index.ts",
+            "src/core/interactions/index.ts",
+            "src/react/index.ts",
         ],
         external: [
             // Mark react as external dependencies
