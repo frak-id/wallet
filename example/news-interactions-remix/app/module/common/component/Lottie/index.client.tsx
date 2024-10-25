@@ -18,7 +18,7 @@ export function Lottie({ className }: { className?: string }) {
         <div
             className={`${className} ${playerState === "complete" ? styles.lottie__complete : ""}`}
         >
-            <Link to={process.env.FRAK_WALLET_URL as string} target={"_blank"}>
+            <Link to={window?.ENV?.FRAK_WALLET_URL as string} target={"_blank"}>
                 <Player
                     src={lottie}
                     autoplay
