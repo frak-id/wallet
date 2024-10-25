@@ -13,10 +13,7 @@ function isBrowser(): boolean {
  * @returns {Env}
  */
 export function getEnv(): Env {
-    if (isBrowser()) {
-        if (typeof window.ENV === "undefined") {
-            throw new Error("Environment variables not initialized in browser");
-        }
+    if (isBrowser() && typeof window.ENV !== "undefined") {
         return window.ENV;
     }
 
