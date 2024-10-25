@@ -1,7 +1,7 @@
 {
   "name": "@frak-labs-example/news-interactions",
   "version": "0.0.1",
-  "description": "Demo of a news paper website using the Frak SDK to sniff user interactions",
+  "description": "Demo of a news paper website using the Frak SDK",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -35,7 +35,7 @@
     "remix-utils": "^7.7.0",
     "swiper": "^11.1.14",
     "use-dehydrated-state": "^0.1.0",
-    "viem": "^2.21.29"
+    "viem": "^2.21.35"
   },
   "devDependencies": {
     "@originjs/vite-plugin-commonjs": "^1.0.3",

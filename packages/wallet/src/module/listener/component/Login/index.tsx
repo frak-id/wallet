@@ -102,7 +102,7 @@ export function LoginModalStep({
                                 .requestStorageAccess()
                                 .then(getSharedStorageAccessStatus)
                                 .then(async (hasAccess) => {
-                                    // Check for sotrage access post request
+                                    // Check for storage access post request
                                     if (hasAccess) {
                                         const session =
                                             await mutateAsyncUpdateSessionStatus();
@@ -110,9 +110,19 @@ export function LoginModalStep({
                                             onFinish({
                                                 wallet: session.address,
                                             });
-                                            return;
+                                            return false;
                                         }
                                     }
+
+                                    // Tell that we should login here
+                                    return true;
+                                })
+                                .catch(() => {
+                                    // If we failed to get storage access, we need to login
+                                    return true;
+                                })
+                                .then(async (shouldLogin) => {
+                                    if (!shouldLogin) return;
 
                                     // If we are here, we need to login
                                     await login({});

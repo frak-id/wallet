@@ -5,7 +5,9 @@ import { getErpcTransport } from "./transport/erpc-transport";
 /**
  * Get the transport for the given chain
  */
-export function getTransport({ chain }: { chain: Chain }) {
+export function getTransport<TChain extends Chain>({
+    chain,
+}: { chain: TChain }) {
     const erpcTransport = getErpcTransport({ chain });
     const alchemyTransport = getAlchemyTransport({ chain });
     if (!erpcTransport) {
@@ -17,7 +19,9 @@ export function getTransport({ chain }: { chain: Chain }) {
 /**
  * Get the viem client for the given chain
  */
-export function getViemClientFromChain({ chain }: { chain: Chain }) {
+export function getViemClientFromChain<TChain extends Chain>({
+    chain,
+}: { chain: TChain }) {
     return createClient({
         chain,
         transport: getTransport({ chain }),
