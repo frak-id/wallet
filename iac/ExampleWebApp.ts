@@ -37,6 +37,20 @@ export function ExampleAppStack({ stack }: StackContext) {
         },
     });
 
+    const ethCCDemoRemix = new RemixSite(stack, "walletExampleEthCCRemix", {
+        path: "example/wallet-ethcc-remix",
+        // Set the custom domain
+        customDomain: {
+            domainName: "ethcc-remix.news-paper.xyz",
+            hostedZone: "news-paper.xyz",
+        },
+        // Environment variables
+        environment: {
+            FRAK_WALLET_URL: frakWalletUrl.value,
+            STAGE: stack.stage,
+        },
+    });
+
     // Declare the remix site on news-paper.xyz
     const newsInteractionDemo = new RemixSite(stack, "newsInteractionDemo", {
         path: "example/news-interactions",
@@ -54,6 +68,7 @@ export function ExampleAppStack({ stack }: StackContext) {
 
     stack.addOutputs({
         NewsSiteUrl: ethCCDemo.url,
+        NewsSiteUrlRemix: ethCCDemoRemix.url,
         NewsInteractionSiteUrl: newsInteractionDemo.url,
     });
 }

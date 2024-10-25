@@ -1,0 +1,36 @@
+{
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/.server/**/*.ts",
+    "**/.server/**/*.tsx",
+    "**/.client/**/*.ts",
+    "**/.client/**/*.tsx",
+    "../../packages/shared/types/*.d.ts"
+  ],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "types": ["@remix-run/node", "vite/client"],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "target": "ES2022",
+    "strict": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./app/*"],
+      "@/public/*": ["./public/*"],
+      "@module/*": ["../../packages/shared/module/*"],
+      "@backend-utils": ["../../packages/backend-elysia/src/utils/index.ts"],
+      "@backend-common": ["../../packages/backend-elysia/src/common/index.ts"],
+      "@backend-common/*": ["../../packages/backend-elysia/src/common/*"]
+    },
+    "noEmit": true
+  }
+}
