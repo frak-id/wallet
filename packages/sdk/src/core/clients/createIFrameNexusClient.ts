@@ -159,9 +159,6 @@ export function createIFrameNexusClient({
         lifecycleManager,
     });
 
-    // Show the share button when connected
-    lifecycleManager.isConnected.then(() => showButtonShare(config));
-
     return {
         config,
         waitForConnection: lifecycleManager.isConnected,
@@ -189,6 +186,9 @@ export async function postConnectionSetup({
 }): Promise<void> {
     // Wait for the handler to be connected
     await lifecycleManager.isConnected;
+
+    // Show the share button
+    showButtonShare(config);
 
     // Push raw CSS if needed
     const pushCss = async () => {
