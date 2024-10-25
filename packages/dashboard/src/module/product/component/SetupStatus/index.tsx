@@ -49,8 +49,12 @@ function SetupStatusItems({
             <Row>
                 <OverallStatus hasWarning={hasWarning} />
 
-                {items.map((item) => (
-                    <SetupStatusItem key={item.key} item={item} />
+                {items.map((item, index) => (
+                    <SetupStatusItem
+                        key={item.key}
+                        item={item}
+                        position={index + 1}
+                    />
                 ))}
             </Row>
         </div>
@@ -75,19 +79,25 @@ function OverallStatus({ hasWarning }: { hasWarning: boolean }) {
     );
 }
 
-function SetupStatusItem({ item }: { item: ProductSetupStatusItem }) {
+function SetupStatusItem({
+    item,
+    position,
+}: { item: ProductSetupStatusItem; position: number }) {
     if (item.isGood) {
-        return <SuccessStatusItem item={item} />;
+        return <SuccessStatusItem item={item} position={position} />;
     }
 
-    return <WarningStatusItem item={item} />;
+    return <WarningStatusItem item={item} position={position} />;
 }
 
-function SuccessStatusItem({ item }: { item: ProductSetupStatusItem }) {
+function SuccessStatusItem({
+    item,
+    position,
+}: { item: ProductSetupStatusItem; position: number }) {
     return (
         <div className={styles.stepItem}>
             <div className={styles.header}>
-                <span className={styles.stepPosition}>{item.position}</span>
+                <span className={styles.stepPosition}>{position}</span>
                 <span className={styles.stepName}>
                     {item.name}
                     <BadgeCheck className={styles.icon} />
@@ -98,12 +108,15 @@ function SuccessStatusItem({ item }: { item: ProductSetupStatusItem }) {
     );
 }
 
-function WarningStatusItem({ item }: { item: ProductSetupStatusItem }) {
+function WarningStatusItem({
+    item,
+    position,
+}: { item: ProductSetupStatusItem; position: number }) {
     const { navigateWithTransition } = useAnimatedRouter();
     return (
         <div className={styles.stepItem}>
             <div className={styles.header}>
-                <span className={styles.stepPosition}>{item.position}</span>
+                <span className={styles.stepPosition}>{position}</span>
                 <span className={styles.stepName}>
                     {item.name}
                     <AlertCircle className={styles.iconWarning} />

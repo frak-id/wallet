@@ -4,6 +4,7 @@ import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
+import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
 import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
 import { useProductInteractionContract } from "@/module/product/hook/useProductInteractionContract";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
@@ -14,7 +15,6 @@ import {
     productInteractionManagerAbi,
 } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
-import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { AlertDialog } from "@module/component/AlertDialog";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
@@ -22,7 +22,6 @@ import { WalletAddress } from "@module/component/HashDisplay";
 import { Spinner } from "@module/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { all } from "radash";
 import { useState } from "react";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 import { generatePrivateKey } from "viem/accounts";
@@ -154,8 +153,13 @@ function ManagedInteractionValidator({
     interactionContract,
 }: { productId: Hex; interactionContract: Address }) {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
+    const { data: productValidator } = useGetAdminWallet({ productId });
+    const { data: interactionExecutor } = useGetAdminWallet({
+        key: "interaction-executor",
+    });
 
     const { data, isLoading, refetch } = useQuery({
+        enabled: !!productValidator,
         queryKey: [
             "product",
             "managed-interaction-validator",
@@ -163,29 +167,17 @@ function ManagedInteractionValidator({
             productId,
         ],
         queryFn: async () => {
-            const { productResult, interactionExecutorResult } = await all({
-                productResult: backendApi.common.adminWallet.get({
-                    query: { productId },
-                }),
-                interactionExecutorResult: backendApi.common.adminWallet.get({
-                    query: { key: "interaction-executor" },
-                }),
-            });
-
-            if (!productResult?.data?.pubKey) {
+            if (!productValidator) {
                 return null;
             }
-            const validatorPublicKey = productResult.data.pubKey;
             const hasValidatorRoles = await readContract(viemClient, {
                 abi: productInteractionDiamondAbi,
                 address: interactionContract,
                 functionName: "hasAllRoles",
-                args: [validatorPublicKey, interactionValidatorRoles],
+                args: [productValidator, interactionValidatorRoles],
             });
             return {
-                validatorPublicKey,
-                interactionExecutorPubKey:
-                    interactionExecutorResult?.data?.pubKey,
+                productValidator,
                 hasValidatorRoles,
             };
         },
@@ -202,7 +194,7 @@ function ManagedInteractionValidator({
             "update-permissions",
         ],
         mutationFn: async ({ allow }: { allow: boolean }) => {
-            if (!data?.validatorPublicKey) {
+            if (!productValidator) {
                 return;
             }
 
@@ -212,10 +204,7 @@ function ManagedInteractionValidator({
                     data: encodeFunctionData({
                         abi: productInteractionDiamondAbi,
                         functionName: allow ? "grantRoles" : "revokeRoles",
-                        args: [
-                            data.validatorPublicKey,
-                            interactionValidatorRoles,
-                        ],
+                        args: [productValidator, interactionValidatorRoles],
                     }),
                 },
                 metadata: {
@@ -251,10 +240,10 @@ function ManagedInteractionValidator({
                 )}
             </p>
 
-            {data.validatorPublicKey && (
+            {data.productValidator && (
                 <p>
                     <strong>Public Key: </strong>{" "}
-                    <WalletAddress wallet={data.validatorPublicKey} />
+                    <WalletAddress wallet={data.productValidator} />
                 </p>
             )}
 
@@ -284,10 +273,10 @@ function ManagedInteractionValidator({
                 generating ECDSA signatures.
             </CallOut>
 
-            {data.interactionExecutorPubKey && (
+            {interactionExecutor && (
                 <p>
                     <strong>Interaction executor: </strong>{" "}
-                    <WalletAddress wallet={data.interactionExecutorPubKey} />
+                    <WalletAddress wallet={interactionExecutor} />
                 </p>
             )}
         </>

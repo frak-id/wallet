@@ -2,6 +2,7 @@ import { viemClient } from "@/context/blockchain/provider";
 import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
+import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
 import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
 import { Form, FormLabel } from "@/module/forms/Form";
 import {
@@ -56,18 +57,15 @@ export function PurchaseOracleSetup({ productId }: { productId: Hex }) {
  */
 function ProductOracleSetupInner({ productId }: { productId: Hex }) {
     const { isAdministrator } = useHasRoleOnProduct({ productId });
+    const { data: oracleUpdater } = useGetAdminWallet({
+        key: "oracle-updater",
+    });
     // Fetch some data about the current oracle setup
     const { data: oracleSetupData, refetch: refresh } = useQuery({
+        enabled: !!oracleUpdater,
         queryKey: ["product", "oracle-setup-data"],
         queryFn: async () => {
-            // Get the oracle updater address
-            const { data: oracleUpdater } =
-                await backendApi.common.adminWallet.get({
-                    query: {
-                        key: "oracle-updater",
-                    },
-                });
-            if (!oracleUpdater?.pubKey) {
+            if (!oracleUpdater) {
                 return null;
             }
 
@@ -83,13 +81,13 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
                 functionName: "hasAllRolesOrOwner",
                 args: [
                     BigInt(productId),
-                    oracleUpdater.pubKey,
+                    oracleUpdater,
                     productRoles.purchaseOracleUpdater,
                 ],
             });
 
             return {
-                oracleUpdater: oracleUpdater.pubKey,
+                oracleUpdater: oracleUpdater,
                 isOracleUpdaterAllowed,
                 isWebhookSetup: webhookStatus?.setup,
                 webhookUrl: `${process.env.BACKEND_URL}/oracle/shopify/${productId}/hook`,
@@ -133,7 +131,9 @@ function ProductOracleSetupInner({ productId }: { productId: Hex }) {
             </Columns>
             <Columns>
                 <Column size={"full"} style={{ width: "100%" }}>
-                    <Title as={"h3"}>Webhook status</Title>
+                    <Title as={"h3"} id={"setupWebhook"}>
+                        Webhook status
+                    </Title>
                     <p>
                         <Badge
                             variant={
@@ -286,6 +286,7 @@ function ToggleOracleUpdaterRole({
 
     return (
         <Button
+            id={"allowOracleUpdater"}
             variant={"submit"}
             onClick={() =>
                 sendTx({
