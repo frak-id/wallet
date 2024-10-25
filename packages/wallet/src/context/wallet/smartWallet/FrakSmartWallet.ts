@@ -300,7 +300,7 @@ export async function frakWalletSmartAccount<
                 }
 
                 const [, estimation] = await tryit(() =>
-                    estimateGas(client as typeof currentViemClient, {
+                    estimateGas(client as unknown as typeof currentViemClient, {
                         account: userOperation.sender ?? accountAddress,
                         to: userOperation.sender ?? accountAddress,
                         data: userOperation.callData as Hex,
