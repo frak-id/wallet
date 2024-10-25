@@ -4,7 +4,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
     server: {
-        port: 3013,
+        port: 3011,
     },
     plugins: [remix(), tsconfigPaths()],
 });

@@ -1,5 +1,5 @@
 {
-  "name": "@frak-labs-example/news-interactions-remix",
+  "name": "@frak-labs-example/news-interactions",
   "version": "0.0.1",
   "description": "Demo of a news paper website using the Frak SDK to sniff user interactions",
   "private": true,

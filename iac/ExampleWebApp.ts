@@ -37,45 +37,23 @@ export function ExampleAppStack({ stack }: StackContext) {
         },
     });
 
-    // Declare the next js site on news-paper.xyz
-    // Use it for the ETH-CC demo
-    const newsInteractionDemo = new NextjsSite(stack, "newsInteractionDemo", {
+    // Declare the remix site on news-paper.xyz
+    const newsInteractionDemo = new RemixSite(stack, "newsInteractionDemo", {
         path: "example/news-interactions",
-        // Bind to the configs
-        bind: [frakWalletUrl, backendUrl],
-        openNextVersion: openNextVersion,
         // Set the custom domain
         customDomain: {
             domainName: "news-paper.xyz",
             hostedZone: "news-paper.xyz",
         },
-        // Enable image optimization
-        imageOptimization: {
-            memorySize: 512,
-            staticImageOptimization: true,
+        // Environment variables
+        environment: {
+            FRAK_WALLET_URL: frakWalletUrl.value,
+            BACKEND_URL: backendUrl.value,
         },
     });
-
-    const newsInteractionDemoRemix = new RemixSite(
-        stack,
-        "newsInteractionDemoRemix",
-        {
-            path: "example/news-interactions-remix",
-            // Set the custom domain
-            customDomain: {
-                domainName: "news-paper-remix.frak.id",
-                hostedZone: "frak.id",
-            },
-            environment: {
-                FRAK_WALLET_URL: frakWalletUrl.value,
-                BACKEND_URL: backendUrl.value,
-            },
-        }
-    );
 
     stack.addOutputs({
         NewsSiteUrl: ethCCDemo.url,
         NewsInteractionSiteUrl: newsInteractionDemo.url,
-        NewsInteractionRemixSiteUrl: newsInteractionDemoRemix.url,
     });
 }
