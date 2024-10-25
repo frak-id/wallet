@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.22
+
+### Patch Changes
+
+- [`d10d058`](https://github.com/frak-id/wallet/commit/d10d05891bb2bf4f38a3a05edac023251e4133aa) Thanks [@srod](https://github.com/srod)! - Disable share button until iframe is ready
+
 ## 0.0.21
 
 ### Patch Changes
