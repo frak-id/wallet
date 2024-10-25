@@ -154,7 +154,7 @@ export function recoverySmartAccount<
                 }
 
                 const [, estimation] = await tryit(() =>
-                    estimateGas(client as typeof currentViemClient, {
+                    estimateGas(client as unknown as typeof currentViemClient, {
                         account: userOperation.sender ?? initialWallet.address,
                         to: userOperation.sender ?? initialWallet.address,
                         data: userOperation.callData as Hex,

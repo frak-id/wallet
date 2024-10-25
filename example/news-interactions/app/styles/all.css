@@ -1,0 +1,5 @@
+@import "normalize.css/normalize.css";
+@import "@frak-labs/shared/module/styles/colors.css";
+@import "colors-app.css";
+@import "@frak-labs/shared/module/styles/global.css";
+@import "global.css";

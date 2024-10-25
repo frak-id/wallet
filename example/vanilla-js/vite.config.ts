@@ -5,6 +5,9 @@ const projectRootDir = resolve(__dirname);
 const bundleDir = resolve(projectRootDir, "../../packages/sdk/dist/bundle");
 
 export default defineConfig({
+    server: {
+        port: 3013,
+    },
     plugins: [
         {
             name: "html-transform",

@@ -1,6 +1,6 @@
 import { use } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
-import { NextjsSite } from "sst/constructs";
+import { NextjsSite, RemixSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
 import { isProdStack, openNextVersion } from "./utils";
 
@@ -37,22 +37,18 @@ export function ExampleAppStack({ stack }: StackContext) {
         },
     });
 
-    // Declare the next js site on news-paper.xyz
-    // Use it for the ETH-CC demo
-    const newsInteractionDemo = new NextjsSite(stack, "newsInteractionDemo", {
+    // Declare the remix site on news-paper.xyz
+    const newsInteractionDemo = new RemixSite(stack, "newsInteractionDemo", {
         path: "example/news-interactions",
-        // Bind to the configs
-        bind: [frakWalletUrl, backendUrl],
-        openNextVersion: openNextVersion,
         // Set the custom domain
         customDomain: {
             domainName: "news-paper.xyz",
             hostedZone: "news-paper.xyz",
         },
-        // Enable image optimization
-        imageOptimization: {
-            memorySize: 512,
-            staticImageOptimization: true,
+        // Environment variables
+        environment: {
+            FRAK_WALLET_URL: frakWalletUrl.value,
+            BACKEND_URL: backendUrl.value,
         },
     });
 

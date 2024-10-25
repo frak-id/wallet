@@ -29,7 +29,7 @@
     "radash": "^12.1.0",
     "react": "^18",
     "react-dom": "^18",
-    "viem": "^2.21.29"
+    "viem": "^2.21.35"
   },
   "devDependencies": {
     "@types/node": "^22",

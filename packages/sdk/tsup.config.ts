@@ -16,7 +16,9 @@ export default defineConfig([
             "react-dom",
             // Viem is also a peer dependency
             "viem",
+            "@tanstack/react-query",
         ],
+        noExternal: ["async-lz-string"],
         // Format waited
         format: ["cjs", "esm"],
         // Code splitting and stuff

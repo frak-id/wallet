@@ -29,15 +29,6 @@ export function displayWalletStatus() {
                 return;
             }
             loginButton.disabled = status.key === "connected";
-
-            const shareButton = document.getElementById(
-                "share-button"
-            ) as HTMLButtonElement | null;
-            if (!shareButton) {
-                console.error("Share button not found");
-                return;
-            }
-            shareButton.disabled = status.key === "not-connected";
         }
     ).catch((error: Error) => {
         statusElement.textContent = `Error: ${error.message}`;

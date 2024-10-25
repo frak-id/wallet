@@ -6,6 +6,7 @@
             "_esm",
             "_types",
             "dist",
+            "build",
             "node_modules/**",
             ".sst/**",
             ".open-next/**",
