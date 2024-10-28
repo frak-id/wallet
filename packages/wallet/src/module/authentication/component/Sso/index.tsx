@@ -71,6 +71,7 @@ export function Sso() {
 
             // Save the current sso context
             jotaiStore.set(ssoContextAtom, {
+                id: compressedParam.id ?? undefined,
                 productId: productId ?? undefined,
                 redirectUrl: redirectUrl ?? undefined,
                 directExit: directExit ?? undefined,

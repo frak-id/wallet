@@ -10,16 +10,17 @@ import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
+import type { Hex } from "viem";
 
 /**
  * Hook that handle the registration process
  */
 export function useLogin(
-    mutations?: UseMutationOptions<
+    options?: UseMutationOptions<
         Session,
         Error,
         { lastAuthentication?: PreviousAuthenticatorModel } | undefined
-    >
+    > & { ssoId?: Hex }
 ) {
     // The mutation that will be used to perform the registration process
     const {
@@ -29,7 +30,7 @@ export function useLogin(
         error,
         mutateAsync: login,
     } = useMutation({
-        ...mutations,
+        ...options,
         mutationKey: ["login"],
         mutationFn: async (args?: {
             lastAuthentication?: PreviousAuthenticatorModel;
@@ -66,6 +67,7 @@ export function useLogin(
                 await authenticatedBackendApi.auth.wallet.login.post({
                     expectedChallenge: authenticationOptions.challenge,
                     authenticatorResponse: encodedResponse,
+                    ssoId: options?.ssoId,
                 });
             if (error) {
                 throw error;
