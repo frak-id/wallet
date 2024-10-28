@@ -1,9 +1,10 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
+import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
+import { useAtomValue } from "jotai/index";
 import { useTranslation } from "react-i18next";
-import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**
@@ -19,9 +20,11 @@ export function SsoLoginComponent({
     onSuccess: () => void;
     lastAuthentication?: PreviousAuthenticatorModel;
 }) {
+    const ssoId = useAtomValue(ssoContextAtom)?.id;
     const { t } = useTranslation();
     const { login, isLoading } = useLogin({
         onSuccess: () => onSuccess(),
+        ssoId,
     });
 
     if (isPrimary) {

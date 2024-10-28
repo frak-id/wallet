@@ -6,7 +6,7 @@ import { Elysia, t } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import { ssoTable } from "../../db/schema";
-import { WalletSessionResponseDto } from "../../models/WalletSessionDto";
+import { WalletAuthResponseDto } from "../../models/WalletSessionDto";
 import { walletSdkSessionService } from "../../services/WalletSdkSessionService";
 import { walletSsoService } from "../../services/WalletSsoService";
 
@@ -82,7 +82,6 @@ export const walletSsoRoutes = new Elysia({
         async ({
             body: { id, productId, consumeKey },
             // Response
-            cookie: { walletAuth },
             error,
             // Context
             getAuthenticatorDb,
@@ -144,9 +143,6 @@ export const walletSsoRoutes = new Elysia({
                 sub: ssoSession.wallet,
                 iat: Date.now(),
             });
-            walletAuth.update({
-                value: token,
-            });
 
             // Finally, generate a JWT token for the SDK
             const sdkJwt = await generateSdkJwt({ wallet: ssoSession.wallet });
@@ -154,9 +150,11 @@ export const walletSsoRoutes = new Elysia({
             return {
                 status: "ok",
                 session: {
+                    token,
                     address: ssoSession.wallet,
                     authenticatorId: authenticator._id,
                     publicKey: authenticator.publicKey,
+                    transports: authenticator.transports,
                     sdkJwt,
                 },
             };
@@ -179,7 +177,7 @@ export const walletSsoRoutes = new Elysia({
                     }),
                     t.Object({
                         status: t.Literal("ok"),
-                        session: WalletSessionResponseDto,
+                        session: WalletAuthResponseDto,
                     }),
                 ]),
             },

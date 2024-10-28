@@ -63,11 +63,12 @@ export function useLogin(
             const encodedResponse = Buffer.from(
                 JSON.stringify(authenticationResponse)
             ).toString("base64");
-            const { data, error } = await backendApi.auth.wallet.login.post({
-                expectedChallenge: authenticationOptions.challenge,
-                authenticatorResponse: encodedResponse,
-                ssoId: options?.ssoId,
-            });
+            const { data, error } =
+                await authenticatedBackendApi.auth.wallet.login.post({
+                    expectedChallenge: authenticationOptions.challenge,
+                    authenticatorResponse: encodedResponse,
+                    ssoId: options?.ssoId,
+                });
             if (error) {
                 throw error;
             }

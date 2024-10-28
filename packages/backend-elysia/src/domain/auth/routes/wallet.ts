@@ -215,8 +215,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 await resolveSsoSession({
                     id: ssoId,
                     wallet: walletAddress,
+                    authenticatorId: credential.id,
                 });
-                    authenticatorId: credentialID,
             }
 
             // Create the token and set the cookie

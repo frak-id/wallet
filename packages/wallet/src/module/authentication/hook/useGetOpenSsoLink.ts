@@ -1,7 +1,7 @@
+import { authenticatedBackendApi } from "@/context/common/backendClient";
 import type { AppSpecificSsoMetadata } from "@/module/authentication/atoms/sso";
 import { ssoParamsToCompressed } from "@/module/authentication/utils/ssoDataCompression";
 import { compressJson } from "@frak-labs/nexus-sdk/core";
-import { backendApi } from "@frak-labs/shared/context/server";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { Hex } from "viem";
@@ -44,11 +44,12 @@ export function useGetOpenSsoLink() {
 
             // If we got a consumption key, we want sso tracking, thus we need to call the backend to obtain a trackable link
             if (consumeKey) {
-                const { data } = await backendApi.auth.wallet.sso.create.post({
-                    productId,
-                    consumeKey,
-                    params: compressedParam,
-                });
+                const { data } =
+                    await authenticatedBackendApi.auth.wallet.sso.create.post({
+                        productId,
+                        consumeKey,
+                        params: compressedParam,
+                    });
                 if (data) {
                     return {
                         url: data.link,

@@ -132,8 +132,6 @@ export function Sso() {
         }
     }, []);
 
-    const ssoId = useAtomValue(ssoContextAtom)?.id;
-
     if (!currentMetadata) {
         return <Spinner />;
     }

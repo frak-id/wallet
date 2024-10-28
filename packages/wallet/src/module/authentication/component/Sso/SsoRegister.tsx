@@ -1,10 +1,11 @@
+import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Notice } from "@/module/common/component/Notice";
 import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
+import { useAtomValue } from "jotai/index";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**
@@ -16,6 +17,7 @@ export function SsoRegisterComponent({
     onSuccess,
 }: { isPrimary: boolean; onSuccess: () => void }) {
     const { t } = useTranslation();
+    const ssoId = useAtomValue(ssoContextAtom)?.id;
     const { register, error, isRegisterInProgress } = useRegister({
         ssoId,
         onSuccess: () => onSuccess(),

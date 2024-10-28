@@ -55,12 +55,13 @@ export function useRegister(
             const encodedResponse = Buffer.from(
                 JSON.stringify(registrationResponse)
             ).toString("base64");
-            const { data, error } = await backendApi.auth.wallet.register.post({
-                userAgent: navigator.userAgent,
-                expectedChallenge: registrationOptions.challenge,
-                registrationResponse: encodedResponse,
-                ssoId: options?.ssoId,
-            });
+            const { data, error } =
+                await authenticatedBackendApi.auth.wallet.register.post({
+                    userAgent: navigator.userAgent,
+                    expectedChallenge: registrationOptions.challenge,
+                    registrationResponse: encodedResponse,
+                    ssoId: options?.ssoId,
+                });
             if (error) {
                 throw error;
             }
