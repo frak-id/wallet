@@ -148,6 +148,12 @@ export const walletSsoRoutes = new Elysia({
             // Finally, generate a JWT token for the SDK
             const sdkJwt = await generateSdkJwt({ wallet: ssoSession.wallet });
 
+            // And delete the sso session
+            await ssoDb
+                .delete(ssoTable)
+                .where(eq(ssoTable.ssoId, id))
+                .execute();
+
             return {
                 status: "ok",
                 session: {

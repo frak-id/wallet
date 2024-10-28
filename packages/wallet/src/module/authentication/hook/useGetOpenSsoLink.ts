@@ -1,10 +1,19 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
-import type { AppSpecificSsoMetadata } from "@/module/authentication/atoms/sso";
+import {
+    type AppSpecificSsoMetadata,
+    ssoConsumeKey,
+} from "@/module/authentication/atoms/sso";
 import { ssoParamsToCompressed } from "@/module/authentication/utils/ssoDataCompression";
+import {
+    getFromLocalStorage,
+    getSafeSession,
+} from "@/module/listener/utils/localStorage";
 import { compressJson } from "@frak-labs/nexus-sdk/core";
+import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type { Hex } from "viem";
+import { generatePrivateKey } from "viem/accounts";
 
 /**
  * Feature for the sso popup
@@ -81,20 +90,63 @@ export function useSsoLink({
     metadata,
     directExit,
     redirectUrl,
-    consumeKey,
+    useConsumeKey,
     lang,
 }: {
     productId: Hex;
     metadata: AppSpecificSsoMetadata;
     directExit?: boolean;
     redirectUrl?: string;
-    consumeKey?: Hex;
+    useConsumeKey?: boolean;
     lang?: "en" | "fr";
 }) {
     const getLink = useGetOpenSsoLink();
 
+    // Get the current consuming key if needed
+    const safeConsumeKey = useMemo(() => {
+        if (!useConsumeKey) return undefined;
+
+        const consumeKey =
+            jotaiStore.get(ssoConsumeKey) ??
+            getFromLocalStorage<{
+                key: Hex;
+                generatedAt: number;
+            }>("frak_ssoConsumeKey");
+
+        // If we don't have a current consume key, generate a new one
+        if (!consumeKey) {
+            console.log("Generating new consume key cause of null", {
+                consumeKey,
+                testDirect: jotaiStore.get(ssoConsumeKey),
+            });
+            const key = generatePrivateKey();
+            jotaiStore.set(ssoConsumeKey, { key, generatedAt: Date.now() });
+            return key;
+        }
+        getSafeSession();
+
+        // If we don't have a current consume key, generate a new one
+        if (Date.now() - consumeKey.generatedAt > 3600000) {
+            console.log("Generating new consume key cause of exp");
+            const key = generatePrivateKey();
+            jotaiStore.set(ssoConsumeKey, { key, generatedAt: Date.now() });
+            return key;
+        }
+
+        return consumeKey.key;
+    }, [useConsumeKey]);
+
     const { data, ...query } = useQuery({
-        queryKey: ["sso", productId, metadata, directExit, redirectUrl, lang, consumeKey],
+        queryKey: [
+            "sso",
+            "link",
+            productId,
+            metadata,
+            directExit,
+            redirectUrl,
+            lang,
+            safeConsumeKey,
+        ],
         queryFn: async () => {
             // Return the link
             return getLink({
@@ -103,9 +155,13 @@ export function useSsoLink({
                 directExit,
                 redirectUrl,
                 lang,
-                consumeKey,
+                consumeKey: safeConsumeKey,
             });
         },
+        // Try to refetch the link the least possible (to keep the sso openned)
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
     });
     return {
         link: data?.url,

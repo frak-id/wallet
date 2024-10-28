@@ -1,5 +1,6 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
+import { useConsumePendingSso } from "@/module/authentication/hook/useConsumePendingSso";
 import {
     ssoPopupFeatures,
     ssoPopupName,
@@ -22,7 +23,6 @@ import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { generatePrivateKey } from "viem/accounts";
 import { useModalTranslation } from "../../hooks/useModalTranslation";
 import { DismissButton } from "../Generic";
 
@@ -178,9 +178,6 @@ function SsoButton({
     // Target language
     const lang = useAtomValue(modalDisplayedRequestAtom)?.metadata?.lang;
 
-    // The consuming key we will use for the sso
-    const consumeKey = useMemo(() => generatePrivateKey(), []);
-
     // Get the link to use with the SSO
     const { link, trackingId } = useSsoLink({
         productId: context.productId,
@@ -189,14 +186,15 @@ function SsoButton({
             ...ssoMetadata,
         },
         directExit: true,
-        consumeKey,
+        useConsumeKey: true,
         lang,
     });
 
-    useEffect(() => {
-        console.log("sso tracking", { consumeKey, trackingId });
-        // todo: Once sso linked consumed, should clear the SSO link post login stuff sheninangans
-    }, [consumeKey, trackingId]);
+    // Consume the pending sso if possible (maybe some hook to early exit here? Already working since we have the session listener)
+    useConsumePendingSso({
+        trackingId,
+        productId: context.productId,
+    });
 
     // The text to display on the button
     const text = useMemo<ReactNode>(
