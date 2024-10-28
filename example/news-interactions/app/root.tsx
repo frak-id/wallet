@@ -6,8 +6,6 @@ import {
     Outlet,
     Scripts,
     ScrollRestoration,
-    json,
-    useRouteLoaderData,
 } from "@remix-run/react";
 import type { ReactNode } from "react";
 import { MainLayout } from "./module/common/component/MainLayout";
@@ -96,17 +94,7 @@ export const links: LinksFunction = () => [
     },
 ];
 
-export async function loader() {
-    return json({
-        ENV: {
-            FRAK_WALLET_URL: process.env.FRAK_WALLET_URL,
-            BACKEND_URL: process.env.BACKEND_URL,
-        },
-    });
-}
-
 export function Layout({ children }: { children: ReactNode }) {
-    const data = useRouteLoaderData<typeof loader>("root");
     return (
         <html lang="en">
             <head>
@@ -123,16 +111,6 @@ export function Layout({ children }: { children: ReactNode }) {
                     <MainLayout>{children}</MainLayout>
                 </RootProvider>
                 <ScrollRestoration />
-                {data?.ENV && (
-                    <script
-                        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
-                        dangerouslySetInnerHTML={{
-                            __html: `window.process = ${JSON.stringify({
-                                env: data.ENV,
-                            })}`,
-                        }}
-                    />
-                )}
                 <Scripts />
             </body>
         </html>
