@@ -144,7 +144,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             error,
             // Context
             generateSdkJwt,
-            getAuthenticatorDb,
+            authenticatorRepository,
             walletJwt,
             getAuthenticatorWalletAddress,
             parseCompressedWebAuthNResponse,
@@ -194,8 +194,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     authenticatorId: credential.id,
                     pubKey: publicKey,
                 }));
-            const authenticatorDbRepository = await getAuthenticatorDb();
-            await authenticatorDbRepository.createAuthenticator({
+            await authenticatorRepository.createAuthenticator({
                 _id: credential.id,
                 smartWalletAddress: walletAddress,
                 userAgent,

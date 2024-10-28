@@ -85,7 +85,7 @@ export const walletSsoRoutes = new Elysia({
             // Response
             error,
             // Context
-            getAuthenticatorDb,
+            authenticatorRepository,
             walletJwt,
             generateSdkJwt,
             ssoDb,
@@ -122,10 +122,10 @@ export const walletSsoRoutes = new Elysia({
             }
 
             // Get the authenticator db and resolve it
-            const authenticatorDb = await getAuthenticatorDb();
-            const authenticator = await authenticatorDb.getByCredentialId(
-                ssoSession.authenticatorId
-            );
+            const authenticator =
+                await authenticatorRepository.getByCredentialId(
+                    ssoSession.authenticatorId
+                );
             if (!authenticator) {
                 return error(404, "Authenticator not found");
             }

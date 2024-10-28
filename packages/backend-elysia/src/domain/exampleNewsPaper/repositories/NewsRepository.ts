@@ -1,13 +1,32 @@
-import type { Collection, Db, WithId } from "mongodb";
+import { getMongoDb } from "@backend-common";
+import { Mutex } from "async-mutex";
+import type { Collection, WithId } from "mongodb";
 import type { NewsDocument } from "../models/dto/NewsDocument";
 
 /**
  * Repository used to access the news repositories
  */
 export class NewsRepository {
-    private readonly collection: Collection<NewsDocument>;
-    constructor(db: Db) {
-        this.collection = db.collection<NewsDocument>("news");
+    private initMutex = new Mutex();
+    private collection: Collection<NewsDocument> | undefined;
+
+    /**
+     * Get the collection
+     */
+    private async getCollection() {
+        if (this.collection) {
+            return this.collection;
+        }
+
+        return this.initMutex.runExclusive(async () => {
+            const db = await getMongoDb({
+                urlKey: "MONGODB_EXAMPLE_URI",
+                db: "example",
+            });
+            const collection = db.collection<NewsDocument>("news");
+            this.collection = collection;
+            return collection;
+        });
     }
 
     /**
@@ -19,7 +38,8 @@ export class NewsRepository {
         limit,
         offset,
     }: { limit: number; offset: number }) {
-        return this.collection
+        const collection = await this.getCollection();
+        return collection
             .find()
             .sort({ publishDate: -1 })
             .skip(offset)
@@ -36,7 +56,8 @@ export class NewsRepository {
         limit,
         offset,
     }: { limit: number; offset: number }) {
-        return this.collection
+        const collection = await this.getCollection();
+        return collection
             .find()
             .sort({ sentiment: -1 })
             .skip(offset)
@@ -48,7 +69,8 @@ export class NewsRepository {
      * Get a random news
      */
     public async getRandomNews({ count }: { count: number }) {
-        return await this.collection
+        const collection = await this.getCollection();
+        return await collection
             .aggregate<WithId<NewsDocument>>([{ $sample: { size: count } }])
             .toArray();
     }
@@ -58,7 +80,8 @@ export class NewsRepository {
      * @param id
      */
     public async getNewsById(id: string) {
-        return this.collection.findOne({ _id: id });
+        const collection = await this.getCollection();
+        return collection.findOne({ _id: id });
     }
 
     /**
@@ -66,6 +89,7 @@ export class NewsRepository {
      * @param documents
      */
     public async insertMany(documents: NewsDocument[]) {
-        return this.collection.insertMany(documents);
+        const collection = await this.getCollection();
+        return collection.insertMany(documents);
     }
 }
