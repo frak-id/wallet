@@ -1,4 +1,3 @@
-import { customHex } from "@backend-utils";
 import {
     index,
     pgTable,
@@ -7,6 +6,7 @@ import {
     uniqueIndex,
     varchar,
 } from "drizzle-orm/pg-core";
+import { customHex } from "../../../utils/drizzle/customTypes";
 
 /**
  * Table storing the sso sessions

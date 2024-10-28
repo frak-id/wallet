@@ -22,6 +22,7 @@ import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { generatePrivateKey } from "viem/accounts";
 import { useModalTranslation } from "../../hooks/useModalTranslation";
 import { DismissButton } from "../Generic";
 
@@ -177,16 +178,25 @@ function SsoButton({
     // Target language
     const lang = useAtomValue(modalDisplayedRequestAtom)?.metadata?.lang;
 
+    // The consuming key we will use for the sso
+    const consumeKey = useMemo(() => generatePrivateKey(), []);
+
     // Get the link to use with the SSO
-    const { link } = useSsoLink({
+    const { link, trackingId } = useSsoLink({
         productId: context.productId,
         metadata: {
             name: appName,
             ...ssoMetadata,
         },
         directExit: true,
+        consumeKey,
         lang,
     });
+
+    useEffect(() => {
+        console.log("sso tracking", { consumeKey, trackingId });
+        // todo: Once sso linked consumed, should clear the SSO link post login stuff sheninangans
+    }, [consumeKey, trackingId]);
 
     // The text to display on the button
     const text = useMemo<ReactNode>(

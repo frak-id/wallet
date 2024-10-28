@@ -30,7 +30,7 @@ export function useGetOpenSsoLink() {
             metadata: AppSpecificSsoMetadata;
             directExit?: boolean;
             redirectUrl?: string;
-            consumeKey?: string;
+            consumeKey?: Hex;
             lang?: "en" | "fr";
         }) => {
             // Build the sso compressed param
@@ -81,18 +81,20 @@ export function useSsoLink({
     metadata,
     directExit,
     redirectUrl,
+    consumeKey,
     lang,
 }: {
     productId: Hex;
     metadata: AppSpecificSsoMetadata;
     directExit?: boolean;
     redirectUrl?: string;
+    consumeKey?: Hex;
     lang?: "en" | "fr";
 }) {
     const getLink = useGetOpenSsoLink();
 
     const { data, ...query } = useQuery({
-        queryKey: ["sso", productId, metadata, directExit, redirectUrl, lang],
+        queryKey: ["sso", productId, metadata, directExit, redirectUrl, lang, consumeKey],
         queryFn: async () => {
             // Return the link
             return getLink({
@@ -101,11 +103,13 @@ export function useSsoLink({
                 directExit,
                 redirectUrl,
                 lang,
+                consumeKey,
             });
         },
     });
     return {
-        link: data,
+        link: data?.url,
+        trackingId: data?.trackingId,
         ...query,
     };
 }

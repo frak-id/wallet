@@ -1,14 +1,15 @@
+import { t } from "@backend-utils";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { compressToBase64 } from "async-lz-string";
-import { webAuthNService } from "domain/auth/services/WebAuthNService";
 import { and, eq } from "drizzle-orm";
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import { ssoTable } from "../../db/schema";
 import { WalletAuthResponseDto } from "../../models/WalletSessionDto";
 import { walletSdkSessionService } from "../../services/WalletSdkSessionService";
 import { walletSsoService } from "../../services/WalletSsoService";
+import { webAuthNService } from "../../services/WebAuthNService";
 
 export const walletSsoRoutes = new Elysia({
     prefix: "/sso",
@@ -19,7 +20,7 @@ export const walletSsoRoutes = new Elysia({
     .use(webAuthNService)
     // Route to create a new sso session
     .post(
-        "/sso/create",
+        "/create",
         async ({ body: { productId, consumeKey, params }, ssoDb }) => {
             // Generate the sso id
             const paramHash = keccak256(toHex(JSON.stringify(params)));
@@ -78,7 +79,7 @@ export const walletSsoRoutes = new Elysia({
     )
     // Route to consume a current sso session
     .post(
-        "/sso/consume",
+        "/consume",
         async ({
             body: { id, productId, consumeKey },
             // Response
