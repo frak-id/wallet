@@ -127,7 +127,9 @@ export function Layout({ children }: { children: ReactNode }) {
                     <script
                         // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
                         dangerouslySetInnerHTML={{
-                            __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
+                            __html: `window.process = ${JSON.stringify({
+                                env: data.ENV,
+                            })}`,
                         }}
                     />
                 )}

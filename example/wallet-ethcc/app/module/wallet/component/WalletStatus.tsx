@@ -1,7 +1,6 @@
 import { Panel } from "@/module/common/component/Panel";
 import type { WalletStatusReturnType } from "@frak-labs/nexus-sdk/core";
 import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
-import { getEnv } from "@module/utils/getEnv";
 import { Link } from "@remix-run/react";
 
 export function WalletStatus() {
@@ -11,7 +10,7 @@ export function WalletStatus() {
         <Panel variant={"primary"}>
             <h2>Wallet Status</h2>
             <InnerStatus status={walletStatus} />
-            <Link to={getEnv()?.FRAK_WALLET_URL ?? ""}>
+            <Link to={process.env.FRAK_WALLET_URL ?? ""}>
                 Check on Frak Wallet
             </Link>
         </Panel>
