@@ -1,8 +1,8 @@
 import { use } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
-import { NextjsSite, RemixSite } from "sst/constructs";
+import { RemixSite } from "sst/constructs";
 import { ConfigStack } from "./Config";
-import { isProdStack, openNextVersion } from "./utils";
+import { isProdStack } from "./utils";
 
 /**
  * Define the example webapp SST stack
@@ -18,30 +18,13 @@ export function ExampleAppStack({ stack }: StackContext) {
     // The configs required to run the app
     const { frakWalletUrl, backendUrl } = use(ConfigStack);
 
-    // Declare the next js site on news-paper.xyz
+    // Declare the remix site on news-paper.xyz
     // Use it for the ETH-CC demo
-    const ethCCDemo = new NextjsSite(stack, "walletExampleEthCC", {
+    const ethCCDemo = new RemixSite(stack, "walletExampleEthCC", {
         path: "example/wallet-ethcc",
-        // Bind to the configs
-        bind: [frakWalletUrl],
-        openNextVersion: openNextVersion,
         // Set the custom domain
         customDomain: {
             domainName: "ethcc.news-paper.xyz",
-            hostedZone: "news-paper.xyz",
-        },
-        // Enable image optimization
-        imageOptimization: {
-            memorySize: 512,
-            staticImageOptimization: true,
-        },
-    });
-
-    const ethCCDemoRemix = new RemixSite(stack, "walletExampleEthCCRemix", {
-        path: "example/wallet-ethcc-remix",
-        // Set the custom domain
-        customDomain: {
-            domainName: "ethcc-remix.news-paper.xyz",
             hostedZone: "news-paper.xyz",
         },
         // Environment variables
@@ -68,7 +51,6 @@ export function ExampleAppStack({ stack }: StackContext) {
 
     stack.addOutputs({
         NewsSiteUrl: ethCCDemo.url,
-        NewsSiteUrlRemix: ethCCDemoRemix.url,
         NewsInteractionSiteUrl: newsInteractionDemo.url,
     });
 }
