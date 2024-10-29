@@ -21,14 +21,6 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
         );
         return new Response("ko", { status: 200 });
     })
-    .mapResponse(({ response }) => {
-        if ("code" in response && response.code !== 200) {
-            log.error({ response }, "Error while handling shopify webhook");
-            return new Response("ko", { status: 200 });
-        }
-
-        return response;
-    })
     .guard({
         headers: t.Partial(
             t.Object({
@@ -68,14 +60,15 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             params: { productId },
             body,
             headers,
-            oracleDb,
-            upsertPurchase,
             error,
+            oracleDb,
+            validateBodyHmac,
+            upsertPurchase,
         }) => {
-            // todo: hmac validation in the `onParse` hook? https://shopify.dev/docs/apps/build/webhooks/subscribe/https#step-2-validate-the-origin-of-your-webhook-to-ensure-its-coming-from-shopify
-
             // Try to parse the body as a shopify webhook type and ensure the type validity
-            const webhookData = body as ShopifyOrderUpdateWebhookDto;
+            const webhookData = JSON.parse(
+                body
+            ) as ShopifyOrderUpdateWebhookDto;
             // Ensure the order id match the one in the headers
             if (
                 webhookData?.id !==
@@ -98,6 +91,13 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             if (!oracle) {
                 return error(404, "Product oracle not found");
             }
+
+            // Validate the body hmac
+            validateBodyHmac({
+                body,
+                secret: oracle.hookSignatureKey,
+                signature: headers["x-shopify-hmac-sha256"],
+            });
 
             // Prebuild some data before insert
             const purchaseStatus = mapFinancialStatus(
@@ -143,6 +143,10 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
 
             // Return the success state
             return "ok";
+        },
+        {
+            type: "text",
+            body: t.String(),
         }
     );
 

@@ -23,17 +23,9 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
                 reqHeaders: headers,
                 response,
             },
-            "Error while handling woo commerce webhook"
+            "Error while handling WooCommerce webhook"
         );
         return new Response("ko", { status: 200 });
-    })
-    .mapResponse(({ response }) => {
-        if ("code" in response && response.code !== 200) {
-            log.error({ response }, "Error while handling WooCommerce webhook");
-            return new Response("ko", { status: 200 });
-        }
-
-        return response;
     })
     .guard({
         headers: t.Partial(
@@ -62,24 +54,20 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
     .post(
         ":productId/hook",
         async ({
+            // Query
             params: { productId },
             body,
             headers,
+            error,
+            // Context
             oracleDb,
             upsertPurchase,
-            error,
+            validateBodyHmac,
         }) => {
-            log.debug(
-                {
-                    productId,
-                    body,
-                    headers,
-                },
-                "WooCommerce inner hook"
-            );
-
             // Try to parse the body as a shopify webhook type and ensure the type validity
-            const webhookData = body as WooCommerceOrderUpdateWebhookDto;
+            const webhookData = JSON.parse(
+                body
+            ) as WooCommerceOrderUpdateWebhookDto;
 
             // Find the product oracle for this product id
             if (!productId) {
@@ -91,6 +79,13 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
             if (!oracle) {
                 return error(404, "Product oracle not found");
             }
+
+            // Validate the body hmac
+            validateBodyHmac({
+                body,
+                secret: oracle.hookSignatureKey,
+                signature: headers["x-wc-webhook-signature"],
+            });
 
             // Prebuild some data before insert
             const purchaseStatus = mapOrderStatus(webhookData.status);
@@ -125,11 +120,8 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
             return "ok";
         },
         {
-            response: {
-                200: t.String(),
-                400: t.String(),
-                404: t.String(),
-            },
+            type: "text",
+            body: t.String(),
         }
     );
 
