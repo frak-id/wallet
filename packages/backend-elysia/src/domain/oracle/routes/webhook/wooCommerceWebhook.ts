@@ -3,20 +3,15 @@ import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
-import { oracleContext } from "../context";
-import {
-    productOracleTable,
-    purchaseItemTable,
-    type purchaseStatusEnum,
-    purchaseStatusTable,
-} from "../db/schema";
+import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
 import type {
     WooCommerceOrderStatus,
     WooCommerceOrderUpdateWebhookDto,
-} from "../dto/WooCommerceWebhook";
+} from "../../dto/WooCommerceWebhook";
+import { purchaseWebhookService } from "../../services/hookService";
 
 export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
-    .use(oracleContext)
+    .use(purchaseWebhookService)
     // Error failsafe, to never fail on shopify webhook
     .onError(({ error, code, body, path, headers, response }) => {
         log.error(
@@ -66,7 +61,14 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
     //   here we should just validate the request and save it
     .post(
         ":productId/hook",
-        async ({ params: { productId }, body, headers, oracleDb, error }) => {
+        async ({
+            params: { productId },
+            body,
+            headers,
+            oracleDb,
+            upsertPurchase,
+            error,
+        }) => {
             log.debug(
                 {
                     productId,
@@ -97,62 +99,27 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
             );
 
             // Insert purchase and items
-            await oracleDb.transaction(async (trx) => {
-                // Insert the purchase first
-                await trx
-                    .insert(purchaseStatusTable)
-                    .values({
-                        oracleId: oracle.id,
-                        purchaseId,
-                        externalId: webhookData.id.toString(),
-                        externalCustomerId: webhookData.customer_id.toString(),
-                        purchaseToken:
-                            webhookData.order_key ?? webhookData.transaction_id,
-                        status: purchaseStatus,
-                        totalPrice: webhookData.total,
-                        currencyCode: webhookData.currency,
-                    })
-                    .onConflictDoUpdate({
-                        target: [purchaseStatusTable.purchaseId],
-                        set: {
-                            status: purchaseStatus,
-                            totalPrice: webhookData.total,
-                            currencyCode: webhookData.currency,
-                            updatedAt: new Date(),
-                            ...(webhookData.order_key
-                                ? {
-                                      purchaseToken: webhookData.order_key,
-                                  }
-                                : {}),
-                        },
-                    });
-                // Insert the items if needed
-                if (webhookData.line_items.length === 0) {
-                    return;
-                }
-                const mappedItems = webhookData.line_items.map((item) => ({
+            await upsertPurchase({
+                purchase: {
+                    oracleId: oracle.id,
+                    purchaseId,
+                    externalId: webhookData.id.toString(),
+                    externalCustomerId: webhookData.customer_id.toString(),
+                    purchaseToken:
+                        webhookData.order_key ?? webhookData.transaction_id,
+                    status: purchaseStatus,
+                    totalPrice: webhookData.total,
+                    currencyCode: webhookData.currency,
+                },
+                purchaseItems: webhookData.line_items.map((item) => ({
                     purchaseId,
                     externalId: item.product_id.toString(),
                     price: item.price.toString(),
                     name: item.name,
                     title: item.name,
                     quantity: item.quantity,
-                }));
-                await trx.insert(purchaseItemTable).values(mappedItems);
+                })),
             });
-            log.debug(
-                {
-                    purchaseId,
-                    purchaseStatus,
-                    externalId: webhookData.id.toString(),
-                    externalCustomerId: webhookData.customer_id.toString(),
-                    purchaseToken:
-                        webhookData.order_key ?? webhookData.transaction_id,
-                    totalPrice: webhookData.total,
-                    currencyCode: webhookData.currency,
-                },
-                "WooCommerce Purchase inserted"
-            );
 
             // Return the success state
             return "ok";

@@ -101,5 +101,9 @@ export const purchaseItemTable = pgTable(
     },
     (table) => ({
         purchaseIdIdx: index("item_purchase_id_idx").on(table.purchaseId),
+        externalIdIdx: uniqueIndex("unique_external_id").on(
+            table.externalId,
+            table.purchaseId
+        ),
     })
 );
