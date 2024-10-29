@@ -1,6 +1,5 @@
 import { log } from "@backend-common";
 import { t } from "@backend-utils";
-import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
@@ -12,79 +11,78 @@ import {
     purchaseStatusTable,
 } from "../db/schema";
 import type {
-    OrderFinancialStatus,
-    ShopifyOrderUpdateWebhookDto,
-} from "../dto/ShopifyWebhook";
+    WooCommerceOrderStatus,
+    WooCommerceOrderUpdateWebhookDto,
+} from "../dto/WooCommerceWebhook";
 
-export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
+export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
     .use(oracleContext)
     // Error failsafe, to never fail on shopify webhook
     .onError(({ error, code, body, path, headers }) => {
         log.error(
             { error, code, reqPath: path, reqBody: body, reqHeaders: headers },
-            "Error while handling shopify webhook"
+            "Error while handling woo commerce webhook"
         );
         return new Response("ko", { status: 200 });
     })
     .mapResponse(({ response }) => {
         if ("code" in response && response.code !== 200) {
-            log.error({ response }, "Error while handling shopify webhook");
+            log.error({ response }, "Error while handling WooCommerce webhook");
             return new Response("ko", { status: 200 });
         }
 
         return response;
     })
-    .guard({
-        headers: t.Partial(
-            t.Object({
-                "x-shopify-hmac-sha256": t.String(),
-                "x-shopify-api-version": t.String(),
-                "x-shopify-order-id": t.Optional(t.String()),
-                "x-shopify-test": t.Optional(t.Boolean()),
-                // Should be used to validate the product id?
-                "x-shopify-shop-domain": t.String(),
-                "x-shopify-topic": t.String(),
-            })
-        ),
-    })
+    // .guard({
+    //     headers: t.Partial(
+    //         t.Object({
+    //             "X-WC-Webhook-Source": t.String(),
+    //             "X-WC-Webhook-Topic": t.String(),
+    //             "X-WC-Webhook-Resource": t.String(),
+    //             "X-WC-Webhook-Event": t.String(),
+    //             "X-WC-Webhook-Signature": t.String(),
+    //             "X-WC-Webhook-ID": t.String(),
+    //             "X-WC-Webhook-Delivery-ID": t.String(),
+    //         })
+    //     ),
+    // })
     // Request pre validation hook
-    .onBeforeHandle(({ headers, error }) => {
-        // If it's a test and not running in prod, early exit
-        if (headers["x-shopify-test"] && isRunningInProd) {
-            return error(400, "Shopify test aren't accepted in production");
-        }
-        // If it's an unsported shopify version, early exit
-        if (headers["x-shopify-api-version"] !== "2024-10") {
-            return error(400, "Unsupported shopify version");
-        }
-        // Order specific tests, should be moved elsewhere if we got other hooks
-        if (!headers["x-shopify-order-id"]) {
-            return error(400, "Missing order id");
-        }
-        if (!headers["x-shopify-topic"]?.startsWith("orders/")) {
-            return error(400, "Unsupported shopify topic");
-        }
+    .onBeforeHandle(({ headers, error, body, path }) => {
+        log.info(
+            {
+                headers,
+                signature: headers["X-WC-Webhook-Signature"] ?? "none",
+                resource: headers["X-WC-Webhook-Resource"] ?? "none",
+                body,
+                bodyType: typeof body,
+                path,
+            },
+            "WooCommerce on before handle"
+        );
+        // if (!headers["X-WC-Webhook-Signature"]) {
+        //     return error(400, "Missing signature");
+        // }
+        // if (!headers["X-WC-Webhook-Resource"]?.startsWith("orders/")) {
+        //     return error(400, "Unsupported woo commerce resource");
+        // }
     })
     // Shopify only give us 5sec to answer, all the heavy logic should be in a cron running elsewhere,
     //   here we should just validate the request and save it
     .post(
         ":productId/hook",
         async ({ params: { productId }, body, headers, oracleDb, error }) => {
-            // todo: hmac validation in the `onParse` hook? https://shopify.dev/docs/apps/build/webhooks/subscribe/https#step-2-validate-the-origin-of-your-webhook-to-ensure-its-coming-from-shopify
+            log.debug(
+                {
+                    productId,
+                    body,
+                    headers,
+                    bodyType: typeof body,
+                },
+                "WooCommerce hooks yougouuu"
+            );
 
             // Try to parse the body as a shopify webhook type and ensure the type validity
-            const webhookData = body as ShopifyOrderUpdateWebhookDto;
-            // Ensure the order id match the one in the headers
-            if (
-                webhookData?.id !==
-                Number.parseInt(headers["x-shopify-order-id"] ?? "0")
-            ) {
-                return error(400, "Order id mismatch");
-            }
-            // Ensure the test field match
-            if (headers["x-shopify-test"] !== webhookData?.test) {
-                return error(400, "Test field mismatch");
-            }
+            const webhookData = body as WooCommerceOrderUpdateWebhookDto;
 
             // Find the product oracle for this product id
             if (!productId) {
@@ -98,22 +96,9 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             }
 
             // Prebuild some data before insert
-            const purchaseStatus = mapFinancialStatus(
-                webhookData.financial_status
-            );
+            const purchaseStatus = mapOrderStatus(webhookData.status);
             const purchaseId = keccak256(
                 concatHex([oracle.productId, toHex(webhookData.id)])
-            );
-
-            log.debug(
-                {
-                    productId,
-                    purchaseId,
-                    purchaseStatus,
-                    purchaseExternalId: webhookData.id,
-                    status: webhookData.financial_status,
-                },
-                "Handling new shopify webhook event"
             );
 
             // Insert purchase and items
@@ -125,23 +110,23 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                         oracleId: oracle.id,
                         purchaseId,
                         externalId: webhookData.id.toString(),
-                        externalCustomerId: webhookData.customer.id.toString(),
+                        externalCustomerId: webhookData.customer_id.toString(),
                         purchaseToken:
-                            webhookData.checkout_token ?? webhookData.token,
+                            webhookData.order_key ?? webhookData.transaction_id,
                         status: purchaseStatus,
-                        totalPrice: webhookData.total_price,
+                        totalPrice: webhookData.total,
                         currencyCode: webhookData.currency,
                     })
                     .onConflictDoUpdate({
                         target: [purchaseStatusTable.purchaseId],
                         set: {
                             status: purchaseStatus,
-                            totalPrice: webhookData.total_price,
+                            totalPrice: webhookData.total,
                             currencyCode: webhookData.currency,
                             updatedAt: new Date(),
-                            ...(webhookData.checkout_token
+                            ...(webhookData.order_key
                                 ? {
-                                      purchaseToken: webhookData.checkout_token,
+                                      purchaseToken: webhookData.order_key,
                                   }
                                 : {}),
                         },
@@ -153,9 +138,9 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                 const mappedItems = webhookData.line_items.map((item) => ({
                     purchaseId,
                     externalId: item.product_id.toString(),
-                    price: item.price,
+                    price: item.price.toString(),
                     name: item.name,
-                    title: item.title,
+                    title: item.name,
                     quantity: item.quantity,
                 }));
                 await trx.insert(purchaseItemTable).values(mappedItems);
@@ -163,19 +148,26 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
 
             // Return the success state
             return "ok";
+        },
+        {
+            response: {
+                200: t.String(),
+                400: t.String(),
+                404: t.String(),
+            },
         }
     );
 
-function mapFinancialStatus(
-    financialStatus: OrderFinancialStatus
+function mapOrderStatus(
+    orderStatus: WooCommerceOrderStatus
 ): (typeof purchaseStatusEnum.enumValues)[number] {
-    if (financialStatus === "paid") {
+    if (orderStatus === "confirmed") {
         return "confirmed";
     }
-    if (financialStatus === "refunded") {
+    if (orderStatus === "refunded") {
         return "refunded";
     }
-    if (financialStatus === "voided") {
+    if (orderStatus === "cancelled") {
         return "cancelled";
     }
 
