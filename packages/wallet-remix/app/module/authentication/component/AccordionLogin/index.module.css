@@ -1,0 +1,19 @@
+.accordionLogin {
+}
+
+.accordionLogin__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--frak-accordion-trigger-color);
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.accordionLogin__content {
+    margin-right: -10px;
+}
+
+.accordionLogin__content > div {
+    margin-top: 20px;
+}

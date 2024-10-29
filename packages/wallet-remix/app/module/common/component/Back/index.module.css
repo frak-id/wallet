@@ -1,0 +1,12 @@
+.back {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+}
+
+.back--disabled {
+    color: var(--frak-color-grayText);
+}

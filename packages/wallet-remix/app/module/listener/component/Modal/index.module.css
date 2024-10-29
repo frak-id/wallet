@@ -1,0 +1,226 @@
+.modalListener__header {
+    margin-bottom: 20px;
+}
+
+.modalListener__title {
+    font-size: 16px;
+    text-align: left;
+    font-weight: 700;
+}
+
+.modalListener__subTitle {
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.modalListener__text {
+    margin: 4px 0px;
+}
+
+.modalListener__error {
+    text-align: center;
+}
+
+.modalListener__action {
+    margin-top: 20px;
+}
+
+.modalListener__success {
+    text-align: center;
+    color: var(--frak-color-green);
+}
+
+.modalListener__steps {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding: 4px;
+}
+
+.modalListener__stepNumber {
+    position: relative;
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalListener__stepNumber .modalListener__stepNumberInnerIcon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: #fff;
+    color: #818c9c;
+    border-radius: 50%;
+    border: 2px solid #818c9c;
+}
+
+.modalListener__stepItem:not(:last-child) .modalListener__stepNumber:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: calc(50% + 20px); /* Start after the icon + margin */
+    width: calc(100% - 44px); /* Full width minus the icon width and margin */
+    height: 3px;
+    background: radial-gradient(circle, #a1aebe 50%, transparent 50%) repeat-x;
+    background-size: 6px 3px;
+    transform: translateY(-50%);
+    z-index: 0; /* Keeps the line below the step number */
+}
+
+.modalListener__stepItem {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+    color: #818c9c;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.modalListener__stepItem--done {
+    color: #0171ec;
+
+    .modalListener__stepNumberInnerIcon {
+        border-color: #0171ec;
+        color: #0171ec;
+    }
+}
+
+.modalListener__stepItem:last-child.modalListener__stepItem--active {
+    animation: highlightLastStep 2s forwards;
+
+    .modalListener__stepNumberInnerIcon {
+        animation: highlightLastStep 2s forwards;
+    }
+}
+
+@keyframes highlightLastStep {
+    60% {
+        color: #818c9c;
+        border-color: #818c9c;
+    }
+    100% {
+        color: #0171ec;
+        border-color: #0171ec;
+    }
+}
+
+.modalListener__help {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #818c9c;
+}
+
+.modalListener__context {
+    margin-bottom: 12px;
+    font-size: 12px;
+}
+
+.modalListener__buttonsWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    margin-top: 40px;
+}
+
+.modalListener__buttonsWrapper > div {
+    flex: 1;
+    width: 100%;
+    text-align: center;
+}
+
+.modalListener__buttonPrimary,
+.modalListener__buttonSecondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 80%;
+    border: 1px solid transparent;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    line-height: 24px;
+    text-align: center;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+}
+
+.modalListener__buttonPrimary {
+    background-color: var(--frak-alertDialog-button-primary-background-color);
+    color: var(--frak-alertDialog-button-primary-text-color);
+}
+
+.modalListener__buttonSecondary {
+    background-color: var(--frak-alertDialog-button-secondary-background-color);
+    color: var(--frak-alertDialog-button-secondary-text-color);
+    border-color: var(--frak-alertDialog-button-secondary-border-color);
+}
+
+.modalListener__sharingButtons {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+}
+
+.modalListener__buttonLink {
+    all: unset;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.modalListener__iconContainer {
+    display: flex;
+    margin: 0 auto 28px auto;
+    width: 50%;
+    flex-direction: column;
+
+    .modalTitle__provided {
+        align-self: flex-end;
+        margin-top: -4px;
+    }
+}
+
+.modalListener__icon {
+    display: block;
+    width: 100%;
+}
+
+.modalListener__footer {
+    width: 100%;
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modalTitle__provided {
+    margin-left: 10px;
+    font-size: 12px;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -.02em;
+}
+.modalTitle__logo {
+    margin-left: 2px;
+    height: 22px;
+    width: auto;
+}
+
+.drawerTitle__container {
+    margin: 12px 0;
+    font-size: 16px;
+    text-align: left;
+    font-weight: 700;
+}

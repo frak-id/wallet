@@ -1,0 +1,10 @@
+.navigation {
+    border-bottom: 1px solid var(--frak-navigation-border-color);
+    padding-bottom: 10px;
+}
+
+.navigation__list {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 12px;
+}

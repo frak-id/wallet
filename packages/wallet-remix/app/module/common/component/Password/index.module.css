@@ -1,0 +1,9 @@
+.password__input {
+    margin: 10px 0;
+}
+
+.password__error {
+    display: block;
+    padding-bottom: 5px;
+    color: var(--frak-color-red);
+}

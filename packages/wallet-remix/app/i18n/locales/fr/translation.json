@@ -1,0 +1,224 @@
+{
+    "authent": {
+        "create": {
+            "alreadyRegistered": "Vous avez déjà un porte-monnaie enregistré. Cliquez sur le bouton de connexion ci-dessous pour vous connecter.",
+            "error": "Erreur lors de l'inscription, veuillez réessayer",
+            "inProgress": "Création du porte-monnaie en cours"
+        },
+        "sso": {
+            "btn": {
+                "new": {
+                    "create": "Utilisez la biométrie pour prouver que vous n'êtes pas un robot",
+                    "login": "Connecter un porte-monnaie existant"
+                },
+                "existing": {
+                    "create": "Créer un nouveau porte-monnaie",
+                    "login": "Connectez-vous avec votre porte-monnaie"
+                }
+            },
+            "description": "Avant de continuer, assurez-vous que vous utilisez un appareil qui vous appartient.<br /> Frak est une solution permettant à <strong>{{productName}}</strong> de récompenser sa communauté pour l'aide apportée à la promotion de ses offres. <strong>Frak est une solution décentralisée et open-source, qui ne stocke aucune donnée personnelle ou biométrique.</strong><br /> Pour en savoir plus sur <strong>{{productName}}</strong> , veuillez consulter notre politique de confidentialité et nos conditions d'utilisation.",
+            "header": { "title": "Connectez-vous avec Frak Wallet" },
+            "recover": "Récupérer le porte-monnaie à partir du fichier",
+            "redirect": "Vous serez redirigé vers {{ productName }} dans quelques secondes.",
+            "redirectNow": "Rediriger maintenant",
+            "subTitle": "pour recevoir immédiatement vos gains de <pLink>{{productName}}</pLink> .",
+            "title": "Créez votre porte-monnaie",
+            "title_new": "Créez votre porte-monnaie",
+            "title_existing": "Utiliser votre porte-monnaie",
+            "previousWallet": "Votre compte : <strong>{{ wallet }}</strong>"
+        }
+    },
+    "common": {
+        "amountRequired": "Le montant est requis",
+        "added": "ajouté",
+        "at": "à",
+        "authenticator": "Authentificateur :",
+        "balance": "Solde",
+        "claim": "Réclamer",
+        "claimed": "réclamé",
+        "copied": "Copié !",
+        "copyAddress": "Copier l'adresse",
+        "enterAddress": "Entrez l'adresse",
+        "interactions": "Interactions",
+        "logout": "Déconnexion",
+        "notifications": "Notifications",
+        "receive": "Recevoir",
+        "rewards": "Gains",
+        "send": "Envoyer",
+        "submit": "Envoyer",
+        "to": "À",
+        "transactionHash": "Hash de transaction :",
+        "transactionLink": "Lien de transaction",
+        "transactionSuccess": "Transaction réussie !",
+        "wallet": "Porte-monnaie :",
+        "walletAddress": "Adresse du porte-monnaie :",
+        "walletAddressRequired": "L'adresse du porte-monnaie est requise",
+        "walletInvalid": "Adresse de porte-monnaie invalide"
+    },
+    "sdk": {
+        "modal": {
+            "default": {
+                "dismissBtn": "Je continue ma navigation",
+                "dismissBtn_sharing": "Partager sans être rémunéré(e)"
+            },
+            "final": {
+                "default": {
+                    "title": "Succès",
+                    "title_reward": "Gains",
+                    "title_sharing": "Partager",
+                    "description_sharing": "En partageant ce lien, vous serez récompensé par **{{ productName }}** si ces partages entraînent des actions comme des clics, des inscriptions ou des achats. Consultez vos gains à tout moment sur [wallet.frak.id](https://wallet.frak.id).",
+                    "description_reward": "Consultez vos gains à tout moment sur [wallet.frak.id](https://wallet.frak.id). Vous aussi partagez à vos amis, tous vos partages qui entraînent des clics, des inscriptions ou des achats génèrent de nouveaux gains !",
+                    "description": "Vous avez effectué toutes les étapes avec succès."
+                },
+                "dismissed": {
+                    "description": "Tout est bon",
+                    "description_sharing": "Partager cet article."
+                }
+            },
+            "login": {
+                "default": {
+                    "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**.",
+                    "description_sharing": "{{ productName }} vous rémunère directement sur votre **porte-monnaie** pour la valeur que vous créez si vos partages entraînent des actions comme des clics, des inscriptions ou des achats.",
+                    "description_reward": "{{ productName }} vous rémunère directement sur votre **porte-monnaie** pour la valeur que vous créez en cas d'actions sur ce site, comme des clics, inscriptions ou achats.",
+                    "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
+                    "secondaryAction": "J'ai déjà un porte-monnaie",
+                    "title": "Connexion"
+                },
+                "success": "Connexion réussie"
+            },
+            "openSession": {
+                "default": {
+                    "description": "Bravo, votre porte-monnaie est créé ! Cliquez sur le bouton ci-dessous pour l'activer et recevoir vos gains",
+                    "primaryAction": "J'active mon porte-monnaie",
+                    "title": "Activation"
+                }
+            },
+            "sendTransaction": {
+                "default": {
+                    "description": "Pour terminer, autorisez cette transaction dans votre porte-monnaie. Cela garantit un traitement sécurisé.",
+                    "primaryAction_one": "Envoyer une transaction",
+                    "primaryAction_other": "Envoyer des transactions",
+                    "title": "Transaction"
+                }
+            },
+            "siweAuthenticate": {
+                "default": {
+                    "description": "Veuillez vous authentifier avec votre porte-monnaie pour continuer en toute sécurité. Votre signature confirme votre identité.",
+                    "primaryAction": "Authentifier",
+                    "title": "Authentification"
+                }
+            }
+        }
+    },
+    "sharing": {
+        "btn": {
+            "copy": "Copier le lien",
+            "copySuccess": "Lien copié",
+            "share": "Partager",
+            "shareSuccess": "Partagé"
+        },
+        "default": {
+            "text": "Découvrez ce produit incroyable !",
+            "title": "Lien d'invitation {{productName}}"
+        }
+    },
+    "wallet": {
+        "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
+        "biometryInfos": "Informations biométriques",
+        "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
+        "interaction": {
+            "CREATE_REFERRAL_LINK": "Lien de partage créé",
+            "OPEN_ARTICLE": "Article ouvert",
+            "PURCHASE_COMPLETED": "Achat terminé",
+            "PURCHASE_STARTED": "Achat commencé",
+            "READ_ARTICLE": "Article lu",
+            "REFERRED": "Parrainé",
+            "WEBSHOP_OPENNED": "Ouverture de la boutique en ligne"
+        },
+        "login": {
+            "accountCreation": "Création de compte",
+            "button": "Récupérez votre <strong>porte-monnaie</strong>",
+            "recover": "Récupérer le porte-monnaie à partir du fichier",
+            "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil"
+        },
+        "password": {
+            "enter": "Entrez le mot de passe",
+            "minimum": "La longueur minimale du mot de passe est de 5",
+            "pleaseEnter": "Veuillez entrer un mot de passe",
+            "required": "Le mot de passe est requis"
+        },
+        "pendingReferral": {
+            "success": "Vous avez réclamé votre récompense avec succès !",
+            "text": "Vous avez obtenu {{eurClaimable}} EUR en attente grâce à vos activités de parrainage !",
+            "title": "Récompense de parrainage en attente"
+        },
+        "recovery": {
+            "title": "Récupérer un porte-monnaie",
+            "step1": "Téléchargez votre fichier de récupération",
+            "step2": "Examiner les données de récupération",
+            "step3": "Décryptage avec mot de passe",
+            "step4": "Créer une nouvelle clé d'accès",
+            "step5": "Exécuter la récupération",
+            "step6": "Succès",
+            "uploadOrDrag": "Téléchargez ou faites glisser le fichier de récupération",
+            "invalidFile": "Fichier invalide",
+            "continue": "Poursuivre la récupération",
+            "invalidPassword": "Mot de passe invalide",
+            "errorLoading": "Erreur lors du chargement du compte de récupération",
+            "needCreatePasskey": "Vous devez créer une nouvelle clé d'accès sur votre appareil",
+            "createPasskey": "créer une clé d'accès",
+            "loadingRecovery": "Chargement de la récupération",
+            "pushPasskey": "Envoyer la nouvelle clé d'accès",
+            "status": {
+                "loading": "Chargement ...",
+                "walletAlready": "Porte-monnaie déjà récupéré",
+                "inProgress": "En cours",
+                "done": "Fait",
+                "error": "Erreur",
+                "pending": "En attente"
+            },
+            "successful": "La récupération est réussie, vous pouvez maintenant vous <pLink>connecter</pLink>"
+        },
+        "recoverySetup": {
+            "currentGuardian": "Gardien actuel :",
+            "disclaimer": "Avertissement<br /> - Nous ne stockons aucune information liée à la récupération de votre porte-monnaie.<br /> - Vous êtes seul responsable de la sécurité et de la confidentialité de votre fichier de récupération et de votre mot de passe.<br /> - Le fichier de récupération peut être généré maintenant, mais le processus de récupération réel ne sera disponible qu'une semaine après la création du fichier pour éviter toute utilisation malveillante.",
+            "download": "Télécharger mon fichier de récupération",
+            "generating": "Génération de données de récupération",
+            "setupNew": "Configurer une nouvelle récupération",
+            "setupOn": "Installer sur {{name}}",
+            "step1": "Mot de passe de cryptage",
+            "step2": "Générer les données de récupération",
+            "step3": "Télécharger le fichier de récupération",
+            "step4": "Activer la récupération",
+            "title": "Configuration de récupération"
+        },
+        "register": {
+            "button": {
+                "alreadyRegistered": "Vous avez déjà un porte-monnaie sur votre appareil<br /> Redirection vers la page de connexion",
+                "create": "Créez votre <strong>porte-monnaie</strong> <sup>*</sup> en une seconde grâce à la biométrie",
+                "error": "Erreur lors de l'inscription, veuillez réessayer",
+                "inProgress": "Création du porte-monnaie en cours<br /> En attente de la validation de votre biométrie"
+            },
+            "notice": "<sup>*</sup> compte numérique crypté où vous pouvez retrouver tout le contenu que vous possédez, vos données de consommation et les récompenses que vous gagnez",
+            "useExisting": "Utiliser un porte-monnaie existant"
+        },
+        "session": {
+            "closed": "Votre porte-monnaie n’est pas activé. Vous ne pouvez pas recevoir vos gains",
+            "open": "Votre porte-monnaie est activé",
+            "openSession": "Activez votre porte-monnaie",
+            "tooltip": {
+                "active": "Vous avez un porte-monnaie actif depuis {{sessionStart}} et jusqu'à {{sessionEnd}}",
+                "inactive": "L'activation du porte-monnaie nous permettra d'envoyer des données d'interaction"
+            }
+        },
+        "tokens": {
+            "amountLessThanBalance": "Le montant doit être inférieur au solde",
+            "amountPositive": "Le montant doit être positif",
+            "amountToSend": "Montant à envoyer",
+            "backToWallet": "Retour au porte-monnaie",
+            "receive": {
+                "title": "Recevoir des actifs sur <strong>les réseaux de test</strong>"
+            }
+        }
+    }
+}
