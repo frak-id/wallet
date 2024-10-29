@@ -1,4 +1,3 @@
-export { getMongoDb } from "./mongo";
 export {
     blockchainContext,
     postgresContext,
@@ -6,7 +5,9 @@ export {
     nextSessionContext,
     indexerApiContext,
     sessionContext,
+    mongoDbContext,
     walletSessionContext,
     walletSdkSessionContext,
+    type GetMongoDb,
 } from "./context";
 export { log } from "./logger";

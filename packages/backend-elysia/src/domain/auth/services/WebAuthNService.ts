@@ -1,4 +1,8 @@
-import { blockchainContext, sessionContext } from "@backend-common";
+import {
+    blockchainContext,
+    mongoDbContext,
+    sessionContext,
+} from "@backend-common";
 import { WebAuthN, kernelAddresses } from "@frak-labs/app-essentials";
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
@@ -11,9 +15,10 @@ import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository
 export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
     .use(sessionContext)
     .use(blockchainContext)
+    .use(mongoDbContext)
     // A few helpers
-    .decorate(({ client, ...decorators }) => {
-        const authenticatorRepository = new AuthenticatorRepository();
+    .decorate(({ client, getMongoDb, ...decorators }) => {
+        const authenticatorRepository = new AuthenticatorRepository(getMongoDb);
 
         /**
          * Parse a compressed webauthn response

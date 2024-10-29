@@ -1,5 +1,4 @@
-import { getMongoDb } from "@backend-common";
-import { Mutex } from "async-mutex";
+import type { GetMongoDb } from "@backend-common";
 import type { Collection } from "mongodb";
 import type { Address } from "viem";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
@@ -8,8 +7,9 @@ import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument"
  * Access our authenticator repository
  */
 export class AuthenticatorRepository {
-    private initMutex = new Mutex();
     private collection: Collection<AuthenticatorDocument> | undefined;
+
+    constructor(private readonly getDb: GetMongoDb) {}
 
     /**
      * Get the collection
@@ -19,16 +19,14 @@ export class AuthenticatorRepository {
             return this.collection;
         }
 
-        return this.initMutex.runExclusive(async () => {
-            const db = await getMongoDb({
-                urlKey: "MONGODB_NEXUS_URI",
-                db: "nexus",
-            });
-            const collection =
-                db.collection<AuthenticatorDocument>("authenticators");
-            this.collection = collection;
-            return collection;
+        const db = await this.getDb({
+            urlKey: "MONGODB_NEXUS_URI",
+            db: "nexus",
         });
+        const collection =
+            db.collection<AuthenticatorDocument>("authenticators");
+        this.collection = collection;
+        return collection;
     }
 
     /**

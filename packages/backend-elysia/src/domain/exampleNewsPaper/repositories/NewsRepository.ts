@@ -1,5 +1,4 @@
-import { getMongoDb } from "@backend-common";
-import { Mutex } from "async-mutex";
+import type { GetMongoDb } from "@backend-common";
 import type { Collection, WithId } from "mongodb";
 import type { NewsDocument } from "../models/dto/NewsDocument";
 
@@ -7,8 +6,9 @@ import type { NewsDocument } from "../models/dto/NewsDocument";
  * Repository used to access the news repositories
  */
 export class NewsRepository {
-    private initMutex = new Mutex();
     private collection: Collection<NewsDocument> | undefined;
+
+    constructor(private readonly getDb: GetMongoDb) {}
 
     /**
      * Get the collection
@@ -18,15 +18,13 @@ export class NewsRepository {
             return this.collection;
         }
 
-        return this.initMutex.runExclusive(async () => {
-            const db = await getMongoDb({
-                urlKey: "MONGODB_EXAMPLE_URI",
-                db: "example",
-            });
-            const collection = db.collection<NewsDocument>("news");
-            this.collection = collection;
-            return collection;
+        const db = await this.getDb({
+            urlKey: "MONGODB_EXAMPLE_URI",
+            db: "example",
         });
+        const collection = db.collection<NewsDocument>("news");
+        this.collection = collection;
+        return collection;
     }
 
     /**
