@@ -18,9 +18,16 @@ import type {
 export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
     .use(oracleContext)
     // Error failsafe, to never fail on shopify webhook
-    .onError(({ error, code, body, path, headers }) => {
+    .onError(({ error, code, body, path, headers, response }) => {
         log.error(
-            { error, code, reqPath: path, reqBody: body, reqHeaders: headers },
+            {
+                error,
+                code,
+                reqPath: path,
+                reqBody: body,
+                reqHeaders: headers,
+                response,
+            },
             "Error while handling woo commerce webhook"
         );
         return new Response("ko", { status: 200 });
@@ -33,38 +40,27 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
 
         return response;
     })
-    // .guard({
-    //     headers: t.Partial(
-    //         t.Object({
-    //             "X-WC-Webhook-Source": t.String(),
-    //             "X-WC-Webhook-Topic": t.String(),
-    //             "X-WC-Webhook-Resource": t.String(),
-    //             "X-WC-Webhook-Event": t.String(),
-    //             "X-WC-Webhook-Signature": t.String(),
-    //             "X-WC-Webhook-ID": t.String(),
-    //             "X-WC-Webhook-Delivery-ID": t.String(),
-    //         })
-    //     ),
-    // })
+    .guard({
+        headers: t.Partial(
+            t.Object({
+                "x-wc-webhook-source": t.String(),
+                "x-wc-webhook-topic": t.String(),
+                "x-wc-webhook-resource": t.String(),
+                "x-wc-webhook-event": t.String(),
+                "x-wc-webhook-signature": t.String(),
+                "x-wc-webhook-id": t.String(),
+                "x-wc-webhook-delivery-id": t.String(),
+            })
+        ),
+    })
     // Request pre validation hook
-    .onBeforeHandle(({ headers, error, body, path }) => {
-        log.info(
-            {
-                headers,
-                signature: headers["X-WC-Webhook-Signature"] ?? "none",
-                resource: headers["X-WC-Webhook-Resource"] ?? "none",
-                body,
-                bodyType: typeof body,
-                path,
-            },
-            "WooCommerce on before handle"
-        );
-        // if (!headers["X-WC-Webhook-Signature"]) {
-        //     return error(400, "Missing signature");
-        // }
-        // if (!headers["X-WC-Webhook-Resource"]?.startsWith("orders/")) {
-        //     return error(400, "Unsupported woo commerce resource");
-        // }
+    .onBeforeHandle(({ headers, error }) => {
+        if (!headers["x-wc-webhook-signature"]) {
+            return error(400, "Missing signature");
+        }
+        if (headers["x-wc-webhook-resource"] !== "order") {
+            return error(400, "Unsupported woo commerce webhook");
+        }
     })
     // Shopify only give us 5sec to answer, all the heavy logic should be in a cron running elsewhere,
     //   here we should just validate the request and save it
@@ -76,9 +72,8 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
                     productId,
                     body,
                     headers,
-                    bodyType: typeof body,
                 },
-                "WooCommerce hooks yougouuu"
+                "WooCommerce inner hook"
             );
 
             // Try to parse the body as a shopify webhook type and ensure the type validity
@@ -145,6 +140,19 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
                 }));
                 await trx.insert(purchaseItemTable).values(mappedItems);
             });
+            log.debug(
+                {
+                    purchaseId,
+                    purchaseStatus,
+                    externalId: webhookData.id.toString(),
+                    externalCustomerId: webhookData.customer_id.toString(),
+                    purchaseToken:
+                        webhookData.order_key ?? webhookData.transaction_id,
+                    totalPrice: webhookData.total,
+                    currencyCode: webhookData.currency,
+                },
+                "WooCommerce Purchase inserted"
+            );
 
             // Return the success state
             return "ok";
@@ -161,7 +169,7 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
 function mapOrderStatus(
     orderStatus: WooCommerceOrderStatus
 ): (typeof purchaseStatusEnum.enumValues)[number] {
-    if (orderStatus === "confirmed") {
+    if (orderStatus === "completed") {
         return "confirmed";
     }
     if (orderStatus === "refunded") {
