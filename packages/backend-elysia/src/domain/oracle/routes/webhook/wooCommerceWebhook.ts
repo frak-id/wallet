@@ -10,7 +10,7 @@ import type {
 } from "../../dto/WooCommerceWebhook";
 import { purchaseWebhookService } from "../../services/hookService";
 
-export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
+export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
     .use(purchaseWebhookService)
     // Error failsafe, to never fail on shopify webhook
     .onError(({ error, code, body, path, headers, response }) => {
