@@ -12,13 +12,17 @@ export function useWaitForTxAndInvalidateQueries() {
     const queryClient = useQueryClient();
 
     return useCallback(
-        async ({ hash, queryKey }: { hash: Hex; queryKey: string[] }) => {
+        async ({
+            hash,
+            queryKey,
+            confirmations = 16,
+        }: { hash: Hex; queryKey: string[]; confirmations?: number }) => {
             // Wait a bit for the tx to be confirmed
             await guard(() =>
                 waitForTransactionReceipt(viemClient, {
                     hash,
-                    confirmations: 32,
-                    retryCount: 32,
+                    confirmations: confirmations,
+                    retryCount: confirmations,
                 })
             );
 

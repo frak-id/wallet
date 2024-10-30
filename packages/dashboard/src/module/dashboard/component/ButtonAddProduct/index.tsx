@@ -1,6 +1,5 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Row } from "@/module/common/component/Row";
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import {
     useCheckDomainName,
@@ -27,7 +26,6 @@ import { Spinner } from "@module/component/Spinner";
 import { TextWithCopy } from "@module/component/TextWithCopy";
 import { Input } from "@module/component/forms/Input";
 import { validateUrl } from "@module/utils/validateUrl";
-import { useQuery } from "@tanstack/react-query";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -373,31 +371,16 @@ function NewProductVerify({
     setupCode: string;
 }) {
     const setIsMinting = useSetAtom(isMintingAtom);
-    const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
 
     const {
-        mutate: triggerMintMyContent,
-        isIdle,
-        error,
-        data: { mintTxHash } = {},
+        infoTxt,
+        mutation: {
+            mutate: triggerMintMyContent,
+            isIdle,
+            error,
+            data: { mintTxHash } = {},
+        },
     } = useMintMyProduct();
-
-    const { isLoading: isWaitingForFinalisedCreation, data: isConfirmed } =
-        useQuery({
-            queryKey: ["mint", "wait-for-finalised-deployment"],
-            enabled: !!mintTxHash,
-            queryFn: async () => {
-                if (!mintTxHash) return false;
-
-                // Invalidate the product related cache
-                await waitForTxAndInvalidateQueries({
-                    hash: mintTxHash,
-                    queryKey: ["product"],
-                });
-                setIsMinting(false);
-                return true;
-            },
-        });
 
     if (!domain) return null;
 
@@ -417,12 +400,19 @@ function NewProductVerify({
                 className={styles.newProductForm__fingerprint}
                 action={() => {
                     setIsMinting(true);
-                    triggerMintMyContent({
-                        name,
-                        domain,
-                        productTypes,
-                        setupCode,
-                    });
+                    triggerMintMyContent(
+                        {
+                            name,
+                            domain,
+                            productTypes,
+                            setupCode,
+                        },
+                        {
+                            onSettled() {
+                                setIsMinting(false);
+                            },
+                        }
+                    );
                 }}
                 disabled={!isIdle}
             >
@@ -430,11 +420,7 @@ function NewProductVerify({
             </AuthFingerprint>
 
             {error && <p className={"error"}>{error.message}</p>}
-            <ProductSuccessInfo
-                txHash={mintTxHash}
-                isWaitingForFinalisedCreation={isWaitingForFinalisedCreation}
-                isConfirmed={isConfirmed}
-            />
+            <ProductSuccessInfo txHash={mintTxHash} infoTxt={infoTxt} />
         </div>
     );
 }
@@ -445,23 +431,21 @@ function NewProductVerify({
  */
 function ProductSuccessInfo({
     txHash,
-    isWaitingForFinalisedCreation,
-    isConfirmed,
+    infoTxt,
 }: {
     txHash?: Hex;
-    isWaitingForFinalisedCreation: boolean;
-    isConfirmed?: boolean | null;
+    infoTxt?: string;
 }) {
-    if (!txHash) return null;
-
-    if (txHash && isWaitingForFinalisedCreation && !isConfirmed) {
+    if (infoTxt) {
         return (
             <p>
-                Setting all the right blockchain data
+                {infoTxt}
                 <span className={"dotsLoading"}>...</span>
             </p>
         );
     }
+
+    if (!txHash) return null;
 
     return (
         <>

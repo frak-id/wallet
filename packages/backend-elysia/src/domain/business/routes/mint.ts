@@ -113,7 +113,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
 
             // Mint a product
             try {
-                const { mintTxHash, productId } =
+                const { mintTxHash, productId, bankResult, interactionResult } =
                     await mintRepository.mintProduct({
                         name,
                         domain: normalisedDomain,
@@ -121,7 +121,12 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                         owner: businessSession.wallet,
                     });
 
-                return { txHash: mintTxHash, productId: toHex(productId) };
+                return {
+                    txHash: mintTxHash,
+                    productId: toHex(productId),
+                    interactionContract: interactionResult?.interactionContract,
+                    bankContract: bankResult?.bank,
+                };
             } catch (e) {
                 return error(400, (e as Error)?.message ?? "An error occurred");
             }
@@ -147,6 +152,8 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                 200: t.Object({
                     txHash: t.Hex(),
                     productId: t.Hex(),
+                    interactionContract: t.Optional(t.Hex()),
+                    bankContract: t.Optional(t.Hex()),
                 }),
             },
         }

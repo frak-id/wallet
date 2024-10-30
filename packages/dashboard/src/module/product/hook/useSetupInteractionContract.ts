@@ -104,7 +104,8 @@ export function useSetupInteractionContract() {
 }
 
 /**
- * Get a potentially futur interaction contract
+ * Get a potentially future interaction contract
+ * @param wallet
  * @param productId
  * @param salt
  */

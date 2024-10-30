@@ -19,6 +19,7 @@ import {
     type Address,
     type Chain,
     type Client,
+    type Hex,
     type LocalAccount,
     type Transport,
     isAddressEqual,
@@ -136,21 +137,22 @@ export class MintRepository {
         });
 
         // Deploy the matching interaction contract
-        await this.deployInteractionContract({
+        const interactionResult = await this.deployInteractionContract({
             productId: precomputedProductId,
             minter,
             lock,
         });
 
         // Then deploy a mocked usd bank for this product
+        let bankResult: { txHash: Hex; bank: Address } | undefined;
         if (isRunningInProd) {
-            await this.deployUsdcBank({
+            bankResult = await this.deployUsdcBank({
                 productId: precomputedProductId,
                 minter,
                 lock,
             });
         } else {
-            await this.deployMockedUsdBank({
+            bankResult = await this.deployMockedUsdBank({
                 productId: precomputedProductId,
                 minter,
                 lock,
@@ -160,6 +162,8 @@ export class MintRepository {
         return {
             productId: precomputedProductId,
             mintTxHash,
+            interactionResult,
+            bankResult,
         };
     }
 
@@ -176,7 +180,7 @@ export class MintRepository {
         lock,
     }: { productId: bigint; minter: LocalAccount; lock: Mutex }) {
         try {
-            const hash = await lock.runExclusive(async () => {
+            const result = await lock.runExclusive(async () => {
                 // Prepare the deployment data
                 const { request, result } = await simulateContract(
                     this.client,
@@ -193,14 +197,17 @@ export class MintRepository {
                 }
 
                 // Trigger the deployment
-                return await writeContract(this.client, request);
+                const txHash = await writeContract(this.client, request);
+                return { txHash, interactionContract: result };
             });
-            if (!hash) return;
+            if (!result) return;
             // Ensure it's included before proceeding
             await waitForTransactionReceipt(this.client, {
-                hash,
+                hash: result.txHash,
                 confirmations: 1,
             });
+            // And return everything
+            return result;
         } catch (e) {
             log.warn(
                 { productId, error: e },
@@ -221,7 +228,7 @@ export class MintRepository {
         lock,
     }: { productId: bigint; minter: LocalAccount; lock: Mutex }) {
         try {
-            await lock.runExclusive(async () => {
+            return await lock.runExclusive(async () => {
                 // Get the current nonce
                 const nonce = await getTransactionCount(this.client, minter);
 
@@ -242,7 +249,7 @@ export class MintRepository {
                 }
 
                 // Trigger the deployment
-                await writeContract(this.client, request);
+                const txHash = await writeContract(this.client, request);
 
                 // Then mint a few test tokens to this bank
                 await writeContract(this.client, {
@@ -253,6 +260,9 @@ export class MintRepository {
                     args: [result, parseEther("500")],
                     nonce: nonce + 1,
                 });
+
+                // Then return the hash + contract
+                return { txHash, bank: result };
             });
         } catch (e) {
             log.warn(
@@ -266,6 +276,7 @@ export class MintRepository {
      * Automatically deploy a mocked usd bank for the given product
      * @param productId
      * @param minter
+     * @param lock
      * @private
      */
     private async deployUsdcBank({
@@ -274,7 +285,7 @@ export class MintRepository {
         lock,
     }: { productId: bigint; minter: LocalAccount; lock: Mutex }) {
         try {
-            await lock.runExclusive(async () => {
+            return await lock.runExclusive(async () => {
                 // Prepare the deployment data
                 const { request, result } = await simulateContract(
                     this.client,
@@ -291,7 +302,10 @@ export class MintRepository {
                 }
 
                 // Trigger the deployment
-                await writeContract(this.client, request);
+                const txHash = await writeContract(this.client, request);
+
+                // Then return the hash + contract
+                return { txHash, bank: result };
             });
         } catch (e) {
             log.warn({ productId, error: e }, "Failed to deploy the usdc bank");
