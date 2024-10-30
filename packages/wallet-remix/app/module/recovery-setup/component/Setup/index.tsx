@@ -1,5 +1,3 @@
-"use client";
-
 import { Step1 } from "@/module/recovery-setup/component/Setup/Step1";
 import { Step2 } from "@/module/recovery-setup/component/Setup/Step2";
 import { Step3 } from "@/module/recovery-setup/component/Setup/Step3";
