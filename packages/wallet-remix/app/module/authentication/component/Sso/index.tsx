@@ -1,5 +1,3 @@
-"use client";
-
 import { lastAuthenticatorAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import {
     currentSsoMetadataAtom,
@@ -21,11 +19,11 @@ import { Spinner } from "@module/component/Spinner";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { CloudUpload } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import styles from "./index.module.css";
+import "./sso.global.css";
+import { Link, useSearchParams } from "@remix-run/react";
 
 /**
  * The SSO page itself
@@ -47,7 +45,7 @@ export function Sso() {
     /**
      * Get the search params and set stuff in the sso context
      */
-    const searchParams = useSearchParams();
+    const [searchParams] = useSearchParams();
 
     /**
      * Set the sso context atom directly
@@ -152,8 +150,9 @@ export function Sso() {
                             />
                         </Notice>
                         <Link
-                            href={"/recovery"}
+                            to={"/recovery"}
                             className={styles.sso__recover}
+                            viewTransition
                         >
                             <CloudUpload /> {t("authent.sso.recover")}
                         </Link>
