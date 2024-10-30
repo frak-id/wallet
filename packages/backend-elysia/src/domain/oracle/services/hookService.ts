@@ -76,6 +76,8 @@ export const purchaseWebhookService = new Elysia({
                             status: purchase.status,
                             totalPrice: purchase.totalPrice,
                             currencyCode: purchase.currencyCode,
+                            // Reset leaf on update
+                            leaf: null,
                             updatedAt: new Date(),
                             ...(purchase.purchaseToken
                                 ? {
