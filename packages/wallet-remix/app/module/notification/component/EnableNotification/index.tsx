@@ -1,22 +1,20 @@
-"use client";
-
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
-import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { Notifications } from "@module/asset/icons/Notifications";
 import { Button } from "@module/component/Button";
 import { Trans } from "react-i18next";
 
 export function EnableNotification() {
-    const { isSupported, subscription } = useNotificationSetupStatus();
+    // const { isSupported, subscription } = useNotificationSetupStatus();
 
     const { subscribeToPush, isPending } = useSubscribeToPushNotification();
 
     // If not supported, or already got a subscription, return nothing
-    if (!isSupported || subscription) {
-        return null;
-    }
+    // TODO: Add a way to unsubscribe
+    // if (!isSupported || subscription) {
+    //     return null;
+    // }
 
     // Otherwise, button to subscribe to the notification
     return (

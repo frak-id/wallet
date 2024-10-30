@@ -1,4 +1,4 @@
-import type { GetRecoveryAvailabilityResponse } from "@/context/recover/action/get";
+import type { GetRecoveryAvailabilityResponse } from "@/context/recover/action/get.server";
 import { useFetcherWithPromise } from "@/module/common/hook/useFetcherWithPromise";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useQuery } from "@tanstack/react-query";

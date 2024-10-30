@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 // Secret env variable from SST we want in the frontend
-const wantedFromConfig = [
+const wantedFromConfig: (keyof typeof Config)[] = [
     "STAGE",
     "ALCHEMY_API_KEY",
     "PIMLICO_API_KEY",

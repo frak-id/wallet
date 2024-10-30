@@ -1,7 +1,7 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Balance } from "@/module/tokens/component/Balance";
+import { Link } from "@remix-run/react";
 import { HandCoins, Send } from "lucide-react";
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
@@ -12,15 +12,17 @@ export function Tokens() {
             <Balance />
             <div className={styles.tokens__buttons}>
                 <Link
-                    href={"/tokens/receive"}
-                    className={`button ${styles.tokens__button}`}
+                    to={"/tokens/receive"}
+                    className={`${styles.tokens__button}`}
+                    viewTransition
                 >
                     <HandCoins size={56} absoluteStrokeWidth={true} />
                     {t("common.receive")}
                 </Link>
                 <Link
-                    href={"/tokens/send"}
-                    className={`button ${styles.tokens__button}`}
+                    to={"/tokens/send"}
+                    className={`${styles.tokens__button}`}
+                    viewTransition
                 >
                     <Send size={56} absoluteStrokeWidth={true} />
                     {t("common.send")}

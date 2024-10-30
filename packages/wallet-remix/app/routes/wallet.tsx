@@ -1,10 +1,10 @@
 import { RestrictedLayout } from "@/module/layout/RestrictedLayout";
-import { Outlet } from "@remix-run/react";
+import { Wallet } from "@/module/wallet/component/Home";
 
 export default function WalletRoute() {
     return (
         <RestrictedLayout>
-            <Outlet />
+            <Wallet />
         </RestrictedLayout>
     );
 }

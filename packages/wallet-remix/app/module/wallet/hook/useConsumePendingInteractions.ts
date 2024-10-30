@@ -6,8 +6,7 @@ import {
     pendingInteractionAtom,
 } from "@/module/wallet/atoms/pendingInteraction";
 import { useMutation } from "@tanstack/react-query";
-import { useSetAtom } from "jotai";
-import { useAtomValue } from "jotai/index";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useAccount } from "wagmi";
 
 /**

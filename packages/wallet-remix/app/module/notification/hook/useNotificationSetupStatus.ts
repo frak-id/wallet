@@ -1,5 +1,3 @@
-"use client";
-
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";

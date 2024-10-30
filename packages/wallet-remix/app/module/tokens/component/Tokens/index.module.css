@@ -6,6 +6,8 @@
 }
 
 .tokens__button {
+    all: unset;
+    cursor: pointer;
     position: relative;
     flex: 1;
     display: flex;
