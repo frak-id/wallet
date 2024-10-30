@@ -1,9 +1,11 @@
 import { vitePlugin as remix } from "@remix-run/dev";
+import { pick } from "radash";
+import { Config } from "sst/node/config";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 // Secret env variable from SST we want in the frontend
-const wantedFromEnv = [
+const wantedFromConfig = [
     "STAGE",
     "ALCHEMY_API_KEY",
     "PIMLICO_API_KEY",
@@ -13,6 +15,7 @@ const wantedFromEnv = [
     "BACKEND_URL",
     "INDEXER_URL",
 ];
+const envFromSstConfig = pick(Config, wantedFromConfig);
 
 declare module "@remix-run/node" {
     interface Future {
@@ -21,14 +24,12 @@ declare module "@remix-run/node" {
 }
 
 export default defineConfig({
-    define: {
-        ...Object.fromEntries(
-            wantedFromEnv.map((key) => [
-                `process.env.${key}`,
-                JSON.stringify(process.env[key]),
-            ])
-        ),
-    },
+    define: Object.fromEntries(
+        Object.entries(envFromSstConfig).map(([key, value]) => [
+            `process.env.${key}`,
+            JSON.stringify(value),
+        ])
+    ),
     server: {
         port: 3000,
     },

@@ -1,6 +1,5 @@
 import type { StackContext } from "sst/constructs";
-import { use } from "sst/constructs";
-import { NextjsSite } from "sst/constructs";
+import { NextjsSite, RemixSite, use } from "sst/constructs";
 import { ConfigStack } from "./Config";
 import { isProdStack, openNextVersion } from "./utils";
 
@@ -37,7 +36,24 @@ export function WalletAppStack({ stack }: StackContext) {
         ? "wallet"
         : `wallet-${stack.stage.toLowerCase()}`;
 
-    // Declare the Next.js site
+    // Declare the Remix site
+    const siteRemix = new RemixSite(stack, "wallet-remix", {
+        path: "packages/wallet-remix",
+        // Set the custom domain
+        customDomain: {
+            // domainName: `${subDomain}.frak.id`.toLowerCase(),
+            domainName: "wallet-remix.frak.id".toLowerCase(),
+            hostedZone: "frak.id",
+        },
+        // Bind to the configs
+        bind: configs,
+        // Number of server side instance to keep warm
+        warm: 1,
+        dev: {
+            deploy: false,
+        },
+    });
+
     const site = new NextjsSite(stack, "wallet", {
         path: "packages/wallet",
         // Set the custom domain
@@ -62,5 +78,6 @@ export function WalletAppStack({ stack }: StackContext) {
 
     stack.addOutputs({
         SiteUrl: site.url,
+        SiteUrlRemix: siteRemix.url,
     });
 }
