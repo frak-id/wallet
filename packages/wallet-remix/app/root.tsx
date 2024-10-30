@@ -11,9 +11,14 @@ import {
     Outlet,
     Scripts,
     ScrollRestoration,
+    json,
     redirect,
+    useLoaderData,
+    useRouteLoaderData,
 } from "@remix-run/react";
 import type { ReactNode } from "react";
+import { useChangeLanguage } from "remix-i18next/react";
+import i18nServer, { localeCookie } from "./i18n/i18n.server";
 import { SetPresenceCookie } from "./module/authentication/component/SetPresenceCookie";
 import { RootProvider } from "./module/common/provider/RootProvider";
 
@@ -156,19 +161,26 @@ export const links: LinksFunction = () => [
     },
 ];
 
+export const handle = { i18n: ["translation"] };
+
 export const loader: LoaderFunction = async ({ request }) => {
+    const locale = await i18nServer.getLocale(request);
     const url = new URL(request.url);
 
     if (url.pathname === "/") {
         return redirect("/wallet");
     }
 
-    return null;
+    return json(
+        { locale },
+        { headers: { "Set-Cookie": await localeCookie.serialize(locale) } }
+    );
 };
 
 export function Layout({ children }: { children: ReactNode }) {
+    const { locale } = useRouteLoaderData<typeof loader>("root");
     return (
-        <html lang="en">
+        <html lang={locale ?? "en"}>
             <head>
                 <meta charSet="utf-8" />
                 <meta
@@ -189,5 +201,7 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+    const { locale } = useLoaderData<typeof loader>();
+    useChangeLanguage(locale);
     return <Outlet />;
 }

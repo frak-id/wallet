@@ -54,6 +54,7 @@
     "react-loading-skeleton": "^3.5.0",
     "react-markdown": "^9.0.1",
     "rehype-external-links": "^3.0.0",
+    "remix-i18next": "^6.4.1",
     "remix-utils": "^7.7.0",
     "vaul": "^1.1.0",
     "viem": "^2.21.35",

@@ -1,31 +1,18 @@
-import { isRunningLocally } from "@frak-labs/app-essentials";
-import { createInstance } from "i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import enTranslation from "./locales/en/translation.json";
 import frTranslation from "./locales/fr/translation.json";
 
-/**
- * Define our main i18n instance
- */
-export const mainI18nInstance = createInstance({
-    supportedLngs: ["en", "fr"],
-    fallbackLng: "en",
-    resources: {
-        en: {
-            translation: enTranslation,
-        },
-        fr: {
-            translation: frTranslation,
-        },
-    },
-    interpolation: {
-        escapeValue: false, // not needed for react as it escapes by default
-    },
-    debug: isRunningLocally,
-    defaultNS: "translation",
-}).use(LanguageDetector);
+// This is the list of languages your application supports, the last one is your
+// fallback language
+export const supportedLngs = ["en", "fr"];
 
-/**
- * Function to trigger the i18n instance init
- */
-export const initI18nInstance = () => mainI18nInstance.init();
+// This is the language you want to use in case
+// the user language is not in the supportedLngs
+export const fallbackLng = "en";
+
+// The default namespace of i18next is "translation", but you can customize it
+export const defaultNS = "translation";
+
+export const resources = {
+    en: { translation: enTranslation },
+    fr: { translation: frTranslation },
+};

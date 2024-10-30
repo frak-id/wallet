@@ -1,7 +1,6 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
-import { initI18nInstance, mainI18nInstance } from "@/i18n/config";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
@@ -13,7 +12,6 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai/index";
 import { type PropsWithChildren, useEffect, useMemo } from "react";
-import { I18nextProvider } from "react-i18next";
 import { createClient } from "viem";
 import { WagmiProvider, createConfig } from "wagmi";
 
@@ -50,13 +48,6 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 };
 
 export function RootProvider({ children }: PropsWithChildren) {
-    // Trigger the i18n instance init on mount
-    useEffect(() => {
-        initI18nInstance().then(() => {
-            console.log("I18n instance initialized");
-        });
-    }, []);
-
     return (
         <>
             <Provider store={jotaiStore}>
@@ -66,7 +57,7 @@ export function RootProvider({ children }: PropsWithChildren) {
                 >
                     <SetupServiceWorker />
                     <WagmiProviderWithDynamicConfig>
-                        <LocalisationProvider>{children}</LocalisationProvider>
+                        {children}
                     </WagmiProviderWithDynamicConfig>
                     <ReactQueryDevtools initialIsOpen={false} />
                 </PersistQueryClientProvider>
@@ -164,10 +155,4 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
 function EnforceWagmiConnection() {
     useEnforceWagmiConnection();
     return null;
-}
-
-function LocalisationProvider({ children }: PropsWithChildren) {
-    return (
-        <I18nextProvider i18n={mainI18nInstance}>{children}</I18nextProvider>
-    );
 }
