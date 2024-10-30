@@ -1,4 +1,3 @@
-"use server";
 import type { RewardHistory } from "@/types/RewardHistory";
 import type { Token } from "@/types/Token";
 import { indexerApi } from "@frak-labs/shared/context/server";

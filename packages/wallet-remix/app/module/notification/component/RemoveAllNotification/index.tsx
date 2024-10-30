@@ -1,7 +1,7 @@
 "use client";
 
 import { Panel } from "@/module/common/component/Panel";
-import Row from "@/module/common/component/Row";
+import { Row } from "@/module/common/component/Row";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
 import { ButtonRipple } from "@module/component/ButtonRipple";
 import { BellOff } from "lucide-react";

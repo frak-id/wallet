@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from "react";
 import styles from "./index.module.css";
 
-export default function Row({
+export function Row({
     withIcon,
     className = "",
     children,

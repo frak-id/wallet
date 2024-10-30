@@ -1,5 +1,3 @@
-"use client";
-
 import { prefixDrawerCss } from "@module/utils/prefixDrawerCss";
 import {
     type ComponentProps,

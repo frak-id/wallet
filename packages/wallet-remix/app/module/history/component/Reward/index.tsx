@@ -1,8 +1,6 @@
-"use client";
-
 import { formatUsd } from "@/context/wallet/utils/mUsdFormatter";
 import { Panel } from "@/module/common/component/Panel";
-import Row from "@/module/common/component/Row";
+import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { AlertDialogArticle } from "@/module/history/component/AlertDialogArticle";
 import { DrawerArticle } from "@/module/history/component/DrawerArticle";

@@ -1,5 +1,3 @@
-"use client";
-
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Reward } from "@/module/history/component/Reward";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";

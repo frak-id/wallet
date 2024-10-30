@@ -1,4 +1,3 @@
-"use server";
 import type { InteractionHistory } from "@/types/InteractionHistory";
 import { indexerApi } from "@frak-labs/shared/context/server";
 import type { Address, Hex } from "viem";

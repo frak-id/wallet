@@ -1,5 +1,3 @@
-"use client";
-
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import type { InteractionHistory } from "@/types/InteractionHistory";

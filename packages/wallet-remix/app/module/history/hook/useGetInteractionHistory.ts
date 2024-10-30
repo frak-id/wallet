@@ -1,5 +1,3 @@
-"use client";
-
 import { getInteractionHistory } from "@/context/history/action/interactionHistory";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";

@@ -1,9 +1,7 @@
-"use client";
-
 import type { NotificationModel } from "@/context/common/dexie/NotificationModel";
 import { dexieDb } from "@/context/common/dexie/dexieDb";
 import { Panel } from "@/module/common/component/Panel";
-import Row from "@/module/common/component/Row";
+import { Row } from "@/module/common/component/Row";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import { useQuery } from "@tanstack/react-query";
