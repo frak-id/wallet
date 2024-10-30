@@ -178,9 +178,9 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export function Layout({ children }: { children: ReactNode }) {
-    const { locale } = useRouteLoaderData<typeof loader>("root");
+    const loaderData = useRouteLoaderData<typeof loader>("root");
     return (
-        <html lang={locale ?? "en"}>
+        <html lang={loaderData?.locale ?? "en"}>
             <head>
                 <meta charSet="utf-8" />
                 <meta

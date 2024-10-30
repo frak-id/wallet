@@ -9,7 +9,7 @@ const rpId = isRunningLocally ? "localhost" : "frak.id";
 const rpOrigin = isRunningInProd
     ? "https://wallet.frak.id"
     : isRunningLocally
-      ? "https://localhost:3000"
+      ? "http://localhost:3000"
       : "https://wallet-dev.frak.id";
 
 /**

@@ -1,5 +1,3 @@
-"use server";
-
 import { currentViemClient } from "@/context/blockchain/provider";
 import {
     doAddPassKeyFnAbi,
@@ -82,6 +80,17 @@ export async function getCurrentRecoveryOption({
     };
 }
 
+export type GetRecoveryAvailabilityParams = {
+    wallet: Address;
+    expectedGuardian: Address;
+    newAuthenticatorId: string;
+};
+
+export type GetRecoveryAvailabilityResponse = {
+    available: boolean;
+    alreadyRecovered?: boolean;
+};
+
 /**
  * Get all the chains available chains for recovery for the given wallet
  * @param wallet
@@ -92,14 +101,7 @@ export async function getRecoveryAvailability({
     wallet,
     expectedGuardian,
     newAuthenticatorId,
-}: {
-    wallet: Address;
-    expectedGuardian: Address;
-    newAuthenticatorId: string;
-}): Promise<{
-    available: boolean;
-    alreadyRecovered?: boolean;
-}> {
+}: GetRecoveryAvailabilityParams): Promise<GetRecoveryAvailabilityResponse> {
     // Get the recovery option for the wallet
     const currentRecovery = await getCurrentRecoveryOption({
         wallet,

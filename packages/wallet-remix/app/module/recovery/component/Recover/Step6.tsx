@@ -1,5 +1,5 @@
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
-import Link from "next/link";
+import { Link } from "@remix-run/react";
 import { Trans, useTranslation } from "react-i18next";
 
 const ACTUAL_STEP = 6;
@@ -15,7 +15,7 @@ export function Step6() {
                 <Trans
                     i18nKey={"wallet.recovery.successful"}
                     components={{
-                        pLink: <Link href={"/login"} />,
+                        pLink: <Link to={"/login"} viewTransition />,
                     }}
                 />
             </p>

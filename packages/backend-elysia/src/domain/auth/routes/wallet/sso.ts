@@ -52,7 +52,7 @@ export const walletSsoRoutes = new Elysia({
                 isRunningInProd
                     ? "https://wallet.frak.id"
                     : isRunningLocally
-                      ? "https://localhost:3000"
+                      ? "http://localhost:3000"
                       : "https://wallet-dev.frak.id"
             );
             url.pathname = "/sso";

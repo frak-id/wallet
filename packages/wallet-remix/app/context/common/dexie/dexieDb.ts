@@ -1,5 +1,3 @@
-"use client";
-
 import type { NotificationModel } from "@/context/common/dexie/NotificationModel";
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import type { Table } from "dexie";

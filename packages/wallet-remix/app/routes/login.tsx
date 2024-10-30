@@ -1,10 +1,10 @@
-import { Register } from "@/module/authentication/component/Register";
+import { Login } from "@/module/authentication/component/Login";
 import { AuthenticationLayout } from "@/module/layout/AuthenticationLayout";
 
-export default function RegisterRoute() {
+export default function LoginRoute() {
     return (
         <AuthenticationLayout>
-            <Register />
+            <Login />
         </AuthenticationLayout>
     );
 }

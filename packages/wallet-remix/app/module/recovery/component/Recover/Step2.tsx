@@ -6,8 +6,8 @@ import {
 } from "@/module/settings/atoms/recovery";
 import { Button } from "@module/component/Button";
 import { WalletAddress } from "@module/component/HashDisplay";
+import { useNavigate } from "@remix-run/react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { toHex } from "viem";
@@ -23,7 +23,7 @@ export function Step2() {
     // Get the recovery file
     const fileContent = useAtomValue(recoveryFileContentAtom);
 
-    const router = useRouter();
+    const navigate = useNavigate();
     const [, startTransition] = useTransition();
 
     // Get the login function in case passkey is still on device
@@ -53,14 +53,14 @@ export function Step2() {
             // If login is in success, go to the wallet
             if (wallet) {
                 startTransition(() => {
-                    router.push("/wallet");
+                    navigate("/wallet", { viewTransition: true });
                 });
             }
         } catch (e) {
             console.error(e);
             setStep(ACTUAL_STEP + 1);
         }
-    }, [fileContent, login, setStep, router]);
+    }, [fileContent, login, setStep, navigate]);
 
     return (
         <AccordionRecoveryItem

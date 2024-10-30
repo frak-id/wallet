@@ -1,4 +1,5 @@
-import { getRecoveryAvailability } from "@/context/recover/action/get";
+import type { GetRecoveryAvailabilityResponse } from "@/context/recover/action/get";
+import { useFetcherWithPromise } from "@/module/common/hook/useFetcherWithPromise";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useQuery } from "@tanstack/react-query";
 
@@ -9,6 +10,8 @@ export function useRecoveryAvailability({
     file,
     newAuthenticatorId,
 }: { file: RecoveryFileContent; newAuthenticatorId: string }) {
+    const fetcher = useFetcherWithPromise<GetRecoveryAvailabilityResponse>();
+
     const { data, ...queryStuff } = useQuery({
         queryKey: [
             "recovery",
@@ -18,12 +21,23 @@ export function useRecoveryAvailability({
         ],
         gcTime: 0,
         enabled: !!file.initialWallet.address,
-        queryFn: async () =>
-            getRecoveryAvailability({
-                wallet: file.initialWallet.address,
-                expectedGuardian: file.guardianAddress,
-                newAuthenticatorId,
-            }),
+        queryFn: async () => {
+            const data = await fetcher.submit(
+                {
+                    wallet: file.initialWallet.address,
+                    expectedGuardian: file.guardianAddress,
+                    newAuthenticatorId,
+                },
+                {
+                    action: "/recovery",
+                    method: "post",
+                }
+            );
+            if (!data) {
+                return undefined;
+            }
+            return data;
+        },
     });
     return {
         ...queryStuff,

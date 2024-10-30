@@ -1,5 +1,5 @@
 export const frakConfig = {
-    walletUrl: "https://localhost:3000",
+    walletUrl: "http://localhost:3000",
     metadata: {
         name: "Your App Name",
     },

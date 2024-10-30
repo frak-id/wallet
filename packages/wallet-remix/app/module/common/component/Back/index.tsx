@@ -1,5 +1,5 @@
+import { Link } from "@remix-run/react";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import type { PropsWithChildren } from "react";
 import styles from "./index.module.css";
 
@@ -23,7 +23,7 @@ export function Back({
         >
             <ArrowLeft />
             {href && (
-                <Link href={href} aria-disabled={disabled}>
+                <Link to={href} aria-disabled={disabled} viewTransition>
                     {children}
                 </Link>
             )}

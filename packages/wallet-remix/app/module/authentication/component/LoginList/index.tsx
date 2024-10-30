@@ -1,5 +1,3 @@
-"use client";
-
 import { AccordionLogin } from "@/module/authentication/component/AccordionLogin";
 import { LoginItem } from "@/module/authentication/component/LoginItem";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";

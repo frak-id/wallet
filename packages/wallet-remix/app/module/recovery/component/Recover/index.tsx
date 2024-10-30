@@ -1,5 +1,3 @@
-"use client";
-
 import { Title } from "@/module/common/component/Title";
 import { Step1 } from "@/module/recovery/component/Recover/Step1";
 import { Step2 } from "@/module/recovery/component/Recover/Step2";

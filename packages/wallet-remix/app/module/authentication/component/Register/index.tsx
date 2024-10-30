@@ -72,7 +72,7 @@ export function Register() {
             className={styles.register__grid}
             footer={
                 <>
-                    <Link to={"/login"}>
+                    <Link to={"/login"} viewTransition>
                         {t("wallet.register.useExisting")}
                     </Link>
                     <Notice>

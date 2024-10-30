@@ -10,10 +10,7 @@ export function GlobalLayout({
         <>
             <div className={"desktop scrollbars"}>
                 <main className={styles.main}>
-                    <div className={styles.inner}>
-                        {/* <ClientOnly>{children}</ClientOnly> */}
-                        {children}
-                    </div>
+                    <div className={styles.inner}>{children}</div>
                 </main>
             </div>
         </>

@@ -37,6 +37,7 @@
     "@tanstack/react-query-devtools": "^5.59.16",
     "@tanstack/react-query-persist-client": "^5.59.16",
     "@wagmi/core": "^2.14.1",
+    "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.0",
     "dexie": "^4.0.8",
     "i18next": "^23.16.0",

@@ -20,13 +20,13 @@ export function AuthRestricted({
         // If require an auth but no token, redirect to registration
         if (requireAuthenticated && !session?.token) {
             console.log("Redirecting to registration");
-            navigate("/register", { replace: true });
+            navigate("/register", { replace: true, viewTransition: true });
         }
 
         // If don't require an auth but have token, redirect to wallet
         if (!requireAuthenticated && session?.token) {
             console.log("Redirecting to wallet");
-            navigate("/wallet", { replace: true });
+            navigate("/wallet", { replace: true, viewTransition: true });
         }
     }, [requireAuthenticated, session?.token, navigate]);
 

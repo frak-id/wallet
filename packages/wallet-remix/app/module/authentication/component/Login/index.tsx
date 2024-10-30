@@ -1,12 +1,10 @@
-"use client";
-
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
+import { Link, useNavigate } from "@remix-run/react";
 import { CloudUpload } from "lucide-react";
-import Link from "next/link";
 import { Trans, useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
@@ -15,10 +13,11 @@ import styles from "./index.module.css";
  * @constructor
  */
 export function Login() {
+    const navigate = useNavigate();
     const { t } = useTranslation();
     const { login } = useLogin({
         onSuccess: () => {
-            window.location.href = "/wallet";
+            navigate("/wallet");
         },
     });
 
@@ -29,7 +28,11 @@ export function Login() {
                 className={styles.login__grid}
                 footer={
                     <>
-                        <Link href={"/recovery"} className={styles.login__link}>
+                        <Link
+                            to={"/recovery"}
+                            className={styles.login__link}
+                            viewTransition
+                        >
                             <CloudUpload /> {t("wallet.login.recover")}
                         </Link>
                         <LoginList />

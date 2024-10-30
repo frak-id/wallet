@@ -1,5 +1,3 @@
-"use client";
-
 import { dexieDb } from "@/context/common/dexie/dexieDb";
 import { useQuery } from "@tanstack/react-query";
 
