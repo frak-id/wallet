@@ -58,6 +58,8 @@ export function compressedSsoToParams(
  * Type of compressed the sso data
  */
 export type CompressedSsoData = {
+    // Potential id from backend
+    id?: Hex;
     // redirect url
     r?: string;
     // direct exit

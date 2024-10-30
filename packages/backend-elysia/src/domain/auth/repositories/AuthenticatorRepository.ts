@@ -1,4 +1,5 @@
-import type { Collection, Db } from "mongodb";
+import type { GetMongoDb } from "@backend-common";
+import type { Collection } from "mongodb";
 import type { Address } from "viem";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
 
@@ -6,20 +7,37 @@ import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument"
  * Access our authenticator repository
  */
 export class AuthenticatorRepository {
-    private readonly collection: Collection<AuthenticatorDocument>;
-    constructor(db: Db) {
-        this.collection =
+    private collection: Collection<AuthenticatorDocument> | undefined;
+
+    constructor(private readonly getDb: GetMongoDb) {}
+
+    /**
+     * Get the collection
+     */
+    private async getCollection() {
+        if (this.collection) {
+            return this.collection;
+        }
+
+        const db = await this.getDb({
+            urlKey: "MONGODB_NEXUS_URI",
+            db: "nexus",
+        });
+        const collection =
             db.collection<AuthenticatorDocument>("authenticators");
+        this.collection = collection;
+        return collection;
     }
 
     /**
      * Get all authenticators for the given user
      * @param credentialId
      */
-    public getByCredentialId(
+    public async getByCredentialId(
         credentialId: string
     ): Promise<AuthenticatorDocument | null> {
-        return this.collection.findOne({ _id: credentialId });
+        const collection = await this.getCollection();
+        return collection.findOne({ _id: credentialId });
     }
 
     /**
@@ -35,7 +53,8 @@ export class AuthenticatorRepository {
             throw new Error("Credential already exists");
         }
 
-        await this.collection.insertOne(authenticator);
+        const collection = await this.getCollection();
+        await collection.insertOne(authenticator);
     }
 
     /**
@@ -47,7 +66,8 @@ export class AuthenticatorRepository {
         credentialId,
         counter,
     }: { credentialId: string; counter: number }): Promise<void> {
-        await this.collection.updateOne(
+        const collection = await this.getCollection();
+        await collection.updateOne(
             { _id: credentialId },
             { $set: { counter } }
         );
@@ -65,7 +85,8 @@ export class AuthenticatorRepository {
         credentialId: string;
         smartWalletAddress: Address;
     }): Promise<void> {
-        await this.collection.updateOne(
+        const collection = await this.getCollection();
+        await collection.updateOne(
             { _id: credentialId },
             { $set: { smartWalletAddress } }
         );

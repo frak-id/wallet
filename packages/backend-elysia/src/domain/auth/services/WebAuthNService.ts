@@ -1,4 +1,8 @@
-import { blockchainContext, getMongoDb, sessionContext } from "@backend-common";
+import {
+    blockchainContext,
+    mongoDbContext,
+    sessionContext,
+} from "@backend-common";
 import { WebAuthN, kernelAddresses } from "@frak-labs/app-essentials";
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
@@ -11,8 +15,11 @@ import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository
 export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
     .use(sessionContext)
     .use(blockchainContext)
+    .use(mongoDbContext)
     // A few helpers
-    .decorate(({ client, ...decorators }) => {
+    .decorate(({ client, getMongoDb, ...decorators }) => {
+        const authenticatorRepository = new AuthenticatorRepository(getMongoDb);
+
         /**
          * Parse a compressed webauthn response
          */
@@ -20,17 +27,6 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
             return JSON.parse(
                 Buffer.from(response, "base64").toString("utf-8")
             );
-        }
-
-        /**
-         * Get the authenticator database
-         */
-        async function getAuthenticatorDb() {
-            const db = await getMongoDb({
-                urlKey: "MONGODB_NEXUS_URI",
-                db: "nexus",
-            });
-            return new AuthenticatorRepository(db);
         }
 
         /**
@@ -71,10 +67,8 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
                 );
 
             // Find the authenticator
-            const authenticatorDb = await getAuthenticatorDb();
-            const authenticator = await authenticatorDb.getByCredentialId(
-                signature.id
-            );
+            const authenticator =
+                await authenticatorRepository.getByCredentialId(signature.id);
             if (!authenticator) {
                 return false;
             }
@@ -106,7 +100,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
                 verification.authenticationInfo.newCounter !==
                 authenticator.counter
             ) {
-                await authenticatorDb.updateCounter({
+                await authenticatorRepository.updateCounter({
                     credentialId: authenticator._id,
                     counter: verification.authenticationInfo.newCounter + 1,
                 });
@@ -125,7 +119,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
             ...decorators,
             isValidWebAuthNSignature,
             parseCompressedWebAuthNResponse,
-            getAuthenticatorDb,
+            authenticatorRepository,
             getAuthenticatorWalletAddress,
         };
     })

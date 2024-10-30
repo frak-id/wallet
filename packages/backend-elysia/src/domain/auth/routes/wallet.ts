@@ -9,12 +9,17 @@ import { WalletAuthResponseDto } from "../models/WalletSessionDto";
 import { walletSdkSessionService } from "../services/WalletSdkSessionService";
 import { webAuthNService } from "../services/WebAuthNService";
 import { decodePublicKey } from "../utils/webauthnDecode";
+import { walletSdkRoutes } from "./wallet/sdk";
+import { walletSsoRoutes } from "./wallet/sso";
 
 export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     .use(blockchainContext)
     .use(sessionContext)
     .use(webAuthNService)
     .use(walletSdkSessionService)
+    // SSO + sdk sub routes
+    .use(walletSsoRoutes)
+    .use(walletSdkRoutes)
     // Logout
     .post("/logout", async ({ cookie: { businessAuth } }) => {
         businessAuth.remove();
@@ -54,6 +59,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             body: {
                 authenticatorResponse: rawAuthenticatorResponse,
                 expectedChallenge,
+                ssoId,
             },
             // Response
             error,
@@ -61,6 +67,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             isValidWebAuthNSignature,
             walletJwt,
             generateSdkJwt,
+            resolveSsoSession,
         }) => {
             // Check if that's a valid webauthn signature
             const verificationnResult = await isValidWebAuthNSignature({
@@ -88,6 +95,15 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Finally, generate a JWT token for the SDK
             const sdkJwt = await generateSdkJwt({ wallet: address });
 
+            // If all good, mark the sso as done
+            if (ssoId) {
+                await resolveSsoSession({
+                    id: ssoId,
+                    wallet: address,
+                    authenticatorId,
+                });
+            }
+
             return {
                 token,
                 address,
@@ -103,6 +119,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 expectedChallenge: t.String(),
                 // b64 + stringified version of the authenticator response
                 authenticatorResponse: t.String(),
+                // potential sso id
+                ssoId: t.Optional(t.Hex()),
             }),
             response: {
                 404: t.String(),
@@ -120,15 +138,17 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 expectedChallenge,
                 userAgent,
                 previousWallet,
+                ssoId,
             },
             // Response
             error,
             // Context
             generateSdkJwt,
-            getAuthenticatorDb,
+            authenticatorRepository,
             walletJwt,
             getAuthenticatorWalletAddress,
             parseCompressedWebAuthNResponse,
+            resolveSsoSession,
         }) => {
             // Decode the registration response
             const registrationResponse =
@@ -174,8 +194,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     authenticatorId: credential.id,
                     pubKey: publicKey,
                 }));
-            const authenticatorDbRepository = await getAuthenticatorDb();
-            await authenticatorDbRepository.createAuthenticator({
+            await authenticatorRepository.createAuthenticator({
                 _id: credential.id,
                 smartWalletAddress: walletAddress,
                 userAgent,
@@ -189,6 +208,15 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
 
             // Finally, generate a JWT token for the SDK
             const sdkJwt = await generateSdkJwt({ wallet: walletAddress });
+
+            // If all good, mark the sso as done
+            if (ssoId) {
+                await resolveSsoSession({
+                    id: ssoId,
+                    wallet: walletAddress,
+                    authenticatorId: credential.id,
+                });
+            }
 
             // Create the token and set the cookie
             const token = await walletJwt.sign({
@@ -217,6 +245,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 userAgent: t.String(),
                 previousWallet: t.Optional(t.Address()),
                 setSessionCookie: t.Optional(t.Boolean()),
+                // potential sso id
+                ssoId: t.Optional(t.Hex()),
             }),
             response: {
                 400: t.String(),

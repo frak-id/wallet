@@ -39,7 +39,7 @@ export function useOnOpenSso(): OnOpenSso {
                 return;
             }
 
-            const link = await getOpenSsoLink({
+            const { url: ssoLink } = await getOpenSsoLink({
                 productId: context.productId,
                 metadata: {
                     ...ssoInfo.metadata,
@@ -54,7 +54,7 @@ export function useOnOpenSso(): OnOpenSso {
             try {
                 // Open the popup
                 const openedWindow = window.open(
-                    link,
+                    ssoLink,
                     ssoPopupName,
                     ssoPopupFeatures
                 );
