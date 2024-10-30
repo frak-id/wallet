@@ -1,13 +1,11 @@
-"use client";
-
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { jotaiStore } from "@module/atoms/store";
 import { Button } from "@module/component/Button";
+import { useNavigate } from "@remix-run/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { RESET } from "jotai/utils";
 import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 function cleanLocalStorage() {
@@ -29,7 +27,7 @@ function cleanLocalStorage() {
  */
 export function Logout() {
     const { t } = useTranslation();
-    const router = useRouter();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     return (
         <Panel size={"none"} variant={"invisible"}>
@@ -46,7 +44,7 @@ export function Logout() {
                     // Local storage cleanup
                     setTimeout(() => {
                         cleanLocalStorage();
-                        router.push("/register");
+                        navigate("/register", { viewTransition: true });
                     }, 100);
                 }}
                 leftIcon={<LogOut size={32} />}

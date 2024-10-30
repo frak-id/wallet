@@ -1,10 +1,8 @@
-"use client";
-
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { CurrentRecoverySetupStatus } from "@/module/recovery-setup/component/CurrentSetupStatus";
+import { Link } from "@remix-run/react";
 import { Shield } from "lucide-react";
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -19,7 +17,7 @@ export function RecoveryLink() {
                 {t("wallet.recoverySetup.title")}
             </Title>
             <CurrentRecoverySetupStatus />
-            <Link href={"/settings/recovery"}>
+            <Link to={"/settings/recovery"} viewTransition>
                 {t("wallet.recoverySetup.setupNew")}
             </Link>
         </Panel>

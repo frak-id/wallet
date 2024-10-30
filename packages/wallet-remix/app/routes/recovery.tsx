@@ -1,7 +1,7 @@
 import {
     type GetRecoveryAvailabilityParams,
     getRecoveryAvailability,
-} from "@/context/recover/action/get.server";
+} from "@/context/recover/action/get";
 import { Grid } from "@/module/common/component/Grid";
 import { AuthenticationLayout } from "@/module/layout/AuthenticationLayout";
 import { RecoverWallet } from "@/module/recovery/component/Recover";

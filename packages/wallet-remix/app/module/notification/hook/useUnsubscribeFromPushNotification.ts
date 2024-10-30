@@ -1,4 +1,3 @@
-"use client";
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useMutation, useQuery } from "@tanstack/react-query";
