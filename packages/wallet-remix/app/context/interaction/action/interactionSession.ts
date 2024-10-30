@@ -1,4 +1,3 @@
-"use server";
 import { currentViemClient } from "@/context/blockchain/provider";
 import type { InteractionSession } from "@/types/Session";
 import {

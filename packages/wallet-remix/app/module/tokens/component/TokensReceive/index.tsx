@@ -1,5 +1,3 @@
-"use client";
-
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { QRCodeWallet } from "@/module/wallet/component/QRCodeWallet";

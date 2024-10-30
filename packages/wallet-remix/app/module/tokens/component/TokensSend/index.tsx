@@ -1,4 +1,3 @@
-"use client";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { TokenMax } from "@/module/tokens/component/TokenMax";

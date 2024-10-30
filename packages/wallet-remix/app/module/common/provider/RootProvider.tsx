@@ -84,7 +84,7 @@ function SetupServiceWorker() {
         const loadServiceWorker = async () => {
             // Ask the navigator to register the service worker
             const registration = await navigator.serviceWorker.register(
-                "./sw.js",
+                "/sw.js",
                 {
                     scope: "/",
                     updateViaCache: "none",

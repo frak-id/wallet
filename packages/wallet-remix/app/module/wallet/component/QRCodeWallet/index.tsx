@@ -1,6 +1,6 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { ButtonRipple } from "@module/component/ButtonRipple";
+import { Button } from "@frak-labs/shared/module/component/Button";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { ArrowDownToLine, Copy } from "lucide-react";
 import { useQRCode } from "next-qrcode";
@@ -40,15 +40,15 @@ export function QRCodeWallet() {
                     )}
                     <p className={styles.QRCodeWallet__address}>{address}</p>
                 </Panel>
-                <Panel size={"none"} variant={"empty"}>
-                    <ButtonRipple
+                <Panel size={"none"} variant={"invisible"}>
+                    <Button
+                        width={"full"}
                         onClick={() => copy(address)}
-                        timeout={300}
                         className={styles.QRCodeWallet__button}
                     >
                         <Copy />
                         {copied ? t("common.copied") : t("common.copyAddress")}
-                    </ButtonRipple>
+                    </Button>
                 </Panel>
             </>
         )
