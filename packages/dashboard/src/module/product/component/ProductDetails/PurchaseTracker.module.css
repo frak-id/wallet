@@ -1,4 +1,4 @@
-.purchaseOracleSetup__inner {
+.purchaseTrackerAccordionContent {
     & p,
     & form,
     & button {
@@ -6,7 +6,7 @@
     }
 }
 
-p.purchaseOracleSetup__description {
+p.purchaseTracker__description {
     margin: 0 0 10px 0;
     font-size: 16px;
 }
