@@ -51,6 +51,13 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
                         );
                         continue;
                     }
+                    if (result.purchase.status !== "confirmed") {
+                        log.debug(
+                            { result, tracker },
+                            "Purchase not completed yet for tracker"
+                        );
+                        continue;
+                    }
 
                     // If all good, build the interaction and push it
                     const interaction =

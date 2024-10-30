@@ -32,9 +32,6 @@ export const PurchaseProofService = new Elysia({
             if (!purchase) {
                 return { status: "purchase-not-found" } as const;
             }
-            if (purchase.status !== "confirmed") {
-                return { status: "purchase-not-confirmed" } as const;
-            }
 
             // Case where the purchase hasn't been processed yet
             if (!purchase?.leaf) {
