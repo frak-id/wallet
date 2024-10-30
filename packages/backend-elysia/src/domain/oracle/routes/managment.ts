@@ -45,6 +45,7 @@ export const managmentRoutes = new Elysia()
             // Return the oracle status
             return {
                 setup: true,
+                platform: currentOracle.platform,
                 webhookSigninKey: currentOracle.hookSignatureKey,
                 stats: {
                     firstPurchase: stats[0]?.firstPurchase ?? undefined,
@@ -61,6 +62,11 @@ export const managmentRoutes = new Elysia()
                 }),
                 t.Object({
                     setup: t.Literal(true),
+                    platform: t.Union([
+                        t.Literal("shopify"),
+                        t.Literal("woocommerce"),
+                        t.Literal("custom"),
+                    ]),
                     webhookSigninKey: t.String(),
                     stats: t.Optional(
                         t.Partial(
@@ -84,7 +90,7 @@ export const managmentRoutes = new Elysia()
                 return error(400, "Invalid product id");
             }
 
-            const { hookSignatureKey } = body;
+            const { hookSignatureKey, platform } = body;
 
             // todo: Role check for the wallet
 
@@ -94,11 +100,13 @@ export const managmentRoutes = new Elysia()
                 .values({
                     productId,
                     hookSignatureKey,
+                    platform,
                 })
                 .onConflictDoUpdate({
                     target: [productOracleTable.productId],
                     set: {
                         hookSignatureKey,
+                        platform,
                     },
                 })
                 .execute();
@@ -107,6 +115,11 @@ export const managmentRoutes = new Elysia()
             isAuthenticated: "business",
             body: t.Object({
                 hookSignatureKey: t.String(),
+                platform: t.Union([
+                    t.Literal("shopify"),
+                    t.Literal("woocommerce"),
+                    t.Literal("custom"),
+                ]),
             }),
         }
     )

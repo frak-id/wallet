@@ -113,6 +113,7 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/wooCommerce" })
                     name: item.name,
                     title: item.name,
                     quantity: item.quantity,
+                    imageUrl: item.image?.src?.length ? item.image.src : null,
                 })),
             });
 
