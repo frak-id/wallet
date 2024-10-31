@@ -78,7 +78,7 @@ a {
     opacity: 0.35;
 }
 
-/* nextjs-toploader */
+/* toploader */
 #nprogress .bar {
     background: var(--frak-color-gradient) !important;
 }

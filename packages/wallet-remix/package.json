@@ -45,6 +45,7 @@
     "jotai": "^2.10.1",
     "lucide-react": "^0.453.0",
     "normalize.css": "^8.0.1",
+    "nprogress": "^0.2.0",
     "permissionless": "^0.2.11",
     "radash": "^12.1.0",
     "react": "^18",
@@ -63,9 +64,9 @@
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
+    "@remix-run/dev": "^2.13.1",
     "@serwist/webpack-plugin": "^9.0.9",
     "@simplewebauthn/types": "^11.0.0",
-    "@remix-run/dev": "^2.13.1",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^18",
     "@types/react-dom": "^18",

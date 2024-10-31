@@ -20,6 +20,10 @@ import type { ReactNode } from "react";
 import { useChangeLanguage } from "remix-i18next/react";
 import i18nServer, { localeCookie } from "./i18n/i18n.server";
 import { SetPresenceCookie } from "./module/authentication/component/SetPresenceCookie";
+import {
+    TopLoader,
+    nProgressStylesUrl,
+} from "./module/common/component/TopLoader";
 import { RootProvider } from "./module/common/provider/RootProvider";
 
 export const meta: MetaFunction = () => {
@@ -159,6 +163,7 @@ export const links: LinksFunction = () => [
         rel: "stylesheet",
         href: allCssUrl,
     },
+    { rel: "stylesheet", href: nProgressStylesUrl },
 ];
 
 export const handle = { i18n: ["translation"] };
@@ -193,6 +198,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <body className="scrollbars">
                 <RootProvider>{children}</RootProvider>
                 <SetPresenceCookie />
+                <TopLoader />
                 <ScrollRestoration />
                 <Scripts />
             </body>
