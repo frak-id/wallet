@@ -11,7 +11,7 @@ import {
     Outlet,
     Scripts,
     ScrollRestoration,
-    json,
+    data,
     redirect,
     useLoaderData,
     useRouteLoaderData,
@@ -171,7 +171,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         return redirect("/wallet");
     }
 
-    return json(
+    return data(
         { locale },
         { headers: { "Set-Cookie": await localeCookie.serialize(locale) } }
     );
