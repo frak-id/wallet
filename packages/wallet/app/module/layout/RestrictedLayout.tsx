@@ -6,7 +6,7 @@ import type { PropsWithChildren } from "react";
 export function RestrictedLayout({ children }: PropsWithChildren) {
     return (
         <AuthRestricted requireAuthenticated={true}>
-            <GlobalLayout>
+            <GlobalLayout navigation={true}>
                 <Header />
                 {children}
             </GlobalLayout>

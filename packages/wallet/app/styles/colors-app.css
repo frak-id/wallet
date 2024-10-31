@@ -7,6 +7,7 @@
     --frak-panel-outlined-border-color: var(--frak-color-blue-zodiac-darker);
     --frak-panel-shadow-color: var(--frak-shadow-color);
     --frak-panel-border-color: rgba(129, 140, 156, 0.2);
+    --frak-header-background-color: var(--frak-color-blur);
     --frak-input-background-color: var(--frak-color-blue-zodiac-darker);
     --frak-input-border-color: var(--frak-color-white);
     --frak-input-text-color: var(--frak-color-white);
@@ -27,7 +28,6 @@
     --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
     --frak-button-disabled-text-color: var(--frak-color-grayText);
     --frak-navigation-color: var(--frak-color-white);
-    --frak-navigation-border-color: var(--frak-color-white);
     --frak-token-item-hover-color: var(--frak-color-grayText);
     --frak-header-border-color: var(--frak-color-white);
     --frak-header-wallet-color: var(--frak-color-east-bay);

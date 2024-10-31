@@ -7,7 +7,7 @@ export function AuthenticationLayout({ children }: PropsWithChildren) {
     return (
         <AuthRestricted requireAuthenticated={false}>
             <GlobalLayout>
-                <Header navigation={false} />
+                <Header />
                 {children}
             </GlobalLayout>
         </AuthRestricted>

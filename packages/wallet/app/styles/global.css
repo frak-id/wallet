@@ -20,6 +20,7 @@ html {
         overflow: auto;
 
         & .desktop {
+            position: relative;
             min-height: 100dvh;
         }
     }
@@ -40,7 +41,7 @@ html {
                 width: 430px;
                 height: 805px;
                 min-height: auto;
-                overflow: auto;
+                overflow: hidden;
                 transition: background .3s;
                 background: var(--frak-contrast-background-color);
             }

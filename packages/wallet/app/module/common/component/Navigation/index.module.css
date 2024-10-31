@@ -1,6 +1,16 @@
 .navigation {
-    border-bottom: 1px solid var(--frak-navigation-border-color);
-    padding-bottom: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 12px 24px;
+    background: var(--frak-header-background-color);
+    backdrop-filter: blur(20px);
+}
+
+@media (min-width: 600px) {
+    .navigation {
+        position: static;
+    }
 }
 
 .navigation__list {
