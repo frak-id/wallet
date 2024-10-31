@@ -13,6 +13,36 @@ import type {
 import { displayModal } from "../displayModal";
 
 /**
+ * Represent the type of the modal step builder
+ */
+export type ModalStepBuilder<
+    Steps extends ModalStepTypes[] = ModalStepTypes[],
+> = {
+    params: DisplayModalParamsType<Steps>;
+    sendTx: (
+        options: SendTransactionModalStepType["params"]
+    ) => ModalStepBuilder<[...Steps, SendTransactionModalStepType]>;
+    reward: (
+        options?: Omit<FinalModalStepType["params"], "action">
+    ) => ModalStepBuilder<[...Steps, FinalModalStepType]>;
+    sharing: (
+        sharingOptions?: Extract<
+            FinalActionType,
+            { key: "sharing" }
+        >["options"],
+        options?: Omit<FinalModalStepType["params"], "action">
+    ) => ModalStepBuilder<[...Steps, FinalModalStepType]>;
+    display: () => Promise<ModalRpcStepsResultType<Steps>>;
+};
+
+/**
+ * Represent the output type of the modal builder
+ */
+export type ModalBuilder = ModalStepBuilder<
+    [LoginModalStepType, OpenInteractionSessionModalStepType]
+>;
+
+/**
  * Simple modal builder params builder
  * @param client
  * @param metadata
@@ -30,7 +60,7 @@ export function modalBuilder(
         login?: LoginModalStepType["params"];
         openSession?: OpenInteractionSessionModalStepType["params"];
     }
-): ModalStepBuilder<[LoginModalStepType, OpenInteractionSessionModalStepType]> {
+): ModalBuilder {
     // Build the initial modal params
     const baseParams: DisplayModalParamsType<
         [LoginModalStepType, OpenInteractionSessionModalStepType]
@@ -45,27 +75,6 @@ export function modalBuilder(
     // Return the step builder
     return modalStepsBuilder(client, baseParams);
 }
-
-/**
- * Represent the type of the modal step builder
- */
-type ModalStepBuilder<Steps extends ModalStepTypes[]> = {
-    params: DisplayModalParamsType<Steps>;
-    sendTx: (
-        options: SendTransactionModalStepType["params"]
-    ) => ModalStepBuilder<[...Steps, SendTransactionModalStepType]>;
-    reward: (
-        options?: Omit<FinalModalStepType["params"], "action">
-    ) => ModalStepBuilder<[...Steps, FinalModalStepType]>;
-    sharing: (
-        sharingOptions?: Extract<
-            FinalActionType,
-            { key: "sharing" }
-        >["options"],
-        options?: Omit<FinalModalStepType["params"], "action">
-    ) => ModalStepBuilder<[...Steps, FinalModalStepType]>;
-    display: () => Promise<ModalRpcStepsResultType<Steps>>;
-};
 
 /**
  * Build builder helping to add steps to the modal

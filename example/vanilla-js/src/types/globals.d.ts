@@ -1,5 +1,7 @@
 import type {
+    ModalBuilder,
     displayModal,
+    modalBuilder,
     referralInteraction,
     watchWalletStatus,
 } from "@frak-labs/nexus-sdk/actions";
@@ -18,11 +20,13 @@ declare global {
             displayModal: typeof displayModal;
             referralInteraction: typeof referralInteraction;
             watchWalletStatus: typeof watchWalletStatus;
+            modalBuilder: typeof modalBuilder;
         };
         FrakSetup: {
             frakConfig: NexusWalletSdkConfig;
             frakClient: NexusClient | null;
             modalShare: () => void;
+            modalBuilder: ModalBuilder | null;
         };
     }
 }
