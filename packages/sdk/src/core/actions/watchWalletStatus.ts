@@ -13,7 +13,15 @@ export function watchWalletStatus(
 ): Promise<WalletStatusReturnType> {
     // If no callback is provided, just do a request with deferred result
     if (!callback) {
-        return client.request({ method: "frak_listenToWalletStatus" });
+        return client
+            .request({ method: "frak_listenToWalletStatus" })
+            .then((result) => {
+                // Save the potential interaction token
+                savePotentialToken(result.interactionToken);
+
+                // Return the result
+                return result;
+            });
     }
 
     // Otherwise, listen to the wallet status and return the first one received
@@ -30,6 +38,9 @@ export function watchWalletStatus(
                 // Transmit the status to the callback
                 callback(status);
 
+                // Save the potential interaction token
+                savePotentialToken(status.interactionToken);
+
                 // If the promise hasn't resolved yet, resolve it
                 if (!hasResolved) {
                     firstResult.resolve(status);
@@ -38,4 +49,25 @@ export function watchWalletStatus(
             }
         )
         .then(() => firstResult.promise);
+}
+
+/**
+ * Helper to save a potential interaction token
+ * @param interactionToken
+ */
+function savePotentialToken(interactionToken?: string) {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    if (interactionToken) {
+        // If we got an interaction token, save it
+        window.sessionStorage.setItem(
+            "frak-wallet-interaction-token",
+            interactionToken
+        );
+    } else {
+        // Otherwise, remove it
+        window.sessionStorage.removeItem("frak.interaction-token");
+    }
 }

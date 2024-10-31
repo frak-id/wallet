@@ -13,6 +13,7 @@ export {
     sendTransaction,
     type SendTransactionParams,
 } from "./wrapper/sendTransaction";
+export { modalBuilder } from "./wrapper/modalBuilder";
 // Referral interaction
 export { referralInteraction } from "./referral/referralInteraction";
 export { processReferral } from "./referral/processReferral";
