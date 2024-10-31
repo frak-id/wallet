@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { WalletStatusReturnType } from "../../core";
-import { walletStatus } from "../../core/actions";
+import { watchWalletStatus } from "../../core/actions";
 import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
@@ -37,7 +37,7 @@ export function useWalletStatus() {
                 throw new ClientNotFound();
             }
 
-            return walletStatus(client, newStatusUpdated);
+            return watchWalletStatus(client, newStatusUpdated);
         },
         enabled: !!client,
     });
