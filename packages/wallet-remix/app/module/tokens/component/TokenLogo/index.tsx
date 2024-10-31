@@ -1,5 +1,5 @@
-import { FrakToken } from "@/assets/icons/FrakToken";
 import type { BalanceItem } from "@/types/Token";
+import { FrakToken } from "./FrakToken";
 import styles from "./index.module.css";
 
 export function TokenLogo({
