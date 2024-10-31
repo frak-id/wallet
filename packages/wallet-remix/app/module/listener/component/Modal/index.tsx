@@ -1,4 +1,3 @@
-"use client";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";

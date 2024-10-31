@@ -144,10 +144,11 @@ function SsoButton({
     });
 
     // Consume the pending sso if possible (maybe some hook to early exit here? Already working since we have the session listener)
-    useConsumePendingSso({
+    const { data } = useConsumePendingSso({
         trackingId,
         productId: context.productId,
     });
+    console.log("useConsumePendingSso response", data);
 
     // The text to display on the button
     const text = useMemo<ReactNode>(

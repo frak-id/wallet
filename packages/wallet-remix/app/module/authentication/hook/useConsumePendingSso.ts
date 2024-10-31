@@ -57,7 +57,7 @@ export function useConsumePendingSso({
 
             // If the status is not-found, remove the sso link query
             if (data.status === "not-found") {
-                await queryClient.removeQueries({
+                queryClient.removeQueries({
                     queryKey: ["sso", "link"],
                     exact: false,
                 });

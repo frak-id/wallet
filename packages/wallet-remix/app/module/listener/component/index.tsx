@@ -1,5 +1,3 @@
-"use client";
-
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { ListenerModal } from "@/module/listener/component/Modal";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
