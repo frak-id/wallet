@@ -1,34 +1,59 @@
-import { log, walletSdkSessionContext } from "@backend-common";
+import { log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
+import { type Address, isHex } from "viem";
 import { interactionsContext } from "../context";
 import { interactionsPurchaseTrackerTable } from "../db/schema";
 
 export const purchaseInteractionsRoutes = new Elysia()
     .use(interactionsContext)
-    .use(walletSdkSessionContext)
+    .use(sessionContext)
     .post(
         "/listenForPurchase",
-        async ({ body, interactionsDb, walletSdkSession }) => {
-            if (!walletSdkSession) return;
+        async ({
+            body,
+            headers: { "x-wallet-sdk-auth": walletSdkAuth },
+            interactionsDb,
+            walletSdkJwt,
+            error,
+        }) => {
+            if (!walletSdkAuth) return error(401, "Missing wallet SDK JWT");
 
-            log.debug(`Received purchase from ${body.customerId}`);
+            // Get the right address
+            let address: Address;
+            if (isHex(walletSdkAuth)) {
+                // Condition required for initial implementation, should be updated in a later stage to enforce wallet session
+                address = walletSdkAuth;
+            } else {
+                const session = await walletSdkJwt.verify(walletSdkAuth);
+                if (!session) return error(401, "Invalid wallet SDK JWT");
+                address = session.address;
+            }
+
+            log.debug(`Received purchase from ${body.customerId} - ${address}`);
 
             // Insert the purchase tracker
             await interactionsDb
                 .insert(interactionsPurchaseTrackerTable)
                 .values({
-                    wallet: walletSdkSession.address,
-                    externalCustomerId: body.customerId,
-                    externalPurchaseId: body.orderId,
+                    wallet: address,
+                    externalCustomerId:
+                        typeof body.customerId !== "string"
+                            ? body.customerId.toString()
+                            : body.customerId,
+                    externalPurchaseId:
+                        typeof body.orderId !== "string"
+                            ? body.orderId.toString()
+                            : body.orderId,
                     token: body.token,
-                });
+                })
+                .onConflictDoNothing();
         },
         {
-            authenticated: "wallet-sdk",
+            type: "json",
             body: t.Object({
-                customerId: t.String(),
-                orderId: t.String(),
+                customerId: t.Union([t.String(), t.Number()]),
+                orderId: t.Union([t.String(), t.Number()]),
                 token: t.String(),
             }),
         }

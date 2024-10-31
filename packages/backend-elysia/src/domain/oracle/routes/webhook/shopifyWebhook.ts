@@ -4,20 +4,15 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
-import { oracleContext } from "../context";
-import {
-    productOracleTable,
-    purchaseItemTable,
-    type purchaseStatusEnum,
-    purchaseStatusTable,
-} from "../db/schema";
+import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
 import type {
     OrderFinancialStatus,
     ShopifyOrderUpdateWebhookDto,
-} from "../dto/ShopifyWebhook";
+} from "../../dto/ShopifyWebhook";
+import { purchaseWebhookService } from "../../services/hookService";
 
 export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
-    .use(oracleContext)
+    .use(purchaseWebhookService)
     // Error failsafe, to never fail on shopify webhook
     .onError(({ error, code, body, path, headers }) => {
         log.error(
@@ -61,11 +56,19 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     //   here we should just validate the request and save it
     .post(
         ":productId/hook",
-        async ({ params: { productId }, body, headers, oracleDb, error }) => {
-            // todo: hmac validation in the `onParse` hook? https://shopify.dev/docs/apps/build/webhooks/subscribe/https#step-2-validate-the-origin-of-your-webhook-to-ensure-its-coming-from-shopify
-
+        async ({
+            params: { productId },
+            body,
+            headers,
+            error,
+            oracleDb,
+            validateBodyHmac,
+            upsertPurchase,
+        }) => {
             // Try to parse the body as a shopify webhook type and ensure the type validity
-            const webhookData = body as ShopifyOrderUpdateWebhookDto;
+            const webhookData = JSON.parse(
+                body
+            ) as ShopifyOrderUpdateWebhookDto;
             // Ensure the order id match the one in the headers
             if (
                 webhookData?.id !==
@@ -89,6 +92,13 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                 return error(404, "Product oracle not found");
             }
 
+            // Validate the body hmac
+            validateBodyHmac({
+                body,
+                secret: oracle.hookSignatureKey,
+                signature: headers["x-shopify-hmac-sha256"],
+            });
+
             // Prebuild some data before insert
             const purchaseStatus = mapFinancialStatus(
                 webhookData.financial_status
@@ -109,52 +119,34 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             );
 
             // Insert purchase and items
-            await oracleDb.transaction(async (trx) => {
-                // Insert the purchase first
-                await trx
-                    .insert(purchaseStatusTable)
-                    .values({
-                        oracleId: oracle.id,
-                        purchaseId,
-                        externalId: webhookData.id.toString(),
-                        externalCustomerId: webhookData.customer.id.toString(),
-                        purchaseToken:
-                            webhookData.checkout_token ?? webhookData.token,
-                        status: purchaseStatus,
-                        totalPrice: webhookData.total_price,
-                        currencyCode: webhookData.currency,
-                    })
-                    .onConflictDoUpdate({
-                        target: [purchaseStatusTable.purchaseId],
-                        set: {
-                            status: purchaseStatus,
-                            totalPrice: webhookData.total_price,
-                            currencyCode: webhookData.currency,
-                            updatedAt: new Date(),
-                            ...(webhookData.checkout_token
-                                ? {
-                                      purchaseToken: webhookData.checkout_token,
-                                  }
-                                : {}),
-                        },
-                    });
-                // Insert the items if needed
-                if (webhookData.line_items.length === 0) {
-                    return;
-                }
-                const mappedItems = webhookData.line_items.map((item) => ({
+            await upsertPurchase({
+                purchase: {
+                    oracleId: oracle.id,
+                    purchaseId,
+                    externalId: webhookData.id.toString(),
+                    externalCustomerId: webhookData.customer.id.toString(),
+                    purchaseToken:
+                        webhookData.checkout_token ?? webhookData.token,
+                    status: purchaseStatus,
+                    totalPrice: webhookData.total_price,
+                    currencyCode: webhookData.currency,
+                },
+                purchaseItems: webhookData.line_items.map((item) => ({
                     purchaseId,
                     externalId: item.product_id.toString(),
                     price: item.price,
                     name: item.name,
                     title: item.title,
                     quantity: item.quantity,
-                }));
-                await trx.insert(purchaseItemTable).values(mappedItems);
+                })),
             });
 
             // Return the success state
             return "ok";
+        },
+        {
+            type: "text",
+            body: t.String(),
         }
     );
 

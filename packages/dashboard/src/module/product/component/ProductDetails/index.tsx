@@ -14,7 +14,7 @@ import {
 } from "@/module/forms/Form";
 import { MultiSelect, type MultiSelectProps } from "@/module/forms/MultiSelect";
 import { InteractionSettings } from "@/module/product/component/ProductDetails/InteractionSettings";
-import { PurchaseOracleSetup } from "@/module/product/component/ProductDetails/PurchaseOracle";
+import { PurchasseTrackerSetup } from "@/module/product/component/ProductDetails/PurchaseTracker";
 import { ProductHead } from "@/module/product/component/ProductHead";
 import { useEditProduct } from "@/module/product/hook/useEditProduct";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
@@ -204,7 +204,7 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                         </Columns>
                     </Panel>
                 )}
-                <PurchaseOracleSetup productId={productId} />
+                <PurchasseTrackerSetup productId={productId} />
                 <InteractionSettings productId={productId} />
             </Form>
         </FormLayout>

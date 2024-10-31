@@ -1,18 +1,42 @@
-import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
-import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
+import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import {
+    addresses,
+    campaignBankAbi,
+    interactionValidatorRoles,
+    productAdministratorRegistryAbi,
+    productInteractionManagerAbi,
+    productRoles,
+} from "@frak-labs/app-essentials/blockchain";
+import type {
+    ProductTypesKey,
+    SendTransactionModalStepType,
+} from "@frak-labs/nexus-sdk/core";
+import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
 import { backendApi } from "@frak-labs/shared/context/server";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { encodeFunctionData } from "viem";
 
 /**
  * Hook to mint the user product
  */
 export function useMintMyProduct() {
-    const { mutateAsync: deployInteractionContract } =
-        useSetupInteractionContract();
+    const { data: oracleUpdater } = useGetAdminWallet({
+        key: "oracle-updater",
+    });
+    const { mutateAsync: sendTransaction } = useSendTransactionAction();
+    const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
 
-    return useMutation({
+    const [infoTxt, setInfoTxt] = useState<string | undefined>();
+
+    const mutation = useMutation({
         mutationKey: ["product", "launch-mint"],
-        mutationFn: async ({
+        onSettled() {
+            // Clear info post mutation
+            setInfoTxt(undefined);
+        },
+        async mutationFn({
             name,
             domain,
             setupCode,
@@ -22,7 +46,9 @@ export function useMintMyProduct() {
             domain: string;
             setupCode: string;
             productTypes: ProductTypesKey[];
-        }) => {
+        }) {
+            // Trigger the backend mint
+            setInfoTxt("Registering your product");
             const { data, error } = await backendApi.business.mint.put({
                 name,
                 domain,
@@ -31,9 +57,89 @@ export function useMintMyProduct() {
             });
             if (error) throw error;
 
-            // Setup the interaction contract if needed
-            await deployInteractionContract({
-                productId: data.productId,
+            // Compute the post mint transaction to be done
+            setInfoTxt("Preparing post setup validation");
+            const tx: SendTransactionModalStepType["params"]["tx"] = [];
+
+            // If we got a banking contract, activate it on mint
+            if (data.bankContract) {
+                tx.push({
+                    to: data.bankContract,
+                    data: encodeFunctionData({
+                        abi: campaignBankAbi,
+                        functionName: "updateDistributionState",
+                        args: [true],
+                    }),
+                });
+            }
+
+            // If we got a interaction contract, allow the managed validator on it
+            if (data.interactionContract) {
+                // Get the manager validator address
+                const { data: delegatedManagerWallet } =
+                    await backendApi.common.adminWallet.get({
+                        query: {
+                            productId: data.productId,
+                        },
+                    });
+                if (delegatedManagerWallet?.pubKey) {
+                    tx.push({
+                        to: data.interactionContract,
+                        data: encodeFunctionData({
+                            abi: productInteractionManagerAbi,
+                            functionName: "grantRoles",
+                            args: [
+                                delegatedManagerWallet?.pubKey,
+                                interactionValidatorRoles,
+                            ],
+                        }),
+                    });
+                }
+            }
+
+            // If that's a product related oracle, enable the purchase oracle by default
+            if (productTypes.includes("purchase") && oracleUpdater) {
+                tx.push({
+                    to: addresses.productAdministratorRegistry,
+                    data: encodeFunctionData({
+                        abi: productAdministratorRegistryAbi,
+                        functionName: "grantRoles",
+                        args: [
+                            BigInt(data.productId),
+                            oracleUpdater,
+                            productRoles.purchaseOracleUpdater,
+                        ],
+                    }),
+                });
+            }
+
+            // Send all the post mint transactions
+            if (tx.length) {
+                setInfoTxt("Waiting for post setup validation");
+                const { hash } = await sendTransaction({
+                    tx,
+                    metadata: {
+                        header: {
+                            title: "Post mint setup",
+                        },
+                        context: "Setting up the product post mint",
+                    },
+                });
+
+                // Wait for the post setup tx to be done, and invalidate product
+                await waitForTxAndInvalidateQueries({
+                    hash,
+                    queryKey: ["product"],
+                    confirmations: 4,
+                });
+            }
+
+            // Wait for the mint tx to be done, and invalidated everything related to the campaigns
+            setInfoTxt("Verifying everything");
+            await waitForTxAndInvalidateQueries({
+                hash: data.txHash,
+                queryKey: ["product"],
+                confirmations: 16,
             });
 
             return {
@@ -41,4 +147,6 @@ export function useMintMyProduct() {
             };
         },
     });
+
+    return { mutation, infoTxt };
 }

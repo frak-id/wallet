@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import { walletStatus } from "../";
+import { watchWalletStatus } from "../";
 import type {
     DisplayModalParamsType,
     ModalStepTypes,
@@ -29,7 +29,7 @@ export async function referralInteraction(
     });
 
     // Get the current wallet status
-    const currentWalletStatus = await walletStatus(client);
+    const currentWalletStatus = await watchWalletStatus(client);
 
     try {
         return await processReferral(client, {

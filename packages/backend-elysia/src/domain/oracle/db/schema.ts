@@ -12,6 +12,12 @@ import {
 } from "drizzle-orm/pg-core";
 import { customHex } from "../../../utils/drizzle/customTypes";
 
+export const productOraclePlatformEnum = pgEnum("product_oracle_platform", [
+    "shopify",
+    "woocommerce",
+    "custom",
+]);
+
 export const productOracleTable = pgTable(
     "product_oracle",
     {
@@ -21,6 +27,10 @@ export const productOracleTable = pgTable(
         hookSignatureKey: varchar("hook_signature_key").notNull(),
         // Date infos
         createdAt: timestamp("created_at").defaultNow(),
+        // The plateform of the oracle
+        platform: productOraclePlatformEnum("platform")
+            .notNull()
+            .default("shopify"),
         // The current merkle root for this oracle
         merkleRoot: customHex("merkle_root"),
         // If the oracle is synced with the blockchain
@@ -94,6 +104,8 @@ export const purchaseItemTable = pgTable(
         name: varchar("name").notNull(),
         // The title of the product
         title: varchar("title").notNull(),
+        // Potential image for the purchase item
+        imageUrl: varchar("image_url"),
         // The quantity of the product
         quantity: integer("quantity").notNull(),
         // Update infos
@@ -101,5 +113,9 @@ export const purchaseItemTable = pgTable(
     },
     (table) => ({
         purchaseIdIdx: index("item_purchase_id_idx").on(table.purchaseId),
+        externalIdIdx: uniqueIndex("unique_external_purchase_item_id").on(
+            table.externalId,
+            table.purchaseId
+        ),
     })
 );
