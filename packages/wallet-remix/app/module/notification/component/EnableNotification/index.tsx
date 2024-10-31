@@ -4,17 +4,16 @@ import { useSubscribeToPushNotification } from "@/module/notification/hook/useSu
 import { Notifications } from "@module/asset/icons/Notifications";
 import { Button } from "@module/component/Button";
 import { Trans } from "react-i18next";
+import { useNotificationSetupStatus } from "../../hook/useNotificationSetupStatus";
 
 export function EnableNotification() {
-    // const { isSupported, subscription } = useNotificationSetupStatus();
-
+    const { isSupported, subscription } = useNotificationSetupStatus();
     const { subscribeToPush, isPending } = useSubscribeToPushNotification();
 
     // If not supported, or already got a subscription, return nothing
-    // TODO: Add a way to unsubscribe
-    // if (!isSupported || subscription) {
-    //     return null;
-    // }
+    if (!isSupported || subscription) {
+        return null;
+    }
 
     // Otherwise, button to subscribe to the notification
     return (
