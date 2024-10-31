@@ -5,7 +5,12 @@ import { setupFrakClient } from "./module/setupClient";
 import { displayWalletStatus } from "./module/walletStatus";
 
 // Export the setup function and config for use in other files
-window.FrakSetup = { frakConfig, frakClient: null, modalShare };
+window.FrakSetup = {
+    frakConfig,
+    frakClient: null,
+    modalShare,
+    modalBuilder: null,
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("NexusSDK", window.NexusSDK);
@@ -16,22 +21,19 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        const modalStepBuilder = window.NexusSDK.modalBuilder(frakClient, {
+            metadata: {
+                lang: "fr",
+                isDismissible: true,
+            },
+            login: loginModalStep,
+        });
+
         window.FrakSetup.frakClient = frakClient;
+        window.FrakSetup.modalBuilder = modalStepBuilder;
 
         window.NexusSDK.referralInteraction(frakClient, {
-            modalConfig: {
-                steps: {
-                    login: loginModalStep,
-                    openSession: {},
-                    final: {
-                        action: { key: "reward" },
-                    },
-                },
-                metadata: {
-                    lang: "fr",
-                    isDismissible: true,
-                },
-            },
+            modalConfig: modalStepBuilder.reward().params,
             options: {
                 alwaysAppendUrl: true,
             },
