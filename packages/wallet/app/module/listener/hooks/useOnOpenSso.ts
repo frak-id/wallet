@@ -1,14 +1,14 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import {
+    ssoPopupFeatures,
+    ssoPopupName,
+    useGetOpenSsoLink,
+} from "@/module/authentication/hook/useGetOpenSsoLink";
+import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
     RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
-import {
-    ssoPopupFeatures,
-    ssoPopupName,
-} from "@frak-labs/nexus-wallet/src/module/authentication/hook/useGetOpenSsoLink";
-import { useGetOpenSsoLink } from "@frak-labs/nexus-wallet/src/module/authentication/hook/useGetOpenSsoLink";
 import { useCallback } from "react";
 
 type OnOpenSso = IFrameRequestResolver<

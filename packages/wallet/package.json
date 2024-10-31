@@ -44,6 +44,7 @@
     "isbot": "^5.1.17",
     "jotai": "^2.10.1",
     "lucide-react": "^0.453.0",
+    "next-qrcode": "^2.5.1",
     "normalize.css": "^8.0.1",
     "nprogress": "^0.2.0",
     "permissionless": "^0.2.11",
