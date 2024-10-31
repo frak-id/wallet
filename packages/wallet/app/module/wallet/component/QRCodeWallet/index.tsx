@@ -3,8 +3,8 @@ import { Title } from "@/module/common/component/Title";
 import { Button } from "@frak-labs/shared/module/component/Button";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { ArrowDownToLine, Copy } from "lucide-react";
-import { useQRCode } from "next-qrcode";
 import { Trans, useTranslation } from "react-i18next";
+import QRCode from "react-qr-code";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
 
@@ -12,7 +12,6 @@ export function QRCodeWallet() {
     const { t } = useTranslation();
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
-    const { Canvas } = useQRCode();
 
     return (
         address && (
@@ -23,18 +22,11 @@ export function QRCodeWallet() {
                     </Title>
                     {address && (
                         <div className={styles.QRCodeWallet__code}>
-                            <Canvas
-                                text={address}
-                                options={{
-                                    errorCorrectionLevel: "M",
-                                    margin: 3,
-                                    scale: 4,
-                                    width: 200,
-                                    color: {
-                                        dark: "#000000ff",
-                                        light: "#ffffff90",
-                                    },
-                                }}
+                            <QRCode
+                                value={address}
+                                size={200}
+                                bgColor="#000000ff"
+                                fgColor="#ffffff90"
                             />
                         </div>
                     )}
