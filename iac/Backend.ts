@@ -1,4 +1,6 @@
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
+import { Repository } from "aws-cdk-lib/aws-ecr";
+import { ContainerImage } from "aws-cdk-lib/aws-ecs";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
 import { Config, Service, type StackContext, use } from "sst/constructs";
@@ -46,7 +48,7 @@ export function BackendStack(ctx: StackContext) {
  * @param stack
  */
 function elysiaBackend(
-    { stack }: StackContext,
+    { app, stack }: StackContext,
     {
         masterKeySecret,
         masterSecretId,
@@ -76,6 +78,21 @@ function elysiaBackend(
         vapidPublicKey,
         coinGeckoApiKey,
     } = use(ConfigStack);
+
+    // Get the image that will be used for the backend
+    // Get the container props of our prebuilt binaries
+    const containerRegistry = Repository.fromRepositoryAttributes(
+        stack,
+        "ElysiaBackendRegistry",
+        {
+            repositoryArn: `arn:aws:ecr:eu-west-1:${app.account}:repository/${process.env.ELYSIA_REPO}`,
+            repositoryName: process.env.ELYSIA_REPO ?? "",
+        }
+    );
+    const dockerImage = ContainerImage.fromEcrRepository(
+        containerRegistry,
+        process.env.BACKEND_IMAGE_TAG ?? "latest"
+    );
 
     // The domain name we will be using
     const domainName = isDevStack(stack)
@@ -166,6 +183,12 @@ function elysiaBackend(
                     healthyHttpCodes: "200",
                 },
                 deregistrationDelay: Duration.seconds(60),
+            },
+            // Directly specify the image position in the registry here
+            container: {
+                containerName: "elysia",
+                image: dockerImage,
+                portMappings: [{ containerPort: 3030 }],
             },
         },
     });
