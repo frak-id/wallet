@@ -6,7 +6,6 @@ on:
     branches:
       - main
       - dev
-      - tech/elysia-separate-build
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -92,9 +91,9 @@ jobs:
             echo "BACKEND_IMAGE_TAG=latest" >> $GITHUB_ENV
           fi
           
-          echo "Deployment stage  : $STAGE"
-          echo "Elysia rep        : $ELYSIA_REPO"
-          echo "Backend image tag : $BACKEND_IMAGE_TAG"
+          echo "Deployment stage  : ${{ env.STAGE }}"
+          echo "Elysia rep        : {{ env.$ELYSIA_REPO }}"
+          echo "Backend image tag : ${{ env.BACKEND_IMAGE_TAG }}"
 
       - name: "🔨 Build Elysia backend"
         if: steps.changes.outputs.backend == 'true'
