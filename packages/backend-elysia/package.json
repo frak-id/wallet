@@ -1,7 +1,7 @@
 {
   "name": "@frak-labs/backend-elysia",
   "description": "Elysia Backend for the frak ecosystem",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "private": true,
   "type": "module",
   "license": "GNU GPL 3.0",

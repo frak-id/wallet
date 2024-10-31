@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.23
+
+### Patch Changes
+
+- [`8fe1ebc`](https://github.com/frak-id/wallet/commit/8fe1ebc83ec96c6468aad013d9deb03c838b6987) Thanks [@KONFeature](https://github.com/KONFeature)! - Add a `modalBuilder` to ease modal creation
+
 ## 0.0.22
 
 ### Patch Changes
