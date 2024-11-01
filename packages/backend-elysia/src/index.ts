@@ -14,7 +14,12 @@ import {
 } from "./domain";
 
 // Full on service app
-const app = new Elysia()
+const app = new Elysia({
+    // biome-ignore lint/correctness/noUndeclaredVariables: variable replaced at build time
+    aot: __PRECOMPILE__,
+    // biome-ignore lint/correctness/noUndeclaredVariables: variable replaced at build time
+    precompile: __PRECOMPILE__,
+})
     .use(
         log.into({
             autoLogging: isRunningLocally,
@@ -52,8 +57,6 @@ const app = new Elysia()
     .listen({
         port: Number.parseInt(process.env.PORT ?? "3030"),
     });
-
-// todo: hostname lockup? How to check target pre request?
 
 log.info(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
 
