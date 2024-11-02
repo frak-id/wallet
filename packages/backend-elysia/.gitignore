@@ -1,2 +1,5 @@
 server
 dist/
+
+.env
+.env.*

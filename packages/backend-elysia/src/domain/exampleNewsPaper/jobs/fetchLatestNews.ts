@@ -2,7 +2,6 @@ import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { Patterns } from "@elysiajs/cron";
 import { cluster } from "radash";
-import { Config } from "sst/node/config";
 import type { NewsPaperContextApp } from "../context";
 import { LlmFormatterRepository } from "../repositories/LlmFormatterRepository";
 import type { NewsRepository } from "../repositories/NewsRepository";
@@ -24,7 +23,7 @@ export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
                     // Get the repositories we will use
                     const newsDbRepository = app.decorator.newsDbRepository;
                     const worldNewsApiRepository = new WorldNewsApiRepository(
-                        Config.WORLD_NEWS_API_KEY
+                        process.env.WORLD_NEWS_API_KEY
                     );
                     const llmRepository = new LlmFormatterRepository();
 

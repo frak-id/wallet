@@ -5,7 +5,6 @@ import { inArray } from "drizzle-orm";
 import { Elysia } from "elysia";
 import type { KyInstance } from "ky";
 import { parallel } from "radash";
-import { Config } from "sst/node/config";
 import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
 import { notificationContext } from "../context";
@@ -59,8 +58,8 @@ export const sendRoutes = new Elysia()
                 // Set the vapid details for the notification
                 setVapidDetails(
                     "mailto:hello@frak.id",
-                    Config.VAPID_PUBLIC_KEY,
-                    Config.VAPID_PRIVATE_KEY
+                    process.env.VAPID_PUBLIC_KEY,
+                    process.env.VAPID_PRIVATE_KEY
                 );
 
                 // Send all the notification in parallel, by batch of 30

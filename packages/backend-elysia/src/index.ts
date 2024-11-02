@@ -15,10 +15,8 @@ import {
 
 // Full on service app
 const app = new Elysia({
-    // biome-ignore lint/correctness/noUndeclaredVariables: variable replaced at build time
-    aot: __PRECOMPILE__,
-    // biome-ignore lint/correctness/noUndeclaredVariables: variable replaced at build time
-    precompile: __PRECOMPILE__,
+    aot: true,
+    precompile: true,
 })
     .use(
         log.into({

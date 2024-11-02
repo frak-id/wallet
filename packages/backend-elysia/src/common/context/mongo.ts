@@ -1,7 +1,6 @@
 import { Mutex } from "async-mutex";
 import { Elysia } from "elysia";
 import { MongoClient } from "mongodb";
-import { Config, type SecretTypes } from "sst/node/config";
 
 /**
  * Build the common context for the app
@@ -35,9 +34,7 @@ export const mongoDbContext = new Elysia({
             }
 
             // Get the mongo client
-            const client = new MongoClient(
-                Config[urlKey as keyof SecretTypes] as string
-            );
+            const client = new MongoClient(process.env[urlKey] as string);
             // Store the client
             currentClients.set(db, client);
             await client.connect();

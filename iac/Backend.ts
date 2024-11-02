@@ -6,7 +6,12 @@ import { Secret as AwsSecret } from "aws-cdk-lib/aws-secretsmanager";
 import { Config, Service, type StackContext, use } from "sst/constructs";
 import { ClusterStack } from "./Cluster";
 import { ConfigStack } from "./Config";
-import { isDevStack, isDistantStack } from "./utils";
+import {
+    extractEcsEnvFromConfigs,
+    extractEcsSecretsFromConfigs,
+    isDevStack,
+    isDistantStack,
+} from "./utils";
 
 /**
  * Define backend stack
@@ -45,7 +50,10 @@ export function BackendStack(ctx: StackContext) {
 
 /**
  * Create our elysia backend
+ * @param app
  * @param stack
+ * @param masterKeySecret
+ * @param masterSecretId
  */
 function elysiaBackend(
     { app, stack }: StackContext,
@@ -98,6 +106,33 @@ function elysiaBackend(
     const domainName = isDevStack(stack)
         ? "backend-dev.frak.id"
         : "backend.frak.id";
+
+    // Build our secrets map
+    const secrets = extractEcsSecretsFromConfigs(stack, [
+        // Db secrets
+        postgres.host,
+        postgres.password,
+        mongoExampleUri,
+        mongoNexusUri,
+        // External api secrets
+        alchemyApiKey,
+        coinGeckoApiKey,
+        worldNewsApiKey,
+        // Internal secrets
+        jwtSdkSecret,
+        jwtSecret,
+        sessionEncryptionKey,
+        setupCodeSalt,
+        // Notification secrets
+        vapidPrivateKey,
+        vapidPublicKey,
+    ]);
+    const envFromConfigs = extractEcsEnvFromConfigs([
+        indexerUrl,
+        postgres.db,
+        postgres.user,
+        masterSecretId,
+    ]);
 
     // The service itself
     const elysiaService = new Service(stack, "ElysiaService", {
@@ -155,6 +190,7 @@ function elysiaBackend(
                 resources: [masterKeySecret.secretArn],
             }),
         ],
+        environment: envFromConfigs,
         // Arm architecture (lower cost)
         architecture: "arm64",
         // Hardware config
@@ -189,6 +225,14 @@ function elysiaBackend(
                 containerName: "elysia",
                 image: dockerImage,
                 portMappings: [{ containerPort: 3030 }],
+                secrets,
+                environment: {
+                    ...envFromConfigs,
+                    STAGE: app.stage,
+                    SST_STAGE: app.stage,
+                    SST_APP: app.name,
+                    HOSTNAME: domainName,
+                },
             },
         },
     });

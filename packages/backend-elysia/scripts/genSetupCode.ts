@@ -1,4 +1,3 @@
-import { Config } from "sst/node/config";
 import { concatHex, keccak256, toHex } from "viem";
 
 // Var for the setup code generation
@@ -10,7 +9,7 @@ const setupCode = keccak256(
     concatHex([
         toHex(domain),
         owner,
-        toHex(Config.PRODUCT_SETUP_CODE_SALT ?? ""),
+        toHex(process.env.PRODUCT_SETUP_CODE_SALT ?? ""),
     ])
 );
 

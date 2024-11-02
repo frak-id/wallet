@@ -1,3 +1,0 @@
-# Default configuration for the dev env of the backend-elysia package
-[define]
-"__PRECOMPILE__" = "false"
