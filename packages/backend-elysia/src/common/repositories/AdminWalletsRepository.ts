@@ -5,7 +5,6 @@ import {
 } from "@aws-sdk/client-secrets-manager";
 import { Mutex } from "async-mutex";
 import { LRUCache } from "lru-cache";
-import { Config } from "sst/node/config";
 import { type Hex, hexToBytes, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -54,7 +53,7 @@ export class AdminWalletsRepository {
             // Fetch the aws secret
             const secretValue = await this.secretManager.send(
                 new GetSecretValueCommand({
-                    SecretId: Config.MASTER_KEY_SECRET_ID,
+                    SecretId: process.env.MASTER_KEY_SECRET_ID,
                 })
             );
             if (!secretValue.SecretString) {

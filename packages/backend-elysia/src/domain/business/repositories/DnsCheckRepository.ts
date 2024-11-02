@@ -2,7 +2,6 @@ import * as dns from "node:dns";
 import { promisify } from "node:util";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { flat } from "radash";
-import { Config } from "sst/node/config";
 import { type Address, concatHex, isHex, keccak256, toHex } from "viem";
 import { URL } from "whatwg-url";
 
@@ -49,7 +48,7 @@ export class DnsCheckRepository {
                 concatHex([
                     toHex(domain),
                     owner,
-                    toHex(Config.PRODUCT_SETUP_CODE_SALT),
+                    toHex(process.env.PRODUCT_SETUP_CODE_SALT),
                 ])
             );
             // Check if the hash is the same as the setup code

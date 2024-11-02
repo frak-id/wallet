@@ -1,6 +1,5 @@
 import { Elysia } from "elysia";
 import postgres from "postgres";
-import { Config } from "sst/node/config";
 
 /**
  * Build the common context for the app
@@ -11,11 +10,11 @@ export const postgresContext = new Elysia({
     { as: "append" },
     {
         postgresDb: postgres({
-            host: Config.POSTGRES_HOST,
+            host: process.env.POSTGRES_HOST,
             port: 5432,
-            database: Config.POSTGRES_DB,
-            username: Config.POSTGRES_USER,
-            password: Config.POSTGRES_PASSWORD,
+            database: process.env.POSTGRES_DB,
+            username: process.env.POSTGRES_USER,
+            password: process.env.POSTGRES_PASSWORD,
         }),
     }
 );

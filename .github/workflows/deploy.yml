@@ -108,6 +108,8 @@ jobs:
           # Github actions cache
           cache-from: type=gha
           cache-to: type=gha,mode=min
+        env:
+          STAGE: ${{ env.STAGE }}
 
       - name: "🚀 SST Deploy"
         if: steps.changes.outputs.deployRequired == 'true'
