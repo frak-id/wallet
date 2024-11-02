@@ -39,11 +39,11 @@
     "@sinclair/typebox": "0.32.34",
     "croner": "^9.0.0",
     "drizzle-orm": "^0.34.1",
-    "elysia": "1.1.23",
+    "elysia": "1.1.24",
     "iron-session": "^8.0.3",
     "jose": "^5.9.6",
     "ky": "^1.7.2",
-    "lru-cache": "^11.0.1",
+    "lru-cache": "^11.0.2",
     "merkletreejs": "^0.4.0",
     "mongodb": "^6.9.0",
     "permissionless": "^0.2.11",
@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "@simplewebauthn/types": "^11.0.0",
-    "@types/web-push": "^3.6.3",
+    "@types/web-push": "^3.6.4",
     "bun-types": "latest",
     "drizzle-kit": "^0.25.0"
   },

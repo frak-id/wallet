@@ -237,9 +237,6 @@ function elysiaBackend(
         },
     });
 
-    elysiaService.addEnvironment("HOSTNAME", domainName);
-    elysiaService.addEnvironment("STAGE", stack.stage);
-
     // Ensure we got a fargate service set up
     if (!elysiaService.cdk?.fargateService) {
         console.error(

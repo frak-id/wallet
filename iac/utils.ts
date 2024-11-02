@@ -105,16 +105,19 @@ function extractEcsSecretsFromConfig(
     }
 
     // Then, first index is stage one, second one is fallback
-    const secretArn = getParamPermission[useStageValue ? 0 : 1].replace(
-        /\$\{Token\[AWS\.Partition\.\d+\]\}/g,
-        "aws"
-    );
+    const secretArn = getParamPermission[useStageValue ? 0 : 1];
+    const secretPath = secretArn
+        .split(":")
+        .slice(-1)[0]
+        .replace("parameter", "");
 
     // Log the config
-    const stringParameter = StringParameter.fromStringParameterArn(
+    const stringParameter = StringParameter.fromSecureStringParameterAttributes(
         stack,
         `${name}Parameter`,
-        secretArn.replace("${Token[AWS.Partition.12]}", "aws")
+        {
+            parameterName: secretPath,
+        }
     );
     return { [name]: Secret.fromSsmParameter(stringParameter) };
 }
