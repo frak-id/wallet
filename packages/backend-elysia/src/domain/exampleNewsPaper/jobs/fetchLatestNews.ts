@@ -23,7 +23,7 @@ export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
                     // Get the repositories we will use
                     const newsDbRepository = app.decorator.newsDbRepository;
                     const worldNewsApiRepository = new WorldNewsApiRepository(
-                        process.env.WORLD_NEWS_API_KEY
+                        process.env.WORLD_NEWS_API_KEY as string
                     );
                     const llmRepository = new LlmFormatterRepository();
 

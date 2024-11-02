@@ -48,7 +48,7 @@ export class DnsCheckRepository {
                 concatHex([
                     toHex(domain),
                     owner,
-                    toHex(process.env.PRODUCT_SETUP_CODE_SALT),
+                    toHex(process.env.PRODUCT_SETUP_CODE_SALT as string),
                 ])
             );
             // Check if the hash is the same as the setup code

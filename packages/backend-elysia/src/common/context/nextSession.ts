@@ -19,7 +19,7 @@ export const nextSessionContext = new Elysia({
 
                 // If we got one, try to decode the cookie and then proceed
                 return await unsealData<T>(token, {
-                    password: process.env.SESSION_ENCRYPTION_KEY,
+                    password: process.env.SESSION_ENCRYPTION_KEY as string,
                     ttl: 60 * 60 * 24 * 7, // 1 week
                 });
             },

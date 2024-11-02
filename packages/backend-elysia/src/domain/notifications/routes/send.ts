@@ -58,8 +58,8 @@ export const sendRoutes = new Elysia()
                 // Set the vapid details for the notification
                 setVapidDetails(
                     "mailto:hello@frak.id",
-                    process.env.VAPID_PUBLIC_KEY,
-                    process.env.VAPID_PRIVATE_KEY
+                    process.env.VAPID_PUBLIC_KEY as string,
+                    process.env.VAPID_PRIVATE_KEY as string
                 );
 
                 // Send all the notification in parallel, by batch of 30

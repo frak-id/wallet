@@ -11,6 +11,8 @@ declare global {
             // Notification stuff
             VAPID_PUBLIC_KEY: string;
             VAPID_PRIVATE_KEY: string;
+            // Other services
+            WORLD_NEWS_API_KEY: string;
         }
     }
 }

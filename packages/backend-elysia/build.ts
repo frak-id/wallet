@@ -1,5 +1,4 @@
 import { build } from "bun";
-import { Config } from "sst/node/config";
 
 console.log("Building...");
 console.time("build-time");
@@ -10,14 +9,15 @@ const result = await build({
     target: "bun",
     // Directly replace some known env during build time
     define: {
-        // Replace public env variable with the current value
-        "process.env.STAGE": JSON.stringify(Config.STAGE),
-        "process.env.POSTGRES_DB": JSON.stringify(Config.POSTGRES_DB),
-        "process.env.POSTGRES_USER": JSON.stringify(Config.POSTGRES_USER),
-        "process.env.INDEXER_URL": JSON.stringify(Config.INDEXER_URL),
-        "process.env.MASTER_KEY_SECRET_ID": JSON.stringify(
-            Config.MASTER_KEY_SECRET_ID
-        ),
+        // todo: This is fucking up during docker build
+        // // Replace public env variable with the current value
+        // "process.env.STAGE": JSON.stringify(Config.STAGE),
+        // "process.env.POSTGRES_DB": JSON.stringify(Config.POSTGRES_DB),
+        // "process.env.POSTGRES_USER": JSON.stringify(Config.POSTGRES_USER),
+        // "process.env.INDEXER_URL": JSON.stringify(Config.INDEXER_URL),
+        // "process.env.MASTER_KEY_SECRET_ID": JSON.stringify(
+        //     Config.MASTER_KEY_SECRET_ID
+        // ),
     },
     // Drop any console or debugger related code
     drop: ["console", "debugger"],

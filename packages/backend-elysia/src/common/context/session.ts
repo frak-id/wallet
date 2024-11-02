@@ -21,7 +21,7 @@ export const sessionContext = new Elysia({
     .use(
         jwt({
             name: "walletJwt",
-            secret: process.env.JWT_SECRET,
+            secret: process.env.JWT_SECRET as string,
             schema: WalletTokenDto,
             // Default jwt payload
             iss: "frak.id",
@@ -31,7 +31,7 @@ export const sessionContext = new Elysia({
     .use(
         jwt({
             name: "walletSdkJwt",
-            secret: process.env.JWT_SDK_SECRET,
+            secret: process.env.JWT_SDK_SECRET as string,
             schema: t.Object({
                 address: t.Address(),
                 scopes: t.Array(t.Literal("interaction")),
@@ -46,7 +46,7 @@ export const sessionContext = new Elysia({
     .use(
         jwt({
             name: "businessJwt",
-            secret: process.env.JWT_SECRET,
+            secret: process.env.JWT_SECRET as string,
             schema: t.Object({
                 wallet: t.Address(),
                 siweMsg: t.String(),
