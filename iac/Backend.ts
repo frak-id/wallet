@@ -88,13 +88,13 @@ function elysiaBackend(
     } = use(ConfigStack);
 
     // Get the image that will be used for the backend
-    // Get the container props of our prebuilt binaries
+    const repoName = process.env.ELYSIA_REPO ?? "backend-elysia-dev";
     const containerRegistry = Repository.fromRepositoryAttributes(
         stack,
         "ElysiaBackendRegistry",
         {
-            repositoryArn: `arn:aws:ecr:eu-west-1:${app.account}:repository/${process.env.ELYSIA_REPO}`,
-            repositoryName: process.env.ELYSIA_REPO ?? "",
+            repositoryArn: `arn:aws:ecr:eu-west-1:${app.account}:repository/${repoName}`,
+            repositoryName: repoName,
         }
     );
     const dockerImage = ContainerImage.fromEcrRepository(

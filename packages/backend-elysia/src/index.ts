@@ -56,6 +56,6 @@ const app = new Elysia({
         port: Number.parseInt(process.env.PORT ?? "3030"),
     });
 
-log.info(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
+log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);
 
 export type App = typeof app;
