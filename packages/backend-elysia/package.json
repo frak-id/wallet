@@ -14,7 +14,7 @@
     "dev:env": "sst bind \"env | grep -E 'SST_|AWS_' > .env\" && sed -i '' 's/SST_Parameter_value_//g' .env && sed -i '' 's/SST_Secret_value_//g' .env",
     "dev:watch": "bun run --watch src/index.ts",
     "build:docker": "docker build --tag \"elysia-dev\" .",
-    "build": "sst bind bun build:package",
+    "build": "sst bind --stage $STAGE bun build:package",
     "build:package": "bun run build.ts",
     "build:binary-linux-arm64": "bun build --compile --minify --target=bun-linux-arm64 --outfile ./server src/index.ts",
     "build:binary": "bun build --compile --minify --target=bun --outfile ./server src/index.ts",
