@@ -12,7 +12,6 @@
     "typecheck": "tsc --noEmit",
     "dev": "sst bind bun dev:watch",
     "dev:watch": "bun run --watch src/index.ts",
-    "dev:docker": "sst bind \"env | grep -E 'SST_|AWS_' > .env.tmp.old && docker run --env-file .env.tmp.old -P elysia-dev\"",
     "build:docker": "docker build --tag \"elysia-dev\" .",
     "build": "sst bind bun build:package",
     "build:package": "bun run build.ts",
@@ -20,8 +19,10 @@
     "build:binary": "bun build --compile --minify --target=bun --outfile ./server src/index.ts",
     "start": "NODE_ENV=production bun dist/index.js",
     "db:studio": "sst bind drizzle-kit studio",
-    "db:generate": "sst bind drizzle-kit generate",
-    "db:migrate": "sst bind drizzle-kit migrate"
+    "db-dev:generate": "sst bind drizzle-kit generate",
+    "db-dev:migrate": "sst bind drizzle-kit migrate",
+    "db-prod:generate": "sst bind --stage prod drizzle-kit generate",
+    "db-prod:migrate": "sst bind --stage prod drizzle-kit migrate"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.679.0",
