@@ -11,7 +11,6 @@ const wantedFromConfig: (keyof typeof Config)[] = [
     "PIMLICO_API_KEY",
     "NEXUS_RPC_SECRET",
     "VAPID_PUBLIC_KEY",
-    "VAPID_PRIVATE_KEY",
     "BACKEND_URL",
     "INDEXER_URL",
 ];

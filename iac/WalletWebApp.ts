@@ -16,7 +16,6 @@ export function WalletAppStack({ stack }: StackContext) {
         frakWalletUrl,
         nexusRpcSecret,
         vapidPublicKey,
-        vapidPrivateKey,
         backendUrl,
         indexerUrl,
     } = use(ConfigStack);
@@ -26,7 +25,6 @@ export function WalletAppStack({ stack }: StackContext) {
         frakWalletUrl,
         nexusRpcSecret,
         vapidPublicKey,
-        vapidPrivateKey,
         backendUrl,
         indexerUrl,
     ];
