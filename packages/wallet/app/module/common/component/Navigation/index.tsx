@@ -1,5 +1,4 @@
 import { NavigationItem } from "@/module/common/component/NavigationItem";
-import { Medal } from "@module/asset/icons/Medal";
 import { History, Settings, Wallet } from "lucide-react";
 import styles from "./index.module.css";
 
@@ -13,9 +12,9 @@ export function Navigation() {
                 <NavigationItem url={"/history"}>
                     <History size={29} />
                 </NavigationItem>
-                <NavigationItem url={"/earn"}>
+                {/* <NavigationItem url={"/earn"}>
                     <Medal />
-                </NavigationItem>
+                </NavigationItem> */}
                 <NavigationItem url={"/settings"}>
                     <Settings size={29} />
                 </NavigationItem>
