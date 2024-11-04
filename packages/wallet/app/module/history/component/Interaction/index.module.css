@@ -1,20 +1,8 @@
-.interaction__panel + .interaction__panel {
-    margin-top: 20px;
-}
-
 .interaction__title {
-    color: #7c7b8c;
-    font-weight: 400;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-.interaction__titleText {
-    line-height: 1.4em;
-}
-
-.interaction__titleText > span {
-    display: block;
-}
-
-.interaction__provider {
-    color: var(--frak-text-color);
+.interaction__date {
+    color: #b2b4b5;
 }

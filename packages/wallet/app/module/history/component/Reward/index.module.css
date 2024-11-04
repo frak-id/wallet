@@ -1,0 +1,18 @@
+.reward {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reward__title {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.reward__date {
+    color: #b2b4b5;
+}
+
+.reward__amount {
+    font-size: 16px;
+}

@@ -37,10 +37,12 @@ function ButtonType({
     children,
 }: PropsWithChildren<{ currentType: HistoryType }>) {
     const [type, setType] = useAtom(historyTypeAtom);
+    const classActive = currentType === type ? styles.history__active : "";
+
     return (
         <button
             type="button"
-            className={`${currentType === type ? styles.history__active : ""} button ${styles.history__inactive}`}
+            className={`${styles.history__button} ${classActive}`}
             onClick={() => setType(currentType)}
         >
             {children}
