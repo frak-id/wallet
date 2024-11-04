@@ -43,6 +43,7 @@
         "logout": "Déconnexion",
         "notifications": "Notifications",
         "receive": "Recevoir",
+        "refresh": "Rafraîchir",
         "rewards": "Gains",
         "send": "Envoyer",
         "submit": "Envoyer",
@@ -141,6 +142,9 @@
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil"
         },
+        "notifications": {
+            "noNotifications": "Aucune notifications"
+        },
         "password": {
             "enter": "Entrez le mot de passe",
             "minimum": "La longueur minimale du mot de passe est de 5",
@@ -211,6 +215,7 @@
                 "inactive": "L'activation du porte-monnaie nous permettra d'envoyer des données d'interaction"
             }
         },
+        "share-and-earn": "Partagez<br />& gagnez",
         "tokens": {
             "amountLessThanBalance": "Le montant doit être inférieur au solde",
             "amountPositive": "Le montant doit être positif",

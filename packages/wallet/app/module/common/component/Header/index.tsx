@@ -16,7 +16,13 @@ export function Header() {
                         <LogoFrakWithName />
                     </Link>
                 </h1>
-                <Notifications className={styles.header__notification} />
+                <Link
+                    to={"/notifications"}
+                    className={styles.header__notification}
+                    viewTransition
+                >
+                    <Notifications />
+                </Link>
             </header>
         </>
     );

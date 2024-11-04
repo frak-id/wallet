@@ -13,7 +13,7 @@ export function Navigation() {
                 <NavigationItem url={"/history"}>
                     <History size={29} />
                 </NavigationItem>
-                <NavigationItem url={"/share-and-earn"}>
+                <NavigationItem url={"/earn"}>
                     <Medal />
                 </NavigationItem>
                 <NavigationItem url={"/settings"}>

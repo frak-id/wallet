@@ -1,6 +1,5 @@
 import { Panel } from "@/module/common/component/Panel";
 import { InteractionHistory } from "@/module/history/component/InteractionHistory";
-import { NotificationHistory } from "@/module/history/component/NotificationHistory";
 import { RewardHistory } from "@/module/history/component/RewardHistory";
 import { atom, useAtom, useAtomValue } from "jotai";
 import type { PropsWithChildren } from "react";
@@ -25,15 +24,10 @@ export function History() {
                     <ButtonType currentType={"interaction"}>
                         {t("common.interactions")}
                     </ButtonType>
-                    |{" "}
-                    <ButtonType currentType={"notifications"}>
-                        {t("common.notifications")}
-                    </ButtonType>
                 </nav>
             </Panel>
             {type === "rewards" && <RewardHistory />}
             {type === "interaction" && <InteractionHistory />}
-            {type === "notifications" && <NotificationHistory />}
         </>
     );
 }

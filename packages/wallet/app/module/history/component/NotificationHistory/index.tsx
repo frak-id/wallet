@@ -6,8 +6,10 @@ import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function NotificationHistory() {
+    const { t } = useTranslation();
     const { data: notifications } = useQuery({
         queryKey: ["notification", "history"],
         queryFn: async () => {
@@ -18,6 +20,16 @@ export function NotificationHistory() {
     });
 
     if (!notifications) return <Skeleton count={3} height={110} />;
+
+    if (notifications.length === 0) {
+        return (
+            <Panel size={"small"}>
+                <Title icon={<BellRing />}>
+                    {t("wallet.notifications.noNotifications")}
+                </Title>
+            </Panel>
+        );
+    }
 
     return notifications?.map((notificationItem, index) => (
         <Notification

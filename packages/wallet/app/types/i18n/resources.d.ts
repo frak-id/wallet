@@ -46,6 +46,7 @@ interface Resources {
             logout: "Logout";
             notifications: "Notifications";
             receive: "Receive";
+            refresh: "Refresh";
             rewards: "Rewards";
             send: "Send";
             submit: "Submit";
@@ -144,6 +145,9 @@ interface Resources {
                 recover: "Recover wallet from file";
                 walletsOnDevice: "Wallets used on this device";
             };
+            notifications: {
+                noNotifications: "No notifications";
+            };
             password: {
                 enter: "Enter password";
                 minimum: "Minimum password length is 5";
@@ -214,6 +218,7 @@ interface Resources {
                     inactive: "The wallet activation will permit us to send interaction data";
                 };
             };
+            "share-and-earn": "Share<br />& Earn";
             tokens: {
                 amountLessThanBalance: "Amount must be less than balance";
                 amountPositive: "Amount must be positive";
