@@ -3,6 +3,7 @@ import { PassThrough } from "node:stream";
 import {
     defaultNS,
     fallbackLng,
+    interpolation,
     resources,
     supportedLngs,
 } from "@/i18n/config";
@@ -29,9 +30,15 @@ export default async function handleRequest(
     const lng = await i18nServer.getLocale(request);
     const ns = i18nServer.getRouteNamespaces(remixContext);
 
-    await instance
-        .use(initReactI18next)
-        .init({ supportedLngs, fallbackLng, defaultNS, resources, lng, ns });
+    await instance.use(initReactI18next).init({
+        supportedLngs,
+        fallbackLng,
+        defaultNS,
+        resources,
+        lng,
+        ns,
+        interpolation,
+    });
 
     const prohibitOutOfOrderStreaming =
         isBotRequest(request.headers.get("user-agent")) ||

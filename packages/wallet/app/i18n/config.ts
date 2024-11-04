@@ -16,3 +16,7 @@ export const resources = {
     en: { translation: enTranslation },
     fr: { translation: frTranslation },
 };
+
+export const interpolation = {
+    escapeValue: false, // this ensures that HTML entities are not escaped
+};

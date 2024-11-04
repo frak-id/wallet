@@ -3,6 +3,7 @@ import { Buffer } from "buffer";
 import {
     defaultNS,
     fallbackLng,
+    interpolation,
     resources,
     supportedLngs,
 } from "@/i18n/config";
@@ -38,6 +39,7 @@ async function main() {
                 // on the browser, so we disable it
                 caches: [],
             },
+            interpolation,
         });
 
     startTransition(() => {
