@@ -2,7 +2,7 @@
     position: fixed;
     bottom: 0;
     width: 100%;
-    padding: 12px 24px;
+    padding: 10px 24px;
     background: var(--frak-header-background-color);
     backdrop-filter: blur(20px);
 }
@@ -16,5 +16,4 @@
 .navigation__list {
     display: flex;
     justify-content: space-between;
-    margin: 0 12px;
 }

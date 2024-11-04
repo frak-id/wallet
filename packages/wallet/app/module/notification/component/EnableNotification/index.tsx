@@ -1,7 +1,7 @@
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
-import { Notifications } from "@module/asset/icons/Notifications";
+import { NotificationsMobile } from "@module/asset/icons/NotificationsMobile";
 import { Button } from "@module/component/Button";
 import { Trans } from "react-i18next";
 import { useNotificationSetupStatus } from "../../hook/useNotificationSetupStatus";
@@ -26,7 +26,7 @@ export function EnableNotification() {
                 onClick={() => subscribeToPush()}
                 disabled={isPending}
                 isLoading={isPending}
-                leftIcon={<Notifications />}
+                leftIcon={<NotificationsMobile />}
             >
                 <ButtonLabel>
                     <Trans i18nKey={"wallet.activateNotifications"} />

@@ -1,4 +1,5 @@
 import { LogoFrakWithName } from "@frak-labs/shared/module/asset/icons/LogoFrakWithName";
+import { Notifications } from "@module/asset/icons/Notifications";
 import { Link } from "@remix-run/react";
 import styles from "./index.module.css";
 
@@ -15,6 +16,7 @@ export function Header() {
                         <LogoFrakWithName />
                     </Link>
                 </h1>
+                <Notifications className={styles.header__notification} />
             </header>
         </>
     );

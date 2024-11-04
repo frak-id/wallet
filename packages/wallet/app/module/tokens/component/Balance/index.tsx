@@ -13,13 +13,13 @@ export function Balance() {
     }, [refetch]);
 
     return (
-        <>
+        <div className={styles.balance}>
             <Title size={"big"} align={"center"}>
                 {t("common.balance")}
             </Title>
             <p className={styles.balance__amount}>
                 {userBalance?.eurBalance?.toFixed(2) ?? 0}€
             </p>
-        </>
+        </div>
     );
 }

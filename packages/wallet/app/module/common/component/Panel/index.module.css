@@ -1,5 +1,5 @@
 .panel {
-    border-radius: 12px;
+    border-radius: 18px;
     transition: background .3s;
     background-size: cover;
     background-position: -100%;
@@ -7,12 +7,12 @@
 }
 
 .panel + .panel {
-    margin-top: 32px;
+    margin-top: 10px;
 }
 
 .primary {
     background-color: var(--frak-panel-background-color);
-    backdrop-filter: blur(80px);
+    backdrop-filter: blur(40px);
 }
 
 .outlined {

@@ -59,7 +59,10 @@ export function RootProvider({ children }: PropsWithChildren) {
                     <WagmiProviderWithDynamicConfig>
                         {children}
                     </WagmiProviderWithDynamicConfig>
-                    <ReactQueryDevtools initialIsOpen={false} />
+                    <ReactQueryDevtools
+                        initialIsOpen={false}
+                        buttonPosition={"bottom-left"}
+                    />
                 </PersistQueryClientProvider>
             </Provider>
         </>

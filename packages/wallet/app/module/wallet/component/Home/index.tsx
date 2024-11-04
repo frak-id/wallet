@@ -1,6 +1,7 @@
 import { Grid } from "@/module/common/component/Grid";
 import { EnableNotification } from "@/module/notification/component/EnableNotification";
-import { Tokens } from "@/module/tokens/component/Tokens";
+import { Balance } from "@/module/tokens/component/Balance";
+import { HomeNavigation } from "@/module/wallet/component/HomeNavigation";
 import { ToggleSession } from "@/module/wallet/component/ToggleSession";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { InstallApp } from "../InstallApp";
@@ -11,7 +12,8 @@ export function Wallet() {
     return (
         <Grid>
             <ToggleSession />
-            <Tokens />
+            <Balance />
+            <HomeNavigation />
             {isHydrated && (
                 <>
                     <InstallApp />

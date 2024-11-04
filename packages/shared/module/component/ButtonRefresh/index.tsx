@@ -1,9 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type PropsWithChildren, useEffect, useState } from "react";
 import styles from "./index.module.css";
 
-export function ButtonRefresh({ className = "" }: { className?: string }) {
+export function ButtonRefresh({
+    className = "",
+    children,
+}: PropsWithChildren<{ className?: string }>) {
     const queryClient = useQueryClient();
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -22,7 +25,7 @@ export function ButtonRefresh({ className = "" }: { className?: string }) {
                 queryClient.resetQueries().then(() => setIsRefreshing(false));
             }}
         >
-            <RefreshCcw size={20} />
+            {children ?? <RefreshCcw size={20} />}
         </button>
     );
 }
