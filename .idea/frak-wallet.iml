@@ -20,6 +20,10 @@
       <excludeFolder url="file://$MODULE_DIR$/.sst/cache" />
       <excludeFolder url="file://$MODULE_DIR$/.sst" />
       <excludeFolder url="file://$MODULE_DIR$/packages/backend-elysia/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/example/news-interactions/build" />
+      <excludeFolder url="file://$MODULE_DIR$/example/vanilla-js/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/example/wallet-ethcc/build" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/wallet/build" />
     </content>
     <content url="file://$MODULE_DIR$/.sst/types" />
     <orderEntry type="inheritedJdk" />
