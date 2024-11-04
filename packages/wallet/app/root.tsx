@@ -3,7 +3,7 @@ import { SetPresenceCookie } from "@/module/authentication/component/SetPresence
 import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { rootConfig } from "@/module/root/config";
-import { type LoaderFunction, data, redirect } from "@remix-run/node";
+import { type LoaderFunction, data } from "@remix-run/node";
 import {
     Links,
     Meta,
@@ -22,11 +22,6 @@ export const handle = { i18n: ["translation"] };
 
 export const loader: LoaderFunction = async ({ request }) => {
     const locale = await i18nServer.getLocale(request);
-    const url = new URL(request.url);
-
-    if (url.pathname === "/") {
-        return redirect("/wallet");
-    }
 
     return data(
         { locale },
@@ -48,9 +43,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Links />
             </head>
             <body className="scrollbars">
-                <RootProvider>{children}</RootProvider>
-                <SetPresenceCookie />
-                <TopLoader />
+                {children}
                 <ScrollRestoration />
                 <Scripts />
             </body>
@@ -61,5 +54,13 @@ export function Layout({ children }: { children: ReactNode }) {
 export default function App() {
     const { locale } = useLoaderData<typeof loader>();
     useChangeLanguage(locale);
-    return <Outlet />;
+    return (
+        <>
+            <RootProvider>
+                <Outlet />
+            </RootProvider>
+            <SetPresenceCookie />
+            <TopLoader />
+        </>
+    );
 }
