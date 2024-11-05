@@ -8,7 +8,7 @@ export function useGetRewardHistory() {
 
     // The query fn that will fetch the history
     const { data: history } = useQuery({
-        queryKey: ["history", "reward", address],
+        queryKey: ["history", "rewards", address],
         queryFn: async () => {
             return await getRewardHistory({
                 account: address ?? "0x",

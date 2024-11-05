@@ -8,7 +8,7 @@ export function useGetInteractionHistory() {
 
     // The query fn that will fetch the history
     const { data: history } = useQuery({
-        queryKey: ["history", "interaction", address],
+        queryKey: ["history", "interactions", address],
         queryFn: async () => {
             return await getInteractionHistory({
                 account: address ?? "0x",
