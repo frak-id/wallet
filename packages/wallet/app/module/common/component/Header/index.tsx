@@ -1,9 +1,15 @@
 import { LogoFrakWithName } from "@frak-labs/shared/module/asset/icons/LogoFrakWithName";
 import { Notifications } from "@module/asset/icons/Notifications";
 import { Link } from "@remix-run/react";
+import { useAtomValue } from "jotai";
+import { useHydrated } from "remix-utils/use-hydrated";
+import { sessionAtom } from "../../atoms/session";
 import styles from "./index.module.css";
 
 export function Header() {
+    const isHydrated = useHydrated();
+    const session = useAtomValue(sessionAtom);
+
     return (
         <>
             <header className={styles.header}>
@@ -16,13 +22,15 @@ export function Header() {
                         <LogoFrakWithName />
                     </Link>
                 </h1>
-                <Link
-                    to={"/notifications"}
-                    className={styles.header__notification}
-                    viewTransition
-                >
-                    <Notifications />
-                </Link>
+                {isHydrated && session && (
+                    <Link
+                        to={"/notifications"}
+                        className={styles.header__notification}
+                        viewTransition
+                    >
+                        <Notifications />
+                    </Link>
+                )}
             </header>
         </>
     );
