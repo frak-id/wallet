@@ -16,8 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@frak-labs/nexus-sdk": "workspace:*",
     "@frak-labs/app-essentials": "workspace:*",
+    "@frak-labs/nexus-sdk": "workspace:*",
     "@radix-ui/react-slot": "^1.1.0",
     "@remix-run/node": "^2.13.1",
     "@remix-run/react": "^2.13.1",
@@ -33,6 +33,7 @@
     "react": "^18",
     "react-dom": "^18",
     "remix-utils": "^7.7.0",
+    "use-dehydrated-state": "^0.1.0",
     "viem": "^2.21.35"
   },
   "devDependencies": {
