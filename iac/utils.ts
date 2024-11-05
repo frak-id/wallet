@@ -40,7 +40,7 @@ export function getWalletUrl(stack: Stack): string {
     if (isDevStack(stack)) {
         return "https://wallet-dev.frak.id";
     }
-    return "http://localhost:3000";
+    return "https://localhost:3000";
 }
 
 /**
