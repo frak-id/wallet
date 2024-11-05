@@ -1,9 +1,8 @@
+import { Markdown } from "@/module/common/component/Markdown";
 import { dismissModalBtnAtom } from "@/module/listener/atoms/modalUtils";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAtom } from "jotai";
-import Markdown from "react-markdown";
-import rehypeExternalLinks from "rehype-external-links";
 import { useModalTranslation } from "../../hooks/useModalTranslation";
 
 export function MetadataInfo({
@@ -19,12 +18,9 @@ export function MetadataInfo({
                 className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
             >
                 <Markdown
-                    rehypePlugins={[
-                        [rehypeExternalLinks, { target: "_blank" }],
-                    ]}
-                >
-                    {metadata?.description ?? defaultDescription}
-                </Markdown>
+                    md={metadata?.description}
+                    defaultTxt={defaultDescription}
+                />
             </div>
         );
     }

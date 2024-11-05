@@ -7,20 +7,18 @@ declare const self: ServiceWorkerGlobalScope;
  */
 
 /**
- * Auto skips the waiting phase
- */
-self.skipWaiting();
-
-/**
  * Auto claims all clients
  */
-self.addEventListener("activate", () => self.clients.claim());
+self.addEventListener("activate", (event) =>
+    event.waitUntil(self.clients.claim())
+);
 
 /**
  * Log a few stuff on install
  */
 self.addEventListener("install", (event) => {
     console.log("Service worker installed", event);
+    event.waitUntil(self.skipWaiting());
 });
 
 /**
