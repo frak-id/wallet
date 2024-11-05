@@ -1,14 +1,14 @@
 import { AuthRestricted } from "@/module/common/component/AuthRestricted";
 import { GlobalLayout } from "@/module/common/component/GlobalLayout";
 import { Header } from "@/module/common/component/Header";
-import type { PropsWithChildren } from "react";
+import { Outlet } from "@remix-run/react";
 
-export function RestrictedLayout({ children }: PropsWithChildren) {
+export default function AuthenticationLayout() {
     return (
-        <AuthRestricted requireAuthenticated={true}>
-            <GlobalLayout navigation={true}>
+        <AuthRestricted requireAuthenticated={false}>
+            <GlobalLayout>
                 <Header />
-                {children}
+                <Outlet />
             </GlobalLayout>
         </AuthRestricted>
     );

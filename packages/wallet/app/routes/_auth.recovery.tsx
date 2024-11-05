@@ -1,5 +1,4 @@
 import { Grid } from "@/module/common/component/Grid";
-import { AuthenticationLayout } from "@/module/layout/AuthenticationLayout";
 import { RecoverWallet } from "@/module/recovery/component/Recover";
 
 // export async function action({ request }: ActionFunctionArgs) {
@@ -13,10 +12,8 @@ import { RecoverWallet } from "@/module/recovery/component/Recover";
 
 export default function RecoveryRoute() {
     return (
-        <AuthenticationLayout>
-            <Grid>
-                <RecoverWallet />
-            </Grid>
-        </AuthenticationLayout>
+        <Grid>
+            <RecoverWallet />
+        </Grid>
     );
 }
