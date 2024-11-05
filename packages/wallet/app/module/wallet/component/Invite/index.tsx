@@ -2,7 +2,6 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
-import invitePicture from "./invite.png";
 
 export function Invite() {
     const { t } = useTranslation();
@@ -13,7 +12,7 @@ export function Invite() {
                 <p className={styles.invite__text}>{t("wallet.invite.text")}</p>
             </div>
             <div>
-                <img src={invitePicture} alt="invite" />
+                <img src={"/img/invite_logo.png"} alt="invite" />
             </div>
         </Panel>
     );

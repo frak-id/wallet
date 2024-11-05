@@ -26,8 +26,8 @@
     "db-prod:migrate": "sst bind --stage prod drizzle-kit migrate"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.679.0",
-    "@aws-sdk/client-secrets-manager": "^3.674.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.682.0",
+    "@aws-sdk/client-secrets-manager": "^3.682.0",
     "@bogeychan/elysia-logger": "^0.1.4",
     "@elysiajs/cors": "^1.1.1",
     "@elysiajs/cron": "^1.1.1",
@@ -46,13 +46,13 @@
     "ky": "^1.7.2",
     "lru-cache": "^11.0.2",
     "merkletreejs": "^0.4.0",
-    "mongodb": "^6.9.0",
-    "permissionless": "^0.2.11",
+    "mongodb": "^6.10.0",
+    "permissionless": "^0.2.15",
     "postgres": "^3.4.5",
     "radash": "^12.1.0",
-    "solady": "^0.0.259",
+    "solady": "^0.0.263",
     "sst": "2.44.0",
-    "viem": "^2.21.35",
+    "viem": "^2.21.40",
     "web-push": "^3.6.7",
     "whatwg-url": "^14.0.0"
   },
