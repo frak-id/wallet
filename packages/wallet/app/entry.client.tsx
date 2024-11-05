@@ -1,4 +1,3 @@
-import { Buffer } from "buffer";
 import {
     defaultNS,
     fallbackLng,
@@ -14,9 +13,6 @@ import { StrictMode, startTransition } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { getInitialNamespaces } from "remix-i18next/client";
-
-// Polyfill Buffer for the browser
-globalThis.Buffer = Buffer;
 
 async function main() {
     await i18next

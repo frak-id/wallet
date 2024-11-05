@@ -52,9 +52,7 @@ export function useRegister(
             });
 
             // Verify it
-            const encodedResponse = Buffer.from(
-                JSON.stringify(registrationResponse)
-            ).toString("base64");
+            const encodedResponse = btoa(JSON.stringify(registrationResponse));
             const { data, error } =
                 await authenticatedBackendApi.auth.wallet.register.post({
                     userAgent: navigator.userAgent,

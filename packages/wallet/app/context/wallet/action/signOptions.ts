@@ -1,7 +1,7 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
-import type { Hex } from "viem";
+import { type Hex, hexToBytes } from "viem";
 
 /**
  * Generate the webauthn signature options for a user
@@ -26,7 +26,7 @@ export async function getSignOptions({
             },
         ],
         userVerification: "required",
-        challenge: Buffer.from(toSign.slice(2), "hex"),
+        challenge: hexToBytes(toSign),
         // timeout in ms (3min, can be useful for mobile phone linking)
         timeout: 180_000,
     });

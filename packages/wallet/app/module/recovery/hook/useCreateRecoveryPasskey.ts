@@ -19,9 +19,7 @@ export function useCreateRecoveryPasskey() {
             });
 
             // Verify the registration and return the formatted output
-            const encodedResponse = Buffer.from(
-                JSON.stringify(registrationResponse)
-            ).toString("base64");
+            const encodedResponse = btoa(JSON.stringify(registrationResponse));
             const { data: wallet, error } =
                 await authenticatedBackendApi.auth.wallet.register.post({
                     userAgent: navigator.userAgent,

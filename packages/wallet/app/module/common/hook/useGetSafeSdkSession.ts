@@ -41,9 +41,9 @@ export function useGetSafeSdkSession() {
 
             // Otherwise, try to craft a new token from the last webauthn action
             if (lastWebAuthnAction) {
-                const encodedSignature = Buffer.from(
+                const encodedSignature = btoa(
                     JSON.stringify(lastWebAuthnAction.signature)
-                ).toString("base64");
+                );
                 const { data: session, error } =
                     await authenticatedBackendApi.auth.wallet.sdk.fromWebAuthNSignature.post(
                         {

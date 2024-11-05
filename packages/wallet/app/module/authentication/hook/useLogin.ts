@@ -60,9 +60,9 @@ export function useLogin(
             });
 
             // Verify it
-            const encodedResponse = Buffer.from(
+            const encodedResponse = btoa(
                 JSON.stringify(authenticationResponse)
-            ).toString("base64");
+            );
             const { data, error } =
                 await authenticatedBackendApi.auth.wallet.login.post({
                     expectedChallenge: authenticationOptions.challenge,
