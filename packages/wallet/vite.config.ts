@@ -2,6 +2,7 @@ import { vitePlugin as remix } from "@remix-run/dev";
 import { pick } from "radash";
 import { Config } from "sst/node/config";
 import { defineConfig } from "vite";
+import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 // Secret env variable from SST we want in the frontend
@@ -31,6 +32,7 @@ export default defineConfig({
     ),
     server: {
         port: 3000,
+        proxy: {},
     },
     plugins: [
         remix({
@@ -42,6 +44,7 @@ export default defineConfig({
                 // v3_lazyRouteDiscovery: true,
             },
         }),
+        mkcert(),
         tsconfigPaths(),
     ],
 });

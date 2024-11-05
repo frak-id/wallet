@@ -1,4 +1,3 @@
-// biome-ignore lint/style/useNodejsImportProtocol: <explanation>
 import { Buffer } from "buffer";
 import {
     defaultNS,
