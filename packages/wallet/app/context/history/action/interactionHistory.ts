@@ -1,3 +1,5 @@
+import { groupByDay } from "@/context/history/utils/groupByDay";
+import type { HistoryGroup } from "@/types/HistoryGroup";
 import type { InteractionHistory } from "@/types/InteractionHistory";
 import { indexerApi } from "@frak-labs/shared/context/server";
 import type { Address, Hex } from "viem";
@@ -41,19 +43,20 @@ export async function getInteractionHistory({
     account,
 }: {
     account: Address;
-}): Promise<InteractionHistory[]> {
+}): Promise<HistoryGroup<InteractionHistory>> {
     // Perform the request to our api
     const interactionsHistory = await indexerApi
         .get(`interactions/${account}`)
         .json<ApiResult>();
 
     // Map our result
-    return (
-        interactionsHistory?.map((item) => {
-            return {
-                ...item,
-                timestamp: Number(item.timestamp),
-            };
-        }) ?? []
-    );
+    const finalArray = interactionsHistory?.map((item) => {
+        return {
+            ...item,
+            timestamp: Number(item.timestamp),
+        };
+    });
+
+    // Return the grouped by date version
+    return groupByDay(finalArray ?? []);
 }

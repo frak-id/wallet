@@ -1,3 +1,5 @@
+import { groupByDay } from "@/context/history/utils/groupByDay";
+import type { HistoryGroup } from "@/types/HistoryGroup";
 import type { RewardHistory } from "@/types/RewardHistory";
 import type { Token } from "@/types/Token";
 import { indexerApi } from "@frak-labs/shared/context/server";
@@ -29,7 +31,7 @@ export async function getRewardHistory({
     account,
 }: {
     account: Address;
-}): Promise<RewardHistory[]> {
+}): Promise<HistoryGroup<RewardHistory>> {
     // Perform the request to our api
     const rewardsHistory = await indexerApi
         .get(`rewards/${account}/history`)
@@ -61,6 +63,6 @@ export async function getRewardHistory({
         ) ?? []),
     ];
 
-    // Sort it by timestamp in the descending order
-    return finalArray.sort((a, b) => b.timestamp - a.timestamp);
+    // Group everything by date and return it
+    return groupByDay(finalArray);
 }
