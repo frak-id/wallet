@@ -1,36 +1,74 @@
 import { Slot } from "@radix-ui/react-slot";
-import type { PropsWithChildren } from "react";
+import { cx } from "class-variance-authority";
+import { X } from "lucide-react";
+import { type PropsWithChildren, useState } from "react";
 import styles from "./index.module.css";
 
+type PanelVariant =
+    | "primary"
+    | "secondary"
+    | "outlined"
+    | "empty"
+    | "invisible";
+type PanelSize = "none" | "small" | "normal" | "big";
 type PanelProps = {
-    variant?: "primary" | "secondary" | "outlined" | "empty" | "invisible";
-    size?: "none" | "small" | "normal" | "big";
+    variant?: PanelVariant;
+    size?: PanelSize;
     withShadow?: boolean;
     asChild?: boolean;
     className?: string;
     cover?: string;
+    isDismissible?: boolean;
 };
 
 export function Panel({
-    variant,
-    size,
-    withShadow,
+    variant = "primary",
+    size = "normal",
+    withShadow = false,
     asChild = false,
     className = "",
     cover,
+    isDismissible = false,
     children,
 }: PropsWithChildren<PanelProps>) {
-    const variantClass = variant ? styles[variant] : styles.primary;
-    const sizeClass = size ? styles[`size--${size}`] : styles["size--normal"];
-    const shadowClass = withShadow ? styles.shadow : "";
-    const stylesInline = cover ? { backgroundImage: `url(${cover})` } : {};
-    const Comp = asChild ? Slot : "div";
+    const [isVisible, setIsVisible] = useState(true);
+
+    if (!isVisible) {
+        return null;
+    }
+
+    const backgroundStyle = cover ? { backgroundImage: `url(${cover})` } : {};
+
+    const Component = asChild ? Slot : "div";
+
+    const renderDismissButton = () => {
+        if (!isDismissible) return null;
+
+        return (
+            <button
+                type="button"
+                className={styles.dismissible__button}
+                onClick={() => setIsVisible(false)}
+            >
+                <X />
+            </button>
+        );
+    };
+
     return (
-        <Comp
-            className={`${styles.panel} ${className} ${variantClass} ${sizeClass} ${shadowClass}`}
-            style={stylesInline}
+        <Component
+            className={cx(
+                styles.panel,
+                styles[variant],
+                styles[`size--${size}`],
+                withShadow && styles.shadow,
+                styles.dismissible,
+                className
+            )}
+            style={backgroundStyle}
         >
             {children}
-        </Comp>
+            {renderDismissButton()}
+        </Component>
     );
 }

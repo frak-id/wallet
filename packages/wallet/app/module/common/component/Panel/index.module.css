@@ -34,17 +34,31 @@
 }
 
 .size--small {
-    padding: 8px;
+    padding: 12px;
 }
 
 .size--normal {
-    padding: 17px 8px;
+    padding: 17px 12px;
 }
 
 .size--big {
-    padding: 25px 8px;
+    padding: 25px 12px;
 }
 
 .shadow {
     box-shadow: 4px 4px 4px 0 var(--frak-panel-shadow-color);
+}
+
+.dismissible {
+    position: relative;
+}
+
+.dismissible__button {
+    all: unset;
+    position: absolute;
+    top: 5px;
+    right: 9px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
 }

@@ -136,6 +136,10 @@
             "REFERRED": "Parrainé",
             "WEBSHOP_OPENNED": "Ouverture de la boutique en ligne"
         },
+        "invite": {
+            "title": "Invitez des amis, gagnez 5€",
+            "text": "Gagnez 5€ pour chaque ami que vous invitez. Conditions générales applicables"
+        },
         "login": {
             "accountCreation": "Création de compte",
             "button": "Récupérez votre <strong>porte-monnaie</strong>",
@@ -224,6 +228,10 @@
             "receive": {
                 "title": "Recevoir des actifs sur <strong>les réseaux de test</strong>"
             }
+        },
+        "welcome": {
+            "title": "Bienvenue dans votre porte-monnaie",
+            "text": "Ce porte-monnaie vous permettra de collecter toutes les récompenses et bien plus encore."
         }
     }
 }

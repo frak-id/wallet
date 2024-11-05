@@ -139,6 +139,10 @@ interface Resources {
                 REFERRED: "Referred";
                 WEBSHOP_OPENNED: "Opened webshop";
             };
+            invite: {
+                title: "Invite friends, earn $5";
+                text: "Earn $5 for each friend you invite. T&C apply";
+            };
             login: {
                 accountCreation: "Account creation";
                 button: "Recover your <strong>wallet</strong>";
@@ -227,6 +231,10 @@ interface Resources {
                 receive: {
                     title: "Receive assets on <strong>Testnets</strong>";
                 };
+            };
+            welcome: {
+                title: "Welcome in your wallet";
+                text: "This wallet will enable you to collect all the rewards and much more.";
             };
         };
     };
