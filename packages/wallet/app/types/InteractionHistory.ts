@@ -2,6 +2,7 @@ import type { Address, Hex } from "viem";
 
 type BaseInteraction = {
     productId: string;
+    productName: string;
     timestamp: number; // timestamp in seconds
 };
 

@@ -6,6 +6,7 @@ type ApiResult = Array<
     {
         timestamp: string;
         productId: string;
+        productName: string;
     } & (
         | {
               type: "OPEN_ARTICLE" | "READ_ARTICLE";

@@ -18,7 +18,9 @@ export function Reward({ reward }: RewardProps) {
     return (
         <Panel size={"small"} className={styles.reward}>
             <div>
-                <Title className={styles.reward__title}>{label}</Title>
+                <Title className={styles.reward__title}>
+                    {reward.productName} - {label}
+                </Title>
                 <span className={styles.reward__date}>
                     {new Date(reward.timestamp * 1000).toLocaleString()}
                 </span>

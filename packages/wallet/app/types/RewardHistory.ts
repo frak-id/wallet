@@ -5,4 +5,6 @@ export type RewardHistory = {
     amount: number;
     txHash: Hex;
     timestamp: number; // timestamp in seconds
+    productId: string;
+    productName: string;
 };

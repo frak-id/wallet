@@ -8,11 +8,15 @@ type ApiResult = {
         amount: string;
         timestamp: string;
         txHash: Hex;
+        productId: string;
+        productName: string;
     }[];
     claimed: {
         amount: string;
         timestamp: string;
         txHash: Hex;
+        productId: string;
+        productName: string;
     }[];
     tokens: Token[];
 };
@@ -40,6 +44,8 @@ export async function getRewardHistory({
                     amount: Number.parseFloat(formatEther(BigInt(item.amount))),
                     timestamp: Number.parseInt(item.timestamp),
                     txHash: item.txHash,
+                    productId: item.productId,
+                    productName: item.productName,
                 }) as const
         ) ?? []),
         ...(rewardsHistory?.claimed?.map(
@@ -49,6 +55,8 @@ export async function getRewardHistory({
                     amount: Number.parseFloat(formatEther(BigInt(item.amount))),
                     timestamp: Number.parseInt(item.timestamp),
                     txHash: item.txHash,
+                    productId: item.productId,
+                    productName: item.productName,
                 }) as const
         ) ?? []),
     ];

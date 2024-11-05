@@ -14,6 +14,7 @@ export function Interaction({ article }: InteractionProps) {
     return (
         <Panel size={"small"}>
             <Title className={styles.interaction__title}>
+                {article.productName} -{" "}
                 {t(`wallet.interaction.${article.type}`)}
             </Title>
             <span className={styles.interaction__date}>
