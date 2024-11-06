@@ -2,12 +2,13 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
+import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import { interactionCampaignAbi } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/shared/context/server";
 import {
     type Address,
-    formatEther,
+    formatUnits,
     getAddress,
     hexToString,
     isAddressEqual,
@@ -18,6 +19,7 @@ type ApiResult = {
     productId: string;
     isOwner: number; // bool
     id: Address;
+    bank: Address;
     totalInteractions: string;
     openInteractions: string;
     readInteractions: string;
@@ -62,7 +64,7 @@ export async function getMyCampaignsStats() {
     });
 
     // Cleanly format all of the stats from string to bigint
-    return campaignStats.map((campaign, index) => {
+    const mappedAsync = campaignStats.map(async (campaign, index) => {
         // Get the matching campaign name and id
         const campaignDoc = campaignDocuments.find(
             (doc) =>
@@ -83,6 +85,9 @@ export async function getMyCampaignsStats() {
             campaign.createReferredLinkInteractions
         );
         const referredInteractions = Number(campaign.referredInteractions);
+
+        // Get the decimals of the campaign banking
+        const { decimals } = await getBankTokenInfo({ bank: campaign.bank });
 
         // CTR = share / couverture
         const sharingRate =
@@ -118,11 +123,17 @@ export async function getMyCampaignsStats() {
             // Polished stats for the array
             title,
             id: campaignDoc?._id?.toHexString() ?? campaign.id,
-            amountSpent: Number.parseFloat(formatEther(totalRewards)),
+            amountSpent: Number.parseFloat(formatUnits(totalRewards, decimals)),
             sharingRate,
-            costPerShare: Number.parseFloat(formatEther(costPerShare)),
+            costPerShare: Number.parseFloat(
+                formatUnits(costPerShare, decimals)
+            ),
             ctr,
-            costPerResult: Number.parseFloat(formatEther(costPerResult)),
+            costPerResult: Number.parseFloat(
+                formatUnits(costPerResult, decimals)
+            ),
         };
     });
+
+    return Promise.all(mappedAsync);
 }

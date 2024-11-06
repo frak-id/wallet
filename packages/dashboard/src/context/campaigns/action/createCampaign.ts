@@ -2,6 +2,7 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
+import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
 import type { DraftCampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
@@ -29,8 +30,8 @@ import {
     encodeFunctionData,
     isAddress,
     parseAbi,
-    parseEther,
     parseEventLogs,
+    parseUnits,
 } from "viem";
 import { getTransactionReceipt, simulateContract } from "viem/actions";
 
@@ -96,6 +97,11 @@ export async function getCreationData(campaign: Campaign) {
         end = Math.floor(new Date(campaign.scheduled.dateEnd).getTime() / 1000);
     }
 
+    // Get the token decimal count
+    const { decimals: tokenDecimals } = await getBankTokenInfo({
+        bank: campaign.bank,
+    });
+
     // Rebuild the triggers
     const triggers = Object.entries(campaign.triggers)
         .map(([interactionTypeKey, trigger]) => {
@@ -124,7 +130,7 @@ export async function getCreationData(campaign: Campaign) {
 
             return {
                 interactionType: interactionType,
-                baseReward: parseEther(initialReward.toString()),
+                baseReward: parseUnits(initialReward.toString(), tokenDecimals),
                 userPercent: userPercent,
                 deperditionPerLevel: deperditionPerLevel,
                 maxCountPerUser: trigger.maxCountPerUser
@@ -145,7 +151,10 @@ export async function getCreationData(campaign: Campaign) {
         {
             period: capPeriod,
             amount: campaign.budget.maxEuroDaily
-                ? parseEther(campaign.budget.maxEuroDaily.toString())
+                ? parseUnits(
+                      campaign.budget.maxEuroDaily.toString(),
+                      tokenDecimals
+                  )
                 : 0n,
         },
         // Activation period
