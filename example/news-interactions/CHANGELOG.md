@@ -1,5 +1,13 @@
 # @frak-labs-example/news-interactions
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [[`ddedad4`](https://github.com/frak-id/wallet/commit/ddedad484fd9803ea90a8f83ed876bd79cc1e101)]:
+  - @frak-labs/nexus-sdk@0.0.24
+  - @frak-labs/shared@0.0.0
+
 ## 0.0.3
 
 ### Patch Changes
