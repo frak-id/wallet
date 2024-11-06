@@ -1,8 +1,12 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { getSafeSession } from "@/module/listener/utils/localStorage";
+import {
+    getSafeSdkSession,
+    getSafeSession,
+} from "@/module/listener/utils/localStorage";
 import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
+import { useCallback } from "react";
 import { sdkSessionAtom, sessionAtom } from "../atoms/session";
 import { lastWebAuthNActionAtom } from "../atoms/webauthn";
 
@@ -15,9 +19,45 @@ export function useGetSafeSdkSession() {
     const currentSession = useAtomValue(sessionAtom);
     const lastWebAuthnAction = useAtomValue(lastWebAuthNActionAtom);
 
+    /**
+     * Generate an SDK session from the last webauthn action if possible
+     */
+    const genSessionFromWebAuthnAction = useCallback(async () => {
+        if (!lastWebAuthnAction) {
+            return;
+        }
+
+        const encodedSignature = Buffer.from(
+            JSON.stringify(lastWebAuthnAction.signature)
+        ).toString("base64");
+        const { data: session, error } =
+            await authenticatedBackendApi.auth.wallet.sdk.fromWebAuthNSignature.post(
+                {
+                    signature: encodedSignature,
+                    msg: lastWebAuthnAction.msg,
+                    wallet: lastWebAuthnAction.wallet,
+                }
+            );
+        if (error) {
+            console.error(
+                "Unable to generate a new token from previous signature",
+                error
+            );
+        }
+        if (session) {
+            jotaiStore.set(sdkSessionAtom, session);
+            return session;
+        }
+    }, [lastWebAuthnAction]);
+
+    /**
+     * Getch the current sdk session or regen a new one
+     */
     const query = useQuery({
         // keep in mem for 2min
         gcTime: 2 * 60 * 1000,
+        // Keep it stale for 15min
+        staleTime: 15 * 60 * 1000,
         queryKey: [
             "sdk-token",
             "get-safe",
@@ -26,45 +66,26 @@ export function useGetSafeSdkSession() {
             lastWebAuthnAction?.wallet ?? "no-last-action",
         ],
         queryFn: async () => {
+            // Get the current session status
+            const sdkSession = currentSdkSession ?? getSafeSdkSession();
+
             // If we got a current token, check it's validity
-            if (currentSession) {
-                const isValid =
+            if (sdkSession) {
+                const { data } =
                     await authenticatedBackendApi.auth.wallet.sdk.isValid.get({
                         headers: {
-                            "x-wallet-sdk-auth": currentSession.token,
+                            "x-wallet-sdk-auth": sdkSession.token,
                         },
                     });
-                if (isValid) {
-                    return currentSdkSession;
+                if (data?.isValid) {
+                    return sdkSession;
                 }
             }
 
             // Otherwise, try to craft a new token from the last webauthn action
-            if (lastWebAuthnAction) {
-                const encodedSignature = Buffer.from(
-                    JSON.stringify(lastWebAuthnAction.signature)
-                ).toString("base64");
-                const { data: session, error } =
-                    await authenticatedBackendApi.auth.wallet.sdk.fromWebAuthNSignature.post(
-                        {
-                            signature: encodedSignature,
-                            msg: lastWebAuthnAction.msg,
-                            wallet: lastWebAuthnAction.wallet,
-                        }
-                    );
-                if (error) {
-                    console.error(
-                        "Unable to generate a new token from previous signature",
-                        error
-                    );
-                }
-                if (session) {
-                    jotaiStore.set(sdkSessionAtom, session);
-                    return session;
-                }
-            }
+            await genSessionFromWebAuthnAction();
 
-            // Otherwise, if we don't have any current session, we can early exit (since we won't have any token for the generation)
+            // If we got a user session, we can try to generate a new token
             const session = getSafeSession();
             if (!session) {
                 return null;
@@ -81,18 +102,6 @@ export function useGetSafeSdkSession() {
             // Save the token and return it
             jotaiStore.set(sdkSessionAtom, data);
             return data;
-        },
-        staleTime: ({ state }) => {
-            if (state.data?.expires) {
-                // If we got a token, keep it in mem for expiration time less 15min
-                const stale = state.data.expires - 15 * 60 * 1000;
-                if (stale > Date.now()) {
-                    return stale;
-                }
-            }
-
-            // Default to 15min
-            return 15 * 60 * 1000;
         },
     });
     return {
