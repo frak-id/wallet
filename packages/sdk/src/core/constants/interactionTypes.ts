@@ -25,7 +25,7 @@ export const interactionTypes = {
         createLink: "0xb2c0f17c",
     },
     purchase: {
-        started: "0xd87e90c3",
-        completed: "0x8403aeb4",
+        started: "0x8403aeb4",
+        completed: "0xd87e90c3",
     },
 } as const;
