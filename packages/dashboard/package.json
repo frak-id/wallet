@@ -43,6 +43,7 @@
     "jotai": "^2.10.1",
     "lucide-react": "^0.454.0",
     "mongodb": "^6.10.0",
+    "lru-cache": "^11.0.2",
     "next": "14.2.15",
     "normalize.css": "^8.0.1",
     "radash": "^12.1.0",
