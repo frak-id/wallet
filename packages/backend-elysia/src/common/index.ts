@@ -7,6 +7,7 @@ export {
     sessionContext,
     mongoDbContext,
     walletSessionContext,
+    eventsContext,
     walletSdkSessionContext,
     type GetMongoDb,
 } from "./context";

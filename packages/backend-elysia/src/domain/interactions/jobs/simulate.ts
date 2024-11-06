@@ -8,12 +8,12 @@ import type { InteractionsContextApp, InteractionsDb } from "../context";
 import { pendingInteractionsTable } from "../db/schema";
 import type { InteractionDiamondRepository } from "../repositories/InteractionDiamondRepository";
 import type { WalletSessionRepository } from "../repositories/WalletSessionRepository";
-import type { ExecuteInteractionAppJob } from "./execute";
 
 export const simulateInteractionJob = (app: InteractionsContextApp) =>
     app.use(
         mutexCron({
             name: "simulateInteraction",
+            triggerKeys: ["newInteractions"],
             pattern: isRunningInProd
                 ? // Every minute on prod
                   Patterns.everyMinute()
@@ -73,21 +73,17 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                         hasSuccessInteractions,
                     });
 
-                    // Trigger the execution job
-                    const store =
-                        app.store as ExecuteInteractionAppJob["store"];
-                    await store.cron.executeInteraction.trigger();
+                    // Emit the event to trigger the interaction execution
+                    if (hasSuccessInteractions) {
+                        app.store.emitter.emit("simulatedInteractions");
+                    }
                 } finally {
                     // Unlock the interactions
-                    pendingInteractionsRepository.unlock(interactions);
+                    await pendingInteractionsRepository.unlock(interactions);
                 }
             },
         })
     );
-
-export type SimulateInteractionAppJob = ReturnType<
-    typeof simulateInteractionJob
->;
 
 /**
  * Simulate a list of transaction and update their state

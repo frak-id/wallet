@@ -5,7 +5,6 @@ import { isAddressEqual } from "viem";
 import { interactionsContext } from "../context";
 import { pendingInteractionsTable } from "../db/schema";
 import { InteractionRequestDto } from "../dto/InteractionDto";
-import type { SimulateInteractionAppJob } from "../jobs/simulate";
 
 export const pushInteractionsRoutes = new Elysia()
     .use(interactionsContext)
@@ -58,9 +57,7 @@ export const pushInteractionsRoutes = new Elysia()
                 .returning({ insertedId: pendingInteractionsTable.id });
 
             // Trigger the simulation job (and don't wait for it)
-            (
-                store as SimulateInteractionAppJob["store"]
-            ).cron.simulateInteraction.trigger();
+            store.emitter.emit("newInteractions");
 
             // Return the inserted ids
             return results.map((result) => result.insertedId.toString());

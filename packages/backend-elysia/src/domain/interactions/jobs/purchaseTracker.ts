@@ -1,4 +1,4 @@
-import { log } from "@backend-common";
+import { eventsContext, log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { Patterns } from "@elysiajs/cron";
 import { PurchaseInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
@@ -13,6 +13,7 @@ import {
 
 const outerPurchaseTracker = new Elysia({ name: "Job.OuterPurchaseTracker" })
     .use(interactionsContext)
+    .use(eventsContext)
     .use(PurchaseProofService);
 
 type OuterPurchaseTrackerApp = typeof outerPurchaseTracker;
@@ -21,6 +22,7 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
     app.use(
         mutexCron({
             name: "purchaseTracker",
+            triggerKeys: ["newTrackedPurchase", "oracleUpdated"],
             pattern: Patterns.everyMinutes(5),
             skipIfLocked: true,
             coolDownInMs: 3_000,
@@ -28,8 +30,9 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
             catch: true,
             interval: 60,
             run: async () => {
-                // Get stuff from the app
+                // Get stuff from the app and the store
                 const { interactionsDb, getPurchaseProof } = app.decorator;
+                const { emitter } = app.store;
 
                 // Get all the currents tracker (max 50 at the time)
                 const trackers = await interactionsDb
@@ -83,6 +86,9 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
                         .where(
                             eq(interactionsPurchaseTrackerTable.id, tracker.id)
                         );
+
+                    // Emit the event to launch potential simulation
+                    emitter.emit("newInteractions");
                 }
             },
         })

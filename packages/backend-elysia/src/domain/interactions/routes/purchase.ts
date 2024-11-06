@@ -16,6 +16,7 @@ export const purchaseInteractionsRoutes = new Elysia()
             interactionsDb,
             walletSdkJwt,
             error,
+            store: { emitter },
         }) => {
             if (!walletSdkAuth) return error(401, "Missing wallet SDK JWT");
 
@@ -48,6 +49,9 @@ export const purchaseInteractionsRoutes = new Elysia()
                     token: body.token,
                 })
                 .onConflictDoNothing();
+
+            // Emit the event
+            emitter.emit("newTrackedPurchase");
         },
         {
             type: "json",

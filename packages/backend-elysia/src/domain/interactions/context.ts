@@ -1,6 +1,7 @@
 import {
     adminWalletContext,
     blockchainContext,
+    eventsContext,
     postgresContext,
 } from "@backend-common";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
@@ -25,6 +26,7 @@ export const interactionsContext = new Elysia({
     .use(blockchainContext)
     .use(postgresContext)
     .use(adminWalletContext)
+    .use(eventsContext)
     .decorate(
         ({ client, postgresDb, adminWalletsRepository, ...decorators }) => {
             // Build our drizzle DB

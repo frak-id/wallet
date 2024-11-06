@@ -1,6 +1,7 @@
 import {
     adminWalletContext,
     blockchainContext,
+    eventsContext,
     postgresContext,
 } from "@backend-common";
 import { t } from "@backend-utils";
@@ -21,6 +22,7 @@ export const oracleContext = new Elysia({
     .use(blockchainContext)
     .use(postgresContext)
     .use(adminWalletContext)
+    .use(eventsContext)
     .decorate(({ postgresDb, ...decorators }) => {
         const oracleDb = drizzle(postgresDb, {
             schema: {

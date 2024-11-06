@@ -89,11 +89,12 @@ export const updateMerkleRootJob = (app: OracleContextApp) =>
                     adminRepository: adminWalletsRepository,
                     client,
                 });
+
+                // Then emit the oracle updated event
+                app.store.emitter.emit("oracleUpdated");
             },
         })
     );
-
-export type UpdateMerkleRootAppJob = ReturnType<typeof updateMerkleRootJob>;
 
 /**
  * Update all the empty leafs if needed

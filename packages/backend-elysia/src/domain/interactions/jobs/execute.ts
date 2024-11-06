@@ -58,8 +58,6 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
         })
     );
 
-export type ExecuteInteractionAppJob = ReturnType<typeof executeInteractionJob>;
-
 /**
  * Execute a list of interactions
  */
