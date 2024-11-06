@@ -3,9 +3,8 @@ import {
     getSafeSdkSession,
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
-import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { useCallback } from "react";
 import { sdkSessionAtom, sessionAtom } from "../atoms/session";
 import { lastWebAuthNActionAtom } from "../atoms/webauthn";
@@ -15,7 +14,7 @@ import { lastWebAuthNActionAtom } from "../atoms/webauthn";
  */
 export function useGetSafeSdkSession() {
     // Using jotai hook since it's seem to struggle reading from storage directly in some cases
-    const currentSdkSession = useAtomValue(sdkSessionAtom);
+    const [currentSdkSession, setCurrentSdkSession] = useAtom(sdkSessionAtom);
     const currentSession = useAtomValue(sessionAtom);
     const lastWebAuthnAction = useAtomValue(lastWebAuthNActionAtom);
 
@@ -45,10 +44,10 @@ export function useGetSafeSdkSession() {
             );
         }
         if (session) {
-            jotaiStore.set(sdkSessionAtom, session);
-            return session;
+            setCurrentSdkSession(session);
         }
-    }, [lastWebAuthnAction]);
+        return session;
+    }, [lastWebAuthnAction, setCurrentSdkSession]);
 
     /**
      * Getch the current sdk session or regen a new one
@@ -61,7 +60,6 @@ export function useGetSafeSdkSession() {
         queryKey: [
             "sdk-token",
             "get-safe",
-            currentSdkSession?.expires?.toString() ?? "no-sdk-token",
             currentSession?.address ?? "no-session",
             lastWebAuthnAction?.wallet ?? "no-last-action",
         ],
@@ -83,7 +81,10 @@ export function useGetSafeSdkSession() {
             }
 
             // Otherwise, try to craft a new token from the last webauthn action
-            await genSessionFromWebAuthnAction();
+            const sdkSessionFromWebAuthN = await genSessionFromWebAuthnAction();
+            if (sdkSessionFromWebAuthN) {
+                return sdkSessionFromWebAuthN;
+            }
 
             // If we got a user session, we can try to generate a new token
             const session = getSafeSession();
@@ -100,7 +101,7 @@ export function useGetSafeSdkSession() {
             }
 
             // Save the token and return it
-            jotaiStore.set(sdkSessionAtom, data);
+            setCurrentSdkSession(data);
             return data;
         },
     });
