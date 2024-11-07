@@ -30,7 +30,7 @@ if (!result.success) {
 }
 
 // Display the result
-console.log("Build succeeded");
+console.log("Build messages:");
 for (const message of result.logs) {
     console.log(message);
 }
