@@ -43,7 +43,7 @@ const app = new Elysia({
     }))
     .use(commonRoutes)
     // Example news paper logics
-    .use(exampleNewsPaper)
+    .guard({}, (app) => app.use(exampleNewsPaper))
     // Business logics
     .use(auth)
     .use(oracle)

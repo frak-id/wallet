@@ -7,7 +7,7 @@ import { Elysia } from "elysia";
  */
 export const eventsContext = new Elysia({
     name: "Context.event",
-}).state(
+}).decorate(
     { as: "append" },
     {
         emitter: new EventEmitter<FrakEvents>({ captureRejections: true }),

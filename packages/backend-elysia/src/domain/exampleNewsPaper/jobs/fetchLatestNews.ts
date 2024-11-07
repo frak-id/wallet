@@ -1,6 +1,5 @@
-import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
-import { Patterns } from "@elysiajs/cron";
+import type { pino } from "@bogeychan/elysia-logger";
 import { cluster } from "radash";
 import type { NewsPaperContextApp } from "../context";
 import { LlmFormatterRepository } from "../repositories/LlmFormatterRepository";
@@ -18,10 +17,9 @@ export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
             mutexCron({
                 name: "fetchNews",
                 skipIfLocked: true,
-                pattern: Patterns.everyHours(6),
-                run: async () => {
+                pattern: "0 0-23/6 * * *", // Every 6 hours
+                run: async ({ context: { logger } }) => {
                     // Get the repositories we will use
-                    const newsDbRepository = app.decorator.newsDbRepository;
                     const worldNewsApiRepository = new WorldNewsApiRepository(
                         process.env.WORLD_NEWS_API_KEY as string
                     );
@@ -29,9 +27,10 @@ export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
 
                     // Perform the logic
                     await fetchLatestNew({
-                        newsDbRepository,
+                        newsDbRepository: app.decorator.newsDbRepository,
                         llmRepository,
                         worldNewsApiRepository,
+                        logger,
                     });
                 },
             })
@@ -42,22 +41,25 @@ export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
  * @param newsDbRepository
  * @param llmRepository
  * @param worldNewsApiRepository
+ * @param logger
  */
 async function fetchLatestNew({
     newsDbRepository,
     llmRepository,
     worldNewsApiRepository,
+    logger,
 }: {
     newsDbRepository: NewsRepository;
     llmRepository: LlmFormatterRepository;
     worldNewsApiRepository: WorldNewsApiRepository;
+    logger: pino.Logger;
 }) {
     // Fetch the latest news
     const latestNews = await worldNewsApiRepository.getYesterdayArticles();
     if (!latestNews?.length) {
         return;
     }
-    log.debug(
+    logger.debug(
         {
             length: latestNews.length,
             ids: latestNews.map((news) => news.id),
@@ -70,7 +72,7 @@ async function fetchLatestNew({
 
     // Process each cluster
     for (const cluster of clusters) {
-        log.debug(
+        logger.debug(
             {
                 length: cluster.length,
                 ids: cluster.map((news) => news.id),
@@ -119,7 +121,7 @@ async function fetchLatestNew({
 
             // Then insert them
             const insertResult = await newsDbRepository.insertMany(documents);
-            log.info(
+            logger.info(
                 {
                     amount: insertResult.insertedCount,
                     ids: insertResult.insertedIds,
@@ -127,7 +129,7 @@ async function fetchLatestNew({
                 "Inserted news"
             );
         } catch (error) {
-            log.warn({ error }, "Error while processing news cluster");
+            logger.warn({ error }, "Error while processing news cluster");
         }
     }
 }

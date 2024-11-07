@@ -1,4 +1,3 @@
-import { log } from "@backend-common";
 import { Elysia } from "elysia";
 import { updateMerkleRootJob } from "./jobs/updateOrale";
 import { managmentRoutes } from "./routes/managment";
@@ -14,12 +13,7 @@ export const oracle = new Elysia({ prefix: "/oracle" })
     .use(proofRoutes)
     .get(
         "/status",
-        async ({
-            store: {
-                cron: { updateMerkleRoot },
-            },
-            merkleRepository,
-        }) => ({
+        async ({ cron: { updateMerkleRoot }, merkleRepository }) => ({
             updateMerkleRootCron: {
                 run: {
                     prevRun: updateMerkleRoot.previousRun(),
@@ -35,15 +29,4 @@ export const oracle = new Elysia({ prefix: "/oracle" })
                 trees: merkleRepository.cachedTrees,
             },
         })
-    )
-    .post(
-        "/trigger",
-        async ({
-            store: {
-                cron: { updateMerkleRoot },
-            },
-        }) => {
-            log.debug("Triggering updateMerkleRoot");
-            await updateMerkleRoot.trigger();
-        }
     );

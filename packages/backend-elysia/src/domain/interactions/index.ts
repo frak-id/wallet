@@ -16,13 +16,7 @@ export const interactions = new Elysia({
     .get(
         "/status",
         ({
-            store: {
-                cron: {
-                    simulateInteraction,
-                    executeInteraction,
-                    purchaseTracker,
-                },
-            },
+            cron: { simulateInteraction, executeInteraction, purchaseTracker },
         }) => ({
             simulateInteractionCron: {
                 run: {

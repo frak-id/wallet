@@ -1,6 +1,5 @@
-import { eventsContext, log } from "@backend-common";
+import { eventsContext } from "@backend-common";
 import { mutexCron } from "@backend-utils";
-import { Patterns } from "@elysiajs/cron";
 import { PurchaseInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
@@ -23,17 +22,12 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
         mutexCron({
             name: "purchaseTracker",
             triggerKeys: ["newTrackedPurchase", "oracleUpdated"],
-            pattern: Patterns.everyMinutes(5),
+            pattern: "0 */5 * * * *", // Every 5 minutes
             skipIfLocked: true,
             coolDownInMs: 3_000,
-            protect: true,
-            catch: true,
-            interval: 60,
-            run: async () => {
-                // Get stuff from the app and the store
-                const { interactionsDb, getPurchaseProof } = app.decorator;
-                const { emitter } = app.store;
-
+            run: async ({ context: { logger } }) => {
+                const { interactionsDb, getPurchaseProof, emitter } =
+                    app.decorator;
                 // Get all the currents tracker (max 50 at the time)
                 const trackers = await interactionsDb
                     .select()
@@ -48,14 +42,14 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
                         externalId: tracker.externalPurchaseId,
                     });
                     if (result.status !== "success") {
-                        log.debug(
+                        logger.debug(
                             { result, tracker },
                             "Proof not available yet for tracker"
                         );
                         continue;
                     }
                     if (result.purchase.status !== "confirmed") {
-                        log.debug(
+                        logger.debug(
                             { result, tracker },
                             "Purchase not completed yet for tracker"
                         );

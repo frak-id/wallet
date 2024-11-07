@@ -16,7 +16,7 @@ export const pushInteractionsRoutes = new Elysia()
             walletSdkSession,
             error,
             interactionsDb,
-            store,
+            emitter,
         }) => {
             if (!walletSdkSession) return;
 
@@ -57,7 +57,7 @@ export const pushInteractionsRoutes = new Elysia()
                 .returning({ insertedId: pendingInteractionsTable.id });
 
             // Trigger the simulation job (and don't wait for it)
-            store.emitter.emit("newInteractions");
+            emitter.emit("newInteractions");
 
             // Return the inserted ids
             return results.map((result) => result.insertedId.toString());

@@ -1,6 +1,6 @@
 import { build } from "bun";
 
-console.log("Building...");
+console.log("Building...", { stage: process.env.STAGE });
 console.time("build-time");
 const result = await build({
     entrypoints: ["./src/index.ts"],
@@ -11,7 +11,7 @@ const result = await build({
     define: {
         // todo: This is fucking up during docker build
         // // Replace public env variable with the current value
-        // "process.env.STAGE": JSON.stringify(Config.STAGE),
+        "process.env.STAGE": JSON.stringify(process.env.STAGE ?? "dev"),
         // "process.env.POSTGRES_DB": JSON.stringify(Config.POSTGRES_DB),
         // "process.env.POSTGRES_USER": JSON.stringify(Config.POSTGRES_USER),
         // "process.env.INDEXER_URL": JSON.stringify(Config.INDEXER_URL),
