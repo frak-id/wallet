@@ -10,6 +10,11 @@ COPY . .
 # Setup bun (since we are on a node image)
 RUN npm i -g bun
 
+# Fetch arg env
+ARG STAGE
+ENV NODE_ENV=production
+ENV STAGE=$STAGE
+
 # Install dependencies and build the project
 RUN bun install --frozen-lockfile
 RUN bun run build:sdk

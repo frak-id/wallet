@@ -38,8 +38,7 @@ const app = new Elysia({
     .get("/health", () => ({
         status: "ok",
         hostname: process.env.HOSTNAME,
-        isProd: isRunningInProd,
-        isLocal: isRunningLocally,
+        stage: process.env.STAGE
     }))
     .use(commonRoutes)
     // Example news paper logics

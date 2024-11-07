@@ -18,7 +18,7 @@
     "build:package": "bun run build.ts",
     "build:binary-linux-arm64": "bun build --compile --minify --target=bun-linux-arm64 --outfile ./server src/index.ts",
     "build:binary": "bun build --compile --minify --target=bun --outfile ./server src/index.ts",
-    "start": "NODE_ENV=production bun dist/index.js",
+    "start": "NODE_ENV=production bun dist/index-terser.js",
     "db:studio": "sst bind drizzle-kit studio",
     "db-dev:generate": "sst bind drizzle-kit generate",
     "db-dev:migrate": "sst bind drizzle-kit migrate",
@@ -59,7 +59,8 @@
     "@simplewebauthn/types": "^11.0.0",
     "@types/web-push": "^3.6.4",
     "bun-types": "latest",
-    "drizzle-kit": "^0.25.0"
+    "drizzle-kit": "^0.25.0",
+    "terser": "^5.36.0"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"
