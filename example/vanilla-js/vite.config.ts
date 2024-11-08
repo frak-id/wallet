@@ -8,6 +8,7 @@ export default defineConfig({
     server: {
         port: 3013,
     },
+    publicDir: "public",
     plugins: [
         {
             name: "html-transform",

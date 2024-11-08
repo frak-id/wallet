@@ -53,12 +53,12 @@ export const meta: MetaFunction = () => {
 export const links: LinksFunction = () => [
     {
         rel: "icon",
-        href: "/favicons/favicon.ico",
+        href: "/favicon.ico",
         sizes: "48x48",
     },
     {
         rel: "apple-touch-icon",
-        href: "/favicons/icon-192.png",
+        href: "/icon-192.png",
         type: "image/png",
     },
     {

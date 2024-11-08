@@ -41,7 +41,7 @@ self.addEventListener("push", (event) => {
     // Rebuild the notification options
     const notificationOptions = {
         body,
-        icon: icon || "/favicons/icon-192x192.png",
+        icon: icon || "/icon-192.png",
         ...additionalParams,
     };
 

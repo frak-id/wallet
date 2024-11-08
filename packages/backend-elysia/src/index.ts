@@ -1,6 +1,6 @@
 import { log } from "@backend-common";
 import { cors } from "@elysiajs/cors";
-import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { commonRoutes } from "./common/routes";
 import {
@@ -38,7 +38,7 @@ const app = new Elysia({
     .get("/health", () => ({
         status: "ok",
         hostname: process.env.HOSTNAME,
-        stage: process.env.STAGE
+        stage: process.env.STAGE,
     }))
     .use(commonRoutes)
     // Example news paper logics
