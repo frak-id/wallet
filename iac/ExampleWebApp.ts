@@ -27,8 +27,11 @@ export function ExampleAppStack({ stack }: StackContext) {
             domainName: "ethcc.news-paper.xyz",
             hostedZone: "news-paper.xyz",
         },
-        // Bind to the configs
-        bind: [frakWalletUrl],
+        // Environment variables
+        environment: {
+            FRAK_WALLET_URL: frakWalletUrl.value,
+            STAGE: stack.stage,
+        },
     });
 
     // Declare the remix site on news-paper.xyz
@@ -39,8 +42,11 @@ export function ExampleAppStack({ stack }: StackContext) {
             domainName: "news-paper.xyz",
             hostedZone: "news-paper.xyz",
         },
-        // Bind to the configs
-        bind: [frakWalletUrl, backendUrl],
+        // Environment variables
+        environment: {
+            FRAK_WALLET_URL: frakWalletUrl.value,
+            BACKEND_URL: backendUrl.value,
+        },
     });
 
     stack.addOutputs({
