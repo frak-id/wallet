@@ -92,7 +92,7 @@ jobs:
           fi
           
           echo "Deployment stage  : ${{ env.STAGE }}"
-          echo "Elysia rep        : {{ env.$ELYSIA_REPO }}"
+          echo "Elysia rep        : ${{ env.ELYSIA_REPO }}"
           echo "Backend image tag : ${{ env.BACKEND_IMAGE_TAG }}"
 
       - name: "🔨 Build Elysia backend"

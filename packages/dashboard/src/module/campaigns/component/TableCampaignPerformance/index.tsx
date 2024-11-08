@@ -64,7 +64,7 @@ export function TableCampaignPerformance() {
     const columnFilters = useAtomValue(tablePerformanceFiltersAtom);
 
     const { data, isLoading } = useQuery({
-        queryKey: ["campaigns", "my-campaigns-stats"],
+        queryKey: ["campaigns", "all-stats"],
         queryFn: async () => await getMyCampaignsStats(),
     });
 
@@ -78,63 +78,156 @@ export function TableCampaignPerformance() {
                     ),
                     footer: "Total",
                 }),
-                columnHelper.accessor("referredInteractions", {
-                    header: "Result",
-                    footer: ({ table }) =>
-                        sumRows(table, "referredInteractions"),
-                }),
-                columnHelper.accessor("createReferredLinkInteractions", {
-                    header: () => "Share",
-                    footer: ({ table }) =>
-                        sumRows(table, "createReferredLinkInteractions"),
-                }),
-                columnHelper.accessor("readInteractions", {
+                columnHelper.accessor("ambassador", {
                     header: () => (
                         <TooltipTable
                             content={
                                 <>
-                                    <strong>Coverage</strong>
-                                    <br /> Le nombre d’utilisateurs uniques qui
-                                    ont vu votre contenu au moins une fois. La
-                                    couverture est différente des impressions,
-                                    qui peuvent inclure plusieurs vues de votre
-                                    contenu par les mêmes utilisateurs.
+                                    <strong>Ambassador</strong>
+                                    <br /> Ambassador on your product (users who
+                                    are the first to create a share link).
                                 </>
                             }
                         >
-                            <span>Coverage</span>
+                            <span>Ambassador</span>
                         </TooltipTable>
                     ),
-                    footer: ({ table }) => sumRows(table, "readInteractions"),
+                    footer: ({ table }) => sumRows(table, "ambassador"),
                 }),
-                columnHelper.accessor("openInteractions", {
-                    header: () => "Impression",
-                    footer: ({ table }) => sumRows(table, "openInteractions"),
+                columnHelper.accessor("createReferredLinkInteractions", {
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>Share</strong>
+                                    <br /> Amount of share link created on your
+                                    product.
+                                </>
+                            }
+                        >
+                            <span>Share</span>
+                        </TooltipTable>
+                    ),
+                    footer: ({ table }) =>
+                        sumRows(table, "createReferredLinkInteractions"),
+                }),
+                columnHelper.accessor("referredInteractions", {
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>Result</strong>
+                                    <br /> Amount of user who discovered your
+                                    product via ambassador.
+                                </>
+                            }
+                        >
+                            <span>Result</span>
+                        </TooltipTable>
+                    ),
+                    footer: ({ table }) =>
+                        sumRows(table, "referredInteractions"),
+                }),
+                columnHelper.accessor("purchaseInteractions", {
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>Purchase</strong>
+                                    <br /> Number of purchase performed thanks
+                                    to this campaign.
+                                </>
+                            }
+                        >
+                            <span>Purchase</span>
+                        </TooltipTable>
+                    ),
+                    footer: ({ table }) =>
+                        sumRows(table, "purchaseInteractions"),
                 }),
                 columnHelper.accessor("sharingRate", {
-                    header: () => "Sharing Rate",
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>Sharing Rate</strong>
+                                    <br /> Number of sharing link created to the
+                                    number of wallet activated.
+                                </>
+                            }
+                        >
+                            <span>Sharing Rate</span>
+                        </TooltipTable>
+                    ),
                     footer: ({ table }) => avgPercentages(table, "sharingRate"),
                     cell: ({ getValue }) => `${(getValue() * 100).toFixed(2)}%`,
                 }),
                 columnHelper.accessor("costPerShare", {
-                    header: () => "Cost per share",
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>Cost per share</strong>
+                                    <br /> Average cost per share link creation
+                                </>
+                            }
+                        >
+                            <span>Cost per share</span>
+                        </TooltipTable>
+                    ),
                     footer: ({ table }) =>
                         sumRows(table, "costPerShare", { dollar: true }),
                     cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
                 }),
                 columnHelper.accessor("ctr", {
-                    header: () => "CTR",
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>CTR</strong>
+                                    <br /> Click-through rate, the number of
+                                    user who discovered your product via
+                                    ambassador.
+                                </>
+                            }
+                        >
+                            <span>CTR</span>
+                        </TooltipTable>
+                    ),
                     footer: ({ table }) => avgPercentages(table, "ctr"),
                     cell: ({ getValue }) => `${(getValue() * 100).toFixed(2)}%`,
                 }),
-                columnHelper.accessor("costPerResult", {
-                    header: () => "Cost per Result",
+                columnHelper.accessor("costPerPurchase", {
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>Cost per Purchase</strong>
+                                    <br /> Average cost per purchase.
+                                </>
+                            }
+                        >
+                            <span>Cost per Purchase</span>
+                        </TooltipTable>
+                    ),
                     footer: ({ table }) =>
-                        sumRows(table, "costPerResult", { dollar: true }),
+                        sumRows(table, "costPerPurchase", { dollar: true }),
                     cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
                 }),
                 columnHelper.accessor("amountSpent", {
-                    header: () => "Amount Spent",
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>Amount Spent</strong>
+                                    <br /> The total amount you spent for on
+                                    this campaign.
+                                </>
+                            }
+                        >
+                            <span>Amount Spent</span>
+                        </TooltipTable>
+                    ),
                     footer: ({ table }) =>
                         sumRows(table, "amountSpent", { dollar: true }),
                     cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
