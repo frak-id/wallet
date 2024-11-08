@@ -107,9 +107,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Links />
             </head>
             <body>
-                <RootProvider>
-                    <MainLayout>{children}</MainLayout>
-                </RootProvider>
+                {children}
                 <ScrollRestoration />
                 <Scripts />
             </body>
@@ -118,5 +116,11 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-    return <Outlet />;
+    return (
+        <RootProvider>
+            <MainLayout>
+                <Outlet />
+            </MainLayout>
+        </RootProvider>
+    );
 }
