@@ -68,10 +68,13 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                             walletSessionRepository,
                         });
 
-                    log.debug("Simulated interactions", {
-                        interactions: interactions.length,
-                        hasSuccessInteractions,
-                    });
+                    log.debug(
+                        {
+                            interactions: interactions.length,
+                            hasSuccessInteractions,
+                        },
+                        "Simulated interactions"
+                    );
 
                     // Trigger the execution job
                     const store =
@@ -79,7 +82,7 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     await store.cron.executeInteraction.trigger();
                 } finally {
                     // Unlock the interactions
-                    pendingInteractionsRepository.unlock(interactions);
+                    await pendingInteractionsRepository.unlock(interactions);
                 }
             },
         })
