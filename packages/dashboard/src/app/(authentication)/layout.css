@@ -1,0 +1,14 @@
+html[data-page="authentication"] {
+    background: var(--frak-color-white);
+    color: var(--frak-color-black);
+    height: 100%;
+
+    & body {
+        overflow: hidden;
+        height: 100%;
+    }
+
+    & a {
+        color: var(--frak-color-black);
+    }
+}
