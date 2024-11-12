@@ -63,10 +63,13 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                             logger,
                         });
 
-                    logger.debug("Simulated interactions", {
-                        interactions: interactions.length,
-                        hasSuccessInteractions,
-                    });
+                    logger.debug(
+                        {
+                            interactions: interactions.length,
+                            hasSuccessInteractions,
+                        },
+                        "Simulated interactions"
+                    );
 
                     // Emit the event to trigger the interaction execution
                     if (hasSuccessInteractions) {

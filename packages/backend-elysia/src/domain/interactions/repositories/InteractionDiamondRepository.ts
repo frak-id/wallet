@@ -1,7 +1,6 @@
 import { log } from "@backend-common";
 import {
     addresses,
-    isRunningInProd,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
 } from "@frak-labs/app-essentials";
@@ -24,8 +23,8 @@ import type { InteractionData } from "../types/interactions";
 export class InteractionDiamondRepository {
     private addressCache = new LRUCache<string, { address?: Address }>({
         max: 256,
-        // TTL of 2 hours in prod, 10min in dev
-        ttl: isRunningInProd ? 2 * 60 * 60 * 1000 : 10 * 60 * 1000,
+        // TTL of 10min
+        ttl: 10 * 60 * 1000,
     });
 
     constructor(private readonly client: Client) {}
@@ -79,6 +78,7 @@ export class InteractionDiamondRepository {
     }) {
         const diamondContract = await this.getDiamondContract(productId);
         if (!diamondContract) {
+            log.info({ productId }, "No diamond contract found for product");
             return {
                 isSimulationSuccess: false,
             };
@@ -99,7 +99,7 @@ export class InteractionDiamondRepository {
                 isSimulationSuccess: true,
             };
         } catch (e) {
-            log.error(
+            log.warn(
                 {
                     wallet,
                     productId,
