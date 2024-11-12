@@ -1,4 +1,5 @@
-import { type PropsWithChildren, useMemo } from "react";
+import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import type { PropsWithChildren } from "react";
 
 /**
  * Component to require webauthn for the children sub-components
@@ -7,15 +8,7 @@ import { type PropsWithChildren, useMemo } from "react";
  */
 export function RequireWebAuthN({ children }: PropsWithChildren) {
     // Check if webauthn is supported
-    const isWebAuthnSupported = useMemo(() => {
-        // If on server side, webauthn not supported
-        if (typeof window === "undefined") {
-            return false;
-        }
-
-        // Check if webauthn is supported
-        return window.PublicKeyCredential !== undefined;
-    }, []);
+    const isWebAuthnSupported = useIsWebAuthNSupported();
 
     // If webauthn is supported, directly return the children
     if (isWebAuthnSupported) {

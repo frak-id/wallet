@@ -236,6 +236,9 @@ interface Resources {
                 title: "Welcome in your wallet";
                 text: "This wallet will enable you to collect all the rewards and much more.";
             };
+            errors: {
+                webauthnNotSupported: "Open this page on your <strong>default browser</strong>, or use a compatible browser to create your wallet. Be sure to use the <strong>latest version</strong> of your browser.";
+            };
         };
     };
 }
