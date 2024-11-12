@@ -126,6 +126,6 @@ export async function getRecoveryAvailability({
         available: true,
         alreadyRecovered:
             potentiallyExistingPasskey &&
-            potentiallyExistingPasskey[1].x !== 0n,
+            potentiallyExistingPasskey[1].x !== BigInt(0),
     };
 }

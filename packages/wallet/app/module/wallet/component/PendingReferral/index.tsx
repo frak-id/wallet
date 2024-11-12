@@ -50,7 +50,7 @@ export function PendingReferral() {
                     functionName: "pullReward",
                     args: [address],
                 }),
-                value: 0n,
+                value: BigInt(0),
             }));
 
             // For each pending rewards, launch a tx

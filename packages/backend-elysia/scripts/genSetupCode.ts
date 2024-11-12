@@ -1,8 +1,9 @@
 import { concatHex, keccak256, toHex } from "viem";
 
 // Var for the setup code generation
-const domain = "";
-const owner = "0x";
+// const domain = "moov360.com";
+const domain = "test01.frak.id";
+const owner = "0xd64b31C0a06aC2cA02374DF233c550c38D94BA78";
 
 // Gen the setup code
 const setupCode = keccak256(

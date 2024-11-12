@@ -18,7 +18,7 @@ export function encodeWalletMulticall(
         args: [
             txs.map((tx) => ({
                 to: tx.to,
-                value: tx.value ?? 0n,
+                value: tx.value ?? BigInt(0),
                 data: tx.data ?? "0x",
             })),
         ],

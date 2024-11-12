@@ -195,7 +195,7 @@ export class InteractionSignerRepository {
                 to: addresses.interactionDelegator,
                 data,
                 // Provide a 25% more gas than the estimation (in the case of campaign deployed in-between)
-                gas: (gas * 125n) / 100n,
+                gas: (gas * BigInt(125)) / BigInt(100),
             });
         } catch (e) {
             log.error(
