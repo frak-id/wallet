@@ -70,11 +70,20 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "i18next-resources-for-ts": "^1.5.0",
+    "postcss": "^8.4.49",
+    "postcss-preset-env": "^10.1.0",
     "sst": "2.44.0",
     "tsup": "^8.3.5",
     "typescript": "^5",
     "vite": "^5.4.10",
     "vite-plugin-mkcert": "^1.17.6",
     "vite-tsconfig-paths": "^5.1.0"
-  }
+  },
+  "browserslist": [
+    "chrome 64",
+    "edge 79",
+    "firefox 67",
+    "opera 51",
+    "safari 12"
+  ]
 }
