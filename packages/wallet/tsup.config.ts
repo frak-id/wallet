@@ -3,7 +3,7 @@ import { defineConfig } from "tsup";
 export default defineConfig([
     // Config for the service worker
     {
-        target: "es2022",
+        target: "ES2020",
         // All of our entry-points
         entry: {
             sw: "app/service-worker.ts",

@@ -23,7 +23,7 @@ declare module "@remix-run/node" {
     }
 }
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
     define: Object.fromEntries(
         Object.entries(envFromSstConfig).map(([key, value]) => [
             `process.env.${key}`,
@@ -47,4 +47,5 @@ export default defineConfig({
         mkcert(),
         tsconfigPaths(),
     ],
-});
+    build: isSsrBuild ? { target: "ES2022" } : { target: "ES2020" },
+}));
