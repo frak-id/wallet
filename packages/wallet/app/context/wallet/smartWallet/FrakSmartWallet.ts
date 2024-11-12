@@ -197,7 +197,7 @@ export async function frakWalletSmartAccount<
             return encodeFunctionData({
                 abi: KernelExecuteAbi,
                 functionName: "execute",
-                args: [call.to, call.value ?? BigInt(0), call.data ?? "0x", 0],
+                args: [call.to, call.value ?? 0n, call.data ?? "0x", 0],
             });
         },
         // Factory args
@@ -277,7 +277,7 @@ export async function frakWalletSmartAccount<
             const maxCurveValue =
                 BigInt(
                     "0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"
-                ) - BigInt(1);
+                ) - 1n;
 
             // Generate a template signature for the webauthn validator
             const sig = formatSignature({
@@ -310,13 +310,10 @@ export async function frakWalletSmartAccount<
                     return undefined;
                 }
                 // The margin depend on the chain, if testnet x10, if mainnet x1.25
-                const margin =
-                    client?.chain?.testnet === true
-                        ? BigInt(1000)
-                        : BigInt(125);
+                const margin = client?.chain?.testnet === true ? 1000n : 125n;
                 // Use the estimation with 25% of error margin on the estimation
                 return {
-                    callGasLimit: (estimation * margin) / BigInt(100),
+                    callGasLimit: (estimation * margin) / 100n,
                 };
             },
         },

@@ -59,7 +59,7 @@ export class BalancesRepository {
 
         // Get the effective balance, where asset are gt than 0
         const effectiveBalances = response.tokenBalances.filter(
-            ({ tokenBalance }) => tokenBalance > BigInt(0)
+            ({ tokenBalance }) => tokenBalance > 0n
         );
 
         // Then map them with the associated metadatas

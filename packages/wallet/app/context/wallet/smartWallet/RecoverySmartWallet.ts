@@ -165,7 +165,7 @@ export function recoverySmartAccount<
                 }
                 // Use the estimation with 25% of error margin on the estimation
                 return {
-                    callGasLimit: (estimation * BigInt(125)) / BigInt(100),
+                    callGasLimit: (estimation * 125n) / 100n,
                 };
             },
         },

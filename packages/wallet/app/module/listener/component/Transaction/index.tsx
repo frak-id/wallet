@@ -84,10 +84,7 @@ function useMappedTx({
         if (!Array.isArray(tx)) {
             return {
                 txs: [tx],
-                toSendTx: {
-                    ...tx,
-                    value: tx.value ? BigInt(tx.value) : BigInt(0),
-                },
+                toSendTx: { ...tx, value: tx.value ? BigInt(tx.value) : 0n },
             };
         }
 
@@ -96,7 +93,7 @@ function useMappedTx({
             txs: tx,
             toSendTx: {
                 to: address,
-                value: BigInt(0),
+                value: 0n,
                 data: encodeWalletMulticall(
                     tx.map((tx) => ({
                         to: tx.to,

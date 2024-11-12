@@ -42,7 +42,7 @@ export function AccordionTransactions({
                             />
                         </p>
 
-                        {tx.value && BigInt(tx.value) > BigInt(0) ? (
+                        {tx.value && BigInt(tx.value) > 0n ? (
                             <p>Amount: ${formatEther(BigInt(tx.value))}</p>
                         ) : null}
 

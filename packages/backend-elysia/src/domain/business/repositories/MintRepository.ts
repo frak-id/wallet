@@ -66,7 +66,7 @@ export class MintRepository {
                 args: [productId],
             });
             // Return true if the existing metadata exists
-            return existingMetadata.productTypes !== BigInt(0);
+            return existingMetadata.productTypes !== 0n;
         } catch {
             return false;
         }
@@ -171,10 +171,7 @@ export class MintRepository {
      * Encode an array of product types keys into a bit mask
      */
     private encodeProductTypesMask(types: ProductTypesKey[]): bigint {
-        return types.reduce(
-            (acc, type) => acc | productTypesMask[type],
-            BigInt(0)
-        );
+        return types.reduce((acc, type) => acc | productTypesMask[type], 0n);
     }
 
     private async deployInteractionContract({

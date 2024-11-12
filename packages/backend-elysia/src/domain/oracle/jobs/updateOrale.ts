@@ -82,7 +82,7 @@ export const updateMerkleRootJob = (app: OracleContextApp) =>
                 );
                 // Then update each product ids merkle root
                 await updateProductsMerkleRoot({
-                    productIds: Array.from(finalProductIds),
+                    productIds: [...finalProductIds],
                     oracleDb,
                     merkleRepository,
                     adminRepository: adminWalletsRepository,

@@ -75,6 +75,6 @@ export function getWebAuthNSmartWalletInitCode({
     return encodeFunctionData({
         abi: createAccountAbi,
         functionName: "createAccount",
-        args: [kernelAddresses.accountLogic, initialisationData, BigInt(0)],
+        args: [kernelAddresses.accountLogic, initialisationData, 0n],
     }) as Hex;
 }
