@@ -1,9 +1,12 @@
 html[data-page="authentication"] {
+    position: relative;
+    overflow: hidden;
+    height: 100%;
     background: var(--frak-color-white);
     color: var(--frak-color-black);
-    height: 100%;
 
     & body {
+        position: relative;
         overflow: hidden;
         height: 100%;
     }

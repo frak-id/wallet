@@ -44,3 +44,23 @@
     width: 634px;
     height: 634px;
 }
+
+@media screen and (max-width: 768px) {
+    .ellipse-blue-top {
+        top: 706px;
+        left: -441px;
+        width: 626px;
+        height: 626px;
+    }
+
+    .ellipse-white-1 {
+        top: 51px;
+        left: -250px;
+        filter: blur(500px);
+    }
+
+    .ellipse-red-1 {
+        top: 481px;
+        left: 148px;
+    }
+}
