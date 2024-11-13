@@ -31,13 +31,15 @@ export function Login() {
 
     const logoFrakLabs = (
         <ClientOnly>
-            <Image
-                src={logo}
-                alt="Frak Labs"
-                width={111}
-                height={111}
-                className={styles.image}
-            />
+            <a href="https://frak.id" target="_blank" rel="noreferrer">
+                <Image
+                    src={logo}
+                    alt="Frak Labs"
+                    width={111}
+                    height={111}
+                    className={styles.image}
+                />
+            </a>
         </ClientOnly>
     );
 
