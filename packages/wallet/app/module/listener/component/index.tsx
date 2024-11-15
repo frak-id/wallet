@@ -1,10 +1,15 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
-import { ListenerModal } from "@/module/listener/component/Modal";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
-import { useEffect, useState } from "react";
+import { lazy, useEffect, useState } from "react";
+
+const ListenerModal = lazy(() =>
+    import("@/module/listener/component/Modal").then((module) => ({
+        default: module.ListenerModal,
+    }))
+);
 
 /**
  * Global Listener UI that cna only be set via an iFrame
@@ -21,6 +26,9 @@ export function ListenerUI() {
 
     // Hook used when a dashboard action is requested
     const onInteractionRequest = useSendInteractionListener();
+
+    // State when a modal display is asked
+    const [modalRequested, setModalRequested] = useState(false);
 
     // Hook when a modal display is asked
     const onDisplayModalRequest = useDisplayModalListener();
@@ -44,7 +52,10 @@ export function ListenerUI() {
             /**
              * Listen request for the modal display request
              */
-            frak_displayModal: onDisplayModalRequest,
+            frak_displayModal: (request, context, emitter) => {
+                setModalRequested(true);
+                return onDisplayModalRequest(request, context, emitter);
+            },
 
             /**
              * Listen request for the open sso request
@@ -89,5 +100,5 @@ export function ListenerUI() {
         };
     }, []);
 
-    return <ListenerModal />;
+    return modalRequested ? <ListenerModal /> : null;
 }
