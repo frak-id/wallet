@@ -1,24 +1,60 @@
 {
   "name": "@frak-labs/shopify-app",
-  "version": "1.0.0",
-  "license": "UNLICENSED",
+  "private": true,
   "scripts": {
-    "shopify": "shopify",
-    "build": "shopify app build",
+    "build": "remix vite:build",
     "dev": "shopify app dev",
-    "info": "shopify app info",
+    "config:link": "shopify app config link",
     "generate": "shopify app generate",
     "deploy": "shopify app deploy",
+    "config:use": "shopify app config use",
+    "env": "shopify app env",
+    "start": "remix-serve ./build/server/index.js",
+    "docker-start": "npm run setup && npm run start",
+    "setup": "prisma generate && prisma migrate deploy",
     "lint": "biome lint .",
     "format:check": "biome check .",
-    "format": "biome check --write ."
+    "format": "biome check --write .",
+    "shopify": "shopify",
+    "prisma": "prisma",
+    "graphql-codegen": "graphql-codegen",
+    "vite": "vite"
   },
-  "dependencies": {},
+  "type": "module",
+  "engines": {
+    "node": "^18.20 || ^20.10 || >=21.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.11.0",
+    "@remix-run/dev": "^2.7.1",
+    "@remix-run/node": "^2.7.1",
+    "@remix-run/react": "^2.7.1",
+    "@remix-run/serve": "^2.7.1",
+    "@shopify/app-bridge-react": "^4.1.2",
+    "@shopify/polaris": "^12.0.0",
+    "@shopify/shopify-app-remix": "^3.4.0",
+    "@shopify/shopify-app-session-storage-prisma": "^5.1.5",
+    "isbot": "^5.1.0",
+    "prisma": "^5.11.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "vite-tsconfig-paths": "^5.0.1"
+  },
+  "devDependencies": {
+    "@shopify/api-codegen-preset": "^1.1.1",
+    "@types/node": "^22.2.0",
+    "@types/react": "^18.2.31",
+    "@types/react-dom": "^18.2.14",
+    "prettier": "^3.2.4",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.3"
+  },
+  "workspaces": [
+    "extensions/*"
+  ],
   "trustedDependencies": [
     "@shopify/plugin-cloudflare"
   ],
-  "private": true,
-  "workspaces": [
-    "extensions/*"
-  ]
+  "resolutions": {},
+  "overrides": {}
 }

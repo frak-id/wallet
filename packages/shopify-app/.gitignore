@@ -1,28 +1,23 @@
-# Environment Configuration
+node_modules
+
+/.cache
+/build
+/app/build
+/public/build/
+/public/_dev
+/app/public/build
+/prisma/dev.sqlite
+/prisma/dev.sqlite-journal
+database.sqlite
+
 .env
 .env.*
 
-# Dependency directory
-node_modules
-
-# Test coverage directory
-coverage
-
-# Ignore Apple macOS Desktop Services Store
-.DS_Store
-
-# Logs
-logs
-*.log
-
-# extensions build output
-extensions/*/build
-extensions/*/dist
-
-# lock files
 
 
 
+
+/extensions/*/dist
 
 # Ignore shopify files created during app dev
 .shopify/*

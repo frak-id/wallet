@@ -1,23 +1,32 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "8bc45d423919a0074a2660d8d0feac5d"
-application_url = "https://shopify.dev/apps/default-app-home"
+client_id = "87da8338f40c95301b4881ca4bfb23db"
+application_url = "https://catherine-gsm-lu-layer.trycloudflare.com"
 embedded = true
-name = "frak-app"
-handle = "frak-app"
+name = "Frak"
+handle = "frak"
 
 [webhooks]
 api_version = "2024-10"
 
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
+scopes = "write_products"
 
 [auth]
-redirect_urls = [ "https://shopify.dev/apps/default-app-home/api/auth" ]
+redirect_urls = [
+  "https://catherine-gsm-lu-layer.trycloudflare.com/auth/callback",
+  "https://catherine-gsm-lu-layer.trycloudflare.com/auth/shopify/callback",
+  "https://catherine-gsm-lu-layer.trycloudflare.com/api/auth/callback"
+]
 
 [pos]
 embedded = false
 
 [build]
 dev_store_url = "paris-rooftop.myshopify.com"
+automatically_update_urls_on_dev = true
