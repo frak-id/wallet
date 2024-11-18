@@ -5,7 +5,7 @@ import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
 
-import { RootProvider } from "../components/common/provider/RootProvider";
+import { RootProvider } from "../providers/RootProvider";
 import { authenticate } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
