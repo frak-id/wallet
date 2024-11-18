@@ -1,0 +1,24 @@
+{
+  "name": "@frak-labs/shopify-app",
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "scripts": {
+    "shopify": "shopify",
+    "build": "shopify app build",
+    "dev": "shopify app dev",
+    "info": "shopify app info",
+    "generate": "shopify app generate",
+    "deploy": "shopify app deploy",
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --write ."
+  },
+  "dependencies": {},
+  "trustedDependencies": [
+    "@shopify/plugin-cloudflare"
+  ],
+  "private": true,
+  "workspaces": [
+    "extensions/*"
+  ]
+}
