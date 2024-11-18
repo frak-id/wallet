@@ -28,5 +28,6 @@
     <content url="file://$MODULE_DIR$/.sst/types" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="styles" level="application" />
   </component>
 </module>

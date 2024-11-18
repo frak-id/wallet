@@ -14,6 +14,7 @@ import {
     Text,
 } from "@shopify/polaris";
 import { useEffect } from "react";
+import { Wallet } from "../components/frak/wallet/Wallet";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -22,6 +23,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return null;
 };
 
+/**
+ * todo: Index page of the Frak application on the shopify admin panel
+ *  - Login with a Frak wallet if needed
+ *  - Check if a product is present, otherwise, link to product page?
+ *  - Quickly check product status? Active campaign etc? And redirect to business for more infos?
+ *  - Setup pixel + webhook automatically?
+ * @param request
+ */
 export const action = async ({ request }: ActionFunctionArgs) => {
     const { admin } = await authenticate.admin(request);
     const color = ["Red", "Orange", "Yellow", "Green"][
@@ -131,6 +140,7 @@ export default function Index() {
                         <Card>
                             <BlockStack gap="500">
                                 <BlockStack gap="200">
+                                    <Wallet />
                                     <Text as="h2" variant="headingMd">
                                         Congrats on creating a new Shopify app
                                         🎉

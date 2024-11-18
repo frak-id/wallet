@@ -10,7 +10,7 @@
     "config:use": "shopify app config use",
     "env": "shopify app env",
     "start": "remix-serve ./build/server/index.js",
-    "docker-start": "npm run setup && npm run start",
+    "docker-start": "bun run setup && bun run start",
     "setup": "prisma generate && prisma migrate deploy",
     "lint": "biome lint .",
     "format:check": "biome check .",
@@ -25,6 +25,7 @@
     "node": "^18.20 || ^20.10 || >=21.0.0"
   },
   "dependencies": {
+    "@frak-labs/nexus-sdk": "^0.0.23",
     "@prisma/client": "^5.11.0",
     "@remix-run/dev": "^2.7.1",
     "@remix-run/node": "^2.7.1",
@@ -34,6 +35,8 @@
     "@shopify/polaris": "^12.0.0",
     "@shopify/shopify-app-remix": "^3.4.0",
     "@shopify/shopify-app-session-storage-prisma": "^5.1.5",
+    "@tanstack/react-query": "^5.60.5",
+    "@tanstack/react-query-persist-client": "^5.60.5",
     "isbot": "^5.1.0",
     "prisma": "^5.11.0",
     "react": "^18.2.0",

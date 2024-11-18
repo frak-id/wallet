@@ -1,5 +1,4 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import {
     Button,
@@ -23,13 +22,13 @@ export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const errors = loginErrorMessage(await login(request));
 
-    return json({ errors, polarisTranslations });
+    return Response.json({ errors, polarisTranslations });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
     const errors = loginErrorMessage(await login(request));
 
-    return json({
+    return Response.json({
         errors,
     });
 };
