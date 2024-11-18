@@ -18,6 +18,7 @@ export function WalletAppStack({ stack }: StackContext) {
         vapidPublicKey,
         backendUrl,
         indexerUrl,
+        umamiWalletWebsiteId,
     } = use(ConfigStack);
     const configs = [
         alchemyApiKey,
@@ -27,6 +28,7 @@ export function WalletAppStack({ stack }: StackContext) {
         vapidPublicKey,
         backendUrl,
         indexerUrl,
+        umamiWalletWebsiteId,
     ];
 
     // Base domain for our whole app

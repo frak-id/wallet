@@ -3,6 +3,7 @@ import styles from "@/module/listener/component/Modal/index.module.css";
 import type { SiweAuthenticateModalStepType } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { trackEvent } from "@module/utils/trackEvent";
 import { useMemo } from "react";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
@@ -82,6 +83,7 @@ export function SiweAuthenticateModalStep({
                             signMessage({
                                 message,
                             });
+                            trackEvent("cta-authenticate");
                         }}
                     >
                         {isPending && <Spinner />}

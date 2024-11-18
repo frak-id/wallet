@@ -5,6 +5,7 @@ import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { trackEvent } from "@module/utils/trackEvent";
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { useModalTranslation } from "../../hooks/useModalTranslation";
@@ -106,6 +107,7 @@ export function OpenSessionModalStep({
                         disabled={isPending || isFetchingStatus}
                         onClick={() => {
                             openSession();
+                            trackEvent("cta-open-session");
                         }}
                     >
                         {isPending && <Spinner />}

@@ -3,6 +3,7 @@ import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
+import { trackEvent } from "@module/utils/trackEvent";
 import { useAtomValue } from "jotai/index";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
@@ -33,7 +34,10 @@ export function SsoLoginComponent({
                 <AuthFingerprint
                     icon={<Fingerprint color={"#000"} sizes={57} />}
                     isShiny={false}
-                    action={() => login({ lastAuthentication })}
+                    action={() => {
+                        login({ lastAuthentication });
+                        trackEvent("cta-sso-login");
+                    }}
                     disabled={isLoading}
                     className={styles.sso__buttonPrimary}
                 >
@@ -48,7 +52,10 @@ export function SsoLoginComponent({
             <button
                 className={styles.sso__buttonLink}
                 disabled={isLoading}
-                onClick={() => login({ lastAuthentication })}
+                onClick={() => {
+                    login({ lastAuthentication });
+                    trackEvent("cta-sso-login");
+                }}
                 type={"button"}
             >
                 {t("authent.sso.btn.new.login")}

@@ -9,6 +9,7 @@ import { ReferralInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { jotaiStore } from "@module/atoms/store";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { trackEvent } from "@module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
 import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
@@ -43,7 +44,10 @@ export function FinalModalActionComponent({
         <button
             type={"button"}
             className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
-            onClick={() => onFinish({})}
+            onClick={() => {
+                onFinish({});
+                trackEvent("cta-dismissed");
+            }}
         >
             {t("sdk.modal.default.dismissBtn")}
         </button>
@@ -53,7 +57,6 @@ export function FinalModalActionComponent({
 /**
  * Sharing buttons component
  * @param shareWithFrak
- * @param appName
  * @param link
  * @param popupTitle
  * @param text
@@ -159,15 +162,32 @@ function SharingButtons({
                 onClick={async () => {
                     if (!finalSharingLink) return;
                     copy(finalSharingLink);
+                    trackSharingLink("sharing-copy-link", finalSharingLink);
                 }}
             >
                 <Copy size={32} absoluteStrokeWidth={true} />
                 {t(copied ? "sharing.btn.copySuccess" : "sharing.btn.copy")}
             </ButtonAction>
-            <ButtonAction disabled={isSharing} onClick={() => triggerSharing()}>
+            <ButtonAction
+                disabled={isSharing}
+                onClick={() => {
+                    if (!finalSharingLink) return;
+                    triggerSharing();
+                    trackSharingLink("sharing-share-link", finalSharingLink);
+                }}
+            >
                 <Share size={32} absoluteStrokeWidth={true} />{" "}
                 {shareResult ?? t("sharing.btn.share")}
             </ButtonAction>
         </div>
     );
+}
+
+/**
+ * Track the sharing link
+ * @param name
+ * @param link
+ */
+function trackSharingLink(name: string, link: string) {
+    trackEvent(name, { link });
 }

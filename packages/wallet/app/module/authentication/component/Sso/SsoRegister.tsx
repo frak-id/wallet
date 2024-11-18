@@ -3,6 +3,7 @@ import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Notice } from "@/module/common/component/Notice";
 import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
+import { trackEvent } from "@module/utils/trackEvent";
 import { useAtomValue } from "jotai/index";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -57,7 +58,10 @@ export function SsoRegisterComponent({
                 <AuthFingerprint
                     icon={<Fingerprint color={"#000"} sizes={57} />}
                     isShiny={false}
-                    action={register}
+                    action={() => {
+                        register();
+                        trackEvent("cta-sso-register");
+                    }}
                     disabled={
                         isRegisterInProgress ||
                         isPreviouslyUsedAuthenticatorError
@@ -78,7 +82,10 @@ export function SsoRegisterComponent({
                 disabled={
                     isRegisterInProgress || isPreviouslyUsedAuthenticatorError
                 }
-                onClick={() => register()}
+                onClick={() => {
+                    register();
+                    trackEvent("cta-sso-register");
+                }}
                 type={"button"}
             >
                 {t("authent.sso.btn.existing.create")}

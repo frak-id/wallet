@@ -16,6 +16,7 @@ import type {
 } from "@frak-labs/nexus-sdk/core";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { trackEvent } from "@module/utils/trackEvent";
 import { useAtomValue } from "jotai/index";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useModalTranslation } from "../../hooks/useModalTranslation";
@@ -81,6 +82,7 @@ export function LoginModalStep({
                         disabled={isLoading}
                         onClick={() => {
                             login({});
+                            trackEvent("cta-login");
                         }}
                     >
                         {isLoading && <Spinner />}
@@ -193,6 +195,7 @@ function RegularSsoButton({ link, text }: { link: string; text: ReactNode }) {
                     // Otherwise, mark that we fail to open it
                     setFailToOpen(true);
                 }
+                trackEvent("cta-sso");
             }}
         >
             {text}
@@ -201,7 +204,7 @@ function RegularSsoButton({ link, text }: { link: string; text: ReactNode }) {
 }
 
 /**
- * SSO button using a simple link, with sharing stauts
+ * SSO button using a simple link, with sharing status
  */
 function LinkSsoButton({ link, text }: { link: string; text: ReactNode }) {
     return (
@@ -210,6 +213,9 @@ function LinkSsoButton({ link, text }: { link: string; text: ReactNode }) {
             className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
             target="frak-sso"
             rel="noreferrer"
+            onClick={() => {
+                trackEvent("cta-sso");
+            }}
         >
             {text}
         </a>

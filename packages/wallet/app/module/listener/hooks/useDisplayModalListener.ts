@@ -15,6 +15,7 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
+import { trackEvent } from "@module/utils/trackEvent";
 import { useCallback } from "react";
 
 type OnDisplayModalRequest = IFrameRequestResolver<
@@ -74,7 +75,34 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             // Initial result if any
             initialResult: currentResult as ModalRpcStepsResultType,
         });
+
+        trackModalDisplay(stepsPrepared, currentStep);
     }, []);
+}
+
+/**
+ * Track the display of the modal
+ * @param steps
+ * @param currentStep
+ */
+function trackModalDisplay(
+    steps: ReturnType<typeof prepareInputStepsArray>,
+    currentStep: number
+) {
+    const currentKey = steps[currentStep].key;
+    const trackingData: { step: string } = {
+        step: currentKey,
+    };
+
+    // In case of final step, track the final action
+    if (currentKey === "final") {
+        const finalStepKey = steps[currentStep].params.action.key;
+        if (finalStepKey) {
+            trackingData.step = finalStepKey;
+        }
+    }
+
+    trackEvent("display-modal", trackingData);
 }
 
 /**

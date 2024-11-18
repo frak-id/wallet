@@ -70,6 +70,7 @@
     "@types/nprogress": "^0.2.3",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/umami": "^2.10.0",
     "i18next-resources-for-ts": "^1.5.0",
     "postcss": "^8.4.49",
     "postcss-preset-env": "^10.1.0",

@@ -3,6 +3,8 @@ import { SetPresenceCookie } from "@/module/authentication/component/SetPresence
 import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { rootConfig } from "@/module/root/config";
+import { isRunningInProd } from "@frak-labs/app-essentials";
+import { Analytics } from "@module/component/Analytics";
 import { type LoaderFunction, data } from "@remix-run/node";
 import {
     Links,
@@ -31,6 +33,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export function Layout({ children }: { children: ReactNode }) {
     const loaderData = useRouteLoaderData<typeof loader>("root");
+    const websiteId = process.env.UMAMI_WALLET_WEBSITE_ID;
     return (
         <html lang={loaderData?.locale ?? "en"}>
             <head>
@@ -41,6 +44,9 @@ export function Layout({ children }: { children: ReactNode }) {
                 />
                 <Meta />
                 <Links />
+                {isRunningInProd && websiteId ? (
+                    <Analytics websiteId={websiteId} />
+                ) : null}
             </head>
             <body className="scrollbars">
                 {children}

@@ -14,6 +14,7 @@ const wantedFromConfig: (keyof typeof Config)[] = [
     "VAPID_PUBLIC_KEY",
     "BACKEND_URL",
     "INDEXER_URL",
+    "UMAMI_WALLET_WEBSITE_ID",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
