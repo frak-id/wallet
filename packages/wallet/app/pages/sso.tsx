@@ -3,7 +3,7 @@ import { GlobalLayout } from "@/module/common/component/GlobalLayout";
 
 export default function SSORoute() {
     return (
-        <GlobalLayout>
+        <GlobalLayout header={false}>
             <Sso />
         </GlobalLayout>
     );

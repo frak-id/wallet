@@ -1,13 +1,17 @@
+import { Header } from "@/module/common/component/Header";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import { cx } from "class-variance-authority";
 import type { ReactNode } from "react";
 import { Trans } from "react-i18next";
 import { Navigation } from "../Navigation";
 import styles from "./index.module.css";
 
 export function GlobalLayout({
+    header = true,
     navigation = false,
     children,
 }: Readonly<{
+    header?: boolean;
     navigation?: boolean;
     children: ReactNode;
 }>) {
@@ -22,11 +26,16 @@ export function GlobalLayout({
 
     return (
         <div className={"desktop scrollbars"}>
-            <div className={styles.wrapper}>
-                <main className={styles.main}>
-                    <div className={styles.inner}>{children}</div>
-                </main>
-            </div>
+            {header && <Header />}
+            <main
+                className={cx(
+                    styles.main,
+                    !header && styles.mainNoHeader,
+                    !navigation && styles.mainNoNav
+                )}
+            >
+                {children}
+            </main>
             {navigation && <Navigation />}
         </div>
     );

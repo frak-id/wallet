@@ -1,41 +1,36 @@
-.wrapper {
-    margin-bottom: 48px;
+.main {
+    margin: 47px 0;
     overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.mainNoHeader {
+    margin-top: 0;
+}
+
+.mainNoNav {
+    margin-bottom: 0;
+    height: calc(100dvh - 47px);
+}
+
+.mainNoHeader.mainNoNav {
+    height: 100dvh;
 }
 
 :root[data-page="sso"] {
-    .wrapper {
+    .main {
         margin-bottom: 0;
     }
 }
 
-.main {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-}
-
-.inner {
-    position: relative;
-    width: 100%;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding-top: 47px;
-}
-
 @media (min-width: 600px) {
-    .wrapper {
-        margin: 0;
-        height: 757px;
-    }
-
     .main {
-        min-height: 100%;
+        margin: 0;
+        height: 710px;
     }
 
-    .inner {
-        padding-top: 0;
-        width: 430px;
+    .mainNoNav {
+        height: 759px;
     }
 }
