@@ -1,7 +1,15 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { TitleBar } from "@shopify/app-bridge-react";
-import { BlockStack, Card, Layout, List, Page, Text } from "@shopify/polaris";
-import { useCallback } from "react";
+import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
+import {
+    BlockStack,
+    Card,
+    Layout,
+    Link,
+    List,
+    Page,
+    Text,
+} from "@shopify/polaris";
+import { useCallback, useMemo } from "react";
 import { ShopInfo } from "../components/ShopInfo";
 import { WalletGated } from "../components/WalletGated";
 import { authenticate } from "../shopify.server";
@@ -29,10 +37,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
  * @param request
  */
 export default function Index() {
+    const shopify = useAppBridge();
     const goToDashboard = useCallback(() => {
         // Open a new window in business.frak.id
         window.open("https://business.frak.id", "_blank");
     }, []);
+
+    const frakModalConfigurationLink = useMemo(() => {
+        if (typeof window === "undefined") {
+            return "";
+        }
+
+        return `https://${shopify.config.shop}/admin/themes/current/editor?context=apps&activateAppId={uuid}/listener`;
+    }, [shopify]);
 
     return (
         <Page>
@@ -72,6 +89,13 @@ export default function Index() {
                                             want
                                         </List.Item>
                                     </List>
+
+                                    <Link
+                                        url={frakModalConfigurationLink}
+                                        target="_blank"
+                                    >
+                                        Setup frak modal
+                                    </Link>
                                 </WalletGated>
                             </BlockStack>
                         </Card>

@@ -11,21 +11,28 @@
         domain: window.location.host,
     };
 
+    // Precompute a few stuff
+    let logoUrl = "{{ block.settings.logo.src }}";
+    if (logoUrl.startsWith("cdn.shopify.com")) {
+        logoUrl = `https://${Shopify.shop}/cdn/shop/${logoUrl}`;
+    }
+    const lang = "{{ block.settings.modal_lng }}" === "default" ? undefined : "{{ block.settings.modal_lng }}";
+
     // Configure base modal info that will be displayed when a user can receive a reward or want to share
     // All the modal customisation options can be found here: https://docs.frak.id/wallet-sdk/api/types/DisplayModalType
     const baseModalConfig = {
         login: {
             allowSso: true,
             ssoMetadata: {
-                logoUrl: "{{ block.settings.logo.src }}",
+                logoUrl,
                 homepageLink: window.location.host,
             },
         },
         metadata: {
             header: {
-                icon: "{{ block.settings.logo.src }}"
+                icon: logoUrl,
             },
-            lang: "{{ block.settings.modal_lng }}",
+            lang,
         },
     };
 
@@ -123,9 +130,13 @@
         {
           "value": "fr",
           "label": "Francais"
+        },
+        {
+          "value": "default",
+          "label": "Default user language"
         }
       ],
-      "default": "en"
+      "default": "default"
     },
     {
       "type": "text",
