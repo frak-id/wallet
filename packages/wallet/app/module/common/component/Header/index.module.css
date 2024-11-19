@@ -7,18 +7,21 @@
     position: relative;
     width: 100%;
     min-height: 47px;
+    backdrop-filter: blur(20px);
 }
 
-.header__logo {
-    position: absolute;
-    margin-top: -18px;
-    top: 50%;
-    left: -5px;
-}
-
+.header__logo,
 .header__notification {
     position: absolute;
     margin-top: -15px;
     top: 50%;
-    right: -5px;
+    display: flex;
+}
+
+.header__logo {
+    left: 12px;
+}
+
+.header__notification {
+    right: 12px;
 }
