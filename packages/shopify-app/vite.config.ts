@@ -1,4 +1,6 @@
 import { vitePlugin as remix } from "@remix-run/dev";
+import { pick } from "radash";
+import { Config } from "sst/node/config";
 import { type UserConfig, defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -39,7 +41,22 @@ if (host === "localhost") {
     };
 }
 
+// Secret env variable from SST we want in the frontend
+const wantedFromConfig: (keyof typeof Config)[] = [
+    "POSTGRES_HOST",
+    "POSTGRES_SHOPIFY_DB",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+];
+const envFromSstConfig = pick(Config, wantedFromConfig);
+
 export default defineConfig({
+    define: Object.fromEntries(
+        Object.entries(envFromSstConfig).map(([key, value]) => [
+            `process.env.${key}`,
+            JSON.stringify(value),
+        ])
+    ),
     server: {
         port: Number(process.env.PORT || 3000),
         hmr: hmrConfig,

@@ -30,6 +30,9 @@ export function ConfigStack({ stack }: StackContext) {
         db: new Config.Parameter(stack, "POSTGRES_DB", {
             value: isProdStack(stack) ? "backend" : "backend_dev",
         }),
+        dbShopify: new Config.Parameter(stack, "POSTGRES_SHOPIFY_DB", {
+            value: isProdStack(stack) ? "shopify_app" : "shopify_app_dev",
+        }),
     };
 
     // External api related

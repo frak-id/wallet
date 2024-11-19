@@ -1,16 +1,21 @@
-import { PrismaClient } from "@prisma/client";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { sessionTable } from "../db/schema/sessionTable";
 
-declare global {
-    var prisma: PrismaClient;
-}
+/**
+ * Create our postgres connector
+ */
+const posgresDb = postgres({
+    host: process.env.POSTGRES_HOST,
+    port: 5432,
+    database: process.env.POSTGRES_SHOPIFY_DB,
+    username: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+});
 
-if (process.env.NODE_ENV !== "production") {
-    if (!global.prisma) {
-        global.prisma = new PrismaClient();
-    }
-}
-
-// biome-ignore lint/suspicious/noRedeclare: Global declaration, can be redeclared
-const prisma: PrismaClient = global.prisma || new PrismaClient();
-
-export default prisma;
+/**
+ * Create our drizzle connector
+ */
+export const drizzleDb = drizzle(posgresDb, {
+    schema: { sessionTable },
+});

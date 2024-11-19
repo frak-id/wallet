@@ -11,14 +11,17 @@
     "env": "shopify app env",
     "start": "remix-serve ./build/server/index.js",
     "docker-start": "bun run setup && bun run start",
-    "setup": "prisma generate && prisma migrate deploy",
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
     "shopify": "shopify",
-    "prisma": "prisma",
     "graphql-codegen": "graphql-codegen",
-    "vite": "vite"
+    "vite": "vite",
+    "db:studio": "sst bind drizzle-kit studio",
+    "db-dev:generate": "sst bind drizzle-kit generate",
+    "db-dev:migrate": "sst bind drizzle-kit migrate",
+    "db-prod:generate": "sst bind --stage prod drizzle-kit generate",
+    "db-prod:migrate": "sst bind --stage prod drizzle-kit migrate"
   },
   "type": "module",
   "engines": {
@@ -26,7 +29,6 @@
   },
   "dependencies": {
     "@frak-labs/nexus-sdk": "^0.0.23",
-    "@prisma/client": "^5.11.0",
     "@remix-run/dev": "^2.7.1",
     "@remix-run/node": "^2.7.1",
     "@remix-run/react": "^2.7.1",
@@ -34,11 +36,13 @@
     "@shopify/app-bridge-react": "^4.1.2",
     "@shopify/polaris": "^12.0.0",
     "@shopify/shopify-app-remix": "^3.4.0",
-    "@shopify/shopify-app-session-storage-prisma": "^5.1.5",
     "@tanstack/react-query": "^5.60.5",
     "@tanstack/react-query-persist-client": "^5.60.5",
+    "drizzle-orm": "^0.36.3",
     "isbot": "^5.1.0",
-    "prisma": "^5.11.0",
+    "pick": "^0.0.1",
+    "postgres": "^3.4.5",
+    "radash": "^12.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "vite-tsconfig-paths": "^5.0.1"
@@ -50,6 +54,7 @@
     "@types/react-dom": "^18.2.14",
     "prettier": "^3.2.4",
     "typescript": "^5.2.2",
+    "drizzle-kit": "^0.25.0",
     "vite": "^5.1.3"
   },
   "workspaces": [

@@ -8,7 +8,8 @@ import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     await authenticate.admin(request);
-
+    const admin = await authenticate.admin(request);
+    admin.admin.graphql;
     return null;
 };
 
@@ -18,6 +19,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
  *  - Check if a product is present, otherwise, link to product page?
  *  - Quickly check product status? Active campaign etc? And redirect to business for more infos?
  *  - Setup pixel + webhook automatically?
+ *
+ *
+ *  todo:
+ *   - List webhooks: https://shopify.dev/docs/api/admin-graphql/2024-07/queries/webhookSubscriptions
+ *   - Webhook creation? Not sure: https://shopify.dev/docs/api/admin-graphql/2024-07/mutations/webhookSubscriptionCreate
+ *   - web pixel extension for post checkout? https://shopify.dev/docs/apps/build/marketing-analytics/build-web-pixels
+ *   - theme app extensions for the frak-setup js asset? https://shopify.dev/docs/apps/build/online-store/theme-app-extensions
  * @param request
  */
 export default function Index() {
@@ -45,6 +53,13 @@ export default function Index() {
                                 <WalletGated>
                                     <Text as="p" variant="bodyMd">
                                         Ready to manage your product
+                                    </Text>
+
+                                    <Text as="p" variant="bodyMd">
+                                        Here you can do: - Manage your product -
+                                        Auto setup pixel? - Auto setup the
+                                        webhook? - Auto push the assets for the
+                                        frak sdk?
                                     </Text>
                                 </WalletGated>
                             </BlockStack>
