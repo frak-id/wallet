@@ -4,10 +4,19 @@
     justify-content: center;
     flex-direction: column;
     gap: 8px;
-    position: relative;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 100;
     width: 100%;
     min-height: 47px;
     backdrop-filter: blur(20px);
+}
+
+@media (min-width: 600px) {
+    .header {
+        position: sticky;
+    }
 }
 
 .header__logo,
