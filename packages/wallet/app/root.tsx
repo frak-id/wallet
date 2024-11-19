@@ -3,6 +3,7 @@ import { SetPresenceCookie } from "@/module/authentication/component/SetPresence
 import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { rootConfig } from "@/module/root/config";
+import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Analytics } from "@module/component/Analytics";
 import { type LoaderFunction, data } from "@remix-run/node";
@@ -67,6 +68,7 @@ export default function App() {
             </RootProvider>
             <SetPresenceCookie />
             <TopLoader />
+            <DetectPWA />
         </>
     );
 }
