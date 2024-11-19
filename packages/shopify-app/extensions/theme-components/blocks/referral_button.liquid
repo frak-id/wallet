@@ -1,0 +1,25 @@
+
+<div id="nexus-share-button">
+  <button
+          type="button"
+          onClick="window.FrakSetup.modalShare()"
+          class="button"
+          style="background-color:{{ block.settings.background_color }} color:{{ block.settings.text_color }}"
+  >
+        <span>
+            {{ 'share_btn.label' | t }}
+        </span>
+  </button>
+</div>
+
+{% schema %}
+{
+  "name": "Frak Sharing Button",
+  "target": "section",
+  "settings": [
+    { "type": "color", "id": "background_color", "label": "Button color", "default": "#121212" },
+    { "type": "color", "id": "text_color", "label": "Button text color", "default": "#FFFFFF" }
+  ]
+}
+{% endschema %}
+

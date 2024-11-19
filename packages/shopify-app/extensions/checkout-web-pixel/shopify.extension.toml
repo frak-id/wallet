@@ -1,0 +1,11 @@
+api_version = "2024-10"
+
+[[extensions]]
+name = "checkout-web-pixel"
+handle = "checkout-web-pixel"
+description = "Pixel tracker to trigger referral reward on user purchase."
+type = "web_pixel_extension"
+runtime_context = "strict"
+
+    [extensions.capabilities]
+    network_access = true

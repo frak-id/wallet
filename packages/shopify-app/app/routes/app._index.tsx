@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { BlockStack, Card, Layout, Page, Text } from "@shopify/polaris";
+import { BlockStack, Card, Layout, List, Page, Text } from "@shopify/polaris";
 import { useCallback } from "react";
 import { ShopInfo } from "../components/ShopInfo";
 import { WalletGated } from "../components/WalletGated";
@@ -55,12 +55,23 @@ export default function Index() {
                                         Ready to manage your product
                                     </Text>
 
-                                    <Text as="p" variant="bodyMd">
-                                        Here you can do: - Manage your product -
-                                        Auto setup pixel? - Auto setup the
-                                        webhook? - Auto push the assets for the
-                                        frak sdk?
-                                    </Text>
+                                    <List type="number">
+                                        <List.Item>
+                                            Setup Frak application pixel
+                                        </List.Item>
+                                        <List.Item>
+                                            Enable Frak webhook for purchase
+                                            tracking
+                                        </List.Item>
+                                        <List.Item>
+                                            Setup Frak embeded app within your
+                                            theme
+                                        </List.Item>
+                                        <List.Item>
+                                            Add the sharing button where you
+                                            want
+                                        </List.Item>
+                                    </List>
                                 </WalletGated>
                             </BlockStack>
                         </Card>

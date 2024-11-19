@@ -36,6 +36,7 @@
   },
   "workspaces": [
     "packages/*",
+    "packages/shopify-app/extensions/*",
     "example/*"
   ],
   "dependencies": {
