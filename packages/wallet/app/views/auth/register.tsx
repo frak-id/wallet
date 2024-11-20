@@ -5,9 +5,9 @@ import { Notice } from "@/module/common/component/Notice";
 import { Link, useNavigate } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import styles from "./index.module.css";
+import styles from "./register.module.css";
 
-export function Register() {
+export default function Register() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { register, error, isRegisterInProgress } = useRegister({

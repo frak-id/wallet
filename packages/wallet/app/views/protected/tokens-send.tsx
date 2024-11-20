@@ -2,13 +2,11 @@ import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
-import {
-    getUpdatedToken,
-    validateAmount,
-} from "@/module/tokens/component/TokensSend/utils";
 import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
+import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
+import { validateAmount } from "@/module/tokens/utils/validateAmount";
 import type { BalanceItem } from "@/types/Token";
 import { Button } from "@module/component/Button";
 import { Input } from "@module/component/forms/Input";
@@ -19,14 +17,14 @@ import { useTranslation } from "react-i18next";
 import { erc20Abi, parseUnits } from "viem";
 import type { Hex } from "viem";
 import { useWriteContract } from "wagmi";
-import styles from "./index.module.css";
+import styles from "./tokens-send.module.css";
 
 type FormInput = {
     toAddress: Hex;
     amount: string;
 };
 
-export function TokensSend() {
+export default function TokensSend() {
     const { t } = useTranslation();
 
     // Form control and validation

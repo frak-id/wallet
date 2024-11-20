@@ -12,11 +12,11 @@ const ListenerModal = lazy(() =>
 );
 
 /**
- * Global Listener UI that cna only be set via an iFrame
+ * Global Listener UI that can only be set via an iFrame
  *  - It's goal is to answer every request from the iFrame windows parent
  * @constructor
  */
-export function ListenerUI() {
+export default function Listener() {
     const [resolver, setResolver] = useState<
         ReturnType<typeof createIFrameRequestResolver> | undefined
     >(undefined);

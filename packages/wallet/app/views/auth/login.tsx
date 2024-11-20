@@ -6,13 +6,9 @@ import { Grid } from "@/module/common/component/Grid";
 import { Link, useNavigate } from "@remix-run/react";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
-import styles from "./index.module.css";
+import styles from "./login.module.css";
 
-/**
- * Login from previous authentication
- * @constructor
- */
-export function Login() {
+export default function Login() {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { login } = useLogin({

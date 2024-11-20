@@ -6,6 +6,7 @@ import {
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
+import styles from "@/module/authentication/component/Sso/index.module.css";
 import {
     type CompressedSsoData,
     compressedSsoToParams,
@@ -21,15 +22,10 @@ import { useAtomValue } from "jotai";
 import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import styles from "./index.module.css";
 import "./sso.global.css";
 import { Link, useSearchParams } from "@remix-run/react";
 
-/**
- * The SSO page itself
- * @constructor
- */
-export function Sso() {
+export default function Sso() {
     const { i18n, t } = useTranslation();
 
     /**

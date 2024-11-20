@@ -1,3 +1,4 @@
+import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
 import { Step1 } from "@/module/recovery/component/Recover/Step1";
 import { Step2 } from "@/module/recovery/component/Recover/Step2";
@@ -16,11 +17,7 @@ import { useTranslation } from "react-i18next";
 
 const MAX_STEPS = 6;
 
-/**
- * Recover a wallet component
- * @constructor
- */
-export function RecoverWallet() {
+export default function Recovery() {
     const { t } = useTranslation();
     const recoveryReset = useSetAtom(recoveryResetAtom);
     const step = useAtomValue(recoveryStepAtom);
@@ -34,7 +31,7 @@ export function RecoverWallet() {
     }, [step, recoveryReset]);
 
     return (
-        <>
+        <Grid>
             <Title>{t("wallet.recovery.title")}</Title>
             <Accordion type={"single"} collapsible value={`step-${step}`}>
                 <Step1 />
@@ -44,6 +41,6 @@ export function RecoverWallet() {
                 <Step5 />
                 <Step6 />
             </Accordion>
-        </>
+        </Grid>
     );
 }

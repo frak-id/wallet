@@ -1,5 +1,6 @@
 import type { NotificationModel } from "@/context/common/dexie/NotificationModel";
 import { dexieDb } from "@/context/common/dexie/dexieDb";
+import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { Skeleton } from "@/module/common/component/Skeleton";
@@ -8,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export function NotificationHistory() {
+export default function Notifications() {
     const { t } = useTranslation();
     const { data: notifications } = useQuery({
         queryKey: ["notification", "history"],
@@ -23,20 +24,26 @@ export function NotificationHistory() {
 
     if (notifications.length === 0) {
         return (
-            <Panel size={"small"}>
-                <Title icon={<BellRing />}>
-                    {t("wallet.notifications.noNotifications")}
-                </Title>
-            </Panel>
+            <Grid>
+                <Panel size={"small"}>
+                    <Title icon={<BellRing />}>
+                        {t("wallet.notifications.noNotifications")}
+                    </Title>
+                </Panel>
+            </Grid>
         );
     }
 
-    return notifications?.map((notificationItem, index) => (
-        <Notification
-            key={`${notificationItem.timestamp}-${notificationItem.id}-${index}`}
-            notification={notificationItem}
-        />
-    ));
+    return (
+        <Grid>
+            {notifications?.map((notificationItem, index) => (
+                <Notification
+                    key={`${notificationItem.timestamp}-${notificationItem.id}-${index}`}
+                    notification={notificationItem}
+                />
+            ))}
+        </Grid>
+    );
 }
 
 function Notification({ notification }: { notification: NotificationModel }) {

@@ -10,6 +10,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     return null;
 };
 
-export default function Index() {
+export default function Home() {
     return null;
 }
