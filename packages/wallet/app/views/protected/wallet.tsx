@@ -3,7 +3,6 @@ import { EnableNotification } from "@/module/notification/component/EnableNotifi
 import { Balance } from "@/module/tokens/component/Balance";
 import { HomeNavigation } from "@/module/wallet/component/HomeNavigation";
 import { InstallApp } from "@/module/wallet/component/InstallApp";
-import { Invite } from "@/module/wallet/component/Invite";
 import { PendingReferral } from "@/module/wallet/component/PendingReferral";
 import { ToggleSession } from "@/module/wallet/component/ToggleSession";
 import { Welcome } from "@/module/wallet/component/Welcome";
@@ -17,7 +16,7 @@ export default function Wallet() {
             <Balance />
             <HomeNavigation />
             <Welcome />
-            <Invite />
+            {/*<Invite />*/}
             {isHydrated && (
                 <>
                     <InstallApp />
