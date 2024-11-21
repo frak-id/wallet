@@ -35,24 +35,27 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             });
 
             // For each balances, get the eur price
-            const mappedBalances = await Promise.all(
-                balances.map(async (tokenBalance) => {
-                    // Get the eur price of the token
-                    const { eur } = await pricingRepository.getTokenPrice({
-                        token: tokenBalance.contractAddress,
-                    });
+            const mappedBalances = sift(
+                await Promise.all(
+                    balances.map(async (tokenBalance) => {
+                        // Get the eur price of the token
+                        const price = await pricingRepository.getTokenPrice({
+                            token: tokenBalance.contractAddress,
+                        });
+                        if (!price) return null;
 
-                    // Return the well formatted balance
-                    return {
-                        token: tokenBalance.contractAddress,
-                        name: tokenBalance.metadata.name,
-                        symbol: tokenBalance.metadata.symbol,
-                        decimals: tokenBalance.metadata.decimals,
-                        balance: tokenBalance.balance,
-                        eurBalance: tokenBalance.balance * eur,
-                        rawBalance: toHex(tokenBalance.rawBalance),
-                    };
-                })
+                        // Return the well formatted balance
+                        return {
+                            token: tokenBalance.contractAddress,
+                            name: tokenBalance.metadata.name,
+                            symbol: tokenBalance.metadata.symbol,
+                            decimals: tokenBalance.metadata.decimals,
+                            balance: tokenBalance.balance,
+                            eurBalance: tokenBalance.balance * price.eur,
+                            rawBalance: toHex(tokenBalance.rawBalance),
+                        };
+                    })
+                )
             );
 
             // Get the total eur balance
@@ -111,9 +114,11 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                 if (!token) return null;
 
                 // Get the eur price of the token
-                const { eur } = await pricingRepository.getTokenPrice({
+                const price = await pricingRepository.getTokenPrice({
                     token: reward.token,
                 });
+                if (!price) return null;
+
                 const rawBalance = BigInt(reward.amount);
                 const balance = Number.parseFloat(
                     formatUnits(rawBalance, token.decimals)
@@ -126,7 +131,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                     symbol: token.symbol,
                     decimals: token.decimals,
                     balance: balance,
-                    eurBalance: balance * eur,
+                    eurBalance: balance * price.eur,
                     rawBalance: toHex(rawBalance),
                 };
             });
