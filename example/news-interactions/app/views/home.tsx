@@ -8,7 +8,7 @@ import { Title } from "@/module/news/component/Title";
 import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useQuery } from "@tanstack/react-query";
 
-export function NewsList() {
+export default function Home() {
     const { data: news, isPending } = useQuery({
         queryKey: ["news", "list"],
         queryFn: async () => {
