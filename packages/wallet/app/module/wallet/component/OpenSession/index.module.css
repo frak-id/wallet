@@ -1,9 +1,3 @@
-.toggleSession {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
 .sessionClosed {
     display: flex;
     align-items: center;

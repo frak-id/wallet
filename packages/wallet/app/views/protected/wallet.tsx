@@ -3,8 +3,8 @@ import { EnableNotification } from "@/module/notification/component/EnableNotifi
 import { Balance } from "@/module/tokens/component/Balance";
 import { HomeNavigation } from "@/module/wallet/component/HomeNavigation";
 import { InstallApp } from "@/module/wallet/component/InstallApp";
+import { OpenSession } from "@/module/wallet/component/OpenSession";
 import { PendingReferral } from "@/module/wallet/component/PendingReferral";
-import { ToggleSession } from "@/module/wallet/component/ToggleSession";
 import { Welcome } from "@/module/wallet/component/Welcome";
 import { useHydrated } from "remix-utils/use-hydrated";
 
@@ -12,7 +12,7 @@ export default function Wallet() {
     const isHydrated = useHydrated();
     return (
         <Grid>
-            <ToggleSession />
+            <OpenSession />
             <Balance />
             <HomeNavigation />
             <Welcome />

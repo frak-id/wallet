@@ -217,6 +217,8 @@ interface Resources {
                 closed: "Your wallet is not activated. You can’t be rewarded.";
                 open: "Your wallet is activated";
                 openSession: "Activate your wallet";
+                titleActivated: "Wallet is activated";
+                titleNotActivated: "Wallet not activated";
                 tooltip: {
                     active: "You got an active wallet since {{sessionStart}} and until {{sessionEnd}}";
                     inactive: "The wallet activation will permit us to send interaction data";
