@@ -1,7 +1,6 @@
-import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
 import { mutexCron } from "@backend-utils";
-import { Patterns } from "@elysiajs/cron";
+import type { pino } from "@bogeychan/elysia-logger";
 import {
     addresses,
     purchaseOracleAbi,
@@ -22,17 +21,15 @@ export const updateMerkleRootJob = (app: OracleContextApp) =>
     app.use(
         mutexCron({
             name: "updateMerkleRoot",
-            pattern: Patterns.everyMinutes(5),
-            protect: true,
-            catch: true,
-            interval: 30,
-            run: async () => {
-                // Extract some stuff from the app
+            pattern: "0 */5 * * * *", // Every 5 minutes
+            skipIfLocked: true,
+            run: async ({ context: { logger } }) => {
                 const {
                     oracleDb,
                     merkleRepository,
                     adminWalletsRepository,
                     client,
+                    emitter,
                 } = app.decorator;
 
                 // Get some unsynced products
@@ -47,19 +44,20 @@ export const updateMerkleRootJob = (app: OracleContextApp) =>
                             isNotNull(productOracleTable.merkleRoot)
                         )
                     );
-                log.debug(
+                logger.debug(
                     `${notSyncedProductIds.length} products are not synced`
                 );
 
                 // Update the empty leafs
                 const updatedOracleIds = await updateEmptyLeafs({
                     oracleDb,
+                    logger,
                 });
                 if (
                     updatedOracleIds.size === 0 &&
                     notSyncedProductIds.length === 0
                 ) {
-                    log.debug("No oracle to update");
+                    logger.debug("No oracle to update");
                     return;
                 }
 
@@ -68,8 +66,9 @@ export const updateMerkleRootJob = (app: OracleContextApp) =>
                     oracleIds: updatedOracleIds,
                     oracleDb,
                     merkleRepository,
+                    logger,
                 });
-                log.debug(
+                logger.debug(
                     `Invalidating oracle for ${productIds.length} products`
                 );
 
@@ -78,7 +77,7 @@ export const updateMerkleRootJob = (app: OracleContextApp) =>
                         notSyncedProductIds.map((product) => product.productId)
                     )
                 );
-                log.debug(
+                logger.debug(
                     `Will update ${finalProductIds.size} products merkle tree`
                 );
                 // Then update each product ids merkle root
@@ -88,19 +87,22 @@ export const updateMerkleRootJob = (app: OracleContextApp) =>
                     merkleRepository,
                     adminRepository: adminWalletsRepository,
                     client,
+                    logger,
                 });
+
+                // Then emit the oracle updated event
+                emitter.emit("oracleUpdated");
             },
         })
     );
-
-export type UpdateMerkleRootAppJob = ReturnType<typeof updateMerkleRootJob>;
 
 /**
  * Update all the empty leafs if needed
  */
 async function updateEmptyLeafs({
     oracleDb,
-}: { oracleDb: OracleDb }): Promise<Set<number>> {
+    logger,
+}: { oracleDb: OracleDb; logger: pino.Logger }): Promise<Set<number>> {
     // Get all purchase with empty leafs
     const purchases = await oracleDb.query.purchaseStatusTable.findMany({
         where: isNull(purchaseStatusTable.leaf),
@@ -142,7 +144,7 @@ async function updateEmptyLeafs({
             leaf,
         };
     });
-    log.debug(
+    logger.debug(
         `Generated ${purchaseWithLeafs.length} new leafs for ${oracleIds.size} oracles`
     );
     if (purchaseWithLeafs.length === 0) {
@@ -170,10 +172,12 @@ async function invalidateOracleTree({
     oracleIds,
     oracleDb,
     merkleRepository,
+    logger,
 }: {
     oracleIds: Set<number>;
     oracleDb: OracleDb;
     merkleRepository: MerkleTreeRepository;
+    logger: pino.Logger;
 }) {
     if (oracleIds.size === 0) {
         return [];
@@ -186,7 +190,7 @@ async function invalidateOracleTree({
         .from(productOracleTable)
         .where(inArray(productOracleTable.id, Array.from(oracleIds)));
     const productIds = productIdsFromDb.map((product) => product.productId);
-    log.debug(`Invalidate ${productIds.length} product trees`);
+    logger.debug(`Invalidate ${productIds.length} product trees`);
 
     // Invalidate the merkle tree
     merkleRepository.invalidateProductTrees({
@@ -205,12 +209,14 @@ async function updateProductsMerkleRoot({
     merkleRepository,
     adminRepository,
     client,
+    logger,
 }: {
     productIds: Hex[];
     oracleDb: OracleDb;
     merkleRepository: MerkleTreeRepository;
     adminRepository: AdminWalletsRepository;
     client: Client;
+    logger: pino.Logger;
 }) {
     const oracleUpdater = await adminRepository.getKeySpecificAccount({
         key: "oracle-updater",
@@ -224,7 +230,7 @@ async function updateProductsMerkleRoot({
             .update(productOracleTable)
             .set({ merkleRoot: root, synced: false })
             .where(eq(productOracleTable.productId, productId));
-        log.debug(`Updated merkle root for product ${productId}`);
+        logger.debug(`Updated merkle root for product ${productId}`);
 
         // Blockchain update
         const { isSuccess, txHash } = await safeMerkleeRootBlockchainUpdate({
@@ -232,6 +238,7 @@ async function updateProductsMerkleRoot({
             merkleRoot: root,
             oracleUpdater,
             client,
+            logger,
         });
 
         // Update the synced status if it's a success
@@ -257,11 +264,13 @@ async function safeMerkleeRootBlockchainUpdate({
     merkleRoot,
     oracleUpdater,
     client,
+    logger,
 }: {
     productId: Hex;
     merkleRoot: Hex;
     oracleUpdater: LocalAccount;
     client: Client;
+    logger: pino.Logger;
 }) {
     // Get the current merklee root (and early exit if it's the same)
     const currentRoot = await readContract(client, {
@@ -272,7 +281,9 @@ async function safeMerkleeRootBlockchainUpdate({
     });
 
     if (currentRoot === merkleRoot) {
-        log.debug(`Merkle root for product ${productId} is already up to date`);
+        logger.debug(
+            `Merkle root for product ${productId} is already up to date`
+        );
         return { isSuccess: true };
     }
 
@@ -295,10 +306,10 @@ async function safeMerkleeRootBlockchainUpdate({
             confirmations: 4,
             retryCount: 8,
         });
-        log.info({ productId }, "Merkle update finalised");
+        logger.info({ productId }, "Merkle update finalised");
         return { isSuccess: true, txHash };
     } catch (e) {
-        log.error(
+        logger.error(
             { error: e },
             `Failed to update the merkle root on chain for ${productId}`
         );

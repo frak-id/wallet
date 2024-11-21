@@ -1,4 +1,4 @@
-import { FrakProvider } from "@/module/common/provider/FrakProvider.client";
+import { FrakProvider } from "@/module/common/provider/FrakProvider";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -7,7 +7,6 @@ import {
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
 import { type PropsWithChildren, useState } from "react";
-import { useHydrated } from "remix-utils/use-hydrated";
 import { useDehydratedState } from "use-dehydrated-state";
 
 /**
@@ -31,8 +30,6 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 };
 
 export function RootProvider({ children }: PropsWithChildren) {
-    const isHydrated = useHydrated();
-
     /**
      * The query client that will be used by tanstack/react-query
      */
@@ -54,11 +51,7 @@ export function RootProvider({ children }: PropsWithChildren) {
             persistOptions={persistOptions}
         >
             <HydrationBoundary state={dehydratedState}>
-                {isHydrated ? (
-                    <FrakProvider>{children}</FrakProvider>
-                ) : (
-                    children
-                )}
+                <FrakProvider>{children}</FrakProvider>
                 <ReactQueryDevtools initialIsOpen={false} />
             </HydrationBoundary>
         </PersistQueryClientProvider>

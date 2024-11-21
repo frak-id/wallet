@@ -58,6 +58,13 @@ export function ConfigStack({ stack }: StackContext) {
             ? "https://indexer.frak.id"
             : "https://indexer-dev.frak.id",
     });
+    const umamiWalletWebsiteId = new Config.Parameter(
+        stack,
+        "UMAMI_WALLET_WEBSITE_ID",
+        {
+            value: "0f1ae6e2-2a22-438a-95f4-d6b3edd6a1ab",
+        }
+    );
 
     return {
         indexerUrl,
@@ -79,5 +86,6 @@ export function ConfigStack({ stack }: StackContext) {
         vapidPrivateKey,
         backendUrl,
         postgres,
+        umamiWalletWebsiteId,
     };
 }

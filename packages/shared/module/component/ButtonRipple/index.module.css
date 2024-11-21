@@ -1,7 +1,9 @@
 .buttonRipple__button {
     box-sizing: border-box;
     display: block;
+    padding: 0;
     width: 100%;
+    border: none;
     border-radius: 16px;
     position: relative;
     overflow: hidden;
@@ -9,6 +11,7 @@
     color: var(--frak-button-ripple-color);
     background: rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(80px);
+    cursor: pointer;
 
     & > span {
         display: flex;

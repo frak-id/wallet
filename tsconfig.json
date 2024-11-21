@@ -12,6 +12,6 @@
     "incremental": true,
     "target": "esnext"
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "global.d.ts"],
   "exclude": ["node_modules"]
 }

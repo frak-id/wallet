@@ -1,6 +1,5 @@
-import { log } from "@backend-common";
+import { eventsContext } from "@backend-common";
 import { mutexCron } from "@backend-utils";
-import { Patterns } from "@elysiajs/cron";
 import { PurchaseInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
@@ -13,6 +12,7 @@ import {
 
 const outerPurchaseTracker = new Elysia({ name: "Job.OuterPurchaseTracker" })
     .use(interactionsContext)
+    .use(eventsContext)
     .use(PurchaseProofService);
 
 type OuterPurchaseTrackerApp = typeof outerPurchaseTracker;
@@ -21,16 +21,13 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
     app.use(
         mutexCron({
             name: "purchaseTracker",
-            pattern: Patterns.everyMinutes(5),
+            triggerKeys: ["newTrackedPurchase", "oracleUpdated"],
+            pattern: "0 */5 * * * *", // Every 5 minutes
             skipIfLocked: true,
             coolDownInMs: 3_000,
-            protect: true,
-            catch: true,
-            interval: 60,
-            run: async () => {
-                // Get stuff from the app
-                const { interactionsDb, getPurchaseProof } = app.decorator;
-
+            run: async ({ context: { logger } }) => {
+                const { interactionsDb, getPurchaseProof, emitter } =
+                    app.decorator;
                 // Get all the currents tracker (max 50 at the time)
                 const trackers = await interactionsDb
                     .select()
@@ -45,14 +42,14 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
                         externalId: tracker.externalPurchaseId,
                     });
                     if (result.status !== "success") {
-                        log.debug(
+                        logger.debug(
                             { result, tracker },
                             "Proof not available yet for tracker"
                         );
                         continue;
                     }
                     if (result.purchase.status !== "confirmed") {
-                        log.debug(
+                        logger.debug(
                             { result, tracker },
                             "Purchase not completed yet for tracker"
                         );
@@ -83,6 +80,9 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
                         .where(
                             eq(interactionsPurchaseTrackerTable.id, tracker.id)
                         );
+
+                    // Emit the event to launch potential simulation
+                    emitter.emit("newInteractions");
                 }
             },
         })

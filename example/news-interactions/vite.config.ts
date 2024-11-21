@@ -13,5 +13,17 @@ export default defineConfig({
     server: {
         port: 3011,
     },
-    plugins: [remix(), tsconfigPaths()],
+    plugins: [
+        remix({
+            future: {
+                v3_fetcherPersist: true,
+                v3_relativeSplatPath: true,
+                v3_throwAbortReason: true,
+                v3_singleFetch: true,
+                v3_lazyRouteDiscovery: true,
+                unstable_routeConfig: true,
+            },
+        }),
+        tsconfigPaths(),
+    ],
 });

@@ -1,6 +1,5 @@
 import { Elysia, t } from "elysia";
 import { unsealData } from "iron-session";
-import { Config } from "sst/node/config";
 import type { Address, Hex } from "viem";
 
 /**
@@ -20,7 +19,7 @@ export const nextSessionContext = new Elysia({
 
                 // If we got one, try to decode the cookie and then proceed
                 return await unsealData<T>(token, {
-                    password: Config.SESSION_ENCRYPTION_KEY,
+                    password: process.env.SESSION_ENCRYPTION_KEY as string,
                     ttl: 60 * 60 * 24 * 7, // 1 week
                 });
             },

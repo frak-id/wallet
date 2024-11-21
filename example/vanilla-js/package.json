@@ -16,6 +16,6 @@
   "devDependencies": {
     "@frak-labs/nexus-sdk": "workspace:*",
     "typescript": "^5",
-    "vite": "^5.4.9"
+    "vite": "^5.4.11"
   }
 }

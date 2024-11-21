@@ -1,0 +1,35 @@
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    position: fixed;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    min-height: 47px;
+    backdrop-filter: blur(20px);
+}
+
+@media (min-width: 600px) {
+    .header {
+        position: static;
+    }
+}
+
+.header__logo,
+.header__notification {
+    position: absolute;
+    margin-top: -15px;
+    top: 50%;
+    display: flex;
+}
+
+.header__logo {
+    left: 12px;
+}
+
+.header__notification {
+    right: 12px;
+}

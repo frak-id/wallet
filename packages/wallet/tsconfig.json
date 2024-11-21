@@ -1,30 +1,36 @@
 {
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/.server/**/*.ts",
+    "**/.server/**/*.tsx",
+    "**/.client/**/*.ts",
+    "**/.client/**/*.tsx",
+    "../../packages/shared/types/*.d.ts"
+  ],
+  "exclude": ["public/sw.js"],
   "compilerOptions": {
-    "target": "esnext",
-    "lib": ["es2023", "esnext", "dom", "dom.iterable", "webworker"],
+    "lib": ["DOM", "DOM.Iterable", "ES2022", "webworker"],
+    "types": ["@remix-run/node", "vite/client", "@types/umami"],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "target": "ES2020",
+    "strict": true,
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [{"name": "next"}],
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@module/*": ["../shared/module/*"],
+      "@/*": ["./app/*"],
+      "@module/*": ["../../packages/shared/module/*"],
       "@backend-utils": ["../backend-elysia/src/utils/index.ts"],
       "@backend-common": ["../backend-elysia/src/common/index.ts"],
       "@backend-common/*": ["../backend-elysia/src/common/*"]
     },
-    "verbatimModuleSyntax": true
-  },
-  "include": [
-    "./next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../shared/types/*.d.ts"
-  ],
-  "exclude": ["node_modules", "public/sw.js"],
+    "noEmit": true
+  }
 }

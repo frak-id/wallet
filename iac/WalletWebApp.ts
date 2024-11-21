@@ -1,8 +1,7 @@
 import type { StackContext } from "sst/constructs";
-import { use } from "sst/constructs";
-import { NextjsSite } from "sst/constructs";
+import { RemixSite, use } from "sst/constructs";
 import { ConfigStack } from "./Config";
-import { isProdStack, openNextVersion } from "./utils";
+import { isProdStack } from "./utils";
 
 /**
  * Define the wallet webapp SST stack
@@ -17,9 +16,9 @@ export function WalletAppStack({ stack }: StackContext) {
         frakWalletUrl,
         nexusRpcSecret,
         vapidPublicKey,
-        vapidPrivateKey,
         backendUrl,
         indexerUrl,
+        umamiWalletWebsiteId,
     } = use(ConfigStack);
     const configs = [
         alchemyApiKey,
@@ -27,9 +26,9 @@ export function WalletAppStack({ stack }: StackContext) {
         frakWalletUrl,
         nexusRpcSecret,
         vapidPublicKey,
-        vapidPrivateKey,
         backendUrl,
         indexerUrl,
+        umamiWalletWebsiteId,
     ];
 
     // Base domain for our whole app
@@ -37,22 +36,16 @@ export function WalletAppStack({ stack }: StackContext) {
         ? "wallet"
         : `wallet-${stack.stage.toLowerCase()}`;
 
-    // Declare the Next.js site
-    const site = new NextjsSite(stack, "wallet", {
+    // Declare the Remix site
+    const site = new RemixSite(stack, "wallet", {
         path: "packages/wallet",
         // Set the custom domain
         customDomain: {
             domainName: `${subDomain}.frak.id`.toLowerCase(),
             hostedZone: "frak.id",
         },
-        // Enable image optimization
-        imageOptimization: {
-            memorySize: 512,
-            staticImageOptimization: true,
-        },
         // Bind to the configs
         bind: configs,
-        openNextVersion: openNextVersion,
         // Number of server side instance to keep warm
         warm: 1,
         dev: {

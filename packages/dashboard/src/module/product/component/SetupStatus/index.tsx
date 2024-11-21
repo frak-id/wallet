@@ -8,10 +8,10 @@ import {
     type ProductSetupStatusItem,
     useProductSetupStatus,
 } from "@/module/product/hook/useProductSetupStatus";
-import { useAnimatedRouter } from "@frak-labs/nexus-wallet/src/module/common/hook/useAnimatedRouter";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";
 import { AlertCircle, BadgeCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
 
@@ -112,7 +112,7 @@ function WarningStatusItem({
     item,
     position,
 }: { item: ProductSetupStatusItem; position: number }) {
-    const { navigateWithTransition } = useAnimatedRouter();
+    const router = useRouter();
     return (
         <div className={styles.stepItem}>
             <div className={styles.header}>
@@ -126,7 +126,7 @@ function WarningStatusItem({
             <div className={styles.actions}>
                 <Button
                     variant={"information"}
-                    onClick={() => navigateWithTransition(item.resolvingPage)}
+                    onClick={() => router.push(item.resolvingPage)}
                 >
                     Complete this step
                 </Button>

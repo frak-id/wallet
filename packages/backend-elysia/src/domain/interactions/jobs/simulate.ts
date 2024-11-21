@@ -1,6 +1,5 @@
-import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
-import { Patterns } from "@elysiajs/cron";
+import type { pino } from "@bogeychan/elysia-logger";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import type { Address } from "viem";
@@ -8,32 +7,27 @@ import type { InteractionsContextApp, InteractionsDb } from "../context";
 import { pendingInteractionsTable } from "../db/schema";
 import type { InteractionDiamondRepository } from "../repositories/InteractionDiamondRepository";
 import type { WalletSessionRepository } from "../repositories/WalletSessionRepository";
-import type { ExecuteInteractionAppJob } from "./execute";
 
 export const simulateInteractionJob = (app: InteractionsContextApp) =>
     app.use(
         mutexCron({
             name: "simulateInteraction",
+            triggerKeys: ["newInteractions"],
             pattern: isRunningInProd
                 ? // Every minute on prod
-                  Patterns.everyMinute()
+                  "*/1 * * * *"
                 : // Every 30sec on dev
-                  Patterns.everySenconds(30),
+                  "*/30 * * * * *",
             skipIfLocked: true,
-            // 5 sec of cooldown
             coolDownInMs: 5_000,
-            protect: true,
-            catch: true,
-            interval: 5,
-            run: async () => {
-                // Get some stuff from the app
+            run: async ({ context: { logger } }) => {
                 const {
                     interactionsDb,
                     interactionDiamondRepository,
                     walletSessionRepository,
                     pendingInteractionsRepository,
+                    emitter,
                 } = app.decorator;
-
                 // Get interactions to simulate
                 const interactions =
                     await pendingInteractionsRepository.getAndLock({
@@ -51,10 +45,10 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                         },
                     });
                 if (interactions.length === 0) {
-                    log.debug("No interactions to simulate");
+                    logger.debug("No interactions to simulate");
                     return;
                 }
-                log.debug(
+                logger.debug(
                     `Got ${interactions.length} interactions to simulate`
                 );
 
@@ -66,9 +60,10 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                             interactionsDb,
                             interactionDiamondRepository,
                             walletSessionRepository,
+                            logger,
                         });
 
-                    log.debug(
+                    logger.debug(
                         {
                             interactions: interactions.length,
                             hasSuccessInteractions,
@@ -76,10 +71,10 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                         "Simulated interactions"
                     );
 
-                    // Trigger the execution job
-                    const store =
-                        app.store as ExecuteInteractionAppJob["store"];
-                    await store.cron.executeInteraction.trigger();
+                    // Emit the event to trigger the interaction execution
+                    if (hasSuccessInteractions) {
+                        emitter.emit("simulatedInteractions");
+                    }
                 } finally {
                     // Unlock the interactions
                     await pendingInteractionsRepository.unlock(interactions);
@@ -88,27 +83,26 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
         })
     );
 
-export type SimulateInteractionAppJob = ReturnType<
-    typeof simulateInteractionJob
->;
-
 /**
  * Simulate a list of transaction and update their state
  * @param interactions
  * @param interactionsDb
  * @param interactionDiamondRepository
  * @param walletSessionRepository
+ * @param logger
  */
 async function simulateAndUpdateInteractions({
     interactions,
     interactionsDb,
     interactionDiamondRepository,
     walletSessionRepository,
+    logger,
 }: {
     interactions: (typeof pendingInteractionsTable.$inferSelect)[];
     interactionsDb: InteractionsDb;
     interactionDiamondRepository: InteractionDiamondRepository;
     walletSessionRepository: WalletSessionRepository;
+    logger: pino.Logger;
 }) {
     // Get the unique wallets matching this interactions
     const wallets = new Set<Address>();
@@ -165,7 +159,7 @@ async function simulateAndUpdateInteractions({
             }
         });
     } catch (e) {
-        log.error({ error: e }, "Error updating interactions");
+        logger.error({ error: e }, "Error updating interactions");
     }
 
     // Return if we got success interactions (to know if we should trigger the push job)

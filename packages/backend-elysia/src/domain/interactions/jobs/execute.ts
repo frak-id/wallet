@@ -1,6 +1,5 @@
-import { log } from "@backend-common";
 import { mutexCron } from "@backend-utils";
-import { Patterns } from "@elysiajs/cron";
+import type { pino } from "@bogeychan/elysia-logger";
 import { inArray } from "drizzle-orm";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
 import {
@@ -15,21 +14,16 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
     app.use(
         mutexCron({
             name: "executeInteraction",
-            pattern: Patterns.everyMinutes(3),
+            pattern: "0 */3 * * * *", // Every 3 minutes
             skipIfLocked: true,
             coolDownInMs: 2_000,
-            protect: true,
-            catch: true,
-            interval: 60,
-            run: async () => {
-                // Get some stuff from the app
+            run: async ({ context: { logger } }) => {
                 const {
                     interactionsDb,
                     interactionDiamondRepository,
                     interactionSignerRepository,
                     pendingInteractionsRepository,
                 } = app.decorator;
-
                 // Get interactions to simulate
                 const interactions =
                     await pendingInteractionsRepository.getAndLock({
@@ -37,10 +31,12 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
                         limit: 200,
                     });
                 if (interactions.length === 0) {
-                    log.debug("No interactions to execute");
+                    logger.debug("No interactions to execute");
                     return;
                 }
-                log.debug(`Will execute ${interactions.length} interactions`);
+                logger.debug(
+                    `Will execute ${interactions.length} interactions`
+                );
 
                 try {
                     // Execute them
@@ -49,6 +45,7 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
                         interactionsDb,
                         interactionDiamondRepository,
                         interactionSignerRepository,
+                        logger,
                     });
                 } finally {
                     // Unlock them
@@ -58,8 +55,6 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
         })
     );
 
-export type ExecuteInteractionAppJob = ReturnType<typeof executeInteractionJob>;
-
 /**
  * Execute a list of interactions
  */
@@ -68,11 +63,13 @@ async function executeInteractions({
     interactionsDb,
     interactionDiamondRepository,
     interactionSignerRepository,
+    logger,
 }: {
     interactions: (typeof pendingInteractionsTable.$inferSelect)[];
     interactionsDb: InteractionsDb;
     interactionDiamondRepository: InteractionDiamondRepository;
     interactionSignerRepository: InteractionSignerRepository;
+    logger: pino.Logger;
 }) {
     // Prepare and pack every interaction
     const preparedInteractionsAsync = interactions.map(async (interaction) => {
@@ -95,7 +92,7 @@ async function executeInteractions({
                 interactionContract,
             }));
         if (!signature) {
-            log.warn(
+            logger.warn(
                 {
                     interaction,
                 },
@@ -123,10 +120,10 @@ async function executeInteractions({
         await Promise.all(preparedInteractionsAsync)
     ).filter((out) => out !== null) as PreparedInteraction[];
     if (preparedInteractions.length === 0) {
-        log.debug("No interactions to execute post preparation");
+        logger.debug("No interactions to execute post preparation");
         return undefined;
     }
-    log.debug(
+    logger.debug(
         {
             interactions: preparedInteractions.length,
         },
@@ -139,7 +136,7 @@ async function executeInteractions({
             preparedInteractions
         );
     if (!txHash) {
-        log.error(
+        logger.error(
             {
                 preparedInteractions: preparedInteractions.length,
             },
@@ -147,7 +144,7 @@ async function executeInteractions({
         );
         return undefined;
     }
-    log.info({ txHash }, "Pushed all the interactions on txs");
+    logger.info({ txHash }, "Pushed all the interactions on txs");
 
     // Update the db
     await interactionsDb.transaction(async (trx) => {

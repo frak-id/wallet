@@ -13,22 +13,15 @@ export const exampleNewsPaper = new Elysia({ prefix: "/exampleNewsPaper" })
     // Our routes
     .use(newsRoutes)
     // Status endpoint
-    .get(
-        "/status",
-        async ({
-            store: {
-                cron: { fetchNews },
+    .get("/status", async ({ cron: { fetchNews } }) => ({
+        fetchNewsCron: {
+            run: {
+                prevRun: fetchNews.previousRun(),
+                currRun: fetchNews.currentRun(),
+                planning: fetchNews.nextRuns(10),
             },
-        }) => ({
-            fetchNewsCron: {
-                run: {
-                    prevRun: fetchNews.previousRun(),
-                    currRun: fetchNews.currentRun(),
-                    planning: fetchNews.nextRuns(10),
-                },
-                isBusy: fetchNews.isBusy(),
-                isRunning: fetchNews.isRunning(),
-                isStopped: fetchNews.isStopped(),
-            },
-        })
-    );
+            isBusy: fetchNews.isBusy(),
+            isRunning: fetchNews.isRunning(),
+            isStopped: fetchNews.isStopped(),
+        },
+    }));

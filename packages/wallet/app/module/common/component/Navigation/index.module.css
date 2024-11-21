@@ -1,0 +1,26 @@
+.navigation {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 10px 24px;
+    background: var(--frak-header-background-color);
+    backdrop-filter: blur(20px);
+}
+
+/* Add a margin only on iOS PWA */
+:root[data-ios-pwa="true"] {
+    .navigation {
+        padding-bottom: 34px;
+    }
+}
+
+@media (min-width: 600px) {
+    .navigation {
+        position: static;
+    }
+}
+
+.navigation__list {
+    display: flex;
+    justify-content: space-between;
+}

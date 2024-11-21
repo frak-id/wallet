@@ -4,7 +4,6 @@ import {
     getTokenBalances,
 } from "@frak-labs/app-essentials/blockchain";
 import { LRUCache } from "lru-cache";
-import { Config } from "sst/node/config";
 import {
     type Address,
     type Chain,
@@ -42,7 +41,7 @@ export class BalancesRepository {
             chain: client.chain,
             transport: getAlchemyTransportNoBatch({
                 chain: client.chain,
-                apiKey: Config.ALCHEMY_API_KEY,
+                apiKey: process.env.ALCHEMY_API_KEY,
             }),
             cacheTime: 60_000,
         });

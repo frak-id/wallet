@@ -20,8 +20,8 @@ const config: KnipConfig = {
             entry: "**/*.{ts,tsx}",
         },
         "packages/wallet": {
-            entry: ["src/**/*.tsx", "src/app/service-worker.ts"],
-            project: ["src/**/*.{ts,tsx}"],
+            entry: ["app/**/*.tsx", "app/service-worker.ts"],
+            project: ["app/**/*.{ts,tsx}"],
         },
         "packages/backend-elysia": {
             entry: "src/index.ts",

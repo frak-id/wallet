@@ -1,0 +1,36 @@
+.main {
+    margin: 47px 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.mainNoHeader {
+    margin-top: 0;
+}
+
+.mainNoNav {
+    margin-bottom: 0;
+    height: calc(100dvh - 47px);
+}
+
+.mainNoHeader.mainNoNav {
+    height: 100dvh;
+}
+
+:root[data-page="sso"] {
+    .main {
+        margin-bottom: 0;
+    }
+}
+
+@media (min-width: 600px) {
+    .main {
+        margin: 0;
+        height: 710px;
+    }
+
+    .mainNoNav {
+        height: 759px;
+    }
+}

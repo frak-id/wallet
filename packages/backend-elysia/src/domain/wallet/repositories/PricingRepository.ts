@@ -2,7 +2,6 @@ import { addresses, usdcArbitrumAddress } from "@frak-labs/app-essentials";
 import { Mutex } from "async-mutex";
 import ky, { type KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
-import { Config } from "sst/node/config";
 import { type Address, isAddressEqual } from "viem";
 
 type TokenPrice = {
@@ -32,7 +31,7 @@ export class PricingRepository {
             headers: {
                 "Content-Type": "application/json",
                 accept: "application/json",
-                "x-cg-demo-api-key": Config.COIN_GECKO_API_KEY,
+                "x-cg-demo-api-key": process.env.COIN_GECKO_API_KEY,
             },
         });
     }

@@ -1,0 +1,17 @@
+.QRCodeWallet__code > svg {
+    display: block;
+    margin: 10px auto 0 auto;
+}
+
+.QRCodeWallet__address {
+    margin: 20px 0;
+    font-size: 12px;
+    text-align: center;
+}
+
+.QRCodeWallet__button {
+    & > span {
+        flex-direction: row !important;
+        justify-content: center !important;
+    }
+}

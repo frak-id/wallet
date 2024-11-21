@@ -48,7 +48,7 @@ export function ButtonRipple({
     return (
         <button
             type={type}
-            className={`button ${
+            className={`${
                 styles.buttonRipple__button
             } ${sizeClass} ${className} ${isLoading ? styles.isLoading : ""}`}
             disabled={disabled}

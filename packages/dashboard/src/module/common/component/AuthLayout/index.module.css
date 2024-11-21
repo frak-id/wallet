@@ -1,0 +1,66 @@
+.main {
+    position: relative;
+}
+
+.ellipse-blue-corner,
+.ellipse-blue-top,
+.ellipse-white-1,
+.ellipse-red-1 {
+    position: absolute;
+    filter: blur(500px);
+    border-radius: 50%;
+}
+
+.ellipse-blue-corner {
+    top: -279px;
+    left: -317px;
+    background-color: #a9bce4;
+    width: 634px;
+    height: 634px;
+}
+
+.ellipse-blue-top {
+    top: 283px;
+    left: 1000px;
+    width: 885px;
+    height: 885px;
+    background-color: #a9bce4;
+}
+
+.ellipse-white-1 {
+    top: 219px;
+    left: 376px;
+    filter: blur(1000px);
+    background-color: #ffffff;
+    width: 634px;
+    height: 634px;
+}
+
+.ellipse-red-1 {
+    top: -364px;
+    left: 581px;
+    filter: blur(1000px);
+    background-color: #ffd6d6;
+    width: 634px;
+    height: 634px;
+}
+
+@media screen and (max-width: 768px) {
+    .ellipse-blue-top {
+        top: 706px;
+        left: -441px;
+        width: 626px;
+        height: 626px;
+    }
+
+    .ellipse-white-1 {
+        top: 51px;
+        left: -250px;
+        filter: blur(500px);
+    }
+
+    .ellipse-red-1 {
+        top: 481px;
+        left: 148px;
+    }
+}

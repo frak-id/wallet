@@ -4,6 +4,7 @@ export { mongoDbContext, type GetMongoDb } from "./mongo";
 export { adminWalletContext } from "./adminWallet";
 export { nextSessionContext } from "./nextSession";
 export { indexerApiContext } from "./indexerApi";
+export { eventsContext } from "./events";
 export {
     sessionContext,
     walletSessionContext,

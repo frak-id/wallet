@@ -1,32 +1,34 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
-import { viemClient } from "@/context/blockchain/provider";
 import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { interactionCampaignAbi } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/shared/context/server";
-import {
-    type Address,
-    formatUnits,
-    getAddress,
-    hexToString,
-    isAddressEqual,
-} from "viem";
-import { multicall } from "viem/actions";
+import { type Address, formatUnits, getAddress, isAddressEqual } from "viem";
 
-type ApiResult = {
+type CampaignStats = {
     productId: string;
     isOwner: number; // bool
     id: Address;
+    name: string;
     bank: Address;
     totalInteractions: string;
     openInteractions: string;
     readInteractions: string;
     referredInteractions: string;
     createReferredLinkInteractions: string;
+    purchaseStartedInteractions: string;
+    purchaseCompletedInteractions: string;
     totalRewards: string;
-}[];
+};
+
+type ApiResult = {
+    stats: CampaignStats[];
+    users: {
+        productId: string;
+        wallets: number;
+    }[];
+};
 
 /**
  * Get the current user campaigns
@@ -35,11 +37,11 @@ export async function getMyCampaignsStats() {
     const session = await getSafeSession();
 
     // Perform the request to our api
-    const campaignStats = await indexerApi
-        .get(`admin/${session.wallet}/campaigns/stats`)
+    const result = await indexerApi
+        .get(`admin/${session.wallet}/campaignsStats`)
         .json<ApiResult>();
 
-    if (!campaignStats) {
+    if (!result.stats) {
         return [];
     }
 
@@ -47,37 +49,19 @@ export async function getMyCampaignsStats() {
     const campaignRepository = await getCampaignRepository();
     const campaignDocuments = await campaignRepository.findByAddressesOrCreator(
         {
-            addresses: campaignStats.map((campaign) => getAddress(campaign.id)),
+            addresses: result.stats.map((campaign) => getAddress(campaign.id)),
         }
     );
 
-    const onChainMetadatas = await multicall(viemClient, {
-        allowFailure: false,
-        contracts: campaignStats.map(
-            (campaign) =>
-                ({
-                    address: campaign.id,
-                    abi: interactionCampaignAbi,
-                    functionName: "getMetadata",
-                }) as const
-        ),
-    });
-
     // Cleanly format all of the stats from string to bigint
-    const mappedAsync = campaignStats.map(async (campaign, index) => {
+    const mappedAsync = result.stats.map(async (campaign) => {
         // Get the matching campaign name and id
         const campaignDoc = campaignDocuments.find(
             (doc) =>
                 doc.state.key === "created" &&
                 isAddressEqual(doc.state.address, campaign.id)
         );
-        const onChainTitle = hexToString(onChainMetadatas[index]?.[2])
-            // Remove non ascii characters
-            .replace(/[^\x20-\x7E]/g, "")
-            .trim();
-        const title =
-            campaignDoc?.title ??
-            (onChainTitle.length > 1 ? onChainTitle : campaign.id);
+        const title = campaignDoc?.title ?? campaign.name ?? "Unknown campaign";
 
         // Map a few stuff we will use for computation
         const totalRewards = BigInt(campaign.totalRewards);
@@ -85,6 +69,9 @@ export async function getMyCampaignsStats() {
             campaign.createReferredLinkInteractions
         );
         const referredInteractions = Number(campaign.referredInteractions);
+        const purchaseInteractions = Number(
+            campaign.purchaseCompletedInteractions
+        );
 
         // Get the decimals of the campaign banking
         const { decimals } = await getBankTokenInfo({ bank: campaign.bank });
@@ -107,30 +94,43 @@ export async function getMyCampaignsStats() {
                 ? referredInteractions / createReferredLinkInteractions
                 : 0;
 
-        // costPerResult = totalRewards / activation
-        const costPerResult =
-            referredInteractions > 0
-                ? totalRewards / BigInt(referredInteractions)
+        // costPerPurchase = totalRewards / purchaseCompleted
+        const costPerPurchase =
+            purchaseInteractions > 0
+                ? totalRewards / BigInt(purchaseInteractions)
                 : BigInt(0);
 
+        // Unique wallet
+        const uniqueWallets =
+            result.users.find(
+                (w) => BigInt(w.productId) === BigInt(campaign.productId)
+            )?.wallets ?? 0;
+        let ambassador = uniqueWallets - referredInteractions;
+        if (ambassador <= 0) {
+            ambassador = referredInteractions > 0 ? 1 : 0;
+        }
+
         return {
+            title,
+            id: campaignDoc?._id?.toHexString() ?? campaign.id,
             // Raw stats
             openInteractions: Number(campaign.openInteractions),
             readInteractions: Number(campaign.readInteractions),
             referredInteractions,
             createReferredLinkInteractions,
+            purchaseInteractions,
             totalRewards,
+            uniqueWallets,
+            ambassador,
             // Polished stats for the array
-            title,
-            id: campaignDoc?._id?.toHexString() ?? campaign.id,
-            amountSpent: Number.parseFloat(formatUnits(totalRewards, decimals)),
             sharingRate,
+            ctr,
+            amountSpent: Number.parseFloat(formatUnits(totalRewards, decimals)),
             costPerShare: Number.parseFloat(
                 formatUnits(costPerShare, decimals)
             ),
-            ctr,
-            costPerResult: Number.parseFloat(
-                formatUnits(costPerResult, decimals)
+            costPerPurchase: Number.parseFloat(
+                formatUnits(costPerPurchase, decimals)
             ),
         };
     });

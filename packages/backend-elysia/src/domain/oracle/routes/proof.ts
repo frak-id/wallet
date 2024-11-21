@@ -1,7 +1,6 @@
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { oracleContext } from "../context";
-import type { UpdateMerkleRootAppJob } from "../jobs/updateOrale";
 import { PurchaseProofService } from "../services/proofService";
 
 export const proofRoutes = new Elysia({
@@ -28,16 +27,13 @@ export const proofRoutes = new Elysia({
     // Get the proof around a given product and purchase
     .get(
         ":productId/purchase/:purchaseId",
-        async ({ productId, purchaseId, store, error, getPurchaseProof }) => {
+        async ({ productId, purchaseId, error, getPurchaseProof }) => {
             // Get the purchase proof
             const result = await getPurchaseProof({ productId, purchaseId });
             if (result.status === "purchase-not-found") {
                 return error(404, "Purchase not found");
             }
             if (result.status === "purchase-not-processed") {
-                await (
-                    store as UpdateMerkleRootAppJob["store"]
-                ).cron.updateMerkleRoot.trigger();
                 return error(423, "Purchase not processed yet");
             }
             if (result.status === "no-proof-found") {

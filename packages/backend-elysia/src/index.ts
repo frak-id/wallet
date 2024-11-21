@@ -1,6 +1,6 @@
 import { log } from "@backend-common";
 import { cors } from "@elysiajs/cors";
-import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { commonRoutes } from "./common/routes";
 import {
@@ -14,7 +14,10 @@ import {
 } from "./domain";
 
 // Full on service app
-const app = new Elysia()
+const app = new Elysia({
+    aot: true,
+    precompile: true,
+})
     .use(
         log.into({
             autoLogging: isRunningLocally,
@@ -35,12 +38,11 @@ const app = new Elysia()
     .get("/health", () => ({
         status: "ok",
         hostname: process.env.HOSTNAME,
-        isProd: isRunningInProd,
-        isLocal: isRunningLocally,
+        stage: process.env.STAGE,
     }))
     .use(commonRoutes)
     // Example news paper logics
-    .use(exampleNewsPaper)
+    .guard({}, (app) => app.use(exampleNewsPaper))
     // Business logics
     .use(auth)
     .use(oracle)
@@ -53,8 +55,6 @@ const app = new Elysia()
         port: Number.parseInt(process.env.PORT ?? "3030"),
     });
 
-// todo: hostname lockup? How to check target pre request?
-
-log.info(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
+log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);
 
 export type App = typeof app;
