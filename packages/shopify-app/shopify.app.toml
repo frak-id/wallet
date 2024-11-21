@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "87da8338f40c95301b4881ca4bfb23db"
-application_url = "https://superb-registration-theta-novelty.trycloudflare.com"
+application_url = "https://letters-sox-deep-pension.trycloudflare.com"
 embedded = true
 name = "Frak"
 handle = "frak"
@@ -19,9 +19,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://superb-registration-theta-novelty.trycloudflare.com/auth/callback",
-  "https://superb-registration-theta-novelty.trycloudflare.com/auth/shopify/callback",
-  "https://superb-registration-theta-novelty.trycloudflare.com/api/auth/callback"
+  "https://letters-sox-deep-pension.trycloudflare.com/auth/callback",
+  "https://letters-sox-deep-pension.trycloudflare.com/auth/shopify/callback",
+  "https://letters-sox-deep-pension.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

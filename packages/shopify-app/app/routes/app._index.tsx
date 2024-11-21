@@ -11,7 +11,6 @@ import {
 } from "@shopify/polaris";
 import { useCallback, useMemo } from "react";
 import { ShopInfo } from "../components/ShopInfo";
-import { WalletGated } from "../components/WalletGated";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -67,36 +66,34 @@ export default function Index() {
                     <Layout.Section>
                         <Card>
                             <BlockStack gap="500">
-                                <WalletGated>
-                                    <Text as="p" variant="bodyMd">
-                                        Ready to manage your product
-                                    </Text>
+                                {/*<WalletGated>*/}
+                                <Text as="p" variant="bodyMd">
+                                    Ready to manage your product
+                                </Text>
 
-                                    <List type="number">
-                                        <List.Item>
-                                            Setup Frak application pixel
-                                        </List.Item>
-                                        <List.Item>
-                                            Enable Frak webhook for purchase
-                                            tracking
-                                        </List.Item>
-                                        <List.Item>
-                                            Setup Frak embeded app within your
-                                            theme
-                                        </List.Item>
-                                        <List.Item>
-                                            Add the sharing button where you
-                                            want
-                                        </List.Item>
-                                    </List>
+                                <List type="number">
+                                    <List.Item>
+                                        Setup Frak application pixel
+                                    </List.Item>
+                                    <List.Item>
+                                        Enable Frak webhook for purchase
+                                        tracking
+                                    </List.Item>
+                                    <List.Item>
+                                        Setup Frak embeded app within your theme
+                                    </List.Item>
+                                    <List.Item>
+                                        Add the sharing button where you want
+                                    </List.Item>
+                                </List>
 
-                                    <Link
-                                        url={frakModalConfigurationLink}
-                                        target="_blank"
-                                    >
-                                        Setup frak modal
-                                    </Link>
-                                </WalletGated>
+                                <Link
+                                    url={frakModalConfigurationLink}
+                                    target="_blank"
+                                >
+                                    Setup frak modal
+                                </Link>
+                                {/*</WalletGated>*/}
                             </BlockStack>
                         </Card>
                     </Layout.Section>
