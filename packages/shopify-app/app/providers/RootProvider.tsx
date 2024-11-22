@@ -5,6 +5,7 @@ import {
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
 import { type PropsWithChildren, useState } from "react";
+import { ClientOnly } from "remix-utils/client-only";
 import { FrakProvider } from "./FrakProvider";
 
 /**
@@ -42,12 +43,15 @@ export function RootProvider({ children }: PropsWithChildren) {
                 },
             })
     );
+
     return (
         <PersistQueryClientProvider
             client={queryClient}
             persistOptions={persistOptions}
         >
-            <FrakProvider>{children}</FrakProvider>
+            <ClientOnly>
+                {() => <FrakProvider>{children}</FrakProvider>}
+            </ClientOnly>
         </PersistQueryClientProvider>
     );
 }
