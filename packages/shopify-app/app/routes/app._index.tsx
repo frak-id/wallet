@@ -11,13 +11,13 @@ import {
 } from "@shopify/polaris";
 import { useCallback, useMemo } from "react";
 import { ShopInfo } from "../components/ShopInfo";
+import { doesThemeSupportBlock } from "../services.server/theme";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-    await authenticate.admin(request);
-    const admin = await authenticate.admin(request);
-    admin.admin.graphql;
-    return null;
+    const context = await authenticate.admin(request);
+    const isThemeSupported = await doesThemeSupportBlock(context);
+    return Response.json({ isThemeSupported });
 };
 
 /**

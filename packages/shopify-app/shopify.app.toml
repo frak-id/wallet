@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "87da8338f40c95301b4881ca4bfb23db"
-application_url = "https://letters-sox-deep-pension.trycloudflare.com"
+application_url = "https://card-config-hub-volumes.trycloudflare.com"
 embedded = true
 name = "Frak"
 handle = "frak"
@@ -15,13 +15,13 @@ api_version = "2024-10"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "read_customer_events, write_pixels, read_pixels, read_themes"
 
 [auth]
 redirect_urls = [
-  "https://letters-sox-deep-pension.trycloudflare.com/auth/callback",
-  "https://letters-sox-deep-pension.trycloudflare.com/auth/shopify/callback",
-  "https://letters-sox-deep-pension.trycloudflare.com/api/auth/callback"
+  "https://card-config-hub-volumes.trycloudflare.com/auth/callback",
+  "https://card-config-hub-volumes.trycloudflare.com/auth/shopify/callback",
+  "https://card-config-hub-volumes.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
