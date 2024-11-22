@@ -1,5 +1,5 @@
 import "@shopify/shopify-app-remix/adapters/node";
-import { restResources } from "@shopify/shopify-api/rest/admin/2024-07";
+import { restResources } from "@shopify/shopify-api/rest/admin/2024-10";
 import {
     ApiVersion,
     AppDistribution,
