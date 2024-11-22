@@ -7,5 +7,9 @@ description = "Pixel tracker to trigger referral reward on user purchase."
 type = "web_pixel_extension"
 runtime_context = "strict"
 
-    [extensions.capabilities]
-    network_access = true
+[extensions.capabilities]
+network_access = true
+
+[extensions.settings]
+type = "object"
+fields = {}
