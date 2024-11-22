@@ -1,6 +1,7 @@
 import { useDisplayModal, useWalletStatus } from "@frak-labs/nexus-sdk/react";
-import { useAppBridge } from "@shopify/app-bridge-react";
+import { useLoaderData } from "@remix-run/react";
 import { BlockStack, Button, InlineStack, Text } from "@shopify/polaris";
+import type { loader } from "app/routes/app._index";
 import { type ReactNode, useCallback } from "react";
 
 export function WalletGated({ children }: { children: ReactNode }) {
@@ -12,7 +13,9 @@ export function WalletGated({ children }: { children: ReactNode }) {
 }
 
 function WalletGatedInner({ children }: { children: ReactNode }) {
-    const shopify = useAppBridge();
+    const {
+        shop: { url },
+    } = useLoaderData<typeof loader>();
     const { data: walletStatus } = useWalletStatus();
     const { mutate: displayFrakModal, isPending } = useDisplayModal();
 
@@ -24,12 +27,12 @@ function WalletGatedInner({ children }: { children: ReactNode }) {
                 login: {
                     allowSso: true,
                     ssoMetadata: {
-                        homepageLink: shopify.config.host,
+                        homepageLink: url,
                     },
                 },
             },
         });
-    }, [displayFrakModal, shopify]);
+    }, [displayFrakModal, url]);
 
     if (walletStatus === undefined) {
         return (

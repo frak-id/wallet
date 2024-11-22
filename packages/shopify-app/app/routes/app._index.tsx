@@ -10,15 +10,17 @@ import {
     Text,
 } from "@shopify/polaris";
 import { WalletGated } from "app/components/WalletGated";
+import { shopInfo } from "app/services.server/shop";
+import { doesThemeSupportBlock } from "app/services.server/theme";
 import { useCallback, useMemo } from "react";
 import { ShopInfo } from "../components/ShopInfo";
-import { doesThemeSupportBlock } from "../services.server/theme";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
     const isThemeSupported = await doesThemeSupportBlock(context);
-    return Response.json({ isThemeSupported, shop: context.session.shop });
+    const shop = await shopInfo(context);
+    return Response.json({ isThemeSupported, shop });
 };
 
 /**

@@ -11,16 +11,19 @@ import { keccak256, toHex } from "viem";
  * @constructor
  */
 export function ShopInfo() {
-    const { shop } = useLoaderData<typeof loader>();
+    const {
+        shop: { name, myshopifyDomain },
+    } = useLoaderData<typeof loader>();
+
     const someInfos = useMemo(() => {
         // Get some info
-        const productId = keccak256(toHex(shop));
+        const productId = keccak256(toHex(myshopifyDomain));
         return {
-            productId: keccak256(toHex(shop)),
-            shop: shop,
+            productId: keccak256(toHex(myshopifyDomain)),
+            shop: myshopifyDomain,
             dashboardLink: `https://business.frak.id/product/${productId}`,
         };
-    }, [shop]);
+    }, [myshopifyDomain]);
 
     return (
         <Card>
@@ -31,9 +34,16 @@ export function ShopInfo() {
                 <BlockStack gap="200">
                     <InlineStack align="space-between">
                         <Text as="span" variant="bodyMd">
+                            Name:
+                        </Text>
+                        <span>{name}</span>
+                    </InlineStack>
+
+                    <InlineStack align="space-between">
+                        <Text as="span" variant="bodyMd">
                             Domain:
                         </Text>
-                        <span>{shop}</span>
+                        <span>{myshopifyDomain}</span>
                     </InlineStack>
 
                     <InlineStack align="space-between">
