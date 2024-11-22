@@ -1,9 +1,9 @@
-import { useAppBridge } from "@shopify/app-bridge-react";
+import { useLoaderData } from "@remix-run/react";
 import { BlockStack, Card, InlineStack, Link, Text } from "@shopify/polaris";
+import type { loader } from "app/routes/app._index";
 import { useMemo } from "react";
 import { keccak256, toHex } from "viem";
 
-// todo: Loader fetch the shop info on the server side
 // todo: Info to fetch: is product minted, number of active campaigns, shopify webhook + oracle setup status
 
 /**
@@ -11,19 +11,16 @@ import { keccak256, toHex } from "viem";
  * @constructor
  */
 export function ShopInfo() {
-    const shopify = useAppBridge();
+    const { shop } = useLoaderData<typeof loader>();
     const someInfos = useMemo(() => {
-        // If on server, early return
-        if (typeof window === "undefined") return undefined;
-
         // Get some info
-        const productId = keccak256(toHex(shopify.config.shop ?? ""));
+        const productId = keccak256(toHex(shop));
         return {
-            productId: keccak256(toHex(shopify.config.shop ?? "")),
-            shop: shopify.config.shop,
+            productId: keccak256(toHex(shop)),
+            shop: shop,
             dashboardLink: `https://business.frak.id/product/${productId}`,
         };
-    }, [shopify]);
+    }, [shop]);
 
     return (
         <Card>
@@ -36,7 +33,7 @@ export function ShopInfo() {
                         <Text as="span" variant="bodyMd">
                             Domain:
                         </Text>
-                        <span>{someInfos?.shop}</span>
+                        <span>{shop}</span>
                     </InlineStack>
 
                     <InlineStack align="space-between">
