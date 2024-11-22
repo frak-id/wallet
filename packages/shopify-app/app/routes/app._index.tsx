@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import {
     BlockStack,
@@ -10,8 +10,10 @@ import {
     Text,
 } from "@shopify/polaris";
 import { WalletGated } from "app/components/WalletGated";
+import { WebPixel } from "app/components/WebPixel";
 import { shopInfo } from "app/services.server/shop";
 import { doesThemeSupportBlock } from "app/services.server/theme";
+import { activateWebPixel } from "app/services.server/webPixel";
 import { useCallback, useMemo } from "react";
 import { ShopInfo } from "../components/ShopInfo";
 import { authenticate } from "../shopify.server";
@@ -22,6 +24,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const shop = await shopInfo(context);
     return Response.json({ isThemeSupported, shop });
 };
+
+export async function action({ request }: ActionFunctionArgs) {
+    const context = await authenticate.admin(request);
+
+    // Will activate the pixel on the shopify store
+    return activateWebPixel(context);
+}
 
 /**
  * todo: Index page of the Frak application on the shopify admin panel
@@ -109,6 +118,7 @@ export default function Index() {
                         </BlockStack>
                     </Layout.Section>
                 </Layout>
+                <WebPixel />
             </BlockStack>
         </Page>
     );
