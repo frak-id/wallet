@@ -34,20 +34,44 @@
   ],
   "exports": {
     "./core": {
-      "import": "./dist/core/index.js",
-      "default": "./dist/core/index.cjs"
+      "import": {
+        "types": "./dist/core/index.d.ts",
+        "default": "./dist/core/index.js"
+      },
+      "require": {
+        "types": "./dist/core/index.d.cts",
+        "default": "./dist/core/index.cjs"
+      }
     },
     "./actions": {
-      "import": "./dist/core/actions/index.js",
-      "default": "./dist/core/actions/index.cjs"
+      "import": {
+        "types": "./dist/core/actions/index.d.ts",
+        "default": "./dist/core/actions/index.js"
+      },
+      "require": {
+        "types": "./dist/core/actions/index.d.cts",
+        "default": "./dist/core/actions/index.cjs"
+      }
     },
     "./interactions": {
-      "import": "./dist/core/interactions/index.js",
-      "default": "./dist/core/interactions/index.cjs"
+      "import": {
+        "types": "./dist/core/interactions/index.d.ts",
+        "default": "./dist/core/interactions/index.js"
+      },
+      "require": {
+        "types": "./dist/core/interactions/index.d.cts",
+        "default": "./dist/core/interactions/index.cjs"
+      }
     },
     "./react": {
-      "import": "./dist/react/index.js",
-      "default": "./dist/react/index.cjs"
+      "import": {
+        "types": "./dist/react/index.d.ts",
+        "default": "./dist/react/index.js"
+      },
+      "require": {
+        "types": "./dist/react/index.d.cts",
+        "default": "./dist/react/index.cjs"
+      }
     }
   },
   "scripts": {
