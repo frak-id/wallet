@@ -1,7 +1,7 @@
 {
   "name": "frak-wallet",
   "version": "0.1.0",
-  "description": "Simple demo of a future Frak Wallet",
+  "description": "Frak ecosystem packages",
   "private": true,
   "type": "module",
   "license": "GNU GPL 3.0",

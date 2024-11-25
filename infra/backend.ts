@@ -56,6 +56,7 @@ export const backendService = new SstService("Elysia", {
     },
     // Env
     environment: {
+        STAGE: $app.stage,
         INDEXER_URL: indexerUrl,
         MASTER_KEY_SECRET_ID: Output.create(masterSecretKey).apply(
             (secretKey) => secretKey.arn

@@ -1,11 +1,10 @@
-import { vpc, walletUrl } from "./config";
+import { walletUrl } from "./config";
 
 /**
  * EthCC wallet demo website
  */
 export const ethccWebsite = new sst.aws.Remix("WalletExampleEthCC", {
     path: "example/wallet-ethcc",
-    vpc,
     // Set the custom domain
     domain: {
         // name: "ethcc.news-paper.xyz",
@@ -13,6 +12,7 @@ export const ethccWebsite = new sst.aws.Remix("WalletExampleEthCC", {
     },
     // Environment variables
     environment: {
+        STAGE: $app.stage,
         FRAK_WALLET_URL: walletUrl,
     },
 });
@@ -22,13 +22,13 @@ export const ethccWebsite = new sst.aws.Remix("WalletExampleEthCC", {
  */
 // export const newsInteractionWebsite = new sst.aws.Remix("NewsInteractionDemo", {
 //     path: "example/news-interactions",
-//     vpc,
 //     // Set the custom domain
 //     domain: {
 //         name: "news-paper.xyz",
 //     },
 //     // Environment variables
 //     environment: {
+//         STAGE: $app.stage,
 //         FRAK_WALLET_URL: walletUrl,
 //         BACKEND_URL: backendUrl
 //     },

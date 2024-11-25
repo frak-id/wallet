@@ -6,7 +6,6 @@ import {
     mongoBusinessDb,
     nexusRpcSecret,
     sessionEncryptionKy,
-    vpc,
     walletUrl,
 } from "./config";
 
@@ -19,7 +18,6 @@ const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
  */
 export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
     path: "packages/dashboard",
-    vpc,
     // Set the custom domain
     domain: {
         name: `${subdomain}.frak.id`,
@@ -31,6 +29,7 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
     },
     // Environment variables
     environment: {
+        STAGE: $app.stage,
         FRAK_WALLET_URL: walletUrl,
         BACKEND_URL: backendUrl,
         INDEXER_URL: indexerUrl,
