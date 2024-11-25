@@ -1,5 +1,5 @@
 import { pick } from "radash";
-import { Config } from "sst/node/config";
+import { Resource } from "sst";
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
@@ -12,9 +12,9 @@ const wantedFromConfig = [
     "INDEXER_URL",
     "FUNDING_ON_RAMP_URL",
 ];
-const envFromSstConfig = pick(Config, wantedFromConfig);
+const envFromSstConfig = pick(Resource, wantedFromConfig);
 
-const isDistant = ["prod", "dev"].includes(Config.STAGE);
+const isDistant = ["prod", "dev"].includes(Resource.App.stage);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

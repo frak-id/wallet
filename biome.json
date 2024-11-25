@@ -39,7 +39,7 @@
                 "useHookAtTopLevel": "error",
                 "noUnusedVariables": "error",
                 "noUnusedImports": "error",
-                "noUndeclaredVariables": "error",
+                "noUndeclaredVariables": "off",
                 "noUnusedPrivateClassMembers": "error"
             },
             "style": {

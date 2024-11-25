@@ -24,6 +24,7 @@
       <excludeFolder url="file://$MODULE_DIR$/example/vanilla-js/dist" />
       <excludeFolder url="file://$MODULE_DIR$/example/wallet-ethcc/build" />
       <excludeFolder url="file://$MODULE_DIR$/packages/wallet/build" />
+      <excludeFolder url="file://$MODULE_DIR$/.sst-bk" />
     </content>
     <content url="file://$MODULE_DIR$/.sst/types" />
     <orderEntry type="inheritedJdk" />

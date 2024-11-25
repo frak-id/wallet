@@ -7,7 +7,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "build": "sst bind remix vite:build",
+    "build": "remix vite:build",
     "dev": "sst bind remix vite:dev",
     "start": "sst bind remix-serve ./build/server/index.js",
     "lint": "biome lint .",

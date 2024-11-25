@@ -57,7 +57,7 @@
     "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "sst": "2.44.0",
+    "sst": "3.3.28",
     "typescript": "^5"
   }
 }
