@@ -1,23 +1,54 @@
 import type { AuthenticatedContext } from "app/types/context";
 
-export type WebPixelReturnType = {
+export type GetWebPixelReturnType = {
+    id: string;
+    settings: string;
+};
+
+export type CreateWebPixelReturnType = {
     userErrors: {
         code: string;
         field: string;
         message: string;
     }[];
-    webPixel: {
-        id: string;
-        settings: string;
-    };
+    webPixel: GetWebPixelReturnType;
+};
+
+export type DeleteWebPixelReturnType = {
+    deletedWebPixelId: string;
+    userErrors: {
+        code: string;
+        field: string;
+        message: string;
+    }[];
 };
 
 /**
- * Activate the web pixel
+ * Get the web pixel
  */
-export async function activateWebPixel({
+export async function getWebPixel({
     admin: { graphql },
-}: AuthenticatedContext): Promise<WebPixelReturnType> {
+}: AuthenticatedContext): Promise<GetWebPixelReturnType> {
+    const response = await graphql(`
+query getWebPixel {
+  webPixel {
+    id
+    settings
+  }
+}`);
+    const {
+        data: { webPixel },
+    } = await response.json();
+
+    return webPixel;
+}
+
+/**
+ * Create the web pixel
+ */
+export async function createWebPixel({
+    admin: { graphql },
+}: AuthenticatedContext): Promise<CreateWebPixelReturnType> {
     const response = await graphql(`
 mutation {
   webPixelCreate(webPixel: { settings: "{}" }) {
@@ -27,8 +58,8 @@ mutation {
       message
     }
     webPixel {
-      settings
       id
+      settings
     }
   }
 }`);
@@ -37,4 +68,37 @@ mutation {
     } = await response.json();
 
     return webPixelCreate;
+}
+
+/**
+ * Delete the web pixel
+ */
+export async function deleteWebPixel({
+    admin: { graphql },
+    id,
+}: AuthenticatedContext & { id: string }): Promise<DeleteWebPixelReturnType> {
+    console.log("===deleteWebPixel", id);
+    const response = await graphql(
+        `
+mutation deleteWebPixel($id: ID!) {
+  webPixelDelete(id: $id) {
+    deletedWebPixelId
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}`,
+        {
+            variables: {
+                id,
+            },
+        }
+    );
+    const {
+        data: { webPixelDelete },
+    } = await response.json();
+
+    return webPixelDelete;
 }

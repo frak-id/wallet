@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import {
     BlockStack,
@@ -10,7 +10,6 @@ import {
     Text,
 } from "@shopify/polaris";
 import { WalletGated } from "app/components/WalletGated";
-import { WebPixel } from "app/components/WebPixel";
 import { shopInfo } from "app/services.server/shop";
 import { doesThemeSupportBlock } from "app/services.server/theme";
 import { activateWebPixel } from "app/services.server/webPixel";
@@ -25,13 +24,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return Response.json({ isThemeSupported, shop });
 };
 
-export async function action({ request }: ActionFunctionArgs) {
-    const context = await authenticate.admin(request);
-
-    // Will activate the pixel on the shopify store
-    return activateWebPixel(context);
-}
-
 /**
  * todo: Index page of the Frak application on the shopify admin panel
  *  - Login with a Frak wallet if needed
@@ -43,7 +35,6 @@ export async function action({ request }: ActionFunctionArgs) {
  *  todo:
  *   - List webhooks: https://shopify.dev/docs/api/admin-graphql/2024-07/queries/webhookSubscriptions
  *   - Webhook creation? Not sure: https://shopify.dev/docs/api/admin-graphql/2024-07/mutations/webhookSubscriptionCreate
- *   - web pixel extension for post checkout? https://shopify.dev/docs/apps/build/marketing-analytics/build-web-pixels
  *   - theme app extensions for the frak-setup js asset? https://shopify.dev/docs/apps/build/online-store/theme-app-extensions
  * @param request
  */
@@ -85,7 +76,9 @@ export default function Index() {
 
                                     <List type="number">
                                         <List.Item>
-                                            Setup Frak application pixel
+                                            <Link url={"/app/pixel"}>
+                                                Setup Frak application pixel
+                                            </Link>
                                         </List.Item>
                                         <List.Item>
                                             Enable Frak webhook for purchase
@@ -118,7 +111,6 @@ export default function Index() {
                         </BlockStack>
                     </Layout.Section>
                 </Layout>
-                <WebPixel />
             </BlockStack>
         </Page>
     );
