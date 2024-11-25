@@ -2,11 +2,10 @@ import {
     alchemyApiKey,
     backendUrl,
     indexerUrl,
-    isProd, mongoBusinessDb,
+    isProd,
+    mongoBusinessDb,
     nexusRpcSecret,
-    pimlicoApiKey, sessionEncryptionKy,
-    umamiWalletWebsiteId,
-    vapidPublicKey,
+    sessionEncryptionKy,
     vpc,
     walletUrl,
 } from "./config";
@@ -41,6 +40,6 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
         nexusRpcSecret,
         sessionEncryptionKy,
         mongoBusinessDb,
-        onRampUrl
+        onRampUrl,
     ],
 });
