@@ -10,7 +10,7 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
-    "dev": "bun dev:env && bun sst dev bun dev:watch",
+    "dev": "bun sst dev bun dev:watch",
     "dev:env": "sst shell bun run scripts/envSetup.ts",
     "dev:watch": "bun run --watch src/index.ts",
     "build:docker": "docker build --tag \"elysia-dev\" .",
@@ -20,10 +20,8 @@
     "build:binary": "bun build --compile --minify --target=bun --outfile ./server src/index.ts",
     "start": "NODE_ENV=production bun dist/index-terser.js",
     "db:studio": "sst dev drizzle-kit studio",
-    "db-dev:generate": "sst dev drizzle-kit generate",
-    "db-dev:migrate": "sst dev drizzle-kit migrate",
-    "db-prod:generate": "sst dev --stage prod drizzle-kit generate",
-    "db-prod:migrate": "sst dev --stage prod drizzle-kit migrate"
+    "db:generate": "sst dev drizzle-kit generate",
+    "db:migrate": "sst dev drizzle-kit migrate"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.696.0",

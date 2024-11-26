@@ -19,10 +19,11 @@ export default $config({
 
         // Build the sdk on dev env
         if ($dev) {
-            new sst.x.DevCommand("SDK-Build", {
+            new sst.x.DevCommand("sdk:build", {
                 dev: {
-                    autostart: true,
-                    command: "bun run build:watch",
+                    title: "Build SDK",
+                    autostart: false,
+                    command: "bun run build",
                     directory: "packages/sdk",
                 },
             });

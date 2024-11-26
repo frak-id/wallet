@@ -36,9 +36,9 @@ export default defineConfig(({ isSsrBuild }) => {
     return {
         define: {
             // Some env variables
-            STAGE: JSON.stringify(process.env.STAGE),
-            BACKEND_URL: JSON.stringify(process.env.BACKEND_URL),
-            INDEXER_URL: JSON.stringify(process.env.INDEXER_URL),
+            "process.env.STAGE": JSON.stringify(process.env.STAGE),
+            "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
+            "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
             // Some secrets
             ...Object.fromEntries(sstSecrets),
         },
