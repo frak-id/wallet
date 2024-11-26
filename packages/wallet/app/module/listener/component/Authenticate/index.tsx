@@ -17,11 +17,9 @@ import { useModalTranslation } from "../../hooks/useModalTranslation";
 export function SiweAuthenticateModalStep({
     params,
     onFinish,
-    onError,
 }: {
     params: SiweAuthenticateModalStepType["params"];
     onFinish: (result: SiweAuthenticateModalStepType["returns"]) => void;
-    onError: (reason?: string) => void;
 }) {
     const { t } = useModalTranslation();
     const { metadata } = params;
@@ -57,9 +55,6 @@ export function SiweAuthenticateModalStep({
                     signature,
                     message,
                 }),
-            onError: (error) => {
-                onError(error.message);
-            },
         },
     });
 

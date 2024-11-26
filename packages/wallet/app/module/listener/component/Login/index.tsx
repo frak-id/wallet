@@ -32,19 +32,16 @@ export function LoginModalStep({
     context,
     params,
     onFinish,
-    onError,
 }: {
     appName: string;
     context: IFrameResolvingContext;
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
-    onError: (reason?: string) => void;
 }) {
     const { t } = useModalTranslation();
     const { metadata } = params;
     const { login, isSuccess, isLoading, isError, error } = useLogin({
-        // On error, transmit the error up a level
-        onError: (error) => onError(error.message),
+        // Don't transmit the error up, to avoid modal closing
         // On success, transmit the wallet address up a level
         onSuccess: (session) => onFinish({ wallet: session.address }),
     });
@@ -75,21 +72,23 @@ export function LoginModalStep({
                         />
                     </div>
                 )}
-                <div>
-                    <button
-                        type={"button"}
-                        className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
-                        disabled={isLoading}
-                        onClick={() => {
-                            login({});
-                            trackEvent("cta-login");
-                        }}
-                    >
-                        {isLoading && <Spinner />}
-                        {metadata?.secondaryActionText ??
-                            t("sdk.modal.login.default.secondaryAction")}
-                    </button>
-                </div>
+                {!params.allowSso && (
+                    <div>
+                        <button
+                            type={"button"}
+                            className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
+                            disabled={isLoading}
+                            onClick={() => {
+                                login({});
+                                trackEvent("cta-login");
+                            }}
+                        >
+                            {isLoading && <Spinner />}
+                            {metadata?.secondaryActionText ??
+                                t("sdk.modal.login.default.secondaryAction")}
+                        </button>
+                    </div>
+                )}
                 <div>
                     <DismissButton />
                 </div>
