@@ -16,11 +16,9 @@ import { useModalTranslation } from "../../hooks/useModalTranslation";
 export function TransactionModalStep({
     params,
     onFinish,
-    onError,
 }: {
     params: SendTransactionModalStepType["params"];
     onFinish: (result: SendTransactionModalStepType["returns"]) => void;
-    onError: (reason?: string) => void;
 }) {
     const { t } = useModalTranslation();
     const { sendTransaction, isPending, isError, error } = useSendTransaction({
@@ -28,9 +26,6 @@ export function TransactionModalStep({
             // Link success and error hooks
             onSuccess: (hash) => {
                 onFinish({ hash });
-            },
-            onError: (error) => {
-                onError(error?.message ?? "Error when sending the transaction");
             },
         },
     });
