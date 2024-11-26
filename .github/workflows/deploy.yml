@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - dev
+      - tech/sst-v3
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -103,7 +104,7 @@ jobs:
         if: steps.changes.outputs.backend == 'true'
         uses: docker/build-push-action@v6
         with:
-          file: ./iac/docker/ElysiaDockerfile
+          file: ./infra/docker/ElysiaDockerfile
           platforms: linux/arm64
           push: true
           tags: |

@@ -4,7 +4,7 @@ export default $config({
     app(input) {
         return {
             name: "wallet",
-            removal: input?.stage === "production" ? "retain" : "remove",
+            removal: input?.stage === "prod" ? "retain" : "remove",
             home: "aws",
             provider: {
                 aws: {
@@ -37,7 +37,7 @@ export default $config({
         await import("./infra/dashboard.ts");
 
         // Deploy example on non prod stacks
-        if ($app.stage !== "production") {
+        if ($app.stage !== "prod") {
             await import("./infra/example.ts");
         }
     },

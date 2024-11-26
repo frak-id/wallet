@@ -7,7 +7,7 @@ const { id: vpcId } = await aws.ec2.getVpc({
 export const vpc = sst.aws.Vpc.get("MasterVpc", vpcId);
 
 // Get some info about the deployment env
-export const isProd = $app.stage === "production";
+export const isProd = $app.stage === "prod";
 export const isLocal = $dev ?? false;
 
 /**
