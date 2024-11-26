@@ -32,8 +32,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
  *
  *
  *  todo:
- *   - List webhooks: https://shopify.dev/docs/api/admin-graphql/2024-07/queries/webhookSubscriptions
- *   - Webhook creation? Not sure: https://shopify.dev/docs/api/admin-graphql/2024-07/mutations/webhookSubscriptionCreate
  *   - theme app extensions for the frak-setup js asset? https://shopify.dev/docs/apps/build/online-store/theme-app-extensions
  * @param request
  */
@@ -41,7 +39,7 @@ export default function Index() {
     const shopify = useAppBridge();
     const goToDashboard = useCallback(() => {
         // Open a new window in business.frak.id
-        window.open("https://business.frak.id", "_blank");
+        window.open(process.env.BUSINESS_URL, "_blank");
     }, []);
 
     const frakModalConfigurationLink = useMemo(() => {
@@ -86,21 +84,19 @@ export default function Index() {
                                             </Link>
                                         </List.Item>
                                         <List.Item>
-                                            Setup Frak embeded app within your
-                                            theme
+                                            <Link
+                                                url={frakModalConfigurationLink}
+                                                target="_blank"
+                                            >
+                                                Setup Frak embeded app within
+                                                your theme
+                                            </Link>
                                         </List.Item>
                                         <List.Item>
                                             Add the sharing button where you
                                             want
                                         </List.Item>
                                     </List>
-
-                                    <Link
-                                        url={frakModalConfigurationLink}
-                                        target="_blank"
-                                    >
-                                        Setup frak modal
-                                    </Link>
                                 </WalletGated>
                             </BlockStack>
                         </Card>

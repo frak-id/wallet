@@ -6,7 +6,7 @@ import type { PropsWithChildren } from "react";
 
 export function FrakProvider({ children }: PropsWithChildren) {
     const frakWalletSdkConfig = {
-        walletUrl: "https://wallet.frak.id",
+        walletUrl: process.env.FRAK_WALLET_URL ?? "https://wallet.frak.id",
         metadata: {
             name: "Shopify App",
         },

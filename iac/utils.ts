@@ -44,6 +44,20 @@ export function getWalletUrl(stack: Stack): string {
 }
 
 /**
+ * Get the current business url
+ * @param stack
+ */
+export function getBusinessUrl(stack: Stack): string {
+    if (isProdStack(stack)) {
+        return "https://business.frak.id";
+    }
+    if (isDevStack(stack)) {
+        return "https://business-dev.frak.id";
+    }
+    return "https://localhost:3001";
+}
+
+/**
  * Get the current backend url
  * @param stack
  */

@@ -21,7 +21,7 @@ export function ShopInfo() {
         return {
             productId,
             shop: myshopifyDomain,
-            dashboardLink: `https://business.frak.id/product/${productId}`,
+            dashboardLink: `${process.env.BUSINESS_URL}/product/${productId}`,
         };
     }, [myshopifyDomain]);
 
@@ -53,7 +53,7 @@ export function ShopInfo() {
                         <Link
                             url={
                                 someInfos?.dashboardLink ??
-                                "https://business.frak.id/"
+                                process.env.BUSINESS_URL
                             }
                             target="_blank"
                             removeUnderline

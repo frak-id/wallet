@@ -73,8 +73,7 @@ export async function createWebhook({
 }: AuthenticatedContext & {
     productId: string;
 }): Promise<CreateWebhookSubscriptionReturnType> {
-    // TODO - Implement the domain switch for dev, prod?
-    const webhookUrl = `https://backend.frak.id/oracle/shopify/${productId}/hook`;
+    const webhookUrl = `${process.env.BACKEND_URL}/oracle/shopify/${productId}/hook`;
     const response = await graphql(
         `
 mutation webhookSubscriptionCreate($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {

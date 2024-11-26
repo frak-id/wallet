@@ -1,6 +1,11 @@
 import { Config } from "sst/constructs";
 import type { StackContext } from "sst/constructs";
-import { getBackendUrl, getWalletUrl, isProdStack } from "./utils";
+import {
+    getBackendUrl,
+    getBusinessUrl,
+    getWalletUrl,
+    isProdStack,
+} from "./utils";
 
 /**
  * Define the app wide configs
@@ -53,6 +58,9 @@ export function ConfigStack({ stack }: StackContext) {
     const frakWalletUrl = new Config.Parameter(stack, "FRAK_WALLET_URL", {
         value: getWalletUrl(stack),
     });
+    const businessUrl = new Config.Parameter(stack, "BUSINESS_URL", {
+        value: getBusinessUrl(stack),
+    });
     const backendUrl = new Config.Parameter(stack, "BACKEND_URL", {
         value: getBackendUrl(stack),
     });
@@ -90,5 +98,6 @@ export function ConfigStack({ stack }: StackContext) {
         backendUrl,
         postgres,
         umamiWalletWebsiteId,
+        businessUrl,
     };
 }

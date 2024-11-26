@@ -47,6 +47,9 @@ const wantedFromConfig: (keyof typeof Config)[] = [
     "POSTGRES_SHOPIFY_DB",
     "POSTGRES_USER",
     "POSTGRES_PASSWORD",
+    "BACKEND_URL",
+    "BUSINESS_URL",
+    "FRAK_WALLET_URL",
 ];
 const envFromSstConfig = pick(Config, wantedFromConfig);
 
