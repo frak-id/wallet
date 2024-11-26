@@ -12,7 +12,6 @@ import {
 import { WalletGated } from "app/components/WalletGated";
 import { shopInfo } from "app/services.server/shop";
 import { doesThemeSupportBlock } from "app/services.server/theme";
-import { activateWebPixel } from "app/services.server/webPixel";
 import { useCallback, useMemo } from "react";
 import { ShopInfo } from "../components/ShopInfo";
 import { authenticate } from "../shopify.server";
@@ -81,8 +80,10 @@ export default function Index() {
                                             </Link>
                                         </List.Item>
                                         <List.Item>
-                                            Enable Frak webhook for purchase
-                                            tracking
+                                            <Link url={"/app/webhook"}>
+                                                Enable Frak webhook for purchase
+                                                tracking
+                                            </Link>
                                         </List.Item>
                                         <List.Item>
                                             Setup Frak embeded app within your

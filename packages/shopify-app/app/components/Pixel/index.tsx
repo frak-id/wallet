@@ -5,14 +5,15 @@ import type {
     CreateWebPixelReturnType,
     DeleteWebPixelReturnType,
 } from "app/services.server/webPixel";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+
+export type IntentWebPixel = "createWebPixel" | "deleteWebPixel";
 
 export function Pixel({ id }: { id?: string }) {
     const shopify = useAppBridge();
     const fetcher = useFetcher<
         CreateWebPixelReturnType | DeleteWebPixelReturnType
     >();
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (!fetcher.data) return;
@@ -36,14 +37,9 @@ export function Pixel({ id }: { id?: string }) {
         if (deletedWebPixelId) {
             shopify.toast.show("Application pixel disconnected successfully");
         }
-
-        setLoading(false);
     }, [fetcher.data, shopify.toast]);
 
-    const handleAction = async (
-        intent: "createWebPixel" | "deleteWebPixel"
-    ) => {
-        setLoading(true);
+    const handleAction = async (intent: IntentWebPixel) => {
         fetcher.submit({ intent }, { method: "POST" });
     };
 
@@ -52,8 +48,8 @@ export function Pixel({ id }: { id?: string }) {
             {!id && (
                 <Button
                     variant="primary"
-                    loading={loading}
-                    disabled={loading}
+                    loading={fetcher.state !== "idle"}
+                    disabled={fetcher.state !== "idle"}
                     onClick={() => handleAction("createWebPixel")}
                 >
                     Connect application pixel
@@ -62,8 +58,8 @@ export function Pixel({ id }: { id?: string }) {
             {id && (
                 <Button
                     variant="primary"
-                    loading={loading}
-                    disabled={loading}
+                    loading={fetcher.state !== "idle"}
+                    disabled={fetcher.state !== "idle"}
                     onClick={() => handleAction("deleteWebPixel")}
                 >
                     Disconnect application pixel

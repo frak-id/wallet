@@ -7,7 +7,6 @@ export type GetWebPixelReturnType = {
 
 export type CreateWebPixelReturnType = {
     userErrors: {
-        code: string;
         field: string;
         message: string;
     }[];
@@ -53,7 +52,6 @@ export async function createWebPixel({
 mutation {
   webPixelCreate(webPixel: { settings: "{}" }) {
     userErrors {
-      code
       field
       message
     }
@@ -77,7 +75,6 @@ export async function deleteWebPixel({
     admin: { graphql },
     id,
 }: AuthenticatedContext & { id: string }): Promise<DeleteWebPixelReturnType> {
-    console.log("===deleteWebPixel", id);
     const response = await graphql(
         `
 mutation deleteWebPixel($id: ID!) {

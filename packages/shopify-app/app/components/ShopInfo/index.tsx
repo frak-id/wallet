@@ -1,8 +1,8 @@
 import { useLoaderData } from "@remix-run/react";
 import { BlockStack, Card, InlineStack, Link, Text } from "@shopify/polaris";
 import type { loader } from "app/routes/app._index";
+import { productIdFromDomain } from "app/utils/productIdFromDomain";
 import { useMemo } from "react";
-import { keccak256, toHex } from "viem";
 
 // todo: Info to fetch: is product minted, number of active campaigns, shopify webhook + oracle setup status
 
@@ -17,9 +17,9 @@ export function ShopInfo() {
 
     const someInfos = useMemo(() => {
         // Get some info
-        const productId = keccak256(toHex(myshopifyDomain));
+        const productId = productIdFromDomain(myshopifyDomain);
         return {
-            productId: keccak256(toHex(myshopifyDomain)),
+            productId,
             shop: myshopifyDomain,
             dashboardLink: `https://business.frak.id/product/${productId}`,
         };

@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { BlockStack, Card, Page, Text } from "@shopify/polaris";
-import { Pixel } from "app/components/Pixel";
+import { type IntentWebPixel, Pixel } from "app/components/Pixel";
 import {
     createWebPixel,
     deleteWebPixel,
@@ -25,7 +25,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export async function action({ request }: ActionFunctionArgs) {
     const context = await authenticate.admin(request);
     const formData = await request.formData();
-    const intent = formData.get("intent");
+    const intent = formData.get("intent") as IntentWebPixel;
 
     switch (intent) {
         case "createWebPixel": {

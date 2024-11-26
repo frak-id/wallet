@@ -26,6 +26,7 @@ export default function App() {
                         Home
                     </Link>
                     <Link to="/app/pixel">Application pixel</Link>
+                    <Link to="/app/webhook">Webhook</Link>
                 </NavMenu>
                 <Outlet />
             </RootProvider>
