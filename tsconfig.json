@@ -10,7 +10,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true,
-    "target": "esnext"
+    "target": "esnext",
+    "allowImportingTsExtensions": true
   },
   "include": ["**/*.ts", "global.d.ts"],
   "exclude": ["node_modules"]

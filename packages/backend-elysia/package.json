@@ -11,7 +11,7 @@
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "dev": "bun dev:env && bun sst dev bun dev:watch",
-    "dev:env": "sst dev \"env | grep -E 'SST_|AWS_' > .env\" && sed -i '' 's/SST_Parameter_value_//g' .env && sed -i '' 's/SST_Secret_value_//g' .env",
+    "dev:env": "sst shell bun run scripts/envSetup.ts",
     "dev:watch": "bun run --watch src/index.ts",
     "build:docker": "docker build --tag \"elysia-dev\" .",
     "build": "bun build:package",

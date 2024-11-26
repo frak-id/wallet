@@ -5,7 +5,7 @@ import { SstService } from "./utils";
 
 // Get the master cluster
 export const cluster = await aws.ecs.getCluster({
-    clusterName: `master-cluster-${$app.stage}`,
+    clusterName: `master-cluster-${isProd ? "production" : "dev"}`,
 });
 
 // Get the master secret key
@@ -30,6 +30,12 @@ export const backendService = new SstService("Elysia", {
     cluster: {
         name: cluster.clusterName,
         arn: cluster.arn,
+    },
+    // Development configuration
+    dev: {
+        directory: "packages/backend-elysia",
+        autostart: true,
+        command: "bun run dev",
     },
     // hardware config
     cpu: "0.25 vCPU",

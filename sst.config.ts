@@ -17,7 +17,19 @@ export default $config({
         // Some config
         await import("./infra/config.ts");
 
+        // Build the sdk on dev env
+        if ($dev) {
+            new sst.x.DevCommand("SDK-Build", {
+                dev: {
+                    autostart: true,
+                    command: "bun run build:watch",
+                    directory: "packages/sdk",
+                },
+            });
+        }
+
         // Deploy backend
+        await import("./infra/backend.ts");
 
         // Add wallet + dashboard
         await import("./infra/wallet.ts");

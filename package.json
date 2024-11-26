@@ -14,8 +14,7 @@
     "clean": "rimraf **/.open-next/ **/.next/ .sst/dist/ .sst/artifacts/",
     "deploy": "sst deploy --stage dev",
     "deploy:prod": "sst deploy --stage prod",
-    "dev": "turbo run dev //#dev:infra",
-    "dev:infra": "sst dev",
+    "dev": "bun sst dev",
     "format": "biome check --write .",
     "format:check": "biome check .",
     "knip": "knip",
@@ -43,8 +42,7 @@
     "example/*"
   ],
   "dependencies": {
-    "i18next-browser-languagedetector": "^8.0.0",
-    "turbo": "^2.1.2"
+    "i18next-browser-languagedetector": "^8.0.0"
   },
   "packageManager": "bun@1.1.26"
 }

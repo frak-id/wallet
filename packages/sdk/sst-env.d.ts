@@ -13,6 +13,10 @@ declare module "sst" {
             type: "sst.aws.Nextjs";
             url: string;
         };
+        Elysia: {
+            service: string;
+            type: "sst.aws.Service";
+        };
         FUNDING_ON_RAMP_URL: {
             type: "sst.sst.Secret";
             value: string;
