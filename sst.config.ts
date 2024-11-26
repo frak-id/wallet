@@ -14,11 +14,17 @@ export default $config({
         };
     },
     async run() {
-        // Import the master VPC
+        // Some config
         await import("./infra/config.ts");
 
+        // Deploy backend
+
+        // Add wallet + dashboard
+        await import("./infra/wallet.ts");
+        await import("./infra/dashboard.ts");
+
+        // Deploy example on non prod stacks
         if ($app.stage !== "production") {
-            // Deploy example only on non prod variant
             await import("./infra/example.ts");
         }
     },

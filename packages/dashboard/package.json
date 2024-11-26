@@ -7,9 +7,9 @@
   "license": "GNU GPL 3.0",
   "scripts": {
     "next-dev-https": "next dev --experimental-https --port 3001",
-    "dev": "sst bind bun run next-dev-https",
-    "build": "sst bind next build --experimental-turbo",
-    "start": "sst bind next start",
+    "dev": "sst dev bun run next-dev-https",
+    "build": "next build --experimental-turbo",
+    "start": "next start",
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",

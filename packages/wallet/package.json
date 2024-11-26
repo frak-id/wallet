@@ -7,14 +7,14 @@
   "type": "module",
   "license": "GNU GPL 3.0",
   "scripts": {
-    "build": "bun run sw && sst bind remix vite:build",
-    "dev": "bun run sw && sst bind remix vite:dev",
-    "start": "sst bind remix-serve ./build/server/index.js",
+    "build": "bun run sw && remix vite:build",
+    "dev": "bun run sw && sst dev remix vite:dev",
+    "start": "remix-serve ./build/server/index.js",
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
-    "bundle:check": "bun sst bind bunx vite-bundle-visualizer",
+    "bundle:check": "bun sst dev bunx vite-bundle-visualizer",
     "i18n:types": "bun run i18next-resources-for-ts interface -i ./app/i18n/locales/en/ -o app/types/i18n/resources.d.ts",
     "i18n:pull": "",
     "sw": "bun run tsup"

@@ -5,14 +5,17 @@ import { Resource } from "sst";
 const wantedFromConfig = [
     "ALCHEMY_API_KEY",
     "NEXUS_RPC_SECRET",
-    "FRAK_WALLET_URL",
     "SESSION_ENCRYPTION_KEY",
     "MONGODB_BUSINESS_URI",
-    "BACKEND_URL",
-    "INDEXER_URL",
     "FUNDING_ON_RAMP_URL",
 ];
-const envFromSstConfig = pick(Resource, wantedFromConfig);
+// The Resource.XXX can be an object with { value: string }, needed to upper up the value
+const envFromSstConfig = Object.fromEntries(
+    Object.entries(pick(Resource, wantedFromConfig)).map(([key, value]) => [
+        key,
+        value.value,
+    ])
+);
 
 const isDistant = ["prod", "dev"].includes(Resource.App.stage);
 
@@ -33,9 +36,13 @@ const nextConfig = {
         ];
     },
     env: {
+        // Some env variables
+        STAGE: process.env.STAGE,
+        FRAK_WALLET_URL: process.env.FRAK_WALLET_URL,
+        BACKEND_URL: process.env.BACKEND_URL,
+        INDEXER_URL: process.env.INDEXER_URL,
+        // Secrets from sst
         ...envFromSstConfig,
-        STAGE: Config.STAGE,
-        // APP_URL: Config.NEXUS_DASHBOARD_URL,
     },
     transpilePackages: ["lucide-react", "@frak-labs/app-essentials"],
     compiler: {

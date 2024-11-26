@@ -20,7 +20,8 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
     path: "packages/dashboard",
     // Set the custom domain
     domain: {
-        name: `${subdomain}.frak.id`,
+        // name: `${subdomain}.frak.id`,
+        name: `${subdomain}.frak-labs.com`,
     },
     // Enable image optimization
     imageOptimization: {

@@ -2,9 +2,60 @@
 /* tslint:disable */
 /* eslint-disable */
 /* deno-fmt-ignore-file */
-import "sst"
-export {}
+import "sst";
 declare module "sst" {
-  export interface Resource {
-  }
+    export interface Resource {
+        ALCHEMY_API_KEY: {
+            type: "sst.sst.Secret";
+            value: string;
+        };
+        Dashboard: {
+            type: "sst.aws.Nextjs";
+            url: string;
+        };
+        FUNDING_ON_RAMP_URL: {
+            type: "sst.sst.Secret";
+            value: string;
+        };
+        MONGODB_BUSINESS_URI: {
+            type: "sst.sst.Secret";
+            value: string;
+        };
+        MasterVpc: {
+            bastion: string;
+            type: "sst.aws.Vpc";
+        };
+        NEXUS_RPC_SECRET: {
+            type: "sst.sst.Secret";
+            value: string;
+        };
+        NewsInteractionDemo: {
+            type: "sst.aws.Remix";
+            url: string;
+        };
+        PIMLICO_API_KEY: {
+            type: "sst.sst.Secret";
+            value: string;
+        };
+        SESSION_ENCRYPTION_KEY: {
+            type: "sst.sst.Secret";
+            value: string;
+        };
+        UMAMI_WALLET_WEBSITE_ID: {
+            type: "sst.sst.Secret";
+            value: string;
+        };
+        VAPID_PUBLIC_KEY: {
+            type: "sst.sst.Secret";
+            value: string;
+        };
+        Wallet: {
+            type: "sst.aws.Remix";
+            url: string;
+        };
+        WalletExampleEthCC: {
+            type: "sst.aws.Remix";
+            url: string;
+        };
+    }
 }
