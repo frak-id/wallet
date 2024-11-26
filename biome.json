@@ -15,7 +15,8 @@
             "tsconfig.*.json",
             "package.json",
             "sw.js",
-            "bundle.js"
+            "bundle.js",
+            "sst-env.d.ts"
         ]
     },
     "organizeImports": {

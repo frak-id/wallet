@@ -19,8 +19,7 @@ export const walletWebsite = new sst.aws.Remix("Wallet", {
     path: "packages/wallet",
     // Set the custom domain
     domain: {
-        // name: `${subdomain}.frak.id`,
-        name: `${subdomain}.frak-labs.com`,
+        name: `${subdomain}.frak.id`,
     },
     // Environment variables
     environment: {

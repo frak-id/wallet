@@ -13,7 +13,7 @@ export const cluster = await aws.ecs.getCluster({
 const masterSecretKey = aws.secretsmanager.getSecret({
     name: isProd
         ? "MasterPrivateKeyFAAD0A05-L7zmByBQjYzr"
-        : "MasterPrivateKeyFAAD0A05-0uIIzzLQMOET",
+        : "MasterPrivateKeyFAAD0A05-L7zmByBQjYzr",
 });
 
 // Get the image we will deploy

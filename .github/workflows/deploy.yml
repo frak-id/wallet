@@ -122,6 +122,7 @@ jobs:
         run: |
           STAGE=${STAGE_OVERRIDE:-$STAGE}
           echo "Deploying with stage: $STAGE"
+          bun sst install
           bun sst deploy --stage $STAGE
         env:
           STAGE: ${{ env.STAGE }}

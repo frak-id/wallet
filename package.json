@@ -19,7 +19,8 @@
     "format:check": "biome check .",
     "knip": "knip",
     "lint": "biome lint .",
-    "update:deps": "npm-check-updates -ui -ws"
+    "update:deps": "npm-check-updates -ui -ws",
+    "typecheck": "bun run --filter '*' typecheck"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",

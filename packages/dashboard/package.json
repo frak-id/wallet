@@ -8,13 +8,12 @@
   "scripts": {
     "next-dev-https": "next dev --experimental-https --port 3001",
     "dev": "sst dev bun run next-dev-https",
-    "build": "next build --experimental-turbo",
+    "build": "next build",
     "start": "next start",
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
-    "typecheck": "tsc --noEmit",
-    "deploy": "sst deploy --stage prod"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",
