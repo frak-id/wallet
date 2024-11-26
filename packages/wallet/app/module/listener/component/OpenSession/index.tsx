@@ -72,12 +72,6 @@ export function OpenSessionModalStep({
                     endTimestamp: status.data.sessionEnd,
                 });
             },
-            onError: (error) => {
-                // If that's not an error about an existing session, directly exit
-                if (error.message !== "session-exit") {
-                    onError(error.message);
-                }
-            },
         },
     });
 

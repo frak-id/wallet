@@ -339,7 +339,6 @@ function CurrentModalStepComponent({
                         context={currentRequest.context}
                         params={currentStep.params}
                         onFinish={currentStep.onResponse}
-                        onError={onError}
                     />
                 );
             case "siweAuthenticate":
@@ -347,7 +346,6 @@ function CurrentModalStepComponent({
                     <SiweAuthenticateModalStep
                         params={currentStep.params}
                         onFinish={currentStep.onResponse}
-                        onError={onError}
                     />
                 );
             case "sendTransaction":
@@ -355,7 +353,6 @@ function CurrentModalStepComponent({
                     <TransactionModalStep
                         params={currentStep.params}
                         onFinish={currentStep.onResponse}
-                        onError={onError}
                     />
                 );
             case "openSession":
