@@ -7,7 +7,7 @@ import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
-import type { BalanceItem } from "@/types/Token";
+import type { BalanceItem } from "@/types/Balance";
 import { Button } from "@module/component/Button";
 import { Input } from "@module/component/forms/Input";
 import { useEffect, useState } from "react";

@@ -1,29 +1,9 @@
 import { groupByDay } from "@/context/history/utils/groupByDay";
 import type { HistoryGroup } from "@/types/HistoryGroup";
 import type { RewardHistory } from "@/types/RewardHistory";
-import type { Token } from "@/types/Token";
+import type { GetRewardHistoryResponseDto } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/shared/context/server";
-import { type Address, type Hex, formatUnits, isAddressEqual } from "viem";
-
-type ApiResult = {
-    added: {
-        amount: string;
-        timestamp: string;
-        txHash: Hex;
-        productId: string;
-        productName: string;
-        token: Address;
-    }[];
-    claimed: {
-        amount: string;
-        timestamp: string;
-        txHash: Hex;
-        productId: string;
-        productName: string;
-        token: Address;
-    }[];
-    tokens: Token[];
-};
+import { type Address, formatUnits, isAddressEqual } from "viem";
 
 /**
  * Get the reward history for a user
@@ -37,7 +17,7 @@ export async function getRewardHistory({
     // Perform the request to our api
     const rewardsHistory = await indexerApi
         .get(`rewards/${account}/history`)
-        .json<ApiResult>();
+        .json<GetRewardHistoryResponseDto>();
 
     // Merge both array into one
     const finalArray = [
@@ -48,7 +28,7 @@ export async function getRewardHistory({
             return {
                 type: "add",
                 amount: Number.parseFloat(
-                    formatUnits(BigInt(item.amount), token?.decimal ?? 18)
+                    formatUnits(BigInt(item.amount), token?.decimals ?? 18)
                 ),
                 timestamp: Number.parseInt(item.timestamp),
                 txHash: item.txHash,
@@ -63,7 +43,7 @@ export async function getRewardHistory({
             return {
                 type: "claim",
                 amount: Number.parseFloat(
-                    formatUnits(BigInt(item.amount), token?.decimal ?? 18)
+                    formatUnits(BigInt(item.amount), token?.decimals ?? 18)
                 ),
                 timestamp: Number.parseInt(item.timestamp),
                 txHash: item.txHash,

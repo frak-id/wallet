@@ -1,4 +1,8 @@
-import { referralCampaignAbi } from "@frak-labs/app-essentials";
+import {
+    type GetCampaignResponseDto,
+    type IndexerToken,
+    referralCampaignAbi,
+} from "@frak-labs/app-essentials";
 import { interactionTypes } from "@frak-labs/nexus-sdk/core";
 import type { KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
@@ -12,25 +16,6 @@ import {
     toHex,
 } from "viem";
 import { getStorageAt, multicall } from "viem/actions";
-
-type GetCampaignResult = {
-    campaigns: {
-        address: Address;
-        type: string;
-        name: string;
-        version: string;
-        productId: string; // string representing a bigint
-        attached: boolean;
-        banking: Address;
-        token: Address;
-    }[];
-    tokens: {
-        address: Address;
-        name: string;
-        symbol: string;
-        decimals: number;
-    }[];
-};
 
 type CampaignRewards = {
     rewards: CampaignReward[];
@@ -89,7 +74,7 @@ export class CampaignRewardsRepository {
         // Query our indexer to fetch the campaigns for the given product
         const { campaigns, tokens } = await this.indexerApi
             .get(`campaigns?productId=${productId}`)
-            .json<GetCampaignResult>();
+            .json<GetCampaignResponseDto>();
         if (!campaigns.length) return [];
 
         // Filter out all the non attached campaigns
@@ -148,7 +133,7 @@ export class CampaignRewardsRepository {
         campaign,
     }: {
         campaign: Address;
-        token: GetCampaignResult["tokens"][0];
+        token: IndexerToken;
     }): Promise<CampaignRewards> {
         const cached = this.campaignRewardsCache.get(campaign);
         if (cached) {

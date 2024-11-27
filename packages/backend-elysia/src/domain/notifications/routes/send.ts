@@ -1,5 +1,6 @@
 import { indexerApiContext, log, nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
+import type { GetMembersWalletResponseDto } from "@frak-labs/app-essentials";
 import { Mutex } from "async-mutex";
 import { inArray } from "drizzle-orm";
 import { Elysia } from "elysia";
@@ -109,7 +110,7 @@ async function getWalletsTargets({
         .post(`members/${wallet}`, {
             json: { filter: targets.filter, onlyAddress: true },
         })
-        .json<{ totalResult: number; users: Address[] }>();
+        .json<GetMembersWalletResponseDto>();
     log.debug(`Found ${result.users.length} wallets for the given filter`);
     return result.users;
 }
