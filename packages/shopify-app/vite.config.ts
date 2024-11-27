@@ -1,6 +1,7 @@
+import process from "node:process";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { pick } from "radash";
-import { Config } from "sst/node/config";
+import { Resource } from "sst";
 import { type UserConfig, defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -42,39 +43,55 @@ if (host === "localhost") {
 }
 
 // Secret env variable from SST we want in the frontend
-const wantedFromConfig: (keyof typeof Config)[] = [
+const wantedFromConfig: (keyof typeof Resource)[] = [
     "POSTGRES_HOST",
-    "POSTGRES_SHOPIFY_DB",
-    "POSTGRES_USER",
     "POSTGRES_PASSWORD",
-    "BACKEND_URL",
-    "BUSINESS_URL",
-    "FRAK_WALLET_URL",
 ];
-const envFromSstConfig = pick(Config, wantedFromConfig);
 
-export default defineConfig({
-    define: Object.fromEntries(
-        Object.entries(envFromSstConfig).map(([key, value]) => [
+export default defineConfig(() => {
+    // Load some secrets from SST
+    const sstSecrets = Object.entries(pick(Resource, wantedFromConfig)).map(
+        ([key, obj]) => [
             `process.env.${key}`,
-            JSON.stringify(value),
-        ])
-    ),
-    server: {
-        port: Number(process.env.PORT || 3000),
-        hmr: hmrConfig,
-        fs: {
-            // See https://vitejs.dev/config/server-options.html#server-fs-allow for more information
-            allow: ["app", "node_modules"],
+            JSON.stringify("value" in obj ? obj.value : obj),
+        ]
+    );
+
+    return {
+        define: {
+            "process.env.STAGE": JSON.stringify(process.env.STAGE),
+            "process.env.FRAK_WALLET_URL": JSON.stringify(
+                process.env.FRAK_WALLET_URL
+            ),
+            "process.env.BUSINESS_URL": JSON.stringify(
+                process.env.BUSINESS_URL
+            ),
+            "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
+            "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
+            "process.env.POSTGRES_USER": JSON.stringify(
+                process.env.POSTGRES_USER
+            ),
+            "process.env.POSTGRES_SHOPIFY_DB": JSON.stringify(
+                process.env.POSTGRES_SHOPIFY_DB
+            ),
+            ...sstSecrets,
         },
-    },
-    plugins: [
-        remix({
-            ignoredRouteFiles: ["**/.*"],
-        }),
-        tsconfigPaths(),
-    ],
-    build: {
-        assetsInlineLimit: 0,
-    },
-}) satisfies UserConfig;
+        server: {
+            port: Number(process.env.PORT || 3000),
+            hmr: hmrConfig,
+            fs: {
+                // See https://vitejs.dev/config/server-options.html#server-fs-allow for more information
+                allow: ["app", "node_modules"],
+            },
+        },
+        plugins: [
+            remix({
+                ignoredRouteFiles: ["**/.*"],
+            }),
+            tsconfigPaths(),
+        ],
+        build: {
+            assetsInlineLimit: 0,
+        },
+    } satisfies UserConfig;
+});

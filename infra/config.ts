@@ -48,6 +48,11 @@ export const walletUrl = getStaticVariable({
     dev: "https://wallet-dev.frak.id",
     local: "https://localhost:3000",
 });
+export const businessUrl = getStaticVariable({
+    prod: "https://business.frak.id",
+    dev: "https://business-dev.frak.id",
+    local: "https://localhost:3001",
+});
 export const stage = $app.stage ?? "dev";
 
 // Some secrets
@@ -58,3 +63,6 @@ export const vapidPublicKey = new sst.Secret("VAPID_PUBLIC_KEY");
 export const umamiWalletWebsiteId = new sst.Secret("UMAMI_WALLET_WEBSITE_ID");
 export const sessionEncryptionKy = new sst.Secret("SESSION_ENCRYPTION_KEY");
 export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
+
+export const postgresHost = new sst.Secret("POSTGRES_HOST");
+export const postgresPassword = new sst.Secret("POSTGRES_PASSWORD");

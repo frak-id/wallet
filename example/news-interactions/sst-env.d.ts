@@ -42,6 +42,14 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "POSTGRES_HOST": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "POSTGRES_PASSWORD": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "SESSION_ENCRYPTION_KEY": {
       "type": "sst.sst.Secret"
       "value": string
