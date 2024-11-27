@@ -66,7 +66,11 @@ export default defineConfig(() => {
             "process.env.BUSINESS_URL": JSON.stringify(
                 process.env.BUSINESS_URL
             ),
-            "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
+            "process.env.BACKEND_URL": JSON.stringify(
+                process.env.BACKEND_URL?.startsWith("http://localhost")
+                    ? "https://backend-dev.frak.id"
+                    : process.env.BACKEND_URL
+            ),
             "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
             "process.env.POSTGRES_USER": JSON.stringify(
                 process.env.POSTGRES_USER
