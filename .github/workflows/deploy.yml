@@ -103,7 +103,7 @@ jobs:
         if: steps.changes.outputs.backend == 'true'
         uses: docker/build-push-action@v6
         with:
-          file: ./iac/docker/ElysiaDockerfile
+          file: ./infra/docker/ElysiaDockerfile
           platforms: linux/arm64
           push: true
           tags: |
@@ -122,6 +122,7 @@ jobs:
         run: |
           STAGE=${STAGE_OVERRIDE:-$STAGE}
           echo "Deploying with stage: $STAGE"
+          bun sst install
           bun sst deploy --stage $STAGE
         env:
           STAGE: ${{ env.STAGE }}

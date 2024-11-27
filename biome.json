@@ -15,7 +15,8 @@
             "tsconfig.*.json",
             "package.json",
             "sw.js",
-            "bundle.js"
+            "bundle.js",
+            "sst-env.d.ts"
         ]
     },
     "organizeImports": {
@@ -39,7 +40,7 @@
                 "useHookAtTopLevel": "error",
                 "noUnusedVariables": "error",
                 "noUnusedImports": "error",
-                "noUndeclaredVariables": "error",
+                "noUndeclaredVariables": "off",
                 "noUnusedPrivateClassMembers": "error"
             },
             "style": {
