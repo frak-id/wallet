@@ -46,6 +46,10 @@ export default defineConfig(({ isSsrBuild }) => {
             port: 3000,
             proxy: {},
         },
+        // Remove console and debugger on prod
+        esbuild: {
+            drop: process.env.STAGE === "prod" ? ["console", "debugger"] : [],
+        },
         plugins: [
             remix({
                 future: {
