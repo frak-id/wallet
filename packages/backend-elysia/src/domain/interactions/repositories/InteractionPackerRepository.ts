@@ -1,10 +1,6 @@
 import { log } from "@backend-common";
-import {
-    addresses,
-    productInteractionDiamondAbi,
-    productInteractionManagerAbi,
-} from "@frak-labs/app-essentials";
-import { LRUCache } from "lru-cache";
+import type { InteractionDiamondRepository } from "@backend-common/repositories";
+import { productInteractionDiamondAbi } from "@frak-labs/app-essentials";
 import {
     type Address,
     type Client,
@@ -12,7 +8,7 @@ import {
     encodeFunctionData,
     encodePacked,
 } from "viem";
-import { readContract, simulateContract } from "viem/actions";
+import { simulateContract } from "viem/actions";
 import type { InteractionData } from "../types/interactions";
 
 /**
@@ -20,46 +16,11 @@ import type { InteractionData } from "../types/interactions";
  *  - Used to fetch contract address for a given product
  *  - Used to simulate transaction
  */
-export class InteractionDiamondRepository {
-    private addressCache = new LRUCache<string, { address?: Address }>({
-        max: 256,
-        // TTL of 10min
-        ttl: 10 * 60 * 1000,
-    });
-
-    constructor(private readonly client: Client) {}
-
-    /**
-     * Get the diamond address for a given product
-     * @param productId
-     */
-    async getDiamondContract(productId: Hex): Promise<Address | undefined> {
-        const cached = this.addressCache.get(productId);
-        if (cached) {
-            return cached.address;
-        }
-
-        try {
-            const address = await readContract(this.client, {
-                address: addresses.productInteractionManager,
-                abi: productInteractionManagerAbi,
-                functionName: "getInteractionContract",
-                args: [BigInt(productId)],
-            });
-            this.addressCache.set(productId, { address });
-            return address;
-        } catch (e) {
-            log.error(
-                {
-                    productId,
-                    error: e,
-                },
-                "Failed to get diamond contract"
-            );
-            this.addressCache.set(productId, { address: undefined });
-        }
-        return undefined;
-    }
+export class InteractionPackerRepository {
+    constructor(
+        private readonly client: Client,
+        private readonly diamondRepository: InteractionDiamondRepository
+    ) {}
 
     /**
      * Simulate an interaction
@@ -76,7 +37,8 @@ export class InteractionDiamondRepository {
         productId: Hex;
         interactionData: InteractionData;
     }) {
-        const diamondContract = await this.getDiamondContract(productId);
+        const diamondContract =
+            await this.diamondRepository.getDiamondContract(productId);
         if (!diamondContract) {
             log.info({ productId }, "No diamond contract found for product");
             return {

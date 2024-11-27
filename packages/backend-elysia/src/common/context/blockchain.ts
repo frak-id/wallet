@@ -1,3 +1,4 @@
+import { InteractionDiamondRepository } from "@backend-common/repositories";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { getViemClientFromChain } from "@frak-labs/app-essentials/blockchain";
 import { Elysia } from "elysia";
@@ -11,10 +12,14 @@ export const blockchainContext = new Elysia({
 }).decorate((decorators) => {
     const chain = isRunningInProd ? arbitrum : arbitrumSepolia;
     const client = getViemClientFromChain({ chain });
+    const interactionDiamondRepository = new InteractionDiamondRepository(
+        client
+    );
 
     return {
         ...decorators,
         chain,
         client,
+        interactionDiamondRepository,
     };
 });

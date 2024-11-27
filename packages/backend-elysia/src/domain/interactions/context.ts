@@ -12,7 +12,7 @@ import {
     pendingInteractionsTable,
     pushedInteractionsTable,
 } from "./db/schema";
-import { InteractionDiamondRepository } from "./repositories/InteractionDiamondRepository";
+import { InteractionPackerRepository } from "./repositories/InteractionPackerRepository";
 import { InteractionSignerRepository } from "./repositories/InteractionSignerRepository";
 import { PendingInteractionsRepository } from "./repositories/PendingInteractionsRepository";
 import { WalletSessionRepository } from "./repositories/WalletSessionRepository";
@@ -28,7 +28,13 @@ export const interactionsContext = new Elysia({
     .use(adminWalletContext)
     .use(eventsContext)
     .decorate(
-        ({ client, postgresDb, adminWalletsRepository, ...decorators }) => {
+        ({
+            client,
+            postgresDb,
+            adminWalletsRepository,
+            interactionDiamondRepository,
+            ...decorators
+        }) => {
             // Build our drizzle DB
             const interactionsDb = drizzle(postgresDb, {
                 schema: {
@@ -44,12 +50,15 @@ export const interactionsContext = new Elysia({
                 new PendingInteractionsRepository(interactionsDb);
 
             // Build our blockchain repositories
-            const interactionDiamondRepository =
-                new InteractionDiamondRepository(client);
+            const interactionPackerRepository = new InteractionPackerRepository(
+                client,
+                interactionDiamondRepository
+            );
             const walletSessionRepository = new WalletSessionRepository(client);
             const interactionSignerRepository = new InteractionSignerRepository(
                 client,
-                adminWalletsRepository
+                adminWalletsRepository,
+                interactionDiamondRepository
             );
 
             return {
@@ -59,6 +68,7 @@ export const interactionsContext = new Elysia({
                 // Repos
                 pendingInteractionsRepository,
                 interactionDiamondRepository,
+                interactionPackerRepository,
                 walletSessionRepository,
                 interactionSignerRepository,
             };

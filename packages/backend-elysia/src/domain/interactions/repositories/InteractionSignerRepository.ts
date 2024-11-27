@@ -1,5 +1,6 @@
 import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
+import type { InteractionDiamondRepository } from "@backend-common/repositories/InteractionDiamondRepository";
 import {
     addresses,
     interactionDelegatorAbi,
@@ -40,7 +41,8 @@ export class InteractionSignerRepository {
 
     constructor(
         private readonly client: Client<Transport, Chain>,
-        private readonly adminWalletRepository: AdminWalletsRepository
+        private readonly adminWalletRepository: AdminWalletsRepository,
+        private readonly diamondRepository: InteractionDiamondRepository
     ) {}
 
     /**
@@ -50,13 +52,19 @@ export class InteractionSignerRepository {
         facetData,
         productId,
         user,
-        interactionContract,
     }: {
         facetData: Hex;
         user: Address;
         productId: Hex;
-        interactionContract: Address;
     }): Promise<Hex | undefined> {
+        // Get the diamond for id
+        const interactionContract =
+            await this.diamondRepository.getDiamondContract(productId);
+        if (!interactionContract) {
+            log.warn({ productId }, "No diamond contract found for product");
+            return undefined;
+        }
+
         // Get the signer
         const signerAccount =
             await this.adminWalletRepository.getProductSpecificAccount({
