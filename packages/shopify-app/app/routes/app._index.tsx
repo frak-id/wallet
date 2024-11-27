@@ -1,6 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { useRouteLoaderData } from "@remix-run/react";
-import { useAppBridge } from "@shopify/app-bridge-react";
+import { useLoaderData, useRouteLoaderData } from "@remix-run/react";
 import {
     BlockStack,
     Button,
@@ -13,15 +12,19 @@ import {
 } from "@shopify/polaris";
 import { WalletGated } from "app/components/WalletGated";
 import type { loader as appLoader } from "app/routes/app";
-import { shopInfo } from "app/services.server/shop";
-import { useCallback, useMemo } from "react";
+import { firstProductPublished, shopInfo } from "app/services.server/shop";
 import { ShopInfo } from "../components/ShopInfo";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
     const shop = await shopInfo(context);
-    return { shop };
+    const firstProduct = await firstProductPublished(context);
+    return {
+        shop,
+        firstProduct,
+        APP_THEME_ID: process.env.SHOPIFY_THEME_COMPONENTS_ID,
+    };
 };
 
 /**
@@ -39,16 +42,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function Index() {
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     const isThemeSupported = rootData?.isThemeSupported;
-    const goToDashboard = useCallback(() => {
-        // Open a new window in business.frak.id
-        window.open(process.env.BUSINESS_URL, "_blank");
-    }, []);
 
     return (
         <Page
             title="Frak configuration"
             primaryAction={
-                <Button variant="primary" onClick={goToDashboard}>
+                <Button
+                    variant="primary"
+                    url={process.env.BUSINESS_URL}
+                    target="_blank"
+                >
                     Go to dashboard
                 </Button>
             }
@@ -79,14 +82,8 @@ function ThemeNotSupported() {
 }
 
 function ThemeSupported() {
-    const shopify = useAppBridge();
-    const frakModalConfigurationLink = useMemo(() => {
-        if (typeof window === "undefined") {
-            return "";
-        }
-
-        return `https://${shopify.config.shop}/admin/themes/current/editor?context=apps&activateAppId={uuid}/listener`;
-    }, [shopify]);
+    const { shop, firstProduct, APP_THEME_ID } = useLoaderData<typeof loader>();
+    const editorUrl = `https://${shop.myshopifyDomain}/admin/themes/current/editor`;
 
     return (
         <>
@@ -112,14 +109,19 @@ function ThemeSupported() {
                                 </List.Item>
                                 <List.Item>
                                     <Link
-                                        url={frakModalConfigurationLink}
+                                        url={`${editorUrl}?context=apps&appEmbed=${APP_THEME_ID}/listener`}
                                         target="_blank"
                                     >
                                         Setup Frak embeded app within your theme
                                     </Link>
                                 </List.Item>
                                 <List.Item>
-                                    Add the sharing button where you want
+                                    <Link
+                                        url={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
+                                        target="_blank"
+                                    >
+                                        Add the sharing button where you want
+                                    </Link>
                                 </List.Item>
                             </List>
                         </WalletGated>

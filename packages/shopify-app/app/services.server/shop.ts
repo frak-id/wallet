@@ -26,3 +26,30 @@ query shopInfo {
 
     return shop;
 }
+
+type FirstProductPublishedReturnType = {
+    handle: string;
+};
+
+/**
+ * Get the first product published
+ */
+export async function firstProductPublished({
+    admin: { graphql },
+}: AuthenticatedContext): Promise<FirstProductPublishedReturnType> {
+    const response = await graphql(`
+query GetFirstPublishedProduct {
+  products(first: 1, query: "published_status:published") {
+    edges {
+      node {
+        handle
+      }
+    }
+  }
+}`);
+    const {
+        data: { products },
+    } = await response.json();
+
+    return products.edges[0].node;
+}
