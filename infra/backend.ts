@@ -11,9 +11,7 @@ export const cluster = await aws.ecs.getCluster({
 
 // Get the master secret key
 const masterSecretKey = aws.secretsmanager.getSecret({
-    name: isProd
-        ? "MasterPrivateKeyFAAD0A05-L7zmByBQjYzr"
-        : "MasterPrivateKeyFAAD0A05-L7zmByBQjYzr",
+    name: isProd ? "MasterPrivateKey-Prod" : "MasterPrivateKey-Dev",
 });
 
 // Get the image we will deploy
@@ -93,6 +91,7 @@ const fullEnv = {
     ),
     POSTGRES_DB: isProd ? "backend" : "backend_dev",
     POSTGRES_USER: isProd ? "backend" : "backend-dev",
+    HOSTNAME: domainName,
 };
 
 // Create the service targets
