@@ -74,7 +74,7 @@ export default defineConfig(() => {
             "process.env.POSTGRES_SHOPIFY_DB": JSON.stringify(
                 process.env.POSTGRES_SHOPIFY_DB
             ),
-            ...sstSecrets,
+            ...Object.fromEntries(sstSecrets),
         },
         server: {
             port: Number(process.env.PORT || 3000),
