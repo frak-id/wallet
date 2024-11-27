@@ -46,7 +46,7 @@ export const backendUrl = getStaticVariable({
 export const walletUrl = getStaticVariable({
     prod: "https://wallet.frak.id",
     dev: "https://wallet-dev.frak.id",
-    local: "http://localhost:3000",
+    local: "https://localhost:3000",
 });
 export const stage = $app.stage ?? "dev";
 

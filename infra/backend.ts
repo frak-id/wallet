@@ -91,7 +91,7 @@ const fullEnv = {
     ),
     POSTGRES_DB: isProd ? "backend" : "backend_dev",
     POSTGRES_USER: isProd ? "backend" : "backend-dev",
-    HOSTNAME: domainName,
+    HOSTNAME: $dev ? "" : domainName,
 };
 
 // Create the service targets

@@ -2,6 +2,7 @@ import * as aws from "@pulumi/aws";
 import { type ComponentResourceOptions, Output, all } from "@pulumi/pulumi";
 import type { Component } from "../../.sst/platform/src/components/component.js";
 import type * as sstDuration from "../../.sst/platform/src/components/duration";
+import { isProd } from "../config.ts";
 
 // Some re-export from sst platform
 const SstComponent: typeof Component = await import(
@@ -92,7 +93,7 @@ export class ServiceTargets extends SstComponent {
     // Get the master load balancer
     private getMasterLoadBalancer() {
         return aws.lb.getLoadBalancer({
-            name: `master-elb-${$app.stage}`,
+            name: `master-elb-${isProd ? "production" : "dev"}`,
         });
     }
 
