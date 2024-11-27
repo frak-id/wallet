@@ -1,24 +1,13 @@
-import {
-    blockchainContext,
-    indexerApiContext,
-    walletSessionContext,
-} from "@backend-common";
+import { walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { sift } from "radash";
 import { type Address, formatUnits, isAddressEqual, toHex } from "viem";
-import { BalancesRepository } from "../repositories/BalancesRepository";
-import { PricingRepository } from "../repositories/PricingRepository";
+import { walletContext } from "../context";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .use(walletSessionContext)
-    .use(indexerApiContext)
-    .use(blockchainContext)
-    .decorate(({ client, ...decorators }) => ({
-        ...decorators,
-        balancesRepository: new BalancesRepository(client),
-        pricingRepository: new PricingRepository(),
-    }))
+    .use(walletContext)
     .get(
         "",
         async ({
