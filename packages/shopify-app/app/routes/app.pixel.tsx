@@ -1,6 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { TitleBar } from "@shopify/app-bridge-react";
 import { BlockStack, Card, Page, Text } from "@shopify/polaris";
 import { type IntentWebPixel, Pixel } from "app/components/Pixel";
 import {
@@ -42,8 +41,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function PixelPage() {
     const webPixel = useLoaderData<typeof loader>();
     return (
-        <Page>
-            <TitleBar title="Application pixel" />
+        <Page title="Application pixel">
             <BlockStack gap="500">
                 <Card>
                     <BlockStack gap="200">

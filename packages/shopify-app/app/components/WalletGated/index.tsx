@@ -1,6 +1,12 @@
 import { useDisplayModal, useWalletStatus } from "@frak-labs/nexus-sdk/react";
 import { useLoaderData } from "@remix-run/react";
-import { BlockStack, Button, InlineStack, Text } from "@shopify/polaris";
+import {
+    BlockStack,
+    Button,
+    InlineStack,
+    Spinner,
+    Text,
+} from "@shopify/polaris";
 import type { loader } from "app/routes/app._index";
 import { type ReactNode, useCallback } from "react";
 
@@ -20,8 +26,6 @@ function WalletGatedInner({ children }: { children: ReactNode }) {
     const { mutate: displayFrakModal, isPending } = useDisplayModal();
 
     const authenticate = useCallback(() => {
-        // todo: login failing cause the shopify modal doesn't have the webauthn permissions
-
         displayFrakModal({
             steps: {
                 login: {
@@ -36,11 +40,12 @@ function WalletGatedInner({ children }: { children: ReactNode }) {
 
     if (walletStatus === undefined) {
         return (
-            <>
+            <InlineStack gap="200" blockAlign="center">
+                <Spinner size="small" />
                 <Text variant="headingMd" as="h2">
                     Checking everything...
                 </Text>
-            </>
+            </InlineStack>
         );
     }
 

@@ -4,20 +4,24 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
-
+import { doesThemeSupportBlock } from "app/services.server/theme";
 import { RootProvider } from "../providers/RootProvider";
 import { authenticate } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-    await authenticate.admin(request);
-    return Response.json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
+    const context = await authenticate.admin(request);
+    const isThemeSupported = await doesThemeSupportBlock(context);
+
+    return {
+        apiKey: process.env.SHOPIFY_API_KEY || "",
+        isThemeSupported,
+    };
 };
 
 export default function App() {
-    const { apiKey } = useLoaderData<typeof loader>();
-
+    const { apiKey, isThemeSupported } = useLoaderData<typeof loader>();
     return (
         <AppProvider isEmbeddedApp apiKey={apiKey}>
             <RootProvider>
@@ -25,8 +29,12 @@ export default function App() {
                     <Link to="/app" rel="home">
                         Home
                     </Link>
-                    <Link to="/app/pixel">Application pixel</Link>
-                    <Link to="/app/webhook">Webhook</Link>
+                    {isThemeSupported && (
+                        <>
+                            <Link to="/app/pixel">Application pixel</Link>
+                            <Link to="/app/webhook">Webhook</Link>
+                        </>
+                    )}
                 </NavMenu>
                 <Outlet />
             </RootProvider>

@@ -38,6 +38,7 @@
     "@tanstack/react-query-persist-client": "^5.61.0",
     "drizzle-orm": "^0.36.3",
     "isbot": "^5.1.17",
+    "jsonc-parser": "^3.3.1",
     "pick": "^0.0.1",
     "postgres": "^3.4.5",
     "radash": "^12.1.0",

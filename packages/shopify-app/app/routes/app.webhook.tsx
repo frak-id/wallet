@@ -1,6 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { TitleBar } from "@shopify/app-bridge-react";
 import { BlockStack, Card, Page, Text } from "@shopify/polaris";
 import { type IntentWebhook, Webhook } from "app/components/Webhook";
 import { shopInfo } from "app/services.server/shop";
@@ -45,8 +44,7 @@ export default function WebHookPage() {
     const { webhooks } = data;
     const isWebhookExists = webhooks.edges.length > 0;
     return (
-        <Page>
-            <TitleBar title="Webhook" />
+        <Page title="Webhook">
             <BlockStack gap="500">
                 <Card>
                     <BlockStack gap="200">
