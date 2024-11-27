@@ -116,12 +116,20 @@ function ThemeSupported() {
                                     </Link>
                                 </List.Item>
                                 <List.Item>
-                                    <Link
-                                        url={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
-                                        target="_blank"
-                                    >
-                                        Add the sharing button where you want
-                                    </Link>
+                                    {firstProduct ? (
+                                        <Link
+                                            url={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
+                                            target="_blank"
+                                        >
+                                            Add the sharing button where you
+                                            want
+                                        </Link>
+                                    ) : (
+                                        <>
+                                            You need to add a product to your
+                                            store to add the sharing button
+                                        </>
+                                    )}
                                 </List.Item>
                             </List>
                         </WalletGated>

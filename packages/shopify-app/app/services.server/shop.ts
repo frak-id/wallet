@@ -51,5 +51,5 @@ query GetFirstPublishedProduct {
         data: { products },
     } = await response.json();
 
-    return products.edges[0].node;
+    return products.edges?.[0]?.node;
 }
