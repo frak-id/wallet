@@ -3,5 +3,5 @@ roles = ["frontend", "backend"]
 webhooks_path = "/webhooks/app/uninstalled"
 
 [commands]
-predev = "bun db-dev:generate"
-dev = "bun db-dev:migrate && sst bind bun remix vite:dev"
+predev = "bun db:generate"
+dev = "bun db:migrate && sst dev bun remix vite:dev"

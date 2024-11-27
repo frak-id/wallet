@@ -17,11 +17,9 @@
     "shopify": "shopify",
     "graphql-codegen": "graphql-codegen",
     "vite": "vite",
-    "db:studio": "sst bind drizzle-kit studio",
-    "db-dev:generate": "sst bind drizzle-kit generate",
-    "db-dev:migrate": "sst bind drizzle-kit migrate",
-    "db-prod:generate": "sst bind --stage prod drizzle-kit generate",
-    "db-prod:migrate": "sst bind --stage prod drizzle-kit migrate"
+    "db:studio": "sst dev drizzle-kit studio",
+    "db:generate": "sst dev drizzle-kit generate",
+    "db:migrate": "sst dev drizzle-kit migrate"
   },
   "type": "module",
   "engines": {
