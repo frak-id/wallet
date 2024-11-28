@@ -5,8 +5,8 @@ import type { NexusWalletSdkConfig } from "../types";
  * @param selector
  */
 const getButtonShare = (
-    selector = "#nexus-share-button > button"
-): Element | null => document.querySelector(selector);
+    selector = "button[data-frak-share-button], #nexus-share-button > button"
+): NodeListOf<Element> => document.querySelectorAll(selector);
 
 /**
  * Set the button disabled
@@ -27,8 +27,12 @@ const setButtonDisabled = (disabled: boolean, button: Element | null) => {
  */
 const toggleButtonDisabled =
     (disabled: boolean) => (config?: NexusWalletSdkConfig) => {
-        const button = getButtonShare(config?.metadata?.buttonShare);
-        setButtonDisabled(disabled, button);
+        const buttons = Array.from(
+            getButtonShare(config?.metadata?.buttonShare)
+        );
+        for (const button of buttons) {
+            setButtonDisabled(disabled, button);
+        }
     };
 
 /**

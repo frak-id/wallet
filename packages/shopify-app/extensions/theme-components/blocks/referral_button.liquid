@@ -1,16 +1,15 @@
-
-<div id="nexus-share-button">
-  <button
-          type="button"
-          onClick="window.FrakSetup.modalShare()"
-          class="button"
-          style="background-color:{{ block.settings.background_color }} color:{{ block.settings.text_color }}"
-  >
-        <span>
-            {{ 'share_btn.label' | t }}
-        </span>
-  </button>
-</div>
+<button
+  type="button"
+  onClick="window.FrakSetup.modalShare()"
+  class="button"
+  style="background-color:{{ block.settings.background_color }} color:{{ block.settings.text_color }}"
+  data-frak-share-button
+  disabled
+>
+    <span>
+      {{ 'share_btn.label' | t }}
+    </span>
+</button>
 
 {% schema %}
 {
