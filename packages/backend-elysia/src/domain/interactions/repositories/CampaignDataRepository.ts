@@ -1,6 +1,7 @@
 import { interactionTypes } from "@frak-labs/nexus-sdk/core";
 import type { FullInteractionTypesKey } from "@frak-labs/nexus-sdk/core";
 import { LRUCache } from "lru-cache";
+import { sift } from "radash";
 import {
     type Address,
     type Chain,
@@ -63,11 +64,8 @@ export class CampaignDataRepository {
             return cached;
         }
 
-        // Build our reward output
-        const rewards: CampaignReward[] = [];
-
-        // Iterate over each known storage pointer that could contain a reward
-        for (const storagePtr of this.storagePtrs) {
+        // Async mapping of the rewards
+        const rewardsAsync = this.storagePtrs.map(async (storagePtr) => {
             // Find the trigger value
             const triggerValue = await getStorageAt(this.client, {
                 address: campaign,
@@ -75,15 +73,18 @@ export class CampaignDataRepository {
                 blockNumber: lastUpdateBlock,
             });
             // If that's 0, early exit
-            if (!triggerValue) continue;
+            if (!triggerValue) return null;
             const baseReward = this.extractBaseRewardFromStorage(triggerValue);
-            if (!baseReward) continue;
+            if (!baseReward) return null;
             // Otherwise, add it to the cache
-            rewards.push({
+            return {
                 interactionTypeKey: storagePtr.key,
                 amount: baseReward,
-            });
-        }
+            };
+        });
+
+        // Build our reward output
+        const rewards: CampaignReward[] = sift(await Promise.all(rewardsAsync));
 
         // If no rewards, early exit
         if (!rewards.length) {
