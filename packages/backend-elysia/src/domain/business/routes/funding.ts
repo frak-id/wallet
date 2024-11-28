@@ -1,4 +1,4 @@
-import { adminWalletContext, blockchainContext, log } from "@backend-common";
+import { blockchainContext, log } from "@backend-common";
 import { t } from "@backend-utils";
 import { addresses } from "@frak-labs/app-essentials";
 import { mintAbi } from "@frak-labs/app-essentials/blockchain";
@@ -12,7 +12,6 @@ import { readContract, writeContract } from "viem/actions";
  */
 export const fundingRoutes = new Elysia({ prefix: "/funding" })
     .use(blockchainContext)
-    .use(adminWalletContext)
     .post(
         "/getTestToken",
         async ({ body: { bank }, client, adminWalletsRepository }) => {

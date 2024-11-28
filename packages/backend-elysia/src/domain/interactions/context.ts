@@ -1,5 +1,4 @@
 import {
-    adminWalletContext,
     blockchainContext,
     eventsContext,
     postgresContext,
@@ -25,7 +24,6 @@ export const interactionsContext = new Elysia({
 })
     .use(blockchainContext)
     .use(postgresContext)
-    .use(adminWalletContext)
     .use(eventsContext)
     .decorate(
         ({

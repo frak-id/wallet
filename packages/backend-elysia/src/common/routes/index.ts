@@ -1,10 +1,10 @@
-import { adminWalletContext } from "@backend-common/context";
+import { blockchainContext } from "@backend-common/context";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { isHex } from "viem";
 
 export const commonRoutes = new Elysia({ prefix: "/common" })
-    .use(adminWalletContext)
+    .use(blockchainContext)
     .get(
         "/adminWallet",
         async ({ adminWalletsRepository, query, error }) => {

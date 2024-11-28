@@ -1,3 +1,4 @@
+import type { PricingRepository } from "@backend-common/repositories";
 import {
     type GetCampaignResponseDto,
     referralCampaignAbi,
@@ -10,19 +11,39 @@ import {
     type Client,
     type Hex,
     type Transport,
+    concatHex,
     formatUnits,
+    keccak256,
     toHex,
 } from "viem";
 import { multicall } from "viem/actions";
 import type { CampaignDataRepository } from "../repositories/CampaignDataRepository";
-import type { PricingRepository } from "../repositories/PricingRepository";
 
+export type ActiveReward = {
+    campaign: Address;
+    token: Address;
+    interactionTypeKey: string;
+    rawAmount: Hex;
+    amount: number;
+    eurAmount: number;
+    usdAmount: number;
+};
+
+/**
+ * Service helping us to fetch all the actives campaign rewards around a product
+ */
 export class CampaignRewardsService {
     // Cache for the campaigns info per product
     private readonly campaignsPerProductCache = new LRUCache<
         Hex,
         GetCampaignResponseDto
     >({
+        max: 128,
+        ttl: 5 * 60_000,
+    });
+
+    // Cache for the active campaigns
+    private readonly activeCampaignsCache = new LRUCache<Hex, boolean[]>({
         max: 128,
         ttl: 5 * 60_000,
     });
@@ -39,7 +60,9 @@ export class CampaignRewardsService {
      * @param productId
      * @private
      */
-    async getRewardForProduct({ productId }: { productId: Hex }) {
+    async getActiveRewardsForProduct({
+        productId,
+    }: { productId: Hex }): Promise<ActiveReward[] | undefined> {
         // Query our indexer to fetch the campaigns for the given product
         const { campaigns, tokens } = await this.getCampaignData(productId);
         if (!campaigns.length) return undefined;
@@ -49,39 +72,14 @@ export class CampaignRewardsService {
             (campaign) => campaign.attached
         );
 
-        // Check if each campaigns are active or not
-        const isCampaignActives = await multicall(this.client, {
-            contracts: attachedCampaigns.map(
-                (campaign) =>
-                    ({
-                        abi: referralCampaignAbi,
-                        address: campaign.address,
-                        functionName: "isActive",
-                    }) as const
-            ),
-            allowFailure: false,
+        // Filter out all the non-active campaigns
+        const activeCampaigns = await this.filterActiveCampaigns({
+            campaigns: attachedCampaigns,
         });
-
-        // If none active early exit
-        if (!isCampaignActives.some((isActive) => isActive)) {
-            return undefined;
-        }
-
-        // Filter out all the non active campaigns
-        const activeCampaigns = attachedCampaigns.filter(
-            (_, index) => isCampaignActives[index]
-        );
+        if (!activeCampaigns.length) return undefined;
 
         // All the active rewards on the active campaigns
-        const activeRewards: {
-            campaign: Address;
-            token: Address;
-            interactionTypeKey: string;
-            rawAmount: Hex;
-            amount: number;
-            eurAmount: number;
-        }[] = [];
-        let totalPerCampaign = 0;
+        const activeRewards: ActiveReward[] = [];
 
         // Iterate over each campaigns
         for (const campaign of activeCampaigns) {
@@ -98,7 +96,7 @@ export class CampaignRewardsService {
                 token: token.address,
             });
             if (!price) continue;
-
+ 
             // Fetch the rewards
             const rewards =
                 await this.campaignDataRepository.getRewardsFromStorage({
@@ -116,25 +114,17 @@ export class CampaignRewardsService {
                     interactionTypeKey: reward.interactionTypeKey,
                     amount,
                     eurAmount: price.eur * amount,
+                    usdAmount: price.usd * amount,
                     rawAmount: toHex(reward.amount),
                 };
             });
 
             // Add them to the active rewards
             activeRewards.push(...mappedRewards);
-            totalPerCampaign +=
-                mappedRewards.reduce(
-                    (acc, reward) => acc + reward.eurAmount,
-                    0
-                ) / mappedRewards.length;
         }
 
         // Return everything
-        return {
-            activeRewards,
-            totalPerCampaign,
-            avgPerCampaign: totalPerCampaign / activeRewards.length,
-        };
+        return activeRewards;
     }
 
     /**
@@ -152,5 +142,38 @@ export class CampaignRewardsService {
             .json<GetCampaignResponseDto>();
         this.campaignsPerProductCache.set(productId, result);
         return result;
+    }
+
+    /**
+     * Filter a list of campaigns t only get the active ones
+     * @param campaigns
+     * @private
+     */
+    private async filterActiveCampaigns({
+        campaigns,
+    }: { campaigns: GetCampaignResponseDto["campaigns"] }) {
+        // Get initial potential value from cache
+        const cacheKey = keccak256(concatHex(campaigns.map((c) => c.address)));
+        const cached = this.activeCampaignsCache.get(cacheKey);
+
+        // Check if each campaigns are active or not
+        const isActives =
+            cached?.length === campaigns.length
+                ? cached
+                : await multicall(this.client, {
+                      contracts: campaigns.map(
+                          (campaign) =>
+                              ({
+                                  abi: referralCampaignAbi,
+                                  address: campaign.address,
+                                  functionName: "isActive",
+                              }) as const
+                      ),
+                      allowFailure: false,
+                  });
+        this.activeCampaignsCache.set(cacheKey, isActives);
+
+        // Filter on the campaigns
+        return campaigns.filter((_, index) => isActives[index]);
     }
 }
