@@ -37,16 +37,14 @@ export function useEstimatedInteractionReward({
             const { data, error } =
                 await authenticatedBackendApi.interactions.reward.estimate.get({
                     query: {
-                        productId:
-                            "0x2d0cdaf9a1153a9a4b68379c64d4397611a0f3d9fa4015376435f9a64aafc0c1",
+                        productId: listenerProductId,
                         ...(interaction ? { interactionKey: interaction } : {}),
                     },
                 });
             console.log("Result", {
                 data,
                 error,
-                listenerProductId:
-                    "0x2d0cdaf9a1153a9a4b68379c64d4397611a0f3d9fa4015376435f9a64aafc0c1",
+                listenerProductId: listenerProductId,
                 interaction,
             });
             if (error) throw error;
