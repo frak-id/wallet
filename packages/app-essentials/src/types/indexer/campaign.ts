@@ -11,6 +11,7 @@ export type GetCampaignResponseDto = {
         attached: boolean;
         banking: Address;
         token: Address;
+        lastUpdateBlock: string; // string representing a bigint
     }[];
     tokens: IndexerToken[];
 };

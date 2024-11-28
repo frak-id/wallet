@@ -21,6 +21,7 @@ export {
 export {
     interactionTypes,
     type InteractionTypesKey,
+    type FullInteractionTypesKey,
 } from "./constants/interactionTypes";
 
 // Types

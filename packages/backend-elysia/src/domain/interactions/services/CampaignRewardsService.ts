@@ -96,11 +96,12 @@ export class CampaignRewardsService {
                 token: token.address,
             });
             if (!price) continue;
- 
+
             // Fetch the rewards
             const rewards =
                 await this.campaignDataRepository.getRewardsFromStorage({
                     campaign: campaign.address,
+                    lastUpdateBlock: BigInt(campaign.lastUpdateBlock),
                 });
 
             // Map all the rewards

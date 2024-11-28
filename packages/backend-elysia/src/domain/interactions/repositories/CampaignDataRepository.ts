@@ -1,4 +1,5 @@
 import { interactionTypes } from "@frak-labs/nexus-sdk/core";
+import type { FullInteractionTypesKey } from "@frak-labs/nexus-sdk/core";
 import { LRUCache } from "lru-cache";
 import {
     type Address,
@@ -14,7 +15,7 @@ import {
 import { getStorageAt } from "viem/actions";
 
 type CampaignReward = {
-    interactionTypeKey: string;
+    interactionTypeKey: FullInteractionTypesKey;
     amount: bigint;
 };
 
@@ -34,7 +35,7 @@ export class CampaignDataRepository {
     private readonly storagePtrs = Object.entries(interactionTypes).flatMap(
         ([key, subType]) =>
             Object.entries(subType).map(([subKey, typeHash]) => ({
-                key: `${key}.${subKey}`,
+                key: `${key}.${subKey}` as FullInteractionTypesKey,
                 typeHash,
                 storagePtr: toHex(
                     hexToBigInt(
@@ -52,8 +53,10 @@ export class CampaignDataRepository {
      */
     async getRewardsFromStorage({
         campaign,
+        lastUpdateBlock,
     }: {
         campaign: Address;
+        lastUpdateBlock?: bigint;
     }): Promise<CampaignReward[]> {
         const cached = this.campaignRewardsCache.get(campaign);
         if (cached) {
@@ -69,6 +72,7 @@ export class CampaignDataRepository {
             const triggerValue = await getStorageAt(this.client, {
                 address: campaign,
                 slot: storagePtr.storagePtr,
+                blockNumber: lastUpdateBlock,
             });
             // If that's 0, early exit
             if (!triggerValue) continue;
