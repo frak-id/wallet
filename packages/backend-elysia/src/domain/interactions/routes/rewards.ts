@@ -33,7 +33,7 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
     })
     // Estimate potential reward for an interaction
     .get(
-        "estimate",
+        "/estimate",
         async ({
             query: { productId, interactionKey },
             campaignRewardsService,
