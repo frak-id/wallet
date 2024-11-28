@@ -6,7 +6,7 @@ import {
     pendingInteractionsTable,
     pushedInteractionsTable,
 } from "../db/schema";
-import type { InteractionDiamondRepository } from "../repositories/InteractionDiamondRepository";
+import type { InteractionPackerRepository } from "../repositories/InteractionPackerRepository";
 import type { InteractionSignerRepository } from "../repositories/InteractionSignerRepository";
 import type { PreparedInteraction } from "../types/interactions";
 
@@ -20,7 +20,7 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
             run: async ({ context: { logger } }) => {
                 const {
                     interactionsDb,
-                    interactionDiamondRepository,
+                    interactionPackerRepository,
                     interactionSignerRepository,
                     pendingInteractionsRepository,
                 } = app.decorator;
@@ -43,7 +43,7 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
                     await executeInteractions({
                         interactions,
                         interactionsDb,
-                        interactionDiamondRepository,
+                        interactionPackerRepository,
                         interactionSignerRepository,
                         logger,
                     });
@@ -61,27 +61,18 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
 async function executeInteractions({
     interactions,
     interactionsDb,
-    interactionDiamondRepository,
+    interactionPackerRepository,
     interactionSignerRepository,
     logger,
 }: {
     interactions: (typeof pendingInteractionsTable.$inferSelect)[];
     interactionsDb: InteractionsDb;
-    interactionDiamondRepository: InteractionDiamondRepository;
+    interactionPackerRepository: InteractionPackerRepository;
     interactionSignerRepository: InteractionSignerRepository;
     logger: pino.Logger;
 }) {
     // Prepare and pack every interaction
     const preparedInteractionsAsync = interactions.map(async (interaction) => {
-        // Get the diamond for id
-        const interactionContract =
-            await interactionDiamondRepository.getDiamondContract(
-                interaction.productId
-            );
-        if (!interactionContract) {
-            return null;
-        }
-
         // Get the signature
         const signature =
             interaction.signature ??
@@ -89,7 +80,6 @@ async function executeInteractions({
                 user: interaction.wallet,
                 facetData: interaction.interactionData,
                 productId: interaction.productId,
-                interactionContract,
             }));
         if (!signature) {
             logger.warn(
@@ -103,7 +93,7 @@ async function executeInteractions({
 
         // Pack it for execution
         const packedInteraction =
-            interactionDiamondRepository.packageInteractionData({
+            interactionPackerRepository.packageInteractionData({
                 interactionData: {
                     handlerTypeDenominator: interaction.typeDenominator,
                     interactionData: interaction.interactionData,

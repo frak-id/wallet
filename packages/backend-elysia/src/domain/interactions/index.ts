@@ -4,12 +4,14 @@ import { purchaseTrackerJob } from "./jobs/purchaseTracker";
 import { simulateInteractionJob } from "./jobs/simulate";
 import { purchaseInteractionsRoutes } from "./routes/purchase";
 import { pushInteractionsRoutes } from "./routes/push";
+import { rewardsRoutes } from "./routes/rewards";
 
 export const interactions = new Elysia({
     prefix: "/interactions",
 })
     .use(executeInteractionJob)
     .use(simulateInteractionJob)
+    .use(rewardsRoutes)
     .use(pushInteractionsRoutes)
     .use(purchaseInteractionsRoutes)
     .use(purchaseTrackerJob)

@@ -1,5 +1,4 @@
 import {
-    adminWalletContext,
     blockchainContext,
     eventsContext,
     postgresContext,
@@ -21,7 +20,6 @@ export const oracleContext = new Elysia({
 })
     .use(blockchainContext)
     .use(postgresContext)
-    .use(adminWalletContext)
     .use(eventsContext)
     .decorate(({ postgresDb, ...decorators }) => {
         const oracleDb = drizzle(postgresDb, {

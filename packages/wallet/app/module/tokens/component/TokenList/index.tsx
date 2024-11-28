@@ -1,7 +1,7 @@
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { TokenItem } from "@/module/tokens/component/TokenItem";
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
-import type { BalanceItem } from "@/types/Token";
+import type { BalanceItem } from "@/types/Balance";
 import styles from "./index.module.css";
 
 export function TokenList({

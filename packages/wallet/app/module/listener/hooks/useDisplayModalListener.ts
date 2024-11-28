@@ -135,7 +135,7 @@ function filterStepsToDo({
     stepsPrepared: Pick<ModalStepTypes, "key" | "params">[];
 }) {
     const session = jotaiStore.get(sessionAtom);
-    const openSession = jotaiStore.get(interactionSessionAtom);
+    const interactionSession = jotaiStore.get(interactionSessionAtom);
 
     // The current result (if already authenticated + session)
     let currentResult: ModalRpcStepsResultType<[]> = {};
@@ -156,14 +156,15 @@ function filterStepsToDo({
     if (
         stepsPrepared.find((step) => step.key === "openSession") &&
         session &&
-        openSession
+        interactionSession &&
+        interactionSession.sessionEnd > Date.now()
     ) {
         // Add the openSession result
         currentResult = {
             ...currentResult,
             openSession: {
-                startTimestamp: openSession.sessionStart,
-                endTimestamp: openSession.sessionEnd,
+                startTimestamp: interactionSession.sessionStart,
+                endTimestamp: interactionSession.sessionEnd,
             },
         };
         currentStep++;

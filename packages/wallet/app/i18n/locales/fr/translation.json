@@ -60,15 +60,15 @@
         "modal": {
             "default": {
                 "dismissBtn": "Je continue ma navigation",
-                "dismissBtn_sharing": "Partager sans être rémunéré(e)"
+                "dismissBtn_sharing": "Partager sans être récompensé"
             },
             "final": {
                 "default": {
                     "title": "Succès",
                     "title_reward": "Gains",
                     "title_sharing": "Partager",
-                    "description_sharing": "En partageant ce lien, vous serez récompensé par **{{ productName }}** si ces partages entraînent des actions comme des clics, des inscriptions ou des achats. Consultez vos gains à tout moment sur [wallet.frak.id](https://wallet.frak.id).",
-                    "description_reward": "Consultez vos gains à tout moment sur [wallet.frak.id](https://wallet.frak.id). Vous aussi partagez à vos amis, tous vos partages qui entraînent des clics, des inscriptions ou des achats génèrent de nouveaux gains !",
+                    "description_sharing": "Recevez **{{ estimatedReward }}€** de la part de **{{ productName }}** directement sur votre porte-monnaie pour tout achat réalisé grâce à votre partage.\n\nRetrouvez votre porte-monnaie sur [wallet.frak.id](https://wallet.frak.id).\n\nPrêt, Partagez, Gagnez !",
+                    "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois **{{ estimatedReward }}€** directement sur mon porte-monnaie, utilisable où je veux.",
                     "description": "Vous avez effectué toutes les étapes avec succès."
                 },
                 "dismissed": {
@@ -79,8 +79,9 @@
             "login": {
                 "default": {
                     "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**.",
-                    "description_sharing": "{{ productName }} vous rémunère directement sur votre **porte-monnaie** pour la valeur que vous créez si vos partages entraînent des actions comme des clics, des inscriptions ou des achats.",
-                    "description_reward": "{{ productName }} vous rémunère directement sur votre **porte-monnaie** pour la valeur que vous créez en cas d'actions sur ce site, comme des clics, inscriptions ou achats.",
+                    "description_other": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**",
+                    "description_sharing": "En partageant ce produit, je deviens ambassadeur-rice **{{ productName }}**, je reçois **{{ estimatedReward }}€** directement dans mon porte-monnaie.",
+                    "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois **{{ estimatedReward }}€** directement sur mon porte-monnaie, utilisable où je veux.",
                     "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
                     "secondaryAction": "J'ai déjà un porte-monnaie",
                     "title": "Connexion"
@@ -89,7 +90,7 @@
             },
             "openSession": {
                 "default": {
-                    "description": "Bravo, votre porte-monnaie est créé ! Cliquez sur le bouton ci-dessous pour l'activer et recevoir vos gains",
+                    "description": "Bravo votre porte-monnaie est créé ! Activez-le maintenant pour recevoir vos **{{ estimatedReward }}€**.",
                     "primaryAction": "J'active mon porte-monnaie",
                     "title": "Activation"
                 }

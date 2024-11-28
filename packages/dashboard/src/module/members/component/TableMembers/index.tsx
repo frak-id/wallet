@@ -14,7 +14,7 @@ import {
 import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
-import type { MembersPageItem } from "@/types/Members";
+import type { GetMembersPageItem } from "@frak-labs/app-essentials";
 import { Button } from "@module/component/Button";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";
@@ -31,14 +31,14 @@ import { useEffect, useMemo, useState } from "react";
 import { formatEther, isAddressEqual } from "viem";
 import styles from "./index.module.css";
 
-const Table = dynamic<ReactTableProps<MembersPageItem>>(
+const Table = dynamic<ReactTableProps<GetMembersPageItem>>(
     () => import("@/module/common/component/Table").then((mod) => mod.Table),
     {
         loading: () => <Skeleton />,
     }
 );
 
-const columnHelper = createColumnHelper<MembersPageItem>();
+const columnHelper = createColumnHelper<GetMembersPageItem>();
 
 /**
  * Table of all the members components
@@ -163,7 +163,7 @@ export function TableMembers() {
                     cell: ({ getValue }) =>
                         `${formatEther(BigInt(getValue()))} $`,
                 }),
-            ] as ColumnDef<MembersPageItem>[],
+            ] as ColumnDef<GetMembersPageItem>[],
         [selectedMembers, addSelectedMember, removeSelectedMember]
     );
 

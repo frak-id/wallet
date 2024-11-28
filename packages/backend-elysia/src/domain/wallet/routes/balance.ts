@@ -1,24 +1,14 @@
-import {
-    blockchainContext,
-    indexerApiContext,
-    walletSessionContext,
-} from "@backend-common";
+import { walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
+import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { sift } from "radash";
-import { type Address, formatUnits, isAddressEqual, toHex } from "viem";
-import { BalancesRepository } from "../repositories/BalancesRepository";
-import { PricingRepository } from "../repositories/PricingRepository";
+import { formatUnits, isAddressEqual, toHex } from "viem";
+import { walletContext } from "../context";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .use(walletSessionContext)
-    .use(indexerApiContext)
-    .use(blockchainContext)
-    .decorate(({ client, ...decorators }) => ({
-        ...decorators,
-        balancesRepository: new BalancesRepository(client),
-        pricingRepository: new PricingRepository(),
-    }))
+    .use(walletContext)
     .get(
         "",
         async ({
@@ -98,7 +88,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             // Fetch the pending rewards for this user
             const { rewards, tokens } = await indexerApi
                 .get(`rewards/${walletSession.address}`)
-                .json<RewardApiResult>();
+                .json<GetRewardResponseDto>();
             if (!rewards.length) {
                 return {
                     eurClaimable: 0,
@@ -170,17 +160,3 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             },
         }
     );
-
-type RewardApiResult = {
-    rewards: {
-        amount: string;
-        address: Address;
-        token: Address;
-    }[];
-    tokens: {
-        address: Address;
-        decimals: number;
-        name: string;
-        symbol: string;
-    }[];
-};
