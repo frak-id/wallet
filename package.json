@@ -17,7 +17,7 @@
     "dev": "bun sst dev",
     "format": "biome check --write .",
     "format:check": "biome check .",
-    "knip": "knip",
+    "knip": "sst shell bun run knip",
     "lint": "biome lint .",
     "update:deps": "npm-check-updates -ui -ws",
     "typecheck": "bun run --filter '*' typecheck"
@@ -27,7 +27,6 @@
     "@changesets/changelog-git": "^0.2.0",
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.7",
-    "@types/aws-lambda": "8.10.145",
     "@types/node": "^22.0.0",
     "knip": "^5.27.0",
     "npm-check-updates": "^16.14.20",
@@ -42,8 +41,5 @@
     "packages/shopify-app/extensions/*",
     "example/*"
   ],
-  "dependencies": {
-    "i18next-browser-languagedetector": "^8.0.0"
-  },
   "packageManager": "bun@1.1.26"
 }

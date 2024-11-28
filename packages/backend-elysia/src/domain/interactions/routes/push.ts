@@ -1,6 +1,7 @@
 import { log, walletSdkSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
+import { sift } from "radash";
 import { isAddressEqual } from "viem";
 import { interactionsContext } from "../context";
 import { pendingInteractionsTable } from "../db/schema";
@@ -17,8 +18,12 @@ export const pushInteractionsRoutes = new Elysia()
             error,
             interactionsDb,
             emitter,
+            interactionDiamondRepository,
         }) => {
             if (!walletSdkSession) return;
+            if (!interactions.length) {
+                return;
+            }
 
             // Ensure no wallet mismatch
             if (
@@ -35,9 +40,24 @@ export const pushInteractionsRoutes = new Elysia()
             log.debug(`Received ${interactions.length} interactions`);
 
             // Map the interaction for the db insertion
-            const interactionsForInsert = interactions.map(
-                (interaction) =>
-                    ({
+            const interactionsForInsertPromise = interactions.map(
+                async (interaction) => {
+                    const diamond =
+                        await interactionDiamondRepository.getDiamondContract(
+                            interaction.productId
+                        );
+                    // If no diamond found, it mean that we don't havy any interaction contract for this product
+                    if (!diamond) {
+                        log.warn(
+                            {
+                                productId: interaction.productId,
+                            },
+                            "No diamond found for the product"
+                        );
+                        return null;
+                    }
+
+                    return {
                         wallet: interaction.wallet,
                         productId: interaction.productId,
                         typeDenominator:
@@ -46,8 +66,17 @@ export const pushInteractionsRoutes = new Elysia()
                             interaction.interaction.interactionData,
                         signature: interaction.signature ?? undefined,
                         status: "pending",
-                    }) as const
+                    } as const;
+                }
             );
+
+            const interactionsForInsert = sift(
+                await Promise.all(interactionsForInsertPromise)
+            );
+            if (!interactionsForInsert.length) {
+                log.warn("No interaction to insert post filter");
+                return;
+            }
 
             // Insert it in the pending state
             const results = await interactionsDb

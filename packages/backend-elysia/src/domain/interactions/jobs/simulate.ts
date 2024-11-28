@@ -52,6 +52,8 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     `Got ${interactions.length} interactions to simulate`
                 );
 
+                // todo: Base anti cheat system (for now just prevent unsafe purchase one)
+
                 try {
                     // Perform the simulation and update the interactions
                     const hasSuccessInteractions =
