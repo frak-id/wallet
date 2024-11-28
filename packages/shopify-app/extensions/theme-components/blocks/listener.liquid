@@ -13,7 +13,7 @@
 
     // Precompute a few stuff
     let logoUrl = "{{ block.settings.logo.src }}";
-    if (logoUrl.startsWith("cdn.shopify.com")) {
+    if (!logoUrl.startsWith("cdn.shopify.com")) {
         logoUrl = `https://${Shopify.shop}/cdn/shop/${logoUrl}`;
     }
     const lang = "{{ block.settings.modal_lng }}" === "default" ? undefined : "{{ block.settings.modal_lng }}";
