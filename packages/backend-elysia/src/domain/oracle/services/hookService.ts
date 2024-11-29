@@ -11,6 +11,8 @@ export const purchaseWebhookService = new Elysia({
     .decorate(({ oracleDb, ...decorators }) => {
         /**
          * Validate a body hmac signature
+         * Signature is a base64 encoded hmac sha256 of the body
+         *  - Encoded using the product secret, set in the dashboard
          */
         function validateBodyHmac({
             body,
