@@ -33,6 +33,7 @@
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
     "importHelpers": true, // This is only used for build validation. Since we do not have `tslib` installed, this will fail if we accidentally make use of anything that'd require injection of helpers.
+    "experimentalDecorators": true,
 
     // Language and environment
     "moduleResolution": "node",
@@ -48,11 +49,18 @@
     "noErrorTruncation": true,
 
     // Enable source map by default
-    "sourceMap": true,
+    "sourceMap": false,
 
     // Declaration files
-    "declaration": true,
-    "declarationDir": "./dist",
+//    "declaration": true,
+//    "declarationDir": "./dist",
+
+    "plugins": [
+      {
+        "name": "ts-lit-plugin",
+        "strict": true
+      }
+    ]
   },
   "tsc-alias": {
     "resolveFullPaths": true,

@@ -1,9 +1,9 @@
 export function modalShare() {
-    if (!window.FrakSetup.modalBuilder) {
+    if (!window.NexusSDK.modalBuilderSteps) {
         console.error("Frak client not initialized");
         return;
     }
-    window.FrakSetup.modalBuilder
+    window.NexusSDK.modalBuilderSteps
         .sharing({
             popupTitle: "Share this article with your friends",
             text: "Discover this awesome article",

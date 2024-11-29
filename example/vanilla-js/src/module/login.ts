@@ -17,11 +17,11 @@ async function handleLogin() {
     loginButton.textContent = "Logging in...";
 
     try {
-        if (!window.FrakSetup.modalBuilder) {
+        if (!window.NexusSDK.modalBuilderSteps) {
             console.error("Frak client not initialized");
             return;
         }
-        await window.FrakSetup.modalBuilder.display();
+        await window.NexusSDK.modalBuilderSteps.display();
         loginButton.textContent = "Logged In";
     } catch (error) {
         console.error("Login error:", error);

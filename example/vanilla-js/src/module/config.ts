@@ -13,3 +13,17 @@ export const loginModalStep = {
         homepageLink: "https://news-paper.xyz/",
     },
 };
+
+export const modalConfig = {
+    metadata: {
+        lang: "fr",
+        isDismissible: true,
+    },
+    login: loginModalStep,
+} as const;
+
+export const modalShareConfig = {
+    popupTitle: "Share this article with your friends",
+    text: "Discover this awesome article",
+    link: typeof window !== "undefined" ? window.location.href : "",
+};

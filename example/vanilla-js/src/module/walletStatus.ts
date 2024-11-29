@@ -8,12 +8,12 @@ export function displayWalletStatus() {
     }
     statusElement.textContent = "Checking wallet status...";
 
-    if (!window.FrakSetup.frakClient) {
+    if (!window.NexusSDK.client) {
         console.error("Frak client not initialized");
         return;
     }
     window.NexusSDK.watchWalletStatus(
-        window.FrakSetup.frakClient,
+        window.NexusSDK.client,
         (status: WalletStatusReturnType) => {
             console.log("Wallet status:", status);
 

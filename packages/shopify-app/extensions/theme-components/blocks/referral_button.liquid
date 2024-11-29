@@ -5,25 +5,20 @@
   {% assign full_width_class = 'button--full-width' %}
 {% endif %}
 
-<button
-    type="button"
-    onClick="window.FrakSetup.modalShare()"
-    class="button {{ button_class }} {{ full_width_class }} frak-share-button-custom"
-    {% if block.settings.button_style == 'custom' %}
-      data-custom-colors="true"
-    {% endif %}
-    data-frak-share-button
-    disabled
->
-    <span>
-      {{ 'share_btn.label' | t }}
-    </span>
-</button>
+{% assign custom_class = '' %}
+{% if block.settings.button_style == 'custom' %}
+  {% assign custom_class = 'frak-share-button-custom' %}
+{% endif %}
+
+<frak-button-share
+    classname="button {{ button_class }} {{ full_width_class }} {{ custom_class }}"
+    text="{{ 'share_btn.label' | t }}"
+></frak-button-share>
 
 {% style %}
-  .frak-share-button-custom[data-custom-colors="true"] {
-    background-color: {{ block.settings.background_color }};
-    color: {{ block.settings.text_color }};
+  .frak-share-button-custom {
+  background-color: {{ block.settings.background_color }};
+  color: {{ block.settings.text_color }};
   }
 {% endstyle %}
 
