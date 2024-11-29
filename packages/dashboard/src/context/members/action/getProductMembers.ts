@@ -20,11 +20,19 @@ export type GetMembersParam = Omit<
 export async function getProductMembers(params: GetMembersParam) {
     const session = await getSafeSession();
 
-    return await indexerApi
-        .get(`members/${session.wallet}`, {
-            json: params,
-        })
-        .json<GetMembersResponseDto>();
+    try {
+        return await indexerApi
+            .put(`members/${session.wallet}`, {
+                json: params,
+            })
+            .json<GetMembersResponseDto>();
+    } catch (e) {
+        console.warn("Failed to fetch members", e);
+        return {
+            totalResult: 0,
+            members: [],
+        };
+    }
 }
 
 /**
@@ -36,10 +44,15 @@ export async function getProductsMembersCount(
 ) {
     const session = await getSafeSession();
 
-    const result = await indexerApi
-        .get(`members/${session.wallet}`, {
-            json: { ...params, noData: true },
-        })
-        .json<GetMembersCountResponseDto>();
-    return result.totalResult;
+    try {
+        const result = await indexerApi
+            .put(`members/${session.wallet}`, {
+                json: { ...params, noData: true },
+            })
+            .json<GetMembersCountResponseDto>();
+        return result.totalResult;
+    } catch (e) {
+        console.warn("Failed to fetch members count", e);
+        return 0;
+    }
 }
