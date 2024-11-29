@@ -18,9 +18,9 @@ export type GetMembersParam = Omit<
  * @param params
  */
 export async function getProductMembers(params: GetMembersParam) {
-    const session = await getSafeSession();
-
     try {
+        const session = await getSafeSession();
+
         return await indexerApi
             .put(`members/${session.wallet}`, {
                 json: params,
@@ -42,9 +42,9 @@ export async function getProductMembers(params: GetMembersParam) {
 export async function getProductsMembersCount(
     params: Omit<GetMembersParam, "limit" | "offset" | "sort">
 ) {
-    const session = await getSafeSession();
-
     try {
+        const session = await getSafeSession();
+
         const result = await indexerApi
             .put(`members/${session.wallet}`, {
                 json: { ...params, noData: true },
