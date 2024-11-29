@@ -9,6 +9,7 @@ import { Spinner } from "@module/component/Spinner";
 import { TextWithCopy } from "@module/component/TextWithCopy";
 import { Input } from "@module/component/forms/Input";
 import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex } from "viem";
@@ -114,6 +115,13 @@ function PlatformSelector({
             >
                 WooCommerce
             </Badge>
+            <Badge
+                onClick={() => setPlatform("custom")}
+                variant={currentPlatform === "custom" ? "success" : "secondary"}
+                style={{ cursor: "pointer" }}
+            >
+                Custom
+            </Badge>
         </Row>
     );
 }
@@ -139,12 +147,79 @@ function PlatformRegistration({
         );
     }
 
+    if (platform === "custom") {
+        return (
+            <CustomRegistrationForm
+                productId={productId}
+                webhookUrl={webhookUrl}
+                currentSigninKey={currentSigninKey}
+            />
+        );
+    }
+
     return (
         <StripeRegistrationForm
             productId={productId}
             webhookUrl={webhookUrl}
             currentSigninKey={currentSigninKey}
         />
+    );
+}
+
+function CustomRegistrationForm({
+    productId,
+    webhookUrl,
+    currentSigninKey,
+}: {
+    productId: Hex;
+    webhookUrl: string;
+    currentSigninKey?: string;
+}) {
+    const { mutate: setupWebhook, isPending } = useWebhookSetup({
+        productId,
+    });
+
+    // The key that will be used for the woocommerce webhook
+    const signinKey = useMemo(() => {
+        if (currentSigninKey) {
+            return currentSigninKey;
+        }
+
+        return generatePrivateKey();
+    }, [currentSigninKey]);
+
+    return (
+        <>
+            <p>
+                To use this webhook on your website, please refer to the{" "}
+                <Link
+                    href={"https://docs.frak.id/wallet-sdk/api/endpoints/webhook#custom-webhook"}
+                    target={"_blank"}
+                >
+                    Documentation
+                </Link>
+            </p>
+            <TextWithCopy text={webhookUrl} style={{ width: "100%" }}>
+                URL: <pre>{webhookUrl}</pre>
+            </TextWithCopy>
+            <TextWithCopy text={signinKey} style={{ width: "100%" }}>
+                Secret: <pre>{signinKey}</pre>
+            </TextWithCopy>
+            <p>And finally Register it on Frak via this button</p>
+            <Button
+                type="button"
+                variant="information"
+                disabled={isPending}
+                onClick={() => {
+                    setupWebhook({
+                        webhookKey: signinKey,
+                        platform: "custom",
+                    });
+                }}
+            >
+                {currentSigninKey ? "Update Webhook" : "Register webhook"}
+            </Button>
+        </>
     );
 }
 
