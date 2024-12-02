@@ -11,8 +11,8 @@
 {% endif %}
 
 <frak-button-share
-    classname="button {{ button_class }} {{ full_width_class }} {{ custom_class }}"
     text="{{ 'share_btn.label' | t }}"
+    classname="button {{ button_class }} {{ full_width_class }} {{ custom_class }}"
 ></frak-button-share>
 
 {% style %}
@@ -56,12 +56,14 @@
     {
       "type": "color",
       "id": "background_color",
-      "label": "Button color"
+      "label": "Button color",
+      "default": "#121212"
     },
     {
       "type": "color",
       "id": "text_color",
-      "label": "Button text color"
+      "label": "Button text color",
+      "default": "#FFFFFF"
     }
   ]
 }

@@ -27,13 +27,16 @@
     "allowJs": false,
     "checkJs": false,
 
+    // Preact support
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+
     // Interop constraints
     "esModuleInterop": false,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
     "importHelpers": true, // This is only used for build validation. Since we do not have `tslib` installed, this will fail if we accidentally make use of anything that'd require injection of helpers.
-    "experimentalDecorators": true,
 
     // Language and environment
     "moduleResolution": "node",
@@ -49,18 +52,11 @@
     "noErrorTruncation": true,
 
     // Enable source map by default
-    "sourceMap": false,
+    "sourceMap": true,
 
     // Declaration files
-//    "declaration": true,
-//    "declarationDir": "./dist",
-
-    "plugins": [
-      {
-        "name": "ts-lit-plugin",
-        "strict": true
-      }
-    ]
+    "declaration": true,
+    "declarationDir": "./dist",
   },
   "tsc-alias": {
     "resolveFullPaths": true,

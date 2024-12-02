@@ -81,8 +81,6 @@
     "clean": "rimraf dist",
     "build": "tsup && bun run check-exports",
     "build:watch": "tsup --watch",
-    "build:components": "rollup --config rollup.config.ts --configPlugin typescript",
-    "build:components:watch": "rollup --config rollup.config.ts --configPlugin typescript --watch",
     "check-exports": "attw --pack --profile node16 ."
   },
   "peerDependencies": {
@@ -93,18 +91,14 @@
   "dependencies": {
     "async-lz-string": "^1.1.0",
     "js-sha256": "^0.11.0",
-    "lit": "^3.2.1"
+    "preact": "^10.25.0",
+    "preact-custom-element": "^4.3.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.0",
-    "@rollup/plugin-node-resolve": "^15.3.0",
-    "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/plugin-typescript": "^12.1.1",
     "@tanstack/react-query": ">=5.61.0",
     "@types/node": "^22",
-    "rollup": "^4.27.4",
-    "rollup-plugin-summary": "^3.0.0",
-    "ts-lit-plugin": "^2.0.2",
+    "@types/preact-custom-element": "^4.0.4",
     "tsup": "^8.3.5",
     "typescript": "^5"
   }
