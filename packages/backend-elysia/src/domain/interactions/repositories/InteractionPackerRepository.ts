@@ -1,6 +1,9 @@
 import { log } from "@backend-common";
 import type { InteractionDiamondRepository } from "@backend-common/repositories";
-import { productInteractionDiamondAbi } from "@frak-labs/app-essentials";
+import {
+    productInteractionDiamond_delegateToFacet,
+    productInteractionDiamond_handleInteraction,
+} from "@backend-utils";
 import {
     type Address,
     type Client,
@@ -50,7 +53,7 @@ export class InteractionPackerRepository {
             await simulateContract(this.client, {
                 account: wallet,
                 address: diamondContract,
-                abi: productInteractionDiamondAbi,
+                abi: [productInteractionDiamond_delegateToFacet],
                 functionName: "delegateToFacet",
                 args: [
                     Number.parseInt(interactionData.handlerTypeDenominator),
@@ -86,7 +89,7 @@ export class InteractionPackerRepository {
         signature,
     }: { interactionData: InteractionData; signature: Hex }) {
         return encodeFunctionData({
-            abi: productInteractionDiamondAbi,
+            abi: [productInteractionDiamond_handleInteraction],
             functionName: "handleInteraction",
             args: [
                 encodePacked(

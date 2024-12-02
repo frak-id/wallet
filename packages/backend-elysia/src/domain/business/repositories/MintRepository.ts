@@ -1,14 +1,17 @@
 import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
 import {
+    campaignBankFactory_deployCampaignBank,
+    interactionManager_deployInteractionContract,
+    productRegistry_getMetadata,
+    productRegistry_mint,
+} from "@backend-utils";
+import {
     addresses,
     isRunningInProd,
-    productInteractionManagerAbi,
-    productRegistryAbi,
     stringToBytes32,
 } from "@frak-labs/app-essentials";
 import {
-    campaignBankFactoryAbi,
     mintAbi,
     usdcArbitrumAddress,
 } from "@frak-labs/app-essentials/blockchain";
@@ -61,7 +64,7 @@ export class MintRepository {
         try {
             const existingMetadata = await readContract(this.client, {
                 address: addresses.productRegistry,
-                abi: productRegistryAbi,
+                abi: [productRegistry_getMetadata],
                 functionName: "getMetadata",
                 args: [productId],
             });
@@ -114,7 +117,7 @@ export class MintRepository {
             const mintSimulation = await simulateContract(this.client, {
                 account: minter,
                 address: addresses.productRegistry,
-                abi: productRegistryAbi,
+                abi: [productRegistry_mint],
                 functionName: "mint",
                 args: [
                     this.encodeProductTypesMask(productTypes),
@@ -187,7 +190,7 @@ export class MintRepository {
                     {
                         account: minter,
                         address: addresses.productInteractionManager,
-                        abi: productInteractionManagerAbi,
+                        abi: [interactionManager_deployInteractionContract],
                         functionName: "deployInteractionContract",
                         args: [productId],
                     }
@@ -237,7 +240,7 @@ export class MintRepository {
                     this.client,
                     {
                         account: minter,
-                        abi: campaignBankFactoryAbi,
+                        abi: [campaignBankFactory_deployCampaignBank],
                         address: addresses.campaignBankFactory,
                         functionName: "deployCampaignBank",
                         args: [productId, addresses.mUSDToken],
@@ -291,7 +294,7 @@ export class MintRepository {
                     this.client,
                     {
                         account: minter,
-                        abi: campaignBankFactoryAbi,
+                        abi: [campaignBankFactory_deployCampaignBank],
                         address: addresses.campaignBankFactory,
                         functionName: "deployCampaignBank",
                         args: [productId, usdcArbitrumAddress],

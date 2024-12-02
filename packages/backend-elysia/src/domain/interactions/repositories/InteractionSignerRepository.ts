@@ -2,10 +2,12 @@ import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
 import type { InteractionDiamondRepository } from "@backend-common/repositories/InteractionDiamondRepository";
 import {
+    interactionDelegator_execute,
+    productInteractionDiamond_hasAllRoles,
+} from "@backend-utils";
+import {
     addresses,
-    interactionDelegatorAbi,
     interactionValidatorRoles,
-    productInteractionDiamondAbi,
 } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
 import * as solady from "solady";
@@ -135,7 +137,7 @@ export class InteractionSignerRepository {
         }
 
         const isAllowed = await readContract(this.client, {
-            abi: productInteractionDiamondAbi,
+            abi: [productInteractionDiamond_hasAllRoles],
             address: interactionContract,
             functionName: "hasAllRoles",
             args: [signerAccount.address, interactionValidatorRoles],
@@ -159,7 +161,7 @@ export class InteractionSignerRepository {
 
         // Prepare the execution data
         const executeNoBatchData = encodeFunctionData({
-            abi: interactionDelegatorAbi,
+            abi: [interactionDelegator_execute],
             functionName: "execute",
             args: [
                 preparedInteractions.map(

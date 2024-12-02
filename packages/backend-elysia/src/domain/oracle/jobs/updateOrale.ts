@@ -1,10 +1,11 @@
 import type { AdminWalletsRepository } from "@backend-common/repositories";
-import { mutexCron } from "@backend-utils";
-import type { pino } from "@bogeychan/elysia-logger";
 import {
-    addresses,
-    purchaseOracleAbi,
-} from "@frak-labs/app-essentials/blockchain";
+    mutexCron,
+    purchaseOracle_getMerkleRoot,
+    purchaseOracle_updateMerkleRoot,
+} from "@backend-utils";
+import type { pino } from "@bogeychan/elysia-logger";
+import { addresses } from "@frak-labs/app-essentials/blockchain";
 import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { type Client, type Hex, type LocalAccount, encodePacked } from "viem";
 import {
@@ -274,7 +275,7 @@ async function safeMerkleeRootBlockchainUpdate({
 }) {
     // Get the current merklee root (and early exit if it's the same)
     const currentRoot = await readContract(client, {
-        abi: purchaseOracleAbi,
+        abi: [purchaseOracle_getMerkleRoot],
         address: addresses.purchaseOracle,
         functionName: "getMerkleRoot",
         args: [BigInt(productId)],
@@ -291,7 +292,7 @@ async function safeMerkleeRootBlockchainUpdate({
         // Simulate the tx first
         const { request } = await simulateContract(client, {
             account: oracleUpdater,
-            abi: purchaseOracleAbi,
+            abi: [purchaseOracle_updateMerkleRoot],
             address: addresses.purchaseOracle,
             functionName: "updateMerkleRoot",
             args: [BigInt(productId), merkleRoot],

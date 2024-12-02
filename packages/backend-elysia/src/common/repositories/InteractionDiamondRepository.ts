@@ -1,8 +1,6 @@
 import { log } from "@backend-common";
-import {
-    addresses,
-    productInteractionManagerAbi,
-} from "@frak-labs/app-essentials";
+import { interactionManager_getInteractionContract } from "@backend-utils";
+import { addresses } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
 import type { Address, Client, Hex } from "viem";
 import { readContract } from "viem/actions";
@@ -34,7 +32,7 @@ export class InteractionDiamondRepository {
         try {
             const address = await readContract(this.client, {
                 address: addresses.productInteractionManager,
-                abi: productInteractionManagerAbi,
+                abi: [interactionManager_getInteractionContract],
                 functionName: "getInteractionContract",
                 args: [BigInt(productId)],
             });

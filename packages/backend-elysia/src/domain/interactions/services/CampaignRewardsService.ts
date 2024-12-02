@@ -1,8 +1,6 @@
 import type { PricingRepository } from "@backend-common/repositories";
-import {
-    type GetCampaignResponseDto,
-    referralCampaignAbi,
-} from "@frak-labs/app-essentials";
+import { referralCampaign_isActive } from "@backend-utils";
+import type { GetCampaignResponseDto } from "@frak-labs/app-essentials";
 import type { KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
 import {
@@ -165,7 +163,7 @@ export class CampaignRewardsService {
                       contracts: campaigns.map(
                           (campaign) =>
                               ({
-                                  abi: referralCampaignAbi,
+                                  abi: [referralCampaign_isActive],
                                   address: campaign.address,
                                   functionName: "isActive",
                               }) as const
