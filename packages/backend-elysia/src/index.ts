@@ -41,8 +41,6 @@ const app = new Elysia({
         stage: process.env.STAGE,
     }))
     .use(commonRoutes)
-    // Example news paper logics
-    .guard({}, (app) => app.use(exampleNewsPaper))
     // Business logics
     .use(auth)
     .use(oracle)
@@ -50,6 +48,8 @@ const app = new Elysia({
     .use(notifications)
     .use(wallet)
     .use(business)
+    // Example news paper logics (lazy loaded)
+    .use(exampleNewsPaper)
     // Setup bun serve options
     .listen({
         port: Number.parseInt(process.env.PORT ?? "3030"),
