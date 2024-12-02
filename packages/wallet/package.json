@@ -58,7 +58,6 @@
     "react-i18next": "^15.1.1",
     "react-loading-skeleton": "^3.5.0",
     "react-qr-code": "^2.0.15",
-    "remix-i18next": "^6.4.1",
     "remix-utils": "^7.7.0",
     "vaul": "^1.1.1",
     "viem": "^2.21.48",

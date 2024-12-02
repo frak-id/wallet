@@ -63,7 +63,7 @@ declare module "sst" {
       "value": string
     }
     "Wallet": {
-      "type": "sst.aws.Remix"
+      "type": "sst.aws.StaticSite"
       "url": string
     }
     "WalletExampleEthCC": {

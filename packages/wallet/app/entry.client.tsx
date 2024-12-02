@@ -12,7 +12,6 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
-import { getInitialNamespaces } from "remix-i18next/client";
 
 async function main() {
     await i18next
@@ -24,16 +23,6 @@ async function main() {
             supportedLngs,
             resources,
             debug: isRunningLocally,
-            ns: getInitialNamespaces(),
-            detection: {
-                // Here only enable htmlTag detection, we'll detect the language only
-                // server-side with remix-i18next, by using the `<html lang>` attribute
-                // we can communicate to the client the language detected server-side
-                order: ["htmlTag"],
-                // Because we only use htmlTag, there's no reason to cache the language
-                // on the browser, so we disable it
-                caches: [],
-            },
             interpolation,
         });
 

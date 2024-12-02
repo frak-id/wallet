@@ -1,7 +1,5 @@
 import * as process from "node:process";
 import { vitePlugin as remix } from "@remix-run/dev";
-import { pick } from "radash";
-import { Resource } from "sst";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -12,26 +10,7 @@ declare module "@remix-run/node" {
     }
 }
 
-/**
- * Some secrets wanted from SST during the build time
- */
-const wantedFromConfig: (keyof typeof Resource)[] = [
-    "ALCHEMY_API_KEY",
-    "PIMLICO_API_KEY",
-    "NEXUS_RPC_SECRET",
-    "VAPID_PUBLIC_KEY",
-    "UMAMI_WALLET_WEBSITE_ID",
-];
-
 export default defineConfig(({ isSsrBuild }) => {
-    // Load some secrets from SST
-    const sstSecrets = Object.entries(pick(Resource, wantedFromConfig)).map(
-        ([key, obj]) => [
-            `process.env.${key}`,
-            JSON.stringify("value" in obj ? obj.value : obj),
-        ]
-    );
-
     // Return the built config
     return {
         define: {
@@ -39,8 +18,21 @@ export default defineConfig(({ isSsrBuild }) => {
             "process.env.STAGE": JSON.stringify(process.env.STAGE),
             "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
             "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
-            // Some secrets
-            ...Object.fromEntries(sstSecrets),
+            "process.env.ALCHEMY_API_KEY": JSON.stringify(
+                process.env.ALCHEMY_API_KEY
+            ),
+            "process.env.PIMLICO_API_KEY": JSON.stringify(
+                process.env.PIMLICO_API_KEY
+            ),
+            "process.env.NEXUS_RPC_SECRET": JSON.stringify(
+                process.env.NEXUS_RPC_SECRET
+            ),
+            "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
+                process.env.VAPID_PUBLIC_KEY
+            ),
+            "process.env.UMAMI_WALLET_WEBSITE_ID": JSON.stringify(
+                process.env.UMAMI_WALLET_WEBSITE_ID
+            ),
         },
         server: {
             port: 3000,
@@ -52,6 +44,7 @@ export default defineConfig(({ isSsrBuild }) => {
         },
         plugins: [
             remix({
+                ssr: false,
                 future: {
                     v3_fetcherPersist: true,
                     v3_relativeSplatPath: true,

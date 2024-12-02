@@ -30,5 +30,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="styles" level="application" />
+    <orderEntry type="library" name="script" level="application" />
   </component>
 </module>
