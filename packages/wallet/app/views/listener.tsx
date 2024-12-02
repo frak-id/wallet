@@ -1,5 +1,6 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
+import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
 import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
@@ -99,6 +100,11 @@ export default function Listener() {
             rootElement.dataset.listener = "false";
         };
     }, []);
+
+    /**
+     * Preload a few data
+     */
+    useListenerDataPreload();
 
     return modalRequested ? <ListenerModal /> : null;
 }

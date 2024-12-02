@@ -193,7 +193,9 @@ function CustomRegistrationForm({
             <p>
                 To use this webhook on your website, please refer to the{" "}
                 <Link
-                    href={"https://docs.frak.id/wallet-sdk/api/endpoints/webhook#custom-webhook"}
+                    href={
+                        "https://docs.frak.id/wallet-sdk/api/endpoints/webhook#custom-webhook"
+                    }
                     target={"_blank"}
                 >
                     Documentation
