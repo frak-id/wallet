@@ -3,7 +3,7 @@
  */
 export type NexusWalletSdkConfig = Readonly<{
     // The current url for the wallet sdk
-    walletUrl: string;
+    walletUrl?: string;
     // Your own datas
     metadata: {
         // Your app name
@@ -14,5 +14,5 @@ export type NexusWalletSdkConfig = Readonly<{
         buttonShare?: string;
     };
     // Your domain (will be retrieved automatically if not provided)
-    domain: string;
+    domain?: string;
 }>;

@@ -42,7 +42,7 @@ export function createIFrameNexusClient({
 
     // Build our message handler
     const messageHandler = createIFrameMessageHandler({
-        nexusWalletUrl: config.walletUrl,
+        nexusWalletUrl: config?.walletUrl ?? "https://wallet.frak.id",
         iframe,
         channelManager,
         iframeLifecycleManager: lifecycleManager,
