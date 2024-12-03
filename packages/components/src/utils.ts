@@ -1,4 +1,4 @@
-import type { NexusClient } from "@frak-labs/nexus-sdk/core";
+import type { NexusClient } from "@sdk/core";
 
 const CUSTOM_EVENT_NAME = "frakClientReady";
 

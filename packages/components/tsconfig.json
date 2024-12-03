@@ -2,6 +2,10 @@
   "extends": "@total-typescript/tsconfig/bundler/dom/library",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "preact"
+    "jsxImportSource": "preact",
+    "paths": {
+      "@module/*": ["../../packages/shared/module/*"],
+      "@sdk/*": ["../../packages/sdk/src/*"]
+    }
   }
 }

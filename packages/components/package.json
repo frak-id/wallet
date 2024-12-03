@@ -44,12 +44,10 @@
     "build:watch": "tsup --watch"
   },
   "dependencies": {
-    "@frak-labs/shared": "workspace:*",
     "preact": "^10.25.0",
     "preact-custom-element": "^4.3.0"
   },
   "devDependencies": {
-    "@frak-labs/nexus-sdk": "workspace:*",
     "@total-typescript/tsconfig": "^1.0.4",
     "@types/node": "^22",
     "@types/preact-custom-element": "^4.0.4",

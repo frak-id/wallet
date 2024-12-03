@@ -1,4 +1,4 @@
-import { onDocumentReady } from "@frak-labs/shared/module/utils/onDocumentReady";
+import { onDocumentReady } from "@module/utils/onDocumentReady";
 import { websiteOverrides } from "./specifics";
 
 export * from "../core/index";

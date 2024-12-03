@@ -53,6 +53,10 @@
     // Declaration files
     "declaration": true,
     "declarationDir": "./dist",
+
+    "paths": {
+      "@module/*": ["../../packages/shared/module/*"]
+    }
   },
   "tsc-alias": {
     "resolveFullPaths": true,
