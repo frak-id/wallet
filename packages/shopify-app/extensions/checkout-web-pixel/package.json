@@ -1,6 +1,7 @@
 {
   "name": "@frak-labs-shopify/checkout-web-pixel",
   "version": "1.0.0",
+  "private": true,
   "main": "dist/main.js",
   "license": "UNLICENSED",
   "dependencies": {
