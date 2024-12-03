@@ -33,7 +33,7 @@ export default defineConfig([
     {
         target: "es2022",
         // All of our entry-points
-        entry: ["src/core/bundle.ts"],
+        entry: ["src/bundle/bundle.ts"],
         outDir: "dist/bundle",
         outExtension() {
             return {
@@ -54,7 +54,7 @@ export default defineConfig([
     {
         target: "es2022",
         // All of our entry-points
-        entry: ["src/components/bootstrap.ts"],
+        entry: ["src/components/components.ts"],
         outDir: "dist/components",
         outExtension() {
             return {

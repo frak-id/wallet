@@ -23,7 +23,7 @@ export function onClientReady(action: "add" | "remove", callback: () => void) {
  */
 export async function setupClient(): Promise<NexusClient | undefined> {
     if (!window?.FrakSetup.config) {
-        console.error("window?.FrakSetup.config not found");
+        console.error("window.FrakSetup.config not found");
         return;
     }
 
@@ -115,11 +115,17 @@ export function onDocumentReady(callback: () => void) {
 
 /**
  * Load a script
+ * @param id
  * @param url
  */
-export async function loadScript(url: string) {
+export async function loadScript(id: string, url: string) {
+    if (document.getElementById(id)) {
+        return Promise.resolve(true);
+    }
+
     return new Promise((resolve, reject) => {
         const script = document.createElement("script");
+        script.id = id;
         script.src = url;
         script.async = true;
         script.onload = () => resolve(true);

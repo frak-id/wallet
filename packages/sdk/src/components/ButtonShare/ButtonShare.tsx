@@ -7,6 +7,10 @@ type ButtonShareProps = {
 };
 
 function modalShare() {
+    if (!window.FrakSetup.modalShareConfig) {
+        console.error("window.FrakSetup.modalShareConfig not found");
+        return;
+    }
     window.FrakSetup.modalBuilderSteps
         .sharing(window.FrakSetup.modalShareConfig)
         .display();

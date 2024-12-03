@@ -12,6 +12,9 @@ declare global {
     }
 }
 
-register(ButtonShare, "frak-button-share", ["text"], { shadow: false });
+// If custom element is not already registered
+if (!customElements.get("frak-button-share")) {
+    register(ButtonShare, "frak-button-share", ["text"], { shadow: false });
+}
 
 export { ButtonShare };
