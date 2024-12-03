@@ -84,9 +84,6 @@ export function setupModalConfig(client: NexusClient) {
 export async function setupReferral(client: NexusClient) {
     const referral = await window.NexusSDK.referralInteraction(client, {
         modalConfig: window.FrakSetup.modalBuilderSteps?.reward().params,
-        options: {
-            alwaysAppendUrl: true,
-        },
     });
     console.log("referral", referral);
 }
