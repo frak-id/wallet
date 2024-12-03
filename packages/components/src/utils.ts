@@ -1,4 +1,4 @@
-import type { NexusClient } from "../core";
+import type { NexusClient } from "@frak-labs/nexus-sdk/core";
 
 const CUSTOM_EVENT_NAME = "frakClientReady";
 
@@ -89,49 +89,4 @@ export async function setupReferral(client: NexusClient) {
         },
     });
     console.log("referral", referral);
-}
-
-/**
- * When the document is ready, run the callback
- * @param callback
- */
-export function onDocumentReady(callback: () => void) {
-    if (
-        document.readyState === "complete" ||
-        document.readyState === "interactive"
-    ) {
-        setTimeout(callback, 1);
-    } else if (document.addEventListener) {
-        document.addEventListener("DOMContentLoaded", callback);
-    } else {
-        // @ts-ignore
-        document.attachEvent("onreadystatechange", () => {
-            if (document.readyState === "complete") {
-                callback();
-            }
-        });
-    }
-}
-
-/**
- * Load a script
- * @param id
- * @param url
- */
-export async function loadScript(id: string, url: string) {
-    if (document.getElementById(id)) {
-        return Promise.resolve(true);
-    }
-
-    return new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.id = id;
-        script.src = url;
-        script.async = true;
-        script.onload = () => resolve(true);
-        script.onerror = () =>
-            reject(new Error(`Script load error for ${url}`));
-
-        document.head.appendChild(script);
-    });
 }

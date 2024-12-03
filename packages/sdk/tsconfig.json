@@ -27,19 +27,15 @@
     "allowJs": false,
     "checkJs": false,
 
-    // Preact support
-    "jsx": "react-jsx",
-    "jsxImportSource": "preact",
-
     // Interop constraints
     "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
+    "allowSyntheticDefaultImports": false,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
     "importHelpers": true, // This is only used for build validation. Since we do not have `tslib` installed, this will fail if we accidentally make use of anything that'd require injection of helpers.
 
     // Language and environment
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "module": "esnext",
     "target": "ES2021", // Setting this to `ES2021` enables native support for `Node v16+`: https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping.
     "lib": [

@@ -17,7 +17,7 @@
     "url": "https://github.com/frak-id/wallet",
     "directory": "packages/sdk"
   },
-  "homepage": "https://docs.frak.id/wallet-sdk",
+  "homepage": "https://docs.frak.id/wallet-sdk/overview",
   "keywords": [
     "frak-labs",
     "nexus-wallet",
@@ -89,16 +89,14 @@
     "react": ">=18"
   },
   "dependencies": {
+    "@frak-labs/shared": "workspace:*",
     "async-lz-string": "^1.1.0",
-    "js-sha256": "^0.11.0",
-    "preact": "^10.25.0",
-    "preact-custom-element": "^4.3.0"
+    "js-sha256": "^0.11.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.0",
     "@tanstack/react-query": ">=5.61.0",
     "@types/node": "^22",
-    "@types/preact-custom-element": "^4.0.4",
     "tsup": "^8.3.5",
     "typescript": "^5"
   }

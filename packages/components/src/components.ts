@@ -1,10 +1,6 @@
-import {
-    loadScript,
-    onDocumentReady,
-    setupClient,
-    setupModalConfig,
-    setupReferral,
-} from "./utils";
+import { loadScript } from "@frak-labs/shared/module/utils/loadScript";
+import { onDocumentReady } from "@frak-labs/shared/module/utils/onDocumentReady";
+import { setupClient, setupModalConfig, setupReferral } from "./utils";
 
 export { ButtonShare } from "./ButtonShare";
 

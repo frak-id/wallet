@@ -1,4 +1,4 @@
-import { loadScript } from "../../components/utils";
+import { loadScript } from "@frak-labs/shared/module/utils/loadScript";
 
 export function moov360() {
     setConfig();

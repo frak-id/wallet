@@ -51,23 +51,4 @@ export default defineConfig([
         // Expose NexusSDK in global namespace window.NexusSDK
         globalName: "NexusSDK",
     },
-    {
-        target: "es2022",
-        // All of our entry-points
-        entry: ["src/components/components.ts"],
-        outDir: "dist/components",
-        outExtension() {
-            return {
-                js: ".js",
-            };
-        },
-        // Format waited
-        format: ["iife"],
-        // Code splitting and stuff
-        clean: true,
-        splitting: false,
-        minify: true,
-        // Expose FrakComponents in global namespace window.FrakComponents
-        globalName: "FrakComponents",
-    },
 ]);
