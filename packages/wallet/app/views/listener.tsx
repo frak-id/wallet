@@ -106,8 +106,14 @@ export default function Listener() {
      */
     useEffect(() => {
         const handleIdleCallback = async () => await modalImport();
-        const idleCallbackId = requestIdleCallback(handleIdleCallback);
-        return () => cancelIdleCallback(idleCallbackId);
+
+        if ("requestIdleCallback" in window) {
+            const idleCallbackId = requestIdleCallback(handleIdleCallback);
+            return () => cancelIdleCallback(idleCallbackId);
+        }
+
+        const timeoutId = setTimeout(handleIdleCallback, 0);
+        return () => clearTimeout(timeoutId);
     }, []);
 
     /**
