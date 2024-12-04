@@ -1,6 +1,17 @@
-import type { NexusClient } from "@sdk/core";
+import {
+    type NexusClient,
+    createIFrameNexusClient,
+    createIframe,
+} from "@sdk/core";
+import {
+    type ModalBuilder,
+    modalBuilder,
+    referralInteraction,
+} from "@sdk/core/actions";
 
 const CUSTOM_EVENT_NAME = "frakClientReady";
+
+let modalBuilderSteps: ModalBuilder | undefined;
 
 export function dispatchClientReadyEvent() {
     const event = new CustomEvent(CUSTOM_EVENT_NAME);
@@ -28,7 +39,7 @@ export async function setupClient(): Promise<NexusClient | undefined> {
     }
 
     // Create our iframe
-    const iframe = await window.NexusSDK.createIframe({
+    const iframe = await createIframe({
         walletBaseUrl:
             window.FrakSetup.config.walletUrl ?? "https://wallet.frak.id",
     });
@@ -39,7 +50,7 @@ export async function setupClient(): Promise<NexusClient | undefined> {
     }
 
     // Create our client
-    const client = window.NexusSDK.createIFrameNexusClient({
+    const client = createIFrameNexusClient({
         config: window.FrakSetup.config,
         iframe,
     });
@@ -71,10 +82,7 @@ export function setupModalConfig(client: NexusClient) {
         return;
     }
 
-    window.FrakSetup.modalBuilderSteps = window.NexusSDK.modalBuilder(
-        client,
-        window.FrakSetup.modalConfig
-    );
+    modalBuilderSteps = modalBuilder(client, window.FrakSetup.modalConfig);
 }
 
 /**
@@ -82,8 +90,20 @@ export function setupModalConfig(client: NexusClient) {
  * @param client
  */
 export async function setupReferral(client: NexusClient) {
-    const referral = await window.NexusSDK.referralInteraction(client, {
-        modalConfig: window.FrakSetup.modalBuilderSteps?.reward().params,
+    if (!modalBuilderSteps) {
+        console.error("modalBuilderSteps not found");
+        return;
+    }
+
+    const referral = await referralInteraction(client, {
+        modalConfig: modalBuilderSteps.reward().params,
     });
     console.log("referral", referral);
+}
+
+/**
+ * Return the modal builder steps
+ */
+export function getModalBuilderSteps() {
+    return modalBuilderSteps;
 }

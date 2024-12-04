@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { onClientReady } from "../utils";
+import { getModalBuilderSteps, onClientReady } from "../utils";
 
 type ButtonShareProps = {
     text: string;
@@ -7,13 +7,19 @@ type ButtonShareProps = {
 };
 
 function modalShare() {
+    const modalBuilderSteps = getModalBuilderSteps();
+
     if (!window.FrakSetup.modalShareConfig) {
         console.error("window.FrakSetup.modalShareConfig not found");
         return;
     }
-    window.FrakSetup.modalBuilderSteps
-        .sharing(window.FrakSetup.modalShareConfig)
-        .display();
+
+    if (!modalBuilderSteps) {
+        console.error("modalBuilderSteps not found");
+        return;
+    }
+
+    modalBuilderSteps.sharing(window.FrakSetup.modalShareConfig).display();
 }
 
 export function ButtonShare({

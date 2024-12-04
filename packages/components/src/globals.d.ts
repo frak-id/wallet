@@ -4,23 +4,10 @@ import type {
     ModalRpcMetadata,
     NexusClient,
     NexusWalletSdkConfig,
-    createIFrameNexusClient,
-    createIframe,
 } from "../core";
-import type {
-    ModalBuilder,
-    modalBuilder,
-    referralInteraction,
-} from "../core/actions";
 
 declare global {
     interface Window {
-        NexusSDK: {
-            createIframe: typeof createIframe;
-            createIFrameNexusClient: typeof createIFrameNexusClient;
-            modalBuilder: typeof modalBuilder;
-            referralInteraction: typeof referralInteraction;
-        };
         FrakSetup: {
             client?: NexusClient;
             config?: NexusWalletSdkConfig;
@@ -32,7 +19,6 @@ declare global {
                 FinalActionType,
                 { key: "sharing" }
             >["options"];
-            modalBuilderSteps: ModalBuilder;
         };
     }
 }
