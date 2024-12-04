@@ -5,6 +5,7 @@ import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiC
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@module/atoms/store";
+import { PrivyProvider } from "@privy-io/react-auth";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -58,9 +59,11 @@ export function RootProvider({ children }: PropsWithChildren) {
                     persistOptions={persistOptions}
                 >
                     <SetupServiceWorker />
-                    <WagmiProviderWithDynamicConfig>
-                        {children}
-                    </WagmiProviderWithDynamicConfig>
+                    <PrivyProviderWithConfig>
+                        <WagmiProviderWithDynamicConfig>
+                            {children}
+                        </WagmiProviderWithDynamicConfig>
+                    </PrivyProviderWithConfig>
                     <ReactQueryDevtools
                         initialIsOpen={false}
                         buttonPosition={"bottom-left"}
@@ -160,4 +163,26 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
 function EnforceWagmiConnection() {
     useEnforceWagmiConnection();
     return null;
+}
+
+function PrivyProviderWithConfig({ children }: PropsWithChildren) {
+    return (
+        <PrivyProvider
+            appId={process.env.PRIVY_APP_ID ?? ""}
+            config={{
+                // Customize Privy's appearance in your app
+                appearance: {
+                    theme: "light",
+                    accentColor: "#676FFF",
+                    logo: "https://wallet.frak.id/icon-192.png",
+                },
+                embeddedWallets: {
+                    // Don't automaticaly create wallet
+                    createOnLogin: "off",
+                },
+            }}
+        >
+            {children}
+        </PrivyProvider>
+    );
 }
