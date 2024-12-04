@@ -4,7 +4,7 @@ import type {
     ModalRpcMetadata,
     NexusClient,
     NexusWalletSdkConfig,
-} from "../core";
+} from "@sdk/core";
 
 declare global {
     interface Window {
