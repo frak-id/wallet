@@ -12,8 +12,9 @@ export default [
     // Auth Routes
     layout("./views/layouts/authentication.tsx", [
         route("/login", "./views/auth/login.tsx"),
-        route("/recovery", "./views/auth/recovery.tsx"),
         route("/register", "./views/auth/register.tsx"),
+        route("/recovery", "./views/auth/recovery.tsx"),
+        route("/fallback", "./views/auth/fallback.tsx"),
     ]),
     layout("./views/layouts/sso.tsx", [route("/sso", "./views/auth/sso.tsx")]),
 

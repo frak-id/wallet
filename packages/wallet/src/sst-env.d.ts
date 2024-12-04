@@ -11,6 +11,7 @@ interface ImportMetaEnv {
   readonly NEXUS_RPC_SECRET: string
   readonly VAPID_PUBLIC_KEY: string
   readonly UMAMI_WALLET_WEBSITE_ID: string
+  readonly PRIVY_APP_ID: string
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv
