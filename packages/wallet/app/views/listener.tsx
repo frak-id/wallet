@@ -6,11 +6,11 @@ import { useSendInteractionListener } from "@/module/listener/hooks/useSendInter
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
 import { lazy, useEffect, useState } from "react";
 
-const ListenerModal = lazy(() =>
+const modalImport = () =>
     import("@/module/listener/component/Modal").then((module) => ({
         default: module.ListenerModal,
-    }))
-);
+    }));
+const ListenerModal = lazy(modalImport);
 
 /**
  * Global Listener UI that can only be set via an iFrame
@@ -99,6 +99,15 @@ export default function Listener() {
         return () => {
             rootElement.dataset.listener = "false";
         };
+    }, []);
+
+    /**
+     * Preload the modal so it did not take too much time to display on slow network
+     */
+    useEffect(() => {
+        const handleIdleCallback = async () => await modalImport();
+        const idleCallbackId = requestIdleCallback(handleIdleCallback);
+        return () => cancelIdleCallback(idleCallbackId);
     }, []);
 
     /**
