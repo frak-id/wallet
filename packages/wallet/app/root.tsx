@@ -1,4 +1,3 @@
-import { SetPresenceCookie } from "@/module/authentication/component/SetPresenceCookie";
 import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { rootConfig } from "@/module/root/config";
@@ -49,7 +48,6 @@ export default function App() {
             <RootProvider>
                 <Outlet />
             </RootProvider>
-            <SetPresenceCookie />
             <TopLoader />
             <DetectPWA />
         </>
