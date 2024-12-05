@@ -40,8 +40,7 @@ export async function setupClient(): Promise<NexusClient | undefined> {
 
     // Create our iframe
     const iframe = await createIframe({
-        walletBaseUrl:
-            window.FrakSetup.config.walletUrl ?? "https://wallet.frak.id",
+        config: window.FrakSetup.config,
     });
 
     if (!iframe) {

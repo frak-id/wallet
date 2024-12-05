@@ -12,7 +12,7 @@ export const NexusConfigContext = createContext<
  * Props to instantiate the Nexus Wallet SDK configuration provider
  */
 export type NexusConfigProviderProps = {
-    config: Omit<NexusWalletSdkConfig, "domain"> & { domain?: string };
+    config: NexusWalletSdkConfig;
 };
 
 /**
@@ -29,6 +29,7 @@ export function NexusConfigProvider(
         {
             value: {
                 ...config,
+                walletUrl: config.walletUrl ?? "https://wallet.frak.id",
                 domain:
                     config.domain ??
                     (typeof window !== "undefined"
