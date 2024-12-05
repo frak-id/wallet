@@ -24,7 +24,7 @@ export function smartAccountConnector<
     // Create the wagmi connector itself
     return createConnector<Provider>((config) => ({
         id: "frak-wallet-connector",
-        name: "Nexus Smart Account",
+        name: "Frak Smart Account",
         type: smartAccountConnector.type,
         supportsSimulation: true,
 
