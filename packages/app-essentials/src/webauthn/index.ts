@@ -1,5 +1,4 @@
 import { isRunningInProd, isRunningLocally } from "../utils";
-import { getWebAuthNSmartWalletInitCode } from "./kernel";
 
 /**
  * The RP ID for the webauthn
@@ -22,5 +21,4 @@ export const WebAuthN = {
     rpName,
     rpOrigin,
     defaultUsername,
-    getWebAuthNSmartWalletInitCode,
 };

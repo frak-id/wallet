@@ -33,6 +33,10 @@ type SmartAccountProvierParameters = {
 
 /**
  * Get the smart account provider for our wagmi connector
+ *  - todo: Also support privy here
+ *
+ *  - todo: how? session generification? Supporting both webauthn or privy?
+ *  - todo: How to pick the right privy wallet?
  */
 export function getSmartAccountProvider<
     transport extends Transport = Transport,

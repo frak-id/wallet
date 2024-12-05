@@ -3,11 +3,11 @@ import {
     mongoDbContext,
     sessionContext,
 } from "@backend-common";
-import { WebAuthN, kernelAddresses } from "@frak-labs/app-essentials";
 import {
     type AuthenticationResponseJSON,
     verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
+import {WebAuthN, kernelAddresses, KernelWallet} from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { getSenderAddress } from "permissionless/actions";
 import { type Hex, concatHex, keccak256, toHex } from "viem";
@@ -40,7 +40,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
         }: { authenticatorId: string; pubKey: { x: Hex; y: Hex } }) {
             // Compute base stuff to fetch the smart wallet address
             const authenticatorIdHash = keccak256(toHex(authenticatorId));
-            const initCode = WebAuthN.getWebAuthNSmartWalletInitCode({
+            const initCode = KernelWallet.getWebAuthNSmartWalletInitCode({
                 authenticatorIdHash,
                 signerPubKey: pubKey,
             });

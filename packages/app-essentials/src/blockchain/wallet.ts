@@ -50,10 +50,10 @@ const webAuthNValidatorEnablingLayout = [
  * @param authenticatorId
  * @param signerPubKey
  */
-export function getWebAuthNSmartWalletInitCode({
-    authenticatorIdHash,
-    signerPubKey,
-}: {
+function getWebAuthNSmartWalletInitCode({
+                                                   authenticatorIdHash,
+                                                   signerPubKey,
+                                               }: {
     authenticatorIdHash: Hex;
     signerPubKey: { x: Hex; y: Hex };
 }): Hex {
@@ -77,4 +77,35 @@ export function getWebAuthNSmartWalletInitCode({
         functionName: "createAccount",
         args: [kernelAddresses.accountLogic, initialisationData, 0n],
     }) as Hex;
+}
+
+/**
+ * Get the account initialization code for a fallback smart account (using a regular ecdsa key)
+ * @param ecdsaAddress
+ */
+function getFallbackWalletInitCode({
+                                              ecdsaAddress,
+                                          }: {
+    ecdsaAddress: Hex;
+}): Hex {
+    if (!ecdsaAddress) throw new Error("Owner account not found");
+
+    // Build the account initialization data
+    const initialisationData = encodeFunctionData({
+        abi: KernelInitAbi,
+        functionName: "initialize",
+        args: [kernelAddresses.ecdsaValidator, ecdsaAddress],
+    });
+
+    // Build the account init code
+    return encodeFunctionData({
+        abi: createAccountAbi,
+        functionName: "createAccount",
+        args: [kernelAddresses.accountLogic, initialisationData, 0n],
+    }) as Hex;
+}
+
+export const KernelWallet = {
+    getWebAuthNSmartWalletInitCode,
+    getFallbackWalletInitCode,
 }

@@ -177,8 +177,8 @@ function PrivyProviderWithConfig({ children }: PropsWithChildren) {
                     logo: "https://wallet.frak.id/icon-192.png",
                 },
                 embeddedWallets: {
-                    // Don't automaticaly create wallet
-                    createOnLogin: "off",
+                    // Create wallet on login for user who don't have one
+                    createOnLogin: "users-without-wallets",
                 },
             }}
         >

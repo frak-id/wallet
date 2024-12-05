@@ -15,12 +15,7 @@ export default function Fallback() {
     return (
         <>
             <Back href={"/register"}>Back to biometric login</Back>
-            <Grid
-                className={styles.login__grid}
-                footer={
-                    <>{/*    todo: More specific CGU/CGV with privy infos?*/}</>
-                }
-            >
+            <Grid className={styles.login__grid} footer={<>CGU</>}>
                 <Button type={"button"} onClick={() => login()}>
                     Login via Privy
                 </Button>
