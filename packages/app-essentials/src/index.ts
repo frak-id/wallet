@@ -6,6 +6,8 @@ export {
     productRoles,
     interactionValidatorRoles,
     type ProductRolesKey,
+    // Wallet
+    KernelWallet,
     // Abis
     campaignFactoryAbi,
     interactionCampaignAbi,
