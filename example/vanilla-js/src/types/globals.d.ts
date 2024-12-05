@@ -13,7 +13,7 @@ declare global {
                 metadata: ModalRpcMetadata;
                 login: LoginModalStepType["params"];
             };
-            modalShareConfig: Extract<
+            modalShareConfig?: Extract<
                 FinalActionType,
                 { key: "sharing" }
             >["options"];

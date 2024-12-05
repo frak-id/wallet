@@ -56,7 +56,7 @@ export function modalBuilder(
         login,
         openSession,
     }: {
-        metadata: ModalRpcMetadata;
+        metadata?: ModalRpcMetadata;
         login?: LoginModalStepType["params"];
         openSession?: OpenInteractionSessionModalStepType["params"];
     }

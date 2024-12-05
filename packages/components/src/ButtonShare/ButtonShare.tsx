@@ -9,17 +9,14 @@ type ButtonShareProps = {
 function modalShare() {
     const modalBuilderSteps = getModalBuilderSteps();
 
-    if (!window.FrakSetup.modalShareConfig) {
-        console.error("window.FrakSetup.modalShareConfig not found");
-        return;
-    }
-
     if (!modalBuilderSteps) {
         console.error("modalBuilderSteps not found");
         return;
     }
 
-    modalBuilderSteps.sharing(window.FrakSetup.modalShareConfig).display();
+    modalBuilderSteps
+        .sharing(window.FrakSetup?.modalShareConfig ?? {})
+        .display();
 }
 
 export function ButtonShare({

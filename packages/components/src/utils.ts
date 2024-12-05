@@ -77,12 +77,10 @@ export async function setupClient(): Promise<NexusClient | undefined> {
  * @param client
  */
 export function setupModalConfig(client: NexusClient) {
-    if (!window.FrakSetup.modalConfig) {
-        console.error("window.FrakSetup.modalConfig not found");
-        return;
-    }
-
-    modalBuilderSteps = modalBuilder(client, window.FrakSetup.modalConfig);
+    modalBuilderSteps = modalBuilder(
+        client,
+        window.FrakSetup?.modalConfig ?? {}
+    );
 }
 
 /**

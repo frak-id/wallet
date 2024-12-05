@@ -5,7 +5,6 @@ import type {
     NexusClient,
     NexusWalletSdkConfig,
 } from "../core";
-import type { ModalBuilder } from "../core/actions";
 
 declare global {
     interface Window {
@@ -13,14 +12,13 @@ declare global {
             client?: NexusClient;
             config?: NexusWalletSdkConfig;
             modalConfig?: {
-                metadata: ModalRpcMetadata;
-                login: LoginModalStepType["params"];
+                metadata?: ModalRpcMetadata;
+                login?: LoginModalStepType["params"];
             };
-            modalShareConfig: Extract<
+            modalShareConfig?: Extract<
                 FinalActionType,
                 { key: "sharing" }
             >["options"];
-            modalBuilderSteps: ModalBuilder;
         };
     }
 }

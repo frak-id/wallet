@@ -17,6 +17,20 @@ Add the following script tag to your HTML file:
 <script src="https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/dist/components.js" defer="defer"></script>
 ```
 
+## Quick start
+
+Add a minimal configuration:
+
+```javascript
+window.FrakSetup = {
+    config: {
+        metadata: {
+            name: "Your App Name",
+        },
+    },
+};
+```
+
 ## Sample usage
 
 Sample code to use share button:
