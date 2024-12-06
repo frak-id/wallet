@@ -2,7 +2,6 @@ import { Fonts } from "@/module/common/component/Fonts";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
 import "../polyfill/bigint-serialization";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 
@@ -68,7 +67,7 @@ export const viewport: Viewport = {
 export default function RootLayout({
     children,
 }: Readonly<{
-    children: ReactNode;
+    children: React.ReactNode;
 }>) {
     return (
         <html lang="en">

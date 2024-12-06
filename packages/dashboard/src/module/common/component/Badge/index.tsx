@@ -1,7 +1,5 @@
-import { cva } from "class-variance-authority";
-import type { VariantProps } from "class-variance-authority";
-import { forwardRef } from "react";
-import type { HTMLAttributes } from "react";
+import { type VariantProps, cva } from "class-variance-authority";
+import type { ComponentPropsWithRef, FC } from "react";
 import styles from "./index.module.css";
 
 export const badgeVariants = cva(styles.badge, {
@@ -28,23 +26,28 @@ export const badgeVariants = cva(styles.badge, {
 });
 
 export interface BadgeProps
-    extends HTMLAttributes<HTMLDivElement>,
+    extends ComponentPropsWithRef<"span">,
         VariantProps<typeof badgeVariants> {}
 
-export const Badge = forwardRef<HTMLDivElement, BadgeProps>(
-    ({ className, variant, size, ...props }, ref) => {
-        return (
-            <span
-                className={badgeVariants({
-                    variant,
-                    size,
-                    className,
-                })}
-                ref={ref}
-                {...props}
-            />
-        );
-    }
-);
+export const Badge: FC<BadgeProps> = ({
+    className,
+    variant,
+    size,
+    ref,
+    children,
+    ...props
+}) => {
+    return (
+        <span
+            ref={ref}
+            className={badgeVariants({
+                variant,
+                size,
+                className,
+            })}
+            {...props}
+        />
+    );
+};
 
 Badge.displayName = "Badge";

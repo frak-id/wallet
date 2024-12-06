@@ -1,3 +1,4 @@
+import { hasClassName } from "@module/utils/hasClassName";
 import { mergeElement } from "@module/utils/mergeElement";
 import { cva, cx } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
@@ -49,7 +50,11 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
                 />
                 {rightSection && isValidElement(rightSection) ? (
                     mergeElement(rightSection, {
-                        className: `${styles.rightSection} ${rightSection?.props?.className ?? ""}`,
+                        className: `${styles.rightSection} ${
+                            hasClassName(rightSection)
+                                ? rightSection.props.className
+                                : ""
+                        }`,
                     })
                 ) : (
                     <span className={styles.rightSection}>{rightSection}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import styles from "./index.module.css";
 
 export function TooltipTable({
@@ -9,9 +9,9 @@ export function TooltipTable({
     children,
     ...props
 }: {
-    content: string | ReactNode;
+    content: string | React.ReactNode;
     className?: string;
-    children: ReactNode;
+    children: React.ReactNode;
 }) {
     const [showTooltip, setShowTooltip] = useState(false);
     return (

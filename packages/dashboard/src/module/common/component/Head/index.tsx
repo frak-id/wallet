@@ -1,11 +1,10 @@
 import { Title, type TitleProps } from "@/module/common/component/Title";
-import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
 type HeadProps = {
     title?: { content: string; size?: TitleProps["size"] };
-    leftSection?: ReactNode;
-    rightSection?: ReactNode;
+    leftSection?: React.ReactNode;
+    rightSection?: React.ReactNode;
 };
 
 export function Head({ title, leftSection, rightSection }: HeadProps) {

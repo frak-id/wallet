@@ -12,7 +12,7 @@ import { mergeElement } from "@module/utils/mergeElement";
 import { cx } from "class-variance-authority";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
-import type { PropsWithChildren, ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 import styles from "./index.module.css";
 
 /**
@@ -76,7 +76,7 @@ type NavigationItemProps = {
     url?: string;
     className?: string;
     isSub?: boolean;
-    rightSection?: ReactNode;
+    rightSection?: React.ReactNode;
     isActive?: boolean;
     disabled?: boolean;
 };
@@ -144,7 +144,7 @@ export function SubNavigationItem({
 export function NavigationLabel({
     icon,
     children,
-}: PropsWithChildren<{ icon: ReactNode }>) {
+}: PropsWithChildren<{ icon: React.ReactNode }>) {
     return (
         <>
             {icon}

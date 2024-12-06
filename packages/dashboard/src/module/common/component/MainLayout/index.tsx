@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
-export function MainLayout({ children }: { children: ReactNode }) {
+export function MainLayout({ children }: { children: React.ReactNode }) {
     return <main className={styles.main}>{children}</main>;
 }

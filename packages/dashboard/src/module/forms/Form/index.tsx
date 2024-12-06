@@ -7,7 +7,6 @@ import type {
     ComponentPropsWithoutRef,
     ElementRef,
     HTMLAttributes,
-    ReactNode,
 } from "react";
 import { Controller, FormProvider, useFormContext } from "react-hook-form";
 import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
@@ -18,7 +17,7 @@ const Form = FormProvider;
 function FormLayout({
     children,
     className,
-}: { children: ReactNode; className?: string }) {
+}: { children: React.ReactNode; className?: string }) {
     return <div className={cx(styles.form__layout, className)}>{children}</div>;
 }
 
@@ -179,7 +178,7 @@ export const formDescriptionVariants = cva(styles.form__description);
 const FormDescription = forwardRef<
     HTMLParagraphElement,
     HTMLAttributes<HTMLParagraphElement> & {
-        label?: string | ReactNode;
+        label?: string | React.ReactNode;
         classNameTitle?: string;
     }
 >(({ label, classNameTitle = "", className = "", children, ...props }, ref) => {

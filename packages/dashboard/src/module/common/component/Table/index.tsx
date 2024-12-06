@@ -14,14 +14,13 @@ import type { SortingState } from "@tanstack/react-table";
 import type { TableOptions } from "@tanstack/table-core";
 import { ArrowDown, ArrowDownUp, ArrowUp } from "lucide-react";
 import { type PropsWithChildren, useMemo, useState } from "react";
-import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
 export type ReactTableProps<TData> = {
     classNameWrapper?: string;
     className?: string;
-    preTable?: ReactNode;
-    postTable?: ReactNode;
+    preTable?: React.ReactNode;
+    postTable?: React.ReactNode;
     // Some custom configs
     enableFiltering?: boolean;
     // Some states

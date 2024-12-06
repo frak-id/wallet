@@ -1,7 +1,7 @@
 import { Button } from "@module/component/Button";
 import { cx } from "class-variance-authority";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
-import { type ComponentProps, type ReactNode, forwardRef } from "react";
+import { type ComponentProps, forwardRef } from "react";
 import styles from "./index.module.css";
 
 const Pagination = ({ className, ...props }: ComponentProps<"nav">) => (
@@ -34,7 +34,7 @@ PaginationItem.displayName = "PaginationItem";
 
 type PaginationLinkProps = {
     isActive?: boolean;
-    children?: ReactNode;
+    children?: React.ReactNode;
 } & ComponentProps<typeof Button>;
 
 const PaginationLink = ({

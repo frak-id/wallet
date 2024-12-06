@@ -1,9 +1,9 @@
 "use client";
 
-import { type ReactNode, useEffect } from "react";
+import { useEffect } from "react";
 import styles from "./index.module.css";
 
-export function AuthLayout({ children }: { children: ReactNode }) {
+export function AuthLayout({ children }: { children: React.ReactNode }) {
     /**
      * Add a data attribute to the root element to style the layout
      */

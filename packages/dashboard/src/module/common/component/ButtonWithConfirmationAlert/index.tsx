@@ -1,7 +1,7 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@module/component/Button";
 import { X } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 
 export function ButtonWithConfirmationAlert({
     description,
@@ -10,9 +10,9 @@ export function ButtonWithConfirmationAlert({
     onClick,
     disabled,
 }: {
-    description: ReactNode;
-    buttonText?: ReactNode;
-    title?: ReactNode;
+    description: React.ReactNode;
+    buttonText?: React.ReactNode;
+    title?: React.ReactNode;
     onClick: () => void;
     disabled?: boolean;
 }) {
