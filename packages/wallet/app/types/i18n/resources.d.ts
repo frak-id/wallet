@@ -128,7 +128,11 @@ interface Resources {
         };
         wallet: {
             activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
-            biometryInfos: "Biometry informations";
+            settings: {
+                biometryInfo: "Biometry informations";
+                privyInfo: "Login informations";
+                privyWallet: "Privy wallet";
+            };
             installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
             interaction: {
                 CREATE_REFERRAL_LINK: "Created share link";

@@ -10,35 +10,38 @@ import {
     useWallets,
 } from "@privy-io/react-auth";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Address, Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 
 export function PrivyLogin() {
-    const { ready, authenticated } = usePrivy();
+    const { ready } = usePrivy();
 
     if (!ready) {
         return <Spinner />;
     }
 
-    if (!authenticated) {
-        return <DoPrivyLogin />;
-    }
-
-    return <DoPrivyAuthentication />;
+    return (
+        <>
+            <DoPrivyLogin />
+            <br />
+            <br />
+            <DoPrivyAuthentication />
+        </>
+    );
 }
 
 function DoPrivyLogin() {
     // todo: Maybe a fork session stuff for the SDK post SSO?
-    const { ready, login, authenticated } = usePrivy();
-
-    if (!ready || authenticated) {
-        return <Spinner />;
-    }
+    const { login, authenticated } = usePrivy();
 
     return (
-        <Button type={"button"} onClick={() => login()}>
-            Login via socials
+        <Button
+            type={"button"}
+            onClick={() => login()}
+            disabled={authenticated}
+        >
+            Connect via socials
         </Button>
     );
 }
@@ -47,8 +50,16 @@ function DoPrivyAuthentication() {
     const { signMessage } = usePrivy();
     const { wallets } = useWallets();
     const [wallet, setWallet] = useState<ConnectedWallet | undefined>(
-        wallets.length > 2 ? undefined : wallets[0]
+        undefined
     );
+
+    // Auto pick the first wallet
+    useEffect(() => {
+        if (wallets.length === 1) {
+            setWallet(wallets[0]);
+        }
+    }, [wallets]);
+
     const { mutate: authenticate } = useMutation({
         mutationKey: ["privy-login", wallet?.address],
         async mutationFn() {
@@ -97,14 +108,19 @@ function DoPrivyAuthentication() {
         },
     });
 
-    if (!wallet) {
-        return <PickPrivyWallet wallets={wallets} onPick={setWallet} />;
-    }
-
     return (
-        <Button type={"button"} onClick={() => authenticate()}>
-            Login via Privy
-        </Button>
+        <>
+            {!wallet && wallets.length > 0 && (
+                <PickPrivyWallet wallets={wallets} onPick={setWallet} />
+            )}
+            <Button
+                type={"button"}
+                onClick={() => authenticate()}
+                disabled={wallet === undefined}
+            >
+                Authenticate
+            </Button>
+        </>
     );
 }
 

@@ -2,6 +2,7 @@ import { currentChain } from "@/context/blockchain/provider";
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
+import { useSyncPrivySession } from "@/module/common/hook/useSyncPrivySession";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@module/atoms/store";
@@ -162,6 +163,7 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
 
 function EnforceWagmiConnection() {
     useEnforceWagmiConnection();
+    useSyncPrivySession();
     return null;
 }
 
@@ -175,11 +177,14 @@ function PrivyProviderWithConfig({ children }: PropsWithChildren) {
                     theme: "light",
                     accentColor: "#676FFF",
                     logo: "https://wallet.frak.id/icon-192.png",
+                    walletChainType: "ethereum-only",
                 },
                 embeddedWallets: {
                     // Create wallet on login for user who don't have one
                     createOnLogin: "users-without-wallets",
                 },
+                supportedChains: [currentChain],
+                defaultChain: currentChain,
             }}
         >
             {children}
