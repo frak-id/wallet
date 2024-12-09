@@ -1,13 +1,7 @@
 import allCssUrl from "@/styles/all.css?url";
-import type { LinksFunction, MetaFunction } from "@remix-run/node";
-import {
-    Links,
-    Meta,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
-} from "@remix-run/react";
 import type { ReactNode } from "react";
+import type { LinksFunction, MetaFunction } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import { MainLayout } from "./module/common/component/MainLayout";
 import { RootProvider } from "./module/common/provider/RootProvider";
 
