@@ -14,18 +14,13 @@ export type PrivyWallet = {
 
 /*
 
-* A new session would looks like either:
- token: string
- wallet: Address
- { type: "webauthn" ...},
- { type: "fallback" ...}
 
  Need to generate a session token for the fallback type though
  Impact on:
   - wagmi connector
   - everything that use webauthn directly
-  - backend authentication
   - wallet settings page?
+  - recovery (use privy recovery insteead)
 
   - how to transmit the signature provider to the wagmi provider? Need to check how the privy custom conenctor is build
     - Maybe a privy store?
