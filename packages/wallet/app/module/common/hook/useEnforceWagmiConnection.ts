@@ -1,4 +1,8 @@
-import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
+import {
+    type FrakWalletConnector,
+    smartAccountConnector,
+} from "@/context/wallet/smartWallet/connector";
+import { useWallets } from "@privy-io/react-auth";
 import { useEffect, useMemo } from "react";
 import { useConfig, useConnect } from "wagmi";
 
@@ -21,6 +25,11 @@ export function useEnforceWagmiConnection() {
             ),
         [connectors]
     );
+
+    /**
+     * Get the current privy wallets
+     */
+    const { wallets } = useWallets();
 
     /**
      * Connect to the nexus connector
@@ -53,4 +62,15 @@ export function useEnforceWagmiConnection() {
         });
         connect({ connector: frakConnector });
     }, [connect, frakConnector, isPending, state.current, state.status]);
+
+    useEffect(() => {
+        if (!frakConnector) {
+            return;
+        }
+
+        // Update the privy wallets from the frak connectors
+        (frakConnector as unknown as FrakWalletConnector).onPrivyWalletsUpdate({
+            wallets,
+        });
+    }, [wallets, frakConnector]);
 }

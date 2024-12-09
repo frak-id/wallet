@@ -21,9 +21,7 @@ export {
     type GetTokenMetadataParams,
 } from "./actions/getTokenMetadata";
 export { getTokenBalances } from "./actions/getTokenBalances";
-export {
-    KernelWallet
-} from "./wallet"
+export { KernelWallet } from "./wallet";
 // Abis
 export {
     campaignFactoryAbi,

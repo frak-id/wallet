@@ -7,6 +7,7 @@ import {
 } from "@simplewebauthn/server";
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
+import { verifyMessage } from "viem/actions";
 import { WalletAuthResponseDto } from "../models/WalletSessionDto";
 import { walletSdkSessionService } from "../services/WalletSdkSessionService";
 import { webAuthNService } from "../services/WebAuthNService";
@@ -50,6 +51,81 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             response: {
                 404: t.String(),
                 200: t.Omit(WalletAuthResponseDto, ["sdkJwt"]),
+            },
+        }
+    )
+    // Privy login
+    .post(
+        "/privyLogin",
+        async ({
+            // Request
+            body: { expectedChallenge, signature, wallet, walletId, ssoId },
+            // Response
+            error,
+            // Context
+            client,
+            walletJwt,
+            generateSdkJwt,
+            resolveSsoSession,
+        }) => {
+            // Rebuild the message that have been signed
+            const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${expectedChallenge}`;
+
+            // Verify the message signature
+            const isValidSignature = await verifyMessage(client, {
+                signature,
+                message,
+                address: wallet,
+            });
+            if (!isValidSignature) {
+                return error(404, "Invalid signature");
+            }
+
+            const authenticatorId = `privy-${walletId}` as const;
+
+            // Create the token and set the cookie
+            const token = await walletJwt.sign({
+                address: wallet,
+                authenticatorId,
+                publicKey: wallet,
+                sub: wallet,
+                iat: Date.now(),
+                transports: undefined,
+            });
+
+            // Finally, generate a JWT token for the SDK
+            const sdkJwt = await generateSdkJwt({ wallet });
+
+            // If all good, mark the sso as done
+            if (ssoId) {
+                await resolveSsoSession({
+                    id: ssoId,
+                    wallet,
+                    authenticatorId,
+                });
+            }
+
+            return {
+                token,
+                address: wallet,
+                authenticatorId,
+                publicKey: wallet,
+                sdkJwt,
+                transports: undefined,
+            };
+        },
+        {
+            body: t.Object({
+                expectedChallenge: t.String(),
+                wallet: t.Address(),
+                walletId: t.String(),
+                signature: t.Hex(),
+                // potential sso id
+                ssoId: t.Optional(t.Hex()),
+            }),
+            response: {
+                404: t.String(),
+                200: WalletAuthResponseDto,
             },
         }
     )

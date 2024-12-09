@@ -51,9 +51,9 @@ const webAuthNValidatorEnablingLayout = [
  * @param signerPubKey
  */
 function getWebAuthNSmartWalletInitCode({
-                                                   authenticatorIdHash,
-                                                   signerPubKey,
-                                               }: {
+    authenticatorIdHash,
+    signerPubKey,
+}: {
     authenticatorIdHash: Hex;
     signerPubKey: { x: Hex; y: Hex };
 }): Hex {
@@ -84,8 +84,8 @@ function getWebAuthNSmartWalletInitCode({
  * @param ecdsaAddress
  */
 function getFallbackWalletInitCode({
-                                              ecdsaAddress,
-                                          }: {
+    ecdsaAddress,
+}: {
     ecdsaAddress: Hex;
 }): Hex {
     if (!ecdsaAddress) throw new Error("Owner account not found");
@@ -108,4 +108,4 @@ function getFallbackWalletInitCode({
 export const KernelWallet = {
     getWebAuthNSmartWalletInitCode,
     getFallbackWalletInitCode,
-}
+};

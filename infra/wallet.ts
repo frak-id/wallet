@@ -4,7 +4,8 @@ import {
     indexerUrl,
     isProd,
     nexusRpcSecret,
-    pimlicoApiKey, privyAppId,
+    pimlicoApiKey,
+    privyAppId,
     umamiWalletWebsiteId,
     vapidPublicKey,
 } from "./config";

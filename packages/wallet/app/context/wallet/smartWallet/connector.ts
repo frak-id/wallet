@@ -1,10 +1,15 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
+import type { ConnectedWallet } from "@privy-io/react-auth";
 import type { Transport } from "viem";
 import { createConnector } from "wagmi";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
+
+export type FrakWalletConnector = ReturnType<
+    ReturnType<typeof smartAccountConnector>
+>;
 
 /**
  * Create a connector for the smart account
@@ -22,7 +27,10 @@ export function smartAccountConnector<
     let provider: Provider | undefined;
 
     // Create the wagmi connector itself
-    return createConnector<Provider>((config) => ({
+    return createConnector<
+        Provider,
+        { onPrivyWalletsUpdate: (args: { wallets: ConnectedWallet[] }) => void }
+    >((config) => ({
         id: "frak-wallet-connector",
         name: "Frak Smart Account",
         type: smartAccountConnector.type,
@@ -150,6 +158,11 @@ export function smartAccountConnector<
         },
         onDisconnect() {
             config.emitter.emit("disconnect");
+        },
+        // When the list of privy wallets change
+        onPrivyWalletsUpdate({ wallets }: { wallets: ConnectedWallet[] }) {
+            // todo: Do some stuff with it
+            console.log("Wagmi provider wallets update", { wallets });
         },
     }));
 }
