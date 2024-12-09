@@ -161,9 +161,7 @@ export function smartAccountConnector<
                         return (await signViaPrivy(
                             message,
                             {
-                                title: "Action confirmation",
-                                description:
-                                    "By signing the following hash, you will authorize the current frak action",
+                                showWalletUIs: false,
                             },
                             address
                         )) as Hex;

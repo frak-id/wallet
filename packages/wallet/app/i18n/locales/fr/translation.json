@@ -126,7 +126,11 @@
     },
     "wallet": {
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
-        "biometryInfos": "Informations biométriques",
+        "settings": {
+            "biometryInfo": "Informations biométriques",
+            "privyInfo": "Informations de connection",
+            "privyWallet": "Portefeuille privy"
+        },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
         "interaction": {
             "CREATE_REFERRAL_LINK": "Lien de partage créé",

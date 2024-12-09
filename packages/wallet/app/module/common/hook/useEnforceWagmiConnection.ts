@@ -2,7 +2,7 @@ import {
     type FrakWalletConnector,
     smartAccountConnector,
 } from "@/context/wallet/smartWallet/connector";
-import { usePrivy } from "@privy-io/react-auth";
+import { useSignMessage } from "@privy-io/react-auth";
 import { useEffect, useMemo } from "react";
 import { useConfig, useConnect } from "wagmi";
 
@@ -59,10 +59,9 @@ export function useEnforceWagmiConnection() {
     }, [connect, frakConnector, isPending, state.current, state.status]);
 
     /**
-     * Get the current privy wallets
+     * Synchronise the privy sign message with the frak connector
      */
-    const { signMessage } = usePrivy();
-
+    const { signMessage } = useSignMessage();
     useEffect(() => {
         if (!frakConnector) {
             return;

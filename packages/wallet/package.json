@@ -16,7 +16,6 @@
     "typecheck": "tsc --noEmit",
     "bundle:check": "sst shell bunx vite-bundle-visualizer",
     "i18n:types": "bun run i18next-resources-for-ts interface -i ./app/i18n/locales/en/ -o app/types/i18n/resources.d.ts",
-    "i18n:pull": "",
     "sw": "bun run tsup"
   },
   "dependencies": {
