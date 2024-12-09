@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import type { Address } from "viem";
 import type { InteractionsContextApp, InteractionsDb } from "../context";
 import { pendingInteractionsTable } from "../db/schema";
-import type { InteractionDiamondRepository } from "../repositories/InteractionDiamondRepository";
+import type { InteractionPackerRepository } from "../repositories/InteractionPackerRepository";
 import type { WalletSessionRepository } from "../repositories/WalletSessionRepository";
 
 export const simulateInteractionJob = (app: InteractionsContextApp) =>
@@ -23,7 +23,7 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
             run: async ({ context: { logger } }) => {
                 const {
                     interactionsDb,
-                    interactionDiamondRepository,
+                    interactionPackerRepository,
                     walletSessionRepository,
                     pendingInteractionsRepository,
                     emitter,
@@ -52,13 +52,15 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     `Got ${interactions.length} interactions to simulate`
                 );
 
+                // todo: Base anti cheat system (for now just prevent unsafe purchase one)
+
                 try {
                     // Perform the simulation and update the interactions
                     const hasSuccessInteractions =
                         await simulateAndUpdateInteractions({
                             interactions,
                             interactionsDb,
-                            interactionDiamondRepository,
+                            interactionPackerRepository,
                             walletSessionRepository,
                             logger,
                         });
@@ -94,13 +96,13 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
 async function simulateAndUpdateInteractions({
     interactions,
     interactionsDb,
-    interactionDiamondRepository,
+    interactionPackerRepository,
     walletSessionRepository,
     logger,
 }: {
     interactions: (typeof pendingInteractionsTable.$inferSelect)[];
     interactionsDb: InteractionsDb;
-    interactionDiamondRepository: InteractionDiamondRepository;
+    interactionPackerRepository: InteractionPackerRepository;
     walletSessionRepository: WalletSessionRepository;
     logger: pino.Logger;
 }) {
@@ -133,7 +135,7 @@ async function simulateAndUpdateInteractions({
 
         // Then perform the simulation
         const { isSimulationSuccess } =
-            await interactionDiamondRepository.simulateInteraction({
+            await interactionPackerRepository.simulateInteraction({
                 wallet: interaction.wallet,
                 productId: interaction.productId,
                 interactionData: {

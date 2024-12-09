@@ -1,15 +1,16 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
+import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
 import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
 import { lazy, useEffect, useState } from "react";
 
-const ListenerModal = lazy(() =>
+const modalImport = () =>
     import("@/module/listener/component/Modal").then((module) => ({
         default: module.ListenerModal,
-    }))
-);
+    }));
+const ListenerModal = lazy(modalImport);
 
 /**
  * Global Listener UI that can only be set via an iFrame
@@ -99,6 +100,26 @@ export default function Listener() {
             rootElement.dataset.listener = "false";
         };
     }, []);
+
+    /**
+     * Preload the modal so it did not take too much time to display on slow network
+     */
+    useEffect(() => {
+        const handleIdleCallback = async () => await modalImport();
+
+        if ("requestIdleCallback" in window) {
+            const idleCallbackId = requestIdleCallback(handleIdleCallback);
+            return () => cancelIdleCallback(idleCallbackId);
+        }
+
+        const timeoutId = setTimeout(handleIdleCallback, 0);
+        return () => clearTimeout(timeoutId);
+    }, []);
+
+    /**
+     * Preload a few data
+     */
+    useListenerDataPreload();
 
     return modalRequested ? <ListenerModal /> : null;
 }

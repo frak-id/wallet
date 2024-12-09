@@ -1,4 +1,3 @@
-import { getSessionStatus } from "@/context/interaction/action/interactionSession";
 import { pushBackupData } from "@/context/sdk/utils/backup";
 import type {
     IFrameRequestResolver,
@@ -10,11 +9,13 @@ import {
     getSafeSdkSession,
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
+import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
+import { useQueryClient } from "@tanstack/react-query";
 import { atom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -39,6 +40,9 @@ export function useWalletStatusListener(): OnListenToWallet {
     const sessionsRef = useRef(undefined as typeof bothSessions | undefined);
     const unsubscribeSessionRef = useRef<(() => void) | null>(null);
     const unsubscribeSdkRef = useRef<(() => void) | null>(null);
+
+    // Get our query client, to check if we got some cached data
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         sessionsRef.current = bothSessions;
@@ -83,17 +87,18 @@ export function useWalletStatusListener(): OnListenToWallet {
                 return;
             }
 
-            // Get the on chain status
-            const interactionSession = await getSessionStatus({
-                wallet: wallet.address,
-            }).then((interactionSession) =>
-                interactionSession
-                    ? {
-                          startTimestamp: interactionSession.sessionStart,
-                          endTimestamp: interactionSession.sessionEnd,
-                      }
-                    : undefined
-            );
+            // Get the on chain status (or a cached version if present)
+            const interactionSession = await queryClient
+                .ensureQueryData(interactionSessionStatusQuery(wallet.address))
+                .catch(() => undefined)
+                .then((interactionSession) =>
+                    interactionSession
+                        ? {
+                              startTimestamp: interactionSession.sessionStart,
+                              endTimestamp: interactionSession.sessionEnd,
+                          }
+                        : undefined
+                );
 
             // Check again if aborted before emitting
             if (signal?.aborted) {
@@ -120,7 +125,7 @@ export function useWalletStatusListener(): OnListenToWallet {
             // And push some backup data if we got ones
             await pushBackupData({ productId: context.productId });
         },
-        []
+        [queryClient]
     );
 
     // Clean up on unmount

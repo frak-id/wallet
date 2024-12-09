@@ -1,0 +1,7 @@
+name = "remix"
+roles = ["frontend", "backend"]
+webhooks_path = "/webhooks/app/uninstalled"
+
+[commands]
+predev = "bun db:generate"
+dev = "bun db:migrate && sst dev bun remix vite:dev"

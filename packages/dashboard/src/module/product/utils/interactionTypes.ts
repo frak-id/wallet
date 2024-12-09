@@ -32,6 +32,10 @@ export const interactionTypesInfo: Record<
         name: "Purchase completed",
         relatedGoal: "sales",
     },
+    unsafeCompleted: {
+        name: "Purchase completed (unsafe)",
+        relatedGoal: "sales",
+    },
     proofVerifiableStorageUpdate: {
         name: "Proof Verifiable Storage Update",
         hidden: true,

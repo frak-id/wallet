@@ -1,4 +1,4 @@
-import type { BalanceItem } from "@/types/Token";
+import type { BalanceItem } from "@/types/Balance";
 import { FrakToken } from "./FrakToken";
 import styles from "./index.module.css";
 

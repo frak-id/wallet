@@ -1,3 +1,4 @@
+import { useEstimatedInteractionReward } from "@/module/listener/hooks/useEstimatedInteractionReward";
 import type { TOptions } from "i18next";
 import { atom, useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";
@@ -31,6 +32,7 @@ const modalTranslationContextAtom = atom((get) => {
 export function useModalTranslation() {
     const { i18n } = useTranslation();
     const { lang, context } = useAtomValue(modalTranslationContextAtom);
+    const { estimatedReward } = useEstimatedInteractionReward();
 
     // Transform the i18n instance to include the context
     const { newI18n, newT } = useMemo(() => {
@@ -39,12 +41,13 @@ export function useModalTranslation() {
             interpolation: {
                 defaultVariables: {
                     ...context,
+                    estimatedReward,
                 },
             },
         });
         const newT = newI18n.getFixedT(lang ?? "en", null) as typeof newI18n.t;
         return { newI18n, newT };
-    }, [i18n, lang, context]);
+    }, [i18n, lang, context, estimatedReward]);
 
     // Build the translation with context function
     const translationWithContext = useCallback(
@@ -52,9 +55,10 @@ export function useModalTranslation() {
             return newT(key, {
                 ...context,
                 ...options,
+                estimatedReward,
             });
         },
-        [newT, context]
+        [newT, context, estimatedReward]
     );
 
     return { t: translationWithContext, i18n: newI18n };

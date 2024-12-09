@@ -25,6 +25,7 @@ export async function siweAuthenticate(
     client: NexusClient,
     { siwe, metadata }: SiweAuthenticateModalParams
 ): Promise<SiweAuthenticateReturnType> {
+    const effectiveDomain = client.config?.domain ?? window.location.host;
     const realStatement =
         siwe?.statement ??
         `I confirm that I want to use my Frak wallet on: ${client.config.metadata.name}`;
@@ -34,9 +35,9 @@ export async function siweAuthenticate(
         ...siwe,
         statement: realStatement,
         nonce: siwe?.nonce ?? generateSiweNonce(),
-        uri: siwe?.uri ?? `https://${client.config.domain}`,
+        uri: siwe?.uri ?? `https://${effectiveDomain}`,
         version: siwe?.version ?? "1",
-        domain: client.config.domain,
+        domain: effectiveDomain,
     };
 
     // Trigger a modal with login options

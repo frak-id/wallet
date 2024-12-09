@@ -5,21 +5,18 @@ import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import type { UndefinedInitialDataOptions } from "@tanstack/react-query";
 import { RESET } from "jotai/utils";
+import { useMemo } from "react";
 import type { Address } from "viem";
+import { useAccount } from "wagmi";
 
 /**
- * Use the current session status
+ * The raw query data we will use to get the session status
+ * @param address
  */
-export function useInteractionSessionStatus({
-    address,
-    query,
-}: {
-    address?: Address;
-    query?: Partial<UndefinedInitialDataOptions<InteractionSession | null>>;
-}) {
-    return useQuery({
-        ...query,
-        queryKey: ["interactions", "session-status"],
+export const interactionSessionStatusQuery = (address?: Address) => {
+    return {
+        enabled: !!address,
+        queryKey: ["interactions", "session-status", address ?? "no-address"],
         queryFn: async () => {
             if (!address) {
                 return null;
@@ -28,6 +25,27 @@ export function useInteractionSessionStatus({
             jotaiStore.set(interactionSessionAtom, session ?? RESET);
             return session;
         },
-        enabled: !!address,
+    };
+};
+
+/**
+ * Use the current session status
+ */
+export function useInteractionSessionStatus({
+    address: paramAddress,
+    query,
+}: {
+    address?: Address;
+    query?: Partial<UndefinedInitialDataOptions<InteractionSession | null>>;
+} = {}) {
+    const wagmiAddress = useAccount().address;
+    const address = useMemo(
+        () => paramAddress ?? wagmiAddress,
+        [paramAddress, wagmiAddress]
+    );
+
+    return useQuery({
+        ...query,
+        ...interactionSessionStatusQuery(address),
     });
 }

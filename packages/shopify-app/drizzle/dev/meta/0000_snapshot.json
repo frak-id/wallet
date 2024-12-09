@@ -1,0 +1,75 @@
+{
+    "id": "6c170acb-6304-4286-85b8-5c59253429cd",
+    "prevId": "00000000-0000-0000-0000-000000000000",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.session": {
+            "name": "session",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "text",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "shop": {
+                    "name": "shop",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "state": {
+                    "name": "state",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "isOnline": {
+                    "name": "isOnline",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "scope": {
+                    "name": "scope",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "expires": {
+                    "name": "expires",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "accessToken": {
+                    "name": "accessToken",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "userId": {
+                    "name": "userId",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {}
+        }
+    },
+    "enums": {},
+    "schemas": {},
+    "sequences": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
+}

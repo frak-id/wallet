@@ -1,4 +1,4 @@
-import type { BalanceItem } from "@/types/Token";
+import type { BalanceItem } from "@/types/Balance";
 import { t } from "i18next";
 
 export const validateAmount = (value: string, selectedToken: BalanceItem) => {

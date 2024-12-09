@@ -35,7 +35,7 @@ export function FinalModalActionComponent({
                 isModalSuccess={isSuccess}
                 popupTitle={action?.options?.popupTitle}
                 text={action?.options?.text}
-                link={action?.options?.link}
+                link={action?.options?.link ?? window.location.href}
             />
         );
     }

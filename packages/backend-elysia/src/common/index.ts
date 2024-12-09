@@ -1,7 +1,6 @@
 export {
     blockchainContext,
     postgresContext,
-    adminWalletContext,
     nextSessionContext,
     indexerApiContext,
     sessionContext,

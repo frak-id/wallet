@@ -39,7 +39,11 @@ export function LoginModalStep({
     onFinish: (args: LoginModalStepType["returns"]) => void;
 }) {
     const { t } = useModalTranslation();
-    const { metadata } = params;
+    const { metadata, ssoMetadata } = params;
+
+    // Set the allowSso flag to true by default
+    const allowSso = params.allowSso ?? true;
+
     const { login, isSuccess, isLoading, isError, error } = useLogin({
         // Don't transmit the error up, to avoid modal closing
         // On success, transmit the wallet address up a level
@@ -62,17 +66,17 @@ export function LoginModalStep({
             <div
                 className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
             >
-                {params.allowSso && (
+                {allowSso && (
                     <div>
                         <SsoButton
                             appName={appName}
                             context={context}
-                            ssoMetadata={params.ssoMetadata}
+                            ssoMetadata={ssoMetadata ?? {}}
                             alternateText={metadata?.primaryActionText}
                         />
                     </div>
                 )}
-                {!params.allowSso && (
+                {!allowSso && (
                     <div>
                         <button
                             type={"button"}

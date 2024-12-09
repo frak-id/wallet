@@ -5,16 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Example Vanilla JS</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32"/>
-    <!--    <script src="https://cdn.jsdelivr.net/npm/@frak-labs/nexus-sdk@latest/dist/bundle/bundle.js"></script>-->
-    <script src="@/bundle.js"></script>
+<!--    <script src="https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/dist/bundle/components.js" defer="defer"></script>-->
+    <script src="@/components.js"></script>
     <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
 <h1>Welcome to example Vanilla JS</h1>
-<div id="wallet-status"></div>
-<button type="button" id="login-button">Login</button>
-<div id="nexus-wallet-button">
-    <button type="button" onclick="window.FrakSetup.modalShare()" id="share-button">Share and earn!</button>
-</div>
+<frak-button-share classname="button"></frak-button-share>
 </body>
 </html>

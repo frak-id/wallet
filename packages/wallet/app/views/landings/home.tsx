@@ -1,15 +1,12 @@
-import { type LoaderFunction, redirect } from "@remix-run/node";
-
-export const loader: LoaderFunction = async ({ request }) => {
-    const url = new URL(request.url);
-
-    if (url.pathname === "/") {
-        return redirect("/wallet");
-    }
-
-    return null;
-};
+import { useNavigate } from "@remix-run/react";
+import { useEffect } from "react";
 
 export default function Home() {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        navigate("/wallet");
+    }, [navigate]);
+
     return null;
 }

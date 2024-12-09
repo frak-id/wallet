@@ -1,7 +1,9 @@
 import { build, write } from "bun";
 import { minify } from "terser";
 
-console.log("Building...", { stage: process.env.STAGE });
+const stage = process.env.STAGE ?? "dev";
+
+console.log("Building...", { stage });
 console.time("build-time");
 const result = await build({
     entrypoints: ["./src/index.ts"],
@@ -12,7 +14,7 @@ const result = await build({
     // Directly replace some known env during build time
     define: {
         // Replace public env variable with the current value
-        "process.env.STAGE": JSON.stringify(process.env.STAGE ?? "dev"),
+        "process.env.STAGE": JSON.stringify(stage),
     },
     // Drop any console or debugger related code
     drop: ["console", "debugger"],

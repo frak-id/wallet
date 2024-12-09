@@ -1,10 +1,13 @@
 import { log } from "@backend-common";
 import type { AdminWalletsRepository } from "@backend-common/repositories";
+import type { InteractionDiamondRepository } from "@backend-common/repositories/InteractionDiamondRepository";
+import {
+    interactionDelegator_execute,
+    productInteractionDiamond_hasAllRoles,
+} from "@backend-utils";
 import {
     addresses,
-    interactionDelegatorAbi,
     interactionValidatorRoles,
-    productInteractionDiamondAbi,
 } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
 import * as solady from "solady";
@@ -40,7 +43,8 @@ export class InteractionSignerRepository {
 
     constructor(
         private readonly client: Client<Transport, Chain>,
-        private readonly adminWalletRepository: AdminWalletsRepository
+        private readonly adminWalletRepository: AdminWalletsRepository,
+        private readonly diamondRepository: InteractionDiamondRepository
     ) {}
 
     /**
@@ -50,13 +54,19 @@ export class InteractionSignerRepository {
         facetData,
         productId,
         user,
-        interactionContract,
     }: {
         facetData: Hex;
         user: Address;
         productId: Hex;
-        interactionContract: Address;
     }): Promise<Hex | undefined> {
+        // Get the diamond for id
+        const interactionContract =
+            await this.diamondRepository.getDiamondContract(productId);
+        if (!interactionContract) {
+            log.warn({ productId }, "No diamond contract found for product");
+            return undefined;
+        }
+
         // Get the signer
         const signerAccount =
             await this.adminWalletRepository.getProductSpecificAccount({
@@ -127,7 +137,7 @@ export class InteractionSignerRepository {
         }
 
         const isAllowed = await readContract(this.client, {
-            abi: productInteractionDiamondAbi,
+            abi: [productInteractionDiamond_hasAllRoles],
             address: interactionContract,
             functionName: "hasAllRoles",
             args: [signerAccount.address, interactionValidatorRoles],
@@ -151,7 +161,7 @@ export class InteractionSignerRepository {
 
         // Prepare the execution data
         const executeNoBatchData = encodeFunctionData({
-            abi: interactionDelegatorAbi,
+            abi: [interactionDelegator_execute],
             functionName: "execute",
             args: [
                 preparedInteractions.map(

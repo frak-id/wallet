@@ -1,8 +1,15 @@
 /**
- * The keys for each interaction types
+ * The final keys for each interaction types (e.g. `openArticle`) -> interaction type
  */
 export type InteractionTypesKey = {
     [K in keyof typeof interactionTypes]: keyof (typeof interactionTypes)[K];
+}[keyof typeof interactionTypes];
+
+/**
+ * The keys for each interaction types (e.g. `press.openArticle`) -> category_type.interaction_type
+ */
+export type FullInteractionTypesKey = {
+    [Category in keyof typeof interactionTypes]: `${Category & string}.${keyof (typeof interactionTypes)[Category] & string}`;
 }[keyof typeof interactionTypes];
 
 /**
@@ -27,5 +34,6 @@ export const interactionTypes = {
     purchase: {
         started: "0xd87e90c3",
         completed: "0x8403aeb4",
+        unsafeCompleted: "0x4d5b14e0",
     },
 } as const;

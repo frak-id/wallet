@@ -1,5 +1,5 @@
 import { TokenLogo } from "@/module/tokens/component/TokenLogo";
-import type { BalanceItem } from "@/types/Token";
+import type { BalanceItem } from "@/types/Balance";
 import styles from "./index.module.css";
 
 export function TokenItemLite({

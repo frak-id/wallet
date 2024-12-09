@@ -1,0 +1,70 @@
+{% assign button_class = block.settings.button_style | prepend: 'button--' %}
+
+{% assign full_width_class = '' %}
+{% if block.settings.full_width == true %}
+  {% assign full_width_class = 'button--full-width' %}
+{% endif %}
+
+{% assign custom_class = '' %}
+{% if block.settings.button_style == 'custom' %}
+  {% assign custom_class = 'frak-share-button-custom' %}
+{% endif %}
+
+<frak-button-share
+    text="{{ 'share_btn.label' | t }}"
+    classname="button {{ button_class }} {{ full_width_class }} {{ custom_class }}"
+></frak-button-share>
+
+{% style %}
+  .frak-share-button-custom {
+  background-color: {{ block.settings.background_color }};
+  color: {{ block.settings.text_color }};
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Frak Sharing Button",
+  "target": "section",
+  "settings": [
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "Button Style",
+      "options": [
+        {
+          "value": "primary",
+          "label": "Primary"
+        },
+        {
+          "value": "secondary",
+          "label": "Secondary"
+        },
+        {
+          "value": "custom",
+          "label": "Custom Colors"
+        }
+      ],
+      "default": "primary"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "label": "Full Width",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Button color",
+      "default": "#121212"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Button text color",
+      "default": "#FFFFFF"
+    }
+  ]
+}
+{% endschema %}

@@ -5,7 +5,7 @@ import {
     route,
 } from "@remix-run/route-config";
 
-export const routes: RouteConfig = [
+export default [
     // Landing Routes
     index("./views/landings/home.tsx"),
 
@@ -33,4 +33,4 @@ export const routes: RouteConfig = [
 
     // Catch-all Route
     route("*", "./views/catch-all.tsx"),
-];
+] satisfies RouteConfig;

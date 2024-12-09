@@ -10,8 +10,8 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
-    "dev": "bun dev:env && bun sst bind bun dev:watch",
-    "dev:env": "sst bind \"env | grep -E 'SST_|AWS_' > .env\" && sed -i '' 's/SST_Parameter_value_//g' .env && sed -i '' 's/SST_Secret_value_//g' .env",
+    "dev": "bun sst dev bun dev:watch",
+    "dev:env": "sst shell bun run scripts/envSetup.ts",
     "dev:watch": "bun run --watch src/index.ts",
     "build:docker": "docker build --tag \"elysia-dev\" .",
     "build": "bun build:package",
@@ -19,11 +19,9 @@
     "build:binary-linux-arm64": "bun build --compile --minify --target=bun-linux-arm64 --outfile ./server src/index.ts",
     "build:binary": "bun build --compile --minify --target=bun --outfile ./server src/index.ts",
     "start": "NODE_ENV=production bun dist/index-terser.js",
-    "db:studio": "sst bind drizzle-kit studio",
-    "db-dev:generate": "sst bind drizzle-kit generate",
-    "db-dev:migrate": "sst bind drizzle-kit migrate",
-    "db-prod:generate": "sst bind --stage prod drizzle-kit generate",
-    "db-prod:migrate": "sst bind --stage prod drizzle-kit migrate"
+    "db:studio": "sst dev drizzle-kit studio",
+    "db:generate": "sst dev drizzle-kit generate",
+    "db:migrate": "sst dev drizzle-kit migrate"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.696.0",
@@ -50,7 +48,7 @@
     "postgres": "^3.4.5",
     "radash": "^12.1.0",
     "solady": "^0.0.268",
-    "sst": "2.44.0",
+    "sst": "3.3.28",
     "viem": "^2.21.48",
     "web-push": "^3.6.7",
     "whatwg-url": "^14.0.0"

@@ -33,7 +33,7 @@ export default defineConfig([
     {
         target: "es2022",
         // All of our entry-points
-        entry: ["src/core/bundle.ts"],
+        entry: ["src/bundle/bundle.ts"],
         outDir: "dist/bundle",
         outExtension() {
             return {

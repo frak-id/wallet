@@ -38,3 +38,14 @@ export {
     bytesToString,
 } from "./utils";
 export { WebAuthN } from "./webauthn";
+export type {
+    IndexerToken,
+    GetCampaignResponseDto,
+    GetMembersWalletResponseDto,
+    GetMembersResponseDto,
+    GetMembersPageItem,
+    GetMembersRequestDto,
+    GetMembersCountResponseDto,
+    GetRewardResponseDto,
+    GetRewardHistoryResponseDto,
+} from "./types";

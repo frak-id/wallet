@@ -21,13 +21,13 @@ export const baseIframeProps = {
 
 /**
  * Create the given iframe
- * @param walletBaseUrl
+ * @param walletBaseUrl - @deprecated Use config.walletUrl instead. Will be removed in future versions.
  * @param config
  */
 export function createIframe({
     walletBaseUrl,
     config,
-}: { walletBaseUrl: string; config?: NexusWalletSdkConfig }): Promise<
+}: { walletBaseUrl?: string; config?: NexusWalletSdkConfig }): Promise<
     HTMLIFrameElement | undefined
 > {
     // Hide the share button by default until the iframe is loaded and connected
@@ -36,9 +36,9 @@ export function createIframe({
     // Check if the iframe is already created
     const alreadyCreatedIFrame = document.querySelector("#nexus-wallet");
 
-    // If the iframe is already created, return it
+    // If the iframe is already created, remove it
     if (alreadyCreatedIFrame) {
-        return Promise.resolve(alreadyCreatedIFrame as HTMLIFrameElement);
+        alreadyCreatedIFrame.remove();
     }
 
     const iframe = document.createElement("iframe");
@@ -54,7 +54,7 @@ export function createIframe({
 
     return new Promise((resolve) => {
         iframe?.addEventListener("load", () => resolve(iframe));
-        iframe.src = `${walletBaseUrl}/listener`;
+        iframe.src = `${walletBaseUrl ?? config?.walletUrl ?? "https://wallet.frak.id"}/listener`;
     });
 }
 /**

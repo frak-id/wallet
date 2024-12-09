@@ -40,8 +40,8 @@ export class WorldNewsApiRepository {
         const response = await fetch(url.toString());
         const data = (await response.json()) as NewsResponse;
 
-        // And return our data
-        return data.news;
+        // And return our data, filter out all the news without an image
+        return data.news.filter((news) => news.image);
     }
 
     // Format the date in the form:  yyyy-mm-dd hh:mm:ss

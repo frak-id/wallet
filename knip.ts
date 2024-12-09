@@ -3,15 +3,18 @@ import type { KnipConfig } from "knip";
 const config: KnipConfig = {
     // Exclude types analysis for now
     exclude: ["types"],
-    ignore: ["**/*.d.ts"],
+    ignore: ["**/*.d.ts", "packages/shopify-app/**"],
     // Include all the workspaces
     workspaces: {
         ".": {
-            entry: "sst.config.ts",
+            entry: ["sst.config.ts", "infra/*.ts"],
             project: "iat/*.ts",
             ignore: [".sst/**"],
         },
-        "example/*": {},
+        "example/*": {
+            entry: ["app/*.{ts,tsx}", "app/views/**/*.tsx"],
+            project: ["app/**/*.{ts,tsx}"],
+        },
         "packages/sdk": {
             entry: "src/**/index.{ts,tsx}",
             project: ["src/**/*.{ts,tsx}"],
@@ -20,12 +23,16 @@ const config: KnipConfig = {
             entry: "**/*.{ts,tsx}",
         },
         "packages/wallet": {
-            entry: ["app/**/*.tsx", "app/service-worker.ts"],
+            entry: ["app/*.{ts,tsx}", "app/views/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}"],
         },
         "packages/backend-elysia": {
             entry: "src/index.ts",
             project: "src/**/*.ts",
+        },
+        "packages/shopify-app": {
+            entry: ["app/**/*.tsx"],
+            project: ["app/**/*.{ts,tsx}"],
         },
     },
     // Ignore SDK for knip for now
