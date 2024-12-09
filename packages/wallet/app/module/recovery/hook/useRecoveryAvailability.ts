@@ -9,8 +9,6 @@ export function useRecoveryAvailability({
     file,
     newAuthenticatorId,
 }: { file: RecoveryFileContent; newAuthenticatorId: string }) {
-    // const fetcher = useFetcherWithPromise<GetRecoveryAvailabilityResponse>();
-
     const { data, ...queryStuff } = useQuery({
         queryKey: [
             "recovery",
@@ -26,21 +24,6 @@ export function useRecoveryAvailability({
                 expectedGuardian: file.guardianAddress,
                 newAuthenticatorId,
             });
-            // const data = await fetcher.submit(
-            //     {
-            //         wallet: file.initialWallet.address,
-            //         expectedGuardian: file.guardianAddress,
-            //         newAuthenticatorId,
-            //     },
-            //     {
-            //         action: "/recovery",
-            //         method: "post",
-            //     }
-            // );
-            // if (!data) {
-            //     return undefined;
-            // }
-            // return data;
         },
     });
     return {

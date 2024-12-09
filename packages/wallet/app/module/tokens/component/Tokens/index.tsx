@@ -1,8 +1,8 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Balance } from "@/module/tokens/component/Balance";
-import { Link } from "@remix-run/react";
 import { HandCoins, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import styles from "./index.module.css";
 
 export function Tokens() {

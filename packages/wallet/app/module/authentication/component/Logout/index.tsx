@@ -2,11 +2,11 @@ import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { jotaiStore } from "@module/atoms/store";
 import { Button } from "@module/component/Button";
-import { useNavigate } from "@remix-run/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { RESET } from "jotai/utils";
 import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 
 function cleanLocalStorage() {
     // Clear static local storage items

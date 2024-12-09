@@ -1,14 +1,8 @@
 import * as process from "node:process";
-import { vitePlugin as remix } from "@remix-run/dev";
+import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
-
-declare module "@remix-run/node" {
-    interface Future {
-        v3_singleFetch: true;
-    }
-}
 
 export default defineConfig(({ isSsrBuild }) => {
     // Return the built config
@@ -42,21 +36,7 @@ export default defineConfig(({ isSsrBuild }) => {
         esbuild: {
             drop: process.env.STAGE === "prod" ? ["console", "debugger"] : [],
         },
-        plugins: [
-            remix({
-                ssr: false,
-                future: {
-                    v3_fetcherPersist: true,
-                    v3_relativeSplatPath: true,
-                    v3_throwAbortReason: true,
-                    v3_singleFetch: true,
-                    v3_lazyRouteDiscovery: true,
-                    v3_routeConfig: true,
-                },
-            }),
-            mkcert(),
-            tsconfigPaths(),
-        ],
+        plugins: [reactRouter(), mkcert(), tsconfigPaths()],
         build: isSsrBuild ? { target: "ES2022" } : { target: "ES2020" },
     };
 });

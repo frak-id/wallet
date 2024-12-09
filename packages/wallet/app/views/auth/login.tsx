@@ -3,9 +3,9 @@ import { LoginList } from "@/module/authentication/component/LoginList";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
-import { Link, useNavigate } from "@remix-run/react";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
+import { Link, useNavigate } from "react-router";
 import styles from "./login.module.css";
 
 export default function Login() {
