@@ -6,10 +6,10 @@ import {
 } from "@/module/settings/atoms/recovery";
 import { Button } from "@module/component/Button";
 import { WalletAddress } from "@module/component/HashDisplay";
-import { useNavigate } from "@remix-run/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { toHex } from "viem";
 import styles from "./Step2.module.css";
 

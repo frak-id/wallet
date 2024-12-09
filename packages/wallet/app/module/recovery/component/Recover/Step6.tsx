@@ -1,6 +1,6 @@
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
-import { Link } from "@remix-run/react";
 import { Trans, useTranslation } from "react-i18next";
+import { Link } from "react-router";
 
 const ACTUAL_STEP = 6;
 

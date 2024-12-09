@@ -3,10 +3,10 @@ import { useLogin } from "@/module/authentication/hook/useLogin";
 import { FingerprintFrak } from "@module/asset/icons/FingerprintFrak";
 import { Button } from "@module/component/Button";
 import { formatHash } from "@module/component/HashDisplay";
-import { useNavigate } from "@remix-run/react";
 import { SquareUser } from "lucide-react";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { toHex } from "viem";
 import styles from "./index.module.css";
 

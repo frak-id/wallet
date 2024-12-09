@@ -1,7 +1,7 @@
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
-import { useNavigate } from "@remix-run/react";
 import { useState, useTransition } from "react";
 import type { PropsWithChildren } from "react";
+import { useNavigate } from "react-router";
 
 export function ButtonAuth({
     trigger,

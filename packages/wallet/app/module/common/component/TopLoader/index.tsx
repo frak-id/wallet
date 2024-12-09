@@ -1,7 +1,7 @@
-import { useFetchers, useNavigation } from "@remix-run/react";
 import NProgress from "nprogress";
 import nProgressStylesUrl from "nprogress/nprogress.css?url";
 import { useEffect, useMemo } from "react";
+import { useFetchers, useNavigation } from "react-router";
 
 export function TopLoader() {
     NProgress.configure({ showSpinner: false });

@@ -13,7 +13,6 @@ import {
 } from "@/module/authentication/utils/ssoDataCompression";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { decompressJson } from "@frak-labs/nexus-sdk/core";
 import { jotaiStore } from "@module/atoms/store";
 import { formatHash } from "@module/component/HashDisplay";
 import { Spinner } from "@module/component/Spinner";
@@ -23,7 +22,8 @@ import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import "./sso.global.css";
-import { Link, useSearchParams } from "@remix-run/react";
+import { decompressJson } from "@frak-labs/nexus-sdk/core";
+import { Link, useSearchParams } from "react-router";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();

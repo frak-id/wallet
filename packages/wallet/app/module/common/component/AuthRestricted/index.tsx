@@ -1,9 +1,9 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import { getSafeSession } from "@/module/listener/utils/localStorage";
 import { Skeleton } from "@module/component/Skeleton";
-import { useNavigate } from "@remix-run/react";
 import { useAtomValue } from "jotai";
 import { type PropsWithChildren, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 /**
  * Simple wrapper that limit the access to the subpage depending on the authentication status

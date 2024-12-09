@@ -3,7 +3,7 @@ import {
     index,
     layout,
     route,
-} from "@remix-run/route-config";
+} from "@react-router/dev/routes";
 
 export default [
     // Landing Routes

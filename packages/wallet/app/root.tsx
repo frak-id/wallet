@@ -4,14 +4,8 @@ import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Analytics } from "@module/component/Analytics";
-import {
-    Links,
-    Meta,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
-} from "@remix-run/react";
 import type { ReactNode } from "react";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 
 export const meta = rootConfig.meta;
 export const links = rootConfig.links;
