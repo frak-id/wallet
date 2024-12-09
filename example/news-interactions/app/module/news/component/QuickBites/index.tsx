@@ -1,5 +1,5 @@
 import type { LightNews } from "@/types/News";
-import { Link } from "@remix-run/react";
+import { Link } from "react-router";
 import styles from "./index.module.css";
 
 export function QuickBites({ id, title, summary }: LightNews) {

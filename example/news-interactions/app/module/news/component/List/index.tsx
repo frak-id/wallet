@@ -1,7 +1,7 @@
 import { ImageRemote } from "@/module/common/component/ImageRemote";
 import type { LightNews } from "@/types/News";
-import { Link } from "@remix-run/react";
 import type { PropsWithChildren } from "react";
+import { Link } from "react-router";
 import styles from "./index.module.css";
 
 export function List({ children }: PropsWithChildren) {

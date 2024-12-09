@@ -1,6 +1,6 @@
 import { NewsArticle } from "@/module/news/component/NewsArticle";
-import type { LoaderFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import type { LoaderFunction } from "react-router";
+import { useLoaderData } from "react-router";
 
 export const loader: LoaderFunction = async ({ request }) => {
     const url = new URL(request.url);
