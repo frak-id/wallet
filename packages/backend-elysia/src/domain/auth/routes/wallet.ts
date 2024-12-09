@@ -59,11 +59,12 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
         "/privyLogin",
         async ({
             // Request
-            body: { expectedChallenge, signature, wallet, walletId, ssoId },
+            body: { expectedChallenge, signature, wallet, ssoId },
             // Response
             error,
             // Context
             client,
+            getEcdsaWalletAddress,
             walletJwt,
             generateSdkJwt,
             resolveSsoSession,
@@ -81,33 +82,38 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 return error(404, "Invalid signature");
             }
 
-            const authenticatorId = `privy-${walletId}` as const;
+            const authenticatorId = `privy-${wallet}` as const;
+
+            // Get the wallet address
+            const walletAddress = await getEcdsaWalletAddress({
+                ecdsaAddress: wallet,
+            });
 
             // Create the token and set the cookie
             const token = await walletJwt.sign({
-                address: wallet,
+                address: walletAddress,
                 authenticatorId,
                 publicKey: wallet,
-                sub: wallet,
+                sub: walletAddress,
                 iat: Date.now(),
                 transports: undefined,
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await generateSdkJwt({ wallet });
+            const sdkJwt = await generateSdkJwt({ wallet: walletAddress });
 
             // If all good, mark the sso as done
             if (ssoId) {
                 await resolveSsoSession({
                     id: ssoId,
-                    wallet,
+                    wallet: walletAddress,
                     authenticatorId,
                 });
             }
 
             return {
                 token,
-                address: wallet,
+                address: walletAddress,
                 authenticatorId,
                 publicKey: wallet,
                 sdkJwt,
@@ -118,7 +124,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             body: t.Object({
                 expectedChallenge: t.String(),
                 wallet: t.Address(),
-                walletId: t.String(),
                 signature: t.Hex(),
                 // potential sso id
                 ssoId: t.Optional(t.Hex()),
@@ -224,7 +229,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             generateSdkJwt,
             authenticatorRepository,
             walletJwt,
-            getAuthenticatorWalletAddress,
+            getWebAuthnWalletAddress,
             parseCompressedWebAuthNResponse,
             resolveSsoSession,
         }) => {
@@ -268,7 +273,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Get the wallet address
             const walletAddress =
                 previousWallet ??
-                (await getAuthenticatorWalletAddress({
+                (await getWebAuthnWalletAddress({
                     authenticatorId: credential.id,
                     pubKey: publicKey,
                 }));

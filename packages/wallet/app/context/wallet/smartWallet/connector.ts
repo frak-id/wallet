@@ -1,8 +1,8 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
-import type { ConnectedWallet } from "@privy-io/react-auth";
-import type { Transport } from "viem";
+import type { PrivyInterface } from "@privy-io/react-auth";
+import type { Hex, Transport } from "viem";
 import { createConnector } from "wagmi";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
@@ -26,10 +26,17 @@ export function smartAccountConnector<
     // The current provider
     let provider: Provider | undefined;
 
+    // The privy message signer (null if not ready)
+    let signViaPrivy: PrivyInterface["signMessage"] | undefined = undefined;
+
     // Create the wagmi connector itself
     return createConnector<
         Provider,
-        { onPrivyWalletsUpdate: (args: { wallets: ConnectedWallet[] }) => void }
+        {
+            onPrivyInterfaceUpdate: (
+                args: PrivyInterface["signMessage"]
+            ) => void;
+        }
     >((config) => ({
         id: "frak-wallet-connector",
         name: "Frak Smart Account",
@@ -146,6 +153,21 @@ export function smartAccountConnector<
                             chainId: config.chains[0].id,
                         });
                     },
+
+                    async signViaPrivy(message, address) {
+                        if (!signViaPrivy) {
+                            throw new Error("Privy not ready yet");
+                        }
+                        return (await signViaPrivy(
+                            message,
+                            {
+                                title: "Action confirmation",
+                                description:
+                                    "By signing the following hash, you will authorize the current frak action",
+                            },
+                            address
+                        )) as Hex;
+                    },
                 });
             }
             return provider;
@@ -159,10 +181,9 @@ export function smartAccountConnector<
         onDisconnect() {
             config.emitter.emit("disconnect");
         },
-        // When the list of privy wallets change
-        onPrivyWalletsUpdate({ wallets }: { wallets: ConnectedWallet[] }) {
-            // todo: Do some stuff with it
-            console.log("Wagmi provider wallets update", { wallets });
+
+        onPrivyInterfaceUpdate(privySignMsg: PrivyInterface["signMessage"]) {
+            signViaPrivy = privySignMsg;
         },
     }));
 }
