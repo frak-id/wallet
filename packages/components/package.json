@@ -44,7 +44,7 @@
     "build:watch": "tsup --watch"
   },
   "dependencies": {
-    "preact": "^10.25.0",
+    "preact": "^10.25.1",
     "preact-custom-element": "^4.3.0"
   },
   "devDependencies": {
