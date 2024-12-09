@@ -6,7 +6,7 @@
   "type": "module",
   "license": "GNU GPL 3.0",
   "scripts": {
-    "next-dev-https": "next dev --experimental-https --port 3001",
+    "next-dev-https": "next dev --turbopack --experimental-https --port 3001",
     "dev": "sst dev bun run next-dev-https",
     "build": "next build",
     "start": "next start",
@@ -43,20 +43,24 @@
     "lucide-react": "^0.468.0",
     "mongodb": "^6.11.0",
     "lru-cache": "^11.0.2",
-    "next": "14.2.18",
+    "next": "15.0.4",
     "normalize.css": "^8.0.1",
     "radash": "^12.1.0",
-    "react": "^18",
+    "react": "^19",
     "react-day-picker": "^9.4.2",
-    "react-dom": "^18",
+    "react-dom": "^19",
     "react-hook-form": "^7.54.0",
     "viem": "^2.21.48"
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "sst": "3.3.28",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
   }
 }

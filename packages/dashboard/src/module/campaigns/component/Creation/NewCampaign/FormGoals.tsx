@@ -33,7 +33,7 @@ import styles from "./FormGoals.module.css";
 type ItemGoals = {
     id: string;
     label: string;
-    icon: ReactElement;
+    icon: ReactElement<unknown>;
     information?: {
         title: string;
         description: string;
