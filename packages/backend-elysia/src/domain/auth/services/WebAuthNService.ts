@@ -3,7 +3,11 @@ import {
     mongoDbContext,
     sessionContext,
 } from "@backend-common";
-import {WebAuthN, kernelAddresses, KernelWallet} from "@frak-labs/app-essentials";
+import {
+    KernelWallet,
+    WebAuthN,
+    kernelAddresses,
+} from "@frak-labs/app-essentials";
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
 import { Elysia } from "elysia";

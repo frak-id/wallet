@@ -10,6 +10,7 @@ import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAut
 import { sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import { getSafeSession } from "@/module/listener/utils/localStorage";
+import type { PrivyWallet } from "@/types/Session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
@@ -28,7 +29,7 @@ type SmartAccountProvierParameters = {
     /**
      * Method when the account has changed
      */
-    onAccountChanged: (newWallet?: WebAuthNWallet) => void;
+    onAccountChanged: (newWallet?: WebAuthNWallet | PrivyWallet) => void;
 };
 
 /**
@@ -102,10 +103,24 @@ export function getSmartAccountProvider<
                 return undefined;
             }
 
+            const privyWallet =
+                currentWebAuthNWallet.authenticatorId.startsWith("privy-")
+                    ? (currentWebAuthNWallet as PrivyWallet)
+                    : undefined;
+            const webauthnWallet = privyWallet
+                ? undefined
+                : (currentWebAuthNWallet as WebAuthNWallet);
+
             // Otherwise, build it
-            targetSmartAccount = await buildSmartAccount({
-                wallet: currentWebAuthNWallet,
-            });
+            if (privyWallet) {
+                // todo: Custom for privy here
+                return undefined;
+            }
+            targetSmartAccount = webauthnWallet
+                ? await buildSmartAccount({
+                      wallet: webauthnWallet,
+                  })
+                : undefined;
 
             // Save the new one
             currentSmartAccountClient = targetSmartAccount;
