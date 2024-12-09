@@ -11,7 +11,7 @@ import {
 } from "@privy-io/react-auth";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 
 export function PrivyLogin() {
@@ -29,6 +29,7 @@ export function PrivyLogin() {
 }
 
 function DoPrivyLogin() {
+    // todo: Maybe a fork session stuff for the SDK post SSO?
     const { ready, login, authenticated } = usePrivy();
 
     if (!ready || authenticated) {
@@ -43,9 +44,10 @@ function DoPrivyLogin() {
 }
 
 function DoPrivyAuthentication() {
+    const { signMessage } = usePrivy();
     const { wallets } = useWallets();
     const [wallet, setWallet] = useState<ConnectedWallet | undefined>(
-        wallets.length > 1 ? undefined : wallets[0]
+        wallets.length > 2 ? undefined : wallets[0]
     );
     const { mutate: authenticate } = useMutation({
         mutationKey: ["privy-login", wallet?.address],
@@ -54,9 +56,6 @@ function DoPrivyAuthentication() {
                 throw new Error("No wallet selected");
             }
 
-            // Get the provider
-            const provider = await wallet.getEthereumProvider();
-
             // Generate a random challenge
             const challenge = generatePrivateKey();
 
@@ -64,10 +63,15 @@ function DoPrivyAuthentication() {
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${challenge}`;
 
             // Do the message signature
-            const signature = await provider.request({
-                method: "personal_sign",
-                params: [message, wallet.address],
-            });
+            const signature = (await signMessage(
+                message,
+                {
+                    title: "Frak authentication",
+                    description:
+                        "After this message approval, you will be logged in",
+                },
+                wallet.address
+            )) as Hex;
 
             // Launch the backend authentication process
             const { data, error } =
@@ -75,7 +79,6 @@ function DoPrivyAuthentication() {
                     expectedChallenge: challenge,
                     signature,
                     wallet: wallet.address as Address,
-                    walletId: wallet.meta.id,
                 });
             if (error) {
                 throw error;
