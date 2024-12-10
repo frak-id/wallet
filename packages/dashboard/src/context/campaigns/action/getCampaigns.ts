@@ -17,7 +17,7 @@ import { multicall } from "viem/actions";
 
 type ApiResult = {
     productId: string;
-    isOwner: number; // bool
+    isOwner: boolean;
     id: Address;
     name: string;
     version: string;

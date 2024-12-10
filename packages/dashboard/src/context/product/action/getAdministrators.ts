@@ -5,7 +5,7 @@ import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {
     wallet: Address;
-    isOwner: number; // bool, 0 false 1 true
+    isOwner: boolean;
     roles: string; // bigint
     addedTimestamp: string; // bigint
 }[];
@@ -40,11 +40,11 @@ export async function getProductAdministrators({
     // Return that mapped with the right types
     const administrators = json.map((result) => ({
         wallet: result.wallet,
-        isOwner: result.isOwner === 1,
+        isOwner: result.isOwner,
         roles: toHex(BigInt(result.roles)),
         addedTimestamp: BigInt(result.addedTimestamp),
         roleDetails: {
-            admin: result.isOwner === 1,
+            admin: result.isOwner,
             ...buildRolesMap(BigInt(result.roles)),
         } as Record<"admin" | ProductRolesKey, boolean>,
     }));
