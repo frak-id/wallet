@@ -1,0 +1,18 @@
+packages:
+  - "example/*"
+  - "packages/*"
+  - "packages/shopify-app/extensions/*"
+
+catalogs:
+  # Can be referenced through "catalog:react18"
+  react18:
+    react: ^18
+    react-dom: ^18
+    "@types/react": ^18
+    "@types/react-dom": ^18
+
+  react19:
+    react: ^19
+    react-dom: ^19
+    "@types/react": ^19
+    "@types/react-dom": ^19
