@@ -117,7 +117,6 @@ export function useSsoLink({
         if (!consumeKey) {
             console.log("Generating new consume key cause of null", {
                 consumeKey,
-                testDirect: jotaiStore.get(ssoConsumeKey),
             });
             const key = generatePrivateKey();
             jotaiStore.set(ssoConsumeKey, { key, generatedAt: Date.now() });

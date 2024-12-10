@@ -34,6 +34,7 @@ export type {
     SendInteractionReturnType,
     SsoMetadata,
     OpenSsoParamsType,
+    GetProductInformationReturnType,
     // RPC Modal generics
     ModalStepTypes,
     ModalRpcMetadata,

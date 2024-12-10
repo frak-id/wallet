@@ -7,3 +7,4 @@ export { useReferralInteraction } from "./helper/useReferralInteraction";
 export { useSendInteraction } from "./useSendInteraction";
 export { useDisplayModal } from "./useDisplayModal";
 export { useOpenSso } from "./useOpenSso";
+export { useGetProductInformation } from "./useGetProductInformation";

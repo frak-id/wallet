@@ -1,6 +1,7 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
+import { useOnGetProductInformation } from "@/module/listener/hooks/useOnGetProductInformation";
 import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
@@ -37,6 +38,9 @@ export default function Listener() {
     // Hook when a modal display is asked
     const onOpenSso = useOnOpenSso();
 
+    // Hook when the product information are asked
+    const onGetProductInformation = useOnGetProductInformation();
+
     // Create the resolver
     useEffect(() => {
         const newResolver = createIFrameRequestResolver({
@@ -62,6 +66,11 @@ export default function Listener() {
              * Listen request for the open sso request
              */
             frak_sso: onOpenSso,
+
+            /**
+             * Listen request for the product information
+             */
+            frak_getProductInformation: onGetProductInformation,
         });
 
         // Set our new resolver
@@ -76,6 +85,7 @@ export default function Listener() {
         onInteractionRequest,
         onDisplayModalRequest,
         onOpenSso,
+        onGetProductInformation,
     ]);
 
     /**

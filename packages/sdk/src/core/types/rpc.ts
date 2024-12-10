@@ -8,6 +8,7 @@ import type {
     PreparedInteraction,
     SendInteractionReturnType,
 } from "./rpc/interaction";
+import type { GetProductInformationReturnType } from "./rpc/productInformation";
 import type { OpenSsoParamsType } from "./rpc/sso";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
@@ -49,6 +50,7 @@ export type IFrameRpcSchema = [
     },
     /**
      * Method to start a SSO
+     *  todo: Should also support direct tracking via a consumeKey
      */
     {
         Method: "frak_sso";
@@ -58,5 +60,16 @@ export type IFrameRpcSchema = [
             customCss?: string,
         ];
         ReturnType: undefined;
+    },
+    /**
+     * Method to get current product information's
+     *  - Is product minted?
+     *  - Does it have running campaign?
+     *  - Estimated reward on actions
+     */
+    {
+        Method: "frak_getProductInformation";
+        Parameters?: undefined;
+        ReturnType: GetProductInformationReturnType;
     },
 ];

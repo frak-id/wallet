@@ -30,7 +30,7 @@ export function useOnOpenSso(): OnOpenSso {
 
             // If we are on the server side directly exit with an error
             if (window === undefined) {
-                emitter({
+                await emitter({
                     error: {
                         code: RpcErrorCodes.internalError,
                         message: "Server side not supported",
@@ -61,14 +61,14 @@ export function useOnOpenSso(): OnOpenSso {
                 if (openedWindow) {
                     openedWindow.focus();
                     // Emit the end
-                    emitter({
+                    await emitter({
                         result: undefined,
                     });
                     return;
                 }
             } finally {
                 // Otherwise, emit an error
-                emitter({
+                await emitter({
                     error: {
                         code: RpcErrorCodes.internalError,
                         message: "Failed to open the SSO",

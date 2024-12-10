@@ -1,6 +1,7 @@
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import { listenerProductIdAtom } from "@/module/listener/atoms/listenerContext";
 import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEstimatedInteractionReward";
+import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";
 import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useQueries } from "@tanstack/react-query";
 import { useAtomValue } from "jotai/index";
@@ -24,6 +25,7 @@ export function useListenerDataPreload() {
     const queries = useMemo(
         () => [
             estimatedInteractionRewardQuery({ productId: listenerProductId }),
+            getProductMetadataQuery({ productId: listenerProductId }),
             interactionSessionStatusQuery(address),
         ],
         [address, listenerProductId]
