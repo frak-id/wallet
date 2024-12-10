@@ -1,6 +1,6 @@
 import { ImageRemote } from "@/module/common/component/ImageRemote";
-import { Link } from "@remix-run/react";
 import { forwardRef } from "react";
+import { Link } from "react-router";
 import styles from "./index.module.css";
 
 export const Hero = forwardRef<

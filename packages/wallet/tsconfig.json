@@ -11,7 +11,7 @@
   "exclude": ["public/sw.js"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022", "webworker"],
-    "types": ["@remix-run/node", "vite/client", "@types/umami"],
+    "types": ["@react-router/node", "vite/client", "@types/umami"],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -23,6 +23,7 @@
     "allowJs": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "rootDirs": [".", "./.react-router/types"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],

@@ -56,6 +56,7 @@
   "devDependencies": {
     "@simplewebauthn/types": "^11.0.0",
     "@types/web-push": "^3.6.4",
+    "@types/whatwg-url": "^13.0.0",
     "bun-types": "latest",
     "drizzle-kit": "^0.25.0",
     "terser": "^5.36.0"

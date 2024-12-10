@@ -1,9 +1,9 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { CurrentRecoverySetupStatus } from "@/module/recovery-setup/component/CurrentSetupStatus";
-import { Link } from "@remix-run/react";
 import { Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 
 /**
  * Component for the settings with the recovery link

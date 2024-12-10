@@ -35,7 +35,7 @@ declare module "sst" {
       "value": string
     }
     "NewsInteractionDemo": {
-      "type": "sst.aws.Remix"
+      "type": "sst.aws.StaticSite"
       "url": string
     }
     "PIMLICO_API_KEY": {
@@ -67,7 +67,7 @@ declare module "sst" {
       "url": string
     }
     "WalletExampleEthCC": {
-      "type": "sst.aws.Remix"
+      "type": "sst.aws.StaticSite"
       "url": string
     }
   }

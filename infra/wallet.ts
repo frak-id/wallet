@@ -24,6 +24,9 @@ new sst.aws.StaticSite("Wallet", {
         command: "bun run build",
         output: "build/client",
     },
+    vite: {
+        types: "./sst-env.d.ts",
+    },
     // Environment variables
     environment: {
         STAGE: $app.stage,

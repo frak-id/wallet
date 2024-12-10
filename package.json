@@ -39,7 +39,6 @@
   },
   "workspaces": [
     "packages/*",
-    "packages/shopify-app/extensions/*",
     "example/*"
   ],
   "packageManager": "bun@1.1.26"

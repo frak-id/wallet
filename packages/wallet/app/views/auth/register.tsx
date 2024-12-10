@@ -2,9 +2,9 @@ import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { Link, useNavigate } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { Link, useNavigate } from "react-router";
 import styles from "./register.module.css";
 
 export default function Register() {

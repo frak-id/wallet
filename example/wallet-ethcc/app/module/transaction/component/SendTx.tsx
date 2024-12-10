@@ -9,8 +9,8 @@ import type {
 } from "@frak-labs/nexus-sdk/core";
 import { useDisplayModal } from "@frak-labs/nexus-sdk/react";
 import { Button } from "@module/component/Button";
-import { Link } from "@remix-run/react";
 import { BadgeCheck } from "lucide-react";
+import { Link } from "react-router";
 import { encodeFunctionData } from "viem";
 
 export function SendTransaction() {

@@ -40,10 +40,5 @@ export default $config({
         if ($app.stage !== "prod") {
             await import("./infra/example.ts");
         }
-
-        // Add the shopify command only if running locally
-        if ($dev) {
-            await import("./infra/shopify.ts");
-        }
     },
 });

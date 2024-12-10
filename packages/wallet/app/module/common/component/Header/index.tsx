@@ -1,7 +1,7 @@
 import { LogoFrakWithName } from "@frak-labs/shared/module/asset/icons/LogoFrakWithName";
 import { Notifications } from "@module/asset/icons/Notifications";
-import { Link } from "@remix-run/react";
 import { useAtomValue } from "jotai";
+import { Link } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { sessionAtom } from "../../atoms/session";
 import styles from "./index.module.css";
