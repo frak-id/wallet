@@ -8,7 +8,7 @@ type ApiResponse = {
     address: Address;
     totalDistributed: string; // bigint as string
     totalClaimed: string; // bigint as string
-    isDistributing: number; // 0 or 1
+    isDistributing: boolean;
     token: {
         address: Address;
         name: string;
@@ -62,7 +62,7 @@ export function useGetProductFunding({ productId }: { productId?: Hex }) {
                 ...funding,
                 totalDistributed: BigInt(funding.totalDistributed),
                 totalClaimed: BigInt(funding.totalClaimed),
-                isDistributing: funding.isDistributing === 1,
+                isDistributing: funding.isDistributing,
                 balance: balances[index],
                 formatted: {
                     totalDistributed: formatUnits(
