@@ -8,7 +8,7 @@ import { type Address, formatUnits, getAddress, isAddressEqual } from "viem";
 
 type CampaignStats = {
     productId: string;
-    isOwner: number; // bool
+    isOwner: boolean;
     id: Address;
     name: string;
     bank: Address;

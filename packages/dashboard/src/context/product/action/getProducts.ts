@@ -6,7 +6,7 @@ import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {
     id: string; // bigint
-    isOwner: number; // bool, 0 false 1 true
+    isOwner: boolean;
     roles: string; // bigint
     domain: string;
     name: string;
@@ -39,7 +39,7 @@ async function getProducts({ wallet }: { wallet: Address }) {
                 };
 
                 // Push it in the right list
-                if (item.isOwner === 1) {
+                if (item.isOwner) {
                     acc.owner.push(mappedProduct);
                 } else if (BigInt(item.roles) !== 0n) {
                     acc.operator.push(mappedProduct);
