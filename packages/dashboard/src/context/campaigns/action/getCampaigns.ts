@@ -21,7 +21,7 @@ type ApiResult = {
     id: Address;
     name: string;
     version: string;
-    attached: number;
+    attached: boolean;
     // bigint, time is second
     attachTimestamp: string;
     detachTimestamp?: string | null;
@@ -139,7 +139,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
             state: {
                 ...state,
                 interactionLink: {
-                    isAttached: blockchainCampaign.attached === 1,
+                    isAttached: blockchainCampaign.attached,
                     attachTimestamp: blockchainCampaign.attachTimestamp,
                     detachTimestamp:
                         blockchainCampaign.detachTimestamp ?? undefined,
