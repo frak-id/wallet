@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs-example/news-interactions",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Demo of a news paper website using the Frak SDK",
   "private": true,
   "sideEffects": false,

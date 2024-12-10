@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs-example/wallet-ethcc",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "Simple demo of a future Frak Wallet",
   "private": true,
   "sideEffects": false,

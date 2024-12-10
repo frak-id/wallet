@@ -1,5 +1,14 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.24
+
+### Patch Changes
+
+- [`fbb4020`](https://github.com/frak-id/wallet/commit/fbb402094f139824d8cd64aff6fc50834514d5e7) Thanks [@srod](https://github.com/srod)! - - ✨ Add new `core` action `getProductInformation`
+  - ✨ Add new `react` hook `useGetProductInformation`
+  - ♻️ Update some configs to be optionals
+  - 🐛 Fix case when iframe already exists, remove old iframe
+
 ## 0.0.23
 
 ### Patch Changes
