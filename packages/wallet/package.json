@@ -7,7 +7,7 @@
   "type": "module",
   "license": "GNU GPL 3.0",
   "scripts": {
-    "build": "bun run sw && react-router build",
+    "build": "bun run sw && NODE_ENV=production react-router build",
     "dev": "bun run sw && sst dev react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "lint": "biome lint .",

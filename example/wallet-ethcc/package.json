@@ -7,7 +7,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "build": "react-router build",
+    "build": "NODE_ENV=production react-router build",
     "dev": "sst dev react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "lint": "biome lint .",
