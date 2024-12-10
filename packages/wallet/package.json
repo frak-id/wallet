@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs/nexus-wallet",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "The simple and cross-platform wallet to centralise your contents.",
   "private": true,
   "sideEffects": false,

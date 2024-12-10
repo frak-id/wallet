@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.25
+
+### Patch Changes
+
+- [`6ce3b03`](https://github.com/frak-id/wallet/commit/6ce3b0397fd6fb0f29b51f0a89652b4df727d717) Thanks [@srod](https://github.com/srod)! - 🐛 Load components only if override match
+
 ## 0.0.24
 
 ### Patch Changes
