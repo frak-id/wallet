@@ -1,5 +1,11 @@
 # @frak-labs/components
 
+## 0.0.4
+
+### Patch Changes
+
+- [`3e3e9e2`](https://github.com/frak-id/wallet/commit/3e3e9e28d76c7146f50855f623bd9c6e9a292698) Thanks [@srod](https://github.com/srod)! - Don't load full SDK and move bundle to its folder
+
 ## 0.0.3
 
 ### Patch Changes
