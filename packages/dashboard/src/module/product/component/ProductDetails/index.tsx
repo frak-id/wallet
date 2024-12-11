@@ -19,10 +19,7 @@ import { ProductHead } from "@/module/product/component/ProductHead";
 import { useEditProduct } from "@/module/product/hook/useEditProduct";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import { productTypesLabel } from "@/module/product/utils/productTypes";
-import {
-    type ProductTypesKey,
-    productTypesMask,
-} from "@frak-labs/nexus-sdk/core";
+import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { Input, type InputProps } from "@module/component/forms/Input";

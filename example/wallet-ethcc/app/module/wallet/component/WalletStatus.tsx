@@ -1,6 +1,6 @@
 import { Panel } from "@/module/common/component/Panel";
-import type { WalletStatusReturnType } from "@frak-labs/nexus-sdk/core";
-import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
+import type { WalletStatusReturnType } from "@frak-labs/core-sdk";
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Link } from "react-router";
 
 export function WalletStatus() {

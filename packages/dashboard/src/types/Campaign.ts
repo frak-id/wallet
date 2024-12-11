@@ -1,4 +1,4 @@
-import type { InteractionTypesKey } from "@frak-labs/nexus-sdk/core";
+import type { InteractionTypesKey } from "@frak-labs/core-sdk";
 import type { TCountryCode } from "countries-list";
 import type { Address, Hex } from "viem";
 

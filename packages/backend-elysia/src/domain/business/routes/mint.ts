@@ -1,7 +1,7 @@
 import { blockchainContext, nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
-import { productTypes } from "@frak-labs/nexus-sdk/core";
+import type { ProductTypesKey } from "@frak-labs/core-sdk";
+import { productTypes } from "@frak-labs/core-sdk";
 import { Elysia } from "elysia";
 import { toHex } from "viem";
 import { DnsCheckRepository } from "../repositories/DnsCheckRepository";

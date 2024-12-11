@@ -3,7 +3,7 @@ import type {
     LoginModalStepType,
     ModalRpcMetadata,
     NexusWalletSdkConfig,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 
 declare global {
     interface Window {

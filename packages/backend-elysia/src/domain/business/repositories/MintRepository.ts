@@ -15,8 +15,8 @@ import {
     mintAbi,
     usdcArbitrumAddress,
 } from "@frak-labs/app-essentials/blockchain";
-import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
-import { productTypesMask } from "@frak-labs/nexus-sdk/core";
+import type { ProductTypesKey } from "@frak-labs/core-sdk";
+import { productTypesMask } from "@frak-labs/core-sdk";
 import type { Mutex } from "async-mutex";
 import {
     type Address,

@@ -6,7 +6,7 @@ import type {
     ModalRpcStepsResultType,
     ModalStepTypes,
     RpcResponse,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { atom } from "jotai";
 
 /**

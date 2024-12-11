@@ -2,7 +2,7 @@ import { viemClient } from "@/context/blockchain/provider";
 import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { referralCampaignAbi } from "@frak-labs/app-essentials";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, encodeFunctionData, parseUnits } from "viem";
 import { readContract } from "viem/actions";

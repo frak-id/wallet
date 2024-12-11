@@ -3,8 +3,8 @@ import type {
     LoginModalStepType,
     ModalRpcStepsResultType,
     SiweAuthenticateModalStepType,
-} from "@frak-labs/nexus-sdk/core";
-import { useDisplayModal } from "@frak-labs/nexus-sdk/react";
+} from "@frak-labs/core-sdk";
+import { useDisplayModal } from "@frak-labs/react-sdk";
 import { Button } from "@module/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";

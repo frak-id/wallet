@@ -1,10 +1,7 @@
 import { currentViemClient } from "@/context/blockchain/provider";
 import { listenerProductIdAtom } from "@/module/listener/atoms/listenerContext";
 import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
-import {
-    type ProductTypesKey,
-    productTypesMask,
-} from "@frak-labs/nexus-sdk/core";
+import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { Hex } from "viem";

@@ -6,7 +6,7 @@ import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
     RpcErrorCodes,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { useAtomValue } from "jotai/index";
 import { useCallback } from "react";
 

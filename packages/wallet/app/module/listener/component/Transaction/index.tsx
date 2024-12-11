@@ -2,7 +2,7 @@ import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
-import type { SendTransactionModalStepType } from "@frak-labs/nexus-sdk/core";
+import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
 import { useAccount, useSendTransaction } from "wagmi";

@@ -11,8 +11,8 @@ import {
 import type {
     ProductTypesKey,
     SendTransactionModalStepType,
-} from "@frak-labs/nexus-sdk/core";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+} from "@frak-labs/core-sdk";
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { backendApi } from "@frak-labs/shared/context/server";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";

@@ -4,7 +4,7 @@ import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import {
     NexusConfigProvider,
     NexusIFrameClientProvider,
-} from "@frak-labs/nexus-sdk/react";
+} from "@frak-labs/react-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";

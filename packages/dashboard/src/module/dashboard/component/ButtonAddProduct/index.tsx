@@ -16,10 +16,7 @@ import {
 } from "@/module/forms/Form";
 import { MultiSelect } from "@/module/forms/MultiSelect";
 import { productTypesLabel } from "@/module/product/utils/productTypes";
-import {
-    type ProductTypesKey,
-    productTypesMask,
-} from "@frak-labs/nexus-sdk/core";
+import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { Button } from "@module/component/Button";
 import { Spinner } from "@module/component/Spinner";

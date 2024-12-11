@@ -1,5 +1,5 @@
 import { deleteCampaign } from "@/context/campaigns/action/deleteCampaign";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const useDeleteCampaign = () => {

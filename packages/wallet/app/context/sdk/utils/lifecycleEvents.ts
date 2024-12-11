@@ -1,4 +1,4 @@
-import type { IFrameLifecycleEvent } from "@frak-labs/nexus-sdk/core";
+import type { IFrameLifecycleEvent } from "@frak-labs/core-sdk";
 
 /**
  * Emit an iframe lifecycle event

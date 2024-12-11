@@ -1,4 +1,4 @@
-import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
+import type { PreparedInteraction } from "@frak-labs/core-sdk";
 import type { Hex } from "viem";
 
 export type PendingInteraction = {

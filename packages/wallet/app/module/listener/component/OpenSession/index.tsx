@@ -2,7 +2,7 @@ import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
-import type { OpenInteractionSessionModalStepType } from "@frak-labs/nexus-sdk/core";
+import type { OpenInteractionSessionModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";

@@ -23,8 +23,8 @@ bun add viem @frak-labs/nexus-sdk
 import {
     createIframe,
     createIFrameNexusClient,
-} from "@frak-labs/nexus-sdk/core";
-import type { NexusClient, NexusWalletSdkConfig } from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
+import type { NexusClient, NexusWalletSdkConfig } from "@frak-labs/core-sdk";
 
 // Create the config for the Frak Wallet SDK
 export const nexusConfig: NexusWalletSdkConfig = {
@@ -63,7 +63,7 @@ Sample code to watch the current user wallet status:
 ```ts
 import { nexusClient } from "./client";
 import { watchWalletStatus } from "@frak-labs/nexus-sdk/actions";
-import type { WalletStatusReturnType } from "@frak-labs/nexus-sdk/core";
+import type { WalletStatusReturnType } from "@frak-labs/core-sdk";
 
 // Watch the wallet status
 watchWalletStatus(nexusClient, (walletStatus: WalletStatusReturnType) => {

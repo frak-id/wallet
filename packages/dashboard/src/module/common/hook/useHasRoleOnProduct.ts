@@ -5,7 +5,7 @@ import {
     productRegistryAbi,
     productRoles,
 } from "@frak-labs/app-essentials";
-import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { type Address, type Hex, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";

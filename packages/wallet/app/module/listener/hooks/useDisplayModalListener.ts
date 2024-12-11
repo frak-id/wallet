@@ -13,7 +13,7 @@ import {
     type ModalRpcStepsResultType,
     type ModalStepTypes,
     RpcErrorCodes,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useCallback } from "react";

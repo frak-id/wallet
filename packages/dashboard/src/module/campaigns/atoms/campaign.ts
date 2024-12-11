@@ -7,7 +7,7 @@ import type { Campaign } from "@/types/Campaign";
 import {
     type InteractionTypesKey,
     interactionTypes,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 

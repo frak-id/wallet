@@ -1,4 +1,4 @@
-import type { SendTransactionTxType } from "@frak-labs/nexus-sdk/core";
+import type { SendTransactionTxType } from "@frak-labs/core-sdk";
 import {
     Accordion,
     AccordionContent,

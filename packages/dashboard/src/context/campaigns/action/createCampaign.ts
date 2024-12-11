@@ -20,7 +20,7 @@ import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import {
     type InteractionTypesKey,
     interactionTypes,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { ObjectId } from "mongodb";
 import { first } from "radash";
 import {

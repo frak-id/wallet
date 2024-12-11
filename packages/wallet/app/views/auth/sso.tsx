@@ -22,7 +22,7 @@ import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import "./sso.global.css";
-import { decompressJson } from "@frak-labs/nexus-sdk/core";
+import { decompressJson } from "@frak-labs/core-sdk";
 import { Link, useSearchParams } from "react-router";
 
 export default function Sso() {
