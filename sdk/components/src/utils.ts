@@ -1,13 +1,13 @@
 import {
-    type NexusClient,
-    createIFrameNexusClient,
-    createIframe,
-} from "@sdk/core";
-import {
     type ModalBuilder,
     modalBuilder,
     referralInteraction,
-} from "@sdk/core/actions";
+} from "@core/actions";
+import {
+    type NexusClient,
+    createIFrameNexusClient,
+    createIframe,
+} from "@core/index";
 
 const CUSTOM_EVENT_NAME = "frakClientReady";
 

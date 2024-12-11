@@ -21,8 +21,8 @@ export const baseIframeProps = {
 
 /**
  * Create the given iframe
- * @param walletBaseUrl - @deprecated Use config.walletUrl instead. Will be removed in future versions.
- * @param config
+ * @param walletBaseUrl - Deprecated: Use `config.walletUrl` instead. Will be removed in future versions.
+ * @param config - The configuration object containing iframe options, including the replacement for `walletBaseUrl`.
  */
 export function createIframe({
     walletBaseUrl,

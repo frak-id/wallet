@@ -15,9 +15,9 @@
   "description": "Frak Wallet components, helping any person to interact with the Frak wallet.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
-    "directory": "packages/components"
+    "directory": "sdk/components"
   },
-  "homepage": "https://docs.frak.id/wallet-sdk/overview",
+  "homepage": "https://docs.frak.id/components",
   "keywords": [
     "frak-labs",
     "nexus-wallet",
@@ -31,7 +31,7 @@
   "sideEffects": false,
   "private": false,
   "type": "module",
-  "main": "dist/components.js",
+  "main": "dist/bundle/components.js",
   "files": [
     "/dist"
   ],
@@ -41,14 +41,14 @@
     "format": "biome check --write .",
     "clean": "rimraf dist",
     "build": "tsup",
-    "build:watch": "tsup --watch"
+    "build:watch": "tsup --watch",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "preact": "^10.25.1",
     "preact-custom-element": "^4.3.0"
   },
   "devDependencies": {
-    "@total-typescript/tsconfig": "^1.0.4",
     "@types/node": "^22",
     "@types/preact-custom-element": "^4.0.4",
     "tsup": "^8.3.5",
