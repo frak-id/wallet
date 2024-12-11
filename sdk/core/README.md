@@ -1,8 +1,8 @@
-# Frak Wallet SDK
+# Frak Wallet Core SDK
 
 This SDK help any dApps, or gated content provider, use the [Frak Wallet](https://wallet.frak.id/) as a regular wallet, with smoother UX for your end-users (pay for his gas fees, check the paywall options, track his consumption etc.)
 
-Checkout our documentation for more informations about the usage:
+Checkout our documentation for more information's about the usage:
  - [React client usage](https://docs.frak.id/wallet-sdk/how-to/client-react)
  - [Core client usage](https://docs.frak.id/wallet-sdk/how-to/client-core)
 
@@ -14,7 +14,7 @@ To have more info about how does it works under the hood, you can check [this](h
 ## Installation
 
 ```bash
-bun add viem @frak-labs/nexus-sdk
+bun add viem @frak-labs/core-sdk
 ```
 
 ## Setup
@@ -62,7 +62,7 @@ Sample code to watch the current user wallet status:
 
 ```ts
 import { nexusClient } from "./client";
-import { watchWalletStatus } from "@frak-labs/nexus-sdk/actions";
+import { watchWalletStatus } from "@frak-labs/core-sdk/actions";
 import type { WalletStatusReturnType } from "@frak-labs/core-sdk";
 
 // Watch the wallet status
@@ -71,4 +71,3 @@ watchWalletStatus(nexusClient, (walletStatus: WalletStatusReturnType) => {
     // You can now use the status to update your UI
 });
 ```
-
