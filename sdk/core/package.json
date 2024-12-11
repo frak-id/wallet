@@ -71,7 +71,8 @@
     "clean": "rimraf dist",
     "build": "tsup && bun run check-exports",
     "build:watch": "tsup --watch",
-    "check-exports": "attw --pack --profile node16 ."
+    "check-exports": "attw --pack --profile node16 .",
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "viem": "^2.x",
