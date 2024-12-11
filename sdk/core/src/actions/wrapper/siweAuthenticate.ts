@@ -1,7 +1,7 @@
 import { generateSiweNonce } from "viem/siwe";
 import type {
+    FrakClient,
     ModalRpcMetadata,
-    NexusClient,
     SiweAuthenticateReturnType,
     SiweAuthenticationParams,
 } from "../../types";
@@ -22,7 +22,7 @@ export type SiweAuthenticateModalParams = {
  * @param context
  */
 export async function siweAuthenticate(
-    client: NexusClient,
+    client: FrakClient,
     { siwe, metadata }: SiweAuthenticateModalParams
 ): Promise<SiweAuthenticateReturnType> {
     const effectiveDomain = client.config?.domain ?? window.location.host;

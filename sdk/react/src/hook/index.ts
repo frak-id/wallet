@@ -1,5 +1,5 @@
-export { useNexusConfig } from "./useNexusConfig";
-export { useNexusClient } from "./useNexusClient";
+export { useFrakConfig } from "./useFrakConfig";
+export { useFrakClient } from "./useFrakClient";
 export { useWalletStatus } from "./useWalletStatus";
 export { useSendTransactionAction } from "./useSendTransaction";
 export { useSiweAuthenticate } from "./useSiweAuthenticate";

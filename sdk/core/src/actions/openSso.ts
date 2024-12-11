@@ -1,4 +1,4 @@
-import type { NexusClient, OpenSsoParamsType } from "../types";
+import type { FrakClient, OpenSsoParamsType } from "../types";
 
 /**
  * Function used to open the SSO
@@ -6,7 +6,7 @@ import type { NexusClient, OpenSsoParamsType } from "../types";
  * @param args
  */
 export async function openSso(
-    client: NexusClient,
+    client: FrakClient,
     args: OpenSsoParamsType
 ): Promise<void> {
     const { metadata } = client.config;

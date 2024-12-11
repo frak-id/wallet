@@ -6,7 +6,7 @@ import {
 } from "@frak-labs/core-sdk";
 import { sendInteraction } from "@frak-labs/core-sdk/actions";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import { useNexusClient } from "./useNexusClient";
+import { useFrakClient } from "./useFrakClient";
 
 type MutationOptions = Omit<
     UseMutationOptions<
@@ -27,11 +27,11 @@ interface UseSendInteractionParams {
 export function useSendInteraction({
     mutations,
 }: UseSendInteractionParams = {}) {
-    const client = useNexusClient();
+    const client = useFrakClient();
 
     return useMutation({
         ...mutations,
-        mutationKey: ["nexus-sdk", "send-interaction"],
+        mutationKey: ["frak-sdk", "send-interaction"],
         mutationFn: async (params: SendInteractionParamsType) => {
             if (!client) {
                 throw new ClientNotFound();

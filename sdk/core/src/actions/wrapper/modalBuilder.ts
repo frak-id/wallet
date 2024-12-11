@@ -2,11 +2,11 @@ import type {
     DisplayModalParamsType,
     FinalActionType,
     FinalModalStepType,
+    FrakClient,
     LoginModalStepType,
     ModalRpcMetadata,
     ModalRpcStepsResultType,
     ModalStepTypes,
-    NexusClient,
     OpenInteractionSessionModalStepType,
     SendTransactionModalStepType,
 } from "../../types";
@@ -50,7 +50,7 @@ export type ModalBuilder = ModalStepBuilder<
  * @param openSession
  */
 export function modalBuilder(
-    client: NexusClient,
+    client: FrakClient,
     {
         metadata,
         login,
@@ -82,7 +82,7 @@ export function modalBuilder(
  * @param params
  */
 function modalStepsBuilder<CurrentSteps extends ModalStepTypes[]>(
-    client: NexusClient,
+    client: FrakClient,
     params: DisplayModalParamsType<CurrentSteps>
 ): ModalStepBuilder<CurrentSteps> {
     // Function add the send tx step

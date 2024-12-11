@@ -1,9 +1,9 @@
-import type { NexusWalletSdkConfig } from "./config";
+import type { FrakWalletSdkConfig } from "./config";
 import type { IFrameTransport } from "./transport";
 
 /**
- * Representing a Nexus client
+ * Representing a Frak client
  */
-export type NexusClient = {
-    config: NexusWalletSdkConfig;
+export type FrakClient = {
+    config: FrakWalletSdkConfig;
 } & IFrameTransport;

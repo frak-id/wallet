@@ -1,6 +1,6 @@
 import type {
+    FrakClient,
     ModalRpcMetadata,
-    NexusClient,
     SendTransactionModalStepType,
     SendTransactionReturnType,
 } from "../../types";
@@ -18,7 +18,7 @@ export type SendTransactionParams = {
  * @param context
  */
 export async function sendTransaction(
-    client: NexusClient,
+    client: FrakClient,
     { tx, metadata }: SendTransactionParams
 ): Promise<SendTransactionReturnType> {
     // Trigger a modal with login options

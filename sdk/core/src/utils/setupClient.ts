@@ -1,14 +1,14 @@
 import { createIFrameNexusClient } from "../clients";
-import type { NexusClient, NexusWalletSdkConfig } from "../types";
+import type { FrakClient, FrakWalletSdkConfig } from "../types";
 import { createIframe } from "./iframeHelper";
 
 /**
- * Setup the Nexus client using the Nexus Wallet SDK
+ * Setup the Frak client and the iframe to use Frak Wallet SDK
  * @param config
  */
 export async function setupClient({
     config,
-}: { config: NexusWalletSdkConfig }): Promise<NexusClient | undefined> {
+}: { config: FrakWalletSdkConfig }): Promise<FrakClient | undefined> {
     // Create our iframe
     const iframe = await createIframe({
         config,

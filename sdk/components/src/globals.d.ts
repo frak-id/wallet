@@ -1,16 +1,16 @@
 import type {
     FinalActionType,
+    FrakClient,
+    FrakWalletSdkConfig,
     LoginModalStepType,
     ModalRpcMetadata,
-    NexusClient,
-    NexusWalletSdkConfig,
 } from "@core/index";
 
 declare global {
     interface Window {
         FrakSetup: {
-            client?: NexusClient;
-            config?: NexusWalletSdkConfig;
+            client?: FrakClient;
+            config?: FrakWalletSdkConfig;
             modalConfig?: {
                 metadata?: ModalRpcMetadata;
                 login?: LoginModalStepType["params"];

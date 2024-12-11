@@ -57,7 +57,7 @@ export type {
     FinalModalStepType,
     FinalActionType,
     // Client
-    NexusClient,
+    FrakClient,
     // Transport
     RpcResponse,
     IFrameTransport,
@@ -68,7 +68,7 @@ export type {
     ExtractedParametersFromRpc,
     ExtractedReturnTypeFromRpc,
     // Config
-    NexusWalletSdkConfig,
+    FrakWalletSdkConfig,
     // Compression
     KeyProvider,
     CompressedData,

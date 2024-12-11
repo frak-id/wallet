@@ -3,7 +3,7 @@ import {
     modalBuilder,
     referralInteraction,
 } from "@core/actions";
-import type { NexusClient } from "@core/index";
+import type { FrakClient } from "@core/index";
 
 const CUSTOM_EVENT_NAME = "frakClientReady";
 
@@ -29,7 +29,7 @@ export function onClientReady(action: "add" | "remove", callback: () => void) {
  * Setup the modal config
  * @param client
  */
-export function setupModalConfig(client: NexusClient) {
+export function setupModalConfig(client: FrakClient) {
     modalBuilderSteps = modalBuilder(
         client,
         window.FrakSetup?.modalConfig ?? {}
@@ -40,7 +40,7 @@ export function setupModalConfig(client: NexusClient) {
  * Setup the referral
  * @param client
  */
-export async function setupReferral(client: NexusClient) {
+export async function setupReferral(client: FrakClient) {
     if (!modalBuilderSteps) {
         console.error("modalBuilderSteps not found");
         return;

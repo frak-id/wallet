@@ -1,4 +1,4 @@
-import type { NexusWalletSdkConfig } from "../types";
+import type { FrakWalletSdkConfig } from "../types";
 import { disableButtonShare } from "./buttonShare";
 
 /**
@@ -27,7 +27,7 @@ export const baseIframeProps = {
 export function createIframe({
     walletBaseUrl,
     config,
-}: { walletBaseUrl?: string; config?: NexusWalletSdkConfig }): Promise<
+}: { walletBaseUrl?: string; config?: FrakWalletSdkConfig }): Promise<
     HTMLIFrameElement | undefined
 > {
     // Hide the share button by default until the iframe is loaded and connected

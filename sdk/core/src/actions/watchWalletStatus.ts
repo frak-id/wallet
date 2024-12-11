@@ -1,4 +1,4 @@
-import type { NexusClient } from "../types/client";
+import type { FrakClient } from "../types/client";
 import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
 import { Deferred } from "../utils";
 
@@ -8,7 +8,7 @@ import { Deferred } from "../utils";
  * @param callback
  */
 export function watchWalletStatus(
-    client: NexusClient,
+    client: FrakClient,
     callback?: (status: WalletStatusReturnType) => void
 ): Promise<WalletStatusReturnType> {
     // If no callback is provided, just do a request with deferred result

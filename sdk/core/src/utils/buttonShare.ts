@@ -1,4 +1,4 @@
-import type { NexusWalletSdkConfig } from "../types";
+import type { FrakWalletSdkConfig } from "../types";
 
 /**
  * Get the button share element
@@ -26,7 +26,7 @@ const setButtonDisabled = (disabled: boolean, button: Element | null) => {
  * @param disabled
  */
 const toggleButtonDisabled =
-    (disabled: boolean) => (config?: NexusWalletSdkConfig) => {
+    (disabled: boolean) => (config?: FrakWalletSdkConfig) => {
         const buttons = Array.from(
             getButtonShare(config?.metadata?.buttonShare)
         );

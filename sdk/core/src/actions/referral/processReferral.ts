@@ -2,10 +2,10 @@ import { type Address, type Hex, isAddressEqual } from "viem";
 import { ReferralInteractionEncoder } from "../../interactions";
 import {
     type DisplayModalParamsType,
+    type FrakClient,
     type FrakContext,
     FrakRpcError,
     type ModalStepTypes,
-    type NexusClient,
     RpcErrorCodes,
     type WalletStatusReturnType,
 } from "../../types";
@@ -38,7 +38,7 @@ export type ProcessReferralOptions = {
  * @param options
  */
 export async function processReferral(
-    client: NexusClient,
+    client: FrakClient,
     {
         walletStatus,
         frakContext,
@@ -151,7 +151,7 @@ export async function processReferralLogic({
  * Helper to ensure a wallet is connected, and display a modal if we got everything needed
  */
 async function ensureWalletConnected(
-    client: NexusClient,
+    client: FrakClient,
     {
         modalConfig,
         walletStatus,

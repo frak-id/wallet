@@ -8,7 +8,7 @@ import {
     siweAuthenticate,
 } from "@frak-labs/core-sdk/actions";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import { useNexusClient } from "./useNexusClient";
+import { useFrakClient } from "./useFrakClient";
 
 type MutationOptions = Omit<
     UseMutationOptions<
@@ -29,12 +29,12 @@ interface UseSiweAuthenticateParams {
 export function useSiweAuthenticate({
     mutations,
 }: UseSiweAuthenticateParams = {}) {
-    const client = useNexusClient();
+    const client = useFrakClient();
 
     return useMutation({
         ...mutations,
         mutationKey: [
-            "nexus-sdk",
+            "frak-sdk",
             "siwe-authenticate",
             client?.config.domain ?? "no-domain",
         ],

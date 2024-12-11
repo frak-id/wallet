@@ -5,7 +5,7 @@ import {
 } from "@frak-labs/core-sdk";
 import { openSso } from "@frak-labs/core-sdk/actions";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import { useNexusClient } from "./useNexusClient";
+import { useFrakClient } from "./useFrakClient";
 
 type MutationOptions = Omit<
     UseMutationOptions<void, FrakRpcError, OpenSsoParamsType>,
@@ -20,11 +20,11 @@ interface UseSendInteractionParams {
  * Open the SSO
  */
 export function useOpenSso({ mutations }: UseSendInteractionParams = {}) {
-    const client = useNexusClient();
+    const client = useFrakClient();
 
     return useMutation({
         ...mutations,
-        mutationKey: ["nexus-sdk", "open-sso"],
+        mutationKey: ["frak-sdk", "open-sso"],
         mutationFn: async (params: OpenSsoParamsType) => {
             if (!client) {
                 throw new ClientNotFound();

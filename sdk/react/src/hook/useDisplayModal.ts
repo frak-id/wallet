@@ -7,7 +7,7 @@ import {
 } from "@frak-labs/core-sdk";
 import { displayModal } from "@frak-labs/core-sdk/actions";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import { useNexusClient } from "./useNexusClient";
+import { useFrakClient } from "./useFrakClient";
 
 type MutationOptions<T extends ModalStepTypes[]> = Omit<
     UseMutationOptions<
@@ -28,11 +28,11 @@ interface UseDisplayModalParams<T extends ModalStepTypes[] = ModalStepTypes[]> {
 export function useDisplayModal<T extends ModalStepTypes[] = ModalStepTypes[]>({
     mutations,
 }: UseDisplayModalParams<T> = {}) {
-    const client = useNexusClient();
+    const client = useFrakClient();
 
     return useMutation({
         ...mutations,
-        mutationKey: ["nexus-sdk", "display-modal"],
+        mutationKey: ["frak-sdk", "display-modal"],
         mutationFn: async (args: DisplayModalParamsType<T>) => {
             if (!client) {
                 throw new ClientNotFound();

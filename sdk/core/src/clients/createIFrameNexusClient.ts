@@ -1,6 +1,6 @@
 import { type ExtractedParametersFromRpc, FrakRpcError } from "../types";
-import type { NexusClient } from "../types/client";
-import type { NexusWalletSdkConfig } from "../types/config";
+import type { FrakClient } from "../types/client";
+import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { InternalError, RpcErrorCodes } from "../types/rpc/error";
 import type {
@@ -32,9 +32,9 @@ export function createIFrameNexusClient({
     config,
     iframe,
 }: {
-    config: NexusWalletSdkConfig;
+    config: FrakWalletSdkConfig;
     iframe: HTMLIFrameElement;
-}): NexusClient {
+}): FrakClient {
     // Build our channel manager
     const channelManager = createIFrameChannelManager();
 
@@ -180,7 +180,7 @@ export async function postConnectionSetup({
     messageHandler,
     lifecycleManager,
 }: {
-    config: NexusWalletSdkConfig;
+    config: FrakWalletSdkConfig;
     lifecycleManager: IframeLifecycleManager;
     messageHandler: IFrameMessageHandler;
 }): Promise<void> {

@@ -1,7 +1,7 @@
-export { NexusConfigProvider, NexusConfigContext } from "./NexusConfigProvider";
-export type { NexusConfigProviderProps } from "./NexusConfigProvider";
+export { FrakConfigProvider, FrakConfigContext } from "./FrakConfigProvider";
+export type { FrakConfigProviderProps } from "./FrakConfigProvider";
 export {
-    NexusIFrameClientContext,
-    NexusIFrameClientProvider,
-} from "./NexusIFrameClientProvider";
-export type { NexusIFrameClientProps } from "./NexusIFrameClientProvider";
+    FrakIFrameClientContext,
+    FrakIFrameClientProvider,
+} from "./FrakIFrameClientProvider";
+export type { FrakIFrameClientProps } from "./FrakIFrameClientProvider";

@@ -1,6 +1,6 @@
 import {
-    type NexusClient,
-    type NexusWalletSdkConfig,
+    type FrakClient,
+    type FrakWalletSdkConfig,
     baseIframeProps,
     createIFrameNexusClient,
 } from "@frak-labs/core-sdk";
@@ -12,39 +12,39 @@ import {
     createElement,
     useState,
 } from "react";
-import { useNexusConfig } from "../hook";
+import { useFrakConfig } from "../hook";
 
 /**
- * The context that will keep the Nexus Wallet SDK client
+ * The context that will keep the Frak Wallet SDK client
  */
-export const NexusIFrameClientContext = createContext<NexusClient | undefined>(
+export const FrakIFrameClientContext = createContext<FrakClient | undefined>(
     undefined
 );
 
 /**
- * Props to instantiate the Nexus Wallet SDK configuration provider
+ * Props to instantiate the Frak Wallet SDK configuration provider
  */
-export type NexusIFrameClientProps = {
-    config: NexusWalletSdkConfig;
+export type FrakIFrameClientProps = {
+    config: FrakWalletSdkConfig;
 };
 
 /**
- * IFrame client provider for the Nexus Wallet SDK
+ * IFrame client provider for the Frak Wallet SDK
  *  - Automatically set the config provider
  * @param parameters
  * @constructor
  */
-export function NexusIFrameClientProvider({
+export function FrakIFrameClientProvider({
     style,
     children,
 }: {
     style?: CSSProperties;
     children?: ReactNode;
 }) {
-    const config = useNexusConfig();
+    const config = useFrakConfig();
 
     // Using a state for the client since using directly a client built inside the ref cause re-render loop
-    const [client, setClient] = useState<NexusClient | undefined>(undefined);
+    const [client, setClient] = useState<FrakClient | undefined>(undefined);
 
     // Create the iframe that will be used to communicate with the wallet
     const iFrame = createElement("iframe", {
@@ -66,7 +66,7 @@ export function NexusIFrameClientProvider({
 
     // Create the component that will provide the client
     const providerComponent = createElement(
-        NexusIFrameClientContext.Provider,
+        FrakIFrameClientContext.Provider,
         { value: client },
         children
     );

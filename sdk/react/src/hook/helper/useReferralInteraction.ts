@@ -10,7 +10,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Hex } from "viem";
-import { useNexusClient } from "../useNexusClient";
+import { useFrakClient } from "../useFrakClient";
 import { useWalletStatus } from "../useWalletStatus";
 import { useFrakContext } from "../utils/useFrakContext";
 
@@ -31,7 +31,7 @@ export function useReferralInteraction({
     options?: ProcessReferralOptions;
 } = {}) {
     // Get the nexus client
-    const client = useNexusClient();
+    const client = useFrakClient();
 
     // Get the current frak context
     const { frakContext } = useFrakContext();
@@ -48,7 +48,7 @@ export function useReferralInteraction({
         gcTime: 0,
         staleTime: 0,
         queryKey: [
-            "nexus-sdk",
+            "frak-sdk",
             "auto-referral-interaction",
             frakContext?.r ?? "no-referrer",
             walletStatus?.key ?? "no-wallet-status",

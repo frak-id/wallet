@@ -13,7 +13,7 @@ export type {
 export { FrakRpcError, RpcErrorCodes, ClientNotFound } from "./rpc/error";
 export type { IFrameRpcSchema } from "./rpc";
 // Client related
-export type { NexusClient } from "./client";
+export type { FrakClient } from "./client";
 export type {
     IFrameTransport,
     IFrameRpcEvent,
@@ -24,7 +24,7 @@ export type {
     RpcResponse,
 } from "./transport";
 export type { IFrameLifecycleEvent, ClientLifecycleEvent } from "./lifecycle";
-export type { NexusWalletSdkConfig } from "./config";
+export type { FrakWalletSdkConfig } from "./config";
 export type {
     CompressedData,
     HashProtectedData,

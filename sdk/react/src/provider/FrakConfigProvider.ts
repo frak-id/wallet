@@ -1,31 +1,31 @@
-import type { NexusWalletSdkConfig } from "@frak-labs/core-sdk";
+import type { FrakWalletSdkConfig } from "@frak-labs/core-sdk";
 import { type PropsWithChildren, createContext, createElement } from "react";
 
 /**
- * The context that will keep the Nexus Wallet SDK configuration
+ * The context that will keep the Frak Wallet SDK configuration
  */
-export const NexusConfigContext = createContext<
-    NexusWalletSdkConfig | undefined
->(undefined);
+export const FrakConfigContext = createContext<FrakWalletSdkConfig | undefined>(
+    undefined
+);
 
 /**
- * Props to instantiate the Nexus Wallet SDK configuration provider
+ * Props to instantiate the Frak Wallet SDK configuration provider
  */
-export type NexusConfigProviderProps = {
-    config: NexusWalletSdkConfig;
+export type FrakConfigProviderProps = {
+    config: FrakWalletSdkConfig;
 };
 
 /**
- * Simple config provider for the Nexus Wallet SDK
+ * Simple config provider for the Frak Wallet SDK
  * @param parameters
  * @constructor
  */
-export function NexusConfigProvider(
-    parameters: PropsWithChildren<NexusConfigProviderProps>
+export function FrakConfigProvider(
+    parameters: PropsWithChildren<FrakConfigProviderProps>
 ) {
     const { children, config } = parameters;
     return createElement(
-        NexusConfigContext.Provider,
+        FrakConfigContext.Provider,
         {
             value: {
                 ...config,

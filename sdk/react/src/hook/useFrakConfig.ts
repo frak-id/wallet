@@ -1,16 +1,16 @@
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/core-sdk";
 import { useContext } from "react";
-import { NexusConfigContext } from "../provider";
+import { FrakConfigContext } from "../provider";
 
 /**
- * Use the current nexus config
+ * Use the current frak config
  */
-export function useNexusConfig() {
-    const config = useContext(NexusConfigContext);
+export function useFrakConfig() {
+    const config = useContext(FrakConfigContext);
     if (!config) {
         throw new FrakRpcError(
             RpcErrorCodes.configError,
-            "Nexus config not found"
+            "Frak config not found"
         );
     }
     return config;

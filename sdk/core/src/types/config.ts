@@ -1,7 +1,7 @@
 /**
  * Configuration for the Nexus Wallet SDK
  */
-export type NexusWalletSdkConfig = Readonly<{
+export type FrakWalletSdkConfig = Readonly<{
     // The current url for the wallet sdk
     walletUrl?: string;
     // Your own datas

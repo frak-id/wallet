@@ -8,4 +8,8 @@ loadScript(
     "https://cdn.jsdelivr.net/npm/@frak-labs/core-sdk@latest/dist/bundle/bundle.js"
 ).then(() => {
     console.log("Frak core SDK loaded");
+    // Re-export FrakSDK as NexusSDK
+    //  todo: Are we sure that this will work?
+    //  todo: Will the lazy loading of the SDK be a problem?
+    window.NexusSDK = window.FrakSDK;
 });

@@ -1,5 +1,5 @@
 import type {
-    NexusClient,
+    FrakClient,
     SendInteractionParamsType,
     SendInteractionReturnType,
 } from "../types";
@@ -13,7 +13,7 @@ import { computeProductId } from "../utils/computeProductId";
  * @param validation
  */
 export async function sendInteraction(
-    client: NexusClient,
+    client: FrakClient,
     { productId, interaction, validation }: SendInteractionParamsType
 ): Promise<SendInteractionReturnType> {
     const pId = productId ?? computeProductId(client.config);

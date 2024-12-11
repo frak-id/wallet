@@ -1,19 +1,19 @@
 // Providers export
 export {
-    NexusConfigContext,
-    NexusConfigProvider,
-    NexusIFrameClientContext,
-    NexusIFrameClientProvider,
+    FrakConfigContext,
+    FrakConfigProvider,
+    FrakIFrameClientContext,
+    FrakIFrameClientProvider,
 } from "./provider";
 export type {
-    NexusConfigProviderProps,
-    NexusIFrameClientProps,
+    FrakConfigProviderProps,
+    FrakIFrameClientProps,
 } from "./provider";
 
 // Hooks export
 export {
-    useNexusConfig,
-    useNexusClient,
+    useFrakConfig,
+    useFrakClient,
     useWalletStatus,
     useSendTransactionAction,
     useSendInteraction,

@@ -1,8 +1,8 @@
 import type {
     DisplayModalParamsType,
+    FrakClient,
     ModalRpcStepsResultType,
     ModalStepTypes,
-    NexusClient,
 } from "../types";
 
 /**
@@ -13,7 +13,7 @@ import type {
 export async function displayModal<
     T extends ModalStepTypes[] = ModalStepTypes[],
 >(
-    client: NexusClient,
+    client: FrakClient,
     { steps, metadata }: DisplayModalParamsType<T>
 ): Promise<ModalRpcStepsResultType<T>> {
     return (await client.request({

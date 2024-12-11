@@ -5,7 +5,7 @@ import {
 } from "@frak-labs/core-sdk";
 import { getProductInformation } from "@frak-labs/core-sdk/actions";
 import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
-import { useNexusClient } from "./useNexusClient";
+import { useFrakClient } from "./useFrakClient";
 
 type QueryOptions = Omit<
     UseQueryOptions<GetProductInformationReturnType, FrakRpcError, undefined>,
@@ -22,11 +22,11 @@ interface UseGetProductInformationParams {
 export function useGetProductInformation({
     query,
 }: UseGetProductInformationParams = {}) {
-    const client = useNexusClient();
+    const client = useFrakClient();
 
     return useQuery({
         ...query,
-        queryKey: ["nexus-sdk", "get-product-information"],
+        queryKey: ["frak-sdk", "get-product-information"],
         queryFn: async () => {
             if (!client) {
                 throw new ClientNotFound();

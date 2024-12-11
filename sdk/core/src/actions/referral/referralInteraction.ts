@@ -1,8 +1,8 @@
 import type { Hex } from "viem";
 import type {
     DisplayModalParamsType,
+    FrakClient,
     ModalStepTypes,
-    NexusClient,
 } from "../../types";
 import { FrakContextManager } from "../../utils";
 import { watchWalletStatus } from "../index";
@@ -12,7 +12,7 @@ import {
 } from "./processReferral";
 
 export async function referralInteraction(
-    client: NexusClient,
+    client: FrakClient,
     {
         productId,
         modalConfig,

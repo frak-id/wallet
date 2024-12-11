@@ -3,14 +3,14 @@ import { useCallback, useMemo } from "react";
 import { useWindowLocation } from "./useWindowLocation";
 
 /**
- * Extract the current nexus context from the url
+ * Extract the current frak context from the url
  */
 export function useFrakContext() {
     // Get the current window location
     const { location } = useWindowLocation();
 
     /**
-     * Fetching and parsing the current nexus context
+     * Fetching and parsing the current frak context
      */
     const frakContext = useMemo(() => {
         // If no url extracted yet, early exit

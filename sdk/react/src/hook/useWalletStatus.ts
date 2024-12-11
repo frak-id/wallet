@@ -5,14 +5,14 @@ import {
 import { watchWalletStatus } from "@frak-labs/core-sdk/actions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { useNexusClient } from "./useNexusClient";
+import { useFrakClient } from "./useFrakClient";
 
 /**
  * Hooks used to listen to the current wallet status
  */
 export function useWalletStatus() {
     const queryClient = useQueryClient();
-    const client = useNexusClient();
+    const client = useFrakClient();
 
     /**
      * Callback hook when we receive an updated wallet status
@@ -20,7 +20,7 @@ export function useWalletStatus() {
     const newStatusUpdated = useCallback(
         (event: WalletStatusReturnType) => {
             queryClient.setQueryData(
-                ["nexus-sdk", "wallet-status-listener"],
+                ["frak-sdk", "wallet-status-listener"],
                 event
             );
         },
@@ -33,7 +33,7 @@ export function useWalletStatus() {
     return useQuery<WalletStatusReturnType>({
         gcTime: 0,
         staleTime: 0,
-        queryKey: ["nexus-sdk", "wallet-status-listener"],
+        queryKey: ["frak-sdk", "wallet-status-listener"],
         queryFn: async () => {
             if (!client) {
                 throw new ClientNotFound();
