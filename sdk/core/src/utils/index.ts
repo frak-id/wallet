@@ -7,3 +7,4 @@ export {
 export { FrakContextManager } from "./FrakContext";
 export { Deferred } from "./Deferred";
 export { baseIframeProps } from "./iframeHelper";
+export { setupClient } from "./setupClient";

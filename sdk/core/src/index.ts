@@ -11,6 +11,7 @@ export {
     FrakContextManager,
     Deferred,
     baseIframeProps,
+    setupClient,
 } from "./utils";
 
 // Constants

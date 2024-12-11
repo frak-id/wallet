@@ -3,11 +3,7 @@ import {
     modalBuilder,
     referralInteraction,
 } from "@core/actions";
-import {
-    type NexusClient,
-    createIFrameNexusClient,
-    createIframe,
-} from "@core/index";
+import type { NexusClient } from "@core/index";
 
 const CUSTOM_EVENT_NAME = "frakClientReady";
 
@@ -27,48 +23,6 @@ export function onClientReady(action: "add" | "remove", callback: () => void) {
     const eventHandler =
         action === "add" ? window.addEventListener : window.removeEventListener;
     eventHandler(CUSTOM_EVENT_NAME, callback, false);
-}
-
-/**
- * Setup the Frak client using the Frak SDK
- */
-export async function setupClient(): Promise<NexusClient | undefined> {
-    if (!window?.FrakSetup.config) {
-        console.error("window.FrakSetup.config not found");
-        return;
-    }
-
-    // Create our iframe
-    const iframe = await createIframe({
-        config: window.FrakSetup.config,
-    });
-
-    if (!iframe) {
-        console.error("Failed to create iframe");
-        return;
-    }
-
-    // Create our client
-    const client = createIFrameNexusClient({
-        config: window.FrakSetup.config,
-        iframe,
-    });
-
-    // Wait for the connection to be established
-    const waitForConnection = await client.waitForConnection;
-
-    if (!waitForConnection) {
-        console.error("Failed to connect to Frak client");
-        return;
-    }
-
-    // Set the client on the window object to be available globally
-    window.FrakSetup.client = client;
-
-    // Dispatch the event to let the rest of the app know that the Frak client is ready
-    dispatchClientReadyEvent();
-
-    return client;
 }
 
 /**
