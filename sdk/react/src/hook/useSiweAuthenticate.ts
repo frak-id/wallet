@@ -1,13 +1,13 @@
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import {
+    ClientNotFound,
+    type FrakRpcError,
+    type SiweAuthenticateReturnType,
+} from "@frak-labs/core-sdk";
 import {
     type SiweAuthenticateModalParams,
     siweAuthenticate,
-} from "../../core/actions";
-import type {
-    FrakRpcError,
-    SiweAuthenticateReturnType,
-} from "../../core/types";
-import { ClientNotFound } from "../../core/types/rpc/error";
+} from "@frak-labs/core-sdk/actions";
+import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions = Omit<

@@ -1,8 +1,10 @@
+import {
+    ClientNotFound,
+    type WalletStatusReturnType,
+} from "@frak-labs/core-sdk";
+import { watchWalletStatus } from "@frak-labs/core-sdk/actions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import type { WalletStatusReturnType } from "../../core";
-import { watchWalletStatus } from "../../core/actions";
-import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
 /**

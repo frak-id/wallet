@@ -21,4 +21,7 @@ export {
 } from "./wrapper/modalBuilder";
 // Referral interaction
 export { referralInteraction } from "./referral/referralInteraction";
-export { processReferral } from "./referral/processReferral";
+export {
+    processReferral,
+    type ProcessReferralOptions,
+} from "./referral/processReferral";

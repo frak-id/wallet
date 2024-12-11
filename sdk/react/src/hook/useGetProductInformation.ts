@@ -1,7 +1,10 @@
+import {
+    ClientNotFound,
+    type FrakRpcError,
+    type GetProductInformationReturnType,
+} from "@frak-labs/core-sdk";
+import { getProductInformation } from "@frak-labs/core-sdk/actions";
 import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
-import type { FrakRpcError, GetProductInformationReturnType } from "../../core";
-import { getProductInformation } from "../../core/actions";
-import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
 type QueryOptions = Omit<

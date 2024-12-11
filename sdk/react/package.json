@@ -1,5 +1,5 @@
 {
-  "name": "@frak-labs/core-sdk",
+  "name": "@frak-labs/react-sdk",
   "author": "Frak Labs",
   "maintainers": [
     {
@@ -12,10 +12,10 @@
     }
   ],
   "version": "0.0.1",
-  "description": "Core SDK of the Frak wallet, low level library to interact directly with the frak ecosystem.",
+  "description": "React SDK of the Frak wallet, low level library to interact directly with the frak ecosystem.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
-    "directory": "sdk/core"
+    "directory": "sdk/react"
   },
   "homepage": "https://docs.frak.id/wallet-sdk/overview",
   "keywords": [
@@ -32,6 +32,8 @@
   "files": [
     "/dist"
   ],
+  "main": "dist/index.cjs",
+  "types": "dist/index.d.cts",
   "exports": {
     ".": {
       "import": {
@@ -42,26 +44,6 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
-    },
-    "./actions": {
-      "import": {
-        "types": "./dist/actions/index.d.ts",
-        "default": "./dist/actions/index.js"
-      },
-      "require": {
-        "types": "./dist/actions/index.d.cts",
-        "default": "./dist/actions/index.cjs"
-      }
-    },
-    "./interactions": {
-      "import": {
-        "types": "./dist/interactions/index.d.ts",
-        "default": "./dist/interactions/index.js"
-      },
-      "require": {
-        "types": "./dist/interactions/index.d.cts",
-        "default": "./dist/interactions/index.cjs"
-      }
     }
   },
   "scripts": {
@@ -71,15 +53,16 @@
     "clean": "rimraf dist",
     "build": "tsup && bun run check-exports",
     "build:watch": "tsup --watch",
-    "check-exports": "attw --pack --profile node16 .",
+    "check-exports": "attw --pack .",
     "typecheck": "tsc --noEmit"
   },
-  "peerDependencies": {
-    "viem": "^2.x"
-  },
   "dependencies": {
-    "async-lz-string": "^1.1.0",
-    "js-sha256": "^0.11.0"
+    "@frak-labs/core-sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "viem": "^2.x",
+    "@tanstack/react-query": ">=5.0.0",
+    "react": ">=18"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.1",

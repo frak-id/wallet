@@ -1,10 +1,15 @@
+import {
+    ClientNotFound,
+    type DisplayModalParamsType,
+    type ModalStepTypes,
+} from "@frak-labs/core-sdk";
+import {
+    type ProcessReferralOptions,
+    processReferral,
+} from "@frak-labs/core-sdk/actions";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Hex } from "viem";
-import type { DisplayModalParamsType, ModalStepTypes } from "../../../core";
-import { processReferral } from "../../../core/actions";
-import type { ProcessReferralOptions } from "../../../core/actions/referral/processReferral";
-import { ClientNotFound } from "../../../core/types/rpc/error";
 import { useNexusClient } from "../useNexusClient";
 import { useWalletStatus } from "../useWalletStatus";
 import { useFrakContext } from "../utils/useFrakContext";

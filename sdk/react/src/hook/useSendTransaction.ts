@@ -1,10 +1,13 @@
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import type { FrakRpcError, SendTransactionReturnType } from "../../core";
+import {
+    ClientNotFound,
+    type FrakRpcError,
+    type SendTransactionReturnType,
+} from "@frak-labs/core-sdk";
 import {
     type SendTransactionParams,
     sendTransaction,
-} from "../../core/actions";
-import { ClientNotFound } from "../../core/types/rpc/error";
+} from "@frak-labs/core-sdk/actions";
+import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions = Omit<

@@ -1,11 +1,11 @@
+import {
+    ClientNotFound,
+    type FrakRpcError,
+    type SendInteractionParamsType,
+    type SendInteractionReturnType,
+} from "@frak-labs/core-sdk";
+import { sendInteraction } from "@frak-labs/core-sdk/actions";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import type {
-    FrakRpcError,
-    SendInteractionParamsType,
-    SendInteractionReturnType,
-} from "../../core";
-import { sendInteraction } from "../../core/actions";
-import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions = Omit<

@@ -1,5 +1,5 @@
+import { FrakContextManager } from "@frak-labs/core-sdk";
 import { useCallback, useMemo } from "react";
-import { FrakContextManager } from "../../../core";
 import type { FrakContext } from "../../types/FrakContext";
 import { useWindowLocation } from "./useWindowLocation";
 

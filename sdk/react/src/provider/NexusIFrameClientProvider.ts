@@ -1,4 +1,10 @@
 import {
+    type NexusClient,
+    type NexusWalletSdkConfig,
+    baseIframeProps,
+    createIFrameNexusClient,
+} from "@frak-labs/core-sdk";
+import {
     type CSSProperties,
     Fragment,
     type ReactNode,
@@ -6,12 +12,6 @@ import {
     createElement,
     useState,
 } from "react";
-import {
-    type NexusClient,
-    type NexusWalletSdkConfig,
-    createIFrameNexusClient,
-} from "../../core";
-import { baseIframeProps } from "../../core/utils/iframeHelper";
 import { useNexusConfig } from "../hook";
 
 /**

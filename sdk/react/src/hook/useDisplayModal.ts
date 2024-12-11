@@ -1,12 +1,12 @@
+import {
+    ClientNotFound,
+    type DisplayModalParamsType,
+    type FrakRpcError,
+    type ModalRpcStepsResultType,
+    type ModalStepTypes,
+} from "@frak-labs/core-sdk";
+import { displayModal } from "@frak-labs/core-sdk/actions";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import type {
-    DisplayModalParamsType,
-    FrakRpcError,
-    ModalRpcStepsResultType,
-    ModalStepTypes,
-} from "../../core";
-import { displayModal } from "../../core/actions/displayModal";
-import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions<T extends ModalStepTypes[]> = Omit<

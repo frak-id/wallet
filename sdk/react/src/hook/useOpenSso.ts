@@ -1,7 +1,10 @@
+import {
+    ClientNotFound,
+    type FrakRpcError,
+    type OpenSsoParamsType,
+} from "@frak-labs/core-sdk";
+import { openSso } from "@frak-labs/core-sdk/actions";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import type { FrakRpcError, OpenSsoParamsType } from "../../core";
-import { openSso } from "../../core/actions";
-import { ClientNotFound } from "../../core/types/rpc/error";
 import { useNexusClient } from "./useNexusClient";
 
 type MutationOptions = Omit<

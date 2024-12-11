@@ -1,5 +1,5 @@
+import { FrakRpcError, RpcErrorCodes } from "@frak-labs/core-sdk";
 import { useContext } from "react";
-import { FrakRpcError, RpcErrorCodes } from "../../core";
 import { NexusConfigContext } from "../provider";
 
 /**

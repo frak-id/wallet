@@ -10,7 +10,7 @@ export type {
     SendInteractionParamsType,
     SendInteractionReturnType,
 } from "./rpc/interaction";
-export { FrakRpcError, RpcErrorCodes } from "./rpc/error";
+export { FrakRpcError, RpcErrorCodes, ClientNotFound } from "./rpc/error";
 export type { IFrameRpcSchema } from "./rpc";
 // Client related
 export type { NexusClient } from "./client";

@@ -1,5 +1,5 @@
+import type { NexusWalletSdkConfig } from "@frak-labs/core-sdk";
 import { type PropsWithChildren, createContext, createElement } from "react";
-import type { NexusWalletSdkConfig } from "../../core";
 
 /**
  * The context that will keep the Nexus Wallet SDK configuration

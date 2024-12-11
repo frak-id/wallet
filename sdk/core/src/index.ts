@@ -10,6 +10,7 @@ export {
     createIframe,
     FrakContextManager,
     Deferred,
+    baseIframeProps,
 } from "./utils";
 
 // Constants
@@ -72,4 +73,4 @@ export type {
     CompressedData,
     HashProtectedData,
 } from "./types";
-export { FrakRpcError, RpcErrorCodes } from "./types";
+export { FrakRpcError, RpcErrorCodes, ClientNotFound } from "./types";
