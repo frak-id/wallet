@@ -26,9 +26,9 @@ import {
 } from "./transports/iframeMessageHandler";
 
 /**
- * Create a new iframe Nexus client
+ * Create a new iframe Frak client
  */
-export function createIFrameNexusClient({
+export function createIFrameFrakClient({
     config,
     iframe,
 }: {
@@ -42,7 +42,7 @@ export function createIFrameNexusClient({
 
     // Build our message handler
     const messageHandler = createIFrameMessageHandler({
-        nexusWalletUrl: config?.walletUrl ?? "https://wallet.frak.id",
+        frakWalletUrl: config?.walletUrl ?? "https://wallet.frak.id",
         iframe,
         channelManager,
         iframeLifecycleManager: lifecycleManager,

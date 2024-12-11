@@ -1,5 +1,5 @@
 // Clients
-export { createIFrameNexusClient } from "./clients";
+export { createIFrameFrakClient } from "./clients";
 
 // Utils
 export {

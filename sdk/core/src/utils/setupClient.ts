@@ -1,4 +1,4 @@
-import { createIFrameNexusClient } from "../clients";
+import { createIFrameFrakClient } from "../clients";
 import type { FrakClient, FrakWalletSdkConfig } from "../types";
 import { createIframe } from "./iframeHelper";
 
@@ -20,7 +20,7 @@ export async function setupClient({
     }
 
     // Create our client
-    const client = createIFrameNexusClient({
+    const client = createIFrameFrakClient({
         config,
         iframe,
     });

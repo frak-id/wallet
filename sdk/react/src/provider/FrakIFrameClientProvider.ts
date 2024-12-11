@@ -2,7 +2,7 @@ import {
     type FrakClient,
     type FrakWalletSdkConfig,
     baseIframeProps,
-    createIFrameNexusClient,
+    createIFrameFrakClient,
 } from "@frak-labs/core-sdk";
 import {
     type CSSProperties,
@@ -56,7 +56,7 @@ export function FrakIFrameClientProvider({
                 return;
             }
             setClient(
-                createIFrameNexusClient({
+                createIFrameFrakClient({
                     iframe,
                     config,
                 })

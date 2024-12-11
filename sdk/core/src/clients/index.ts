@@ -1,1 +1,1 @@
-export { createIFrameNexusClient } from "./createIFrameNexusClient";
+export { createIFrameFrakClient } from "./createIFrameFrakClient";
