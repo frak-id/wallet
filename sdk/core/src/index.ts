@@ -72,5 +72,7 @@ export type {
     KeyProvider,
     CompressedData,
     HashProtectedData,
+    // Utils
+    FrakContext,
 } from "./types";
 export { FrakRpcError, RpcErrorCodes, ClientNotFound } from "./types";
