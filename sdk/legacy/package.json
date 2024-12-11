@@ -15,7 +15,7 @@
   "description": "Legacy SDK, only used here to provide nice wrapper and redirection for older implementation, to not break anything and keep them updated with latest security updates.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
-    "directory": "packages/sdk"
+    "directory": "sdk/legacy"
   },
   "homepage": "https://docs.frak.id/wallet-sdk/overview",
   "keywords": [
@@ -32,25 +32,13 @@
   "files": [
     "/dist"
   ],
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
-    }
-  },
+  "main": "dist/bundle/bundle.js",
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf dist",
-    "build": "tsup && bun run check-exports",
-    "build:watch": "tsup --watch",
-    "check-exports": "attw --pack --profile node16 ."
+    "build": "tsup",
+    "build:watch": "tsup --watch"
   }
 }
