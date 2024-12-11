@@ -39,6 +39,7 @@
   },
   "workspaces": [
     "packages/*",
+    "sdk/*",
     "example/*"
   ],
   "packageManager": "bun@1.1.26"
