@@ -1,6 +1,16 @@
 /** @type {Partial<import("typedoc").TypeDocOptions>} */
 const config = {
-    plugin: ["typedoc-plugin-markdown", "typedoc-plugin-inline-sources"],
+    plugin: [
+        // Generate markdown output
+        "typedoc-plugin-markdown",
+        // Options to add `@source` tag in tsdoc, to include the source code in the out file
+        "typedoc-plugin-inline-sources",
+        // Generate sidebar compatible with vocs
+        "typedoc-vitepress-theme",
+        // Add frontmatter headers to mdx file
+        "typedoc-plugin-frontmatter",
+        "./docs/frak-frontmatter.js",
+    ],
     entryPoints: ["sdk/core", "sdk/react"],
     entryPointStrategy: "packages",
     packageOptions: {
@@ -12,13 +22,9 @@ const config = {
             "src/interactions/index.ts",
         ],
     },
-    out: "./generated-docs",
+    out: "./generated-docs/",
     fileExtension: ".mdx",
     // Module is too fat, and members too verbose, should find a mix
-    // outputs: [{
-    //     kind: "markdown",
-    //     out: "./generated-docs",
-    // }],
     outputFileStrategy: "members",
     excludeScopesInPaths: true,
     excludeExternals: true,
@@ -29,6 +35,13 @@ const config = {
     expandObjects: true,
     expandParameters: true,
     typeDeclarationVisibility: "verbose",
+    // Vitepress docs export config
+    publicPath: "/wallet-sdk/references",
+    sidebar: {
+        pretty: true,
+    },
+    // Frontmatter
+    frontmatterCommentTags: ["description"]
 };
 
 export default config;

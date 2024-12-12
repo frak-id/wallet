@@ -10,7 +10,6 @@ export type OpenInteractionSessionReturnType = Readonly<{
     endTimestamp: number;
 }>;
 
-
 /**
  * The open interaction session step for a Modal
  *

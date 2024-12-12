@@ -13,9 +13,11 @@ import type { PreparedInteraction } from "../types";
  *   To properly handle referral interactions, ensure that the "Referral" product type is enabled in your Business dashboard.
  * </Callout>
  *
- * {@link PreparedInteraction} The prepared interaction object that can be sent
+ * @description Encode referral related user interactions
+ *
  * @group Interactions Encoder
  *
+ * @see {@link PreparedInteraction} The prepared interaction object that can be sent
  * @see {@link sendInteraction} Action used to send the prepared interaction to the Frak Wallet.
  */
 export const ReferralInteractionEncoder = {

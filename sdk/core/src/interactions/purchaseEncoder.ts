@@ -25,11 +25,12 @@ import type { PreparedInteraction } from "../types";
  * - `externalPurchaseId`: The id of the purchase in your system (e.g. the shopify `order_id`).
  * </Callout>
  *
+ * @description Encode purchase related user interactions
  *
- * {@link PreparedInteraction} The prepared interaction object that can be sent
  * @group Interactions Encoder
  *
  * @see {@link sendInteraction} Action used to send the prepared interaction to the Frak Wallet.
+ * @see {@link PreparedInteraction} The prepared interaction object that can be sent
  * @see {@link trackPurchaseStatus} Action that will automatically send the purchase upon completion
  * @see [Purchase Webhooks](/wallet-sdk/api-endpoints/webhook) Webhooks to be implemented on your side to confirm a purchase
  * @see [Purchase Proof](/wallet-sdk/api-endpoints/purchaseProof) Get a merklee proof for the purchase
