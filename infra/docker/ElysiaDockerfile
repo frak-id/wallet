@@ -17,7 +17,7 @@ ENV STAGE=$STAGE
 
 # Install dependencies and build the project
 RUN bun install --frozen-lockfile
-RUN bun run build:sdk
+RUN bun run build:sdk-all
 RUN cd packages/backend-elysia && bun run build
 
 # Start a new stage for the final image

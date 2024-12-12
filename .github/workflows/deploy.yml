@@ -67,7 +67,7 @@ jobs:
 
       - name: "🔨 Build the SDK"
         if: steps.changes.outputs.deployRequired == 'true'
-        run: bun run build:sdk
+        run: bun run build:sdk-all
 
       - name: "👥 Configure AWS Credentials"
         if: steps.changes.outputs.deployRequired == 'true'
