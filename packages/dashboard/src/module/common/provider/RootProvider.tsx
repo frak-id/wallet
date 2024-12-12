@@ -2,8 +2,8 @@
 
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import {
-    NexusConfigProvider,
-    NexusIFrameClientProvider,
+    FrakConfigProvider,
+    FrakIFrameClientProvider,
 } from "@frak-labs/react-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -55,12 +55,12 @@ export function RootProvider({ children }: PropsWithChildren) {
                 client={queryClient}
                 persistOptions={persistOptions}
             >
-                <NexusConfigProvider config={frakWalletSdkConfig}>
-                    <NexusIFrameClientProvider>
+                <FrakConfigProvider config={frakWalletSdkConfig}>
+                    <FrakIFrameClientProvider>
                         <ReactQueryDevtools initialIsOpen={false} />
                         {children}
-                    </NexusIFrameClientProvider>
-                </NexusConfigProvider>
+                    </FrakIFrameClientProvider>
+                </FrakConfigProvider>
             </PersistQueryClientProvider>
         </Provider>
     );
