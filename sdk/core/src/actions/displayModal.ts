@@ -8,7 +8,7 @@ import type {
 /**
  * Function used to display a modal
  * @param client - The current Frak Client
- * @param args - The modal parameters
+ * @param args
  * @param args.steps - The different steps of the modal
  * @param args.metadata - The metadata for the modal (customisation, language etc)
  * @returns The result of each modal steps

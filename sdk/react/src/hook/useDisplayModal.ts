@@ -25,6 +25,8 @@ interface UseDisplayModalParams<T extends ModalStepTypes[] = ModalStepTypes[]> {
 /**
  * Hook that return a mutation helping to display a modal to the user
  *
+ * @group hooks
+ *
  * @see {@link displayModal} for more info about the underlying action
  * @see [Tanstack Query - Mutation](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation) for more info about the mutation options and response
  */

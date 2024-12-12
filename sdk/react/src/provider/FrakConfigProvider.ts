@@ -3,6 +3,7 @@ import { type PropsWithChildren, createContext, createElement } from "react";
 
 /**
  * The context that will keep the Frak Wallet SDK configuration
+ * @ignore
  */
 export const FrakConfigContext = createContext<FrakWalletSdkConfig | undefined>(
     undefined
@@ -10,6 +11,8 @@ export const FrakConfigContext = createContext<FrakWalletSdkConfig | undefined>(
 
 /**
  * Props to instantiate the Frak Wallet SDK configuration provider
+ *
+ * @group provider
  */
 export type FrakConfigProviderProps = {
     config: FrakWalletSdkConfig;
@@ -17,6 +20,9 @@ export type FrakConfigProviderProps = {
 
 /**
  * Simple config provider for the Frak Wallet SDK
+ *
+ * @group provider
+ *
  * @param parameters
  */
 export function FrakConfigProvider(

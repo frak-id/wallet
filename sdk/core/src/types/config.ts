@@ -2,15 +2,27 @@
  * Configuration for the Nexus Wallet SDK
  */
 export type FrakWalletSdkConfig = Readonly<{
-    // The current url for the wallet sdk
+    /**
+     * The Frak wallet url
+     * @defaultValue "https://wallet.frak.id"
+     */
     walletUrl?: string;
-    // Your own datas
+    /**
+     * Some metadata about your implementation of the Frak SDK
+     */
     metadata: {
-        // Your app name
+        /**
+         * Your application name (will be displayed in a few modals and in SSO)
+         */
         name: string;
-        // Your app styles to skin modals / sso
+        /**
+         * Custom CSS styles to apply to the modals and components
+         */
         css?: string;
     };
-    // Your domain (will be retrieved automatically if not provided)
+    /**
+     * The domain name of your application
+     * @defaultValue window.location.host
+     */
     domain?: string;
 }>;

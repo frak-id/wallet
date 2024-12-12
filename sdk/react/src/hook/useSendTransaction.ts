@@ -26,6 +26,8 @@ interface UseSendTransactionParams {
 /**
  * Hook that return a mutation helping to send a transaction
  *
+ * @group hooks
+ *
  * @see {@link sendTransaction} for more info about the underlying action
  * @see [Tanstack Query - Mutation](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation) for more info about the mutation options and response
  */

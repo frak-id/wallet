@@ -3,7 +3,9 @@ import { useContext } from "react";
 import { FrakConfigContext } from "../provider";
 
 /**
- * Use the current frak config
+ * Get the current Frak config
+ * @throws {FrakRpcError} if the config is not found (only if this hooks is used outside of a FrakConfigProvider)
+ * @group hooks
  */
 export function useFrakConfig() {
     const config = useContext(FrakConfigContext);
