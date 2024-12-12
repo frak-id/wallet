@@ -26,16 +26,10 @@ export function load(app) {
         (page) => {
             // Set the frontmatter options depending on the model kind
             if (targetModelKink.includes(page.model?.kind)) {
-                // Find a description that match it
-                const description =
-                    page.model?.comment?.description ??
-                    page.model?.comment?.shortText;
-
                 // Set custom front matter options here
                 page.frontmatter = {
                     // Add a few options to the frontmatter section
                     title: `${page.group} - ${page.model?.name}`,
-                    description,
                     date: dateStr,
                     // spread the existing frontmatter
                     ...page.frontmatter,

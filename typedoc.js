@@ -5,11 +5,11 @@ const config = {
         "typedoc-plugin-markdown",
         // Options to add `@source` tag in tsdoc, to include the source code in the out file
         "typedoc-plugin-inline-sources",
-        // Generate sidebar compatible with vocs
-        "typedoc-vitepress-theme",
         // Add frontmatter headers to mdx file
         "typedoc-plugin-frontmatter",
-        "./docs/frak-frontmatter.js",
+        // Custom scripts (frontmatter + vocs sidebar generation)
+        "./docs/vocs-frontmatter.js",
+        "./docs/vocs-sidebar.js",
     ],
     entryPoints: ["sdk/core", "sdk/react"],
     entryPointStrategy: "packages",
@@ -29,19 +29,16 @@ const config = {
     excludeScopesInPaths: true,
     excludeExternals: true,
     categorizeByGroup: true,
+    // Tell that this will be in a subfolder of the main docs
+    publicPath: "/wallet-sdk/references",
     // Stylisation
     // If set to true, should use @link in the comment to reference param types and stuff
     useCodeBlocks: false,
     expandObjects: true,
     expandParameters: true,
     typeDeclarationVisibility: "verbose",
-    // Vitepress docs export config
-    publicPath: "/wallet-sdk/references",
-    sidebar: {
-        pretty: true,
-    },
     // Frontmatter
-    frontmatterCommentTags: ["description"]
+    frontmatterCommentTags: ["description"],
 };
 
 export default config;

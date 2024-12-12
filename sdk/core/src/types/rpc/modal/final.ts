@@ -23,6 +23,7 @@ export type FinalModalStepType = GenericModalStepType<
 
 /**
  * The different types of final actions we can display in the final step
+ * @group Modal Display
  */
 export type FinalActionType =
     | {

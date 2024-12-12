@@ -14,6 +14,7 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
  * RPC interface that's used for the iframe communication
+ * @group RPC Schema
  */
 export type IFrameRpcSchema = [
     /**

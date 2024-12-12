@@ -13,6 +13,7 @@ export type SsoMetadata = {
 
 /**
  * Params to start a SSO
+ * @group RPC Schema
  */
 export type OpenSsoParamsType = {
     redirectUrl?: string;

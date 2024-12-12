@@ -1,6 +1,10 @@
 import type { Hex } from "viem";
 import type { ProductTypesKey } from "../../constants/productTypes";
 
+/**
+ * Response of the `frak_getProductInformation` RPC method
+ * @group RPC Schema
+ */
 export type GetProductInformationReturnType = Readonly<{
     /**
      * Current product id

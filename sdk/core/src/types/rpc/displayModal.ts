@@ -22,6 +22,7 @@ export type ModalStepTypes =
  * Just the `returns` type of each `ModalStepTypes`
  * @typeParam T - The list of modal steps we expect to have in the modal
  * @group Modal Display
+ * @group RPC Schema
  */
 export type ModalRpcStepsResultType<
     T extends ModalStepTypes[] = ModalStepTypes[],
@@ -34,6 +35,7 @@ export type ModalRpcStepsResultType<
  * Just the `params` type of each `ModalStepTypes`
  * @typeParam T - The list of modal steps we expect to have in the modal
  * @group Modal Display
+ * @group RPC Schema
  */
 export type ModalRpcStepsInput<T extends ModalStepTypes[] = ModalStepTypes[]> =
     {
@@ -43,6 +45,7 @@ export type ModalRpcStepsInput<T extends ModalStepTypes[] = ModalStepTypes[]> =
 /**
  * RPC metadata for the modal, used on top level modal configuration
  * @group Modal Display
+ * @group RPC Schema
  */
 export type ModalRpcMetadata = Readonly<
     {

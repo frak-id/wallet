@@ -1,9 +1,17 @@
 import type { Address } from "viem";
 
+/**
+ * RPC Response for the method `frak_listenToWalletStatus`
+ * @group RPC Schema
+ */
 export type WalletStatusReturnType = Readonly<
     WalletConnected | WalletNotConnected
 >;
 
+/**
+ * @ignore
+ * @inline
+ */
 export type WalletConnected = {
     key: "connected";
     // The user wallet address
@@ -17,6 +25,10 @@ export type WalletConnected = {
     };
 };
 
+/**
+ * @ignore
+ * @inline
+ */
 export type WalletNotConnected = {
     key: "not-connected";
     wallet?: never;
