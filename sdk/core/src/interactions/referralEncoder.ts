@@ -7,12 +7,14 @@ import type { PreparedInteraction } from "../types";
  * Referral interactions allow you to track user sharing activities.
  * These interactions are essential for platforms looking to grow their user base through user-to-user referrals and reward systems.
  *
+ * import { Callout } from 'vocs/components'
+ *
  * <Callout type="info">
  *   To properly handle referral interactions, ensure that the "Referral" product type is enabled in your Business dashboard.
  * </Callout>
  *
  * {@link PreparedInteraction} The prepared interaction object that can be sent
- * @category Interactions Encoder
+ * @group Interactions Encoder
  *
  * @see {@link sendInteraction} Action used to send the prepared interaction to the Frak Wallet.
  */
@@ -33,7 +35,8 @@ export const ReferralInteractionEncoder = {
 
     /**
      * Encode a referred interaction
-     * @param referrer The Ethereum address of the user who made the referral
+     * @param options
+     * @param options.referrer - The Ethereum address of the user who made the referral
      */
     referred({ referrer }: { referrer: Address }): PreparedInteraction {
         const interactionData = concatHex([

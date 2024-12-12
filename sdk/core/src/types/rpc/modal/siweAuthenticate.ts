@@ -15,6 +15,8 @@ export type SiweAuthenticationParams = Omit<
 
 /**
  * Return type of the send transaction rpc request
+ * @inline
+ * @ignore
  */
 export type SiweAuthenticateReturnType = Readonly<{
     signature: Hex;
@@ -22,7 +24,12 @@ export type SiweAuthenticateReturnType = Readonly<{
 }>;
 
 /**
- * Generic type of modal we will display to the end user
+ * The SIWE authentication step for a Modal
+ *
+ * **Input**: SIWE message parameters
+ * **Output**: SIWE result (message signed and wallet signature)
+ *
+ * @group Modal Display
  */
 export type SiweAuthenticateModalStepType = GenericModalStepType<
     "siweAuthenticate",

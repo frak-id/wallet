@@ -6,12 +6,14 @@ import type { PreparedInteraction } from "../types";
 /**
  * Webshop interactions allow you to track user activities on your webshop.
  *
+ * import { Callout } from 'vocs/components'
+ *
  * <Callout type="info">
  *   To properly handle webshop interactions, ensure that the "WebShop" product type is enabled in your Business dashboard.
  * </Callout>
  *
  * {@link PreparedInteraction} The prepared interaction object that can be sent
- * @category Interactions Encoder
+ * @group Interactions Encoder
  *
  * @see {@link sendInteraction} Action used to send the prepared interaction to the Frak Wallet.
  */

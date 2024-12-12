@@ -7,6 +7,8 @@ import type { PreparedInteraction } from "../types";
  * Purchase interactions allow you to track user purchases on your platform.
  * After setting up these interactions, you can create acquisition campaign based on the user purchase  (starting a new one, completed, or even purchase dropped).
  *
+ * import { Callout } from 'vocs/components'
+ *
  * <Callout type="info">
  *   To properly handle purchase interactions, ensure that the "Purchase" product type is enabled in your Business dashboard, and that you have set up everything correctly in the `Purchasetracker` section.
  * </Callout>
@@ -25,7 +27,7 @@ import type { PreparedInteraction } from "../types";
  *
  *
  * {@link PreparedInteraction} The prepared interaction object that can be sent
- * @category Interactions Encoder
+ * @group Interactions Encoder
  *
  * @see {@link sendInteraction} Action used to send the prepared interaction to the Frak Wallet.
  * @see {@link trackPurchaseStatus} Action that will automatically send the purchase upon completion
@@ -35,7 +37,8 @@ import type { PreparedInteraction } from "../types";
 export const PurchaseInteractionEncoder = {
     /**
      * Encode a start purchase interaction
-     * @param purchaseId The id of the purchase that is being started.
+     * @param options
+     * @param options.purchaseId - The id of the purchase that is being started.
      */
     startPurchase({ purchaseId }: { purchaseId: Hex }): PreparedInteraction {
         const interactionData = concatHex([
@@ -50,8 +53,9 @@ export const PurchaseInteractionEncoder = {
 
     /**
      * Encode a complete purchase interaction
-     * @param purchaseId The id of the purchase that is being completed.
-     * @param proof The merkle proof that the user has completed the purchase (see [Purchase Webhooks](/wallet-sdk/api-endpoints/webhook) for more details).
+     * @param options
+     * @param options.purchaseId - The id of the purchase that is being completed.
+     * @param options.proof - The merkle proof that the user has completed the purchase (see [Purchase Webhooks](/wallet-sdk/api-endpoints/webhook) for more details).
      */
     completedPurchase({
         purchaseId,

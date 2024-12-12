@@ -12,11 +12,21 @@ export type SendTransactionTxType = Readonly<{
 
 /**
  * Return type of the send transaction rpc request
+ * @inline
+ * @ignore
  */
 export type SendTransactionReturnType = Readonly<{
     hash: Hex;
 }>;
 
+/**
+ * The send transaction step for a Modal
+ *
+ * **Input**: Either a single tx or an array of tx to be sent
+ * **Output**: The hash of the tx(s) hash (in case of multiple tx, still returns a single hash because it's bundled on the wallet level)
+ *
+ * @group Modal Display
+ */
 export type SendTransactionModalStepType = GenericModalStepType<
     "sendTransaction",
     { tx: SendTransactionTxType | SendTransactionTxType[] },

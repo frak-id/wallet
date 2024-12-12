@@ -7,8 +7,11 @@ import type {
 
 /**
  * Function used to display a modal
- * @param client
- * @param args
+ * @param client - The current Frak Client
+ * @param args - The modal parameters
+ * @param args.steps - The different steps of the modal
+ * @param args.metadata - The metadata for the modal (customisation, language etc)
+ * @group Modal Display
  */
 export async function displayModal<
     T extends ModalStepTypes[] = ModalStepTypes[],

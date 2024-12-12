@@ -2,6 +2,7 @@ import type { FrakWalletSdkConfig } from "../types";
 
 /**
  * Base props for the iframe
+ * @ignore
  */
 export const baseIframeProps = {
     id: "nexus-wallet",
@@ -20,7 +21,7 @@ export const baseIframeProps = {
 
 /**
  * Create the given iframe
- * @param walletBaseUrl - Deprecated: Use `config.walletUrl` instead. Will be removed in future versions.
+ * @param walletBaseUrl - Use `config.walletUrl` instead. Will be removed in future versions.
  * @param config - The configuration object containing iframe options, including the replacement for `walletBaseUrl`.
  */
 export function createIframe({
@@ -50,7 +51,7 @@ export function createIframe({
 
     return new Promise((resolve) => {
         iframe?.addEventListener("load", () => resolve(iframe));
-        iframe.src = `${walletBaseUrl ?? config?.walletUrl ?? "https://wallet.frak.id"}/listener`;
+        iframe.src = `${config?.walletUrl ?? walletBaseUrl ?? "https://wallet.frak.id"}/listener`;
     });
 }
 /**

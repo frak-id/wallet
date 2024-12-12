@@ -7,6 +7,7 @@ export type PreparedInteraction = Readonly<{
 
 /**
  * Parameters of an interaction handling request
+ * @inline
  */
 export type SendInteractionParamsType = {
     productId?: Hex; // If null will be recomputed from domain

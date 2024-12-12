@@ -15,15 +15,20 @@ const config = {
     out: "./generated-docs",
     fileExtension: ".mdx",
     // Module is too fat, and members too verbose, should find a mix
+    // outputs: [{
+    //     kind: "markdown",
+    //     out: "./generated-docs",
+    // }],
     outputFileStrategy: "members",
     excludeScopesInPaths: true,
-    excludeInternal: true,
+    excludeExternals: true,
+    categorizeByGroup: true,
     // Stylisation
     // If set to true, should use @link in the comment to reference param types and stuff
     useCodeBlocks: false,
     expandObjects: true,
     expandParameters: true,
-    typeDeclarationVisibility: "compact",
+    typeDeclarationVisibility: "verbose",
 };
 
 export default config;
