@@ -3,7 +3,7 @@ import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
 import { Deferred } from "../utils";
 
 /**
- * Function used to watch the current nexus wallet status
+ * Function used to watch the current frak wallet status
  * @param client
  * @param callback
  */
