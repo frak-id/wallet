@@ -3,6 +3,7 @@ import { Deferred } from "../../utils/Deferred";
 import { BACKUP_KEY } from "../../utils/constants";
 import { changeIframeVisibility } from "../../utils/iframeHelper";
 
+/** @ignore */
 export type IframeLifecycleManager = {
     isConnected: Promise<boolean>;
     handleEvent: (messageEvent: IFrameLifecycleEvent) => Promise<void>;
@@ -10,6 +11,7 @@ export type IframeLifecycleManager = {
 
 /**
  * Create a new iframe lifecycle handler
+ * @ignore
  */
 export function createIFrameLifecycleManager({
     iframe,

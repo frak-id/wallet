@@ -1,10 +1,21 @@
 import { createIFrameFrakClient } from "../clients";
 import type { FrakClient, FrakWalletSdkConfig } from "../types";
-import { createIframe } from "./iframeHelper";
+import { createIframe } from "../utils";
 
 /**
- * Setup the Frak client and the iframe to use Frak Wallet SDK
- * @param config
+ * Directly setup the Frak client with an iframe
+ * Return when the FrakClient is ready (setup and communication estbalished with the wallet)
+ *
+ * @param config - The configuration to use for the Frak Wallet SDK
+ * @returns a Promise with the Frak Client
+ *
+ * @example
+ * const frakConfig: FrakWalletSdkConfig = {
+ *     metadata: {
+ *         name: "My app title",
+ *     },
+ * }
+ * const client = await setupClient({ config: frakConfig });
  */
 export async function setupClient({
     config,
@@ -27,7 +38,6 @@ export async function setupClient({
 
     // Wait for the connection to be established
     const waitForConnection = await client.waitForConnection;
-
     if (!waitForConnection) {
         console.error("Failed to connect to client");
         return;

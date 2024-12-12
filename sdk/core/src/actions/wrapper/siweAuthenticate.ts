@@ -39,8 +39,8 @@ export type SiweAuthenticateModalParams = {
  *
  * @description This function will display a modal to the user with the provided SIWE parameters and metadata.
  *
- * @exampleimport
- * { siweAuthenticate } from "@frak-labs/core-sdk/actions";
+ * @example
+ * import { siweAuthenticate } from "@frak-labs/core-sdk/actions";
  * import { parseSiweMessage } from "viem/siwe";
  *
  * const { signature, message } = await siweAuthenticate(frakConfig, {

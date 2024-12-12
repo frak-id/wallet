@@ -23,7 +23,7 @@ interface UseGetProductInformationParams {
  *
  * @group hooks
  *
- * @see {@link getProductInformation} for more info about the underlying action
+ * @see {@link @frak-labs/core-sdk!actions.getProductInformation | `getProductInformation()`} for more info about the underlying action
  * @see [Tanstack Query - Query](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery) for more info about the useQuery param and response
  */
 export function useGetProductInformation({

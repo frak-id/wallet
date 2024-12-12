@@ -27,7 +27,7 @@ interface UseDisplayModalParams<T extends ModalStepTypes[] = ModalStepTypes[]> {
  *
  * @group hooks
  *
- * @see {@link displayModal} for more info about the underlying action
+ * @see {@link @frak-labs/core-sdk!actions.displayModal | `displayModal()`} for more info about the underlying action
  * @see [Tanstack Query - Mutation](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation) for more info about the mutation options and response
  */
 export function useDisplayModal<T extends ModalStepTypes[] = ModalStepTypes[]>({

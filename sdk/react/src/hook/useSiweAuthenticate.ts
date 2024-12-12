@@ -28,7 +28,7 @@ interface UseSiweAuthenticateParams {
  *
  * @group hooks
  *
- * @see {@link siweAuthenticate} for more info about the underlying action
+ * @see {@link @frak-labs/core-sdk!actions.siweAuthenticate | `siweAuthenticate()`} for more info about the underlying action
  * @see [Tanstack Query - Mutation](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation) for more info about the mutation options and response
  */
 export function useSiweAuthenticate({

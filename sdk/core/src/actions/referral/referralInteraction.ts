@@ -16,8 +16,8 @@ import {
  * @param client - The current Frak Client
  * @param args
  * @param args.productId - The product id to interact with (if not specified will be recomputed from the current domain)
- * @param modalConfig - The modal configuration to display if the user is not logged in
- * @param options - Some options for the referral interaction
+ * @param args.modalConfig - The modal configuration to display if the user is not logged in
+ * @param args.options - Some options for the referral interaction
  *
  * @returns  A promise with the resulting referral state, or undefined in case of an error
  *

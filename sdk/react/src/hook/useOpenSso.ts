@@ -21,7 +21,7 @@ interface UseSendInteractionParams {
  *
  * @group hooks
  *
- * @see {@link openSso} for more info about the underlying action
+ * @see {@link @frak-labs/core-sdk!actions.openSso | `openSso()`} for more info about the underlying action
  * @see [Tanstack Query - Mutation](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation) for more info about the mutation options and response
  */
 export function useOpenSso({ mutations }: UseSendInteractionParams = {}) {

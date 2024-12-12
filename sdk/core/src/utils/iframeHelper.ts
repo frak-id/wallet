@@ -20,9 +20,10 @@ export const baseIframeProps = {
 };
 
 /**
- * Create the given iframe
- * @param walletBaseUrl - Use `config.walletUrl` instead. Will be removed in future versions.
- * @param config - The configuration object containing iframe options, including the replacement for `walletBaseUrl`.
+ * Create the Frak iframe
+ * @param args
+ * @param args.walletBaseUrl - Use `config.walletUrl` instead. Will be removed in future versions.
+ * @param args.config - The configuration object containing iframe options, including the replacement for `walletBaseUrl`.
  */
 export function createIframe({
     walletBaseUrl,
@@ -56,8 +57,7 @@ export function createIframe({
 }
 /**
  * Change the visibility of the given iframe
- * @param iframe
- * @param isVisible
+ * @ignore
  */
 export function changeIframeVisibility({
     iframe,

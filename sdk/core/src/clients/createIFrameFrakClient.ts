@@ -26,6 +26,19 @@ import {
 
 /**
  * Create a new iframe Frak client
+ * @param args
+ * @param args.config - The configuration to use for the Frak Wallet SDK
+ * @param args.iframe - The iframe to use for the communication
+ * @returns The created Frak Client
+ *
+ * @example
+ * const frakConfig: FrakWalletSdkConfig = {
+ *     metadata: {
+ *         name: "My app title",
+ *     },
+ * }
+ * const iframe = await createIframe({ config: frakConfig });
+ * const client = createIFrameFrakClient({ config: frakConfig, iframe });
  */
 export function createIFrameFrakClient({
     config,

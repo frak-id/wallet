@@ -17,7 +17,7 @@ import type { PreparedInteraction } from "../types";
  * @group Interactions Encoder
  *
  * @see {@link PreparedInteraction} The prepared interaction object that can be sent
- * @see {@link sendInteraction} Action used to send the prepared interaction to the Frak Wallet.
+ * @see {@link !actions.sendInteraction | `sendInteraction()`} Action used to send the prepared interaction to the Frak Wallet
  */
 export const WebShopInteractionEncoder = {
     /**

@@ -18,7 +18,7 @@ import type { PreparedInteraction } from "../types";
  * @group Interactions Encoder
  *
  * @see {@link PreparedInteraction} The prepared interaction object that can be sent
- * @see {@link sendInteraction} Action used to send the prepared interaction to the Frak Wallet.
+ * @see {@link !actions.sendInteraction | `sendInteraction()`} Action used to send the prepared interaction to the Frak Wallet
  */
 export const ReferralInteractionEncoder = {
     /**
@@ -37,8 +37,8 @@ export const ReferralInteractionEncoder = {
 
     /**
      * Encode a referred interaction
-     * @param options
-     * @param options.referrer - The Ethereum address of the user who made the referral
+     * @param args
+     * @param args.referrer - The Ethereum address of the user who made the referral
      */
     referred({ referrer }: { referrer: Address }): PreparedInteraction {
         const interactionData = concatHex([

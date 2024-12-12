@@ -1,3 +1,5 @@
+import { OptionDefaults } from "typedoc";
+
 /** @type {Partial<import("typedoc").TypeDocOptions>} */
 const config = {
     plugin: [
@@ -24,6 +26,13 @@ const config = {
     },
     out: "./generated-docs/",
     fileExtension: ".mdx",
+    // Add custom tags definition
+    blockTags: [
+        // All the previous typedoc supported tags
+        ...OptionDefaults.blockTags,
+        // Support the description tag, for frontmatter usage,
+        "@description",
+    ],
     // Module is too fat, and members too verbose, should find a mix
     outputFileStrategy: "members",
     excludeScopesInPaths: true,
@@ -39,6 +48,14 @@ const config = {
     typeDeclarationVisibility: "verbose",
     includeVersion: true,
     readme: "none",
+    // Some type mapping
+    externalSymbolLinkMappings: {
+        // todo: Doesn't work
+        viem: {
+            Address: "https://viem.sh/docs/glossary/types#address",
+            Hex: "https://viem.sh/docs/glossary/types#hex",
+        },
+    },
     // Frontmatter
     frontmatterCommentTags: ["description"],
 };
