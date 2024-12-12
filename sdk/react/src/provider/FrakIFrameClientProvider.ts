@@ -32,7 +32,6 @@ export type FrakIFrameClientProps = {
  * IFrame client provider for the Frak Wallet SDK
  *  - Automatically set the config provider
  * @param parameters
- * @constructor
  */
 export function FrakIFrameClientProvider({
     style,

@@ -1,5 +1,6 @@
 /**
  * Generic Frak RPC error
+ * @ignore
  */
 export class FrakRpcError<T = undefined> extends Error {
     constructor(
@@ -11,18 +12,21 @@ export class FrakRpcError<T = undefined> extends Error {
     }
 }
 
+/** @ignore */
 export class MethodNotFoundError extends FrakRpcError<{ method: string }> {
     constructor(message: string, method: string) {
         super(RpcErrorCodes.methodNotFound, message, { method });
     }
 }
 
+/** @ignore */
 export class InternalError extends FrakRpcError {
     constructor(message: string) {
         super(RpcErrorCodes.internalError, message);
     }
 }
 
+/** @ignore */
 export class ClientNotFound extends FrakRpcError {
     constructor() {
         super(RpcErrorCodes.clientNotConnected, "Client not found");
@@ -30,7 +34,7 @@ export class ClientNotFound extends FrakRpcError {
 }
 
 /**
- * All the rpc error codes
+ * The different Frak RPC error codes
  */
 export const RpcErrorCodes = {
     // Standard JSON-RPC 2.0 errors

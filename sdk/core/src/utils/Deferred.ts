@@ -1,3 +1,7 @@
+/**
+ * Simple deferred promise wrapper
+ * @ignore
+ */
 export class Deferred<T> {
     private readonly _promise: Promise<T>;
     private _resolve: ((value: T | PromiseLike<T>) => void) | undefined;

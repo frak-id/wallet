@@ -18,7 +18,6 @@ export type FrakConfigProviderProps = {
 /**
  * Simple config provider for the Frak Wallet SDK
  * @param parameters
- * @constructor
  */
 export function FrakConfigProvider(
     parameters: PropsWithChildren<FrakConfigProviderProps>

@@ -9,6 +9,7 @@ import type {
 /**
  * Decompress the given string
  * @param compressedData The params to encode
+ * @ignore
  */
 export async function decompressDataAndCheckHash<T>(
     compressedData: CompressedData
@@ -65,6 +66,7 @@ export async function decompressDataAndCheckHash<T>(
 /**
  * Decompress json data
  * @param data
+ * @ignore
  */
 export async function decompressJson<T>(data: string): Promise<T | null> {
     const decompressed = await decompressFromBase64(data);

@@ -55,3 +55,5 @@ packages/wallet/next-env.d.ts
 
 # Turbo tmp stuff
 .turbo
+
+generated-docs/
