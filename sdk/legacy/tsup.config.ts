@@ -18,5 +18,7 @@ export default defineConfig([
         clean: true,
         splitting: false,
         minify: true,
+        // Expose NexusSDK in global namespace window.NexusSDK
+        globalName: "NexusSDK",
     },
 ]);

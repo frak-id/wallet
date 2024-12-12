@@ -1,13 +1,6 @@
-import { loadScript } from "@module/utils/loadScript";
-
 export function moov360() {
     setConfig();
     replaceFrakLinks();
-
-    loadScript(
-        "frak-components",
-        "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/dist/bundle/components.js"
-    );
 }
 
 /**

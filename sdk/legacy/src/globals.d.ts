@@ -4,7 +4,7 @@ import type {
     FrakWalletSdkConfig,
     LoginModalStepType,
     ModalRpcMetadata,
-} from "../index.ts";
+} from "@core/index";
 
 declare global {
     interface Window {

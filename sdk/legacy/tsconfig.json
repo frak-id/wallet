@@ -51,7 +51,8 @@
     "declarationDir": "./dist",
 
     "paths": {
-      "@module/*": ["../../packages/shared/module/*"]
+      "@module/*": ["../../packages/shared/module/*"],
+      "@core/*": ["../core/src/*"]
     }
   },
   "tsc-alias": {
