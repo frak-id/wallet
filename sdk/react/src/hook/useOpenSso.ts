@@ -17,7 +17,10 @@ interface UseSendInteractionParams {
 }
 
 /**
- * Open the SSO
+ * Hook that return a mutation helping to open the SSO page
+ *
+ * @see {@link openSso} for more info about the underlying action
+ * @see [Tanstack Query - Mutation](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation) for more info about the mutation options and response
  */
 export function useOpenSso({ mutations }: UseSendInteractionParams = {}) {
     const client = useFrakClient();

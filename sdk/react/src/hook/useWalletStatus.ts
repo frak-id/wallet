@@ -8,7 +8,11 @@ import { useCallback } from "react";
 import { useFrakClient } from "./useFrakClient";
 
 /**
- * Hooks used to listen to the current wallet status
+ * Hook that return a query helping to get the current wallet status.
+ * The query result will be updated when the wallet status changes.
+ *
+ * @see {@link watchWalletStatus} for more info about the underlying action
+ * @see [Tanstack Query - Query](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery) for more info about the useQuery and response
  */
 export function useWalletStatus() {
     const queryClient = useQueryClient();

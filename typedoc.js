@@ -37,6 +37,8 @@ const config = {
     expandObjects: true,
     expandParameters: true,
     typeDeclarationVisibility: "verbose",
+    includeVersion: true,
+    readme: "none",
     // Frontmatter
     frontmatterCommentTags: ["description"],
 };

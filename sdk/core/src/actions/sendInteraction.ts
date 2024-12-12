@@ -7,10 +7,17 @@ import { computeProductId } from "../utils/computeProductId";
 
 /**
  * Function used to send an interaction
- * @param client
- * @param productId
- * @param interaction
- * @param validation
+ * @param client - The current Frak Client
+ * @param args
+ *
+ * @example
+ * const interaction = PressInteractionEncoder.openArticle({
+ *     articleId: keccak256(toHex("article-slug")),
+ * });
+ * const { delegationId } = await sendInteraction(frakConfig, {
+ *     interaction,
+ * });
+ * console.log("Delegated interaction id", delegationId);
  */
 export async function sendInteraction(
     client: FrakClient,

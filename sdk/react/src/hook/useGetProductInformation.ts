@@ -17,7 +17,10 @@ interface UseGetProductInformationParams {
 }
 
 /**
- * Open the SSO
+ * Hook that return a query helping to get the current product informations
+ *
+ * @see {@link getProductInformation} for more info about the underlying action
+ * @see [Tanstack Query - Query](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery) for more info about the useQuery param and response
  */
 export function useGetProductInformation({
     query,

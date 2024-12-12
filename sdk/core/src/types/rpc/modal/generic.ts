@@ -19,22 +19,22 @@ export type ModalStepMetadata = {
     metadata?: {
         /**
          * Custom title for the step
-         * @default Internationalised text
+         * If none provided, it will use an internationalised text
          */
         title?: string;
         /**
          * Custom description for the step
-         * @default Internationalised text
+         * If none provided, it will use an internationalised text
          */
         description?: string;
         /**
          * Custom text for the primary action of the step
-         * @default Internationalised text
+         * If none provided, it will use an internationalised text
          */
         primaryActionText?: string;
         /**
-         Custom text for the secondary action of the step
-         * @default Internationalised text
+         * Custom text for the secondary action of the step
+         * If none provided, it will use an internationalised text
          */
         secondaryActionText?: string;
     };

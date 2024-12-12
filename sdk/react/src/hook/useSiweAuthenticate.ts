@@ -24,7 +24,10 @@ interface UseSiweAuthenticateParams {
 }
 
 /**
- * Trigger a dashboard action to the wallet
+ * Hook that return a mutation helping to send perform a SIWE authentication
+ *
+ * @see {@link siweAuthenticate} for more info about the underlying action
+ * @see [Tanstack Query - Mutation](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation) for more info about the mutation options and response
  */
 export function useSiweAuthenticate({
     mutations,

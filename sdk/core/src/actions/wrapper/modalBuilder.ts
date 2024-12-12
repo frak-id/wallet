@@ -18,13 +18,25 @@ import { displayModal } from "../displayModal";
 export type ModalStepBuilder<
     Steps extends ModalStepTypes[] = ModalStepTypes[],
 > = {
+    /**
+     * The current modal params
+     */
     params: DisplayModalParamsType<Steps>;
+    /**
+     * Add a send transaction step to the modal
+     */
     sendTx: (
         options: SendTransactionModalStepType["params"]
     ) => ModalStepBuilder<[...Steps, SendTransactionModalStepType]>;
+    /**
+     * Add a final step of type reward to the modal
+     */
     reward: (
         options?: Omit<FinalModalStepType["params"], "action">
     ) => ModalStepBuilder<[...Steps, FinalModalStepType]>;
+    /**
+     * Add a final step of type sharing to the modal
+     */
     sharing: (
         sharingOptions?: Extract<
             FinalActionType,
@@ -32,6 +44,9 @@ export type ModalStepBuilder<
         >["options"],
         options?: Omit<FinalModalStepType["params"], "action">
     ) => ModalStepBuilder<[...Steps, FinalModalStepType]>;
+    /**
+     * Display the modal
+     */
     display: () => Promise<ModalRpcStepsResultType<Steps>>;
 };
 
@@ -43,11 +58,39 @@ export type ModalBuilder = ModalStepBuilder<
 >;
 
 /**
- * Simple modal builder params builder
- * @param client
- * @param metadata
- * @param login
- * @param openSession
+ * Helper to craft Frak modal, and share a base initial config
+ * @param client - The current Frak Client
+ * @param args
+ * @param args.metadata - Common modal metadata (customisation, language etc)
+ * @param args.login - Login step parameters
+ * @param args.openSession - Open session step parameters
+ *
+ * @description This function will create a modal builder with the provided metadata, login and open session parameters.
+ *
+ * @example
+ * Here is an example of how to use the `modalBuilder` to create and display a sharing modal:
+ *
+ * ```js
+ * // Create the modal builder
+ * const modalBuilder = window.FrakSDK.modalBuilder(frakClient, baseModalConfig);
+ *
+ * // Configure the information to be shared via the sharing link
+ * const sharingConfig = {
+ *   popupTitle: "Share this with your friends",
+ *   text: "Discover our product!",
+ *   link: window.location.href,
+ * };
+ *
+ * // Display the sharing modal
+ * function modalShare() {
+ *   modalBuilder.sharing(sharingConfig).display();
+ * }
+ * ```
+ *
+ * @see {@link ModalStepTypes} for more info about each modal step types and their parameters
+ * @see {@link ModalRpcMetadata} for more info about the metadata that can be passed to the modal
+ * @see {@link ModalRpcStepsResultType} for more info about the result of each modal steps
+ * @see {@link displayModal} for more info about how the modal is displayed
  */
 export function modalBuilder(
     client: FrakClient,
@@ -77,9 +120,7 @@ export function modalBuilder(
 }
 
 /**
- * Build builder helping to add steps to the modal
- * @param client
- * @param params
+ * Modal step builder, allowing to add new steps to the modal, and to build and display it
  */
 function modalStepsBuilder<CurrentSteps extends ModalStepTypes[]>(
     client: FrakClient,

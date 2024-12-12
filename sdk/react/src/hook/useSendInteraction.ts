@@ -22,7 +22,10 @@ interface UseSendInteractionParams {
 }
 
 /**
- * Send a user interaction
+ * Hook that return a mutation helping to send a user interaction
+ *
+ * @see {@link sendInteraction} for more info about the underlying action
+ * @see [Tanstack Query - Mutation](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation) for more info about the mutation options and response
  */
 export function useSendInteraction({
     mutations,
