@@ -31,10 +31,12 @@
   "sideEffects": false,
   "private": false,
   "type": "module",
-  "main": "dist/bundle/components.js",
   "files": [
-    "/dist"
+    "/dist",
+    "/cdn"
   ],
+  "main": "./cdn/components.js",
+  "browser": "./cdn/components.js",
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",

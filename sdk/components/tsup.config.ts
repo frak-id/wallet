@@ -5,7 +5,7 @@ export default defineConfig([
         target: "es2022",
         // All of our entry-points
         entry: ["src/components.ts"],
-        outDir: "dist/bundle",
+        outDir: "cdn",
         outExtension() {
             return {
                 js: ".js",

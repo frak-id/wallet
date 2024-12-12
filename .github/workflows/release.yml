@@ -38,5 +38,5 @@ jobs:
         with:
           url: |
             https://cdn.jsdelivr.net/npm/@frak-labs/nexus-sdk@latest/dist/bundle/bundle.js
-            https://cdn.jsdelivr.net/npm/@frak-labs/core-sdk@latest/dist/bundle/bundle.js
-            https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/dist/bundle/components.js
+            https://cdn.jsdelivr.net/npm/@frak-labs/core-sdk@latest/cdn/bundle.js
+            https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js

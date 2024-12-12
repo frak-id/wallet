@@ -25,8 +25,8 @@ export default defineConfig([
     {
         target: "es2022",
         // All of our entry-points
-        entry: ["src/bundle/bundle.ts"],
-        outDir: "dist/bundle",
+        entry: ["src/bundle.ts"],
+        outDir: "cdn",
         outExtension() {
             return {
                 js: ".js",

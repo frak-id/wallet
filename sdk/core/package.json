@@ -30,8 +30,10 @@
   "private": false,
   "type": "module",
   "files": [
-    "/dist"
+    "/dist",
+    "/cdn"
   ],
+  "browser": "./cdn/bundle.js",
   "exports": {
     ".": {
       "import": {

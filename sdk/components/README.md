@@ -15,7 +15,7 @@ To have more info about how does it works under the hood, you can check [this](h
 Add the following script tag to your HTML file:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/dist/bundle/components.js" defer="defer"></script>
+<script src="https://cdn.jsdelivr.net/npm/@frak-labs/components" defer="defer"></script>
 ```
 
 ## Quick start

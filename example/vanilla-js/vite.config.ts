@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
 const projectRootDir = resolve(__dirname);
-const bundleDir = resolve(projectRootDir, "../../sdk/components/dist/bundle");
+const bundleDir = resolve(projectRootDir, "../../sdk/components/cdn");
 
 export default defineConfig({
     server: {

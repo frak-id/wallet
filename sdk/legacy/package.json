@@ -32,7 +32,8 @@
   "files": [
     "/dist"
   ],
-  "main": "dist/bundle/bundle.js",
+  "main": "./dist/bundle/bundle.js",
+  "browser": "./dist/bundle/bundle.js",
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",

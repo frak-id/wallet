@@ -28,6 +28,7 @@ cdk.context.json
 # production
 build
 dist
+cdn
 
 # misc
 .DS_Store
