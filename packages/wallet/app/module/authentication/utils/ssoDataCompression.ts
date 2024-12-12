@@ -1,5 +1,5 @@
 import type { AppSpecificSsoMetadata } from "@/module/authentication/atoms/sso";
-import type { OpenSsoParamsType } from "@frak-labs/nexus-sdk/core";
+import type { OpenSsoParamsType } from "@frak-labs/core-sdk";
 import type { Hex } from "viem";
 
 /**

@@ -1,11 +1,8 @@
 import { ButtonAction } from "@/module/listener/component/ButtonAction";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
-import {
-    type FinalActionType,
-    FrakContextManager,
-} from "@frak-labs/nexus-sdk/core";
-import { ReferralInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
+import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
+import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { jotaiStore } from "@module/atoms/store";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@module/utils/prefixModalCss";

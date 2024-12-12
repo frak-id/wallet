@@ -29,7 +29,7 @@
     "@bogeychan/elysia-logger": "^0.1.4",
     "@elysiajs/cors": "^1.1.1",
     "@frak-labs/app-essentials": "workspace:*",
-    "@frak-labs/nexus-sdk": "workspace:*",
+    "@frak-labs/core-sdk": "workspace:*",
     "@simplewebauthn/server": "^11.0.0",
     "@sinclair/typebox": "0.32.34",
     "@tusbar/cache-control": "^1.0.2",

@@ -1,5 +1,5 @@
-import { interactionTypes } from "@frak-labs/nexus-sdk/core";
-import type { FullInteractionTypesKey } from "@frak-labs/nexus-sdk/core";
+import { interactionTypes } from "@frak-labs/core-sdk";
+import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { LRUCache } from "lru-cache";
 import { sift } from "radash";
 import {

@@ -1,5 +1,5 @@
 import type { Goal } from "@/types/Campaign";
-import type { InteractionTypesKey } from "@frak-labs/nexus-sdk/core";
+import type { InteractionTypesKey } from "@frak-labs/core-sdk";
 
 /**
  * The keys for each interaction types
@@ -30,10 +30,6 @@ export const interactionTypesInfo: Record<
     },
     completed: {
         name: "Purchase completed",
-        relatedGoal: "sales",
-    },
-    unsafeCompleted: {
-        name: "Purchase completed (unsafe)",
         relatedGoal: "sales",
     },
     proofVerifiableStorageUpdate: {

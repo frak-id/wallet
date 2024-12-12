@@ -1,6 +1,6 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { listenerProductIdAtom } from "@/module/listener/atoms/listenerContext";
-import type { FullInteractionTypesKey } from "@frak-labs/nexus-sdk/core";
+import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { Hex } from "viem";

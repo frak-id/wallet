@@ -5,8 +5,8 @@ import {
     productRegistryAbi,
     stringToBytes32,
 } from "@frak-labs/app-essentials";
-import type { ProductTypesKey } from "@frak-labs/nexus-sdk/core";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import type { ProductTypesKey } from "@frak-labs/core-sdk";
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
 import { type Hex, encodeFunctionData } from "viem";
 

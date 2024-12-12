@@ -1,7 +1,7 @@
 import {
     NexusConfigProvider,
     NexusIFrameClientProvider,
-} from "@frak-labs/nexus-sdk/react";
+} from "@frak-labs/react-sdk";
 import type { PropsWithChildren } from "react";
 
 export function FrakProvider({ children }: PropsWithChildren) {

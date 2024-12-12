@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@frak-labs/nexus-sdk": "workspace:*",
+    "@frak-labs/core-sdk": "workspace:*",
+    "@frak-labs/react-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
     "@lottiefiles/react-lottie-player": "^3.5.4",
     "@react-router/node": "^7.0.2",

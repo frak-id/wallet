@@ -8,7 +8,7 @@ import {
     type RpcResponse,
     decompressDataAndCheckHash,
     hashAndCompressData,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { type Hex, keccak256, toHex } from "viem";
 

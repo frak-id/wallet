@@ -11,7 +11,7 @@ import {
     type CompressedData,
     decompressDataAndCheckHash,
     hashAndCompressData,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { atom } from "jotai";
 import { tryit } from "radash";

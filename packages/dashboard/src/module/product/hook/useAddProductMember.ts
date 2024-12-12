@@ -5,7 +5,7 @@ import {
     productAdministratorRegistryAbi,
     productRoles,
 } from "@frak-labs/app-essentials";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 

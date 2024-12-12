@@ -8,7 +8,7 @@ import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
     RpcErrorCodes,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { useCallback } from "react";
 
 type OnOpenSso = IFrameRequestResolver<

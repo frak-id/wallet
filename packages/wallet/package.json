@@ -22,7 +22,8 @@
   "dependencies": {
     "@elysiajs/eden": "^1.1.3",
     "@frak-labs/app-essentials": "workspace:*",
-    "@frak-labs/nexus-sdk": "workspace:*",
+    "@frak-labs/core-sdk": "workspace:*",
+    "@frak-labs/react-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
     "@peculiar/asn1-ecc": "2.3.14",
     "@peculiar/asn1-schema": "^2.3.13",

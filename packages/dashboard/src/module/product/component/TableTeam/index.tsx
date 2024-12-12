@@ -9,7 +9,7 @@ import {
 } from "@/module/product/component/TableTeam/Modal";
 import { useGetProductAdministrators } from "@/module/product/hook/useGetProductAdministrators";
 import { permissionLabels } from "@/module/product/utils/permissions";
-import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button } from "@module/component/Button";
 import { WalletAddress } from "@module/component/HashDisplay";
 import { Skeleton } from "@module/component/Skeleton";

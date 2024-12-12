@@ -1,6 +1,6 @@
 "use client";
 import { setSession } from "@/context/auth/actions/session";
-import { useSiweAuthenticate } from "@frak-labs/nexus-sdk/react";
+import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { ClientOnly } from "@module/component/ClientOnly";
 import { Spinner } from "@module/component/Spinner";
 import { useMediaQuery } from "@module/hook/useMediaQuery";

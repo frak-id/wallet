@@ -1,7 +1,7 @@
 import { Panel } from "@/module/common/component/Panel";
-import type { SendInteractionReturnType } from "@frak-labs/nexus-sdk/core";
-import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
-import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
+import type { SendInteractionReturnType } from "@frak-labs/core-sdk";
+import { PressInteractionEncoder } from "@frak-labs/core-sdk/interactions";
+import { useSendInteraction } from "@frak-labs/react-sdk";
 import { Button } from "@module/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { generatePrivateKey } from "viem/accounts";

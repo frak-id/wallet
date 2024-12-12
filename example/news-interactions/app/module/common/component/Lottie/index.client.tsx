@@ -1,4 +1,4 @@
-import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Player } from "@lottiefiles/react-lottie-player";
 import { useState } from "react";
 import { Link } from "react-router";

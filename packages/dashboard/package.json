@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",
-    "@frak-labs/nexus-sdk": "workspace:*",
+    "@frak-labs/core-sdk": "workspace:*",
+    "@frak-labs/react-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
     "@lucasmogari/react-pagination": "^1.2.0",
     "@radix-ui/react-collapsible": "^1.1.1",
