@@ -34,8 +34,8 @@ function setConfig() {
         },
     };
     window.FrakSetup.modalShareConfig = {
-        popupTitle: "Pr\xEAt(e) \xE0 r\xE9v\xE9ler un secret bien-\xEAtre ?",
-        text: "D\xE9couvre ce produit chez Gapianne",
+        popupTitle: "Prêt(e) à révéler un secret bien-être ?",
+        text: "Découvre ce produit chez Gapianne",
         link: window.location.href,
     };
 }

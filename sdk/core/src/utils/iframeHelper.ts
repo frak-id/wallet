@@ -1,5 +1,4 @@
 import type { FrakWalletSdkConfig } from "../types";
-import { disableButtonShare } from "./buttonShare";
 
 /**
  * Base props for the iframe
@@ -30,9 +29,6 @@ export function createIframe({
 }: { walletBaseUrl?: string; config?: FrakWalletSdkConfig }): Promise<
     HTMLIFrameElement | undefined
 > {
-    // Hide the share button by default until the iframe is loaded and connected
-    disableButtonShare(config);
-
     // Check if the iframe is already created
     const alreadyCreatedIFrame = document.querySelector("#nexus-wallet");
 
