@@ -30,8 +30,8 @@ import type { PreparedInteraction } from "../types";
  * @see {@link !actions.sendInteraction | `sendInteraction()`} Action used to send the prepared interaction to the Frak Wallet
  * @see {@link PreparedInteraction} The prepared interaction object that can be sent
  * @see {@link !actions.trackPurchaseStatus | `trackPurchaseStatus()`} Action that will automatically send the purchase upon completion
- * @see [Purchase Webhooks](/wallet-sdk/api-endpoints/webhook) Webhooks to be implemented on your side to confirm a purchase
- * @see [Purchase Proof](/wallet-sdk/api-endpoints/purchaseProof) Get a merklee proof for the purchase
+ * @see [Purchase Webhooks](/wallet-sdk/references-api/webhook) Webhooks to be implemented on your side to confirm a purchase
+ * @see [Purchase Proof](/wallet-sdk/references-api/purchaseProof) Get a merklee proof for the purchase
  */
 export const PurchaseInteractionEncoder = {
     /**
@@ -54,7 +54,7 @@ export const PurchaseInteractionEncoder = {
      * Encode a complete purchase interaction
      * @param args
      * @param args.purchaseId - The id of the purchase that is being completed.
-     * @param args.proof - The merkle proof that the user has completed the purchase (see [Purchase Webhooks](/wallet-sdk/api-endpoints/webhook) for more details).
+     * @param args.proof - The merkle proof that the user has completed the purchase (see [Purchase Webhooks](/wallet-sdk/references-api/webhook) for more details).
      */
     completedPurchase({
         purchaseId,
