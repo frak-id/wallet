@@ -7,7 +7,7 @@ import { getModalBuilderSteps, onClientReady } from "../utils";
  */
 type ButtonShareProps = {
     /** Text to display on the button */
-    text: string;
+    text?: string;
     /** Classname to apply to the button */
     classname?: string;
 };
