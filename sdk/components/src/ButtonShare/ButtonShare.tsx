@@ -1,11 +1,23 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { getModalBuilderSteps, onClientReady } from "../utils";
 
+/**
+ * The props type for {@link ButtonShare}.
+ * @inline
+ */
 type ButtonShareProps = {
-    text: string;
+    /** Text to display on the button */
+    text?: string;
+    /** Classname to apply to the button */
     classname?: string;
 };
 
+/**
+ * Open the share modal
+ *
+ * @description
+ * This function will open the share modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
+ */
 function modalShare() {
     const modalBuilderSteps = getModalBuilderSteps();
 
@@ -19,6 +31,36 @@ function modalShare() {
         .display();
 }
 
+/**
+ * Button to share the current page
+ *
+ * @param args
+ * @param args.text - Text to display on the button
+ * @param args.classname - Classname to apply to the button
+ * @returns The share button with `<button>` tag
+ *
+ * @group components
+ *
+ * @example
+ * Basic usage:
+ * ```html
+ * <frak-button-share></frak-button-share>
+ * ```
+ *
+ * @example
+ * Using a custom text:
+ * ```html
+ * <frak-button-share text="Share and earn!"></frak-button-share>
+ * ```
+ *
+ * @example
+ * Using a custom class:
+ * ```html
+ * <frak-button-share classname="button button-primary"></frak-button-share>
+ * ```
+ *
+ * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the underlying action
+ */
 export function ButtonShare({
     text = "Share and earn!",
     classname = "",

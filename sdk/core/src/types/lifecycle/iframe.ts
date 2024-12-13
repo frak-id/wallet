@@ -1,5 +1,6 @@
 /**
  * Event related to the iframe lifecycle
+ * @ignore
  */
 export type IFrameLifecycleEvent =
     | {

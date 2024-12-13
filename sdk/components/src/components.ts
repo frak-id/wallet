@@ -1,4 +1,4 @@
-import { setupClient } from "@core/utils";
+import { setupClient } from "@core/clients";
 import { onDocumentReady } from "@module/utils/onDocumentReady";
 import {
     dispatchClientReadyEvent,

@@ -12,6 +12,7 @@ type IFrameChannelId = string;
 
 /**
  * Represent an IFrame channel manager
+ * @ignore
  */
 export type IFrameChannelManager = {
     /**
@@ -34,6 +35,7 @@ export type IFrameChannelManager = {
 
 /**
  * Create a new IFrame channel manager
+ * @ignore
  */
 export function createIFrameChannelManager(): IFrameChannelManager {
     const channels: Map<IFrameChannelId, IFrameChannelResolver> = new Map();

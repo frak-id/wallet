@@ -16,10 +16,19 @@ import { useFrakContext } from "../utils/useFrakContext";
 
 /**
  * Helper hook to automatically submit a referral interaction when detected
- *   -> And automatically set the referral context in the url
- * @param productId
- * @param modalConfig
- * @param options
+ *
+ * @group hooks
+ *
+ * @param args
+ * @param args.productId - The product id to interact with (if not specified will be recomputed from the current domain)
+ * @param args.modalConfig - The modal configuration to display if the user is not logged in
+ * @param args.options - Some options for the referral interaction
+ *
+ * @returns  The resulting referral state, or a potential error
+ *
+ * @description This function will automatically handle the referral interaction process
+ *
+ * @see {@link @frak-labs/core-sdk!actions.processReferral | `processReferral()`} for more details on the automatic referral handling process
  */
 export function useReferralInteraction({
     productId,

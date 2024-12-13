@@ -1,7 +1,12 @@
 import type { GenericModalStepType, ModalStepMetadata } from "./generic";
 
 /**
- * The final modal step type (displayed on success or dimissed)
+ * The final modal step type, could be used to display sharing options or a success reward screen.
+ *
+ * **Input**: What type final step to display?
+ * **Output**: None
+ *
+ * @group Modal Display
  */
 export type FinalModalStepType = GenericModalStepType<
     "final",
@@ -16,6 +21,10 @@ export type FinalModalStepType = GenericModalStepType<
     object
 >;
 
+/**
+ * The different types of final actions we can display in the final step
+ * @group Modal Display
+ */
 export type FinalActionType =
     | {
           key: "sharing";

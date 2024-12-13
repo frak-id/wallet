@@ -16,6 +16,7 @@ import type {
 /**
  * Compress the given params, and add hash protection to (rapidly) prevent interception modification
  * @param data The params to encode
+ * @ignore
  */
 export async function hashAndCompressData<T>(data: T): Promise<CompressedData> {
     // Create a hash of the main params
@@ -40,6 +41,7 @@ export async function hashAndCompressData<T>(data: T): Promise<CompressedData> {
 /**
  * Compress json data
  * @param data
+ * @ignore
  */
 export async function compressJson(data: unknown): Promise<string> {
     return compressToBase64(JSON.stringify(data));

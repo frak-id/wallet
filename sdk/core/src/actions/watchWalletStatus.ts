@@ -3,9 +3,22 @@ import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
 import { Deferred } from "../utils";
 
 /**
- * Function used to watch the current nexus wallet status
- * @param client
- * @param callback
+ * Function used to watch the current frak wallet status
+ * @param client - The current Frak Client
+ * @param callback - The callback that will receive any wallet status change
+ * @returns A rpomise resolving with the initial wallet status
+ *
+ * @description This function will return the current wallet status, and will listen to any change in the wallet status.
+ *
+ * @example
+ * await watchWalletStatus(frakConfig, (status: WalletStatusReturnType) => {
+ *     if (status.key === "connected") {
+ *         console.log("Wallet connected:", status.wallet);
+ *         console.log("Current interaction session:", status.interactionSession);
+ *     } else {
+ *         console.log("Wallet not connected");
+ *     }
+ * });
  */
 export function watchWalletStatus(
     client: FrakClient,

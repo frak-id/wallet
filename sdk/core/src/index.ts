@@ -1,5 +1,5 @@
 // Clients
-export { createIFrameFrakClient } from "./clients";
+export { createIFrameFrakClient, setupClient } from "./clients";
 
 // Utils
 export {
@@ -11,7 +11,6 @@ export {
     FrakContextManager,
     Deferred,
     baseIframeProps,
-    setupClient,
 } from "./utils";
 
 // Constants

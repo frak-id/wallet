@@ -3,6 +3,7 @@ import { type PropsWithChildren, createContext, createElement } from "react";
 
 /**
  * The context that will keep the Frak Wallet SDK configuration
+ * @ignore
  */
 export const FrakConfigContext = createContext<FrakWalletSdkConfig | undefined>(
     undefined
@@ -10,15 +11,25 @@ export const FrakConfigContext = createContext<FrakWalletSdkConfig | undefined>(
 
 /**
  * Props to instantiate the Frak Wallet SDK configuration provider
+ *
+ * @group provider
  */
 export type FrakConfigProviderProps = {
+    /**
+     * The wanted Frak configuration
+     * @see {@link @frak-labs/core-sdk!index.FrakWalletSdkConfig | FrakWalletSdkConfig}
+     */
     config: FrakWalletSdkConfig;
 };
 
 /**
  * Simple config provider for the Frak Wallet SDK
+ *
+ * Should be wrapped within a {@link @tanstack/react-query!QueryClientProvider | `QueryClientProvider`}
+ *
+ * @group provider
+ *
  * @param parameters
- * @constructor
  */
 export function FrakConfigProvider(
     parameters: PropsWithChildren<FrakConfigProviderProps>

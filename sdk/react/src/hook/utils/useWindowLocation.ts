@@ -3,6 +3,7 @@ import { useMounted } from "./useMounted";
 
 /**
  * Returns the current window location and href
+ * @ignore
  */
 export function useWindowLocation(): {
     location: Location | undefined;

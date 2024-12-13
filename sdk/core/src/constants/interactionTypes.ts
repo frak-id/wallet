@@ -1,5 +1,6 @@
 /**
  * The final keys for each interaction types (e.g. `openArticle`) -> interaction type
+ * @inline
  */
 export type InteractionTypesKey = {
     [K in keyof typeof interactionTypes]: keyof (typeof interactionTypes)[K];
@@ -7,6 +8,7 @@ export type InteractionTypesKey = {
 
 /**
  * The keys for each interaction types (e.g. `press.openArticle`) -> category_type.interaction_type
+ * @inline
  */
 export type FullInteractionTypesKey = {
     [Category in keyof typeof interactionTypes]: `${Category & string}.${keyof (typeof interactionTypes)[Category] & string}`;

@@ -1,9 +1,11 @@
 import type { Address } from "viem";
 
 /**
- * The type of the nexus context
+ * The current Frak Context
+ *
+ * For now, only contain a referrer address.
  */
-export type FrakContext = Readonly<{
+export type FrakContext = {
     // Referrer address
     r: Address;
-}>;
+};

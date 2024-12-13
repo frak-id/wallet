@@ -5,6 +5,7 @@ import type { IFrameRpcSchema } from "./rpc";
 
 /**
  * Type that extract the possible parameters from a RPC Schema
+ * @ignore
  */
 export type ExtractedParametersFromRpc<TRpcSchema extends RpcSchema> = {
     [K in keyof TRpcSchema]: Prettify<
@@ -22,6 +23,7 @@ export type ExtractedParametersFromRpc<TRpcSchema extends RpcSchema> = {
 
 /**
  * Type that extract the possible return type from a RPC Schema
+ * @ignore
  */
 export type ExtractedReturnTypeFromRpc<
     TRpcSchema extends RpcSchema,
@@ -31,6 +33,7 @@ export type ExtractedReturnTypeFromRpc<
 
 /**
  * Type that extract the possible return type from a RPC Schema
+ * @ignore
  */
 export type ExtractedMethodFromRpc<
     TRpcSchema extends RpcSchema,
@@ -40,6 +43,7 @@ export type ExtractedMethodFromRpc<
 
 /**
  * Raw response that we will receive after an rpc request
+ * @ignore
  */
 export type RpcResponse<
     TRpcSchema extends RpcSchema,
@@ -63,6 +67,7 @@ export type RpcResponse<
 
 /**
  * Type used for a one shot request function
+ * @inline
  */
 export type RequestFn<TRpcSchema extends RpcSchema> = <
     TParameters extends
@@ -73,7 +78,8 @@ export type RequestFn<TRpcSchema extends RpcSchema> = <
 ) => Promise<_ReturnType>;
 
 /**
- * Type used for a one shot request function
+ * Type used for a listening request
+ * @inline
  */
 export type ListenerRequestFn<TRpcSchema extends RpcSchema> = <
     TParameters extends

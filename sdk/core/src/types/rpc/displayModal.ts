@@ -8,6 +8,7 @@ import type {
 
 /**
  * Generic type of steps we will display in the modal to the end user
+ * @group Modal Display
  */
 export type ModalStepTypes =
     | LoginModalStepType
@@ -18,6 +19,10 @@ export type ModalStepTypes =
 
 /**
  * Type for the result of a modal request
+ * Just the `returns` type of each `ModalStepTypes`
+ * @typeParam T - The list of modal steps we expect to have in the modal
+ * @group Modal Display
+ * @group RPC Schema
  */
 export type ModalRpcStepsResultType<
     T extends ModalStepTypes[] = ModalStepTypes[],
@@ -27,6 +32,10 @@ export type ModalRpcStepsResultType<
 
 /**
  * Type for the RPC input of a modal
+ * Just the `params` type of each `ModalStepTypes`
+ * @typeParam T - The list of modal steps we expect to have in the modal
+ * @group Modal Display
+ * @group RPC Schema
  */
 export type ModalRpcStepsInput<T extends ModalStepTypes[] = ModalStepTypes[]> =
     {
@@ -34,30 +43,32 @@ export type ModalRpcStepsInput<T extends ModalStepTypes[] = ModalStepTypes[]> =
     };
 
 /**
- * RPC metadata for the modal
+ * RPC metadata for the modal, used on top level modal configuration
+ * @group Modal Display
+ * @group RPC Schema
  */
-export type ModalRpcMetadata = Readonly<
-    {
-        header?: {
-            title?: string;
-            icon?: string;
-        };
-        context?: string;
-        lang?: "en" | "fr";
-    } & (
-        | {
-              isDismissible: true;
-              dismissActionTxt?: string;
-          }
-        | {
-              isDismissible?: false;
-              dismissActionTxt?: never;
-          }
-    )
->;
+export type ModalRpcMetadata = {
+    header?: {
+        title?: string;
+        icon?: string;
+    };
+    context?: string;
+    lang?: "en" | "fr";
+} & (
+    | {
+          isDismissible: true;
+          dismissActionTxt?: string;
+      }
+    | {
+          isDismissible?: false;
+          dismissActionTxt?: never;
+      }
+);
 
 /**
- * Generic params used to display modals
+ * Params used to display a modal
+ * @typeParam T - The list of modal steps we expect to have in the modal
+ * @group Modal Display
  */
 export type DisplayModalParamsType<T extends ModalStepTypes[]> = {
     steps: ModalRpcStepsInput<T>;

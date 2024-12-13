@@ -28,7 +28,8 @@ function base64url_decode(value: string): Uint8Array {
 
 /**
  * Compress the current Frak context
- * @param context
+ * @param context - The context to be compressed
+ * @returns A compressed string containing the Frak context
  */
 function compress(context?: Partial<FrakContext>): string | undefined {
     if (!context?.r) return;
@@ -43,7 +44,8 @@ function compress(context?: Partial<FrakContext>): string | undefined {
 
 /**
  * Decompress the given Frak context
- * @param context
+ * @param context - The raw context to be decompressed into a `FrakContext`
+ * @returns The decompressed Frak context, or undefined if it fails
  */
 function decompress(context?: string): FrakContext | undefined {
     if (!context || context.length === 0) return;
@@ -57,8 +59,10 @@ function decompress(context?: string): FrakContext | undefined {
 }
 
 /**
- * Parse the current Frak context in the given url
- * @param url
+ * Parse the current URL into a Frak Context
+ * @param args
+ * @param args.url - The url to parse
+ * @returns The parsed Frak context
  */
 function parse({ url }: { url: string }) {
     if (!url) return null;
@@ -74,6 +78,10 @@ function parse({ url }: { url: string }) {
 
 /**
  * Populate the current url with the given Frak context
+ * @param args
+ * @param args.url - The url to update
+ * @param args.context - The context to update
+ * @returns The new url with the Frak context
  */
 function update({
     url,
@@ -103,7 +111,9 @@ function update({
 }
 
 /**
- * Remove Nexus context from current url
+ * Remove Frak context from current url
+ * @param url - The url to update
+ * @returns The new url without the Frak context
  */
 function remove(url: string) {
     const urlObj = new URL(url);
@@ -112,9 +122,10 @@ function remove(url: string) {
 }
 
 /**
- * Replace the current url with the given Nexus context
- * @param url
- * @param context
+ * Replace the current url with the given Frak context
+ * @param args
+ * @param args.url - The url to update
+ * @param args.context - The context to update
  */
 function replaceUrl({
     url: baseUrl,

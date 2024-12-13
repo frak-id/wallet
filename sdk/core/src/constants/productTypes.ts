@@ -1,5 +1,6 @@
 /**
  * The keys for each product types
+ * @inline
  */
 export type ProductTypesKey = keyof typeof productTypes;
 

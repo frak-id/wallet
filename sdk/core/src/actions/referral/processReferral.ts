@@ -12,6 +12,10 @@ import {
 import { FrakContextManager } from "../../utils";
 import { displayModal, sendInteraction } from "../index";
 
+/**
+ * The different states of the referral process
+ * @inline
+ */
 type ReferralState =
     | "idle"
     | "processing"
@@ -22,20 +26,44 @@ type ReferralState =
     | "no-referrer"
     | "self-referral";
 
+/**
+ * Options for the referral auto-interaction process
+ */
 export type ProcessReferralOptions = {
-    // If we want to always append the url with the frk context or not
+    /**
+     * If we want to always append the url with the frak context or not
+     * @defaultValue false
+     */
     alwaysAppendUrl?: boolean;
 };
 
 /**
- * Automatically submit a referral interaction when detected
- *   -> And automatically set the referral context in the url
- * @param client
- * @param walletStatus
- * @param frakContext
- * @param modalConfig
- * @param productId
- * @param options
+ * This function handle all the heavy lifting of the referral interaction process
+ *  1. Check if the user has been referred or not (if not, early exit)
+ *  2. Then check if the user is logged in or not
+ *  2.1 If not logged in, try a soft login, if it fail, display a modal for the user to login
+ *  3. Check if that's not a self-referral (if yes, early exit)
+ *  4. Check if the user has an interaction session or not
+ *  4.1 If not, display a modal for the user to open a session
+ *  5. Push the referred interaction
+ *  6. Update the current url with the right data
+ *  7. Return the resulting referral state
+ *
+ *  If any error occurs during the process, the function will catch it and return an error state
+ *
+ * @param client - The current Frak Client
+ * @param args
+ * @param args.walletStatus - The current user wallet status
+ * @param args.frakContext - The current frak context
+ * @param args.modalConfig - The modal configuration to display if the user is not logged in
+ * @param args.productId - The product id to interact with (if not specified will be recomputed from the current domain)
+ * @param args.options - Some options for the referral interaction
+ * @returns  A promise with the resulting referral state
+ *
+ * @see {@link displayModal} for more details about the displayed modal
+ * @see {@link sendInteraction} for more details on the interaction submission part
+ * @see {@link ReferralInteractionEncoder} for more details about the referred interaction
+ * @see {@link ModalStepTypes} for more details on each modal steps types
  */
 export async function processReferral(
     client: FrakClient,
@@ -111,7 +139,7 @@ export async function processReferral(
  * @param walletStatus
  * @param frakContext
  */
-export async function processReferralLogic({
+async function processReferralLogic({
     initialWalletStatus,
     getFreshWalletStatus,
     pushReferralInteraction,

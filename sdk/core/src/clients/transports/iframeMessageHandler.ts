@@ -6,6 +6,7 @@ import type { IframeLifecycleManager } from "./iframeLifecycleManager";
 
 /**
  * Config needed for the creation of an iframe message handler
+ * @ignore
  */
 export type IFrameMessageHandlerParam = {
     /**
@@ -30,6 +31,7 @@ export type IFrameMessageHandlerParam = {
 
 /**
  * Represent the output of an iframe message handler
+ * @ignore
  */
 export type IFrameMessageHandler = {
     /**
@@ -44,10 +46,7 @@ export type IFrameMessageHandler = {
 
 /**
  * Create an iframe message handler
- * @param frakWalletUrl
- * @param metadata
- * @param iframe
- * @param channelManager
+ * @ignore
  */
 export function createIFrameMessageHandler({
     frakWalletUrl,

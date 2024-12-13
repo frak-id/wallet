@@ -2,7 +2,9 @@ import { useContext } from "react";
 import { FrakIFrameClientContext } from "../provider";
 
 /**
- * Use the current frak iframe client
+ * Get the current Frak client
+ *
+ * @group hooks
  */
 export function useFrakClient() {
     return useContext(FrakIFrameClientContext);

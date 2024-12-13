@@ -4,6 +4,7 @@ import { useWindowLocation } from "./useWindowLocation";
 
 /**
  * Extract the current frak context from the url
+ * @ignore
  */
 export function useFrakContext() {
     // Get the current window location
