@@ -56,7 +56,7 @@ function modalShare() {
  * @example
  * Using a custom class:
  * ```html
- * <frak-button-share classname="my-custom-class my-custom-class2"></frak-button-share>
+ * <frak-button-share classname="button button-primary"></frak-button-share>
  * ```
  *
  * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the underlying action
