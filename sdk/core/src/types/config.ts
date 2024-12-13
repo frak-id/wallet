@@ -1,7 +1,7 @@
 /**
  * Configuration for the Nexus Wallet SDK
  */
-export type FrakWalletSdkConfig = Readonly<{
+export type FrakWalletSdkConfig = {
     /**
      * The Frak wallet url
      * @defaultValue "https://wallet.frak.id"
@@ -25,4 +25,4 @@ export type FrakWalletSdkConfig = Readonly<{
      * @defaultValue window.location.host
      */
     domain?: string;
-}>;
+};

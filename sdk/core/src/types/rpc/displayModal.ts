@@ -47,25 +47,23 @@ export type ModalRpcStepsInput<T extends ModalStepTypes[] = ModalStepTypes[]> =
  * @group Modal Display
  * @group RPC Schema
  */
-export type ModalRpcMetadata = Readonly<
-    {
-        header?: {
-            title?: string;
-            icon?: string;
-        };
-        context?: string;
-        lang?: "en" | "fr";
-    } & (
-        | {
-              isDismissible: true;
-              dismissActionTxt?: string;
-          }
-        | {
-              isDismissible?: false;
-              dismissActionTxt?: never;
-          }
-    )
->;
+export type ModalRpcMetadata = {
+    header?: {
+        title?: string;
+        icon?: string;
+    };
+    context?: string;
+    lang?: "en" | "fr";
+} & (
+    | {
+          isDismissible: true;
+          dismissActionTxt?: string;
+      }
+    | {
+          isDismissible?: false;
+          dismissActionTxt?: never;
+      }
+);
 
 /**
  * Params used to display a modal

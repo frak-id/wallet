@@ -5,7 +5,7 @@ import type { ProductTypesKey } from "../../constants/productTypes";
  * Response of the `frak_getProductInformation` RPC method
  * @group RPC Schema
  */
-export type GetProductInformationReturnType = Readonly<{
+export type GetProductInformationReturnType = {
     /**
      * Current product id
      */
@@ -31,4 +31,4 @@ export type GetProductInformationReturnType = Readonly<{
      * Current the current estimated product reward
      */
     estimatedEurReward?: string;
-}>;
+};

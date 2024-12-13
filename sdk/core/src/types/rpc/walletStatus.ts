@@ -4,9 +4,7 @@ import type { Address } from "viem";
  * RPC Response for the method `frak_listenToWalletStatus`
  * @group RPC Schema
  */
-export type WalletStatusReturnType = Readonly<
-    WalletConnected | WalletNotConnected
->;
+export type WalletStatusReturnType = WalletConnected | WalletNotConnected;
 
 /**
  * @ignore

@@ -4,19 +4,19 @@ import type { GenericModalStepType } from "./generic";
 /**
  * Generic format representing a tx to be sent
  */
-export type SendTransactionTxType = Readonly<{
+export type SendTransactionTxType = {
     to: Address;
     data?: Hex;
     value?: Hex;
-}>;
+};
 
 /**
  * Return type of the send transaction rpc request
  * @inline
  */
-export type SendTransactionReturnType = Readonly<{
+export type SendTransactionReturnType = {
     hash: Hex;
-}>;
+};
 
 /**
  * The send transaction step for a Modal

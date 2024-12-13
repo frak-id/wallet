@@ -5,7 +5,7 @@ import type { Address } from "viem";
  *
  * For now, only contain a referrer address.
  */
-export type FrakContext = Readonly<{
+export type FrakContext = {
     // Referrer address
     r: Address;
-}>;
+};

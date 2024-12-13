@@ -44,7 +44,7 @@ const config = {
     // Stylisation
     // If set to true, should use @link in the comment to reference param types and stuff
     useCodeBlocks: false,
-    expandObjects: false,
+    expandObjects: true,
     expandParameters: false,
     typeDeclarationVisibility: "compact",
     includeVersion: true,

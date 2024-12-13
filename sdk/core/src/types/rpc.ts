@@ -14,7 +14,33 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
  * RPC interface that's used for the iframe communication
+ *
+ * Define all the methods available within the iFrame RPC client
+ *
  * @group RPC Schema
+ *
+ * @remarks
+ * Here is the list of methods available:
+ *
+ * ### frak_listenToWalletStatus
+ *  - Params: None
+ *  - Returns: {@link WalletStatusReturnType}
+ *
+ * ### frak_displayModal
+ * - Params: [{@link ModalRpcStepsInput}, name: string, metadata?: {@link ModalRpcMetadata}]
+ * - Returns: {@link ModalRpcStepsResultType}
+ *
+ * ### frak_sendInteraction
+ *  - Params: [productId: Hex, interaction: {@link PreparedInteraction}, signature?: Hex]
+ *  - Returns: {@link SendInteractionReturnType}
+ *
+ * ### frak_sso
+ *  - Params [params: {@link OpenSsoParamsType}, name: string, customCss?: string]
+ *  - Returns: undefined
+ *
+ *  ### frak_getProductInformation
+ *  - Params: None
+ *  - Returns: {@link GetProductInformationReturnType}
  */
 export type IFrameRpcSchema = [
     /**

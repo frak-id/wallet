@@ -5,10 +5,10 @@ import type { GenericModalStepType } from "./generic";
  * @inline
  * @ignore
  */
-export type OpenInteractionSessionReturnType = Readonly<{
+export type OpenInteractionSessionReturnType = {
     startTimestamp: number;
     endTimestamp: number;
-}>;
+};
 
 /**
  * The open interaction session step for a Modal

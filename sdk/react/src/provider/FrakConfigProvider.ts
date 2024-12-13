@@ -15,6 +15,10 @@ export const FrakConfigContext = createContext<FrakWalletSdkConfig | undefined>(
  * @group provider
  */
 export type FrakConfigProviderProps = {
+    /**
+     * The wanted Frak configuration
+     * @see {@link @frak-labs/core-sdk!index.FrakWalletSdkConfig | FrakWalletSdkConfig}
+     */
     config: FrakWalletSdkConfig;
 };
 

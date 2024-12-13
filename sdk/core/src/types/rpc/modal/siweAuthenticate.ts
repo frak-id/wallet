@@ -17,10 +17,10 @@ export type SiweAuthenticationParams = Omit<
  * Return type of the Siwe transaction rpc request
  * @inline
  */
-export type SiweAuthenticateReturnType = Readonly<{
+export type SiweAuthenticateReturnType = {
     signature: Hex;
     message: string;
-}>;
+};
 
 /**
  * The SIWE authentication step for a Modal
