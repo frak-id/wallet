@@ -6,11 +6,9 @@ import type { PreparedInteraction } from "../types";
 /**
  * Webshop interactions allow you to track user activities on your webshop.
  *
- * import { Callout } from 'vocs/components'
- *
- * <Callout type="info">
+ * :::info
  *   To properly handle webshop interactions, ensure that the "WebShop" product type is enabled in your Business dashboard.
- * </Callout>
+ * :::
  *
  * @description Encode webshop related user interactions
  *

@@ -13,8 +13,6 @@ import type {
  * @param args.metadata - The metadata for the modal (customisation, language etc)
  * @returns The result of each modal steps
  *
- *
- * @group Modal Display
  * @description This function will display a modal to the user with the provided steps and metadata.
  *
  * @remarks

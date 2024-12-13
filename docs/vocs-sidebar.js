@@ -78,7 +78,11 @@ function getNavigationItem(navigationItem, basePath) {
         if (basePath.length) {
             linkParts.push(basePath);
         }
-        linkParts.push(getParsedUrl(navigationItem.path).replace(/\\/g, "/"));
+        linkParts.push(
+            getParsedUrl(navigationItem.path)
+                .replace(/\\/g, "/")
+                .replace(".mdx", "")
+        );
     }
 
     // Get all the childrens of the navigation item

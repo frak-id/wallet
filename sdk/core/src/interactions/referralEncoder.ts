@@ -7,11 +7,9 @@ import type { PreparedInteraction } from "../types";
  * Referral interactions allow you to track user sharing activities.
  * These interactions are essential for platforms looking to grow their user base through user-to-user referrals and reward systems.
  *
- * import { Callout } from 'vocs/components'
- *
- * <Callout type="info">
+ * :::info
  *   To properly handle referral interactions, ensure that the "Referral" product type is enabled in your Business dashboard.
- * </Callout>
+ * :::
  *
  * @description Encode referral related user interactions
  *

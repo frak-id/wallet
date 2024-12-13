@@ -7,12 +7,9 @@ import type { PreparedInteraction } from "../types";
  * Press interactions allow you to track user engagement with articles or other press content on your platform.
  * After setting up these interactions, you can create acquisition campaign based on the user engagement with your press content.
  *
- *
- * import { Callout } from 'vocs/components'
- *
- * <Callout type="info">
+ * :::info
  *   To properly handle press interactions, ensure that the "Press" product type is enabled in your Business dashboard.
- * </Callout>
+ * :::
  *
  * @description Encode press related user interactions
  *

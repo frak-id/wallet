@@ -7,13 +7,11 @@ import type { PreparedInteraction } from "../types";
  * Purchase interactions allow you to track user purchases on your platform.
  * After setting up these interactions, you can create acquisition campaign based on the user purchase  (starting a new one, completed, or even purchase dropped).
  *
- * import { Callout } from 'vocs/components'
- *
- * <Callout type="info">
+ * :::info
  *   To properly handle purchase interactions, ensure that the "Purchase" product type is enabled in your Business dashboard, and that you have set up everything correctly in the `Purchasetracker` section.
- * </Callout>
+ * :::
  *
- * <Callout type="note">
+ * :::note
  * The `purchaseId` is used on both interactions. It can be computed like this:
  *
  * ```ts
@@ -23,7 +21,7 @@ import type { PreparedInteraction } from "../types";
  * With:
  * - `productId`: The id of your product, you can find it in the product dashboard.
  * - `externalPurchaseId`: The id of the purchase in your system (e.g. the shopify `order_id`).
- * </Callout>
+ * :::
  *
  * @description Encode purchase related user interactions
  *
