@@ -14,7 +14,7 @@ const config = {
         "./docs/vocs-sidebar.js",
         "./docs/replace-external.js",
     ],
-    entryPoints: ["sdk/core", "sdk/react"],
+    entryPoints: ["sdk/core", "sdk/react", "sdk/components"],
     entryPointStrategy: "packages",
     packageOptions: {
         entryPoints: [
@@ -23,6 +23,8 @@ const config = {
             // Core SDK custom entry points
             "src/actions/index.ts",
             "src/interactions/index.ts",
+            // Components entry points
+            "src/components.ts",
         ],
     },
     out: "./generated-docs/",
