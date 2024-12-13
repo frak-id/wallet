@@ -31,7 +31,7 @@ interface UseSendTransactionParams {
 /**
  * Hook that return a mutation helping to send a transaction
  *
- * It's a {@tansktack/react-query | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.sendTransaction | `sendTransaction()`} action
+ * It's a {@link @tanstack/react-query!home | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.sendTransaction | `sendTransaction()`} action
  *
  * @param args
  *

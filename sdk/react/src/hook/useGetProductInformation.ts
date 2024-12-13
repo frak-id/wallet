@@ -24,7 +24,7 @@ interface UseGetProductInformationParams {
 /**
  * Hook that return a query helping to get the current product information
  *
- * It's a {@tansktack/react-query | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.getProductInformation | `getProductInformation()`} action
+ * It's a {@link @tanstack/react-query!home | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.getProductInformation | `getProductInformation()`} action
  *
  * @param args
  *

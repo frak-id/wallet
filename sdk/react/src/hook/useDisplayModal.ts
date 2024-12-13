@@ -30,7 +30,7 @@ interface UseDisplayModalParams<T extends ModalStepTypes[] = ModalStepTypes[]> {
 /**
  * Hook that return a mutation helping to display a modal to the user
  *
- * It's a {@tansktack/react-query | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.displayModal | `displayModal()`} action
+ * It's a {@link @tanstack/react-query!home | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.displayModal | `displayModal()`} action
  *
  * @param args
  *

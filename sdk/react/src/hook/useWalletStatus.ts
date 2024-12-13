@@ -10,7 +10,7 @@ import { useFrakClient } from "./useFrakClient";
 /**
  * Hook that return a query helping to get the current wallet status.
  *
- * It's a {@tansktack/react-query | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.watchWalletStatus | `watchWalletStatus()`} action
+ * It's a {@link @tanstack/react-query!home | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.watchWalletStatus | `watchWalletStatus()`} action
  *
  * @group hooks
  *

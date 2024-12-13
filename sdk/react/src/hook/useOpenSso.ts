@@ -24,7 +24,7 @@ interface UseSendInteractionParams {
 /**
  * Hook that return a mutation helping to open the SSO page
  *
- * It's a {@tansktack/react-query | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.openSso | `openSso()`} action
+ * It's a {@link @tanstack/react-query!home | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.openSso | `openSso()`} action
  *
  * @param args
  *
