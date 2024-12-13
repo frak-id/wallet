@@ -13,7 +13,6 @@ export type SendTransactionTxType = Readonly<{
 /**
  * Return type of the send transaction rpc request
  * @inline
- * @ignore
  */
 export type SendTransactionReturnType = Readonly<{
     hash: Hex;

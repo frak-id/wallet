@@ -7,7 +7,7 @@ import type {
 import { displayModal } from "../displayModal";
 
 /**
- * @ignore
+ * Parameters to directly show a modal used to send a transaction
  * @inline
  */
 export type SendTransactionParams = {

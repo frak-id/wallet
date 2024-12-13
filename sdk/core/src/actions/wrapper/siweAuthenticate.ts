@@ -8,13 +8,13 @@ import type {
 import { displayModal } from "../displayModal";
 
 /**
- * Partial SIWE params, since we can rebuild them from the SDK if they are empty
- * @ignore
+ * Parameter used to directly show a modal used to authenticate with SIWE
  * @inline
  */
 export type SiweAuthenticateModalParams = {
     /**
-     * SIWE authentication parameters
+     * Partial SIWE params, since we can rebuild them from the SDK if they are empty
+     *
      * If no parameters provider, some fields will be recomputed from the current configuration and environment.
      *  - `statement` will be set to a default value
      *  - `nonce` will be generated
