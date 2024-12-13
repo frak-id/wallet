@@ -20,11 +20,13 @@ interface UseGetProductInformationParams {
 
 /**
  * Hook that return a query helping to get the current product informations
+ * @param args
+ * @param args.query - The query options, see {@link @tanstack/react-query!useQuery | `useQuery()`}
  *
  * @group hooks
  *
  * @see {@link @frak-labs/core-sdk!actions.getProductInformation | `getProductInformation()`} for more info about the underlying action
- * @see [Tanstack Query - Query](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery) for more info about the useQuery param and response
+ * @see {@link @tanstack/react-query!useQuery | `useQuery()`} for more info about the useQuery options and response
  */
 export function useGetProductInformation({
     query,

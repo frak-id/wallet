@@ -24,8 +24,8 @@ import type { PreparedInteraction } from "../types";
 export const PressInteractionEncoder = {
     /**
      * Encode an open article interaction
-     * @param options
-     * @param options.articleId - The id of the article the user opened (32 bytes), could be a `keccak256` hash of the article slug, or your internal id
+     * @param args
+     * @param args.articleId - The id of the article the user opened (32 bytes), could be a `keccak256` hash of the article slug, or your internal id
      */
     openArticle({ articleId }: { articleId: Hex }): PreparedInteraction {
         const interactionData = concatHex([
@@ -40,8 +40,8 @@ export const PressInteractionEncoder = {
 
     /**
      * Encode a read article interaction
-     * @param options
-     * @param options.articleId - The id of the article the user opened (32 bytes), could be a `keccak256` hash of the article slug, or your internal id
+     * @param args
+     * @param args.articleId - The id of the article the user opened (32 bytes), could be a `keccak256` hash of the article slug, or your internal id
      */
     readArticle({ articleId }: { articleId: Hex }): PreparedInteraction {
         const interactionData = concatHex([

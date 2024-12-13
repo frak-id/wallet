@@ -67,6 +67,7 @@ export type RpcResponse<
 
 /**
  * Type used for a one shot request function
+ * @inline
  */
 export type RequestFn<TRpcSchema extends RpcSchema> = <
     TParameters extends
@@ -77,7 +78,8 @@ export type RequestFn<TRpcSchema extends RpcSchema> = <
 ) => Promise<_ReturnType>;
 
 /**
- * Type used for a one shot request function
+ * Type used for a listening request
+ * @inline
  */
 export type ListenerRequestFn<TRpcSchema extends RpcSchema> = <
     TParameters extends

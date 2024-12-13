@@ -60,8 +60,8 @@ function decompress(context?: string): FrakContext | undefined {
 
 /**
  * Parse the current URL into a Frak Context
- * @param options
- * @param options.url - The url to parse
+ * @param args
+ * @param args.url - The url to parse
  * @returns The parsed Frak context
  */
 function parse({ url }: { url: string }) {
@@ -78,9 +78,9 @@ function parse({ url }: { url: string }) {
 
 /**
  * Populate the current url with the given Frak context
- * @param options
- * @param options.url - The url to update
- * @param options.context - The context to update
+ * @param args
+ * @param args.url - The url to update
+ * @param args.context - The context to update
  * @returns The new url with the Frak context
  */
 function update({
@@ -123,9 +123,9 @@ function remove(url: string) {
 
 /**
  * Replace the current url with the given Frak context
- * @param options
- * @param options.url - The url to update
- * @param options.context - The context to update
+ * @param args
+ * @param args.url - The url to update
+ * @param args.context - The context to update
  */
 function replaceUrl({
     url: baseUrl,

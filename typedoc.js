@@ -9,9 +9,10 @@ const config = {
         "typedoc-plugin-inline-sources",
         // Add frontmatter headers to mdx file
         "typedoc-plugin-frontmatter",
-        // Custom scripts (frontmatter + vocs sidebar generation)
+        // Custom scripts (frontmatter + vocs sidebar generation + external dependencies links)
         "./docs/vocs-frontmatter.js",
         "./docs/vocs-sidebar.js",
+        "./docs/replace-external.js",
     ],
     entryPoints: ["sdk/core", "sdk/react"],
     entryPointStrategy: "packages",
@@ -43,19 +44,11 @@ const config = {
     // Stylisation
     // If set to true, should use @link in the comment to reference param types and stuff
     useCodeBlocks: false,
-    expandObjects: true,
-    expandParameters: true,
-    typeDeclarationVisibility: "verbose",
+    expandObjects: false,
+    expandParameters: false,
+    typeDeclarationVisibility: "compact",
     includeVersion: true,
     readme: "none",
-    // Some type mapping
-    externalSymbolLinkMappings: {
-        // todo: Doesn't work
-        viem: {
-            Address: "https://viem.sh/docs/glossary/types#address",
-            Hex: "https://viem.sh/docs/glossary/types#hex",
-        },
-    },
     // Frontmatter
     frontmatterCommentTags: ["description"],
 };

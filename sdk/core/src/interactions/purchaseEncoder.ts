@@ -38,8 +38,8 @@ import type { PreparedInteraction } from "../types";
 export const PurchaseInteractionEncoder = {
     /**
      * Encode a start purchase interaction
-     * @param options
-     * @param options.purchaseId - The id of the purchase that is being started.
+     * @param args
+     * @param args.purchaseId - The id of the purchase that is being started.
      */
     startPurchase({ purchaseId }: { purchaseId: Hex }): PreparedInteraction {
         const interactionData = concatHex([
@@ -54,9 +54,9 @@ export const PurchaseInteractionEncoder = {
 
     /**
      * Encode a complete purchase interaction
-     * @param options
-     * @param options.purchaseId - The id of the purchase that is being completed.
-     * @param options.proof - The merkle proof that the user has completed the purchase (see [Purchase Webhooks](/wallet-sdk/api-endpoints/webhook) for more details).
+     * @param args
+     * @param args.purchaseId - The id of the purchase that is being completed.
+     * @param args.proof - The merkle proof that the user has completed the purchase (see [Purchase Webhooks](/wallet-sdk/api-endpoints/webhook) for more details).
      */
     completedPurchase({
         purchaseId,

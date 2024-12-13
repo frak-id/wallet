@@ -9,6 +9,7 @@ import { displayModal } from "@frak-labs/core-sdk/actions";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
+/** @inline */
 type MutationOptions<T extends ModalStepTypes[]> = Omit<
     UseMutationOptions<
         ModalRpcStepsResultType<T>,
@@ -18,17 +19,20 @@ type MutationOptions<T extends ModalStepTypes[]> = Omit<
     "mutationFn" | "mutationKey"
 >;
 
+/** @inline */
 interface UseDisplayModalParams<T extends ModalStepTypes[] = ModalStepTypes[]> {
     mutations?: MutationOptions<T>;
 }
 
 /**
  * Hook that return a mutation helping to display a modal to the user
+ * @param args
+ * @param args.mutations - The mutation options, see {@link @tanstack/react-query!useMutation | `useMutation()`}
  *
  * @group hooks
  *
  * @see {@link @frak-labs/core-sdk!actions.displayModal | `displayModal()`} for more info about the underlying action
- * @see [Tanstack Query - Mutation](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation) for more info about the mutation options and response
+ * @see {@link @tanstack/react-query!useMutation | `useMutation()`} for more info about the mutation options and response
  */
 export function useDisplayModal<T extends ModalStepTypes[] = ModalStepTypes[]>({
     mutations,

@@ -21,6 +21,8 @@ export type FrakConfigProviderProps = {
 /**
  * Simple config provider for the Frak Wallet SDK
  *
+ * Should be wrapped within a {@link @tanstack/react-query!QueryClientProvider | `QueryClientProvider`}
+ *
  * @group provider
  *
  * @param parameters

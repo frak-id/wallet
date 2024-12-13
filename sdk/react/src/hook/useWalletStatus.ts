@@ -14,7 +14,7 @@ import { useFrakClient } from "./useFrakClient";
  * @group hooks
  *
  * @see {@link @frak-labs/core-sdk!actions.watchWalletStatus | `watchWalletStatus()`} for more info about the underlying action
- * @see [Tanstack Query - useQuery](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery) for more info about the useQuery and response
+ * @see {@link @tanstack/react-query!useQuery | `useQuery()`} for more info about the useQuery response
  */
 export function useWalletStatus() {
     const queryClient = useQueryClient();
