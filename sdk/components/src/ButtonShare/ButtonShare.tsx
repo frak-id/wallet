@@ -58,6 +58,8 @@ function modalShare() {
  * ```html
  * <frak-button-share classname="my-custom-class my-custom-class2"></frak-button-share>
  * ```
+ *
+ * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the underlying action
  */
 export function ButtonShare({
     text = "Share and earn!",
