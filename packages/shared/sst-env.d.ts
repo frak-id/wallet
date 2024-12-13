@@ -62,6 +62,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "VanillaJsDemo": {
+      "type": "sst.aws.StaticSite"
+      "url": string
+    }
     "Wallet": {
       "type": "sst.aws.StaticSite"
       "url": string

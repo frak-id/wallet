@@ -49,3 +49,21 @@ export const newsInteractionWebsite = new sst.aws.StaticSite(
         },
     }
 );
+
+/**
+ * Vanilla JS demo website
+ */
+export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
+    path: "example/vanilla-js",
+    // Set the custom domain
+    domain: {
+        name: "vanilla-js.news-paper.xyz",
+    },
+    build: {
+        command: "bun run build",
+        output: "dist",
+    },
+    vite: {
+        types: "./sst-env.d.ts",
+    },
+});
