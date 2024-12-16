@@ -3,6 +3,7 @@ import {
     sdkSessionAtom,
     sessionAtom,
 } from "@/module/common/atoms/session";
+import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { jotaiStore } from "@module/atoms/store";
 import { useAtomValue } from "jotai";
@@ -22,17 +23,25 @@ export function useSyncDynamicSession() {
         if (!primaryWallet) return;
         if (!dynamicSession) return;
 
-        // Check if the wallet match the current session
+        // If that's not an ethereum wallet, early reset
+        if (!isEthereumWallet(primaryWallet)) {
+            jotaiStore.set(sessionAtom, RESET);
+            jotaiStore.set(sdkSessionAtom, RESET);
+            return;
+        }
+
+        // If the addresses doesn't match, early reset
         if (
-            isAddressEqual(
+            !isAddressEqual(
                 primaryWallet.address as Address,
                 dynamicSession.publicKey
             )
-        )
+        ) {
+            jotaiStore.set(sessionAtom, RESET);
+            jotaiStore.set(sdkSessionAtom, RESET);
             return;
+        }
 
-        // If no wallet match, we reset the current user session
-        jotaiStore.set(sessionAtom, RESET);
-        jotaiStore.set(sdkSessionAtom, RESET);
+        // Otherwise, nothing to do
     }, [dynamicSession, sdkHasLoaded, primaryWallet]);
 }

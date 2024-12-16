@@ -1,8 +1,17 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
+import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import type { Wallet } from "@dynamic-labs/sdk-react-core";
-import type { Hex, Transport } from "viem";
+import {
+    type Account,
+    type Address,
+    type Chain,
+    type Transport,
+    type WalletClient,
+    isAddressEqual,
+} from "viem";
+import { signMessage } from "viem/actions";
 import { createConnector } from "wagmi";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
@@ -28,6 +37,28 @@ export function smartAccountConnector<
 
     // The ecdsa message signer (null if not ready)
     let dynamicWallets: Wallet[] = [];
+    let resolvedDynamicWalletClient:
+        | WalletClient<Transport, Chain, Account>
+        | undefined = undefined;
+
+    async function getDynamicWalletClient(address: Address) {
+        if (
+            resolvedDynamicWalletClient &&
+            isAddressEqual(resolvedDynamicWalletClient.account.address, address)
+        ) {
+            return resolvedDynamicWalletClient;
+        }
+
+        const matchingWallet = dynamicWallets.find((w) =>
+            isAddressEqual(w.address as Address, address)
+        );
+        if (!(matchingWallet && isEthereumWallet(matchingWallet))) {
+            throw new Error("Wallet not found");
+        }
+
+        resolvedDynamicWalletClient = await matchingWallet.getWalletClient();
+        return resolvedDynamicWalletClient;
+    }
 
     // Create the wagmi connector itself
     return createConnector<
@@ -153,23 +184,14 @@ export function smartAccountConnector<
                     },
 
                     async signViaDynamic(message, address) {
-                        if (!dynamicWallets.length) {
-                            throw new Error("Dynamic not ready yet");
+                        const resolved = await getDynamicWalletClient(address);
+                        if (!resolved) {
+                            throw new Error("Dynamic not resolved");
                         }
-
-                        // Find the right wallet
-                        const wallet = dynamicWallets.find(
-                            (w) => w.address === address
-                        );
-                        if (!wallet) {
-                            throw new Error("Wallet not found");
-                        }
-
-                        const signature = await wallet.signMessage(message);
-                        if (!signature) {
-                            throw new Error("No signature");
-                        }
-                        return signature as Hex;
+                        // Sign the message
+                        return await signMessage(resolved, {
+                            message: { raw: message },
+                        });
                     },
                 });
             }
@@ -186,6 +208,7 @@ export function smartAccountConnector<
         },
 
         onDynamicWalletUpdate(wallets: Wallet[]) {
+            // Get all the wallet eth providers
             dynamicWallets = wallets;
         },
     }));
