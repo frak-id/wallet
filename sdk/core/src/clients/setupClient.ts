@@ -36,6 +36,9 @@ export async function setupClient({
         iframe,
     });
 
+    // Wait for the client to be all setup
+    await client.waitForSetup;
+
     // Wait for the connection to be established
     const waitForConnection = await client.waitForConnection;
     if (!waitForConnection) {

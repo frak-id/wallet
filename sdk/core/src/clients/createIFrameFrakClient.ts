@@ -195,16 +195,15 @@ function setupHeartbeat(
     messageHandler: IFrameMessageHandler,
     lifecycleManager: IframeLifecycleManager
 ) {
-    const HEARTBEAT_INTERVAL = 1_000; // Send heartbeat every second
+    const HEARTBEAT_INTERVAL = 100; // Send heartbeat every 100ms until we are connected
     const HEARTBEAT_TIMEOUT = 30_000; // 30 seconds timeout
     let heartbeatInterval: NodeJS.Timeout;
     let timeoutId: NodeJS.Timeout;
 
-    function sendHeartbeat() {
+    const sendHeartbeat = () =>
         messageHandler.sendEvent({
             iframeLifecycle: "heartbeat",
         });
-    }
 
     // Start sending heartbeats
     async function startHeartbeat() {
@@ -217,6 +216,7 @@ function setupHeartbeat(
             console.log("Heartbeat timeout: connection failed");
         }, HEARTBEAT_TIMEOUT);
 
+        // Once connected, stop it
         await lifecycleManager.isConnected;
 
         // We are now connected, stop the heartbeat
