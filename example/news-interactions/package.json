@@ -27,7 +27,7 @@
     "@tanstack/react-query-devtools": "^5.62.7",
     "@tanstack/react-query-persist-client": "^5.62.7",
     "buffer": "^6.0.3",
-    "isbot": "^5.1.17",
+    "isbot": "^5.1.18",
     "normalize.css": "^8.0.1",
     "radash": "^12.1.0",
     "react": "^19",

@@ -33,7 +33,7 @@
     "@tanstack/react-query": "^5.62.7",
     "@tanstack/react-query-devtools": "^5.62.7",
     "@tanstack/react-query-persist-client": "^5.62.7",
-    "@tanstack/react-table": "^8.20.5",
+    "@tanstack/react-table": "^8.20.6",
     "@tanstack/table-core": "^8.20.5",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.0.4",
@@ -48,7 +48,7 @@
     "normalize.css": "^8.0.1",
     "radash": "^12.1.0",
     "react": "^19",
-    "react-day-picker": "^9.4.3",
+    "react-day-picker": "^9.4.4",
     "react-dom": "^19",
     "react-hook-form": "^7.54.1",
     "viem": "^2.21.48"
