@@ -76,8 +76,13 @@ export function createIFrameRequestResolver(
         // And store it
         jotaiStore.set(listenerContextAtom, resolvingContext);
 
+        // Check if the message data are object
+        if (typeof message.data !== "object") {
+            return;
+        }
+
         // Check if that's a client lifecycle request event
-        if (typeof message.data === "object" && "clientLifecycle" in message.data) {
+        if ("clientLifecycle" in message.data) {
             const { clientLifecycle, data } = message.data;
 
             switch (clientLifecycle) {
