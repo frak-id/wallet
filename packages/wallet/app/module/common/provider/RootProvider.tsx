@@ -2,11 +2,12 @@ import { currentChain } from "@/context/blockchain/provider";
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import { useSyncPrivySession } from "@/module/common/hook/useSyncPrivySession";
+import { useSyncDynamicSession } from "@/module/common/hook/useSyncDynamicSession";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
+import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@module/atoms/store";
-import { PrivyProvider } from "@privy-io/react-auth";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -60,11 +61,16 @@ export function RootProvider({ children }: PropsWithChildren) {
                     persistOptions={persistOptions}
                 >
                     <SetupServiceWorker />
-                    <PrivyProviderWithConfig>
+                    <DynamicContextProvider
+                        settings={{
+                            environmentId: process.env.DYNAMIC_ENV_ID ?? "",
+                            walletConnectors: [EthereumWalletConnectors],
+                        }}
+                    >
                         <WagmiProviderWithDynamicConfig>
                             {children}
                         </WagmiProviderWithDynamicConfig>
-                    </PrivyProviderWithConfig>
+                    </DynamicContextProvider>
                     <ReactQueryDevtools
                         initialIsOpen={false}
                         buttonPosition={"bottom-left"}
@@ -139,6 +145,7 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
             createConfig({
                 chains: [currentChain],
                 connectors: [smartAccountConnector()],
+                multiInjectedProviderDiscovery: false,
                 client: ({ chain }) =>
                     createClient({
                         chain,
@@ -163,31 +170,6 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
 
 function EnforceWagmiConnection() {
     useEnforceWagmiConnection();
-    useSyncPrivySession();
+    useSyncDynamicSession();
     return null;
-}
-
-function PrivyProviderWithConfig({ children }: PropsWithChildren) {
-    return (
-        <PrivyProvider
-            appId={process.env.PRIVY_APP_ID ?? ""}
-            config={{
-                // Customize Privy's appearance in your app
-                appearance: {
-                    theme: "light",
-                    accentColor: "#676FFF",
-                    logo: "https://wallet.frak.id/icon-192.png",
-                    walletChainType: "ethereum-only",
-                },
-                embeddedWallets: {
-                    // Create wallet on login for user who don't have one
-                    createOnLogin: "users-without-wallets",
-                },
-                supportedChains: [currentChain],
-                defaultChain: currentChain,
-            }}
-        >
-            {children}
-        </PrivyProvider>
-    );
 }

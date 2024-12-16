@@ -1,67 +1,51 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import {
+    DynamicConnectButton,
+    type Wallet,
+    useIsLoggedIn,
+    useUserWallets,
+} from "@dynamic-labs/sdk-react-core";
 import { jotaiStore } from "@module/atoms/store";
 import { Button } from "@module/component/Button";
-import { Spinner } from "@module/component/Spinner";
 import { trackEvent } from "@module/utils/trackEvent";
-import {
-    type ConnectedWallet,
-    usePrivy,
-    useWallets,
-} from "@privy-io/react-auth";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { Address, Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 
-export function PrivyLogin() {
-    const { ready } = usePrivy();
-
-    if (!ready) {
-        return <Spinner />;
-    }
-
+export function DynamicLogin() {
     return (
         <>
-            <DoPrivyLogin />
+            <DoDynamicLogin />
             <br />
             <br />
-            <DoPrivyAuthentication />
+            <DoDynamicAuthentication />
         </>
     );
 }
 
-function DoPrivyLogin() {
-    // todo: Maybe a fork session stuff for the SDK post SSO?
-    const { login, authenticated } = usePrivy();
-
-    return (
-        <Button
-            type={"button"}
-            onClick={() => login()}
-            disabled={authenticated}
-        >
-            Connect via socials
-        </Button>
-    );
+function DoDynamicLogin() {
+    const isLoggedIn = useIsLoggedIn();
+    if (isLoggedIn) {
+        return null;
+    }
+    return <DynamicConnectButton>Connect via socials</DynamicConnectButton>;
 }
 
-function DoPrivyAuthentication() {
-    const { signMessage } = usePrivy();
-    const { wallets } = useWallets();
-    const [wallet, setWallet] = useState<ConnectedWallet | undefined>(
-        undefined
-    );
+function DoDynamicAuthentication() {
+    const userWallets = useUserWallets();
+    const [wallet, setWallet] = useState<Wallet | undefined>(undefined);
 
     // Auto pick the first wallet
     useEffect(() => {
-        if (wallets.length === 1) {
-            setWallet(wallets[0]);
+        if (userWallets.length === 1) {
+            setWallet(userWallets[0]);
         }
-    }, [wallets]);
+    }, [userWallets]);
 
     const { mutate: authenticate } = useMutation({
-        mutationKey: ["privy-login", wallet?.address],
+        mutationKey: ["ecdsa-login", wallet?.address],
         async mutationFn() {
             if (!wallet) {
                 throw new Error("No wallet selected");
@@ -73,20 +57,18 @@ function DoPrivyAuthentication() {
             // Build the message to sign
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${challenge}`;
 
-            // Do the message signature
-            const signature = (await signMessage(
-                message,
-                {
-                    title: "Frak authentication",
-                    description:
-                        "After this message approval, you will be logged in",
-                },
-                wallet.address
-            )) as Hex;
+            // Launch the signature
+            const signature = (await wallet.signMessage(message)) as
+                | Hex
+                | undefined;
+            if (!signature) {
+                console.warn("No signature");
+                throw new Error("No signature returned");
+            }
 
             // Launch the backend authentication process
             const { data, error } =
-                await authenticatedBackendApi.auth.wallet.privyLogin.post({
+                await authenticatedBackendApi.auth.wallet.ecdsaLogin.post({
                     expectedChallenge: challenge,
                     signature,
                     wallet: wallet.address as Address,
@@ -104,14 +86,13 @@ function DoPrivyAuthentication() {
             jotaiStore.set(sdkSessionAtom, sdkJwt);
 
             // Track the event
-            trackEvent("cta-privy-login");
+            trackEvent("cta-ecdsa-login");
         },
     });
-
     return (
         <>
-            {!wallet && wallets.length > 0 && (
-                <PickPrivyWallet wallets={wallets} onPick={setWallet} />
+            {!wallet && userWallets.length > 0 && (
+                <PickDynamicWallet wallets={userWallets} onPick={setWallet} />
             )}
             <Button
                 type={"button"}
@@ -124,13 +105,13 @@ function DoPrivyAuthentication() {
     );
 }
 
-function PickPrivyWallet({
+function PickDynamicWallet({
     wallets,
     onPick,
-}: { wallets: ConnectedWallet[]; onPick: (args: ConnectedWallet) => void }) {
+}: { wallets: Wallet[]; onPick: (args: Wallet) => void }) {
     return (
         <div>
-            Pick a privy wallet
+            Pick the wallet to use on Frak
             {wallets.map((wallet) => {
                 return (
                     <Button key={wallet.address} onClick={() => onPick(wallet)}>

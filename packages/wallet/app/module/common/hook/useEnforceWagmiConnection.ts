@@ -2,7 +2,7 @@ import {
     type FrakWalletConnector,
     smartAccountConnector,
 } from "@/context/wallet/smartWallet/connector";
-import { useSignMessage } from "@privy-io/react-auth";
+import { useUserWallets } from "@dynamic-labs/sdk-react-core";
 import { useEffect, useMemo } from "react";
 import { useConfig, useConnect } from "wagmi";
 
@@ -59,17 +59,17 @@ export function useEnforceWagmiConnection() {
     }, [connect, frakConnector, isPending, state.current, state.status]);
 
     /**
-     * Synchronise the privy sign message with the frak connector
+     * Synchronise the dynamic wallets with the frak connector
      */
-    const { signMessage } = useSignMessage();
+    const userWallets = useUserWallets();
     useEffect(() => {
         if (!frakConnector) {
             return;
         }
 
-        // Update the privy wallets from the frak connectors
-        (
-            frakConnector as unknown as FrakWalletConnector
-        ).onPrivyInterfaceUpdate(signMessage);
-    }, [signMessage, frakConnector]);
+        // Update the dynamic wallets from the frak connectors
+        (frakConnector as unknown as FrakWalletConnector).onDynamicWalletUpdate(
+            userWallets
+        );
+    }, [userWallets, frakConnector]);
 }

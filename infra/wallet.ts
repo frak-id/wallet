@@ -5,7 +5,7 @@ import {
     isProd,
     nexusRpcSecret,
     pimlicoApiKey,
-    privyAppId,
+    dynamicEnvId,
     umamiWalletWebsiteId,
     vapidPublicKey,
 } from "./config";
@@ -38,6 +38,6 @@ new sst.aws.StaticSite("Wallet", {
         NEXUS_RPC_SECRET: nexusRpcSecret.value,
         VAPID_PUBLIC_KEY: vapidPublicKey.value,
         UMAMI_WALLET_WEBSITE_ID: umamiWalletWebsiteId.value,
-        PRIVY_APP_ID: privyAppId.value,
+        DYNAMIC_ENV_ID: dynamicEnvId.value,
     },
 });

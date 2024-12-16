@@ -13,7 +13,7 @@ export const webauthnSessionAtom = atom((get) => {
     return session;
 });
 
-export const privySessionAtom = atom((get) => {
+export const dynamicSessionAtom = atom((get) => {
     const session = get(sessionAtom);
     if (!session || typeof session.publicKey === "object") return null;
     return session;

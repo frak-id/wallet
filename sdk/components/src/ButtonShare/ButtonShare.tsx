@@ -35,8 +35,6 @@ function modalShare() {
  * Button to share the current page
  *
  * @param args
- * @param args.text - Text to display on the button
- * @param args.classname - Classname to apply to the button
  * @returns The share button with `<button>` tag
  *
  * @group components

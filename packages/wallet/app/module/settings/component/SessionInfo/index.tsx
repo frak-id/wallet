@@ -1,5 +1,5 @@
 import {
-    privySessionAtom,
+    dynamicSessionAtom,
     webauthnSessionAtom,
 } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
@@ -18,7 +18,7 @@ export function SessionInfo() {
     const { t } = useTranslation();
     const { address } = useAccount();
     const webauthnWallet = useAtomValue(webauthnSessionAtom);
-    const privyWallet = useAtomValue(privySessionAtom);
+    const dynamicWallet = useAtomValue(dynamicSessionAtom);
 
     if (webauthnWallet) {
         return (
@@ -51,18 +51,18 @@ export function SessionInfo() {
         );
     }
 
-    if (privyWallet) {
+    if (dynamicWallet) {
         return (
             <Panel size={"small"}>
                 <Title icon={<KeyRound size={32} />}>
-                    {t("wallet.settings.privyInfo")}
+                    {t("wallet.settings.dynamicInfo")}
                 </Title>
                 <ul className={styles.settings__list}>
                     <li>
-                        {t("wallet.settings.privyWallet")}{" "}
+                        {t("wallet.settings.dynamicWallet")}{" "}
                         {isHydrated && (
                             <WalletAddress
-                                wallet={toHex(privyWallet.publicKey)}
+                                wallet={toHex(dynamicWallet.publicKey)}
                                 copiedText={t("common.copied")}
                             />
                         )}

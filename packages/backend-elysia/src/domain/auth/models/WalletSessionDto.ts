@@ -1,14 +1,14 @@
 import { t } from "@backend-utils";
 
-const PrivyWalletTokenDto = t.Object({
+const EcdsaWalletTokenDto = t.Object({
     address: t.Address(),
-    authenticatorId: t.TemplateLiteral([t.Literal("privy-"), t.String()]),
+    authenticatorId: t.TemplateLiteral([t.Literal("ecdsa-"), t.String()]),
     publicKey: t.Hex(),
     transports: t.Undefined(),
 });
 export const WebAuthNWalletTokenDto = t.Object({
     address: t.Address(),
-    authenticatorId: t.String(), // 'Privy' in case of fallback authentication
+    authenticatorId: t.String(),
     publicKey: t.Object({
         x: t.Hex(),
         y: t.Hex(),
@@ -16,7 +16,7 @@ export const WebAuthNWalletTokenDto = t.Object({
     transports: t.Optional(t.Array(t.String())),
 });
 export const WalletTokenDto = t.Union([
-    PrivyWalletTokenDto,
+    EcdsaWalletTokenDto,
     WebAuthNWalletTokenDto,
 ]);
 

@@ -10,6 +10,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "DYNAMIC_ENV_ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Dashboard": {
       "type": "sst.aws.Nextjs"
       "url": string
@@ -47,10 +51,6 @@ declare module "sst" {
       "value": string
     }
     "POSTGRES_PASSWORD": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "PRIVY_APP_ID": {
       "type": "sst.sst.Secret"
       "value": string
     }

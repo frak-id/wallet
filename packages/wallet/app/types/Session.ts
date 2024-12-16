@@ -3,12 +3,12 @@ import type { Address, Hex } from "viem";
 
 export type Session = {
     token: string;
-} & (WebAuthNWallet | PrivyWallet);
+} & (WebAuthNWallet | EcdsaWallet);
 
-export type PrivyWallet = {
+export type EcdsaWallet = {
     address: Address;
     publicKey: Hex;
-    authenticatorId: `privy-${string}`;
+    authenticatorId: `ecdsa-${string}`;
     transports: undefined;
 };
 

@@ -54,9 +54,9 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             },
         }
     )
-    // Privy login
+    // Ecdsa login
     .post(
-        "/privyLogin",
+        "/ecdsaLogin",
         async ({
             // Request
             body: { expectedChallenge, signature, wallet, ssoId },
@@ -82,7 +82,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 return error(404, "Invalid signature");
             }
 
-            const authenticatorId = `privy-${wallet}` as const;
+            const authenticatorId = `ecdsa-${wallet}` as const;
 
             // Get the wallet address
             const walletAddress = await getEcdsaWalletAddress({

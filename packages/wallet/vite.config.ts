@@ -27,8 +27,8 @@ export default defineConfig(({ isSsrBuild }) => {
             "process.env.UMAMI_WALLET_WEBSITE_ID": JSON.stringify(
                 process.env.UMAMI_WALLET_WEBSITE_ID
             ),
-            "process.env.PRIVY_APP_ID": JSON.stringify(
-                process.env.PRIVY_APP_ID
+            "process.env.DYNAMIC_ENV_ID": JSON.stringify(
+                process.env.DYNAMIC_ENV_ID
             ),
         },
         server: {

@@ -11,7 +11,7 @@ import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAut
 import { sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import { getSafeSession } from "@/module/listener/utils/localStorage";
-import type { PrivyWallet } from "@/types/Session";
+import type { EcdsaWallet } from "@/types/Session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
@@ -30,27 +30,23 @@ type SmartAccountProviderParameters = {
     /**
      * Method when the account has changed
      */
-    onAccountChanged: (newWallet?: WebAuthNWallet | PrivyWallet) => void;
+    onAccountChanged: (newWallet?: WebAuthNWallet | EcdsaWallet) => void;
 
     /**
-     * Method used to sign aa message via privy
+     * Method used to sign aa message via dynamic
      * @param data
      * @param address
      */
-    signViaPrivy: (data: Hex, address: Address) => Promise<Hex>;
+    signViaDynamic: (data: Hex, address: Address) => Promise<Hex>;
 };
 
 /**
  * Get the smart account provider for our wagmi connector
- *  - todo: Also support privy here
- *
- *  - todo: how? session generification? Supporting both webauthn or privy?
- *  - todo: How to pick the right privy wallet?
  */
 export function getSmartAccountProvider<
     transport extends Transport = Transport,
     account extends SmartAccountV06 = SmartAccountV06,
->({ onAccountChanged, signViaPrivy }: SmartAccountProviderParameters) {
+>({ onAccountChanged, signViaDynamic }: SmartAccountProviderParameters) {
     console.log("Building a new smart account provider");
     // A few types shortcut
     type ConnectorClient = SmartAccountClient<
@@ -114,7 +110,7 @@ export function getSmartAccountProvider<
             // Otherwise, build it
             targetSmartAccount = await buildSmartAccount({
                 wallet: currentWebAuthNWallet,
-                signViaPrivy,
+                signViaDynamic,
             });
 
             // Save the new one
@@ -144,10 +140,10 @@ async function buildSmartAccount<
     account extends SmartAccountV06 = SmartAccountV06,
 >({
     wallet,
-    signViaPrivy,
+    signViaDynamic,
 }: {
-    wallet: WebAuthNWallet | PrivyWallet;
-    signViaPrivy: (data: Hex, address: Address) => Promise<Hex>;
+    wallet: WebAuthNWallet | EcdsaWallet;
+    signViaDynamic: (data: Hex, address: Address) => Promise<Hex>;
 }): Promise<
     SmartAccountClient<transport, typeof currentChain, SmartAccount<account>>
 > {
@@ -185,12 +181,12 @@ async function buildSmartAccount<
             preDeterminedAccountAddress: wallet.address,
         });
     } else {
-        // That's a privy wallet
+        // That's a dynamic wallet
         smartAccount = await frakFallbackWalletSmartAccount(currentViemClient, {
             ecdsaAddress: wallet.publicKey,
             preDeterminedAccountAddress: wallet.address,
             signatureProvider({ hash }) {
-                return signViaPrivy(hash, wallet.publicKey);
+                return signViaDynamic(hash, wallet.publicKey);
             },
         });
     }

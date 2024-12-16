@@ -1,7 +1,7 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
-import type { PrivyInterface } from "@privy-io/react-auth";
+import type { Wallet } from "@dynamic-labs/sdk-react-core";
 import type { Hex, Transport } from "viem";
 import { createConnector } from "wagmi";
 
@@ -26,16 +26,14 @@ export function smartAccountConnector<
     // The current provider
     let provider: Provider | undefined;
 
-    // The privy message signer (null if not ready)
-    let signViaPrivy: PrivyInterface["signMessage"] | undefined = undefined;
+    // The ecdsa message signer (null if not ready)
+    let dynamicWallets: Wallet[] = [];
 
     // Create the wagmi connector itself
     return createConnector<
         Provider,
         {
-            onPrivyInterfaceUpdate: (
-                args: PrivyInterface["signMessage"]
-            ) => void;
+            onDynamicWalletUpdate: (args: Wallet[]) => void;
         }
     >((config) => ({
         id: "frak-wallet-connector",
@@ -154,17 +152,24 @@ export function smartAccountConnector<
                         });
                     },
 
-                    async signViaPrivy(message, address) {
-                        if (!signViaPrivy) {
-                            throw new Error("Privy not ready yet");
+                    async signViaDynamic(message, address) {
+                        if (!dynamicWallets.length) {
+                            throw new Error("Dynamic not ready yet");
                         }
-                        return (await signViaPrivy(
-                            message,
-                            {
-                                showWalletUIs: true,
-                            },
-                            address
-                        )) as Hex;
+
+                        // Find the right wallet
+                        const wallet = dynamicWallets.find(
+                            (w) => w.address === address
+                        );
+                        if (!wallet) {
+                            throw new Error("Wallet not found");
+                        }
+
+                        const signature = await wallet.signMessage(message);
+                        if (!signature) {
+                            throw new Error("No signature");
+                        }
+                        return signature as Hex;
                     },
                 });
             }
@@ -180,8 +185,8 @@ export function smartAccountConnector<
             config.emitter.emit("disconnect");
         },
 
-        onPrivyInterfaceUpdate(privySignMsg: PrivyInterface["signMessage"]) {
-            signViaPrivy = privySignMsg;
+        onDynamicWalletUpdate(wallets: Wallet[]) {
+            dynamicWallets = wallets;
         },
     }));
 }
