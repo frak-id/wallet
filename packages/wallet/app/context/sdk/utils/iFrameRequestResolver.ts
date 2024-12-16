@@ -100,6 +100,12 @@ export function createIFrameRequestResolver(
             return;
         }
         if ("iframeLifecycle" in message.data) {
+            const { iframeLifecycle } = message.data;
+            if (iframeLifecycle === "heartbeat") {
+                setReadyToHandleRequest();
+                return;
+            }
+
             console.error(
                 "Received an iframe lifecycle event on the iframe side, dismissing it"
             );

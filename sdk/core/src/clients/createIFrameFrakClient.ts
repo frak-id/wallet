@@ -154,8 +154,13 @@ export function createIFrameFrakClient({
         });
     };
 
+    // Setup heartbeat
+    const stopHeartbeat = setupHeartbeat(messageHandler, lifecycleManager);
+
     // Build our destroy function
     const destroy = async () => {
+        // Stop heartbeat
+        stopHeartbeat();
         // Destroy the channel manager
         channelManager.destroy();
         // Cleanup the message handler
@@ -182,10 +187,63 @@ export function createIFrameFrakClient({
 }
 
 /**
+ * Setup the heartbeat
+ * @param messageHandler
+ * @param lifecycleManager
+ */
+function setupHeartbeat(
+    messageHandler: IFrameMessageHandler,
+    lifecycleManager: IframeLifecycleManager
+) {
+    const HEARTBEAT_INTERVAL = 1_000; // Send heartbeat every second
+    const HEARTBEAT_TIMEOUT = 30_000; // 30 seconds timeout
+    let heartbeatInterval: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout;
+
+    function sendHeartbeat() {
+        messageHandler.sendEvent({
+            iframeLifecycle: "heartbeat",
+        });
+    }
+
+    // Start sending heartbeats
+    async function startHeartbeat() {
+        sendHeartbeat(); // Send initial heartbeat
+        heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+
+        // Set up timeout
+        timeoutId = setTimeout(() => {
+            stopHeartbeat();
+            console.log("Heartbeat timeout: connection failed");
+        }, HEARTBEAT_TIMEOUT);
+
+        await lifecycleManager.isConnected;
+
+        // We are now connected, stop the heartbeat
+        stopHeartbeat();
+    }
+
+    // Stop sending heartbeats
+    function stopHeartbeat() {
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+        }
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+    }
+
+    startHeartbeat();
+
+    // Return cleanup function
+    return stopHeartbeat;
+}
+
+/**
  * Perform the post connection setup
  * @param config
- * @param lifecycleManager
  * @param messageHandler
+ * @param lifecycleManager
  */
 export async function postConnectionSetup({
     config,
