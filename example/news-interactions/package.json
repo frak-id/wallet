@@ -37,7 +37,7 @@
     "react-router-dom": "^7.0.2",
     "remix-utils": "^8.0.0",
     "swiper": "^11.1.15",
-    "viem": "^2.21.48"
+    "viem": "^2.21.55"
   },
   "devDependencies": {
     "@react-router/dev": "^7.0.2",

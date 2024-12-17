@@ -51,7 +51,7 @@
     "react-day-picker": "^9.4.4",
     "react-dom": "^19",
     "react-hook-form": "^7.54.1",
-    "viem": "^2.21.48"
+    "viem": "^2.21.55"
   },
   "devDependencies": {
     "@types/node": "^22",
