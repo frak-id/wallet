@@ -1,6 +1,6 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { type Hex, hexToBytes } from "viem";
 
 /**

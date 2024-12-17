@@ -31,8 +31,8 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@react-router/node": "^7.0.2",
     "@react-router/serve": "^7.0.2",
-    "@simplewebauthn/browser": "^11.0.0",
-    "@simplewebauthn/server": "^11.0.0",
+    "@simplewebauthn/browser": "^13.0.0",
+    "@simplewebauthn/server": "^13.0.0",
     "@tanstack/query-sync-storage-persister": "^5.62.7",
     "@tanstack/react-query": "^5.62.7",
     "@tanstack/react-query-devtools": "^5.62.7",
@@ -67,7 +67,6 @@
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
     "@react-router/dev": "^7.0.2",
-    "@simplewebauthn/types": "^11.0.0",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",

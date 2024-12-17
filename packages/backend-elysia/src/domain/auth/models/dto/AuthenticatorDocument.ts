@@ -1,7 +1,7 @@
 import type {
     AuthenticatorTransportFuture,
     CredentialDeviceType,
-} from "@simplewebauthn/types";
+} from "@simplewebauthn/server";
 import type { Binary } from "mongodb";
 import type { Address, Hex } from "viem";
 

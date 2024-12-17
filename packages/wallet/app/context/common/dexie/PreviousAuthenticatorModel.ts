@@ -1,4 +1,4 @@
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
 import type { Address } from "viem";
 
 /**

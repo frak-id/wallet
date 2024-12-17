@@ -1,8 +1,10 @@
 import { blockchainContext, log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { verifyRegistrationResponse } from "@simplewebauthn/server";
-import type { RegistrationResponseJSON } from "@simplewebauthn/types";
+import {
+    type RegistrationResponseJSON,
+    verifyRegistrationResponse,
+} from "@simplewebauthn/server";
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
 import { WalletAuthResponseDto } from "../models/WalletSessionDto";

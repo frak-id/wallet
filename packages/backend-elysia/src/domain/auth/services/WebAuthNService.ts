@@ -4,8 +4,10 @@ import {
     sessionContext,
 } from "@backend-common";
 import { WebAuthN, kernelAddresses } from "@frak-labs/app-essentials";
-import { verifyAuthenticationResponse } from "@simplewebauthn/server";
-import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
+import {
+    type AuthenticationResponseJSON,
+    verifyAuthenticationResponse,
+} from "@simplewebauthn/server";
 import { Elysia } from "elysia";
 import { getSenderAddress } from "permissionless/actions";
 import { type Hex, concatHex, keccak256, toHex } from "viem";
