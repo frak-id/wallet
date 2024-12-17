@@ -2,13 +2,8 @@ import { Label } from "@/module/forms/Label";
 import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva, cx } from "class-variance-authority";
-import { createContext, forwardRef, useContext, useId } from "react";
-import type {
-    ComponentPropsWithoutRef,
-    ComponentRef,
-    HTMLAttributes,
-    ReactNode,
-} from "react";
+import { createContext, useContext, useId } from "react";
+import type { ComponentPropsWithRef, ReactNode } from "react";
 import { Controller, FormProvider, useFormContext } from "react-hook-form";
 import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
 import styles from "./index.module.css";
@@ -77,9 +72,8 @@ const FormItemContext = createContext<FormItemContextValue>(
     {} as FormItemContextValue
 );
 
-export interface FormItemProps
-    extends HTMLAttributes<HTMLDivElement>,
-        VariantProps<typeof formItemVariants> {}
+export type FormItemProps = ComponentPropsWithRef<"div"> &
+    VariantProps<typeof formItemVariants>;
 
 export const formItemVariants = cva(styles.form__item, {
     variants: {
@@ -90,26 +84,23 @@ export const formItemVariants = cva(styles.form__item, {
     },
 });
 
-const FormItem = forwardRef<HTMLDivElement, FormItemProps>(
-    ({ variant, className, ...props }, ref) => {
-        const id = useId();
+const FormItem = ({ ref, variant, className, ...props }: FormItemProps) => {
+    const id = useId();
 
-        return (
-            <FormItemContext.Provider value={{ id }}>
-                <div
-                    ref={ref}
-                    className={formItemVariants({ variant, className })}
-                    {...props}
-                />
-            </FormItemContext.Provider>
-        );
-    }
-);
+    return (
+        <FormItemContext.Provider value={{ id }}>
+            <div
+                ref={ref}
+                className={formItemVariants({ variant, className })}
+                {...props}
+            />
+        </FormItemContext.Provider>
+    );
+};
 FormItem.displayName = "FormItem";
 
-export interface FormLabelProps
-    extends ComponentPropsWithoutRef<typeof LabelPrimitive.Root>,
-        VariantProps<typeof formLabelVariants> {}
+export type FormLabelProps = ComponentPropsWithRef<typeof LabelPrimitive.Root> &
+    VariantProps<typeof formLabelVariants>;
 
 export const formLabelVariants = cva(styles.form__label, {
     variants: {
@@ -128,10 +119,14 @@ export const formLabelVariants = cva(styles.form__label, {
     },
 });
 
-const FormLabel = forwardRef<
-    ComponentRef<typeof LabelPrimitive.Root>,
-    FormLabelProps
->(({ variant, selected, weight, className, ...props }, ref) => {
+const FormLabel = ({
+    ref,
+    variant,
+    selected,
+    weight,
+    className,
+    ...props
+}: FormLabelProps) => {
     const { error, formItemId } = useFormField();
     const classNameError = error ? styles.form__error : "";
 
@@ -148,13 +143,10 @@ const FormLabel = forwardRef<
             {...props}
         />
     );
-});
+};
 FormLabel.displayName = "FormLabel";
 
-const FormControl = forwardRef<
-    ComponentRef<typeof Slot>,
-    ComponentPropsWithoutRef<typeof Slot>
->(({ ...props }, ref) => {
+const FormControl = ({ ref, ...props }: ComponentPropsWithRef<typeof Slot>) => {
     const { error, formItemId, formDescriptionId, formMessageId } =
         useFormField();
 
@@ -171,18 +163,25 @@ const FormControl = forwardRef<
             {...props}
         />
     );
-});
+};
 FormControl.displayName = "FormControl";
 
 export const formDescriptionVariants = cva(styles.form__description);
 
-const FormDescription = forwardRef<
-    HTMLParagraphElement,
-    HTMLAttributes<HTMLParagraphElement> & {
+export type FormDescriptionProps = ComponentPropsWithRef<"p"> &
+    VariantProps<typeof formDescriptionVariants> & {
         label?: string | ReactNode;
         classNameTitle?: string;
-    }
->(({ label, classNameTitle = "", className = "", children, ...props }, ref) => {
+    };
+
+const FormDescription = ({
+    ref,
+    label,
+    classNameTitle = "",
+    className = "",
+    children,
+    ...props
+}: FormDescriptionProps) => {
     const { formDescriptionId } = useFormField();
 
     return (
@@ -202,13 +201,15 @@ const FormDescription = forwardRef<
             </p>
         </>
     );
-});
+};
 FormDescription.displayName = "FormDescription";
 
-const FormMessage = forwardRef<
-    HTMLParagraphElement,
-    HTMLAttributes<HTMLParagraphElement>
->(({ className = "", children, ...props }, ref) => {
+const FormMessage = ({
+    ref,
+    className = "",
+    children,
+    ...props
+}: ComponentPropsWithRef<"p">) => {
     const { error, formMessageId } = useFormField();
     const body = error ? String(error?.message) : children;
 
@@ -226,13 +227,15 @@ const FormMessage = forwardRef<
             {body}
         </p>
     );
-});
+};
 FormMessage.displayName = "FormMessage";
 
-const FormValidMessage = forwardRef<
-    HTMLParagraphElement,
-    HTMLAttributes<HTMLParagraphElement>
->(({ className = "", children, ...props }, ref) => {
+const FormValidMessage = ({
+    ref,
+    className = "",
+    children,
+    ...props
+}: ComponentPropsWithRef<"p">) => {
     const { formMessageId, invalid, error } = useFormField();
 
     if (invalid || !!error) {
@@ -249,7 +252,7 @@ const FormValidMessage = forwardRef<
             {children}
         </p>
     );
-});
+};
 FormValidMessage.displayName = "FormValidMessage";
 
 export {

@@ -24,7 +24,7 @@ import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";
 import { Input, type InputProps } from "@module/component/forms/Input";
 import { Pencil } from "lucide-react";
-import { forwardRef, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
@@ -208,47 +208,47 @@ export function ProductDetails({ productId }: { productId: Hex }) {
     );
 }
 
-const InputWithToggle = forwardRef<HTMLInputElement, InputProps>(
-    ({ disabled, ...props }, ref) => {
-        const [isDisabled, setIsDisabled] = useState(true);
-        return (
-            <Row align={"center"}>
-                <Input
-                    {...props}
-                    ref={ref}
-                    disabled={isDisabled}
-                    onBlur={() => setIsDisabled(true)}
-                />
-                <button
-                    type={"button"}
-                    className={styles.inputWithToggle__button}
-                    onClick={() => setIsDisabled(!isDisabled)}
-                    disabled={disabled}
-                >
-                    <Pencil size={20} />
-                </button>
-            </Row>
-        );
-    }
-);
+const InputWithToggle = ({ ref, disabled, ...props }: InputProps) => {
+    const [isDisabled, setIsDisabled] = useState(true);
+    return (
+        <Row align={"center"}>
+            <Input
+                {...props}
+                ref={ref}
+                disabled={isDisabled}
+                onBlur={() => setIsDisabled(true)}
+            />
+            <button
+                type={"button"}
+                className={styles.inputWithToggle__button}
+                onClick={() => setIsDisabled(!isDisabled)}
+                disabled={disabled}
+            >
+                <Pencil size={20} />
+            </button>
+        </Row>
+    );
+};
 InputWithToggle.displayName = "InputWithToggle";
 
-const MultiSelectWithToggle = forwardRef<HTMLButtonElement, MultiSelectProps>(
-    ({ disabled, ...props }, ref) => {
-        const [isDisabled, setIsDisabled] = useState(true);
-        return (
-            <Row align={"center"}>
-                <MultiSelect ref={ref} disabled={isDisabled} {...props} />
-                <button
-                    type={"button"}
-                    className={styles.inputWithToggle__button}
-                    onClick={() => setIsDisabled(!isDisabled)}
-                    disabled={disabled}
-                >
-                    <Pencil size={20} />
-                </button>
-            </Row>
-        );
-    }
-);
+const MultiSelectWithToggle = ({
+    ref,
+    disabled,
+    ...props
+}: MultiSelectProps) => {
+    const [isDisabled, setIsDisabled] = useState(true);
+    return (
+        <Row align={"center"}>
+            <MultiSelect ref={ref} disabled={isDisabled} {...props} />
+            <button
+                type={"button"}
+                className={styles.inputWithToggle__button}
+                onClick={() => setIsDisabled(!isDisabled)}
+                disabled={disabled}
+            >
+                <Pencil size={20} />
+            </button>
+        </Row>
+    );
+};
 MultiSelectWithToggle.displayName = "MultiSelectWithToggle";

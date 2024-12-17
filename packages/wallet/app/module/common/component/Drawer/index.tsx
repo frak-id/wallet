@@ -1,11 +1,5 @@
 import { prefixDrawerCss } from "@module/utils/prefixDrawerCss";
-import {
-    type ComponentProps,
-    type ComponentPropsWithoutRef,
-    type ComponentRef,
-    type HTMLAttributes,
-    forwardRef,
-} from "react";
+import type { ComponentProps, ComponentPropsWithRef } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import styles from "./index.module.css";
 
@@ -26,22 +20,25 @@ const DrawerPortal = DrawerPrimitive.Portal;
 
 // const DrawerClose = DrawerPrimitive.Close;
 
-const DrawerOverlay = forwardRef<
-    ComponentRef<typeof DrawerPrimitive.Overlay>,
-    ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
->(({ className, ...props }, ref) => (
+const DrawerOverlay = ({
+    ref,
+    className,
+    ...props
+}: ComponentPropsWithRef<typeof DrawerPrimitive.Overlay>) => (
     <DrawerPrimitive.Overlay
         ref={ref}
         className={`${prefixDrawerCss("overlay")} ${styles.drawer__overlay} ${className}`}
         {...props}
     />
-));
+);
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
-const DrawerContent = forwardRef<
-    ComponentRef<typeof DrawerPrimitive.Content>,
-    ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+const DrawerContent = ({
+    ref,
+    className,
+    children,
+    ...props
+}: ComponentPropsWithRef<typeof DrawerPrimitive.Content>) => (
     <DrawerPortal>
         <DrawerOverlay />
         <DrawerPrimitive.Content
@@ -59,43 +56,39 @@ const DrawerContent = forwardRef<
             </DrawerPrimitive.Description>
         </DrawerPrimitive.Content>
     </DrawerPortal>
-));
+);
 DrawerContent.displayName = "DrawerContent";
 
-const DrawerHeader = ({
-    className,
-    ...props
-}: HTMLAttributes<HTMLDivElement>) => (
+const DrawerHeader = ({ className, ...props }: ComponentProps<"div">) => (
     <div className={`${styles.drawer__header} ${className}`} {...props} />
 );
 DrawerHeader.displayName = "DrawerHeader";
 
-const DrawerFooter = ({
-    className,
-    ...props
-}: HTMLAttributes<HTMLDivElement>) => (
+const DrawerFooter = ({ className, ...props }: ComponentProps<"div">) => (
     <div className={`${styles.drawer__footer} ${className}`} {...props} />
 );
 DrawerFooter.displayName = "DrawerFooter";
 
-const DrawerTitle = forwardRef<
-    ComponentRef<typeof DrawerPrimitive.Title>,
-    ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
->(({ className, ...props }, ref) => (
+const DrawerTitle = ({
+    ref,
+    className,
+    ...props
+}: ComponentPropsWithRef<typeof DrawerPrimitive.Title>) => (
     <DrawerPrimitive.Title ref={ref} className={`${className}`} {...props} />
-));
+);
 DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
 
-const DrawerDescription = forwardRef<
-    ComponentRef<typeof DrawerPrimitive.Description>,
-    ComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
->(({ className, ...props }, ref) => (
+const DrawerDescription = ({
+    ref,
+    className,
+    ...props
+}: ComponentPropsWithRef<typeof DrawerPrimitive.Description>) => (
     <DrawerPrimitive.Description
         ref={ref}
         className={`${className}`}
         {...props}
     />
-));
+);
 DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
 export { Drawer, DrawerTrigger, DrawerContent };

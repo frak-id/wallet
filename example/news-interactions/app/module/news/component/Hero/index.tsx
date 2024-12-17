@@ -1,12 +1,20 @@
 import { ImageRemote } from "@/module/common/component/ImageRemote";
-import { forwardRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import { Link } from "react-router";
 import styles from "./index.module.css";
 
-export const Hero = forwardRef<
-    HTMLHeadingElement,
-    { id: string; image: string; title: string; isArticle?: boolean }
->(({ id, image, title, isArticle }, ref) => {
+export const Hero = ({
+    ref,
+    id,
+    image,
+    title,
+    isArticle,
+}: ComponentPropsWithRef<"h1"> & {
+    id: string;
+    image: string;
+    title: string;
+    isArticle?: boolean;
+}) => {
     const Content = (
         <>
             <ImageRemote
@@ -33,6 +41,6 @@ export const Hero = forwardRef<
             )}
         </div>
     );
-});
+};
 
 Hero.displayName = "Hero";

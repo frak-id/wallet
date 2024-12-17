@@ -1,12 +1,12 @@
-import { forwardRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
-export const IconInfo = forwardRef<HTMLSpanElement>((props, ref) => {
+export const IconInfo = ({ ref, ...props }: ComponentPropsWithRef<"span">) => {
     return (
         <span ref={ref} {...props} className={styles.iconInfo}>
             i
         </span>
     );
-});
+};
 
 IconInfo.displayName = "IconInfo";

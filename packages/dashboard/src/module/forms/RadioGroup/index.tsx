@@ -1,14 +1,14 @@
 "use client";
 
 import { Indicator, Item, Root } from "@radix-ui/react-radio-group";
-import { forwardRef } from "react";
-import type { ComponentPropsWithoutRef, ComponentRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
-const RadioGroup = forwardRef<
-    ComponentRef<typeof Root>,
-    ComponentPropsWithoutRef<typeof Root>
->(({ className, ...props }, ref) => {
+const RadioGroup = ({
+    ref,
+    className,
+    ...props
+}: ComponentPropsWithRef<typeof Root>) => {
     return (
         <Root
             className={`${styles.radioGroup} ${className}`}
@@ -16,13 +16,14 @@ const RadioGroup = forwardRef<
             ref={ref}
         />
     );
-});
+};
 RadioGroup.displayName = Root.displayName;
 
-const RadioGroupItem = forwardRef<
-    ComponentRef<typeof Item>,
-    ComponentPropsWithoutRef<typeof Item>
->(({ className, ...props }, ref) => {
+const RadioGroupItem = ({
+    ref,
+    className,
+    ...props
+}: ComponentPropsWithRef<typeof Item>) => {
     return (
         <Item
             ref={ref}
@@ -32,7 +33,7 @@ const RadioGroupItem = forwardRef<
             <Indicator className={`${styles.radioGroup__indicator}`} />
         </Item>
     );
-});
+};
 RadioGroupItem.displayName = Item.displayName;
 
 export { RadioGroup, RadioGroupItem };

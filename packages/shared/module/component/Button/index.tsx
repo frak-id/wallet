@@ -2,19 +2,17 @@ import { Spinner } from "@module/component/Spinner";
 import { mergeElement } from "@module/utils/mergeElement";
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
-import { forwardRef } from "react";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ComponentPropsWithRef, ReactNode } from "react";
 import styles from "./index.module.css";
 
-export interface ButtonProps
-    extends ButtonHTMLAttributes<HTMLButtonElement>,
-        VariantProps<typeof buttonVariants> {
-    isLoading?: boolean;
-    leftIcon?: ReactNode;
-    rightIcon?: ReactNode;
-    asChild?: boolean;
-    children?: string | ReactNode;
-}
+export type ButtonProps = ComponentPropsWithRef<"button"> &
+    VariantProps<typeof buttonVariants> & {
+        isLoading?: boolean;
+        leftIcon?: ReactNode;
+        rightIcon?: ReactNode;
+        asChild?: boolean;
+        children?: string | ReactNode;
+    };
 
 export const buttonVariants = cva(styles.button, {
     variants: {
@@ -67,58 +65,54 @@ export const buttonVariants = cva(styles.button, {
     },
 });
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-    (
-        {
-            variant,
-            className = "",
-            size,
-            blur,
-            width,
-            align,
-            gap,
-            isLoading,
-            leftIcon,
-            rightIcon,
-            asChild = false,
-            type = "button",
-            children,
-            ...props
-        },
-        ref
-    ) => {
-        const Comp = asChild ? Slot : "button";
-        return (
-            <Comp
-                className={buttonVariants({
-                    variant,
-                    size,
-                    blur,
-                    width,
-                    align,
-                    gap,
-                    className,
-                })}
-                ref={ref}
-                type={type}
-                {...props}
-            >
-                <>
-                    {isLoading && <Spinner />}
-                    {leftIcon}
-                    {asChild
-                        ? mergeElement(children, {
-                              className: buttonVariants({
-                                  variant,
-                                  size,
-                                  className,
-                              }),
-                          })
-                        : children}
-                    {rightIcon}
-                </>
-            </Comp>
-        );
-    }
-);
+export const Button = ({
+    ref,
+    variant,
+    className = "",
+    size,
+    blur,
+    width,
+    align,
+    gap,
+    isLoading,
+    leftIcon,
+    rightIcon,
+    asChild = false,
+    type = "button",
+    children,
+    ...props
+}: ButtonProps) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+        <Comp
+            className={buttonVariants({
+                variant,
+                size,
+                blur,
+                width,
+                align,
+                gap,
+                className,
+            })}
+            ref={ref}
+            type={type}
+            {...props}
+        >
+            <>
+                {isLoading && <Spinner />}
+                {leftIcon}
+                {asChild
+                    ? mergeElement(children, {
+                          className: buttonVariants({
+                              variant,
+                              size,
+                              className,
+                          }),
+                      })
+                    : children}
+                {rightIcon}
+            </>
+        </Comp>
+    );
+};
 Button.displayName = "Button";
