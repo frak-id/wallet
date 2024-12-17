@@ -187,29 +187,25 @@ export function TableMembers() {
                     postTable={
                         <>
                             {(selectedMembers?.length ?? 0) > 0 && (
-                                <>
-                                    <Row
-                                        align={"center"}
-                                        className={styles.selectedMembersRow}
+                                <Row
+                                    align={"center"}
+                                    className={styles.selectedMembersRow}
+                                >
+                                    <p>
+                                        You have selected{" "}
+                                        <strong>
+                                            {selectedMembers?.length}
+                                        </strong>{" "}
+                                        Members
+                                    </p>
+                                    <Button
+                                        type={"button"}
+                                        onClick={() => setSelectedMembers([])}
+                                        variant={"outline"}
                                     >
-                                        <p>
-                                            You have selected{" "}
-                                            <strong>
-                                                {selectedMembers?.length}
-                                            </strong>{" "}
-                                            Members
-                                        </p>
-                                        <Button
-                                            type={"button"}
-                                            onClick={() =>
-                                                setSelectedMembers([])
-                                            }
-                                            variant={"outline"}
-                                        >
-                                            Clear selection
-                                        </Button>
-                                    </Row>
-                                </>
+                                        Clear selection
+                                    </Button>
+                                </Row>
                             )}
 
                             {page.totalResult > (filters.limit ?? 10) && (

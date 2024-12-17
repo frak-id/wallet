@@ -6,7 +6,6 @@ import styles from "./index.module.css";
 
 const Pagination = ({ className, ...props }: ComponentProps<"nav">) => (
     <nav
-        role="navigation"
         aria-label="pagination"
         className={`${styles.pagination} ${className}`}
         {...props}

@@ -84,7 +84,7 @@ export function RewardFiltering({
                                 value={
                                     rewardsInputDisabled
                                         ? ""
-                                        : field.value ?? ""
+                                        : (field.value ?? "")
                                 }
                                 placeholder={"Min reward"}
                                 length={"small"}
@@ -133,7 +133,7 @@ export function RewardFiltering({
                                 value={
                                     rewardsInputDisabled
                                         ? ""
-                                        : field.value ?? ""
+                                        : (field.value ?? "")
                                 }
                                 placeholder={"Max reward"}
                                 length={"small"}

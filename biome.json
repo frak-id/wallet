@@ -50,6 +50,12 @@
                 "useShorthandAssign": "error",
                 "useImportType": "error",
                 "useExportType": "error"
+            },
+            "a11y": {
+                "useGenericFontNames": "off"
+            },
+            "suspicious": {
+                "noEmptyBlock": "off"
             }
         }
     },
