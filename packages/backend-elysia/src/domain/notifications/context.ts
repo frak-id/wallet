@@ -9,7 +9,8 @@ export const notificationContext = new Elysia({
 })
     .use(postgresContext)
     .decorate(({ postgresDb, ...decorators }) => {
-        const notificationDb = drizzle(postgresDb, {
+        const notificationDb = drizzle({
+            client: postgresDb,
             schema: { pushTokensTable },
         });
         return {

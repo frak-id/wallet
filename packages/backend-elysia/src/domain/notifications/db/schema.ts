@@ -23,12 +23,12 @@ export const pushTokensTable = pgTable(
         expireAt: timestamp("expire_at"),
         createdAt: timestamp("created_at").defaultNow(),
     },
-    (table) => ({
-        walletIdx: index("wallet_push_tokens_idx").on(table.wallet),
-        unqPushToken: unique("unique_push_token").on(
+    (table) => [
+        index("wallet_push_tokens_idx").on(table.wallet),
+        unique("unique_push_token").on(
             table.wallet,
             table.endpoint,
             table.keyP256dh
         ),
-    })
+    ]
 );
