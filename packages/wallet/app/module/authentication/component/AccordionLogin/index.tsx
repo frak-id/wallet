@@ -12,11 +12,7 @@ export function AccordionLogin({
     children,
 }: PropsWithChildren<{ trigger: ReactNode }>) {
     return (
-        <Accordion
-            type={"single"}
-            collapsible
-            className={styles.accordionLogin}
-        >
+        <Accordion type={"single"} collapsible>
             <AccordionItem value={"item-1"}>
                 <AccordionTrigger className={styles.accordionLogin__trigger}>
                     {trigger}

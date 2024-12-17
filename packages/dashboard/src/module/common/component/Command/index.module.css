@@ -6,9 +6,6 @@
     overflow: hidden;
 }
 
-.command__dialog {
-}
-
 .command__inputWrapper {
     display: flex;
     align-items: center;

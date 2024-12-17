@@ -108,9 +108,7 @@ export function AlertDialog({
                     ) : (
                         <AlertDialogPrimitive.Description />
                     )}
-                    {text && (
-                        <div className={styles.alertDialog__text}>{text}</div>
-                    )}
+                    {text && <div>{text}</div>}
                     <div
                         className={`${styles.alertDialog__footer} ${footerClassName}`}
                     >

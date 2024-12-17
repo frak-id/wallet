@@ -82,11 +82,7 @@ const DrawerTitle = forwardRef<
     ElementRef<typeof DrawerPrimitive.Title>,
     ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
 >(({ className, ...props }, ref) => (
-    <DrawerPrimitive.Title
-        ref={ref}
-        className={`${styles.drawer__title} ${className}`}
-        {...props}
-    />
+    <DrawerPrimitive.Title ref={ref} className={`${className}`} {...props} />
 ));
 DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
 
@@ -96,7 +92,7 @@ const DrawerDescription = forwardRef<
 >(({ className, ...props }, ref) => (
     <DrawerPrimitive.Description
         ref={ref}
-        className={`${styles.drawer__description} ${className}`}
+        className={`${className}`}
         {...props}
     />
 ));

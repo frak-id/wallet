@@ -105,8 +105,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             >
                 <>
                     {isLoading && <Spinner />}
-                    {leftIcon &&
-                        mergeElement(leftIcon, { className: styles.leftIcon })}
+                    {leftIcon}
                     {asChild
                         ? mergeElement(children, {
                               className: buttonVariants({
@@ -116,10 +115,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                               }),
                           })
                         : children}
-                    {rightIcon &&
-                        mergeElement(rightIcon, {
-                            className: styles.rightIcon,
-                        })}
+                    {rightIcon}
                 </>
             </Comp>
         );

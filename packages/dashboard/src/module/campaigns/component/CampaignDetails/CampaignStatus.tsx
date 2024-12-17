@@ -12,7 +12,7 @@ import { useMemo } from "react";
 import type { Address, Hex } from "viem";
 import styles from "./CampaignStatus.module.css";
 
-const statusVariants = cva(styles.campaignStatus__status, {
+const statusVariants = cva(undefined, {
     variants: {
         variant: {
             loading: styles.loading,

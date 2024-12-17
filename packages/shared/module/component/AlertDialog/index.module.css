@@ -59,9 +59,6 @@
     font-weight: 400;
 }
 
-.alertDialog__text {
-}
-
 .alertDialog__footer {
     display: flex;
     justify-content: flex-end;

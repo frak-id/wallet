@@ -5,9 +5,6 @@
     padding: 0 19px;
 }
 
-.listItem {
-}
-
 .listItem + .listItem {
     border-top: 1px dotted #e0e0e0;
     padding-top: 6px;
@@ -17,9 +14,6 @@
     display: flex;
     align-items: center;
     gap: 11px;
-}
-
-.listItem__linkSummary {
 }
 
 .listItem__contentSummary {
