@@ -3,11 +3,11 @@
 import { Indicator, Root } from "@radix-ui/react-checkbox";
 import { Check, Minus } from "lucide-react";
 import { forwardRef } from "react";
-import type { ComponentPropsWithoutRef, ElementRef } from "react";
+import type { ComponentPropsWithoutRef, ComponentRef } from "react";
 import styles from "./index.module.css";
 
 export const Checkbox = forwardRef<
-    ElementRef<typeof Root>,
+    ComponentRef<typeof Root>,
     ComponentPropsWithoutRef<typeof Root>
 >(({ ...props }, ref) => {
     return (

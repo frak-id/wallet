@@ -2,7 +2,7 @@ import { prefixDrawerCss } from "@module/utils/prefixDrawerCss";
 import {
     type ComponentProps,
     type ComponentPropsWithoutRef,
-    type ElementRef,
+    type ComponentRef,
     type HTMLAttributes,
     forwardRef,
 } from "react";
@@ -27,7 +27,7 @@ const DrawerPortal = DrawerPrimitive.Portal;
 // const DrawerClose = DrawerPrimitive.Close;
 
 const DrawerOverlay = forwardRef<
-    ElementRef<typeof DrawerPrimitive.Overlay>,
+    ComponentRef<typeof DrawerPrimitive.Overlay>,
     ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
     <DrawerPrimitive.Overlay
@@ -39,7 +39,7 @@ const DrawerOverlay = forwardRef<
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
 const DrawerContent = forwardRef<
-    ElementRef<typeof DrawerPrimitive.Content>,
+    ComponentRef<typeof DrawerPrimitive.Content>,
     ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
     <DrawerPortal>
@@ -79,7 +79,7 @@ const DrawerFooter = ({
 DrawerFooter.displayName = "DrawerFooter";
 
 const DrawerTitle = forwardRef<
-    ElementRef<typeof DrawerPrimitive.Title>,
+    ComponentRef<typeof DrawerPrimitive.Title>,
     ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
 >(({ className, ...props }, ref) => (
     <DrawerPrimitive.Title ref={ref} className={`${className}`} {...props} />
@@ -87,7 +87,7 @@ const DrawerTitle = forwardRef<
 DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
 
 const DrawerDescription = forwardRef<
-    ElementRef<typeof DrawerPrimitive.Description>,
+    ComponentRef<typeof DrawerPrimitive.Description>,
     ComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
 >(({ className, ...props }, ref) => (
     <DrawerPrimitive.Description

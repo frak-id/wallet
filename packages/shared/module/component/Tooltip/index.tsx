@@ -7,7 +7,7 @@ import {
     Trigger,
 } from "@radix-ui/react-tooltip";
 import { forwardRef } from "react";
-import type { ElementRef, ReactNode } from "react";
+import type { ComponentRef, ReactNode } from "react";
 import styles from "./index.module.css";
 
 type TooltipProps = {
@@ -18,7 +18,7 @@ type TooltipProps = {
     side?: "top" | "bottom" | "left" | "right";
 };
 
-export const Tooltip = forwardRef<ElementRef<typeof Provider>, TooltipProps>(
+export const Tooltip = forwardRef<ComponentRef<typeof Provider>, TooltipProps>(
     (
         { content, hidden = false, className = "", children, side, ...props },
         ref

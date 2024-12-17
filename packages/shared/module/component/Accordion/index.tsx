@@ -2,7 +2,7 @@ import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";
 import {
     type ComponentPropsWithoutRef,
-    type ElementRef,
+    type ComponentRef,
     forwardRef,
 } from "react";
 import styles from "./index.module.css";
@@ -10,7 +10,7 @@ import styles from "./index.module.css";
 const Accordion = AccordionPrimitive.Root;
 
 const AccordionItem = forwardRef<
-    ElementRef<typeof AccordionPrimitive.Item>,
+    ComponentRef<typeof AccordionPrimitive.Item>,
     ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
 >(({ className = "", ...props }, ref) => (
     <AccordionPrimitive.Item
@@ -22,7 +22,7 @@ const AccordionItem = forwardRef<
 AccordionItem.displayName = "AccordionItem";
 
 const AccordionTrigger = forwardRef<
-    ElementRef<typeof AccordionPrimitive.Trigger>,
+    ComponentRef<typeof AccordionPrimitive.Trigger>,
     ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
 >(({ className = "", children, ...props }, ref) => (
     <AccordionPrimitive.Header className={styles.accordion__header} asChild>
@@ -41,7 +41,7 @@ const AccordionTrigger = forwardRef<
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 
 const AccordionContent = forwardRef<
-    ElementRef<typeof AccordionPrimitive.Content>,
+    ComponentRef<typeof AccordionPrimitive.Content>,
     ComponentPropsWithoutRef<typeof AccordionPrimitive.Content> & {
         classNameText?: string;
     }

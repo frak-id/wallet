@@ -2,7 +2,7 @@
 
 import { Content, Portal, Root, Trigger } from "@radix-ui/react-popover";
 import { forwardRef } from "react";
-import type { ComponentPropsWithoutRef, ElementRef } from "react";
+import type { ComponentPropsWithoutRef, ComponentRef } from "react";
 import styles from "./index.module.css";
 
 const Popover = Root;
@@ -10,7 +10,7 @@ const Popover = Root;
 const PopoverTrigger = Trigger;
 
 const PopoverContent = forwardRef<
-    ElementRef<typeof Content>,
+    ComponentRef<typeof Content>,
     ComponentPropsWithoutRef<typeof Content>
 >(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
     <Portal>

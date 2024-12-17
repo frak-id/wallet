@@ -2,11 +2,11 @@
 
 import { Indicator, Item, Root } from "@radix-ui/react-radio-group";
 import { forwardRef } from "react";
-import type { ComponentPropsWithoutRef, ElementRef } from "react";
+import type { ComponentPropsWithoutRef, ComponentRef } from "react";
 import styles from "./index.module.css";
 
 const RadioGroup = forwardRef<
-    ElementRef<typeof Root>,
+    ComponentRef<typeof Root>,
     ComponentPropsWithoutRef<typeof Root>
 >(({ className, ...props }, ref) => {
     return (
@@ -20,7 +20,7 @@ const RadioGroup = forwardRef<
 RadioGroup.displayName = Root.displayName;
 
 const RadioGroupItem = forwardRef<
-    ElementRef<typeof Item>,
+    ComponentRef<typeof Item>,
     ComponentPropsWithoutRef<typeof Item>
 >(({ className, ...props }, ref) => {
     return (

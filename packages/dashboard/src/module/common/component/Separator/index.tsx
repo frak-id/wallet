@@ -2,11 +2,11 @@
 
 import { Root } from "@radix-ui/react-separator";
 import { forwardRef } from "react";
-import type { ComponentPropsWithoutRef, ElementRef } from "react";
+import type { ComponentPropsWithoutRef, ComponentRef } from "react";
 import styles from "./index.module.css";
 
 export const Separator = forwardRef<
-    ElementRef<typeof Root>,
+    ComponentRef<typeof Root>,
     ComponentPropsWithoutRef<typeof Root>
 >(
     (

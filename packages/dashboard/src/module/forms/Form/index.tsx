@@ -5,7 +5,7 @@ import { type VariantProps, cva, cx } from "class-variance-authority";
 import { createContext, forwardRef, useContext, useId } from "react";
 import type {
     ComponentPropsWithoutRef,
-    ElementRef,
+    ComponentRef,
     HTMLAttributes,
     ReactNode,
 } from "react";
@@ -129,7 +129,7 @@ export const formLabelVariants = cva(styles.form__label, {
 });
 
 const FormLabel = forwardRef<
-    ElementRef<typeof LabelPrimitive.Root>,
+    ComponentRef<typeof LabelPrimitive.Root>,
     FormLabelProps
 >(({ variant, selected, weight, className, ...props }, ref) => {
     const { error, formItemId } = useFormField();
@@ -152,7 +152,7 @@ const FormLabel = forwardRef<
 FormLabel.displayName = "FormLabel";
 
 const FormControl = forwardRef<
-    ElementRef<typeof Slot>,
+    ComponentRef<typeof Slot>,
     ComponentPropsWithoutRef<typeof Slot>
 >(({ ...props }, ref) => {
     const { error, formItemId, formDescriptionId, formMessageId } =

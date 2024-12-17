@@ -1,9 +1,9 @@
 import { cx } from "class-variance-authority";
 import { forwardRef } from "react";
-import type { ElementRef, HTMLAttributes } from "react";
+import type { ComponentRef, HTMLAttributes } from "react";
 import styles from "./index.module.css";
 
-type SpinnerElement = ElementRef<"span">;
+type SpinnerElement = ComponentRef<"span">;
 interface SpinnerProps extends HTMLAttributes<HTMLSpanElement> {
     className?: string;
 }
