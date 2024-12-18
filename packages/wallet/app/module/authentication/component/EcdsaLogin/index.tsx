@@ -11,7 +11,7 @@ export function EcdsaLogin() {
     const { mutate: logIn } = usePrivyCrossAppAuthenticate();
 
     return (
-        <Button type={"button"} onClick={() => logIn()}>
+        <Button type={"button"} onClick={() => logIn()} variant={"primary"}>
             Connect via Privy
         </Button>
     );
