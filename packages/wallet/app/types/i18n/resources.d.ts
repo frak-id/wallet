@@ -128,7 +128,11 @@ interface Resources {
         };
         wallet: {
             activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
-            biometryInfos: "Biometry informations";
+            settings: {
+                biometryInfo: "Biometry informations";
+                ecdsaInfo: "Login informations";
+                ecdsaWallet: "Ecdsa wallet";
+            };
             installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
             interaction: {
                 CREATE_REFERRAL_LINK: "Created share link";
@@ -237,9 +241,6 @@ interface Resources {
             welcome: {
                 title: "Welcome in your wallet";
                 text: "This wallet will enable you to collect all the rewards and much more.";
-            };
-            errors: {
-                webauthnNotSupported: "Open this page on your <strong>default browser</strong>, or use a compatible browser to create your wallet. Be sure to use the <strong>latest version</strong> of your browser.";
             };
         };
     };

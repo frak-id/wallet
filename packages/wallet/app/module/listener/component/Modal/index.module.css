@@ -179,6 +179,8 @@
     all: unset;
     cursor: pointer;
     text-decoration: underline;
+    display: inline-flex;
+    gap: 8px;
 }
 
 .modalListener__iconContainer {

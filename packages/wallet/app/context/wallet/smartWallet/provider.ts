@@ -4,12 +4,14 @@ import {
 } from "@/context/blockchain/aa-provider";
 import { currentChain, currentViemClient } from "@/context/blockchain/provider";
 import { getSignOptions } from "@/context/wallet/action/signOptions";
+import { frakFallbackWalletSmartAccount } from "@/context/wallet/smartWallet/FrakFallbackSmartWallet";
 import { frakWalletSmartAccount } from "@/context/wallet/smartWallet/FrakSmartWallet";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
 import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import { getSafeSession } from "@/module/listener/utils/localStorage";
+import type { EcdsaWallet } from "@/types/Session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { jotaiStore } from "@module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
@@ -18,17 +20,24 @@ import {
     createSmartAccountClient,
 } from "permissionless";
 import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
-import type { Transport } from "viem";
+import type { Address, Hex, Transport } from "viem";
 import type { SmartAccount } from "viem/account-abstraction";
 
 /**
  * Properties
  */
-type SmartAccountProvierParameters = {
+type SmartAccountProviderParameters = {
     /**
      * Method when the account has changed
      */
-    onAccountChanged: (newWallet?: WebAuthNWallet) => void;
+    onAccountChanged: (newWallet?: WebAuthNWallet | EcdsaWallet) => void;
+
+    /**
+     * Method used to sign a message via ecdsa
+     * @param data
+     * @param address
+     */
+    signViaEcdsa: (data: Hex, address: Address) => Promise<Hex>;
 };
 
 /**
@@ -37,7 +46,7 @@ type SmartAccountProvierParameters = {
 export function getSmartAccountProvider<
     transport extends Transport = Transport,
     account extends SmartAccountV06 = SmartAccountV06,
->({ onAccountChanged }: SmartAccountProvierParameters) {
+>({ onAccountChanged, signViaEcdsa }: SmartAccountProviderParameters) {
     console.log("Building a new smart account provider");
     // A few types shortcut
     type ConnectorClient = SmartAccountClient<
@@ -101,6 +110,7 @@ export function getSmartAccountProvider<
             // Otherwise, build it
             targetSmartAccount = await buildSmartAccount({
                 wallet: currentWebAuthNWallet,
+                signViaEcdsa,
             });
 
             // Save the new one
@@ -130,39 +140,56 @@ async function buildSmartAccount<
     account extends SmartAccountV06 = SmartAccountV06,
 >({
     wallet,
-}: { wallet: WebAuthNWallet }): Promise<
+    signViaEcdsa,
+}: {
+    wallet: WebAuthNWallet | EcdsaWallet;
+    signViaEcdsa: (data: Hex, address: Address) => Promise<Hex>;
+}): Promise<
     SmartAccountClient<transport, typeof currentChain, SmartAccount<account>>
 > {
-    // Get the smart wallet client
-    const smartAccount = await frakWalletSmartAccount(currentViemClient, {
-        authenticatorId: wallet.authenticatorId,
-        signerPubKey: wallet.publicKey,
-        signatureProvider: async (message) => {
-            // Get the signature options from server
-            const options = await getSignOptions({
-                authenticatorId: wallet.authenticatorId,
-                toSign: message,
-            });
+    let smartAccount: SmartAccountV06;
+    // Get the webauthn smart wallet client
+    if (typeof wallet.publicKey === "object") {
+        // That's a webauthn wallet
+        smartAccount = await frakWalletSmartAccount(currentViemClient, {
+            authenticatorId: wallet.authenticatorId,
+            signerPubKey: wallet.publicKey,
+            signatureProvider: async (message) => {
+                // Get the signature options from server
+                const options = await getSignOptions({
+                    authenticatorId: wallet.authenticatorId,
+                    toSign: message,
+                });
 
-            // Start the client authentication
-            const authenticationResponse = await startAuthentication({
-                optionsJSON: options,
-            });
+                // Start the client authentication
+                const authenticationResponse = await startAuthentication({
+                    optionsJSON: options,
+                });
 
-            // Store that in our last webauthn action atom
-            jotaiStore.set(lastWebAuthNActionAtom, {
-                wallet: wallet.address,
-                signature: authenticationResponse,
-                msg: options.challenge,
-            });
+                // Store that in our last webauthn action atom
+                jotaiStore.set(lastWebAuthNActionAtom, {
+                    wallet: wallet.address,
+                    signature: authenticationResponse,
+                    msg: options.challenge,
+                });
 
-            // Store this shit somewhere
+                // Store this shit somewhere
 
-            // Perform the verification of the signature
-            return parseWebAuthNAuthentication(authenticationResponse);
-        },
-        preDeterminedAccountAddress: wallet.address,
-    });
+                // Perform the verification of the signature
+                return parseWebAuthNAuthentication(authenticationResponse);
+            },
+            preDeterminedAccountAddress: wallet.address,
+        });
+    } else {
+        // That's a dynamic wallet
+        smartAccount = await frakFallbackWalletSmartAccount(currentViemClient, {
+            ecdsaAddress: wallet.publicKey,
+            preDeterminedAccountAddress: wallet.address,
+            signatureProvider({ hash }) {
+                return signViaEcdsa(hash, wallet.publicKey);
+            },
+        });
+    }
 
     // Get the bundler and paymaster clients
     const pimlicoTransport = getPimlicoTransport();

@@ -1,4 +1,3 @@
-import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
 import styles from "@/module/listener/component/Modal/index.module.css";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
@@ -90,7 +89,7 @@ export function OpenSessionModalStep({
     }, [currentSession, onFinish, isIdle]);
 
     return (
-        <RequireWebAuthN>
+        <>
             <div
                 className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
             >
@@ -116,6 +115,6 @@ export function OpenSessionModalStep({
                     {error.message}
                 </p>
             )}
-        </RequireWebAuthN>
+        </>
     );
 }

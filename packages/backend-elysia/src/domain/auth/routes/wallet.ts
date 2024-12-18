@@ -7,6 +7,7 @@ import {
 } from "@simplewebauthn/server";
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
+import { verifyMessage } from "viem/actions";
 import { WalletAuthResponseDto } from "../models/WalletSessionDto";
 import { walletSdkSessionService } from "../services/WalletSdkSessionService";
 import { webAuthNService } from "../services/WebAuthNService";
@@ -50,6 +51,86 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             response: {
                 404: t.String(),
                 200: t.Omit(WalletAuthResponseDto, ["sdkJwt"]),
+            },
+        }
+    )
+    // Ecdsa login
+    .post(
+        "/ecdsaLogin",
+        async ({
+            // Request
+            body: { expectedChallenge, signature, wallet, ssoId },
+            // Response
+            error,
+            // Context
+            client,
+            getEcdsaWalletAddress,
+            walletJwt,
+            generateSdkJwt,
+            resolveSsoSession,
+        }) => {
+            // Rebuild the message that have been signed
+            const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${expectedChallenge}`;
+
+            // Verify the message signature
+            const isValidSignature = await verifyMessage(client, {
+                signature,
+                message,
+                address: wallet,
+            });
+            if (!isValidSignature) {
+                return error(404, "Invalid signature");
+            }
+
+            const authenticatorId = `ecdsa-${wallet}` as const;
+
+            // Get the wallet address
+            const walletAddress = await getEcdsaWalletAddress({
+                ecdsaAddress: wallet,
+            });
+
+            // Create the token and set the cookie
+            const token = await walletJwt.sign({
+                address: walletAddress,
+                authenticatorId,
+                publicKey: wallet,
+                sub: walletAddress,
+                iat: Date.now(),
+                transports: undefined,
+            });
+
+            // Finally, generate a JWT token for the SDK
+            const sdkJwt = await generateSdkJwt({ wallet: walletAddress });
+
+            // If all good, mark the sso as done
+            if (ssoId) {
+                await resolveSsoSession({
+                    id: ssoId,
+                    wallet: walletAddress,
+                    authenticatorId,
+                });
+            }
+
+            return {
+                token,
+                address: walletAddress,
+                authenticatorId,
+                publicKey: wallet,
+                sdkJwt,
+                transports: undefined,
+            };
+        },
+        {
+            body: t.Object({
+                expectedChallenge: t.String(),
+                wallet: t.Address(),
+                signature: t.Hex(),
+                // potential sso id
+                ssoId: t.Optional(t.Hex()),
+            }),
+            response: {
+                404: t.String(),
+                200: WalletAuthResponseDto,
             },
         }
     )
@@ -148,7 +229,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             generateSdkJwt,
             authenticatorRepository,
             walletJwt,
-            getAuthenticatorWalletAddress,
+            getWebAuthnWalletAddress,
             parseCompressedWebAuthNResponse,
             resolveSsoSession,
         }) => {
@@ -192,7 +273,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Get the wallet address
             const walletAddress =
                 previousWallet ??
-                (await getAuthenticatorWalletAddress({
+                (await getWebAuthnWalletAddress({
                     authenticatorId: credential.id,
                     pubKey: publicKey,
                 }));

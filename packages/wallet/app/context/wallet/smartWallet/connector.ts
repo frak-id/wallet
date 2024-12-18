@@ -1,10 +1,15 @@
+import { crossAppClient } from "@/context/blockchain/privy-cross-client";
 import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
-import type { Transport } from "viem";
+import { type Hex, type Transport, isAddressEqual } from "viem";
 import { createConnector } from "wagmi";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
+
+export type FrakWalletConnector = ReturnType<
+    ReturnType<typeof smartAccountConnector>
+>;
 
 /**
  * Create a connector for the smart account
@@ -24,7 +29,7 @@ export function smartAccountConnector<
     // Create the wagmi connector itself
     return createConnector<Provider>((config) => ({
         id: "frak-wallet-connector",
-        name: "Nexus Smart Account",
+        name: "Frak Smart Account",
         type: smartAccountConnector.type,
         supportsSimulation: true,
 
@@ -137,6 +142,25 @@ export function smartAccountConnector<
                             accounts: [wallet.address],
                             chainId: config.chains[0].id,
                         });
+                    },
+
+                    async signViaEcdsa(message, address) {
+                        const currentWallet = crossAppClient.address;
+                        if (
+                            !(
+                                currentWallet &&
+                                isAddressEqual(currentWallet, address)
+                            )
+                        ) {
+                            throw new Error("No current wallet");
+                        }
+
+                        // Send the request to the cross app client
+                        const response = await crossAppClient.sendRequest(
+                            "personal_sign",
+                            [message, currentWallet]
+                        );
+                        return response as Hex;
                     },
                 });
             }

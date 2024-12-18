@@ -83,6 +83,11 @@ export function createIFrameMessageHandler({
             return;
         }
 
+        // Check if the data are an object
+        if (typeof event.data !== "object") {
+            return;
+        }
+
         // Check if that's a lifecycle event
         if ("iframeLifecycle" in event.data) {
             await iframeLifecycleManager.handleEvent(event.data);

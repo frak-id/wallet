@@ -16,7 +16,6 @@
     "typecheck": "tsc --noEmit",
     "bundle:check": "sst shell bunx vite-bundle-visualizer",
     "i18n:types": "bun run i18next-resources-for-ts interface -i ./app/i18n/locales/en/ -o app/types/i18n/resources.d.ts",
-    "i18n:pull": "",
     "sw": "bun run tsup"
   },
   "dependencies": {
@@ -28,6 +27,7 @@
     "@peculiar/asn1-ecc": "2.3.14",
     "@peculiar/asn1-schema": "^2.3.13",
     "@radix-ui/react-alert-dialog": "^1.1.4",
+    "@privy-io/cross-app-connect": "^0.1.2",
     "@radix-ui/react-slot": "^1.1.1",
     "@react-router/node": "^7.0.2",
     "@react-router/serve": "^7.0.2",

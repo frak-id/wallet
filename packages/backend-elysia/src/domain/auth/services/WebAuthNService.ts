@@ -3,14 +3,18 @@ import {
     mongoDbContext,
     sessionContext,
 } from "@backend-common";
-import { WebAuthN, kernelAddresses } from "@frak-labs/app-essentials";
+import {
+    KernelWallet,
+    WebAuthN,
+    kernelAddresses,
+} from "@frak-labs/app-essentials";
 import {
     type AuthenticationResponseJSON,
     verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
 import { Elysia } from "elysia";
 import { getSenderAddress } from "permissionless/actions";
-import { type Hex, concatHex, keccak256, toHex } from "viem";
+import { type Address, type Hex, concatHex, keccak256, toHex } from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
 import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 
@@ -34,15 +38,33 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
         /**
          * Get a wallet address from an authenticator
          */
-        async function getAuthenticatorWalletAddress({
+        async function getWebAuthnWalletAddress({
             authenticatorId,
             pubKey,
         }: { authenticatorId: string; pubKey: { x: Hex; y: Hex } }) {
             // Compute base stuff to fetch the smart wallet address
             const authenticatorIdHash = keccak256(toHex(authenticatorId));
-            const initCode = WebAuthN.getWebAuthNSmartWalletInitCode({
+            const initCode = KernelWallet.getWebAuthNSmartWalletInitCode({
                 authenticatorIdHash,
                 signerPubKey: pubKey,
+            });
+
+            // Get the sender address based on the init code
+            return getSenderAddress(client, {
+                initCode: concatHex([kernelAddresses.factory, initCode]),
+                entryPointAddress: entryPoint06Address,
+            });
+        }
+
+        /**
+         * Get a wallet address from an authenticator
+         */
+        async function getEcdsaWalletAddress({
+            ecdsaAddress,
+        }: { ecdsaAddress: Address }) {
+            // Compute base stuff to fetch the smart wallet address
+            const initCode = KernelWallet.getFallbackWalletInitCode({
+                ecdsaAddress,
             });
 
             // Get the sender address based on the init code
@@ -76,7 +98,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
             }
 
             // Check if the address match the signature provided
-            const walletAddress = await getAuthenticatorWalletAddress({
+            const walletAddress = await getWebAuthnWalletAddress({
                 authenticatorId: signature.id,
                 pubKey: authenticator.publicKey,
             });
@@ -122,7 +144,8 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
             isValidWebAuthNSignature,
             parseCompressedWebAuthNResponse,
             authenticatorRepository,
-            getAuthenticatorWalletAddress,
+            getWebAuthnWalletAddress,
+            getEcdsaWalletAddress,
         };
     })
     .as("plugin");
