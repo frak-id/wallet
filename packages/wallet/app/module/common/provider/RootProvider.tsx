@@ -2,10 +2,8 @@ import { currentChain } from "@/context/blockchain/provider";
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import { useSyncDynamicSession } from "@/module/common/hook/useSyncDynamicSession";
+import { useSyncEcdsaSession } from "@/module/common/hook/useSyncEcdsaSession";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
-import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
-import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -61,16 +59,9 @@ export function RootProvider({ children }: PropsWithChildren) {
                     persistOptions={persistOptions}
                 >
                     <SetupServiceWorker />
-                    <DynamicContextProvider
-                        settings={{
-                            environmentId: process.env.DYNAMIC_ENV_ID ?? "",
-                            walletConnectors: [EthereumWalletConnectors],
-                        }}
-                    >
-                        <WagmiProviderWithDynamicConfig>
-                            {children}
-                        </WagmiProviderWithDynamicConfig>
-                    </DynamicContextProvider>
+                    <WagmiProviderWithDynamicConfig>
+                        {children}
+                    </WagmiProviderWithDynamicConfig>
                     <ReactQueryDevtools
                         initialIsOpen={false}
                         buttonPosition={"bottom-left"}
@@ -170,6 +161,6 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
 
 function EnforceWagmiConnection() {
     useEnforceWagmiConnection();
-    useSyncDynamicSession();
+    useSyncEcdsaSession();
     return null;
 }

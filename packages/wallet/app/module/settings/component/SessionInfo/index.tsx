@@ -1,5 +1,5 @@
 import {
-    dynamicSessionAtom,
+    ecdsaSessionAtom,
     webauthnSessionAtom,
 } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
@@ -18,7 +18,7 @@ export function SessionInfo() {
     const { t } = useTranslation();
     const { address } = useAccount();
     const webauthnWallet = useAtomValue(webauthnSessionAtom);
-    const dynamicWallet = useAtomValue(dynamicSessionAtom);
+    const ecdsaWallet = useAtomValue(ecdsaSessionAtom);
 
     if (webauthnWallet) {
         return (
@@ -51,18 +51,18 @@ export function SessionInfo() {
         );
     }
 
-    if (dynamicWallet) {
+    if (ecdsaWallet) {
         return (
             <Panel size={"small"}>
                 <Title icon={<KeyRound size={32} />}>
-                    {t("wallet.settings.dynamicInfo")}
+                    {t("wallet.settings.ecdsaInfo")}
                 </Title>
                 <ul className={styles.settings__list}>
                     <li>
-                        {t("wallet.settings.dynamicWallet")}{" "}
+                        {t("wallet.settings.ecdsaWallet")}{" "}
                         {isHydrated && (
                             <WalletAddress
-                                wallet={toHex(dynamicWallet.publicKey)}
+                                wallet={toHex(ecdsaWallet.publicKey)}
                                 copiedText={t("common.copied")}
                             />
                         )}

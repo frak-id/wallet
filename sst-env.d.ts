@@ -10,10 +10,6 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
-    "DYNAMIC_ENV_ID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
     "Dashboard": {
       "type": "sst.aws.Nextjs"
       "url": string

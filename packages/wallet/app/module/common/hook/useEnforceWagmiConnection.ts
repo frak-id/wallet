@@ -1,8 +1,4 @@
-import {
-    type FrakWalletConnector,
-    smartAccountConnector,
-} from "@/context/wallet/smartWallet/connector";
-import { useUserWallets } from "@dynamic-labs/sdk-react-core";
+import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { useEffect, useMemo } from "react";
 import { useConfig, useConnect } from "wagmi";
 
@@ -57,19 +53,4 @@ export function useEnforceWagmiConnection() {
         });
         connect({ connector: frakConnector });
     }, [connect, frakConnector, isPending, state.current, state.status]);
-
-    /**
-     * Synchronise the dynamic wallets with the frak connector
-     */
-    const userWallets = useUserWallets();
-    useEffect(() => {
-        if (!frakConnector) {
-            return;
-        }
-
-        // Update the dynamic wallets from the frak connectors
-        (frakConnector as unknown as FrakWalletConnector).onDynamicWalletUpdate(
-            userWallets
-        );
-    }, [userWallets, frakConnector]);
 }

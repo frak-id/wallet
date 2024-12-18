@@ -1,6 +1,6 @@
+import { crossAppClient } from "@/context/blockchain/privy-cross-client";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { jotaiStore } from "@module/atoms/store";
 import { Button } from "@module/component/Button";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,7 +30,6 @@ export function Logout() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { handleLogOut } = useDynamicContext();
 
     return (
         <Panel size={"none"} variant={"invisible"}>
@@ -39,10 +38,8 @@ export function Logout() {
                 width={"full"}
                 align={"left"}
                 onClick={async () => {
-                    // Dynamic logout
-                    handleLogOut().catch(() => {
-                        console.log("Dynamic logout failed");
-                    });
+                    // Privy logout
+                    crossAppClient.clearConnection();
                     // Session deletion
                     jotaiStore.set(sessionAtom, RESET);
                     jotaiStore.set(sdkSessionAtom, RESET);

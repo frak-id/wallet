@@ -27,9 +27,6 @@ export default defineConfig(({ isSsrBuild }) => {
             "process.env.UMAMI_WALLET_WEBSITE_ID": JSON.stringify(
                 process.env.UMAMI_WALLET_WEBSITE_ID
             ),
-            "process.env.DYNAMIC_ENV_ID": JSON.stringify(
-                process.env.DYNAMIC_ENV_ID
-            ),
         },
         server: {
             port: 3000,

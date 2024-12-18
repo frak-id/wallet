@@ -128,8 +128,8 @@
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
         "settings": {
             "biometryInfo": "Informations biométriques",
-            "dynamicInfo": "Informations de connection",
-            "dynamicWallet": "Portefeuille Dynamic"
+            "ecdsaInfo": "Informations de connection",
+            "ecdsaWallet": "Portefeuille Ecdsa"
         },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
         "interaction": {

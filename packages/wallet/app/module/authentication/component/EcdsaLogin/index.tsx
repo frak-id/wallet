@@ -1,52 +1,48 @@
+import { crossAppClient } from "@/context/blockchain/privy-cross-client";
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
-import {
-    DynamicConnectButton,
-    type Wallet,
-    useIsLoggedIn,
-    useUserWallets,
-} from "@dynamic-labs/sdk-react-core";
+import { isCrossAppWalletLoggedInQuery } from "@/module/common/hook/crossAppPrivyHooks";
 import { jotaiStore } from "@module/atoms/store";
 import { Button } from "@module/component/Button";
 import { trackEvent } from "@module/utils/trackEvent";
-import { useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import type { Address, Hex } from "viem";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 
-export function DynamicLogin() {
+export function EcdsaLogin() {
+    const { data: isLoggedIn } = useQuery(isCrossAppWalletLoggedInQuery);
+
+    if (isLoggedIn) {
+        return <DoEcdsaLogin />;
+    }
+    return <DoEcdsaAuthentication />;
+}
+
+function DoEcdsaLogin() {
+    const queryClient = useQueryClient();
+    const { mutate: logIn, isPending } = useMutation({
+        mutationKey: ["privy-cross-app", "connect"],
+        async mutationFn() {
+            await crossAppClient.requestConnection();
+            await queryClient.invalidateQueries({
+                queryKey: ["privy-cross-app"],
+                exact: false,
+            });
+        },
+    });
+
     return (
-        <>
-            <DoDynamicLogin />
-            <br />
-            <br />
-            <DoDynamicAuthentication />
-        </>
+        <Button type={"button"} onClick={() => logIn()} disabled={isPending}>
+            Connect via Privy
+        </Button>
     );
 }
 
-function DoDynamicLogin() {
-    const isLoggedIn = useIsLoggedIn();
-    if (isLoggedIn) {
-        return null;
-    }
-    return <DynamicConnectButton>Connect via socials</DynamicConnectButton>;
-}
-
-function DoDynamicAuthentication() {
-    const userWallets = useUserWallets();
-    const [wallet, setWallet] = useState<Wallet | undefined>(undefined);
-
-    // Auto pick the first wallet
-    useEffect(() => {
-        if (userWallets.length === 1) {
-            setWallet(userWallets[0]);
-        }
-    }, [userWallets]);
-
-    const { mutate: authenticate } = useMutation({
-        mutationKey: ["ecdsa-login", wallet?.address],
+function DoEcdsaAuthentication() {
+    const { mutate: authenticate, isPending } = useMutation({
+        mutationKey: ["privy-cross-app", "authenticate"],
         async mutationFn() {
+            const wallet = crossAppClient.address;
             if (!wallet) {
                 throw new Error("No wallet selected");
             }
@@ -58,9 +54,10 @@ function DoDynamicAuthentication() {
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${challenge}`;
 
             // Launch the signature
-            const signature = (await wallet.signMessage(message)) as
-                | Hex
-                | undefined;
+            const signature = (await crossAppClient.sendRequest(
+                "personal_sign",
+                [stringToHex(message), wallet]
+            )) as Hex | undefined;
             if (!signature) {
                 console.warn("No signature");
                 throw new Error("No signature returned");
@@ -71,7 +68,7 @@ function DoDynamicAuthentication() {
                 await authenticatedBackendApi.auth.wallet.ecdsaLogin.post({
                     expectedChallenge: challenge,
                     signature,
-                    wallet: wallet.address as Address,
+                    wallet: wallet as Address,
                 });
             if (error) {
                 throw error;
@@ -89,36 +86,16 @@ function DoDynamicAuthentication() {
             trackEvent("cta-ecdsa-login");
         },
     });
+
     return (
         <>
-            {!wallet && userWallets.length > 0 && (
-                <PickDynamicWallet wallets={userWallets} onPick={setWallet} />
-            )}
             <Button
                 type={"button"}
                 onClick={() => authenticate()}
-                disabled={wallet === undefined}
+                disabled={isPending}
             >
                 Authenticate
             </Button>
         </>
-    );
-}
-
-function PickDynamicWallet({
-    wallets,
-    onPick,
-}: { wallets: Wallet[]; onPick: (args: Wallet) => void }) {
-    return (
-        <div>
-            Pick the wallet to use on Frak
-            {wallets.map((wallet) => {
-                return (
-                    <Button key={wallet.address} onClick={() => onPick(wallet)}>
-                        {wallet.address}
-                    </Button>
-                );
-            })}
-        </div>
     );
 }

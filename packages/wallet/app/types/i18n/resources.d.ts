@@ -130,8 +130,8 @@ interface Resources {
             activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
             settings: {
                 biometryInfo: "Biometry informations";
-                dynamicInfo: "Login informations";
-                dynamicWallet: "Dynamic wallet";
+                ecdsaInfo: "Login informations";
+                ecdsaWallet: "Ecdsa wallet";
             };
             installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
             interaction: {

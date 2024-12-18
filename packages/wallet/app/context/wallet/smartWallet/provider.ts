@@ -33,11 +33,11 @@ type SmartAccountProviderParameters = {
     onAccountChanged: (newWallet?: WebAuthNWallet | EcdsaWallet) => void;
 
     /**
-     * Method used to sign aa message via dynamic
+     * Method used to sign a message via ecdsa
      * @param data
      * @param address
      */
-    signViaDynamic: (data: Hex, address: Address) => Promise<Hex>;
+    signViaEcdsa: (data: Hex, address: Address) => Promise<Hex>;
 };
 
 /**
@@ -46,7 +46,7 @@ type SmartAccountProviderParameters = {
 export function getSmartAccountProvider<
     transport extends Transport = Transport,
     account extends SmartAccountV06 = SmartAccountV06,
->({ onAccountChanged, signViaDynamic }: SmartAccountProviderParameters) {
+>({ onAccountChanged, signViaEcdsa }: SmartAccountProviderParameters) {
     console.log("Building a new smart account provider");
     // A few types shortcut
     type ConnectorClient = SmartAccountClient<
@@ -110,7 +110,7 @@ export function getSmartAccountProvider<
             // Otherwise, build it
             targetSmartAccount = await buildSmartAccount({
                 wallet: currentWebAuthNWallet,
-                signViaDynamic,
+                signViaEcdsa,
             });
 
             // Save the new one
@@ -140,10 +140,10 @@ async function buildSmartAccount<
     account extends SmartAccountV06 = SmartAccountV06,
 >({
     wallet,
-    signViaDynamic,
+    signViaEcdsa,
 }: {
     wallet: WebAuthNWallet | EcdsaWallet;
-    signViaDynamic: (data: Hex, address: Address) => Promise<Hex>;
+    signViaEcdsa: (data: Hex, address: Address) => Promise<Hex>;
 }): Promise<
     SmartAccountClient<transport, typeof currentChain, SmartAccount<account>>
 > {
@@ -186,7 +186,7 @@ async function buildSmartAccount<
             ecdsaAddress: wallet.publicKey,
             preDeterminedAccountAddress: wallet.address,
             signatureProvider({ hash }) {
-                return signViaDynamic(hash, wallet.publicKey);
+                return signViaEcdsa(hash, wallet.publicKey);
             },
         });
     }
