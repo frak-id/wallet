@@ -149,7 +149,8 @@
             "accountCreation": "Account creation",
             "button": "Recover your <strong>wallet</strong>",
             "recover": "Recover wallet from file",
-            "walletsOnDevice": "Wallets used on this device"
+            "walletsOnDevice": "Wallets used on this device",
+            "privy": "Connect via Privy"
         },
         "notifications": {
             "noNotifications": "No notifications"

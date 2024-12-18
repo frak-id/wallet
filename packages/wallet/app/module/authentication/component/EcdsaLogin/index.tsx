@@ -1,5 +1,6 @@
 import { usePrivyCrossAppAuthenticate } from "@/module/common/hook/crossAppPrivyHooks";
 import { Button } from "@module/component/Button";
+import { useTranslation } from "react-i18next";
 
 /**
  * Do an ecdsa login, and chain the steps
@@ -9,10 +10,11 @@ import { Button } from "@module/component/Button";
  */
 export function EcdsaLogin() {
     const { mutate: logIn } = usePrivyCrossAppAuthenticate();
+    const { t } = useTranslation();
 
     return (
         <Button type={"button"} onClick={() => logIn()} variant={"primary"}>
-            Connect via Privy
+            {t("wallet.login.privy")}
         </Button>
     );
 }

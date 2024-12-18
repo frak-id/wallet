@@ -150,7 +150,8 @@
             "accountCreation": "Création de compte",
             "button": "Récupérez votre <strong>porte-monnaie</strong>",
             "recover": "Récupérer le porte-monnaie à partir du fichier",
-            "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil"
+            "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil",
+            "privy": "Connection via Privy"
         },
         "notifications": {
             "noNotifications": "Aucune notifications"
