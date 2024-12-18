@@ -12,8 +12,8 @@ export { ButtonShare } from "./ButtonShare";
  * Initialize the app on document ready
  */
 onDocumentReady(async function init() {
-    if (!window.FrakSetup.config) {
-        console.error("config not found");
+    if (!window.FrakSetup?.config) {
+        console.error("window.FrakSetup.config not found");
         return;
     }
 
