@@ -82,8 +82,7 @@ export function LoginModalStep({
                         onClick={() => privyLogin()}
                     >
                         {isPrivyLoading && <Spinner />}
-                        {metadata?.secondaryActionText ??
-                            t("sdk.modal.login.default.privyAction")}
+                        {t("sdk.modal.login.default.privyAction")}
                     </button>
                 </div>
             </div>
@@ -123,18 +122,15 @@ export function LoginModalStep({
                     </div>
                 )}
 
-                <p></p>
-                <div>
-                    <button
-                        type={"button"}
-                        className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-privy")}`}
-                        disabled={isPrivyLoading}
-                        onClick={() => privyLogin()}
-                    >
-                        {isPrivyLoading && <Spinner />}
-                        {t("sdk.modal.login.default.privyAction")}
-                    </button>
-                </div>
+                <button
+                    type={"button"}
+                    className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-privy")}`}
+                    disabled={isPrivyLoading}
+                    onClick={() => privyLogin()}
+                >
+                    {isPrivyLoading && <Spinner />}
+                    {t("sdk.modal.login.default.privyAction")}
+                </button>
 
                 <div>
                     <DismissButton />
