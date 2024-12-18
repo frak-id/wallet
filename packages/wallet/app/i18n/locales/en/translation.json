@@ -83,6 +83,7 @@
                     "description_reward": "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
                     "primaryAction": "I create my wallet under 30sec",
                     "secondaryAction": "I already have a wallet",
+                    "privyAction": "Connect via Privy",
                     "title": "Connection"
                 },
                 "success": "Connection successful"
@@ -238,9 +239,6 @@
         "welcome": {
             "title": "Welcome in your wallet",
             "text": "This wallet will enable you to collect all the rewards and much more."
-        },
-        "errors": {
-            "webauthnNotSupported": "Open this page on your <strong>default browser</strong>, or use a compatible browser to create your wallet. Be sure to use the <strong>latest version</strong> of your browser."
         }
     }
 }

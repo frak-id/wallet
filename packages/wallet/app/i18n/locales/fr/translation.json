@@ -84,6 +84,7 @@
                     "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois **{{ estimatedReward }}€** directement sur mon porte-monnaie, utilisable où je veux.",
                     "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
                     "secondaryAction": "J'ai déjà un porte-monnaie",
+                    "privyAction": "Connection via Privy",
                     "title": "Connexion"
                 },
                 "success": "Connexion réussie"
@@ -239,9 +240,6 @@
         "welcome": {
             "title": "Bienvenue dans votre porte-monnaie",
             "text": "Ce porte-monnaie vous permettra de collecter toutes les récompenses et bien plus encore."
-        },
-        "errors": {
-            "webauthnNotSupported": "Ouvrez cette page sur votre <strong>navigateur par défaut</strong> ou utilisez un navigateur compatible pour créer votre portefeuille. Assurez-vous d'utiliser la <strong>dernière version</strong> de votre navigateur."
         }
     }
 }
