@@ -2,9 +2,6 @@
   // This tsconfig file contains the shared config for the build (tsconfig.build.json) and type checking (tsconfig.json) config.
   "include": ["./src"],
   "compilerOptions": {
-    // Output directory
-    "outDir": "./dist",
-
     // Incremental builds
     // NOTE: Enabling incremental builds speeds up `tsc`. Keep in mind though that it does not reliably bust the cache when the `tsconfig.json` file changes.
     "incremental": false,
@@ -43,15 +40,18 @@
     "noErrorTruncation": true,
 
     // Enable source map by default
-    "sourceMap": true,
+    "sourceMap": false,
 
     // Declaration files
     "declaration": true,
-    "declarationDir": "./dist",
+    "declarationDir": "./dist/types",
+    "emitDeclarationOnly": true,
 
     "paths": {
       "@module/*": ["../../packages/shared/module/*"]
-    }
+    },
+
+    "isolatedModules": true,
   },
   "tsc-alias": {
     "resolveFullPaths": true,

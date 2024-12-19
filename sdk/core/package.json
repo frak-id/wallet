@@ -71,7 +71,9 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf dist",
-    "build": "tsup && bun run check-exports",
+    "build": "bun run build:types && bun run build:lib",
+    "build:lib": "rspack build",
+    "build:types": "tsc",
     "build:watch": "tsup --watch",
     "check-exports": "attw --pack --profile node16 .",
     "typecheck": "tsc --noEmit"
@@ -85,7 +87,10 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.1",
+    "@rspack/cli": "^1.1.6",
+    "@rspack/core": "^1.1.6",
     "@types/node": "^22",
+    "ts-checker-rspack-plugin": "^1.0.3",
     "tsup": "^8.3.5",
     "typescript": "^5"
   }
