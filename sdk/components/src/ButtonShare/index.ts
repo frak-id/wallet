@@ -1,10 +1,8 @@
 import register from "preact-custom-element";
-import { ButtonShare } from "./ButtonShare";
+import { ButtonShare, type ButtonShareProps } from "./ButtonShare";
 
-interface ButtonShareElement extends HTMLElement {
-    text: string;
-    classname?: string;
-}
+// Button share element is HTML element + ButtonShareProps
+interface ButtonShareElement extends HTMLElement, ButtonShareProps {}
 
 declare global {
     interface HTMLElementTagNameMap {
