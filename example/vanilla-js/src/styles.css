@@ -1,0 +1,82 @@
+/* ---------------------- Roulette ---------------------- */
+
+.roulette {
+    box-sizing: border-box;
+    position: relative;
+    width: 320px;
+    height: 50px;
+    /*margin: 50px;*/
+    /*padding: 10px;*/
+    border-radius: 30px;
+    background: #3e557e;
+    /*box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);*/
+    overflow: hidden;
+    transition: 0.5s all;
+}
+.roulette:before {
+    position: absolute;
+    content: "";
+    width: 80px;
+    height: 100%;
+    top: 50%;
+    left: 50%;
+    background: #03a9f4;
+    transform: translate(-50%, -50%);
+    opacity: 0.6;
+}
+/*.roulette:hover {
+    box-shadow: 0px 50px 90px rgba(0, 0, 0, 0.08);
+}*/
+.roulette__list {
+    display: flex;
+    height: 100%;
+}
+.roulette__prize {
+    flex: 0 0 auto;
+    margin-right: 10px;
+    /*color: #fff;*/
+}
+.prize-item {
+    width: 80px;
+    height: 50px;
+    /*border: 2px solid;*/
+    /*border-radius: 5px;*/
+    text-align: center;
+    line-height: 50px;
+    color: #fff;
+    font-family: "Roboto", sans-serif;
+    font-size: 20px;
+}
+
+.prize-item--green {
+    border-color: #4caf50;
+}
+.prize-item--yellow {
+    border-color: #fbc02d;
+}
+.prize-item--pink {
+    border-color: #f06292;
+}
+.prize-item--purple {
+    border-color: #ab47bc;
+}
+.prize-item--teal {
+    border-color: #4db6ac;
+}
+
+.roulette {
+    overflow: hidden;
+}
+.roulette__list {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.roulette__prize {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+}

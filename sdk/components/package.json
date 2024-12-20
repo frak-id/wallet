@@ -37,6 +37,16 @@
   ],
   "main": "./cdn/components.js",
   "browser": "./cdn/components.js",
+  "exports": {
+    ".": {
+      "import": "./cdn/components.js",
+      "require": "./cdn/components.js",
+      "default": "./cdn/components.js"
+    },
+    "./components.css": {
+      "default": "./cdn/components.css"
+    }
+  },
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",

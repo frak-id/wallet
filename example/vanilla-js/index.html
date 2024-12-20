@@ -7,9 +7,24 @@
     <link rel="icon" href="/favicon.ico" sizes="32x32"/>
     <script type="module" src="/src/main.ts"></script>
     <%- injectScript %>
+    <%- injectCSS %>
 </head>
 <body>
 <h1>Welcome to example Vanilla JS</h1>
 <frak-button-share classname="button"></frak-button-share>
+
+<div class="roulette">
+    <div class="prize-item">2€</div>
+    <div class="prize-item">5€</div>
+    <div class="prize-item">10€</div>
+    <div class="prize-item">20€</div>
+    <div class="prize-item">30€</div>
+    <div class="prize-item">50€</div>
+    <div class="prize-item">100€</div>
+    <div class="prize-item">200€</div>
+</div>
+
+<button id="start">Start roulette</button>
+<button id="stop">Stop roulette</button>
 </body>
 </html>

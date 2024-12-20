@@ -1,0 +1,17 @@
+frak-button-share {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+
+  button {
+    all: unset;
+    background-color: #3b5998;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    /* Hide text while keeping it accessible */
+    text-indent: -9999px;
+    overflow: hidden;
+  }
+}

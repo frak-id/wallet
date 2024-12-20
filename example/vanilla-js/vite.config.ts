@@ -8,6 +8,10 @@ const scriptSrc =
     process.env.NODE_ENV === "production"
         ? "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/dist/bundle/components.js"
         : `${bundleDir}/components.js`;
+const cssSrc =
+    process.env.NODE_ENV === "production"
+        ? "https://cdn.jsdelivr.net/npm/@frak-labs/components/components.css"
+        : `${bundleDir}/components.css`;
 
 export default defineConfig({
     server: {
@@ -19,6 +23,7 @@ export default defineConfig({
             inject: {
                 data: {
                     injectScript: `<script src="${scriptSrc}"></script>`,
+                    injectCSS: `<link id="frak-css" rel="stylesheet" href="${cssSrc}" />`,
                 },
             },
         }),

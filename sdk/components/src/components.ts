@@ -1,10 +1,12 @@
 import { setupClient } from "@core/clients";
 import { onDocumentReady } from "@module/utils/onDocumentReady";
+import { loadCSS } from "@module/utils/loadCSS";
 import {
     dispatchClientReadyEvent,
     setupModalConfig,
     setupReferral,
 } from "./utils";
+import "./styles.css";
 
 export { ButtonShare } from "./ButtonShare";
 
@@ -12,6 +14,11 @@ export { ButtonShare } from "./ButtonShare";
  * Initialize the app on document ready
  */
 onDocumentReady(async function init() {
+    loadCSS(
+        "frak-css",
+        "https://cdn.jsdelivr.net/npm/@frak-labs/components/components.css"
+    );
+
     if (!window.FrakSetup?.config) {
         console.error("window.FrakSetup.config not found");
         return;
