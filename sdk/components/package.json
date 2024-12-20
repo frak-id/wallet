@@ -42,8 +42,8 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf dist",
-    "build": "tsup",
-    "build:watch": "tsup --watch",
+    "build": "rslib build",
+    "build:watch": "rslib build --watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -51,6 +51,7 @@
     "preact-custom-element": "^4.3.0"
   },
   "devDependencies": {
+    "@rslib/core": "^0.1.5",
     "@types/node": "^22",
     "@types/preact-custom-element": "^4.0.4",
     "tsup": "^8.3.5",
