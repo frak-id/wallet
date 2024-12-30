@@ -121,8 +121,11 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
             return "ok";
         },
         {
-            type: "text",
+            parse: "text",
             body: t.String(),
+            params: t.Object({
+                productId: t.Optional(t.Hex()),
+            }),
         }
     );
 

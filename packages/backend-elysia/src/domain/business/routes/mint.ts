@@ -30,7 +30,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             });
         },
         {
-            isAuthenticated: "business",
+            nextAuthenticated: "business",
             query: t.Object({
                 domain: t.String(),
             }),
@@ -65,7 +65,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             return { isDomainValid, isAlreadyMinted };
         },
         {
-            isAuthenticated: "business",
+            nextAuthenticated: "business",
             query: t.Object({
                 domain: t.String(),
                 setupCode: t.Optional(t.String()),
@@ -127,7 +127,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             }
         },
         {
-            isAuthenticated: "business",
+            nextAuthenticated: "business",
             body: t.Object({
                 name: t.String(),
                 domain: t.String(),

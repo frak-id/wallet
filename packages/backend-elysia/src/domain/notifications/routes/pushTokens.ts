@@ -31,7 +31,7 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
             authenticated: "wallet",
 
             // Cleanup expired tokens
-            cleanupExpiredTokens: true,
+            cleanupTokens: true,
 
             // Body schema
             body: t.Object({
@@ -59,7 +59,7 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
         },
         {
             authenticated: "wallet",
-            cleanupExpiredTokens: true,
+            cleanupTokens: true,
         }
     )
     .get(
