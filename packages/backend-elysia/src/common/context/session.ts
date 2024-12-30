@@ -66,86 +66,86 @@ export const sessionContext = new Elysia({
         // Set default properties for businessAuth cookie
         businessAuth.update(defaultCookiesProps);
     })
-    .macro(({ onBeforeHandle }) => ({
+    .macro({
         authenticated(target?: true | "wallet" | "business" | "wallet-sdk") {
             if (!target) return;
 
-            switch (target) {
-                // Business casse
-                case "business":
-                    return onBeforeHandle(
-                        async ({
-                            cookie: { businessAuth },
-                            error,
-                            businessJwt,
-                        }) => {
-                            if (!businessAuth?.value) {
-                                return error(
-                                    "Unauthorized",
-                                    "Missing business JWT"
-                                );
-                            }
-                            const auth = await businessJwt.verify(
-                                businessAuth.value
+            // Business case
+            if (target === "business") {
+                return {
+                    beforeHandle: async ({
+                        cookie: { businessAuth },
+                        error,
+                        businessJwt,
+                    }) => {
+                        if (!businessAuth?.value) {
+                            return error(
+                                "Unauthorized",
+                                "Missing business JWT"
                             );
-                            // Throw an error and remove the token
-                            if (!auth) {
-                                businessAuth.update({
-                                    value: "",
-                                    maxAge: 0,
-                                });
-                                return error(
-                                    "Unauthorized",
-                                    "Invalid business JWT"
-                                );
-                            }
                         }
-                    );
-                // Wallet SDK case
-                case "wallet-sdk":
-                    return onBeforeHandle(
-                        async ({
-                            headers: { "x-wallet-sdk-auth": walletSdkAuth },
-                            error,
-                            walletSdkJwt,
-                        }) => {
-                            if (!walletSdkAuth) {
-                                return error(
-                                    "Unauthorized",
-                                    "Missing wallet SDK JWT"
-                                );
-                            }
-                            const auth =
-                                await walletSdkJwt.verify(walletSdkAuth);
-                            if (!auth) {
-                                return error(
-                                    "Unauthorized",
-                                    "Invalid wallet SDK JWT"
-                                );
-                            }
+                        const auth = await businessJwt.verify(
+                            businessAuth.value
+                        );
+                        // Throw an error and remove the token
+                        if (!auth) {
+                            businessAuth.update({
+                                value: "",
+                                maxAge: 0,
+                            });
+                            return error(
+                                "Unauthorized",
+                                "Invalid business JWT"
+                            );
                         }
-                    );
-                // True or "wallet" case
-                default:
-                    return onBeforeHandle(
-                        async ({
-                            headers: { "x-wallet-auth": walletAuth },
-                            error,
-                            walletJwt,
-                        }) => {
-                            if (!walletAuth) {
-                                return error(401, "Missing wallet JWT");
-                            }
-                            const auth = await walletJwt.verify(walletAuth);
-                            // Throw an error and remove the token
-                            if (!auth) {
-                                return error(401, "Invalid wallet JWT");
-                            }
-                        }
-                    );
+                    },
+                };
             }
+
+            // Wallet SDK case
+            if (target === "wallet-sdk") {
+                return {
+                    beforeHandle: async ({
+                        headers: { "x-wallet-sdk-auth": walletSdkAuth },
+                        error,
+                        walletSdkJwt,
+                    }) => {
+                        if (!walletSdkAuth) {
+                            return error(
+                                "Unauthorized",
+                                "Missing wallet SDK JWT"
+                            );
+                        }
+                        const auth = await walletSdkJwt.verify(walletSdkAuth);
+                        if (!auth) {
+                            return error(
+                                "Unauthorized",
+                                "Invalid wallet SDK JWT"
+                            );
+                        }
+                    },
+                };
+            }
+
+            // True or "wallet" case
+            return {
+                beforeHandle: async ({
+                    headers: { "x-wallet-auth": walletAuth },
+                    error,
+                    walletJwt,
+                }) => {
+                    if (!walletAuth) {
+                        return error(401, "Missing wallet JWT");
+                    }
+                    const auth = await walletJwt.verify(walletAuth);
+                    // Throw an error and remove the token
+                    if (!auth) {
+                        return error(401, "Invalid wallet JWT");
+                    }
+                },
+            };
         },
-    }))
+    })
     .as("plugin");
 
 export const walletSessionContext = new Elysia({

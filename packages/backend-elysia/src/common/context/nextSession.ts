@@ -47,16 +47,36 @@ export const nextSessionContext = new Elysia({
         })
     )
     // Macro to enforce a session or throw an error
-    .macro(({ onBeforeHandle }) => ({
-        isAuthenticated(wanted?: "business") {
+    .macro({
+        nextAuthenticated(wanted?: "business") {
             if (!wanted) return;
 
-            // If no session present, exit with unauthorized
-            return onBeforeHandle(async ({ businessSession, error }) => {
-                if (wanted === "business" && !businessSession) {
-                    return error(401, "Missing business auth cookie");
-                }
-            });
+            return {
+                beforeHandle: async ({
+                    cookie: { businessSession },
+                    error,
+                    decodeNextSessionCookie,
+                }) => {
+                    // Resolve the session
+                    const resolvedSession = await decodeNextSessionCookie<{
+                        wallet: Address;
+                        siwe: {
+                            message: string;
+                            signature: Hex;
+                        };
+                    }>({
+                        token: businessSession.value,
+                    });
+
+                    // If none is found, throw an error
+                    if (
+                        wanted === "business" &&
+                        !(businessSession && resolvedSession)
+                    ) {
+                        return error(401, "Missing business auth cookie");
+                    }
+                },
+            };
         },
-    }))
+    })
     .as("plugin");

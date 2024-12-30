@@ -127,7 +127,7 @@ JWTOption<Name, Schema>) => {
                       })
                   ),
               ]),
-              {}
+              { modules: t.Module({}) }
           )
         : undefined;
 

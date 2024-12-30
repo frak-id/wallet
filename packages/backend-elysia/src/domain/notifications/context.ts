@@ -25,13 +25,15 @@ export const notificationContext = new Elysia({
         };
     })
     // Macro tyo automatically cleanup expired tokens
-    .macro(({ onAfterResponse }) => ({
-        cleanupExpiredTokens(isEnabled?: boolean) {
+    .macro({
+        cleanupTokens(isEnabled?: boolean) {
             if (!isEnabled) return;
 
-            return onAfterResponse(async ({ cleanupExpiredTokens }) => {
-                await cleanupExpiredTokens();
-            });
+            return {
+                afterResponse: async ({ cleanupExpiredTokens }) => {
+                    await cleanupExpiredTokens();
+                },
+            };
         },
-    }))
+    })
     .as("plugin");
