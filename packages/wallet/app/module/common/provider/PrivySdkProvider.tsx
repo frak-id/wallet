@@ -34,7 +34,7 @@ export function PrivySdkProvider({ children }: { children: ReactNode }) {
     /**
      * Get the current wallet address
      */
-    const { data: wallet } = useQuery({
+    const { data: wallet, status: walletStatus } = useQuery({
         queryKey: ["privy-cross-app", "wallet"],
         queryFn() {
             return client.address ?? null;
@@ -101,12 +101,13 @@ export function PrivySdkProvider({ children }: { children: ReactNode }) {
 
     const context = useMemo(
         () => ({
+            ready: client !== undefined && walletStatus !== "pending",
             wallet: wallet ?? undefined,
             login,
             signMessage,
             logout,
         }),
-        [wallet, login, logout, signMessage]
+        [client, wallet, walletStatus, login, logout, signMessage]
     );
 
     return (

@@ -6,8 +6,8 @@ import {
     useSsoLink,
 } from "@/module/authentication/hook/useGetOpenSsoLink";
 import { useLogin } from "@/module/authentication/hook/useLogin";
+import { usePrivyLogin } from "@/module/authentication/hook/usePrivyLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { usePrivyCrossAppAuthenticate } from "@/module/common/hook/privy/crossAppPrivyHooks";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
@@ -46,11 +46,10 @@ export function LoginModalStep({
         // On success, transmit the wallet address up a level
         onSuccess: (session) => onFinish({ wallet: session.address }),
     });
-    const { mutate: privyLogin, isPending: isPrivyLoading } =
-        usePrivyCrossAppAuthenticate({
-            // On success, transmit the wallet address up a level
-            onSuccess: (session) => onFinish({ wallet: session.address }),
-        });
+    const { privyLogin, isLoading: isPrivyLoading } = usePrivyLogin({
+        // On success, transmit the wallet address up a level
+        onSuccess: (session) => onFinish({ wallet: session.address }),
+    });
 
     const session = useAtomValue(sessionAtom);
 

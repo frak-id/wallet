@@ -8,6 +8,10 @@ import type { Address, Hex } from "viem";
  */
 export type PrivyContextType = {
     /**
+     * Is the SDK rdy to handle requests
+     */
+    ready: boolean;
+    /**
      * The current logged in wallet
      */
     wallet?: Address;

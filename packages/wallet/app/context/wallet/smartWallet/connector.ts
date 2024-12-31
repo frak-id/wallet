@@ -1,8 +1,7 @@
-import { crossAppClient } from "@/context/blockchain/privy-cross-client";
 import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
-import { type Hex, type Transport, isAddressEqual } from "viem";
+import type { Address, Hex, Transport } from "viem";
 import { createConnector } from "wagmi";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
@@ -26,8 +25,18 @@ export function smartAccountConnector<
     // The current provider
     let provider: Provider | undefined;
 
+    // The current privy signer
+    let privySigner:
+        | ((args: { hash: Hex; address: Address }) => Promise<Hex>)
+        | undefined = undefined;
+
     // Create the wagmi connector itself
-    return createConnector<Provider>((config) => ({
+    return createConnector<
+        Provider,
+        {
+            setPrivySigner: (signer: typeof privySigner) => void;
+        }
+    >((config) => ({
         id: "frak-wallet-connector",
         name: "Frak Smart Account",
         type: smartAccountConnector.type,
@@ -145,22 +154,11 @@ export function smartAccountConnector<
                     },
 
                     async signViaEcdsa(message, address) {
-                        const currentWallet = crossAppClient.address;
-                        if (
-                            !(
-                                currentWallet &&
-                                isAddressEqual(currentWallet, address)
-                            )
-                        ) {
-                            throw new Error("No current wallet");
+                        if (!privySigner) {
+                            throw new Error("No privy signer");
                         }
 
-                        // Send the request to the cross app client
-                        const response = await crossAppClient.sendRequest(
-                            "personal_sign",
-                            [message, currentWallet]
-                        );
-                        return response as Hex;
+                        return privySigner({ hash: message, address });
                     },
                 });
             }
@@ -174,6 +172,13 @@ export function smartAccountConnector<
         },
         onDisconnect() {
             config.emitter.emit("disconnect");
+        },
+        /**
+         * Update the current privy signer
+         * @param signer
+         */
+        setPrivySigner(signer: typeof privySigner) {
+            privySigner = signer;
         },
     }));
 }

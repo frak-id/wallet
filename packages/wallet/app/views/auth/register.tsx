@@ -1,9 +1,9 @@
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { EcdsaLogin } from "@/module/authentication/component/EcdsaLogin";
+import { usePrivyLogin } from "@/module/authentication/hook/usePrivyLogin";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { usePrivyCrossAppAuthenticate } from "@/module/common/hook/privy/crossAppPrivyHooks";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -18,7 +18,7 @@ export default function Register() {
     const { register, error, isRegisterInProgress } = useRegister({
         onSuccess: () => navigate("/wallet"),
     });
-    const { mutateAsync: privyLogin } = usePrivyCrossAppAuthenticate({
+    const { privyLoginAsync } = usePrivyLogin({
         // On success, transmit the wallet address up a level
         onSuccess: () => navigate("/wallet"),
     });
@@ -93,7 +93,7 @@ export default function Register() {
             }
         >
             <ButtonAuth
-                trigger={isWebAuthnSupported ? register : privyLogin}
+                trigger={isWebAuthnSupported ? register : privyLoginAsync}
                 disabled={disabled || isPreviouslyUsedAuthenticatorError}
             >
                 {message}

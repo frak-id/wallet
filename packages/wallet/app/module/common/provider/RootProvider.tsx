@@ -3,6 +3,7 @@ import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { useSyncEcdsaSession } from "@/module/common/hook/useSyncEcdsaSession";
+import { PrivySdkProvider } from "@/module/common/provider/PrivySdkProvider";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@module/atoms/store";
@@ -58,14 +59,16 @@ export function RootProvider({ children }: PropsWithChildren) {
                     client={queryClient}
                     persistOptions={persistOptions}
                 >
-                    <SetupServiceWorker />
-                    <WagmiProviderWithDynamicConfig>
-                        {children}
-                    </WagmiProviderWithDynamicConfig>
-                    <ReactQueryDevtools
-                        initialIsOpen={false}
-                        buttonPosition={"bottom-left"}
-                    />
+                    <PrivySdkProvider>
+                        <SetupServiceWorker />
+                        <WagmiProviderWithDynamicConfig>
+                            {children}
+                        </WagmiProviderWithDynamicConfig>
+                        <ReactQueryDevtools
+                            initialIsOpen={false}
+                            buttonPosition={"bottom-left"}
+                        />
+                    </PrivySdkProvider>
                 </PersistQueryClientProvider>
             </Provider>
         </>
