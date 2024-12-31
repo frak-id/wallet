@@ -12,17 +12,17 @@ import {
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 
+/**
+ * todo:
+ *  - Detect if in iframe?? Or just different provider depending on the context (like base one, and another one in the listener side?)
+ *  - If in iframe, use the privy cross app client
+ *  - If root, use the regular privy logics, with smoother ui etc
+ */
+
 export const crossAppWalletQuery = {
     queryKey: ["privy-cross-app", "wallet"],
     queryFn() {
-        return crossAppClient.address;
-    },
-} as const;
-
-export const isCrossAppWalletLoggedInQuery = {
-    queryKey: ["privy-cross-app", "isLoggedIn"],
-    queryFn() {
-        return crossAppClient.address;
+        return crossAppClient.address ?? null;
     },
 } as const;
 

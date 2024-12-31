@@ -7,7 +7,7 @@ import {
 } from "@/module/authentication/hook/useGetOpenSsoLink";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { usePrivyCrossAppAuthenticate } from "@/module/common/hook/crossAppPrivyHooks";
+import { usePrivyCrossAppAuthenticate } from "@/module/common/hook/privy/crossAppPrivyHooks";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";

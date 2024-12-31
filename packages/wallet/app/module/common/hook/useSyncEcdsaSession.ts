@@ -3,7 +3,7 @@ import {
     sdkSessionAtom,
     sessionAtom,
 } from "@/module/common/atoms/session";
-import { crossAppWalletQuery } from "@/module/common/hook/crossAppPrivyHooks";
+import { crossAppWalletQuery } from "@/module/common/hook/privy/crossAppPrivyHooks";
 import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";

@@ -1,4 +1,4 @@
-import { usePrivyCrossAppAuthenticate } from "@/module/common/hook/crossAppPrivyHooks";
+import { usePrivyCrossAppAuthenticate } from "@/module/common/hook/privy/crossAppPrivyHooks";
 import { Button } from "@module/component/Button";
 import { useTranslation } from "react-i18next";
 

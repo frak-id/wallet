@@ -1,8 +1,13 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { createPrivyCrossAppClient } from "@privy-io/cross-app-connect";
 
+/**
+ * The privy cross app client
+ *  - Here we are referencing the abstract provider app
+ *
+ *  -
+ */
 export const crossAppClient = createPrivyCrossAppClient({
-    // todo: This is the provider app id for Abstract wallet, maybe should find another one, idk
     providerAppId: "cm04asygd041fmry9zmcyn5o5",
     chains: [currentChain],
     chainId: currentChain.id,
