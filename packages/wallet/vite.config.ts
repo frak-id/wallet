@@ -27,6 +27,9 @@ export default defineConfig(({ isSsrBuild }) => {
             "process.env.UMAMI_WALLET_WEBSITE_ID": JSON.stringify(
                 process.env.UMAMI_WALLET_WEBSITE_ID
             ),
+            "process.env.PRIVY_APP_ID": JSON.stringify(
+                process.env.PRIVY_APP_ID
+            ),
         },
         server: {
             port: 3000,

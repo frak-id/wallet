@@ -1,15 +1,15 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { createPrivyCrossAppClient } from "@privy-io/cross-app-connect";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useMemo } from "react";
+import { type PropsWithChildren, useMemo } from "react";
 import type { Address, Hex } from "viem";
-import { PrivyContext } from "./PrivyProvider";
+import { PrivyContext, PrivySessionSyncer } from "./PrivyProvider";
 
 /**
  * Export the privy SDK provider
  * @constructor
  */
-export function PrivySdkProvider({ children }: { children: ReactNode }) {
+export function PrivySdkProvider({ children }: PropsWithChildren) {
     const queryClient = useQueryClient();
 
     /**
@@ -112,6 +112,7 @@ export function PrivySdkProvider({ children }: { children: ReactNode }) {
 
     return (
         <PrivyContext.Provider value={context}>
+            <PrivySessionSyncer />
             {children}
         </PrivyContext.Provider>
     );

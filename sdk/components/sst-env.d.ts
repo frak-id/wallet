@@ -50,6 +50,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "PRIVY_APP_ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "SESSION_ENCRYPTION_KEY": {
       "type": "sst.sst.Secret"
       "value": string

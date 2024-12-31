@@ -1,3 +1,4 @@
+import { useSyncEcdsaSession } from "@/module/common/hook/useSyncEcdsaSession";
 import { createContext, useContext } from "react";
 import type { Address, Hex } from "viem";
 
@@ -43,3 +44,8 @@ export const usePrivyContext = () => {
     }
     return context;
 };
+
+export function PrivySessionSyncer() {
+    useSyncEcdsaSession();
+    return null;
+}
