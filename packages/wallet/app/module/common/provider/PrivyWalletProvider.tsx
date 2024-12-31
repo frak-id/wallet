@@ -4,15 +4,16 @@ import {
     type User,
     useLogin,
     usePrivy,
+    useWallets,
 } from "@privy-io/react-auth";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
     type PropsWithChildren,
     type ReactNode,
     useMemo,
     useState,
 } from "react";
-import type { Address, Hex } from "viem";
+import { type Address, type Hex, isAddressEqual, zeroAddress } from "viem";
 import { PrivyContext, PrivySessionSyncer } from "./PrivyProvider";
 
 /**
@@ -56,8 +57,8 @@ function PrivyProviderWithConfig({ children }: PropsWithChildren) {
 }
 
 function InnerPrivyWalletProvider({ children }: PropsWithChildren) {
-    const queryClient = useQueryClient();
-    const { ready, logout, user, signMessage: baseSignMessage } = usePrivy();
+    const { ready, logout, user, authenticated } = usePrivy();
+    const { wallets } = useWallets();
 
     // Small promise wrapper to map the login callback stuff to a mutation
     const [loginPromise, setLoginPromise] = useState<{
@@ -68,24 +69,10 @@ function InnerPrivyWalletProvider({ children }: PropsWithChildren) {
     // Privy login, using the promise wrapper to send back the results to the mutation
     const { login: baseLogin } = useLogin({
         onComplete(user) {
-            console.log("Privy login complete", user);
-            // Invalidate privy related queries
-            queryClient.invalidateQueries({
-                queryKey: ["privy"],
-                exact: false,
-            });
-            // Resolve the promise
             loginPromise.resolve?.(user);
         },
-        onError() {
-            console.log("Privy login failed", user);
-            // Invalidate privy related queries
-            queryClient.invalidateQueries({
-                queryKey: ["privy"],
-                exact: false,
-            });
-            // Reject the login promise
-            loginPromise.reject?.(new Error("Login failed"));
+        onError(errorCode) {
+            loginPromise.reject?.(new Error(`Login failed: ${errorCode}`));
         },
     });
     /**
@@ -111,9 +98,7 @@ function InnerPrivyWalletProvider({ children }: PropsWithChildren) {
             baseLogin();
 
             // Wait for the login to complete
-            console.log("Waiting for login to complete");
             const user = await loginPromise;
-            console.log("Login complete", user);
 
             // Ensure the user got a wallet
             if (!user.wallet) {
@@ -131,13 +116,26 @@ function InnerPrivyWalletProvider({ children }: PropsWithChildren) {
         queryKey: [
             "privy",
             "wallet",
+            authenticated,
             user?.id ?? "no-user",
             user?.wallet?.address ?? "no-wallet",
         ],
         enabled: ready,
         queryFn() {
             if (!ready) return null;
+            if (!authenticated) return null;
             if (!user?.wallet?.address) return null;
+
+            // Ensure the user wallet address is present in the wallets
+            const wallet = wallets.find((w) =>
+                isAddressEqual(
+                    w.address as Address,
+                    (user?.wallet?.address ?? zeroAddress) as Address
+                )
+            );
+            if (!wallet) {
+                throw new Error("Wallet not found");
+            }
 
             return user.wallet.address as Address;
         },
@@ -151,16 +149,34 @@ function InnerPrivyWalletProvider({ children }: PropsWithChildren) {
     const { mutateAsync: signMessage } = useMutation({
         mutationKey: ["privy", "sign-message", wallet],
         async mutationFn({ hash, address }: { hash: Hex; address: Address }) {
-            const signature = await baseSignMessage(
-                hash,
-                {
-                    showWalletUIs: true,
-                    title: "Validate the action",
-                    description:
-                        "Sign the following message to validate the current Frak action",
-                },
-                address
+            // // Find a wallet matching the address
+            const matchingWallet = wallets.find((w) =>
+                isAddressEqual(w.address as Address, address)
             );
+            if (!matchingWallet) {
+                throw new Error("Wallet not found");
+            }
+            await matchingWallet.switchChain(currentChain.id);
+
+            // Get the wallet provider
+            const provider = await matchingWallet.getEthereumProvider();
+
+            // Send the signature request
+            const signature = await provider.request({
+                method: "personal_sign",
+                params: [hash, address],
+            });
+
+            // const signature = await baseSignMessage(
+            //     hash,
+            //     {
+            //         showWalletUIs: true,
+            //         title: "Validate the action",
+            //         description:
+            //             "Sign the following message to validate the current Frak action",
+            //     },
+            //     // address
+            // );
             if (!signature) {
                 throw new Error("No signature returned");
             }
