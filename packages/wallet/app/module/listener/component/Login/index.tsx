@@ -6,7 +6,6 @@ import {
     useSsoLink,
 } from "@/module/authentication/hook/useGetOpenSsoLink";
 import { useLogin } from "@/module/authentication/hook/useLogin";
-import { usePrivyLogin } from "@/module/authentication/hook/usePrivyLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
@@ -46,10 +45,6 @@ export function LoginModalStep({
         // On success, transmit the wallet address up a level
         onSuccess: (session) => onFinish({ wallet: session.address }),
     });
-    const { privyLogin, isLoading: isPrivyLoading } = usePrivyLogin({
-        // On success, transmit the wallet address up a level
-        onSuccess: (session) => onFinish({ wallet: session.address }),
-    });
 
     const session = useAtomValue(sessionAtom);
 
@@ -64,29 +59,6 @@ export function LoginModalStep({
             onFinish({ wallet: session.address });
         }
     }, [onFinish, session]);
-
-    /**
-     * If webauthn isn't supported, only show the ecdsa login button
-     */
-    if (!isWebAuthnSupported) {
-        return (
-            <div
-                className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
-            >
-                <div>
-                    <button
-                        type={"button"}
-                        className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
-                        disabled={isPrivyLoading}
-                        onClick={() => privyLogin()}
-                    >
-                        {isPrivyLoading && <Spinner />}
-                        {t("sdk.modal.login.default.privyAction")}
-                    </button>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <>
@@ -108,7 +80,7 @@ export function LoginModalStep({
                         <button
                             type={"button"}
                             className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
-                            disabled={isLoading}
+                            disabled={isLoading || !isWebAuthnSupported}
                             onClick={() => {
                                 login({});
                                 trackEvent("cta-login");
@@ -120,16 +92,6 @@ export function LoginModalStep({
                         </button>
                     </div>
                 )}
-
-                <button
-                    type={"button"}
-                    className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-privy")}`}
-                    disabled={isPrivyLoading}
-                    onClick={() => privyLogin()}
-                >
-                    {isPrivyLoading && <Spinner />}
-                    {t("sdk.modal.login.default.privyAction")}
-                </button>
 
                 <div>
                     <DismissButton />

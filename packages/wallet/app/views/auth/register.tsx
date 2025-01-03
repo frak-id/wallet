@@ -1,6 +1,6 @@
+import { isPrivyEnabled } from "@/context/blockchain/privy";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { EcdsaLogin } from "@/module/authentication/component/EcdsaLogin";
-import { usePrivyLogin } from "@/module/authentication/hook/usePrivyLogin";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
@@ -16,10 +16,6 @@ export default function Register() {
     const [disabled, setDisabled] = useState(false);
     const isWebAuthnSupported = useIsWebAuthNSupported();
     const { register, error, isRegisterInProgress } = useRegister({
-        onSuccess: () => navigate("/wallet"),
-    });
-    const { privyLoginAsync } = usePrivyLogin({
-        // On success, transmit the wallet address up a level
         onSuccess: () => navigate("/wallet"),
     });
 
@@ -93,12 +89,16 @@ export default function Register() {
             }
         >
             <ButtonAuth
-                trigger={isWebAuthnSupported ? register : privyLoginAsync}
-                disabled={disabled || isPreviouslyUsedAuthenticatorError}
+                trigger={register}
+                disabled={
+                    disabled ||
+                    isPreviouslyUsedAuthenticatorError ||
+                    !isWebAuthnSupported
+                }
             >
                 {message}
             </ButtonAuth>
-            {isWebAuthnSupported && <EcdsaLogin />}
+            {isPrivyEnabled && <EcdsaLogin />}
         </Grid>
     );
 }
