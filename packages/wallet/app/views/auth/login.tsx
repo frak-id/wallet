@@ -1,10 +1,10 @@
+import { isPrivyEnabled } from "@/context/blockchain/privy";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { EcdsaLogin } from "@/module/authentication/component/EcdsaLogin";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
-import { usePrivyCrossAppAuthenticate } from "@/module/common/hook/crossAppPrivyHooks";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
@@ -17,10 +17,6 @@ export default function Login() {
 
     const isWebAuthnSupported = useIsWebAuthNSupported();
     const { login } = useLogin({
-        onSuccess: () => navigate("/wallet"),
-    });
-    const { mutateAsync: privyLogin } = usePrivyCrossAppAuthenticate({
-        // On success, transmit the wallet address up a level
         onSuccess: () => navigate("/wallet"),
     });
 
@@ -43,14 +39,13 @@ export default function Login() {
                 }
             >
                 <ButtonAuth
-                    trigger={() =>
-                        isWebAuthnSupported ? login({}) : privyLogin()
-                    }
+                    disabled={!isWebAuthnSupported}
+                    trigger={() => login({})}
                 >
                     <Trans i18nKey={"wallet.login.button"} />
                 </ButtonAuth>
 
-                {isWebAuthnSupported && <EcdsaLogin />}
+                {isPrivyEnabled && <EcdsaLogin />}
             </Grid>
         </>
     );

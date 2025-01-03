@@ -1,4 +1,4 @@
-import { usePrivyCrossAppAuthenticate } from "@/module/common/hook/crossAppPrivyHooks";
+import { usePrivyLogin } from "@/module/authentication/hook/usePrivyLogin";
 import { Button } from "@module/component/Button";
 import { useTranslation } from "react-i18next";
 
@@ -9,11 +9,15 @@ import { useTranslation } from "react-i18next";
  * @constructor
  */
 export function EcdsaLogin() {
-    const { mutate: logIn } = usePrivyCrossAppAuthenticate();
+    const { privyLogin } = usePrivyLogin();
     const { t } = useTranslation();
 
     return (
-        <Button type={"button"} onClick={() => logIn()} variant={"primary"}>
+        <Button
+            type={"button"}
+            onClick={() => privyLogin()}
+            variant={"primary"}
+        >
             {t("wallet.login.privy")}
         </Button>
     );

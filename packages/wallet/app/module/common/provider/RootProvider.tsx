@@ -2,7 +2,6 @@ import { currentChain } from "@/context/blockchain/provider";
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import { useSyncEcdsaSession } from "@/module/common/hook/useSyncEcdsaSession";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@module/atoms/store";
@@ -161,6 +160,5 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
 
 function EnforceWagmiConnection() {
     useEnforceWagmiConnection();
-    useSyncEcdsaSession();
     return null;
 }

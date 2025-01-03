@@ -1,4 +1,3 @@
-import { crossAppClient } from "@/context/blockchain/privy-cross-client";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { jotaiStore } from "@module/atoms/store";
@@ -30,6 +29,7 @@ export function Logout() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    // const { logout: privyLogout } = usePrivyContext();
 
     return (
         <Panel size={"none"} variant={"invisible"}>
@@ -39,7 +39,8 @@ export function Logout() {
                 align={"left"}
                 onClick={async () => {
                     // Privy logout
-                    crossAppClient.clearConnection();
+                    // todo: to reput when privy enabled
+                    // await privyLogout();
                     // Session deletion
                     jotaiStore.set(sessionAtom, RESET);
                     jotaiStore.set(sdkSessionAtom, RESET);
