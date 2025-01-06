@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs/nexus-dashboard",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "The simple and cross-platform wallet to centralise your contents.",
   "private": true,
   "type": "module",
