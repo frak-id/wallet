@@ -1,5 +1,11 @@
 # @frak-labs/react-sdk
 
+## 0.0.3
+
+### Patch Changes
+
+- [`d36568a`](https://github.com/frak-id/wallet/commit/d36568a662fa76de7ea1ce838a065062fa2daee0) Thanks [@srod](https://github.com/srod)! - Initial publish
+
 ## 0.0.2
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @frak-labs-example/wallet-ethcc
 
+## 0.1.25
+
+### Patch Changes
+
+- Updated dependencies [[`d36568a`](https://github.com/frak-id/wallet/commit/d36568a662fa76de7ea1ce838a065062fa2daee0)]:
+  - @frak-labs/react-sdk@0.0.3
+
 ## 0.1.24
 
 ### Patch Changes
