@@ -43,6 +43,8 @@
     "format": "biome check --write .",
     "clean": "rimraf dist",
     "build": "tsup",
-    "build:watch": "tsup --watch"
+    "build:watch": "tsup --watch",
+    "prepublish": "bun run lint && bun run build",
+    "publish": "bun publish"
   }
 }

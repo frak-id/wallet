@@ -47,7 +47,9 @@
     "clean": "rimraf dist",
     "build": "tsup",
     "build:watch": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublish": "bun run lint && bun run build",
+    "publish": "bun publish"
   },
   "dependencies": {
     "preact": "^10.25.2",
