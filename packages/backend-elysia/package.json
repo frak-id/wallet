@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs/backend-elysia",
-  "description": "Backend for Frak",
+  "description": "Backend for Frak using Elysia",
   "version": "0.0.13",
   "private": true,
   "type": "module",
