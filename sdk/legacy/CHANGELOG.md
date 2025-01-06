@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.26
+
+### Patch Changes
+
+- [`3b1c2f6`](https://github.com/frak-id/wallet/commit/3b1c2f678bcb9b8d4721652ceaa6ea2c96b70e9e) Thanks [@srod](https://github.com/srod)! - ♻️ Move old sdk to sdk/legacy
+
 ## 0.0.25
 
 ### Patch Changes
