@@ -11,7 +11,7 @@
       "url": "https://twitter.com/QNivelais"
     }
   ],
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Frak Wallet components, helping any person to interact with the Frak wallet.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
@@ -35,7 +35,6 @@
   },
   "type": "module",
   "files": [
-    "/dist",
     "/cdn"
   ],
   "main": "./cdn/components.js",
@@ -44,7 +43,7 @@
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
-    "clean": "rimraf dist",
+    "clean": "rimraf cdn",
     "build": "tsup",
     "build:watch": "tsup --watch",
     "typecheck": "tsc --noEmit",

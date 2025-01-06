@@ -1,5 +1,11 @@
 # @frak-labs/components
 
+## 0.0.5
+
+### Patch Changes
+
+- [`6f5c9b4`](https://github.com/frak-id/wallet/commit/6f5c9b45aafb67db173e9652830c39e7bc5b72df) Thanks [@srod](https://github.com/srod)! - ♻️ Move components to sdk/components
+
 ## 0.0.4
 
 ### Patch Changes
