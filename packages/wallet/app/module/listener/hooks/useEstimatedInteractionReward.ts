@@ -37,7 +37,7 @@ export const estimatedInteractionRewardQuery = ({
             if (error) throw error;
 
             // Floor it so we don't have floating point issues
-            return data?.totalEur?.toFixed(2) ?? null;
+            return data?.totalReferrerEur?.toFixed(2) ?? null;
         },
     };
 };
