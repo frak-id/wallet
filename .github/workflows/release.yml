@@ -27,7 +27,6 @@ jobs:
         uses: changesets/action@v1
         id: changesets
         with:
-          publish: bun publish
           version: bun changeset:version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
