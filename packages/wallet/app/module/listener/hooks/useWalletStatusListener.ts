@@ -13,7 +13,7 @@ import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteracti
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { atom, useAtomValue } from "jotai";

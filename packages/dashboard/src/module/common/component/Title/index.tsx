@@ -1,21 +1,15 @@
 import { type VariantProps, cva } from "class-variance-authority";
-import {
-    type ElementType,
-    type HTMLAttributes,
-    type ReactNode,
-    forwardRef,
-} from "react";
+import type { ComponentPropsWithRef, ElementType, ReactNode } from "react";
 import styles from "./index.module.css";
 
-export interface TitleProps
-    extends HTMLAttributes<HTMLHeadingElement>,
-        VariantProps<typeof titleVariants> {
-    as?: ElementType;
-    className?: string;
-    classNameText?: string;
-    icon?: ReactNode;
-    children?: string | ReactNode;
-}
+export type TitleProps = ComponentPropsWithRef<"h1"> &
+    VariantProps<typeof titleVariants> & {
+        as?: ElementType;
+        className?: string;
+        classNameText?: string;
+        icon?: ReactNode;
+        children?: string | ReactNode;
+    };
 
 export const titleVariants = cva(styles.title, {
     variants: {
@@ -34,38 +28,34 @@ export const titleVariants = cva(styles.title, {
     },
 });
 
-export const Title = forwardRef<HTMLHeadingElement, TitleProps>(
-    (
-        {
-            as: Component = "h2",
-            className = "",
-            classNameText = "",
-            icon,
-            tag,
-            size,
-            children,
-            ...props
-        },
-        ref
-    ) => {
-        return (
-            <Component
-                ref={ref}
-                className={titleVariants({
-                    tag: Component.toString() as VariantProps<
-                        typeof titleVariants
-                    >["tag"],
-                    size,
-                    className,
-                })}
-                {...props}
-            >
-                {icon && <span className={styles.title__icon}>{icon}</span>}
-                <span className={`${styles.title__text} ${classNameText}`}>
-                    {children}
-                </span>
-            </Component>
-        );
-    }
-);
+export const Title = ({
+    ref,
+    as: Component = "h2",
+    className = "",
+    classNameText = "",
+    icon,
+    tag,
+    size,
+    children,
+    ...props
+}: TitleProps) => {
+    return (
+        <Component
+            ref={ref}
+            className={titleVariants({
+                tag: Component.toString() as VariantProps<
+                    typeof titleVariants
+                >["tag"],
+                size,
+                className,
+            })}
+            {...props}
+        >
+            {icon && <span className={styles.title__icon}>{icon}</span>}
+            <span className={`${styles.title__text} ${classNameText}`}>
+                {children}
+            </span>
+        </Component>
+    );
+};
 Title.displayName = "Title";

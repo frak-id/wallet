@@ -83,6 +83,7 @@
                     "description_reward": "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
                     "primaryAction": "I create my wallet under 30sec",
                     "secondaryAction": "I already have a wallet",
+                    "privyAction": "Connect via Privy",
                     "title": "Connection"
                 },
                 "success": "Connection successful"
@@ -125,7 +126,11 @@
     },
     "wallet": {
         "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",
-        "biometryInfos": "Biometry informations",
+        "settings": {
+            "biometryInfo": "Biometry informations",
+            "ecdsaInfo": "Login informations",
+            "ecdsaWallet": "Ecdsa wallet"
+        },
         "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
         "interaction": {
             "CREATE_REFERRAL_LINK": "Created share link",
@@ -144,7 +149,8 @@
             "accountCreation": "Account creation",
             "button": "Recover your <strong>wallet</strong>",
             "recover": "Recover wallet from file",
-            "walletsOnDevice": "Wallets used on this device"
+            "walletsOnDevice": "Wallets used on this device",
+            "privy": "Connect via Privy"
         },
         "notifications": {
             "noNotifications": "No notifications"
@@ -234,9 +240,6 @@
         "welcome": {
             "title": "Welcome in your wallet",
             "text": "This wallet will enable you to collect all the rewards and much more."
-        },
-        "errors": {
-            "webauthnNotSupported": "Open this page on your <strong>default browser</strong>, or use a compatible browser to create your wallet. Be sure to use the <strong>latest version</strong> of your browser."
         }
     }
 }

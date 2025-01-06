@@ -1,7 +1,6 @@
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
-import { forwardRef } from "react";
-import type { HTMLAttributes } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
 export const callOutVariants = cva(styles.callOut, {
@@ -20,22 +19,24 @@ export const callOutVariants = cva(styles.callOut, {
     },
 });
 
-export interface CallOutProps
-    extends HTMLAttributes<HTMLDivElement>,
-        VariantProps<typeof callOutVariants> {}
+export type CallOutProps = ComponentPropsWithRef<"p"> &
+    VariantProps<typeof callOutVariants>;
 
-export const CallOut = forwardRef<HTMLDivElement, CallOutProps>(
-    ({ className, variant, ...props }, ref) => {
-        return (
-            <p
-                className={`${callOutVariants({
-                    variant,
-                })} ${className}`}
-                ref={ref}
-                {...props}
-            />
-        );
-    }
-);
+export const CallOut = ({
+    ref,
+    className,
+    variant,
+    ...props
+}: CallOutProps) => {
+    return (
+        <p
+            className={`${callOutVariants({
+                variant,
+            })} ${className}`}
+            ref={ref}
+            {...props}
+        />
+    );
+};
 
 CallOut.displayName = "CallOut";

@@ -145,8 +145,11 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             return "ok";
         },
         {
-            type: "text",
+            parse: "text",
             body: t.String(),
+            params: t.Object({
+                productId: t.Optional(t.Hex()),
+            }),
         }
     );
 

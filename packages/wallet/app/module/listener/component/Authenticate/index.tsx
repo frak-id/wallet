@@ -1,6 +1,6 @@
 import { TextData } from "@/module/common/component/TextData";
 import styles from "@/module/listener/component/Modal/index.module.css";
-import type { SiweAuthenticateModalStepType } from "@frak-labs/nexus-sdk/core";
+import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";

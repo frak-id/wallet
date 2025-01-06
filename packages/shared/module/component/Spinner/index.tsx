@@ -1,31 +1,23 @@
 import { cx } from "class-variance-authority";
-import { forwardRef } from "react";
-import type { ElementRef, HTMLAttributes } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
-type SpinnerElement = ElementRef<"span">;
-interface SpinnerProps extends HTMLAttributes<HTMLSpanElement> {
+type SpinnerProps = ComponentPropsWithRef<"span"> & {
     className?: string;
-}
+};
 
-export const Spinner = forwardRef<SpinnerElement, SpinnerProps>(
-    ({ className, ...props }, forwardedRef) => {
-        return (
-            <span
-                {...props}
-                ref={forwardedRef}
-                className={cx(styles.spinner, className)}
-            >
-                <span className={styles.spinner__leaf} />
-                <span className={styles.spinner__leaf} />
-                <span className={styles.spinner__leaf} />
-                <span className={styles.spinner__leaf} />
-                <span className={styles.spinner__leaf} />
-                <span className={styles.spinner__leaf} />
-                <span className={styles.spinner__leaf} />
-                <span className={styles.spinner__leaf} />
-            </span>
-        );
-    }
-);
+export const Spinner = ({ ref, className, ...props }: SpinnerProps) => {
+    return (
+        <span {...props} ref={ref} className={cx(styles.spinner, className)}>
+            <span className={styles.spinner__leaf} />
+            <span className={styles.spinner__leaf} />
+            <span className={styles.spinner__leaf} />
+            <span className={styles.spinner__leaf} />
+            <span className={styles.spinner__leaf} />
+            <span className={styles.spinner__leaf} />
+            <span className={styles.spinner__leaf} />
+            <span className={styles.spinner__leaf} />
+        </span>
+    );
+};
 Spinner.displayName = "Spinner";

@@ -13,7 +13,7 @@
 .sessionClosed__warning {
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
         "Android Emoji", "EmojiOne Mozilla", "Twemoji Mozilla", "Noto Emoji",
-        "Segoe UI Symbol", EmojiSymbols, emoji;
+        "Segoe UI Symbol", EmojiSymbols, emoji, sans-serif;
     font-size: 12px;
 }
 

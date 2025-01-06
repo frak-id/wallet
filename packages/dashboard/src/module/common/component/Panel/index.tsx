@@ -2,16 +2,15 @@ import { Title } from "@/module/common/component/Title";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 import { BadgeCheck } from "lucide-react";
-import { type HTMLAttributes, type PropsWithChildren, forwardRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
-export interface PanelProps
-    extends HTMLAttributes<HTMLDivElement>,
-        PropsWithChildren<VariantProps<typeof panelVariants>> {
-    title?: string;
-    withBadge?: boolean;
-    className?: string;
-}
+export type PanelProps = ComponentPropsWithRef<"div"> &
+    VariantProps<typeof panelVariants> & {
+        title?: string;
+        withBadge?: boolean;
+        className?: string;
+    };
 
 export const panelVariants = cva(styles.panel, {
     variants: {
@@ -26,30 +25,26 @@ export const panelVariants = cva(styles.panel, {
     },
 });
 
-export const Panel = forwardRef<HTMLDivElement, PanelProps>(
-    (
-        {
-            variant,
-            title,
-            withBadge = true,
-            className = "",
-            children,
-            ...props
-        },
-        ref
-    ) => {
-        return (
-            <div
-                ref={ref}
-                className={panelVariants({ variant, className })}
-                {...props}
-            >
-                <PanelTitle title={title} withBadge={withBadge} />
-                {children}
-            </div>
-        );
-    }
-);
+export const Panel = ({
+    ref,
+    variant,
+    title,
+    withBadge = true,
+    className = "",
+    children,
+    ...props
+}: PanelProps) => {
+    return (
+        <div
+            ref={ref}
+            className={panelVariants({ variant, className })}
+            {...props}
+        >
+            <PanelTitle title={title} withBadge={withBadge} />
+            {children}
+        </div>
+    );
+};
 
 export function PanelTitle({
     withBadge = true,

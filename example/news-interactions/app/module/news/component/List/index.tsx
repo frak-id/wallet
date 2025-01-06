@@ -1,7 +1,7 @@
 import { ImageRemote } from "@/module/common/component/ImageRemote";
 import type { LightNews } from "@/types/News";
-import { Link } from "@remix-run/react";
 import type { PropsWithChildren } from "react";
+import { Link } from "react-router";
 import styles from "./index.module.css";
 
 export function List({ children }: PropsWithChildren) {
@@ -24,7 +24,7 @@ function ListItem({ news, top = false }: { news: LightNews; top?: boolean }) {
     }
 
     return (
-        <li className={styles.listItem}>
+        <li>
             <article>
                 <Component />
             </article>
@@ -70,11 +70,7 @@ function ItemWithoutSummary({ news }: { news: LightNews }) {
 function ItemWithSummary({ news }: { news: LightNews }) {
     const { id, image, title, summary } = news;
     return (
-        <Link
-            className={styles.listItem__linkSummary}
-            to={`/article?id=${id}`}
-            viewTransition
-        >
+        <Link to={`/article?id=${id}`} viewTransition>
             <h2 className={styles.listItem__title}>{title}</h2>
             <span className={styles.listItem__contentSummary}>
                 <p className={styles.listItem__textSummary}>{summary}</p>

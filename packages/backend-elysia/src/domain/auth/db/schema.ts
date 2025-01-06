@@ -24,11 +24,8 @@ export const ssoTable = pgTable(
         wallet: customHex("wallet"),
         authenticatorId: varchar("authenticator_id"),
     },
-    (table) => ({
-        ssoIdx: index("sso_idx").on(table.ssoId),
-        ssoProductIdx: uniqueIndex("sso_product_idx").on(
-            table.ssoId,
-            table.productId
-        ),
-    })
+    (table) => [
+        index("sso_idx").on(table.ssoId),
+        uniqueIndex("sso_product_idx").on(table.ssoId, table.productId),
+    ]
 );

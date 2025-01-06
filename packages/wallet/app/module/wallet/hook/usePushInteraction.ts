@@ -2,7 +2,7 @@ import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { pushBackupData } from "@/context/sdk/utils/backup";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
-import type { PreparedInteraction } from "@frak-labs/nexus-sdk/core";
+import type { PreparedInteraction } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";

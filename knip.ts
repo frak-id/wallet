@@ -3,7 +3,7 @@ import type { KnipConfig } from "knip";
 const config: KnipConfig = {
     // Exclude types analysis for now
     exclude: ["types"],
-    ignore: ["**/*.d.ts", "packages/shopify-app/**"],
+    ignore: ["**/*.d.ts"],
     // Include all the workspaces
     workspaces: {
         ".": {
@@ -29,10 +29,6 @@ const config: KnipConfig = {
         "packages/backend-elysia": {
             entry: "src/index.ts",
             project: "src/**/*.ts",
-        },
-        "packages/shopify-app": {
-            entry: ["app/**/*.tsx"],
-            project: ["app/**/*.{ts,tsx}"],
         },
     },
     // Ignore SDK for knip for now

@@ -1,8 +1,8 @@
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import type { ButtonHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import styles from "./index.module.css";
 
-export function ButtonAction(props: ButtonHTMLAttributes<HTMLButtonElement>) {
+export function ButtonAction(props: ComponentProps<"button">) {
     return (
         <button
             type={"button"}

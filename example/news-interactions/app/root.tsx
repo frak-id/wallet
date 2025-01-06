@@ -1,13 +1,8 @@
 import allCssUrl from "@/styles/all.css?url";
-import type { LinksFunction, MetaFunction } from "@remix-run/node";
-import {
-    Links,
-    Meta,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
-} from "@remix-run/react";
+import { Spinner } from "@module/component/Spinner";
 import type { ReactNode } from "react";
+import type { LinksFunction, MetaFunction } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import { MainLayout } from "./module/common/component/MainLayout";
 import { RootProvider } from "./module/common/provider/RootProvider";
 
@@ -93,6 +88,24 @@ export const links: LinksFunction = () => [
         href: allCssUrl,
     },
 ];
+
+export function HydrateFallback() {
+    return (
+        <>
+            <div
+                style={{
+                    position: "fixed",
+                    left: "50%",
+                    top: "50%",
+                    margin: "-8px 0 0 -8px",
+                }}
+            >
+                <Spinner />
+            </div>
+            <Scripts />
+        </>
+    );
+}
 
 export function Layout({ children }: { children: ReactNode }) {
     return (

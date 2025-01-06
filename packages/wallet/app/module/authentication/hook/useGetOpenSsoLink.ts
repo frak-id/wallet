@@ -8,7 +8,7 @@ import {
     getFromLocalStorage,
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
-import { compressJson } from "@frak-labs/nexus-sdk/core";
+import { compressJson } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
@@ -117,7 +117,6 @@ export function useSsoLink({
         if (!consumeKey) {
             console.log("Generating new consume key cause of null", {
                 consumeKey,
-                testDirect: jotaiStore.get(ssoConsumeKey),
             });
             const key = generatePrivateKey();
             jotaiStore.set(ssoConsumeKey, { key, generatedAt: Date.now() });

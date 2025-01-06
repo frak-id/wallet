@@ -1,5 +1,5 @@
 import { getProductAdministrators } from "@/context/product/action/getAdministrators";
-import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { type Hex, isAddressEqual, toHex } from "viem";
 

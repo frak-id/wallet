@@ -1,15 +1,13 @@
 "use client";
-
 import { Indicator, Root } from "@radix-ui/react-checkbox";
 import { Check, Minus } from "lucide-react";
-import { forwardRef } from "react";
-import type { ComponentPropsWithoutRef, ElementRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
-export const Checkbox = forwardRef<
-    ElementRef<typeof Root>,
-    ComponentPropsWithoutRef<typeof Root>
->(({ ...props }, ref) => {
+export const Checkbox = ({
+    ref,
+    ...props
+}: ComponentPropsWithRef<typeof Root>) => {
     return (
         <Root className={styles.checkbox} ref={ref} {...props}>
             <Indicator className={styles.checkbox__indicator}>
@@ -21,5 +19,5 @@ export const Checkbox = forwardRef<
             </Indicator>
         </Root>
     );
-});
+};
 Checkbox.displayName = "Checkbox";

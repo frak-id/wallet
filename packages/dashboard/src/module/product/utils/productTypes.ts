@@ -1,7 +1,4 @@
-import {
-    type ProductTypesKey,
-    productTypesMask,
-} from "@frak-labs/nexus-sdk/core";
+import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
 
 /**
  * Decode a bit mask of product types into an array of keys contained inside it

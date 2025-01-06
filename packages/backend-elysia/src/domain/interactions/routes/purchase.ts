@@ -54,7 +54,7 @@ export const purchaseInteractionsRoutes = new Elysia()
             emitter.emit("newTrackedPurchase");
         },
         {
-            type: "json",
+            parse: "json",
             body: t.Object({
                 customerId: t.Union([t.String(), t.Number()]),
                 orderId: t.Union([t.String(), t.Number()]),

@@ -1,18 +1,20 @@
 "use client";
 
 import { Content, Portal, Root, Trigger } from "@radix-ui/react-popover";
-import { forwardRef } from "react";
-import type { ComponentPropsWithoutRef, ElementRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
 const Popover = Root;
 
 const PopoverTrigger = Trigger;
 
-const PopoverContent = forwardRef<
-    ElementRef<typeof Content>,
-    ComponentPropsWithoutRef<typeof Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+const PopoverContent = ({
+    ref,
+    className,
+    align = "center",
+    sideOffset = 4,
+    ...props
+}: ComponentPropsWithRef<typeof Content>) => (
     <Portal>
         <Content
             ref={ref}
@@ -22,7 +24,7 @@ const PopoverContent = forwardRef<
             {...props}
         />
     </Portal>
-));
+);
 PopoverContent.displayName = Content.displayName;
 
 export { Popover, PopoverTrigger, PopoverContent };

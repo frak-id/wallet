@@ -7,7 +7,7 @@ import styles from "./index.module.css";
 interface ProductItemProps
     extends Omit<HTMLAttributes<HTMLSpanElement>, "className"> {
     id?: Hex;
-    name?: string | ReactElement;
+    name?: string | ReactElement<unknown>;
     domain?: string;
     showActions?: boolean;
     isLink?: boolean;

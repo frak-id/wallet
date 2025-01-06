@@ -7,13 +7,10 @@ import {
 } from "@/module/authentication/hook/useGetOpenSsoLink";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { RequireWebAuthN } from "@/module/common/component/RequireWebAuthN";
+import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
 import styles from "@/module/listener/component/Modal/index.module.css";
-import type {
-    LoginModalStepType,
-    SsoMetadata,
-} from "@frak-labs/nexus-sdk/core";
+import type { LoginModalStepType, SsoMetadata } from "@frak-labs/core-sdk";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
@@ -45,11 +42,13 @@ export function LoginModalStep({
     const allowSso = params.allowSso ?? true;
 
     const { login, isSuccess, isLoading, isError, error } = useLogin({
-        // Don't transmit the error up, to avoid modal closing
         // On success, transmit the wallet address up a level
         onSuccess: (session) => onFinish({ wallet: session.address }),
     });
+
     const session = useAtomValue(sessionAtom);
+
+    const isWebAuthnSupported = useIsWebAuthNSupported();
 
     /**
      * Listen to the session status, and exit directly after a session is set in the storage
@@ -62,7 +61,7 @@ export function LoginModalStep({
     }, [onFinish, session]);
 
     return (
-        <RequireWebAuthN>
+        <>
             <div
                 className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
             >
@@ -81,7 +80,7 @@ export function LoginModalStep({
                         <button
                             type={"button"}
                             className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
-                            disabled={isLoading}
+                            disabled={isLoading || !isWebAuthnSupported}
                             onClick={() => {
                                 login({});
                                 trackEvent("cta-login");
@@ -93,6 +92,7 @@ export function LoginModalStep({
                         </button>
                     </div>
                 )}
+
                 <div>
                     <DismissButton />
                 </div>
@@ -109,7 +109,7 @@ export function LoginModalStep({
                     {error.message}
                 </p>
             )}
-        </RequireWebAuthN>
+        </>
     );
 }
 
@@ -149,11 +149,10 @@ function SsoButton({
     });
 
     // Consume the pending sso if possible (maybe some hook to early exit here? Already working since we have the session listener)
-    const { data } = useConsumePendingSso({
+    useConsumePendingSso({
         trackingId,
         productId: context.productId,
     });
-    console.log("useConsumePendingSso response", data);
 
     // The text to display on the button
     const text = useMemo<ReactNode>(

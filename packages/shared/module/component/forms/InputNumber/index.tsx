@@ -1,21 +1,14 @@
-import { Input } from "@module/component/forms/Input";
-import type { InputProps } from "@module/component/forms/Input";
-import { forwardRef } from "react";
-import type { InputHTMLAttributes } from "react";
+import { Input, type InputProps } from "@module/component/forms/Input";
 import type {
     ControllerRenderProps,
     FieldPath,
     FieldValues,
 } from "react-hook-form";
 
-interface InputNumberProps extends InputHTMLAttributes<HTMLInputElement> {}
+type InputNumberProps = InputProps &
+    ControllerRenderProps<FieldValues, FieldPath<FieldValues>>;
 
-export const InputNumber = forwardRef<
-    HTMLInputElement,
-    InputNumberProps &
-        InputProps &
-        ControllerRenderProps<FieldValues, FieldPath<FieldValues>>
->(({ onChange, ...props }, ref) => {
+export const InputNumber = ({ ref, onChange, ...props }: InputNumberProps) => {
     return (
         <Input
             {...props}
@@ -30,5 +23,5 @@ export const InputNumber = forwardRef<
             }}
         />
     );
-});
+};
 InputNumber.displayName = "InputNumber";

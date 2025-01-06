@@ -1,7 +1,7 @@
 import {
-    NexusConfigProvider,
-    NexusIFrameClientProvider,
-} from "@frak-labs/nexus-sdk/react";
+    FrakConfigProvider,
+    FrakIFrameClientProvider,
+} from "@frak-labs/react-sdk";
 import type { PropsWithChildren } from "react";
 
 export function FrakProvider({ children }: PropsWithChildren) {
@@ -14,8 +14,8 @@ export function FrakProvider({ children }: PropsWithChildren) {
     };
 
     return (
-        <NexusConfigProvider config={frakWalletSdkConfig}>
-            <NexusIFrameClientProvider>{children}</NexusIFrameClientProvider>
-        </NexusConfigProvider>
+        <FrakConfigProvider config={frakWalletSdkConfig}>
+            <FrakIFrameClientProvider>{children}</FrakIFrameClientProvider>
+        </FrakConfigProvider>
     );
 }

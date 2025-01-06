@@ -22,7 +22,8 @@ export const oracleContext = new Elysia({
     .use(postgresContext)
     .use(eventsContext)
     .decorate(({ postgresDb, ...decorators }) => {
-        const oracleDb = drizzle(postgresDb, {
+        const oracleDb = drizzle({
+            client: postgresDb,
             schema: {
                 productOracleTable,
                 purchaseStatusEnum,

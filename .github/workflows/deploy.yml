@@ -28,6 +28,11 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
@@ -62,7 +67,7 @@ jobs:
 
       - name: "🔨 Build the SDK"
         if: steps.changes.outputs.deployRequired == 'true'
-        run: bun run build:sdk
+        run: bun run build:sdk-all
 
       - name: "👥 Configure AWS Credentials"
         if: steps.changes.outputs.deployRequired == 'true'

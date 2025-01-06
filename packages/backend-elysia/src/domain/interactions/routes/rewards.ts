@@ -85,7 +85,8 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
             );
 
             return {
-                totalEur,
+                totalReferrerEur: totalEur / 2,
+                totalRefereeEur: totalEur / 2,
                 activeRewards: filteredRewards,
             };
         },
@@ -96,7 +97,8 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
             }),
             response: t.Union([
                 t.Object({
-                    totalEur: t.Number(),
+                    totalReferrerEur: t.Number(),
+                    totalRefereeEur: t.Number(),
                     activeRewards: t.Array(
                         t.Object({
                             campaign: t.Address(),

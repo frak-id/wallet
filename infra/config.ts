@@ -63,6 +63,7 @@ export const vapidPublicKey = new sst.Secret("VAPID_PUBLIC_KEY");
 export const umamiWalletWebsiteId = new sst.Secret("UMAMI_WALLET_WEBSITE_ID");
 export const sessionEncryptionKy = new sst.Secret("SESSION_ENCRYPTION_KEY");
 export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
+export const privyAppId = new sst.Secret("PRIVY_APP_ID");
 
 export const postgresHost = new sst.Secret("POSTGRES_HOST");
 export const postgresPassword = new sst.Secret("POSTGRES_PASSWORD");

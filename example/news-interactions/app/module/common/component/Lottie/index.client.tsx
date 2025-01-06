@@ -1,7 +1,7 @@
-import { useWalletStatus } from "@frak-labs/nexus-sdk/react";
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Player } from "@lottiefiles/react-lottie-player";
-import { Link } from "@remix-run/react";
 import { useState } from "react";
+import { Link } from "react-router";
 import lottie from "./assets/lottie.json";
 import styles from "./index.module.css";
 

@@ -27,14 +27,15 @@ jobs:
         uses: changesets/action@v1
         id: changesets
         with:
-          publish: bun changeset:release
           version: bun changeset:version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - uses: gacts/purge-jsdelivr-cache@v1
         if: steps.changesets.outputs.published == 'true'
         with:
           url: |
             https://cdn.jsdelivr.net/npm/@frak-labs/nexus-sdk@latest/dist/bundle/bundle.js
+            https://cdn.jsdelivr.net/npm/@frak-labs/core-sdk@latest/cdn/bundle.js
+            https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js

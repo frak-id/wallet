@@ -9,7 +9,8 @@ export const notificationContext = new Elysia({
 })
     .use(postgresContext)
     .decorate(({ postgresDb, ...decorators }) => {
-        const notificationDb = drizzle(postgresDb, {
+        const notificationDb = drizzle({
+            client: postgresDb,
             schema: { pushTokensTable },
         });
         return {
@@ -24,13 +25,15 @@ export const notificationContext = new Elysia({
         };
     })
     // Macro tyo automatically cleanup expired tokens
-    .macro(({ onAfterResponse }) => ({
-        cleanupExpiredTokens(isEnabled?: boolean) {
+    .macro({
+        cleanupTokens(isEnabled?: boolean) {
             if (!isEnabled) return;
 
-            return onAfterResponse(async ({ cleanupExpiredTokens }) => {
-                await cleanupExpiredTokens();
-            });
+            return {
+                afterResponse: async ({ cleanupExpiredTokens }) => {
+                    await cleanupExpiredTokens();
+                },
+            };
         },
-    }))
+    })
     .as("plugin");

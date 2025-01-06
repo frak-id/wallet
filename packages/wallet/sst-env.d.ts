@@ -35,7 +35,7 @@ declare module "sst" {
       "value": string
     }
     "NewsInteractionDemo": {
-      "type": "sst.aws.Remix"
+      "type": "sst.aws.StaticSite"
       "url": string
     }
     "PIMLICO_API_KEY": {
@@ -47,6 +47,10 @@ declare module "sst" {
       "value": string
     }
     "POSTGRES_PASSWORD": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "PRIVY_APP_ID": {
       "type": "sst.sst.Secret"
       "value": string
     }
@@ -62,12 +66,16 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "VanillaJsDemo": {
+      "type": "sst.aws.StaticSite"
+      "url": string
+    }
     "Wallet": {
       "type": "sst.aws.StaticSite"
       "url": string
     }
     "WalletExampleEthCC": {
-      "type": "sst.aws.Remix"
+      "type": "sst.aws.StaticSite"
       "url": string
     }
   }

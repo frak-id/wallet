@@ -37,9 +37,7 @@ export const productOracleTable = pgTable(
         synced: boolean("synced").default(false),
         lastSyncTxHash: customHex("last_sync_tx_hash"),
     },
-    (table) => ({
-        productIdIdx: index("unique_product_id").on(table.productId),
-    })
+    (table) => [index("unique_product_id").on(table.productId)]
 );
 
 export const purchaseStatusEnum = pgEnum("purchase_status", [
@@ -76,17 +74,14 @@ export const purchaseStatusTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
     },
-    (table) => ({
-        externalIdIdx: uniqueIndex("unique_external_id").on(
-            table.externalId,
-            table.oracleId
-        ),
-        purchaseIdIdx: index("purchase_id_idx").on(table.purchaseId),
-        externalListenerIdx: uniqueIndex("external_listener_id").on(
+    (table) => [
+        uniqueIndex("unique_external_id").on(table.externalId, table.oracleId),
+        index("purchase_id_idx").on(table.purchaseId),
+        uniqueIndex("external_listener_id").on(
             table.externalId,
             table.purchaseToken
         ),
-    })
+    ]
 );
 
 export const purchaseItemTable = pgTable(
@@ -111,11 +106,11 @@ export const purchaseItemTable = pgTable(
         // Update infos
         createdAt: timestamp("created_at").defaultNow(),
     },
-    (table) => ({
-        purchaseIdIdx: index("item_purchase_id_idx").on(table.purchaseId),
-        externalIdIdx: uniqueIndex("unique_external_purchase_item_id").on(
+    (table) => [
+        index("item_purchase_id_idx").on(table.purchaseId),
+        uniqueIndex("unique_external_purchase_item_id").on(
             table.externalId,
             table.purchaseId
         ),
-    })
+    ]
 );

@@ -81,7 +81,7 @@ export const sendRoutes = new Elysia()
                 );
             }),
         {
-            isAuthenticated: "business",
+            nextAuthenticated: "business",
             body: t.Object({
                 targets: SendNotificationTargetsDto,
                 payload: SendNotificationPayloadDto,

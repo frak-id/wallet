@@ -14,7 +14,7 @@ import {
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
 } from "@frak-labs/app-essentials";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { AlertDialog } from "@module/component/AlertDialog";
 import { Button } from "@module/component/Button";
 import { Column, Columns } from "@module/component/Columns";

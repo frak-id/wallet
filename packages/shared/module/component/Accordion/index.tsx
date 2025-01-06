@@ -1,30 +1,29 @@
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";
-import {
-    type ComponentPropsWithoutRef,
-    type ElementRef,
-    forwardRef,
-} from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
 const Accordion = AccordionPrimitive.Root;
 
-const AccordionItem = forwardRef<
-    ElementRef<typeof AccordionPrimitive.Item>,
-    ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
->(({ className = "", ...props }, ref) => (
+const AccordionItem = ({
+    ref,
+    className = "",
+    ...props
+}: ComponentPropsWithRef<typeof AccordionPrimitive.Item>) => (
     <AccordionPrimitive.Item
         ref={ref}
         className={`${styles.accordion__item} ${className}`}
         {...props}
     />
-));
+);
 AccordionItem.displayName = "AccordionItem";
 
-const AccordionTrigger = forwardRef<
-    ElementRef<typeof AccordionPrimitive.Trigger>,
-    ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className = "", children, ...props }, ref) => (
+const AccordionTrigger = ({
+    ref,
+    className = "",
+    children,
+    ...props
+}: ComponentPropsWithRef<typeof AccordionPrimitive.Trigger>) => (
     <AccordionPrimitive.Header className={styles.accordion__header} asChild>
         <h2>
             <AccordionPrimitive.Trigger
@@ -37,15 +36,18 @@ const AccordionTrigger = forwardRef<
             </AccordionPrimitive.Trigger>
         </h2>
     </AccordionPrimitive.Header>
-));
+);
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 
-const AccordionContent = forwardRef<
-    ElementRef<typeof AccordionPrimitive.Content>,
-    ComponentPropsWithoutRef<typeof AccordionPrimitive.Content> & {
-        classNameText?: string;
-    }
->(({ className = "", classNameText = "", children, ...props }, ref) => (
+const AccordionContent = ({
+    ref,
+    className = "",
+    classNameText = "",
+    children,
+    ...props
+}: ComponentPropsWithRef<typeof AccordionPrimitive.Content> & {
+    classNameText?: string;
+}) => (
     <AccordionPrimitive.Content
         ref={ref}
         className={`${styles.accordion__content} ${className}`}
@@ -53,7 +55,7 @@ const AccordionContent = forwardRef<
     >
         <div className={`${classNameText}`}>{children}</div>
     </AccordionPrimitive.Content>
-));
+);
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
 
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };

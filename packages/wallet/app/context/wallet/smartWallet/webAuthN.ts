@@ -1,8 +1,10 @@
 import type { P256Signature, WebAuthNSignature } from "@/types/WebAuthN";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
-import { base64URLStringToBuffer } from "@simplewebauthn/browser";
-import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
+import {
+    type AuthenticationResponseJSON,
+    base64URLStringToBuffer,
+} from "@simplewebauthn/browser";
 import { toHex } from "viem";
 import { polygon, polygonMumbai } from "viem/chains";
 

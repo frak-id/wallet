@@ -1,4 +1,4 @@
-import type { SsoMetadata } from "@frak-labs/nexus-sdk/core";
+import type { SsoMetadata } from "@frak-labs/core-sdk";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import type { Hex } from "viem";

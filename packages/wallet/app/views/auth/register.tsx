@@ -1,21 +1,23 @@
+import { isPrivyEnabled } from "@/context/blockchain/privy";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
+import { EcdsaLogin } from "@/module/authentication/component/EcdsaLogin";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { Link, useNavigate } from "@remix-run/react";
+import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { Link, useNavigate } from "react-router";
 import styles from "./register.module.css";
 
 export default function Register() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { register, error, isRegisterInProgress } = useRegister({
-        onSuccess: () => {
-            navigate("/wallet");
-        },
-    });
     const [disabled, setDisabled] = useState(false);
+    const isWebAuthnSupported = useIsWebAuthNSupported();
+    const { register, error, isRegisterInProgress } = useRegister({
+        onSuccess: () => navigate("/wallet"),
+    });
 
     /**
      * Boolean used to know if the error is about a previously used authenticator
@@ -88,10 +90,15 @@ export default function Register() {
         >
             <ButtonAuth
                 trigger={register}
-                disabled={disabled || isPreviouslyUsedAuthenticatorError}
+                disabled={
+                    disabled ||
+                    isPreviouslyUsedAuthenticatorError ||
+                    !isWebAuthnSupported
+                }
             >
                 {message}
             </ButtonAuth>
+            {isPrivyEnabled && <EcdsaLogin />}
         </Grid>
     );
 }

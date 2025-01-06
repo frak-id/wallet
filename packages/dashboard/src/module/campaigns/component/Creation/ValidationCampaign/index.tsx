@@ -19,7 +19,7 @@ import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { useSendTransactionAction } from "@frak-labs/nexus-sdk/react";
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";

@@ -1,12 +1,9 @@
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { useIntersectionObserver } from "@/module/common/hooks/useIntersectionObserver";
 import { Hero } from "@/module/news/component/Hero";
-import { PressInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
-import {
-    useDisplayModal,
-    useReferralInteraction,
-} from "@frak-labs/nexus-sdk/react";
-import { useSendInteraction } from "@frak-labs/nexus-sdk/react";
+import { PressInteractionEncoder } from "@frak-labs/core-sdk/interactions";
+import { useDisplayModal, useReferralInteraction } from "@frak-labs/react-sdk";
+import { useSendInteraction } from "@frak-labs/react-sdk";
 import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";

@@ -22,9 +22,13 @@ cdk.context.json
 **/.open-next/
 **/out/
 
+# react router
+.react-router
+
 # production
 build
 dist
+cdn
 
 # misc
 .DS_Store
@@ -52,3 +56,5 @@ packages/wallet/next-env.d.ts
 
 # Turbo tmp stuff
 .turbo
+
+generated-docs/

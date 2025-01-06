@@ -34,7 +34,8 @@ export const interactionsContext = new Elysia({
             ...decorators
         }) => {
             // Build our drizzle DB
-            const interactionsDb = drizzle(postgresDb, {
+            const interactionsDb = drizzle({
+                client: postgresDb,
                 schema: {
                     pendingInteractionsTable,
                     interactionSimulationStatus,

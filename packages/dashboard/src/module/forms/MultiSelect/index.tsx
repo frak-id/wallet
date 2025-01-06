@@ -17,8 +17,8 @@ import { Separator } from "@/module/common/component/Separator";
 import { Button } from "@module/component/Button";
 import { Tooltip } from "@module/component/Tooltip";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
-import { forwardRef, useState } from "react";
-import type { ButtonHTMLAttributes } from "react";
+import { useState } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
 type Option = {
@@ -27,136 +27,129 @@ type Option = {
     tooltip?: string;
 };
 
-export interface MultiSelectProps
-    extends ButtonHTMLAttributes<HTMLButtonElement> {
+export type MultiSelectProps = ComponentPropsWithRef<typeof Button> & {
     options: Option[];
     onValueChange: (value: Option[]) => void;
     placeholder?: string;
     animation?: number;
     asChild?: boolean;
     className?: string;
-}
+};
 
-export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
-    (
-        {
-            options,
-            onValueChange,
-            value,
-            placeholder = "Select options",
-            asChild = false,
-            className,
-            ...props
-        },
-        ref
-    ) => {
-        const namesFromValue = Array.isArray(value)
-            ? value.map(
-                  (v: string) =>
-                      options.find((o) => (o.value ?? o.name) === v)?.name ?? v
-              )
-            : [];
-        const selectedNames = new Set(namesFromValue);
-        const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+export const MultiSelect = ({
+    ref,
+    options,
+    onValueChange,
+    value,
+    placeholder = "Select options",
+    asChild = false,
+    className,
+    ...props
+}: MultiSelectProps) => {
+    const namesFromValue = Array.isArray(value)
+        ? value.map(
+              (v: string) =>
+                  options.find((o) => (o.value ?? o.name) === v)?.name ?? v
+          )
+        : [];
+    const selectedNames = new Set(namesFromValue);
+    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-        const toggleOption = (args: Option) => {
-            const isSelected = selectedNames.has(args.name);
-            if (isSelected) {
-                selectedNames.delete(args.name);
-            } else {
-                selectedNames.add(args.name);
-            }
-            const filterValues = Array.from(selectedNames)
-                .map((name) => options.find((o) => o.name === name))
-                .filter((value) => value !== undefined);
-            onValueChange(filterValues);
-        };
+    const toggleOption = (args: Option) => {
+        const isSelected = selectedNames.has(args.name);
+        if (isSelected) {
+            selectedNames.delete(args.name);
+        } else {
+            selectedNames.add(args.name);
+        }
+        const filterValues = Array.from(selectedNames)
+            .map((name) => options.find((o) => o.name === name))
+            .filter((value) => value !== undefined);
+        onValueChange(filterValues);
+    };
 
-        const handleClear = () => {
-            onValueChange([]);
-        };
+    const handleClear = () => {
+        onValueChange([]);
+    };
 
-        const handleTogglePopover = () => {
-            setIsPopoverOpen((prev) => !prev);
-        };
+    const handleTogglePopover = () => {
+        setIsPopoverOpen((prev) => !prev);
+    };
 
-        return (
-            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant={"trigger"}
-                        ref={ref}
-                        {...props}
-                        onClick={handleTogglePopover}
-                        className={styles.multiSelect__trigger}
-                    >
-                        {selectedNames.size > 0 ? (
-                            <SelectedValues
+    return (
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant={"trigger"}
+                    ref={ref}
+                    {...props}
+                    onClick={handleTogglePopover}
+                    className={styles.multiSelect__trigger}
+                >
+                    {selectedNames.size > 0 ? (
+                        <SelectedValues
+                            selectedValues={selectedNames}
+                            options={options}
+                            toggleOption={toggleOption}
+                            handleClear={handleClear}
+                        />
+                    ) : (
+                        <div className={styles.multiSelect__triggerInner}>
+                            <span>{placeholder}</span>
+                            <ChevronDown size={20} />
+                        </div>
+                    )}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent
+                align="start"
+                onEscapeKeyDown={() => setIsPopoverOpen(false)}
+            >
+                <Command>
+                    <CommandInput placeholder="Search..." />
+                    <CommandSeparator />
+                    <CommandList>
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup>
+                            <OptionsList
                                 selectedValues={selectedNames}
                                 options={options}
                                 toggleOption={toggleOption}
-                                handleClear={handleClear}
                             />
-                        ) : (
-                            <div className={styles.multiSelect__triggerInner}>
-                                <span>{placeholder}</span>
-                                <ChevronDown size={20} />
-                            </div>
-                        )}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                    align="start"
-                    onEscapeKeyDown={() => setIsPopoverOpen(false)}
-                >
-                    <Command>
-                        <CommandInput placeholder="Search..." />
-                        <CommandSeparator />
-                        <CommandList>
-                            <CommandEmpty>No results found.</CommandEmpty>
-                            <CommandGroup>
-                                <OptionsList
-                                    selectedValues={selectedNames}
-                                    options={options}
-                                    toggleOption={toggleOption}
-                                />
-                            </CommandGroup>
-                        </CommandList>
-                        <CommandSeparator />
-                        <CommandGroup>
-                            <div className={styles.multiSelect__actions}>
-                                {selectedNames.size > 0 && (
-                                    <>
-                                        <CommandItem
-                                            onSelect={handleClear}
-                                            className={
-                                                styles.multiSelect__button
-                                            }
-                                        >
-                                            Clear
-                                        </CommandItem>
-                                        <Separator
-                                            orientation="vertical"
-                                            className={
-                                                styles.multiSelect__separator
-                                            }
-                                        />
-                                    </>
-                                )}
-                                <CommandItem
-                                    onSelect={() => setIsPopoverOpen(false)}
-                                    className={styles.multiSelect__button}
-                                >
-                                    Close
-                                </CommandItem>
-                            </div>
                         </CommandGroup>
-                    </Command>
-                </PopoverContent>
-            </Popover>
-        );
-    }
-);
+                    </CommandList>
+                    <CommandSeparator />
+                    <CommandGroup>
+                        <div className={styles.multiSelect__actions}>
+                            {selectedNames.size > 0 && (
+                                <>
+                                    <CommandItem
+                                        onSelect={handleClear}
+                                        className={styles.multiSelect__button}
+                                    >
+                                        Clear
+                                    </CommandItem>
+                                    <Separator
+                                        orientation="vertical"
+                                        className={
+                                            styles.multiSelect__separator
+                                        }
+                                    />
+                                </>
+                            )}
+                            <CommandItem
+                                onSelect={() => setIsPopoverOpen(false)}
+                                className={styles.multiSelect__button}
+                            >
+                                Close
+                            </CommandItem>
+                        </div>
+                    </CommandGroup>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    );
+};
 MultiSelect.displayName = "MultiSelect";
 
 /**

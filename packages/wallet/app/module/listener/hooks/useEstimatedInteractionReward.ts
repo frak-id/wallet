@@ -1,6 +1,6 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import { listenerProductIdAtom } from "@/module/listener/atoms/listenerContext";
-import type { FullInteractionTypesKey } from "@frak-labs/nexus-sdk/core";
+import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { Hex } from "viem";
@@ -37,7 +37,7 @@ export const estimatedInteractionRewardQuery = ({
             if (error) throw error;
 
             // Floor it so we don't have floating point issues
-            return data?.totalEur?.toFixed(2) ?? null;
+            return data?.totalReferrerEur?.toFixed(2) ?? null;
         },
     };
 };

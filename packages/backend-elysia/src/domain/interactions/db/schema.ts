@@ -33,10 +33,10 @@ export const pendingInteractionsTable = pgTable(
         updatedAt: timestamp("updated_at").defaultNow(),
         locked: boolean("locked").default(false),
     },
-    (table) => ({
-        walletIdx: index("wallet_pending_interactions_idx").on(table.wallet),
-        productIdx: index("product_idx").on(table.productId),
-    })
+    (table) => [
+        index("wallet_pending_interactions_idx").on(table.wallet),
+        index("product_idx").on(table.productId),
+    ]
 );
 
 /**
@@ -55,9 +55,7 @@ export const pushedInteractionsTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
     },
-    (table) => ({
-        walletIdx: index("wallet_pushed_interactions_idx").on(table.wallet),
-    })
+    (table) => [index("wallet_pushed_interactions_idx").on(table.wallet)]
 );
 
 /**
@@ -74,13 +72,11 @@ export const interactionsPurchaseTrackerTable = pgTable(
         pushed: boolean("pushed").default(false),
         createdAt: timestamp("created_at").defaultNow(),
     },
-    (table) => ({
-        walletIdx: index("wallet_interactions_purchase_map_idx").on(
-            table.wallet
-        ),
-        uniqueMappingIdIdx: unique("unique_map_idx").on(
+    (table) => [
+        index("wallet_interactions_purchase_map_idx").on(table.wallet),
+        unique("unique_map_idx").on(
             table.externalPurchaseId,
             table.externalCustomerId
         ),
-    })
+    ]
 );

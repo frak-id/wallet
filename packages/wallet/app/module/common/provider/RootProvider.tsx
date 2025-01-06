@@ -23,6 +23,8 @@ const queryClient = new QueryClient({
         queries: {
             gcTime: Number.POSITIVE_INFINITY,
             staleTime: 60 * 1000, // 1 minute
+            // Enable prefetching during the page render, for snappier UI / data
+            experimental_prefetchInRender: true,
         },
     },
 });
@@ -133,6 +135,7 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
             createConfig({
                 chains: [currentChain],
                 connectors: [smartAccountConnector()],
+                multiInjectedProviderDiscovery: false,
                 client: ({ chain }) =>
                     createClient({
                         chain,

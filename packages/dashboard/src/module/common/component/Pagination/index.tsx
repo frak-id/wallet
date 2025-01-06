@@ -1,12 +1,11 @@
 import { Button } from "@module/component/Button";
 import { cx } from "class-variance-authority";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
-import { type ComponentProps, type ReactNode, forwardRef } from "react";
+import type { ComponentProps, ComponentPropsWithRef, ReactNode } from "react";
 import styles from "./index.module.css";
 
 const Pagination = ({ className, ...props }: ComponentProps<"nav">) => (
     <nav
-        role="navigation"
         aria-label="pagination"
         className={`${styles.pagination} ${className}`}
         {...props}
@@ -14,21 +13,25 @@ const Pagination = ({ className, ...props }: ComponentProps<"nav">) => (
 );
 Pagination.displayName = "Pagination";
 
-const PaginationContent = forwardRef<HTMLUListElement, ComponentProps<"ul">>(
-    ({ className, ...props }, ref) => (
-        <ul
-            ref={ref}
-            className={`${styles.pagination__content} ${className}`}
-            {...props}
-        />
-    )
+const PaginationContent = ({
+    ref,
+    className,
+    ...props
+}: ComponentPropsWithRef<"ul">) => (
+    <ul
+        ref={ref}
+        className={`${styles.pagination__content} ${className}`}
+        {...props}
+    />
 );
 PaginationContent.displayName = "PaginationContent";
 
-const PaginationItem = forwardRef<HTMLLIElement, ComponentProps<"li">>(
-    ({ className, ...props }, ref) => (
-        <li ref={ref} className={className} {...props} />
-    )
+const PaginationItem = ({
+    ref,
+    className,
+    ...props
+}: ComponentPropsWithRef<"li">) => (
+    <li ref={ref} className={className} {...props} />
 );
 PaginationItem.displayName = "PaginationItem";
 

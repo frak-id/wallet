@@ -83,7 +83,7 @@ export function InteractionsFiltering({
                             <Input
                                 type={"number"}
                                 {...field}
-                                value={inputDisabled ? "" : field.value ?? ""}
+                                value={inputDisabled ? "" : (field.value ?? "")}
                                 placeholder={"Min interactions"}
                                 length={"small"}
                                 onBlur={handleSubmit(onSubmit)}
@@ -128,7 +128,7 @@ export function InteractionsFiltering({
                             <Input
                                 type={"number"}
                                 {...field}
-                                value={inputDisabled ? "" : field.value ?? ""}
+                                value={inputDisabled ? "" : (field.value ?? "")}
                                 placeholder={"Max interactions"}
                                 length={"small"}
                                 onBlur={handleSubmit(onSubmit)}

@@ -1,6 +1,6 @@
 import { eventsContext } from "@backend-common";
 import { mutexCron } from "@backend-utils";
-import { PurchaseInteractionEncoder } from "@frak-labs/nexus-sdk/interactions";
+import { PurchaseInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { PurchaseProofService } from "../../oracle/services/proofService";

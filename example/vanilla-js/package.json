@@ -14,8 +14,9 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@frak-labs/nexus-sdk": "workspace:*",
+    "@frak-labs/core-sdk": "workspace:*",
     "typescript": "^5",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vite-plugin-html": "^3.2.2"
   }
 }

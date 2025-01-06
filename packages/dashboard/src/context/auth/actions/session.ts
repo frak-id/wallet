@@ -32,7 +32,7 @@ const sessionOptions: SessionOptions = {
  * Get the full session from the cookies
  */
 async function getFullSession() {
-    return await getIronSession<AuthSession>(cookies(), sessionOptions);
+    return await getIronSession<AuthSession>(await cookies(), sessionOptions);
 }
 
 /**
@@ -52,7 +52,7 @@ export async function setSession({
     // Ensure the siwe message is valid
     const isValid = validateSiweMessage({
         message: siweMessage,
-        domain: headers().get("host") ?? "",
+        domain: (await headers()).get("host") ?? "",
     });
     if (!isValid) {
         console.error("Invalid SIWE message", { siweMessage });

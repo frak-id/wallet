@@ -13,7 +13,8 @@ export const walletSsoService = new Elysia({
     .use(sessionContext)
     .decorate(({ postgresDb, ...decorators }) => {
         // Get our SSO database
-        const ssoDb = drizzle(postgresDb, {
+        const ssoDb = drizzle({
+            client: postgresDb,
             schema: { ssoTable },
         });
 

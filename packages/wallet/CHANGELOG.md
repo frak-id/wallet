@@ -1,5 +1,37 @@
 # @frak-labs/nexus-wallet
 
+## 0.0.26
+
+### Patch Changes
+
+- Updated dependencies [[`d36568a`](https://github.com/frak-id/wallet/commit/d36568a662fa76de7ea1ce838a065062fa2daee0)]:
+  - @frak-labs/react-sdk@0.0.3
+
+## 0.0.25
+
+### Patch Changes
+
+- Updated dependencies [[`b18a684`](https://github.com/frak-id/wallet/commit/b18a6841e5faa3523f178603729b7b4f6fe8dea7)]:
+  - @frak-labs/core-sdk@0.0.2
+  - @frak-labs/react-sdk@0.0.2
+  - @frak-labs/shared@0.0.0
+
+## 0.0.24
+
+### Patch Changes
+
+- Updated dependencies [[`6ce3b03`](https://github.com/frak-id/wallet/commit/6ce3b0397fd6fb0f29b51f0a89652b4df727d717)]:
+  - @frak-labs/nexus-sdk@0.0.25
+  - @frak-labs/shared@0.0.0
+
+## 0.0.23
+
+### Patch Changes
+
+- Updated dependencies [[`fbb4020`](https://github.com/frak-id/wallet/commit/fbb402094f139824d8cd64aff6fc50834514d5e7)]:
+  - @frak-labs/nexus-sdk@0.0.24
+  - @frak-labs/shared@0.0.0
+
 ## 0.0.22
 
 ### Patch Changes

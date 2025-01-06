@@ -1,5 +1,5 @@
 import { Lottie } from "@/module/common/component/Lottie/index.client";
-import { Link } from "@remix-run/react";
+import { Link } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import logo from "/assets/logo-good-vibes.svg?url";
 import styles from "./index.module.css";

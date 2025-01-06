@@ -1,4 +1,4 @@
-import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
+import type { AuthenticationResponseJSON } from "@simplewebauthn/browser";
 import { atomWithStorage } from "jotai/utils";
 import type { Address } from "viem";
 

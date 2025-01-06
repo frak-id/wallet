@@ -4,18 +4,32 @@ import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Analytics } from "@module/component/Analytics";
-import {
-    Links,
-    Meta,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
-} from "@remix-run/react";
+import { Spinner } from "@module/component/Spinner";
 import type { ReactNode } from "react";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 
 export const meta = rootConfig.meta;
 export const links = rootConfig.links;
 export const handle = { i18n: ["translation"] };
+
+export function HydrateFallback() {
+    return (
+        <>
+            <div
+                style={{
+                    position: "fixed",
+                    left: "50%",
+                    top: "50%",
+                    margin: "-8px 0 0 -8px",
+                    color: "black",
+                }}
+            >
+                <Spinner />
+            </div>
+            <Scripts />
+        </>
+    );
+}
 
 export function Layout({ children }: { children: ReactNode }) {
     const websiteId = process.env.UMAMI_WALLET_WEBSITE_ID;

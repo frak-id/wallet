@@ -111,7 +111,10 @@ export const customWebhook = new Elysia({ prefix: "/custom" })
             return "ok";
         },
         {
-            type: "text",
+            parse: "text",
             body: t.String(),
+            params: t.Object({
+                productId: t.Optional(t.Hex()),
+            }),
         }
     );

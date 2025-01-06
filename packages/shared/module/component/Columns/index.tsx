@@ -1,10 +1,9 @@
 import { type VariantProps, cva } from "class-variance-authority";
-import { type HTMLAttributes, forwardRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
-interface ColumnsProps
-    extends HTMLAttributes<HTMLDivElement>,
-        VariantProps<typeof columnsVariants> {}
+type ColumnsProps = ComponentPropsWithRef<"div"> &
+    VariantProps<typeof columnsVariants>;
 
 const columnsVariants = cva(styles.columns, {
     variants: {
@@ -23,26 +22,29 @@ const columnsVariants = cva(styles.columns, {
     },
 });
 
-export const Columns = forwardRef<HTMLDivElement, ColumnsProps>(
-    ({ className, size, align, ...props }, ref) => {
-        return (
-            <div
-                className={columnsVariants({
-                    size,
-                    align,
-                    className,
-                })}
-                ref={ref}
-                {...props}
-            />
-        );
-    }
-);
+export const Columns = ({
+    ref,
+    className,
+    size,
+    align,
+    ...props
+}: ColumnsProps) => {
+    return (
+        <div
+            className={columnsVariants({
+                size,
+                align,
+                className,
+            })}
+            ref={ref}
+            {...props}
+        />
+    );
+};
 Columns.displayName = "Columns";
 
-interface ColumnProps
-    extends HTMLAttributes<HTMLDivElement>,
-        VariantProps<typeof columnVariants> {}
+type ColumnProps = ComponentPropsWithRef<"div"> &
+    VariantProps<typeof columnVariants>;
 
 const columnVariants = cva(styles.column, {
     variants: {
@@ -62,19 +64,23 @@ const columnVariants = cva(styles.column, {
     },
 });
 
-export const Column = forwardRef<HTMLDivElement, ColumnProps>(
-    ({ className, size, justify, ...props }, ref) => {
-        return (
-            <div
-                className={columnVariants({
-                    size,
-                    justify,
-                    className,
-                })}
-                ref={ref}
-                {...props}
-            />
-        );
-    }
-);
+export const Column = ({
+    ref,
+    className,
+    size,
+    justify,
+    ...props
+}: ColumnProps) => {
+    return (
+        <div
+            className={columnVariants({
+                size,
+                justify,
+                className,
+            })}
+            ref={ref}
+            {...props}
+        />
+    );
+};
 Column.displayName = "Column";

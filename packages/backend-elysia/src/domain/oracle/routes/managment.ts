@@ -112,7 +112,7 @@ export const managmentRoutes = new Elysia()
                 .execute();
         },
         {
-            isAuthenticated: "business",
+            nextAuthenticated: "business",
             body: t.Object({
                 hookSignatureKey: t.String(),
                 platform: t.Union([
@@ -148,6 +148,6 @@ export const managmentRoutes = new Elysia()
                 .execute();
         },
         {
-            isAuthenticated: "business",
+            nextAuthenticated: "business",
         }
     );

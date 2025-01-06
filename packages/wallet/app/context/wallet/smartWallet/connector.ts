@@ -1,10 +1,14 @@
 import { currentChain } from "@/context/blockchain/provider";
 import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
 import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
-import type { Transport } from "viem";
+import type { Address, Hex, Transport } from "viem";
 import { createConnector } from "wagmi";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
+
+export type FrakWalletConnector = ReturnType<
+    ReturnType<typeof smartAccountConnector>
+>;
 
 /**
  * Create a connector for the smart account
@@ -21,10 +25,20 @@ export function smartAccountConnector<
     // The current provider
     let provider: Provider | undefined;
 
+    // The current privy signer
+    let privySigner:
+        | ((args: { hash: Hex; address: Address }) => Promise<Hex>)
+        | undefined = undefined;
+
     // Create the wagmi connector itself
-    return createConnector<Provider>((config) => ({
+    return createConnector<
+        Provider,
+        {
+            setPrivySigner: (signer: typeof privySigner) => void;
+        }
+    >((config) => ({
         id: "frak-wallet-connector",
-        name: "Nexus Smart Account",
+        name: "Frak Smart Account",
         type: smartAccountConnector.type,
         supportsSimulation: true,
 
@@ -138,6 +152,14 @@ export function smartAccountConnector<
                             chainId: config.chains[0].id,
                         });
                     },
+
+                    async signViaEcdsa(message, address) {
+                        if (!privySigner) {
+                            throw new Error("No privy signer");
+                        }
+
+                        return privySigner({ hash: message, address });
+                    },
                 });
             }
             return provider;
@@ -150,6 +172,13 @@ export function smartAccountConnector<
         },
         onDisconnect() {
             config.emitter.emit("disconnect");
+        },
+        /**
+         * Update the current privy signer
+         * @param signer
+         */
+        setPrivySigner(signer: typeof privySigner) {
+            privySigner = signer;
         },
     }));
 }

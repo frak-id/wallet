@@ -1,16 +1,16 @@
 "use client";
 
 import { Root, Thumb } from "@radix-ui/react-switch";
-import { forwardRef } from "react";
-import type { ComponentPropsWithoutRef, ElementRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
-export const Switch = forwardRef<
-    ElementRef<typeof Root>,
-    ComponentPropsWithoutRef<typeof Root>
->(({ className, ...props }, ref) => (
+export const Switch = ({
+    ref,
+    className,
+    ...props
+}: ComponentPropsWithRef<typeof Root>) => (
     <Root className={`${styles.switch} ${className}`} {...props} ref={ref}>
         <Thumb className={styles.switchThumb} />
     </Root>
-));
+);
 Switch.displayName = Root.displayName;

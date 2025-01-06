@@ -25,11 +25,11 @@
       <excludeFolder url="file://$MODULE_DIR$/example/wallet-ethcc/build" />
       <excludeFolder url="file://$MODULE_DIR$/packages/wallet/build" />
       <excludeFolder url="file://$MODULE_DIR$/.sst-bk" />
+      <excludeFolder url="file://$MODULE_DIR$/sdk/components/cdn" />
     </content>
     <content url="file://$MODULE_DIR$/.sst/types" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="styles" level="application" />
-    <orderEntry type="library" name="script" level="application" />
   </component>
 </module>

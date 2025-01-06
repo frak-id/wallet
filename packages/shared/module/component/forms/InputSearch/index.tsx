@@ -1,17 +1,8 @@
-import { Input } from "@module/component/forms/Input";
-import type { InputProps } from "@module/component/forms/Input";
+import { Input, type InputProps } from "@module/component/forms/Input";
 import { Search } from "lucide-react";
-import { forwardRef } from "react";
-import type { InputHTMLAttributes } from "react";
 import styles from "./index.module.css";
 
-export interface InputSearchProps
-    extends InputHTMLAttributes<HTMLInputElement> {}
-
-export const InputSearch = forwardRef<
-    HTMLInputElement,
-    InputSearchProps & InputProps
->(({ type, ...props }, ref) => {
+export const InputSearch = ({ ref, type, ...props }: InputProps) => {
     return (
         <Input
             ref={ref}
@@ -23,5 +14,5 @@ export const InputSearch = forwardRef<
             {...props}
         />
     );
-});
+};
 InputSearch.displayName = "InputSearch";

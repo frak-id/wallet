@@ -84,6 +84,7 @@
                     "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois **{{ estimatedReward }}€** directement sur mon porte-monnaie, utilisable où je veux.",
                     "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
                     "secondaryAction": "J'ai déjà un porte-monnaie",
+                    "privyAction": "Connection via Privy",
                     "title": "Connexion"
                 },
                 "success": "Connexion réussie"
@@ -126,7 +127,11 @@
     },
     "wallet": {
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
-        "biometryInfos": "Informations biométriques",
+        "settings": {
+            "biometryInfo": "Informations biométriques",
+            "ecdsaInfo": "Informations de connection",
+            "ecdsaWallet": "Portefeuille Ecdsa"
+        },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
         "interaction": {
             "CREATE_REFERRAL_LINK": "Lien de partage créé",
@@ -145,7 +150,8 @@
             "accountCreation": "Création de compte",
             "button": "Récupérez votre <strong>porte-monnaie</strong>",
             "recover": "Récupérer le porte-monnaie à partir du fichier",
-            "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil"
+            "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil",
+            "privy": "Connection via Privy"
         },
         "notifications": {
             "noNotifications": "Aucune notifications"
@@ -235,9 +241,6 @@
         "welcome": {
             "title": "Bienvenue dans votre porte-monnaie",
             "text": "Ce porte-monnaie vous permettra de collecter toutes les récompenses et bien plus encore."
-        },
-        "errors": {
-            "webauthnNotSupported": "Ouvrez cette page sur votre <strong>navigateur par défaut</strong> ou utilisez un navigateur compatible pour créer votre portefeuille. Assurez-vous d'utiliser la <strong>dernière version</strong> de votre navigateur."
         }
     }
 }

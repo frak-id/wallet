@@ -1,9 +1,8 @@
 import { CampaignDetails } from "@/module/campaigns/component/CampaignDetails";
 
-export default function CampaignsContentPage({
-    params,
-}: {
-    params: { campaignId: string };
+export default async function CampaignsContentPage(props: {
+    params: Promise<{ campaignId: string }>;
 }) {
+    const params = await props.params;
     return <CampaignDetails campaignId={params.campaignId} />;
 }

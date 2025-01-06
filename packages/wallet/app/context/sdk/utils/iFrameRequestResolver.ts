@@ -8,7 +8,7 @@ import {
     type RpcResponse,
     decompressDataAndCheckHash,
     hashAndCompressData,
-} from "@frak-labs/nexus-sdk/core";
+} from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { type Hex, keccak256, toHex } from "viem";
 
@@ -76,6 +76,11 @@ export function createIFrameRequestResolver(
         // And store it
         jotaiStore.set(listenerContextAtom, resolvingContext);
 
+        // Check if the message data are object
+        if (typeof message.data !== "object") {
+            return;
+        }
+
         // Check if that's a client lifecycle request event
         if ("clientLifecycle" in message.data) {
             const { clientLifecycle, data } = message.data;
@@ -100,6 +105,12 @@ export function createIFrameRequestResolver(
             return;
         }
         if ("iframeLifecycle" in message.data) {
+            const { iframeLifecycle } = message.data;
+            if (iframeLifecycle === "heartbeat") {
+                setReadyToHandleRequest();
+                return;
+            }
+
             console.error(
                 "Received an iframe lifecycle event on the iframe side, dismissing it"
             );

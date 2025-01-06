@@ -17,7 +17,7 @@ import { FinalModalStep } from "@/module/listener/component/Final";
 import { LoginModalStep } from "@/module/listener/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/component/Transaction";
-import { RpcErrorCodes } from "@frak-labs/nexus-sdk/core";
+import { RpcErrorCodes } from "@frak-labs/core-sdk";
 import { LogoFrakWithName } from "@module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@module/atoms/store";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
