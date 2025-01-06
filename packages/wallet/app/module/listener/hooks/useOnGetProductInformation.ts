@@ -1,13 +1,12 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
-import { listenerProductIdAtom } from "@/module/listener/atoms/listenerContext";
-import { useEstimatedInteractionReward } from "@/module/listener/hooks/useEstimatedInteractionReward";
-import { useGetProductMetadata } from "@/module/listener/hooks/useGetProductMetadata";
+import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEstimatedInteractionReward";
+import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,
     RpcErrorCodes,
 } from "@frak-labs/core-sdk";
-import { useAtomValue } from "jotai/index";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
 type OnGetProductInformation = IFrameRequestResolver<
@@ -21,21 +20,15 @@ type OnGetProductInformation = IFrameRequestResolver<
  * Get the current product information
  */
 export function useOnGetProductInformation(): OnGetProductInformation {
-    const productId = useAtomValue(listenerProductIdAtom);
-    const {
-        estimatedReward: initialEstimatedReward,
-        refetch: refetchEstimatedReward,
-    } = useEstimatedInteractionReward();
-    const {
-        metadata: initialProductMetadata,
-        refetch: refetchProductMetadata,
-    } = useGetProductMetadata();
+    const queryClient = useQueryClient();
 
     return useCallback(
-        async (_request, _context, emitter) => {
+        async (_request, { productId }, emitter) => {
             const [estimatedReward, productMetadata] = await Promise.all([
-                initialEstimatedReward ?? (await refetchEstimatedReward()).data,
-                initialProductMetadata ?? (await refetchProductMetadata()).data,
+                queryClient.fetchQuery(
+                    estimatedInteractionRewardQuery({ productId })
+                ),
+                queryClient.fetchQuery(getProductMetadataQuery({ productId })),
             ]);
 
             if (!(productId && productMetadata)) {
@@ -57,12 +50,6 @@ export function useOnGetProductInformation(): OnGetProductInformation {
                 },
             });
         },
-        [
-            productId,
-            initialEstimatedReward,
-            initialProductMetadata,
-            refetchEstimatedReward,
-            refetchProductMetadata,
-        ]
+        [queryClient]
     );
 }
