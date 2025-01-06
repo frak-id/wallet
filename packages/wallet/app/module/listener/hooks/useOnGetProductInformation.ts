@@ -22,14 +22,20 @@ type OnGetProductInformation = IFrameRequestResolver<
  */
 export function useOnGetProductInformation(): OnGetProductInformation {
     const productId = useAtomValue(listenerProductIdAtom);
-    const { promise: estimatedRewardAsync } = useEstimatedInteractionReward();
-    const { promise: productMetadataAsync } = useGetProductMetadata();
+    const {
+        estimatedReward: initialEstimatedReward,
+        refetch: refetchEstimatedReward,
+    } = useEstimatedInteractionReward();
+    const {
+        metadata: initialProductMetadata,
+        refetch: refetchProductMetadata,
+    } = useGetProductMetadata();
 
     return useCallback(
         async (_request, _context, emitter) => {
             const [estimatedReward, productMetadata] = await Promise.all([
-                estimatedRewardAsync,
-                productMetadataAsync,
+                initialEstimatedReward ?? (await refetchEstimatedReward()).data,
+                initialProductMetadata ?? (await refetchProductMetadata()).data,
             ]);
 
             if (!(productId && productMetadata)) {
@@ -51,6 +57,12 @@ export function useOnGetProductInformation(): OnGetProductInformation {
                 },
             });
         },
-        [productId, estimatedRewardAsync, productMetadataAsync]
+        [
+            productId,
+            initialEstimatedReward,
+            initialProductMetadata,
+            refetchEstimatedReward,
+            refetchProductMetadata,
+        ]
     );
 }

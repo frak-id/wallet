@@ -2,6 +2,12 @@ name: 🚀 Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force the deployment (even if no file changes)'
+        required: true
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -50,27 +56,27 @@ jobs:
               - 'packages/backend-elysia/**'
 
       - name: Set up QEMU
-        if: steps.changes.outputs.backend == 'true'
+        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: linux/arm64
 
       - name: Set up Docker Buildx
-        if: steps.changes.outputs.backend == 'true'
+        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/arm64
 
       - name: "🔨 Install dependencies"
-        if: steps.changes.outputs.deployRequired == 'true'
+        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
         run: bun install --frozen-lockfile
 
       - name: "🔨 Build the SDK"
-        if: steps.changes.outputs.deployRequired == 'true'
+        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
         run: bun run build:sdk
 
       - name: "👥 Configure AWS Credentials"
-        if: steps.changes.outputs.deployRequired == 'true'
+        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
@@ -78,12 +84,12 @@ jobs:
           retry-max-attempts: 5
 
       - name:  "👥 Login to Amazon ECR"
-        if: steps.changes.outputs.deployRequired == 'true'
+        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: "🔧 Setup environment"
-        if: steps.changes.outputs.deployRequired == 'true'
+        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
         shell: bash
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
@@ -105,7 +111,7 @@ jobs:
           echo "Backend image tag : ${{ env.BACKEND_IMAGE_TAG }}"
 
       - name: "🔨 Build Elysia backend"
-        if: steps.changes.outputs.backend == 'true'
+        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         uses: docker/build-push-action@v6
         with:
           file: ./infra/docker/ElysiaDockerfile
@@ -123,7 +129,7 @@ jobs:
           STAGE: ${{ env.STAGE }}
 
       - name: "🚀 SST Deploy"
-        if: steps.changes.outputs.deployRequired == 'true'
+        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
         run: |
           STAGE=${STAGE_OVERRIDE:-$STAGE}
           echo "Deploying with stage: $STAGE"
