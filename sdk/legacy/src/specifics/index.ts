@@ -14,7 +14,7 @@ export function websiteOverrides() {
 
         loadScript(
             "frak-components",
-            "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/dist/bundle/components.js"
+            "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js"
         );
     }
 }

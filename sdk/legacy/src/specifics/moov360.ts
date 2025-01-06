@@ -44,7 +44,9 @@ function replaceFrakLinks() {
     const frakLinks = document.querySelectorAll("a.frak-link");
     for (const link of Array.from(frakLinks)) {
         const buttonShare = document.createElement("frak-button-share");
-        buttonShare.setAttribute("text", "Partage et gagne");
+        buttonShare.setAttribute("text", "Partage et gagne {REWARD}!");
+        buttonShare.setAttribute("no-reward-text", "Partage et gagne");
+        buttonShare.setAttribute("use-reward", "true");
         buttonShare.setAttribute("classname", "button");
         buttonShare.style.display = "block";
         buttonShare.style.marginTop = "20px";

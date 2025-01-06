@@ -110,7 +110,6 @@ export function ButtonShare({
         }
         // Find the estimated reward
         getProductInformation(client).then((info) => {
-            console.log("info", info);
             if (!info?.estimatedEurReward) return;
             setReward(`${info.estimatedEurReward} €`);
         });
