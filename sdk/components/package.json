@@ -35,7 +35,6 @@
   },
   "type": "module",
   "files": [
-    "/dist",
     "/cdn"
   ],
   "main": "./cdn/components.js",
@@ -44,7 +43,7 @@
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
-    "clean": "rimraf dist",
+    "clean": "rimraf cdn",
     "build": "tsup",
     "build:watch": "tsup --watch",
     "typecheck": "tsc --noEmit",
