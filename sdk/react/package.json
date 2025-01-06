@@ -28,6 +28,9 @@
   "license": "GNU GPL 3.0",
   "sideEffects": false,
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "files": [
     "/dist"
