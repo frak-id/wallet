@@ -1,4 +1,4 @@
-import { getIFrameResolvingContext } from "@/context/sdk/utils/iIframeContext";
+import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import {

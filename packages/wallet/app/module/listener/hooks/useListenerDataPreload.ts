@@ -1,4 +1,4 @@
-import { getIFrameResolvingContext } from "@/context/sdk/utils/iIframeContext";
+import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEstimatedInteractionReward";
 import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";

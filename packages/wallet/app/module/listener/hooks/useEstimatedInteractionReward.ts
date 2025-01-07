@@ -1,7 +1,8 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { getIFrameResolvingContext } from "@/context/sdk/utils/iIframeContext";
+import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import type { Hex } from "viem";
 
 /**
@@ -10,20 +11,19 @@ import type { Hex } from "viem";
  * @param interaction
  */
 export const estimatedInteractionRewardQuery = ({
-    productId: initialProductId,
+    productId,
     interaction,
 }: { productId?: Hex; interaction?: FullInteractionTypesKey }) => ({
+    enabled: !!productId,
     queryKey: [
         "interactions",
-        "estimated-reward",
-        initialProductId ?? "no-initial-product-id",
+        "estimated-interactions-reward",
+        productId ?? "no-initial-product-id",
         interaction ?? "no-key-filter",
     ],
     async queryFn() {
-        const productId =
-            initialProductId ?? getIFrameResolvingContext()?.productId;
         if (!productId) {
-            return null;
+            throw new Error("No product id provided");
         }
 
         const { data, error } =
@@ -49,8 +49,10 @@ export function useEstimatedInteractionReward({
 }: {
     interaction?: FullInteractionTypesKey;
 } = {}) {
+    const productId = useMemo(() => getIFrameResolvingContext()?.productId, []);
     const { data, ...query } = useQuery(
         estimatedInteractionRewardQuery({
+            productId,
             interaction,
         })
     );

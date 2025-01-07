@@ -2,7 +2,7 @@ import { restoreBackupData } from "@/context/sdk/utils/backup";
 import {
     getIFrameResolvingContext,
     isInIframe,
-} from "@/context/sdk/utils/iIframeContext";
+} from "@/context/sdk/utils/iframeContext";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import {
     type ExtractedParametersFromRpc,
@@ -79,6 +79,7 @@ export function createIFrameRequestResolver(
         if (productId !== resolvingContext?.productId) {
             console.error("Received a message from an unknown origin", {
                 productId,
+                resolvingContext,
             });
             return;
         }

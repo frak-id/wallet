@@ -19,7 +19,6 @@ export function getIFrameResolvingContext():
     if (!(isInIframe() && referrer)) {
         console.log("Not in an iframe or no origin", {
             isInIframe: isInIframe(),
-            top: window.top,
             referrer,
         });
         return undefined;
@@ -29,6 +28,11 @@ export function getIFrameResolvingContext():
     const originUrl = new URL(referrer);
     const productId = keccak256(toHex(originUrl.hostname));
     const origin = originUrl.origin;
+
+    console.log("Computed resolving context", {
+        referrer,
+        productId,
+    });
 
     // Return the context
     return { productId, origin };
