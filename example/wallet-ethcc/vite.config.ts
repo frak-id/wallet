@@ -4,6 +4,20 @@ import type { ConfigEnv, Plugin, UserConfig } from "vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+const hugeLibraries = [
+    "viem",
+    "vite-plugin-node-polyfills",
+    "readable-stream",
+    "browserify-rsa",
+    "browserify-sign",
+    "elliptic",
+];
+
+function manualChunks(id: string) {
+    const lib = hugeLibraries.find((lib) => id.includes(`node_modules/${lib}`));
+    if (lib) return lib;
+}
+
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     return {
         define: {
@@ -22,5 +36,12 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             reactRouter(),
             tsconfigPaths(),
         ],
+        build: {
+            rollupOptions: {
+                output: {
+                    manualChunks,
+                },
+            },
+        },
     };
 });
