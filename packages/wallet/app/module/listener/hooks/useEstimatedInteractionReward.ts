@@ -1,8 +1,7 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { listenerProductIdAtom } from "@/module/listener/atoms/listenerContext";
+import { getIFrameResolvingContext } from "@/context/sdk/utils/iIframeContext";
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import type { Hex } from "viem";
 
 /**
@@ -11,36 +10,35 @@ import type { Hex } from "viem";
  * @param interaction
  */
 export const estimatedInteractionRewardQuery = ({
-    productId,
+    productId: initialProductId,
     interaction,
-}: { productId?: Hex; interaction?: FullInteractionTypesKey }) => {
-    return {
-        enabled: !!productId,
-        queryKey: [
-            "interactions",
-            "estimated-reward",
-            productId ?? "no-product-id",
-            interaction ?? "no-key-filter",
-        ],
-        async queryFn() {
-            if (!productId) {
-                return null;
-            }
+}: { productId?: Hex; interaction?: FullInteractionTypesKey }) => ({
+    queryKey: [
+        "interactions",
+        "estimated-reward",
+        initialProductId ?? "no-initial-product-id",
+        interaction ?? "no-key-filter",
+    ],
+    async queryFn() {
+        const productId =
+            initialProductId ?? getIFrameResolvingContext()?.productId;
+        if (!productId) {
+            return null;
+        }
 
-            const { data, error } =
-                await authenticatedBackendApi.interactions.reward.estimate.get({
-                    query: {
-                        productId: productId,
-                        ...(interaction ? { interactionKey: interaction } : {}),
-                    },
-                });
-            if (error) throw error;
+        const { data, error } =
+            await authenticatedBackendApi.interactions.reward.estimate.get({
+                query: {
+                    productId: productId,
+                    ...(interaction ? { interactionKey: interaction } : {}),
+                },
+            });
+        if (error) throw error;
 
-            // Floor it so we don't have floating point issues
-            return data?.totalReferrerEur?.toFixed(2) ?? null;
-        },
-    };
-};
+        // Floor it so we don't have floating point issues
+        return data?.totalReferrerEur?.toFixed(2) ?? null;
+    },
+});
 
 /**
  * Fetch the estimated interaction reward for this interaction
@@ -51,11 +49,8 @@ export function useEstimatedInteractionReward({
 }: {
     interaction?: FullInteractionTypesKey;
 } = {}) {
-    const listenerProductId = useAtomValue(listenerProductIdAtom);
-
     const { data, ...query } = useQuery(
         estimatedInteractionRewardQuery({
-            productId: listenerProductId,
             interaction,
         })
     );

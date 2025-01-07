@@ -13,20 +13,18 @@ import { useAccount } from "wagmi";
  * The raw query data we will use to get the session status
  * @param address
  */
-export const interactionSessionStatusQuery = (address?: Address) => {
-    return {
-        enabled: !!address,
-        queryKey: ["interactions", "session-status", address ?? "no-address"],
-        queryFn: async () => {
-            if (!address) {
-                return null;
-            }
-            const session = await getSessionStatus({ wallet: address });
-            jotaiStore.set(interactionSessionAtom, session ?? RESET);
-            return session;
-        },
-    };
-};
+export const interactionSessionStatusQuery = (address?: Address) => ({
+    enabled: !!address,
+    queryKey: ["interactions", "session-status", address ?? "no-address"],
+    queryFn: async () => {
+        if (!address) {
+            return null;
+        }
+        const session = await getSessionStatus({ wallet: address });
+        jotaiStore.set(interactionSessionAtom, session ?? RESET);
+        return session;
+    },
+});
 
 /**
  * Use the current session status

@@ -1,6 +1,9 @@
 import { restoreBackupData } from "@/context/sdk/utils/backup";
+import {
+    getIFrameResolvingContext,
+    isInIframe,
+} from "@/context/sdk/utils/iIframeContext";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
-import { listenerContextAtom } from "@/module/listener/atoms/listenerContext";
 import {
     type ExtractedParametersFromRpc,
     type IFrameEvent,
@@ -9,7 +12,6 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
 import { type Hex, keccak256, toHex } from "viem";
 
 /**
@@ -61,20 +63,25 @@ export function createIFrameRequestResolver(
     if (typeof window === "undefined") {
         throw new Error("IFrame resolver should be used in the browser");
     }
+    if (!isInIframe()) {
+        throw new Error("IFrame resolver should be used in an iframe");
+    }
+
+    // Get the resolving context
+    const resolvingContext = getIFrameResolvingContext();
 
     // Listen to the window message
     const onMessage = async (message: MessageEvent<IFrameEvent>) => {
-        // Parse the origin URL
-        const url = new URL(message.origin);
+        // Recompute the product id associated with the message
+        const productId = keccak256(toHex(new URL(message.origin).hostname));
 
-        // Build our resolving context
-        const resolvingContext: IFrameResolvingContext = {
-            productId: keccak256(toHex(url.hostname)),
-            origin: message.origin,
-        };
-
-        // And store it
-        jotaiStore.set(listenerContextAtom, resolvingContext);
+        // If  it doesn't match the one computed from the iframe, exit
+        if (productId !== resolvingContext?.productId) {
+            console.error("Received a message from an unknown origin", {
+                productId,
+            });
+            return;
+        }
 
         // Check if the message data are object
         if (typeof message.data !== "object") {
@@ -82,37 +89,14 @@ export function createIFrameRequestResolver(
         }
 
         // Check if that's a client lifecycle request event
-        if ("clientLifecycle" in message.data) {
-            const { clientLifecycle, data } = message.data;
-
-            switch (clientLifecycle) {
-                case "modal-css": {
-                    const style = document.createElement("link");
-                    style.rel = "stylesheet";
-                    style.href = data.cssLink;
-                    document.head.appendChild(style);
-                    break;
-                }
-                case "restore-backup": {
-                    // Restore the backup
-                    await restoreBackupData({
-                        backup: data.backup,
-                        productId: resolvingContext.productId,
-                    });
-                    break;
-                }
-            }
-            return;
-        }
-        if ("iframeLifecycle" in message.data) {
-            const { iframeLifecycle } = message.data;
-            if (iframeLifecycle === "heartbeat") {
-                setReadyToHandleRequest();
-                return;
-            }
-
-            console.error(
-                "Received an iframe lifecycle event on the iframe side, dismissing it"
+        if (
+            "clientLifecycle" in message.data ||
+            "iframeLifecycle" in message.data
+        ) {
+            await handleLifecycleEvents(
+                message,
+                resolvingContext,
+                setReadyToHandleRequest
             );
             return;
         }
@@ -161,7 +145,6 @@ export function createIFrameRequestResolver(
     // Small cleanup function
     function destroy() {
         window.removeEventListener("message", onMessage);
-        jotaiStore.set(listenerContextAtom, null);
     }
 
     // Helper to tell when we are ready to process message
@@ -173,4 +156,54 @@ export function createIFrameRequestResolver(
         destroy,
         setReadyToHandleRequest,
     };
+}
+
+/**
+ * Handle the lifecycle related message events
+ * @param message
+ * @param resolvingContext
+ * @param setReadyToHandleRequest
+ */
+async function handleLifecycleEvents(
+    message: MessageEvent<IFrameEvent>,
+    resolvingContext: IFrameResolvingContext,
+    setReadyToHandleRequest: () => void
+) {
+    // Check if that's a client lifecycle request event
+    if ("clientLifecycle" in message.data) {
+        const { clientLifecycle, data } = message.data;
+
+        switch (clientLifecycle) {
+            case "modal-css": {
+                const style = document.createElement("link");
+                style.rel = "stylesheet";
+                style.href = data.cssLink;
+                document.head.appendChild(style);
+                break;
+            }
+            case "restore-backup": {
+                // Restore the backup
+                await restoreBackupData({
+                    backup: data.backup,
+                    productId: resolvingContext.productId,
+                });
+                break;
+            }
+        }
+        return;
+    }
+
+    // Check if that's an iframe lifecycle request event
+    if ("iframeLifecycle" in message.data) {
+        const { iframeLifecycle } = message.data;
+        if (iframeLifecycle === "heartbeat") {
+            setReadyToHandleRequest();
+            return;
+        }
+
+        console.error(
+            "Received an iframe lifecycle event on the iframe side, dismissing it"
+        );
+        return;
+    }
 }
