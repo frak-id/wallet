@@ -47,7 +47,7 @@
     "micromark": "^4.0.1",
     "normalize.css": "^8.0.1",
     "nprogress": "^0.2.0",
-    "permissionless": "^0.2.23",
+    "permissionless": "^0.2.24",
     "radash": "^12.1.0",
     "react": "^19",
     "react-dom": "^19",
