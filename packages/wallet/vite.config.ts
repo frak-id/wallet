@@ -1,10 +1,12 @@
 import * as process from "node:process";
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig } from "vite";
+import type { ConfigEnv, Plugin, UserConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-export default defineConfig(({ isSsrBuild }) => {
+export default defineConfig(({ isSsrBuild, mode }: ConfigEnv): UserConfig => {
     // Return the built config
     return {
         define: {
@@ -39,7 +41,26 @@ export default defineConfig(({ isSsrBuild }) => {
         esbuild: {
             drop: process.env.STAGE === "prod" ? ["console", "debugger"] : [],
         },
-        plugins: [reactRouter(), mkcert(), tsconfigPaths()],
-        build: isSsrBuild ? { target: "ES2022" } : { target: "ES2020" },
+        plugins: [
+            ...(mode === "production"
+                ? [nodePolyfills() as Plugin]
+                : ([] as Plugin[])),
+            reactRouter(),
+            mkcert(),
+            tsconfigPaths(),
+        ],
+        build: {
+            target: isSsrBuild ? "ES2022" : "ES2020",
+            rollupOptions: {
+                output: {
+                    manualChunks: {
+                        "blockchain-core": [
+                            "../app-essentials/src/blockchain/wallet.ts",
+                            "../app-essentials/src/blockchain/index.ts",
+                        ],
+                    },
+                },
+            },
+        },
     };
 });
