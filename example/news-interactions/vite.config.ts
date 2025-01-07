@@ -3,22 +3,7 @@ import { defineConfig } from "vite";
 import type { ConfigEnv, Plugin, UserConfig } from "vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import tsconfigPaths from "vite-tsconfig-paths";
-
-const hugeLibraries = [
-    "@lottiefiles",
-    "viem",
-    "dexie",
-    "vite-plugin-node-polyfills",
-    "readable-stream",
-    "browserify-rsa",
-    "browserify-sign",
-    "elliptic",
-];
-
-function manualChunks(id: string) {
-    const lib = hugeLibraries.find((lib) => id.includes(`node_modules/${lib}`));
-    if (lib) return lib;
-}
+import { manualChunks, onwarn } from "../../packages/shared/tooling/vite";
 
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     return {
@@ -44,6 +29,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
                 output: {
                     manualChunks,
                 },
+                onwarn,
             },
         },
     };

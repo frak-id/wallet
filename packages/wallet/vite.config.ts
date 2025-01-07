@@ -5,27 +5,7 @@ import type { ConfigEnv, Plugin, UserConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import tsconfigPaths from "vite-tsconfig-paths";
-
-const hugeLibraries = [
-    "viem",
-    "dexie",
-    "vite-plugin-node-polyfills",
-    "readable-stream",
-    "browserify-rsa",
-    "browserify-sign",
-    "elliptic",
-];
-
-function manualChunks(id: string) {
-    if (
-        id.includes("app-essentials/src/blockchain/wallet.ts") ||
-        id.includes("app-essentials/src/blockchain/index.ts")
-    ) {
-        return "blockchain-core";
-    }
-    const lib = hugeLibraries.find((lib) => id.includes(`node_modules/${lib}`));
-    if (lib) return lib;
-}
+import { manualChunks, onwarn } from "../shared/tooling/vite";
 
 export default defineConfig(({ isSsrBuild, mode }: ConfigEnv): UserConfig => {
     // Return the built config
@@ -74,8 +54,21 @@ export default defineConfig(({ isSsrBuild, mode }: ConfigEnv): UserConfig => {
             target: isSsrBuild ? "ES2022" : "ES2020",
             rollupOptions: {
                 output: {
-                    manualChunks,
+                    manualChunks(id) {
+                        if (
+                            id.includes(
+                                "app-essentials/src/blockchain/wallet.ts"
+                            ) ||
+                            id.includes(
+                                "app-essentials/src/blockchain/index.ts"
+                            )
+                        ) {
+                            return "blockchain-core";
+                        }
+                        return manualChunks(id);
+                    },
                 },
+                onwarn,
             },
         },
     };
