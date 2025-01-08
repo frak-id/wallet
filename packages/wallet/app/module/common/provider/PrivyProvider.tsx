@@ -1,4 +1,5 @@
 import { useSyncEcdsaSession } from "@/module/common/hook/useSyncEcdsaSession";
+import type Privy from "@privy-io/js-sdk-core";
 import { createContext, useContext } from "react";
 import type { Address, Hex } from "viem";
 
@@ -13,13 +14,13 @@ export type PrivyContextType = {
      */
     ready: boolean;
     /**
+     * The current privy client
+     */
+    client: Privy;
+    /**
      * The current logged in wallet
      */
     wallet?: Address;
-    /**
-     * Launch the privy login process, and return the logged in ecdsa address
-     */
-    login: () => Promise<Address>;
     /**
      * Sign a message via privy
      * @param args

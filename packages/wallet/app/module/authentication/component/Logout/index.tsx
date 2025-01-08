@@ -1,5 +1,6 @@
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
+import { usePrivyContext } from "@/module/common/provider/PrivyProvider";
 import { jotaiStore } from "@module/atoms/store";
 import { Button } from "@module/component/Button";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,7 +30,7 @@ export function Logout() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    // const { logout: privyLogout } = usePrivyContext();
+    const { logout: privyLogout } = usePrivyContext();
 
     return (
         <Panel size={"none"} variant={"invisible"}>
@@ -39,8 +40,7 @@ export function Logout() {
                 align={"left"}
                 onClick={async () => {
                     // Privy logout
-                    // todo: to reput when privy enabled
-                    // await privyLogout();
+                    await privyLogout();
                     // Session deletion
                     jotaiStore.set(sessionAtom, RESET);
                     jotaiStore.set(sdkSessionAtom, RESET);
