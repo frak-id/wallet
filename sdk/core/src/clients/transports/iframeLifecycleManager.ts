@@ -2,6 +2,7 @@ import type { IFrameLifecycleEvent } from "../../types";
 import { Deferred } from "../../utils/Deferred";
 import { BACKUP_KEY } from "../../utils/constants";
 import { changeIframeVisibility } from "../../utils/iframeHelper";
+import { setupPrivyChannel } from "../setupPrivy";
 
 /** @ignore */
 export type IframeLifecycleManager = {
@@ -15,9 +16,18 @@ export type IframeLifecycleManager = {
  */
 export function createIFrameLifecycleManager({
     iframe,
-}: { iframe: HTMLIFrameElement }): IframeLifecycleManager {
+    frakWalletUrl,
+}: {
+    iframe: HTMLIFrameElement;
+    frakWalletUrl: string;
+}): IframeLifecycleManager {
     // Create the isConnected listener
     const isConnectedDeferred = new Deferred<boolean>();
+
+    // The function to send privy request
+    let sendPrivyRequest:
+        | ((data: unknown, targetOrigin: string) => void)
+        | undefined = undefined;
 
     // Build the handler itself
     const handler = async (messageEvent: IFrameLifecycleEvent) => {
@@ -45,6 +55,31 @@ export function createIFrameLifecycleManager({
                     iframe,
                     isVisible: messageEvent.iframeLifecycle === "show",
                 });
+                break;
+            case "setup-privy":
+                // Setup the privy channel
+                const { embeddedWalletUrl } = messageEvent.data;
+                const { sendPrivyRequest: sendPrivyRequestFn } =
+                    await setupPrivyChannel({
+                        embeddedWalletUrl,
+                        onPrivyResponse: (data: unknown) => {
+                            iframe.contentWindow?.postMessage(
+                                {
+                                    clientLifecycle: "privy-response",
+                                    data,
+                                },
+                                frakWalletUrl
+                            );
+                            // todo: How to send that back?
+                        },
+                    });
+                sendPrivyRequest = sendPrivyRequestFn;
+                break;
+            case "privy-request":
+                sendPrivyRequest?.(
+                    messageEvent.data,
+                    messageEvent.targetOrigin
+                );
                 break;
         }
     };
