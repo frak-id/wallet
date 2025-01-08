@@ -6,6 +6,7 @@ import { Button } from "@module/component/Button";
 import { useQueryClient } from "@tanstack/react-query";
 import { RESET } from "jotai/utils";
 import { LogOut } from "lucide-react";
+import { guard } from "radash";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
@@ -40,7 +41,7 @@ export function Logout() {
                 align={"left"}
                 onClick={async () => {
                     // Privy logout
-                    await privyLogout();
+                    await guard(privyLogout);
                     // Session deletion
                     jotaiStore.set(sessionAtom, RESET);
                     jotaiStore.set(sdkSessionAtom, RESET);
