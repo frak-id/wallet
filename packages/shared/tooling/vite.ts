@@ -1,4 +1,4 @@
-import type { LoggingFunction, RollupLog } from "Rollup";
+import type { LoggingFunction, RollupLog } from "rollup";
 
 const hugeLibraries = [
     "viem",
