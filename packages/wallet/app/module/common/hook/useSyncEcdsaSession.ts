@@ -7,7 +7,7 @@ import {
     sdkSessionAtom,
     sessionAtom,
 } from "@/module/common/atoms/session";
-import { usePrivyContext } from "@/module/common/provider/PrivyProvider";
+import type { PrivyContextType } from "@/module/common/provider/PrivyProvider";
 import { jotaiStore } from "@module/atoms/store";
 import { useAtomValue } from "jotai";
 import { RESET } from "jotai/utils";
@@ -18,8 +18,11 @@ import { useConfig } from "wagmi";
 /**
  * Hook that synchronise the dynamic session
  */
-export function useSyncEcdsaSession() {
-    const { ready, wallet, signMessage } = usePrivyContext();
+export function useSyncEcdsaSession({
+    ready,
+    wallet,
+    signMessage,
+}: PrivyContextType) {
     const ecdsaSession = useAtomValue(ecdsaSessionAtom);
     const { connectors } = useConfig();
 
@@ -39,7 +42,7 @@ export function useSyncEcdsaSession() {
      */
     useEffect(() => {
         if (!ecdsaSession) return;
-        if (ready) return;
+        if (!ready) return;
 
         // If the addresses doesn't match, early reset
         if (!isAddressEqual(wallet ?? zeroAddress, ecdsaSession.publicKey)) {

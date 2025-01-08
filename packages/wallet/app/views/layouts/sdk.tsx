@@ -1,10 +1,10 @@
-import { PrivyCoreProvider } from "@/module/common/provider/PrivyCoreProvider";
+import { PrivyProvider } from "@/module/common/provider/PrivyProvider";
 import { Outlet } from "react-router";
 
 export default function SdkLayout() {
     return (
-        <PrivyCoreProvider>
+        <PrivyProvider>
             <Outlet />
-        </PrivyCoreProvider>
+        </PrivyProvider>
     );
 }

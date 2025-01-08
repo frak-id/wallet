@@ -55,9 +55,8 @@ function EcdsaSendMail({
     const { client } = usePrivyContext();
     const { mutate: sendMail, status } = useMutation({
         mutationKey: ["privy", "email-login", "send-code"],
-        mutationFn: async (mail: string) => {
-            await client.auth.email.sendCode(mail);
-        },
+        mutationFn: async (mail: string) =>
+            await client.auth.email.sendCode(mail),
         onSuccess: onCodeSent,
     });
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);

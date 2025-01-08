@@ -1,10 +1,12 @@
-import { PrivyCoreProvider } from "@/module/common/provider/PrivyCoreProvider";
+import { PrivyProvider } from "@/module/common/provider/PrivyProvider";
+import { PrivyWalletMessageProvider } from "@/module/common/provider/PrivyWalletMessageProvider";
 import { Outlet } from "react-router";
 
 export default function WalletLayout() {
     return (
-        <PrivyCoreProvider>
+        <PrivyProvider>
+            <PrivyWalletMessageProvider />
             <Outlet />
-        </PrivyCoreProvider>
+        </PrivyProvider>
     );
 }
