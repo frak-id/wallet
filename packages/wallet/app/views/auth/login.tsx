@@ -1,4 +1,3 @@
-import { isPrivyEnabled } from "@/context/blockchain/privy";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { EcdsaLogin } from "@/module/authentication/component/EcdsaLogin";
 import { LoginList } from "@/module/authentication/component/LoginList";
@@ -45,7 +44,7 @@ export default function Login() {
                     <Trans i18nKey={"wallet.login.button"} />
                 </ButtonAuth>
 
-                {isPrivyEnabled && <EcdsaLogin />}
+                <EcdsaLogin />
             </Grid>
         </>
     );

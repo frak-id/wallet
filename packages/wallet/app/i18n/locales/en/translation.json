@@ -153,6 +153,14 @@
             "walletsOnDevice": "Wallets used on this device",
             "privy": "Connect via Privy"
         },
+        "privyLogin": {
+            "sendMailInput": "Email",
+            "sendMailBtn": "Send validation mail",
+            "otpInput": "Email",
+            "otpTitle": "Enter the 6-digit confirmation code",
+            "otpLbl": "Sent from Privy.io to {{email}}",
+            "signSiwe": "Validate the authentication"
+        },
         "notifications": {
             "noNotifications": "No notifications"
         },

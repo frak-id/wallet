@@ -1,15 +1,10 @@
-import { isPrivyEnabled } from "@/context/blockchain/privy";
-import { PrivySdkProvider } from "@/module/common/provider/PrivySdkProvider";
+import { PrivyCoreProvider } from "@/module/common/provider/PrivyCoreProvider";
 import { Outlet } from "react-router";
 
 export default function SdkLayout() {
-    if (!isPrivyEnabled) {
-        return <Outlet />;
-    }
-
     return (
-        <PrivySdkProvider>
+        <PrivyCoreProvider>
             <Outlet />
-        </PrivySdkProvider>
+        </PrivyCoreProvider>
     );
 }

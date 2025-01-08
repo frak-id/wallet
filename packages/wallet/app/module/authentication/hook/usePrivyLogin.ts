@@ -13,7 +13,7 @@ import { generatePrivateKey } from "viem/accounts";
  * Hook that handle the registration process
  */
 export function usePrivyLogin(options?: UseMutationOptions<Session>) {
-    const { login, signMessage } = usePrivyContext();
+    const { wallet, signMessage } = usePrivyContext();
 
     // The mutation that will be used to perform the privy login process
     const {
@@ -25,10 +25,9 @@ export function usePrivyLogin(options?: UseMutationOptions<Session>) {
         mutateAsync: privyLoginAsync,
     } = useMutation({
         ...options,
-        mutationKey: ["privy-login"],
+        mutationKey: ["privy", "login", wallet ?? "no-wallet"],
         mutationFn: async () => {
-            // Do the initial privy login stuff
-            const wallet = await login();
+            // Ensure a privy wallet exist
             if (!wallet) {
                 throw new Error("No wallet selected");
             }

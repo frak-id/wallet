@@ -1,15 +1,10 @@
-import { isPrivyEnabled } from "@/context/blockchain/privy";
-import { PrivyWalletProvider } from "@/module/common/provider/PrivyWalletProvider";
+import { PrivyCoreProvider } from "@/module/common/provider/PrivyCoreProvider";
 import { Outlet } from "react-router";
 
 export default function WalletLayout() {
-    if (!isPrivyEnabled) {
-        return <Outlet />;
-    }
-
     return (
-        <PrivyWalletProvider>
+        <PrivyCoreProvider>
             <Outlet />
-        </PrivyWalletProvider>
+        </PrivyCoreProvider>
     );
 }
