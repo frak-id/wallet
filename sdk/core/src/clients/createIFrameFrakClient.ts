@@ -49,12 +49,15 @@ export function createIFrameFrakClient({
 }): FrakClient {
     // Build our channel manager
     const channelManager = createIFrameChannelManager();
-
-    const lifecycleManager = createIFrameLifecycleManager({ iframe });
+    const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
+    const lifecycleManager = createIFrameLifecycleManager({
+        iframe,
+        frakWalletUrl,
+    });
 
     // Build our message handler
     const messageHandler = createIFrameMessageHandler({
-        frakWalletUrl: config?.walletUrl ?? "https://wallet.frak.id",
+        frakWalletUrl,
         iframe,
         channelManager,
         iframeLifecycleManager: lifecycleManager,

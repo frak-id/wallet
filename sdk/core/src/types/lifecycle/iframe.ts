@@ -8,7 +8,9 @@ export type IFrameLifecycleEvent =
           data?: never;
       }
     | DoBackupEvent
-    | RemoveBackupEvent;
+    | RemoveBackupEvent
+    | SetupPrivyEvent
+    | PrivyRequestEvent;
 
 type DoBackupEvent = {
     iframeLifecycle: "do-backup";
@@ -17,4 +19,17 @@ type DoBackupEvent = {
 
 type RemoveBackupEvent = {
     iframeLifecycle: "remove-backup";
+};
+
+type SetupPrivyEvent = {
+    iframeLifecycle: "setup-privy";
+    data: {
+        embeddedWalletUrl: string;
+    };
+};
+
+type PrivyRequestEvent = {
+    iframeLifecycle: "privy-request";
+    targetOrigin: string;
+    data: unknown;
 };
