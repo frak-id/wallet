@@ -12,6 +12,7 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
+import type Privy from "@privy-io/js-sdk-core";
 import { type Hex, keccak256, toHex } from "viem";
 
 /**
@@ -57,9 +58,10 @@ export type IFrameRequestResolverMap = {
 /**
  * Create our iframe request resolver
  */
-export function createIFrameRequestResolver(
-    resolversMap: IFrameRequestResolverMap
-) {
+export function createIFrameRequestResolver({
+    privyClient,
+    ...resolversMap
+}: IFrameRequestResolverMap & { privyClient: Privy }) {
     if (typeof window === "undefined") {
         throw new Error("IFrame resolver should be used in the browser");
     }
@@ -97,7 +99,8 @@ export function createIFrameRequestResolver(
             await handleLifecycleEvents(
                 message,
                 resolvingContext,
-                setReadyToHandleRequest
+                setReadyToHandleRequest,
+                privyClient
             );
             return;
         }
@@ -151,6 +154,12 @@ export function createIFrameRequestResolver(
     // Helper to tell when we are ready to process message
     function setReadyToHandleRequest() {
         emitLifecycleEvent({ iframeLifecycle: "connected" });
+        emitLifecycleEvent({
+            iframeLifecycle: "setup-privy",
+            data: {
+                embeddedWalletUrl: privyClient.embeddedWallet.getURL(),
+            },
+        });
     }
 
     return {
@@ -164,17 +173,20 @@ export function createIFrameRequestResolver(
  * @param message
  * @param resolvingContext
  * @param setReadyToHandleRequest
+ * @param privyClient
  */
 async function handleLifecycleEvents(
     message: MessageEvent<IFrameEvent>,
     resolvingContext: IFrameResolvingContext,
-    setReadyToHandleRequest: () => void
+    setReadyToHandleRequest: () => void,
+    privyClient: Privy
 ) {
     // Check if that's a client lifecycle request event
     if ("clientLifecycle" in message.data) {
         const { clientLifecycle, data } = message.data;
 
         switch (clientLifecycle) {
+            // Apply custom styles
             case "modal-css": {
                 const style = document.createElement("link");
                 style.rel = "stylesheet";
@@ -182,14 +194,18 @@ async function handleLifecycleEvents(
                 document.head.appendChild(style);
                 break;
             }
-            case "restore-backup": {
-                // Restore the backup
+            // Restore the backup
+            case "restore-backup":
                 await restoreBackupData({
                     backup: data.backup,
                     productId: resolvingContext.productId,
                 });
                 break;
-            }
+            // Receive a privy response from the SDK privy iframe
+            case "privy-response":
+                // biome-ignore lint/suspicious/noExplicitAny:
+                privyClient.embeddedWallet.onMessage(data as any);
+                break;
         }
         return;
     }

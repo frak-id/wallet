@@ -1,4 +1,5 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
+import { EcdsaLogin } from "@/module/authentication/component/EcdsaLogin";
 import { useConsumePendingSso } from "@/module/authentication/hook/useConsumePendingSso";
 import {
     ssoPopupFeatures,
@@ -97,6 +98,8 @@ export function LoginModalStep({
                     <DismissButton />
                 </div>
             </div>
+
+            <EcdsaLogin />
 
             {isSuccess && (
                 <p className={styles.modalListener__success}>

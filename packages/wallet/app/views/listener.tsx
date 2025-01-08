@@ -1,4 +1,5 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { usePrivyContext } from "@/module/common/provider/PrivyProvider";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
 import { useOnGetProductInformation } from "@/module/listener/hooks/useOnGetProductInformation";
@@ -19,6 +20,9 @@ const ListenerModal = lazy(modalImport);
  * @constructor
  */
 export default function Listener() {
+    // Import the privy client
+    const { client } = usePrivyContext();
+
     const [resolver, setResolver] = useState<
         ReturnType<typeof createIFrameRequestResolver> | undefined
     >(undefined);
@@ -44,6 +48,10 @@ export default function Listener() {
     // Create the resolver
     useEffect(() => {
         const newResolver = createIFrameRequestResolver({
+            /**
+             * Flat pass the privy client
+             */
+            privyClient: client,
             /**
              * Listen request on the wallet status
              */
@@ -81,6 +89,7 @@ export default function Listener() {
             newResolver.destroy();
         };
     }, [
+        client,
         onWalletListenRequest,
         onInteractionRequest,
         onDisplayModalRequest,
