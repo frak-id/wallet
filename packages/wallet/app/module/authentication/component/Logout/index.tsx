@@ -29,6 +29,7 @@ export function Logout() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    // const { logout: privyLogout } = usePrivyContext();
 
     return (
         <Panel size={"none"} variant={"invisible"}>
@@ -37,6 +38,9 @@ export function Logout() {
                 width={"full"}
                 align={"left"}
                 onClick={async () => {
+                    // Privy logout
+                    // todo: to reput when privy enabled
+                    // await privyLogout();
                     // Session deletion
                     jotaiStore.set(sessionAtom, RESET);
                     jotaiStore.set(sdkSessionAtom, RESET);
