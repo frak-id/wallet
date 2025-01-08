@@ -56,8 +56,8 @@ export function createIFrameLifecycleManager({
                     isVisible: messageEvent.iframeLifecycle === "show",
                 });
                 break;
-            case "setup-privy":
-                // Setup the privy channel
+            // Setup the privy channel
+            case "setup-privy": {
                 const { embeddedWalletUrl } = messageEvent.data;
                 const { sendPrivyRequest: sendPrivyRequestFn } =
                     await setupPrivyChannel({
@@ -70,11 +70,11 @@ export function createIFrameLifecycleManager({
                                 },
                                 frakWalletUrl
                             );
-                            // todo: How to send that back?
                         },
                     });
                 sendPrivyRequest = sendPrivyRequestFn;
                 break;
+            }
             case "privy-request":
                 sendPrivyRequest?.(
                     messageEvent.data,
