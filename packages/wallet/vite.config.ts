@@ -1,13 +1,12 @@
 import * as process from "node:process";
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig } from "vite";
-import type { ConfigEnv, Plugin, UserConfig } from "vite";
+import type { ConfigEnv, UserConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
-import { nodePolyfills } from "vite-plugin-node-polyfills";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { manualChunks, onwarn } from "../shared/tooling/vite";
 
-export default defineConfig(({ isSsrBuild, mode }: ConfigEnv): UserConfig => {
+export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
     // Return the built config
     return {
         define: {
@@ -42,14 +41,7 @@ export default defineConfig(({ isSsrBuild, mode }: ConfigEnv): UserConfig => {
         esbuild: {
             drop: process.env.STAGE === "prod" ? ["console", "debugger"] : [],
         },
-        plugins: [
-            ...(mode === "production"
-                ? [nodePolyfills() as Plugin]
-                : ([] as Plugin[])),
-            reactRouter(),
-            mkcert(),
-            tsconfigPaths(),
-        ],
+        plugins: [reactRouter(), mkcert(), tsconfigPaths()],
         build: {
             target: isSsrBuild ? "ES2022" : "ES2020",
             rollupOptions: {

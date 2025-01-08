@@ -1,11 +1,10 @@
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig } from "vite";
-import type { ConfigEnv, Plugin, UserConfig } from "vite";
-import { nodePolyfills } from "vite-plugin-node-polyfills";
+import type { UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { manualChunks, onwarn } from "../../packages/shared/tooling/vite";
 
-export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
+export default defineConfig((): UserConfig => {
     return {
         define: {
             "process.env.STAGE": JSON.stringify(process.env.STAGE),
@@ -16,13 +15,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         server: {
             port: 3012,
         },
-        plugins: [
-            ...(mode === "production"
-                ? [nodePolyfills() as Plugin]
-                : ([] as Plugin[])),
-            reactRouter(),
-            tsconfigPaths(),
-        ],
+        plugins: [reactRouter(), tsconfigPaths()],
         build: {
             rollupOptions: {
                 output: {
