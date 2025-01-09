@@ -1,0 +1,67 @@
+.input-otp__container {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+
+    &:disabled {
+        opacity: 50;
+    }
+}
+
+.input-otp:disabled {
+    cursor: not-allowed;
+}
+
+.input-otp-group {
+    display: flex;
+    align-items: center;
+}
+
+.input-otp-slot {
+    display: flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    border-right-width: 1px;
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+
+    &:first-child {
+        border-top-left-radius: 0.375rem;
+        border-bottom-left-radius: 0.375rem;
+        border-left-width: 1px;
+    }
+
+    &:last-child {
+        border-top-right-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+}
+
+.input-otp-slot__active {
+    z-index: 10;
+    box-shadow: 0 0 0 2px var(rgba(59, 130, 246, 0.5));
+}
+
+.input-otp-slot__fake-caret {
+    display: flex;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+.input-otp-slot__fake-caret__inner {
+    width: 1px;
+    height: 1rem;
+    transition-duration: 1000ms;
+}

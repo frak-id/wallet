@@ -1,4 +1,9 @@
 import { usePrivyLogin } from "@/module/authentication/hook/usePrivyLogin";
+import {
+    InputOTP,
+    InputOTPGroup,
+    InputOTPSlot,
+} from "@/module/common/component/InputOtp";
 import { usePrivyContext } from "@/module/common/provider/PrivyProvider";
 import { Button } from "@module/component/Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -91,6 +96,7 @@ function EcdsaSendMail({
 
 /**
  * Login step where the user need to sign a message to authenticate
+ * todo: use this: https://ui.shadcn.com/docs/components/input-otp
  * @constructor
  */
 function EcdsaOtp({
@@ -107,7 +113,7 @@ function EcdsaOtp({
     const [otp, setOtp] = useState("");
     const queryClient = useQueryClient();
 
-    const { mutate: validateOtp, status } = useMutation({
+    const { mutate: validateOtp, isPending } = useMutation({
         mutationKey: ["privy", "email-login", "validate-code"],
         mutationFn: async ({
             email,
@@ -144,22 +150,38 @@ function EcdsaOtp({
                 <p className="otp-subtitle">
                     {t("wallet.privyLogin.otpLbl", { email })}
                 </p>
-                <input
-                    type="number"
+                <InputOTP
                     maxLength={6}
-                    minLength={6}
+                    onChange={(value) => handleOtpChange(value)}
                     value={otp}
-                    onChange={(e) => handleOtpChange(e.target.value)}
-                    className="otp-input"
-                    placeholder="000000"
-                    disabled={status === "pending"}
-                />
+                    disabled={isPending}
+                >
+                    <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                        <InputOTPSlot index={6} />
+                    </InputOTPGroup>
+                </InputOTP>
+                {/*<input*/}
+                {/*    type="number"*/}
+                {/*    maxLength={6}*/}
+                {/*    minLength={6}*/}
+                {/*    value={otp}*/}
+                {/*    onChange={(e) => handleOtpChange(e.target.value)}*/}
+                {/*    className="otp-input"*/}
+                {/*    placeholder="000000"*/}
+                {/*    disabled={status === "pending"}*/}
+                {/*/>*/}
             </div>
             <button
                 onClick={onBack}
                 className="change-email-btn"
                 type={"button"}
-                disabled={status === "pending"}
+                disabled={isPending}
             >
                 Change email
             </button>
