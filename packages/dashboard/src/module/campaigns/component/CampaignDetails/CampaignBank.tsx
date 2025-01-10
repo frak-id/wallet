@@ -1,6 +1,7 @@
 import { viemClient } from "@/context/blockchain/provider";
 import { useGetOnChainCampaignDetails } from "@/module/campaigns/hook/useGetOnChainDetails";
 import { Title } from "@/module/common/component/Title";
+import { convertToEuro } from "@/module/common/utils/convertToEuro";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -98,8 +99,9 @@ export function CampaignBank({
             </p>
             <p>
                 Current bank balance:{" "}
-                {formatUnits(BigInt(bankInfo.balance), bankInfo.decimal)}
-                {bankInfo.symbol}
+                {convertToEuro(
+                    formatUnits(BigInt(bankInfo.balance), bankInfo.decimal)
+                )}
             </p>
             <p>
                 <Link href={`/product/${onChainInfos?.productId}/funding`}>

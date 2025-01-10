@@ -8,8 +8,8 @@ import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
 import { useUpdateCampaignRunningStatus } from "@/module/campaigns/hook/useUpdateCampaignRunningStatus";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import type { ReactTableProps } from "@/module/common/component/Table";
+import { convertToEuro } from "@/module/common/utils/convertToEuro";
 import { formatDate } from "@/module/common/utils/formatDate";
-import { formatPrice } from "@/module/common/utils/formatPrice";
 import { Switch } from "@/module/forms/Switch";
 import type { CampaignWithState } from "@/types/Campaign";
 import { Button } from "@module/component/Button";
@@ -113,7 +113,7 @@ export function TableCampaigns() {
                         return (
                             <span className={styles.table__budget}>
                                 <span className={styles.table__budgetAmount}>
-                                    {formatPrice(getValue())}
+                                    {convertToEuro(getValue())}
                                 </span>
                                 {row.original.budget?.type && (
                                     <span className={styles.table__budgetType}>
