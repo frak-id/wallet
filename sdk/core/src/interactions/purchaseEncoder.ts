@@ -73,4 +73,22 @@ export const PurchaseInteractionEncoder = {
             interactionData,
         };
     },
+
+    /**
+     * Encode an unsafe complete purchase interaction (when we can't provide the proof)
+     * @param args
+     * @param args.purchaseId - The id of the purchase that is being completed.
+     */
+    unsafeCompletedPurchase({
+        purchaseId,
+    }: { purchaseId: Hex }): PreparedInteraction {
+        const interactionData = concatHex([
+            interactionTypes.purchase.completed,
+            pad(purchaseId, { size: 32 }),
+        ]);
+        return {
+            handlerTypeDenominator: toHex(productTypes.purchase),
+            interactionData,
+        };
+    },
 };
