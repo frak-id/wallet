@@ -1,4 +1,5 @@
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
 import { FormFromTo } from "@/module/campaigns/component/Creation/MetricsCampaign/FormFromTo";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
@@ -9,7 +10,8 @@ import {
     type ProductTypesKey,
     interactionTypes,
 } from "@frak-labs/core-sdk";
-import { useAtomValue } from "jotai/index";
+import { Button } from "@module/component/Button";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -20,6 +22,7 @@ export function FormPriceRange({
     form: UseFormReturn<Campaign["triggers"]>;
     productTypes: ProductTypesKey[];
 }) {
+    const setStep = useSetAtom(campaignStepAtom);
     const { type: currentGoal } = useAtomValue(campaignAtom);
     const availableInteractions = useMemo(() => {
         if (!currentGoal) return [];
@@ -48,13 +51,33 @@ export function FormPriceRange({
 
     return (
         <Panel title="Configure Price Range">
-            <FormDescription>
-                Set a price range for each campaign objective. The budget will
-                be distributed between the referee and referrer according to an
-                automatically optimized allocation key. Frak will apply a 20%
-                management fee to support the campaign delivery and to cover
-                operational costs.
-            </FormDescription>
+            {availableInteractions.length === 0 && (
+                <>
+                    <FormDescription>
+                        <span className="error">
+                            No interactions available for the current goal,
+                            please select another goal at previous step.
+                        </span>
+                    </FormDescription>
+                    <FormDescription>
+                        <Button
+                            variant={"informationOutline"}
+                            onClick={() => setStep((prev) => prev - 1)}
+                        >
+                            Go back to previous step
+                        </Button>
+                    </FormDescription>
+                </>
+            )}
+            {availableInteractions.length > 0 && (
+                <FormDescription>
+                    Set a price range for each campaign objective. The budget
+                    will be distributed between the referee and referrer
+                    according to an automatically optimized allocation key. Frak
+                    will apply a 20% management fee to support the campaign
+                    delivery and to cover operational costs.
+                </FormDescription>
+            )}
             {availableInteractions.map(({ key, label }) => (
                 <FormFromTo
                     key={key}
