@@ -3,15 +3,15 @@ import { t } from "@backend-utils";
 import { Value } from "@sinclair/typebox/value";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { interactionsContext } from "../context";
-import { backendTrackerTable, pendingInteractionsTable } from "../db/schema";
-import { BackendInteractionDto } from "../dto/InteractionDto";
+import { interactionsContext } from "../../context";
+import { backendTrackerTable, pendingInteractionsTable } from "../../db/schema";
+import { BackendInteractionDto } from "../../dto/InteractionDto";
 
-export const webhookRoutes = new Elysia({ prefix: "/webhook" })
+export const webhookPushRoutes = new Elysia()
     .use(interactionsContext)
     .use(bodyHmacContext)
     .post(
-        ":productId/",
+        ":productId/push",
         async ({
             // Request
             params: { productId },
