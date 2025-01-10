@@ -139,7 +139,8 @@
             "PURCHASE_STARTED": "Started purchase",
             "READ_ARTICLE": "Read article",
             "REFERRED": "Referred",
-            "WEBSHOP_OPENNED": "Opened webshop"
+            "WEBSHOP_OPENNED": "Opened webshop",
+            "CUSTOMER_MEETING": "Appointment in store"
         },
         "invite": {
             "title": "Invite friends, earn $5",

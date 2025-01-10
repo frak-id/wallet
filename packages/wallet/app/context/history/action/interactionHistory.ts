@@ -32,6 +32,10 @@ type ApiResult = Array<
                   purchaseId: Hex;
               };
           }
+        | {
+              type: "CUSTOMER_MEETING";
+              data: { agencyId: string };
+          }
     )
 >;
 
