@@ -12,6 +12,7 @@ export const productTypes = {
     dapp: 1,
     press: 2,
     webshop: 3,
+    retail: 4,
 
     // feature type
     referral: 30,

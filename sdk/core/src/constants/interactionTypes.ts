@@ -37,4 +37,7 @@ export const interactionTypes = {
         started: "0xd87e90c3",
         completed: "0x8403aeb4",
     },
+    retail: {
+        customerMeeting: "0x74489004",
+    },
 } as const;

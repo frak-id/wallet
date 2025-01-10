@@ -1,4 +1,4 @@
-import { concatHex, toHex } from "viem";
+import { toHex } from "viem";
 import { interactionTypes } from "../constants/interactionTypes";
 import { productTypes } from "../constants/productTypes";
 import type { PreparedInteraction } from "../types";
@@ -22,13 +22,9 @@ export const WebShopInteractionEncoder = {
      * Encode an open webshop interaction
      */
     open(): PreparedInteraction {
-        const interactionData = concatHex([
-            interactionTypes.webshop.open,
-            "0x",
-        ]);
         return {
             handlerTypeDenominator: toHex(productTypes.webshop),
-            interactionData,
+            interactionData: interactionTypes.webshop.open,
         };
     },
 };
