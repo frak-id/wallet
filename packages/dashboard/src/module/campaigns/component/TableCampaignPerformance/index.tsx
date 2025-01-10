@@ -232,6 +232,24 @@ export function TableCampaignPerformance() {
                         sumRows(table, "amountSpent", { dollar: true }),
                     cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
                 }),
+                columnHelper.accessor("customerMeetingInteractions", {
+                    header: () => (
+                        <TooltipTable
+                            content={
+                                <>
+                                    <strong>Customer meetings</strong>
+                                    <br /> Amount of meetings
+                                    <br />
+                                    with customers.
+                                </>
+                            }
+                        >
+                            <span>Customer meetings</span>
+                        </TooltipTable>
+                    ),
+                    footer: ({ table }) =>
+                        sumRows(table, "customerMeetingInteractions"),
+                }),
             ] as ColumnDef<TableData>[],
         []
     );
