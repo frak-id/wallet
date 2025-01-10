@@ -9,3 +9,7 @@ export const InteractionRequestDto = t.Object({
     }),
     signature: t.Optional(t.Union([t.Hex(), t.Undefined(), t.Null()])),
 });
+
+export const BackendInteractionDto = t.Omit(InteractionRequestDto, [
+    "productId",
+]);

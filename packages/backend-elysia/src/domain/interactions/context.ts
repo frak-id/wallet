@@ -6,6 +6,7 @@ import {
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import {
+    backendTrackerTable,
     interactionSimulationStatus,
     interactionsPurchaseTrackerTable,
     pendingInteractionsTable,
@@ -41,6 +42,7 @@ export const interactionsContext = new Elysia({
                     interactionSimulationStatus,
                     pushedInteractionsTable,
                     interactionsPurchaseTrackerTable,
+                    backendTrackerTable,
                 },
             });
 
@@ -82,4 +84,5 @@ export type InteractionsDb = PostgresJsDatabase<{
     interactionSimulationStatus: typeof interactionSimulationStatus;
     pushedInteractionsTable: typeof pushedInteractionsTable;
     interactionsPurchaseTrackerTable: typeof interactionsPurchaseTrackerTable;
+    backendTrackerTable: typeof backendTrackerTable;
 }>;
