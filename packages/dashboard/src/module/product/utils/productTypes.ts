@@ -46,6 +46,10 @@ export const productTypesLabel: Record<
         description:
             "Track user engagement with product view and basket actions.",
     },
+    retail: {
+        name: "Retail",
+        description: "Track user engagement in retail.",
+    },
     referral: {
         name: "Referral",
         description: "Enable and measure user referral activities.",

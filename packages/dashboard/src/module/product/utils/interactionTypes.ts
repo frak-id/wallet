@@ -48,4 +48,8 @@ export const interactionTypesInfo: Record<
         name: "Create Link",
         hidden: true,
     },
+    customerMeeting: {
+        name: "Customer Meeting",
+        relatedGoal: "registration",
+    },
 };
