@@ -100,11 +100,11 @@ export const webhookManagmentRoutes = new Elysia()
             // todo: Oracle merkle update authorisation setup
 
             // Check if we already got a setup for this product (we could only have one)
-            const existingTracker =
-                await interactionsDb.query.backendTrackerTable.findFirst({
-                    with: { productId },
-                });
-            if (!existingTracker) {
+            const existingTrackers = await interactionsDb
+                .select({ id: backendTrackerTable.id })
+                .from(backendTrackerTable)
+                .where(eq(backendTrackerTable.productId, productId));
+            if (!existingTrackers.length) {
                 return error(
                     404,
                     `Product ${productId} have no current tracker setup`
