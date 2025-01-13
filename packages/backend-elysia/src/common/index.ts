@@ -8,6 +8,7 @@ export {
     walletSessionContext,
     eventsContext,
     walletSdkSessionContext,
+    bodyHmacContext,
     type GetMongoDb,
 } from "./context";
 export { log } from "./logger";

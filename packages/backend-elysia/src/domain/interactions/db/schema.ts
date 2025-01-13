@@ -80,3 +80,26 @@ export const interactionsPurchaseTrackerTable = pgTable(
         ),
     ]
 );
+
+export const backendTrackerSourceEnum = pgEnum(
+    "backend_interactions_tracker_source",
+    ["custom"]
+);
+
+/**
+ * Table for all the backend interaction tracker
+ */
+export const backendTrackerTable = pgTable(
+    "backend_interactions_tracker",
+    {
+        id: serial("id").primaryKey(),
+        productId: customHex("product_id").unique().notNull(),
+        // The signing key that will be used for the hooks
+        hookSignatureKey: varchar("hook_signature_key").notNull(),
+        // Date infos
+        createdAt: timestamp("created_at").defaultNow(),
+        // The source of this backend tracker
+        source: backendTrackerSourceEnum("source").notNull().default("custom"),
+    },
+    (table) => [index("unique_tracker_product_id").on(table.productId)]
+);
