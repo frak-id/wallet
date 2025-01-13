@@ -101,5 +101,5 @@ export const backendTrackerTable = pgTable(
         // The source of this backend tracker
         source: backendTrackerSourceEnum("source").notNull().default("custom"),
     },
-    (table) => [index("unique_product_id").on(table.productId)]
+    (table) => [index("unique_tracker_product_id").on(table.productId)]
 );
