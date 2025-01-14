@@ -83,7 +83,7 @@ export const PurchaseInteractionEncoder = {
         purchaseId,
     }: { purchaseId: Hex }): PreparedInteraction {
         const interactionData = concatHex([
-            interactionTypes.purchase.completed,
+            interactionTypes.purchase.unsafeCompleted,
             pad(purchaseId, { size: 32 }),
         ]);
         return {
