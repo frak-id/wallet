@@ -238,7 +238,7 @@ function mapRawInteraction({
             });
         }
         // Case of an unsafe purchase
-        case interactionTypes.purchase.completed: {
+        case interactionTypes.purchase.unsafeCompleted: {
             if (data.length !== 1) {
                 log.warn("Invalid data length for purchase", {
                     key,
