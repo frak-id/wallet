@@ -60,7 +60,7 @@ export function WebhookInteraction({ productId }: { productId: Hex }) {
     } = useWebhookInteractionSetup({ productId });
     // Current webhook url and signinKey to setup
     const webhookUrl = useMemo(() => {
-        return `${process.env.BACKEND_URL}/interactions/webhook/${productId}`;
+        return `${process.env.BACKEND_URL}/interactions/webhook/${productId}/pushRaw`;
     }, [productId]);
 
     // The key that will be used for webhook
