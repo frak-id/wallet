@@ -17,8 +17,8 @@ export const estimatedInteractionRewardQuery = ({
     enabled: !!productId,
     queryKey: [
         "interactions",
-        "estimated-interactions-reward",
-        productId ?? "no-initial-product-id",
+        "estimated-reward",
+        productId ?? "no-product-id",
         interaction ?? "no-key-filter",
     ],
     async queryFn() {
@@ -35,8 +35,12 @@ export const estimatedInteractionRewardQuery = ({
             });
         if (error) throw error;
 
-        // Floor it so we don't have floating point issues
-        return data?.totalReferrerEur?.toFixed(2) ?? null;
+        if (!data?.totalReferrerEur) {
+            return null;
+        }
+
+        // Ceil it so we don't have floating point issues
+        return Math.ceil(data.totalReferrerEur).toString();
     },
 });
 
