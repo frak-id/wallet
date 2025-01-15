@@ -54,7 +54,7 @@ export function useWalletStatusListener(): OnListenToWallet {
      */
     const emitCurrentStatus = useCallback(
         async (
-            context: IFrameResolvingContext,
+            { productId }: IFrameResolvingContext,
             emitter: IFrameResponseEmitter<{
                 method: "frak_listenToWalletStatus";
             }>,
@@ -83,7 +83,7 @@ export function useWalletStatusListener(): OnListenToWallet {
                     },
                 });
                 // And push fresh backup data with no session
-                await pushBackupData({ productId: context.productId });
+                await pushBackupData({ productId });
                 return;
             }
 
@@ -123,7 +123,7 @@ export function useWalletStatusListener(): OnListenToWallet {
             }
 
             // And push some backup data if we got ones
-            await pushBackupData({ productId: context.productId });
+            await pushBackupData({ productId });
         },
         [queryClient]
     );

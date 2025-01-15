@@ -2,6 +2,7 @@ import { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStat
 import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
+import { convertToEuro } from "@/module/common/utils/convertToEuro";
 import { Skeleton } from "@module/component/Skeleton";
 import { computeWithPrecision } from "@module/utils/computeWithPrecision";
 import { useQuery } from "@tanstack/react-query";
@@ -41,7 +42,7 @@ function sumRows(
             0
         );
     if (formatting?.dollar) {
-        return <span>${total.toFixed(2)}</span>;
+        return <span>{convertToEuro(total)}</span>;
     }
     return <span>{total}</span>;
 }
@@ -177,7 +178,7 @@ export function TableCampaignPerformance() {
                     ),
                     footer: ({ table }) =>
                         sumRows(table, "costPerShare", { dollar: true }),
-                    cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
+                    cell: ({ getValue }) => convertToEuro(getValue()),
                 }),
                 columnHelper.accessor("ctr", {
                     header: () => (
@@ -212,7 +213,7 @@ export function TableCampaignPerformance() {
                     ),
                     footer: ({ table }) =>
                         sumRows(table, "costPerPurchase", { dollar: true }),
-                    cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
+                    cell: ({ getValue }) => convertToEuro(getValue()),
                 }),
                 columnHelper.accessor("amountSpent", {
                     header: () => (
@@ -230,7 +231,7 @@ export function TableCampaignPerformance() {
                     ),
                     footer: ({ table }) =>
                         sumRows(table, "amountSpent", { dollar: true }),
-                    cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
+                    cell: ({ getValue }) => convertToEuro(getValue()),
                 }),
             ] as ColumnDef<TableData>[],
         []

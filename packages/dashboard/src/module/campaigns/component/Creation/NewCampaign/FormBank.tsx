@@ -1,4 +1,5 @@
 import { Panel } from "@/module/common/component/Panel";
+import { convertToEuro } from "@/module/common/utils/convertToEuro";
 import {
     FormControl,
     FormField,
@@ -53,7 +54,10 @@ export function FormBank(form: UseFormReturn<Campaign>) {
                                             value={bank.address}
                                         >
                                             {bank.token.name} (
-                                            {bank.formatted.balance})
+                                            {convertToEuro(
+                                                bank.formatted.balance
+                                            )}
+                                            )
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

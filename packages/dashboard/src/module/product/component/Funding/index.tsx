@@ -4,6 +4,7 @@ import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
+import { convertToEuro } from "@/module/common/utils/convertToEuro";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { FormLayout } from "@/module/forms/Form";
 import { ProductHead } from "@/module/product/component/ProductHead";
@@ -161,15 +162,9 @@ function BankAmount({
     amount,
     symbol,
 }: { title: string; amount: string; symbol: string }) {
-    const amountInEuros = Number.parseFloat(amount) * 0.91; // Assuming 1 USD = 0.91 EUR
-    const formattedEuros = formatPrice(
-        amountInEuros.toString(),
-        undefined,
-        "EUR"
-    );
     return (
         <p>
-            {title} <strong>{formattedEuros}</strong> (
+            {title} <strong>{convertToEuro(amount)}</strong> (
             {formatPrice(amount)?.replace("$", `${symbol} `)})
         </p>
     );

@@ -32,10 +32,17 @@ type WebShopOpenInteraction = BaseInteraction & {
     type: "WEBSHOP_OPENNED";
     data: null;
 };
+type RetailInteraction = BaseInteraction & {
+    type: "CUSTOMER_MEETING";
+    data: {
+        agencyId: string;
+    };
+};
 
 export type InteractionHistory =
     | OpenOrReadInteraction
     | ReferredInteraction
     | CreateReferralLinkInteraction
     | PurchasesInteraction
-    | WebShopOpenInteraction;
+    | WebShopOpenInteraction
+    | RetailInteraction;

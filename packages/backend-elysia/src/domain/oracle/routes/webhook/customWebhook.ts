@@ -1,4 +1,4 @@
-import { log } from "@backend-common";
+import { bodyHmacContext, log } from "@backend-common";
 import { t } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
@@ -9,6 +9,7 @@ import type { CustomWebhookDto } from "../../dto/CustomWebhook";
 import { purchaseWebhookService } from "../../services/hookService";
 
 export const customWebhook = new Elysia({ prefix: "/custom" })
+    .use(bodyHmacContext)
     .use(purchaseWebhookService)
     // Error failsafe, to never fail on shopify webhook
     .onError(({ error, code, body, path, headers }) => {

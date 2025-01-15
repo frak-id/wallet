@@ -32,6 +32,13 @@ export const interactionTypesInfo: Record<
         name: "Purchase completed",
         relatedGoal: "sales",
     },
+    // todo: Just display a checkbox on top of completed interaction to activate this one
+    //  todo: Checkbox being smth like "Web2 validation of the purchase only"
+    unsafeCompleted: {
+        name: "[UNSAFE] Purchase completed",
+        relatedGoal: "sales",
+        hidden: true,
+    },
     proofVerifiableStorageUpdate: {
         name: "Proof Verifiable Storage Update",
         hidden: true,
@@ -47,5 +54,9 @@ export const interactionTypesInfo: Record<
     createLink: {
         name: "Create Link",
         hidden: true,
+    },
+    customerMeeting: {
+        name: "Customer Meeting",
+        relatedGoal: "registration",
     },
 };

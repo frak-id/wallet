@@ -23,8 +23,8 @@ export default $config({
                 dev: {
                     title: "Build SDK",
                     autostart: false,
-                    command: "bun run build",
-                    directory: "packages/sdk",
+                    command: "bun run build:sdk",
+                    directory: "./",
                 },
             });
         }

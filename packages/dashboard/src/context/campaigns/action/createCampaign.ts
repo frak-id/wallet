@@ -101,45 +101,7 @@ export async function getCreationData(campaign: Campaign) {
     const { decimals: tokenDecimals } = await getBankTokenInfo({
         bank: campaign.bank,
     });
-
-    // Rebuild the triggers
-    const triggers = Object.entries(campaign.triggers)
-        .map(([interactionTypeKey, trigger]) => {
-            // The initial reward is just the avg of from and to for now
-            const initialReward = Math.floor((trigger.from + trigger.to) / 2);
-
-            // Find the matching interaction types (into the sub-keys of interaction types)
-            const interactionType = getHexValueForKey(
-                interactionTypeKey as InteractionTypesKey
-            );
-            if (!interactionType) {
-                throw new Error(
-                    `No interaction type found for the key ${interactionTypeKey}`
-                );
-            }
-
-            // Create the user percent (number between 0 and 1, should be a bigint between 0 and 10_000 after mapping, with no decimals)
-            const userPercent = trigger.userPercent
-                ? BigInt(Math.floor(trigger.userPercent * 10_000))
-                : 5_000n; // default to 50%
-
-            // Same wise for the deperdition level
-            const deperditionPerLevel = trigger.deperditionPerLevel
-                ? BigInt(Math.floor(trigger.deperditionPerLevel * 10_000))
-                : 8_000n; // default to 80%
-
-            return {
-                interactionType: interactionType,
-                baseReward: parseUnits(initialReward.toString(), tokenDecimals),
-                userPercent: userPercent,
-                deperditionPerLevel: deperditionPerLevel,
-                maxCountPerUser: trigger.maxCountPerUser
-                    ? BigInt(trigger.maxCountPerUser)
-                    : 1n, // Max 1 per user
-            };
-        })
-        // Filter out trigger with no rewards
-        .filter((trigger) => trigger.baseReward > 0n);
+    const triggers = extractTriggers(campaign, tokenDecimals);
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(referralConfigStruct, [
@@ -212,6 +174,71 @@ export async function getCreationData(campaign: Campaign) {
             },
         ],
     };
+}
+
+/**
+ * Extract the triggers from a campaign
+ * @param campaign
+ * @param tokenDecimals
+ */
+function extractTriggers(campaign: Campaign, tokenDecimals: number) {
+    // Rebuild the triggers
+    const triggers = Object.entries(campaign.triggers)
+        .map(([interactionTypeKey, trigger]) => {
+            // The initial reward is just the avg of from and to for now
+            const initialReward = Math.floor((trigger.from + trigger.to) / 2);
+
+            // Find the matching interaction types (into the sub-keys of interaction types)
+            const interactionType = getHexValueForKey(
+                interactionTypeKey as InteractionTypesKey
+            );
+            if (!interactionType) {
+                throw new Error(
+                    `No interaction type found for the key ${interactionTypeKey}`
+                );
+            }
+
+            // Create the user percent (number between 0 and 1, should be a bigint between 0 and 10_000 after mapping, with no decimals)
+            const userPercent = trigger.userPercent
+                ? BigInt(Math.floor(trigger.userPercent * 10_000))
+                : 5_000n; // default to 50%
+
+            // Same wise for the deperdition level
+            const deperditionPerLevel = trigger.deperditionPerLevel
+                ? BigInt(Math.floor(trigger.deperditionPerLevel * 10_000))
+                : 8_000n; // default to 80%
+
+            return {
+                interactionType: interactionType,
+                baseReward: parseUnits(initialReward.toString(), tokenDecimals),
+                userPercent: userPercent,
+                deperditionPerLevel: deperditionPerLevel,
+                maxCountPerUser: trigger.maxCountPerUser
+                    ? BigInt(trigger.maxCountPerUser)
+                    : 1n, // Max 1 per user
+            };
+        })
+        // Filter out trigger with no rewards
+        .filter((trigger) => trigger.baseReward > 0n);
+
+    // Check if we got a purchase related triggers, if yes, add an unsafe ppurchase one with same criteria
+    const purchaseTrigger = triggers.find(
+        (trigger) =>
+            trigger.interactionType === interactionTypes.purchase.completed
+    );
+    const hasUnsafeCompletedTrigger = triggers.some(
+        (trigger) =>
+            trigger.interactionType ===
+            interactionTypes.purchase.unsafeCompleted
+    );
+    if (purchaseTrigger && !hasUnsafeCompletedTrigger) {
+        triggers.push({
+            ...purchaseTrigger,
+            interactionType: interactionTypes.purchase.unsafeCompleted,
+        });
+    }
+
+    return triggers;
 }
 
 // todo: Ugly, should be reviewed after

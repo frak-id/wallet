@@ -1,6 +1,4 @@
-import { isPrivyEnabled } from "@/context/blockchain/privy";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
-import { EcdsaLogin } from "@/module/authentication/component/EcdsaLogin";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
@@ -98,7 +96,6 @@ export default function Register() {
             >
                 {message}
             </ButtonAuth>
-            {isPrivyEnabled && <EcdsaLogin />}
         </Grid>
     );
 }

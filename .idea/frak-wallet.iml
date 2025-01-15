@@ -26,6 +26,17 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/wallet/build" />
       <excludeFolder url="file://$MODULE_DIR$/.sst-bk" />
       <excludeFolder url="file://$MODULE_DIR$/sdk/components/cdn" />
+      <excludeFolder url="file://$MODULE_DIR$/example/news-interactions/.react-router" />
+      <excludeFolder url="file://$MODULE_DIR$/example/news-interactions/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/example/vanilla-js/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/example/wallet-ethcc/.react-router" />
+      <excludeFolder url="file://$MODULE_DIR$/example/wallet-ethcc/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/generated-docs" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/backend-elysia/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/dashboard/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/wallet/.react-router" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/wallet/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/sdk/core/cdn" />
     </content>
     <content url="file://$MODULE_DIR$/.sst/types" />
     <orderEntry type="inheritedJdk" />

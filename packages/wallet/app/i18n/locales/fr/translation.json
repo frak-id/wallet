@@ -140,7 +140,8 @@
             "PURCHASE_STARTED": "Achat commencé",
             "READ_ARTICLE": "Article lu",
             "REFERRED": "Parrainé",
-            "WEBSHOP_OPENNED": "Ouverture de la boutique en ligne"
+            "WEBSHOP_OPENNED": "Ouverture de la boutique en ligne",
+            "CUSTOMER_MEETING": "Rendez-vous en boutique"
         },
         "invite": {
             "title": "Invitez des amis, gagnez 5€",

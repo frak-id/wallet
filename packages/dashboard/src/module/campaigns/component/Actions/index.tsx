@@ -121,13 +121,13 @@ export function ActionsMessageSuccess() {
     );
 }
 
-export function ActionsMessageError({ error }: { error: Error }) {
+export function ActionsMessageError({ error }: { error?: Error }) {
     return (
         <span
             className={`${styles.action__message} ${styles["action__message--error"]}`}
         >
             <X />
-            {error.message}
+            {error?.message ?? "An error occurred"}
         </span>
     );
 }

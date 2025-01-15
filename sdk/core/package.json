@@ -89,7 +89,7 @@
     "js-sha256": "^0.11.0"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.1",
+    "@arethetypeswrong/cli": "^0.17.2",
     "@types/node": "^22",
     "tsup": "^8.3.5",
     "typescript": "^5"

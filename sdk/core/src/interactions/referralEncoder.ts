@@ -23,13 +23,9 @@ export const ReferralInteractionEncoder = {
      * Records the event of a user creating a referral link. Note that this interaction doesn't actually create the link itself; it only sends an event to track that a link was created.
      */
     createLink(): PreparedInteraction {
-        const interactionData = concatHex([
-            interactionTypes.referral.createLink,
-            "0x",
-        ]);
         return {
             handlerTypeDenominator: toHex(productTypes.referral),
-            interactionData,
+            interactionData: interactionTypes.referral.createLink,
         };
     },
 

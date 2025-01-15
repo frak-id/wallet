@@ -36,5 +36,9 @@ export const interactionTypes = {
     purchase: {
         started: "0xd87e90c3",
         completed: "0x8403aeb4",
+        unsafeCompleted: "0x4d5b14e0",
+    },
+    retail: {
+        customerMeeting: "0x74489004",
     },
 } as const;

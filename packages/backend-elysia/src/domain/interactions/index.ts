@@ -5,6 +5,7 @@ import { simulateInteractionJob } from "./jobs/simulate";
 import { purchaseInteractionsRoutes } from "./routes/purchase";
 import { pushInteractionsRoutes } from "./routes/push";
 import { rewardsRoutes } from "./routes/rewards";
+import { webhookRoutes } from "./routes/webhook";
 
 export const interactions = new Elysia({
     prefix: "/interactions",
@@ -12,6 +13,7 @@ export const interactions = new Elysia({
     .use(executeInteractionJob)
     .use(simulateInteractionJob)
     .use(rewardsRoutes)
+    .use(webhookRoutes)
     .use(pushInteractionsRoutes)
     .use(purchaseInteractionsRoutes)
     .use(purchaseTrackerJob)

@@ -20,6 +20,7 @@ type CampaignStats = {
     purchaseStartedInteractions: string;
     purchaseCompletedInteractions: string;
     totalRewards: string;
+    customerMeetingInteractions: string;
 };
 
 type ApiResult = {
@@ -131,6 +132,9 @@ export async function getMyCampaignsStats() {
             ),
             costPerPurchase: Number.parseFloat(
                 formatUnits(costPerPurchase, decimals)
+            ),
+            customerMeetingInteractions: Number(
+                campaign.customerMeetingInteractions
             ),
         };
     });

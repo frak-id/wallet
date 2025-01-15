@@ -1,8 +1,8 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { listenerProductIdAtom } from "@/module/listener/atoms/listenerContext";
+import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
+import { useMemo } from "react";
 import type { Hex } from "viem";
 
 /**
@@ -13,34 +13,36 @@ import type { Hex } from "viem";
 export const estimatedInteractionRewardQuery = ({
     productId,
     interaction,
-}: { productId?: Hex; interaction?: FullInteractionTypesKey }) => {
-    return {
-        enabled: !!productId,
-        queryKey: [
-            "interactions",
-            "estimated-reward",
-            productId ?? "no-product-id",
-            interaction ?? "no-key-filter",
-        ],
-        async queryFn() {
-            if (!productId) {
-                return null;
-            }
+}: { productId?: Hex; interaction?: FullInteractionTypesKey }) => ({
+    enabled: !!productId,
+    queryKey: [
+        "interactions",
+        "estimated-reward",
+        productId ?? "no-product-id",
+        interaction ?? "no-key-filter",
+    ],
+    async queryFn() {
+        if (!productId) {
+            throw new Error("No product id provided");
+        }
 
-            const { data, error } =
-                await authenticatedBackendApi.interactions.reward.estimate.get({
-                    query: {
-                        productId: productId,
-                        ...(interaction ? { interactionKey: interaction } : {}),
-                    },
-                });
-            if (error) throw error;
+        const { data, error } =
+            await authenticatedBackendApi.interactions.reward.estimate.get({
+                query: {
+                    productId: productId,
+                    ...(interaction ? { interactionKey: interaction } : {}),
+                },
+            });
+        if (error) throw error;
 
-            // Floor it so we don't have floating point issues
-            return data?.totalReferrerEur?.toFixed(2) ?? null;
-        },
-    };
-};
+        if (!data?.totalReferrerEur) {
+            return null;
+        }
+
+        // Ceil it so we don't have floating point issues
+        return Math.ceil(data.totalReferrerEur).toString();
+    },
+});
 
 /**
  * Fetch the estimated interaction reward for this interaction
@@ -51,11 +53,10 @@ export function useEstimatedInteractionReward({
 }: {
     interaction?: FullInteractionTypesKey;
 } = {}) {
-    const listenerProductId = useAtomValue(listenerProductIdAtom);
-
+    const productId = useMemo(() => getIFrameResolvingContext()?.productId, []);
     const { data, ...query } = useQuery(
         estimatedInteractionRewardQuery({
-            productId: listenerProductId,
+            productId,
             interaction,
         })
     );

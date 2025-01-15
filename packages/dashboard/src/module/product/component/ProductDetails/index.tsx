@@ -15,6 +15,7 @@ import {
 import { MultiSelect, type MultiSelectProps } from "@/module/forms/MultiSelect";
 import { InteractionSettings } from "@/module/product/component/ProductDetails/InteractionSettings";
 import { PurchasseTrackerSetup } from "@/module/product/component/ProductDetails/PurchaseTracker";
+import { WebhookInteractionSetup } from "@/module/product/component/ProductDetails/WebhookInteraction";
 import { ProductHead } from "@/module/product/component/ProductHead";
 import { useEditProduct } from "@/module/product/hook/useEditProduct";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
@@ -201,6 +202,7 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                         </Columns>
                     </Panel>
                 )}
+                <WebhookInteractionSetup productId={productId} />
                 <PurchasseTrackerSetup productId={productId} />
                 <InteractionSettings productId={productId} />
             </Form>
