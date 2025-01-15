@@ -1,5 +1,11 @@
 # @frak-labs/core-sdk
 
+## 0.0.4
+
+### Patch Changes
+
+- [`ab40feb`](https://github.com/frak-id/wallet/commit/ab40feb34e0e720027cba6090a70bf5a7aa1c867) Thanks [@KONFeature](https://github.com/KONFeature)! - Support new `retail` product types + retail related interactions
+
 ## 0.0.2
 
 ### Patch Changes

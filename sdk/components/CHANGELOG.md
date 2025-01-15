@@ -1,5 +1,11 @@
 # @frak-labs/components
 
+## 0.0.6
+
+### Patch Changes
+
+- [`40b1af3`](https://github.com/frak-id/wallet/commit/40b1af3e4cc5e94da4d963d46aa7c87055223342) Thanks [@KONFeature](https://github.com/KONFeature)! - Update to latest `@frak-labs/core-sdk` version
+
 ## 0.0.5
 
 ### Patch Changes
