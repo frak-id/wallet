@@ -1,5 +1,12 @@
 # @frak-labs/react-sdk
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [[`ab40feb`](https://github.com/frak-id/wallet/commit/ab40feb34e0e720027cba6090a70bf5a7aa1c867)]:
+  - @frak-labs/core-sdk@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes
