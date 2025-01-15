@@ -7,5 +7,14 @@
     "access": "public",
     "baseBranch": "main",
     "updateInternalDependencies": "patch",
-    "ignore": []
+    "ignore": [
+        "@frak-labs-example/news-interactions",
+        "@frak-labs-example/wallet-ethcc",
+        "@frak-labs-example/vanilla-js",
+
+        "@frak-labs/shared",
+        "@frak-labs/backend-elysia",
+        "@frak-labs/nexus-dashboard",
+        "@frak-labs/nexus-wallet"
+    ]
 }
