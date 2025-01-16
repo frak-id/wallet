@@ -107,7 +107,15 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
                             amount: t.Number(),
                             eurAmount: t.Number(),
                             usdAmount: t.Number(),
-                            rawAmount: t.Hex(),
+                            triggerData: t.Union([
+                                t.Object({
+                                    baseReward: t.BigInt(),
+                                }),
+                                t.Object({
+                                    startReward: t.BigInt(),
+                                    endReward: t.BigInt(),
+                                }),
+                            ]),
                         })
                     ),
                 }),

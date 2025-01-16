@@ -12,19 +12,21 @@ import {
     concatHex,
     formatUnits,
     keccak256,
-    toHex,
 } from "viem";
 import { multicall } from "viem/actions";
-import type { CampaignDataRepository } from "../repositories/CampaignDataRepository";
+import type {
+    CampaignDataRepository,
+    TriggerData,
+} from "../repositories/CampaignDataRepository";
 
 export type ActiveReward = {
     campaign: Address;
     token: Address;
     interactionTypeKey: string;
-    rawAmount: Hex;
     amount: number;
     eurAmount: number;
     usdAmount: number;
+    triggerData: TriggerData;
 };
 
 /**
@@ -104,8 +106,12 @@ export class CampaignRewardsService {
 
             // Map all the rewards
             const mappedRewards = rewards.map((reward) => {
+                const maxAmount =
+                    "baseReward" in reward.triggerData
+                        ? reward.triggerData.baseReward
+                        : reward.triggerData.endReward;
                 const amount = Number.parseFloat(
-                    formatUnits(reward.amount, token.decimals)
+                    formatUnits(maxAmount, token.decimals)
                 );
                 return {
                     campaign: campaign.address,
@@ -114,7 +120,7 @@ export class CampaignRewardsService {
                     amount,
                     eurAmount: price.eur * amount,
                     usdAmount: price.usd * amount,
-                    rawAmount: toHex(reward.amount),
+                    triggerData: reward.triggerData,
                 };
             });
 

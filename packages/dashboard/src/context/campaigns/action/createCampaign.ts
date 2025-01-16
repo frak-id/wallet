@@ -261,7 +261,10 @@ function extractTriggers(campaign: Campaign, tokenDecimals: number) {
  * Compute the range trigger reward
  *  -> Will find the right start and end offset + the beta distribution parameter for a fixed alpha
  */
-function computeRangeTriggerReward({from: initialFrom, to: initialTo}: {from: number, to: number}) {
+function computeRangeTriggerReward({
+    from: initialFrom,
+    to: initialTo,
+}: { from: number; to: number }) {
     // Apply the Frak 20% commission on the born calculation
     const from = initialFrom * 0.8;
     const to = initialTo * 0.8;
@@ -278,7 +281,7 @@ function computeRangeTriggerReward({from: initialFrom, to: initialTo}: {from: nu
     const alpha = 2;
 
     // Find the beta
-    const beta = alpha * (end - goal) / (goal - start);
+    const beta = (alpha * (end - goal)) / (goal - start);
 
     return {
         start,

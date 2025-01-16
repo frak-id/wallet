@@ -10,6 +10,10 @@ export {
     interactionValidatorRoles,
     type ProductRolesKey,
 } from "./roles";
+export {
+    type CampaignType,
+    baseCampaignTriggerPtr,
+} from "./campaign";
 // Actions
 export type {
     AlchemyRpcSchema,

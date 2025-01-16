@@ -1,3 +1,8 @@
+import {
+    type CampaignType,
+    baseCampaignTriggerPtr,
+    interactionCampaignAbi,
+} from "@frak-labs/app-essentials";
 import { interactionTypes } from "@frak-labs/core-sdk";
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { LRUCache } from "lru-cache";
@@ -13,11 +18,15 @@ import {
     sliceHex,
     toHex,
 } from "viem";
-import { getStorageAt } from "viem/actions";
+import { getStorageAt, readContract } from "viem/actions";
+
+export type TriggerData =
+    | { baseReward: bigint }
+    | { startReward: bigint; endReward: bigint };
 
 type CampaignReward = {
     interactionTypeKey: FullInteractionTypesKey;
-    amount: bigint;
+    triggerData: TriggerData;
 };
 
 export class CampaignDataRepository {
@@ -38,10 +47,17 @@ export class CampaignDataRepository {
             Object.entries(subType).map(([subKey, typeHash]) => ({
                 key: `${key}.${subKey}` as FullInteractionTypesKey,
                 typeHash,
-                storagePtr: toHex(
-                    hexToBigInt(
-                        "0x2b590e368f6e51c03042de6eb3d37f464929de3b3f869c37f1eb01ab"
-                    ) | BigInt(padHex(typeHash, { dir: "right", size: 32 }))
+                slotPerType: Object.entries(baseCampaignTriggerPtr).reduce(
+                    (acc, [key, value]) => {
+                        acc[key as CampaignType] = toHex(
+                            hexToBigInt(value as Hex) |
+                                BigInt(
+                                    padHex(typeHash, { dir: "right", size: 32 })
+                                )
+                        );
+                        return acc;
+                    },
+                    {} as Record<CampaignType, Hex>
                 ),
             }))
     );
@@ -64,22 +80,36 @@ export class CampaignDataRepository {
             return cached;
         }
 
+        // Get the type of the given campaign
+        const [type] = (await readContract(this.client, {
+            abi: interactionCampaignAbi,
+            address: campaign,
+            functionName: "getMetadata",
+        })) as [CampaignType, string, Hex];
+
         // Async mapping of the rewards
         const rewardsAsync = this.storagePtrs.map(async (storagePtr) => {
+            // Find the right ptr to read at
+            const slot = storagePtr.slotPerType[type];
+            if (!slot) return null;
+
             // Find the trigger value
             const triggerValue = await getStorageAt(this.client, {
                 address: campaign,
-                slot: storagePtr.storagePtr,
+                slot,
                 blockNumber: lastUpdateBlock,
             });
             // If that's 0, early exit
             if (!triggerValue) return null;
-            const baseReward = this.extractBaseRewardFromStorage(triggerValue);
-            if (!baseReward) return null;
+            const triggerData = this.extractTriggerDataFromStorage(
+                type,
+                triggerValue
+            );
+            if (!triggerData) return null;
             // Otherwise, add it to the cache
             return {
                 interactionTypeKey: storagePtr.key,
-                amount: baseReward,
+                triggerData,
             };
         });
 
@@ -100,14 +130,36 @@ export class CampaignDataRepository {
     /**
      * Extract the base reward from a storage ptr
      *  - Storage struct: https://github.com/frak-id/contracts-v2/blob/3d086d956684ce15ca963e764d51af6427c9a462/src/campaign/ReferralCampaign.sol#L86
+     * @param campaignType
      * @param storage
      * @private
      */
-    private extractBaseRewardFromStorage(storage: Hex) {
+    private extractTriggerDataFromStorage(
+        campaignType: CampaignType,
+        storage: Hex
+    ): TriggerData | undefined {
         if (!storage) return undefined;
-        const baseRewardHex = sliceHex(storage, 32 - 24, 32);
-        const baseReward = BigInt(baseRewardHex);
-        if (!baseReward) return undefined;
-        return baseReward;
+
+        if (campaignType === "frak.campaign.affiliation-fixed") {
+            // For storage layout `struct RewardTrigger { uint16 maxCountPerUser; uint240 baseReward; }`
+            const baseReward = BigInt(sliceHex(storage, 0, 30));
+            if (!baseReward) return undefined;
+            return { baseReward };
+        }
+        if (campaignType === "frak.campaign.affiliation-range") {
+            // For storage layout `struct RewardTrigger { uint16 maxCountPerUser; uint48 percentBeta; uint96 startReward; uint96 endReward; }`
+            const endReward = BigInt(sliceHex(storage, 0, 12));
+            const startReward = BigInt(sliceHex(storage, 12, 24));
+            if (!(endReward && startReward)) return undefined;
+            return { startReward, endReward };
+        }
+        if (campaignType === "frak.campaign.referral") {
+            // For storage layout `struct RewardTrigger { uint192 baseReward; uint16 userPercent;  uint16 deperditionPerLevel; uint16 maxCountPerUser; }`
+            const baseReward = BigInt(sliceHex(storage, 8, 32));
+            if (!baseReward) return undefined;
+            return { baseReward };
+        }
+
+        return undefined;
     }
 }
