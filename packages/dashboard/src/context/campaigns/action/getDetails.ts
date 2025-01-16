@@ -43,7 +43,7 @@ export async function getOnChainCampaignsDetails({
         args: [],
     });
 
-    // Fetch a few onchain information
+    // Fetch a few generic onchain information
     const [
         metadata,
         isActive,

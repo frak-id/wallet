@@ -12,6 +12,8 @@ export {
     campaignFactoryAbi,
     interactionCampaignAbi,
     referralCampaignAbi,
+    affiliationFixedCampaignAbi,
+    affiliationRangeCampaignAbi,
     dappInteractionFacetAbi,
     pressInteractionFacetAbi,
     productInteractionDiamondAbi,

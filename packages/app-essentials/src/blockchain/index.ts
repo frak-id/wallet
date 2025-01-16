@@ -29,6 +29,8 @@ export {
     referralCampaignAbi,
     campaignBankAbi,
     campaignBankFactoryAbi,
+    affiliationFixedCampaignAbi,
+    affiliationRangeCampaignAbi,
 } from "./abis/campaignAbis";
 export {
     dappInteractionFacetAbi,
