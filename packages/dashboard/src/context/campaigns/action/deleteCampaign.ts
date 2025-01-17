@@ -3,6 +3,7 @@
 import { getSafeSession } from "@/context/auth/actions/session";
 import { getAttachedCampaigns } from "@/context/campaigns/action/getAttachedCampaigns";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { getRolesOnProduct } from "@/context/product/action/roles";
 import {
     addresses,
     productInteractionManagerAbi,
@@ -26,8 +27,12 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
         throw new Error("Campaign not found");
     }
 
-    // Ensure it's the creator of this campaign
-    if (!isAddressEqual(campaign.creator, session.wallet)) {
+    // Ensure the user is allowed on to manage campaign on this product
+    const roles = await getRolesOnProduct({ productId: campaign.productId });
+    const isAllowed =
+        (roles?.isCampaignManager ?? false) ||
+        isAddressEqual(campaign.creator, session.wallet);
+    if (!isAllowed) {
         throw new Error("You can only delete your own campaigns");
     }
 
@@ -46,7 +51,6 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
     const activeCampaigns = await getAttachedCampaigns({
         productId,
     });
-    console.log("Active campaigns", { activeCampaigns, campaignAddress });
 
     // Check if it's in the active ones
     const isActive =

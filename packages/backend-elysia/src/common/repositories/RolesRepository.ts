@@ -99,33 +99,30 @@ export class RolesRepository {
             wallet,
             productId,
         });
-        return isOwner || hasRolesOrAdmin({ onChainRoles: roles, role });
+        return isOwner || this.hasRolesOrAdmin({ onChainRoles: roles, role });
     }
-}
 
-/**
- * Helper function to check if a user has a given role
- * @param onChainRoles
- * @param role
- */
-function hasRoles({
-    onChainRoles,
-    role,
-}: { onChainRoles: bigint; role: bigint }) {
-    return (onChainRoles & role) !== 0n;
-}
+    /**
+     * Helper function to check if a user has a given role
+     * @param onChainRoles
+     * @param role
+     */
+    hasRoles({ onChainRoles, role }: { onChainRoles: bigint; role: bigint }) {
+        return (onChainRoles & role) !== 0n;
+    }
 
-/**
- * Helper function to check if a user has a given role or is an admin
- * @param onChainRoles
- * @param role
- */
-function hasRolesOrAdmin({
-    onChainRoles,
-    role,
-}: { onChainRoles: bigint; role: bigint }) {
-    return hasRoles({
+    /**
+     * Helper function to check if a user has a given role or is an admin
+     * @param onChainRoles
+     * @param role
+     */
+    hasRolesOrAdmin({
         onChainRoles,
-        role: role | productRoles.productAdministrator,
-    });
+        role,
+    }: { onChainRoles: bigint; role: bigint }) {
+        return this.hasRoles({
+            onChainRoles,
+            role: role | productRoles.productAdministrator,
+        });
+    }
 }
