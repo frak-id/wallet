@@ -1,5 +1,6 @@
 import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
+import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { oracleContext } from "../context";
@@ -85,14 +86,31 @@ export const managmentRoutes = new Elysia()
     // Setup of an oracle for a product
     .post(
         ":productId/setup",
-        async ({ body, oracleDb, productId, error }) => {
+        async ({
+            body,
+            oracleDb,
+            productId,
+            error,
+            businessSession,
+            rolesRepository,
+        }) => {
             if (!productId) {
                 return error(400, "Invalid product id");
             }
 
-            const { hookSignatureKey, platform } = body;
+            if (!businessSession) {
+                return error(401, "Unauthorized");
+            }
+            const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
+                wallet: businessSession.wallet,
+                productId: BigInt(productId),
+                role: productRoles.interactionManager,
+            });
+            if (!isAllowed) {
+                return error(401, "Unauthorized");
+            }
 
-            // todo: Role check for the wallet
+            const { hookSignatureKey, platform } = body;
 
             // Insert or update it
             await oracleDb
@@ -125,9 +143,24 @@ export const managmentRoutes = new Elysia()
     )
     .post(
         ":productId/delete",
-        async ({ productId, oracleDb, error }) => {
-            // todo: Role check for the wallet
-            // todo: Oracle merkle update authorisation setup
+        async ({
+            productId,
+            oracleDb,
+            error,
+            businessSession,
+            rolesRepository,
+        }) => {
+            if (!businessSession) {
+                return error(401, "Unauthorized");
+            }
+            const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
+                wallet: businessSession.wallet,
+                productId: BigInt(productId),
+                role: productRoles.interactionManager,
+            });
+            if (!isAllowed) {
+                return error(401, "Unauthorized");
+            }
 
             // Check if we already got a setup for this product (we could only have one)
             const existingOracle =

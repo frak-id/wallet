@@ -12,12 +12,10 @@ import {
     concatHex,
     formatUnits,
     keccak256,
+    toHex,
 } from "viem";
 import { multicall } from "viem/actions";
-import type {
-    CampaignDataRepository,
-    TriggerData,
-} from "../repositories/CampaignDataRepository";
+import type { CampaignDataRepository } from "../repositories/CampaignDataRepository";
 
 export type ActiveReward = {
     campaign: Address;
@@ -26,7 +24,7 @@ export type ActiveReward = {
     amount: number;
     eurAmount: number;
     usdAmount: number;
-    triggerData: TriggerData;
+    triggerData: { baseReward: Hex } | { startReward: Hex; endReward: Hex };
 };
 
 /**
@@ -39,13 +37,13 @@ export class CampaignRewardsService {
         GetCampaignResponseDto
     >({
         max: 128,
-        ttl: 5 * 60_000,
+        ttl: 60_000,
     });
 
     // Cache for the active campaigns
     private readonly activeCampaignsCache = new LRUCache<Hex, boolean[]>({
         max: 128,
-        ttl: 5 * 60_000,
+        ttl: 60_000,
     });
 
     constructor(
@@ -120,7 +118,21 @@ export class CampaignRewardsService {
                     amount,
                     eurAmount: price.eur * amount,
                     usdAmount: price.usd * amount,
-                    triggerData: reward.triggerData,
+                    triggerData:
+                        "baseReward" in reward.triggerData
+                            ? {
+                                  baseReward: toHex(
+                                      reward.triggerData.baseReward
+                                  ),
+                              }
+                            : {
+                                  startReward: toHex(
+                                      reward.triggerData.startReward
+                                  ),
+                                  endReward: toHex(
+                                      reward.triggerData.endReward
+                                  ),
+                              },
                 };
             });
 
