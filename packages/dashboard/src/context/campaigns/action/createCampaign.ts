@@ -78,7 +78,7 @@ export async function getCreationData(campaign: Campaign) {
     }
 
     // If the bank address isn't set, early exit
-    if (!(campaign.bank && isAddress(campaign.bank))) {
+    if (!campaign.bank || !isAddress(campaign.bank)) {
         throw new Error("Bank is required");
     }
 

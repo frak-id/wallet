@@ -151,7 +151,7 @@ export class CampaignDataRepository {
             const endReward = BigInt(sliceHex(storage, 0, 12));
             const startReward = BigInt(sliceHex(storage, 12, 24));
             const betaPercent = BigInt(sliceHex(storage, 24, 30));
-            if (!(endReward && startReward)) return undefined;
+            if (!endReward || !startReward || !betaPercent) return undefined;
             return { startReward, endReward, betaPercent };
         }
         if (campaignType === "frak.campaign.referral") {

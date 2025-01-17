@@ -14,7 +14,10 @@ import {
     keccak256,
 } from "viem";
 import { multicall } from "viem/actions";
-import type { CampaignDataRepository } from "../repositories/CampaignDataRepository";
+import type {
+    CampaignDataRepository,
+    TriggerData,
+} from "../repositories/CampaignDataRepository";
 
 export type ActiveReward = {
     campaign: Address;
@@ -105,51 +108,20 @@ export class CampaignRewardsService {
 
             // Map all the rewards
             const mappedRewards = rewards.map((reward) => {
-                // Get the max amount possible
-                const maxAmount =
-                    "baseReward" in reward.triggerData
-                        ? reward.triggerData.baseReward
-                        : reward.triggerData.endReward;
-                const amount = Number.parseFloat(
-                    formatUnits(maxAmount, token.decimals)
+                // Map the reward triggers
+                const { maxReward, ...triggerData } = this.mapTriggerData(
+                    reward.triggerData,
+                    token.decimals
                 );
 
-                // Max the trigger data with the right units
-                const triggerData =
-                    "baseReward" in reward.triggerData
-                        ? {
-                              baseReward: Number.parseFloat(
-                                  formatUnits(
-                                      reward.triggerData.baseReward,
-                                      token.decimals
-                                  )
-                              ),
-                          }
-                        : {
-                              startReward: Number.parseFloat(
-                                  formatUnits(
-                                      reward.triggerData.startReward,
-                                      token.decimals
-                                  )
-                              ),
-                              endReward: Number.parseFloat(
-                                  formatUnits(
-                                      reward.triggerData.endReward,
-                                      token.decimals
-                                  )
-                              ),
-                              beta: Number.parseFloat(
-                                  formatUnits(reward.triggerData.betaPercent, 4)
-                              ),
-                          };
-
+                // Return the formated object for the reward
                 return {
                     campaign: campaign.address,
                     token: token.address,
                     interactionTypeKey: reward.interactionTypeKey,
-                    amount,
-                    eurAmount: price.eur * amount,
-                    usdAmount: price.usd * amount,
+                    amount: maxReward,
+                    eurAmount: price.eur * maxReward,
+                    usdAmount: price.usd * maxReward,
                     triggerData,
                 };
             });
@@ -160,6 +132,37 @@ export class CampaignRewardsService {
 
         // Return everything
         return activeRewards;
+    }
+
+    /**
+     * Map trigger data to a redeable format
+     */
+    private mapTriggerData(triggerData: TriggerData, decimals: number) {
+        // Fora fixed reward distribution
+        if ("baseReward" in triggerData) {
+            const baseReward = Number.parseFloat(
+                formatUnits(triggerData.baseReward, decimals)
+            );
+            return {
+                baseReward,
+                maxReward: baseReward,
+            };
+        }
+
+        // For a range distribution
+        const startReward = Number.parseFloat(
+            formatUnits(triggerData.startReward, decimals)
+        );
+        const endReward = Number.parseFloat(
+            formatUnits(triggerData.endReward, decimals)
+        );
+        const beta = Number.parseFloat(formatUnits(triggerData.betaPercent, 4));
+        return {
+            startReward,
+            endReward,
+            beta,
+            maxReward: endReward,
+        };
     }
 
     /**

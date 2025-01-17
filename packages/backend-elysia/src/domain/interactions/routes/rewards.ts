@@ -1,13 +1,9 @@
 import { indexerApiContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import type { Address } from "viem";
 import { interactionsContext } from "../context";
 import { CampaignDataRepository } from "../repositories/CampaignDataRepository";
-import {
-    type ActiveReward,
-    CampaignRewardsService,
-} from "../services/CampaignRewardsService";
+import { CampaignRewardsService } from "../services/CampaignRewardsService";
 
 export const rewardsRoutes = new Elysia({ prefix: "/reward" })
     .use(interactionsContext)
@@ -53,40 +49,16 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
                 : activeRewards;
             if (!filteredRewards.length) return null;
 
-            // Group per campaign
-            const groupedRewards = filteredRewards.reduce(
-                (acc, reward) => {
-                    if (!acc[reward.campaign]) {
-                        acc[reward.campaign] = [];
-                    }
-                    if (reward.amount > 0) {
-                        acc[reward.campaign].push(reward);
-                    }
-                    return acc;
-                },
-                {} as Record<Address, ActiveReward[]>
-            );
-
-            // Calculate the total per campaign
-            const totalEur = Object.values(groupedRewards).reduce(
-                (acc, rewards) => {
-                    if (!rewards.length) {
-                        return acc;
-                    }
-
-                    const average =
-                        rewards.reduce(
-                            (acc, reward) => acc + reward.eurAmount,
-                            0
-                        ) / rewards.length;
-                    return acc + average;
-                },
+            // Get the max amount that can be distributed
+            const maxEurAmount = filteredRewards.reduce(
+                (acc, reward) =>
+                    reward.eurAmount > acc ? reward.eurAmount : acc,
                 0
             );
 
             return {
-                totalReferrerEur: totalEur / 2,
-                totalRefereeEur: totalEur / 2,
+                totalReferrerEur: maxEurAmount / 2,
+                totalRefereeEur: maxEurAmount / 2,
                 activeRewards: filteredRewards,
             };
         },

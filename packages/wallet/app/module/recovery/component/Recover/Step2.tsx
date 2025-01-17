@@ -31,10 +31,8 @@ export function Step2() {
 
     const triggerContinueRecovery = useCallback(async () => {
         if (
-            !(
-                fileContent?.initialWallet?.address &&
-                fileContent?.initialWallet?.authenticatorId
-            )
+            !fileContent?.initialWallet?.address ||
+            !fileContent?.initialWallet?.authenticatorId
         )
             return;
 
