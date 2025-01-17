@@ -1,5 +1,5 @@
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
-import { referralCampaignAbi } from "@frak-labs/app-essentials";
+import { interactionCampaignAbi } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, encodeFunctionData } from "viem";
@@ -22,7 +22,7 @@ export function useUpdateCampaignRunningStatus() {
                 tx: {
                     to: campaign,
                     data: encodeFunctionData({
-                        abi: referralCampaignAbi,
+                        abi: interactionCampaignAbi,
                         functionName: "setRunningStatus",
                         args: [newRunningStatus],
                     }),

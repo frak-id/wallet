@@ -7,8 +7,8 @@ import type { DraftCampaignDocument } from "@/context/campaigns/dto/CampaignDocu
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
 import {
-    referralCampaignId,
-    referralConfigStruct,
+    affiliationRangeCampaignConfigStruct,
+    affiliationRangeCampaignId,
 } from "@/context/campaigns/utils/constants";
 import type { Campaign } from "@/types/Campaign";
 import {
@@ -104,24 +104,46 @@ export async function getCreationData(campaign: Campaign) {
     const triggers = extractTriggers(campaign, tokenDecimals);
 
     // Build the tx to be sent by the creator to create the given campaign
-    const campaignInitData = encodeAbiParameters(referralConfigStruct, [
-        stringToBytes32(campaign.title),
-        campaign.bank,
-        // Triggers
-        triggers,
-        // Cap config
-        {
-            period: capPeriod,
-            amount: campaign.budget.maxEuroDaily
-                ? parseUnits(
-                      campaign.budget.maxEuroDaily.toString(),
-                      tokenDecimals
-                  )
-                : 0n,
-        },
-        // Activation period
-        { start, end },
-    ]);
+    const campaignInitData = encodeAbiParameters(
+        affiliationRangeCampaignConfigStruct,
+        [
+            stringToBytes32(campaign.title),
+            campaign.bank,
+            // Cap config
+            {
+                period: capPeriod,
+                amount: campaign.budget.maxEuroDaily
+                    ? parseUnits(
+                          campaign.budget.maxEuroDaily.toString(),
+                          tokenDecimals
+                      )
+                    : 0n,
+            },
+            // Activation period
+            { start, end },
+            // reward chaining config
+            {
+                userPercent: campaign?.rewardChaining?.userPercent
+                    ? BigInt(
+                          Math.floor(
+                              campaign.rewardChaining.userPercent * 10_000
+                          )
+                      )
+                    : 5_000n, // default to 50%
+                deperditionPerLevel: campaign?.rewardChaining
+                    ?.deperditionPerLevel
+                    ? BigInt(
+                          Math.floor(
+                              campaign.rewardChaining.deperditionPerLevel *
+                                  10_000
+                          )
+                      )
+                    : 8_000n, // default to 80%
+            },
+            // Triggers
+            triggers,
+        ]
+    );
     // Add offset to the data
     const initDataWithOffset = concatHex([
         "0x0000000000000000000000000000000000000000000000000000000000000020",
@@ -139,7 +161,7 @@ export async function getCreationData(campaign: Campaign) {
             functionName: "deployCampaign",
             args: [
                 BigInt(campaign.productId),
-                referralCampaignId,
+                affiliationRangeCampaignId,
                 initDataWithOffset,
             ],
         }
@@ -151,7 +173,7 @@ export async function getCreationData(campaign: Campaign) {
         functionName: "deployCampaign",
         args: [
             BigInt(campaign.productId),
-            referralCampaignId,
+            affiliationRangeCampaignId,
             initDataWithOffset,
         ],
     });
@@ -184,6 +206,7 @@ export async function getCreationData(campaign: Campaign) {
 function extractTriggers(campaign: Campaign, tokenDecimals: number) {
     // Rebuild the triggers
     const triggers = Object.entries(campaign.triggers)
+        .filter(([_, trigger]) => trigger.from > 0 && trigger.to > 0)
         .map(([interactionTypeKey, trigger]) => {
             // The initial reward is just the avg of from and to for now
             const initialReward = Math.floor((trigger.from + trigger.to) / 2);
@@ -198,24 +221,18 @@ function extractTriggers(campaign: Campaign, tokenDecimals: number) {
                 );
             }
 
-            // Create the user percent (number between 0 and 1, should be a bigint between 0 and 10_000 after mapping, with no decimals)
-            const userPercent = trigger.userPercent
-                ? BigInt(Math.floor(trigger.userPercent * 10_000))
-                : 5_000n; // default to 50%
-
-            // Same wise for the deperdition level
-            const deperditionPerLevel = trigger.deperditionPerLevel
-                ? BigInt(Math.floor(trigger.deperditionPerLevel * 10_000))
-                : 8_000n; // default to 80%
+            // Parse the amount
+            const { start, end, beta } = computeRangeTriggerReward(trigger);
 
             return {
                 interactionType: interactionType,
                 baseReward: parseUnits(initialReward.toString(), tokenDecimals),
-                userPercent: userPercent,
-                deperditionPerLevel: deperditionPerLevel,
                 maxCountPerUser: trigger.maxCountPerUser
                     ? BigInt(trigger.maxCountPerUser)
                     : 1n, // Max 1 per user
+                startReward: parseUnits(start.toString(), tokenDecimals),
+                endReward: parseUnits(end.toString(), tokenDecimals),
+                percentBeta: parseUnits(beta.toString(), 4), // on 1e4
             };
         })
         // Filter out trigger with no rewards
@@ -241,6 +258,42 @@ function extractTriggers(campaign: Campaign, tokenDecimals: number) {
     return triggers;
 }
 
+/**
+ * Compute the range trigger reward
+ *  -> Will find the right start and end offset + the beta distribution parameter for a fixed alpha
+ */
+function computeRangeTriggerReward({
+    from: initialFrom,
+    to: initialTo,
+}: {
+    from: number;
+    to: number;
+}) {
+    // Apply the Frak 20% commission on the born calculation
+    const from = initialFrom * 0.8;
+    const to = initialTo * 0.8;
+
+    // Calculate the cac goal (avg of from and to)
+    const goal = (from + to) / 2;
+
+    // The start part is 0.7 the min reward
+    const start = from * 0.7;
+    // The end part is to * 5 if to < 50
+    const end = to < 50 ? to * 5 : to * 3;
+
+    // The alpha of the distribution curve is always 2
+    const alpha = 2;
+
+    // Find the beta
+    const beta = (alpha * (end - goal)) / (goal - start);
+
+    return {
+        start,
+        end,
+        beta,
+    };
+}
+
 // todo: Ugly, should be reviewed after
 function getHexValueForKey(key: InteractionTypesKey): Hex | undefined {
     for (const category in interactionTypes) {
@@ -262,7 +315,10 @@ function getHexValueForKey(key: InteractionTypesKey): Hex | undefined {
 export async function updateCampaignState({
     campaignId,
     txHash,
-}: { campaignId: string; txHash?: Hex }) {
+}: {
+    campaignId: string;
+    txHash?: Hex;
+}) {
     const id = ObjectId.createFromHexString(campaignId);
     const repository = await getCampaignRepository();
 

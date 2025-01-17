@@ -8,10 +8,15 @@ export {
     type ProductRolesKey,
     // Wallet
     KernelWallet,
+    // Campaign helper
+    type CampaignType,
+    baseCampaignTriggerPtr,
     // Abis
     campaignFactoryAbi,
     interactionCampaignAbi,
     referralCampaignAbi,
+    affiliationFixedCampaignAbi,
+    affiliationRangeCampaignAbi,
     dappInteractionFacetAbi,
     pressInteractionFacetAbi,
     productInteractionDiamondAbi,
