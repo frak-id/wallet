@@ -12,7 +12,6 @@ import {
     concatHex,
     formatUnits,
     keccak256,
-    toHex,
 } from "viem";
 import { multicall } from "viem/actions";
 import type { CampaignDataRepository } from "../repositories/CampaignDataRepository";
@@ -24,7 +23,9 @@ export type ActiveReward = {
     amount: number;
     eurAmount: number;
     usdAmount: number;
-    triggerData: { baseReward: Hex } | { startReward: Hex; endReward: Hex };
+    triggerData:
+        | { baseReward: number }
+        | { startReward: number; endReward: number; beta: number };
 };
 
 /**
@@ -104,6 +105,7 @@ export class CampaignRewardsService {
 
             // Map all the rewards
             const mappedRewards = rewards.map((reward) => {
+                // Get the max amount possible
                 const maxAmount =
                     "baseReward" in reward.triggerData
                         ? reward.triggerData.baseReward
@@ -111,6 +113,36 @@ export class CampaignRewardsService {
                 const amount = Number.parseFloat(
                     formatUnits(maxAmount, token.decimals)
                 );
+
+                // Max the trigger data with the right units
+                const triggerData =
+                    "baseReward" in reward.triggerData
+                        ? {
+                              baseReward: Number.parseFloat(
+                                  formatUnits(
+                                      reward.triggerData.baseReward,
+                                      token.decimals
+                                  )
+                              ),
+                          }
+                        : {
+                              startReward: Number.parseFloat(
+                                  formatUnits(
+                                      reward.triggerData.startReward,
+                                      token.decimals
+                                  )
+                              ),
+                              endReward: Number.parseFloat(
+                                  formatUnits(
+                                      reward.triggerData.endReward,
+                                      token.decimals
+                                  )
+                              ),
+                              beta: Number.parseFloat(
+                                  formatUnits(reward.triggerData.betaPercent, 4)
+                              ),
+                          };
+
                 return {
                     campaign: campaign.address,
                     token: token.address,
@@ -118,21 +150,7 @@ export class CampaignRewardsService {
                     amount,
                     eurAmount: price.eur * amount,
                     usdAmount: price.usd * amount,
-                    triggerData:
-                        "baseReward" in reward.triggerData
-                            ? {
-                                  baseReward: toHex(
-                                      reward.triggerData.baseReward
-                                  ),
-                              }
-                            : {
-                                  startReward: toHex(
-                                      reward.triggerData.startReward
-                                  ),
-                                  endReward: toHex(
-                                      reward.triggerData.endReward
-                                  ),
-                              },
+                    triggerData,
                 };
             });
 

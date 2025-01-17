@@ -206,6 +206,7 @@ export async function getCreationData(campaign: Campaign) {
 function extractTriggers(campaign: Campaign, tokenDecimals: number) {
     // Rebuild the triggers
     const triggers = Object.entries(campaign.triggers)
+        .filter(([_, trigger]) => trigger.from > 0 && trigger.to > 0)
         .map(([interactionTypeKey, trigger]) => {
             // The initial reward is just the avg of from and to for now
             const initialReward = Math.floor((trigger.from + trigger.to) / 2);
@@ -264,7 +265,10 @@ function extractTriggers(campaign: Campaign, tokenDecimals: number) {
 function computeRangeTriggerReward({
     from: initialFrom,
     to: initialTo,
-}: { from: number; to: number }) {
+}: {
+    from: number;
+    to: number;
+}) {
     // Apply the Frak 20% commission on the born calculation
     const from = initialFrom * 0.8;
     const to = initialTo * 0.8;
@@ -311,7 +315,10 @@ function getHexValueForKey(key: InteractionTypesKey): Hex | undefined {
 export async function updateCampaignState({
     campaignId,
     txHash,
-}: { campaignId: string; txHash?: Hex }) {
+}: {
+    campaignId: string;
+    txHash?: Hex;
+}) {
     const id = ObjectId.createFromHexString(campaignId);
     const repository = await getCampaignRepository();
 

@@ -22,7 +22,7 @@ import { getStorageAt, readContract } from "viem/actions";
 
 export type TriggerData =
     | { baseReward: bigint }
-    | { startReward: bigint; endReward: bigint };
+    | { startReward: bigint; endReward: bigint; betaPercent: bigint };
 
 type CampaignReward = {
     interactionTypeKey: FullInteractionTypesKey;
@@ -150,8 +150,9 @@ export class CampaignDataRepository {
             // For storage layout `struct RewardTrigger { uint16 maxCountPerUser; uint48 percentBeta; uint96 startReward; uint96 endReward; }`
             const endReward = BigInt(sliceHex(storage, 0, 12));
             const startReward = BigInt(sliceHex(storage, 12, 24));
+            const betaPercent = BigInt(sliceHex(storage, 24, 30));
             if (!(endReward && startReward)) return undefined;
-            return { startReward, endReward };
+            return { startReward, endReward, betaPercent };
         }
         if (campaignType === "frak.campaign.referral") {
             // For storage layout `struct RewardTrigger { uint192 baseReward; uint16 userPercent;  uint16 deperditionPerLevel; uint16 maxCountPerUser; }`
