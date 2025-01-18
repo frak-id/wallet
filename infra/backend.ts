@@ -24,6 +24,14 @@ const image = await aws.ecr.getImage({
 const domainName = isProd ? "backend.frak.id" : "backend-dev.frak.id";
 
 /**
+ * Get the rpc url via cloudmap service discovery
+ */
+const cloudmapErpcUrl = vpc.nodes.cloudmapNamespace.name.apply(
+    (namespaceName) =>
+        `http://Erpc.production.frak-indexer.${namespaceName}:8080/nexus-rpc/evm`
+);
+
+/**
  * All the ssm secrets we will load into the service
  */
 const ssmSecrets = {
@@ -92,6 +100,7 @@ const fullEnv = {
     POSTGRES_DB: isProd ? "backend" : "backend_dev",
     POSTGRES_USER: isProd ? "backend" : "backend-dev",
     HOSTNAME: $dev ? "" : domainName,
+    ERPC_URL: $dev ? undefined : cloudmapErpcUrl,
 };
 
 // Create the service targets
