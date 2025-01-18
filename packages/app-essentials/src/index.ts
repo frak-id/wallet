@@ -48,6 +48,7 @@ export { WebAuthN } from "./webauthn";
 export type {
     IndexerToken,
     GetCampaignResponseDto,
+    GetAdminCampaignsResponseDto,
     GetMembersWalletResponseDto,
     GetMembersResponseDto,
     GetMembersPageItem,

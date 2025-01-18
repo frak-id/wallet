@@ -5,6 +5,7 @@ import { viemClient } from "@/context/blockchain/provider";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import type { CampaignWithState } from "@/types/Campaign";
 import {
+    type GetAdminCampaignsResponseDto,
     addresses,
     interactionCampaignAbi,
     productAdministratorRegistryAbi,
@@ -14,18 +15,6 @@ import { indexerApi } from "@frak-labs/shared/context/server";
 import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
-
-type ApiResult = {
-    productId: string;
-    isOwner: boolean;
-    id: Address;
-    name: string;
-    version: string;
-    attached: boolean;
-    // bigint, time is second
-    attachTimestamp: string;
-    detachTimestamp?: string | null;
-}[];
 
 /**
  * Get the current user campaigns
@@ -37,7 +26,7 @@ export async function getMyCampaigns(): Promise<CampaignWithState[]> {
     const blockchainCampaigns =
         (await indexerApi
             .get(`admin/${session.wallet}/campaigns`)
-            .json<ApiResult>()) ?? [];
+            .json<GetAdminCampaignsResponseDto>()) ?? [];
 
     // Find the campaigns in the database
     const repository = await getCampaignRepository();

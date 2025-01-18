@@ -15,3 +15,15 @@ export type GetCampaignResponseDto = {
     }[];
     tokens: IndexerToken[];
 };
+
+export type GetAdminCampaignsResponseDto = {
+    productId: string;
+    isOwner: boolean;
+    id: Address;
+    name: string;
+    version: string;
+    attached: boolean;
+    // bigint, time in second
+    attachTimestamp: string;
+    detachTimestamp?: string | null;
+}[];

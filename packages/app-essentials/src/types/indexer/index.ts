@@ -1,4 +1,7 @@
-export type { GetCampaignResponseDto } from "./campaign";
+export type {
+    GetCampaignResponseDto,
+    GetAdminCampaignsResponseDto,
+} from "./campaign";
 export type { IndexerToken } from "./common";
 export type {
     GetMembersWalletResponseDto,
