@@ -21,7 +21,7 @@
     "next": "15.1.5",
     "react-hook-form": "^7.54.2",
     "react-loading-skeleton": "^3.5.0",
-    "viem": "^2.22.3"
+    "viem": "^2.22.10"
   },
   "devDependencies": {
     "@frak-labs/app-essentials": "workspace:*",
