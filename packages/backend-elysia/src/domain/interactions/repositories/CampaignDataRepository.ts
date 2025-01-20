@@ -1,6 +1,7 @@
 import {
     type CampaignType,
     baseCampaignTriggerPtr,
+    campaignAbiForType,
     interactionCampaignAbi,
 } from "@frak-labs/app-essentials";
 import { interactionTypes } from "@frak-labs/core-sdk";
@@ -29,11 +30,29 @@ type CampaignReward = {
     triggerData: TriggerData;
 };
 
+export type CampaignRewardChainingConfig = {
+    deperditionLevel: number;
+    userPercent: number;
+};
+
 export class CampaignDataRepository {
+    // Cache for the campaign type
+    private readonly campaignTypeCache = new LRUCache<Address, CampaignType>({
+        max: 1024,
+    });
+
     // Cache for the campaign rewards, no expiration
     private readonly campaignRewardsCache = new LRUCache<
         Address,
         CampaignReward[]
+    >({
+        max: 1024,
+    });
+
+    // Cache for the campaign chaining config, no expiration
+    private readonly campaignRewardChainingCache = new LRUCache<
+        Address,
+        CampaignRewardChainingConfig
     >({
         max: 1024,
     });
@@ -65,6 +84,33 @@ export class CampaignDataRepository {
     constructor(private readonly client: Client<Transport, Chain>) {}
 
     /**
+     * Get a campaign type
+     * @returns
+     */
+    async getType({
+        campaign,
+        lastUpdateBlock,
+    }: {
+        campaign: Address;
+        lastUpdateBlock?: bigint;
+    }): Promise<CampaignType> {
+        const cached = this.campaignTypeCache.get(campaign);
+        if (cached) {
+            return cached;
+        }
+
+        const [type] = (await readContract(this.client, {
+            abi: interactionCampaignAbi,
+            address: campaign,
+            functionName: "getMetadata",
+            blockNumber: lastUpdateBlock,
+        })) as [CampaignType, string, Hex];
+
+        this.campaignTypeCache.set(campaign, type);
+        return type;
+    }
+
+    /**
      * Get the campaign rewards
      * @param address
      */
@@ -81,11 +127,7 @@ export class CampaignDataRepository {
         }
 
         // Get the type of the given campaign
-        const [type] = (await readContract(this.client, {
-            abi: interactionCampaignAbi,
-            address: campaign,
-            functionName: "getMetadata",
-        })) as [CampaignType, string, Hex];
+        const type = await this.getType({ campaign, lastUpdateBlock });
 
         // Async mapping of the rewards
         const rewardsAsync = this.storagePtrs.map(async (storagePtr) => {
@@ -125,6 +167,59 @@ export class CampaignDataRepository {
         // Return the final result
         this.campaignRewardsCache.set(campaign, rewards);
         return rewards;
+    }
+
+    /**
+     * Get the reward chaining config for a campaign
+     */
+    async getChainingConfig({
+        campaign,
+        lastUpdateBlock,
+    }: {
+        campaign: Address;
+        lastUpdateBlock?: bigint;
+    }) {
+        const cached = this.campaignRewardChainingCache.get(campaign);
+        if (cached) {
+            return cached;
+        }
+
+        // Get the type of the given campaign
+        const type = await this.getType({ campaign, lastUpdateBlock });
+        const abi = campaignAbiForType[type];
+        if (!abi) return undefined;
+
+        // Read the config on-chain
+        const config = await readContract(this.client, {
+            abi,
+            address: campaign,
+            functionName: "getConfig",
+            blockNumber: lastUpdateBlock,
+        });
+        if (!config) return undefined;
+
+        // Check if the config contain the chaining reward (4 elements i nthe array theorically)
+        const chaining = config[3];
+
+        // If we have no chaining, consider it's defaulted to 50 / 80
+        if (!chaining) {
+            this.campaignRewardChainingCache.set(campaign, {
+                deperditionLevel: 0.8,
+                userPercent: 0.5,
+            });
+            return {
+                deperditionLevel: 0.8,
+                userPercent: 0.5,
+            };
+        }
+
+        // Otherwise, extract the chaining config (on 10_000 basis)
+        const extracted = {
+            deperditionLevel: Number(chaining.deperditionPerLevel) / 10_000,
+            userPercent: Number(chaining.userPercent) / 10_000,
+        };
+        this.campaignRewardChainingCache.set(campaign, extracted);
+        return extracted;
     }
 
     /**
