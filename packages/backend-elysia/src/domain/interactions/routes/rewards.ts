@@ -49,16 +49,25 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
                 : activeRewards;
             if (!filteredRewards.length) return null;
 
-            // Get the max amount that can be distributed
-            const maxEurAmount = filteredRewards.reduce(
+            // Get the max amount that can be distributed for the referrer and the referee
+            const maxReferrerEurAmount = filteredRewards.reduce(
                 (acc, reward) =>
-                    reward.eurAmount > acc ? reward.eurAmount : acc,
+                    reward.referrer.eurAmount > acc
+                        ? reward.referrer.eurAmount
+                        : acc,
+                0
+            );
+            const maxRefereeAmount = filteredRewards.reduce(
+                (acc, reward) =>
+                    reward.referee.eurAmount > acc
+                        ? reward.referee.eurAmount
+                        : acc,
                 0
             );
 
             return {
-                totalReferrerEur: maxEurAmount / 2,
-                totalRefereeEur: maxEurAmount / 2,
+                totalReferrerEur: maxReferrerEurAmount,
+                totalRefereeEur: maxRefereeAmount,
                 activeRewards: filteredRewards,
             };
         },
@@ -76,9 +85,16 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
                             campaign: t.Address(),
                             interactionTypeKey: t.String(),
                             token: t.Address(),
-                            amount: t.Number(),
-                            eurAmount: t.Number(),
-                            usdAmount: t.Number(),
+                            referrer: t.Object({
+                                amount: t.Number(),
+                                eurAmount: t.Number(),
+                                usdAmount: t.Number(),
+                            }),
+                            referee: t.Object({
+                                amount: t.Number(),
+                                eurAmount: t.Number(),
+                                usdAmount: t.Number(),
+                            }),
                             triggerData: t.Union([
                                 t.Object({
                                     baseReward: t.Number(),

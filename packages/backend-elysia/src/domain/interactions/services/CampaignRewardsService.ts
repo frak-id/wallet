@@ -1,4 +1,5 @@
 import type { PricingRepository } from "@backend-common/repositories";
+import type { TokenPrice } from "@backend-common/repositories/PricingRepository";
 import { referralCampaign_isActive } from "@backend-utils";
 import type { GetCampaignResponseDto } from "@frak-labs/app-essentials";
 import type { KyInstance } from "ky";
@@ -19,13 +20,18 @@ import type {
     TriggerData,
 } from "../repositories/CampaignDataRepository";
 
+type Amount = {
+    amount: number;
+    eurAmount: number;
+    usdAmount: number;
+};
+
 export type ActiveReward = {
     campaign: Address;
     token: Address;
     interactionTypeKey: string;
-    amount: number;
-    eurAmount: number;
-    usdAmount: number;
+    referrer: Amount;
+    referee: Amount;
     triggerData:
         | { baseReward: number }
         | { startReward: number; endReward: number; beta: number };
@@ -106,6 +112,13 @@ export class CampaignRewardsService {
                     lastUpdateBlock: BigInt(campaign.lastUpdateBlock),
                 });
 
+            // Fetch the chaining config
+            const chainingConfig =
+                await this.campaignDataRepository.getChainingConfig({
+                    campaign: campaign.address,
+                    lastUpdateBlock: BigInt(campaign.lastUpdateBlock),
+                });
+
             // Map all the rewards
             const mappedRewards = rewards.map((reward) => {
                 // Map the reward triggers
@@ -119,9 +132,14 @@ export class CampaignRewardsService {
                     campaign: campaign.address,
                     token: token.address,
                     interactionTypeKey: reward.interactionTypeKey,
-                    amount: maxReward,
-                    eurAmount: price.eur * maxReward,
-                    usdAmount: price.usd * maxReward,
+                    referrer: this.mapAmount({
+                        amount: maxReward * (1 - chainingConfig.userPercent),
+                        price,
+                    }),
+                    referee: this.mapAmount({
+                        amount: maxReward * chainingConfig.userPercent,
+                        price,
+                    }),
                     triggerData,
                 };
             });
@@ -132,6 +150,17 @@ export class CampaignRewardsService {
 
         // Return everything
         return activeRewards;
+    }
+
+    private mapAmount({
+        amount,
+        price,
+    }: { amount: number; price: TokenPrice }) {
+        return {
+            amount,
+            eurAmount: price.eur * amount,
+            usdAmount: price.usd * amount,
+        };
     }
 
     /**

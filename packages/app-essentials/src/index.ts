@@ -11,6 +11,7 @@ export {
     // Campaign helper
     type CampaignType,
     baseCampaignTriggerPtr,
+    campaignAbiForType,
     // Abis
     campaignFactoryAbi,
     interactionCampaignAbi,
