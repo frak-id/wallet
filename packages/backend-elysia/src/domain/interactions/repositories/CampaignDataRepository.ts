@@ -7,7 +7,7 @@ import {
 import { interactionTypes } from "@frak-labs/core-sdk";
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { LRUCache } from "lru-cache";
-import { sift } from "radash";
+import { sift, tryit } from "radash";
 import {
     type Address,
     type Chain,
@@ -184,33 +184,34 @@ export class CampaignDataRepository {
             return cached;
         }
 
+        const defaultChaining = {
+            deperditionLevel: 0.8,
+            userPercent: 0.5,
+        };
+
         // Get the type of the given campaign
         const type = await this.getType({ campaign, lastUpdateBlock });
         const abi = campaignAbiForType[type];
-        if (!abi) return undefined;
+        if (!abi) return defaultChaining;
 
         // Read the config on-chain
-        const config = await readContract(this.client, {
-            abi,
-            address: campaign,
-            functionName: "getConfig",
-            blockNumber: lastUpdateBlock,
-        });
-        if (!config) return undefined;
+        const [, config] = await tryit(() =>
+            readContract(this.client, {
+                abi,
+                address: campaign,
+                functionName: "getConfig",
+                blockNumber: lastUpdateBlock,
+            })
+        )();
+        if (!config) return defaultChaining;
 
         // Check if the config contain the chaining reward (4 elements i nthe array theorically)
         const chaining = config[3];
 
         // If we have no chaining, consider it's defaulted to 50 / 80
         if (!chaining) {
-            this.campaignRewardChainingCache.set(campaign, {
-                deperditionLevel: 0.8,
-                userPercent: 0.5,
-            });
-            return {
-                deperditionLevel: 0.8,
-                userPercent: 0.5,
-            };
+            this.campaignRewardChainingCache.set(campaign, defaultChaining);
+            return defaultChaining;
         }
 
         // Otherwise, extract the chaining config (on 10_000 basis)
