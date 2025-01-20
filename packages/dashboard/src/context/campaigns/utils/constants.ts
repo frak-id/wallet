@@ -1,12 +1,12 @@
 /**
  * A referral campaign id
  */
-export const referralCampaignId = "0x1a8750ce" as const;
+export const affiliationRangeCampaignId = "0xf1a57c61" as const;
 
 /**
  * The abi struct used for the referral campaign config
  */
-export const referralConfigStruct = [
+export const affiliationRangeCampaignConfigStruct = [
     { name: "name", internalType: "bytes32", type: "bytes32" },
     {
         name: "campaignBank",
@@ -14,40 +14,8 @@ export const referralConfigStruct = [
         type: "address",
     },
     {
-        name: "triggers",
-        internalType: "struct ReferralCampaignTriggerConfig[]",
-        type: "tuple[]",
-        components: [
-            {
-                name: "interactionType",
-                internalType: "InteractionType",
-                type: "bytes4",
-            },
-            {
-                name: "baseReward",
-                internalType: "uint256",
-                type: "uint256",
-            },
-            {
-                name: "userPercent",
-                internalType: "uint256",
-                type: "uint256",
-            },
-            {
-                name: "deperditionPerLevel",
-                internalType: "uint256",
-                type: "uint256",
-            },
-            {
-                name: "maxCountPerUser",
-                internalType: "uint256",
-                type: "uint256",
-            },
-        ],
-    },
-    {
         name: "capConfig",
-        internalType: "struct ReferralCampaign.CapConfig",
+        internalType: "struct CapConfig",
         type: "tuple",
         components: [
             {
@@ -64,7 +32,7 @@ export const referralConfigStruct = [
     },
     {
         name: "activationPeriod",
-        internalType: "struct ReferralCampaign.ActivationPeriod",
+        internalType: "struct ActivationPeriod",
         type: "tuple",
         components: [
             {
@@ -76,6 +44,55 @@ export const referralConfigStruct = [
                 name: "end",
                 internalType: "uint48",
                 type: "uint48",
+            },
+        ],
+    },
+    {
+        name: "chainingConfig",
+        internalType: "struct RewardChainingConfig",
+        type: "tuple",
+        components: [
+            {
+                name: "userPercent",
+                internalType: "uint256",
+                type: "uint256",
+            },
+            {
+                name: "deperditionPerLevel",
+                internalType: "uint256",
+                type: "uint256",
+            },
+        ],
+    },
+    {
+        name: "triggers",
+        internalType: "struct RangeAffiliationTriggerConfig[]",
+        type: "tuple[]",
+        components: [
+            {
+                name: "interactionType",
+                internalType: "InteractionType",
+                type: "bytes4",
+            },
+            {
+                name: "maxCountPerUser",
+                internalType: "uint256",
+                type: "uint256",
+            },
+            {
+                name: "startReward",
+                internalType: "uint256",
+                type: "uint256",
+            },
+            {
+                name: "endReward",
+                internalType: "uint256",
+                type: "uint256",
+            },
+            {
+                name: "percentBeta",
+                internalType: "uint256",
+                type: "uint256",
             },
         ],
     },

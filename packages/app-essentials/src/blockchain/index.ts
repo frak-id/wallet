@@ -10,6 +10,10 @@ export {
     interactionValidatorRoles,
     type ProductRolesKey,
 } from "./roles";
+export {
+    type CampaignType,
+    baseCampaignTriggerPtr,
+} from "./campaign";
 // Actions
 export type {
     AlchemyRpcSchema,
@@ -29,6 +33,8 @@ export {
     referralCampaignAbi,
     campaignBankAbi,
     campaignBankFactoryAbi,
+    affiliationFixedCampaignAbi,
+    affiliationRangeCampaignAbi,
 } from "./abis/campaignAbis";
 export {
     dappInteractionFacetAbi,

@@ -112,11 +112,9 @@ export const walletSsoRoutes = new Elysia({
 
             // If not resolved yet, early exit
             if (
-                !(
-                    ssoSession.resolvedAt &&
-                    ssoSession.wallet &&
-                    ssoSession.authenticatorId
-                )
+                !ssoSession.resolvedAt ||
+                !ssoSession.wallet ||
+                !ssoSession.authenticatorId
             ) {
                 return { status: "pending" };
             }

@@ -1,6 +1,11 @@
 import { http, type Chain } from "viem";
 
 /**
+ * The default public rpc url
+ */
+const ERPC_URL = "https://rpc.frak.id/nexus-rpc/evm/";
+
+/**
  * Get the alchemy http transport
  * @param chainId
  */
@@ -12,7 +17,7 @@ export function getErpcTransport({ chain }: { chain: Chain }) {
     }
 
     // Build the ercp rpc url depending on the chain
-    const rpcUrl = `https://rpc.frak.id/nexus-rpc/evm/${chain.id}?token=${nexusRpcSecret}`;
+    const rpcUrl = `${process.env.ERPC_URL ?? ERPC_URL}/${chain.id}?token=${nexusRpcSecret}`;
 
     // Build the alchemy client
     return http(rpcUrl, {

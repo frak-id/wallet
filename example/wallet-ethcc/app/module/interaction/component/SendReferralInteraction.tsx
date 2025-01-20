@@ -44,7 +44,7 @@ export function SendReferralInteraction() {
 
             <Button
                 onClick={() => {
-                    if (!(referrer && isAddress(referrer))) {
+                    if (!referrer || !isAddress(referrer)) {
                         alert("Invalid referrer address");
                         return;
                     }

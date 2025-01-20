@@ -34,7 +34,7 @@ self.addEventListener("push", (event) => {
     const { title, body, icon, ...additionalParams } = payload;
 
     // Ensure a few mandatory fields are present
-    if (!(body && title)) {
+    if (!body || !title) {
         return;
     }
 

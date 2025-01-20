@@ -74,15 +74,13 @@ export class WalletSessionRepository {
 
         // Ensure the session addresses match
         if (
-            !(
-                isAddressEqual(
-                    sessionStatus.executor,
-                    addresses.interactionDelegatorAction
-                ) &&
-                isAddressEqual(
-                    sessionStatus.validator,
-                    addresses.interactionDelegatorValidator
-                )
+            !isAddressEqual(
+                sessionStatus.executor,
+                addresses.interactionDelegatorAction
+            ) ||
+            !isAddressEqual(
+                sessionStatus.validator,
+                addresses.interactionDelegatorValidator
             )
         ) {
             this.sessionValidityCache.set(wallet, false);

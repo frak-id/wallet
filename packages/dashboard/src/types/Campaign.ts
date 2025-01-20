@@ -11,13 +11,18 @@ export type Goal =
 type SpecialCategory = "credit" | "jobs" | "housing" | "social";
 export type Budget = "daily" | "weekly" | "monthly" | "global";
 
+/**
+ * The type of reward for a campaign:
+ *  - fixed: Distribute a fixed amount to each users
+ *  - range: Distribute a range of rewards following a beta distribution curve
+ */
+export type CampaignRewardType = "fixed" | "range";
+
 type CampaignTrigger = {
     // Reward range
     from: number;
     to: number;
     // Reward distribution config
-    userPercent?: number; // Between 0 and 1
-    deperditionPerLevel?: number; // Between 0 and 1
     maxCountPerUser?: number;
 };
 
@@ -43,6 +48,11 @@ export type Campaign = {
     scheduled?: {
         dateStart: Date;
         dateEnd?: Date;
+    };
+    // How is the reward chained across multiple user
+    rewardChaining?: {
+        userPercent?: number;
+        deperditionPerLevel?: number;
     };
     // Trigger for the campaign
     triggers: Partial<Record<InteractionTypesKey, CampaignTrigger>>;

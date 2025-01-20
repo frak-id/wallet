@@ -33,11 +33,9 @@ export function Step1() {
             const fileContent = JSON.parse(fileText) as RecoveryFileContent;
             // Ensure all the fields are presents
             if (
-                !(
-                    fileContent.initialWallet &&
-                    fileContent.guardianAddress &&
-                    fileContent.guardianPrivateKeyEncrypted
-                )
+                !fileContent.initialWallet ||
+                !fileContent.guardianAddress ||
+                !fileContent.guardianPrivateKeyEncrypted
             ) {
                 // Should display a user message
                 setFileContent(null);

@@ -96,7 +96,7 @@ export async function deleteSession() {
  */
 export async function getSession(): Promise<AuthSessionClient | null> {
     const session = await getFullSession();
-    if (!(session.wallet && session.siwe.message)) return null;
+    if (!session.wallet || !session.siwe.message) return null;
 
     const message = parseSiweMessage(session.siwe.message);
     if (!message) {

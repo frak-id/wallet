@@ -2,6 +2,7 @@ import {
     AdminWalletsRepository,
     InteractionDiamondRepository,
     PricingRepository,
+    RolesRepository,
 } from "@backend-common/repositories";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { getViemClientFromChain } from "@frak-labs/app-essentials/blockchain";
@@ -23,6 +24,7 @@ export const blockchainContext = new Elysia({
         client
     );
     const pricingRepository = new PricingRepository();
+    const rolesRepository = new RolesRepository(client);
 
     return {
         ...decorators,
@@ -31,5 +33,6 @@ export const blockchainContext = new Elysia({
         adminWalletsRepository,
         interactionDiamondRepository,
         pricingRepository,
+        rolesRepository,
     };
 });

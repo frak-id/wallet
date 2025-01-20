@@ -100,11 +100,9 @@ export async function pushBackupData(args?: { productId?: Hex }) {
 
     // If nothing to back up, just remove it
     if (
-        !(
-            backup.session?.token ||
-            backup.sdkSession?.token ||
-            backup.pendingInteractions?.length
-        )
+        !backup.session?.token &&
+        !backup.sdkSession?.token &&
+        !backup.pendingInteractions?.length
     ) {
         emitLifecycleEvent({
             iframeLifecycle: "remove-backup",

@@ -12,19 +12,23 @@ import {
     concatHex,
     formatUnits,
     keccak256,
-    toHex,
 } from "viem";
 import { multicall } from "viem/actions";
-import type { CampaignDataRepository } from "../repositories/CampaignDataRepository";
+import type {
+    CampaignDataRepository,
+    TriggerData,
+} from "../repositories/CampaignDataRepository";
 
 export type ActiveReward = {
     campaign: Address;
     token: Address;
     interactionTypeKey: string;
-    rawAmount: Hex;
     amount: number;
     eurAmount: number;
     usdAmount: number;
+    triggerData:
+        | { baseReward: number }
+        | { startReward: number; endReward: number; beta: number };
 };
 
 /**
@@ -37,13 +41,13 @@ export class CampaignRewardsService {
         GetCampaignResponseDto
     >({
         max: 128,
-        ttl: 5 * 60_000,
+        ttl: 60_000,
     });
 
     // Cache for the active campaigns
     private readonly activeCampaignsCache = new LRUCache<Hex, boolean[]>({
         max: 128,
-        ttl: 5 * 60_000,
+        ttl: 60_000,
     });
 
     constructor(
@@ -104,17 +108,21 @@ export class CampaignRewardsService {
 
             // Map all the rewards
             const mappedRewards = rewards.map((reward) => {
-                const amount = Number.parseFloat(
-                    formatUnits(reward.amount, token.decimals)
+                // Map the reward triggers
+                const { maxReward, ...triggerData } = this.mapTriggerData(
+                    reward.triggerData,
+                    token.decimals
                 );
+
+                // Return the formated object for the reward
                 return {
                     campaign: campaign.address,
                     token: token.address,
                     interactionTypeKey: reward.interactionTypeKey,
-                    amount,
-                    eurAmount: price.eur * amount,
-                    usdAmount: price.usd * amount,
-                    rawAmount: toHex(reward.amount),
+                    amount: maxReward,
+                    eurAmount: price.eur * maxReward,
+                    usdAmount: price.usd * maxReward,
+                    triggerData,
                 };
             });
 
@@ -124,6 +132,37 @@ export class CampaignRewardsService {
 
         // Return everything
         return activeRewards;
+    }
+
+    /**
+     * Map trigger data to a redeable format
+     */
+    private mapTriggerData(triggerData: TriggerData, decimals: number) {
+        // Fora fixed reward distribution
+        if ("baseReward" in triggerData) {
+            const baseReward = Number.parseFloat(
+                formatUnits(triggerData.baseReward, decimals)
+            );
+            return {
+                baseReward,
+                maxReward: baseReward,
+            };
+        }
+
+        // For a range distribution
+        const startReward = Number.parseFloat(
+            formatUnits(triggerData.startReward, decimals)
+        );
+        const endReward = Number.parseFloat(
+            formatUnits(triggerData.endReward, decimals)
+        );
+        const beta = Number.parseFloat(formatUnits(triggerData.betaPercent, 4));
+        return {
+            startReward,
+            endReward,
+            beta,
+            maxReward: endReward,
+        };
     }
 
     /**
