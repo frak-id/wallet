@@ -1,4 +1,4 @@
-import { setupClient } from "@core/clients";
+import { setupClient } from "@frak-labs/core-sdk";
 import { onDocumentReady } from "@module/utils/onDocumentReady";
 import {
     dispatchClientReadyEvent,

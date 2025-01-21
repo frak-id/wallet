@@ -1,4 +1,4 @@
-import { getProductInformation } from "@core/actions";
+import { getProductInformation } from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { getModalBuilderSteps, onClientReady } from "../utils";
 

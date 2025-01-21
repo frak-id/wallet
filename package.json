@@ -7,7 +7,7 @@
   "license": "GNU GPL 3.0",
   "scripts": {
     "build:infra": "sst build --stage dev",
-    "build:sdk": "for d in sdk/*; do bun run --cwd ${d} build; done",
+    "build:sdk": "dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} build; done",
     "changeset": "changeset",
     "changeset:release": "for d in sdk/*; do bun run --cwd ${d} publish; done",
     "changeset:version": "changeset version && bun install --lockfile-only",

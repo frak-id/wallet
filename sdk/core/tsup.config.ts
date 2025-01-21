@@ -16,6 +16,7 @@ export default defineConfig([
         // Code splitting and stuff
         clean: true,
         splitting: true,
+        treeshake: "smallest",
         // Types config
         dts: {
             resolve: true,

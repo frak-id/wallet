@@ -1,9 +1,9 @@
+import type { FrakClient } from "@frak-labs/core-sdk";
 import {
     type ModalBuilder,
     modalBuilder,
     referralInteraction,
-} from "@core/actions";
-import type { FrakClient } from "@core/index";
+} from "@frak-labs/core-sdk/actions";
 
 const CUSTOM_EVENT_NAME = "frakClientReady";
 

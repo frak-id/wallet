@@ -51,6 +51,7 @@
     "publish": "bun publish"
   },
   "dependencies": {
+    "@frak-labs/core-sdk": "workspace:*",
     "preact": "^10.25.4",
     "preact-custom-element": "^4.3.0"
   },
