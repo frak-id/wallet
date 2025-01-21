@@ -2,13 +2,15 @@ import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitF
 import { encodeProductTypesMask } from "@/module/product/utils/productTypes";
 import {
     addresses,
+    productInteractionManagerAbi,
     productRegistryAbi,
     stringToBytes32,
 } from "@frak-labs/app-essentials";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
-import { type Hex, encodeFunctionData } from "viem";
+import { type Address, type Hex, encodeFunctionData } from "viem";
+import { useProductInteractionContract } from "./useProductInteractionContract";
 
 type ProductEditParams = {
     productTypes: ProductTypesKey[];
@@ -21,28 +23,44 @@ type ProductEditParams = {
 export function useEditProduct({ productId }: { productId: Hex }) {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
+    const { data: interactionContract } = useProductInteractionContract({
+        productId,
+    });
 
     return useMutation({
         mutationKey: ["product", "edit", productId],
         mutationFn: async ({ productTypes, name }: ProductEditParams) => {
             // Build the transaction data
-            const txData = encodeFunctionData({
-                abi: productRegistryAbi,
-                functionName: "updateMetadata",
-                args: [
-                    BigInt(productId),
-                    encodeProductTypesMask(productTypes),
-                    stringToBytes32(name),
-                    "",
-                ],
+            const txs: { to: Address; data: Hex }[] = [];
+            txs.push({
+                to: addresses.productRegistry,
+                data: encodeFunctionData({
+                    abi: productRegistryAbi,
+                    functionName: "updateMetadata",
+                    args: [
+                        BigInt(productId),
+                        encodeProductTypesMask(productTypes),
+                        stringToBytes32(name),
+                        "",
+                    ],
+                }),
             });
+
+            // If the product has an interaction contract, also directly update the product facets
+            if (interactionContract) {
+                txs.push({
+                    to: addresses.productInteractionManager,
+                    data: encodeFunctionData({
+                        abi: productInteractionManagerAbi,
+                        functionName: "updateInteractionContract",
+                        args: [BigInt(productId)],
+                    }),
+                });
+            }
 
             // Send the transaction
             const { hash } = await sendTransaction({
-                tx: {
-                    to: addresses.productRegistry,
-                    data: txData,
-                },
+                tx: txs,
                 metadata: {
                     header: {
                         title: "Update product",
