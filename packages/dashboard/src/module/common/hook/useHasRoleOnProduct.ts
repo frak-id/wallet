@@ -1,3 +1,4 @@
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import { backendApi } from "@frak-labs/shared/context/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
@@ -17,18 +18,27 @@ export function useHasRoleOnProduct({
     productId,
     wallet,
 }: { productId: Hex; wallet?: Address }) {
+    const { data: walletStatus } = useWalletStatus();
+
     // Query fetching all the roles of a user
     const {
         data: rolesResult,
         isSuccess,
         refetch: refresh,
     } = useQuery({
-        queryKey: ["product", productId, "roles", wallet ?? "no-given-wallet"],
+        queryKey: [
+            "product",
+            productId,
+            "roles",
+            wallet ?? "no-given-wallet",
+            walletStatus?.wallet ?? "no-frak-wallet",
+        ],
         queryFn: async () => {
+            const finalWallet = wallet ?? walletStatus?.wallet;
             const { data, error } = await backendApi.business.roles.index.get({
                 query: {
                     productId,
-                    ...(wallet ? { wallet } : {}),
+                    ...(finalWallet ? { wallet: finalWallet } : {}),
                 },
             });
             if (!data) {
