@@ -15,10 +15,6 @@ const config: KnipConfig = {
             entry: ["app/*.{ts,tsx}", "app/views/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}"],
         },
-        "packages/sdk": {
-            entry: "src/**/index.{ts,tsx}",
-            project: ["src/**/*.{ts,tsx}"],
-        },
         "packages/shared": {
             entry: "**/*.{ts,tsx}",
         },
@@ -30,9 +26,21 @@ const config: KnipConfig = {
             entry: "src/index.ts",
             project: "src/**/*.ts",
         },
+        "sdk/core": {
+            entry: "src/**/index.ts",
+            project: "src/**/*.ts",
+        },
+        "sdk/react": {
+            entry: "src/**/index.{ts,tsx}",
+            project: "src/**/*.{ts,tsx}",
+        },
+        "sdk/components": {
+            entry: "src/**/components.ts",
+            project: "src/**/*.{ts,tsx}",
+        },
     },
-    // Ignore SDK for knip for now
-    ignoreWorkspaces: ["packages/sdk"],
+    // Ignore legacy SDK from knip
+    ignoreWorkspaces: ["sdk/legacy"],
 };
 
 export default config;

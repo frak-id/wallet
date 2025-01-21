@@ -245,7 +245,7 @@ function setupHeartbeat(
  * @param messageHandler
  * @param lifecycleManager
  */
-export async function postConnectionSetup({
+async function postConnectionSetup({
     config,
     messageHandler,
     lifecycleManager,

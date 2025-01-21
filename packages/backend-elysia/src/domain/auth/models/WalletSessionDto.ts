@@ -6,7 +6,7 @@ const EcdsaWalletTokenDto = t.Object({
     publicKey: t.Hex(),
     transports: t.Undefined(),
 });
-export const WebAuthNWalletTokenDto = t.Object({
+const WebAuthNWalletTokenDto = t.Object({
     address: t.Address(),
     authenticatorId: t.String(),
     publicKey: t.Object({

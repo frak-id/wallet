@@ -9,7 +9,7 @@ export interface TitleProps extends VariantProps<typeof titleVariants> {
     children?: string | ReactNode;
 }
 
-export const titleVariants = cva(styles.title, {
+const titleVariants = cva(styles.title, {
     variants: {
         size: {
             medium: styles["size--medium"],

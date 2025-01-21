@@ -45,6 +45,7 @@ export {
     referralFeatureFacetAbi,
     purchaseFeatureFacetAbi,
     webShopInteractionFacetAbi,
+    retailInteractionFacetAbi,
 } from "./abis/interactionAbis";
 export {
     productAdministratorRegistryAbi,

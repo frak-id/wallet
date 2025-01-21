@@ -3,7 +3,7 @@ import type { VariantProps } from "class-variance-authority";
 import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
-export const badgeVariants = cva(styles.badge, {
+const badgeVariants = cva(styles.badge, {
     variants: {
         variant: {
             primary: styles.primary,

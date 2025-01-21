@@ -3,7 +3,7 @@ import type { VariantProps } from "class-variance-authority";
 import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
-export const callOutVariants = cva(styles.callOut, {
+const callOutVariants = cva(styles.callOut, {
     variants: {
         variant: {
             primary: styles.primary,

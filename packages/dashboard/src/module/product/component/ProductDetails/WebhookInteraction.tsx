@@ -44,7 +44,7 @@ function WebhookInteractionAccordionContent({ productId }: { productId: Hex }) {
     );
 }
 
-export function WebhookInteraction({ productId }: { productId: Hex }) {
+function WebhookInteraction({ productId }: { productId: Hex }) {
     // Fetch some data about the current webhook interaction setup
     const { data: webhookInteractionStatus, isLoading } =
         useWebhookInteractionStatus({
