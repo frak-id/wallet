@@ -129,7 +129,7 @@ export async function getCreationData(campaign: Campaign) {
                               campaign.rewardChaining.userPercent * 10_000
                           )
                       )
-                    : 5_000n, // default to 50%
+                    : 1_000n, // default to 10%
                 deperditionPerLevel: campaign?.rewardChaining
                     ?.deperditionPerLevel
                     ? BigInt(
@@ -208,9 +208,6 @@ function extractTriggers(campaign: Campaign, tokenDecimals: number) {
     const triggers = Object.entries(campaign.triggers)
         .filter(([_, trigger]) => trigger.from > 0 && trigger.to > 0)
         .map(([interactionTypeKey, trigger]) => {
-            // The initial reward is just the avg of from and to for now
-            const initialReward = Math.floor((trigger.from + trigger.to) / 2);
-
             // Find the matching interaction types (into the sub-keys of interaction types)
             const interactionType = getHexValueForKey(
                 interactionTypeKey as InteractionTypesKey
@@ -226,7 +223,6 @@ function extractTriggers(campaign: Campaign, tokenDecimals: number) {
 
             return {
                 interactionType: interactionType,
-                baseReward: parseUnits(initialReward.toString(), tokenDecimals),
                 maxCountPerUser: trigger.maxCountPerUser
                     ? BigInt(trigger.maxCountPerUser)
                     : 1n, // Max 1 per user
@@ -236,7 +232,9 @@ function extractTriggers(campaign: Campaign, tokenDecimals: number) {
             };
         })
         // Filter out trigger with no rewards
-        .filter((trigger) => trigger.baseReward > 0n);
+        .filter(
+            (trigger) => trigger.startReward > 0n && trigger.endReward > 0n
+        );
 
     // Check if we got a purchase related triggers, if yes, add an unsafe ppurchase one with same criteria
     const purchaseTrigger = triggers.find(

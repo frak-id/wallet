@@ -4,7 +4,7 @@ import ky, { type KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
 import { type Address, isAddressEqual } from "viem";
 
-type TokenPrice = {
+export type TokenPrice = {
     eur: number;
     usd: number;
 };

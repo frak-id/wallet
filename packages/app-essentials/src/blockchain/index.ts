@@ -13,6 +13,7 @@ export {
 export {
     type CampaignType,
     baseCampaignTriggerPtr,
+    campaignAbiForType,
 } from "./campaign";
 // Actions
 export type {
