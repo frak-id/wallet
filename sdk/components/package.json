@@ -45,6 +45,7 @@
     "format": "biome check --write .",
     "clean": "rimraf cdn",
     "build": "tsup",
+    "postbuild": "bunx cpy --flat \"src/**/*.css\" cdn/css",
     "build:watch": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
@@ -58,6 +59,8 @@
   "devDependencies": {
     "@types/node": "^22",
     "@types/preact-custom-element": "^4.0.4",
+    "cpy-cli": "^5.0.0",
+    "esbuild-plugin-svgr": "^3.1.0",
     "tsup": "^8.3.5",
     "typescript": "^5"
   }

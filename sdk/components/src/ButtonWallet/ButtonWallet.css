@@ -1,0 +1,15 @@
+frak-button-wallet {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+
+    button {
+        all: unset;
+        background-color: #3e557e;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        cursor: pointer;
+        text-align: center;
+    }
+}

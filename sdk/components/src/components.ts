@@ -7,6 +7,7 @@ import {
 } from "./utils";
 
 export { ButtonShare } from "./ButtonShare";
+export { ButtonWallet } from "./ButtonWallet";
 
 /**
  * Initialize the app on document ready

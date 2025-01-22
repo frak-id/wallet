@@ -6,8 +6,12 @@ const projectRootDir = resolve(__dirname);
 const bundleDir = resolve(projectRootDir, "../../sdk/components/cdn");
 const scriptSrc =
     process.env.NODE_ENV === "production"
-        ? "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/dist/bundle/components.js"
+        ? "https://cdn.jsdelivr.net/npm/@frak-labs/components"
         : `${bundleDir}/components.js`;
+const cssSrc =
+    process.env.NODE_ENV === "production"
+        ? "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/css/ButtonWallet.css"
+        : `${bundleDir}/css/ButtonWallet.css`;
 
 export default defineConfig({
     server: {
@@ -19,6 +23,7 @@ export default defineConfig({
             inject: {
                 data: {
                     injectScript: `<script src="${scriptSrc}"></script>`,
+                    injectCSS: `<link id="frak-button-wallet" rel="stylesheet" href="${cssSrc}" />`,
                 },
             },
         }),

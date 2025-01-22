@@ -1,3 +1,4 @@
+import svgrPlugin from "esbuild-plugin-svgr";
 import { defineConfig } from "tsup";
 
 export default defineConfig([
@@ -5,6 +6,7 @@ export default defineConfig([
         target: "es2022",
         // All of our entry-points
         entry: ["src/components.ts"],
+        esbuildPlugins: [svgrPlugin()],
         outDir: "cdn",
         outExtension() {
             return {
