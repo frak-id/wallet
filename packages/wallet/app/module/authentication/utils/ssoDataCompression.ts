@@ -25,9 +25,6 @@ export function ssoParamsToCompressed(params: FullSsoParams) {
             css: params.metadata.css,
             l: params.metadata.logoUrl,
             h: params.metadata.homepageLink,
-            c: params.metadata.links?.confidentialityLink,
-            he: params.metadata.links?.helpLink,
-            cg: params.metadata.links?.cguLink,
         },
     };
 }
@@ -45,11 +42,6 @@ export function compressedSsoToParams(
             css: compressed.m?.css,
             logoUrl: compressed.m?.l,
             homepageLink: compressed.m?.h,
-            links: {
-                confidentialityLink: compressed.m?.c,
-                helpLink: compressed.m?.he,
-                cguLink: compressed.m?.cg,
-            },
         },
     };
 }
@@ -78,11 +70,5 @@ export type CompressedSsoData = {
         l?: string;
         // home page link
         h?: string;
-        // confidentiality link
-        c?: string;
-        // help link
-        he?: string;
-        // cgu link
-        cg?: string;
     };
 };

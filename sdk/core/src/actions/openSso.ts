@@ -14,11 +14,6 @@ import type { FrakClient, OpenSsoParamsType } from "../types";
  * const metadata: SsoMetadata = {
  *     logoUrl: "https://my-app.com/logo.png",
  *     homepageLink: "https://my-app.com",
- *     links: {
- *         confidentialityLink: "https://my-app.com/confidentiality",
- *         helpLink: "https://my-app.com/help",
- *         cguLink: "https://my-app.com/cgu",
- *     },
  * };
  * ```
  *

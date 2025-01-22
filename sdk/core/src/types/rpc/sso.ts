@@ -10,23 +10,6 @@ export type SsoMetadata = {
      * Link to your homepage, if referenced your app name will contain a link on the sso page
      */
     homepageLink?: string;
-    /**
-     * A few links that will be displayed in the footer
-     */
-    links?: {
-        /**
-         * URL to your confidentiality page
-         */
-        confidentialityLink?: string;
-        /**
-         * URL to your help page
-         */
-        helpLink?: string;
-        /**
-         * URL to your CGU page
-         */
-        cguLink?: string;
-    };
 };
 
 /**
