@@ -40,10 +40,16 @@ export function createIFrameLifecycleManager({
                 break;
             // Change iframe visibility
             case "show":
+                changeIframeVisibility({
+                    iframe,
+                    isVisible: true,
+                    data: messageEvent.data,
+                });
+                break;
             case "hide":
                 changeIframeVisibility({
                     iframe,
-                    isVisible: messageEvent.iframeLifecycle === "show",
+                    isVisible: false,
                 });
                 break;
         }

@@ -23,7 +23,11 @@ export type {
     ExtractedMethodFromRpc,
     RpcResponse,
 } from "./transport";
-export type { IFrameLifecycleEvent, ClientLifecycleEvent } from "./lifecycle";
+export type {
+    IFrameLifecycleEvent,
+    IFramePositions,
+    ClientLifecycleEvent,
+} from "./lifecycle";
 export type { FrakWalletSdkConfig } from "./config";
 export type {
     CompressedData,

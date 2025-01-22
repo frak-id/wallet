@@ -1,0 +1,26 @@
+.modalListener {
+    background: radial-gradient(circle at center, #fff7c6, #927f0b) padding-box,
+        radial-gradient(circle at center, #fff7c6, #927f0b) border-box;
+    border-radius: 25px;
+    border: 5px solid transparent;
+    height: 100%;
+    text-align: center;
+}
+
+.modalListener__inner {
+    padding: 28px;
+    color: #1d1d1d;
+    background: radial-gradient(
+        75.96% 75.96% at 50.42% 24.04%,
+        #f2f2f2 24.74%,
+        #3e557e 100%
+    );
+    border-radius: 20px;
+    height: 100%;
+}
+
+.modalListener__text {
+    margin-bottom: 29px;
+    font-size: 22px;
+    font-weight: 600;
+}

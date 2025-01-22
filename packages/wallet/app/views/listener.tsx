@@ -13,6 +13,12 @@ const modalImport = () =>
     }));
 const ListenerModal = lazy(modalImport);
 
+const walletImport = () =>
+    import("@/module/listener/component/Wallet").then((module) => ({
+        default: module.ListenerWallet,
+    }));
+const ListenerWallet = lazy(walletImport);
+
 /**
  * Global Listener UI that can only be set via an iFrame
  *  - It's goal is to answer every request from the iFrame windows parent
@@ -131,5 +137,10 @@ export default function Listener() {
      */
     useListenerDataPreload();
 
-    return modalRequested ? <ListenerModal /> : null;
+    return (
+        <>
+            <ListenerWallet />
+            {modalRequested ? <ListenerModal /> : null}
+        </>
+    );
 }

@@ -167,7 +167,10 @@ function SsoButton({
     return <RegularSsoButton link={link} text={text} />;
 }
 
-function RegularSsoButton({ link, text }: { link: string; text: ReactNode }) {
+export function RegularSsoButton({
+    link,
+    text,
+}: { link: string; text: ReactNode }) {
     const [failToOpen, setFailToOpen] = useState(false);
 
     // If we failed to open the SSO modal, fallback to a link

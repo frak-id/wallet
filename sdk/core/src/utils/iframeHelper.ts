@@ -1,4 +1,4 @@
-import type { FrakWalletSdkConfig } from "../types";
+import type { FrakWalletSdkConfig, IFramePositions } from "../types";
 
 /**
  * Base props for the iframe
@@ -62,7 +62,12 @@ export function createIframe({
 export function changeIframeVisibility({
     iframe,
     isVisible,
-}: { iframe: HTMLIFrameElement; isVisible: boolean }) {
+    data,
+}: {
+    iframe: HTMLIFrameElement;
+    isVisible: boolean;
+    data?: IFramePositions;
+}) {
     if (!isVisible) {
         iframe.style.width = "0";
         iframe.style.height = "0";
@@ -74,9 +79,11 @@ export function changeIframeVisibility({
     }
 
     iframe.style.position = "fixed";
-    iframe.style.top = "0";
-    iframe.style.left = "0";
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
+    iframe.style.top = data?.top ?? "0";
+    iframe.style.bottom = data?.bottom ?? "auto";
+    iframe.style.left = data?.left ?? "0";
+    iframe.style.right = data?.right ?? "auto";
+    iframe.style.width = data?.width ?? "100%";
+    iframe.style.height = data?.height ?? "100%";
     iframe.style.pointerEvents = "auto";
 }
