@@ -1,4 +1,5 @@
 import type {
+    DisplayEmbededWalletParamsType,
     FinalActionType,
     FrakWalletSdkConfig,
     LoginModalStepType,
@@ -17,6 +18,7 @@ declare global {
                 FinalActionType,
                 { key: "sharing" }
             >["options"];
+            modalWalletConfig?: DisplayEmbededWalletParamsType;
         };
     }
 }

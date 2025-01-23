@@ -1,23 +1,14 @@
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
-import { useSsoLink } from "@/module/authentication/hook/useGetOpenSsoLink";
-import { RegularSsoButton } from "@/module/listener/modal/component/Login";
+import { sessionAtom } from "@/module/common/atoms/session";
+import type { DisplayEmbededWalletParamsType } from "@frak-labs/core-sdk";
+import { jotaiStore } from "@module/atoms/store";
 import { Overlay } from "@module/component/Overlay";
-import { useCallback, useEffect } from "react";
-import { keccak256, toHex } from "viem";
+import { useCallback, useEffect, useMemo } from "react";
 import styles from "./index.module.css";
 
-export function ListenerWallet() {
-    const { link } = useSsoLink({
-        productId: keccak256(toHex(window.location.host)),
-        metadata: {
-            name: "appName",
-            // ...ssoMetadata,
-        },
-        directExit: true,
-        useConsumeKey: true,
-        lang: "fr",
-    });
-
+export function ListenerWallet({
+    params,
+}: { params: DisplayEmbededWalletParamsType }) {
     /**
      * Display the iframe
      */
@@ -36,18 +27,9 @@ export function ListenerWallet() {
 
     return (
         <>
-            <div className={styles.modalListener}>
-                <div className={styles.modalListener__content}>
-                    <p className={styles.modalListener__text}>
-                        Créez votre porte-monnaie avec Lancôme et recevez
-                        jusqu’à 200€ par ami parrainé
-                    </p>
-                    {link && (
-                        <RegularSsoButton
-                            link={link}
-                            text={"Je crée mon porte-monnaie"}
-                        />
-                    )}
+            <div className={styles.modalListenerWallet}>
+                <div className={styles.modalListenerWallet__content}>
+                    <CurrentEmbeddedViewComponent params={params} />
                 </div>
             </div>
             <Overlay
@@ -55,6 +37,64 @@ export function ListenerWallet() {
                     !value && onClose();
                 }}
             />
+        </>
+    );
+}
+
+/**
+ * Return the right inner component depending on the current session
+ * @constructor
+ */
+function CurrentEmbeddedViewComponent({
+    params,
+}: { params: DisplayEmbededWalletParamsType }) {
+    const session = jotaiStore.get(sessionAtom);
+
+    /**
+     * Return the right component depending on the session
+     */
+    return useMemo(() => {
+        if (session) {
+            return <LoggedInComponent />;
+        }
+
+        return <LoggedOutComponent params={params} />;
+    }, [session, params]);
+}
+
+/**
+ * View for the logged in user
+ * @constructor
+ */
+function LoggedInComponent() {
+    return (
+        <>
+            <p className={styles.modalListenerWallet__text}>Logged in</p>
+        </>
+    );
+}
+
+/**
+ * View for the logged out user
+ * @constructor
+ */
+function LoggedOutComponent({
+    params,
+}: { params: DisplayEmbededWalletParamsType }) {
+    const { metadata, loggedOut } = params;
+
+    return (
+        <>
+            {metadata?.logo && (
+                <img
+                    src={metadata.logo}
+                    className={styles.modalListenerWallet__logo}
+                    alt=""
+                />
+            )}
+            <p className={styles.modalListenerWallet__text}>
+                {loggedOut?.metadata?.text ?? "Logged out"}
+            </p>
         </>
     );
 }

@@ -1,4 +1,4 @@
-.modalListener {
+.modalListenerWallet {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -14,27 +14,6 @@
         #3e557e 100%
     );
     color: #1d1d1d;
-}
-
-.modalListener__content {
-    position: absolute;
-    opacity: 0;
-    padding: 28px;
-    animation: contentShow 250ms 400ms forwards cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes contentShow {
-    from {
-        opacity: 0;
-        position: static;
-        transform: translate(0%, 30%) scale(0.96);
-    }
-
-    to {
-        opacity: 1;
-        position: static;
-        transform: translate(0%, 0%) scale(1);
-    }
 }
 
 @keyframes expand-width {
@@ -55,7 +34,32 @@
     }
 }
 
-.modalListener__text {
+.modalListenerWallet__content {
+    position: absolute;
+    opacity: 0;
+    padding: 28px;
+    animation: contentShow 250ms 400ms forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes contentShow {
+    from {
+        opacity: 0;
+        position: static;
+        transform: translate(0%, 30%) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        position: static;
+        transform: translate(0%, 0%) scale(1);
+    }
+}
+
+.modalListenerWallet__logo {
+    max-width: 50%;
+}
+
+.modalListenerWallet__text {
     margin-bottom: 29px;
     font-size: 22px;
     font-weight: 600;

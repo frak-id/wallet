@@ -26,7 +26,10 @@ function modalWallet() {
         return;
     }
     safeVibrate();
-    displayEmbededWallet(window.FrakSetup.client, {});
+    displayEmbededWallet(
+        window.FrakSetup.client,
+        window.FrakSetup?.modalWalletConfig ?? {}
+    );
 }
 
 /**
