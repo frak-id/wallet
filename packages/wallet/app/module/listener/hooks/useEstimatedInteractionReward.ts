@@ -1,4 +1,5 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
+import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
@@ -50,10 +51,17 @@ export const estimatedInteractionRewardQuery = ({
  */
 export function useEstimatedInteractionReward({
     interaction,
+    resolvingContext,
 }: {
     interaction?: FullInteractionTypesKey;
+    resolvingContext?: IFrameResolvingContext;
 } = {}) {
-    const productId = useMemo(() => getIFrameResolvingContext()?.productId, []);
+    const productId = useMemo(
+        () =>
+            resolvingContext?.productId ??
+            getIFrameResolvingContext()?.productId,
+        [resolvingContext]
+    );
     const { data, ...query } = useQuery(
         estimatedInteractionRewardQuery({
             productId,

@@ -1,11 +1,11 @@
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { AccordionTransactions } from "@/module/listener/modal/component/Transaction/AccordionTransactions";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
-import { useModalTranslation } from "../../../hooks/useModalTranslation";
 
 /**
  * The component for the transaction step of a modal
@@ -19,7 +19,7 @@ export function TransactionModalStep({
     params: SendTransactionModalStepType["params"];
     onFinish: (result: SendTransactionModalStepType["returns"]) => void;
 }) {
-    const { t } = useModalTranslation();
+    const { t } = useListenerTranslation();
     const { sendTransaction, isPending, isError, error } = useSendTransaction({
         mutation: {
             // Link success and error hooks

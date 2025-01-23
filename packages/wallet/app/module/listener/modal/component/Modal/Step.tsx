@@ -5,6 +5,7 @@ import {
 } from "@/module/listener/modal/atoms/modalEvents";
 import { activeStepAtom } from "@/module/listener/modal/atoms/modalUtils";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAtomValue } from "jotai/index";
 import {
@@ -15,7 +16,6 @@ import {
     WalletMinimal,
 } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
-import { useModalTranslation } from "../../../hooks/useModalTranslation";
 
 /**
  * Get the right icon for the given step
@@ -50,7 +50,7 @@ function getStepIcon(step: DisplayedModalStep<AnyModalKey>) {
  * @constructor
  */
 export function ModalStepIndicator() {
-    const { t } = useModalTranslation();
+    const { t } = useListenerTranslation();
     const activeStep = useAtomValue(activeStepAtom);
     const currentSteps = useAtomValue(displayedRpcModalStepsAtom)?.steps;
 

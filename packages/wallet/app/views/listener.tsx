@@ -68,7 +68,6 @@ function ListenerContent() {
              * Listen request for the modal display request
              */
             frak_displayModal: (request, context, emitter) => {
-                setRequest({ type: "modal" });
                 return onDisplayModalRequest(request, context, emitter);
             },
 
@@ -86,7 +85,13 @@ function ListenerContent() {
              * When the display of the embeded wallet is requested
              */
             frak_displayEmbededWallet: async (request) => {
-                setRequest({ type: "embeded", params: request.params[0] });
+                setRequest({
+                    type: "embeded",
+                    params: request.params[0],
+                    i18n: {
+                        lang: request.params[0].metadata?.lang,
+                    },
+                });
             },
         });
 

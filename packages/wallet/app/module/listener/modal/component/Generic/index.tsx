@@ -1,10 +1,10 @@
 import { Markdown } from "@/module/common/component/Markdown";
 import { dismissModalBtnAtom } from "@/module/listener/modal/atoms/modalUtils";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useAtom } from "jotai";
-import { useModalTranslation } from "../../../hooks/useModalTranslation";
 
 export function MetadataInfo({
     metadata,
@@ -32,7 +32,7 @@ export function MetadataInfo({
  * A generic dismiss button, if possible with the current request
  */
 export function DismissButton() {
-    const { t } = useModalTranslation();
+    const { t } = useListenerTranslation();
     const [info, goToDismiss] = useAtom(dismissModalBtnAtom);
     // If not dismissible, or no dismiss step, return null
     if (!info) return null;

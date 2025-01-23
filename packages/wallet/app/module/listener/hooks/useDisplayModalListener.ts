@@ -17,6 +17,7 @@ import {
 import { jotaiStore } from "@module/atoms/store";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useCallback } from "react";
+import { useListenerUI } from "../providers/ListenerUiProvider";
 
 type OnDisplayModalRequest = IFrameRequestResolver<
     Extract<
@@ -29,55 +30,71 @@ type OnDisplayModalRequest = IFrameRequestResolver<
  * Hook used to listen to the display modal action
  */
 export function useDisplayModalListener(): OnDisplayModalRequest {
-    return useCallback(async (request, context, emitter) => {
-        // If no modal to display, early exit
-        const steps = request.params[0];
-        if (Object.keys(steps).length === 0) {
-            await emitter({
-                error: {
-                    code: RpcErrorCodes.invalidRequest,
-                    message: "No modals to display",
+    // Hook used to set the requested listener UI
+    const { setRequest } = useListenerUI();
+
+    return useCallback(
+        async (request, context, emitter) => {
+            // If no modal to display, early exit
+            const steps = request.params[0];
+            if (Object.keys(steps).length === 0) {
+                await emitter({
+                    error: {
+                        code: RpcErrorCodes.invalidRequest,
+                        message: "No modals to display",
+                    },
+                });
+                jotaiStore.set(clearRpcModalAtom);
+                return;
+            }
+
+            // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
+            const stepsPrepared = prepareInputStepsArray(
+                {
+                    appName: request.params[1],
+                    context,
+                    steps,
+                    metadata: request.params[2],
+                    emitter,
+                }.steps
+            );
+
+            // Build our initial result array
+            const { currentResult, currentStep } = filterStepsToDo({
+                stepsPrepared,
+            });
+
+            // Save the new modal
+            jotaiStore.set(setNewModalAtom, {
+                // Store the global request
+                request: {
+                    appName: request.params[1],
+                    context,
+                    steps,
+                    metadata: request.params[2],
+                    emitter,
+                },
+                // Current step + formatted steps
+                currentStep,
+                steps: stepsPrepared,
+                // Initial result if any
+                initialResult: currentResult as ModalRpcStepsResultType,
+            });
+
+            // Save it on the listener UI provider
+            setRequest({
+                type: "modal",
+                appName: request.params[1],
+                i18n: {
+                    lang: request.params[2]?.lang,
+                    context: steps?.final?.action?.key,
                 },
             });
-            jotaiStore.set(clearRpcModalAtom);
-            return;
-        }
 
-        // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
-        const stepsPrepared = prepareInputStepsArray(
-            {
-                appName: request.params[1],
-                context,
-                steps,
-                metadata: request.params[2],
-                emitter,
-            }.steps
-        );
-
-        // Build our initial result array
-        const { currentResult, currentStep } = filterStepsToDo({
-            stepsPrepared,
-        });
-
-        // Save the new modal
-        jotaiStore.set(setNewModalAtom, {
-            // Store the global request
-            request: {
-                appName: request.params[1],
-                context,
-                steps,
-                metadata: request.params[2],
-                emitter,
-            },
-            // Current step + formatted steps
-            currentStep,
-            steps: stepsPrepared,
-            // Initial result if any
-            initialResult: currentResult as ModalRpcStepsResultType,
-        });
-
-        trackModalDisplay(stepsPrepared, currentStep);
-    }, []);
+            trackModalDisplay(stepsPrepared, currentStep);
+        },
+        [setRequest]
+    );
 }
 
 /**

@@ -1,5 +1,6 @@
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
@@ -12,7 +13,6 @@ import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
 import { useEffect, useMemo, useRef } from "react";
 import { useAccount } from "wagmi";
-import { useModalTranslation } from "../../../hooks/useModalTranslation";
 import { modalDisplayedRequestAtom } from "../../atoms/modalEvents";
 
 export function FinalModalActionComponent({
@@ -24,7 +24,7 @@ export function FinalModalActionComponent({
     isSuccess: boolean;
     onFinish: (args: object) => void;
 }) {
-    const { t } = useModalTranslation();
+    const { t } = useListenerTranslation();
 
     if (action.key === "sharing") {
         return (
@@ -71,7 +71,7 @@ function SharingButtons({
 }) {
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
-    const { t } = useModalTranslation();
+    const { t } = useListenerTranslation();
     const pushInteraction = usePushInteraction();
     const isInteractionPushed = useRef(false);
 

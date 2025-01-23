@@ -1,4 +1,5 @@
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/core-sdk";
@@ -7,7 +8,6 @@ import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
-import { useModalTranslation } from "../../../hooks/useModalTranslation";
 
 /**
  * The component for the login step of a modal
@@ -23,7 +23,7 @@ export function OpenSessionModalStep({
     onFinish: (args: OpenInteractionSessionModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
-    const { t } = useModalTranslation();
+    const { t } = useListenerTranslation();
     const { metadata } = params;
     const { address } = useAccount();
     const {

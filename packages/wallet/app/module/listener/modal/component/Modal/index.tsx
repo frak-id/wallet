@@ -17,6 +17,7 @@ import { FinalModalStep } from "@/module/listener/modal/component/Final";
 import { LoginModalStep } from "@/module/listener/modal/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/modal/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/modal/component/Transaction";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { RpcErrorCodes } from "@frak-labs/core-sdk";
 import { LogoFrakWithName } from "@module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@module/atoms/store";
@@ -30,7 +31,6 @@ import {
     useEffect,
     useMemo,
 } from "react";
-import { useModalTranslation } from "../../../hooks/useModalTranslation";
 import { MetadataInfo } from "../Generic";
 import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
@@ -263,7 +263,7 @@ function ModalComponent({
  * Get the current modal metadata info component
  */
 function CurrentModalMetadataInfo() {
-    const { t, i18n } = useModalTranslation();
+    const { t, i18n } = useListenerTranslation();
     const modalSteps = useAtomValue(displayedRpcModalStepsAtom);
 
     // Extract step key and metadata
