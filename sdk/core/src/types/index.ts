@@ -31,7 +31,6 @@ export type {
 } from "./transport";
 export type {
     IFrameLifecycleEvent,
-    IFramePositions,
     ClientLifecycleEvent,
 } from "./lifecycle";
 export type { FrakWalletSdkConfig } from "./config";

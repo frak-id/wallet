@@ -1,5 +1,6 @@
+import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { onClientReady } from "../utils";
+import { onClientReady, safeVibrate } from "../utils";
 import GiftIcon from "./assets/gift.svg";
 
 /**
@@ -20,7 +21,12 @@ export type ButtonWalletProps = {
  * This function will open the wallet modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
  */
 function modalWallet() {
-    // TODO: Implement modal wallet
+    if (!window.FrakSetup?.client) {
+        console.error("Frak client not found");
+        return;
+    }
+    safeVibrate();
+    displayEmbededWallet(window.FrakSetup.client, {});
 }
 
 /**

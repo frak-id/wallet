@@ -64,3 +64,14 @@ export async function setupReferral(client: FrakClient) {
 export function getModalBuilderSteps() {
     return modalBuilderSteps;
 }
+
+/**
+ * Attempt to vibrate the device
+ */
+export function safeVibrate() {
+    if ("vibrate" in navigator) {
+        navigator.vibrate(200);
+    } else {
+        console.log("Vibration not supported");
+    }
+}

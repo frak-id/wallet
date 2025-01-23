@@ -1,22 +1,58 @@
 .modalListener {
-    background: radial-gradient(circle at center, #fff7c6, #927f0b) padding-box,
-        radial-gradient(circle at center, #fff7c6, #927f0b) border-box;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 20;
     border-radius: 25px;
-    border: 5px solid transparent;
-    height: 100%;
+    border: 1px solid #fff;
     text-align: center;
-}
-
-.modalListener__inner {
-    padding: 28px;
-    color: #1d1d1d;
+    animation: expand-width .3s forwards, expand-height .3s .3s forwards;
+    height: 48px;
     background: radial-gradient(
         75.96% 75.96% at 50.42% 24.04%,
-        #f2f2f2 24.74%,
+        #f2f2f2 20%,
         #3e557e 100%
     );
-    border-radius: 20px;
-    height: 100%;
+    color: #1d1d1d;
+}
+
+.modalListener__content {
+    position: absolute;
+    opacity: 0;
+    padding: 28px;
+    animation: contentShow 250ms 400ms forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes contentShow {
+    from {
+        opacity: 0;
+        position: static;
+        transform: translate(0%, 30%) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        position: static;
+        transform: translate(0%, 0%) scale(1);
+    }
+}
+
+@keyframes expand-width {
+    from {
+        width: 66px;
+    }
+    to {
+        width: calc(100% - 40px);
+    }
+}
+
+@keyframes expand-height {
+    from {
+        height: 48px;
+    }
+    to {
+        height: 337px;
+    }
 }
 
 .modalListener__text {
