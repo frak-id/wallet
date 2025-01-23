@@ -8,15 +8,15 @@ import {
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
-import { modalDisplayedRequestAtom } from "@/module/listener/atoms/modalEvents";
-import styles from "@/module/listener/component/Modal/index.module.css";
+import { modalDisplayedRequestAtom } from "@/module/listener/modal/atoms/modalEvents";
+import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import type { LoginModalStepType, SsoMetadata } from "@frak-labs/core-sdk";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useAtomValue } from "jotai/index";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { useModalTranslation } from "../../hooks/useModalTranslation";
+import { useModalTranslation } from "../../../hooks/useModalTranslation";
 import { DismissButton } from "../Generic";
 
 /**

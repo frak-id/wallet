@@ -3,8 +3,8 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import {
     type DisplayedModalStep,
     setNewModalAtom,
-} from "@/module/listener/atoms/modalEvents";
-import { clearRpcModalAtom } from "@/module/listener/atoms/modalUtils";
+} from "@/module/listener/modal/atoms/modalEvents";
+import { clearRpcModalAtom } from "@/module/listener/modal/atoms/modalUtils";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import {
     type ExtractedParametersFromRpc,

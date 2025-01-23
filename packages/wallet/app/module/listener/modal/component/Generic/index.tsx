@@ -1,10 +1,10 @@
 import { Markdown } from "@/module/common/component/Markdown";
-import { dismissModalBtnAtom } from "@/module/listener/atoms/modalUtils";
-import styles from "@/module/listener/component/Modal/index.module.css";
+import { dismissModalBtnAtom } from "@/module/listener/modal/atoms/modalUtils";
+import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useAtom } from "jotai";
-import { useModalTranslation } from "../../hooks/useModalTranslation";
+import { useModalTranslation } from "../../../hooks/useModalTranslation";
 
 export function MetadataInfo({
     metadata,

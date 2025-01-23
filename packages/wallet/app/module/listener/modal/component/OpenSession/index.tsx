@@ -1,4 +1,4 @@
-import styles from "@/module/listener/component/Modal/index.module.css";
+import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/core-sdk";
@@ -7,7 +7,7 @@ import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
-import { useModalTranslation } from "../../hooks/useModalTranslation";
+import { useModalTranslation } from "../../../hooks/useModalTranslation";
 
 /**
  * The component for the login step of a modal

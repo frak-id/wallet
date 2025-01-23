@@ -1,11 +1,11 @@
 import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
-import styles from "@/module/listener/component/Modal/index.module.css";
-import { AccordionTransactions } from "@/module/listener/component/Transaction/AccordionTransactions";
+import styles from "@/module/listener/modal/component/Modal/index.module.css";
+import { AccordionTransactions } from "@/module/listener/modal/component/Transaction/AccordionTransactions";
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
-import { useModalTranslation } from "../../hooks/useModalTranslation";
+import { useModalTranslation } from "../../../hooks/useModalTranslation";
 
 /**
  * The component for the transaction step of a modal

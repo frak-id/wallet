@@ -3,7 +3,7 @@ import type { TOptions } from "i18next";
 import { atom, useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { modalDisplayedRequestAtom } from "../atoms/modalEvents";
+import { modalDisplayedRequestAtom } from "../modal/atoms/modalEvents";
 
 /**
  * Simple atom for our base translation context

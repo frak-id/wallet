@@ -1,5 +1,5 @@
-import { ButtonAction } from "@/module/listener/component/ButtonAction";
-import styles from "@/module/listener/component/Modal/index.module.css";
+import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
+import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
@@ -12,8 +12,8 @@ import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
 import { useEffect, useMemo, useRef } from "react";
 import { useAccount } from "wagmi";
+import { useModalTranslation } from "../../../hooks/useModalTranslation";
 import { modalDisplayedRequestAtom } from "../../atoms/modalEvents";
-import { useModalTranslation } from "../../hooks/useModalTranslation";
 
 export function FinalModalActionComponent({
     action,

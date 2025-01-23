@@ -6,17 +6,17 @@ import {
     displayedRpcModalStepsAtom,
     modalDisplayedRequestAtom,
     modalRpcResultsAtom,
-} from "@/module/listener/atoms/modalEvents";
+} from "@/module/listener/modal/atoms/modalEvents";
 import {
     clearRpcModalAtom,
     currentDisplayedStepAtom,
     onFinishResultAtom,
-} from "@/module/listener/atoms/modalUtils";
-import { SiweAuthenticateModalStep } from "@/module/listener/component/Authenticate";
-import { FinalModalStep } from "@/module/listener/component/Final";
-import { LoginModalStep } from "@/module/listener/component/Login";
-import { OpenSessionModalStep } from "@/module/listener/component/OpenSession";
-import { TransactionModalStep } from "@/module/listener/component/Transaction";
+} from "@/module/listener/modal/atoms/modalUtils";
+import { SiweAuthenticateModalStep } from "@/module/listener/modal/component/Authenticate";
+import { FinalModalStep } from "@/module/listener/modal/component/Final";
+import { LoginModalStep } from "@/module/listener/modal/component/Login";
+import { OpenSessionModalStep } from "@/module/listener/modal/component/OpenSession";
+import { TransactionModalStep } from "@/module/listener/modal/component/Transaction";
 import { RpcErrorCodes } from "@frak-labs/core-sdk";
 import { LogoFrakWithName } from "@module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@module/atoms/store";
@@ -30,7 +30,7 @@ import {
     useEffect,
     useMemo,
 } from "react";
-import { useModalTranslation } from "../../hooks/useModalTranslation";
+import { useModalTranslation } from "../../../hooks/useModalTranslation";
 import { MetadataInfo } from "../Generic";
 import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";

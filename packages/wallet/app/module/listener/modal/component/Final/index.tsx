@@ -1,5 +1,5 @@
-import { isModalDismissedAtom } from "@/module/listener/atoms/modalUtils";
-import { FinalModalActionComponent } from "@/module/listener/component/Final/Action";
+import { isModalDismissedAtom } from "@/module/listener/modal/atoms/modalUtils";
+import { FinalModalActionComponent } from "@/module/listener/modal/component/Final/Action";
 import type { FinalModalStepType } from "@frak-labs/core-sdk";
 import { useAtomValue } from "jotai";
 

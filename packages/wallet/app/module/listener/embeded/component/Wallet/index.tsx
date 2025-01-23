@@ -1,6 +1,6 @@
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { useSsoLink } from "@/module/authentication/hook/useGetOpenSsoLink";
-import { RegularSsoButton } from "@/module/listener/component/Login";
+import { RegularSsoButton } from "@/module/listener/modal/component/Login";
 import { useEffect } from "react";
 import { keccak256, toHex } from "viem";
 import styles from "./index.module.css";

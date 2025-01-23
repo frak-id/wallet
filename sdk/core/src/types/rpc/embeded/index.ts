@@ -5,11 +5,11 @@ export type { EmbededViewAction } from "./loggedIn";
 export type { LoggedInEmbededView, LoggedOutEmbededView };
 
 /**
- * The params used to show the embeded wallet
+ * The params used to display the embeded wallet
  *
  * @group Embeded wallet
  */
-export type ShowEmbededWalletParamsType = {
+export type DisplayEmbededWalletParamsType = {
     /**
      * The embeded view to display once the user is logged in
      */

@@ -36,6 +36,11 @@ export type {
     SsoMetadata,
     OpenSsoParamsType,
     GetProductInformationReturnType,
+    // RPC Embeded wallet
+    DisplayEmbededWalletParamsType,
+    LoggedOutEmbededView,
+    LoggedInEmbededView,
+    EmbededViewAction,
     // RPC Modal generics
     ModalStepTypes,
     ModalRpcMetadata,

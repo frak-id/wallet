@@ -8,13 +8,13 @@ import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatus
 import { lazy, useEffect, useState } from "react";
 
 const modalImport = () =>
-    import("@/module/listener/component/Modal").then((module) => ({
+    import("@/module/listener/modal/component/Modal").then((module) => ({
         default: module.ListenerModal,
     }));
 const ListenerModal = lazy(modalImport);
 
 const walletImport = () =>
-    import("@/module/listener/component/Wallet").then((module) => ({
+    import("@/module/listener/embeded/component/Wallet").then((module) => ({
         default: module.ListenerWallet,
     }));
 const ListenerWallet = lazy(walletImport);
@@ -77,6 +77,13 @@ export default function Listener() {
              * Listen request for the product information
              */
             frak_getProductInformation: onGetProductInformation,
+
+            /**
+             * When the display of the embeded wallet is requested
+             */
+            frak_displayEmbededWallet: async () => {
+                // todo
+            },
         });
 
         // Set our new resolver
