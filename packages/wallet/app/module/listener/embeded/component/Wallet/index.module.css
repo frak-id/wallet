@@ -4,7 +4,7 @@
     right: 20px;
     z-index: 20;
     border-radius: 25px;
-    border: 1px solid #fff;
+    border: 2px solid #fff;
     text-align: center;
     animation: expand-width .3s forwards;
     min-height: 48px;
@@ -25,12 +25,16 @@
     }
 }
 
-.modalListenerWallet__content {
+.modalListenerWallet__inner {
     max-height: 0;
     opacity: 0;
     padding: 40px;
     overflow: hidden;
     animation: expand-height .3s .3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalListenerWallet__inner--loggedIn {
+    padding: 9px;
 }
 
 @keyframes expand-height {
@@ -46,9 +50,30 @@
     }
 }
 
+.modalListenerWallet__header {
+    position: relative;
+
+    & h1 {
+        display: flex;
+        justify-content: center;
+        margin: 0;
+    }
+}
+
+.modalListenerWallet__logoFrak {
+    position: absolute;
+    left: 0;
+    top: 8px;
+}
+
 .modalListenerWallet__logo {
     margin-bottom: 30px;
     max-width: 50%;
+}
+
+.modalListenerWallet__inner--loggedIn .modalListenerWallet__logo {
+    margin-bottom: 10px;
+    max-width: 30%;
 }
 
 .modalListenerWallet__text {
@@ -79,4 +104,37 @@
         cursor: not-allowed;
         opacity: 0.6;
     }
+}
+
+.balance {
+    color: var(--frak-color-grayText);
+}
+
+.balance__title {
+    display: inline;
+    position: relative;
+    font-size: 21px;
+    font-weight: 400;
+}
+
+.balance__status {
+    position: absolute;
+    bottom: 2px;
+    margin-left: 4px;
+    font-size: 11px;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.balance__amount {
+    font-size: 34px;
+    font-weight: 600;
+    /* box-shadow: 0px 4px 4px 0px #0000001a; */
+}
+
+.modalListenerWallet__actionButtons {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 100px 0 10px 0;
 }

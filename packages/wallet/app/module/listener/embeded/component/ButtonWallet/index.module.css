@@ -1,0 +1,44 @@
+.buttonContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    color: #ffffff;
+}
+
+.buttonContainer--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.button {
+    box-sizing: border-box;
+    padding: 0;
+    text-align: center;
+    cursor: pointer;
+    outline: none;
+    border-radius: 50%;
+    border: none;
+    width: 55px;
+    height: 55px;
+    backdrop-filter: blur(14px);
+}
+
+.button:disabled {
+    cursor: not-allowed;
+    background: #4c4c4c59;
+}
+
+.primary {
+    background: #00000059;
+    color: #ffffff;
+}
+
+.danger {
+    background: #ff000080;
+}
+
+.success {
+    background: #34ff3475;
+}
