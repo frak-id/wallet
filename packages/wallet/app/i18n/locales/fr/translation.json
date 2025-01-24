@@ -115,7 +115,7 @@
         "wallet": {
             "login": {
                 "default": {
-                    "text": "Créez votre porte-monnaie avec **{{ productName }}** et recevez jusqu’à **{{ estimatedReward }}€** par ami parrainé",
+                    "text": "Créez votre porte-monnaie avec **{{ productName }}** et recevez jusqu’à **{{ estimatedReward }}€** par ami(e) parrainé(e)",
                     "primaryAction": "Je crée mon porte-monnaie"
                 }
             }

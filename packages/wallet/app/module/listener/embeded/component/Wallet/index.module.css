@@ -6,8 +6,8 @@
     border-radius: 25px;
     border: 1px solid #fff;
     text-align: center;
-    animation: expand-width .3s forwards, expand-height .3s .3s forwards;
-    height: 48px;
+    animation: expand-width .3s forwards;
+    min-height: 48px;
     background: radial-gradient(
         75.96% 75.96% at 50.42% 24.04%,
         #f2f2f2 20%,
@@ -25,32 +25,23 @@
     }
 }
 
+.modalListenerWallet__content {
+    max-height: 0;
+    opacity: 0;
+    padding: 40px;
+    overflow: hidden;
+    animation: expand-height .3s .3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 @keyframes expand-height {
     from {
-        height: 48px;
-    }
-    to {
-        height: 337px;
-    }
-}
-
-.modalListenerWallet__content {
-    position: absolute;
-    opacity: 0;
-    padding: 28px;
-    animation: contentShow 250ms 400ms forwards cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes contentShow {
-    from {
         opacity: 0;
-        position: static;
+        max-height: 0;
         transform: translate(0%, 30%) scale(0.96);
     }
-
     to {
         opacity: 1;
-        position: static;
+        max-height: 500px;
         transform: translate(0%, 0%) scale(1);
     }
 }
@@ -62,6 +53,30 @@
 
 .modalListenerWallet__text {
     margin-bottom: 29px;
-    font-size: 22px;
+    font-size: 21px;
     font-weight: 600;
+}
+
+.modalListenerWallet__buttonPrimary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    border: 1px solid #ffffff;
+    padding: 9px;
+    border-radius: 11px;
+    cursor: pointer;
+    line-height: 24px;
+    text-align: center;
+    background: var(--frak-header-background-color);
+    backdrop-filter: blur(13px);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
 }

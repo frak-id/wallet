@@ -1,10 +1,13 @@
+import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { Markdown } from "@/module/common/component/Markdown";
+import { SsoButton } from "@/module/listener/component/SsoButton";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import type { DisplayEmbededWalletParamsType } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { Overlay } from "@module/component/Overlay";
+import { prefixWalletCss } from "@module/utils/prefixWalletCss";
 import { useCallback, useEffect, useMemo } from "react";
 import styles from "./index.module.css";
 
@@ -84,6 +87,7 @@ function LoggedInComponent() {
 function LoggedOutComponent({ params, appName }: CommonProps) {
     const { metadata, loggedOut } = params;
     const { t } = useListenerTranslation();
+    const productId = getIFrameResolvingContext()?.productId;
 
     return (
         <>
@@ -97,11 +101,23 @@ function LoggedOutComponent({ params, appName }: CommonProps) {
             <div className={styles.modalListenerWallet__text}>
                 <Markdown
                     md={loggedOut?.metadata?.text}
-                    defaultTxt={t("sdk.wallet.login.default.text", {
-                        productName: appName,
-                    })}
+                    defaultTxt={t("sdk.wallet.login.default.text")}
                 />
             </div>
+            {productId && (
+                <SsoButton
+                    appName={appName}
+                    productId={productId}
+                    ssoMetadata={{
+                        logoUrl: metadata?.logo,
+                        homepageLink: metadata?.homepageLink,
+                    }}
+                    lang={metadata?.lang}
+                    text={loggedOut?.metadata?.buttonText}
+                    defaultText={t("sdk.wallet.login.default.primaryAction")}
+                    className={`${styles.modalListenerWallet__buttonPrimary} ${prefixWalletCss("button-primary")}`}
+                />
+            )}
         </>
     );
 }
