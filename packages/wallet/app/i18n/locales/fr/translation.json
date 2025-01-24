@@ -111,6 +111,14 @@
                     "title": "Authentification"
                 }
             }
+        },
+        "wallet": {
+            "login": {
+                "default": {
+                    "text": "Créez votre porte-monnaie avec **{{ productName }}** et recevez jusqu’à **{{ estimatedReward }}€** par ami parrainé",
+                    "primaryAction": "Je crée mon porte-monnaie"
+                }
+            }
         }
     },
     "sharing": {

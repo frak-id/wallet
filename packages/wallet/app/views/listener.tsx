@@ -88,6 +88,7 @@ function ListenerContent() {
                 setRequest({
                     type: "embeded",
                     params: request.params[0],
+                    appName: request.params[1],
                     i18n: {
                         lang: request.params[0].metadata?.lang,
                     },

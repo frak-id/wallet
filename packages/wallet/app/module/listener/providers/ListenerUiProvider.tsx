@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useEstimatedInteractionReward } from "../hooks/useEstimatedInteractionReward";
 
 type GenericWalletUiType = {
-    appName?: string;
+    appName: string;
     i18n?: {
         lang?: "en" | "fr";
         context?: string;

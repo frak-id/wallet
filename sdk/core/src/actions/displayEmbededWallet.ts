@@ -11,6 +11,6 @@ export async function displayEmbededWallet(
 ): Promise<void> {
     await client.request({
         method: "frak_displayEmbededWallet",
-        params: [params],
+        params: [params, client.config.metadata.name],
     });
 }

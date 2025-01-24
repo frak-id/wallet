@@ -1,14 +1,19 @@
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sessionAtom } from "@/module/common/atoms/session";
+import { Markdown } from "@/module/common/component/Markdown";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import type { DisplayEmbededWalletParamsType } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { Overlay } from "@module/component/Overlay";
 import { useCallback, useEffect, useMemo } from "react";
 import styles from "./index.module.css";
 
-export function ListenerWallet({
-    params,
-}: { params: DisplayEmbededWalletParamsType }) {
+type CommonProps = {
+    params: DisplayEmbededWalletParamsType;
+    appName: string;
+};
+
+export function ListenerWallet(props: CommonProps) {
     /**
      * Display the iframe
      */
@@ -29,7 +34,7 @@ export function ListenerWallet({
         <>
             <div className={styles.modalListenerWallet}>
                 <div className={styles.modalListenerWallet__content}>
-                    <CurrentEmbeddedViewComponent params={params} />
+                    <CurrentEmbeddedViewComponent {...props} />
                 </div>
             </div>
             <Overlay
@@ -45,9 +50,7 @@ export function ListenerWallet({
  * Return the right inner component depending on the current session
  * @constructor
  */
-function CurrentEmbeddedViewComponent({
-    params,
-}: { params: DisplayEmbededWalletParamsType }) {
+function CurrentEmbeddedViewComponent(props: CommonProps) {
     const session = jotaiStore.get(sessionAtom);
 
     /**
@@ -58,8 +61,8 @@ function CurrentEmbeddedViewComponent({
             return <LoggedInComponent />;
         }
 
-        return <LoggedOutComponent params={params} />;
-    }, [session, params]);
+        return <LoggedOutComponent {...props} />;
+    }, [session, props]);
 }
 
 /**
@@ -78,10 +81,9 @@ function LoggedInComponent() {
  * View for the logged out user
  * @constructor
  */
-function LoggedOutComponent({
-    params,
-}: { params: DisplayEmbededWalletParamsType }) {
+function LoggedOutComponent({ params, appName }: CommonProps) {
     const { metadata, loggedOut } = params;
+    const { t } = useListenerTranslation();
 
     return (
         <>
@@ -92,9 +94,14 @@ function LoggedOutComponent({
                     alt=""
                 />
             )}
-            <p className={styles.modalListenerWallet__text}>
-                {loggedOut?.metadata?.text ?? "Logged out"}
-            </p>
+            <div className={styles.modalListenerWallet__text}>
+                <Markdown
+                    md={loggedOut?.metadata?.text}
+                    defaultTxt={t("sdk.wallet.login.default.text", {
+                        productName: appName,
+                    })}
+                />
+            </div>
         </>
     );
 }

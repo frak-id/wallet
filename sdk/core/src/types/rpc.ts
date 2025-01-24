@@ -109,7 +109,7 @@ export type IFrameRpcSchema = [
      */
     {
         Method: "frak_displayEmbededWallet";
-        Parameters: [DisplayEmbededWalletParamsType];
+        Parameters: [DisplayEmbededWalletParamsType, name: string];
         ReturnType: undefined;
     },
 ];

@@ -114,6 +114,14 @@ interface Resources {
                     };
                 };
             };
+            wallet: {
+                login: {
+                    default: {
+                        text: "Create your wallet with **{{ productName }}** and receive up to **{{ estimatedReward }}€** per referred friend";
+                        primaryAction: "I create my wallet";
+                    };
+                };
+            };
         };
         sharing: {
             btn: {
@@ -143,6 +151,7 @@ interface Resources {
                 READ_ARTICLE: "Read article";
                 REFERRED: "Referred";
                 WEBSHOP_OPENNED: "Opened webshop";
+                CUSTOMER_MEETING: "Appointment in store";
             };
             invite: {
                 title: "Invite friends, earn $5";
