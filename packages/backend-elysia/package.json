@@ -31,7 +31,7 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "@simplewebauthn/server": "^13.1.0",
-    "@sinclair/typebox": "0.34.14",
+    "@sinclair/typebox": "0.34.13",
     "@tusbar/cache-control": "^1.0.2",
     "async-lz-string": "^1.1.0",
     "async-mutex": "^0.5.0",
