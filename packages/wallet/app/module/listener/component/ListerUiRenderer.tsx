@@ -60,5 +60,10 @@ export function ListenerUiRenderer() {
     /**
      * If the request is a modal, display it
      */
-    return <ListenerModal />;
+    return (
+        <ListenerModal
+            metadata={currentRequest.metadata}
+            emitter={currentRequest.emitter}
+        />
+    );
 }

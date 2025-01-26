@@ -66,12 +66,6 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
 
             // Save the new modal
             jotaiStore.set(setNewModalAtom, {
-                // Store the global request
-                request: {
-                    steps,
-                    metadata: request.params[2],
-                    emitter,
-                },
                 // Current step + formatted steps
                 currentStep,
                 steps: stepsPrepared,
@@ -82,6 +76,9 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             // Save it on the listener UI provider
             setRequest({
                 type: "modal",
+                steps,
+                metadata: request.params[2],
+                emitter,
                 appName: request.params[1],
                 i18n: {
                     lang: request.params[2]?.lang,

@@ -1,10 +1,7 @@
-import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import {
-    type ModalDisplayedRequest,
     displayedRpcModalStepsAtom,
-    modalDisplayedRequestAtom,
     modalRpcResultsAtom,
 } from "@/module/listener/modal/atoms/modalEvents";
 import {
@@ -18,6 +15,7 @@ import { LoginModalStep } from "@/module/listener/modal/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/modal/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/modal/component/Transaction";
 import {
+    type ModalUiType,
     useListenerTranslation,
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
@@ -39,50 +37,28 @@ import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
 
 /**
- * Display the current wallet connect modal
- * @constructor
- */
-export function ListenerModal() {
-    /**
-     * The current request that is being displayed
-     */
-    const currentRequest = useAtomValue(modalDisplayedRequestAtom);
-
-    // If we don't have a modal, do nothing
-    if (!currentRequest) return null;
-
-    return <ListenerModalDialog currentRequest={currentRequest} />;
-}
-
-/**
  * Display the given request in a modal
- * @param currentRequest
- * @constructor
  */
-function ListenerModalDialog({
-    currentRequest,
-}: { currentRequest: ModalDisplayedRequest }) {
-    /**
-     * Display the iframe
-     */
-    useEffect(() => {
-        emitLifecycleEvent({ iframeLifecycle: "show" });
-    }, []);
+export function ListenerModal({
+    metadata,
+    emitter,
+}: { metadata: ModalUiType["metadata"]; emitter: ModalUiType["emitter"] }) {
+    const { clearRequest } = useListenerUI();
 
     /**
      * Method to close the modal
      */
     const onClose = useCallback(() => {
-        emitLifecycleEvent({ iframeLifecycle: "hide" });
+        clearRequest();
         jotaiStore.set(clearRpcModalAtom);
-    }, []);
+    }, [clearRequest]);
 
     /**
      * Method to close the modal
      */
     const onError = useCallback(
         (reason?: string, code: number = RpcErrorCodes.serverError) => {
-            currentRequest.emitter({
+            emitter({
                 error: {
                     code,
                     message:
@@ -92,7 +68,7 @@ function ListenerModalDialog({
             });
             onClose();
         },
-        [onClose, currentRequest]
+        [onClose, emitter]
     );
 
     /**
@@ -103,11 +79,11 @@ function ListenerModalDialog({
         if (!onFinishResult) return;
 
         // Emit the result and exit
-        currentRequest.emitter({
+        emitter({
             result: onFinishResult,
         });
         onClose();
-    }, [onFinishResult, currentRequest.emitter, onClose]);
+    }, [onFinishResult, emitter, onClose]);
 
     /**
      * When the modal visibility changes
@@ -137,12 +113,12 @@ function ListenerModalDialog({
             }
 
             // If every steps completed, return the result
-            currentRequest.emitter({
+            emitter({
                 result: results,
             });
             onClose();
         },
-        [currentRequest, onClose, onError]
+        [emitter, onClose, onError]
     );
 
     /**
@@ -150,8 +126,8 @@ function ListenerModalDialog({
      */
     const { titleComponent, icon, footer, context } = useMemo(() => {
         // Build the title component we will display
-        const titleComponent = currentRequest.metadata?.header?.title ? (
-            <>{currentRequest.metadata.header.title}</>
+        const titleComponent = metadata?.header?.title ? (
+            <>{metadata.header.title}</>
         ) : (
             <div />
         );
@@ -165,7 +141,7 @@ function ListenerModalDialog({
         );
 
         // The icon path
-        const iconPath = currentRequest.metadata?.header?.icon;
+        const iconPath = metadata?.header?.icon;
 
         // Build the header icon component (only if we got an icon)
         const icon = iconPath ? (
@@ -185,12 +161,12 @@ function ListenerModalDialog({
         );
 
         return {
-            context: currentRequest?.metadata?.context,
+            context: metadata?.context,
             titleComponent,
             footer,
             icon,
         };
-    }, [currentRequest?.metadata]);
+    }, [metadata]);
 
     return (
         <ModalComponent

@@ -1,6 +1,13 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
-import type { DisplayEmbededWalletParamsType } from "@frak-labs/core-sdk";
+import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
+import type {
+    DisplayEmbededWalletParamsType,
+    IFrameRpcSchema,
+    ModalRpcMetadata,
+    ModalRpcStepsInput,
+    RpcResponse,
+} from "@frak-labs/core-sdk";
 import type { TOptions, i18n } from "i18next";
 import {
     type PropsWithChildren,
@@ -34,8 +41,13 @@ type EmbededWalletUiType = {
  * Type for the modal ui type
  *  - todo: Should it contain same stuff as the atom? Like prepared steps etc?
  */
-type ModalUiType = {
+export type ModalUiType = {
     type: "modal";
+    metadata?: ModalRpcMetadata;
+    steps: ModalRpcStepsInput;
+    emitter: (
+        response: RpcResponse<IFrameRpcSchema, "frak_displayModal">
+    ) => Promise<void>;
 };
 
 type UIRequest = (EmbededWalletUiType | ModalUiType) & GenericWalletUiType;
@@ -46,6 +58,7 @@ type UIContext = {
     setRequest: (request: UIRequest | undefined) => void;
     clearRequest: () => void;
     translation: {
+        lang?: "en" | "fr";
         t: (key: string, options?: TOptions) => string;
         i18n: i18n;
     };
@@ -76,9 +89,11 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 
     const setRequest = useCallback((request: UIRequest | undefined) => {
         setCurrentRequest(request);
+        emitLifecycleEvent({ iframeLifecycle: "show" });
     }, []);
 
     const clearRequest = useCallback(() => {
+        emitLifecycleEvent({ iframeLifecycle: "hide" });
         setCurrentRequest(undefined);
     }, []);
 
@@ -113,7 +128,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 ...options,
                 estimatedReward,
             });
-        return { i18n, t };
+        return { lang: currentRequest?.i18n?.lang, i18n, t };
     }, [currentRequest, resolvingContext, estimatedReward, initialI18n]);
 
     return (
@@ -134,7 +149,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 /**
  * Access the top level listener UI context
  */
-export const useListenerUI = () => {
+export function useListenerUI() {
     const context = useContext(ListenerUiContext);
     if (!context) {
         throw new Error(
@@ -147,9 +162,12 @@ export const useListenerUI = () => {
     return context as Omit<UIContext, "resolvingContext"> & {
         resolvingContext: IFrameResolvingContext;
     };
-};
+}
 
-export const useListenerWithRequestUI = () => {
+/**
+ * Custom hook to get the listener ui context when a request is present
+ */
+export function useListenerWithRequestUI() {
     const uiContext = useListenerUI();
     if (!uiContext.currentRequest) {
         throw new Error(
@@ -160,19 +178,28 @@ export const useListenerWithRequestUI = () => {
         UIContext,
         "resolvingContext" | "currentRequest"
     > & { resolvingContext: IFrameResolvingContext; currentRequest: UIRequest };
-};
+}
 
-export const useModalListenerUI = () => {
+/**
+ * Custom hook to get the listener ui context only when displaying a modal
+ */
+export function useModalListenerUI() {
     const uiContext = useListenerUI();
     if (uiContext.currentRequest?.type !== "modal") {
         throw new Error(
             "useModalListenerUI must be used within a modal displayed UI"
         );
     }
-    return uiContext;
-};
+    return uiContext as Omit<
+        UIContext,
+        "resolvingContext" | "currentRequest"
+    > & {
+        resolvingContext: IFrameResolvingContext;
+        currentRequest: ModalUiType;
+    };
+}
 
-export const useListenerTranslation = () => {
-    const { translation } = useListenerUI();
-    return translation;
-};
+/**
+ * Custom hooks to get only the translation context
+ */
+export const useListenerTranslation = () => useListenerUI().translation;

@@ -1,30 +1,8 @@
 import type {
-    IFrameRpcSchema,
-    ModalRpcMetadata,
-    ModalRpcStepsInput,
     ModalRpcStepsResultType,
     ModalStepTypes,
-    RpcResponse,
 } from "@frak-labs/core-sdk";
 import { atom } from "jotai";
-
-/**
- * Top level atom storing the current received request
- */
-export type ModalDisplayedRequest = {
-    steps: ModalRpcStepsInput;
-    metadata?: ModalRpcMetadata;
-    emitter: (
-        response: RpcResponse<IFrameRpcSchema, "frak_displayModal">
-    ) => Promise<void>;
-};
-
-/**
- * The currently displayed listener request
- */
-export const modalDisplayedRequestAtom = atom<ModalDisplayedRequest | null>(
-    null
-);
 
 export type AnyModalKey = ModalStepTypes["key"];
 
@@ -74,19 +52,15 @@ export const setNewModalAtom = atom(
         get,
         set,
         {
-            request,
             currentStep,
             initialResult,
             steps,
         }: {
-            request: ModalDisplayedRequest;
             currentStep: number;
             initialResult: ModalRpcStepsResultType;
             steps: Omit<DisplayedModalStep<AnyModalKey>, "onResponse">[];
         }
     ) => {
-        // Store the request
-        set(modalDisplayedRequestAtom, request);
         // Store the initial result
         set(modalRpcResultsAtom, initialResult);
 

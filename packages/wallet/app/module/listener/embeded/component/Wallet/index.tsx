@@ -1,10 +1,12 @@
 import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
-import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { Markdown } from "@/module/common/component/Markdown";
 import { SsoButton } from "@/module/listener/component/SsoButton";
 import { ButtonWallet } from "@/module/listener/embeded/component/ButtonWallet";
-import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
+import {
+    useListenerTranslation,
+    useListenerUI,
+} from "@/module/listener/providers/ListenerUiProvider";
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import type { DisplayEmbededWalletParamsType } from "@frak-labs/core-sdk";
 import { Copy } from "@module/asset/icons/Copy";
@@ -15,7 +17,6 @@ import { jotaiStore } from "@module/atoms/store";
 import { Overlay } from "@module/component/Overlay";
 import { prefixWalletCss } from "@module/utils/prefixWalletCss";
 import { cx } from "class-variance-authority";
-import { useCallback, useEffect } from "react";
 import styles from "./index.module.css";
 
 type CommonProps = {
@@ -23,22 +24,7 @@ type CommonProps = {
 };
 
 export function ListenerWallet(props: CommonProps) {
-    /**
-     * Display the iframe
-     */
-    useEffect(() => {
-        emitLifecycleEvent({
-            iframeLifecycle: "show",
-        });
-    }, []);
-
-    /**
-     * Method to close the modal
-     */
-    const onClose = useCallback(() => {
-        emitLifecycleEvent({ iframeLifecycle: "hide" });
-    }, []);
-
+    const { clearRequest } = useListenerUI();
     return (
         <>
             <div className={styles.modalListenerWallet}>
@@ -46,7 +32,7 @@ export function ListenerWallet(props: CommonProps) {
             </div>
             <Overlay
                 onOpenChange={(value) => {
-                    !value && onClose();
+                    !value && clearRequest();
                 }}
             />
         </>
@@ -172,7 +158,6 @@ function LoggedOutComponent({ params }: CommonProps) {
                         logoUrl: metadata?.logo,
                         homepageLink: metadata?.homepageLink,
                     }}
-                    lang={metadata?.lang}
                     text={loggedOut?.metadata?.buttonText}
                     defaultText={t("sdk.wallet.login.default.primaryAction")}
                     className={`${styles.modalListenerWallet__buttonPrimary} ${prefixWalletCss("button-primary")}`}

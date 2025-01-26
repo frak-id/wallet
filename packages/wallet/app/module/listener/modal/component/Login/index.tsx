@@ -3,7 +3,6 @@ import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { SsoButton } from "@/module/listener/component/SsoButton";
-import { modalDisplayedRequestAtom } from "@/module/listener/modal/atoms/modalEvents";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
@@ -43,9 +42,6 @@ export function LoginModalStep({
 
     const isWebAuthnSupported = useIsWebAuthNSupported();
 
-    // Target language
-    const lang = useAtomValue(modalDisplayedRequestAtom)?.metadata?.lang;
-
     /**
      * Listen to the session status, and exit directly after a session is set in the storage
      *  - Will be triggered if the user goes through the external registration process
@@ -66,7 +62,6 @@ export function LoginModalStep({
                         <SsoButton
                             productId={context.productId}
                             ssoMetadata={ssoMetadata ?? {}}
-                            lang={lang}
                             text={metadata?.primaryActionText}
                             defaultText={t(
                                 "sdk.modal.login.default.primaryAction"

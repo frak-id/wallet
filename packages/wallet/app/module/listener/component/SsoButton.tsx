@@ -26,19 +26,18 @@ export function SsoButton({
     ssoMetadata,
     text,
     defaultText,
-    lang,
     className,
 }: {
     productId: Hex;
     ssoMetadata: SsoMetadata;
     text?: string;
     defaultText?: string;
-    lang?: "en" | "fr";
     className?: string;
 }) {
     // Get the current listener context (with a request)
     const {
         currentRequest: { appName },
+        translation: { lang },
     } = useListenerWithRequestUI();
 
     // Get the link to use with the SSO
