@@ -8,6 +8,7 @@ import type { SsoMetadata } from "@frak-labs/core-sdk";
 import { trackEvent } from "@module/utils/trackEvent";
 import { type ReactNode, useState } from "react";
 import type { Hex } from "viem";
+import { useListenerWithRequestUI } from "../providers/ListenerUiProvider";
 
 /**
  * Button used to launch an SSO registration
@@ -21,7 +22,6 @@ import type { Hex } from "viem";
  * @constructor
  */
 export function SsoButton({
-    appName,
     productId,
     ssoMetadata,
     text,
@@ -29,7 +29,6 @@ export function SsoButton({
     lang,
     className,
 }: {
-    appName: string;
     productId: Hex;
     ssoMetadata: SsoMetadata;
     text?: string;
@@ -37,6 +36,11 @@ export function SsoButton({
     lang?: "en" | "fr";
     className?: string;
 }) {
+    // Get the current listener context (with a request)
+    const {
+        currentRequest: { appName },
+    } = useListenerWithRequestUI();
+
     // Get the link to use with the SSO
     const { link, trackingId } = useSsoLink({
         productId,

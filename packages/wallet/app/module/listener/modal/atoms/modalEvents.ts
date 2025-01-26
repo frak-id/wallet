@@ -1,4 +1,3 @@
-import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import type {
     IFrameRpcSchema,
     ModalRpcMetadata,
@@ -13,8 +12,6 @@ import { atom } from "jotai";
  * Top level atom storing the current received request
  */
 export type ModalDisplayedRequest = {
-    appName: string;
-    context: IFrameResolvingContext;
     steps: ModalRpcStepsInput;
     metadata?: ModalRpcMetadata;
     emitter: (

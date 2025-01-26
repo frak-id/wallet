@@ -54,12 +54,7 @@ export function ListenerUiRenderer() {
      * If the request is an embeded wallet, display it
      */
     if (currentRequest.type === "embeded") {
-        return (
-            <ListenerWallet
-                params={currentRequest.params}
-                appName={currentRequest.appName}
-            />
-        );
+        return <ListenerWallet params={currentRequest.params} />;
     }
 
     /**

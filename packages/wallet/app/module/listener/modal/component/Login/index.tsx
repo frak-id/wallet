@@ -20,12 +20,10 @@ import { DismissButton } from "../Generic";
  * @constructor
  */
 export function LoginModalStep({
-    appName,
     context,
     params,
     onFinish,
 }: {
-    appName: string;
     context: IFrameResolvingContext;
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
@@ -66,7 +64,6 @@ export function LoginModalStep({
                 {allowSso && (
                     <div>
                         <SsoButton
-                            appName={appName}
                             productId={context.productId}
                             ssoMetadata={ssoMetadata ?? {}}
                             lang={lang}

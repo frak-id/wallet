@@ -1,3 +1,4 @@
+import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import type { DisplayEmbededWalletParamsType } from "@frak-labs/core-sdk";
 import type { TOptions, i18n } from "i18next";
@@ -19,6 +20,7 @@ type GenericWalletUiType = {
         context?: string;
     };
 };
+
 /**
  * Type for the embeded wallet ui type
  *  - todo: Maybe some precheck hooks, or other stuff to store here? Like which view to display (loggedOut or loggedIn?)
@@ -38,21 +40,23 @@ type ModalUiType = {
 
 type UIRequest = (EmbededWalletUiType | ModalUiType) & GenericWalletUiType;
 
+type UIContext = {
+    resolvingContext: IFrameResolvingContext | undefined;
+    currentRequest: UIRequest | undefined;
+    setRequest: (request: UIRequest | undefined) => void;
+    clearRequest: () => void;
+    translation: {
+        t: (key: string, options?: TOptions) => string;
+        i18n: i18n;
+    };
+};
+
 /**
  * Context for the different type of UI we can display
  */
-export const ListenerUiContext = createContext<
-    | {
-          currentRequest: UIRequest | undefined;
-          setRequest: (request: UIRequest | undefined) => void;
-          clearRequest: () => void;
-          translation: {
-              t: (key: string, options?: TOptions) => string;
-              i18n: i18n;
-          };
-      }
-    | undefined
->(undefined);
+export const ListenerUiContext = createContext<UIContext | undefined>(
+    undefined
+);
 
 /**
  * Provider for the listener UI
@@ -114,7 +118,13 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 
     return (
         <ListenerUiContext.Provider
-            value={{ currentRequest, setRequest, clearRequest, translation }}
+            value={{
+                resolvingContext,
+                currentRequest,
+                setRequest,
+                clearRequest,
+                translation,
+            }}
         >
             {children}
         </ListenerUiContext.Provider>
@@ -131,7 +141,35 @@ export const useListenerUI = () => {
             "useListenerUI must be used within a ListenerUiContext"
         );
     }
-    return context;
+    if (!context.resolvingContext) {
+        throw new Error("useListenerUI must be used within an iframe");
+    }
+    return context as Omit<UIContext, "resolvingContext"> & {
+        resolvingContext: IFrameResolvingContext;
+    };
+};
+
+export const useListenerWithRequestUI = () => {
+    const uiContext = useListenerUI();
+    if (!uiContext.currentRequest) {
+        throw new Error(
+            "uselListenerWithReauestUI must be used with a current request"
+        );
+    }
+    return uiContext as Omit<
+        UIContext,
+        "resolvingContext" | "currentRequest"
+    > & { resolvingContext: IFrameResolvingContext; currentRequest: UIRequest };
+};
+
+export const useModalListenerUI = () => {
+    const uiContext = useListenerUI();
+    if (uiContext.currentRequest?.type !== "modal") {
+        throw new Error(
+            "useModalListenerUI must be used within a modal displayed UI"
+        );
+    }
+    return uiContext;
 };
 
 export const useListenerTranslation = () => {

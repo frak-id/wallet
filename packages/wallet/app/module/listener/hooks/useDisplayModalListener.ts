@@ -68,8 +68,6 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             jotaiStore.set(setNewModalAtom, {
                 // Store the global request
                 request: {
-                    appName: request.params[1],
-                    context,
                     steps,
                     metadata: request.params[2],
                     emitter,

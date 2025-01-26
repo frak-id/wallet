@@ -20,7 +20,6 @@ import styles from "./index.module.css";
 
 type CommonProps = {
     params: DisplayEmbededWalletParamsType;
-    appName: string;
 };
 
 export function ListenerWallet(props: CommonProps) {
@@ -153,7 +152,7 @@ function ActionButtons() {
  * View for the logged out user
  * @constructor
  */
-function LoggedOutComponent({ params, appName }: CommonProps) {
+function LoggedOutComponent({ params }: CommonProps) {
     const { metadata, loggedOut } = params;
     const { t } = useListenerTranslation();
     const productId = getIFrameResolvingContext()?.productId;
@@ -168,7 +167,6 @@ function LoggedOutComponent({ params, appName }: CommonProps) {
             </div>
             {productId && (
                 <SsoButton
-                    appName={appName}
                     productId={productId}
                     ssoMetadata={{
                         logoUrl: metadata?.logo,

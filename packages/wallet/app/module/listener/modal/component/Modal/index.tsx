@@ -17,7 +17,10 @@ import { FinalModalStep } from "@/module/listener/modal/component/Final";
 import { LoginModalStep } from "@/module/listener/modal/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/modal/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/modal/component/Transaction";
-import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
+import {
+    useListenerTranslation,
+    useListenerUI,
+} from "@/module/listener/providers/ListenerUiProvider";
 import { RpcErrorCodes } from "@frak-labs/core-sdk";
 import { LogoFrakWithName } from "@module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@module/atoms/store";
@@ -204,10 +207,7 @@ function ListenerModalDialog({
                 )}
                 <CurrentModalMetadataInfo />
                 <ModalStepIndicator />
-                <CurrentModalStepComponent
-                    currentRequest={currentRequest}
-                    onError={onError}
-                />
+                <CurrentModalStepComponent onError={onError} />
                 {footer}
             </>
         </ModalComponent>
@@ -316,11 +316,10 @@ function CurrentModalMetadataInfo() {
  */
 function CurrentModalStepComponent({
     onError,
-    currentRequest,
 }: {
     onError: (reason?: string) => void;
-    currentRequest: ModalDisplayedRequest;
 }) {
+    const { resolvingContext } = useListenerUI();
     const currentStep = useAtomValue(currentDisplayedStepAtom);
 
     /**
@@ -335,8 +334,7 @@ function CurrentModalStepComponent({
             case "login":
                 return (
                     <LoginModalStep
-                        appName={currentRequest.appName}
-                        context={currentRequest.context}
+                        context={resolvingContext}
                         params={currentStep.params}
                         onFinish={currentStep.onResponse}
                     />
@@ -373,5 +371,5 @@ function CurrentModalStepComponent({
             default:
                 return <>Can't handle {currentStep} yet</>;
         }
-    }, [onError, currentRequest.context, currentRequest.appName, currentStep]);
+    }, [onError, resolvingContext, currentStep]);
 }

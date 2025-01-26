@@ -1,10 +1,12 @@
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
-import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
+import {
+    useListenerTranslation,
+    useListenerUI,
+} from "@/module/listener/providers/ListenerUiProvider";
 import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
-import { jotaiStore } from "@module/atoms/store";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
@@ -13,7 +15,6 @@ import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
 import { useEffect, useMemo, useRef } from "react";
 import { useAccount } from "wagmi";
-import { modalDisplayedRequestAtom } from "../../atoms/modalEvents";
 
 export function FinalModalActionComponent({
     action,
@@ -69,6 +70,7 @@ function SharingButtons({
     popupTitle?: string;
     text?: string;
 }) {
+    const { resolvingContext } = useListenerUI();
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
@@ -134,24 +136,26 @@ function SharingButtons({
         if (!(copied || shareResult)) return;
         if (isInteractionPushed.current) return;
 
-        // Get the current modal metadata
-        const metadata = jotaiStore.get(modalDisplayedRequestAtom);
-        if (!metadata) return;
-
         // Mark it at done to ensure we don't do it twice
         isInteractionPushed.current = true;
 
         // Send the referral link created event
         console.log("Pushing the referral link created event", {
-            productId: metadata.context.productId,
+            productId: resolvingContext.productId,
         });
         pushInteraction({
-            productId: metadata.context.productId,
+            productId: resolvingContext.productId,
             interaction: ReferralInteractionEncoder.createLink(),
         }).then((result) => {
             console.log("Referral link created event pushed", result);
         });
-    }, [isModalSuccess, copied, shareResult, pushInteraction]);
+    }, [
+        resolvingContext,
+        isModalSuccess,
+        copied,
+        shareResult,
+        pushInteraction,
+    ]);
 
     return (
         <div className={styles.modalListener__sharingButtons}>
