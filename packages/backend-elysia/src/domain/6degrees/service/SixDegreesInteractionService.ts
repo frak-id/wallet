@@ -1,17 +1,35 @@
 import { interactionTypes, productTypes } from "@frak-labs/core-sdk";
 import type { InteractionData } from "domain/interactions/types/interactions";
+import ky from "ky";
 import { size, sliceHex, toHex } from "viem";
 
 /**
  * The mapper for frak interaction to 6degrees one
  */
-export class SixDegreesInteractionMapperService {
+export class SixDegreesInteractionService {
     private readonly referralHandlerType = toHex(productTypes.referral);
+    private readonly sixDegreesApi = ky.create({
+        prefixUrl: "https://api.6degrees.xyz",
+    });
 
     /**
-     * Map an interaction
+     * Push some user interactions
      */
-    mapInteraction(interactions: InteractionData[]) {
+    pushInteraction(interactions: InteractionData[], userToken: string) {
+        const mappedInteractions = this.mapInteraction(interactions);
+        // Push the interaction to six degrees, the userToken is a Bearer auth token
+        this.sixDegreesApi.post("/interactions", {
+            json: mappedInteractions,
+            headers: {
+                Authorization: `Bearer ${userToken}`,
+            },
+        });
+    }
+
+    /**
+     * Map an interaction to the six degrees format
+     */
+    private mapInteraction(interactions: InteractionData[]) {
         return (
             interactions
                 // Pre filter to only get referral related interactions
@@ -27,16 +45,16 @@ export class SixDegreesInteractionMapperService {
                         return false;
                     }
 
-                    // Ensure we got a wallet on 32 bytes after the `referred` type
+                    // todo: the referred address should be longer, representing the b64 pubkey of the webauthn wallet
+                    // todo: Should we nap it using mongo authenticator?
                     const wallet = sliceHex(interactionData, 4, 36);
                     return size(wallet) === 32;
                 })
-                // todo: Mapping output?
-                .map((interaction) => {
+                .map(({ interactionData }) => {
+                    const wallet = sliceHex(interactionData, 4, 36);
                     return {
-                        handlerTypeDenominator:
-                            interaction.handlerTypeDenominator,
-                        interactionData: interaction.interactionData,
+                        type: "referred",
+                        context: wallet,
                     };
                 })
         );

@@ -14,6 +14,12 @@ const WebAuthNWalletTokenDto = t.Object({
         y: t.Hex(),
     }),
     transports: t.Optional(t.Array(t.String())),
+    // Six degrees specific
+    additionalData: t.Optional(
+        t.Object({
+            sixDegreesToken: t.String(),
+        })
+    ),
 });
 export const WalletTokenDto = t.Union([
     EcdsaWalletTokenDto,
