@@ -1,3 +1,4 @@
+import type { FullInteractionTypesKey } from "../../../constants/interactionTypes";
 import type { LoggedInEmbededView } from "./loggedIn";
 import type { LoggedOutEmbededView } from "./loggedOut";
 
@@ -37,5 +38,9 @@ export type DisplayEmbededWalletParamsType = {
          * If unedfined, will default to the domain of the calling website
          */
         homepageLink?: string;
+        /**
+         * The target interaction behind this modal
+         */
+        targetInteraction?: FullInteractionTypesKey;
     };
 };

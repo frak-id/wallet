@@ -1,3 +1,4 @@
+import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { getProductInformation } from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { getModalBuilderSteps, onClientReady } from "../utils";
@@ -26,6 +27,10 @@ export type ButtonShareProps = {
      * Fallback text if the reward isn't found
      */
     noRewardText?: string;
+    /**
+     * Target interaction behind this sharing action (will be used to get the right reward to display)
+     */
+    targetInteraction?: FullInteractionTypesKey;
 };
 
 /**
@@ -34,7 +39,7 @@ export type ButtonShareProps = {
  * @description
  * This function will open the share modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
  */
-function modalShare() {
+function modalShare(targetInteraction?: FullInteractionTypesKey) {
     const modalBuilderSteps = getModalBuilderSteps();
 
     if (!modalBuilderSteps) {
@@ -44,7 +49,10 @@ function modalShare() {
 
     modalBuilderSteps
         .sharing(window.FrakSetup?.modalShareConfig ?? {})
-        .display();
+        .display((metadata) => ({
+            ...metadata,
+            targetInteraction,
+        }));
 }
 
 /**
@@ -79,6 +87,12 @@ function modalShare() {
  * <frak-button-share use-reward text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!"></frak-button-share>
  * ```
  *
+ * @example
+ * Using reward information for specific reward and fallback text:
+ * ```html
+ * <frak-button-share use-reward text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!" target-interaction="retail.customerMeeting"></frak-button-share>
+ * ```
+ *
  * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the modal display
  * @see {@link @frak-labs/core-sdk!actions.getProductInformation | `getProductInformation()`} for more info about the estimated reward fetching
  */
@@ -87,6 +101,7 @@ export function ButtonShare({
     classname = "",
     useReward: rawUseReward,
     noRewardText,
+    targetInteraction,
 }: ButtonShareProps) {
     const useReward = useMemo(() => rawUseReward !== undefined, [rawUseReward]);
 
@@ -111,9 +126,25 @@ export function ButtonShare({
         // Find the estimated reward
         getProductInformation(client).then((info) => {
             if (!info?.estimatedEurReward) return;
-            setReward(`${info.estimatedEurReward} €`);
+
+            let currentReward = info.estimatedEurReward;
+            if (targetInteraction) {
+                // Find the max reward for the target interaction
+                const targetReward = info.rewards
+                    .filter(
+                        (reward) =>
+                            reward.interactionTypeKey === targetInteraction
+                    )
+                    .map((reward) => reward.referrer.eurAmount)
+                    .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
+                if (targetReward > 0) {
+                    currentReward = Math.ceil(targetReward).toString();
+                }
+            }
+
+            setReward(`${currentReward} €`);
         });
-    }, [useReward]);
+    }, [useReward, targetInteraction]);
 
     /**
      * Setup our client listener
@@ -142,7 +173,7 @@ export function ButtonShare({
             type={"button"}
             class={classname}
             disabled={disabled}
-            onClick={modalShare}
+            onClick={() => modalShare(targetInteraction)}
         >
             {btnText}
         </button>

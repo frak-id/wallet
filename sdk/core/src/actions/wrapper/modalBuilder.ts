@@ -46,8 +46,13 @@ export type ModalStepBuilder<
     ) => ModalStepBuilder<[...Steps, FinalModalStepType]>;
     /**
      * Display the modal
+     * @param metadataOverride - Function returning optional metadata to override the current modal metadata
      */
-    display: () => Promise<ModalRpcStepsResultType<Steps>>;
+    display: (
+        metadataOverride?: (
+            current?: ModalRpcMetadata
+        ) => ModalRpcMetadata | undefined
+    ) => Promise<ModalRpcStepsResultType<Steps>>;
 };
 
 /**
@@ -182,7 +187,15 @@ function modalStepsBuilder<CurrentSteps extends ModalStepTypes[]>(
     }
 
     // Function to display it
-    async function display() {
+    async function display(
+        metadataOverride?: (
+            current?: ModalRpcMetadata
+        ) => ModalRpcMetadata | undefined
+    ) {
+        // If we have a metadata override, apply it
+        if (metadataOverride) {
+            params.metadata = metadataOverride(params.metadata ?? {});
+        }
         return await displayModal(client, params);
     }
 

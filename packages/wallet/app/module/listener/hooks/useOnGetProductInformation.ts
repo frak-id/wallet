@@ -45,7 +45,9 @@ export function useOnGetProductInformation(): OnGetProductInformation {
             await emitter({
                 result: {
                     id: productId,
-                    estimatedEurReward: estimatedReward ?? undefined,
+                    estimatedEurReward:
+                        estimatedReward?.estimatedEurReward ?? undefined,
+                    rewards: estimatedReward?.rewards ?? [],
                     onChainMetadata: productMetadata,
                 },
             });

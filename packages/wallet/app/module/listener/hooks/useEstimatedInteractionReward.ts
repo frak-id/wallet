@@ -1,7 +1,10 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
-import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import type {
+    FullInteractionTypesKey,
+    GetProductInformationReturnType,
+} from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Hex } from "viem";
@@ -40,8 +43,12 @@ export const estimatedInteractionRewardQuery = ({
             return null;
         }
 
-        // Ceil it so we don't have floating point issues
-        return Math.ceil(data.totalReferrerEur).toString();
+        // Return formatted stuff
+        return {
+            estimatedEurReward: Math.ceil(data.totalReferrerEur).toString(),
+            rewards:
+                data.activeRewards as GetProductInformationReturnType["rewards"],
+        };
     },
 });
 

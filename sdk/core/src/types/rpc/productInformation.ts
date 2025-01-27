@@ -1,4 +1,5 @@
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
+import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
 import type { ProductTypesKey } from "../../constants/productTypes";
 
 /**
@@ -28,7 +29,25 @@ export type GetProductInformationReturnType = {
         productTypes: ProductTypesKey[];
     };
     /**
-     * Current the current estimated product reward
+     * The max potential reward in EUR for the given product
      */
     estimatedEurReward?: string;
+    /**
+     * List of all the potentials reward arround this product
+     */
+    rewards: {
+        token: Address;
+        campaign: Address;
+        interactionTypeKey: FullInteractionTypesKey;
+        referrer: {
+            amount: number;
+            eurAmount: number;
+            usdAmount: number;
+        };
+        referee: {
+            amount: number;
+            eurAmount: number;
+            usdAmount: number;
+        };
+    }[];
 };

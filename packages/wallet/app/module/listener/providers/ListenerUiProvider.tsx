@@ -3,6 +3,7 @@ import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import type {
     DisplayEmbededWalletParamsType,
+    FullInteractionTypesKey,
     IFrameRpcSchema,
     ModalRpcMetadata,
     ModalRpcStepsInput,
@@ -22,6 +23,7 @@ import { useEstimatedInteractionReward } from "../hooks/useEstimatedInteractionR
 
 type GenericWalletUiType = {
     appName: string;
+    targetInteraction?: FullInteractionTypesKey;
     i18n?: {
         lang?: "en" | "fr";
         context?: string;
@@ -79,7 +81,7 @@ export const ListenerUiContext = createContext<UIContext | undefined>(
 export function ListenerUiProvider({ children }: PropsWithChildren) {
     const { i18n: initialI18n } = useTranslation();
     const resolvingContext = useMemo(() => getIFrameResolvingContext(), []);
-    const { estimatedReward } = useEstimatedInteractionReward({
+    const { estimatedReward: rewardData } = useEstimatedInteractionReward({
         resolvingContext,
     });
 
@@ -100,7 +102,8 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     /**
      * Build the new translation context for the listener UI
      *  - Set the language to the request language
-     *  - Add some default variable (estimated reward, product name, product origin, context)
+     *  - Compute the right reward estimation depending on the request context
+     *  - Add some default variable (product name, product origin, context)
      */
     const translation = useMemo(() => {
         const lang = currentRequest?.i18n?.lang ?? "en";
@@ -112,6 +115,25 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
               }
             : {};
 
+        // Find the right estimated reward depending on the context
+        let estimatedReward = rewardData?.estimatedEurReward;
+        if (rewardData && currentRequest?.targetInteraction) {
+            // Find the max reward for the target interaction
+            const targetReward = rewardData.rewards
+                .filter(
+                    (reward) =>
+                        reward.interactionTypeKey ===
+                        currentRequest.targetInteraction
+                )
+                .map((reward) => reward.referrer.eurAmount)
+                .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
+            // If found a reward, set it as the estimated reward
+            if (targetReward > 0) {
+                estimatedReward = Math.ceil(targetReward).toString();
+            }
+        }
+
+        // Create the new i18n instance with the right context
         const i18n = initialI18n.cloneInstance({
             lng: lang,
             interpolation: {
@@ -121,6 +143,8 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 },
             },
         });
+
+        // Create the new t function with the right context
         const rawT = i18n.getFixedT(lang, null) as typeof i18n.t;
         const t = (key: string, options?: TOptions): string =>
             rawT(key, {
@@ -129,7 +153,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 estimatedReward,
             });
         return { lang: currentRequest?.i18n?.lang, i18n, t };
-    }, [currentRequest, resolvingContext, estimatedReward, initialI18n]);
+    }, [currentRequest, resolvingContext, rewardData, initialI18n]);
 
     return (
         <ListenerUiContext.Provider

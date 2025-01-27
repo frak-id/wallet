@@ -85,12 +85,14 @@ function ListenerContent() {
              * When the display of the embeded wallet is requested
              */
             frak_displayEmbededWallet: async (request) => {
+                const metadata = request.params[0].metadata;
                 setRequest({
                     type: "embeded",
                     params: request.params[0],
                     appName: request.params[1],
+                    targetInteraction: metadata?.targetInteraction,
                     i18n: {
-                        lang: request.params[0].metadata?.lang,
+                        lang: metadata?.lang,
                     },
                 });
             },

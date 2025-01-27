@@ -80,6 +80,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
                 metadata: request.params[2],
                 emitter,
                 appName: request.params[1],
+                targetInteraction: request.params[2]?.targetInteraction,
                 i18n: {
                     lang: request.params[2]?.lang,
                     context: steps?.final?.action?.key,
