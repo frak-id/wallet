@@ -1,5 +1,4 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
-import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import type {
     FullInteractionTypesKey,
@@ -59,18 +58,13 @@ export const estimatedInteractionRewardQuery = ({
  */
 export function useEstimatedInteractionReward({
     interaction,
-    resolvingContext,
 }: {
     interaction?: FullInteractionTypesKey;
-    resolvingContext?: IFrameResolvingContext;
 } = {}) {
     const contextProductId = useAtomValue(
         iframeResolvingContextAtom
     )?.productId;
-    const productId = useMemo(
-        () => resolvingContext?.productId ?? contextProductId,
-        [resolvingContext, contextProductId]
-    );
+    const productId = useMemo(() => contextProductId, [contextProductId]);
     const { data, ...query } = useQuery(
         estimatedInteractionRewardQuery({
             productId,

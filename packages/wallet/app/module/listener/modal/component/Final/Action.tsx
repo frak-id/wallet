@@ -1,4 +1,4 @@
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
+import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
 import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
@@ -8,7 +8,6 @@ import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWith
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
 import { useMemo } from "react";
@@ -68,14 +67,14 @@ function SharingButtons({
     popupTitle?: string;
     text?: string;
 }) {
-    const resolvingContext = useAtomValue(iframeResolvingContextAtom);
+    const { sourceUrl } = useSafeResolvingContext();
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
 
     // Get our final sharing link
     const finalSharingLink = useMemo(() => {
-        const url = link ?? resolvingContext?.sourceUrl;
+        const url = link ?? sourceUrl;
         if (isModalSuccess) {
             // Ensure the sharing link contain the current nexus wallet as referrer
             return FrakContextManager.update({
@@ -87,8 +86,8 @@ function SharingButtons({
         }
 
         // Remove the referrer from the sharing link
-        return url ? FrakContextManager.remove(url) : null;
-    }, [link, isModalSuccess, address, resolvingContext?.sourceUrl]);
+        return FrakContextManager.remove(url);
+    }, [link, isModalSuccess, address, sourceUrl]);
 
     // Trigger native sharing
     const {

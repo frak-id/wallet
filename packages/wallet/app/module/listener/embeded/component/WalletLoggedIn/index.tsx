@@ -1,9 +1,9 @@
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
+import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
 import { ButtonWallet } from "@/module/listener/embeded/component/ButtonWallet";
 import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import {
+    useEmbededListenerUI,
     useListenerTranslation,
-    useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
@@ -17,7 +17,6 @@ import { Share } from "@module/asset/icons/Share";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { tryit } from "radash";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
@@ -59,16 +58,17 @@ function ActionButtons() {
     const { data: currentSession } = useInteractionSessionStatus({
         address,
     });
-    const { currentRequest } = useListenerUI();
-    const resolvingContext = useAtomValue(iframeResolvingContextAtom);
-    const link =
-        currentRequest?.type === "embeded"
-            ? currentRequest.params.loggedIn?.action?.options?.link
-            : undefined;
+    const {
+        currentRequest: {
+            params: { loggedIn },
+        },
+    } = useEmbededListenerUI();
+    const link = loggedIn?.action?.options?.link;
+    const { sourceUrl } = useSafeResolvingContext();
 
     // Ensure the sharing link contain the current nexus wallet as referrer
     const finalSharingLink = FrakContextManager.update({
-        url: link ?? resolvingContext?.sourceUrl,
+        url: link ?? sourceUrl,
         context: {
             r: address,
         },
@@ -158,11 +158,12 @@ function ButtonSharingLink({
     currentSession?: InteractionSession | null;
     finalSharingLink: string | null;
 }) {
-    const { currentRequest } = useListenerUI();
-    const options =
-        currentRequest?.type === "embeded"
-            ? currentRequest.params.loggedIn?.action?.options
-            : undefined;
+    const {
+        currentRequest: {
+            params: { loggedIn },
+        },
+    } = useEmbededListenerUI();
+    const options = loggedIn?.action?.options;
     const { t } = useListenerTranslation();
 
     // Trigger native sharing

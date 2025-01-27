@@ -1,5 +1,5 @@
 import { sessionAtom } from "@/module/common/atoms/session";
-import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
+import { useEmbededListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import { LogoFrakWithName } from "@module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@module/atoms/store";
 import styles from "../Wallet/index.module.css";
@@ -10,11 +10,11 @@ import styles from "../Wallet/index.module.css";
  */
 export function ListenerWalletHeader() {
     const session = jotaiStore.get(sessionAtom);
-    const { currentRequest } = useListenerUI();
-    const logo =
-        currentRequest?.type === "embeded"
-            ? currentRequest?.params.metadata?.logo
-            : undefined;
+    const {
+        currentRequest: {
+            params: { metadata },
+        },
+    } = useEmbededListenerUI();
 
     return (
         <div className={styles.modalListenerWallet__header}>
@@ -25,10 +25,10 @@ export function ListenerWalletHeader() {
                     className={styles.modalListenerWallet__logoFrak}
                 />
             )}
-            {logo && (
+            {metadata?.logo && (
                 <h1>
                     <img
-                        src={logo}
+                        src={metadata?.logo}
                         className={styles.modalListenerWallet__logo}
                         alt=""
                     />

@@ -1,12 +1,11 @@
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
+import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
 import { Markdown } from "@/module/common/component/Markdown";
 import { SsoButton } from "@/module/listener/component/SsoButton";
 import {
+    useEmbededListenerUI,
     useListenerTranslation,
-    useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { prefixWalletCss } from "@module/utils/prefixWalletCss";
-import { useAtomValue } from "jotai";
 import styles from "./index.module.css";
 
 /**
@@ -14,11 +13,13 @@ import styles from "./index.module.css";
  * @constructor
  */
 export function LoggedOutComponent() {
-    const { currentRequest } = useListenerUI();
-    const { metadata, loggedOut } =
-        currentRequest?.type === "embeded" ? currentRequest.params : {};
+    const {
+        currentRequest: {
+            params: { metadata, loggedOut },
+        },
+    } = useEmbededListenerUI();
     const { t } = useListenerTranslation();
-    const productId = useAtomValue(iframeResolvingContextAtom)?.productId;
+    const productId = useSafeResolvingContext()?.productId;
 
     return (
         <>

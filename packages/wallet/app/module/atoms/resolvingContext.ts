@@ -1,7 +1,7 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import type { ClientLifecycleEvent } from "@frak-labs/core-sdk";
-import { atom } from "jotai";
+import { atom, useAtomValue } from "jotai";
 import { keccak256, toHex } from "viem";
 
 /**
@@ -10,6 +10,17 @@ import { keccak256, toHex } from "viem";
 export const iframeResolvingContextAtom = atom<
     IFrameResolvingContext | undefined
 >(getIFrameResolvingContext());
+
+/**
+ * Simple hook to get the current resolving context
+ */
+export function useSafeResolvingContext() {
+    const context = useAtomValue(iframeResolvingContextAtom);
+    if (!context) {
+        throw new Error("No resolving context available");
+    }
+    return context;
+}
 
 /**
  * The atom for the current handshake

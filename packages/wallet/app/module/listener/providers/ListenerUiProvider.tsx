@@ -78,21 +78,25 @@ export const ListenerUiContext = createContext<UIContext | undefined>(
  *  - Keep the state of either modal or embeded wallet in a shared context accessible with hooks
  */
 export function ListenerUiProvider({ children }: PropsWithChildren) {
+    // Initial translation context
     const { i18n: initialI18n } = useTranslation();
+    // We are not using the safeResolvingContext here, since this component is init before the iframe is ready
     const resolvingContext = useAtomValue(iframeResolvingContextAtom);
-    const { estimatedReward: rewardData } = useEstimatedInteractionReward({
-        resolvingContext,
-    });
+    // Get the estimated reward
+    const { estimatedReward: rewardData } = useEstimatedInteractionReward();
 
+    // The current UI request
     const [currentRequest, setCurrentRequest] = useState<UIRequest | undefined>(
         undefined
     );
 
+    // Save the current request + display the iframe
     const setRequest = useCallback((request: UIRequest | undefined) => {
         setCurrentRequest(request);
         emitLifecycleEvent({ iframeLifecycle: "show" });
     }, []);
 
+    // Clear the current request + hide the iframe
     const clearRequest = useCallback(() => {
         emitLifecycleEvent({ iframeLifecycle: "hide" });
         setCurrentRequest(undefined);
