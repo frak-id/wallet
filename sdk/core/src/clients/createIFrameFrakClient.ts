@@ -202,7 +202,7 @@ function setupHeartbeat(
 
     const sendHeartbeat = () =>
         messageHandler.sendEvent({
-            iframeLifecycle: "heartbeat",
+            clientLifecycle: "heartbeat",
         });
 
     // Start sending heartbeats

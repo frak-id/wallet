@@ -1,15 +1,14 @@
+import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
-import {
-    useListenerTranslation,
-    useListenerUI,
-} from "@/module/listener/providers/ListenerUiProvider";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
 import { useMemo } from "react";
@@ -69,17 +68,18 @@ function SharingButtons({
     popupTitle?: string;
     text?: string;
 }) {
-    const { resolvingContext } = useListenerUI();
+    const resolvingContext = useAtomValue(iframeResolvingContextAtom);
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
 
     // Get our final sharing link
     const finalSharingLink = useMemo(() => {
+        const url = link ?? resolvingContext?.sourceUrl;
         if (isModalSuccess) {
             // Ensure the sharing link contain the current nexus wallet as referrer
             return FrakContextManager.update({
-                url: link ?? resolvingContext.origin,
+                url,
                 context: {
                     r: address,
                 },
@@ -87,8 +87,8 @@ function SharingButtons({
         }
 
         // Remove the referrer from the sharing link
-        return FrakContextManager.remove(link ?? resolvingContext.origin);
-    }, [link, isModalSuccess, address, resolvingContext.origin]);
+        return url ? FrakContextManager.remove(url) : null;
+    }, [link, isModalSuccess, address, resolvingContext?.sourceUrl]);
 
     // Trigger native sharing
     const {

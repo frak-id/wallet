@@ -1,6 +1,5 @@
-import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
-import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
+import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import type {
     DisplayEmbededWalletParamsType,
     FullInteractionTypesKey,
@@ -10,6 +9,7 @@ import type {
     RpcResponse,
 } from "@frak-labs/core-sdk";
 import type { TOptions, i18n } from "i18next";
+import { useAtomValue } from "jotai";
 import {
     type PropsWithChildren,
     createContext,
@@ -55,7 +55,6 @@ export type ModalUiType = {
 type UIRequest = (EmbededWalletUiType | ModalUiType) & GenericWalletUiType;
 
 type UIContext = {
-    resolvingContext: IFrameResolvingContext | undefined;
     currentRequest: UIRequest | undefined;
     setRequest: (request: UIRequest | undefined) => void;
     clearRequest: () => void;
@@ -80,7 +79,7 @@ export const ListenerUiContext = createContext<UIContext | undefined>(
  */
 export function ListenerUiProvider({ children }: PropsWithChildren) {
     const { i18n: initialI18n } = useTranslation();
-    const resolvingContext = useMemo(() => getIFrameResolvingContext(), []);
+    const resolvingContext = useAtomValue(iframeResolvingContextAtom);
     const { estimatedReward: rewardData } = useEstimatedInteractionReward({
         resolvingContext,
     });
@@ -153,12 +152,11 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 estimatedReward,
             });
         return { lang: currentRequest?.i18n?.lang, i18n, t };
-    }, [currentRequest, resolvingContext, rewardData, initialI18n]);
+    }, [currentRequest, resolvingContext?.origin, rewardData, initialI18n]);
 
     return (
         <ListenerUiContext.Provider
             value={{
-                resolvingContext,
                 currentRequest,
                 setRequest,
                 clearRequest,
@@ -180,12 +178,7 @@ export function useListenerUI() {
             "useListenerUI must be used within a ListenerUiContext"
         );
     }
-    if (!context.resolvingContext) {
-        throw new Error("useListenerUI must be used within an iframe");
-    }
-    return context as Omit<UIContext, "resolvingContext"> & {
-        resolvingContext: IFrameResolvingContext;
-    };
+    return context as UIContext;
 }
 
 /**
@@ -198,10 +191,9 @@ export function useListenerWithRequestUI() {
             "uselListenerWithReauestUI must be used with a current request"
         );
     }
-    return uiContext as Omit<
-        UIContext,
-        "resolvingContext" | "currentRequest"
-    > & { resolvingContext: IFrameResolvingContext; currentRequest: UIRequest };
+    return uiContext as Omit<UIContext, "currentRequest"> & {
+        currentRequest: UIRequest;
+    };
 }
 
 /**
@@ -214,12 +206,23 @@ export function useModalListenerUI() {
             "useModalListenerUI must be used within a modal displayed UI"
         );
     }
-    return uiContext as Omit<
-        UIContext,
-        "resolvingContext" | "currentRequest"
-    > & {
-        resolvingContext: IFrameResolvingContext;
+    return uiContext as Omit<UIContext, "currentRequest"> & {
         currentRequest: ModalUiType;
+    };
+}
+
+/**
+ * Custom hook to get the listener ui context only when displaying an embeded wallet
+ */
+export function useEmbededListenerUI() {
+    const uiContext = useListenerUI();
+    if (uiContext.currentRequest?.type !== "embeded") {
+        throw new Error(
+            "useModalListenerUI must be used within a embeded displayed UI"
+        );
+    }
+    return uiContext as Omit<UIContext, "currentRequest"> & {
+        currentRequest: EmbededWalletUiType;
     };
 }
 

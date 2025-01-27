@@ -1,6 +1,7 @@
-import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
+import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
+import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
 
 const globalInteractionState = {
@@ -15,7 +16,7 @@ export function useTriggerPushInterraction({
     conditionToTrigger,
 }: { conditionToTrigger: boolean }) {
     const pushInteraction = usePushInteraction();
-    const { resolvingContext } = useListenerUI();
+    const resolvingContext = useAtomValue(iframeResolvingContextAtom);
     const isMounted = useRef(false);
 
     useEffect(() => {
@@ -36,7 +37,8 @@ export function useTriggerPushInterraction({
             if (
                 !conditionToTrigger ||
                 globalInteractionState.isInteractionPushed ||
-                globalInteractionState.isPending
+                globalInteractionState.isPending ||
+                !resolvingContext?.productId
             ) {
                 return;
             }
@@ -45,7 +47,7 @@ export function useTriggerPushInterraction({
             globalInteractionState.isPending = true;
 
             console.log("Pushing the referral link created event", {
-                productId: resolvingContext.productId,
+                productId: resolvingContext?.productId,
             });
 
             try {
@@ -65,7 +67,7 @@ export function useTriggerPushInterraction({
         };
 
         triggerInteraction();
-    }, [conditionToTrigger, pushInteraction, resolvingContext.productId]);
+    }, [conditionToTrigger, pushInteraction, resolvingContext?.productId]);
 
     return null;
 }

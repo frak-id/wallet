@@ -295,7 +295,6 @@ function CurrentModalStepComponent({
 }: {
     onError: (reason?: string) => void;
 }) {
-    const { resolvingContext } = useListenerUI();
     const currentStep = useAtomValue(currentDisplayedStepAtom);
 
     /**
@@ -310,7 +309,6 @@ function CurrentModalStepComponent({
             case "login":
                 return (
                     <LoginModalStep
-                        context={resolvingContext}
                         params={currentStep.params}
                         onFinish={currentStep.onResponse}
                     />
@@ -347,5 +345,5 @@ function CurrentModalStepComponent({
             default:
                 return <>Can't handle {currentStep} yet</>;
         }
-    }, [onError, resolvingContext, currentStep]);
+    }, [onError, currentStep]);
 }

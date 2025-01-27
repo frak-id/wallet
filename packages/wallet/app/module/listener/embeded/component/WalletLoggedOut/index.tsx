@@ -1,4 +1,4 @@
-import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
+import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { Markdown } from "@/module/common/component/Markdown";
 import { SsoButton } from "@/module/listener/component/SsoButton";
 import {
@@ -6,6 +6,7 @@ import {
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { prefixWalletCss } from "@module/utils/prefixWalletCss";
+import { useAtomValue } from "jotai";
 import styles from "./index.module.css";
 
 /**
@@ -17,7 +18,7 @@ export function LoggedOutComponent() {
     const { metadata, loggedOut } =
         currentRequest?.type === "embeded" ? currentRequest.params : {};
     const { t } = useListenerTranslation();
-    const productId = getIFrameResolvingContext()?.productId;
+    const productId = useAtomValue(iframeResolvingContextAtom)?.productId;
 
     return (
         <>

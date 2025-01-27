@@ -1,11 +1,12 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
-import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
+import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import type {
     FullInteractionTypesKey,
     GetProductInformationReturnType,
 } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 
@@ -63,11 +64,12 @@ export function useEstimatedInteractionReward({
     interaction?: FullInteractionTypesKey;
     resolvingContext?: IFrameResolvingContext;
 } = {}) {
+    const contextProductId = useAtomValue(
+        iframeResolvingContextAtom
+    )?.productId;
     const productId = useMemo(
-        () =>
-            resolvingContext?.productId ??
-            getIFrameResolvingContext()?.productId,
-        [resolvingContext]
+        () => resolvingContext?.productId ?? contextProductId,
+        [resolvingContext, contextProductId]
     );
     const { data, ...query } = useQuery(
         estimatedInteractionRewardQuery({

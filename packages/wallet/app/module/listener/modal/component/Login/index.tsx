@@ -1,4 +1,4 @@
-import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
+import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
@@ -19,14 +19,13 @@ import { DismissButton } from "../Generic";
  * @constructor
  */
 export function LoginModalStep({
-    context,
     params,
     onFinish,
 }: {
-    context: IFrameResolvingContext;
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
 }) {
+    const resolvingContext = useAtomValue(iframeResolvingContextAtom);
     const { t } = useListenerTranslation();
     const { metadata, ssoMetadata } = params;
 
@@ -60,7 +59,7 @@ export function LoginModalStep({
                 {allowSso && (
                     <div>
                         <SsoButton
-                            productId={context.productId}
+                            productId={resolvingContext?.productId ?? "0x"}
                             ssoMetadata={ssoMetadata ?? {}}
                             text={metadata?.primaryActionText}
                             defaultText={t(
