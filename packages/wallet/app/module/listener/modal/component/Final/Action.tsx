@@ -1,19 +1,18 @@
+import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import {
     useListenerTranslation,
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
-import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
-import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
 import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { useAccount } from "wagmi";
 
 export function FinalModalActionComponent({
@@ -33,7 +32,7 @@ export function FinalModalActionComponent({
                 isModalSuccess={isSuccess}
                 popupTitle={action?.options?.popupTitle}
                 text={action?.options?.text}
-                link={action?.options?.link ?? window.location.href}
+                link={action?.options?.link}
             />
         );
     }
@@ -74,17 +73,13 @@ function SharingButtons({
     const { address } = useAccount();
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
-    const pushInteraction = usePushInteraction();
-    const isInteractionPushed = useRef(false);
 
     // Get our final sharing link
     const finalSharingLink = useMemo(() => {
-        if (!link) return null;
-
         if (isModalSuccess) {
             // Ensure the sharing link contain the current nexus wallet as referrer
             return FrakContextManager.update({
-                url: link,
+                url: link ?? resolvingContext.origin,
                 context: {
                     r: address,
                 },
@@ -92,8 +87,8 @@ function SharingButtons({
         }
 
         // Remove the referrer from the sharing link
-        return FrakContextManager.remove(link);
-    }, [link, isModalSuccess, address]);
+        return FrakContextManager.remove(link ?? resolvingContext.origin);
+    }, [link, isModalSuccess, address, resolvingContext.origin]);
 
     // Trigger native sharing
     const {
@@ -131,31 +126,9 @@ function SharingButtons({
     });
 
     // Listen to different stuff to trigger the interaction push
-    useEffect(() => {
-        if (!isModalSuccess) return;
-        if (!(copied || shareResult)) return;
-        if (isInteractionPushed.current) return;
-
-        // Mark it at done to ensure we don't do it twice
-        isInteractionPushed.current = true;
-
-        // Send the referral link created event
-        console.log("Pushing the referral link created event", {
-            productId: resolvingContext.productId,
-        });
-        pushInteraction({
-            productId: resolvingContext.productId,
-            interaction: ReferralInteractionEncoder.createLink(),
-        }).then((result) => {
-            console.log("Referral link created event pushed", result);
-        });
-    }, [
-        resolvingContext,
-        isModalSuccess,
-        copied,
-        shareResult,
-        pushInteraction,
-    ]);
+    useTriggerPushInterraction({
+        conditionToTrigger: isModalSuccess && (copied || !!shareResult),
+    });
 
     return (
         <div className={styles.modalListener__sharingButtons}>

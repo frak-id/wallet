@@ -29,6 +29,7 @@
         }
     },
     "common": {
+        "activated": "Activated",
         "amountRequired": "Amount is required",
         "added": "added",
         "at": "at",
@@ -38,10 +39,12 @@
         "claimed": "claimed",
         "copied": "Copied!",
         "copyAddress": "Copy address",
+        "disabled": "Disabled",
         "enterAddress": "Enter address",
         "interactions": "Interactions",
         "logout": "Logout",
         "notifications": "Notifications",
+        "pending": "pending",
         "receive": "Receive",
         "refresh": "Refresh",
         "rewards": "Rewards",

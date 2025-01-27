@@ -14,8 +14,10 @@
 
 .button {
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 0;
-    text-align: center;
     cursor: pointer;
     outline: none;
     border-radius: 50%;
@@ -23,11 +25,11 @@
     width: 55px;
     height: 55px;
     backdrop-filter: blur(14px);
+    color: #ffffff;
 }
 
 .button:disabled {
     cursor: not-allowed;
-    background: #4c4c4c59;
 }
 
 .primary {
@@ -41,4 +43,8 @@
 
 .success {
     background: #34ff3475;
+}
+
+.disabled {
+    background: #4c4c4c59;
 }

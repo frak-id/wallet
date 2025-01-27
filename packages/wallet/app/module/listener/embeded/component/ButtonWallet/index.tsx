@@ -1,3 +1,4 @@
+import { Spinner } from "@module/component/Spinner";
 import { type VariantProps, cva, cx } from "class-variance-authority";
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import styles from "./index.module.css";
@@ -15,6 +16,7 @@ const buttonWalletVariants = cva(styles.button, {
             primary: styles.primary,
             danger: styles.danger,
             success: styles.success,
+            disabled: styles.disabled,
         },
     },
     defaultVariants: {
@@ -47,10 +49,7 @@ export const ButtonWallet = ({
                 type={"button"}
                 {...props}
             >
-                <>
-                    {/* {isLoading && <Spinner />} */}
-                    {icon}
-                </>
+                {isLoading ? <Spinner /> : icon}
             </button>
             {children}
         </div>

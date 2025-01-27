@@ -32,6 +32,7 @@ interface Resources {
             };
         };
         common: {
+            activated: "Activated";
             amountRequired: "Amount is required";
             added: "added";
             at: "at";
@@ -41,10 +42,12 @@ interface Resources {
             claimed: "claimed";
             copied: "Copied!";
             copyAddress: "Copy address";
+            disabled: "Disabled";
             enterAddress: "Enter address";
             interactions: "Interactions";
             logout: "Logout";
             notifications: "Notifications";
+            pending: "pending";
             receive: "Receive";
             refresh: "Refresh";
             rewards: "Rewards";

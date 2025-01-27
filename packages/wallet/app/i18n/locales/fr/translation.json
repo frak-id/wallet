@@ -29,6 +29,7 @@
         }
     },
     "common": {
+        "activated": "Activé",
         "amountRequired": "Le montant est requis",
         "added": "ajouté",
         "at": "à",
@@ -38,10 +39,12 @@
         "claimed": "réclamé",
         "copied": "Copié !",
         "copyAddress": "Copier l'adresse",
+        "disabled": "Désactivé",
         "enterAddress": "Entrez l'adresse",
         "interactions": "Interactions",
         "logout": "Déconnexion",
         "notifications": "Notifications",
+        "pending": "en attente",
         "receive": "Recevoir",
         "refresh": "Rafraîchir",
         "rewards": "Gains",
