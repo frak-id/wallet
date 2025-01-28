@@ -1,5 +1,6 @@
 import {
     index,
+    json,
     pgTable,
     serial,
     timestamp,
@@ -23,6 +24,8 @@ export const ssoTable = pgTable(
         // Resolved wallet + authenticator id
         wallet: customHex("wallet"),
         authenticatorId: varchar("authenticator_id"),
+        // Some potential additional data for the SDK token
+        sdkTokenAdditionalData: json("additional_data"),
     },
     (table) => [
         index("sso_idx").on(table.ssoId),

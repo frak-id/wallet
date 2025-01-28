@@ -4,6 +4,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import type { Address, Hex } from "viem";
 import { ssoTable } from "../db/schema";
+import type { StaticWalletSdkTokenDto } from "../models/WalletSessionDto";
 
 export const walletSsoService = new Elysia({
     name: "Service.walletSso",
@@ -23,7 +24,13 @@ export const walletSsoService = new Elysia({
             id,
             wallet,
             authenticatorId,
-        }: { id: Hex; wallet: Address; authenticatorId: string }) {
+            additionalData,
+        }: {
+            id: Hex;
+            wallet: Address;
+            authenticatorId: string;
+            additionalData?: StaticWalletSdkTokenDto["additionalData"];
+        }) {
             try {
                 await db
                     .update(ssoTable)
@@ -31,6 +38,7 @@ export const walletSsoService = new Elysia({
                         resolvedAt: new Date(),
                         wallet,
                         authenticatorId,
+                        sdkTokenAdditionalData: additionalData,
                     })
                     .where(and(eq(ssoTable.ssoId, id)))
                     .execute();

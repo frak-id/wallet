@@ -9,7 +9,10 @@ import { sixDegreesContext } from "domain/6degrees/context";
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
 import { verifyMessage } from "viem/actions";
-import { WalletAuthResponseDto } from "../models/WalletSessionDto";
+import {
+    type StaticWalletSdkTokenDto,
+    WalletAuthResponseDto,
+} from "../models/WalletSessionDto";
 import { walletSdkSessionService } from "../services/WalletSdkSessionService";
 import { webAuthNService } from "../services/WebAuthNService";
 import { decodePublicKey } from "../utils/webauthnDecode";
@@ -154,7 +157,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             generateSdkJwt,
             webAuthNService,
             ssoService,
-            sixDegrees: { routingService },
+            sixDegrees,
         }) => {
             // Check if that's a valid webauthn signature
             const verificationnResult = await webAuthNService.isValidSignature({
@@ -169,11 +172,18 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             const { address, authenticatorId, publicKey, transports } =
                 verificationnResult;
 
-            // Check if that's a six degrees wallet
-            const isSixDegrees = await routingService.isRoutedWallet(address);
+            // Prepare the additional data object
+            const additionalData: StaticWalletSdkTokenDto["additionalData"] =
+                {};
+
+            // Check if that's a six degrees wallet, and iuf yes, generate a token accordingly
+            const isSixDegrees =
+                await sixDegrees.routingService.isRoutedWallet(address);
             if (isSixDegrees) {
-                // todo: if it is generate a six degrees token
-                return error(404, "Six degrees wallet not supported yet");
+                const token = await sixDegrees.authenticationService.login();
+                if (token) {
+                    additionalData.sixDegreesToken = token;
+                }
             }
 
             // Create the token and set the cookie
@@ -187,7 +197,10 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await generateSdkJwt({ wallet: address });
+            const sdkJwt = await generateSdkJwt({
+                wallet: address,
+                additionalData,
+            });
 
             // If all good, mark the sso as done
             if (ssoId) {
@@ -195,6 +208,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     id: ssoId,
                     wallet: address,
                     authenticatorId,
+                    additionalData,
                 });
             }
 
@@ -242,7 +256,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             walletJwt,
             webAuthNService,
             ssoService,
-            sixDegrees: { routingService },
+            sixDegrees,
         }) => {
             // Decode the registration response
             const registrationResponse =
@@ -300,14 +314,26 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 transports: registrationResponse.response.transports,
             });
 
+            // Prepare the additional data object
+            const additionalData: StaticWalletSdkTokenDto["additionalData"] =
+                {};
+
             // If that's a six degrees wallet, register it
             if (isSixDegrees) {
-                await routingService.registerRoutedWallet(walletAddress);
-                // todo: generate six degrees token and stuff
+                await sixDegrees.routingService.registerRoutedWallet(
+                    walletAddress
+                );
+                const token = await sixDegrees.authenticationService.register();
+                if (token) {
+                    additionalData.sixDegreesToken = token;
+                }
             }
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await generateSdkJwt({ wallet: walletAddress });
+            const sdkJwt = await generateSdkJwt({
+                wallet: walletAddress,
+                additionalData,
+            });
 
             // If all good, mark the sso as done
             if (ssoId) {
@@ -315,6 +341,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     id: ssoId,
                     wallet: walletAddress,
                     authenticatorId: credential.id,
+                    additionalData,
                 });
             }
 
