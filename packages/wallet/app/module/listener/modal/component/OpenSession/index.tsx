@@ -7,7 +7,6 @@ import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { trackEvent } from "@module/utils/trackEvent";
 import { useEffect } from "react";
-import { useAccount } from "wagmi";
 
 /**
  * The component for the login step of a modal
@@ -25,13 +24,11 @@ export function OpenSessionModalStep({
 }) {
     const { t } = useListenerTranslation();
     const { metadata } = params;
-    const { address } = useAccount();
     const {
         data: currentSession,
         isPending: isFetchingStatus,
         refetch: refetchSessionStatus,
     } = useInteractionSessionStatus({
-        address,
         query: {
             refetchOnMount: true,
             refetchOnWindowFocus: true,

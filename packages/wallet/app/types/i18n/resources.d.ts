@@ -124,6 +124,13 @@ interface Resources {
                         primaryAction: "I create my wallet";
                     };
                 };
+                loggedIn: {
+                    onboarding: {
+                        welcome: "🥳 Congratulations! Your wallet has been created. €0.50 bonus upon creation.";
+                        activate: "🟢 Activate your wallet and earn an extra €0.50";
+                        share: "Already €1.00 in your wallet!<br />Share and earn much more 🤝";
+                    };
+                };
             };
         };
         sharing: {

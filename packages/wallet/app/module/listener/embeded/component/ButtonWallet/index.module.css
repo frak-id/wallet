@@ -5,6 +5,7 @@
     flex-direction: column;
     gap: 4px;
     color: #ffffff;
+    font-size: 13px;
 }
 
 .buttonContainer--disabled {

@@ -121,6 +121,13 @@
                     "text": "Créez votre porte-monnaie avec **{{ productName }}** et recevez jusqu’à **{{ estimatedReward }}€** par ami(e) parrainé(e)",
                     "primaryAction": "Je crée mon porte-monnaie"
                 }
+            },
+            "loggedIn": {
+                "onboarding": {
+                    "welcome": "🥳 Félicitations ! Votre porte-monnaie a été créé. Bonus de 0,50 € à la création.",
+                    "activate": "🟢 Activez votre porte-monnaie et gagnez 0,50 € supplémentaires",
+                    "share": "Déjà 1,00 € dans votre porte-monnaie !<br />Partagez et gagnez beaucoup plus 🤝"
+                }
             }
         }
     },

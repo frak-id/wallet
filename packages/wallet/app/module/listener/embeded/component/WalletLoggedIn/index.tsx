@@ -1,5 +1,10 @@
 import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
 import { ButtonWallet } from "@/module/listener/embeded/component/ButtonWallet";
+import {
+    OnboardingActivate,
+    OnboardingShare,
+    OnboardingWelcome,
+} from "@/module/listener/embeded/component/Onboarding";
 import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import {
     useEmbededListenerUI,
@@ -9,7 +14,6 @@ import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
-import type { InteractionSession } from "@/types/Session";
 import { FrakContextManager } from "@frak-labs/core-sdk";
 import { Copy } from "@module/asset/icons/Copy";
 import { Power } from "@module/asset/icons/Power";
@@ -20,6 +24,7 @@ import { useMutation } from "@tanstack/react-query";
 import { tryit } from "radash";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
+const isOnboarding = true;
 
 /**
  * View for the logged in user
@@ -49,15 +54,13 @@ function Balance() {
             <p className={styles.balance__amount}>
                 {userBalance?.eurBalance?.toFixed(2) ?? 0}€
             </p>
+            {isOnboarding && <OnboardingWelcome />}
         </div>
     );
 }
 
 function ActionButtons() {
     const { address } = useAccount();
-    const { data: currentSession } = useInteractionSessionStatus({
-        address,
-    });
     const {
         currentRequest: {
             params: { loggedIn },
@@ -76,22 +79,15 @@ function ActionButtons() {
 
     return (
         <div className={styles.modalListenerWallet__actionButtons}>
-            <ButtonOpenSession currentSession={currentSession} />
-            <ButtonCopyLink
-                currentSession={currentSession}
-                finalSharingLink={finalSharingLink}
-            />
-            <ButtonSharingLink
-                currentSession={currentSession}
-                finalSharingLink={finalSharingLink}
-            />
+            <ButtonOpenSession />
+            <ButtonCopyLink finalSharingLink={finalSharingLink} />
+            <ButtonSharingLink finalSharingLink={finalSharingLink} />
         </div>
     );
 }
 
-function ButtonOpenSession({
-    currentSession,
-}: { currentSession?: InteractionSession | null }) {
+function ButtonOpenSession() {
+    const { data: currentSession } = useInteractionSessionStatus();
     const { t } = useListenerTranslation();
     const { mutate: openSession, isPending: isOpeningSession } =
         useOpenSession();
@@ -99,34 +95,41 @@ function ButtonOpenSession({
         useCloseSession();
 
     return (
-        <ButtonWallet
-            variant={currentSession ? "success" : "danger"}
-            icon={<Power />}
-            onClick={() => {
-                if (currentSession) {
-                    closeSession();
-                    trackEvent("cta-close-session");
-                    return;
-                }
+        <div className={styles.modalListenerWallet__wrapperButton}>
+            <ButtonWallet
+                variant={currentSession ? "success" : "danger"}
+                icon={<Power />}
+                onClick={() => {
+                    if (currentSession) {
+                        closeSession();
+                        trackEvent("cta-close-session");
+                        return;
+                    }
 
-                openSession();
-                trackEvent("cta-open-session");
-            }}
-            isLoading={isOpeningSession || isClosingSession}
-            disabled={isOpeningSession || isClosingSession}
-        >
-            {currentSession ? t("common.activated") : t("common.disabled")}
-        </ButtonWallet>
+                    openSession();
+                    trackEvent("cta-open-session");
+                }}
+                isLoading={isOpeningSession || isClosingSession}
+                disabled={isOpeningSession || isClosingSession}
+            >
+                {currentSession ? t("common.activated") : t("common.disabled")}
+            </ButtonWallet>
+            {isOnboarding && (
+                <OnboardingActivate
+                    isReverse={true}
+                    isHidden={!!currentSession}
+                />
+            )}
+        </div>
     );
 }
 
 function ButtonCopyLink({
-    currentSession,
     finalSharingLink,
 }: {
-    currentSession?: InteractionSession | null;
     finalSharingLink: string | null;
 }) {
+    const { data: currentSession } = useInteractionSessionStatus();
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
 
@@ -152,12 +155,11 @@ function ButtonCopyLink({
 }
 
 function ButtonSharingLink({
-    currentSession,
     finalSharingLink,
 }: {
-    currentSession?: InteractionSession | null;
     finalSharingLink: string | null;
 }) {
+    const { data: currentSession } = useInteractionSessionStatus();
     const {
         currentRequest: {
             params: { loggedIn },
@@ -207,18 +209,23 @@ function ButtonSharingLink({
     });
 
     return (
-        <ButtonWallet
-            variant={!currentSession ? "disabled" : "primary"}
-            disabled={!currentSession || isSharing}
-            isLoading={isSharing}
-            icon={<Share />}
-            onClick={() => {
-                if (!finalSharingLink) return;
-                triggerSharing();
-                trackEvent("sharing-share-link", { link: finalSharingLink });
-            }}
-        >
-            {shareResult ?? t("sharing.btn.share")}
-        </ButtonWallet>
+        <div className={styles.modalListenerWallet__wrapperButton}>
+            <ButtonWallet
+                variant={!currentSession ? "disabled" : "primary"}
+                disabled={!currentSession || isSharing}
+                isLoading={isSharing}
+                icon={<Share />}
+                onClick={() => {
+                    if (!finalSharingLink) return;
+                    triggerSharing();
+                    trackEvent("sharing-share-link", {
+                        link: finalSharingLink,
+                    });
+                }}
+            >
+                {shareResult ?? t("sharing.btn.share")}
+            </ButtonWallet>
+            {isOnboarding && <OnboardingShare isHidden={!currentSession} />}
+        </div>
     );
 }

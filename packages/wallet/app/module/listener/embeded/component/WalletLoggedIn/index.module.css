@@ -1,4 +1,7 @@
 .balance {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
     color: var(--frak-color-grayText);
 }
 
@@ -28,6 +31,10 @@
 .modalListenerWallet__actionButtons {
     display: flex;
     justify-content: center;
-    gap: 40px;
+    gap: 21px;
     margin: 100px 0 10px 0;
+}
+
+.modalListenerWallet__wrapperButton {
+    position: relative;
 }
