@@ -1,6 +1,6 @@
 import { interactionTypes, productTypes } from "@frak-labs/core-sdk";
 import type { InteractionData } from "domain/interactions/types/interactions";
-import ky from "ky";
+import type { KyInstance } from "ky";
 import { size, sliceHex, toHex } from "viem";
 
 /**
@@ -8,9 +8,7 @@ import { size, sliceHex, toHex } from "viem";
  */
 export class SixDegreesInteractionService {
     private readonly referralHandlerType = toHex(productTypes.referral);
-    private readonly sixDegreesApi = ky.create({
-        prefixUrl: "https://api.6degrees.xyz",
-    });
+    constructor(private readonly api: KyInstance) {}
 
     /**
      * Push some user interactions
@@ -18,7 +16,7 @@ export class SixDegreesInteractionService {
     pushInteraction(interactions: InteractionData[], userToken: string) {
         const mappedInteractions = this.mapInteraction(interactions);
         // Push the interaction to six degrees, the userToken is a Bearer auth token
-        this.sixDegreesApi.post("/interactions", {
+        this.api.post("/interactions", {
             json: mappedInteractions,
             headers: {
                 Authorization: `Bearer ${userToken}`,

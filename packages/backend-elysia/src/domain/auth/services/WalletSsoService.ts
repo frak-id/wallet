@@ -13,19 +13,19 @@ export const walletSsoService = new Elysia({
     .use(sessionContext)
     .decorate(({ postgresDb, ...decorators }) => {
         // Get our SSO database
-        const ssoDb = drizzle({
+        const db = drizzle({
             client: postgresDb,
             schema: { ssoTable },
         });
 
         // Helper to resolve a sso session
-        async function resolveSsoSession({
+        async function resolveSession({
             id,
             wallet,
             authenticatorId,
         }: { id: Hex; wallet: Address; authenticatorId: string }) {
             try {
-                await ssoDb
+                await db
                     .update(ssoTable)
                     .set({
                         resolvedAt: new Date(),
@@ -41,8 +41,10 @@ export const walletSsoService = new Elysia({
 
         return {
             ...decorators,
-            resolveSsoSession,
-            ssoDb,
+            ssoService: {
+                resolveSession,
+                db,
+            },
         };
     })
     .as("plugin");

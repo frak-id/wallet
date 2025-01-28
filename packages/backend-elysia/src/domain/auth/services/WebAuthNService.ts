@@ -29,7 +29,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
         /**
          * Parse a compressed webauthn response
          */
-        function parseCompressedWebAuthNResponse<T>(response: string): T {
+        function parseCompressedResponse<T>(response: string): T {
             return JSON.parse(
                 Buffer.from(response, "base64").toString("utf-8")
             );
@@ -38,7 +38,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
         /**
          * Get a wallet address from an authenticator
          */
-        async function getWebAuthnWalletAddress({
+        async function getWalletAddress({
             authenticatorId,
             pubKey,
         }: { authenticatorId: string; pubKey: { x: Hex; y: Hex } }) {
@@ -77,7 +77,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
         /**
          * Check if a signature is valid for a given wallet
          */
-        async function isValidWebAuthNSignature({
+        async function isValidSignature({
             compressedSignature,
             msg,
         }: {
@@ -86,7 +86,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
         }) {
             // Decode the authenticator response
             const signature =
-                parseCompressedWebAuthNResponse<AuthenticationResponseJSON>(
+                parseCompressedResponse<AuthenticationResponseJSON>(
                     compressedSignature
                 );
 
@@ -98,7 +98,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
             }
 
             // Check if the address match the signature provided
-            const walletAddress = await getWebAuthnWalletAddress({
+            const walletAddress = await getWalletAddress({
                 authenticatorId: signature.id,
                 pubKey: authenticator.publicKey,
             });
@@ -141,11 +141,13 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
 
         return {
             ...decorators,
-            isValidWebAuthNSignature,
-            parseCompressedWebAuthNResponse,
-            authenticatorRepository,
-            getWebAuthnWalletAddress,
-            getEcdsaWalletAddress,
+            webAuthNService: {
+                authenticatorRepository,
+                isValidSignature,
+                parseCompressedResponse,
+                getWalletAddress,
+                getEcdsaWalletAddress,
+            },
         };
     })
     .as("plugin");

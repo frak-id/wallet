@@ -34,12 +34,12 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
         "/fromWebAuthNSignature",
         async ({
             body: { signature, msg, wallet },
-            isValidWebAuthNSignature,
+            webAuthNService,
             generateSdkJwt,
             error,
         }) => {
             // Check the validity of the webauthn signature
-            const verificationnResult = await isValidWebAuthNSignature({
+            const verificationnResult = await webAuthNService.isValidSignature({
                 compressedSignature: signature,
                 msg,
             });

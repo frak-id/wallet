@@ -21,7 +21,10 @@ export const walletSsoRoutes = new Elysia({
     // Route to create a new sso session
     .post(
         "/create",
-        async ({ body: { productId, consumeKey, params }, ssoDb }) => {
+        async ({
+            body: { productId, consumeKey, params },
+            ssoService: { db },
+        }) => {
             // Generate the sso id
             const paramHash = keccak256(toHex(JSON.stringify(params)));
             const ssoId = keccak256(
@@ -29,7 +32,7 @@ export const walletSsoRoutes = new Elysia({
             );
 
             // Save this sso session
-            await ssoDb
+            await db
                 .insert(ssoTable)
                 .values({
                     ssoId,
@@ -85,13 +88,13 @@ export const walletSsoRoutes = new Elysia({
             // Response
             error,
             // Context
-            authenticatorRepository,
+            webAuthNService,
             walletJwt,
+            ssoService: { db },
             generateSdkJwt,
-            ssoDb,
         }) => {
             // Get the sso session
-            const ssoSessions = await ssoDb
+            const ssoSessions = await db
                 .select()
                 .from(ssoTable)
                 .where(
@@ -121,7 +124,7 @@ export const walletSsoRoutes = new Elysia({
 
             // Get the authenticator db and resolve it
             const authenticator =
-                await authenticatorRepository.getByCredentialId(
+                await webAuthNService.authenticatorRepository.getByCredentialId(
                     ssoSession.authenticatorId
                 );
             if (!authenticator) {
@@ -129,7 +132,7 @@ export const walletSsoRoutes = new Elysia({
             }
 
             // Remove the sso session
-            await ssoDb
+            await db
                 .delete(ssoTable)
                 .where(eq(ssoTable.id, ssoSession.id))
                 .execute();
@@ -147,10 +150,7 @@ export const walletSsoRoutes = new Elysia({
             const sdkJwt = await generateSdkJwt({ wallet: ssoSession.wallet });
 
             // And delete the sso session
-            await ssoDb
-                .delete(ssoTable)
-                .where(eq(ssoTable.ssoId, id))
-                .execute();
+            await db.delete(ssoTable).where(eq(ssoTable.ssoId, id)).execute();
 
             return {
                 status: "ok",

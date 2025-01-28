@@ -1,14 +1,14 @@
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import { sixDegreesRoutingContext } from "../context";
+import { sixDegreesContext } from "../context";
 
 export const routingRoutes = new Elysia({
     prefix: "/routing",
 })
-    .use(sixDegreesRoutingContext)
+    .use(sixDegreesContext)
     .get(
         "/",
-        async ({ query: { origin }, sixDegreesRouting }) => {
+        async ({ query: { origin }, sixDegrees: { routingService } }) => {
             // If no origin is provided, default to evm
             if (!origin) {
                 return "evm";
@@ -16,7 +16,7 @@ export const routingRoutes = new Elysia({
 
             // Extract the domain for the URL and check the routing status
             const domain = new URL(origin).hostname;
-            const isRouted = await sixDegreesRouting.isRoutedDomain(domain);
+            const isRouted = await routingService.isRoutedDomain(domain);
 
             // If it is routed, return sui, otherwise return evm
             return isRouted ? "sui" : "evm";
