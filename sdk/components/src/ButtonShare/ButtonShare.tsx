@@ -136,16 +136,13 @@ export function ButtonShare({
         [rawShowWallet]
     );
 
-    const [disabled, setDisabled] = useState(true);
     const [reward, setReward] = useState<string | undefined>(undefined);
+    const [isError, setIsError] = useState(false);
 
     /**
      * Once the client is ready, enable the button and fetch the reward if needed
      */
     const handleClientReady = useCallback(() => {
-        // Enable the btn
-        setDisabled(false);
-
         if (!useReward) return;
 
         // Find the estimated reward
@@ -178,15 +175,32 @@ export function ButtonShare({
     }, [useReward, text, noRewardText, reward]);
 
     return (
-        <button
-            type={"button"}
-            class={classname}
-            disabled={disabled}
-            onClick={() =>
-                showWallet ? modalWallet() : modalShare(targetInteraction)
-            }
-        >
-            {btnText}
-        </button>
+        <>
+            <button
+                type={"button"}
+                class={classname}
+                onClick={() => {
+                    if (!window.FrakSetup?.client) {
+                        console.log("Frak client not found");
+                        setIsError(true);
+                        return;
+                    }
+                    showWallet ? modalWallet() : modalShare(targetInteraction);
+                }}
+            >
+                {btnText}
+            </button>
+            {isError && (
+                <span style={{ display: "block" }}>
+                    Impossible d'ouvrir le menu de partage pour le moment. Si le
+                    problème persiste, copiez les informations ci-dessous et
+                    collez-les dans votre mail à{" "}
+                    <a href="mailto:help@frak-labs.com">help@frak-labs.com</a>
+                    <br />
+                    Merci pour votre retour, nous traitons votre demande dans
+                    les plus brefs délais.
+                </span>
+            )}
+        </>
     );
 }
