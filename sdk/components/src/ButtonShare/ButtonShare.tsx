@@ -212,12 +212,12 @@ export function ButtonShare({
                 return;
             }
 
-            console.error("Error while opening the modal", e);
-            const debugInfo = window.FrakSetup.client.debugInfo.formatDebugInfo(
-                "Frak client not found"
-            );
+            const debugInfo =
+                window.FrakSetup.client.debugInfo.formatDebugInfo(e);
             setDebugInfo(debugInfo);
             setIsError(true);
+
+            console.error("Error while opening the modal", e);
             return;
         }
     }, [showWallet, targetInteraction]);

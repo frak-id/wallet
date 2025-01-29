@@ -1,4 +1,4 @@
-import type { FrakWalletSdkConfig, IFrameEvent } from "../types";
+import { FrakRpcError, type FrakWalletSdkConfig, type IFrameEvent } from "../types";
 
 type IframeStatus = {
     loading: boolean;
@@ -116,6 +116,17 @@ export class DebugInfoGatherer {
         const iframeStatus = this.getIframeStatus();
         const navigatorInfo = this.getNavigatorInfo();
 
+        // Format the error in a readable format
+        let formattedError = "Unknown";
+        if (error instanceof FrakRpcError) {
+            formattedError = `FrakRpcError: ${error.code} '${error.message}'`;
+        } else if (error instanceof Error) {
+            formattedError = error.message;
+        } else if (typeof error === "string") {
+            formattedError = error;
+        }
+
+        // Craft the debug info
         const debugInfo: DebugInfo = {
             timestamp: new Date().toISOString(),
             encodedUrl: btoa(window.location.href),
@@ -135,12 +146,7 @@ export class DebugInfoGatherer {
                 ? this.base64Encode(this.lastResponse)
                 : "No Frak response logged",
             clientStatus: this.isSetupDone ? "setup" : "not-setup",
-            error:
-                error instanceof Error
-                    ? error.message
-                    : error instanceof String
-                      ? error.toString()
-                      : "Unknown",
+            error: formattedError,
         };
 
         return debugInfo;
@@ -167,6 +173,6 @@ export class DebugInfoGatherer {
   Last Response: ${debugInfo.lastResponse}
   Client Status: ${debugInfo.clientStatus}
   Error: ${debugInfo.error}
-      `.trim();
+  `.trim();
     }
 }
