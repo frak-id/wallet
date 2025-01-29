@@ -1,13 +1,14 @@
+import { polyfillNode } from "esbuild-plugin-polyfill-node";
 import svgrPlugin from "esbuild-plugin-svgr";
 import { defineConfig } from "tsup";
 
 export default defineConfig([
     {
-        target: "es2022",
+        target: ["chrome67", "edge79", "firefox68", "opera54", "safari14"],
         // All of our entry-points
         entry: ["src/components.ts"],
         replaceNodeEnv: true,
-        esbuildPlugins: [svgrPlugin()],
+        esbuildPlugins: [svgrPlugin(), polyfillNode()],
         outDir: "cdn",
         outExtension() {
             return {

@@ -64,5 +64,12 @@
     "esbuild-plugin-svgr": "^3.1.0",
     "tsup": "^8.3.5",
     "typescript": "^5"
-  }
+  },
+  "browserslist": [
+    "chrome 67",
+    "edge 79",
+    "firefox 68",
+    "opera 54",
+    "safari 14"
+  ]
 }
