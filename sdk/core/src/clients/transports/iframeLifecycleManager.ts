@@ -56,6 +56,7 @@ export function createIFrameLifecycleManager({
                         clientLifecycle: "handshake-response",
                         data: {
                             token: messageEvent.data.token,
+                            currentUrl: window.location.href,
                         },
                     },
                     "*"

@@ -26,5 +26,6 @@ type HandshakeResponse = {
     clientLifecycle: "handshake-response";
     data: {
         token: string;
+        currentUrl: string;
     };
 };

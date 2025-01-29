@@ -69,7 +69,14 @@ export const handleHandshakeResponse = atom(
 
         // Set the new resolving context (only if different)
         const currentContext = get(iframeResolvingContextAtom);
-        const context = getIFrameResolvingContext(event);
+        const context = getIFrameResolvingContext(
+            event as MessageEvent<
+                Extract<
+                    ClientLifecycleEvent,
+                    { clientLifecycle: "handshake-response" }
+                >
+            >
+        );
         if (currentContext?.sourceUrl !== context?.sourceUrl) {
             set(iframeResolvingContextAtom, context);
         }
@@ -89,13 +96,16 @@ export const handleHandshakeResponse = atom(
  * Get the current iFrame resolving context
  */
 function getIFrameResolvingContext(
-    event?: MessageEvent
+    event?: MessageEvent<
+        Extract<ClientLifecycleEvent, { clientLifecycle: "handshake-response" }>
+    >
 ): IFrameResolvingContext | undefined {
     if (typeof document === "undefined") {
         return undefined;
     }
     // Get the referrer of the iframe
-    const sourceUrl = event?.origin ?? document?.referrer;
+    const sourceUrl =
+        event?.data?.data?.currentUrl ?? event?.origin ?? document?.referrer;
     if (!sourceUrl) {
         console.warn("No origin to compute resolving context", {
             sourceUrl,
@@ -105,14 +115,15 @@ function getIFrameResolvingContext(
 
     // Map the origin to an url and compute the product id
     const originUrl = new URL(sourceUrl);
-    const productId = keccak256(toHex(originUrl.hostname));
+    const productId = keccak256(toHex(originUrl.host));
     const origin = originUrl.origin;
-    console.debug("Computed resolving context", {
+    console.log("Computed resolving context", {
         sourceUrl,
         origin,
         productId,
+        isAutoContext: event !== undefined,
     });
 
     // Return the context
-    return { productId, origin, sourceUrl };
+    return { productId, origin, sourceUrl, isAutoContext: event !== undefined };
 }

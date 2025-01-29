@@ -1,4 +1,8 @@
-import { FrakRpcError, type FrakWalletSdkConfig, type IFrameEvent } from "../types";
+import {
+    FrakRpcError,
+    type FrakWalletSdkConfig,
+    type IFrameEvent,
+} from "../types";
 
 type IframeStatus = {
     loading: boolean;

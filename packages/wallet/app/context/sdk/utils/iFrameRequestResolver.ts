@@ -24,6 +24,7 @@ export type IFrameResolvingContext = {
     productId: Hex;
     origin: string;
     sourceUrl: string;
+    isAutoContext: boolean;
 };
 
 /**
@@ -88,7 +89,7 @@ export function createIFrameRequestResolver(
         }
 
         // Recompute the product id associated with the message
-        const productId = keccak256(toHex(new URL(message.origin).hostname));
+        const productId = keccak256(toHex(new URL(message.origin).host));
 
         // Check if we got a current resolving context
         const currentContext = jotaiStore.get(iframeResolvingContextAtom);
@@ -150,9 +151,16 @@ export function createIFrameRequestResolver(
 
     // If we don't have any context, do the request do get one via handshake
     function isContextPresent() {
-        if (!jotaiStore.get(iframeResolvingContextAtom)) {
+        // Get the context
+        const currentContext = jotaiStore.get(iframeResolvingContextAtom);
+        // If we don't have one, initiate the handshake + tell that we can't handle request yet
+        if (!currentContext) {
             jotaiStore.set(startFetchResolvingContextViaHandshake);
             return false;
+        }
+        // We have an auto context, try to fetch a more precise one using the handshake
+        if (currentContext.isAutoContext) {
+            jotaiStore.set(startFetchResolvingContextViaHandshake);
         }
         return true;
     }
