@@ -225,6 +225,8 @@ export function ButtonShare({
             </button>
             {isError && (
                 <span style={{ display: "block" }}>
+                    <b>Oups ! Nous avons rencontré un petit problème</b>
+                    <br />
                     Impossible d'ouvrir le menu de partage pour le moment. Si le
                     problème persiste, copiez les informations ci-dessous et
                     collez-les dans votre mail à{" "}
