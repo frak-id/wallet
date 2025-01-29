@@ -1,6 +1,7 @@
 import { FrakRpcError } from "../../types";
 import { RpcErrorCodes } from "../../types/rpc/error";
 import type { IFrameEvent } from "../../types/transport";
+import type { DebugInfoGatherer } from "../DebugInfo";
 import type { IFrameChannelManager } from "./iframeChannelManager";
 import type { IframeLifecycleManager } from "./iframeLifecycleManager";
 
@@ -27,6 +28,11 @@ export type IFrameMessageHandlerParam = {
      * The lifecycle manager
      */
     iframeLifecycleManager: IframeLifecycleManager;
+
+    /**
+     * The debug info gatherer
+     */
+    debugInfo: DebugInfoGatherer;
 };
 
 /**
@@ -53,6 +59,7 @@ export function createIFrameMessageHandler({
     iframe,
     channelManager,
     iframeLifecycleManager,
+    debugInfo,
 }: IFrameMessageHandlerParam): IFrameMessageHandler {
     // Ensure the window is valid
     if (typeof window === "undefined") {
@@ -88,6 +95,9 @@ export function createIFrameMessageHandler({
             return;
         }
 
+        // Store the debug info
+        debugInfo.setLastResponse(event);
+
         // Check if that's a lifecycle event
         if ("iframeLifecycle" in event.data) {
             await iframeLifecycleManager.handleEvent(event.data);
@@ -119,6 +129,7 @@ export function createIFrameMessageHandler({
         contentWindow.postMessage(message, {
             targetOrigin: frakWalletUrl,
         });
+        debugInfo.setLastRequest(message, frakWalletUrl);
     }
     function cleanup() {
         window.removeEventListener("message", msgHandler);

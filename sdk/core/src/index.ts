@@ -1,5 +1,9 @@
 // Clients
-export { createIFrameFrakClient, setupClient } from "./clients";
+export {
+    createIFrameFrakClient,
+    setupClient,
+    DebugInfoGatherer,
+} from "./clients";
 
 // Utils
 export {

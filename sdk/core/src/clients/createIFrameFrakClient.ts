@@ -14,6 +14,7 @@ import {
     hashAndCompressData,
 } from "../utils/compression";
 import { BACKUP_KEY } from "../utils/constants";
+import { DebugInfoGatherer } from "./DebugInfo";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
 import {
     type IframeLifecycleManager,
@@ -49,8 +50,10 @@ export function createIFrameFrakClient({
 }): FrakClient {
     // Build our channel manager
     const channelManager = createIFrameChannelManager();
-
     const lifecycleManager = createIFrameLifecycleManager({ iframe });
+
+    // Create our debug info gatherer
+    const debugInfo = new DebugInfoGatherer(config, iframe);
 
     // Build our message handler
     const messageHandler = createIFrameMessageHandler({
@@ -58,6 +61,7 @@ export function createIFrameFrakClient({
         iframe,
         channelManager,
         iframeLifecycleManager: lifecycleManager,
+        debugInfo,
     });
 
     // Build our request function
@@ -174,10 +178,11 @@ export function createIFrameFrakClient({
         config,
         messageHandler,
         lifecycleManager,
-    });
+    }).then(() => debugInfo.updateSetupStatus(true));
 
     return {
         config,
+        debugInfo,
         waitForConnection: lifecycleManager.isConnected,
         waitForSetup,
         request,

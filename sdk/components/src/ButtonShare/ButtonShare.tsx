@@ -1,4 +1,9 @@
-import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import {
+    DebugInfoGatherer,
+    FrakRpcError,
+    RpcErrorCodes,
+    type FullInteractionTypesKey,
+} from "@frak-labs/core-sdk";
 import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import {
@@ -48,15 +53,14 @@ export type ButtonShareProps = {
  * @description
  * This function will open the share modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
  */
-function modalShare(targetInteraction?: FullInteractionTypesKey) {
+async function modalShare(targetInteraction?: FullInteractionTypesKey) {
     const modalBuilderSteps = getModalBuilderSteps();
 
     if (!modalBuilderSteps) {
-        console.error("modalBuilderSteps not found");
-        return;
+        throw new Error("modalBuilderSteps not found");
     }
 
-    modalBuilderSteps
+    await modalBuilderSteps
         .sharing(window.FrakSetup?.modalShareConfig ?? {})
         .display((metadata) => ({
             ...metadata,
@@ -65,17 +69,16 @@ function modalShare(targetInteraction?: FullInteractionTypesKey) {
 }
 
 /**
- * Open the wallet modal
+ * Open the embeded wallet modal
  *
  * @description
  * This function will open the wallet modal with the configuration provided in the `window.FrakSetup.modalWalletConfig` object.
  */
-function modalWallet() {
+async function modalEmbededWallet() {
     if (!window.FrakSetup?.client) {
-        console.error("Frak client not found");
-        return;
+        throw new Error("Frak client not found");
     }
-    displayEmbededWallet(
+    await displayEmbededWallet(
         window.FrakSetup.client,
         window.FrakSetup?.modalWalletConfig ?? {}
     );
@@ -136,6 +139,7 @@ export function ButtonShare({
         [rawShowWallet]
     );
 
+    const [debugInfo, setDebugInfo] = useState<string | undefined>(undefined);
     const [reward, setReward] = useState<string | undefined>(undefined);
     const [isError, setIsError] = useState(false);
 
@@ -174,20 +178,49 @@ export function ButtonShare({
             : `${text} ${reward}`;
     }, [useReward, text, noRewardText, reward]);
 
+    /**
+     * The action when the button is clicked
+     */
+    const onClick = useCallback(async () => {
+        // If no client present, set in error state
+        if (!window.FrakSetup?.client) {
+            console.error("Frak client not found");
+            setDebugInfo(
+                DebugInfoGatherer.empty().formatDebugInfo(
+                    "Frak client not found"
+                )
+            );
+            setIsError(true);
+            return;
+        }
+
+        // Try to open the embeded wallet or the sharing modal
+        try {
+            if (showWallet) {
+                await modalEmbededWallet();
+            } else {
+                await modalShare(targetInteraction);
+            }
+        } catch (e) {
+            // Ignore the error if the user aborted the modal
+            if (e instanceof FrakRpcError && e.code === RpcErrorCodes.clientAborted) {
+                console.debug("User aborted the modal");
+                return;
+            }
+
+            console.error("Error while opening the modal", e);
+            const debugInfo = window.FrakSetup.client.debugInfo.formatDebugInfo(
+                "Frak client not found"
+            );
+            setDebugInfo(debugInfo);
+            setIsError(true);
+            return;
+        }
+    }, [showWallet, targetInteraction]);
+
     return (
         <>
-            <button
-                type={"button"}
-                class={classname}
-                onClick={() => {
-                    if (!window.FrakSetup?.client) {
-                        console.log("Frak client not found");
-                        setIsError(true);
-                        return;
-                    }
-                    showWallet ? modalWallet() : modalShare(targetInteraction);
-                }}
-            >
+            <button type={"button"} class={classname} onClick={onClick}>
                 {btnText}
             </button>
             {isError && (
