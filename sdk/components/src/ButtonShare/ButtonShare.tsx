@@ -1,7 +1,10 @@
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
-import { getProductInformation } from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import { getModalBuilderSteps, onClientReady } from "../utils";
+import {
+    getCurrentReward,
+    getModalBuilderSteps,
+    onClientReady,
+} from "../utils";
 
 /**
  * The props type for {@link ButtonShare}.
@@ -117,32 +120,10 @@ export function ButtonShare({
 
         if (!useReward) return;
 
-        // Get the client
-        const client = window.FrakSetup?.client;
-        if (!client) {
-            console.warn("Frak client not ready yet");
-            return;
-        }
         // Find the estimated reward
-        getProductInformation(client).then((info) => {
-            if (!info?.estimatedEurReward) return;
-
-            let currentReward = info.estimatedEurReward;
-            if (targetInteraction) {
-                // Find the max reward for the target interaction
-                const targetReward = info.rewards
-                    .filter(
-                        (reward) =>
-                            reward.interactionTypeKey === targetInteraction
-                    )
-                    .map((reward) => reward.referrer.eurAmount)
-                    .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
-                if (targetReward > 0) {
-                    currentReward = Math.ceil(targetReward).toString();
-                }
-            }
-
-            setReward(`${currentReward} €`);
+        getCurrentReward(targetInteraction).then((reward) => {
+            if (!reward) return;
+            setReward(`${reward}€`);
         });
     }, [useReward, targetInteraction]);
 

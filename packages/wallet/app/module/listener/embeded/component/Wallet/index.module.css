@@ -1,7 +1,7 @@
 .modalListenerWallet {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 19px;
+    right: 19px;
     z-index: 20;
     border-radius: 25px;
     border: 2px solid #fff;
