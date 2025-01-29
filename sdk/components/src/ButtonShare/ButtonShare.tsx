@@ -6,6 +6,7 @@ import {
 } from "@frak-labs/core-sdk";
 import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import {
     getCurrentReward,
     getModalBuilderSteps,
@@ -227,29 +228,71 @@ export function ButtonShare({
                 {btnText}
             </button>
             {isError && (
-                <span style={{ display: "block" }}>
-                    <b>Oups ! Nous avons rencontré un petit problème</b>
-                    <br />
-                    Impossible d'ouvrir le menu de partage pour le moment. Si le
-                    problème persiste, copiez les informations ci-dessous et
-                    collez-les dans votre mail à{" "}
-                    <a href="mailto:help@frak-labs.com">help@frak-labs.com</a>
-                    <br />
-                    Merci pour votre retour, nous traitons votre demande dans
-                    les plus brefs délais.
-                    <br />
-                    <button
-                        type={"button"}
-                        style={{
-                            padding: "5px 10px",
-                            background: "#6e7680",
-                            color: "#fff",
-                        }}
-                    >
-                        Copier les informations
-                    </button>
-                </span>
+                <>
+                    <ErrorMessage debugInfo={debugInfo} />
+                    <ToggleMessage debugInfo={debugInfo} />
+                </>
             )}
         </>
+    );
+}
+
+function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
+    const { copied, copy } = useCopyToClipboard();
+
+    return (
+        <span style={{ display: "block" }}>
+            <b>Oups ! Nous avons rencontré un petit problème</b>
+            <br />
+            Impossible d'ouvrir le menu de partage pour le moment. Si le
+            problème persiste, copiez les informations ci-dessous et collez-les
+            dans votre mail à{" "}
+            <a href="mailto:help@frak-labs.com">help@frak-labs.com</a>
+            <br />
+            Merci pour votre retour, nous traitons votre demande dans les plus
+            brefs délais.
+            <br />
+            <button
+                type={"button"}
+                style={{
+                    padding: "5px 10px",
+                    background: "#6e7680",
+                    color: "#fff",
+                }}
+                onClick={() => copy(debugInfo ?? "")}
+            >
+                {copied
+                    ? "Copié ! Vous pouvez le coller dans votre mail"
+                    : "Copier les informations"}
+            </button>
+        </span>
+    );
+}
+
+function ToggleMessage({ debugInfo }: { debugInfo?: string }) {
+    const [showInfo, setShowInfo] = useState(false);
+
+    return (
+        <div>
+            <button
+                type={"button"}
+                style={{
+                    margin: "10px 0",
+                    padding: "5px 10px",
+                    background: "#6e7680",
+                    color: "#fff",
+                }}
+                onClick={() => setShowInfo(!showInfo)}
+            >
+                Ouvrir les informations
+            </button>
+            {showInfo && (
+                <textarea
+                    style={{ display: "block", width: "100%", height: "200px" }}
+                >
+                    {debugInfo}
+                </textarea>
+            )}
+        </div>
     );
 }

@@ -7,7 +7,6 @@ export default defineConfig([
         target: ["chrome67", "edge79", "firefox68", "opera54", "safari14"],
         // All of our entry-points
         entry: ["src/components.ts"],
-        replaceNodeEnv: true,
         esbuildPlugins: [svgrPlugin(), polyfillNode()],
         outDir: "cdn",
         outExtension() {
