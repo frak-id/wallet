@@ -199,6 +199,17 @@ export function ButtonShare({
                     <br />
                     Merci pour votre retour, nous traitons votre demande dans
                     les plus brefs délais.
+                    <br />
+                    <button
+                        type={"button"}
+                        style={{
+                            padding: "5px 10px",
+                            background: "#6e7680",
+                            color: "#fff",
+                        }}
+                    >
+                        Copier les informations
+                    </button>
                 </span>
             )}
         </>
