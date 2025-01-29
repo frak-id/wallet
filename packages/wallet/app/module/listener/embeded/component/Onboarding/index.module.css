@@ -10,7 +10,7 @@
 .onboarding {
     position: absolute;
     width: 250px;
-    padding: 6px;
+    padding: 6px 6px 6px 12px;
     border-radius: 11px;
     background: #ffffff2b;
     backdrop-filter: blur(13px);

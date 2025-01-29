@@ -124,9 +124,9 @@
             },
             "loggedIn": {
                 "onboarding": {
-                    "welcome": "🥳 Félicitations ! Votre porte-monnaie a été créé. Bonus de 0,50 € à la création.",
-                    "activate": "🟢 Activez votre porte-monnaie et gagnez 0,50 € supplémentaires",
-                    "share": "Déjà 1,00 € dans votre porte-monnaie !<br />Partagez et gagnez beaucoup plus 🤝"
+                    "welcome": "🥳 Bravo ! Votre porte-monnaie est créé.",
+                    "activate": "💫 Activez-le pour pouvoir partager.",
+                    "share": "🚀 C'est parti ! Partagez ce produit à vos proches et recevez directement vos récompenses."
                 }
             }
         }
