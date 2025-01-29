@@ -45,8 +45,9 @@
     "format": "biome check --write .",
     "clean": "rimraf cdn",
     "build": "tsup",
-    "postbuild": "bunx cpy --flat \"src/**/*.css\" cdn/css",
-    "build:watch": "tsup --watch",
+    "postbuild": "bun run copy:css",
+    "build:watch": "tsup --watch --onSuccess 'bun run copy:css'",
+    "copy:css": "bunx cpy --flat \"src/**/*.css\" cdn/css",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
     "publish": "bun publish"
