@@ -6,6 +6,7 @@ import {
     type CSSProperties,
     type PropsWithChildren,
     useEffect,
+    useRef,
     useState,
 } from "react";
 import { Trans } from "react-i18next";
@@ -53,12 +54,23 @@ export function OnboardingArrow({ style }: { style?: CSSProperties }) {
 export function OnboardingWelcome() {
     const { translation } = useEmbededListenerUI();
     const { data: currentSession } = useInteractionSessionStatus();
-    const [hidden, setHidden] = useState(!!currentSession);
+    const [hidden, setHidden] = useState(false);
+    const calledOnce = useRef(false);
 
     useEffect(() => {
         // Hide the onboarding after 8 seconds
         setTimeout(() => setHidden(true), 8_000);
     }, []);
+
+    useEffect(() => {
+        if (calledOnce.current) return;
+        // Hide the onboarding if the session is active
+        const isSessionActive = !!currentSession;
+        setHidden(isSessionActive);
+        if (isSessionActive) {
+            calledOnce.current = true;
+        }
+    }, [currentSession]);
 
     return (
         <div
