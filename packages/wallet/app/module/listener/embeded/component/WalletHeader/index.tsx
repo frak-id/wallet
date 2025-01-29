@@ -20,8 +20,8 @@ export function ListenerWalletHeader() {
         <div className={styles.modalListenerWallet__header}>
             {session && (
                 <LogoFrakWithName
-                    width={63}
-                    height={22}
+                    width={57}
+                    height={16}
                     className={styles.modalListenerWallet__logoFrak}
                 />
             )}
