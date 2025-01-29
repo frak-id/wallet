@@ -1,4 +1,5 @@
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import {
     getCurrentReward,
@@ -34,6 +35,11 @@ export type ButtonShareProps = {
      * Target interaction behind this sharing action (will be used to get the right reward to display)
      */
     targetInteraction?: FullInteractionTypesKey;
+    /**
+     * Do we display the wallet modal instead of the share modal?
+     * @defaultValue `false`
+     */
+    showWallet?: boolean;
 };
 
 /**
@@ -56,6 +62,23 @@ function modalShare(targetInteraction?: FullInteractionTypesKey) {
             ...metadata,
             targetInteraction,
         }));
+}
+
+/**
+ * Open the wallet modal
+ *
+ * @description
+ * This function will open the wallet modal with the configuration provided in the `window.FrakSetup.modalWalletConfig` object.
+ */
+function modalWallet() {
+    if (!window.FrakSetup?.client) {
+        console.error("Frak client not found");
+        return;
+    }
+    displayEmbededWallet(
+        window.FrakSetup.client,
+        window.FrakSetup?.modalWalletConfig ?? {}
+    );
 }
 
 /**
@@ -105,8 +128,13 @@ export function ButtonShare({
     useReward: rawUseReward,
     noRewardText,
     targetInteraction,
+    showWallet: rawShowWallet,
 }: ButtonShareProps) {
     const useReward = useMemo(() => rawUseReward !== undefined, [rawUseReward]);
+    const showWallet = useMemo(
+        () => rawShowWallet !== undefined,
+        [rawShowWallet]
+    );
 
     const [disabled, setDisabled] = useState(true);
     const [reward, setReward] = useState<string | undefined>(undefined);
@@ -154,7 +182,9 @@ export function ButtonShare({
             type={"button"}
             class={classname}
             disabled={disabled}
-            onClick={() => modalShare(targetInteraction)}
+            onClick={() =>
+                showWallet ? modalWallet() : modalShare(targetInteraction)
+            }
         >
             {btnText}
         </button>
