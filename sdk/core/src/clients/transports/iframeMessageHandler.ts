@@ -79,14 +79,19 @@ export function createIFrameMessageHandler({
 
     // Create the function that will handle incoming iframe messages
     async function msgHandler(event: MessageEvent<IFrameEvent>) {
-        if (!(event.origin && URL.canParse(event.origin))) {
+        if (!event.origin) {
             return;
         }
         // Check that the origin match the wallet
-        if (
-            new URL(event.origin).origin.toLowerCase() !==
-            new URL(frakWalletUrl).origin.toLowerCase()
-        ) {
+        try {
+            if (
+                new URL(event.origin).origin.toLowerCase() !==
+                new URL(frakWalletUrl).origin.toLowerCase()
+            ) {
+                return;
+            }
+        } catch (e) {
+            console.log("Unable to check frak msg origin", e);
             return;
         }
 

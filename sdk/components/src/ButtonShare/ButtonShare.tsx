@@ -1,8 +1,8 @@
 import {
     DebugInfoGatherer,
     FrakRpcError,
-    RpcErrorCodes,
     type FullInteractionTypesKey,
+    RpcErrorCodes,
 } from "@frak-labs/core-sdk";
 import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
@@ -203,7 +203,10 @@ export function ButtonShare({
             }
         } catch (e) {
             // Ignore the error if the user aborted the modal
-            if (e instanceof FrakRpcError && e.code === RpcErrorCodes.clientAborted) {
+            if (
+                e instanceof FrakRpcError &&
+                e.code === RpcErrorCodes.clientAborted
+            ) {
                 console.debug("User aborted the modal");
                 return;
             }

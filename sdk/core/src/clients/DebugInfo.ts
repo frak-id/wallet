@@ -54,7 +54,11 @@ export class DebugInfoGatherer {
 
     // Update communication logs
     public setLastResponse(event: MessageEvent<IFrameEvent>) {
-        this.lastResponse = { event: event.data, origin: event.origin, timestamp: Date.now() };
+        this.lastResponse = {
+            event: event.data,
+            origin: event.origin,
+            timestamp: Date.now(),
+        };
     }
     public setLastRequest(event: IFrameEvent, target: string) {
         this.lastRequest = { event, target, timestamp: Date.now() };
