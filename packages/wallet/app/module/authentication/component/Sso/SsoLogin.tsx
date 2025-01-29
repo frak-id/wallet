@@ -32,7 +32,7 @@ export function SsoLoginComponent({
         return (
             <p className={styles.sso__primaryButtonWrapper}>
                 <AuthFingerprint
-                    icon={<Fingerprint color={"#000"} sizes={57} />}
+                    icon={<Fingerprint color={"#fff"} sizes={39} />}
                     isShiny={false}
                     action={() => {
                         login({ lastAuthentication });
@@ -40,6 +40,7 @@ export function SsoLoginComponent({
                     }}
                     disabled={isLoading}
                     className={styles.sso__buttonPrimary}
+                    childrenPosition={"top"}
                 >
                     {t("authent.sso.btn.existing.login")}
                 </AuthFingerprint>

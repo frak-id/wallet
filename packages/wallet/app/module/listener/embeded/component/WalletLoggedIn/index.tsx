@@ -24,7 +24,7 @@ import { useMutation } from "@tanstack/react-query";
 import { tryit } from "radash";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
-const isOnboarding = false;
+const isOnboarding = true;
 
 /**
  * View for the logged in user

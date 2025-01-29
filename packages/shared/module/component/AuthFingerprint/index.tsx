@@ -11,6 +11,7 @@ type AuthFingerprintProps = {
     icon?: ReactNode;
     className?: string;
     isShiny?: boolean;
+    childrenPosition?: "top" | "bottom";
 };
 
 export function AuthFingerprint({
@@ -20,6 +21,7 @@ export function AuthFingerprint({
     icon,
     className = "",
     isShiny = true,
+    childrenPosition = "bottom",
 }: PropsWithChildren<AuthFingerprintProps>) {
     const content = icon ? (
         icon
@@ -29,18 +31,21 @@ export function AuthFingerprint({
         <FingerprintFrak />
     );
     return (
-        <ButtonRipple
-            onClick={action}
-            disabled={disabled}
-            size={"big"}
-            className={cx(
-                className,
-                styles["authFingerprint__button--centered"],
-                isShiny && styles.authFingerprint__shiny
-            )}
-        >
-            {content}
-            <span>{children}</span>
-        </ButtonRipple>
+        <>
+            {childrenPosition === "top" && <span>{children}</span>}
+            <ButtonRipple
+                onClick={action}
+                disabled={disabled}
+                size={"big"}
+                className={cx(
+                    className,
+                    styles["authFingerprint__button--centered"],
+                    isShiny && styles.authFingerprint__shiny
+                )}
+            >
+                {content}
+                {childrenPosition === "bottom" && <span>{children}</span>}
+            </ButtonRipple>
+        </>
     );
 }

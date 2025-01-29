@@ -56,7 +56,7 @@ export function SsoRegisterComponent({
         return (
             <p className={styles.sso__primaryButtonWrapper}>
                 <AuthFingerprint
-                    icon={<Fingerprint color={"#000"} sizes={57} />}
+                    icon={<Fingerprint color={"#fff"} sizes={39} />}
                     isShiny={false}
                     action={() => {
                         register();
@@ -67,6 +67,7 @@ export function SsoRegisterComponent({
                         isPreviouslyUsedAuthenticatorError
                     }
                     className={styles.sso__buttonPrimary}
+                    childrenPosition={"top"}
                 >
                     {t("authent.sso.btn.new.create")}
                 </AuthFingerprint>
