@@ -1,5 +1,15 @@
 # @frak-labs/core-sdk
 
+## 0.0.5
+
+### Patch Changes
+
+- [`fef225f`](https://github.com/frak-id/wallet/commit/fef225ff27b381f0b4f4575f99e44b9dc1400d03) Thanks [@KONFeature](https://github.com/KONFeature)! - Move `hearbeat` event to `clientLifecycle` events
+
+- [`fef225f`](https://github.com/frak-id/wallet/commit/fef225ff27b381f0b4f4575f99e44b9dc1400d03) Thanks [@KONFeature](https://github.com/KONFeature)! - Add `handshake` and `handshake-response` events to compute the reslving context when not available
+
+- [`64e1a8e`](https://github.com/frak-id/wallet/commit/64e1a8eee7bde61cf1fbe1ce269bfdf66f1253f7) Thanks [@KONFeature](https://github.com/KONFeature)! - Add the option to specify a `targetInteraction` for sharing modal and the `ButtonShare` component
+
 ## 0.0.4
 
 ### Patch Changes
