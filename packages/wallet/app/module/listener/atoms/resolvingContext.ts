@@ -79,7 +79,10 @@ export const handleHandshakeResponse = atom(
                 >
             >
         );
-        if (currentContext?.sourceUrl !== context?.sourceUrl) {
+        if (
+            currentContext?.sourceUrl !== context?.sourceUrl ||
+            currentContext?.isAutoContext !== context?.isAutoContext
+        ) {
             set(iframeResolvingContextAtom, context);
         }
 
@@ -123,9 +126,9 @@ function getIFrameResolvingContext(
         sourceUrl,
         origin,
         productId,
-        isAutoContext: event !== undefined,
+        isAutoContext: event === undefined,
     });
 
     // Return the context
-    return { productId, origin, sourceUrl, isAutoContext: event !== undefined };
+    return { productId, origin, sourceUrl, isAutoContext: event === undefined };
 }
