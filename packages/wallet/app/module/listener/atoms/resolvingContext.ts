@@ -30,20 +30,22 @@ const handshakeTokensAtom = atom<Set<string>>(new Set<string>());
 /**
  * Start to fetch the resolving context via an handshake
  */
-export const startFetchResolvingContextViaHandshake = atom(
-    null,
-    (_get, set) => {
-        // Generate an handshake token
-        const token = crypto.randomUUID();
-        // Set the token
-        set(handshakeTokensAtom, (tokens) => tokens.add(token));
-        // Emit the handshake event
-        emitLifecycleEvent({
-            iframeLifecycle: "handshake",
-            data: { token },
-        });
+export const startFetchResolvingContextViaHandshake = atom(null, (get, set) => {
+    // Generate an handshake token
+    const token = crypto.randomUUID();
+    // If we got more than 10 waiting tokens, don't do anything
+    if (get(handshakeTokensAtom).size > 10) {
+        console.warn("Too many handshake tokens without response, skipping");
+        return;
     }
-);
+    // Set the token
+    set(handshakeTokensAtom, (tokens) => tokens.add(token));
+    // Emit the handshake event
+    emitLifecycleEvent({
+        iframeLifecycle: "handshake",
+        data: { token },
+    });
+});
 
 /**
  * Handle the handshake response

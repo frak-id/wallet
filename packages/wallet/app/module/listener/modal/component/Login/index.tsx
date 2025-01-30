@@ -1,7 +1,7 @@
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { SsoButton } from "@/module/listener/component/SsoButton";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";

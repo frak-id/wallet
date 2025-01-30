@@ -1,5 +1,5 @@
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import type {
     DisplayEmbededWalletParamsType,
     FullInteractionTypesKey,

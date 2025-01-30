@@ -4,7 +4,7 @@ import {
     handleHandshakeResponse,
     iframeResolvingContextAtom,
     startFetchResolvingContextViaHandshake,
-} from "@/module/atoms/resolvingContext";
+} from "@/module/listener/atoms/resolvingContext";
 import {
     type ClientLifecycleEvent,
     type ExtractedParametersFromRpc,

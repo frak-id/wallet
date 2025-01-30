@@ -1,5 +1,5 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import type {
     FullInteractionTypesKey,
     GetProductInformationReturnType,

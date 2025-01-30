@@ -1,4 +1,4 @@
-import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
+import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { ButtonWallet } from "@/module/listener/embeded/component/ButtonWallet";
 import {
     OnboardingActivate,

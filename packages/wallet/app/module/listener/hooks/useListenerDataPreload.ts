@@ -1,5 +1,5 @@
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEstimatedInteractionReward";
 import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";
 import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteractionSessionStatus";

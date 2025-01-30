@@ -1,5 +1,5 @@
-import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
 import { Markdown } from "@/module/common/component/Markdown";
+import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { SsoButton } from "@/module/listener/component/SsoButton";
 import {
     useEmbededListenerUI,

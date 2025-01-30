@@ -1,4 +1,4 @@
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { useAtomValue } from "jotai";

@@ -1,4 +1,4 @@
-import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
+import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
