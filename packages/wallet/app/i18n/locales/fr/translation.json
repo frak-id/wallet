@@ -70,7 +70,7 @@
                     "title": "Succès",
                     "title_reward": "Gains",
                     "title_sharing": "Partager",
-                    "description_sharing": "Recevez **{{ estimatedReward }}€** de la part de **{{ productName }}** directement sur votre porte-monnaie pour tout achat réalisé grâce à votre partage.\n\nRetrouvez votre porte-monnaie sur [wallet.frak.id](https://wallet.frak.id).\n\nPrêt, Partagez, Gagnez !",
+                    "description_sharing": "Recevez jusqu'a **{{ estimatedReward }}€** de la part de **{{ productName }}** directement sur votre porte-monnaie pour tout achat réalisé grâce à votre partage.\n\nRetrouvez votre porte-monnaie sur [wallet.frak.id](https://wallet.frak.id).\n\nPrêt, Partagez, Gagnez !",
                     "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois **{{ estimatedReward }}€** directement sur mon porte-monnaie, utilisable où je veux.",
                     "description": "Vous avez effectué toutes les étapes avec succès."
                 },
@@ -83,8 +83,8 @@
                 "default": {
                     "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**.",
                     "description_other": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**",
-                    "description_sharing": "En partageant ce produit, je deviens ambassadeur-rice **{{ productName }}**, je reçois **{{ estimatedReward }}€** directement dans mon porte-monnaie.",
-                    "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois **{{ estimatedReward }}€** directement sur mon porte-monnaie, utilisable où je veux.",
+                    "description_sharing": "En partageant ce produit, je deviens ambassadeur-rice **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}€** directement dans mon porte-monnaie.",
+                    "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}€** directement sur mon porte-monnaie, utilisable où je veux.",
                     "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
                     "secondaryAction": "J'ai déjà un porte-monnaie",
                     "privyAction": "Connection via Privy",
@@ -94,7 +94,7 @@
             },
             "openSession": {
                 "default": {
-                    "description": "Bravo votre porte-monnaie est créé ! Activez-le maintenant pour recevoir vos **{{ estimatedReward }}€**.",
+                    "description": "Bravo votre porte-monnaie est créé ! Activez-le maintenant pour recevoir jusqu'a **{{ estimatedReward }}€**.",
                     "primaryAction": "J'active mon porte-monnaie",
                     "title": "Activation"
                 }
