@@ -43,7 +43,9 @@ export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
         },
         plugins: [reactRouter(), mkcert(), tsconfigPaths()],
         build: {
-            target: isSsrBuild ? "ES2022" : "ES2020",
+            target: isSsrBuild
+                ? "ES2022"
+                : ["chrome67", "edge79", "firefox68", "opera54", "safari14"],
             rollupOptions: {
                 output: {
                     // Set a min chunk size to 16kb
@@ -55,6 +57,7 @@ export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
                 },
                 onwarn,
             },
+            sourcemap: process.env.STAGE !== "prod",
         },
     };
 });
