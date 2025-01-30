@@ -44,6 +44,7 @@
     "clean": "rimraf dist",
     "build": "tsup",
     "build:watch": "tsup --watch",
-    "prepublish": "bun run lint && bun run build"
+    "prepublish": "bun run lint && bun run build",
+    "publish": "bun publish"
   }
 }
