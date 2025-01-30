@@ -196,6 +196,17 @@ async function handleLifecycleEvents(
 ) {
     // Check if that's an iframe lifecycle request event
     if (!("clientLifecycle" in message.data)) {
+        // Check if that's a legacy hearbeat event
+        // todo: To be delete once the SDK will be updated everywhere
+        if (
+            "iframeLifecycle" in message.data &&
+            // @ts-ignore: Legacy versions of the SDK can send this
+            message.data.iframeLifecycle === "heartbeat"
+        ) {
+            setReadyToHandleRequest();
+            return;
+        }
+
         console.error(
             "Received an iframe lifecycle event on the iframe side, dismissing it"
         );
