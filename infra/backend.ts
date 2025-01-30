@@ -4,7 +4,7 @@ import { ServiceTargets } from "./components/ServiceTargets.ts";
 import { indexerUrl, isProd, vpc } from "./config";
 
 // Get the master cluster
-const clusterName = `master-cluster-${$dev ? "dev" : $app.stage}`;
+const clusterName = `master-cluster-${isProd ? "production" : "dev"}`;
 export const sstCluster = sst.aws.Cluster.get("MasterCluster", {
     id: Output.create(aws.ecs.getCluster({ clusterName })).apply((c) => c.id),
     vpc: vpc,
