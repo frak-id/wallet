@@ -5,13 +5,16 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/core-sdk";
 import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
+import { cx } from "class-variance-authority";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { Spinner } from "../Spinner";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import {
     getCurrentReward,
     getModalBuilderSteps,
     onClientReady,
 } from "../utils";
+import styles from "./ButtonShare.module.css";
 
 /**
  * The props type for {@link ButtonShare}.
@@ -143,11 +146,14 @@ export function ButtonShare({
     const [debugInfo, setDebugInfo] = useState<string | undefined>(undefined);
     const [reward, setReward] = useState<string | undefined>(undefined);
     const [isError, setIsError] = useState(false);
+    const [isReady, setIsReady] = useState(false);
 
     /**
      * Once the client is ready, enable the button and fetch the reward if needed
      */
     const handleClientReady = useCallback(() => {
+        setIsReady(true);
+
         if (!useReward) return;
 
         // Find the estimated reward
@@ -224,15 +230,19 @@ export function ButtonShare({
 
     return (
         <>
-            <button type={"button"} class={classname} onClick={onClick}>
-                {btnText}
+            <button
+                type={"button"}
+                className={cx(styles.buttonShare, classname)}
+                onClick={onClick}
+            >
+                {!isReady && <Spinner />} {btnText}
             </button>
             {isError && <ErrorMessage debugInfo={debugInfo} />}
         </>
     );
 }
 
-const styles = {
+const stylesMessage = {
     errorContainer: {
         marginTop: "16px",
         padding: "16px",
@@ -281,20 +291,20 @@ function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
     const { copied, copy } = useCopyToClipboard();
 
     return (
-        <div style={styles.errorContainer}>
-            <div style={styles.header}>
-                <h3 style={styles.title}>
+        <div style={stylesMessage.errorContainer}>
+            <div style={stylesMessage.header}>
+                <h3 style={stylesMessage.title}>
                     Oups ! Nous avons rencontré un petit problème
                 </h3>
             </div>
 
-            <p style={styles.message}>
+            <p style={stylesMessage.message}>
                 Impossible d'ouvrir le menu de partage pour le moment. Si le
                 problème persiste, copiez les informations ci-dessous et
                 collez-les dans votre mail à{" "}
                 <a
                     href={"mailto:help@frak-labs.com?subject=Debug"}
-                    style={styles.link}
+                    style={stylesMessage.link}
                 >
                     help@frak-labs.com
                 </a>{" "}
@@ -306,7 +316,7 @@ function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
             <button
                 type={"button"}
                 onClick={() => copy(debugInfo ?? "")}
-                style={styles.copyButton}
+                style={stylesMessage.copyButton}
             >
                 {copied
                     ? "Informations copiées !"
@@ -325,7 +335,7 @@ function ToggleMessage({ debugInfo }: { debugInfo?: string }) {
         <div>
             <button
                 type={"button"}
-                style={styles.copyButton}
+                style={stylesMessage.copyButton}
                 onClick={() => setShowInfo(!showInfo)}
             >
                 Ouvrir les informations

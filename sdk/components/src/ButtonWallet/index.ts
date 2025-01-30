@@ -10,9 +10,9 @@ declare global {
     }
 }
 
-// If custom element is not already registered
-if (!customElements.get("frak-button-wallet")) {
-    register(ButtonWallet, "frak-button-wallet", [], { shadow: false });
+export function setupButtonWallet() {
+    // If custom element is not already registered
+    if (!customElements.get("frak-button-wallet")) {
+        register(ButtonWallet, "frak-button-wallet", [], { shadow: false });
+    }
 }
-
-export { ButtonWallet };

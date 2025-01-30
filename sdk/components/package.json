@@ -44,10 +44,8 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf cdn",
-    "build": "tsup",
-    "postbuild": "bun run copy:css",
-    "build:watch": "tsup --watch --onSuccess 'bun run copy:css'",
-    "copy:css": "bunx cpy --flat \"src/**/*.css\" cdn/css",
+    "build": "vite build",
+    "build:watch": "vite build --watch",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
     "publish": "bun publish"
@@ -59,14 +57,15 @@
     "preact-custom-element": "^4.3.0"
   },
   "devDependencies": {
+    "@preact/preset-vite": "^2.10.1",
     "@types/node": "^22",
     "@types/preact-custom-element": "^4.0.4",
     "browserslist": "^4.24.4",
     "browserslist-to-esbuild": "^2.1.1",
-    "cpy-cli": "^5.0.0",
-    "esbuild-plugin-svgr": "^3.1.0",
-    "tsup": "^8.3.5",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^6.0.9",
+    "vite-plugin-svgr": "^4.3.0",
+    "vite-tsconfig-paths": "^5.1.4"
   },
   "browserslist": [
     "extends @frak-labs/browserslist-config"

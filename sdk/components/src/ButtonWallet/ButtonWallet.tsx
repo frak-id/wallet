@@ -2,7 +2,8 @@ import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { getCurrentReward, onClientReady, safeVibrate } from "../utils";
-import GiftIcon from "./assets/gift.svg";
+import GiftIcon from "./assets/gift.svg?react";
+import "./ButtonWallet.css";
 
 /**
  * The props type for {@link ButtonWallet}.

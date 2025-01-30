@@ -10,8 +10,8 @@ const scriptSrc =
         : `${bundleDir}/components.js`;
 const cssSrc =
     process.env.NODE_ENV === "production"
-        ? "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/css/ButtonWallet.css"
-        : `${bundleDir}/css/ButtonWallet.css`;
+        ? "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.css"
+        : `${bundleDir}/components.css`;
 
 export default defineConfig({
     server: {
