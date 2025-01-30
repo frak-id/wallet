@@ -289,17 +289,18 @@ function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
             </div>
 
             <p style={styles.message}>
-                Impossible d'ouvrir le menu de partage pour le moment. N'hésitez
-                pas à réessayer dans quelques instants ou à nous contacter à{" "}
+                Impossible d'ouvrir le menu de partage pour le moment. Si le
+                problème persiste, copiez les informations ci-dessous et
+                collez-les dans votre mail à{" "}
                 <a
                     href={"mailto:help@frak-labs.com?subject=Debug"}
                     style={styles.link}
                 >
                     help@frak-labs.com
                 </a>{" "}
-                si le problème persiste. Pour nous aider à résoudre plus
-                rapidement votre problème, vous pouvez copier les informations
-                techniques ci-dessous et les inclure dans votre email.
+                <br />
+                Merci pour votre retour, nous traitons votre demande dans les
+                plus brefs délais.
             </p>
 
             <button
