@@ -3,6 +3,7 @@ import { defineConfig } from "tsup";
 export default defineConfig([
     // Config for the npm package
     {
+        target: ["chrome67", "edge79", "firefox68", "opera54", "safari14"],
         // All of our entry-points
         entry: [
             "src/index.ts",
@@ -16,6 +17,7 @@ export default defineConfig([
         // Code splitting and stuff
         clean: true,
         splitting: true,
+        treeshake: "smallest",
         // Types config
         dts: {
             resolve: true,
@@ -23,7 +25,7 @@ export default defineConfig([
     },
     // Config for the js bundle for vanilla js
     {
-        target: "es2022",
+        target: ["chrome67", "edge79", "firefox68", "opera54", "safari14"],
         // All of our entry-points
         entry: ["src/bundle.ts"],
         outDir: "cdn",

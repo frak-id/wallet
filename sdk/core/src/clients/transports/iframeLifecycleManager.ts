@@ -46,6 +46,23 @@ export function createIFrameLifecycleManager({
                     isVisible: messageEvent.iframeLifecycle === "show",
                 });
                 break;
+            // Handshake handling
+            case "handshake": {
+                console.log("Received handshake event", {
+                    token: messageEvent.data.token,
+                });
+                iframe.contentWindow?.postMessage(
+                    {
+                        clientLifecycle: "handshake-response",
+                        data: {
+                            token: messageEvent.data.token,
+                            currentUrl: window.location.href,
+                        },
+                    },
+                    "*"
+                );
+                break;
+            }
         }
     };
 

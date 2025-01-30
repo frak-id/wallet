@@ -4,6 +4,7 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import type { PreparedInteraction } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
+import { trackEvent } from "@module/utils/trackEvent";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
@@ -67,6 +68,13 @@ export function usePushInteraction() {
                     console.error("Unable to push the interactions", error);
                     return { status: "push-error" } as const;
                 }
+
+                trackEvent("interaction-pushed", {
+                    productId,
+                    handlerType: interaction.handlerTypeDenominator,
+                    data: interaction.interactionData,
+                });
+
                 return { status: "success", delegationId } as const;
             } catch (error) {
                 console.error("Unable to push the interactions", error);

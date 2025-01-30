@@ -32,6 +32,7 @@ interface Resources {
             };
         };
         common: {
+            activated: "Activated";
             amountRequired: "Amount is required";
             added: "added";
             at: "at";
@@ -41,10 +42,12 @@ interface Resources {
             claimed: "claimed";
             copied: "Copied!";
             copyAddress: "Copy address";
+            disabled: "Disabled";
             enterAddress: "Enter address";
             interactions: "Interactions";
             logout: "Logout";
             notifications: "Notifications";
+            pending: "pending";
             receive: "Receive";
             refresh: "Refresh";
             rewards: "Rewards";
@@ -114,6 +117,21 @@ interface Resources {
                     };
                 };
             };
+            wallet: {
+                login: {
+                    default: {
+                        text: "Create your wallet with **{{ productName }}** and receive up to **{{ estimatedReward }}€** per referred friend";
+                        primaryAction: "I create my wallet";
+                    };
+                };
+                loggedIn: {
+                    onboarding: {
+                        welcome: "🥳 Congratulations! Your wallet has been created. €0.50 bonus upon creation.";
+                        activate: "🟢 Activate your wallet and earn an extra €0.50";
+                        share: "Already €1.00 in your wallet!<br />Share and earn much more 🤝";
+                    };
+                };
+            };
         };
         sharing: {
             btn: {
@@ -143,6 +161,7 @@ interface Resources {
                 READ_ARTICLE: "Read article";
                 REFERRED: "Referred";
                 WEBSHOP_OPENNED: "Opened webshop";
+                CUSTOMER_MEETING: "Appointment in store";
             };
             invite: {
                 title: "Invite friends, earn $5";

@@ -1,0 +1,42 @@
+.onboardingWrapper {
+    opacity: 1;
+    transition: opacity .8s ease;
+}
+
+.onboardingWrapper--hidden {
+    opacity: 0;
+}
+
+.onboarding {
+    position: absolute;
+    width: 250px;
+    padding: 6px 6px 6px 12px;
+    border-radius: 11px;
+    background: #ffffff2b;
+    backdrop-filter: blur(13px);
+    text-align: left;
+    font-size: 12px;
+    line-height: 18px;
+    color: #000000;
+}
+
+.onboarding::after {
+    position: absolute;
+    bottom: -13px;
+    left: 15px;
+    width: 14px;
+    height: 13px;
+    content: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiBoZWlnaHQ9IjEzIiB2aWV3Qm94PSIwIDAgMTQgMTMiIHdpZHRoPSIxNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtMTQgMGgtMTRzMyAxIDIgNS41LTIgNy0yIDcgNS41LTEuNSA5LjUtNS41IDQuNS03IDQuNS03eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMTciLz48L3N2Zz4=");
+}
+
+.onboarding--reverse::after {
+    bottom: auto;
+    top: -13px;
+    left: auto;
+    right: 20px;
+    transform: rotate(175deg);
+}
+
+.onboarding__arrow {
+    position: absolute;
+}

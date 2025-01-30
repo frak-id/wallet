@@ -62,7 +62,10 @@ export function createIframe({
 export function changeIframeVisibility({
     iframe,
     isVisible,
-}: { iframe: HTMLIFrameElement; isVisible: boolean }) {
+}: {
+    iframe: HTMLIFrameElement;
+    isVisible: boolean;
+}) {
     if (!isVisible) {
         iframe.style.width = "0";
         iframe.style.height = "0";

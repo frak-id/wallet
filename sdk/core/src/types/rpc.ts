@@ -4,6 +4,7 @@ import type {
     ModalRpcStepsInput,
     ModalRpcStepsResultType,
 } from "./rpc/displayModal";
+import type { DisplayEmbededWalletParamsType } from "./rpc/embeded";
 import type {
     PreparedInteraction,
     SendInteractionReturnType,
@@ -41,6 +42,10 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  *  ### frak_getProductInformation
  *  - Params: None
  *  - Returns: {@link GetProductInformationReturnType}
+ *
+ * ### frak_displayEmbededWallet
+ * - Params: [{@link DisplayEmbededWalletParamsType}]
+ * - Returns: undefined
  */
 export type IFrameRpcSchema = [
     /**
@@ -52,7 +57,7 @@ export type IFrameRpcSchema = [
         ReturnType: WalletStatusReturnType;
     },
     /**
-     * Method to transmit a user interaction
+     * Method to display a modal with the provided steps
      */
     {
         Method: "frak_displayModal";
@@ -98,5 +103,13 @@ export type IFrameRpcSchema = [
         Method: "frak_getProductInformation";
         Parameters?: undefined;
         ReturnType: GetProductInformationReturnType;
+    },
+    /**
+     * Method to show the embeded wallet, with potential customisation
+     */
+    {
+        Method: "frak_displayEmbededWallet";
+        Parameters: [DisplayEmbededWalletParamsType, name: string];
+        ReturnType: undefined;
     },
 ];

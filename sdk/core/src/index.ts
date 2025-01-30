@@ -1,5 +1,9 @@
 // Clients
-export { createIFrameFrakClient, setupClient } from "./clients";
+export {
+    createIFrameFrakClient,
+    setupClient,
+    DebugInfoGatherer,
+} from "./clients";
 
 // Utils
 export {
@@ -36,6 +40,11 @@ export type {
     SsoMetadata,
     OpenSsoParamsType,
     GetProductInformationReturnType,
+    // RPC Embeded wallet
+    DisplayEmbededWalletParamsType,
+    LoggedOutEmbededView,
+    LoggedInEmbededView,
+    EmbededViewAction,
     // RPC Modal generics
     ModalStepTypes,
     ModalRpcMetadata,

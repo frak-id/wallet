@@ -29,6 +29,7 @@
         }
     },
     "common": {
+        "activated": "Activé",
         "amountRequired": "Le montant est requis",
         "added": "ajouté",
         "at": "à",
@@ -38,10 +39,12 @@
         "claimed": "réclamé",
         "copied": "Copié !",
         "copyAddress": "Copier l'adresse",
+        "disabled": "Désactivé",
         "enterAddress": "Entrez l'adresse",
         "interactions": "Interactions",
         "logout": "Déconnexion",
         "notifications": "Notifications",
+        "pending": "en attente",
         "receive": "Recevoir",
         "refresh": "Rafraîchir",
         "rewards": "Gains",
@@ -109,6 +112,21 @@
                     "description": "Veuillez vous authentifier avec votre porte-monnaie pour continuer en toute sécurité. Votre signature confirme votre identité.",
                     "primaryAction": "Authentifier",
                     "title": "Authentification"
+                }
+            }
+        },
+        "wallet": {
+            "login": {
+                "default": {
+                    "text": "Créez votre porte-monnaie avec **{{ productName }}** et recevez jusqu’à **{{ estimatedReward }}€** par ami(e) parrainé(e)",
+                    "primaryAction": "Je crée mon porte-monnaie"
+                }
+            },
+            "loggedIn": {
+                "onboarding": {
+                    "welcome": "🥳 Bravo ! Votre porte-monnaie est créé.",
+                    "activate": "💫 Activez-le pour pouvoir partager.",
+                    "share": "🚀 C'est parti ! Partagez ce produit à vos proches et recevez directement vos récompenses."
                 }
             }
         }

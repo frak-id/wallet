@@ -1,0 +1,20 @@
+.overlay {
+    background: rgba(0, 0, 0, 0.4);
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    animation: overlayShow 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes overlayShow {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

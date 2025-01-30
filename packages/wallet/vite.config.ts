@@ -46,17 +46,10 @@ export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
             target: isSsrBuild ? "ES2022" : "ES2020",
             rollupOptions: {
                 output: {
+                    // Set a min chunk size to 16kb
+                    // note, this is pre-minification chunk size, not the final bundle size
+                    experimentalMinChunkSize: 16384,
                     manualChunks(id) {
-                        if (
-                            id.includes(
-                                "app-essentials/src/blockchain/wallet.ts"
-                            ) ||
-                            id.includes(
-                                "app-essentials/src/blockchain/index.ts"
-                            )
-                        ) {
-                            return "blockchain-core";
-                        }
                         return manualChunks(id);
                     },
                 },

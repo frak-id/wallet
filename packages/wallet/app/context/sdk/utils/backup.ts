@@ -1,5 +1,5 @@
-import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
+import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import {
     addPendingInteractionsAtom,
@@ -82,7 +82,9 @@ const restoreBackupAtom = atom(null, (_get, set, data: BackupData) => {
  */
 export async function pushBackupData(args?: { productId?: Hex }) {
     // Check if we got an iframe resolving context
-    const productId = args?.productId ?? getIFrameResolvingContext()?.productId;
+    const productId =
+        args?.productId ??
+        jotaiStore.get(iframeResolvingContextAtom)?.productId;
     if (!productId) {
         console.log("No context to push backup data to");
         return;

@@ -4,11 +4,12 @@
  */
 export type IFrameLifecycleEvent =
     | {
-          iframeLifecycle: "connected" | "heartbeat" | "show" | "hide";
+          iframeLifecycle: "connected" | "show" | "hide";
           data?: never;
       }
     | DoBackupEvent
-    | RemoveBackupEvent;
+    | RemoveBackupEvent
+    | HandshakeRequestEvent;
 
 type DoBackupEvent = {
     iframeLifecycle: "do-backup";
@@ -17,4 +18,11 @@ type DoBackupEvent = {
 
 type RemoveBackupEvent = {
     iframeLifecycle: "remove-backup";
+};
+
+type HandshakeRequestEvent = {
+    iframeLifecycle: "handshake";
+    data: {
+        token: string;
+    };
 };

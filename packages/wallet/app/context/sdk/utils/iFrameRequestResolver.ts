@@ -1,10 +1,12 @@
 import { restoreBackupData } from "@/context/sdk/utils/backup";
-import {
-    getIFrameResolvingContext,
-    isInIframe,
-} from "@/context/sdk/utils/iframeContext";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import {
+    handleHandshakeResponse,
+    iframeResolvingContextAtom,
+    startFetchResolvingContextViaHandshake,
+} from "@/module/atoms/resolvingContext";
+import {
+    type ClientLifecycleEvent,
     type ExtractedParametersFromRpc,
     type IFrameEvent,
     type IFrameRpcSchema,
@@ -12,6 +14,7 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
+import { jotaiStore } from "@module/atoms/store";
 import { type Hex, keccak256, toHex } from "viem";
 
 /**
@@ -20,6 +23,8 @@ import { type Hex, keccak256, toHex } from "viem";
 export type IFrameResolvingContext = {
     productId: Hex;
     origin: string;
+    sourceUrl: string;
+    isAutoContext: boolean;
 };
 
 /**
@@ -67,23 +72,8 @@ export function createIFrameRequestResolver(
         throw new Error("IFrame resolver should be used in an iframe");
     }
 
-    // Get the resolving context
-    const resolvingContext = getIFrameResolvingContext();
-
     // Listen to the window message
     const onMessage = async (message: MessageEvent<IFrameEvent>) => {
-        // Recompute the product id associated with the message
-        const productId = keccak256(toHex(new URL(message.origin).hostname));
-
-        // If  it doesn't match the one computed from the iframe, exit
-        if (productId !== resolvingContext?.productId) {
-            console.error("Received a message from an unknown origin", {
-                productId,
-                resolvingContext,
-            });
-            return;
-        }
-
         // Check if the message data are object
         if (typeof message.data !== "object") {
             return;
@@ -94,11 +84,22 @@ export function createIFrameRequestResolver(
             "clientLifecycle" in message.data ||
             "iframeLifecycle" in message.data
         ) {
-            await handleLifecycleEvents(
-                message,
-                resolvingContext,
-                setReadyToHandleRequest
-            );
+            await handleLifecycleEvents(message, setReadyToHandleRequest);
+            return;
+        }
+
+        // Recompute the product id associated with the message
+        const productId = keccak256(toHex(new URL(message.origin).host));
+
+        // Check if we got a current resolving context
+        const currentContext = jotaiStore.get(iframeResolvingContextAtom);
+
+        // Check if the product id matches (and only proceed if we got a safe context)
+        if (productId !== currentContext?.productId) {
+            console.error("Received a message from an unknown origin", {
+                productId,
+                currentContext,
+            });
             return;
         }
 
@@ -137,7 +138,7 @@ export function createIFrameRequestResolver(
 
         // Response to the requests
         // @ts-ignore
-        await resolver(uncompressedData, resolvingContext, responseEmitter);
+        await resolver(uncompressedData, currentContext, responseEmitter);
     };
 
     // Add the message listener
@@ -148,10 +149,34 @@ export function createIFrameRequestResolver(
         window.removeEventListener("message", onMessage);
     }
 
+    // If we don't have any context, do the request do get one via handshake
+    function isContextPresent() {
+        // Get the context
+        const currentContext = jotaiStore.get(iframeResolvingContextAtom);
+        // If we don't have one, initiate the handshake + tell that we can't handle request yet
+        if (!currentContext) {
+            jotaiStore.set(startFetchResolvingContextViaHandshake);
+            return false;
+        }
+        // We have an auto context, try to fetch a more precise one using the handshake
+        if (currentContext.isAutoContext) {
+            jotaiStore.set(startFetchResolvingContextViaHandshake);
+        }
+        return true;
+    }
+
     // Helper to tell when we are ready to process message
     function setReadyToHandleRequest() {
+        if (!isContextPresent()) {
+            console.warn("Not ready to handle request yet");
+            return;
+        }
+        // If we got a context, we are rdy to handle request
         emitLifecycleEvent({ iframeLifecycle: "connected" });
     }
+
+    // Directly launch a context check
+    isContextPresent();
 
     return {
         destroy,
@@ -167,37 +192,17 @@ export function createIFrameRequestResolver(
  */
 async function handleLifecycleEvents(
     message: MessageEvent<IFrameEvent>,
-    resolvingContext: IFrameResolvingContext,
     setReadyToHandleRequest: () => void
 ) {
-    // Check if that's a client lifecycle request event
-    if ("clientLifecycle" in message.data) {
-        const { clientLifecycle, data } = message.data;
-
-        switch (clientLifecycle) {
-            case "modal-css": {
-                const style = document.createElement("link");
-                style.rel = "stylesheet";
-                style.href = data.cssLink;
-                document.head.appendChild(style);
-                break;
-            }
-            case "restore-backup": {
-                // Restore the backup
-                await restoreBackupData({
-                    backup: data.backup,
-                    productId: resolvingContext.productId,
-                });
-                break;
-            }
-        }
-        return;
-    }
-
     // Check if that's an iframe lifecycle request event
-    if ("iframeLifecycle" in message.data) {
-        const { iframeLifecycle } = message.data;
-        if (iframeLifecycle === "heartbeat") {
+    if (!("clientLifecycle" in message.data)) {
+        // Check if that's a legacy hearbeat event
+        // todo: To be delete once the SDK will be updated everywhere
+        if (
+            "iframeLifecycle" in message.data &&
+            // @ts-ignore: Legacy versions of the SDK can send this
+            message.data.iframeLifecycle === "heartbeat"
+        ) {
             setReadyToHandleRequest();
             return;
         }
@@ -207,4 +212,60 @@ async function handleLifecycleEvents(
         );
         return;
     }
+
+    // Extract the client lifecucle events data
+    const clientMsg = message.data;
+    const { clientLifecycle } = clientMsg;
+
+    switch (clientLifecycle) {
+        case "modal-css": {
+            const style = document.createElement("link");
+            style.rel = "stylesheet";
+            style.href = clientMsg.data.cssLink;
+            document.head.appendChild(style);
+            return;
+        }
+        case "restore-backup": {
+            const context = jotaiStore.get(iframeResolvingContextAtom);
+            if (!context) {
+                console.warn(
+                    "Can't restore a backend until we are sure of the context"
+                );
+                return;
+            }
+            // Restore the backup
+            await restoreBackupData({
+                backup: clientMsg.data.backup,
+                productId: context.productId,
+            });
+            return;
+        }
+        case "heartbeat": {
+            // Tell that we are rdy to handle request
+            setReadyToHandleRequest();
+            return;
+        }
+        case "handshake-response": {
+            // Set the handshake response
+            const hasContext = jotaiStore.set(
+                handleHandshakeResponse,
+                message as MessageEvent<ClientLifecycleEvent>
+            );
+            // Once we got a context, we can tell that we are rdy to handle request
+            if (hasContext) {
+                setReadyToHandleRequest();
+            }
+            return;
+        }
+    }
+}
+
+/**
+ * Simple helper to check if we currently are in an iframe
+ */
+function isInIframe() {
+    if (typeof window === "undefined") {
+        return false;
+    }
+    return window.self !== window.top;
 }

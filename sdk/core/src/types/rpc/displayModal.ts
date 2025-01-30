@@ -1,3 +1,4 @@
+import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
 import type {
     FinalModalStepType,
     LoginModalStepType,
@@ -54,6 +55,7 @@ export type ModalRpcMetadata = {
     };
     context?: string;
     lang?: "en" | "fr";
+    targetInteraction?: FullInteractionTypesKey;
 } & (
     | {
           isDismissible: true;

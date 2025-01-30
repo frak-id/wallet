@@ -1,0 +1,40 @@
+.balance {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    color: var(--frak-color-grayText);
+}
+
+.balance__title {
+    display: inline;
+    position: relative;
+    font-size: 21px;
+    font-weight: 400;
+}
+
+.balance__status {
+    position: absolute;
+    bottom: 6px;
+    margin-left: 4px;
+    font-size: 11px;
+    font-weight: 400;
+    font-style: italic;
+    white-space: nowrap;
+}
+
+.balance__amount {
+    font-size: 34px;
+    font-weight: 600;
+    text-shadow: 0px 4px 4px #0000001a;
+}
+
+.modalListenerWallet__actionButtons {
+    display: flex;
+    justify-content: center;
+    gap: 21px;
+    margin: 100px 0 10px 0;
+}
+
+.modalListenerWallet__wrapperButton {
+    position: relative;
+}

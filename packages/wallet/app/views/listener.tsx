@@ -1,36 +1,46 @@
 import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
+import { ListenerUiRenderer } from "@/module/listener/component/ListerUiRenderer";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
 import { useOnGetProductInformation } from "@/module/listener/hooks/useOnGetProductInformation";
 import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
-import { lazy, useEffect, useState } from "react";
+import {
+    ListenerUiProvider,
+    useListenerUI,
+} from "@/module/listener/providers/ListenerUiProvider";
+import { useEffect, useState } from "react";
 
-const modalImport = () =>
-    import("@/module/listener/component/Modal").then((module) => ({
-        default: module.ListenerModal,
-    }));
-const ListenerModal = lazy(modalImport);
+/**
+ * Top level listener, wrapped with the Listener Ui context
+ */
+export default function Listener() {
+    return (
+        <ListenerUiProvider>
+            <ListenerContent />
+        </ListenerUiProvider>
+    );
+}
 
 /**
  * Global Listener UI that can only be set via an iFrame
  *  - It's goal is to answer every request from the iFrame windows parent
  * @constructor
  */
-export default function Listener() {
+function ListenerContent() {
     const [resolver, setResolver] = useState<
         ReturnType<typeof createIFrameRequestResolver> | undefined
     >(undefined);
+
+    // Hook used to set the requested listener UI
+    const { setRequest } = useListenerUI();
 
     // Hook used when a wallet status is requested
     const onWalletListenRequest = useWalletStatusListener();
 
     // Hook used when a dashboard action is requested
     const onInteractionRequest = useSendInteractionListener();
-
-    // State when a modal display is asked
-    const [modalRequested, setModalRequested] = useState(false);
 
     // Hook when a modal display is asked
     const onDisplayModalRequest = useDisplayModalListener();
@@ -58,7 +68,6 @@ export default function Listener() {
              * Listen request for the modal display request
              */
             frak_displayModal: (request, context, emitter) => {
-                setModalRequested(true);
                 return onDisplayModalRequest(request, context, emitter);
             },
 
@@ -71,6 +80,22 @@ export default function Listener() {
              * Listen request for the product information
              */
             frak_getProductInformation: onGetProductInformation,
+
+            /**
+             * When the display of the embeded wallet is requested
+             */
+            frak_displayEmbededWallet: async (request) => {
+                const metadata = request.params[0].metadata;
+                setRequest({
+                    type: "embeded",
+                    params: request.params[0],
+                    appName: request.params[1],
+                    targetInteraction: metadata?.targetInteraction,
+                    i18n: {
+                        lang: metadata?.lang,
+                    },
+                });
+            },
         });
 
         // Set our new resolver
@@ -81,6 +106,7 @@ export default function Listener() {
             newResolver.destroy();
         };
     }, [
+        setRequest,
         onWalletListenRequest,
         onInteractionRequest,
         onDisplayModalRequest,
@@ -112,24 +138,9 @@ export default function Listener() {
     }, []);
 
     /**
-     * Preload the modal so it did not take too much time to display on slow network
-     */
-    useEffect(() => {
-        const handleIdleCallback = async () => await modalImport();
-
-        if ("requestIdleCallback" in window) {
-            const idleCallbackId = requestIdleCallback(handleIdleCallback);
-            return () => cancelIdleCallback(idleCallbackId);
-        }
-
-        const timeoutId = setTimeout(handleIdleCallback, 0);
-        return () => clearTimeout(timeoutId);
-    }, []);
-
-    /**
      * Preload a few data
      */
     useListenerDataPreload();
 
-    return modalRequested ? <ListenerModal /> : null;
+    return <ListenerUiRenderer />;
 }

@@ -24,9 +24,9 @@
     "db:migrate": "sst dev drizzle-kit migrate"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.731.1",
-    "@aws-sdk/client-secrets-manager": "^3.731.1",
-    "@bogeychan/elysia-logger": "^0.1.7",
+    "@aws-sdk/client-bedrock-runtime": "^3.734.0",
+    "@aws-sdk/client-secrets-manager": "^3.734.0",
+    "@bogeychan/elysia-logger": "^0.1.8",
     "@elysiajs/cors": "^1.2.0",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
@@ -48,7 +48,7 @@
     "postgres": "^3.4.5",
     "radash": "^12.1.0",
     "solady": "^0.0.298",
-    "sst": "3.4.16",
+    "sst": "3.6.17",
     "viem": "^2.22.10",
     "web-push": "^3.6.7",
     "whatwg-url": "^14.1.0"

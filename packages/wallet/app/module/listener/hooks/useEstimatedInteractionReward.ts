@@ -1,7 +1,11 @@
 import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { getIFrameResolvingContext } from "@/context/sdk/utils/iframeContext";
-import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
+import type {
+    FullInteractionTypesKey,
+    GetProductInformationReturnType,
+} from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 
@@ -39,8 +43,12 @@ export const estimatedInteractionRewardQuery = ({
             return null;
         }
 
-        // Ceil it so we don't have floating point issues
-        return Math.ceil(data.totalReferrerEur).toString();
+        // Return formatted stuff
+        return {
+            estimatedEurReward: Math.ceil(data.totalReferrerEur).toString(),
+            rewards:
+                data.activeRewards as GetProductInformationReturnType["rewards"],
+        };
     },
 });
 
@@ -53,7 +61,10 @@ export function useEstimatedInteractionReward({
 }: {
     interaction?: FullInteractionTypesKey;
 } = {}) {
-    const productId = useMemo(() => getIFrameResolvingContext()?.productId, []);
+    const contextProductId = useAtomValue(
+        iframeResolvingContextAtom
+    )?.productId;
+    const productId = useMemo(() => contextProductId, [contextProductId]);
     const { data, ...query } = useQuery(
         estimatedInteractionRewardQuery({
             productId,

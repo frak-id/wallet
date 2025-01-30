@@ -20,6 +20,7 @@ export {
     affiliationRangeCampaignAbi,
     dappInteractionFacetAbi,
     pressInteractionFacetAbi,
+    retailInteractionFacetAbi,
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
     purchaseFeatureFacetAbi,

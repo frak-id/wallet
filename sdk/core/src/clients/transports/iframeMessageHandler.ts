@@ -1,6 +1,7 @@
 import { FrakRpcError } from "../../types";
 import { RpcErrorCodes } from "../../types/rpc/error";
 import type { IFrameEvent } from "../../types/transport";
+import type { DebugInfoGatherer } from "../DebugInfo";
 import type { IFrameChannelManager } from "./iframeChannelManager";
 import type { IframeLifecycleManager } from "./iframeLifecycleManager";
 
@@ -27,6 +28,11 @@ export type IFrameMessageHandlerParam = {
      * The lifecycle manager
      */
     iframeLifecycleManager: IframeLifecycleManager;
+
+    /**
+     * The debug info gatherer
+     */
+    debugInfo: DebugInfoGatherer;
 };
 
 /**
@@ -53,6 +59,7 @@ export function createIFrameMessageHandler({
     iframe,
     channelManager,
     iframeLifecycleManager,
+    debugInfo,
 }: IFrameMessageHandlerParam): IFrameMessageHandler {
     // Ensure the window is valid
     if (typeof window === "undefined") {
@@ -71,15 +78,20 @@ export function createIFrameMessageHandler({
     const contentWindow = iframe.contentWindow;
 
     // Create the function that will handle incoming iframe messages
-    const msgHandler = async (event: MessageEvent<IFrameEvent>) => {
-        if (!(event.origin && URL.canParse(event.origin))) {
+    async function msgHandler(event: MessageEvent<IFrameEvent>) {
+        if (!event.origin) {
             return;
         }
         // Check that the origin match the wallet
-        if (
-            new URL(event.origin).origin.toLowerCase() !==
-            new URL(frakWalletUrl).origin.toLowerCase()
-        ) {
+        try {
+            if (
+                new URL(event.origin).origin.toLowerCase() !==
+                new URL(frakWalletUrl).origin.toLowerCase()
+            ) {
+                return;
+            }
+        } catch (e) {
+            console.log("Unable to check frak msg origin", e);
             return;
         }
 
@@ -87,6 +99,9 @@ export function createIFrameMessageHandler({
         if (typeof event.data !== "object") {
             return;
         }
+
+        // Store the debug info
+        debugInfo.setLastResponse(event);
 
         // Check if that's a lifecycle event
         if ("iframeLifecycle" in event.data) {
@@ -109,20 +124,21 @@ export function createIFrameMessageHandler({
 
         // If founded, call the resolver
         await resolver(event.data);
-    };
+    }
 
     // Copy the reference to our message handler
     window.addEventListener("message", msgHandler);
 
     // Build our helpers function
-    const sendEvent = (message: IFrameEvent) => {
+    function sendEvent(message: IFrameEvent) {
         contentWindow.postMessage(message, {
             targetOrigin: frakWalletUrl,
         });
-    };
-    const cleanup = () => {
+        debugInfo.setLastRequest(message, frakWalletUrl);
+    }
+    function cleanup() {
         window.removeEventListener("message", msgHandler);
-    };
+    }
 
     return {
         sendEvent,

@@ -2,11 +2,12 @@ import * as aws from "@pulumi/aws";
 import { Output, all } from "@pulumi/pulumi";
 import { ServiceTargets } from "./components/ServiceTargets.ts";
 import { indexerUrl, isProd, vpc } from "./config";
-import { SstService } from "./utils";
 
 // Get the master cluster
-export const cluster = await aws.ecs.getCluster({
-    clusterName: `master-cluster-${isProd ? "production" : "dev"}`,
+const clusterName = `master-cluster-${$dev ? "dev" : $app.stage}`;
+export const sstCluster = sst.aws.Cluster.get("MasterCluster", {
+    id: Output.create(aws.ecs.getCluster({ clusterName })).apply((c) => c.id),
+    vpc: vpc,
 });
 
 // Get the master secret key
@@ -99,8 +100,8 @@ const fullEnv = {
     ),
     POSTGRES_DB: isProd ? "backend" : "backend_dev",
     POSTGRES_USER: isProd ? "backend" : "backend-dev",
+    ERPC_URL: $dev ? "" : cloudmapErpcUrl,
     HOSTNAME: $dev ? "" : domainName,
-    ERPC_URL: $dev ? undefined : cloudmapErpcUrl,
 };
 
 // Create the service targets
@@ -122,12 +123,7 @@ const backendServiceTargets = new ServiceTargets("BackendServiceDomain", {
 });
 
 // Create the elysia backend service (only on prod stage)
-export const backendService = new SstService("Elysia", {
-    vpc,
-    cluster: {
-        name: cluster.clusterName,
-        arn: cluster.arn,
-    },
+sstCluster.addService("Elysia", {
     // Development configuration
     //  todo: Find a way to link SSM parameters to the dev env
     dev: {
@@ -137,7 +133,7 @@ export const backendService = new SstService("Elysia", {
     },
     // hardware config
     cpu: "0.25 vCPU",
-    memory: "0.5 GB",
+    memory: $dev ? "1 GB" : "0.5 GB",
     storage: "20 GB",
     architecture: "arm64",
     // Image to be used

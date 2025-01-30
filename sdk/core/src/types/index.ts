@@ -1,6 +1,12 @@
 // Rpc related
 export type { WalletStatusReturnType } from "./rpc/walletStatus";
 export type {
+    DisplayEmbededWalletParamsType,
+    LoggedOutEmbededView,
+    LoggedInEmbededView,
+    EmbededViewAction,
+} from "./rpc/embeded";
+export type {
     SsoMetadata,
     OpenSsoParamsType,
 } from "./rpc/sso";
@@ -23,7 +29,10 @@ export type {
     ExtractedMethodFromRpc,
     RpcResponse,
 } from "./transport";
-export type { IFrameLifecycleEvent, ClientLifecycleEvent } from "./lifecycle";
+export type {
+    IFrameLifecycleEvent,
+    ClientLifecycleEvent,
+} from "./lifecycle";
 export type { FrakWalletSdkConfig } from "./config";
 export type {
     CompressedData,

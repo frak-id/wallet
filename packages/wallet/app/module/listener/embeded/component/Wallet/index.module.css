@@ -1,0 +1,77 @@
+.modalListenerWallet {
+    position: fixed;
+    bottom: 19px;
+    right: 19px;
+    z-index: 20;
+    border-radius: 25px;
+    border: 2px solid #fff;
+    text-align: center;
+    animation: expand-width .3s forwards;
+    min-height: 48px;
+    background: radial-gradient(
+        75.96% 75.96% at 50.42% 24.04%,
+        #f2f2f2 20%,
+        #3e557e 100%
+    );
+    color: #1d1d1d;
+}
+
+@keyframes expand-width {
+    from {
+        width: 66px;
+    }
+    to {
+        width: calc(100% - 40px);
+    }
+}
+
+.modalListenerWallet__inner {
+    max-height: 0;
+    opacity: 0;
+    padding: 40px;
+    overflow: hidden;
+    animation: expand-height .3s .3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalListenerWallet__inner--loggedIn {
+    padding: 9px;
+}
+
+@keyframes expand-height {
+    from {
+        opacity: 0;
+        max-height: 0;
+        transform: translate(0%, 30%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+        transform: translate(0%, 0%) scale(1);
+    }
+}
+
+.modalListenerWallet__header {
+    position: relative;
+
+    & h1 {
+        display: flex;
+        justify-content: center;
+        margin: 0;
+    }
+}
+
+.modalListenerWallet__logoFrak {
+    position: absolute;
+    left: 0;
+    top: 8px;
+}
+
+.modalListenerWallet__logo {
+    margin-bottom: 30px;
+    max-width: 50%;
+}
+
+.modalListenerWallet__inner--loggedIn .modalListenerWallet__logo {
+    margin-bottom: 10px;
+    max-width: 30%;
+}

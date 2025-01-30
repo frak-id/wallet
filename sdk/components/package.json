@@ -45,19 +45,32 @@
     "format": "biome check --write .",
     "clean": "rimraf cdn",
     "build": "tsup",
-    "build:watch": "tsup --watch",
+    "postbuild": "bun run copy:css",
+    "build:watch": "tsup --watch --onSuccess 'bun run copy:css'",
+    "copy:css": "bunx cpy --flat \"src/**/*.css\" cdn/css",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
     "publish": "bun publish"
   },
   "dependencies": {
+    "@frak-labs/core-sdk": "workspace:*",
+    "esbuild-plugin-polyfill-node": "^0.3.0",
     "preact": "^10.25.4",
     "preact-custom-element": "^4.3.0"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/preact-custom-element": "^4.0.4",
+    "cpy-cli": "^5.0.0",
+    "esbuild-plugin-svgr": "^3.1.0",
     "tsup": "^8.3.5",
     "typescript": "^5"
-  }
+  },
+  "browserslist": [
+    "chrome 67",
+    "edge 79",
+    "firefox 68",
+    "opera 54",
+    "safari 14"
+  ]
 }
