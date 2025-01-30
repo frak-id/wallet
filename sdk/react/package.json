@@ -58,8 +58,7 @@
     "build:watch": "tsup --watch",
     "check-exports": "attw --pack .",
     "typecheck": "tsc --noEmit",
-    "prepublish": "bun run lint && bun run build",
-    "publish": "bun publish"
+    "prepublish": "bun run lint && bun run build"
   },
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*"

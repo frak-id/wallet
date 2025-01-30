@@ -49,8 +49,7 @@
     "build:watch": "tsup --watch --onSuccess 'bun run copy:css'",
     "copy:css": "bunx cpy --flat \"src/**/*.css\" cdn/css",
     "typecheck": "tsc --noEmit",
-    "prepublish": "bun run lint && bun run build",
-    "publish": "bun publish"
+    "prepublish": "bun run lint && bun run build"
   },
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",

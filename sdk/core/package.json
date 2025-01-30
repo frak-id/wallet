@@ -78,8 +78,7 @@
     "build:watch": "tsup --watch",
     "check-exports": "attw --pack --profile node16 .",
     "typecheck": "tsc --noEmit",
-    "prepublish": "bun run lint && bun run build",
-    "publish": "bun publish"
+    "prepublish": "bun run lint && bun run build"
   },
   "peerDependencies": {
     "viem": "^2.x"
