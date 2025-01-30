@@ -227,45 +227,93 @@ export function ButtonShare({
             <button type={"button"} class={classname} onClick={onClick}>
                 {btnText}
             </button>
-            {isError && (
-                <>
-                    <ErrorMessage debugInfo={debugInfo} />
-                    <ToggleMessage debugInfo={debugInfo} />
-                </>
-            )}
+            {isError && <ErrorMessage debugInfo={debugInfo} />}
         </>
     );
 }
+
+const styles = {
+    errorContainer: {
+        marginTop: "16px",
+        padding: "16px",
+        backgroundColor: "#FEE2E2",
+        border: "1px solid #FCA5A5",
+        borderRadius: "4px",
+        color: "#991B1B",
+    },
+    header: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        marginBottom: "12px",
+    },
+    title: {
+        margin: 0,
+        fontSize: "16px",
+        fontWeight: 500,
+    },
+    message: {
+        fontSize: "14px",
+        lineHeight: "1.5",
+        margin: "0 0 12px 0",
+    },
+    link: {
+        color: "#991B1B",
+        textDecoration: "underline",
+        textUnderlineOffset: "2px",
+    },
+    copyButton: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
+        marginBottom: "10px",
+        padding: "8px 12px",
+        backgroundColor: "white",
+        border: "1px solid #D1D5DB",
+        borderRadius: "4px",
+        color: "black",
+        fontSize: "14px",
+        fontWeight: 500,
+    },
+};
 
 function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
     const { copied, copy } = useCopyToClipboard();
 
     return (
-        <span style={{ display: "block" }}>
-            <b>Oups ! Nous avons rencontré un petit problème</b>
-            <br />
-            Impossible d'ouvrir le menu de partage pour le moment. Si le
-            problème persiste, copiez les informations ci-dessous et collez-les
-            dans votre mail à{" "}
-            <a href="mailto:help@frak-labs.com">help@frak-labs.com</a>
-            <br />
-            Merci pour votre retour, nous traitons votre demande dans les plus
-            brefs délais.
-            <br />
+        <div style={styles.errorContainer}>
+            <div style={styles.header}>
+                <h3 style={styles.title}>
+                    Oups ! Nous avons rencontré un petit problème
+                </h3>
+            </div>
+
+            <p style={styles.message}>
+                Impossible d'ouvrir le menu de partage pour le moment. N'hésitez
+                pas à réessayer dans quelques instants ou à nous contacter à{" "}
+                <a
+                    href={"mailto:help@frak-labs.com?subject=Debug"}
+                    style={styles.link}
+                >
+                    help@frak-labs.com
+                </a>{" "}
+                si le problème persiste. Pour nous aider à résoudre plus
+                rapidement votre problème, vous pouvez copier les informations
+                techniques ci-dessous et les inclure dans votre email.
+            </p>
+
             <button
                 type={"button"}
-                style={{
-                    padding: "5px 10px",
-                    background: "#6e7680",
-                    color: "#fff",
-                }}
                 onClick={() => copy(debugInfo ?? "")}
+                style={styles.copyButton}
             >
                 {copied
-                    ? "Copié ! Vous pouvez le coller dans votre mail"
-                    : "Copier les informations"}
+                    ? "Informations copiées !"
+                    : "Copier les informations de débogage"}
             </button>
-        </span>
+
+            <ToggleMessage debugInfo={debugInfo} />
+        </div>
     );
 }
 
@@ -276,19 +324,19 @@ function ToggleMessage({ debugInfo }: { debugInfo?: string }) {
         <div>
             <button
                 type={"button"}
-                style={{
-                    margin: "10px 0",
-                    padding: "5px 10px",
-                    background: "#6e7680",
-                    color: "#fff",
-                }}
+                style={styles.copyButton}
                 onClick={() => setShowInfo(!showInfo)}
             >
                 Ouvrir les informations
             </button>
             {showInfo && (
                 <textarea
-                    style={{ display: "block", width: "100%", height: "200px" }}
+                    style={{
+                        display: "block",
+                        width: "100%",
+                        height: "200px",
+                        fontSize: "12px",
+                    }}
                 >
                     {debugInfo}
                 </textarea>
