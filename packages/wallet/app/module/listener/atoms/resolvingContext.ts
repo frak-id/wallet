@@ -32,7 +32,7 @@ const handshakeTokensAtom = atom<Set<string>>(new Set<string>());
  */
 export const startFetchResolvingContextViaHandshake = atom(null, (get, set) => {
     // Generate an handshake token
-    const token = crypto.randomUUID();
+    const token = Math.random().toString(36).substring(2);
     // If we got more than 10 waiting tokens, don't do anything
     if (get(handshakeTokensAtom).size > 10) {
         console.warn("Too many handshake tokens without response, skipping");
