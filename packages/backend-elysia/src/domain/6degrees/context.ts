@@ -26,7 +26,7 @@ export const sixDegreesContext = new Elysia({
 
         // Build the ky api that will be used to interact with 6degrees
         const sixDegreesApi = ky.create({
-            prefixUrl: "https://api.6degrees.xyz",
+            prefixUrl: "https://prodbe-f2m.6degrees.co/",
         });
 
         // Create the routing service

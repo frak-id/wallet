@@ -169,8 +169,13 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             }
 
             // Otherwise all good, extract a few info
-            const { address, authenticatorId, publicKey, transports } =
-                verificationnResult;
+            const {
+                address,
+                authenticatorId,
+                publicKey,
+                transports,
+                rawPublicKey,
+            } = verificationnResult;
 
             // Prepare the additional data object
             const additionalData: StaticWalletSdkTokenDto["additionalData"] =
@@ -180,7 +185,11 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             const isSixDegrees =
                 await sixDegrees.routingService.isRoutedWallet(address);
             if (isSixDegrees) {
-                const token = await sixDegrees.authenticationService.login();
+                const token = await sixDegrees.authenticationService.login({
+                    publicKey: rawPublicKey,
+                    challenge: expectedChallenge,
+                    signature: rawAuthenticatorResponse,
+                });
                 if (token) {
                     additionalData.sixDegreesToken = token;
                 }
@@ -323,7 +332,11 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 await sixDegrees.routingService.registerRoutedWallet(
                     walletAddress
                 );
-                const token = await sixDegrees.authenticationService.register();
+                const token = await sixDegrees.authenticationService.register({
+                    publicKey: credential.publicKey,
+                    challenge: expectedChallenge,
+                    signature: rawRegistrationResponse,
+                });
                 if (token) {
                     additionalData.sixDegreesToken = token;
                 }

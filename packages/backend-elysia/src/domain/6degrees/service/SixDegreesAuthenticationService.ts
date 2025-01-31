@@ -1,4 +1,30 @@
+import { log } from "@backend-common";
+import { WebAuthN } from "@frak-labs/app-essentials";
 import type { KyInstance } from "ky";
+
+type RegistrationResponse = {
+    success: boolean;
+    message: string;
+    responseObject: {
+        userId: string;
+        walletAddress: string;
+        token: string;
+        expiresAt: string;
+    };
+    statusCode: number;
+};
+
+type LoginResponse = {
+    success: boolean;
+    message: string;
+    responseObject: {
+        exists: boolean;
+        walletAddress: string;
+        token: string;
+        expiresAt: string;
+    };
+    statusCode: number;
+};
 
 /**
  * Class helping us with 6degrees authentication
@@ -9,18 +35,71 @@ export class SixDegreesAuthenticationService {
     /**
      * Perform a SixDegrees registration
      */
-    async register(): Promise<string | undefined> {
-        console.log("Registering to 6degrees", { api: this.api });
-        return "token";
+    async register({
+        publicKey,
+        challenge,
+        signature,
+    }: {
+        publicKey: Uint8Array;
+        challenge: string;
+        signature: string;
+    }): Promise<string | undefined> {
+        try {
+            const result = await this.api.post<RegistrationResponse>(
+                "/api/users/webauthn/register",
+                {
+                    json: {
+                        publicKey: Buffer.from(publicKey).toString("base64"),
+                        challenge: challenge,
+                        signature: signature,
+                        context: {
+                            rpId: WebAuthN.rpId,
+                            rpOrigin: WebAuthN.rpOrigin,
+                            domain: WebAuthN.rpId,
+                        },
+                    },
+                }
+            );
+            // If we got a token, return it
+            const response = await result.json();
+            return response?.responseObject?.token ?? undefined;
+        } catch (e) {
+            log.warn("Failed to register with 6degrees", e);
+        }
     }
 
     /**
      * Perform a SixDegrees login
      */
-    async login(): Promise<string | undefined> {
-        // todo: Test six degrees login
-        // todo: If login fails, try a register?
-        // todo: If both fail, return undefined
-        return "token";
+    async login({
+        publicKey,
+        challenge,
+        signature,
+    }: {
+        publicKey: Uint8Array;
+        challenge: string;
+        signature: string;
+    }): Promise<string | undefined> {
+        try {
+            const result = await this.api.post<LoginResponse>(
+                "/api/users/webauthn/login",
+                {
+                    json: {
+                        publicKey: Buffer.from(publicKey).toString("base64"),
+                        challenge: challenge,
+                        signature: signature,
+                        context: {
+                            rpId: WebAuthN.rpId,
+                            rpOrigin: WebAuthN.rpOrigin,
+                            domain: WebAuthN.rpId,
+                        },
+                    },
+                }
+            );
+            const response = await result.json();
+            return response?.responseObject?.token ?? undefined;
+        } catch (e) {
+            log.warn("Failed to login with 6degrees", e);
+        }
     }
 }
