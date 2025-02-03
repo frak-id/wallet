@@ -10,7 +10,10 @@ import {
     ListenerUiProvider,
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
+import { loadPolyfills } from "@module/utils/polyfills";
 import { useEffect, useState } from "react";
+
+loadPolyfills();
 
 /**
  * Top level listener, wrapped with the Listener Ui context
