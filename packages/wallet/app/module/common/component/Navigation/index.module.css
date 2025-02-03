@@ -16,7 +16,7 @@
 
 @media (min-width: 600px) {
     .navigation {
-        position: static;
+        position: relative;
     }
 }
 
