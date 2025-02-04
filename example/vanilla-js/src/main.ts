@@ -10,4 +10,9 @@ window.FrakSetup = {
             name: "Your App Name",
         },
     },
+    modalWalletConfig: {
+        metadata: {
+            position: "left",
+        },
+    },
 };

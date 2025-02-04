@@ -2,17 +2,35 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { ListenerWalletHeader } from "@/module/listener/embeded/component/WalletHeader";
 import { LoggedInComponent } from "@/module/listener/embeded/component/WalletLoggedIn";
 import { LoggedOutComponent } from "@/module/listener/embeded/component/WalletLoggedOut";
-import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
+import { useEmbededListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import { jotaiStore } from "@module/atoms/store";
 import { Overlay } from "@module/component/Overlay";
-import { cx } from "class-variance-authority";
+import { cva, cx } from "class-variance-authority";
 import styles from "./index.module.css";
 
+const walletStyles = cva(styles.modalListenerWallet, {
+    variants: {
+        position: {
+            left: styles.modalListenerWallet__left,
+            right: styles.modalListenerWallet__right,
+        },
+    },
+    defaultVariants: {
+        position: "right",
+    },
+});
+
 export function ListenerWallet() {
-    const { clearRequest } = useListenerUI();
+    const {
+        clearRequest,
+        currentRequest: {
+            params: { metadata },
+        },
+    } = useEmbededListenerUI();
+
     return (
         <>
-            <div className={styles.modalListenerWallet}>
+            <div className={walletStyles({ position: metadata?.position })}>
                 <CurrentEmbeddedViewComponent />
             </div>
             <Overlay

@@ -1,8 +1,15 @@
 frak-button-wallet {
     position: fixed;
     bottom: 20px;
-    right: 20px;
     z-index: 900;
+}
+
+frak-button-wallet.left {
+    left: 20px;
+}
+
+frak-button-wallet.right {
+    right: 20px;
 }
 
 frak-button-wallet button {

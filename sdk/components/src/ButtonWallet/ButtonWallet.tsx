@@ -1,6 +1,12 @@
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "preact/hooks";
 import { getCurrentReward, onClientReady, safeVibrate } from "../utils";
 import GiftIcon from "./assets/gift.svg?react";
 import "./ButtonWallet.css";
@@ -87,6 +93,7 @@ export function ButtonWallet({
 
     const [disabled, setDisabled] = useState(true);
     const [reward, setReward] = useState<string | undefined>(undefined);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     /**
      * Once the client is ready, enable the button
@@ -112,8 +119,19 @@ export function ButtonWallet({
         return () => onClientReady("remove", handleClientReady);
     }, [handleClientReady]);
 
+    /**
+     * Setup the position of the button
+     */
+    useEffect(() => {
+        // Get position from config metadata
+        const position = window.FrakSetup.modalWalletConfig?.metadata?.position;
+        // Fallback to right if not defined
+        buttonRef.current?.parentElement?.classList.add(position ?? "right");
+    }, []);
+
     return (
         <button
+            ref={buttonRef}
             type={"button"}
             class={classname}
             disabled={disabled}
