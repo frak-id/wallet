@@ -1,10 +1,11 @@
+import browserslistToEsbuild from "browserslist-to-esbuild";
 import { polyfillNode } from "esbuild-plugin-polyfill-node";
 import svgrPlugin from "esbuild-plugin-svgr";
 import { defineConfig } from "tsup";
 
 export default defineConfig([
     {
-        target: ["chrome67", "edge79", "firefox68", "opera54", "safari14"],
+        target: browserslistToEsbuild(),
         // All of our entry-points
         entry: ["src/components.ts"],
         esbuildPlugins: [svgrPlugin(), polyfillNode()],
