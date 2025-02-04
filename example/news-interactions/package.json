@@ -46,5 +46,8 @@
     "typescript": "^5",
     "vite": "^6.0.9",
     "vite-tsconfig-paths": "^5.1.4"
-  }
+  },
+  "browserslist": [
+    "extends @frak-labs/browserslist-config"
+  ]
 }

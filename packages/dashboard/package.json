@@ -63,5 +63,8 @@
   "overrides": {
     "@types/react": "^19",
     "@types/react-dom": "^19"
-  }
+  },
+  "browserslist": [
+    "extends @frak-labs/browserslist-config"
+  ]
 }

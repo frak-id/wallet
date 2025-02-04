@@ -74,5 +74,8 @@
     "@types/node": "^22",
     "tsup": "^8.3.5",
     "typescript": "^5"
-  }
+  },
+  "browserslist": [
+    "extends @frak-labs/browserslist-config"
+  ]
 }

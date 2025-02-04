@@ -46,5 +46,8 @@
     "build:watch": "tsup --watch",
     "prepublish": "bun run lint && bun run build",
     "publish": "bun publish"
-  }
+  },
+  "browserslist": [
+    "extends @frak-labs/browserslist-config"
+  ]
 }
