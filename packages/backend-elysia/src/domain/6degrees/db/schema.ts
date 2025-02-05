@@ -1,4 +1,3 @@
-import { customHex } from "@backend-utils";
 import {
     pgTable,
     serial,
@@ -6,6 +5,7 @@ import {
     uniqueIndex,
     varchar,
 } from "drizzle-orm/pg-core";
+import { customHex } from "../../../utils/drizzle/customTypes";
 
 /**
  * Table storing the domain where 6degrees routing are automatic

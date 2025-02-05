@@ -19,9 +19,9 @@
     "build:binary-linux-arm64": "bun build --compile --minify --target=bun-linux-arm64 --outfile ./server src/index.ts",
     "build:binary": "bun build --compile --minify --target=bun --outfile ./server src/index.ts",
     "start": "NODE_ENV=production bun dist/index-terser.js",
-    "db:studio": "sst dev drizzle-kit studio",
-    "db:generate": "sst dev drizzle-kit generate",
-    "db:migrate": "sst dev drizzle-kit migrate"
+    "db:studio": "drizzle-kit studio",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.734.0",
