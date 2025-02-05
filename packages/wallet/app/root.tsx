@@ -4,6 +4,7 @@ import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Analytics } from "@module/component/Analytics";
+import { ReactScan } from "@module/component/ReactScan";
 import { Spinner } from "@module/component/Spinner";
 import type { ReactNode } from "react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
@@ -36,6 +37,7 @@ export function Layout({ children }: { children: ReactNode }) {
     return (
         <html lang={"en"}>
             <head>
+                {process.env.DEBUG === "true" && <ReactScan />}
                 <meta charSet="utf-8" />
                 <meta
                     name="viewport"

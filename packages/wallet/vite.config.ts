@@ -6,6 +6,8 @@ import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { manualChunks, onwarn } from "../shared/tooling/vite";
 
+const DEBUG = JSON.stringify(false);
+
 export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
     // Return the built config
     return {
@@ -32,6 +34,7 @@ export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
             "process.env.PRIVY_APP_ID": JSON.stringify(
                 process.env.PRIVY_APP_ID
             ),
+            "process.env.DEBUG": JSON.stringify(DEBUG),
         },
         server: {
             port: 3000,
@@ -56,6 +59,9 @@ export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
                 onwarn,
             },
             sourcemap: process.env.STAGE !== "prod",
+        },
+        optimizeDeps: {
+            exclude: ["react-scan"],
         },
     };
 });

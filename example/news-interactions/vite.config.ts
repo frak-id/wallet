@@ -4,6 +4,8 @@ import type { UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { manualChunks, onwarn } from "../../packages/shared/tooling/vite";
 
+const DEBUG = JSON.stringify(false);
+
 export default defineConfig((): UserConfig => {
     return {
         define: {
@@ -12,6 +14,7 @@ export default defineConfig((): UserConfig => {
                 process.env.FRAK_WALLET_URL
             ),
             "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
+            "process.env.DEBUG": JSON.stringify(DEBUG),
         },
         server: {
             port: 3011,
@@ -24,6 +27,9 @@ export default defineConfig((): UserConfig => {
                 },
                 onwarn,
             },
+        },
+        optimizeDeps: {
+            exclude: ["react-scan"],
         },
     };
 });

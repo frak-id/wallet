@@ -1,4 +1,5 @@
 import allCssUrl from "@/styles/all.css?url";
+import { ReactScan } from "@module/component/ReactScan";
 import { Spinner } from "@module/component/Spinner";
 import type { ReactNode } from "react";
 import type { LinksFunction, MetaFunction } from "react-router";
@@ -116,6 +117,7 @@ export function Layout({ children }: { children: ReactNode }) {
     return (
         <html lang="en">
             <head>
+                {process.env.DEBUG === "true" && <ReactScan />}
                 <meta charSet="utf-8" />
                 <meta
                     name="viewport"

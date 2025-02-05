@@ -72,7 +72,12 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <Fonts />
+            <head>
+                {process.env.DEBUG === "true" && (
+                    <script src="//unpkg.com/react-scan/dist/auto.global.js" />
+                )}
+                <Fonts />
+            </head>
             <body>
                 <RootProvider>{children}</RootProvider>
             </body>
