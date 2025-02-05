@@ -82,7 +82,7 @@ export function OnboardingWelcome() {
             <Onboarding style={{ top: "92px", right: "-39px" }}>
                 <Trans
                     i18nKey={"sdk.wallet.loggedIn.onboarding.welcome"}
-                    tOptions={translation}
+                    tOptions={{ lng: translation.lang }}
                 />
             </Onboarding>
             <OnboardingArrow
@@ -132,7 +132,7 @@ export function OnboardingActivate({
             >
                 <Trans
                     i18nKey={"sdk.wallet.loggedIn.onboarding.activate"}
-                    tOptions={translation}
+                    tOptions={{ lng: translation.lang }}
                 />
             </Onboarding>
             <OnboardingArrow
@@ -164,7 +164,7 @@ export function OnboardingShare({ isHidden = true }: { isHidden?: boolean }) {
             <Onboarding style={{ top: "-90px", right: "10px" }}>
                 <Trans
                     i18nKey={"sdk.wallet.loggedIn.onboarding.share"}
-                    tOptions={translation}
+                    tOptions={{ lng: translation.lang }}
                 />
             </Onboarding>
             <OnboardingArrow style={{ top: "-53px", left: "60px" }} />
