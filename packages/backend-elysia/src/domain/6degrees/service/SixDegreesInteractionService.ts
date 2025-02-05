@@ -99,7 +99,7 @@ export class SixDegreesInteractionService {
 
                         return {
                             type: "referred",
-                            context: Buffer.from(
+                            referrerPublicKey: Buffer.from(
                                 authenticator.credentialPublicKey.buffer
                             ).toString("base64"),
                         };
