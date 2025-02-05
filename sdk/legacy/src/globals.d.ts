@@ -1,10 +1,11 @@
 import type {
+    DisplayEmbededWalletParamsType,
     FinalActionType,
     FrakClient,
     FrakWalletSdkConfig,
     LoginModalStepType,
     ModalRpcMetadata,
-} from "@core/index";
+} from "@frak-labs/core-sdk";
 
 declare global {
     interface Window {
@@ -19,6 +20,7 @@ declare global {
                 FinalActionType,
                 { key: "sharing" }
             >["options"];
+            modalWalletConfig?: DisplayEmbededWalletParamsType;
         };
     }
 }
