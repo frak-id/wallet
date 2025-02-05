@@ -1,3 +1,15 @@
+:root {
+    --animation-duration-width: .3s;
+    --animation-duration-height: .3s;
+}
+
+@media (min-width: 431px) {
+    /* Slower animation for larger screens */
+    :root {
+        --animation-duration-width: .8s;
+    }
+}
+
 .modalListenerWallet {
     position: fixed;
     bottom: 19px;
@@ -5,8 +17,10 @@
     border-radius: 25px;
     border: 2px solid #fff;
     text-align: center;
-    animation: expand-width .3s forwards;
+    animation: resize-width var(--animation-duration-width) forwards,
+        resize-height var(--animation-duration-height) forwards;
     min-height: 48px;
+    max-width: 430px;
     background: radial-gradient(
         75.96% 75.96% at 50.42% 24.04%,
         #f2f2f2 20%,
@@ -23,38 +37,43 @@
     left: 19px;
 }
 
-@keyframes expand-width {
+@keyframes resize-width {
     from {
-        width: 66px;
+        width: 0;
     }
     to {
         width: calc(100% - 40px);
     }
 }
 
+@keyframes resize-height {
+    from {
+        height: 0;
+    }
+    to {
+        height: 350px;
+    }
+}
+
+@keyframes opacity {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
 .modalListenerWallet__inner {
-    max-height: 0;
     opacity: 0;
     padding: 40px;
+    height: 100%;
     overflow: hidden;
-    animation: expand-height .3s .3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+    animation: opacity .3s .2s forwards;
 }
 
 .modalListenerWallet__inner--loggedIn {
     padding: 9px;
-}
-
-@keyframes expand-height {
-    from {
-        opacity: 0;
-        max-height: 0;
-        transform: translate(0%, 30%) scale(0.96);
-    }
-    to {
-        opacity: 1;
-        max-height: 500px;
-        transform: translate(0%, 0%) scale(1);
-    }
 }
 
 .modalListenerWallet__header {
