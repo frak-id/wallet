@@ -1,4 +1,5 @@
-import { postgresContext } from "@backend-common";
+import { mongoDbContext, postgresContext } from "@backend-common";
+import { AuthenticatorRepository } from "domain/auth/repositories/AuthenticatorRepository";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import Elysia from "elysia";
 import ky from "ky";
@@ -14,7 +15,8 @@ export const sixDegreesContext = new Elysia({
     name: "Context.6degrees",
 })
     .use(postgresContext)
-    .decorate(({ postgresDb, ...decorators }) => {
+    .use(mongoDbContext)
+    .decorate(({ postgresDb, getMongoDb, ...decorators }) => {
         // Create the 6degrees db
         const db = drizzle({
             client: postgresDb,
@@ -38,12 +40,15 @@ export const sixDegreesContext = new Elysia({
         );
 
         // Create the interaction service
+        const authenticatorRepository = new AuthenticatorRepository(getMongoDb);
         const interactionService = new SixDegreesInteractionService(
-            sixDegreesApi
+            sixDegreesApi,
+            authenticatorRepository
         );
 
         return {
             ...decorators,
+            getMongoDb,
             sixDegrees: {
                 db,
                 api: sixDegreesApi,

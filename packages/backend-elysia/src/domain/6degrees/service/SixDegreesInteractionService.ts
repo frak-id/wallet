@@ -1,4 +1,6 @@
+import { log } from "@backend-common";
 import { interactionTypes, productTypes } from "@frak-labs/core-sdk";
+import type { AuthenticatorRepository } from "domain/auth/repositories/AuthenticatorRepository";
 import type { InteractionData } from "domain/interactions/types/interactions";
 import type { KyInstance } from "ky";
 import { size, sliceHex, toHex } from "viem";
@@ -8,52 +10,91 @@ import { size, sliceHex, toHex } from "viem";
  */
 export class SixDegreesInteractionService {
     private readonly referralHandlerType = toHex(productTypes.referral);
-    constructor(private readonly api: KyInstance) {}
+    private readonly knwownHandlerType = [
+        this.referralHandlerType,
+        toHex(productTypes.webshop),
+        toHex(productTypes.press),
+    ];
+    constructor(
+        private readonly api: KyInstance,
+        private readonly authenticatorRepository: AuthenticatorRepository
+    ) {}
 
     /**
      * Push some user interactions
      */
-    pushInteraction(interactions: InteractionData[], userToken: string) {
-        const mappedInteractions = this.mapInteraction(interactions);
+    async pushInteraction(interactions: InteractionData[], userToken: string) {
+        const mappedInteractions = await Promise.all(
+            this.mapInteractions(interactions)
+        );
         // Push the interaction to six degrees, the userToken is a Bearer auth token
-        this.api.post("/interactions", {
-            json: mappedInteractions,
-            headers: {
-                Authorization: `Bearer ${userToken}`,
-            },
-        });
+        for (const interaction of mappedInteractions) {
+            this.api.post("/interactions", {
+                json: interaction,
+                headers: {
+                    Authorization: `Bearer ${userToken}`,
+                },
+            });
+        }
     }
 
     /**
      * Map an interaction to the six degrees format
      */
-    private mapInteraction(interactions: InteractionData[]) {
+    private mapInteractions(interactions: InteractionData[]) {
         return (
             interactions
-                // Pre filter to only get referral related interactions
+                // Pre filter to only get the knwon interaction
                 .filter(({ handlerTypeDenominator }) => {
-                    return handlerTypeDenominator === this.referralHandlerType;
+                    return this.knwownHandlerType.includes(
+                        handlerTypeDenominator
+                    );
                 })
+                // Filter for the referred interaction on every referral type handler
                 .filter(({ interactionData }) => {
-                    // Ensure the interaction data start with `referred`
+                    // If that's not a referral interaction, we don't care of this filter
                     const interactionType = sliceHex(interactionData, 0, 4);
                     if (
                         interactionType !== interactionTypes.referral.referred
                     ) {
-                        return false;
+                        return true;
                     }
 
-                    // todo: the referred address should be longer, representing the b64 pubkey of the webauthn wallet
-                    // todo: Should we nap it using mongo authenticator?
+                    // Ensure we got a valdi wallet address
                     const wallet = sliceHex(interactionData, 4, 36);
                     return size(wallet) === 32;
                 })
-                .map(({ interactionData }) => {
-                    const wallet = sliceHex(interactionData, 4, 36);
-                    return {
-                        type: "referred",
-                        context: wallet,
-                    };
+                .map(async ({ interactionData }) => {
+                    try {
+                        // If that's not a referral interaction, we map it to a login interaction
+                        const interactionType = sliceHex(interactionData, 0, 4);
+                        if (
+                            interactionType !==
+                            interactionTypes.referral.referred
+                        ) {
+                            return { type: "login" };
+                        }
+
+                        // Get the wallet from the interaction data
+                        const wallet = sliceHex(interactionData, -20);
+                        const authenticator =
+                            await this.authenticatorRepository.getByWallet({
+                                wallet,
+                            });
+                        if (!authenticator) {
+                            return { type: "login" };
+                        }
+
+                        return {
+                            type: "referred",
+                            context: Buffer.from(
+                                authenticator.credentialPublicKey.buffer
+                            ).toString("base64"),
+                        };
+                    } catch (e) {
+                        log.warn("Failed to map interaction", e);
+                    }
+                    return { type: "login" };
                 })
         );
     }
