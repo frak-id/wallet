@@ -74,5 +74,6 @@ function addWalletButton() {
     if (!window.location.pathname.startsWith("/products/")) return;
 
     const buttonWallet = document.createElement("frak-button-wallet");
+    buttonWallet.setAttribute("use-reward", "true");
     document.body.appendChild(buttonWallet);
 }
