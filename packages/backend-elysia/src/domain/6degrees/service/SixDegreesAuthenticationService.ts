@@ -46,7 +46,7 @@ export class SixDegreesAuthenticationService {
     }): Promise<string | undefined> {
         try {
             const result = await this.api.post<RegistrationResponse>(
-                "/api/users/webauthn/register",
+                "api/users/webauthn/register",
                 {
                     json: {
                         publicKey: Buffer.from(publicKey).toString("base64"),
@@ -64,7 +64,7 @@ export class SixDegreesAuthenticationService {
             const response = await result.json();
             return response?.responseObject?.token ?? undefined;
         } catch (e) {
-            log.warn("Failed to register with 6degrees", e);
+            log.warn({ e }, "Failed to register with 6degrees");
         }
     }
 
@@ -82,7 +82,7 @@ export class SixDegreesAuthenticationService {
     }): Promise<string | undefined> {
         try {
             const result = await this.api.post<LoginResponse>(
-                "/api/users/webauthn/login",
+                "api/users/webauthn/login",
                 {
                     json: {
                         publicKey: Buffer.from(publicKey).toString("base64"),
@@ -99,7 +99,7 @@ export class SixDegreesAuthenticationService {
             const response = await result.json();
             return response?.responseObject?.token ?? undefined;
         } catch (e) {
-            log.warn("Failed to login with 6degrees", e);
+            log.warn({ e }, "Failed to login with 6degrees");
         }
     }
 }

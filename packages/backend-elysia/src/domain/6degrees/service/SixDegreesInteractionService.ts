@@ -1,4 +1,5 @@
 import { log } from "@backend-common";
+import { WebAuthN } from "@frak-labs/app-essentials";
 import { interactionTypes, productTypes } from "@frak-labs/core-sdk";
 import type { AuthenticatorRepository } from "domain/auth/repositories/AuthenticatorRepository";
 import type { InteractionData } from "domain/interactions/types/interactions";
@@ -29,12 +30,23 @@ export class SixDegreesInteractionService {
         );
         // Push the interaction to six degrees, the userToken is a Bearer auth token
         for (const interaction of mappedInteractions) {
-            this.api.post("/interactions", {
-                json: interaction,
-                headers: {
-                    Authorization: `Bearer ${userToken}`,
-                },
-            });
+            try {
+                this.api.post("api/users/webauthn/interactions", {
+                    json: {
+                        ...interaction,
+                        context: {
+                            rpId: WebAuthN.rpId,
+                            rpOrigin: WebAuthN.rpOrigin,
+                            domain: WebAuthN.rpId,
+                        },
+                    },
+                    headers: {
+                        Authorization: `Bearer ${userToken}`,
+                    },
+                });
+            } catch (e) {
+                log.warn({ e }, "Failed to push interaction");
+            }
         }
     }
 
