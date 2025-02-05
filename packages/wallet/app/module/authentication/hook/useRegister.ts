@@ -3,6 +3,7 @@ import { getRegisterOptions } from "@/context/wallet/action/registerOptions";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import type { Session } from "@/types/Session";
 import { jotaiStore } from "@module/atoms/store";
 import { startRegistration } from "@simplewebauthn/browser";
@@ -51,6 +52,9 @@ export function useRegister(
                 optionsJSON: registrationOptions,
             });
 
+            // Check if the user is in a six degrees context
+            const isSixDegrees = await isSixDegreesContext();
+
             // Verify it
             const encodedResponse = btoa(JSON.stringify(registrationResponse));
             const { data, error } =
@@ -59,6 +63,7 @@ export function useRegister(
                     expectedChallenge: registrationOptions.challenge,
                     registrationResponse: encodedResponse,
                     ssoId: options?.ssoId,
+                    isSixDegrees,
                 });
             if (error) {
                 throw error;
@@ -86,4 +91,24 @@ export function useRegister(
         error,
         register,
     };
+}
+
+/**
+ * Is the current context a six degrees context
+ */
+async function isSixDegreesContext() {
+    const currentContext = jotaiStore.get(iframeResolvingContextAtom);
+
+    if (!currentContext?.origin) {
+        return false;
+    }
+
+    const getSixDegrees =
+        await authenticatedBackendApi.sixDegrees.routing.index.get({
+            query: {
+                origin: currentContext.origin,
+            },
+        });
+
+    return getSixDegrees.data === "sui";
 }
