@@ -5,6 +5,7 @@ import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataP
 import { useOnGetProductInformation } from "@/module/listener/hooks/useOnGetProductInformation";
 import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
+import { useSendPing } from "@/module/listener/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
 import {
     ListenerUiProvider,
@@ -139,6 +140,11 @@ function ListenerContent() {
             rootElement.dataset.listener = "false";
         };
     }, []);
+
+    /**
+     * Send a ping to the metrics server
+     */
+    useSendPing();
 
     /**
      * Preload a few data
