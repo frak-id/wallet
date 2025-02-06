@@ -11,6 +11,7 @@ import {
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { loadPolyfills } from "@module/utils/polyfills";
+import { trackEvent } from "@module/utils/trackEvent";
 import { useEffect, useState } from "react";
 
 loadPolyfills();
@@ -98,6 +99,7 @@ function ListenerContent() {
                         lang: metadata?.lang,
                     },
                 });
+                trackEvent("display-embedded-wallet", request.params[0]);
             },
         });
 
