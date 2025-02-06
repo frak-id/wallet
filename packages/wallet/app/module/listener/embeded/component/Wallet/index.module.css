@@ -6,7 +6,7 @@
 @media (min-width: 431px) {
     /* Slower animation for larger screens */
     :root {
-        --animation-duration-width: .8s;
+        --animation-duration-width: .55s;
     }
 }
 
@@ -17,8 +17,8 @@
     border-radius: 25px;
     border: 2px solid #fff;
     text-align: center;
-    animation: resize-width var(--animation-duration-width) forwards,
-        resize-height var(--animation-duration-height) forwards;
+    animation: resize-width var(--animation-duration-width) ease-in-out forwards,
+        resize-height var(--animation-duration-height) ease-in-out forwards;
     min-height: 48px;
     max-width: 430px;
     background: radial-gradient(
@@ -38,19 +38,25 @@
 }
 
 @keyframes resize-width {
-    from {
+    0% {
         width: 0;
     }
-    to {
+    70% {
+        width: calc(102% - 40px);
+    }
+    100% {
         width: calc(100% - 40px);
     }
 }
 
 @keyframes resize-height {
-    from {
+    0% {
         height: 0;
     }
-    to {
+    70% {
+        height: 360px;
+    }
+    100% {
         height: 350px;
     }
 }
