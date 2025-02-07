@@ -26,11 +26,11 @@
     "@biomejs/biome": "1.9.4",
     "@changesets/changelog-git": "^0.2.0",
     "@changesets/changelog-github": "^0.5.0",
-    "@changesets/cli": "^2.27.11",
+    "@changesets/cli": "^2.27.12",
     "@pulumi/aws": "^6.67.0",
-    "@pulumi/pulumi": "^3.147.0",
-    "@types/node": "^22.10.10",
-    "knip": "^5.42.2",
+    "@pulumi/pulumi": "^3.148.0",
+    "@types/node": "^22.13.1",
+    "knip": "^5.43.6",
     "npm-check-updates": "^17.1.14",
     "rimraf": "^6.0.1",
     "sst": "3.6.17",
@@ -45,5 +45,5 @@
     "sdk/*",
     "example/*"
   ],
-  "packageManager": "bun@1.2.0"
+  "packageManager": "bun@1.2.2"
 }
