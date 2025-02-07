@@ -57,7 +57,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "sst": "3.6.17",
+    "sst": "3.7.15",
     "typescript": "^5"
   },
   "overrides": {
