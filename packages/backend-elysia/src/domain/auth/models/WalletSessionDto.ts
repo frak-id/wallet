@@ -1,4 +1,5 @@
 import { t } from "@backend-utils";
+import type { Static } from "elysia";
 
 const EcdsaWalletTokenDto = t.Object({
     address: t.Address(),
@@ -15,6 +16,7 @@ const WebAuthNWalletTokenDto = t.Object({
     }),
     transports: t.Optional(t.Array(t.String())),
 });
+
 export const WalletTokenDto = t.Union([
     EcdsaWalletTokenDto,
     WebAuthNWalletTokenDto,
@@ -30,3 +32,17 @@ export const WalletAuthResponseDto = t.Intersect([
     }),
     WalletTokenDto,
 ]);
+
+export const WalletSdkTokenDto = t.Object({
+    address: t.Address(),
+    scopes: t.Array(t.Literal("interaction")),
+    // Some potential additionnal stuff we can put in the webauthn token
+    additionalData: t.Optional(
+        t.Object({
+            // A potential six degrees token if the wallet is routed
+            sixDegreesToken: t.Optional(t.String()),
+        })
+    ),
+});
+
+export type StaticWalletSdkTokenDto = Static<typeof WalletSdkTokenDto>;

@@ -132,8 +132,8 @@ sstCluster.addService("Elysia", {
         command: "bun run dev",
     },
     // hardware config
-    cpu: "0.25 vCPU",
-    memory: $dev ? "1 GB" : "0.5 GB",
+    cpu: isProd ? "0.5 vCPU" : "0.25 vCPU",
+    memory: isProd ? "1 GB" : "0.5 GB",
     storage: "20 GB",
     architecture: "arm64",
     // Image to be used

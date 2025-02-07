@@ -1,6 +1,7 @@
 import { sessionContext } from "@backend-common";
 import { Elysia } from "elysia";
 import type { Address } from "viem";
+import type { StaticWalletSdkTokenDto } from "../models/WalletSessionDto";
 
 export const walletSdkSessionService = new Elysia({
     name: "Service.walletSdkSession",
@@ -10,7 +11,14 @@ export const walletSdkSessionService = new Elysia({
         /**
          * Generate a JWT token for the SDK
          */
-        async generateSdkJwt({ wallet }: { wallet: Address }) {
+        async generateSdkJwt({
+            wallet,
+            additionalData,
+        }: {
+            wallet: Address;
+            additionalData?: StaticWalletSdkTokenDto["additionalData"];
+        }) {
+            // Generate a JWT token for the SDK
             const jwtToken = await walletSdkJwt.sign({
                 // Global payload
                 address: wallet,
@@ -18,6 +26,11 @@ export const walletSdkSessionService = new Elysia({
                 // Some JWT specific infos
                 sub: wallet,
                 iat: Date.now(),
+                // Additional data
+                additionalData:
+                    additionalData && Object.keys(additionalData).length > 0
+                        ? additionalData
+                        : undefined,
             });
 
             return {

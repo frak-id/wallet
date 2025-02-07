@@ -74,6 +74,18 @@ export class AuthenticatorRepository {
     }
 
     /**
+     * Update the counter for the given authenticator
+     * @param authenticatorId
+     * @param counter
+     */
+    public async getByWallet({
+        wallet,
+    }: { wallet: Address }): Promise<AuthenticatorDocument | null> {
+        const collection = await this.getCollection();
+        return collection.findOne({ smartWalletAddress: wallet });
+    }
+
+    /**
      * Set the smart wallet address for the given credential
      * @param credentialId
      * @param smartWalletAddress
