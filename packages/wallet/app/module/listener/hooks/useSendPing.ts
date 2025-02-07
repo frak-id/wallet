@@ -1,4 +1,3 @@
-import { isRunningInProd } from "@frak-labs/app-essentials";
 import { useMemo } from "react";
 
 /**
@@ -6,8 +5,6 @@ import { useMemo } from "react";
  */
 export function useSendPing() {
     return useMemo(async () => {
-        if (!isRunningInProd) return;
-
         fetch("https://metrics.frak.id/ping", {
             method: "POST",
             headers: {
