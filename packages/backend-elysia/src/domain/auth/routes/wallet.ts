@@ -5,7 +5,7 @@ import {
     type RegistrationResponseJSON,
     verifyRegistrationResponse,
 } from "@simplewebauthn/server";
-import { sixDegreesContext } from "domain/6degrees/context";
+import { sixDegreesContext } from "../../../domain/6degrees/context";
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
 import { verifyMessage } from "viem/actions";

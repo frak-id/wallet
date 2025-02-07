@@ -1,6 +1,6 @@
 import { log, walletSdkSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { sixDegreesContext } from "domain/6degrees/context";
+import { sixDegreesContext } from "../../../domain/6degrees/context";
 import { Elysia } from "elysia";
 import { sift } from "radash";
 import { isAddressEqual } from "viem";

@@ -1,8 +1,8 @@
 import { log } from "@backend-common";
 import { WebAuthN } from "@frak-labs/app-essentials";
 import { interactionTypes, productTypes } from "@frak-labs/core-sdk";
-import type { AuthenticatorRepository } from "domain/auth/repositories/AuthenticatorRepository";
-import type { InteractionData } from "domain/interactions/types/interactions";
+import type { AuthenticatorRepository } from "../../../domain/auth/repositories/AuthenticatorRepository";
+import type { InteractionData } from "../../../domain/interactions/types/interactions";
 import type { KyInstance } from "ky";
 import { size, sliceHex, toHex } from "viem";
 

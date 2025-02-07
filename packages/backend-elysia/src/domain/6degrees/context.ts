@@ -1,5 +1,5 @@
 import { mongoDbContext, postgresContext } from "@backend-common";
-import { AuthenticatorRepository } from "domain/auth/repositories/AuthenticatorRepository";
+import { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import Elysia from "elysia";
 import ky from "ky";
