@@ -47,7 +47,7 @@
     "micromark": "^4.0.1",
     "normalize.css": "^8.0.1",
     "nprogress": "^0.2.0",
-    "permissionless": "^0.2.26",
+    "permissionless": "^0.2.30",
     "radash": "^12.1.0",
     "react": "^19",
     "react-dom": "^19",
@@ -60,8 +60,8 @@
     "react-router-dom": "^7.1.5",
     "remix-utils": "^8.1.0",
     "vaul": "^1.1.2",
-    "viem": "^2.22.10",
-    "wagmi": "^2.14.8"
+    "viem": "^2.22.23",
+    "wagmi": "^2.14.10"
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
