@@ -1,8 +1,8 @@
 import { mongoDbContext, postgresContext } from "@backend-common";
-import { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import Elysia from "elysia";
 import ky from "ky";
+import { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
 import { fixedRoutingTable, walletRoutingTable } from "./db/schema";
 import { SixDegreesAuthenticationService } from "./service/SixDegreesAuthenticationService";
 import { SixDegreesInteractionService } from "./service/SixDegreesInteractionService";
