@@ -42,8 +42,8 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf dist",
-    "build": "tsup",
-    "build:watch": "tsup --watch",
+    "build": "rslib build",
+    "build:watch": "rslib build --watch",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing legacy...'"
   },
@@ -51,7 +51,7 @@
     "extends @frak-labs/browserslist-config"
   ],
   "devDependencies": {
-    "browserslist": "^4.24.4",
-    "browserslist-to-esbuild": "^2.1.1"
+    "@microsoft/api-extractor": "^7.50.0",
+    "@rslib/core": "^0.5.1"
   }
 }
