@@ -49,7 +49,7 @@ export const pushInteractionsRoutes = new Elysia()
                     interactions.map((interaction) => interaction.interaction),
                     walletSdkSession.additionalData?.sixDegreesToken
                 );
-                return;
+                return ["6degrees"];
             }
 
             // Map the interaction for the db insertion
