@@ -1,7 +1,7 @@
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
 import { useEffect, useMemo, useRef } from "preact/hooks";
-import GiftIcon from "./assets/gift.svg?react";
+import GiftIcon from "./assets/gift.svg";
 import type { ButtonWalletProps } from "./types";
 import { openWalletModal } from "./utils";
 import "./ButtonWallet.css";
