@@ -8,7 +8,11 @@ import {
 import { Elysia } from "elysia";
 import { Binary } from "mongodb";
 import { verifyMessage } from "viem/actions";
-import { WalletAuthResponseDto } from "../models/WalletSessionDto";
+import { sixDegreesContext } from "../../../domain/6degrees/context";
+import {
+    type StaticWalletSdkTokenDto,
+    WalletAuthResponseDto,
+} from "../models/WalletSessionDto";
 import { walletSdkSessionService } from "../services/WalletSdkSessionService";
 import { webAuthNService } from "../services/WebAuthNService";
 import { decodePublicKey } from "../utils/webauthnDecode";
@@ -23,6 +27,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     // SSO + sdk sub routes
     .use(walletSsoRoutes)
     .use(walletSdkRoutes)
+    // Six Degrees context
+    .use(sixDegreesContext)
     // Logout
     .post("/logout", async ({ cookie: { businessAuth } }) => {
         businessAuth.remove();
@@ -64,10 +70,10 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             error,
             // Context
             client,
-            getEcdsaWalletAddress,
             walletJwt,
             generateSdkJwt,
-            resolveSsoSession,
+            webAuthNService,
+            ssoService,
         }) => {
             // Rebuild the message that have been signed
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${expectedChallenge}`;
@@ -85,7 +91,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             const authenticatorId = `ecdsa-${wallet}` as const;
 
             // Get the wallet address
-            const walletAddress = await getEcdsaWalletAddress({
+            const walletAddress = await webAuthNService.getEcdsaWalletAddress({
                 ecdsaAddress: wallet,
             });
 
@@ -104,7 +110,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
 
             // If all good, mark the sso as done
             if (ssoId) {
-                await resolveSsoSession({
+                await ssoService.resolveSession({
                     id: ssoId,
                     wallet: walletAddress,
                     authenticatorId,
@@ -147,13 +153,14 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Response
             error,
             // Context
-            isValidWebAuthNSignature,
             walletJwt,
             generateSdkJwt,
-            resolveSsoSession,
+            webAuthNService,
+            ssoService,
+            sixDegrees,
         }) => {
             // Check if that's a valid webauthn signature
-            const verificationnResult = await isValidWebAuthNSignature({
+            const verificationnResult = await webAuthNService.isValidSignature({
                 compressedSignature: rawAuthenticatorResponse,
                 msg: expectedChallenge,
             });
@@ -162,8 +169,31 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             }
 
             // Otherwise all good, extract a few info
-            const { address, authenticatorId, publicKey, transports } =
-                verificationnResult;
+            const {
+                address,
+                authenticatorId,
+                publicKey,
+                transports,
+                rawPublicKey,
+            } = verificationnResult;
+
+            // Prepare the additional data object
+            const additionalData: StaticWalletSdkTokenDto["additionalData"] =
+                {};
+
+            // Check if that's a six degrees wallet, and iuf yes, generate a token accordingly
+            const isSixDegrees =
+                await sixDegrees.routingService.isRoutedWallet(address);
+            if (isSixDegrees) {
+                const token = await sixDegrees.authenticationService.login({
+                    publicKey: rawPublicKey,
+                    challenge: expectedChallenge,
+                    signature: rawAuthenticatorResponse,
+                });
+                if (token) {
+                    additionalData.sixDegreesToken = token;
+                }
+            }
 
             // Create the token and set the cookie
             const token = await walletJwt.sign({
@@ -176,14 +206,18 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await generateSdkJwt({ wallet: address });
+            const sdkJwt = await generateSdkJwt({
+                wallet: address,
+                additionalData,
+            });
 
             // If all good, mark the sso as done
             if (ssoId) {
-                await resolveSsoSession({
+                await ssoService.resolveSession({
                     id: ssoId,
                     wallet: address,
                     authenticatorId,
+                    additionalData,
                 });
             }
 
@@ -222,20 +256,20 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 userAgent,
                 previousWallet,
                 ssoId,
+                isSixDegrees,
             },
             // Response
             error,
             // Context
             generateSdkJwt,
-            authenticatorRepository,
             walletJwt,
-            getWebAuthnWalletAddress,
-            parseCompressedWebAuthNResponse,
-            resolveSsoSession,
+            webAuthNService,
+            ssoService,
+            sixDegrees,
         }) => {
             // Decode the registration response
             const registrationResponse =
-                parseCompressedWebAuthNResponse<RegistrationResponseJSON>(
+                webAuthNService.parseCompressedResponse<RegistrationResponseJSON>(
                     rawRegistrationResponse
                 );
 
@@ -273,11 +307,11 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Get the wallet address
             const walletAddress =
                 previousWallet ??
-                (await getWebAuthnWalletAddress({
+                (await webAuthNService.getWalletAddress({
                     authenticatorId: credential.id,
                     pubKey: publicKey,
                 }));
-            await authenticatorRepository.createAuthenticator({
+            await webAuthNService.authenticatorRepository.createAuthenticator({
                 _id: credential.id,
                 smartWalletAddress: walletAddress,
                 userAgent,
@@ -289,15 +323,38 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 transports: registrationResponse.response.transports,
             });
 
+            // Prepare the additional data object
+            const additionalData: StaticWalletSdkTokenDto["additionalData"] =
+                {};
+
+            // If that's a six degrees wallet, register it
+            if (isSixDegrees) {
+                await sixDegrees.routingService.registerRoutedWallet(
+                    walletAddress
+                );
+                const token = await sixDegrees.authenticationService.register({
+                    publicKey: credential.publicKey,
+                    challenge: expectedChallenge,
+                    signature: rawRegistrationResponse,
+                });
+                if (token) {
+                    additionalData.sixDegreesToken = token;
+                }
+            }
+
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await generateSdkJwt({ wallet: walletAddress });
+            const sdkJwt = await generateSdkJwt({
+                wallet: walletAddress,
+                additionalData,
+            });
 
             // If all good, mark the sso as done
             if (ssoId) {
-                await resolveSsoSession({
+                await ssoService.resolveSession({
                     id: ssoId,
                     wallet: walletAddress,
                     authenticatorId: credential.id,
+                    additionalData,
                 });
             }
 
@@ -330,6 +387,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 setSessionCookie: t.Optional(t.Boolean()),
                 // potential sso id
                 ssoId: t.Optional(t.Hex()),
+                // potential routing request
+                isSixDegrees: t.Optional(t.Boolean()),
             }),
             response: {
                 400: t.String(),

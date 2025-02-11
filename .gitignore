@@ -51,6 +51,7 @@ packages/wallet/next-env.d.ts
 
 # sst
 .sst
+sst-env.d.ts
 
 .idea
 

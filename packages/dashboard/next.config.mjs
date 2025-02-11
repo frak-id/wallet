@@ -1,6 +1,8 @@
 import { pick } from "radash";
 import { Resource } from "sst";
 
+const DEBUG = false;
+
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
     "ALCHEMY_API_KEY",
@@ -36,6 +38,7 @@ const nextConfig = {
         FRAK_WALLET_URL: process.env.FRAK_WALLET_URL,
         BACKEND_URL: process.env.BACKEND_URL,
         INDEXER_URL: process.env.INDEXER_URL,
+        DEBUG: JSON.stringify(DEBUG),
         // Secrets from sst
         ...envFromSstConfig,
     },

@@ -3,6 +3,7 @@ import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { sift } from "radash";
 import { isAddressEqual } from "viem";
+import { sixDegreesContext } from "../../../domain/6degrees/context";
 import { interactionsContext } from "../context";
 import { pendingInteractionsTable } from "../db/schema";
 import { InteractionRequestDto } from "../dto/InteractionDto";
@@ -10,6 +11,7 @@ import { InteractionRequestDto } from "../dto/InteractionDto";
 export const pushInteractionsRoutes = new Elysia()
     .use(interactionsContext)
     .use(walletSdkSessionContext)
+    .use(sixDegreesContext)
     .post(
         "/push",
         async ({
@@ -19,6 +21,7 @@ export const pushInteractionsRoutes = new Elysia()
             interactionsDb,
             emitter,
             interactionDiamondRepository,
+            sixDegrees,
         }) => {
             if (!walletSdkSession) return;
             if (!interactions.length) {
@@ -38,6 +41,16 @@ export const pushInteractionsRoutes = new Elysia()
                 return error(403, "Invalid wallet address");
             }
             log.debug(`Received ${interactions.length} interactions`);
+
+            // Check if the user got a sixdegrees token
+            if (walletSdkSession.additionalData?.sixDegreesToken) {
+                log.info("Pushing interactions to 6degrees");
+                await sixDegrees.interactionService.pushInteraction(
+                    interactions.map((interaction) => interaction.interaction),
+                    walletSdkSession.additionalData?.sixDegreesToken
+                );
+                return ["6degrees"];
+            }
 
             // Map the interaction for the db insertion
             const interactionsForInsertPromise = interactions.map(

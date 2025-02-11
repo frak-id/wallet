@@ -1,6 +1,7 @@
 export function gapianne() {
     setConfig();
     replaceNexusShareButton();
+    addWalletButton();
 }
 
 /**
@@ -38,6 +39,14 @@ function setConfig() {
         text: "Découvre ce produit chez Gapianne",
         link: window.location.href,
     };
+    window.FrakSetup.modalWalletConfig = {
+        metadata: {
+            logo,
+            homepageLink: "https://gapianne.com/",
+            lang: "fr",
+            position: "left",
+        },
+    };
 }
 
 /**
@@ -49,8 +58,22 @@ function replaceNexusShareButton() {
     );
     for (const button of Array.from(nexusShareButtons)) {
         const buttonShare = document.createElement("frak-button-share");
-        buttonShare.setAttribute("text", "PARTAGE ET GAGNE");
+        buttonShare.setAttribute("text", "PARTAGE ET GAGNE {REWARD} !");
+        buttonShare.setAttribute("no-reward-text", "PARTAGE ET GAGNE");
+        buttonShare.setAttribute("use-reward", "true");
         buttonShare.setAttribute("classname", "button w-full");
         button.replaceWith(buttonShare);
     }
+}
+
+/**
+ * Add frak-button-wallet to the body
+ */
+function addWalletButton() {
+    // Inject only on product pages
+    if (!window.location.pathname.startsWith("/products/")) return;
+
+    const buttonWallet = document.createElement("frak-button-wallet");
+    buttonWallet.setAttribute("use-reward", "true");
+    document.body.appendChild(buttonWallet);
 }

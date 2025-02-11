@@ -72,7 +72,12 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.3",
     "@types/node": "^22",
-    "tsup": "^8.3.5",
+    "browserslist": "^4.24.4",
+    "browserslist-to-esbuild": "^2.1.1",
+    "tsup": "^8.3.6",
     "typescript": "^5"
-  }
+  },
+  "browserslist": [
+    "extends @frak-labs/browserslist-config"
+  ]
 }

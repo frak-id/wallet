@@ -1,13 +1,15 @@
 import { setupClient } from "@frak-labs/core-sdk";
 import { onDocumentReady } from "@module/utils/onDocumentReady";
+import { setupButtonShare } from "./ButtonShare";
+import { setupButtonWallet } from "./ButtonWallet";
 import {
     dispatchClientReadyEvent,
     setupModalConfig,
     setupReferral,
 } from "./utils";
 
-export { ButtonShare } from "./ButtonShare";
-export { ButtonWallet } from "./ButtonWallet";
+setupButtonShare();
+setupButtonWallet();
 
 /**
  * Initialize the app on document ready

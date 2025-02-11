@@ -4,6 +4,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import type { Address, Hex } from "viem";
 import { ssoTable } from "../db/schema";
+import type { StaticWalletSdkTokenDto } from "../models/WalletSessionDto";
 
 export const walletSsoService = new Elysia({
     name: "Service.walletSso",
@@ -13,24 +14,31 @@ export const walletSsoService = new Elysia({
     .use(sessionContext)
     .decorate(({ postgresDb, ...decorators }) => {
         // Get our SSO database
-        const ssoDb = drizzle({
+        const db = drizzle({
             client: postgresDb,
             schema: { ssoTable },
         });
 
         // Helper to resolve a sso session
-        async function resolveSsoSession({
+        async function resolveSession({
             id,
             wallet,
             authenticatorId,
-        }: { id: Hex; wallet: Address; authenticatorId: string }) {
+            additionalData,
+        }: {
+            id: Hex;
+            wallet: Address;
+            authenticatorId: string;
+            additionalData?: StaticWalletSdkTokenDto["additionalData"];
+        }) {
             try {
-                await ssoDb
+                await db
                     .update(ssoTable)
                     .set({
                         resolvedAt: new Date(),
                         wallet,
                         authenticatorId,
+                        sdkTokenAdditionalData: additionalData,
                     })
                     .where(and(eq(ssoTable.ssoId, id)))
                     .execute();
@@ -41,8 +49,10 @@ export const walletSsoService = new Elysia({
 
         return {
             ...decorators,
-            resolveSsoSession,
-            ssoDb,
+            ssoService: {
+                resolveSession,
+                db,
+            },
         };
     })
     .as("plugin");

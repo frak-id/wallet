@@ -1,0 +1,8 @@
+{
+  "name": "@frak-labs/browserslist-config",
+  "description": "Shared browserslist configuration",
+  "version": "0.0.1",
+  "private": true,
+  "license": "GNU GPL 3.0",
+  "main": "./index.js"
+}

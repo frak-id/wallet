@@ -42,5 +42,9 @@ export type DisplayEmbededWalletParamsType = {
          * The target interaction behind this modal
          */
         targetInteraction?: FullInteractionTypesKey;
+        /**
+         * The position of the component
+         */
+        position?: "left" | "right";
     };
 };

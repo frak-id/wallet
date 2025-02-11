@@ -13,7 +13,7 @@ export const baseIframeProps = {
         height: "0",
         border: "0",
         position: "absolute",
-        zIndex: 1000,
+        zIndex: 2000001,
         top: "-1000px",
         left: "-1000px",
     },

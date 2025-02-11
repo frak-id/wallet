@@ -5,3 +5,4 @@ export { oracle } from "./oracle";
 export { interactions } from "./interactions";
 export { wallet } from "./wallet";
 export { auth } from "./auth";
+export { sixDegrees } from "./6degrees";

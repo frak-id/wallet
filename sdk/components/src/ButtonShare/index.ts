@@ -10,9 +10,9 @@ declare global {
     }
 }
 
-// If custom element is not already registered
-if (!customElements.get("frak-button-share")) {
-    register(ButtonShare, "frak-button-share", ["text"], { shadow: false });
+export function setupButtonShare() {
+    // If custom element is not already registered
+    if (!customElements.get("frak-button-share")) {
+        register(ButtonShare, "frak-button-share", ["text"], { shadow: false });
+    }
 }
-
-export { ButtonShare };

@@ -1,9 +1,10 @@
+import browserslistToEsbuild from "browserslist-to-esbuild";
 import { defineConfig } from "tsup";
 
 export default defineConfig([
     // Config for the js bundle for vanilla js
     {
-        target: "es2022",
+        target: browserslistToEsbuild(),
         // All of our entry-points
         entry: ["src/bundle.ts"],
         outDir: "dist/bundle",

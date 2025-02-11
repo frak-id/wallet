@@ -48,9 +48,6 @@ export function createIFrameLifecycleManager({
                 break;
             // Handshake handling
             case "handshake": {
-                console.log("Received handshake event", {
-                    token: messageEvent.data.token,
-                });
                 iframe.contentWindow?.postMessage(
                     {
                         clientLifecycle: "handshake-response",

@@ -1,23 +1,30 @@
 frak-button-wallet {
     position: fixed;
     bottom: 20px;
-    right: 20px;
-    z-index: 900;
+    z-index: 2000000;
 }
 
-frak-button-wallet button {
+frak-button-wallet.left {
+    left: 20px;
+}
+
+frak-button-wallet.right {
+    right: 20px;
+}
+
+frak-button-wallet button,
+frak-button-wallet [type="button"] {
     all: unset;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     position: relative;
     background-color: #3e557e;
-    width: 42px;
-    height: 42px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     cursor: pointer;
     text-align: center;
-}
-
-frak-button-wallet svg {
-    margin-top: 2px;
 }
 
 frak-button-wallet span {
