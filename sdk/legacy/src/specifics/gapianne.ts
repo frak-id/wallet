@@ -1,7 +1,7 @@
 export function gapianne() {
     setConfig();
     replaceNexusShareButton();
-    addWalletButton();
+    // addWalletButton();
 }
 
 /**
@@ -69,11 +69,11 @@ function replaceNexusShareButton() {
 /**
  * Add frak-button-wallet to the body
  */
-function addWalletButton() {
-    // Inject only on product pages
-    if (!window.location.pathname.startsWith("/products/")) return;
+// function addWalletButton() {
+//     // Inject only on product pages
+//     if (!window.location.pathname.startsWith("/products/")) return;
 
-    const buttonWallet = document.createElement("frak-button-wallet");
-    buttonWallet.setAttribute("use-reward", "true");
-    document.body.appendChild(buttonWallet);
-}
+//     const buttonWallet = document.createElement("frak-button-wallet");
+//     buttonWallet.setAttribute("use-reward", "true");
+//     document.body.appendChild(buttonWallet);
+// }
