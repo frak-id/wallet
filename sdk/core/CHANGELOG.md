@@ -1,5 +1,11 @@
 # @frak-labs/core-sdk
 
+## 0.0.6
+
+### Patch Changes
+
+- [`0a82e0c`](https://github.com/frak-id/wallet/commit/0a82e0c6ea117a36ed2459fd682af52605922733) Thanks [@srod](https://github.com/srod)! - Add new config `position` to `frak-button-wallet`
+
 ## 0.0.5
 
 ### Patch Changes
