@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 0.0.9
+
+### Patch Changes
+
+- [`2b0c2d3`](https://github.com/frak-id/wallet/commit/2b0c2d3f2f78a3ccf1eb8be1602fb72ab4a39aaf) Thanks [@srod](https://github.com/srod)! - 🐛 Fix double publish
+
+- Updated dependencies [[`2b0c2d3`](https://github.com/frak-id/wallet/commit/2b0c2d3f2f78a3ccf1eb8be1602fb72ab4a39aaf)]:
+  - @frak-labs/core-sdk@0.0.7
+
 ## 0.0.8
 
 ### Patch Changes
