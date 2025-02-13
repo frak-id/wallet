@@ -79,7 +79,7 @@
     "check-exports": "attw --pack --profile node16 .",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
-    "publish": "bun publish"
+    "publish": "echo 'Publishing core...'"
   },
   "peerDependencies": {
     "viem": "^2.x"

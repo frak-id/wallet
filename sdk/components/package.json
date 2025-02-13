@@ -48,7 +48,7 @@
     "build:watch": "vite build --watch",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
-    "publish": "bun publish"
+    "publish": "echo 'Publishing components...'"
   },
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",
