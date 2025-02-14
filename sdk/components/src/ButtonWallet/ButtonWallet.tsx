@@ -124,7 +124,8 @@ export function ButtonWallet({
      */
     useEffect(() => {
         // Get position from config metadata
-        const position = window.FrakSetup.modalWalletConfig?.metadata?.position;
+        const position =
+            window.FrakSetup?.modalWalletConfig?.metadata?.position;
         // Fallback to right if not defined
         buttonRef.current?.parentElement?.classList.add(position ?? "right");
     }, []);
