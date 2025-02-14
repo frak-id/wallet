@@ -23,7 +23,7 @@ export default defineConfig({
         createHtmlPlugin({
             inject: {
                 data: {
-                    injectScript: `<script src="${scriptSrc}"></script>`,
+                    injectScript: `<script defer src="${scriptSrc}"></script>`,
                     injectCSS: `<link id="frak-button-wallet" rel="stylesheet" href="${cssSrc}" />`,
                     injectReactScan: DEBUG
                         ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
