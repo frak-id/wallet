@@ -9,7 +9,7 @@
     "build:infra": "sst build --stage dev",
     "build:sdk": "dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} build; done",
     "changeset": "changeset",
-    "changeset:release": "dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} publish; done",
+    "changeset:release": "dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} publish && bun publish --cwd sdk/${d}; done",
     "changeset:version": "changeset version && bun install --lockfile-only",
     "clean": "rimraf **/.open-next/ **/.next/ .sst/dist/ .sst/artifacts/",
     "deploy": "sst deploy --stage dev",
