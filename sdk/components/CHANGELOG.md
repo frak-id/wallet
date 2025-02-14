@@ -1,5 +1,11 @@
 # @frak-labs/components
 
+## 0.0.10
+
+### Patch Changes
+
+- [`4cb4784`](https://github.com/frak-id/wallet/commit/4cb47841c8299b82957606793222726aed5a1db4) Thanks [@srod](https://github.com/srod)! - 🐛 Fix `modalWalletConfig` that can be undefined
+
 ## 0.0.9
 
 ### Patch Changes
