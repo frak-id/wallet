@@ -71,7 +71,7 @@ export function getModalBuilderSteps() {
  */
 export function safeVibrate() {
     if ("vibrate" in navigator) {
-        navigator.vibrate(200);
+        navigator.vibrate(10);
     } else {
         console.log("Vibration not supported");
     }
