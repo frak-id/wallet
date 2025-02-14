@@ -1,5 +1,6 @@
 import register from "preact-custom-element";
-import { ButtonWallet, type ButtonWalletProps } from "./ButtonWallet";
+import { ButtonWallet } from "./ButtonWallet";
+import type { ButtonWalletProps } from "./types";
 
 // Button wallet element is HTML element + ButtonWalletProps
 interface ButtonWalletElement extends HTMLElement, ButtonWalletProps {}

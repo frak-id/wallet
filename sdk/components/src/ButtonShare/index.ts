@@ -1,5 +1,6 @@
 import register from "preact-custom-element";
-import { ButtonShare, type ButtonShareProps } from "./ButtonShare";
+import { ButtonShare } from "./ButtonShare";
+import type { ButtonShareProps } from "./types";
 
 // Button share element is HTML element + ButtonShareProps
 interface ButtonShareElement extends HTMLElement, ButtonShareProps {}

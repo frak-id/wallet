@@ -1,53 +1,10 @@
-import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
-import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
-import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "preact/hooks";
-import { getCurrentReward, onClientReady, safeVibrate } from "../utils";
+import { useClientReady } from "@/hooks/useClientReady";
+import { useReward } from "@/hooks/useReward";
+import { useEffect, useMemo, useRef } from "preact/hooks";
 import GiftIcon from "./assets/gift.svg?react";
+import type { ButtonWalletProps } from "./types";
+import { openWalletModal } from "./utils";
 import "./ButtonWallet.css";
-
-/**
- * The props type for {@link ButtonWallet}.
- * @inline
- */
-export type ButtonWalletProps = {
-    /**
-     * Classname to apply to the button
-     */
-    classname?: string;
-    /**
-     * Do we display the reward on the button?
-     * @defaultValue `false`
-     */
-    useReward?: boolean;
-    /**
-     * Target interaction behind this sharing action (will be used to get the right reward to display)
-     */
-    targetInteraction?: FullInteractionTypesKey;
-};
-
-/**
- * Open the wallet modal
- *
- * @description
- * This function will open the wallet modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
- */
-function modalWallet() {
-    if (!window.FrakSetup?.client) {
-        console.error("Frak client not found");
-        return;
-    }
-    safeVibrate();
-    displayEmbededWallet(
-        window.FrakSetup.client,
-        window.FrakSetup?.modalWalletConfig ?? {}
-    );
-}
 
 /**
  * Button to open wallet modal
@@ -89,44 +46,23 @@ export function ButtonWallet({
     useReward: rawUseReward,
     targetInteraction,
 }: ButtonWalletProps) {
-    const useReward = useMemo(() => rawUseReward !== undefined, [rawUseReward]);
-
-    const [disabled, setDisabled] = useState(true);
-    const [reward, setReward] = useState<string | undefined>(undefined);
+    const shouldUseReward = useMemo(
+        () => rawUseReward !== undefined,
+        [rawUseReward]
+    );
     const buttonRef = useRef<HTMLButtonElement>(null);
-
-    /**
-     * Once the client is ready, enable the button
-     */
-    const handleClientReady = useCallback(() => {
-        // Enable the btn
-        setDisabled(false);
-
-        if (!useReward) return;
-
-        // Find the estimated reward
-        getCurrentReward(targetInteraction).then((reward) => {
-            if (!reward) return;
-            setReward(`${reward}€`);
-        });
-    }, [useReward, targetInteraction]);
-
-    /**
-     * Setup our client listener
-     */
-    useEffect(() => {
-        onClientReady("add", handleClientReady);
-        return () => onClientReady("remove", handleClientReady);
-    }, [handleClientReady]);
+    const { isClientReady } = useClientReady();
+    const { reward } = useReward(
+        shouldUseReward && isClientReady,
+        targetInteraction
+    );
 
     /**
      * Setup the position of the button
      */
     useEffect(() => {
-        // Get position from config metadata
         const position =
             window.FrakSetup?.modalWalletConfig?.metadata?.position;
-        // Fallback to right if not defined
         buttonRef.current?.parentElement?.classList.add(position ?? "right");
     }, []);
 
@@ -135,8 +71,8 @@ export function ButtonWallet({
             ref={buttonRef}
             type={"button"}
             class={classname}
-            disabled={disabled}
-            onClick={modalWallet}
+            disabled={!isClientReady}
+            onClick={openWalletModal}
         >
             <GiftIcon />
             {reward && <span>{reward}</span>}

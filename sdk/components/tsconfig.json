@@ -58,6 +58,7 @@
     "jsxImportSource": "preact",
 
     "paths": {
+      "@/*": ["./src/*"],
       "@module/*": ["../../packages/shared/module/*"]
     }
   },
