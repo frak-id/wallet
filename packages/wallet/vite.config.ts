@@ -6,6 +6,7 @@ import type { ConfigEnv, UserConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { manualChunks, onwarn } from "../shared/tooling/vite";
+
 const DEBUG = JSON.stringify(false);
 
 export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
@@ -16,8 +17,8 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
             "process.env.STAGE": JSON.stringify(process.env.STAGE),
             "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
             "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
-            "process.env.ALCHEMY_API_KEY": JSON.stringify(
-                process.env.ALCHEMY_API_KEY
+            "process.env.DRPC_API_KEY": JSON.stringify(
+                process.env.DRPC_API_KEY
             ),
             "process.env.PIMLICO_API_KEY": JSON.stringify(
                 process.env.PIMLICO_API_KEY

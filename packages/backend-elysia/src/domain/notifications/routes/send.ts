@@ -107,7 +107,7 @@ async function getWalletsTargets({
 
     // Otherwise, query the indexer to fetch the wallets
     const result = await indexerApi
-        .put(`members/${wallet}`, {
+        .post(`members/${wallet}`, {
             json: { filter: targets.filter, onlyAddress: true },
         })
         .json<GetMembersWalletResponseDto>();

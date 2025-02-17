@@ -29,7 +29,7 @@
     "@tanstack/react-query-persist-client": "^5.66.0",
     "buffer": "^6.0.3",
     "isbot": "^5.1.22",
-    "lucide-react": "^0.474.0",
+    "lucide-react": "^0.475.0",
     "normalize.css": "^8.0.1",
     "radash": "^12.1.0",
     "react": "^19",

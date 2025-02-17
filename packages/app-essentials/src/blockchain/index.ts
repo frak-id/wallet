@@ -1,10 +1,7 @@
 export { addresses, kernelAddresses, usdcArbitrumAddress } from "./addresses";
 export { getTransport, getViemClientFromChain } from "./provider";
 export { getErpcTransport } from "./transport/erpc-transport";
-export {
-    getAlchemyTransportNoBatch,
-    getAlchemyTransport,
-} from "./transport/alchemy-transport";
+export { getDrpcTransport } from "./transport/drpc-transport";
 export {
     productRoles,
     interactionValidatorRoles,
@@ -16,16 +13,6 @@ export {
     campaignAbiForType,
 } from "./campaign";
 // Actions
-export type {
-    AlchemyRpcSchema,
-    GetTokenMetadataResponse,
-    GetTokenBalancesRawResponse,
-} from "./actions/AlchemyRpcSchema";
-export {
-    getTokenMetadata,
-    type GetTokenMetadataParams,
-} from "./actions/getTokenMetadata";
-export { getTokenBalances } from "./actions/getTokenBalances";
 export { KernelWallet } from "./wallet";
 // Abis
 export {

@@ -61,8 +61,8 @@ const ssmSecrets = {
     VAPID_PRIVATE_KEY:
         "arn:aws:ssm:eu-west-1:262732185023:parameter/sst/wallet/.fallback/Secret/VAPID_PRIVATE_KEY/value",
     // API key's
-    ALCHEMY_API_KEY:
-        "arn:aws:ssm:eu-west-1:262732185023:parameter/sst/wallet/.fallback/Secret/ALCHEMY_API_KEY/value",
+    DRPC_API_KEY:
+        "arn:aws:ssm:eu-west-1:262732185023:parameter/sst/wallet/.fallback/Secret/DRPC_API_KEY/value",
     PIMLICO_API_KEY:
         "arn:aws:ssm:eu-west-1:262732185023:parameter/sst/wallet/.fallback/Secret/PIMLICO_API_KEY/value",
     COIN_GECKO_API_KEY:
@@ -123,7 +123,8 @@ const backendServiceTargets = new ServiceTargets("BackendServiceDomain", {
 });
 
 // Create the elysia backend service (only on prod stage)
-sstCluster.addService("Elysia", {
+new sst.aws.Service("Elysia", {
+    cluster: sstCluster,
     // Development configuration
     //  todo: Find a way to link SSM parameters to the dev env
     dev: {

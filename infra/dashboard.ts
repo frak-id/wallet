@@ -1,6 +1,6 @@
 import {
-    alchemyApiKey,
     backendUrl,
+    drpcApiKey,
     indexerUrl,
     isProd,
     mongoBusinessDb,
@@ -35,7 +35,7 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
         INDEXER_URL: indexerUrl,
     },
     link: [
-        alchemyApiKey,
+        drpcApiKey,
         nexusRpcSecret,
         sessionEncryptionKy,
         mongoBusinessDb,

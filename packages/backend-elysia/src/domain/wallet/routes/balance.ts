@@ -96,35 +96,38 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                 };
             }
 
-            // Map rewards with tokens and eur price
-            const claimablesAsync = rewards.map(async (reward) => {
-                const token = tokens.find((token) =>
-                    isAddressEqual(token.address, reward.token)
-                );
-                if (!token) return null;
+            const claimablesAsync = rewards
+                // Filter out potential negative reward (in case of indexer bug)
+                .filter((reward) => BigInt(reward.amount) > 0n)
+                // Map rewards with tokens and eur price
+                .map(async (reward) => {
+                    const token = tokens.find((token) =>
+                        isAddressEqual(token.address, reward.token)
+                    );
+                    if (!token) return null;
 
-                // Get the eur price of the token
-                const price = await pricingRepository.getTokenPrice({
-                    token: reward.token,
+                    // Get the eur price of the token
+                    const price = await pricingRepository.getTokenPrice({
+                        token: reward.token,
+                    });
+                    if (!price) return null;
+
+                    const rawBalance = BigInt(reward.amount);
+                    const balance = Number.parseFloat(
+                        formatUnits(rawBalance, token.decimals)
+                    );
+
+                    return {
+                        contract: reward.address,
+                        token: reward.token,
+                        name: token.name,
+                        symbol: token.symbol,
+                        decimals: token.decimals,
+                        balance: balance,
+                        eurBalance: balance * price.eur,
+                        rawBalance: toHex(rawBalance),
+                    };
                 });
-                if (!price) return null;
-
-                const rawBalance = BigInt(reward.amount);
-                const balance = Number.parseFloat(
-                    formatUnits(rawBalance, token.decimals)
-                );
-
-                return {
-                    contract: reward.address,
-                    token: reward.token,
-                    name: token.name,
-                    symbol: token.symbol,
-                    decimals: token.decimals,
-                    balance: balance,
-                    eurBalance: balance * price.eur,
-                    rawBalance: toHex(rawBalance),
-                };
-            });
             const claimables = sift(await Promise.all(claimablesAsync));
 
             // Get the total eur claimable

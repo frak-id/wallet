@@ -22,7 +22,7 @@ export async function getProductMembers(params: GetMembersParam) {
         const session = await getSafeSession();
 
         return await indexerApi
-            .put(`members/${session.wallet}`, {
+            .post(`members/${session.wallet}`, {
                 json: params,
             })
             .json<GetMembersResponseDto>();
@@ -46,7 +46,7 @@ export async function getProductsMembersCount(
         const session = await getSafeSession();
 
         const result = await indexerApi
-            .put(`members/${session.wallet}`, {
+            .post(`members/${session.wallet}`, {
                 json: { ...params, noData: true },
             })
             .json<GetMembersCountResponseDto>();

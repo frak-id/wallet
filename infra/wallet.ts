@@ -1,6 +1,6 @@
 import {
-    alchemyApiKey,
     backendUrl,
+    drpcApiKey,
     indexerUrl,
     isProd,
     nexusRpcSecret,
@@ -33,7 +33,7 @@ new sst.aws.StaticSite("Wallet", {
         STAGE: $app.stage,
         BACKEND_URL: backendUrl,
         INDEXER_URL: indexerUrl,
-        ALCHEMY_API_KEY: alchemyApiKey.value,
+        DRPC_API_KEY: drpcApiKey.value,
         PIMLICO_API_KEY: pimlicoApiKey.value,
         NEXUS_RPC_SECRET: nexusRpcSecret.value,
         VAPID_PUBLIC_KEY: vapidPublicKey.value,

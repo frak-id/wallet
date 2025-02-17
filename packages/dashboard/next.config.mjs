@@ -5,7 +5,7 @@ const DEBUG = false;
 
 // Secret env variable from SST we want in the frontend
 const wantedFromConfig = [
-    "ALCHEMY_API_KEY",
+    "DRPC_API_KEY",
     "NEXUS_RPC_SECRET",
     "SESSION_ENCRYPTION_KEY",
     "MONGODB_BUSINESS_URI",
