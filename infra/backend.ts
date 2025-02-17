@@ -123,7 +123,8 @@ const backendServiceTargets = new ServiceTargets("BackendServiceDomain", {
 });
 
 // Create the elysia backend service (only on prod stage)
-sstCluster.addService("Elysia", {
+new sst.aws.Service("Elysia", {
+    cluster: sstCluster,
     // Development configuration
     //  todo: Find a way to link SSM parameters to the dev env
     dev: {

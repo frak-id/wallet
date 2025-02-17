@@ -73,7 +73,7 @@
     "i18next-resources-for-ts": "^1.5.0",
     "postcss": "^8.5.2",
     "postcss-preset-env": "^10.1.4",
-    "sst": "3.7.15",
+    "sst": "3.9.4",
     "typescript": "^5",
     "vite": "^6.1.0",
     "vite-plugin-mkcert": "^1.17.6",
