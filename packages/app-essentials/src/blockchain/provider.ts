@@ -1,5 +1,5 @@
 import { type Chain, createClient, fallback } from "viem";
-import { getAlchemyTransport } from "./transport/alchemy-transport";
+import { getDrpcTransport } from "./transport/drpc-transport";
 import { getErpcTransport } from "./transport/erpc-transport";
 
 /**
@@ -9,11 +9,11 @@ export function getTransport<TChain extends Chain>({
     chain,
 }: { chain: TChain }) {
     const erpcTransport = getErpcTransport({ chain });
-    const alchemyTransport = getAlchemyTransport({ chain });
+    const drpcTransport = getDrpcTransport({ chain });
     if (!erpcTransport) {
-        return alchemyTransport;
+        return drpcTransport;
     }
-    return fallback([erpcTransport, alchemyTransport]);
+    return fallback([erpcTransport, drpcTransport]);
 }
 
 /**

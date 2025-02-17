@@ -8,4 +8,5 @@ export type {
     GetMembersCountResponseDto,
     GetRewardResponseDto,
     GetRewardHistoryResponseDto,
+    GetAllTokenResponseDto,
 } from "./indexer";

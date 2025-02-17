@@ -56,7 +56,7 @@ export const businessUrl = getStaticVariable({
 export const stage = $app.stage ?? "dev";
 
 // Some secrets
-export const alchemyApiKey = new sst.Secret("ALCHEMY_API_KEY");
+export const drpcApiKey = new sst.Secret("DRPC_API_KEY");
 export const pimlicoApiKey = new sst.Secret("PIMLICO_API_KEY");
 export const nexusRpcSecret = new sst.Secret("NEXUS_RPC_SECRET");
 export const vapidPublicKey = new sst.Secret("VAPID_PUBLIC_KEY");

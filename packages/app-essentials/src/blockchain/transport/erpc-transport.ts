@@ -6,7 +6,7 @@ import { http, type Chain } from "viem";
 const ERPC_URL = "https://rpc.frak.id/nexus-rpc/evm/";
 
 /**
- * Get the alchemy http transport
+ * Get the erpc http transport
  * @param chainId
  */
 export function getErpcTransport({ chain }: { chain: Chain }) {
@@ -19,7 +19,7 @@ export function getErpcTransport({ chain }: { chain: Chain }) {
     // Build the ercp rpc url depending on the chain
     const rpcUrl = `${process.env.ERPC_URL ?? ERPC_URL}/${chain.id}?token=${nexusRpcSecret}`;
 
-    // Build the alchemy client
+    // Build the erpc client
     return http(rpcUrl, {
         batch: {
             wait: 50,

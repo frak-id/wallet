@@ -11,3 +11,4 @@ export type {
     GetRewardResponseDto,
     GetRewardHistoryResponseDto,
 } from "./reward";
+export type { GetAllTokenResponseDto } from "./tokens";
