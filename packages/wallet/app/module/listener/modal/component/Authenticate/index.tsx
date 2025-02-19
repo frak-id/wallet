@@ -1,10 +1,10 @@
 import { TextData } from "@/module/common/component/TextData";
+import { trackEvent } from "@/module/common/utils/trackEvent";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { trackEvent } from "@module/utils/trackEvent";
 import { useMemo } from "react";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";

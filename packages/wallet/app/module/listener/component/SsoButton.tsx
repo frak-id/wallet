@@ -4,8 +4,8 @@ import {
     ssoPopupName,
     useSsoLink,
 } from "@/module/authentication/hook/useGetOpenSsoLink";
+import { trackEvent } from "@/module/common/utils/trackEvent";
 import type { SsoMetadata } from "@frak-labs/core-sdk";
-import { trackEvent } from "@module/utils/trackEvent";
 import { type ReactNode, useState } from "react";
 import type { Hex } from "viem";
 import { useListenerWithRequestUI } from "../providers/ListenerUiProvider";

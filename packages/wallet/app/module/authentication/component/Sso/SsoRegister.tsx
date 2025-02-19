@@ -1,9 +1,9 @@
 import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Notice } from "@/module/common/component/Notice";
+import { trackEvent } from "@/module/common/utils/trackEvent";
 import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
-import { trackEvent } from "@module/utils/trackEvent";
 import { useAtomValue } from "jotai/index";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";

@@ -1,8 +1,13 @@
 import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
 import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
-import type { ClientLifecycleEvent } from "@frak-labs/core-sdk";
+import { sessionAtom } from "@/module/common/atoms/session";
+import {
+    type ClientLifecycleEvent,
+    FrakContextManager,
+} from "@frak-labs/core-sdk";
+import { jotaiStore } from "@module/atoms/store";
 import { atom, useAtomValue } from "jotai";
-import { keccak256, toHex } from "viem";
+import { type Address, isAddressEqual, keccak256, toHex } from "viem";
 
 /**
  * The atom storing the current iframe resolving context
@@ -122,13 +127,47 @@ function getIFrameResolvingContext(
     const originUrl = new URL(sourceUrl);
     const productId = keccak256(toHex(originUrl.host));
     const origin = originUrl.origin;
+    const walletReferrer = getWalletReferrer(sourceUrl);
     console.log("Computed resolving context", {
         sourceUrl,
         origin,
         productId,
         isAutoContext: event === undefined,
+        ...(walletReferrer && { walletReferrer }),
     });
 
     // Return the context
-    return { productId, origin, sourceUrl, isAutoContext: event === undefined };
+    return {
+        productId,
+        origin,
+        sourceUrl,
+        isAutoContext: event === undefined,
+        ...(walletReferrer && { walletReferrer }),
+    };
+}
+
+/**
+ * Get the referrer address from the source url
+ * @param sourceUrl The source URL to extract the referrer from
+ * @returns The referrer address if valid and different from current session, undefined otherwise
+ */
+function getWalletReferrer(sourceUrl: string): Address | undefined {
+    // Get the current session
+    const session = jotaiStore.get(sessionAtom);
+
+    // Get the current frak context
+    const frakContext = FrakContextManager.parse({
+        url: sourceUrl,
+    });
+
+    // If we got a referrer and it's not the same as the current session, return it
+    if (
+        frakContext?.r &&
+        session?.address &&
+        !isAddressEqual(frakContext.r, session.address)
+    ) {
+        return frakContext.r;
+    }
+
+    return;
 }

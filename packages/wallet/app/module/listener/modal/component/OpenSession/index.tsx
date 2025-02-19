@@ -1,3 +1,4 @@
+import { trackEvent } from "@/module/common/utils/trackEvent";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
@@ -5,7 +6,6 @@ import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { trackEvent } from "@module/utils/trackEvent";
 import { useEffect } from "react";
 
 /**

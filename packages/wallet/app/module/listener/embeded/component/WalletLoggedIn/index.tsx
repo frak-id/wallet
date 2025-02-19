@@ -1,3 +1,4 @@
+import { trackEvent } from "@/module/common/utils/trackEvent";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { ButtonWallet } from "@/module/listener/embeded/component/ButtonWallet";
 import {
@@ -19,7 +20,6 @@ import { Copy } from "@module/asset/icons/Copy";
 import { Power } from "@module/asset/icons/Power";
 import { Share } from "@module/asset/icons/Share";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
-import { trackEvent } from "@module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
 import { tryit } from "radash";
 import { useAccount } from "wagmi";

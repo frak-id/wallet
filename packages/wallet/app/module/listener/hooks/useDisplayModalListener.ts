@@ -1,5 +1,6 @@
 import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
+import { trackEvent } from "@/module/common/utils/trackEvent";
 import {
     type DisplayedModalStep,
     setNewModalAtom,
@@ -15,7 +16,6 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
-import { trackEvent } from "@module/utils/trackEvent";
 import { useCallback } from "react";
 import { useListenerUI } from "../providers/ListenerUiProvider";
 
