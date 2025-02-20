@@ -43,6 +43,10 @@ export const meta: MetaFunction = () => {
             name: "keywords",
             content: "frak, wallet, frak-wallet, blockchain, ethcc",
         },
+        {
+            name: "google",
+            content: "notranslate",
+        },
     ];
 };
 

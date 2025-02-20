@@ -2,6 +2,7 @@
 import { setSession } from "@/context/auth/actions/session";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { ClientOnly } from "@module/component/ClientOnly";
+import { Spinner } from "@module/component/Spinner";
 import { useMediaQuery } from "@module/hook/useMediaQuery";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -87,7 +88,7 @@ export function Login() {
                             })
                         }
                     >
-                        Connect
+                        {isPending && <Spinner />} Connect
                     </button>
                 </div>
             </div>

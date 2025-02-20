@@ -90,6 +90,10 @@ const meta: MetaFunction = () => {
             name: "apple-mobile-web-app-status-bar-style",
             content: "default",
         },
+        {
+            name: "google",
+            content: "notranslate",
+        },
     ];
 };
 

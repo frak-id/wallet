@@ -59,6 +59,9 @@ export const metadata: Metadata = {
         description:
             "Deploy, manage, and optimize your Web3 products with Frak Business Hub. Create blockchain-based campaigns and grow your community.",
     },
+    other: {
+        google: "notranslate",
+    },
 };
 
 export const viewport: Viewport = {
