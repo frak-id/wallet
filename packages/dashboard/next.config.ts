@@ -1,3 +1,4 @@
+import type { NextConfig } from "next";
 import { pick } from "radash";
 import { Resource } from "sst";
 
@@ -10,19 +11,19 @@ const wantedFromConfig = [
     "SESSION_ENCRYPTION_KEY",
     "MONGODB_BUSINESS_URI",
     "FUNDING_ON_RAMP_URL",
-];
+] as (keyof Resource)[];
+
 // The Resource.XXX can be an object with { value: string }, needed to upper up the value
 const envFromSstConfig = Object.fromEntries(
     Object.entries(pick(Resource, wantedFromConfig)).map(([key, value]) => [
         key,
-        value.value,
+        "value" in value ? value.value : "",
     ])
 );
 
 const isDistant = ["prod", "dev"].includes(Resource.App.stage);
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
     async redirects() {
         return [
             {
