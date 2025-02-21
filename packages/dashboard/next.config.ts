@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { pick } from "radash";
 import { Resource } from "sst";
 
 const DEBUG = false;
@@ -11,16 +10,20 @@ const wantedFromConfig = [
     "SESSION_ENCRYPTION_KEY",
     "MONGODB_BUSINESS_URI",
     "FUNDING_ON_RAMP_URL",
-] as (keyof Resource)[];
+] as string[];
 
-// The Resource.XXX can be an object with { value: string }, needed to upper up the value
-const envFromSstConfig = Object.fromEntries(
-    Object.entries(pick(Resource, wantedFromConfig)).map(([key, value]) => [
-        key,
-        "value" in value ? value.value : "",
-    ])
-);
-
+// Get the env variables from the Resource
+const envFromSst: Record<string, string> = {};
+for (const key of wantedFromConfig) {
+    // If the key is not in the Resource, skip
+    if (!(key in Resource)) continue;
+    // Get the value from the Resource
+    const value = Resource[key as keyof typeof Resource];
+    // If the value is an object with a value property, add it to the envFromSst object
+    if (value && typeof value === "object" && "value" in value) {
+        envFromSst[key] = value.value as string;
+    }
+}
 const isDistant = ["prod", "dev"].includes(Resource.App.stage);
 
 const nextConfig: NextConfig = {
@@ -41,7 +44,7 @@ const nextConfig: NextConfig = {
         INDEXER_URL: process.env.INDEXER_URL,
         DEBUG: JSON.stringify(DEBUG),
         // Secrets from sst
-        ...envFromSstConfig,
+        ...envFromSst,
     },
     transpilePackages: ["lucide-react", "@frak-labs/app-essentials"],
     compiler: {
