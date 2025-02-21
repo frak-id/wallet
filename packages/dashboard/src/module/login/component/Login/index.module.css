@@ -9,6 +9,13 @@
     }
 }
 
+@media screen and (max-height: 520px) {
+    .login {
+        margin-top: 20px;
+        align-items: flex-start;
+    }
+}
+
 .title {
     margin: 0;
     font-size: 56px;
