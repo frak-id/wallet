@@ -1,3 +1,4 @@
+import { trackEvent } from "@/module/common/utils/trackEvent";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
@@ -6,7 +7,6 @@ import { useListenerTranslation } from "@/module/listener/providers/ListenerUiPr
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { trackEvent } from "@module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
 import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";

@@ -17,7 +17,8 @@
             "package.json",
             "sw.js",
             "bundle.js",
-            "sst-env.d.ts"
+            "sst-env.d.ts",
+            ".react-router/**"
         ]
     },
     "organizeImports": {

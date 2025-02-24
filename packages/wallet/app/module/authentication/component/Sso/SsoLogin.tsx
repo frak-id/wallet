@@ -1,9 +1,9 @@
 import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useLogin } from "@/module/authentication/hook/useLogin";
+import { trackEvent } from "@/module/common/utils/trackEvent";
 import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
-import { trackEvent } from "@module/utils/trackEvent";
 import { useAtomValue } from "jotai/index";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";

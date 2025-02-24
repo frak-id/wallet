@@ -15,7 +15,8 @@ import {
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
-import { type Hex, keccak256, toHex } from "viem";
+import { keccak256, toHex } from "viem";
+import type { Address, Hex } from "viem";
 
 /**
  * The current resolving context
@@ -25,6 +26,7 @@ export type IFrameResolvingContext = {
     origin: string;
     sourceUrl: string;
     isAutoContext: boolean;
+    walletReferrer?: Address;
 };
 
 /**

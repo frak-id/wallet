@@ -1,6 +1,7 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import { trackEvent } from "@/module/common/utils/trackEvent";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { SsoButton } from "@/module/listener/component/SsoButton";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
@@ -8,7 +9,6 @@ import { useListenerTranslation } from "@/module/listener/providers/ListenerUiPr
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@module/component/Spinner";
 import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { trackEvent } from "@module/utils/trackEvent";
 import { useAtomValue } from "jotai/index";
 import { useEffect } from "react";
 import { DismissButton } from "../Generic";
