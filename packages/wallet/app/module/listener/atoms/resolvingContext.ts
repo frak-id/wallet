@@ -163,8 +163,7 @@ function getWalletReferrer(sourceUrl: string): Address | undefined {
     // If we got a referrer and it's not the same as the current session, return it
     if (
         frakContext?.r &&
-        session?.address &&
-        !isAddressEqual(frakContext.r, session.address)
+        (!session?.address || !isAddressEqual(frakContext.r, session.address))
     ) {
         return frakContext.r;
     }
