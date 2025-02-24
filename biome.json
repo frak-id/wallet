@@ -18,7 +18,8 @@
             "sw.js",
             "bundle.js",
             "sst-env.d.ts",
-            ".react-router/**"
+            ".react-router/**",
+            ".rslib/**"
         ]
     },
     "organizeImports": {
