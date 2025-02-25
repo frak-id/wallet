@@ -2,6 +2,7 @@ import { log } from "@backend-common";
 import type { KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
 import type { Address, Chain, Client, Transport } from "viem";
+import { getCode } from "viem/actions";
 
 /**
  * Repository to handle pending balance logic
@@ -10,7 +11,7 @@ import type { Address, Chain, Client, Transport } from "viem";
  */
 export class PendingBalanceRepository {
     // Cache for pending balances to reduce RPC calls
-    private readonly pendingBalanceCache = new LRUCache<string, number>({
+    private readonly pendingBalanceCache = new LRUCache<Address, number>({
         max: 1000,
         // Keep in cache for 5 minutes
         ttl: 300_000,
@@ -34,8 +35,7 @@ export class PendingBalanceRepository {
         address,
     }: { address: Address }): Promise<number> {
         // Check cache first
-        const cacheKey = `pending-balance-${address}`;
-        const cachedBalance = this.pendingBalanceCache.get(cacheKey);
+        const cachedBalance = this.pendingBalanceCache.get(address);
         if (cachedBalance !== undefined) {
             return cachedBalance;
         }
@@ -47,7 +47,7 @@ export class PendingBalanceRepository {
             // Check if wallet exists (always true if we're here, so add 0.5$)
             pendingBalance += 0.5;
 
-            // Check if wallet is activated by looking for any transaction from this address
+            // Check if wallet is activated by checking if the smart contract is deployed
             const isActivated = await this.isWalletActivated(address);
             if (isActivated) {
                 pendingBalance += 1;
@@ -60,7 +60,7 @@ export class PendingBalanceRepository {
             }
 
             // Cache the result
-            this.pendingBalanceCache.set(cacheKey, pendingBalance);
+            this.pendingBalanceCache.set(address, pendingBalance);
             return pendingBalance;
         } catch (error) {
             log.error("Error getting pending balance", { error, address });
@@ -69,17 +69,18 @@ export class PendingBalanceRepository {
     }
 
     /**
-     * Check if the wallet is activated (has made at least one transaction)
+     * Check if the wallet is activated by verifying if the smart contract has been deployed
+     * For Smart Accounts, the wallet is a smart contract, so if it has code, it's been activated
      * @param address The wallet address
-     * @returns True if the wallet is activated
+     * @returns True if the wallet is activated (contract deployed)
      */
     private async isWalletActivated(address: Address): Promise<boolean> {
         try {
-            // Use indexer API to check if wallet has any transactions
-            const response = await this.indexerApi
-                .get(`transactions/count/${address}`)
-                .json<{ count: number }>();
-            return response.count > 0;
+            // Get the code at the wallet address
+            const code = await getCode(this.client, { address });
+            
+            // If there's code (not '0x' which means no code), the wallet is activated
+            return code !== '0x';
         } catch (error) {
             log.error("Error checking wallet activation", { error, address });
             return false;
@@ -88,6 +89,7 @@ export class PendingBalanceRepository {
 
     /**
      * Check if the user has shared a referral link
+     * This method checks if the user has any referrals in the system
      * @param address The wallet address
      * @returns True if the user has shared a referral link
      */
