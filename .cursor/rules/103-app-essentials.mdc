@@ -1,6 +1,7 @@
 ---
 description: This rule apply to app-essentials package.
-globs: *.ts
+globs: packages/app-essentials/**/*.ts
+alwaysApply: false
 ---
 # App Essentials Rules
 

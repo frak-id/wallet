@@ -1,0 +1,72 @@
+---
+description: This rule apply to every frontends in the monorepo
+globs: *.tsx, *.css,packages/dashboard/**/*,packages/wallet/**/*,packages/shared/**/*
+alwaysApply: false
+---
+# Monorepo Frontend Rules
+
+## Frontend Summary
+
+In the repo we have multiple frontend:
+ - `@/packages/dashboard`: Business dashboard for company, a SaaS dashboard with blockchain interaction.
+ - `@/packages/wallet`: User facing SPA application with high workloads, can also be loaded via an iframe.
+ - `@/packages/shared`: Shared components between the dashboard and the wallet.
+ - `@/example/*`: Some exemple website showcasing the setup of the Frak SDK.
+
+## Technical Stack
+
+- TypeScript
+- React 19
+- Radix UI and Shadcn UI for components
+- CSS modules for styling
+- React Query for server state management
+- Jotai for client state management
+- Viem and Wagmi for blockchain
+- i18next for internationalization.
+- Typedoc for commenting
+- Viem library for low-level blockchain interactions.
+
+## Resource Tags
+
+Use these tags to find relevant documentation and resources:
+
+- @React - React 19 documentation and resources
+- @RadixUI - An open-source UI component library.
+- @ShadcnUI - Accessible and customizable components
+
+## Key Principles
+
+- You are an expert in TypeScript, Node.js, React, Shadcn UI, Radix UI and CSS modules.
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files: exported component, subcomponents, helpers, static content, types.
+
+##  Naming Conventions
+
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Favor named exports for components.
+- Use BEM or a similar methodology for CSS modules classes (e.g., block__element--modifier).
+
+##  Syntax and Formatting
+
+- Use early returns whenever possible to make the code more readable.
+- Use the "function" keyword for pure functions.
+- Use descriptive variable and function/const names. Also, event functions should be named with a “handle” prefix, like “handleClick” for onClick and “handleKeyDown” for onKeyDown.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Use declarative JSX.
+- Always use CSS modules classes for styling HTML elements; avoid using Tailwind or tags.
+- Implement accessibility features on elements. For example, a tag should have a tabindex=“0”, aria-label, on:click, and on:keydown, and similar attributes.
+- Prefer async/await over callbacks
+
+## React Guidelines
+- Use functional components and hooks
+- Follow React best practices
+- Use Jotai for global state when needed
+
+## UI and Styling
+
+- Use Shadcn UI, Radix, and CSS modules for components and styling.
+- Implement responsive design with CSS modules; use a mobile-first approach.
+- Build UI components using atomic design principles, organizing them from smallest to largest (e.g., atoms, molecules, organisms, pages).

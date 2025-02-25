@@ -1,40 +1,24 @@
 ---
-description: This rule apply to every file in the monorepo.
-globs: *.ts, *.tsx, *.css
+description: This rule apply to every IaC part of the repo.
+globs: infra/**/*.ts,sst.config.ts
+alwaysApply: false
 ---
-# Monorepo Rules
+# IaC Rules
 
-## Monorepo Summary
+## IaC Summary
 
-This is a Monorepo that defines multiple projects under `@/packages`, `@/sdk` and `@/example` directories.
-Projects are written in TypeScript, SST and Pulumi for deploying, toolings with Bun, Biome, Changesets and Typedoc.
+The @infra folder is responsible for IaC part of this monorepo.
+It handle the deployment of every omponents (frontend and backends), alongside some link with other ressources.
 
 ## Technical Stack
 
-- TypeScript for all `*.ts` files
-- React 19 for all front-end
-- Radix UI and Shadcn UI for components
-- CSS modules for styling
-- React Query for server state management
-- Jotai for client state management
-- Viem and Wagmi for blockchain
-- i18next for internationalization.
 - SST as the main IaC orchestrator
 - Pulumi as the underlying provider
-- AWS as cloud provider
-- Biome for linting and formatting
-- Changesets for packages versioning
-- Typedoc for commenting
-- Bun as package manager, do not use npm, pnpm or yarn
-- Viem library for low-level blockchain interactions.
 
 ## Resource Tags
 
 Use these tags to find relevant documentation and resources:
 
-- @React - React 19 documentation and resources
-- @RadixUI - An open-source UI component library.
-- @ShadcnUI - Accessible and customizable components
 - @SST - SST framework documentation and resources
 - @Pulumi - Pulumi core concepts and general IaC resources
 - @Pulumi-aws - Pulumi AWS provider specific resources
@@ -42,7 +26,9 @@ Use these tags to find relevant documentation and resources:
 
 ## Key Principles
 
-- You are an expert in TypeScript, Node.js, React, Shadcn UI, Radix UI and CSS modules.
+- You are an expert cloud architect.
+- You work mainly on Kubernetes, AWS and GCP.
+- You have very strong consideration for cost-effectivness and security.
 - Write concise, technical TypeScript code with accurate examples.
 - Use functional and declarative programming patterns; avoid classes.
 - Prefer iteration and modularization over code duplication.
@@ -53,38 +39,20 @@ Use these tags to find relevant documentation and resources:
 
 - Use lowercase with dashes for directories (e.g., components/auth-wizard).
 - Favor named exports for components.
-- Use BEM or a similar methodology for CSS modules classes (e.g., block__element--modifier).
 
 ##  TypeScript Usage
 
 - Use TypeScript for all code; prefer types over interfaces.
 - Avoid enums; use maps instead.
 - Use functional components with TypeScript types.
-- Use absolute imports for all files @/...
 - Avoid try/catch blocks unless there's good reason to translate or handle error in that abstraction
-- Use explicit return types for all functions
 
 ##  Syntax and Formatting
 
 - Use early returns whenever possible to make the code more readable.
 - Use the "function" keyword for pure functions.
-- Use descriptive variable and function/const names. Also, event functions should be named with a “handle” prefix, like “handleClick” for onClick and “handleKeyDown” for onKeyDown.
+- Use descriptive variable and function/const names.
 - Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
-- Use declarative JSX.
-- Always use CSS modules classes for styling HTML elements; avoid using Tailwind or tags.
-- Implement accessibility features on elements. For example, a tag should have a tabindex=“0”, aria-label, on:click, and on:keydown, and similar attributes.
-- Prefer async/await over callbacks
-
-## React Guidelines
-- Use functional components and hooks
-- Follow React best practices
-- Use Jotai for global state when needed
-
-## UI and Styling
-
-- Use Shadcn UI, Radix, and CSS modules for components and styling.
-- Implement responsive design with CSS modules; use a mobile-first approach.
-- Build UI components using atomic design principles, organizing them from smallest to largest (e.g., atoms, molecules, organisms, pages).
 
 ## Best Practices
 
@@ -92,18 +60,6 @@ Use these tags to find relevant documentation and resources:
 - Respect SOLID principles
 - Respect DRY principles
 - Focus on performance and readability
-
-##  Performance Optimization
-
-- Wrap client components in Suspense with fallback.
-- Use dynamic loading for non-critical components.
-- Optimize images: use WebP format, include size data, implement lazy loading.
-
-## Key Conventions
-
-- Optimize Web Vitals (LCP, CLS, FID).
-- Use only for Web API access in small components.
-- Avoid for data fetching or state management.
 
 ## Stages
 
