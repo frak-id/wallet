@@ -1,18 +1,30 @@
+import { AnalyticsWrapper } from "@/components/AnalyticsWrapper";
+import { ReactScanWrapper } from "@/components/ReactScanWrapper";
 import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
-import { isRunningInProd } from "@frak-labs/app-essentials";
-import { Analytics } from "@module/component/Analytics";
-import { ReactScan } from "@module/component/ReactScan";
 import { Spinner } from "@module/component/Spinner";
 import type { ReactNode } from "react";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+import {
+    Links,
+    Meta,
+    Outlet,
+    Scripts,
+    ScrollRestoration,
+    isRouteErrorResponse,
+} from "react-router";
+import type { Route } from "./+types/root";
 
 export const meta = rootConfig.meta;
 export const links = rootConfig.links;
 export const handle = { i18n: ["translation"] };
 
+/**
+ * Fallback component for hydration
+ *
+ * @returns {JSX.Element} - The fallback component
+ */
 export function HydrateFallback() {
     return (
         <>
@@ -32,12 +44,54 @@ export function HydrateFallback() {
     );
 }
 
+/**
+ * ErrorBoundary component
+ *
+ * This component is responsible for handling errors in the application.
+ * It wraps around child components and logs errors based on the error type.
+ *
+ * @param {Route.ErrorBoundaryProps} error - The error object.
+ * @returns {JSX.Element} - The ErrorBoundary component.
+ */
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+    if (isRouteErrorResponse(error)) {
+        return (
+            <>
+                <h1>
+                    {error.status} {error.statusText}
+                </h1>
+                <p>{error.data}</p>
+            </>
+        );
+    }
+
+    if (error instanceof Error) {
+        return (
+            <div>
+                <h1>Error</h1>
+                <p>{error.message}</p>
+                <p>The stack trace is:</p>
+                <pre>{error.stack}</pre>
+            </div>
+        );
+    }
+
+    return <h1>Unknown Error</h1>;
+}
+
+/**
+ * Layout component
+ *
+ * This component is responsible for rendering the application's layout.
+ *
+ * @param {ReactNode} children - The child components to render within the layout.
+ * @returns {JSX.Element} - The rendered layout.
+ */
 export function Layout({ children }: { children: ReactNode }) {
-    const websiteId = process.env.UMAMI_WALLET_WEBSITE_ID;
     return (
         <html lang={"en"}>
             <head>
-                {process.env.DEBUG === "true" && <ReactScan />}
+                <ReactScanWrapper />
                 <meta charSet="utf-8" />
                 <meta
                     name="viewport"
@@ -45,9 +99,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 />
                 <Meta />
                 <Links />
-                {isRunningInProd && websiteId ? (
-                    <Analytics websiteId={websiteId} />
-                ) : null}
+                <AnalyticsWrapper />
             </head>
             <body className="scrollbars">
                 {children}
@@ -58,6 +110,13 @@ export function Layout({ children }: { children: ReactNode }) {
     );
 }
 
+/**
+ * App component
+ *
+ * This component is the entry point of the application.
+ *
+ * @returns {JSX.Element} - The rendered application.
+ */
 export default function App() {
     return (
         <>
