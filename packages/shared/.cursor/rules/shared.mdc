@@ -1,0 +1,10 @@
+---
+description: This rule apply to shared package.
+globs: *.ts, *.tsx, *.css
+---
+# Shared Rules
+
+## Shared Summary
+
+`@/packages/shared` is part of Frak monorepo and is designed to provide shared components, utilities, and context management that can be utilized across various projects within the monorepo.
+Project is written in TypeScript using React 19, Radix UI and Shadcn UI for components, React Query for server state management, Jotai for client state management, Viem and Wagmi for blockchain.

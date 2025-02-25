@@ -1,0 +1,35 @@
+---
+description: This rule apply to dashboard package.
+globs: *.ts, *.tsx, *.css
+---
+# Dashboard Rules
+
+## Dashboard Summary
+
+`@/packages/dashboard` is part of Frak monorepo and is designed to provide a comprehensive dashboard solution that integrates with various blockchain functionalities and user authentication mechanisms.
+Project is written in TypeScript using React 19, Next.js App Router, Radix UI and Shadcn UI for components, React Query for server state management, Jotai for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
+
+## Technical Stack
+
+- Next.js using App Router for all `*.tsx` files
+
+## Resource Tags
+
+Use these tags to find relevant documentation and resources:
+
+- @Next.js - Next.js framework documentation and resources
+
+## Key Principles
+
+- You are an expert in TypeScript, Next.js, React, Shadcn UI, Radix UI and CSS modules.
+
+##  Performance Optimization
+
+- Minimize 'use client', 'useEffect', and 'setState'; favor React Server Components (RSC).
+
+## Key Conventions
+
+- Limit 'use client':
+- Favor server components and Next.js SSR.
+
+Follow Next.js docs for Data Fetching, Rendering, and Routing.

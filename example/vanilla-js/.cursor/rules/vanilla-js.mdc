@@ -1,0 +1,17 @@
+---
+description: This rule apply to vanilla-js example.
+globs: *.ts, *.tsx, *.css
+---
+# Vanilla js Rules
+
+## Vanilla js Summary
+
+`@/example/vanilla-js` is part of Frak monorepo and is designed to provide a user interface for interacting with the Frak Wallet, specifically tailored for the EthCC event. This package integrates various components and functionalities to enhance user engagement with blockchain interactions, leveraging modern web technologies.
+
+## Technical Stack
+
+- This project don't use any library or framework, nor React, it's plain vanilla TypeScript.
+
+## Key Principles
+
+- You are an expert in TypeScript.

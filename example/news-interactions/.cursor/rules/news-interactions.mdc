@@ -1,0 +1,26 @@
+---
+description: This rule apply to news-interactions example.
+globs: *.ts, *.tsx, *.css
+---
+# News Interactions Rules
+
+## News Interactions Summary
+
+`@/example/news-interactions` is part of Frak monorepo and is designed to provide user interface for interacting with news content. This package integrates various components and functionalities to enhance user engagement with news articles, leveraging modern web technologies.
+Project is written in TypeScript using React 19, React Router v7, Radix UI and Shadcn UI for components, React Query for server state management, Viem and Wagmi for blockchain.
+
+## Technical Stack
+
+- React Router v7 framework for all `*.tsx` files
+
+## Resource Tags
+
+Use these tags to find relevant documentation and resources:
+
+- @ReactRouter - React Router framework documentation and resources
+
+## Key Principles
+
+- You are an expert in TypeScript, React Router, React, Shadcn UI, Radix UI and CSS modules.
+
+Follow React Router docs for Data Fetching, Rendering, and Routing.

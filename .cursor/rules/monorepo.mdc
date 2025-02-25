@@ -1,0 +1,148 @@
+---
+description: This rule apply to every file in the monorepo.
+globs: *.ts, *.tsx, *.css
+---
+# Monorepo Rules
+
+## Monorepo Summary
+
+This is a Monorepo that defines multiple projects under `@/packages`, `@/sdk` and `@/example` directories.
+Projects are written in TypeScript, SST and Pulumi for deploying, toolings with Bun, Biome, Changesets and Typedoc.
+
+## Technical Stack
+
+- TypeScript for all `*.ts` files
+- React 19 for all front-end
+- Radix UI and Shadcn UI for components
+- CSS modules for styling
+- React Query for server state management
+- Jotai for client state management
+- Viem and Wagmi for blockchain
+- i18next for internationalization.
+- SST as the main IaC orchestrator
+- Pulumi as the underlying provider
+- AWS as cloud provider
+- Biome for linting and formatting
+- Changesets for packages versioning
+- Typedoc for commenting
+- Bun as package manager, do not use npm, pnpm or yarn
+- Viem library for low-level blockchain interactions.
+
+## Resource Tags
+
+Use these tags to find relevant documentation and resources:
+
+- @React - React 19 documentation and resources
+- @RadixUI - An open-source UI component library.
+- @ShadcnUI - Accessible and customizable components
+- @SST - SST framework documentation and resources
+- @Pulumi - Pulumi core concepts and general IaC resources
+- @Pulumi-aws - Pulumi AWS provider specific resources
+- @Pulumi-docker - Pulumi docker provider and resources
+
+## Key Principles
+
+- You are an expert in TypeScript, Node.js, React, Shadcn UI, Radix UI and CSS modules.
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files: exported component, subcomponents, helpers, static content, types.
+
+##  Naming Conventions
+
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Favor named exports for components.
+- Use BEM or a similar methodology for CSS modules classes (e.g., block__element--modifier).
+
+##  TypeScript Usage
+
+- Use TypeScript for all code; prefer types over interfaces.
+- Avoid enums; use maps instead.
+- Use functional components with TypeScript types.
+
+##  Syntax and Formatting
+
+- Use early returns whenever possible to make the code more readable.
+- Use the "function" keyword for pure functions.
+- Use descriptive variable and function/const names. Also, event functions should be named with a “handle” prefix, like “handleClick” for onClick and “handleKeyDown” for onKeyDown.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Use declarative JSX.
+- Always use CSS modules classes for styling HTML elements; avoid using Tailwind or tags.
+- Implement accessibility features on elements. For example, a tag should have a tabindex=“0”, aria-label, on:click, and on:keydown, and similar attributes.
+
+## UI and Styling
+
+- Use Shadcn UI, Radix, and CSS modules for components and styling.
+- Implement responsive design with CSS modules; use a mobile-first approach.
+- Build UI components using atomic design principles, organizing them from smallest to largest (e.g., atoms, molecules, organisms, pages).
+
+## Best Practices
+
+- Ensure secure, efficient code following RESTful API best practices
+- Respect SOLID principles
+- Respect DRY principles
+- Focus on performance and readability
+
+##  Performance Optimization
+
+- Wrap client components in Suspense with fallback.
+- Use dynamic loading for non-critical components.
+- Optimize images: use WebP format, include size data, implement lazy loading.
+
+## Key Conventions
+
+- Optimize Web Vitals (LCP, CLS, FID).
+- Use only for Web API access in small components.
+- Avoid for data fetching or state management.
+
+## Stages
+
+The project operates across three deployment stages, each with specific requirements and considerations:
+
+### Production Stage ($app.stage === 'production')
+
+- Highest criticality environment
+- Maximum protection and security measures
+- Designed for high load and scalability
+- Never to be deleted
+- Full redundancy and high availability
+- Production-grade monitoring and alerting
+- Strict access controls
+- Regular backup procedures
+
+### Dev Stage ($app.stage === 'dev')
+
+- Pre-production testing environment
+- Optimized for cost efficiency
+- No load balancing requirements
+- Limited access (team members only)
+- Minimal redundancy
+- Basic monitoring
+- Suitable for integration testing
+- Lower resource allocation
+
+### Local Stage ($dev === true)
+
+- Development environment
+- Quick setup and teardown
+- Minimal resource requirements
+- Focused on developer experience
+- Fast iteration capability
+- No cloud resources required where possible
+- Simplified configuration
+
+## Documentation and Comments
+
+- Write comprehensive documentation
+- Include detailed comments explaining infrastructure decisions and implications
+- Avoid personal pronouns in documentation
+- Keep documentation up to date with changes
+
+## Deployment Considerations
+
+- Support both local and cloud deployments
+- Document deployment prerequisites
+- Include resource dependency order
+- Verify clean-up procedures
+- Test deployment idempotency

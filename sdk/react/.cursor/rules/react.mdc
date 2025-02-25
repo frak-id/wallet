@@ -1,0 +1,9 @@
+---
+description: This rule apply to react sdk.
+globs: *.ts, *.tsx, *.css
+---
+# React SDK Rules
+
+## React SDK Summary
+
+`@/sdk/react` is part of Frak monorepo and is designed to provide a collection of reusable hooks and context providers that simplify the integration of Frak Wallet functionality into modern web applications. The SDK is tailored for developers seeking an accessible, modular, and type-safe interface for interacting with the Frak ecosystem.

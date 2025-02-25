@@ -1,0 +1,9 @@
+---
+description: This rule apply to app-essentials package.
+globs: *.ts
+---
+# App Essentials Rules
+
+## App Essentials Summary
+
+`@/packages/app-essentials` is the core blockchain utility and SDK package within the Frak ecosystem. It offers a robust, type-safe interface for interacting with various smart contracts, managing wallet initialization, configuring blockchain transports, and integrating tightly with off-chain indexers. The package is written in TypeScript and designed to work seamlessly with the Viem library.

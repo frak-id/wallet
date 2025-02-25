@@ -1,0 +1,21 @@
+---
+description: This rule apply to core sdk.
+globs: *.ts, *.tsx, *.css
+---
+# Core SDK Rules
+
+## Core SDK Summary
+
+`@/sdk/core` is part of Frak monorepo and is designed designed to facilitate the integration of the Frak Wallet.
+`@/sdk/core` is foundational to the SDK’s design, serving as the central hub that exposes client functions, utilities, constants, types, and error handlers.
+
+`@/sdk/core/src/actions` is essentially the "action layer" of the Frak SDK. It collects together all of the functions that:
+
+- Trigger wallet modals and embedded UIs,
+- Send notifications or transaction interactions,
+- Handle user authentication including SSO and SIWE,
+- Monitor wallet status dynamically,
+- Manage referrals and interaction tracking,
+- And build complex modals using a configurable, step-by-step approach.
+
+`@/sdk/core/src/interactions` encapsulates the logic necessary to convert various high-level user events into low-level, encoded data structures. These structures can then be transmitted to the Frak Wallet system for processing, ensuring a robust and standardized approach to tracking user interactions across press, purchase, referral, retail, and webshop domains.

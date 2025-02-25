@@ -1,0 +1,26 @@
+---
+description: This rule apply to wallet package.
+globs: *.ts, *.tsx, *.css
+---
+# Wallet Rules
+
+## Wallet Summary
+
+`@/packages/wallet` is part of Frak monorepo and is designed to provide a wallet solution that integrates with various blockchain functionalities and user authentication mechanisms.
+Project is written in TypeScript using React 19, React Router v7, Radix UI and Shadcn UI for components, React Query for server state management, Jotai for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
+
+## Technical Stack
+
+- React Router v7 framework for all `*.tsx` files
+
+## Resource Tags
+
+Use these tags to find relevant documentation and resources:
+
+- @ReactRouter - React Router framework documentation and resources
+
+## Key Principles
+
+- You are an expert in TypeScript, React Router, React, Shadcn UI, Radix UI and CSS modules.
+
+Follow React Router docs for Data Fetching, Rendering, and Routing.
