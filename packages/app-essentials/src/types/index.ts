@@ -9,4 +9,6 @@ export type {
     GetRewardResponseDto,
     GetRewardHistoryResponseDto,
     GetAllTokenResponseDto,
+    GetInteractionItemDto,
+    GetInteractionsResponseDto,
 } from "./indexer";

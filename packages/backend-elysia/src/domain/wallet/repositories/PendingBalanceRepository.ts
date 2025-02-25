@@ -1,4 +1,5 @@
 import { log } from "@backend-common";
+import type { GetInteractionsResponseDto } from "@frak-labs/app-essentials";
 import type { KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
 import type { Address, Chain, Client, Transport } from "viem";
@@ -78,9 +79,9 @@ export class PendingBalanceRepository {
         try {
             // Get the code at the wallet address
             const code = await getCode(this.client, { address });
-            
+
             // If there's code (not '0x' which means no code), the wallet is activated
-            return code !== '0x';
+            return code !== "0x";
         } catch (error) {
             log.error("Error checking wallet activation", { error, address });
             return false;
@@ -89,17 +90,23 @@ export class PendingBalanceRepository {
 
     /**
      * Check if the user has shared a referral link
-     * This method checks if the user has any referrals in the system
+     * This method checks if the user has any referral-related interactions
      * @param address The wallet address
      * @returns True if the user has shared a referral link
      */
     private async hasSharedReferral(address: Address): Promise<boolean> {
         try {
-            // Use indexer API to check if user has any referrals
-            const response = await this.indexerApi
-                .get(`referrals/${address}`)
-                .json<{ count: number }>();
-            return response.count > 0;
+            // Get all interactions for this address
+            const interactions = await this.indexerApi
+                .get(`interactions/${address}`)
+                .json<GetInteractionsResponseDto>();
+
+            // Check if there are any CREATE_REFERRAL_LINK or REFERRED interactions
+            return interactions.some(
+                (interaction) =>
+                    interaction.type === "CREATE_REFERRAL_LINK" ||
+                    interaction.type === "REFERRED"
+            );
         } catch (error) {
             log.error("Error checking referral sharing", { error, address });
             return false;

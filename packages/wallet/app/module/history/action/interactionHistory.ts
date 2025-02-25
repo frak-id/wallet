@@ -1,43 +1,9 @@
 import { groupByDay } from "@/module/history/utils/groupByDay";
 import type { HistoryGroup } from "@/types/HistoryGroup";
 import type { InteractionHistory } from "@/types/InteractionHistory";
+import type { GetInteractionsResponseDto } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/shared/context/server";
-import type { Address, Hex } from "viem";
-
-type ApiResult = Array<
-    {
-        timestamp: string;
-        productId: string;
-        productName: string;
-    } & (
-        | {
-              type: "OPEN_ARTICLE" | "READ_ARTICLE";
-              data: {
-                  articleId: string;
-              };
-          }
-        | {
-              type: "REFERRED";
-              data: {
-                  referrer: Address;
-              };
-          }
-        | {
-              type: "CREATE_REFERRAL_LINK" | "WEBSHOP_OPENNED";
-              data: null;
-          }
-        | {
-              type: "PURCHASE_STARTED" | "PURCHASE_COMPLETED";
-              data: {
-                  purchaseId: Hex;
-              };
-          }
-        | {
-              type: "CUSTOMER_MEETING";
-              data: { agencyId: string };
-          }
-    )
->;
+import type { Address } from "viem";
 
 /**
  * Get the reward history for a user
@@ -51,7 +17,7 @@ export async function getInteractionHistory({
     // Perform the request to our api
     const interactionsHistory = await indexerApi
         .get(`interactions/${account}`)
-        .json<ApiResult>();
+        .json<GetInteractionsResponseDto>();
 
     // Map our result
     const finalArray = interactionsHistory?.map((item) => {

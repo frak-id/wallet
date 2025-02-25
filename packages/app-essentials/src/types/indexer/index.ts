@@ -12,3 +12,7 @@ export type {
     GetRewardHistoryResponseDto,
 } from "./reward";
 export type { GetAllTokenResponseDto } from "./tokens";
+export type {
+    GetInteractionItemDto,
+    GetInteractionsResponseDto,
+} from "./interactions";
