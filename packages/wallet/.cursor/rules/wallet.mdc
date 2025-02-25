@@ -24,3 +24,20 @@ Use these tags to find relevant documentation and resources:
 - You are an expert in TypeScript, React Router, React, Shadcn UI, Radix UI and CSS modules.
 
 Follow React Router docs for Data Fetching, Rendering, and Routing.
+
+## Structure
+
+- Structure project files as follows:
+```
+app/
+├── i18n/ # Translation config and locales files
+├── module/ # React components organized by features
+├── atoms/ # Jotai atoms for client state
+├── component/ # React components
+├── hook/ # React hooks
+├── utils/ # Utils for that feature
+├── styles/ # CSS global styles
+├── types/ # TypeScript types
+└── views/ # React Router views served by `routes.ts`
+public/ # Public assets
+```

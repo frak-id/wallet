@@ -60,6 +60,9 @@ Use these tags to find relevant documentation and resources:
 - Use TypeScript for all code; prefer types over interfaces.
 - Avoid enums; use maps instead.
 - Use functional components with TypeScript types.
+- Use absolute imports for all files @/...
+- Avoid try/catch blocks unless there's good reason to translate or handle error in that abstraction
+- Use explicit return types for all functions
 
 ##  Syntax and Formatting
 
@@ -70,6 +73,12 @@ Use these tags to find relevant documentation and resources:
 - Use declarative JSX.
 - Always use CSS modules classes for styling HTML elements; avoid using Tailwind or tags.
 - Implement accessibility features on elements. For example, a tag should have a tabindex=“0”, aria-label, on:click, and on:keydown, and similar attributes.
+- Prefer async/await over callbacks
+
+## React Guidelines
+- Use functional components and hooks
+- Follow React best practices
+- Use Jotai for global state when needed
 
 ## UI and Styling
 
