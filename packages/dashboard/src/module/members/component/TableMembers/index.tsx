@@ -15,10 +15,10 @@ import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import type { GetMembersPageItem } from "@frak-labs/app-essentials";
-import { Button } from "@module/component/Button";
-import { WalletAddress } from "@module/component/HashDisplay";
-import { Skeleton } from "@module/component/Skeleton";
-import { Checkbox } from "@module/component/forms/Checkbox";
+import { Button } from "@shared/module/component/Button";
+import { WalletAddress } from "@shared/module/component/HashDisplay";
+import { Skeleton } from "@shared/module/component/Skeleton";
+import { Checkbox } from "@shared/module/component/forms/Checkbox";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
     type ColumnDef,

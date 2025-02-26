@@ -3,8 +3,8 @@ import { ListenerWalletHeader } from "@/module/listener/embeded/component/Wallet
 import { LoggedInComponent } from "@/module/listener/embeded/component/WalletLoggedIn";
 import { LoggedOutComponent } from "@/module/listener/embeded/component/WalletLoggedOut";
 import { useEmbededListenerUI } from "@/module/listener/providers/ListenerUiProvider";
-import { jotaiStore } from "@module/atoms/store";
-import { Overlay } from "@module/component/Overlay";
+import { jotaiStore } from "@shared/module/atoms/store";
+import { Overlay } from "@shared/module/component/Overlay";
 import { cva, cx } from "class-variance-authority";
 import styles from "./index.module.css";
 

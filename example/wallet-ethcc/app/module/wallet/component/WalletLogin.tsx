@@ -5,7 +5,7 @@ import type {
     SiweAuthenticateModalStepType,
 } from "@frak-labs/core-sdk";
 import { useDisplayModal } from "@frak-labs/react-sdk";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";
 import { parseSiweMessage } from "viem/siwe";

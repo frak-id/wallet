@@ -14,7 +14,7 @@ import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { atom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";

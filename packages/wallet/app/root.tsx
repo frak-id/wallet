@@ -4,7 +4,7 @@ import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
-import { Spinner } from "@module/component/Spinner";
+import { Spinner } from "@shared/module/component/Spinner";
 import type { ReactNode } from "react";
 import {
     Links,

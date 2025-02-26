@@ -1,6 +1,6 @@
 import { Head } from "@/module/common/component/Head";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Hex } from "viem";

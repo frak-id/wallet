@@ -1,4 +1,4 @@
-import { Skeleton as SkeletonShared } from "@module/component/Skeleton";
+import { Skeleton as SkeletonShared } from "@shared/module/component/Skeleton";
 import styles from "./index.module.css";
 
 export function Skeleton({

@@ -1,4 +1,4 @@
-import { LogoFrak } from "@module/asset/icons/LogoFrak";
+import { LogoFrak } from "@shared/module/asset/icons/LogoFrak";
 import { useTranslation } from "react-i18next";
 import styles from "./SsoHeader.module.css";
 

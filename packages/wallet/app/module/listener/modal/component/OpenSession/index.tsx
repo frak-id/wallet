@@ -4,8 +4,8 @@ import { useListenerTranslation } from "@/module/listener/providers/ListenerUiPr
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/core-sdk";
-import { Spinner } from "@module/component/Spinner";
-import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { Spinner } from "@shared/module/component/Spinner";
+import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { useEffect } from "react";
 
 /**

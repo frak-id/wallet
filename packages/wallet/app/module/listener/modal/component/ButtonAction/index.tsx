@@ -1,4 +1,4 @@
-import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import type { ComponentProps } from "react";
 import styles from "./index.module.css";
 

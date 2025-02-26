@@ -5,7 +5,7 @@ import {
 } from "@/module/listener/utils/localStorage";
 import { treaty } from "@elysiajs/eden";
 import type { App } from "@frak-labs/backend-elysia";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { RESET } from "jotai/utils";
 
 /**

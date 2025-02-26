@@ -7,7 +7,7 @@ import {
     isFetchedCampaignAtom,
 } from "@/module/campaigns/atoms/campaign";
 import type { Campaign } from "@/types/Campaign";
-import { Spinner } from "@module/component/Spinner";
+import { Spinner } from "@shared/module/component/Spinner";
 import { useQuery } from "@tanstack/react-query";
 import { useAtom, useSetAtom } from "jotai";
 import { usePathname, useRouter } from "next/navigation";

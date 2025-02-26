@@ -9,7 +9,7 @@ import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
 import { selectedMembersAtom } from "@/module/members/atoms/selectedMembers";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";

@@ -4,7 +4,7 @@ import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiC
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { smartAccountConnector } from "@/module/wallet/smartWallet/connector";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";

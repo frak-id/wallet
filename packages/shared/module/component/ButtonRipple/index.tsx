@@ -1,4 +1,4 @@
-import { Spinner } from "@module/component/Spinner";
+import { Spinner } from "@shared/module/component/Spinner";
 import type { MouseEvent } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";

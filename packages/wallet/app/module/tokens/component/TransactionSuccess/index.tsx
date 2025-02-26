@@ -1,5 +1,5 @@
 import { ExplorerTxLink } from "@/module/wallet/component/ExplorerLink";
-import { TransactionHash } from "@module/component/HashDisplay";
+import { TransactionHash } from "@shared/module/component/HashDisplay";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import styles from "./index.module.css";

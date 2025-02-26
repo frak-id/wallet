@@ -1,5 +1,5 @@
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
-import { WalletAddress } from "@module/component/HashDisplay";
+import { WalletAddress } from "@shared/module/component/HashDisplay";
 import { useTranslation } from "react-i18next";
 
 /**

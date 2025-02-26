@@ -2,7 +2,7 @@ import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAut
 import { ssoConsumeKey } from "@/module/authentication/atoms/sso";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { Hex } from "viem";

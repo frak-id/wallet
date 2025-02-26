@@ -12,8 +12,8 @@ import { convertToEuro } from "@/module/common/utils/convertToEuro";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { Switch } from "@/module/forms/Switch";
 import type { CampaignWithState } from "@/types/Campaign";
-import { Button } from "@module/component/Button";
-import { Skeleton } from "@module/component/Skeleton";
+import { Button } from "@shared/module/component/Button";
+import { Skeleton } from "@shared/module/component/Skeleton";
 import {
     type CellContext,
     type ColumnFiltersState,

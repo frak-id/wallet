@@ -5,7 +5,7 @@ import {
     type ClientLifecycleEvent,
     FrakContextManager,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { atom, useAtomValue } from "jotai";
 import { type Address, isAddressEqual, keccak256, toHex } from "viem";
 

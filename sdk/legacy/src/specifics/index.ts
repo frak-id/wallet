@@ -1,4 +1,4 @@
-import { loadScript } from "@module/utils/loadScript";
+import { loadScript } from "@shared/module/utils/loadScript";
 import { gapianne } from "./gapianne";
 
 const WEBSITE_OVERRIDES: Record<string, () => void> = {

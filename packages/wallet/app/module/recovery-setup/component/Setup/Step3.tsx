@@ -4,7 +4,7 @@ import {
     recoveryOptionsAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useTranslation } from "react-i18next";
 

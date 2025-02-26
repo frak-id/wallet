@@ -5,7 +5,7 @@ import { trackEvent } from "@/module/common/utils/trackEvent";
 import { pushBackupData } from "@/module/sdk/utils/backup";
 import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
 import type { PreparedInteraction } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";

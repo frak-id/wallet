@@ -14,7 +14,7 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { keccak256, toHex } from "viem";
 import type { Address, Hex } from "viem";
 

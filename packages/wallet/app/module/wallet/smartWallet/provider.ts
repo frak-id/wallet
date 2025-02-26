@@ -13,7 +13,7 @@ import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
 import { parseWebAuthNAuthentication } from "@/module/wallet/smartWallet/webAuthN";
 import type { EcdsaWallet } from "@/types/Session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import {
     type SmartAccountClient,

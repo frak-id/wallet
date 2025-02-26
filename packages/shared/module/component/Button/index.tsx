@@ -1,6 +1,6 @@
-import { Spinner } from "@module/component/Spinner";
-import { mergeElement } from "@module/utils/mergeElement";
 import { Slot } from "@radix-ui/react-slot";
+import { Spinner } from "@shared/module/component/Spinner";
+import { mergeElement } from "@shared/module/utils/mergeElement";
 import { type VariantProps, cva } from "class-variance-authority";
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import styles from "./index.module.css";

@@ -1,5 +1,5 @@
-import { Button } from "@module/component/Button";
-import { Input } from "@module/component/forms/Input";
+import { Button } from "@shared/module/component/Button";
+import { Input } from "@shared/module/component/forms/Input";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";

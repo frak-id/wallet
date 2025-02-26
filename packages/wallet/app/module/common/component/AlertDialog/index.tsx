@@ -1,6 +1,6 @@
-import { mergeElement } from "@module/utils/mergeElement";
-import { prefixModalCss } from "@module/utils/prefixModalCss";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
+import { mergeElement } from "@shared/module/utils/mergeElement";
+import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import styles from "./index.module.css";

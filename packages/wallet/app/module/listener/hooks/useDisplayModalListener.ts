@@ -16,7 +16,7 @@ import {
     type ModalStepTypes,
     RpcErrorCodes,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { useCallback } from "react";
 
 type OnDisplayModalRequest = IFrameRequestResolver<

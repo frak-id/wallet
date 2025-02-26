@@ -15,12 +15,12 @@ import {
 } from "@/module/product/hook/useGetProductFunding";
 import { useSetBankDistributionStatus } from "@/module/product/hook/useSetBankDistributionStatus";
 import { addresses } from "@frak-labs/app-essentials";
-import { Button } from "@module/component/Button";
-import { Column, Columns } from "@module/component/Columns";
-import { IconInfo } from "@module/component/IconInfo";
-import { Spinner } from "@module/component/Spinner";
-import { Switch } from "@module/component/Switch";
-import { Tooltip } from "@module/component/Tooltip";
+import { Button } from "@shared/module/component/Button";
+import { Column, Columns } from "@shared/module/component/Columns";
+import { IconInfo } from "@shared/module/component/IconInfo";
+import { Spinner } from "@shared/module/component/Spinner";
+import { Switch } from "@shared/module/component/Switch";
+import { Tooltip } from "@shared/module/component/Tooltip";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";

@@ -12,7 +12,7 @@ import {
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { createIFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
-import { loadPolyfills } from "@module/utils/polyfills";
+import { loadPolyfills } from "@shared/module/utils/polyfills";
 import { useEffect, useState } from "react";
 
 loadPolyfills();

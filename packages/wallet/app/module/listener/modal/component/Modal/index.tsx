@@ -21,9 +21,9 @@ import {
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { RpcErrorCodes } from "@frak-labs/core-sdk";
-import { LogoFrakWithName } from "@module/asset/icons/LogoFrakWithName";
-import { jotaiStore } from "@module/atoms/store";
-import { useMediaQuery } from "@module/hook/useMediaQuery";
+import { LogoFrakWithName } from "@shared/module/asset/icons/LogoFrakWithName";
+import { jotaiStore } from "@shared/module/atoms/store";
+import { useMediaQuery } from "@shared/module/hook/useMediaQuery";
 import { useAtomValue } from "jotai";
 import {
     type Dispatch,

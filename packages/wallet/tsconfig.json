@@ -27,7 +27,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
-      "@module/*": ["../../packages/shared/module/*"],
+      "@shared/*": ["../../packages/shared/*"],
       "@backend-utils": ["../backend-elysia/src/utils/index.ts"],
       "@backend-common": ["../backend-elysia/src/common/index.ts"],
       "@backend-common/*": ["../backend-elysia/src/common/*"]

@@ -1,5 +1,5 @@
 import { useEnvironment } from "@/hooks/useEnvironment";
-import { Analytics } from "@module/component/Analytics";
+import { Analytics } from "@shared/module/component/Analytics";
 
 /**
  * AnalyticsWrapper component

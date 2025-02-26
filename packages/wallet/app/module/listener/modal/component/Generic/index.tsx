@@ -6,7 +6,7 @@ import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
-import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
 

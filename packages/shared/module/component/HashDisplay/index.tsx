@@ -1,4 +1,4 @@
-import { useCopyToClipboardWithState } from "@module/hook/useCopyToClipboardWithState";
+import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
 import { useMemo } from "react";
 import { type Address, type Hex, slice } from "viem";
 import styles from "./index.module.css";

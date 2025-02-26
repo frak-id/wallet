@@ -1,7 +1,7 @@
 import { currentChain } from "@/module/blockchain/provider";
 import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
 import { recoveryOptionsAtom } from "@/module/settings/atoms/recovery";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useAtomValue } from "jotai";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";

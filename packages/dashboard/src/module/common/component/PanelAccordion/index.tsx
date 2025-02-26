@@ -8,7 +8,7 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@module/component/Accordion";
+} from "@shared/module/component/Accordion";
 import type { VariantProps } from "class-variance-authority";
 import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";

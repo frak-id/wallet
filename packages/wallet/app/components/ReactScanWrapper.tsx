@@ -1,5 +1,5 @@
 import { useEnvironment } from "@/hooks/useEnvironment";
-import { ReactScan } from "@module/component/ReactScan";
+import { ReactScan } from "@shared/module/component/ReactScan";
 
 /**
  * ReactScanWrapper component

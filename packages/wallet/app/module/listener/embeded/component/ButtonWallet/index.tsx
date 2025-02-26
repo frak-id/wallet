@@ -1,4 +1,4 @@
-import { Spinner } from "@module/component/Spinner";
+import { Spinner } from "@shared/module/component/Spinner";
 import { type VariantProps, cva, cx } from "class-variance-authority";
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import styles from "./index.module.css";

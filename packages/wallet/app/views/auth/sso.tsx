@@ -13,9 +13,9 @@ import {
 } from "@/module/authentication/utils/ssoDataCompression";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { jotaiStore } from "@module/atoms/store";
-import { formatHash } from "@module/component/HashDisplay";
-import { Spinner } from "@module/component/Spinner";
+import { jotaiStore } from "@shared/module/atoms/store";
+import { formatHash } from "@shared/module/component/HashDisplay";
+import { Spinner } from "@shared/module/component/Spinner";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { CloudUpload } from "lucide-react";

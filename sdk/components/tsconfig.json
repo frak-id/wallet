@@ -59,7 +59,7 @@
 
     "paths": {
       "@/*": ["./src/*"],
-      "@module/*": ["../../packages/shared/module/*"]
+      "@shared/*": ["../../packages/shared/*"]
     }
   },
   "tsc-alias": {

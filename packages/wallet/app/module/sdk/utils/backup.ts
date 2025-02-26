@@ -12,7 +12,7 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { atom } from "jotai";
 import { tryit } from "radash";
 import type { Hex } from "viem";

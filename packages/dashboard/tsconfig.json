@@ -17,7 +17,7 @@
     "types": ["bun-types"],
     "paths": {
       "@/*": ["./src/*"],
-      "@module/*": ["../shared/module/*"],
+      "@shared/*": ["../shared/*"],
       "@backend-utils": ["../backend-elysia/src/utils/index.ts"],
       "@backend-common": ["../backend-elysia/src/common/index.ts"],
       "@backend-common/*": ["../backend-elysia/src/common/*"]

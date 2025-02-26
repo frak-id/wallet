@@ -15,7 +15,7 @@
         "incremental": true,
         "plugins": [{"name": "next"}],
         "paths": {
-            "@module/*": ["./module/*"]
+            "@shared/*": ["./*"]
         },
         "verbatimModuleSyntax": true
     },

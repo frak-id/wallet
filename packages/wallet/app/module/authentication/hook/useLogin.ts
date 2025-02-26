@@ -5,7 +5,7 @@ import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
 import type { Session } from "@/types/Session";
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";

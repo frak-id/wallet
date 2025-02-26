@@ -1,4 +1,4 @@
-import { detectPWA } from "@module/utils/detectPWA";
+import { detectPWA } from "@shared/module/utils/detectPWA";
 import { useEffect } from "react";
 
 export function DetectPWA() {

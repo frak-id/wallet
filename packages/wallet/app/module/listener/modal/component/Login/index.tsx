@@ -8,8 +8,8 @@ import { DismissButton } from "@/module/listener/modal/component/Generic";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
-import { Spinner } from "@module/component/Spinner";
-import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { Spinner } from "@shared/module/component/Spinner";
+import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { useAtomValue } from "jotai";
 import { useEffect } from "react";
 

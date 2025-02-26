@@ -1,4 +1,4 @@
-import { prefixDrawerCss } from "@module/utils/prefixDrawerCss";
+import { prefixDrawerCss } from "@shared/module/utils/prefixDrawerCss";
 import type { ComponentProps, ComponentPropsWithRef } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import styles from "./index.module.css";

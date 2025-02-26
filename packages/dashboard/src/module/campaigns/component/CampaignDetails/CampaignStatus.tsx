@@ -5,7 +5,10 @@ import { useGetOnChainCampaignDetails } from "@/module/campaigns/hook/useGetOnCh
 import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { TransactionHash, WalletAddress } from "@module/component/HashDisplay";
+import {
+    TransactionHash,
+    WalletAddress,
+} from "@shared/module/component/HashDisplay";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 import { useMemo } from "react";
