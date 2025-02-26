@@ -1,6 +1,6 @@
-import { currentChain } from "@/context/blockchain/provider";
-import { getSmartAccountProvider } from "@/context/wallet/smartWallet/provider";
-import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
+import { currentChain } from "@/module/blockchain/provider";
+import { getSmartAccountProvider } from "@/module/wallet/smartWallet/provider";
+import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
 import type { Address, Hex, Transport } from "viem";
 import { createConnector } from "wagmi";
 

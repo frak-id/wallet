@@ -1,4 +1,4 @@
-import { smartAccountConnector } from "@/context/wallet/smartWallet/connector";
+import { smartAccountConnector } from "@/module/wallet/smartWallet/connector";
 import { useEffect, useMemo } from "react";
 import { useConfig, useConnect } from "wagmi";
 

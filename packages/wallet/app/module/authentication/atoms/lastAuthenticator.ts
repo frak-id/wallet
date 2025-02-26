@@ -1,4 +1,4 @@
-import { dexieDb } from "@/context/common/dexie/dexieDb";
+import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
 import { atom } from "jotai";

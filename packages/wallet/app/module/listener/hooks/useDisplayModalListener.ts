@@ -1,4 +1,3 @@
-import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { trackEvent } from "@/module/common/utils/trackEvent";
 import {
@@ -6,6 +5,8 @@ import {
     setNewModalAtom,
 } from "@/module/listener/modal/atoms/modalEvents";
 import { clearRpcModalAtom } from "@/module/listener/modal/atoms/modalUtils";
+import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
+import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import {
     type ExtractedParametersFromRpc,
@@ -17,7 +18,6 @@ import {
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { useCallback } from "react";
-import { useListenerUI } from "../providers/ListenerUiProvider";
 
 type OnDisplayModalRequest = IFrameRequestResolver<
     Extract<

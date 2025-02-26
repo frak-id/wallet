@@ -1,6 +1,6 @@
-import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
-import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sessionAtom } from "@/module/common/atoms/session";
+import type { IFrameResolvingContext } from "@/module/sdk/utils/iFrameRequestResolver";
+import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import {
     type ClientLifecycleEvent,
     FrakContextManager,

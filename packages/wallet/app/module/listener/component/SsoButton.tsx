@@ -5,10 +5,10 @@ import {
     useSsoLink,
 } from "@/module/authentication/hook/useGetOpenSsoLink";
 import { trackEvent } from "@/module/common/utils/trackEvent";
+import { useListenerWithRequestUI } from "@/module/listener/providers/ListenerUiProvider";
 import type { SsoMetadata } from "@frak-labs/core-sdk";
 import { type ReactNode, useState } from "react";
 import type { Hex } from "viem";
-import { useListenerWithRequestUI } from "../providers/ListenerUiProvider";
 
 /**
  * Button used to launch an SSO registration

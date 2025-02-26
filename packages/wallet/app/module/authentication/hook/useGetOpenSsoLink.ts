@@ -1,9 +1,9 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
 import {
     type AppSpecificSsoMetadata,
     ssoConsumeKey,
 } from "@/module/authentication/atoms/sso";
 import { ssoParamsToCompressed } from "@/module/authentication/utils/ssoDataCompression";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import {
     getFromLocalStorage,
     getSafeSession,

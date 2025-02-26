@@ -11,6 +11,7 @@ import {
 } from "@/module/listener/modal/atoms/modalUtils";
 import { SiweAuthenticateModalStep } from "@/module/listener/modal/component/Authenticate";
 import { FinalModalStep } from "@/module/listener/modal/component/Final";
+import { MetadataInfo } from "@/module/listener/modal/component/Generic";
 import { LoginModalStep } from "@/module/listener/modal/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/modal/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/modal/component/Transaction";
@@ -32,7 +33,6 @@ import {
     useEffect,
     useMemo,
 } from "react";
-import { MetadataInfo } from "../Generic";
 import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
 

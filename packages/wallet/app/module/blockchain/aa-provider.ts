@@ -1,4 +1,4 @@
-import { currentChain } from "@/context/blockchain/provider";
+import { currentChain } from "@/module/blockchain/provider";
 import { getErpcTransport } from "@frak-labs/app-essentials/blockchain";
 import { memo } from "radash";
 import { http, createClient, fallback } from "viem";

@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";

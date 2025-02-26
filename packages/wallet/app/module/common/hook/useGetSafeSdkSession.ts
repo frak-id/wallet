@@ -1,4 +1,6 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import {
     getSafeSdkSession,
     getSafeSession,
@@ -6,8 +8,6 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback } from "react";
-import { sdkSessionAtom, sessionAtom } from "../atoms/session";
-import { lastWebAuthNActionAtom } from "../atoms/webauthn";
 
 /**
  * Get a safe SDK token

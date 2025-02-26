@@ -1,9 +1,9 @@
 import {
     getPimlicoClient,
     getPimlicoTransport,
-} from "@/context/blockchain/aa-provider";
-import { doAddPassKeyFnAbi } from "@/context/recover/utils/abi";
-import { recoverySmartAccount } from "@/context/wallet/smartWallet/RecoverySmartWallet";
+} from "@/module/blockchain/aa-provider";
+import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
+import { recoverySmartAccount } from "@/module/wallet/smartWallet/RecoverySmartWallet";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { type DefaultError, useMutation } from "@tanstack/react-query";

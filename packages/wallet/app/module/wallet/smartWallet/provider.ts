@@ -1,16 +1,16 @@
 import {
     getPimlicoClient,
     getPimlicoTransport,
-} from "@/context/blockchain/aa-provider";
-import { currentChain, currentViemClient } from "@/context/blockchain/provider";
-import { getSignOptions } from "@/context/wallet/action/signOptions";
-import { frakFallbackWalletSmartAccount } from "@/context/wallet/smartWallet/FrakFallbackSmartWallet";
-import { frakWalletSmartAccount } from "@/context/wallet/smartWallet/FrakSmartWallet";
-import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
-import { parseWebAuthNAuthentication } from "@/context/wallet/smartWallet/webAuthN";
+} from "@/module/blockchain/aa-provider";
+import { currentChain, currentViemClient } from "@/module/blockchain/provider";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import { getSafeSession } from "@/module/listener/utils/localStorage";
+import { getSignOptions } from "@/module/wallet/action/signOptions";
+import { frakFallbackWalletSmartAccount } from "@/module/wallet/smartWallet/FrakFallbackSmartWallet";
+import { frakWalletSmartAccount } from "@/module/wallet/smartWallet/FrakSmartWallet";
+import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
+import { parseWebAuthNAuthentication } from "@/module/wallet/smartWallet/webAuthN";
 import type { EcdsaWallet } from "@/types/Session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { jotaiStore } from "@module/atoms/store";

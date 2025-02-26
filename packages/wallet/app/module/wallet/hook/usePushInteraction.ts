@@ -1,14 +1,14 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { pushBackupData } from "@/context/sdk/utils/backup";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import { trackEvent } from "@/module/common/utils/trackEvent";
+import { pushBackupData } from "@/module/sdk/utils/backup";
+import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
 import type { PreparedInteraction } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@module/atoms/store";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
-import { addPendingInteractionAtom } from "../atoms/pendingInteraction";
 
 export function usePushInteraction() {
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();

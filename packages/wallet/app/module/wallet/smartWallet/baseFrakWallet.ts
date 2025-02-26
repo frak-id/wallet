@@ -1,14 +1,14 @@
-import type { currentViemClient } from "@/context/blockchain/provider";
+import type { currentViemClient } from "@/module/blockchain/provider";
 import {
     fetchAccountMetadata,
     wrapMessageForSignature,
-} from "@/context/wallet/smartWallet/signature";
+} from "@/module/wallet/smartWallet/signature";
 import {
     type SmartAccountV06,
     getAccountAddress,
     isAlreadyFormattedCall,
-} from "@/context/wallet/smartWallet/utils";
-import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
+} from "@/module/wallet/smartWallet/utils";
+import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import { KernelExecuteAbi } from "@frak-labs/app-essentials";
 import { kernelAddresses } from "@frak-labs/app-essentials";
 import { isSmartAccountDeployed } from "permissionless";

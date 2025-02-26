@@ -1,4 +1,4 @@
-import { getInteractionHistory } from "@/context/history/action/interactionHistory";
+import { getInteractionHistory } from "@/module/history/action/interactionHistory";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 

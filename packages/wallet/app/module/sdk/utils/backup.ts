@@ -1,6 +1,6 @@
-import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
+import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import {
     addPendingInteractionsAtom,
     pendingInteractionAtom,

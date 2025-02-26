@@ -1,5 +1,5 @@
-import { setExecutionAbi } from "@/context/recover/utils/abi";
-import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
+import { setExecutionAbi } from "@/module/recovery/utils/abi";
+import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import {
     addresses,
     sendInteractionSelector,

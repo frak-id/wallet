@@ -1,10 +1,10 @@
-import type { NotificationModel } from "@/context/common/dexie/NotificationModel";
-import { dexieDb } from "@/context/common/dexie/dexieDb";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
+import type { NotificationModel } from "@/module/common/storage/dexie/NotificationModel";
+import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";

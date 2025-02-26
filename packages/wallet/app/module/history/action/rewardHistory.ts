@@ -1,4 +1,4 @@
-import { groupByDay } from "@/context/history/utils/groupByDay";
+import { groupByDay } from "@/module/history/utils/groupByDay";
 import type { HistoryGroup } from "@/types/HistoryGroup";
 import type { RewardHistory } from "@/types/RewardHistory";
 import type { GetRewardHistoryResponseDto } from "@frak-labs/app-essentials";

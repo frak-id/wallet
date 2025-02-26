@@ -1,4 +1,4 @@
-import { getRecoveryAvailability } from "@/context/recover/action/get";
+import { getRecoveryAvailability } from "@/module/recovery/action/get";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useQuery } from "@tanstack/react-query";
 

@@ -1,7 +1,7 @@
 import {
     doAddPassKeyFnAbi,
     setExecutionAbi,
-} from "@/context/recover/utils/abi";
+} from "@/module/recovery/utils/abi";
 import type { GeneratedRecoveryData } from "@/types/Recovery";
 import {
     addresses,

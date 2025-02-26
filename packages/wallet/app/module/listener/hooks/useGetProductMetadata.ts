@@ -1,4 +1,4 @@
-import { currentViemClient } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/module/blockchain/provider";
 import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
 import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
 import type { Hex } from "viem";

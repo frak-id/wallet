@@ -1,4 +1,4 @@
-import { getDisableSessionData } from "@/context/interaction/utils/getEnableDisableData";
+import { getDisableSessionData } from "@/module/interaction/utils/getEnableDisableData";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount, useSendTransaction } from "wagmi";
 

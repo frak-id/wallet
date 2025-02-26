@@ -1,10 +1,10 @@
-import { restoreBackupData } from "@/context/sdk/utils/backup";
-import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import {
     handleHandshakeResponse,
     iframeResolvingContextAtom,
     startFetchResolvingContextViaHandshake,
 } from "@/module/listener/atoms/resolvingContext";
+import { restoreBackupData } from "@/module/sdk/utils/backup";
+import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import {
     type ClientLifecycleEvent,
     type ExtractedParametersFromRpc,

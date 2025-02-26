@@ -1,14 +1,14 @@
-import { pushBackupData } from "@/context/sdk/utils/backup";
-import type {
-    IFrameRequestResolver,
-    IFrameResolvingContext,
-    IFrameResponseEmitter,
-} from "@/context/sdk/utils/iFrameRequestResolver";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import {
     getSafeSdkSession,
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
+import { pushBackupData } from "@/module/sdk/utils/backup";
+import type {
+    IFrameRequestResolver,
+    IFrameResolvingContext,
+    IFrameResponseEmitter,
+} from "@/module/sdk/utils/iFrameRequestResolver";
 import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type {
     ExtractedParametersFromRpc,

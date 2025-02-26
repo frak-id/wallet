@@ -1,5 +1,6 @@
 import { Markdown } from "@/module/common/component/Markdown";
 import { trackEvent } from "@/module/common/utils/trackEvent";
+import { displayedRpcModalStepsAtom } from "@/module/listener/modal/atoms/modalEvents";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import {
     useListenerTranslation,
@@ -8,7 +9,6 @@ import {
 import { prefixModalCss } from "@module/utils/prefixModalCss";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
-import { displayedRpcModalStepsAtom } from "../../atoms/modalEvents";
 
 export function MetadataInfo({
     metadata,

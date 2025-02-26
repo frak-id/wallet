@@ -1,10 +1,10 @@
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
+import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { NotificationsMobile } from "@module/asset/icons/NotificationsMobile";
 import { Button } from "@module/component/Button";
 import { Trans } from "react-i18next";
-import { useNotificationSetupStatus } from "../../hook/useNotificationSetupStatus";
 
 export function EnableNotification() {
     const { isSupported, subscription } = useNotificationSetupStatus();

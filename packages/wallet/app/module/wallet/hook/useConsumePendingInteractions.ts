@@ -1,6 +1,6 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { pushBackupData } from "@/context/sdk/utils/backup";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
+import { pushBackupData } from "@/module/sdk/utils/backup";
 import {
     cleanPendingInteractionsAtom,
     pendingInteractionAtom,

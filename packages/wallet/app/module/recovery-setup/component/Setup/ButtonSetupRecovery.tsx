@@ -1,4 +1,4 @@
-import { currentChain } from "@/context/blockchain/provider";
+import { currentChain } from "@/module/blockchain/provider";
 import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
 import { recoveryOptionsAtom } from "@/module/settings/atoms/recovery";
 import { Button } from "@module/component/Button";

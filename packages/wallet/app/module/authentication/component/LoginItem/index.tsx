@@ -1,5 +1,5 @@
-import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { useLogin } from "@/module/authentication/hook/useLogin";
+import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
 import { FingerprintFrak } from "@module/asset/icons/FingerprintFrak";
 import { Button } from "@module/component/Button";
 import { formatHash } from "@module/component/HashDisplay";

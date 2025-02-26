@@ -1,8 +1,8 @@
-import { currentViemClient } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/module/blockchain/provider";
 import {
     doAddPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
-} from "@/context/recover/utils/abi";
+} from "@/module/recovery/utils/abi";
 import type { CurrentRecovery } from "@/types/Recovery";
 import { kernelAddresses } from "@frak-labs/app-essentials";
 import {

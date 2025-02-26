@@ -4,7 +4,7 @@ import { Notice } from "@/module/common/component/Notice";
 import { trackEvent } from "@/module/common/utils/trackEvent";
 import { Fingerprint } from "@module/asset/icons/Fingerprint";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
-import { useAtomValue } from "jotai/index";
+import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";

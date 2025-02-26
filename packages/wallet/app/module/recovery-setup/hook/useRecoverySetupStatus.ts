@@ -1,4 +1,4 @@
-import { getCurrentRecoveryOption } from "@/context/recover/action/get";
+import { getCurrentRecoveryOption } from "@/module/recovery/action/get";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 

@@ -1,4 +1,4 @@
-import { dexieDb } from "@/context/common/dexie/dexieDb";
+import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
 import { useQuery } from "@tanstack/react-query";
 
 /**

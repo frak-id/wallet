@@ -1,9 +1,9 @@
-import { baseFrakWallet } from "@/context/wallet/smartWallet/baseFrakWallet";
+import { baseFrakWallet } from "@/module/wallet/smartWallet/baseFrakWallet";
 import {
     type SmartAccountV06,
     getAccountAddress,
-} from "@/context/wallet/smartWallet/utils";
-import { isRip7212ChainSupported } from "@/context/wallet/smartWallet/webAuthN";
+} from "@/module/wallet/smartWallet/utils";
+import { isRip7212ChainSupported } from "@/module/wallet/smartWallet/webAuthN";
 import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
 import { KernelWallet } from "@frak-labs/app-essentials";
 import {

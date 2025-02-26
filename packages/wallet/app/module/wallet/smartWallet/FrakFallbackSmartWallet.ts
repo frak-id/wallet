@@ -1,5 +1,5 @@
-import { baseFrakWallet } from "@/context/wallet/smartWallet/baseFrakWallet";
-import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
+import { baseFrakWallet } from "@/module/wallet/smartWallet/baseFrakWallet";
+import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
 import { KernelWallet } from "@frak-labs/app-essentials";
 import type { Address, Chain, Client, Hex, Transport } from "viem";
 

@@ -1,7 +1,7 @@
+import { sessionAtom } from "@/module/common/atoms/session";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { jotaiStore } from "@module/atoms/store";
 import { trackEvent as trackUmamiEvent } from "@module/utils/trackEvent";
-import { sessionAtom } from "../atoms/session";
 
 export function trackEvent(name: string, params?: Record<string, unknown>) {
     // Get the current session

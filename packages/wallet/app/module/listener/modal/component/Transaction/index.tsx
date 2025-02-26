@@ -1,7 +1,7 @@
-import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { AccordionTransactions } from "@/module/listener/modal/component/Transaction/AccordionTransactions";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
+import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { AuthFingerprint } from "@module/component/AuthFingerprint";
 import { useMemo } from "react";

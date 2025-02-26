@@ -1,4 +1,4 @@
-import { getSessionStatus } from "@/context/interaction/action/interactionSession";
+import { getSessionStatus } from "@/module/interaction/action/interactionSession";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type { InteractionSession } from "@/types/Session";
 import { jotaiStore } from "@module/atoms/store";

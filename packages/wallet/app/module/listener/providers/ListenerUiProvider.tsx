@@ -1,5 +1,6 @@
-import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
+import { useEstimatedInteractionReward } from "@/module/listener/hooks/useEstimatedInteractionReward";
+import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import type {
     DisplayEmbededWalletParamsType,
     FullInteractionTypesKey,
@@ -19,7 +20,6 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { useEstimatedInteractionReward } from "../hooks/useEstimatedInteractionReward";
 
 type GenericWalletUiType = {
     appName: string;

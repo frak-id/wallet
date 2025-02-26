@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 

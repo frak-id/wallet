@@ -1,4 +1,4 @@
-import { groupByDay } from "@/context/history/utils/groupByDay";
+import { groupByDay } from "@/module/history/utils/groupByDay";
 import type { HistoryGroup } from "@/types/HistoryGroup";
 import type { InteractionHistory } from "@/types/InteractionHistory";
 import { indexerApi } from "@frak-labs/shared/context/server";

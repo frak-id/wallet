@@ -1,4 +1,4 @@
-import { getEnableSessionData } from "@/context/interaction/utils/getEnableDisableData";
+import { getEnableSessionData } from "@/module/interaction/utils/getEnableDisableData";
 import { useConsumePendingInteractions } from "@/module/wallet/hook/useConsumePendingInteractions";
 import {
     type UseMutationOptions,

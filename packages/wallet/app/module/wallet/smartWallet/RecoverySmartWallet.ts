@@ -1,5 +1,5 @@
-import type { currentViemClient } from "@/context/blockchain/provider";
-import type { SmartAccountV06 } from "@/context/wallet/smartWallet/utils";
+import type { currentViemClient } from "@/module/blockchain/provider";
+import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
 import { isSmartAccountDeployed } from "permissionless";

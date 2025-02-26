@@ -1,4 +1,4 @@
-import { currentViemClient } from "@/context/blockchain/provider";
+import { currentViemClient } from "@/module/blockchain/provider";
 import type { InteractionSession } from "@/types/Session";
 import {
     addresses,
