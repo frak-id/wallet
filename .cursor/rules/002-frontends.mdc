@@ -1,6 +1,6 @@
 ---
 description: This rule apply to every frontends in the monorepo
-globs: *.tsx, *.css,packages/dashboard/**/*,packages/wallet/**/*,packages/shared/**/*
+globs: *.tsx, *.css, packages/dashboard/**/*.ts, packages/wallet/**/*, packages/shared/**/*.ts, packages/sdk/**/*.ts
 alwaysApply: false
 ---
 # Monorepo Frontend Rules

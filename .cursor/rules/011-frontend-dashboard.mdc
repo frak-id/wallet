@@ -1,6 +1,6 @@
 ---
 description: This rule apply to dashboard package.
-globs: *.ts, *.tsx, *.css
+globs: packages/dashboard/**/*.ts, packages/dashboard/**/*.tsx
 ---
 # Dashboard Rules
 

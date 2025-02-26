@@ -1,6 +1,7 @@
 ---
 description: This rule apply to components sdk.
-globs: *.ts, *.tsx, *.css
+globs: sdk/components/**/*.ts, sdk/components/**/*.tsx
+alwaysApply: false
 ---
 # Components SDK Rules
 
@@ -13,7 +14,7 @@ Project is written in TypeScript using Preact and CSS modules for styling.
 ## Technical Stack
 
 - Preact for all `*.tsx` files
-- Do not use React 19 at all
+- Do not use React at all
 
 ## Resource Tags
 

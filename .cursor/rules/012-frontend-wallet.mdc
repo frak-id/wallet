@@ -1,6 +1,6 @@
 ---
 description: This rule apply to wallet package.
-globs: *.ts, *.tsx, *.css
+globs: packages/wallet/**/*.ts, packages/wallet/**/*.tsx
 ---
 # Wallet Rules
 
