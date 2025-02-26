@@ -1,27 +1,27 @@
-import { defineConfig } from "@rslib/core";
+import { type LibConfig, defineConfig } from "@rslib/core";
 import { TsCheckerRspackPlugin } from "ts-checker-rspack-plugin";
 
-const entries = {
-    index: "./src/index.ts",
-    actions: "./src/actions/index.ts",
-    interactions: "./src/interactions/index.ts",
-};
-
-const createEntryConfigs = (format: "esm" | "cjs") =>
-    Object.entries(entries).map(([name, path]) => ({
-        id: `${name}:${format}`,
-        format,
-        syntax: "es2022" as const,
+function createLibConfig(config: LibConfig = {}): LibConfig {
+    const basicConfig: LibConfig = {
+        syntax: "es2022",
         dts: {
             bundle: true,
             autoExtension: true,
         },
         source: {
             entry: {
-                [name]: path,
+                index: "./src/index.ts",
+                actions: "./src/actions/index.ts",
+                interactions: "./src/interactions/index.ts",
             },
         },
-    }));
+    };
+
+    return {
+        ...basicConfig,
+        ...config,
+    };
+}
 
 export default defineConfig({
     lib: [
@@ -44,8 +44,12 @@ export default defineConfig({
                 },
             },
         },
-        ...createEntryConfigs("esm"),
-        ...createEntryConfigs("cjs"),
+        createLibConfig({
+            format: "esm",
+        }),
+        createLibConfig({
+            format: "cjs",
+        }),
     ],
     mode: "production",
     output: {

@@ -1,11 +1,10 @@
 import { pluginReact } from "@rsbuild/plugin-react";
-import { defineConfig } from "@rslib/core";
+import { type LibConfig, defineConfig } from "@rslib/core";
 import { TsCheckerRspackPlugin } from "ts-checker-rspack-plugin";
 
-const createEntryConfigs = (format: "esm" | "cjs") => [
-    {
-        format,
-        syntax: "es2022" as const,
+function createLibConfig(config: LibConfig = {}): LibConfig {
+    const basicConfig: LibConfig = {
+        syntax: "es2022",
         dts: {
             bundle: true,
             autoExtension: true,
@@ -15,11 +14,23 @@ const createEntryConfigs = (format: "esm" | "cjs") => [
                 index: "./src/index.ts",
             },
         },
-    },
-];
+    };
+
+    return {
+        ...basicConfig,
+        ...config,
+    };
+}
 
 export default defineConfig({
-    lib: [...createEntryConfigs("esm"), ...createEntryConfigs("cjs")],
+    lib: [
+        createLibConfig({
+            format: "esm",
+        }),
+        createLibConfig({
+            format: "cjs",
+        }),
+    ],
     mode: "production",
     output: {
         target: "web",
