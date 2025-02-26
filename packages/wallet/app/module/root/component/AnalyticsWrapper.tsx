@@ -1,4 +1,4 @@
-import { useEnvironment } from "@/hooks/useEnvironment";
+import { useEnvironment } from "@/module/root/hook/useEnvironment";
 import { Analytics } from "@shared/module/component/Analytics";
 
 /**

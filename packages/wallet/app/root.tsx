@@ -1,7 +1,7 @@
-import { AnalyticsWrapper } from "@/components/AnalyticsWrapper";
-import { ReactScanWrapper } from "@/components/ReactScanWrapper";
 import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
+import { AnalyticsWrapper } from "@/module/root/component/AnalyticsWrapper";
+import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
 import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import { Spinner } from "@shared/module/component/Spinner";

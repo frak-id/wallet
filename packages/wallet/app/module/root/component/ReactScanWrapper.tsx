@@ -1,4 +1,4 @@
-import { useEnvironment } from "@/hooks/useEnvironment";
+import { useEnvironment } from "@/module/root/hook/useEnvironment";
 import { ReactScan } from "@shared/module/component/ReactScan";
 
 /**
