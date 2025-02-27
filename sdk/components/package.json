@@ -35,10 +35,14 @@
   },
   "type": "module",
   "files": [
-    "/cdn"
+    "/cdn",
+    "/dist"
   ],
   "main": "./cdn/components.js",
   "browser": "./cdn/components.js",
+  "exports": {
+    "./dist/components/*": "./dist/components/*"
+  },
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
