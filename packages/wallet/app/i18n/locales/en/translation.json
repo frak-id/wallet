@@ -147,7 +147,9 @@
         "settings": {
             "biometryInfo": "Biometry informations",
             "ecdsaInfo": "Login informations",
-            "ecdsaWallet": "Ecdsa wallet"
+            "ecdsaWallet": "Ecdsa wallet",
+            "privateKey": "Private key",
+            "deletePrivateKey": "Delete private key"
         },
         "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
         "interaction": {
@@ -234,6 +236,13 @@
             },
             "notice": "<sup>*</sup>encrypted digital account where you can find all the content you own, your consumption data and the rewards you earn",
             "useExisting": "Use an existing wallet"
+        },
+        "registerDemo": {
+            "button": {
+                "create": "Create your demo <strong>wallet</strong>",
+                "error": "Error during registration, please try again",
+                "inProgress": "Wallet creation in progress"
+            }
         },
         "session": {
             "closed": "Your wallet is not activated. You can’t be rewarded.",

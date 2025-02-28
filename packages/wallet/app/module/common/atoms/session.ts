@@ -23,3 +23,8 @@ export const sdkSessionAtom = atomWithStorage<SdkSession | null>(
     "frak_sdkSession",
     null
 );
+
+export const privateKeyAtom = atomWithStorage<string | null>(
+    "frak_privateKey",
+    null
+);
