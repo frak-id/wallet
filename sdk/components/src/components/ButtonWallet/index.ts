@@ -4,11 +4,10 @@ import register from "preact-custom-element";
 import { ButtonWallet } from "./ButtonWallet";
 import type { ButtonWalletProps } from "./types";
 
-export * from "./ButtonWallet";
-export default ButtonWallet;
+export { ButtonWallet };
 
 // Button wallet element is HTML element + ButtonWalletProps
-interface ButtonWalletElement extends HTMLElement, ButtonWalletProps {}
+export interface ButtonWalletElement extends HTMLElement, ButtonWalletProps {}
 
 declare global {
     interface HTMLElementTagNameMap {

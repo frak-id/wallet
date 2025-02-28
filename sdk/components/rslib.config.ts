@@ -7,7 +7,7 @@ function createLibConfig(config: LibConfig = {}): LibConfig {
     const basicConfig: LibConfig = {
         syntax: "es2022",
         dts: {
-            bundle: false,
+            bundle: true,
             autoExtension: true,
         },
         source: {
@@ -15,11 +15,6 @@ function createLibConfig(config: LibConfig = {}): LibConfig {
                 index: "./src/index.ts",
                 buttonShare: "./src/components/ButtonShare/index.ts",
                 buttonWallet: "./src/components/ButtonWallet/index.ts",
-            },
-        },
-        output: {
-            distPath: {
-                root: "./dist/components",
             },
         },
     };
