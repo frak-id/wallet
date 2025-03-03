@@ -127,6 +127,20 @@ export function Layout({ children }: { children: ReactNode }) {
                 />
                 <Meta />
                 <Links />
+                <script
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                        window.FrakSetup = {
+                            config: {
+                                walletUrl: "https://localhost:3000",
+                                metadata: {
+                                    name: "Your App Name",
+                                },
+                            },
+                        };`,
+                    }}
+                />
             </head>
             <body>
                 {children}

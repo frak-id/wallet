@@ -11,6 +11,8 @@ import Markdown from "react-markdown";
 import { keccak256, toHex } from "viem";
 import forward from "./assets/forward.svg?url";
 import styles from "./index.module.css";
+import "@frak-labs/components/dist/buttonWallet.js";
+import "@frak-labs/components/dist/buttonWallet.css";
 
 type ArticleData = {
     id: string;
@@ -117,6 +119,7 @@ export function NewsArticle({ articleId }: { articleId: string }) {
 
     return (
         <>
+            <frak-button-wallet />
             <Hero isArticle={true} {...article} ref={titleRef} />
             <article className={styles.article}>
                 <p className={styles.article__author}>

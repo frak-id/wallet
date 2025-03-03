@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@frak-labs/components": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/react-sdk": "workspace:*",
     "@frak-labs/shared": "workspace:*",
@@ -29,6 +30,8 @@
     "buffer": "^6.0.3",
     "isbot": "^5.1.22",
     "normalize.css": "^8.0.1",
+    "preact": "^10.26.2",
+    "preact-custom-element": "^4.3.0",
     "radash": "^12.1.0",
     "react": "^19",
     "react-dom": "^19",
