@@ -47,4 +47,5 @@ export const WalletSdkTokenDto = t.Object({
     ),
 });
 
+export type StaticWalletTokenDto = Static<typeof WalletTokenDto>;
 export type StaticWalletSdkTokenDto = Static<typeof WalletSdkTokenDto>;

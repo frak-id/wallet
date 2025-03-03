@@ -8,6 +8,7 @@ import { generatePrivateKey } from "viem/accounts";
 import { ssoTable } from "../../db/schema";
 import {
     type StaticWalletSdkTokenDto,
+    type StaticWalletTokenDto,
     WalletAuthResponseDto,
 } from "../../models/WalletSessionDto";
 import { walletSdkSessionService } from "../../services/WalletSdkSessionService";
@@ -130,8 +131,24 @@ export const walletSsoRoutes = new Elysia({
                 await webAuthNService.authenticatorRepository.getByCredentialId(
                     ssoSession.authenticatorId
                 );
-            if (!authenticator) {
-                return error(404, "Authenticator not found");
+
+            // Create our wallet payload
+            let walletReference: StaticWalletTokenDto;
+            if (authenticator) {
+                walletReference = {
+                    address: ssoSession.wallet,
+                    authenticatorId: authenticator._id,
+                    publicKey: authenticator.publicKey,
+                    transports: authenticator.transports,
+                };
+            } else {
+                const authenticatorId = `ecdsa-${ssoSession.wallet}` as const;
+                walletReference = {
+                    address: ssoSession.wallet,
+                    authenticatorId: authenticatorId,
+                    publicKey: ssoSession.wallet,
+                    transports: undefined,
+                };
             }
 
             // Remove the sso session
@@ -142,9 +159,7 @@ export const walletSsoRoutes = new Elysia({
 
             // Create the token and set the cookie
             const token = await walletJwt.sign({
-                address: ssoSession.wallet,
-                authenticatorId: authenticator._id,
-                publicKey: authenticator.publicKey,
+                ...walletReference,
                 sub: ssoSession.wallet,
                 iat: Date.now(),
             });
@@ -164,11 +179,8 @@ export const walletSsoRoutes = new Elysia({
                 status: "ok",
                 session: {
                     token,
-                    address: ssoSession.wallet,
-                    authenticatorId: authenticator._id,
-                    publicKey: authenticator.publicKey,
-                    transports: authenticator.transports,
                     sdkJwt,
+                    ...walletReference,
                 },
             };
         },
