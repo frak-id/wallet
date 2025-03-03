@@ -8,11 +8,39 @@ import { Title } from "@/module/news/component/Title";
 import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useQuery } from "@tanstack/react-query";
 
+type LightNews = {
+    id: string;
+    title: string;
+    summary: string;
+    image: string;
+    sourceCountry: string;
+    author: string;
+    publishDate: Date;
+    category?: string;
+};
+
+type HomeNewsData = {
+    hero: LightNews;
+    latest: LightNews[];
+    quickByte: LightNews;
+    featured: LightNews[];
+    positives: LightNews[];
+};
+
 export default function Home() {
     const { data: news, isPending } = useQuery({
         queryKey: ["news", "list"],
         queryFn: async () => {
-            const result = await backendApi.exampleNewsPaper.news.home.get();
+            const api = backendApi as unknown as {
+                exampleNewsPaper: {
+                    news: {
+                        home: {
+                            get: () => Promise<{ data: HomeNewsData }>;
+                        };
+                    };
+                };
+            };
+            const result = await api.exampleNewsPaper.news.home.get();
             return result.data;
         },
     });
