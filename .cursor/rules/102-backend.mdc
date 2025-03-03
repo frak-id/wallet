@@ -27,14 +27,6 @@ Project is written in TypeScript using ElysiaJS framework, PostgreSQL, MongoDB, 
 - Viem for blockchain interface.
 - KY for external API requests.
 
-## Rewrite, Improve, and Refactor:
-
-- When refactoring or fixing code, make sure to keep the code clean and easy to understand without duplicating code.
-- Keep the code clean and easy to understand.
-- Keep the code DRY (Don't Repeat Yourself).
-- Keep the code clean and easy to understand.
-- After fixing an issue, mention the case in the docstring so future changes won't break it again.
-
 ## Resource Tags
 
 Use these tags to find relevant documentation and resources:

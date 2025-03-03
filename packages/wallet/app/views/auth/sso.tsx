@@ -27,16 +27,13 @@ import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import "./sso.global.css";
-import {
-    privateKeyAtom,
-    sdkSessionAtom,
-    sessionAtom,
-} from "@/module/common/atoms/session";
-import type { SdkSession, Session } from "@/types/Session";
+import { privateKeyAtom } from "@/module/common/atoms/session";
+import type { Session } from "@/types/Session";
 import { decompressJson } from "@frak-labs/core-sdk";
 import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
 import { Link, useSearchParams } from "react-router";
 import type { Hex } from "viem";
+import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -316,6 +313,7 @@ function Actions({ onSuccess }: { onSuccess: () => void }) {
 }
 
 function useLoginDemo(options?: UseMutationOptions<Session> & { ssoId?: Hex }) {
+    const { mutateAsync: demoLogin } = useDemoLogin();
     /**
      * Mutation used to launch the login demo process
      */
@@ -324,27 +322,19 @@ function useLoginDemo(options?: UseMutationOptions<Session> & { ssoId?: Hex }) {
         isSuccess,
         isError,
         error,
-        mutateAsync: login,
+        mutateAsync,
     } = useMutation({
         ...options,
-        mutationKey: ["login"],
-        mutationFn: async () => {
-            const session: Session = {
-                token: "mockToken",
-                address: "0x1234567890" as `0x${string}`,
-                publicKey: "0x1234567890" as Hex,
-                authenticatorId: "ecdsa-1234567890" as `ecdsa-${string}`,
-                transports: undefined,
-            };
-            const sdkJwt: SdkSession = {
-                token: "mockSdkJwtToken",
-                expires: 1000000000000000000,
-            };
+        mutationKey: ["demo-login"],
+        async mutationFn() {
+            // Retrieve the pkey
+            const pkey = jotaiStore.get(privateKeyAtom) as Hex | undefined;
+            if (!pkey) {
+                throw new Error("No private key found");
+            }
 
-            // Store the session
-            jotaiStore.set(sessionAtom, session);
-            jotaiStore.set(sdkSessionAtom, sdkJwt);
-            return session;
+            // Launch the login process
+            return demoLogin({ pkey, ssoId: options?.ssoId });
         },
     });
 
@@ -353,6 +343,6 @@ function useLoginDemo(options?: UseMutationOptions<Session> & { ssoId?: Hex }) {
         isSuccess,
         isError,
         error,
-        login,
+        login: mutateAsync,
     };
 }

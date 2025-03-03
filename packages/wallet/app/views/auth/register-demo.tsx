@@ -1,17 +1,14 @@
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
-import {
-    privateKeyAtom,
-    sdkSessionAtom,
-    sessionAtom,
-} from "@/module/common/atoms/session";
+import { privateKeyAtom } from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
-import type { SdkSession, Session } from "@/types/Session";
+import type { Session } from "@/types/Session";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import type { Address, Hex } from "viem";
+import { generatePrivateKey } from "viem/accounts";
+import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import styles from "./register.module.css";
 
 export default function RegisterDemo() {
@@ -50,9 +47,8 @@ export default function RegisterDemo() {
     );
 }
 
-function useRegisterDemo(
-    options?: UseMutationOptions<Session> & { ssoId?: Hex }
-) {
+function useRegisterDemo(options?: UseMutationOptions<Session>) {
+    const { mutateAsync: demoLogin } = useDemoLogin();
     /**
      * Mutation used to launch the registration process
      */
@@ -66,23 +62,12 @@ function useRegisterDemo(
         ...options,
         mutationKey: ["register"],
         mutationFn: async () => {
-            const session: Session = {
-                token: "mockToken",
-                address: "0x1234567890" as Address,
-                publicKey: "0x1234567890" as Hex,
-                authenticatorId: "ecdsa-1234567890" as `ecdsa-${string}`,
-                transports: undefined,
-            };
-            const sdkJwt: SdkSession = {
-                token: "mockSdkJwtToken",
-                expires: 1000000000000000000,
-            };
+            // Generate a private key
+            const privateKey = generatePrivateKey();
+            jotaiStore.set(privateKeyAtom, privateKey);
 
-            // Store the session
-            jotaiStore.set(sessionAtom, session);
-            jotaiStore.set(sdkSessionAtom, sdkJwt);
-            jotaiStore.set(privateKeyAtom, "mockPrivateKey");
-            return session;
+            // Launch the demo login
+            return await demoLogin({ pkey: privateKey });
         },
     });
 
