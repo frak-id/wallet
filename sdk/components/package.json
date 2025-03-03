@@ -51,6 +51,7 @@
         "default": "./dist/buttonShare.cjs"
       }
     },
+    "./dist/buttonShare.css": "./dist/buttonShare.css",
     "./dist/buttonWallet.js": {
       "import": {
         "types": "./dist/buttonWallet.d.ts",
@@ -60,7 +61,8 @@
         "types": "./dist/buttonWallet.d.cts",
         "default": "./dist/buttonWallet.cjs"
       }
-    }
+    },
+    "./dist/buttonWallet.css": "./dist/buttonWallet.css"
   },
   "scripts": {
     "lint": "biome lint .",
@@ -69,7 +71,7 @@
     "clean": "rimraf cdn",
     "build": "rslib build && bun run check-exports",
     "build:watch": "rslib build --watch",
-    "check-exports": "attw --pack .",
+    "check-exports": "attw --pack . --exclude-entrypoints ./dist/buttonShare.css ./dist/buttonWallet.css",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing components...'"
