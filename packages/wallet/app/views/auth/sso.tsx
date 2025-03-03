@@ -312,7 +312,7 @@ function Actions({ onSuccess }: { onSuccess: () => void }) {
     );
 }
 
-function useLoginDemo(options?: UseMutationOptions<Session> & { ssoId?: Hex }) {
+function useLoginDemo(options?: UseMutationOptions<Session>) {
     const { mutateAsync: demoLogin } = useDemoLogin();
     /**
      * Mutation used to launch the login demo process
@@ -333,8 +333,11 @@ function useLoginDemo(options?: UseMutationOptions<Session> & { ssoId?: Hex }) {
                 throw new Error("No private key found");
             }
 
+            // Get the SSO ID
+            const ssoId = jotaiStore.get(ssoContextAtom)?.id;
+
             // Launch the login process
-            return demoLogin({ pkey, ssoId: options?.ssoId });
+            return demoLogin({ pkey, ssoId: ssoId });
         },
     });
 
