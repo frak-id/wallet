@@ -27,7 +27,7 @@ import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import "./sso.global.css";
-import { privateKeyAtom } from "@/module/common/atoms/session";
+import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
 import type { Session } from "@/types/Session";
 import { decompressJson } from "@frak-labs/core-sdk";
 import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
@@ -250,7 +250,7 @@ function Header() {
 
 function Actions({ onSuccess }: { onSuccess: () => void }) {
     const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
-    const privateKey = useAtomValue(privateKeyAtom);
+    const privateKey = useAtomValue(demoPrivateKeyAtom);
     const { login, isLoginInProgress } = useLoginDemo({
         onSuccess: () => onSuccess(),
     });
@@ -328,7 +328,7 @@ function useLoginDemo(options?: UseMutationOptions<Session> & { ssoId?: Hex }) {
         mutationKey: ["demo-login"],
         async mutationFn() {
             // Retrieve the pkey
-            const pkey = jotaiStore.get(privateKeyAtom) as Hex | undefined;
+            const pkey = jotaiStore.get(demoPrivateKeyAtom) as Hex | undefined;
             if (!pkey) {
                 throw new Error("No private key found");
             }

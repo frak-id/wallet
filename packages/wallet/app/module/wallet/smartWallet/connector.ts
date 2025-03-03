@@ -25,8 +25,8 @@ export function smartAccountConnector<
     // The current provider
     let provider: Provider | undefined;
 
-    // The current privy signer
-    let privySigner:
+    // The current ecdsa signer
+    let ecdsaSigner:
         | ((args: { hash: Hex; address: Address }) => Promise<Hex>)
         | undefined = undefined;
 
@@ -34,7 +34,7 @@ export function smartAccountConnector<
     return createConnector<
         Provider,
         {
-            setPrivySigner: (signer: typeof privySigner) => void;
+            setEcdsaSigner: (signer: typeof ecdsaSigner) => void;
         }
     >((config) => ({
         id: "frak-wallet-connector",
@@ -154,11 +154,11 @@ export function smartAccountConnector<
                     },
 
                     async signViaEcdsa(message, address) {
-                        if (!privySigner) {
+                        if (!ecdsaSigner) {
                             throw new Error("No privy signer");
                         }
 
-                        return privySigner({ hash: message, address });
+                        return ecdsaSigner({ hash: message, address });
                     },
                 });
             }
@@ -174,11 +174,11 @@ export function smartAccountConnector<
             config.emitter.emit("disconnect");
         },
         /**
-         * Update the current privy signer
+         * Update the current ecdsa signer
          * @param signer
          */
-        setPrivySigner(signer: typeof privySigner) {
-            privySigner = signer;
+        setEcdsaSigner(signer: typeof ecdsaSigner) {
+            ecdsaSigner = signer;
         },
     }));
 }

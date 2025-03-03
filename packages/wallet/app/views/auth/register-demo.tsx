@@ -1,5 +1,5 @@
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
-import { privateKeyAtom } from "@/module/common/atoms/session";
+import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import type { Session } from "@/types/Session";
 import { jotaiStore } from "@shared/module/atoms/store";
@@ -64,7 +64,7 @@ function useRegisterDemo(options?: UseMutationOptions<Session>) {
         mutationFn: async () => {
             // Generate a private key
             const privateKey = generatePrivateKey();
-            jotaiStore.set(privateKeyAtom, privateKey);
+            jotaiStore.set(demoPrivateKeyAtom, privateKey);
 
             // Launch the demo login
             return await demoLogin({ pkey: privateKey });

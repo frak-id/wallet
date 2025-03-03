@@ -1,4 +1,4 @@
-import { privateKeyAtom } from "@/module/common/atoms/session";
+import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { Button } from "@shared/module/component/Button";
@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 
 export function PrivateKey() {
     const { t } = useTranslation();
-    const privateKey = useAtomValue(privateKeyAtom);
+    const privateKey = useAtomValue(demoPrivateKeyAtom);
 
     if (privateKey) {
         return (
@@ -27,7 +27,7 @@ export function PrivateKey() {
 
 function DeletePrivateKey() {
     const { t } = useTranslation();
-    const setPrivateKey = useSetAtom(privateKeyAtom);
+    const setPrivateKey = useSetAtom(demoPrivateKeyAtom);
 
     const deletePrivateKey = useCallback(() => {
         setPrivateKey(null);

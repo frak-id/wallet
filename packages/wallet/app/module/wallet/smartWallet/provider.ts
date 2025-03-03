@@ -181,7 +181,7 @@ async function buildSmartAccount<
             preDeterminedAccountAddress: wallet.address,
         });
     } else {
-        // That's a dynamic wallet
+        // That's a ecdsa wallet
         smartAccount = await frakFallbackWalletSmartAccount(currentViemClient, {
             ecdsaAddress: wallet.publicKey,
             preDeterminedAccountAddress: wallet.address,
