@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
 
 const DEBUG = false;
+const USE_CDN = false;
 const projectRootDir = resolve(__dirname);
 const bundleDir = resolve(projectRootDir, "../../sdk/components/cdn");
 const scriptSrc =
@@ -19,12 +20,19 @@ export default defineConfig({
         port: 3013,
     },
     publicDir: "public",
+    define: {
+        "process.env.USE_CDN": JSON.stringify(USE_CDN),
+    },
     plugins: [
         createHtmlPlugin({
             inject: {
                 data: {
-                    injectScript: `<script defer src="${scriptSrc}"></script>`,
-                    injectCSS: `<link id="frak-button-wallet" rel="stylesheet" href="${cssSrc}" />`,
+                    injectScript: USE_CDN
+                        ? `<script defer src="${scriptSrc}"></script>`
+                        : "",
+                    injectCSS: USE_CDN
+                        ? `<link id="frak-button-wallet" rel="stylesheet" href="${cssSrc}" />`
+                        : "",
                     injectReactScan: DEBUG
                         ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
                         : "",
