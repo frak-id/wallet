@@ -5,14 +5,12 @@ import {
     referralInteraction,
 } from "@frak-labs/core-sdk/actions";
 
-let modalBuilderSteps: ModalBuilder | undefined;
-
 /**
  * Setup the modal config
  * @param client
  */
 export function setupModalConfig(client: FrakClient) {
-    modalBuilderSteps = modalBuilder(
+    window.modalBuilderSteps = modalBuilder(
         client,
         window.FrakSetup?.modalConfig ?? {}
     );
@@ -23,13 +21,13 @@ export function setupModalConfig(client: FrakClient) {
  * @param client
  */
 export async function setupReferral(client: FrakClient) {
-    if (!modalBuilderSteps) {
+    if (!window.modalBuilderSteps) {
         console.error("modalBuilderSteps not found");
         return;
     }
 
     const referral = await referralInteraction(client, {
-        modalConfig: modalBuilderSteps.reward().params,
+        modalConfig: window.modalBuilderSteps.reward().params,
     });
     console.log("referral", referral);
 }
@@ -37,6 +35,10 @@ export async function setupReferral(client: FrakClient) {
 /**
  * Return the modal builder steps
  */
-export function getModalBuilderSteps() {
-    return modalBuilderSteps;
+export function getModalBuilderSteps(): ModalBuilder {
+    if (!window.modalBuilderSteps) {
+        throw new Error("modalBuilderSteps not found");
+    }
+
+    return window.modalBuilderSteps;
 }

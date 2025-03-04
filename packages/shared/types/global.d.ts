@@ -4,11 +4,14 @@ import type {
     FrakClient,
     FrakWalletSdkConfig,
     LoginModalStepType,
+    ModalBuilder,
     ModalRpcMetadata,
 } from "@frak-labs/core-sdk";
 
 declare global {
     interface Window {
+        frakSetupInProgress?: boolean;
+        modalBuilderSteps?: ModalBuilder;
         FrakSetup: {
             client?: FrakClient;
             config?: FrakWalletSdkConfig;

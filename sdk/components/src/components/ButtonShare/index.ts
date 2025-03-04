@@ -16,7 +16,7 @@ declare global {
 }
 
 if (typeof window !== "undefined") {
-    onDocumentReady(async function init() {
+    onDocumentReady(async function initButtonShare() {
         await initFrakSdk();
     });
 

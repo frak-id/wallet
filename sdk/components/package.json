@@ -41,6 +41,16 @@
   "main": "./cdn/components.js",
   "browser": "./cdn/components.js",
   "exports": {
+    "./dist/index.js": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
     "./dist/buttonShare.js": {
       "import": {
         "types": "./dist/buttonShare.d.ts",
