@@ -1,6 +1,4 @@
-import { initFrakSdk } from "@/utils/initFrakSdk";
-import { onDocumentReady } from "@shared/module/utils/onDocumentReady";
-import register from "preact-custom-element";
+import { registerWebComponent } from "@/utils/registerWebComponent";
 import { ButtonWallet } from "./ButtonWallet";
 import type { ButtonWalletProps } from "./types";
 
@@ -15,13 +13,5 @@ declare global {
     }
 }
 
-if (typeof window !== "undefined") {
-    onDocumentReady(async function initButtonWallet() {
-        await initFrakSdk();
-    });
-
-    // If custom element is not already registered
-    if (!customElements.get("frak-button-wallet")) {
-        register(ButtonWallet, "frak-button-wallet", [], { shadow: false });
-    }
-}
+// Register the ButtonWallet component
+registerWebComponent(ButtonWallet, "frak-button-wallet", [], { shadow: false });

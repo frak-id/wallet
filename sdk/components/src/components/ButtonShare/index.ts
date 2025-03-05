@@ -1,6 +1,4 @@
-import { initFrakSdk } from "@/utils/initFrakSdk";
-import { onDocumentReady } from "@shared/module/utils/onDocumentReady";
-import register from "preact-custom-element";
+import { registerWebComponent } from "@/utils/registerWebComponent";
 import { ButtonShare } from "./ButtonShare";
 import type { ButtonShareProps } from "./types";
 
@@ -15,13 +13,7 @@ declare global {
     }
 }
 
-if (typeof window !== "undefined") {
-    onDocumentReady(async function initButtonShare() {
-        await initFrakSdk();
-    });
-
-    // If custom element is not already registered
-    if (!customElements.get("frak-button-share")) {
-        register(ButtonShare, "frak-button-share", ["text"], { shadow: false });
-    }
-}
+// Register the ButtonShare component
+registerWebComponent(ButtonShare, "frak-button-share", ["text"], {
+    shadow: false,
+});
