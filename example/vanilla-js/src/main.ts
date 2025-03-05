@@ -4,7 +4,6 @@ async function init() {
      */
     if (!process.env.USE_CDN) {
         await Promise.all([
-            // import("@frak-labs/components/dist/index.js"),
             import("@frak-labs/components/dist/buttonWallet.js"),
             import("@frak-labs/components/dist/buttonWallet.css"),
             import("@frak-labs/components/dist/buttonShare.js"),

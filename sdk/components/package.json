@@ -41,16 +41,6 @@
   "main": "./cdn/components.js",
   "browser": "./cdn/components.js",
   "exports": {
-    "./dist/index.js": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
-    },
     "./dist/buttonShare.js": {
       "import": {
         "types": "./dist/buttonShare.d.ts",
@@ -81,7 +71,7 @@
     "clean": "rimraf cdn",
     "build": "rslib build && bun run check-exports",
     "build:watch": "rslib build --watch",
-    "check-exports": "attw --pack . --exclude-entrypoints ./dist/buttonShare.css ./dist/buttonWallet.css",
+    "check-exports": "attw --pack . --exclude-entrypoints ./dist/buttonShare.css ./dist/buttonWallet.css --profile esm-only",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing components...'"
