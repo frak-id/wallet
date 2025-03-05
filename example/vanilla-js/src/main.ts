@@ -1,33 +1,35 @@
-/**
- * If we are not using the CDN, we need to import the components
- */
-if (!process.env.USE_CDN) {
-    await Promise.all([
-        // import("@frak-labs/components/dist/index.js"),
-        import("@frak-labs/components/dist/buttonWallet.js"),
-        import("@frak-labs/components/dist/buttonWallet.css"),
-        import("@frak-labs/components/dist/buttonShare.js"),
-        import("@frak-labs/components/dist/buttonShare.css"),
-    ]);
+async function init() {
+    /**
+     * If we are not using the CDN, we need to import the components
+     */
+    if (!process.env.USE_CDN) {
+        await Promise.all([
+            // import("@frak-labs/components/dist/index.js"),
+            import("@frak-labs/components/dist/buttonWallet.js"),
+            import("@frak-labs/components/dist/buttonWallet.css"),
+            import("@frak-labs/components/dist/buttonShare.js"),
+            import("@frak-labs/components/dist/buttonShare.css"),
+        ]);
+    }
+
+    const walletUrl =
+        process.env.NODE_ENV === "production"
+            ? "https://wallet-dev.frak.id"
+            : "https://localhost:3000";
+
+    window.FrakSetup = {
+        config: {
+            walletUrl,
+            metadata: {
+                name: "Your App Name",
+            },
+        },
+        modalWalletConfig: {
+            metadata: {
+                position: "left",
+            },
+        },
+    };
 }
 
-const walletUrl =
-    process.env.NODE_ENV === "production"
-        ? "https://wallet-dev.frak.id"
-        : "https://localhost:3000";
-
-window.FrakSetup = {
-    config: {
-        walletUrl,
-        metadata: {
-            name: "Your App Name",
-        },
-    },
-    modalWalletConfig: {
-        metadata: {
-            position: "left",
-        },
-    },
-};
-
-export {};
+init();
