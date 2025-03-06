@@ -41,38 +41,12 @@ function createCDNConfig(): LibConfig {
         source: {
             entry: {
                 components: "./src/components.ts",
+                loader: "./src/utils/loader.ts",
             },
         },
         output: {
             distPath: {
                 root: "./cdn",
-            },
-            filename: {
-                js: "[name].[contenthash:8].js",
-                css: "[name].[contenthash:8].css",
-            },
-        },
-        performance: {
-            chunkSplit: {
-                strategy: "custom",
-                splitChunks: {
-                    cacheGroups: {
-                        preact: {
-                            test: /preact/,
-                            name: "preact",
-                            chunks: "all",
-                            enforce: true,
-                            reuseExistingChunk: true,
-                        },
-                        sha256: {
-                            test: require.resolve("js-sha256"),
-                            name: "js-sha256",
-                            chunks: "all",
-                            enforce: true,
-                            reuseExistingChunk: true,
-                        },
-                    },
-                },
             },
         },
     };
