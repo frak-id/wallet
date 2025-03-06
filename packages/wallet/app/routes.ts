@@ -36,6 +36,8 @@ export default [
             route("/tokens/receive", "./views/protected/tokens-receive.tsx"),
             route("/tokens/send", "./views/protected/tokens-send.tsx"),
             route("/wallet", "./views/protected/wallet.tsx"),
+            route("/membrs", "./views/protected/membrs.tsx"),
+            route("/membrs/profile", "./views/protected/membrs-profile.tsx"),
         ]),
     ]),
 

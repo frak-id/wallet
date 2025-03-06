@@ -1,0 +1,41 @@
+.avatarModal__upload {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    cursor: pointer;
+}
+
+.avatarModal__editor {
+    margin: 10px 0;
+    text-align: center;
+}
+
+.avatarModal__button {
+    margin-top: 20px !important;
+}
+
+.avatarModal__uploader {
+    min-width: initial !important;
+    max-width: initial !important;
+    border-color: var(--frak-color-white) !important;
+}
+
+.avatarModal__uploader span {
+    color: var(--frak-color-white) !important;
+}
+
+.avatarModal__uploader svg {
+    display: none;
+}
+
+.avatarModal__uploader > input {
+    width: 100%;
+}
+
+.avatarModal__uploader > input + div {
+    background: var(--frak-color-tangaroa) !important;
+    top: -2px;
+    right: -2px;
+    left: -2px;
+    bottom: -2px;
+}

@@ -1,0 +1,30 @@
+.profileForm {
+    margin-top: 20px;
+}
+
+.profileForm__input {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.profileForm__error {
+    margin-bottom: 10px;
+    color: #ff0000;
+    font-size: 12px;
+    text-align: left;
+}
+
+.profileForm__link {
+    margin-top: 10px;
+    color: rgba(255, 255, 255, 0.56);
+    text-decoration: underline;
+}
+
+.profileForm__submit {
+    display: flex;
+    justify-content: center;
+}
