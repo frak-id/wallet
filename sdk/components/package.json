@@ -40,38 +40,13 @@
   ],
   "main": "./cdn/components.js",
   "browser": "./cdn/components.js",
-  "exports": {
-    "./dist/buttonShare.js": {
-      "import": {
-        "types": "./dist/buttonShare.d.ts",
-        "default": "./dist/buttonShare.js"
-      },
-      "require": {
-        "types": "./dist/buttonShare.d.cts",
-        "default": "./dist/buttonShare.cjs"
-      }
-    },
-    "./dist/buttonShare.css": "./dist/buttonShare.css",
-    "./dist/buttonWallet.js": {
-      "import": {
-        "types": "./dist/buttonWallet.d.ts",
-        "default": "./dist/buttonWallet.js"
-      },
-      "require": {
-        "types": "./dist/buttonWallet.d.cts",
-        "default": "./dist/buttonWallet.cjs"
-      }
-    },
-    "./dist/buttonWallet.css": "./dist/buttonWallet.css"
-  },
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
-    "clean": "rimraf cdn",
-    "build": "rslib build && bun run check-exports",
+    "clean": "rimraf cdn dist",
+    "build": "rslib build",
     "build:watch": "rslib build --watch",
-    "check-exports": "attw --pack . --exclude-entrypoints ./dist/buttonShare.css ./dist/buttonWallet.css --profile esm-only",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing components...'"
@@ -82,7 +57,6 @@
     "preact-custom-element": "^4.3.0"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.3",
     "@rsbuild/plugin-preact": "^1.3.1",
     "@rsbuild/plugin-svgr": "^1.0.7",
     "@rslib/core": "^0.5.2",
