@@ -1,4 +1,5 @@
 import { NavigationItem } from "@/module/common/component/NavigationItem";
+import { Community } from "@/module/membrs/assets/Community";
 import { History, Settings, Wallet } from "lucide-react";
 import styles from "./index.module.css";
 
@@ -15,6 +16,9 @@ export function Navigation() {
                 {/* <NavigationItem url={"/earn"}>
                     <Medal />
                 </NavigationItem> */}
+                <NavigationItem url={"/membrs"}>
+                    <Community />
+                </NavigationItem>
                 <NavigationItem url={"/settings"}>
                     <Settings size={29} />
                 </NavigationItem>
