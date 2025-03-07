@@ -9,6 +9,7 @@ import {
     useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import Webcam from "react-webcam";
 import styles from "./index.module.css";
 
@@ -65,6 +66,8 @@ type CameraButtonProps = {
  * Button to toggle camera activation
  */
 function CameraButton({ isCameraActive, onToggleCamera }: CameraButtonProps) {
+    const { t } = useTranslation();
+
     return (
         <p className={styles.avatarCamera__buttonWrapper}>
             <Button
@@ -72,8 +75,8 @@ function CameraButton({ isCameraActive, onToggleCamera }: CameraButtonProps) {
                 className={styles.avatarCamera__button}
             >
                 {isCameraActive
-                    ? "Stop Camera"
-                    : "Take a picture with your camera"}
+                    ? t("wallet.membrs.profile.avatar.stop")
+                    : t("wallet.membrs.profile.avatar.take")}
             </Button>
         </p>
     );
@@ -87,6 +90,7 @@ type CameraModalProps = {
  * Modal containing webcam and capture button
  */
 function CameraModal({ onCapture }: CameraModalProps) {
+    const { t } = useTranslation();
     const webcamRef = useRef<Webcam | null>(null);
 
     const handleCapture = useCallback(() => {
@@ -104,7 +108,9 @@ function CameraModal({ onCapture }: CameraModalProps) {
                 width={"100%"}
                 className={styles.avatarCamera__webcam}
             />
-            <Button onClick={handleCapture}>Capture photo</Button>
+            <Button onClick={handleCapture}>
+                {t("wallet.membrs.profile.avatar.capture")}
+            </Button>
         </div>,
         document.body
     );

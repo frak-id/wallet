@@ -13,6 +13,7 @@ import {
     type UseFormReturn,
     useForm,
 } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { uploadProfilePhotoAtom } from "../../atoms/uploadProfilePhoto";
 import { userAtom, userSetupLaterAtom } from "../../atoms/user";
@@ -28,6 +29,7 @@ type FormInput = {
  * Profile form component for user profile management
  */
 export function ProfileForm() {
+    const { t } = useTranslation();
     const session = useAtomValue(sessionAtom);
     const [isUsernameDisabled, setIsUsernameDisabled] = useState(true);
     const [submitError, setSubmitError] = useState<string>();
@@ -39,7 +41,7 @@ export function ProfileForm() {
     // Form setup and validation
     const formMethods = useForm<FormInput>({
         defaultValues: {
-            username: user?.username ?? "Enter username",
+            username: user?.username ?? t("wallet.membrs.profile.form.name"),
             photo: user?.photo ?? undefined,
         },
     });
@@ -80,9 +82,7 @@ export function ProfileForm() {
             reset(updatedUser);
         } catch (error) {
             console.error(error);
-            setSubmitError(
-                "An error occurred while saving your profile. Please try again."
-            );
+            setSubmitError(t("wallet.membrs.profile.form.error"));
         }
     };
 
@@ -130,18 +130,20 @@ function UsernameField({
     isDisabled,
     onToggleEdit,
 }: UsernameFieldProps) {
+    const { t } = useTranslation();
+
     return (
         <p className={styles.profileForm__input}>
             <Input
-                aria-label="Enter username"
-                placeholder="Enter username"
+                aria-label={t("wallet.membrs.profile.form.name")}
+                placeholder={t("wallet.membrs.profile.form.name")}
                 disabled={isDisabled}
                 aria-invalid={errors.username ? "true" : "false"}
                 {...register("username", {
-                    required: "Username is required",
+                    required: t("wallet.membrs.profile.form.nameRequired"),
                     minLength: {
                         value: 3,
-                        message: "Minimum username length is 3",
+                        message: t("wallet.membrs.profile.form.nameLength"),
                     },
                 })}
             />
@@ -160,11 +162,15 @@ type AddressFieldProps = {
  * Wallet address field with copy button
  */
 function AddressField({ address }: AddressFieldProps) {
+    const { t } = useTranslation();
     const { copied, copy } = useCopyToClipboardWithState();
 
     return (
         <p className={styles.profileForm__input}>
-            <Input value={copied ? "Copied!" : address} disabled={true} />
+            <Input
+                value={copied ? t("common.copied") : address}
+                disabled={true}
+            />
             <button
                 type="button"
                 className="button"
@@ -184,10 +190,12 @@ type SubmitButtonProps = {
  * Form submit button
  */
 function SubmitButton({ isDisabled }: SubmitButtonProps) {
+    const { t } = useTranslation();
+
     return (
         <p className={styles.profileForm__submit}>
             <Button type="submit" disabled={isDisabled}>
-                confirm
+                {t("wallet.membrs.profile.form.button")}
             </Button>
         </p>
     );
@@ -208,6 +216,7 @@ function ErrorMessage({ message }: ErrorMessageProps) {
  * Button to skip profile setup
  */
 function SetupLaterButton() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const setUserSetupLater = useSetAtom(userSetupLaterAtom);
 
@@ -221,7 +230,7 @@ function SetupLaterButton() {
                 }}
                 className={`button ${styles.profileForm__link}`}
             >
-                later
+                {t("wallet.membrs.profile.form.later")}
             </button>
         </p>
     );

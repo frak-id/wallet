@@ -7,6 +7,7 @@ import { useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactAvatarEditor from "react-avatar-editor";
 import { FileUploader } from "react-drag-drop-files";
+import { useTranslation } from "react-i18next";
 import { AvatarCamera } from "../AvatarCamera";
 import styles from "./index.module.css";
 
@@ -30,6 +31,7 @@ type ImageSource = string | File | undefined;
  * Modal component for uploading and editing profile avatar
  */
 export function AvatarModal() {
+    const { t } = useTranslation();
     const [openModal, setOpenModal] = useState(false);
     const setProfilePhoto = useSetAtom(uploadProfilePhotoAtom);
 
@@ -37,7 +39,7 @@ export function AvatarModal() {
         <AlertDialog
             open={openModal}
             onOpenChange={setOpenModal}
-            title={"Choose profile picture"}
+            title={t("wallet.membrs.profile.avatar.title")}
             text={
                 <AvatarEditorPanel
                     setOpenModal={setOpenModal}
@@ -64,6 +66,7 @@ function AvatarEditorPanel({
     setOpenModal,
     setProfilePhoto,
 }: AvatarEditorPanelProps) {
+    const { t } = useTranslation();
     const editorRef = useRef<ReactAvatarEditor | null>(null);
     const [image, setImage] = useState<ImageSource>();
     const [scale, setScale] = useState<number>(INITIAL_SCALE);
@@ -122,7 +125,7 @@ function AvatarEditorPanel({
         <>
             <FileUploader
                 handleChange={handleFileUpload}
-                label={"Upload or drag recovery file"}
+                label={t("wallet.membrs.profile.avatar.upload")}
                 types={ALLOWED_FILE_TYPES}
                 hoverTitle={" "}
                 classes={`${styles.avatarModal__uploader}`}
@@ -167,6 +170,8 @@ function ImageEditor({
     onZoom,
     onSave,
 }: ImageEditorProps) {
+    const { t } = useTranslation();
+
     return (
         <div className={styles.avatarModal__editor}>
             <ReactAvatarEditor
@@ -184,7 +189,7 @@ function ImageEditor({
             />
 
             <Slider
-                label={"Zoom"}
+                label={t("wallet.membrs.profile.avatar.zoom")}
                 defaultValue={[scale]}
                 value={[scale]}
                 min={INITIAL_SCALE}
@@ -194,7 +199,7 @@ function ImageEditor({
             />
 
             <Button className={styles.avatarModal__button} onClick={onSave}>
-                Save
+                {t("wallet.membrs.profile.avatar.save")}
             </Button>
         </div>
     );

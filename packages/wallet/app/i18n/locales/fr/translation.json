@@ -269,6 +269,39 @@
         "welcome": {
             "title": "Bienvenue dans votre porte-monnaie",
             "text": "Ce porte-monnaie vous permettra de collecter toutes les récompenses et bien plus encore."
+        },
+        "membrs": {
+            "introduction": {
+                "title": "Accès exclusif à vos stars et franchises favorites",
+                "button": "Entrer"
+            },
+            "profile": {
+                "title": "Personnalisez votre profil",
+                "text1": "Personnalisez votre profil pour rejoindre la communauté des créateurs et être récompensé pour votre engagement",
+                "text2": "Bénéficiez des avantages offerts par les designers et leurs partenaires",
+                "form": {
+                    "name": "Votre nom d'utilisateur",
+                    "nameRequired": "Le nom d'utilisateur est requis",
+                    "nameLength": "La longueur minimale du nom d'utilisateur est de 3",
+                    "button": "Confirmer",
+                    "later": "Plus tard",
+                    "error": "Une erreur est survenue lors de la sauvegarde de votre profil. Veuillez réessayer."
+                },
+                "avatar": {
+                    "title": "Choisissez une photo de profil",
+                    "upload": "Télécharger ou glisser une photo de profil",
+                    "zoom": "Zoom",
+                    "save": "Enregistrer",
+                    "take": "Prendre une photo avec la caméra",
+                    "stop": "Arrêter la caméra",
+                    "capture": "Capturer la photo"
+                }
+            },
+            "fanclub": {
+                "title": "Fanclub",
+                "text": "Découvrez le Fanclub de {{productName}}",
+                "button": "Découvrir le Fanclub"
+            }
         }
     }
 }

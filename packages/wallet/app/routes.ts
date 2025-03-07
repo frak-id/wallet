@@ -38,6 +38,7 @@ export default [
             route("/wallet", "./views/protected/wallet.tsx"),
             route("/membrs", "./views/protected/membrs.tsx"),
             route("/membrs/profile", "./views/protected/membrs-profile.tsx"),
+            route("/membrs/fanclub", "./views/protected/membrs-fanclub.tsx"),
         ]),
     ]),
 
