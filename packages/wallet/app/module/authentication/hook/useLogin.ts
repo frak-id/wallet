@@ -3,6 +3,7 @@ import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
+import { userAtom } from "@/module/membrs/atoms/user";
 import type { Session } from "@/types/Session";
 import { WebAuthN } from "@frak-labs/app-essentials";
 import { jotaiStore } from "@shared/module/atoms/store";
@@ -90,6 +91,13 @@ export function useLogin(
             // Store the session
             jotaiStore.set(sessionAtom, session);
             jotaiStore.set(sdkSessionAtom, sdkJwt);
+
+            // Store the mocked user for now
+            // TODO: Remove this once the user is properly stored in the database
+            jotaiStore.set(userAtom, {
+                _id: data.address,
+                username: "mocked-username",
+            });
 
             return session;
         },

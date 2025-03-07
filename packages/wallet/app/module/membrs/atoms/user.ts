@@ -1,16 +1,26 @@
 import type { User } from "@/types/User";
-import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
 /**
  * User atom
  */
-export const userAtom = atom<User | null>(null);
+export const userAtom = atomWithStorage<User | null>(
+    "frak_user",
+    null,
+    undefined,
+    {
+        getOnInit: true,
+    }
+);
 
 /**
  * User choose to setup his profile later
  */
 export const userSetupLaterAtom = atomWithStorage<boolean | null>(
     "frak_userSetupLater",
-    null
+    null,
+    undefined,
+    {
+        getOnInit: true,
+    }
 );

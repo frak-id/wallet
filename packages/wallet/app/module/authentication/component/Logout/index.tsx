@@ -17,6 +17,8 @@ function cleanLocalStorage() {
         "frak_sdkSession",
         "frak_interactionSession",
         "frak_lastWebAuthNAction",
+        "frak_user",
+        "frak_userSetupLater",
     ];
     localStorageItems.map((item) => window.localStorage.removeItem(item));
 }

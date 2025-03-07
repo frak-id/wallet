@@ -279,11 +279,12 @@
                 "title": "Personnalisez votre profil",
                 "text1": "Personnalisez votre profil pour rejoindre la communauté des créateurs et être récompensé pour votre engagement",
                 "text2": "Bénéficiez des avantages offerts par les designers et leurs partenaires",
+                "edit": "Modifier mon profil",
                 "form": {
                     "name": "Votre nom d'utilisateur",
                     "nameRequired": "Le nom d'utilisateur est requis",
                     "nameLength": "La longueur minimale du nom d'utilisateur est de 3",
-                    "button": "Confirmer",
+                    "button": "Enregistrer",
                     "later": "Plus tard",
                     "error": "Une erreur est survenue lors de la sauvegarde de votre profil. Veuillez réessayer."
                 },

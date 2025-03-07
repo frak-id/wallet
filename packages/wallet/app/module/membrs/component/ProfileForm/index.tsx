@@ -4,7 +4,7 @@ import { Pencil } from "@shared/module/asset/icons/Pencil";
 import { Button } from "@shared/module/component/Button";
 import { Input } from "@shared/module/component/forms/Input";
 import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -218,7 +218,11 @@ function ErrorMessage({ message }: ErrorMessageProps) {
 function SetupLaterButton() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const setUserSetupLater = useSetAtom(userSetupLaterAtom);
+    const user = useAtomValue(userAtom);
+    const [userSetupLater, setUserSetupLater] = useAtom(userSetupLaterAtom);
+
+    // If the user is already setup or has skipped the setup, don't show the button
+    if (user || userSetupLater) return null;
 
     return (
         <p>
