@@ -22,7 +22,7 @@
     "react-hook-form": "^7.54.2",
     "react-loading-skeleton": "^3.5.0",
     "react-scan": "^0.2.14",
-    "viem": "^2.22.23"
+    "viem": "^2.23.9"
   },
   "devDependencies": {
     "@frak-labs/app-essentials": "workspace:*",
