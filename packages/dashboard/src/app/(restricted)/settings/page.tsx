@@ -1,7 +1,7 @@
 "use client";
 
 import { deleteSession } from "@/context/auth/actions/session";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {

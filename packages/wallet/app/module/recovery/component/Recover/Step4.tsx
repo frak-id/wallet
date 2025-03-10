@@ -5,7 +5,7 @@ import {
     recoveryNewWalletAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";

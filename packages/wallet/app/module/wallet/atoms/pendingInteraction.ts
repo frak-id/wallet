@@ -1,5 +1,5 @@
 import type { PendingInteraction } from "@/types/Interaction";
-import { atom } from "jotai/index";
+import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { unique } from "radash";
 import { keccak256, stringToHex } from "viem";

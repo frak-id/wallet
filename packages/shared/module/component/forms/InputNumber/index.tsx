@@ -1,4 +1,4 @@
-import { Input, type InputProps } from "@module/component/forms/Input";
+import { Input, type InputProps } from "@shared/module/component/forms/Input";
 import type {
     ControllerRenderProps,
     FieldPath,

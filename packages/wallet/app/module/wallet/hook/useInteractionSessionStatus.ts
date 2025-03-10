@@ -1,7 +1,7 @@
-import { getSessionStatus } from "@/context/interaction/action/interactionSession";
+import { getSessionStatus } from "@/module/interaction/action/interactionSession";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type { InteractionSession } from "@/types/Session";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import type { UndefinedInitialDataOptions } from "@tanstack/react-query";
 import { RESET } from "jotai/utils";

@@ -1,5 +1,5 @@
 @import "normalize.css/normalize.css";
-@import "@module/styles/colors.css";
+@import "@shared/module/styles/colors.css";
 @import "colors-app.css";
-@import "@module/styles/global.css";
+@import "@shared/module/styles/global.css";
 @import "global.css";

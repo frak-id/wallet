@@ -1,7 +1,7 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEmbededListenerUI } from "@/module/listener/providers/ListenerUiProvider";
-import { LogoFrakWithName } from "@module/asset/icons/LogoFrakWithName";
-import { jotaiStore } from "@module/atoms/store";
+import { LogoFrakWithName } from "@shared/module/asset/icons/LogoFrakWithName";
+import { jotaiStore } from "@shared/module/atoms/store";
 import styles from "../Wallet/index.module.css";
 
 /**

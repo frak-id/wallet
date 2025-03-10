@@ -1,4 +1,4 @@
-import { AuthFingerprint } from "@module/component/AuthFingerprint";
+import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
 import { useState, useTransition } from "react";
 import type { PropsWithChildren } from "react";
 import { useNavigate } from "react-router";

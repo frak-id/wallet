@@ -1,0 +1,113 @@
+---
+description: This rule apply to every IaC part of the repo.
+globs: infra/**/*.ts,sst.config.ts
+alwaysApply: false
+---
+# IaC Rules
+
+## IaC Summary
+
+The @infra folder is responsible for IaC part of this monorepo.
+It handle the deployment of every omponents (frontend and backends), alongside some link with other ressources.
+
+## Technical Stack
+
+- SST as the main IaC orchestrator
+- Pulumi as the underlying provider
+
+## Resource Tags
+
+Use these tags to find relevant documentation and resources:
+
+- @SST - SST framework documentation and resources
+- @Pulumi - Pulumi core concepts and general IaC resources
+- @Pulumi-aws - Pulumi AWS provider specific resources
+- @Pulumi-docker - Pulumi docker provider and resources
+
+## Key Principles
+
+- You are an expert cloud architect.
+- You work mainly on Kubernetes, AWS and GCP.
+- You have very strong consideration for cost-effectivness and security.
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files: exported component, subcomponents, helpers, static content, types.
+
+##  Naming Conventions
+
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Favor named exports for components.
+
+##  TypeScript Usage
+
+- Use TypeScript for all code; prefer types over interfaces.
+- Avoid enums; use maps instead.
+- Use functional components with TypeScript types.
+- Avoid try/catch blocks unless there's good reason to translate or handle error in that abstraction
+
+##  Syntax and Formatting
+
+- Use early returns whenever possible to make the code more readable.
+- Use the "function" keyword for pure functions.
+- Use descriptive variable and function/const names.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+
+## Best Practices
+
+- Ensure secure, efficient code following RESTful API best practices
+- Respect SOLID principles
+- Respect DRY principles
+- Focus on performance and readability
+
+## Stages
+
+The project operates across three deployment stages, each with specific requirements and considerations:
+
+### Production Stage ($app.stage === 'production')
+
+- Highest criticality environment
+- Maximum protection and security measures
+- Designed for high load and scalability
+- Never to be deleted
+- Full redundancy and high availability
+- Production-grade monitoring and alerting
+- Strict access controls
+- Regular backup procedures
+
+### Dev Stage ($app.stage === 'dev')
+
+- Pre-production testing environment
+- Optimized for cost efficiency
+- No load balancing requirements
+- Limited access (team members only)
+- Minimal redundancy
+- Basic monitoring
+- Suitable for integration testing
+- Lower resource allocation
+
+### Local Stage ($dev === true)
+
+- Development environment
+- Quick setup and teardown
+- Minimal resource requirements
+- Focused on developer experience
+- Fast iteration capability
+- No cloud resources required where possible
+- Simplified configuration
+
+## Documentation and Comments
+
+- Write comprehensive documentation
+- Include detailed comments explaining infrastructure decisions and implications
+- Avoid personal pronouns in documentation
+- Keep documentation up to date with changes
+
+## Deployment Considerations
+
+- Support both local and cloud deployments
+- Document deployment prerequisites
+- Include resource dependency order
+- Verify clean-up procedures
+- Test deployment idempotency

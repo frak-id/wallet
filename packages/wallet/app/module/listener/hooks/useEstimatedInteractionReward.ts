@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import type {
     FullInteractionTypesKey,

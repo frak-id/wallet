@@ -1,5 +1,5 @@
 import { createIFrameFrakClient } from "@frak-labs/core-sdk";
-import { onDocumentReady } from "@module/utils/onDocumentReady";
+import { onDocumentReady } from "@shared/module/utils/onDocumentReady";
 import { websiteOverrides } from "./specifics";
 
 /**

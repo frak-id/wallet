@@ -7,7 +7,7 @@ import {
     recoveryResetAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { Accordion } from "@module/component/Accordion";
+import { Accordion } from "@shared/module/component/Accordion";
 import { useAtomValue, useSetAtom } from "jotai";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";

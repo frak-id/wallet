@@ -1,7 +1,7 @@
 "use client";
 
 import { currentPushCreationForm } from "@/module/members/atoms/pushCreationForm";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useSetAtom } from "jotai";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -1,5 +1,5 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { getRegisterOptions } from "@/context/wallet/action/registerOptions";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";

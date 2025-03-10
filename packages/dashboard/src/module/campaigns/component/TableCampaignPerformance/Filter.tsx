@@ -1,7 +1,7 @@
 "use client";
 import { tablePerformanceFiltersAtom } from "@/module/campaigns/component/TableCampaignPerformance/index";
-import { Button } from "@module/component/Button";
-import { InputSearch } from "@module/component/forms/InputSearch";
+import { Button } from "@shared/module/component/Button";
+import { InputSearch } from "@shared/module/component/forms/InputSearch";
 import { atom, useAtom } from "jotai";
 import { useSetAtom } from "jotai/index";
 import { SlidersHorizontal } from "lucide-react";

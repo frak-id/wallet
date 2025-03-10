@@ -1,14 +1,14 @@
 import { Markdown } from "@/module/common/component/Markdown";
 import { trackEvent } from "@/module/common/utils/trackEvent";
+import { displayedRpcModalStepsAtom } from "@/module/listener/modal/atoms/modalEvents";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
-import { prefixModalCss } from "@module/utils/prefixModalCss";
+import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
-import { displayedRpcModalStepsAtom } from "../../atoms/modalEvents";
 
 export function MetadataInfo({
     metadata,

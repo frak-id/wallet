@@ -14,8 +14,8 @@ import {
     PopoverTrigger,
 } from "@/module/common/component/Popover";
 import { Separator } from "@/module/common/component/Separator";
-import { Button } from "@module/component/Button";
-import { Tooltip } from "@module/component/Tooltip";
+import { Button } from "@shared/module/component/Button";
+import { Tooltip } from "@shared/module/component/Tooltip";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
 import { useState } from "react";
 import type { ComponentPropsWithRef } from "react";

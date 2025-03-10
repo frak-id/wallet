@@ -1,6 +1,6 @@
-import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEstimatedInteractionReward";
 import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";
+import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,

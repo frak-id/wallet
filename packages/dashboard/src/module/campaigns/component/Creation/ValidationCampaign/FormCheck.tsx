@@ -6,7 +6,7 @@ import { FormPriceRange } from "@/module/campaigns/component/Creation/Validation
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Input } from "@module/component/forms/Input";
+import { Input } from "@shared/module/component/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormCheck(form: UseFormReturn<Campaign>) {

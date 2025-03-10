@@ -8,8 +8,8 @@ import {
     type ProductSetupStatusItem,
     useProductSetupStatus,
 } from "@/module/product/hook/useProductSetupStatus";
-import { Button } from "@module/component/Button";
-import { Spinner } from "@module/component/Spinner";
+import { Button } from "@shared/module/component/Button";
+import { Spinner } from "@shared/module/component/Spinner";
 import { AlertCircle, BadgeCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Hex } from "viem";

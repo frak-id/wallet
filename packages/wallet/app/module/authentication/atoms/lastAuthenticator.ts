@@ -1,10 +1,12 @@
-import { dexieDb } from "@/context/common/dexie/dexieDb";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
+import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
+import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
+import type { Address } from "viem";
 
-type LastAuthentication = WebAuthNWallet & {
+type LastAuthentication = Omit<WebAuthNWallet, "publicKey"> & {
+    publicKey: P256PubKey | Readonly<Address>;
     transports?: AuthenticatorTransportFuture[];
 };
 

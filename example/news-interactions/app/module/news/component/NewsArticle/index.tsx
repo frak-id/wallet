@@ -9,8 +9,18 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import Markdown from "react-markdown";
 import { keccak256, toHex } from "viem";
-import forward from "./assets/forward.svg";
+import forward from "./assets/forward.svg?url";
 import styles from "./index.module.css";
+
+type ArticleData = {
+    id: string;
+    title: string;
+    summary: string;
+    text: string;
+    author: string;
+    image: string;
+    date: string;
+};
 
 const loginModalStep = {
     allowSso: true,
@@ -85,7 +95,15 @@ export function NewsArticle({ articleId }: { articleId: string }) {
     const { data: article } = useQuery({
         queryKey: ["news", "full", articleId],
         queryFn: async () => {
-            const result = await backendApi.exampleNewsPaper
+            const api = backendApi as unknown as {
+                exampleNewsPaper: {
+                    news: (params: { id: string }) => {
+                        get: () => Promise<{ data: ArticleData }>;
+                    };
+                };
+            };
+
+            const result = await api.exampleNewsPaper
                 .news({ id: articleId })
                 .get();
             return result.data;

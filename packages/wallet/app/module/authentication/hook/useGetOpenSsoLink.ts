@@ -1,15 +1,15 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
 import {
     type AppSpecificSsoMetadata,
     ssoConsumeKey,
 } from "@/module/authentication/atoms/sso";
 import { ssoParamsToCompressed } from "@/module/authentication/utils/ssoDataCompression";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import {
     getFromLocalStorage,
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
 import { compressJson } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import type { Hex } from "viem";

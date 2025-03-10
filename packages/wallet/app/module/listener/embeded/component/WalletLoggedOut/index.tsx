@@ -5,7 +5,7 @@ import {
     useEmbededListenerUI,
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
-import { prefixWalletCss } from "@module/utils/prefixWalletCss";
+import { prefixWalletCss } from "@shared/module/utils/prefixWalletCss";
 import styles from "./index.module.css";
 
 /**

@@ -1,4 +1,3 @@
-import { createIFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import { trackEvent } from "@/module/common/utils/trackEvent";
 import { ListenerUiRenderer } from "@/module/listener/component/ListerUiRenderer";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
@@ -12,7 +11,8 @@ import {
     ListenerUiProvider,
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
-import { loadPolyfills } from "@module/utils/polyfills";
+import { createIFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
+import { loadPolyfills } from "@shared/module/utils/polyfills";
 import { useEffect, useState } from "react";
 
 loadPolyfills();

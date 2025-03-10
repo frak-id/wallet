@@ -1,4 +1,4 @@
-import { loadScript } from "@module/utils/loadScript";
+import { loadScript } from "@shared/module/utils/loadScript";
 import { gapianne } from "./gapianne";
 
 const WEBSITE_OVERRIDES: Record<string, () => void> = {
@@ -12,7 +12,8 @@ export function websiteOverrides() {
 
         loadScript(
             "frak-components",
-            "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js"
+            "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js",
+            "module"
         );
     }
 }

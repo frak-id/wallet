@@ -1,4 +1,4 @@
-import { Input, type InputProps } from "@module/component/forms/Input";
+import { Input, type InputProps } from "@shared/module/component/forms/Input";
 import { Search } from "lucide-react";
 import styles from "./index.module.css";
 

@@ -15,6 +15,7 @@ export default [
         layout("./views/layouts/authentication.tsx", [
             route("/login", "./views/auth/login.tsx"),
             route("/register", "./views/auth/register.tsx"),
+            route("/register/demo", "./views/auth/register-demo.tsx"),
             route("/recovery", "./views/auth/recovery.tsx"),
         ]),
 

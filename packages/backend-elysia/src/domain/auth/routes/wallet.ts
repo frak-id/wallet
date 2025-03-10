@@ -65,7 +65,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
         "/ecdsaLogin",
         async ({
             // Request
-            body: { expectedChallenge, signature, wallet, ssoId },
+            body: { expectedChallenge, signature, wallet, ssoId, demoPkey },
             // Response
             error,
             // Context
@@ -106,7 +106,10 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await generateSdkJwt({ wallet: walletAddress });
+            const sdkJwt = await generateSdkJwt({
+                wallet: walletAddress,
+                additionalData: { demoPkey },
+            });
 
             // If all good, mark the sso as done
             if (ssoId) {
@@ -114,6 +117,9 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     id: ssoId,
                     wallet: walletAddress,
                     authenticatorId,
+                    additionalData: {
+                        demoPkey: demoPkey,
+                    },
                 });
             }
 
@@ -133,6 +139,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 signature: t.Hex(),
                 // potential sso id
                 ssoId: t.Optional(t.Hex()),
+                // potential demo pkey
+                demoPkey: t.Optional(t.Hex()),
             }),
             response: {
                 404: t.String(),

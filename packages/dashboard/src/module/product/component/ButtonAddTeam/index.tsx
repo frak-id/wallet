@@ -13,10 +13,10 @@ import {
 import { useAddProductMember } from "@/module/product/hook/useAddProductMember";
 import { permissionLabelsArray } from "@/module/product/utils/permissions";
 import type { ProductRolesKey } from "@frak-labs/app-essentials";
-import { Button } from "@module/component/Button";
-import { Tooltip } from "@module/component/Tooltip";
-import { Checkbox } from "@module/component/forms/Checkbox";
-import { Input } from "@module/component/forms/Input";
+import { Button } from "@shared/module/component/Button";
+import { Tooltip } from "@shared/module/component/Tooltip";
+import { Checkbox } from "@shared/module/component/forms/Checkbox";
+import { Input } from "@shared/module/component/forms/Input";
 import { BadgeCheck } from "lucide-react";
 import {
     type PropsWithChildren,

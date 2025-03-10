@@ -10,7 +10,7 @@ import {
     type ProductTypesKey,
     interactionTypes,
 } from "@frak-labs/core-sdk";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";

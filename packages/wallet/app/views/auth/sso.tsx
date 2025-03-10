@@ -13,17 +13,27 @@ import {
 } from "@/module/authentication/utils/ssoDataCompression";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { jotaiStore } from "@module/atoms/store";
-import { formatHash } from "@module/component/HashDisplay";
-import { Spinner } from "@module/component/Spinner";
-import { useQuery } from "@tanstack/react-query";
+import { Fingerprint } from "@shared/module/asset/icons/Fingerprint";
+import { jotaiStore } from "@shared/module/atoms/store";
+import { formatHash } from "@shared/module/component/HashDisplay";
+import { Spinner } from "@shared/module/component/Spinner";
+import {
+    type UseMutationOptions,
+    useMutation,
+    useQuery,
+} from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import "./sso.global.css";
+import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
+import type { Session } from "@/types/Session";
 import { decompressJson } from "@frak-labs/core-sdk";
+import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
 import { Link, useSearchParams } from "react-router";
+import type { Hex } from "viem";
+import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -240,6 +250,30 @@ function Header() {
 
 function Actions({ onSuccess }: { onSuccess: () => void }) {
     const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
+    const privateKey = useAtomValue(demoPrivateKeyAtom);
+    const { login, isLoginInProgress } = useLoginDemo({
+        onSuccess: () => onSuccess(),
+    });
+    const { t } = useTranslation();
+
+    if (privateKey) {
+        return (
+            <p className={styles.sso__primaryButtonWrapper}>
+                <AuthFingerprint
+                    icon={<Fingerprint color={"#fff"} sizes={39} />}
+                    isShiny={false}
+                    action={() => {
+                        login();
+                    }}
+                    disabled={isLoginInProgress}
+                    className={styles.sso__buttonPrimary}
+                    childrenPosition={"top"}
+                >
+                    {t("authent.sso.btn.existing.login")}
+                </AuthFingerprint>
+            </p>
+        );
+    }
 
     // If previous wallet known
     if (lastAuthenticator) {
@@ -276,4 +310,42 @@ function Actions({ onSuccess }: { onSuccess: () => void }) {
             <SsoLoginComponent onSuccess={onSuccess} isPrimary={false} />
         </>
     );
+}
+
+function useLoginDemo(options?: UseMutationOptions<Session>) {
+    const { mutateAsync: demoLogin } = useDemoLogin();
+    /**
+     * Mutation used to launch the login demo process
+     */
+    const {
+        isPending: isLoginInProgress,
+        isSuccess,
+        isError,
+        error,
+        mutateAsync,
+    } = useMutation({
+        ...options,
+        mutationKey: ["demo-login"],
+        async mutationFn() {
+            // Retrieve the pkey
+            const pkey = jotaiStore.get(demoPrivateKeyAtom) as Hex | undefined;
+            if (!pkey) {
+                throw new Error("No private key found");
+            }
+
+            // Get the SSO ID
+            const ssoId = jotaiStore.get(ssoContextAtom)?.id;
+
+            // Launch the login process
+            return demoLogin({ pkey, ssoId: ssoId });
+        },
+    });
+
+    return {
+        isLoginInProgress,
+        isSuccess,
+        isError,
+        error,
+        login: mutateAsync,
+    };
 }

@@ -7,8 +7,8 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
-import { Button } from "@module/component/Button";
-import { InputSearch } from "@module/component/forms/InputSearch";
+import { Button } from "@shared/module/component/Button";
+import { InputSearch } from "@shared/module/component/forms/InputSearch";
 import { format } from "date-fns";
 import { atom, useAtom } from "jotai";
 import { useSetAtom } from "jotai/index";

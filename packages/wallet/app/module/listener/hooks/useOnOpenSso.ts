@@ -1,9 +1,9 @@
-import type { IFrameRequestResolver } from "@/context/sdk/utils/iFrameRequestResolver";
 import {
     ssoPopupFeatures,
     ssoPopupName,
     useGetOpenSsoLink,
 } from "@/module/authentication/hook/useGetOpenSsoLink";
+import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
 import {
     type ExtractedParametersFromRpc,
     type IFrameRpcSchema,

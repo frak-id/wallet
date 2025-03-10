@@ -6,8 +6,8 @@ import {
 import { activeStepAtom } from "@/module/listener/modal/atoms/modalUtils";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
-import { prefixModalCss } from "@module/utils/prefixModalCss";
-import { useAtomValue } from "jotai/index";
+import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
+import { useAtomValue } from "jotai";
 import {
     Fingerprint,
     HandCoins,

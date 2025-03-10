@@ -1,4 +1,4 @@
-import { Button, type ButtonProps } from "@module/component/Button";
+import { Button, type ButtonProps } from "@shared/module/component/Button";
 import { CalendarIcon } from "lucide-react";
 import styles from "./index.module.css";
 

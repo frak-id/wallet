@@ -1,5 +1,5 @@
-import { generateRecoveryData } from "@/context/recover/action/generate";
 import { encryptPrivateKey } from "@/module/recovery-setup/utils/encrypt";
+import { generateRecoveryData } from "@/module/recovery/action/generate";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { useMutation } from "@tanstack/react-query";

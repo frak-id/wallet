@@ -11,6 +11,7 @@ import {
 } from "@/module/listener/modal/atoms/modalUtils";
 import { SiweAuthenticateModalStep } from "@/module/listener/modal/component/Authenticate";
 import { FinalModalStep } from "@/module/listener/modal/component/Final";
+import { MetadataInfo } from "@/module/listener/modal/component/Generic";
 import { LoginModalStep } from "@/module/listener/modal/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/modal/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/modal/component/Transaction";
@@ -20,9 +21,9 @@ import {
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { RpcErrorCodes } from "@frak-labs/core-sdk";
-import { LogoFrakWithName } from "@module/asset/icons/LogoFrakWithName";
-import { jotaiStore } from "@module/atoms/store";
-import { useMediaQuery } from "@module/hook/useMediaQuery";
+import { LogoFrakWithName } from "@shared/module/asset/icons/LogoFrakWithName";
+import { jotaiStore } from "@shared/module/atoms/store";
+import { useMediaQuery } from "@shared/module/hook/useMediaQuery";
 import { useAtomValue } from "jotai";
 import {
     type Dispatch,
@@ -32,7 +33,6 @@ import {
     useEffect,
     useMemo,
 } from "react";
-import { MetadataInfo } from "../Generic";
 import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
 

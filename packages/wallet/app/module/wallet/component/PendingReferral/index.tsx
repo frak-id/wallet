@@ -1,9 +1,9 @@
-import { authenticatedBackendApi } from "@/context/common/backendClient";
-import { encodeWalletMulticall } from "@/context/wallet/utils/multicall";
+import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import { useTranslation } from "react-i18next";

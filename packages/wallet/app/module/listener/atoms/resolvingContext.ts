@@ -1,11 +1,11 @@
-import type { IFrameResolvingContext } from "@/context/sdk/utils/iFrameRequestResolver";
-import { emitLifecycleEvent } from "@/context/sdk/utils/lifecycleEvents";
 import { sessionAtom } from "@/module/common/atoms/session";
+import type { IFrameResolvingContext } from "@/module/sdk/utils/iFrameRequestResolver";
+import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import {
     type ClientLifecycleEvent,
     FrakContextManager,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { atom, useAtomValue } from "jotai";
 import { type Address, isAddressEqual, keccak256, toHex } from "viem";
 

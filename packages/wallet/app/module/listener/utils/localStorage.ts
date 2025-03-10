@@ -1,6 +1,6 @@
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import type { SdkSession, Session } from "@/types/Session";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 
 /**
  * Get an item from the local storage

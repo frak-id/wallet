@@ -148,7 +148,9 @@
         "settings": {
             "biometryInfo": "Informations biométriques",
             "ecdsaInfo": "Informations de connection",
-            "ecdsaWallet": "Portefeuille Ecdsa"
+            "ecdsaWallet": "Portefeuille Ecdsa",
+            "privateKey": "Clé privée",
+            "deletePrivateKey": "Supprimer la clé privée"
         },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
         "interaction": {
@@ -235,6 +237,13 @@
             },
             "notice": "<sup>*</sup> compte numérique crypté où vous pouvez retrouver tout le contenu que vous possédez, vos données de consommation et les récompenses que vous gagnez",
             "useExisting": "Utiliser un porte-monnaie existant"
+        },
+        "registerDemo": {
+            "button": {
+                "create": "Créez votre <strong>porte-monnaie</strong> de démonstration",
+                "error": "Erreur lors de l'inscription, veuillez réessayer",
+                "inProgress": "Création du porte-monnaie en cours"
+            }
         },
         "session": {
             "closed": "Votre porte-monnaie n’est pas activé. Vous ne pouvez pas recevoir vos gains",

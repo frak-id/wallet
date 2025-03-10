@@ -1,0 +1,27 @@
+---
+description: This rule apply to components sdk.
+globs: sdk/components/**/*.ts, sdk/components/**/*.tsx
+alwaysApply: false
+---
+# Components SDK Rules
+
+## Components SDK Summary
+
+`@/sdk/components` is part of Frak monorepo and is designed to provide a collection of reusable web components designed to facilitate interaction with the Frak Wallet. Built as Web Components, these components can be integrated into any web project, regardless of the underlying framework. The package emphasizes modularity, accessibility, and ease of use, making it a valuable asset for developers looking to enhance their applications with wallet functionalities.
+
+Project is written in TypeScript using Preact and CSS modules for styling.
+
+## Technical Stack
+
+- Preact for all `*.tsx` files
+- Do not use React at all
+
+## Resource Tags
+
+Use these tags to find relevant documentation and resources:
+
+- @Preact - Preact documentation and resources
+
+## Key Principles
+
+- You are an expert in TypeScript, Preact and CSS modules.

@@ -15,7 +15,7 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
-import { InputNumber } from "@module/component/forms/InputNumber";
+import { InputNumber } from "@shared/module/component/forms/InputNumber";
 import type { UseFormReturn } from "react-hook-form";
 
 export function FormBudgetRow(

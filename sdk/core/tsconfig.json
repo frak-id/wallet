@@ -18,6 +18,7 @@
     "noImplicitOverride": true, // Not enabled by default in `strict` mode.
     "noUnusedLocals": true, // Not enabled by default in `strict` mode.
     "noUnusedParameters": true, // Not enabled by default in `strict` mode.
+
     // JavaScript support
     "allowJs": false,
     "checkJs": false,
@@ -50,7 +51,7 @@
     "declarationDir": "./dist",
 
     "paths": {
-      "@module/*": ["../../packages/shared/module/*"]
+      "@shared/*": ["../../packages/shared/*"]
     }
   },
   "tsc-alias": {

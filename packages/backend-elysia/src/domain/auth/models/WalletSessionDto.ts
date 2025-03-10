@@ -41,8 +41,11 @@ export const WalletSdkTokenDto = t.Object({
         t.Object({
             // A potential six degrees token if the wallet is routed
             sixDegreesToken: t.Optional(t.String()),
+            // A potential demo pkey if that a demo wallet
+            demoPkey: t.Optional(t.Hex()),
         })
     ),
 });
 
+export type StaticWalletTokenDto = Static<typeof WalletTokenDto>;
 export type StaticWalletSdkTokenDto = Static<typeof WalletSdkTokenDto>;

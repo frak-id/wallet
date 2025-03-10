@@ -15,11 +15,11 @@ import {
     productInteractionManagerAbi,
 } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { AlertDialog } from "@module/component/AlertDialog";
-import { Button } from "@module/component/Button";
-import { Column, Columns } from "@module/component/Columns";
-import { WalletAddress } from "@module/component/HashDisplay";
-import { Spinner } from "@module/component/Spinner";
+import { AlertDialog } from "@shared/module/component/AlertDialog";
+import { Button } from "@shared/module/component/Button";
+import { Column, Columns } from "@shared/module/component/Columns";
+import { WalletAddress } from "@shared/module/component/HashDisplay";
+import { Spinner } from "@shared/module/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";

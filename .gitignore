@@ -1,8 +1,4 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-.env
-.env.tmp
-
-cdk.context.json
 
 # dependencies
 /node_modules
@@ -22,8 +18,11 @@ cdk.context.json
 **/.open-next/
 **/out/
 
-# react router
+# build
 .react-router
+.rslib
+.turbo
+generated-docs/
 
 # production
 build
@@ -40,22 +39,17 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
+.env.tmp
 .env*.local
-
-# vercel
-.vercel
 
 # typescript
 *.tsbuildinfo
-packages/wallet/next-env.d.ts
 
 # sst
+cdk.context.json
 .sst
 sst-env.d.ts
 
+# IDE
 .idea
-
-# Turbo tmp stuff
-.turbo
-
-generated-docs/

@@ -3,8 +3,8 @@ import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampa
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { convertToEuro } from "@/module/common/utils/convertToEuro";
-import { Skeleton } from "@module/component/Skeleton";
-import { computeWithPrecision } from "@module/utils/computeWithPrecision";
+import { Skeleton } from "@shared/module/component/Skeleton";
+import { computeWithPrecision } from "@shared/module/utils/computeWithPrecision";
 import { useQuery } from "@tanstack/react-query";
 import {
     type ColumnFiltersState,

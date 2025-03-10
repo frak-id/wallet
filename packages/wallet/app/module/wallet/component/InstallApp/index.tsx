@@ -1,8 +1,8 @@
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
 import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
-import { WebApp } from "@module/asset/icons/WebApp";
-import { Button } from "@module/component/Button";
+import { WebApp } from "@shared/module/asset/icons/WebApp";
+import { Button } from "@shared/module/component/Button";
 import { Trans } from "react-i18next";
 
 export function InstallApp() {

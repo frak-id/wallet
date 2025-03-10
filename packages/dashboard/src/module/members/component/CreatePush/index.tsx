@@ -10,7 +10,7 @@ import { PushPayloadPanel } from "@/module/members/component/CreatePush/PushPayl
 import { PushTitlePanel } from "@/module/members/component/CreatePush/PushTitlePanel";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import type { NotificationPayload } from "@frak-labs/shared/types/NotificationPayload";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";

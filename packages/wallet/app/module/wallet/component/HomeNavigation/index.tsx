@@ -1,4 +1,4 @@
-import { ButtonRefresh } from "@module/component/ButtonRefresh";
+import { ButtonRefresh } from "@shared/module/component/ButtonRefresh";
 import { HandCoins, RefreshCcw, Send } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";

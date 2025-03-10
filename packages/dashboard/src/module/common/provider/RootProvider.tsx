@@ -5,7 +5,7 @@ import {
     FrakConfigProvider,
     FrakIFrameClientProvider,
 } from "@frak-labs/react-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";

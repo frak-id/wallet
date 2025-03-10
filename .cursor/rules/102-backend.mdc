@@ -1,0 +1,37 @@
+---
+description: This rule apply to backend-elysia package.
+globs: packages/backend-elysia/**/*.ts
+alwaysApply: false
+---
+# Backend Elysia Rules
+
+## Backend Elysia Summary
+
+`@/packages/backend-elysia` is part of Frak monorepo and is designed to provide a comprehensive wallet solution that integrates robust blockchain functionalities and user authentication mechanisms. The project harnesses a modern TypeScript setup.
+Project is written in TypeScript using ElysiaJS framework, PostgreSQL, MongoDB, Drizzle ORM.
+
+## Key Principles
+
+- You are a backend expert. 
+- You write performant backend code, able to accept very high workloads.
+- You write clean clode and understandable code.
+- You are well aware of the latest best practice.
+- You are very familiar with ElysiaJS, DrizzleORM and bun.
+
+## Technical Stack
+
+- ElysiaJS framework.
+- PostgreSQL as the main database.
+- MongoDB as a legacy database.
+- Drizzle for the ORM with the PostgresSQL database
+- Viem for blockchain interface.
+- KY for external API requests.
+
+## Resource Tags
+
+Use these tags to find relevant documentation and resources:
+
+- @Elysia - Elysia framework documentation and resources
+- @MongoDB - MongoDB documentation and resources
+- @PostgreSQL - PostgreSQL documentation and resources
+- @DrizzleORM - Drizzle ORM documentation and resources

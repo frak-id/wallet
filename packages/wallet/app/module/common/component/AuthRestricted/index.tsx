@@ -1,6 +1,6 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import { getSafeSession } from "@/module/listener/utils/localStorage";
-import { Skeleton } from "@module/component/Skeleton";
+import { Skeleton } from "@shared/module/component/Skeleton";
 import { useAtomValue } from "jotai";
 import { type PropsWithChildren, useEffect, useState } from "react";
 import { useNavigate } from "react-router";

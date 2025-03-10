@@ -1,6 +1,6 @@
 import allCssUrl from "@/styles/all.css?url";
-import { ReactScan } from "@module/component/ReactScan";
-import { Spinner } from "@module/component/Spinner";
+import { ReactScan } from "@shared/module/component/ReactScan";
+import { Spinner } from "@shared/module/component/Spinner";
 import type { ReactNode } from "react";
 import type { LinksFunction, MetaFunction } from "react-router";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";

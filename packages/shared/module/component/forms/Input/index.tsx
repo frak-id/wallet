@@ -1,5 +1,5 @@
-import { hasClassName } from "@module/utils/hasClassName";
-import { mergeElement } from "@module/utils/mergeElement";
+import { hasClassName } from "@shared/module/utils/hasClassName";
+import { mergeElement } from "@shared/module/utils/mergeElement";
 import { cva, cx } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 import { isValidElement } from "react";

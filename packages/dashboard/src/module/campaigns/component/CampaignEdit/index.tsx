@@ -10,7 +10,7 @@ import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign, FinalizedCampaignWithState } from "@/types/Campaign";
-import { Button } from "@module/component/Button";
+import { Button } from "@shared/module/component/Button";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";

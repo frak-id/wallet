@@ -1,10 +1,10 @@
-import type { PreviousAuthenticatorModel } from "@/context/common/dexie/PreviousAuthenticatorModel";
 import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useLogin } from "@/module/authentication/hook/useLogin";
+import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
 import { trackEvent } from "@/module/common/utils/trackEvent";
-import { Fingerprint } from "@module/asset/icons/Fingerprint";
-import { AuthFingerprint } from "@module/component/AuthFingerprint";
-import { useAtomValue } from "jotai/index";
+import { Fingerprint } from "@shared/module/asset/icons/Fingerprint";
+import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
+import { useAtomValue } from "jotai";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 

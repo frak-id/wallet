@@ -1,20 +1,20 @@
-import { pushBackupData } from "@/context/sdk/utils/backup";
-import type {
-    IFrameRequestResolver,
-    IFrameResolvingContext,
-    IFrameResponseEmitter,
-} from "@/context/sdk/utils/iFrameRequestResolver";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import {
     getSafeSdkSession,
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
+import { pushBackupData } from "@/module/sdk/utils/backup";
+import type {
+    IFrameRequestResolver,
+    IFrameResolvingContext,
+    IFrameResponseEmitter,
+} from "@/module/sdk/utils/iFrameRequestResolver";
 import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type {
     ExtractedParametersFromRpc,
     IFrameRpcSchema,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@module/atoms/store";
+import { jotaiStore } from "@shared/module/atoms/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { atom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";

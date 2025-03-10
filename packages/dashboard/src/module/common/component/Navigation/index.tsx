@@ -8,7 +8,7 @@ import { Laptop } from "@/assets/icons/Laptop";
 import { Message } from "@/assets/icons/Message";
 import { Users } from "@/assets/icons/Users";
 import { Wallet } from "@/assets/icons/Wallet";
-import { mergeElement } from "@module/utils/mergeElement";
+import { mergeElement } from "@shared/module/utils/mergeElement";
 import { cx } from "class-variance-authority";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";

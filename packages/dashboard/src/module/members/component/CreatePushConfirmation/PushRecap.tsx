@@ -6,7 +6,7 @@ import {
     type FormMembersFiltering,
     MembersFiltering,
 } from "@/module/members/component/MembersFiltering";
-import { Input } from "@module/component/forms/Input";
+import { Input } from "@shared/module/component/forms/Input";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { Address } from "viem";

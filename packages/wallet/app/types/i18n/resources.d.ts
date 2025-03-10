@@ -126,9 +126,9 @@ interface Resources {
                 };
                 loggedIn: {
                     onboarding: {
-                        welcome: "🥳 Congratulations! Your wallet has been created. €0.50 bonus upon creation.";
-                        activate: "🟢 Activate your wallet and earn an extra €0.50";
-                        share: "Already €1.00 in your wallet!<br />Share and earn much more 🤝";
+                        welcome: "🥳 Congratulations! Your wallet is created.";
+                        activate: "💫 Enable it to be able to share.";
+                        share: "🚀 Let's go! Share this product with your loved ones and receive your rewards directly.";
                     };
                 };
             };
@@ -151,6 +151,8 @@ interface Resources {
                 biometryInfo: "Biometry informations";
                 ecdsaInfo: "Login informations";
                 ecdsaWallet: "Ecdsa wallet";
+                privateKey: "Private key";
+                deletePrivateKey: "Delete private key";
             };
             installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
             interaction: {
@@ -237,6 +239,13 @@ interface Resources {
                 };
                 notice: "<sup>*</sup>encrypted digital account where you can find all the content you own, your consumption data and the rewards you earn";
                 useExisting: "Use an existing wallet";
+            };
+            registerDemo: {
+                button: {
+                    create: "Create your demo <strong>wallet</strong>";
+                    error: "Error during registration, please try again";
+                    inProgress: "Wallet creation in progress";
+                };
             };
             session: {
                 closed: "Your wallet is not activated. You can’t be rewarded.";

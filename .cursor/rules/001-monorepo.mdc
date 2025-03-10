@@ -1,0 +1,77 @@
+---
+description: This rule apply to every file in the monorepo.
+globs: *.ts, *.tsx, *.css
+alwaysApply: true
+---
+# Monorepo Rules
+
+## Monorepo Summary
+
+This is a Monorepo that defines multiple projects under `@/packages`, `@/sdk` and `@/example` directories.
+Projects are written in TypeScript, SST and Pulumi for deploying, toolings with Bun, Biome, Changesets and Typedoc.
+
+This monorepo contain all the ressources used for the Frak-Labs ecosystem, frontends, exemple, backends.
+Every components of the ecosystem are critical, with a very high-work loads. 
+Performance is mandatory on every part of this monorepo.
+
+## Technical Stack
+
+- Typedoc for commenting
+- Changesets for packages versioning
+- Bun as package manager, do not use npm, pnpm or yarn
+
+## Key Principles
+
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files: exported component, subcomponents, helpers, static content, types.
+
+##  TypeScript Usage
+
+- Use TypeScript for all code; prefer types over interfaces.
+- Avoid enums; use maps instead.
+- Use functional components with TypeScript types.
+- Use absolute imports for all files @/...
+- Avoid try/catch blocks unless there's good reason to translate or handle error in that abstraction
+
+##  Syntax and Formatting
+
+- Use early returns whenever possible to make the code more readable.
+- Use the "function" keyword for pure functions.
+- Use descriptive variable and function/const names. 
+- Event functions should be named with a “handle” prefix, like “handleClick” for onClick and “handleKeyDown” for onKeyDown.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Always use async/await over callbacks
+
+## Best Practices
+
+- Ensure secure, efficient code following RESTful API best practices
+- Respect SOLID principles
+- Respect DRY principles
+- Focus on performance and readability
+
+## Documentation and Comments
+
+- Write comprehensive documentation
+- Include detailed comments explaining infrastructure decisions and implications
+- Avoid personal pronouns in documentation
+- Keep documentation up to date with changes
+
+## Rewrite, Improve, and Refactor:
+
+- When refactoring or fixing code, make sure to keep the code clean and easy to understand without duplicating code.
+- Keep the code clean and easy to understand.
+- Keep the code DRY (Don't Repeat Yourself).
+- Keep the code clean and easy to understand.
+- After fixing an issue, mention the case in the docstring so future changes won't break it again.
+
+## Planning:
+
+- Always plan the code before writing it.
+- Think about how the new code will fit into the existing codebase.
+- Think about how the new code will interact with the other parts of the codebase.
+- Think about how the new code will handle errors and edge cases.
+- Think about how the new code will interact with the blockchain.
+- Think about how the new code will be used by the developers.
