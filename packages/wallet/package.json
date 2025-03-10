@@ -53,8 +53,6 @@
     "react": "^19",
     "react-avatar-editor": "^13.0.2",
     "react-dom": "^19",
-    "react-drag-drop-files": "^2.4.0",
-    "react-dropzone-esm": "^15.2.0",
     "react-hook-form": "^7.54.2",
     "react-i18next": "^15.4.1",
     "react-loading-skeleton": "^3.5.0",

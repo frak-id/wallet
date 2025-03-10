@@ -4,11 +4,10 @@ import {
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import type { RecoveryFileContent } from "@/types/Recovery";
+import { Uploader } from "@shared/module/component/Uploader";
 import { useAtom, useSetAtom } from "jotai";
 import { useCallback } from "react";
-import Dropzone from "react-dropzone-esm";
 import { useTranslation } from "react-i18next";
-import styles from "./Step1.module.css";
 
 const ACTUAL_STEP = 1;
 
@@ -54,22 +53,12 @@ export function Step1() {
             actualStep={ACTUAL_STEP}
             title={t("wallet.recovery.step1")}
         >
-            <Dropzone
+            <Uploader
                 onDrop={handleChange}
                 disabled={fileContent !== null}
-                maxFiles={1}
                 accept={{ "application/json": [".json"] }}
-            >
-                {({ getRootProps, getInputProps }) => (
-                    <div {...getRootProps()} className={styles.step1__uploader}>
-                        <input
-                            {...getInputProps()}
-                            className={styles.step1__uploaderInput}
-                        />
-                        <p>{t("wallet.recovery.uploadOrDrag")}</p>
-                    </div>
-                )}
-            </Dropzone>
+                text={t("wallet.recovery.uploadOrDrag")}
+            />
         </AccordionRecoveryItem>
     );
 }

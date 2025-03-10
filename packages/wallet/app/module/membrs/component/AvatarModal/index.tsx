@@ -3,10 +3,10 @@ import { uploadProfilePhotoAtom } from "@/module/membrs/atoms/uploadProfilePhoto
 import { Upload } from "@shared/module/asset/icons/Upload";
 import { Button } from "@shared/module/component/Button";
 import { Slider } from "@shared/module/component/Slider";
-import { useSetAtom } from "jotai";
+import { Uploader } from "@shared/module/component/Uploader";
+import { atom, useAtom, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactAvatarEditor from "react-avatar-editor";
-import { FileUploader } from "react-drag-drop-files";
 import { useTranslation } from "react-i18next";
 import { AvatarCamera } from "../AvatarCamera";
 import styles from "./index.module.css";
@@ -15,7 +15,12 @@ import styles from "./index.module.css";
 const AVATAR_EDITOR_SIZE = 250;
 const INITIAL_SCALE = 1;
 const INITIAL_POSITION = { x: 0.5, y: 0.5 };
-const ALLOWED_FILE_TYPES = ["jpg", "jpeg", "png", "gif", "webp"];
+const ALLOWED_FILE_TYPES = {
+    "image/jpeg": [".jpg", ".jpeg"],
+    "image/gif": [".gif"],
+    "image/png": [".png"],
+    "image/webp": [".webp"],
+};
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.01;
 
@@ -28,24 +33,24 @@ type Position = {
 type ImageSource = string | File | undefined;
 
 /**
+ * Local open modal atom
+ * @description This atom is used to open the modal
+ */
+const localOpenModal = atom(false);
+
+/**
  * Modal component for uploading and editing profile avatar
  */
 export function AvatarModal() {
     const { t } = useTranslation();
-    const [openModal, setOpenModal] = useState(false);
-    const setProfilePhoto = useSetAtom(uploadProfilePhotoAtom);
+    const [openModal, setOpenModal] = useAtom(localOpenModal);
 
     return (
         <AlertDialog
             open={openModal}
             onOpenChange={setOpenModal}
             title={t("wallet.membrs.profile.avatar.title")}
-            text={
-                <AvatarEditorPanel
-                    setOpenModal={setOpenModal}
-                    setProfilePhoto={setProfilePhoto}
-                />
-            }
+            text={<AvatarEditorPanel />}
             button={{
                 label: <Upload />,
                 className: `button ${styles.avatarModal__upload}`,
@@ -54,23 +59,17 @@ export function AvatarModal() {
     );
 }
 
-type AvatarEditorPanelProps = {
-    setOpenModal: (open: boolean) => void;
-    setProfilePhoto: (photo: string) => void;
-};
-
 /**
  * Avatar editor component with file upload, camera capture, and image editing
  */
-function AvatarEditorPanel({
-    setOpenModal,
-    setProfilePhoto,
-}: AvatarEditorPanelProps) {
+function AvatarEditorPanel() {
     const { t } = useTranslation();
     const editorRef = useRef<ReactAvatarEditor | null>(null);
     const [image, setImage] = useState<ImageSource>();
     const [scale, setScale] = useState<number>(INITIAL_SCALE);
     const [position, setPosition] = useState<Position>(INITIAL_POSITION);
+    const setProfilePhoto = useSetAtom(uploadProfilePhotoAtom);
+    const setOpenModal = useSetAtom(localOpenModal);
 
     /**
      * Reset editor to initial settings
@@ -90,13 +89,13 @@ function AvatarEditorPanel({
      * Handle file upload
      */
     const handleFileUpload = useCallback(
-        (file: File | null) => {
-            if (!file) {
+        (files: File[] | null) => {
+            if (!files || files.length === 0) {
                 setImage(undefined);
                 return;
             }
             resetEditorSettings();
-            setImage(file);
+            setImage(files[0]);
         },
         [resetEditorSettings]
     );
@@ -123,12 +122,10 @@ function AvatarEditorPanel({
 
     return (
         <>
-            <FileUploader
-                handleChange={handleFileUpload}
-                label={t("wallet.membrs.profile.avatar.upload")}
-                types={ALLOWED_FILE_TYPES}
-                hoverTitle={" "}
-                classes={`${styles.avatarModal__uploader}`}
+            <Uploader
+                onDrop={handleFileUpload}
+                text={t("wallet.membrs.profile.avatar.upload")}
+                accept={ALLOWED_FILE_TYPES}
             />
 
             <AvatarCamera setImage={setImage} />
