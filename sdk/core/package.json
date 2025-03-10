@@ -89,9 +89,9 @@
     "js-sha256": "^0.11.0"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.3",
-    "@microsoft/api-extractor": "^7.50.1",
-    "@rslib/core": "^0.5.2",
+    "@arethetypeswrong/cli": "^0.17.4",
+    "@microsoft/api-extractor": "^7.51.1",
+    "@rslib/core": "^0.5.4",
     "@types/node": "^22",
     "ts-checker-rspack-plugin": "^1.1.1",
     "typescript": "^5"

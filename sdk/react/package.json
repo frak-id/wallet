@@ -70,10 +70,10 @@
     "react": ">=18"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.3",
-    "@microsoft/api-extractor": "^7.50.1",
+    "@arethetypeswrong/cli": "^0.17.4",
+    "@microsoft/api-extractor": "^7.51.1",
     "@rsbuild/plugin-react": "^1.1.1",
-    "@rslib/core": "^0.5.2",
+    "@rslib/core": "^0.5.4",
     "@types/node": "^22",
     "typescript": "^5"
   },
