@@ -1,5 +1,15 @@
 # @frak-labs/components
 
+## 0.0.11
+
+### Patch Changes
+
+- [`aa3c9f5`](https://github.com/frak-id/wallet/commit/aa3c9f5faf690110f4c5de5700c5e825e731941c) Thanks [@srod](https://github.com/srod)! - ✨ Build all SDK with rslib
+  ✨ Build components SDK as a library to be published on NPM
+  ✨ Refactor component loader for CDN distribution
+- Updated dependencies [[`aa3c9f5`](https://github.com/frak-id/wallet/commit/aa3c9f5faf690110f4c5de5700c5e825e731941c)]:
+  - @frak-labs/core-sdk@0.0.8
+
 ## 0.0.10
 
 ### Patch Changes
