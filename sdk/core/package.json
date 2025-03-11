@@ -90,7 +90,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.4",
-    "@microsoft/api-extractor": "^7.51.1",
+    "@microsoft/api-extractor": "^7.52.1",
     "@rslib/core": "^0.5.4",
     "@types/node": "^22",
     "ts-checker-rspack-plugin": "^1.1.1",
