@@ -7,6 +7,7 @@ They are built as [Web Components](https://developer.mozilla.org/en-US/docs/Web/
 Checkout our documentation for more information's about the usage:
  - [Components](https://docs.frak.id/components)
  - [Share Button usage](https://docs.frak.id/components/share-button)
+ - [Wallet Button usage](https://docs.frak.id/components/wallet-button)
 
 To have more info about how does it works under the hood, you can check [this](https://docs.frak.id/wallet-sdk/under-the-hood)
 
@@ -15,7 +16,7 @@ To have more info about how does it works under the hood, you can check [this](h
 Add the following script tag to your HTML file:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@frak-labs/components" defer="defer"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@frak-labs/components" defer="defer"></script>
 ```
 
 ## Quick start
@@ -32,7 +33,7 @@ window.FrakSetup = {
 };
 ```
 
-## Sample usage
+## Sample usage for Share button
 
 Sample code to use share button:
 
@@ -50,4 +51,18 @@ Button with custom class:
 
 ```html
 <frak-button-share classname="button button-primary"></frak-button-share>
+```
+
+## Sample usage for Wallet button
+
+Sample code to use wallet button:
+
+```html
+<frak-button-wallet></frak-button-wallet>
+```
+
+Button with custom class:
+
+```html
+<frak-button-wallet classname="button button-primary"></frak-button-wallet>
 ```
