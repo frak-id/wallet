@@ -1,6 +1,5 @@
 import { Logout } from "@/module/authentication/component/Logout";
 import { Grid } from "@/module/common/component/Grid";
-import { EditProfile } from "@/module/membrs/component/EditProfile";
 import { RemoveAllNotification } from "@/module/notification/component/RemoveAllNotification";
 import { CloseSession } from "@/module/settings/component/CloseSession";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
@@ -12,7 +11,7 @@ export default function Settings() {
         <Grid
             footer={
                 <>
-                    <EditProfile />
+                    {/* <EditProfile /> */}
                     <Logout />
                 </>
             }
