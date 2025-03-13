@@ -24,6 +24,26 @@ function getCurrencyAmountKey(currency: Currency): keyof TokenAmountType {
 }
 
 /**
+ * Get the supported locale for a given currency
+ * @param currency - The currency to use
+ * @returns The supported locale
+ */
+function getSupportedLocale(
+    currency: Currency
+): (typeof mapLocales)[keyof typeof mapLocales] {
+    return mapLocales[currency] ?? mapLocales.eur;
+}
+
+/**
+ * Get the supported currency for a given currency
+ * @param currency - The currency to use
+ * @returns The supported currency
+ */
+function getSupportedCurrency(currency: Currency): Currency {
+    return currency in mapLocales ? currency : "eur";
+}
+
+/**
  * The parameters for the getCurrentReward function
  */
 type GetCurrentRewardParams = {
@@ -51,22 +71,30 @@ export async function getCurrentReward({
 
     if (!maxReferrer) return;
 
-    let currentReward = maxReferrer[getCurrencyAmountKey(currency)];
+    // Get the supported locale (e.g. "fr-FR")
+    const supportedLocale = getSupportedLocale(currency);
+
+    // Get the supported currency (e.g. "eur")
+    const supportedCurrency = getSupportedCurrency(currency);
+
+    // Get the currency amount key (e.g. "eurAmount")
+    const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
+
+    // Get the current reward
+    let currentReward = maxReferrer[currencyAmountKey];
     if (targetInteraction) {
         // Find the max reward for the target interaction
         const targetReward = rewards
             .filter((reward) => reward.interactionTypeKey === targetInteraction)
-            .map((reward) => reward.referrer[getCurrencyAmountKey(currency)])
+            .map((reward) => reward.referrer[currencyAmountKey])
             .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
         if (targetReward > 0) {
             currentReward = Math.ceil(targetReward);
         }
     }
 
-    const formattedReward = currentReward.toLocaleString(mapLocales[currency], {
+    return currentReward.toLocaleString(supportedLocale, {
         style: "currency",
-        currency: currency,
+        currency: supportedCurrency,
     });
-
-    return formattedReward;
 }
