@@ -5,7 +5,9 @@ export type BalanceItem = {
     name: string;
     symbol: string;
     decimals: number;
-    balance: number;
-    eurBalance: number;
     rawBalance: Hex;
+    amount: number;
+    eurAmount: number;
+    usdAmount: number;
+    gbpAmount: number;
 };

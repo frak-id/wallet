@@ -18,7 +18,7 @@ export function Balance() {
                 {t("common.balance")}
             </Title>
             <p className={styles.balance__amount}>
-                {userBalance?.eurBalance?.toFixed(2) ?? 0}€
+                {userBalance?.total?.eurAmount?.toFixed(2) ?? 0}€
             </p>
         </div>
     );

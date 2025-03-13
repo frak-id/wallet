@@ -44,18 +44,30 @@ const FrakType = {
             })
             .Encode((value) => value as Hex);
     },
+    /**
+     * Type for the amount of tokens
+     */
+    TokenAmountType: () => {
+        return t.Object({
+            amount: t.Number(),
+            eurAmount: t.Number(),
+            usdAmount: t.Number(),
+            gbpAmount: t.Number(),
+        });
+    },
 };
 
 declare module "@sinclair/typebox" {
     interface JavaScriptTypeBuilder {
         Address: typeof FrakType.AddressType;
         Hex: typeof FrakType.HexType;
+        TokenAmount: typeof FrakType.TokenAmountType;
     }
 }
 
 t.Address = FrakType.AddressType;
 t.Hex = FrakType.HexType;
-
+t.TokenAmount = FrakType.TokenAmountType;
 /**
  * Export our new type system
  */

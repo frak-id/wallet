@@ -52,7 +52,7 @@ function Balance() {
                 </span> */}
             </h2>
             <p className={styles.balance__amount}>
-                {userBalance?.eurBalance?.toFixed(2) ?? 0}€
+                {userBalance?.total?.eurAmount?.toFixed(2) ?? 0}€
             </p>
             {isOnboarding && <OnboardingWelcome />}
         </div>

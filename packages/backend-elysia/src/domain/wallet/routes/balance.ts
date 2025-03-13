@@ -40,22 +40,30 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                             name: tokenBalance.metadata.name,
                             symbol: tokenBalance.metadata.symbol,
                             decimals: tokenBalance.metadata.decimals,
-                            balance: tokenBalance.balance,
-                            eurBalance: tokenBalance.balance * price.eur,
                             rawBalance: toHex(tokenBalance.rawBalance),
+                            // Formatted amount
+                            amount: tokenBalance.balance,
+                            eurAmount: tokenBalance.balance * price.eur,
+                            usdAmount: tokenBalance.balance * price.usd,
+                            gbpAmount: tokenBalance.balance * price.gbp,
                         };
                     })
                 )
             );
 
-            // Get the total eur balance
-            const eurBalance = mappedBalances.reduce(
-                (acc, { eurBalance }) => acc + eurBalance,
-                0
+            // Get the total balance
+            const totalBalance = mappedBalances.reduce(
+                (acc, { amount, eurAmount, usdAmount, gbpAmount }) => ({
+                    amount: acc.amount + amount,
+                    eurAmount: acc.eurAmount + eurAmount,
+                    usdAmount: acc.usdAmount + usdAmount,
+                    gbpAmount: acc.gbpAmount + gbpAmount,
+                }),
+                { amount: 0, eurAmount: 0, usdAmount: 0, gbpAmount: 0 }
             );
 
             return {
-                eurBalance,
+                total: totalBalance,
                 balances: mappedBalances,
             };
         },
@@ -64,17 +72,20 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             response: {
                 401: t.String(),
                 200: t.Object({
-                    eurBalance: t.Number(),
+                    // Total
+                    total: t.TokenAmount(),
+                    // Details about the balances
                     balances: t.Array(
-                        t.Object({
-                            token: t.Address(),
-                            name: t.String(),
-                            symbol: t.String(),
-                            decimals: t.Number(),
-                            balance: t.Number(),
-                            eurBalance: t.Number(),
-                            rawBalance: t.Hex(),
-                        })
+                        t.Union([
+                            t.TokenAmount(),
+                            t.Object({
+                                token: t.Address(),
+                                name: t.String(),
+                                symbol: t.String(),
+                                decimals: t.Number(),
+                                rawBalance: t.Hex(),
+                            }),
+                        ])
                     ),
                 }),
             },
@@ -91,7 +102,12 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                 .json<GetRewardResponseDto>();
             if (!rewards.length) {
                 return {
-                    eurClaimable: 0,
+                    total: {
+                        amount: 0,
+                        eurAmount: 0,
+                        usdAmount: 0,
+                        gbpAmount: 0,
+                    },
                     claimables: [],
                 };
             }
@@ -118,26 +134,35 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                     );
 
                     return {
+                        // Basic info
                         contract: reward.address,
                         token: reward.token,
                         name: token.name,
                         symbol: token.symbol,
                         decimals: token.decimals,
-                        balance: balance,
-                        eurBalance: balance * price.eur,
                         rawBalance: toHex(rawBalance),
+                        // Formatted amount
+                        amount: balance,
+                        eurAmount: balance * price.eur,
+                        usdAmount: balance * price.usd,
+                        gbpAmount: balance * price.gbp,
                     };
                 });
             const claimables = sift(await Promise.all(claimablesAsync));
 
-            // Get the total eur claimable
-            const eurClaimable = claimables.reduce(
-                (acc, { eurBalance }) => acc + eurBalance,
-                0
+            // Get the total claimable
+            const totalClaimable = claimables.reduce(
+                (acc, { amount, eurAmount, usdAmount, gbpAmount }) => ({
+                    amount: acc.amount + amount,
+                    eurAmount: acc.eurAmount + eurAmount,
+                    usdAmount: acc.usdAmount + usdAmount,
+                    gbpAmount: acc.gbpAmount + gbpAmount,
+                }),
+                { amount: 0, eurAmount: 0, usdAmount: 0, gbpAmount: 0 }
             );
 
             return {
-                eurClaimable,
+                total: totalClaimable,
                 claimables,
             };
         },
@@ -146,18 +171,21 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             response: {
                 401: t.String(),
                 200: t.Object({
-                    eurClaimable: t.Number(),
+                    // Total claimable
+                    total: t.TokenAmount(),
+                    // Details about the claimable rewards
                     claimables: t.Array(
-                        t.Object({
-                            contract: t.Address(),
-                            token: t.Address(),
-                            name: t.String(),
-                            symbol: t.String(),
-                            decimals: t.Number(),
-                            balance: t.Number(),
-                            eurBalance: t.Number(),
-                            rawBalance: t.Hex(),
-                        })
+                        t.Union([
+                            t.TokenAmount(),
+                            t.Object({
+                                contract: t.Address(),
+                                token: t.Address(),
+                                name: t.String(),
+                                symbol: t.String(),
+                                decimals: t.Number(),
+                                rawBalance: t.Hex(),
+                            }),
+                        ])
                     ),
                 }),
             },

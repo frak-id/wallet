@@ -9,7 +9,7 @@ export function TokenItemLite({
 }) {
     return (
         <li className={`${styles.tokenItemLite}`}>
-            <TokenLogo token={token} size={16} /> {token.eurBalance}
+            <TokenLogo token={token} size={16} /> {token.eurAmount}
             {" €"}
         </li>
     );

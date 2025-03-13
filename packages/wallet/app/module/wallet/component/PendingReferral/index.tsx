@@ -75,7 +75,7 @@ export function PendingReferral() {
         },
     });
 
-    if (!pendingReward?.eurClaimable) {
+    if (!pendingReward?.total?.eurAmount) {
         return null;
     }
 
@@ -93,8 +93,7 @@ export function PendingReferral() {
                 <>
                     <p>
                         {t("wallet.pendingReferral.text", {
-                            eurClaimable:
-                                pendingReward?.eurClaimable?.toFixed(2),
+                            eurClaimable: pendingReward?.total?.eurAmount?.toFixed(2),
                         })}
                     </p>
                     <Button

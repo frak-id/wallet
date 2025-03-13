@@ -24,6 +24,7 @@ type Amount = {
     amount: number;
     eurAmount: number;
     usdAmount: number;
+    gbpAmount: number;
 };
 
 export type ActiveReward = {
@@ -160,6 +161,7 @@ export class CampaignRewardsService {
             amount,
             eurAmount: price.eur * amount,
             usdAmount: price.usd * amount,
+            gbpAmount: price.gbp * amount,
         };
     }
 
