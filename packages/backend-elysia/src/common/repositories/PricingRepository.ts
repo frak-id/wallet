@@ -7,6 +7,7 @@ import { type Address, isAddressEqual } from "viem";
 export type TokenPrice = {
     eur: number;
     usd: number;
+    gbp: number;
 };
 
 export class PricingRepository {
@@ -68,12 +69,13 @@ export class PricingRepository {
                 | {
                       usd: number;
                       eur: number;
+                      gbp: number;
                   }
                 | undefined;
         }>("simple/token_price/arbitrum-one", {
             searchParams: {
                 contract_addresses: finalToken,
-                vs_currencies: "usd,eur",
+                vs_currencies: "usd,eur,gbp",
             },
         });
 

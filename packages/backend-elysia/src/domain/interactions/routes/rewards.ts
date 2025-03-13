@@ -5,6 +5,20 @@ import { interactionsContext } from "../context";
 import { CampaignDataRepository } from "../repositories/CampaignDataRepository";
 import { CampaignRewardsService } from "../services/CampaignRewardsService";
 
+const TokenAmountType = t.Object({
+    amount: t.Number(),
+    eurAmount: t.Number(),
+    usdAmount: t.Number(),
+    gbpAmount: t.Number(),
+});
+
+const emptyTokenAmount = {
+    amount: 0,
+    eurAmount: 0,
+    usdAmount: 0,
+    gbpAmount: 0,
+};
+
 export const rewardsRoutes = new Elysia({ prefix: "/reward" })
     .use(interactionsContext)
     .use(indexerApiContext)
@@ -49,26 +63,25 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
                 : activeRewards;
             if (!filteredRewards.length) return null;
 
-            // Get the max amount that can be distributed for the referrer and the referee
-            const maxReferrerEurAmount = filteredRewards.reduce(
+            // Get the total for both referrer and referee
+            const maxReferrer = filteredRewards.reduce(
                 (acc, reward) =>
-                    reward.referrer.eurAmount > acc
-                        ? reward.referrer.eurAmount
-                        : acc,
-                0
+                    reward.referrer.amount > acc.amount ? reward.referrer : acc,
+                emptyTokenAmount
             );
-            const maxRefereeAmount = filteredRewards.reduce(
+            const maxReferee = filteredRewards.reduce(
                 (acc, reward) =>
-                    reward.referee.eurAmount > acc
-                        ? reward.referee.eurAmount
-                        : acc,
-                0
+                    reward.referee.amount > acc.amount ? reward.referee : acc,
+                emptyTokenAmount
             );
 
             return {
-                totalReferrerEur: maxReferrerEurAmount,
-                totalRefereeEur: maxRefereeAmount,
+                maxReferee,
+                maxReferrer,
                 activeRewards: filteredRewards,
+                // to be deleted once everything is up to date
+                totalReferrerEur: maxReferrer.eurAmount,
+                totalRefereeEur: maxReferee.eurAmount,
             };
         },
         {
@@ -78,23 +91,17 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
             }),
             response: t.Union([
                 t.Object({
-                    totalReferrerEur: t.Number(),
-                    totalRefereeEur: t.Number(),
+                    // Total for both referrer and referee
+                    maxReferrer: TokenAmountType,
+                    maxReferee: TokenAmountType,
+                    // Array of all the activate rewards
                     activeRewards: t.Array(
                         t.Object({
                             campaign: t.Address(),
                             interactionTypeKey: t.String(),
                             token: t.Address(),
-                            referrer: t.Object({
-                                amount: t.Number(),
-                                eurAmount: t.Number(),
-                                usdAmount: t.Number(),
-                            }),
-                            referee: t.Object({
-                                amount: t.Number(),
-                                eurAmount: t.Number(),
-                                usdAmount: t.Number(),
-                            }),
+                            referrer: TokenAmountType,
+                            referee: TokenAmountType,
                             triggerData: t.Union([
                                 t.Object({
                                     baseReward: t.Number(),
@@ -107,6 +114,9 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
                             ]),
                         })
                     ),
+                    // @deprecated: for legacy purposes, should use the `maxReferee` o `maxReferrer` fields
+                    totalReferrerEur: t.Number(),
+                    totalRefereeEur: t.Number(),
                 }),
                 t.Null(),
             ]),
