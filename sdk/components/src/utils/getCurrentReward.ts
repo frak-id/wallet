@@ -6,13 +6,13 @@ import type {
 import { getProductInformation } from "@frak-labs/core-sdk/actions";
 
 /**
- * Map the currency to the symbol
+ * Map the currency to the locale
  */
-const mapCurrencyToSymbol = {
-    eur: "€",
-    usd: "$",
-    gbp: "£",
-};
+const mapLocales = {
+    eur: "fr-FR",
+    usd: "en-US",
+    gbp: "en-GB",
+} as const;
 
 /**
  * Get the currency amount key for a given currency
@@ -63,8 +63,10 @@ export async function getCurrentReward({
         }
     }
 
-    return {
-        amount: currentReward,
-        symbol: mapCurrencyToSymbol[currency],
-    };
+    const formattedReward = currentReward.toLocaleString(mapLocales[currency], {
+        style: "currency",
+        currency: currency,
+    });
+
+    return formattedReward;
 }

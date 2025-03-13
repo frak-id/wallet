@@ -1,4 +1,4 @@
-import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import type { Currency, FullInteractionTypesKey } from "@frak-labs/core-sdk";
 
 /**
  * The props type for {@link ButtonWallet}.
@@ -22,5 +22,5 @@ export type ButtonWalletProps = {
      * The currency to use for the reward
      * @defaultValue `"eur"`
      */
-    currency?: "eur" | "usd" | "gbp";
+    currency?: Currency;
 };

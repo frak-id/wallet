@@ -46,6 +46,7 @@ export const estimatedInteractionRewardQuery = ({
         // Return formatted stuff
         return {
             maxReferrer: data.maxReferrer,
+            maxReferee: data.maxReferee,
             rewards:
                 data.activeRewards as GetProductInformationReturnType["rewards"],
         };

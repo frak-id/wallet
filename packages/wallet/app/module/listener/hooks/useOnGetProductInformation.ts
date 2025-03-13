@@ -46,6 +46,7 @@ export function useOnGetProductInformation(): OnGetProductInformation {
                 result: {
                     id: productId,
                     maxReferrer: estimatedReward?.maxReferrer,
+                    maxReferee: estimatedReward?.maxReferee,
                     rewards: estimatedReward?.rewards ?? [],
                     onChainMetadata: productMetadata,
                 },
