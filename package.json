@@ -30,7 +30,6 @@
     "@changesets/cli": "^2.28.1",
     "@pulumi/aws": "^6.71.0",
     "@pulumi/pulumi": "^3.154.0",
-    "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/node": "^22.13.10",
     "@vitejs/plugin-react": "^4.3.4",
