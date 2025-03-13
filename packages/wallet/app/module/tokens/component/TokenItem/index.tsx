@@ -19,7 +19,7 @@ export function TokenItem({
             >
                 <TokenLogo token={token} size={32} />{" "}
                 <span>
-                    <strong>{token.balance}</strong> {token.symbol}
+                    <strong>{token.amount}</strong> {token.symbol}
                 </span>
             </button>
         </li>

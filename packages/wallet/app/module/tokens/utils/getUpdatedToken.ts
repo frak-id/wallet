@@ -6,8 +6,8 @@ export function getUpdatedToken({
     selectedToken,
 }: { tokens: BalanceItem[]; selectedToken: BalanceItem }) {
     return tokens.find(
-        ({ token, balance }) =>
+        ({ token, amount }) =>
             isAddressEqual(token, selectedToken?.token ?? zeroAddress) &&
-            balance !== selectedToken?.balance
+            amount !== selectedToken?.amount
     );
 }

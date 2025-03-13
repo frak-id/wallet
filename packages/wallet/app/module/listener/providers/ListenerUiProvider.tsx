@@ -119,7 +119,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             : {};
 
         // Find the right estimated reward depending on the context
-        let estimatedReward = rewardData?.estimatedEurReward;
+        let estimatedReward = rewardData?.maxReferrer?.eurAmount;
         if (rewardData && currentRequest?.targetInteraction) {
             // Find the max reward for the target interaction
             const targetReward = rewardData.rewards
@@ -132,7 +132,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
             // If found a reward, set it as the estimated reward
             if (targetReward > 0) {
-                estimatedReward = Math.ceil(targetReward).toString();
+                estimatedReward = Math.ceil(targetReward);
             }
         }
 

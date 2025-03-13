@@ -93,7 +93,8 @@ export function PendingReferral() {
                 <>
                     <p>
                         {t("wallet.pendingReferral.text", {
-                            eurClaimable: pendingReward?.total?.eurAmount?.toFixed(2),
+                            eurClaimable:
+                                pendingReward?.total?.eurAmount?.toFixed(2),
                         })}
                     </p>
                     <Button

@@ -92,7 +92,7 @@ const AmountInput = function AmountInput({
     const { t } = useTranslation();
 
     const handleMaxClick = useCallback(() => {
-        setValue("amount", selectedToken?.balance.toString(), {
+        setValue("amount", selectedToken?.amount.toString(), {
             shouldValidate: true,
         });
     }, [selectedToken, setValue]);
@@ -108,7 +108,7 @@ const AmountInput = function AmountInput({
     return (
         <p className={styles.tokensSend__inputWrapper}>
             <label htmlFor="amount" className={styles.tokensSend__label}>
-                {t("common.balance")}: {selectedToken.balance}
+                {t("common.balance")}: {selectedToken.amount}
                 <TokenMax onClick={handleMaxClick} />
             </label>
             <Input
