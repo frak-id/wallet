@@ -3,6 +3,21 @@ import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
 import type { ProductTypesKey } from "../../constants/productTypes";
 
 /**
+ * The currency available for the reward
+ */
+export type Currency = "eur" | "usd" | "gbp";
+
+/**
+ * The type for the amount of tokens
+ */
+export type TokenAmountType = {
+    amount: number;
+    eurAmount: number;
+    usdAmount: number;
+    gbpAmount: number;
+};
+
+/**
  * Response of the `frak_getProductInformation` RPC method
  * @group RPC Schema
  */
@@ -29,9 +44,13 @@ export type GetProductInformationReturnType = {
         productTypes: ProductTypesKey[];
     };
     /**
-     * The max potential reward in EUR for the given product
+     * The max potential reward for the referrer
      */
-    estimatedEurReward?: string;
+    maxReferrer?: TokenAmountType;
+    /**
+     * The max potential reward for the referee
+     */
+    maxReferee?: TokenAmountType;
     /**
      * List of all the potentials reward arround this product
      */
@@ -39,15 +58,7 @@ export type GetProductInformationReturnType = {
         token: Address;
         campaign: Address;
         interactionTypeKey: FullInteractionTypesKey;
-        referrer: {
-            amount: number;
-            eurAmount: number;
-            usdAmount: number;
-        };
-        referee: {
-            amount: number;
-            eurAmount: number;
-            usdAmount: number;
-        };
+        referrer: TokenAmountType;
+        referee: TokenAmountType;
     }[];
 };

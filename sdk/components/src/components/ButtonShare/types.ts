@@ -33,4 +33,9 @@ export type ButtonShareProps = {
      * @defaultValue `false`
      */
     showWallet?: boolean;
+    /**
+     * The currency to use for the reward
+     * @defaultValue `"eur"`
+     */
+    currency?: "eur" | "usd" | "gbp";
 };

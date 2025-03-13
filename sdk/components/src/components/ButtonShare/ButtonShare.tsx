@@ -73,6 +73,7 @@ export function ButtonShare({
     noRewardText,
     targetInteraction,
     showWallet: rawShowWallet,
+    currency = "eur",
 }: ButtonShareProps) {
     const shouldUseReward = useMemo(
         () => rawUseReward !== undefined,
@@ -85,7 +86,8 @@ export function ButtonShare({
     const { isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
-        targetInteraction
+        targetInteraction,
+        currency
     );
     const { handleShare, isError, debugInfo } =
         useShareModal(targetInteraction);

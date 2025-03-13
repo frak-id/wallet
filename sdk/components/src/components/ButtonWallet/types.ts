@@ -18,4 +18,9 @@ export type ButtonWalletProps = {
      * Target interaction behind this sharing action (will be used to get the right reward to display)
      */
     targetInteraction?: FullInteractionTypesKey;
+    /**
+     * The currency to use for the reward
+     * @defaultValue `"eur"`
+     */
+    currency?: "eur" | "usd" | "gbp";
 };

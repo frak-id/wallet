@@ -10,7 +10,11 @@ export type {
     SsoMetadata,
     OpenSsoParamsType,
 } from "./rpc/sso";
-export type { GetProductInformationReturnType } from "./rpc/productInformation";
+export type {
+    Currency,
+    TokenAmountType,
+    GetProductInformationReturnType,
+} from "./rpc/productInformation";
 export type {
     PreparedInteraction,
     SendInteractionParamsType,

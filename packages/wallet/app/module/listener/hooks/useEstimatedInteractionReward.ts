@@ -39,13 +39,13 @@ export const estimatedInteractionRewardQuery = ({
             });
         if (error) throw error;
 
-        if (!data?.totalReferrerEur) {
+        if (!data?.maxReferrer) {
             return null;
         }
 
         // Return formatted stuff
         return {
-            estimatedEurReward: Math.ceil(data.totalReferrerEur).toString(),
+            maxReferrer: data.maxReferrer,
             rewards:
                 data.activeRewards as GetProductInformationReturnType["rewards"],
         };

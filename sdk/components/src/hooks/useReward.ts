@@ -6,22 +6,24 @@ import { useEffect, useState } from "preact/hooks";
  * Hook to fetch and format the current reward value for a given interaction
  * @param shouldUseReward - Flag to determine if reward should be fetched
  * @param targetInteraction - Optional interaction type to get specific reward for
+ * @param currency - The currency to use for the reward (default is "eur")
  * @returns Object containing the formatted reward value in euros
  */
 export function useReward(
     shouldUseReward: boolean,
-    targetInteraction?: FullInteractionTypesKey
+    targetInteraction?: FullInteractionTypesKey,
+    currency: "eur" | "usd" | "gbp" = "eur"
 ) {
     const [reward, setReward] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (!shouldUseReward) return;
 
-        getCurrentReward(targetInteraction).then((reward) => {
+        getCurrentReward({ targetInteraction, currency }).then((reward) => {
             if (!reward) return;
-            setReward(`${reward}€`);
+            setReward(`${reward.amount}${reward.symbol}`);
         });
-    }, [shouldUseReward, targetInteraction]);
+    }, [shouldUseReward, targetInteraction, currency]);
 
     return { reward };
 }

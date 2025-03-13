@@ -39,6 +39,8 @@ export type {
     SendInteractionReturnType,
     SsoMetadata,
     OpenSsoParamsType,
+    Currency,
+    TokenAmountType,
     GetProductInformationReturnType,
     // RPC Embeded wallet
     DisplayEmbededWalletParamsType,
