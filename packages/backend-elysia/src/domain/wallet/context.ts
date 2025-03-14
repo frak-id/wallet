@@ -11,13 +11,15 @@ export const walletContext = new Elysia({
 })
     .use(indexerApiContext)
     .use(blockchainContext)
-    .decorate(({ client, indexerApi, ...decorators }) => ({
+    .decorate(({ client, indexerApi, pricingRepository, ...decorators }) => ({
         ...decorators,
         client,
         indexerApi,
+        pricingRepository,
         balancesRepository: new BalancesRepository(client, indexerApi),
         pendingBalanceRepository: new PendingBalanceRepository(
             client,
-            indexerApi
+            indexerApi,
+            pricingRepository
         ),
     }));

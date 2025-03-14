@@ -1,5 +1,11 @@
 import { log } from "@backend-common";
-import type { GetInteractionsResponseDto } from "@frak-labs/app-essentials";
+import type { PricingRepository } from "@backend-common/repositories";
+import type { TokenAmount } from "@backend-utils";
+import {
+    type GetInteractionsResponseDto,
+    type GetRewardHistoryResponseDto,
+    usdcArbitrumAddress,
+} from "@frak-labs/app-essentials";
 import type { KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
 import type { Address, Chain, Client, Transport } from "viem";
@@ -20,19 +26,37 @@ export class PendingBalanceRepository {
 
     constructor(
         private readonly client: Client<Transport, Chain>,
-        private readonly indexerApi: KyInstance
+        private readonly indexerApi: KyInstance,
+        private readonly pricingRepository: PricingRepository
     ) {}
+
+    async getPendingBalance({
+        address,
+    }: { address: Address }): Promise<TokenAmount> {
+        const pendingBalance = await this._getPendingBalance({ address });
+
+        const price = await this.pricingRepository.getTokenPrice({
+            token: usdcArbitrumAddress,
+        });
+
+        return {
+            amount: pendingBalance,
+            eurAmount: price ? pendingBalance * price.eur : 0,
+            usdAmount: price ? pendingBalance * price.usd : 0,
+            gbpAmount: price ? pendingBalance * price.gbp : 0,
+        };
+    }
 
     /**
      * Get the pending balance for a wallet address
      * Pending balance is determined by user actions:
      * - 0.5$ upon wallet creation
-     * - 1$ once the wallet is activated
-     * - 2$ once the user has shared a referral link
+     * - 0.5$ once the wallet is activated
+     * - 1$ once the user has shared a referral link
      * @param address The wallet address
      * @returns The pending balance in USD
      */
-    async getPendingBalance({
+    private async _getPendingBalance({
         address,
     }: { address: Address }): Promise<number> {
         // Check cache first
@@ -42,6 +66,12 @@ export class PendingBalanceRepository {
         }
 
         try {
+            // Check if the user has earned a reward
+            const hasEarnedReward = await this.hasEarnedReward(address);
+            if (hasEarnedReward) {
+                return 0;
+            }
+
             // Calculate pending balance based on user actions
             let pendingBalance = 0;
 
@@ -51,13 +81,13 @@ export class PendingBalanceRepository {
             // Check if wallet is activated by checking if the smart contract is deployed
             const isActivated = await this.isWalletActivated(address);
             if (isActivated) {
-                pendingBalance += 1;
+                pendingBalance += 0.5;
             }
 
             // Check if user has shared a referral link
             const hasSharedReferral = await this.hasSharedReferral(address);
             if (hasSharedReferral) {
-                pendingBalance += 2;
+                pendingBalance += 1;
             }
 
             // Cache the result
@@ -109,6 +139,27 @@ export class PendingBalanceRepository {
             );
         } catch (error) {
             log.error("Error checking referral sharing", { error, address });
+            return false;
+        }
+    }
+
+    /**
+     * Check if the user has earned a reward
+     * This method checks if the user has any reward-related interactions
+     * @param address The wallet address
+     * @returns True if the user has earned a reward
+     */
+    private async hasEarnedReward(address: Address): Promise<boolean> {
+        try {
+            // Get the reward history for the user
+            const rewards = await this.indexerApi
+                .get(`rewards/${address}/history`)
+                .json<GetRewardHistoryResponseDto>();
+
+            // Check if the user has earned a reward
+            return rewards.added.length > 0;
+        } catch (error) {
+            log.error("Error checking reward earning", { error, address });
             return false;
         }
     }
