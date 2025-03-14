@@ -24,6 +24,15 @@ async function main() {
             resources,
             debug: isRunningLocally,
             interpolation,
+            detection: {
+                order: [
+                    "querystring",
+                    "cookie",
+                    "sessionStorage",
+                    "localStorage",
+                    "navigator",
+                ],
+            },
         });
 
     startTransition(() => {

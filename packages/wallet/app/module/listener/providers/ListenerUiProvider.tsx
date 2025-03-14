@@ -114,7 +114,9 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
      *  - Add some default variable (product name, product origin, context)
      */
     const translation = useMemo(() => {
-        const lang = currentRequest?.i18n?.lang ?? "en";
+        // Get the language from the request or the detected language from the i18n instance
+        const lang =
+            currentRequest?.i18n?.lang ?? (initialI18n.language as "en" | "fr");
         const context = currentRequest
             ? {
                   productName: currentRequest.appName,
@@ -166,7 +168,6 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 maximumFractionDigits: 2,
             }
         );
-        console.log("formattedReward", formattedReward);
 
         // Create the new i18n instance with the right context
         const i18n = initialI18n.cloneInstance({
@@ -187,7 +188,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 ...options,
                 estimatedReward: formattedReward,
             });
-        return { lang: currentRequest?.i18n?.lang, i18n, t };
+        return { lang, i18n, t };
     }, [currentRequest, resolvingContext?.origin, rewardData, initialI18n]);
 
     return (
