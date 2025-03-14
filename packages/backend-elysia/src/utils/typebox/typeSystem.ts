@@ -1,4 +1,4 @@
-import type { TString } from "@sinclair/typebox";
+import type { Static, TString } from "@sinclair/typebox";
 import { ValidationError, t as elysiaTypes } from "elysia";
 import { type Address, type Hex, isAddress, isHex } from "viem";
 
@@ -60,9 +60,11 @@ const TokenAmountType = t.Object({
     gbpAmount: t.Number(),
 });
 
+type TokenAmount = Static<typeof TokenAmountType>;
+
 t.Address = FrakType.AddressType;
 t.Hex = FrakType.HexType;
 /**
  * Export our new type system
  */
-export { t, TokenAmountType };
+export { t, TokenAmountType, type TokenAmount };

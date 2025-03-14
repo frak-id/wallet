@@ -1,6 +1,6 @@
 import type { PricingRepository } from "@backend-common/repositories";
 import type { TokenPrice } from "@backend-common/repositories/PricingRepository";
-import { referralCampaign_isActive } from "@backend-utils";
+import { type TokenAmount, referralCampaign_isActive } from "@backend-utils";
 import type { GetCampaignResponseDto } from "@frak-labs/app-essentials";
 import type { KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
@@ -20,19 +20,12 @@ import type {
     TriggerData,
 } from "../repositories/CampaignDataRepository";
 
-type Amount = {
-    amount: number;
-    eurAmount: number;
-    usdAmount: number;
-    gbpAmount: number;
-};
-
 export type ActiveReward = {
     campaign: Address;
     token: Address;
     interactionTypeKey: string;
-    referrer: Amount;
-    referee: Amount;
+    referrer: TokenAmount;
+    referee: TokenAmount;
     triggerData:
         | { baseReward: number }
         | { startReward: number; endReward: number; beta: number };
