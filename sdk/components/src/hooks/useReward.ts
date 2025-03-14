@@ -1,5 +1,5 @@
 import { getCurrentReward } from "@/utils/getCurrentReward";
-import type { Currency, FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { useEffect, useState } from "preact/hooks";
 
 /**
@@ -11,19 +11,20 @@ import { useEffect, useState } from "preact/hooks";
  */
 export function useReward(
     shouldUseReward: boolean,
-    targetInteraction?: FullInteractionTypesKey,
-    currency: Currency = "eur"
+    targetInteraction?: FullInteractionTypesKey
 ) {
     const [reward, setReward] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (!shouldUseReward) return;
 
-        getCurrentReward({ targetInteraction, currency }).then((reward) => {
+        getCurrentReward({
+            targetInteraction,
+        }).then((reward) => {
             if (!reward) return;
             setReward(reward);
         });
-    }, [shouldUseReward, targetInteraction, currency]);
+    }, [shouldUseReward, targetInteraction]);
 
     return { reward };
 }

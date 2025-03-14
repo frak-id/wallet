@@ -51,10 +51,10 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
             const stepsPrepared = prepareInputStepsArray(
                 {
-                    appName: request.params[1],
+                    appName: request.params[1]?.name,
                     context,
                     steps,
-                    metadata: request.params[2],
+                    metadata: request.params[1],
                     emitter,
                 }.steps
             );
@@ -77,12 +77,12 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             setRequest({
                 type: "modal",
                 steps,
-                metadata: request.params[2],
+                metadata: request.params[1],
                 emitter,
-                appName: request.params[1],
-                targetInteraction: request.params[2]?.targetInteraction,
+                appName: request.params[1]?.name,
+                targetInteraction: request.params[1]?.targetInteraction,
                 i18n: {
-                    lang: request.params[2]?.lang,
+                    lang: request.params[1]?.lang,
                     context: steps?.final?.action?.key,
                 },
             });

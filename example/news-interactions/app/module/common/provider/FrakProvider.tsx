@@ -9,6 +9,8 @@ export function FrakProvider({ children }: PropsWithChildren) {
         walletUrl: process.env.FRAK_WALLET_URL as string,
         metadata: {
             name: "Good Vibes",
+            lang: "fr" as const,
+            currency: "eur" as const,
         },
         // Specify domain for valid test on localhost
         domain: "news-paper.xyz",

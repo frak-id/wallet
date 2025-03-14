@@ -20,7 +20,9 @@ async function init() {
         config: {
             walletUrl,
             metadata: {
-                name: "Your App Name",
+                name: "Vanilla JS",
+                lang: "fr",
+                currency: "eur",
             },
         },
         modalWalletConfig: {

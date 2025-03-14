@@ -85,8 +85,7 @@ export function ButtonShare({
     const { isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
-        targetInteraction,
-        window.FrakSetup?.modalWalletConfig?.metadata?.currency
+        targetInteraction
     );
     const { handleShare, isError, debugInfo } =
         useShareModal(targetInteraction);

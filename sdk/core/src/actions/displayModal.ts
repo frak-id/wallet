@@ -133,8 +133,6 @@ import type {
  *         },
  *         // Context that will be present in every modal steps
  *         context: "My-app overkill flow",
- *         // Language of the modal
- *         lang: "fr",
  *     },
  * });
  * ```
@@ -147,6 +145,6 @@ export async function displayModal<
 ): Promise<ModalRpcStepsResultType<T>> {
     return (await client.request({
         method: "frak_displayModal",
-        params: [steps, client.config.metadata.name, metadata],
+        params: [steps, { ...metadata, ...client.config.metadata }],
     })) as ModalRpcStepsResultType<T>;
 }

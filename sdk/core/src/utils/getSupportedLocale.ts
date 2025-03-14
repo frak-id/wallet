@@ -7,7 +7,10 @@ import type { Currency } from "../types";
  * @returns The supported locale
  */
 export function getSupportedLocale(
-    currency: Currency
+    currency?: Currency
 ): (typeof locales)[LocalesKey] {
+    if (!currency) {
+        return locales.eur;
+    }
     return locales[currency] ?? locales.eur;
 }

@@ -1,9 +1,7 @@
 import {
-    type Currency,
     type FullInteractionTypesKey,
+    formatAmount,
     getCurrencyAmountKey,
-    getSupportedCurrency,
-    getSupportedLocale,
 } from "@frak-labs/core-sdk";
 import { getProductInformation } from "@frak-labs/core-sdk/actions";
 
@@ -12,7 +10,6 @@ import { getProductInformation } from "@frak-labs/core-sdk/actions";
  */
 type GetCurrentRewardParams = {
     targetInteraction?: FullInteractionTypesKey;
-    currency?: Currency;
 };
 
 /**
@@ -22,7 +19,6 @@ type GetCurrentRewardParams = {
  */
 export async function getCurrentReward({
     targetInteraction,
-    currency = "eur",
 }: GetCurrentRewardParams) {
     // Get the client
     const client = window.FrakSetup?.client;
@@ -35,14 +31,10 @@ export async function getCurrentReward({
 
     if (!maxReferrer) return;
 
-    // Get the supported locale (e.g. "fr-FR")
-    const supportedLocale = getSupportedLocale(currency);
-
-    // Get the supported currency (e.g. "eur")
-    const supportedCurrency = getSupportedCurrency(currency);
-
     // Get the currency amount key (e.g. "eurAmount")
-    const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
+    const currencyAmountKey = getCurrencyAmountKey(
+        client.config.metadata?.currency
+    );
 
     // Get the current reward
     let currentReward = Math.ceil(maxReferrer[currencyAmountKey]);
@@ -57,10 +49,5 @@ export async function getCurrentReward({
         }
     }
 
-    return currentReward.toLocaleString(supportedLocale, {
-        style: "currency",
-        currency: supportedCurrency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-    });
+    return formatAmount(currentReward, client.config.metadata?.currency);
 }

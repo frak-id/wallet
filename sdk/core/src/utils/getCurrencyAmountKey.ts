@@ -6,7 +6,10 @@ import type { Currency, TokenAmountType } from "../types";
  * @returns The currency amount key
  */
 export function getCurrencyAmountKey(
-    currency: Currency
+    currency?: Currency
 ): keyof TokenAmountType {
+    if (!currency) {
+        return "eurAmount";
+    }
     return `${currency}Amount` as keyof TokenAmountType;
 }

@@ -45,7 +45,6 @@ export function ButtonWallet({
     classname = "",
     useReward: rawUseReward,
     targetInteraction,
-    currency = "eur",
 }: ButtonWalletProps) {
     const shouldUseReward = useMemo(
         () => rawUseReward !== undefined,
@@ -55,8 +54,7 @@ export function ButtonWallet({
     const { isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
-        targetInteraction,
-        currency
+        targetInteraction
     );
 
     /**

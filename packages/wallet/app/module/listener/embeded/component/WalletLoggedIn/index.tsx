@@ -15,7 +15,11 @@ import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
-import { FrakContextManager } from "@frak-labs/core-sdk";
+import {
+    FrakContextManager,
+    formatAmount,
+    getCurrencyAmountKey,
+} from "@frak-labs/core-sdk";
 import { Copy } from "@shared/module/asset/icons/Copy";
 import { Power } from "@shared/module/asset/icons/Power";
 import { Share } from "@shared/module/asset/icons/Share";
@@ -42,6 +46,14 @@ export function LoggedInComponent() {
 function Balance() {
     const { t } = useListenerTranslation();
     const { userBalance } = useGetUserBalance();
+    const {
+        currentRequest: {
+            params: { metadata },
+        },
+    } = useEmbededListenerUI();
+
+    // Get the currency amount key (e.g. "eurAmount")
+    const currencyAmountKey = getCurrencyAmountKey(metadata?.currency);
 
     return (
         <div className={styles.balance}>
@@ -52,7 +64,10 @@ function Balance() {
                 </span> */}
             </h2>
             <p className={styles.balance__amount}>
-                {userBalance?.total?.eurAmount?.toFixed(2) ?? 0}€
+                {formatAmount(
+                    userBalance?.total?.[currencyAmountKey] ?? 0,
+                    metadata?.currency
+                )}
             </p>
             {isOnboarding && <OnboardingWelcome />}
         </div>

@@ -1,4 +1,9 @@
 /**
+ * All the currencies available
+ */
+export type Currency = "eur" | "usd" | "gbp";
+
+/**
  * Configuration for the Nexus Wallet SDK
  */
 export type FrakWalletSdkConfig = {
@@ -19,6 +24,16 @@ export type FrakWalletSdkConfig = {
          * Custom CSS styles to apply to the modals and components
          */
         css?: string;
+        /**
+         * Language to display in the modal
+         * If undefined, will default to the browser language
+         */
+        lang?: "fr" | "en";
+        /**
+         * The currency to display in the modal
+         * @defaultValue `"eur"`
+         */
+        currency?: Currency;
     };
     /**
      * The domain name of your application

@@ -15,6 +15,7 @@ function setConfig() {
         walletUrl: "https://wallet.frak.id",
         metadata: {
             name: "Gapianne",
+            lang: "fr",
         },
         domain: window.location.host,
     };
@@ -31,7 +32,6 @@ function setConfig() {
                 icon: logo,
             },
             isDismissible: true,
-            lang: "fr",
         },
     };
     window.FrakSetup.modalShareConfig = {
@@ -43,7 +43,6 @@ function setConfig() {
         metadata: {
             logo,
             homepageLink: "https://gapianne.com/",
-            lang: "fr",
             position: "left",
         },
     };

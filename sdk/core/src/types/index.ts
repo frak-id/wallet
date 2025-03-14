@@ -36,7 +36,7 @@ export type {
     IFrameLifecycleEvent,
     ClientLifecycleEvent,
 } from "./lifecycle";
-export type { FrakWalletSdkConfig } from "./config";
+export type { FrakWalletSdkConfig, Currency } from "./config";
 export type {
     CompressedData,
     HashProtectedData,
@@ -49,7 +49,6 @@ export type {
     ModalRpcStepsResultType,
     DisplayModalParamsType,
     ModalRpcMetadata,
-    Currency,
 } from "./rpc/displayModal";
 export type {
     ModalStepMetadata,

@@ -41,7 +41,6 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                 },
             },
             metadata: {
-                lang: "fr",
                 isDismissible: true,
             },
         },
@@ -140,7 +139,6 @@ export function NewsArticle({ articleId }: { articleId: string }) {
 
                             displayModal({
                                 metadata: {
-                                    lang: "fr",
                                     isDismissible: true,
                                 },
                                 steps: {

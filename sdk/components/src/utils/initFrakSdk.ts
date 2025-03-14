@@ -19,13 +19,14 @@ export async function initFrakSdk(): Promise<void> {
     // Set the setup flag
     window.frakSetupInProgress = true;
 
+    if (!window.FrakSetup.config) {
+        console.error("[Frak SDK] Configuration not found");
+        window.frakSetupInProgress = false;
+        return;
+    }
+
     const client = await setupClient({
-        config: {
-            ...window.FrakSetup.config,
-            metadata: {
-                name: "Frak SDK",
-            },
-        },
+        config: window.FrakSetup.config,
     });
 
     if (!client) {

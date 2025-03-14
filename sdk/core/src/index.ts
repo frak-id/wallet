@@ -18,6 +18,7 @@ export {
     getSupportedCurrency,
     getSupportedLocale,
     getCurrencyAmountKey,
+    formatAmount,
 } from "./utils";
 
 // Constants

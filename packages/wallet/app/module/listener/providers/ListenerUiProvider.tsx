@@ -3,6 +3,7 @@ import { useEstimatedInteractionReward } from "@/module/listener/hooks/useEstima
 import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import type {
     DisplayEmbededWalletParamsType,
+    FrakWalletSdkConfig,
     FullInteractionTypesKey,
     IFrameRpcSchema,
     ModalRpcMetadata,
@@ -41,7 +42,9 @@ type GenericWalletUiType = {
  */
 type EmbededWalletUiType = {
     type: "embeded";
-    params: DisplayEmbededWalletParamsType;
+    params: {
+        metadata: FrakWalletSdkConfig["metadata"];
+    } & DisplayEmbededWalletParamsType;
 };
 
 /**
@@ -50,7 +53,7 @@ type EmbededWalletUiType = {
  */
 export type ModalUiType = {
     type: "modal";
-    metadata?: ModalRpcMetadata;
+    metadata: FrakWalletSdkConfig["metadata"] & ModalRpcMetadata;
     steps: ModalRpcStepsInput;
     emitter: (
         response: RpcResponse<IFrameRpcSchema, "frak_displayModal">

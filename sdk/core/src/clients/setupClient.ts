@@ -1,6 +1,6 @@
 import { createIFrameFrakClient } from "../clients";
 import type { FrakClient, FrakWalletSdkConfig } from "../types";
-import { createIframe } from "../utils";
+import { createIframe, getSupportedCurrency } from "../utils";
 
 /**
  * Directly setup the Frak client with an iframe
@@ -20,9 +20,12 @@ import { createIframe } from "../utils";
 export async function setupClient({
     config,
 }: { config: FrakWalletSdkConfig }): Promise<FrakClient | undefined> {
+    // Prepare the config
+    const preparedConfig = prepareConfig(config);
+
     // Create our iframe
     const iframe = await createIframe({
-        config,
+        config: preparedConfig,
     });
 
     if (!iframe) {
@@ -32,7 +35,7 @@ export async function setupClient({
 
     // Create our client
     const client = createIFrameFrakClient({
-        config,
+        config: preparedConfig,
         iframe,
     });
 
@@ -47,4 +50,22 @@ export async function setupClient({
     }
 
     return client;
+}
+
+/**
+ * Prepare the config for the Frak Client
+ * @param config - The configuration to use for the Frak Wallet SDK
+ * @returns The prepared configuration with the supported currency
+ */
+function prepareConfig(config: FrakWalletSdkConfig): FrakWalletSdkConfig {
+    // Get the supported currency (e.g. "eur")
+    const supportedCurrency = getSupportedCurrency(config.metadata?.currency);
+
+    return {
+        ...config,
+        metadata: {
+            ...config.metadata,
+            currency: supportedCurrency,
+        },
+    };
 }

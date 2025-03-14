@@ -1,4 +1,5 @@
 import type { Hex } from "viem";
+import type { FrakWalletSdkConfig } from "./config";
 import type {
     ModalRpcMetadata,
     ModalRpcStepsInput,
@@ -63,8 +64,7 @@ export type IFrameRpcSchema = [
         Method: "frak_displayModal";
         Parameters: [
             requests: ModalRpcStepsInput,
-            name: string,
-            metadata?: ModalRpcMetadata,
+            metadata: FrakWalletSdkConfig["metadata"] & ModalRpcMetadata,
         ];
         ReturnType: ModalRpcStepsResultType;
     },
@@ -109,7 +109,10 @@ export type IFrameRpcSchema = [
      */
     {
         Method: "frak_displayEmbededWallet";
-        Parameters: [DisplayEmbededWalletParamsType, name: string];
+        Parameters: [
+            DisplayEmbededWalletParamsType,
+            metadata: FrakWalletSdkConfig["metadata"],
+        ];
         ReturnType: undefined;
     },
 ];

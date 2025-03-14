@@ -10,3 +10,4 @@ export { baseIframeProps } from "./iframeHelper";
 export { getSupportedCurrency } from "./getSupportedCurrency";
 export { getSupportedLocale } from "./getSupportedLocale";
 export { getCurrencyAmountKey } from "./getCurrencyAmountKey";
+export { formatAmount } from "./formatAmount";
