@@ -1,4 +1,4 @@
-export { t } from "./typebox/typeSystem";
+export { t, TokenAmountType } from "./typebox/typeSystem";
 export { mutexCron } from "./elysia/mutexCron";
 export { jwt } from "./elysia/jwt";
 export type { FrakEvents } from "./events";

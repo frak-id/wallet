@@ -1,5 +1,5 @@
 import { walletSessionContext } from "@backend-common";
-import { t } from "@backend-utils";
+import { TokenAmountType, t } from "@backend-utils";
 import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { sift } from "radash";
@@ -32,7 +32,6 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                         const price = await pricingRepository.getTokenPrice({
                             token: tokenBalance.contractAddress,
                         });
-                        if (!price) return null;
 
                         // Return the well formatted balance
                         return {
@@ -43,9 +42,15 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                             rawBalance: toHex(tokenBalance.rawBalance),
                             // Formatted amount
                             amount: tokenBalance.balance,
-                            eurAmount: tokenBalance.balance * price.eur,
-                            usdAmount: tokenBalance.balance * price.usd,
-                            gbpAmount: tokenBalance.balance * price.gbp,
+                            eurAmount: price
+                                ? tokenBalance.balance * price.eur
+                                : 0,
+                            usdAmount: price
+                                ? tokenBalance.balance * price.usd
+                                : 0,
+                            gbpAmount: price
+                                ? tokenBalance.balance * price.gbp
+                                : 0,
                         };
                     })
                 )
@@ -73,11 +78,11 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                 401: t.String(),
                 200: t.Object({
                     // Total
-                    total: t.TokenAmount(),
+                    total: TokenAmountType,
                     // Details about the balances
                     balances: t.Array(
-                        t.Union([
-                            t.TokenAmount(),
+                        t.Intersect([
+                            TokenAmountType,
                             t.Object({
                                 token: t.Address(),
                                 name: t.String(),
@@ -126,7 +131,6 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                     const price = await pricingRepository.getTokenPrice({
                         token: reward.token,
                     });
-                    if (!price) return null;
 
                     const rawBalance = BigInt(reward.amount);
                     const balance = Number.parseFloat(
@@ -143,9 +147,9 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                         rawBalance: toHex(rawBalance),
                         // Formatted amount
                         amount: balance,
-                        eurAmount: balance * price.eur,
-                        usdAmount: balance * price.usd,
-                        gbpAmount: balance * price.gbp,
+                        eurAmount: price ? balance * price.eur : 0,
+                        usdAmount: price ? balance * price.usd : 0,
+                        gbpAmount: price ? balance * price.gbp : 0,
                     };
                 });
             const claimables = sift(await Promise.all(claimablesAsync));
@@ -172,11 +176,11 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                 401: t.String(),
                 200: t.Object({
                     // Total claimable
-                    total: t.TokenAmount(),
+                    total: TokenAmountType,
                     // Details about the claimable rewards
                     claimables: t.Array(
-                        t.Union([
-                            t.TokenAmount(),
+                        t.Intersect([
+                            TokenAmountType,
                             t.Object({
                                 contract: t.Address(),
                                 token: t.Address(),
