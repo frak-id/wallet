@@ -9,6 +9,11 @@ import type {
     ModalRpcStepsInput,
     RpcResponse,
 } from "@frak-labs/core-sdk";
+import {
+    getCurrencyAmountKey,
+    getSupportedCurrency,
+    getSupportedLocale,
+} from "@frak-labs/core-sdk";
 import type { TOptions, i18n } from "i18next";
 import { useAtomValue } from "jotai";
 import {
@@ -118,8 +123,23 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
               }
             : {};
 
+        // Get the supported currency (e.g. "eur")
+        const supportedCurrency = getSupportedCurrency(
+            currentRequest?.type === "embeded"
+                ? currentRequest.params.metadata?.currency
+                : currentRequest?.metadata?.currency
+        );
+
+        // Get the supported locale (e.g. "fr-FR")
+        const supportedLocale = getSupportedLocale(supportedCurrency);
+
+        // Get the currency amount key (e.g. "eurAmount")
+        const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
+
         // Find the right estimated reward depending on the context
-        let estimatedReward = rewardData?.maxReferrer?.eurAmount;
+        let estimatedReward = Math.ceil(
+            rewardData?.maxReferrer?.[currencyAmountKey] ?? 0
+        );
         if (rewardData && currentRequest?.targetInteraction) {
             // Find the max reward for the target interaction
             const targetReward = rewardData.rewards
@@ -136,13 +156,25 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             }
         }
 
+        // Format the reward according to the supported locale
+        const formattedReward = estimatedReward.toLocaleString(
+            supportedLocale,
+            {
+                style: "currency",
+                currency: supportedCurrency,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+            }
+        );
+        console.log("formattedReward", formattedReward);
+
         // Create the new i18n instance with the right context
         const i18n = initialI18n.cloneInstance({
             lng: lang,
             interpolation: {
                 defaultVariables: {
                     ...context,
-                    estimatedReward,
+                    estimatedReward: formattedReward,
                 },
             },
         });
@@ -153,7 +185,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             rawT(key, {
                 ...context,
                 ...options,
-                estimatedReward,
+                estimatedReward: formattedReward,
             });
         return { lang: currentRequest?.i18n?.lang, i18n, t };
     }, [currentRequest, resolvingContext?.origin, rewardData, initialI18n]);

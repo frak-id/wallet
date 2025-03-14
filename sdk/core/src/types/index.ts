@@ -11,7 +11,6 @@ export type {
     OpenSsoParamsType,
 } from "./rpc/sso";
 export type {
-    Currency,
     TokenAmountType,
     GetProductInformationReturnType,
 } from "./rpc/productInformation";
@@ -50,6 +49,7 @@ export type {
     ModalRpcStepsResultType,
     DisplayModalParamsType,
     ModalRpcMetadata,
+    Currency,
 } from "./rpc/displayModal";
 export type {
     ModalStepMetadata,

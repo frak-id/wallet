@@ -15,6 +15,9 @@ export {
     FrakContextManager,
     Deferred,
     baseIframeProps,
+    getSupportedCurrency,
+    getSupportedLocale,
+    getCurrencyAmountKey,
 } from "./utils";
 
 // Constants
@@ -28,6 +31,7 @@ export {
     type InteractionTypesKey,
     type FullInteractionTypesKey,
 } from "./constants/interactionTypes";
+export { locales, type LocalesKey } from "./constants/locales";
 
 // Types
 export type {

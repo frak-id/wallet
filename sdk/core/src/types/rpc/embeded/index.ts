@@ -1,4 +1,5 @@
 import type { FullInteractionTypesKey } from "../../../constants/interactionTypes";
+import type { Currency } from "../displayModal";
 import type { LoggedInEmbededView } from "./loggedIn";
 import type { LoggedOutEmbededView } from "./loggedOut";
 
@@ -46,5 +47,9 @@ export type DisplayEmbededWalletParamsType = {
          * The position of the component
          */
         position?: "left" | "right";
+        /**
+         * The currency to display
+         */
+        currency?: Currency;
     };
 };

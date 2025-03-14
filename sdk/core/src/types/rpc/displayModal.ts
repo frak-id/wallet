@@ -8,6 +8,11 @@ import type {
 } from "./modal";
 
 /**
+ * All the currencies available
+ */
+export type Currency = "eur" | "usd" | "gbp";
+
+/**
  * Generic type of steps we will display in the modal to the end user
  * @group Modal Display
  */
@@ -55,6 +60,7 @@ export type ModalRpcMetadata = {
     };
     context?: string;
     lang?: "en" | "fr";
+    currency?: Currency;
     targetInteraction?: FullInteractionTypesKey;
 } & (
     | {

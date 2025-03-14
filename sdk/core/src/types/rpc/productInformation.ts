@@ -3,11 +3,6 @@ import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
 import type { ProductTypesKey } from "../../constants/productTypes";
 
 /**
- * The currency available for the reward
- */
-export type Currency = "eur" | "usd" | "gbp";
-
-/**
  * The type for the amount of tokens
  */
 export type TokenAmountType = {

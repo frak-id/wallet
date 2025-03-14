@@ -1,4 +1,4 @@
-import type { Currency, FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 
 /**
  * The props type for {@link ButtonShare}.
@@ -33,9 +33,4 @@ export type ButtonShareProps = {
      * @defaultValue `false`
      */
     showWallet?: boolean;
-    /**
-     * The currency to use for the reward
-     * @defaultValue `"eur"`
-     */
-    currency?: Currency;
 };

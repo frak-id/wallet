@@ -1,47 +1,11 @@
-import type {
-    Currency,
-    FullInteractionTypesKey,
-    TokenAmountType,
+import {
+    type Currency,
+    type FullInteractionTypesKey,
+    getCurrencyAmountKey,
+    getSupportedCurrency,
+    getSupportedLocale,
 } from "@frak-labs/core-sdk";
 import { getProductInformation } from "@frak-labs/core-sdk/actions";
-
-/**
- * Map the currency to the locale
- */
-const mapLocales = {
-    eur: "fr-FR",
-    usd: "en-US",
-    gbp: "en-GB",
-} as const;
-
-/**
- * Get the currency amount key for a given currency
- * @param currency - The currency to use
- * @returns The currency amount key
- */
-function getCurrencyAmountKey(currency: Currency): keyof TokenAmountType {
-    return `${currency}Amount` as keyof TokenAmountType;
-}
-
-/**
- * Get the supported locale for a given currency
- * @param currency - The currency to use
- * @returns The supported locale
- */
-function getSupportedLocale(
-    currency: Currency
-): (typeof mapLocales)[keyof typeof mapLocales] {
-    return mapLocales[currency] ?? mapLocales.eur;
-}
-
-/**
- * Get the supported currency for a given currency
- * @param currency - The currency to use
- * @returns The supported currency
- */
-function getSupportedCurrency(currency: Currency): Currency {
-    return currency in mapLocales ? currency : "eur";
-}
 
 /**
  * The parameters for the getCurrentReward function
@@ -81,7 +45,7 @@ export async function getCurrentReward({
     const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
 
     // Get the current reward
-    let currentReward = maxReferrer[currencyAmountKey];
+    let currentReward = Math.ceil(maxReferrer[currencyAmountKey]);
     if (targetInteraction) {
         // Find the max reward for the target interaction
         const targetReward = rewards
@@ -96,5 +60,7 @@ export async function getCurrentReward({
     return currentReward.toLocaleString(supportedLocale, {
         style: "currency",
         currency: supportedCurrency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
     });
 }
