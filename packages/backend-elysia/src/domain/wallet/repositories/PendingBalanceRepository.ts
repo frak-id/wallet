@@ -72,20 +72,19 @@ export class PendingBalanceRepository {
                 return 0;
             }
 
-            // Calculate pending balance based on user actions
-            let pendingBalance = 0;
+            // Calculate pending balance based on user actions (default to 0.5$ for new users)
+            let pendingBalance = 0.5;
 
-            // Check if wallet exists (always true if we're here, so add 0.5$)
-            pendingBalance += 0.5;
+            // Check if wallet is activated and if the user has shared a referral link
+            const [isActivated, hasSharedReferral] = await Promise.all([
+                this.isWalletActivated(address),
+                this.hasSharedReferral(address),
+            ]);
 
-            // Check if wallet is activated by checking if the smart contract is deployed
-            const isActivated = await this.isWalletActivated(address);
             if (isActivated) {
                 pendingBalance += 0.5;
             }
 
-            // Check if user has shared a referral link
-            const hasSharedReferral = await this.hasSharedReferral(address);
             if (hasSharedReferral) {
                 pendingBalance += 1;
             }
@@ -111,7 +110,7 @@ export class PendingBalanceRepository {
             const code = await getCode(this.client, { address });
 
             // If there's code (not '0x' which means no code), the wallet is activated
-            return code !== "0x";
+            return code !== undefined && code !== "0x";
         } catch (error) {
             log.error("Error checking wallet activation", { error, address });
             return false;
