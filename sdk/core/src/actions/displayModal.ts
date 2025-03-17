@@ -10,7 +10,7 @@ import type {
  * @param client - The current Frak Client
  * @param args
  * @param args.steps - The different steps of the modal
- * @param args.metadata - The metadata for the modal (customisation, language etc)
+ * @param args.metadata - The metadata for the modal (customisation, etc)
  * @returns The result of each modal steps
  *
  * @description This function will display a modal to the user with the provided steps and metadata.
