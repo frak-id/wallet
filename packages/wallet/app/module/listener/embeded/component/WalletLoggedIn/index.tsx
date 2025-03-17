@@ -12,10 +12,12 @@ import {
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
+import { useGetUserPendingBalance } from "@/module/tokens/hook/useGetUserPendingBalance";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
 import {
+    type Currency,
     FrakContextManager,
     formatAmount,
     getCurrencyAmountKey,
@@ -35,39 +37,53 @@ const isOnboarding = true;
  * @constructor
  */
 export function LoggedInComponent() {
-    return (
-        <>
-            <Balance />
-            <ActionButtons />
-        </>
-    );
-}
-
-function Balance() {
-    const { t } = useListenerTranslation();
-    const { userBalance } = useGetUserBalance();
     const {
         currentRequest: {
             params: { metadata },
         },
     } = useEmbededListenerUI();
-
-    // Get the currency amount key (e.g. "eurAmount")
+    const { userBalance } = useGetUserBalance();
+    const { userPendingBalance } = useGetUserPendingBalance();
     const currencyAmountKey = getCurrencyAmountKey(metadata?.currency);
+    const isPending = !!(
+        userPendingBalance?.[currencyAmountKey] &&
+        userPendingBalance?.[currencyAmountKey] > 0
+    );
+    const amount = isPending
+        ? userPendingBalance[currencyAmountKey]
+        : (userBalance?.total?.[currencyAmountKey] ?? 0);
+
+    return (
+        <>
+            <Balance
+                amount={amount}
+                isPending={isPending}
+                currency={metadata?.currency ?? "eur"}
+            />
+            <ActionButtons />
+        </>
+    );
+}
+
+function Balance({
+    amount,
+    isPending,
+    currency,
+}: { amount: number; isPending: boolean; currency: Currency }) {
+    const { t } = useListenerTranslation();
 
     return (
         <div className={styles.balance}>
             <h2 className={styles.balance__title}>
                 {t("common.balance")}{" "}
-                {/* <span className={styles.balance__status}>
-                    ({t("common.pending")})
-                </span> */}
+                {isPending && (
+                    <span className={styles.balance__status}>
+                        ({t("common.pending")})
+                    </span>
+                )}
             </h2>
             <p className={styles.balance__amount}>
-                {formatAmount(
-                    userBalance?.total?.[currencyAmountKey] ?? 0,
-                    metadata?.currency
-                )}
+                {formatAmount(amount, currency)}
             </p>
             {isOnboarding && <OnboardingWelcome />}
         </div>
