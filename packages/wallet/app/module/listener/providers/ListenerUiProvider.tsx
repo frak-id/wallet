@@ -11,9 +11,9 @@ import type {
     RpcResponse,
 } from "@frak-labs/core-sdk";
 import {
+    formatAmount,
     getCurrencyAmountKey,
     getSupportedCurrency,
-    getSupportedLocale,
 } from "@frak-labs/core-sdk";
 import type { TOptions, i18n } from "i18next";
 import { useAtomValue } from "jotai";
@@ -135,9 +135,6 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 : currentRequest?.metadata?.currency
         );
 
-        // Get the supported locale (e.g. "fr-FR")
-        const supportedLocale = getSupportedLocale(supportedCurrency);
-
         // Get the currency amount key (e.g. "eurAmount")
         const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
 
@@ -161,15 +158,10 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             }
         }
 
-        // Format the reward according to the supported locale
-        const formattedReward = estimatedReward.toLocaleString(
-            supportedLocale,
-            {
-                style: "currency",
-                currency: supportedCurrency,
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-            }
+        // Format the reward
+        const formattedReward = formatAmount(
+            estimatedReward,
+            supportedCurrency
         );
 
         // Create the new i18n instance with the right context
