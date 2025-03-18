@@ -1,5 +1,6 @@
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
+import { notificationQueryKeys } from "@/module/notification/queryKeys/notification";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 
@@ -10,7 +11,7 @@ export function useUnsubscribeFromPushNotification() {
     const [subscription, setSubscription] = useAtom(subscriptionAtom);
 
     const { data: hasPushToken, refetch } = useQuery({
-        queryKey: ["push", "token-count"],
+        queryKey: notificationQueryKeys.push.tokenCount,
         queryFn: async () => {
             const result =
                 await authenticatedBackendApi.notifications.pushToken.hasAny.get();
@@ -26,7 +27,7 @@ export function useUnsubscribeFromPushNotification() {
         mutateAsync: unsubscribeFromPushAsync,
         ...mutationState
     } = useMutation({
-        mutationKey: ["push", "unsubscribe"],
+        mutationKey: notificationQueryKeys.push.unsubscribe,
         mutationFn: async () => {
             // If we got a current subscription, unsubscribe from it
             if (subscription) {

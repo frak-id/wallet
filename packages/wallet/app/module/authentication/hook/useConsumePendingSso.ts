@@ -1,5 +1,6 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { ssoConsumeKey } from "@/module/authentication/atoms/sso";
+import { ssoQueryKeys } from "@/module/authentication/queryKeys/sso";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { jotaiStore } from "@shared/module/atoms/store";
@@ -22,7 +23,7 @@ export function useConsumePendingSso({
     const queryClient = useQueryClient();
     return useQuery({
         enabled: !!trackingId && !!consumeKey,
-        queryKey: ["sso", "consume"],
+        queryKey: ssoQueryKeys.consume,
         async queryFn() {
             if (!(trackingId && consumeKey)) {
                 return "error";
@@ -63,7 +64,7 @@ export function useConsumePendingSso({
             // If the status is not-found, remove the sso link query
             if (data.status === "not-found") {
                 queryClient.removeQueries({
-                    queryKey: ["sso", "link"],
+                    queryKey: ssoQueryKeys.link.base,
                     exact: false,
                 });
             }

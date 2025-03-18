@@ -1,6 +1,7 @@
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
+import { commonQueryKeys } from "@/module/common/queryKeys/common";
 import {
     getSafeSdkSession,
     getSafeSession,
@@ -50,19 +51,17 @@ export function useGetSafeSdkSession() {
     }, [lastWebAuthnAction, setCurrentSdkSession]);
 
     /**
-     * Getch the current sdk session or regen a new one
+     * Fetch the current sdk session or regen a new one
      */
     const query = useQuery({
         // keep in mem for 2min
         gcTime: 2 * 60 * 1000,
         // Keep it stale for 15min
         staleTime: 15 * 60 * 1000,
-        queryKey: [
-            "sdk-token",
-            "get-safe",
-            currentSession?.address ?? "no-session",
-            lastWebAuthnAction?.wallet ?? "no-last-action",
-        ],
+        queryKey: commonQueryKeys.sdk.token.safe.bySession(
+            currentSession?.address,
+            lastWebAuthnAction?.wallet
+        ),
         queryFn: async () => {
             // Get the current session status
             const sdkSession = currentSdkSession ?? getSafeSdkSession();

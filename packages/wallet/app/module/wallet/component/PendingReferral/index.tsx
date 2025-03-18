@@ -1,6 +1,8 @@
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { tokensQueryKeys } from "@/module/tokens/queryKeys/tokens";
+import { claimableQueryKeys } from "@/module/wallet/queryKeys/claimable";
 import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { Button } from "@shared/module/component/Button";
@@ -21,7 +23,7 @@ export function PendingReferral() {
 
     // Fetch the pending reward
     const { data: pendingReward, refetch: refetchPendingReward } = useQuery({
-        queryKey: ["claimable", "pending", address],
+        queryKey: claimableQueryKeys.pending.byAddress(address),
         queryFn: async () => {
             const { data, error } =
                 await authenticatedBackendApi.wallet.balance.claimable.get();
@@ -38,7 +40,7 @@ export function PendingReferral() {
         isPending,
         isSuccess,
     } = useMutation({
-        mutationKey: ["claimable", "do-claim", address],
+        mutationKey: claimableQueryKeys.claim.byAddress(address),
         mutationFn: async () => {
             if (!(pendingReward?.claimables && address)) return;
 
@@ -67,7 +69,7 @@ export function PendingReferral() {
 
             // And refetch the user balance
             await queryClient.invalidateQueries({
-                queryKey: ["balance"],
+                queryKey: tokensQueryKeys.balance.base,
                 exact: false,
             });
 

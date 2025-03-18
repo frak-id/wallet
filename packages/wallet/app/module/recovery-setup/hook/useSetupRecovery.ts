@@ -1,3 +1,4 @@
+import { recoverySetupQueryKeys } from "@/module/recovery-setup/queryKeys/recovery-setup";
 import {
     type DefaultError,
     type UseMutationOptions,
@@ -38,8 +39,7 @@ export function useSetupRecovery(
 
             // Invalidate the recovery options for the given chain
             await queryClient.invalidateQueries({
-                queryKey: ["recovery", "status", address],
-                exact: true,
+                queryKey: recoverySetupQueryKeys.status(address),
             });
 
             return txHash;

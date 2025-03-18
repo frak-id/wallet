@@ -2,6 +2,7 @@ import {
     type AppSpecificSsoMetadata,
     ssoConsumeKey,
 } from "@/module/authentication/atoms/sso";
+import { ssoQueryKeys } from "@/module/authentication/queryKeys/sso";
 import { ssoParamsToCompressed } from "@/module/authentication/utils/ssoDataCompression";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import {
@@ -136,16 +137,14 @@ export function useSsoLink({
     }, [useConsumeKey]);
 
     const { data, ...query } = useQuery({
-        queryKey: [
-            "sso",
-            "link",
+        queryKey: ssoQueryKeys.link.full({
             productId,
             metadata,
             directExit,
             redirectUrl,
             lang,
-            safeConsumeKey,
-        ],
+            consumeKey: safeConsumeKey,
+        }),
         queryFn: async () => {
             // Return the link
             return getLink({

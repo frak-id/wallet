@@ -5,14 +5,18 @@ import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import type { NotificationModel } from "@/module/common/storage/dexie/NotificationModel";
 import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
+import { notificationQueryKeys } from "@/module/notification/queryKeys/notification";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+/**
+ * View to display user notifications history
+ */
 export default function Notifications() {
     const { t } = useTranslation();
     const { data: notifications } = useQuery({
-        queryKey: ["notification", "history"],
+        queryKey: notificationQueryKeys.history.base,
         queryFn: async () => {
             const notifications = await dexieDb.notification.toArray();
             // Sort them by timestamp
@@ -46,6 +50,9 @@ export default function Notifications() {
     );
 }
 
+/**
+ * Component to display a single notification
+ */
 function Notification({ notification }: { notification: NotificationModel }) {
     return (
         <Panel size={"small"}>

@@ -1,5 +1,6 @@
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
+import { listenerQueryKeys } from "@/module/listener/queryKeys/listener";
 import type {
     FullInteractionTypesKey,
     GetProductInformationReturnType,
@@ -19,12 +20,10 @@ export const estimatedInteractionRewardQuery = ({
     interaction,
 }: { productId?: Hex; interaction?: FullInteractionTypesKey }) => ({
     enabled: !!productId,
-    queryKey: [
-        "interactions",
-        "estimated-reward",
-        productId ?? "no-product-id",
-        interaction ?? "no-key-filter",
-    ],
+    queryKey: listenerQueryKeys.interactions.estimatedReward.byProduct(
+        productId,
+        interaction
+    ),
     async queryFn() {
         if (!productId) {
             throw new Error("No product id provided");
