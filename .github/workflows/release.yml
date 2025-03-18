@@ -41,7 +41,3 @@ jobs:
             https://cdn.jsdelivr.net/npm/@frak-labs/core-sdk@latest/cdn/bundle.js
             https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js
             https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/loader.js
-            https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/364.js
-            https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/413.js
-            https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/button-share.js
-            https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/button-wallet.js
