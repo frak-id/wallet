@@ -1,7 +1,7 @@
 /**
- * The different type of action we can have on the embeded view (once the user is logged in)
+ * The different type of action we can have on the embedded view (once the user is logged in)
  *
- * @group Embeded wallet
+ * @group Embedded wallet
  */
 export type EmbededViewAction = {
     key: "sharing";
@@ -27,13 +27,13 @@ export type EmbededViewAction = {
 };
 
 /**
- * Some configuration options for the embeded view
+ * Some configuration options for the embedded view
  *
- * @group Embeded wallet
+ * @group Embedded wallet
  */
 export type LoggedInEmbededView = {
     /**
-     * The main action to display on the logged in embeded view
+     * The main action to display on the logged in embedded view
      *  If none specified, the user will see his wallet with the activation button
      */
     action?: EmbededViewAction;

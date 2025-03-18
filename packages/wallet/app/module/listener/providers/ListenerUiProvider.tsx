@@ -37,8 +37,8 @@ type GenericWalletUiType = {
 };
 
 /**
- * Type for the embeded wallet ui type
- *  - todo: Maybe some precheck hooks, or other stuff to store here? Like which view to display (loggedOut or loggedIn?)
+ * Type for the embedded wallet ui type
+ *  - todo: Maybe some pre-check hooks, or other stuff to store here? Like which view to display (loggedOut or loggedIn?)
  */
 type EmbededWalletUiType = {
     type: "embeded";
@@ -69,6 +69,11 @@ type UIContext = {
     translation: {
         lang?: "en" | "fr";
         t: (key: string, options?: TOptions) => string;
+        fallbackT: (
+            provided: string | undefined,
+            fallbackKey: string,
+            options?: TOptions
+        ) => string;
         i18n: i18n;
     };
 };
@@ -82,8 +87,8 @@ export const ListenerUiContext = createContext<UIContext | undefined>(
 
 /**
  * Provider for the listener UI
- *  - Will directly display either modal or embeded wallet
- *  - Keep the state of either modal or embeded wallet in a shared context accessible with hooks
+ *  - Will directly display either modal or embedded wallet
+ *  - Keep the state of either modal or embedded wallet in a shared context accessible with hooks
  */
 export function ListenerUiProvider({ children }: PropsWithChildren) {
     // Initial translation context
@@ -183,7 +188,24 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 ...options,
                 estimatedReward: formattedReward,
             });
-        return { lang, i18n, t };
+
+        // Create a fallback translation string
+        const fallbackT = (
+            provided: string | undefined,
+            fallbackKey: string,
+            options?: TOptions
+        ): string => {
+            // If we got a provided string, use it
+            if (provided) {
+                i18n.format;
+                // Just replace any placeholder with the right value
+                //  todo: we should use the i18n format for variable??
+                return provided.replace(/{REWARD}/g, formattedReward);
+            }
+            // Otherwise, use the fallback key
+            return t(fallbackKey, options);
+        };
+        return { lang, i18n, t, fallbackT };
     }, [currentRequest, resolvingContext?.origin, rewardData, initialI18n]);
 
     return (
