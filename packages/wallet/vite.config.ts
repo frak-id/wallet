@@ -36,6 +36,9 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
                 process.env.PRIVY_APP_ID
             ),
             "process.env.DEBUG": JSON.stringify(DEBUG),
+            "process.env.APP_VERSION": JSON.stringify(
+                process.env.npm_package_version
+            ),
         },
         // Remove console and debugger on prod
         esbuild: {

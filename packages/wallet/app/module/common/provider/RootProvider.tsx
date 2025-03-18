@@ -47,6 +47,8 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
             return isValid && isStorable;
         },
     },
+    // Invalidate the cache when the app version changes
+    buster: process.env.APP_VERSION,
 };
 
 export function RootProvider({ children }: PropsWithChildren) {
