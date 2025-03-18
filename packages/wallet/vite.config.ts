@@ -37,7 +37,7 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
             ),
             "process.env.DEBUG": JSON.stringify(DEBUG),
             "process.env.APP_VERSION": JSON.stringify(
-                process.env.npm_package_version
+                process.env.COMMIT_HASH ?? "UNKNOWN"
             ),
         },
         // Remove console and debugger on prod

@@ -11,7 +11,7 @@ const modalImport = () =>
 const ListenerModal = lazy(modalImport);
 
 /**
- * Lazy import of the embeded wallet UI
+ * Lazy import of the embedded wallet UI
  */
 const walletImport = () =>
     import("@/module/listener/embeded/component/Wallet").then((module) => ({
@@ -26,7 +26,7 @@ export function ListenerUiRenderer() {
     const { currentRequest } = useListenerUI();
 
     /**
-     * Preload the modal + embeded wallet so it did not take too much time to display on slow network
+     * Preload the modal + embedded wallet so it did not take too much time to display on slow network
      */
     useEffect(() => {
         const handleIdleCallback = async () => {
@@ -51,7 +51,7 @@ export function ListenerUiRenderer() {
     }
 
     /**
-     * If the request is an embeded wallet, display it
+     * If the request is an embedded wallet, display it
      */
     if (currentRequest.type === "embeded") {
         return <ListenerWallet />;

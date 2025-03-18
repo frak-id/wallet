@@ -34,6 +34,9 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
+      - name: Set commit hash for cache busting
+        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -99,13 +102,13 @@ jobs:
             echo "STAGE=dev" >> $GITHUB_ENV
             echo "ELYSIA_REPO=backend-elysia-dev" >> $GITHUB_ENV
           fi
-          
+
           if [[ "${{ steps.changes.outputs.backend }}" == "true" ]]; then
             echo "BACKEND_IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
-          else 
+          else
             echo "BACKEND_IMAGE_TAG=latest" >> $GITHUB_ENV
           fi
-          
+
           echo "Deployment stage  : ${{ env.STAGE }}"
           echo "Elysia rep        : ${{ env.ELYSIA_REPO }}"
           echo "Backend image tag : ${{ env.BACKEND_IMAGE_TAG }}"

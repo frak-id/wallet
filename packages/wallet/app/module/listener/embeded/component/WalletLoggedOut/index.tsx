@@ -18,15 +18,20 @@ export function LoggedOutComponent() {
             params: { metadata, loggedOut },
         },
     } = useEmbededListenerUI();
-    const { t } = useListenerTranslation();
+    const { fallbackT } = useListenerTranslation();
     const productId = useSafeResolvingContext()?.productId;
 
     return (
         <>
             <div className={styles.modalListenerWallet__text}>
                 <Markdown
-                    md={loggedOut?.metadata?.text}
-                    defaultTxt={t("sdk.wallet.login.default.text")}
+                    md={fallbackT(
+                        loggedOut?.metadata?.text,
+                        "sdk.wallet.login.default.text",
+                        {
+                            productName: metadata?.name,
+                        }
+                    )}
                 />
             </div>
             {productId && (
@@ -36,8 +41,10 @@ export function LoggedOutComponent() {
                         logoUrl: metadata?.logo,
                         homepageLink: metadata?.homepageLink,
                     }}
-                    text={loggedOut?.metadata?.buttonText}
-                    defaultText={t("sdk.wallet.login.default.primaryAction")}
+                    text={fallbackT(
+                        loggedOut?.metadata?.buttonText,
+                        "sdk.wallet.login.default.primaryAction"
+                    )}
                     className={`${styles.modalListenerWallet__buttonPrimary} ${prefixWalletCss("button-primary")}`}
                 />
             )}
