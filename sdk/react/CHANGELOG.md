@@ -1,5 +1,14 @@
 # @frak-labs/react-sdk
 
+## 0.0.9
+
+### Patch Changes
+
+- [`2381c27`](https://github.com/frak-id/wallet/commit/2381c274dc6240eeb96f9fd7683315ee4f052aea) Thanks [@srod](https://github.com/srod)! - ✨ Add currency support in config
+
+- Updated dependencies [[`2381c27`](https://github.com/frak-id/wallet/commit/2381c274dc6240eeb96f9fd7683315ee4f052aea)]:
+  - @frak-labs/core-sdk@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes
