@@ -45,8 +45,25 @@ function createCDNConfig(): LibConfig {
             },
         },
         output: {
+            filenameHash: true,
             distPath: {
                 root: "./cdn",
+            },
+        },
+        tools: {
+            rspack: {
+                output: {
+                    filename: (pathData) => {
+                        // Only for the components and loader chunks, we want to use the original name
+                        if (
+                            pathData.chunk?.name === "components" ||
+                            pathData.chunk?.name === "loader"
+                        ) {
+                            return "[name].js";
+                        }
+                        return "[name].[contenthash:8].js";
+                    },
+                },
             },
         },
     };
@@ -58,7 +75,6 @@ export default defineConfig({
         target: "web",
         minify: true,
         cleanDistPath: true,
-        filenameHash: true,
     },
     plugins: [
         pluginPreact(),
@@ -71,18 +87,6 @@ export default defineConfig({
     tools: {
         rspack: {
             plugins: [new TsCheckerRspackPlugin()],
-            output: {
-                filename: (pathData) => {
-                    // Only for the components and loader chunks, we want to use the original name
-                    if (
-                        pathData.chunk?.name === "components" ||
-                        pathData.chunk?.name === "loader"
-                    ) {
-                        return "[name].js";
-                    }
-                    return "[name].[contenthash:8].js";
-                },
-            },
         },
     },
 });
