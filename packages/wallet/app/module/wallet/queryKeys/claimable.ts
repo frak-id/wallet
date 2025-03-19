@@ -1,27 +1,27 @@
 import type { Hex } from "viem";
 
-const base = {
-    claimable: ["claimable"] as const,
-} as const;
-
 /**
  * Query keys for wallet-related claimable queries
  */
-export const claimableQueryKeys = {
-    base: base.claimable,
-    pending: {
-        base: [...base.claimable, "pending"] as const,
-        byAddress: (address?: Hex) =>
-            [...base.claimable, "pending", address ?? "no-address"] as const,
-    },
-} as const;
+export namespace claimableKey {
+    /**
+     * The base key
+     */
+    const base = "claimable" as const;
 
-/**
- * Mutation keys for wallet-related claimable mutations
- */
-export const claimableMutationKeys = {
-    claim: {
+    /**
+     * Query keys for pending claimable
+     */
+    export const pending = {
         byAddress: (address?: Hex) =>
-            [...base.claimable, "do-claim", address ?? "no-address"] as const,
-    },
-} as const;
+            [base, "pending", address ?? "no-address"] as const,
+    };
+
+    /**
+     * Mutation keys for claimable
+     */
+    export const claim = {
+        byAddress: (address?: Hex) =>
+            [base, "do-claim", address ?? "no-address"] as const,
+    };
+}

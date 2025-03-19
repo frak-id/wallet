@@ -1,4 +1,4 @@
-import { authMutationKeys } from "@/module/authentication/queryKeys/auth";
+import { authKey } from "@/module/authentication/queryKeys/auth";
 import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
 import { trackEvent } from "@frak-labs/shared/module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
@@ -9,7 +9,7 @@ import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 
 export function useDemoLogin() {
     return useMutation({
-        mutationKey: authMutationKeys.demo.login,
+        mutationKey: authKey.demo.login,
         async mutationFn({ pkey, ssoId }: { pkey: Hex; ssoId?: Hex }) {
             const account = privateKeyToAccount(pkey);
 

@@ -1,5 +1,5 @@
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
-import { tokensQueryKeys } from "@/module/tokens/queryKeys/tokens";
+import { balanceKey } from "@/module/common/queryKeys/balance";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 
@@ -7,7 +7,7 @@ export function useGetUserBalance() {
     const { address } = useAccount();
 
     const { data, error, isLoading, refetch } = useQuery({
-        queryKey: tokensQueryKeys.balance.byAddress(address),
+        queryKey: balanceKey.byAddress(address),
         queryFn: async () => {
             if (!address) {
                 return null;

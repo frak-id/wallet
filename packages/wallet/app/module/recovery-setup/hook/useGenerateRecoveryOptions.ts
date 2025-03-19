@@ -1,4 +1,4 @@
-import { recoverySetupMutationKeys } from "@/module/recovery-setup/queryKeys/recovery-setup";
+import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 import { encryptPrivateKey } from "@/module/recovery-setup/utils/encrypt";
 import { generateRecoveryData } from "@/module/recovery/action/generate";
 import type { RecoveryFileContent } from "@/types/Recovery";
@@ -12,7 +12,7 @@ import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
  */
 export function useGenerateRecoveryOptions() {
     const { mutate, mutateAsync, ...mutationStuff } = useMutation({
-        mutationKey: recoverySetupMutationKeys.generateFile,
+        mutationKey: recoverySetupKey.generateFile,
         gcTime: 0,
         mutationFn: async ({
             wallet,

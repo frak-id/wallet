@@ -4,7 +4,7 @@ import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPu
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
-import { listenerSharingMutationKeys } from "@/module/listener/queryKeys/sharing";
+import { listenerSharingKey } from "@/module/listener/queryKeys/sharing";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
@@ -96,7 +96,7 @@ function SharingButtons({
         mutate: triggerSharing,
         isPending: isSharing,
     } = useMutation({
-        mutationKey: listenerSharingMutationKeys.sharing.trigger(
+        mutationKey: listenerSharingKey.sharing.trigger(
             "final-modal",
             finalSharingLink
         ),

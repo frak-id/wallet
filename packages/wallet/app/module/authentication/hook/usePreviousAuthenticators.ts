@@ -1,4 +1,4 @@
-import { authMutationKeys } from "@/module/authentication/queryKeys/auth";
+import { authKey } from "@/module/authentication/queryKeys/auth";
 import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
 import { useQuery } from "@tanstack/react-query";
 
@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
  */
 export const usePreviousAuthenticators = () =>
     useQuery({
-        queryKey: authMutationKeys.previousAuthenticators,
+        queryKey: authKey.previousAuthenticators,
         queryFn: async () => {
             return dexieDb.previousAuthenticator.toArray();
         },

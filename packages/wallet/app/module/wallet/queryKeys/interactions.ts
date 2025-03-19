@@ -1,36 +1,27 @@
 import type { Hex } from "viem";
 
-const base = {
-    interactions: ["interactions"] as const,
-} as const;
-
 /**
  * Query keys for wallet-related interactions queries
  */
-export const walletInteractionsQueryKeys = {
-    base: base.interactions,
-    sessionStatus: {
-        base: [...base.interactions, "session-status"] as const,
-        byAddress: (address: Hex | undefined) =>
-            [
-                ...base.interactions,
-                "session-status",
-                address ?? "no-address",
-            ] as const,
-    },
-} as const;
+export namespace interactionsKey {
+    /**
+     * The base key
+     */
+    const base = "interactions" as const;
 
-/**
- * Mutation keys for wallet-related interactions mutations
- */
-export const walletInteractionsMutationKeys = {
-    closeSession: [
-        ...walletInteractionsQueryKeys.base,
-        "close-session",
-    ] as const,
-    openSession: [...walletInteractionsQueryKeys.base, "open-session"] as const,
-    consumePending: [
-        ...walletInteractionsQueryKeys.base,
-        "consume-pending",
-    ] as const,
-};
+    /**
+     * Query keys for session status
+     */
+    export const sessionStatus = {
+        baseKey: [base, "session-status"] as const,
+        byAddress: (address?: Hex) =>
+            [base, "session-status", address ?? "no-address"] as const,
+    };
+
+    /**
+     * Mutation keys
+     */
+    export const closeSession = [base, "close-session"] as const;
+    export const openSession = [base, "open-session"] as const;
+    export const consumePending = [base, "consume-pending"] as const;
+}

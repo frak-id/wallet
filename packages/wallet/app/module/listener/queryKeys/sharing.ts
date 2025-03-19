@@ -1,19 +1,17 @@
-const baseMutation = {
-    sharing: ["sharing"] as const,
-} as const;
-
 /**
- * Mutation keys for listener-related sharing mutations
+ * Query keys for listener-related sharing queries
  */
-export const listenerSharingMutationKeys = {
-    sharing: {
-        base: baseMutation.sharing,
+export namespace listenerSharingKey {
+    /**
+     * The base key
+     */
+    const base = "sharing" as const;
+
+    /**
+     * Query keys for sharing
+     */
+    export const sharing = {
         trigger: (component: string, link: string | null) =>
-            [
-                component,
-                "sharing",
-                "system-sharing",
-                link ?? "no-link",
-            ] as const,
-    },
-} as const;
+            [base, component, "system-sharing", link ?? "no-link"] as const,
+    };
+}

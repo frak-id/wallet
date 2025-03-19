@@ -1,6 +1,6 @@
 import { getSessionStatus } from "@/module/interaction/action/interactionSession";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
-import { walletInteractionsQueryKeys } from "@/module/wallet/queryKeys/interactions";
+import { interactionsKey } from "@/module/wallet/queryKeys/interactions";
 import type { InteractionSession } from "@/types/Session";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
@@ -16,7 +16,7 @@ import { useAccount } from "wagmi";
  */
 export const interactionSessionStatusQuery = (address?: Address) => ({
     enabled: !!address,
-    queryKey: walletInteractionsQueryKeys.sessionStatus.byAddress(address),
+    queryKey: interactionsKey.sessionStatus.byAddress(address),
     queryFn: async () => {
         if (!address) {
             return null;

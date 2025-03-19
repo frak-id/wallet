@@ -1,5 +1,5 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
-import { authMutationKeys } from "@/module/authentication/queryKeys/auth";
+import { authKey } from "@/module/authentication/queryKeys/auth";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
@@ -33,7 +33,7 @@ export function useLogin(
         mutateAsync: login,
     } = useMutation({
         ...options,
-        mutationKey: authMutationKeys.login,
+        mutationKey: authKey.login,
         mutationFn: async (args?: {
             lastAuthentication?: PreviousAuthenticatorModel;
         }) => {

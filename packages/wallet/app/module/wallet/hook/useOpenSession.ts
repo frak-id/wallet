@@ -1,9 +1,6 @@
 import { getEnableSessionData } from "@/module/interaction/utils/getEnableDisableData";
 import { useConsumePendingInteractions } from "@/module/wallet/hook/useConsumePendingInteractions";
-import {
-    walletInteractionsMutationKeys,
-    walletInteractionsQueryKeys,
-} from "@/module/wallet/queryKeys/interactions";
+import { interactionsKey } from "@/module/wallet/queryKeys/interactions";
 import {
     type UseMutationOptions,
     useMutation,
@@ -28,7 +25,7 @@ export function useOpenSession({
 
     return useMutation({
         ...mutations,
-        mutationKey: walletInteractionsMutationKeys.openSession,
+        mutationKey: interactionsKey.openSession,
         mutationFn: async () => {
             // If no wallet address, return
             if (!address) {
@@ -58,7 +55,7 @@ export function useOpenSession({
 
             // Refresh the interactions stuff
             await queryClient.invalidateQueries({
-                queryKey: walletInteractionsQueryKeys.sessionStatus.base,
+                queryKey: interactionsKey.sessionStatus.baseKey,
                 exact: false,
             });
 

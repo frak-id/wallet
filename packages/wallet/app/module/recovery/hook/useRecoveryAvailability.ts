@@ -1,5 +1,5 @@
 import { getRecoveryAvailability } from "@/module/recovery/action/get";
-import { recoveryQueryKeys } from "@/module/recovery/queryKeys/recovery";
+import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useQuery } from "@tanstack/react-query";
 
@@ -14,7 +14,7 @@ export function useRecoveryAvailability({
     newAuthenticatorId: string;
 }) {
     const { data, ...queryStuff } = useQuery({
-        queryKey: recoveryQueryKeys.availableChains({
+        queryKey: recoveryKey.availableChains.full({
             walletAddress: file.initialWallet.address,
             guardianAddress: file.guardianAddress,
         }),

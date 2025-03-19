@@ -1,5 +1,5 @@
 import { currentViemClient } from "@/module/blockchain/provider";
-import { listenerProductQueryKeys } from "@/module/listener/queryKeys/product";
+import { listenerProductKey } from "@/module/listener/queryKeys/product";
 import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
 import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
 import type { Hex } from "viem";
@@ -13,7 +13,7 @@ export const getProductMetadataQuery = ({
     productId,
 }: { productId?: Hex }) => ({
     enabled: !!productId,
-    queryKey: listenerProductQueryKeys.product.metadata.byId(productId),
+    queryKey: listenerProductKey.metadata.byId(productId),
     async queryFn() {
         if (!productId) {
             return null;

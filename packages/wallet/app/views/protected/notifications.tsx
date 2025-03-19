@@ -5,7 +5,7 @@ import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import type { NotificationModel } from "@/module/common/storage/dexie/NotificationModel";
 import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
-import { notificationQueryKeys } from "@/module/notification/queryKeys/notification";
+import { notificationKey } from "@/module/notification/queryKeys/notification";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 export default function Notifications() {
     const { t } = useTranslation();
     const { data: notifications } = useQuery({
-        queryKey: notificationQueryKeys.history.base,
+        queryKey: notificationKey.history.baseKey,
         queryFn: async () => {
             const notifications = await dexieDb.notification.toArray();
             // Sort them by timestamp

@@ -1,5 +1,5 @@
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
-import { recoveryMutationKeys } from "@/module/recovery/queryKeys/recovery";
+import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { startRegistration } from "@simplewebauthn/browser";
@@ -10,7 +10,7 @@ import { useMutation } from "@tanstack/react-query";
  */
 export function useCreateRecoveryPasskey() {
     const { mutateAsync, mutate, ...mutationStuff } = useMutation({
-        mutationKey: recoveryMutationKeys.createRecoveryPasskey,
+        mutationKey: recoveryKey.createRecoveryPasskey,
         gcTime: 0,
         mutationFn: async ({ file }: { file: RecoveryFileContent }) => {
             // Get the registration options and start the registration

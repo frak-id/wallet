@@ -1,31 +1,35 @@
 import type { Hex } from "viem";
 
-const base = {
-    recovery: ["recovery"] as const,
-};
-
 /**
  * Query keys for recovery-related queries
  */
-export const recoveryQueryKeys = {
-    base: base.recovery,
-    availableChains: (params: {
-        walletAddress: Hex;
-        guardianAddress: Hex;
-    }) =>
-        [
-            ...base.recovery,
-            "get-available-chains",
-            params.walletAddress,
-            params.guardianAddress,
-        ] as const,
-} as const;
+export namespace recoveryKey {
+    /**
+     * The base key
+     */
+    const base = "recovery" as const;
 
-/**
- * Mutation keys for recovery-related mutations
- */
-export const recoveryMutationKeys = {
-    createRecoveryPasskey: [...base.recovery, "create-passkey"] as const,
-    performRecovery: [...base.recovery, "perform-recovery"] as const,
-    parseRecoveryFile: [...base.recovery, "parse-file"] as const,
-} as const;
+    /**
+     * Query keys for available chains
+     */
+    const availableChainsBase = "get-available-chains" as const;
+    export const availableChains = {
+        full: (params: {
+            walletAddress: Hex;
+            guardianAddress: Hex;
+        }) =>
+            [
+                base,
+                availableChainsBase,
+                params.walletAddress,
+                params.guardianAddress,
+            ] as const,
+    };
+
+    /**
+     * Mutation keys for recovery-related mutations
+     */
+    export const createRecoveryPasskey = [base, "create-passkey"] as const;
+    export const performRecovery = [base, "perform-recovery"] as const;
+    export const parseRecoveryFile = [base, "parse-file"] as const;
+}

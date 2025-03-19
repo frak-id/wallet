@@ -1,5 +1,5 @@
 import { getInteractionHistory } from "@/module/history/action/interactionHistory";
-import { historyQueryKeys } from "@/module/history/queryKeys/history";
+import { historyKey } from "@/module/history/queryKeys/history";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 
@@ -9,7 +9,7 @@ export function useGetInteractionHistory() {
 
     // The query fn that will fetch the history
     const { data: history } = useQuery({
-        queryKey: historyQueryKeys.interactions.byAddress(address),
+        queryKey: historyKey.interactions.byAddress(address),
         queryFn: async () => {
             return await getInteractionHistory({
                 account: address ?? "0x",

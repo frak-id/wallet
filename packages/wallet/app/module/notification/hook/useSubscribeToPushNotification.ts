@@ -1,7 +1,7 @@
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
-import { notificationMutationKeys } from "@/module/notification/queryKeys/notification";
+import { notificationKey } from "@/module/notification/queryKeys/notification";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
 
@@ -25,7 +25,7 @@ export function useSubscribeToPushNotification(
         ...mutationState
     } = useMutation({
         ...mutationOptions,
-        mutationKey: notificationMutationKeys.push.subscribe,
+        mutationKey: notificationKey.push.subscribe,
         mutationFn: async () => {
             // If notification are not allowed, ask for permission
             if (!isNotificationAllowed && askForNotificationPermission) {
