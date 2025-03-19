@@ -5,6 +5,7 @@ import {
     cleanPendingInteractionsAtom,
     pendingInteractionAtom,
 } from "@/module/wallet/atoms/pendingInteraction";
+import { walletInteractionsMutationKeys } from "@/module/wallet/queryKeys/interactions";
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useAccount } from "wagmi";
@@ -19,7 +20,7 @@ export function useConsumePendingInteractions() {
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();
 
     return useMutation({
-        mutationKey: ["interactions", "consume-pending"],
+        mutationKey: walletInteractionsMutationKeys.consumePending,
         mutationFn: async () => {
             // If no wallet address, return
             if (!address) {

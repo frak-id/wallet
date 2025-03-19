@@ -1,7 +1,7 @@
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
-import { commonQueryKeys } from "@/module/common/queryKeys/common";
+import { commonSdkQueryKeys } from "@/module/common/queryKeys/sdk";
 import {
     getSafeSdkSession,
     getSafeSession,
@@ -58,7 +58,7 @@ export function useGetSafeSdkSession() {
         gcTime: 2 * 60 * 1000,
         // Keep it stale for 15min
         staleTime: 15 * 60 * 1000,
-        queryKey: commonQueryKeys.sdk.token.safe.bySession(
+        queryKey: commonSdkQueryKeys.token.safe.bySession(
             currentSession?.address,
             lastWebAuthnAction?.wallet
         ),

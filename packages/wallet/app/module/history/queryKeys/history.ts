@@ -1,12 +1,12 @@
 import type { Hex } from "viem";
 
-/**
- * Query keys for history-related queries
- */
 const base = {
     history: ["history"] as const,
 } as const;
 
+/**
+ * Query keys for history-related queries
+ */
 export const historyQueryKeys = {
     interactions: {
         base: [...base.history, "interactions"] as const,

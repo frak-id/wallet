@@ -1,5 +1,6 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
+import { authMutationKeys } from "@/module/authentication/queryKeys/auth";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
@@ -31,7 +32,7 @@ export function useRegister(
         mutateAsync: register,
     } = useMutation({
         ...options,
-        mutationKey: ["register"],
+        mutationKey: authMutationKeys.register,
         mutationFn: async () => {
             // Build the credentials to exclude
             const excludeCredentials = previousAuthenticators?.map(

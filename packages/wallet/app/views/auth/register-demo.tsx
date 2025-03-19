@@ -1,4 +1,5 @@
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
+import { authMutationKeys } from "@/module/authentication/queryKeys/auth";
 import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import type { Session } from "@/types/Session";
@@ -60,7 +61,7 @@ function useRegisterDemo(options?: UseMutationOptions<Session>) {
         mutateAsync: register,
     } = useMutation({
         ...options,
-        mutationKey: ["register"],
+        mutationKey: authMutationKeys.demo.register,
         mutationFn: async () => {
             // Generate a private key
             const privateKey = generatePrivateKey();

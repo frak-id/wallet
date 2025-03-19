@@ -1,3 +1,4 @@
+import { recoveryMutationKeys } from "@/module/recovery/queryKeys/recovery";
 import { decryptPrivateKey } from "@/module/recovery/utils/decrypt";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useMutation } from "@tanstack/react-query";
@@ -9,7 +10,7 @@ import { privateKeyToAccount } from "viem/accounts";
  */
 export function useRecoveryLocalAccount() {
     const { mutateAsync, mutate, data, ...mutationStuff } = useMutation({
-        mutationKey: ["recovery", "parse-file"],
+        mutationKey: recoveryMutationKeys.parseRecoveryFile,
         mutationFn: async ({
             file,
             pass,

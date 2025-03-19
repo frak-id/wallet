@@ -2,7 +2,10 @@ import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { tokensQueryKeys } from "@/module/tokens/queryKeys/tokens";
-import { claimableQueryKeys } from "@/module/wallet/queryKeys/claimable";
+import {
+    claimableMutationKeys,
+    claimableQueryKeys,
+} from "@/module/wallet/queryKeys/claimable";
 import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { Button } from "@shared/module/component/Button";
@@ -40,7 +43,7 @@ export function PendingReferral() {
         isPending,
         isSuccess,
     } = useMutation({
-        mutationKey: claimableQueryKeys.claim.byAddress(address),
+        mutationKey: claimableMutationKeys.claim.byAddress(address),
         mutationFn: async () => {
             if (!(pendingReward?.claimables && address)) return;
 

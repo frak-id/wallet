@@ -2,6 +2,7 @@ import {
     getPimlicoClient,
     getPimlicoTransport,
 } from "@/module/blockchain/aa-provider";
+import { recoveryMutationKeys } from "@/module/recovery/queryKeys/recovery";
 import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
 import { recoverySmartAccount } from "@/module/wallet/smartWallet/RecoverySmartWallet";
 import type { RecoveryFileContent } from "@/types/Recovery";
@@ -44,7 +45,7 @@ export function usePerformRecovery(
 
     const { mutateAsync, mutate, ...mutationStuff } = useMutation({
         ...options,
-        mutationKey: ["recovery", "perform-recovery"],
+        mutationKey: recoveryMutationKeys.performRecovery,
         gcTime: 0,
         mutationFn: async ({
             file,

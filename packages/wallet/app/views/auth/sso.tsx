@@ -7,7 +7,10 @@ import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import styles from "@/module/authentication/component/Sso/index.module.css";
-import { ssoQueryKeys } from "@/module/authentication/queryKeys/sso";
+import {
+    ssoMutationKeys,
+    ssoQueryKeys,
+} from "@/module/authentication/queryKeys/sso";
 import {
     type CompressedSsoData,
     compressedSsoToParams,
@@ -326,7 +329,7 @@ function useLoginDemo(options?: UseMutationOptions<Session>) {
         mutateAsync,
     } = useMutation({
         ...options,
-        mutationKey: ssoQueryKeys.demo.login.base,
+        mutationKey: ssoMutationKeys.demo.login,
         async mutationFn() {
             // Retrieve the pkey
             const pkey = jotaiStore.get(demoPrivateKeyAtom) as Hex | undefined;

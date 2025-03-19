@@ -1,14 +1,13 @@
 import type { AppSpecificSsoMetadata } from "@/module/authentication/atoms/sso";
 import type { Hex } from "viem";
 
+const base = {
+    sso: ["sso"] as const,
+} as const;
+
 /**
  * Query keys for SSO-related queries
  */
-const base = {
-    sso: ["sso"] as const,
-    demo: ["demo"] as const,
-} as const;
-
 export const ssoQueryKeys = {
     base: base.sso,
     params: {
@@ -16,15 +15,9 @@ export const ssoQueryKeys = {
         bySearchParams: (searchParams: string) =>
             [...base.sso, "params-decompression", searchParams] as const,
     },
-    demo: {
-        base: base.demo,
-        login: {
-            base: [...base.demo, "login"] as const,
-        },
-    },
-    consume: ["sso", "consume"] as const,
+    consume: [...base.sso, "consume"] as const,
     link: {
-        base: ["sso", "link"] as const,
+        base: [...base.sso, "link"] as const,
         full: (params: {
             productId: Hex;
             metadata: AppSpecificSsoMetadata;
@@ -41,5 +34,14 @@ export const ssoQueryKeys = {
             params.lang,
             params.consumeKey,
         ],
+    },
+} as const;
+
+/**
+ * Mutation keys for SSO-related mutations
+ */
+export const ssoMutationKeys = {
+    demo: {
+        login: [...base.sso, "demo", "login"] as const,
     },
 } as const;

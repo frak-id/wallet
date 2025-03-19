@@ -1,6 +1,6 @@
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
-import { listenerQueryKeys } from "@/module/listener/queryKeys/listener";
+import { listenerInteractionsQueryKeys } from "@/module/listener/queryKeys/interactions";
 import type {
     FullInteractionTypesKey,
     GetProductInformationReturnType,
@@ -20,7 +20,7 @@ export const estimatedInteractionRewardQuery = ({
     interaction,
 }: { productId?: Hex; interaction?: FullInteractionTypesKey }) => ({
     enabled: !!productId,
-    queryKey: listenerQueryKeys.interactions.estimatedReward.byProduct(
+    queryKey: listenerInteractionsQueryKeys.estimatedReward.byProduct(
         productId,
         interaction
     ),

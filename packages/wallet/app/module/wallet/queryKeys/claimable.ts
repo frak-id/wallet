@@ -1,12 +1,12 @@
 import type { Hex } from "viem";
 
-/**
- * Query keys for claimable-related queries
- */
 const base = {
     claimable: ["claimable"] as const,
 } as const;
 
+/**
+ * Query keys for wallet-related claimable queries
+ */
 export const claimableQueryKeys = {
     base: base.claimable,
     pending: {
@@ -14,8 +14,13 @@ export const claimableQueryKeys = {
         byAddress: (address?: Hex) =>
             [...base.claimable, "pending", address ?? "no-address"] as const,
     },
+} as const;
+
+/**
+ * Mutation keys for wallet-related claimable mutations
+ */
+export const claimableMutationKeys = {
     claim: {
-        base: [...base.claimable, "do-claim"] as const,
         byAddress: (address?: Hex) =>
             [...base.claimable, "do-claim", address ?? "no-address"] as const,
     },

@@ -1,3 +1,4 @@
+import { recoverySetupMutationKeys } from "@/module/recovery-setup/queryKeys/recovery-setup";
 import type { RecoveryFileContent } from "@/types/Recovery";
 import { useMutation } from "@tanstack/react-query";
 
@@ -6,7 +7,7 @@ import { useMutation } from "@tanstack/react-query";
  */
 export function useDownloadRecoveryFile() {
     const { mutate, mutateAsync, ...mutationStuff } = useMutation({
-        mutationKey: ["recovery", "download-file"],
+        mutationKey: recoverySetupMutationKeys.downloadRecoveryFile,
         gcTime: 0,
         mutationFn: async ({ file }: { file: RecoveryFileContent }) => {
             // Build the blob with the file product
