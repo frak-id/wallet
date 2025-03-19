@@ -1,4 +1,5 @@
 import { getDisableSessionData } from "@/module/interaction/utils/getEnableDisableData";
+import { interactionsKey } from "@/module/wallet/queryKeys/interactions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount, useSendTransaction } from "wagmi";
 
@@ -8,7 +9,7 @@ export function useCloseSession() {
     const { sendTransactionAsync } = useSendTransaction();
 
     return useMutation({
-        mutationKey: ["interactions", "close-session"],
+        mutationKey: interactionsKey.closeSession,
         mutationFn: async () => {
             if (!address) {
                 return;
@@ -26,7 +27,7 @@ export function useCloseSession() {
 
             // Refresh the interactions stuff
             await queryClient.invalidateQueries({
-                queryKey: ["interactions", "session-status"],
+                queryKey: interactionsKey.sessionStatus.baseKey,
                 exact: false,
             });
 

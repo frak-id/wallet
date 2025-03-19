@@ -1,3 +1,4 @@
+import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 import {
     type DefaultError,
     type UseMutationOptions,
@@ -25,7 +26,7 @@ export function useSetupRecovery(
      */
     const { mutate, mutateAsync, ...mutationStuff } = useMutation({
         ...options,
-        mutationKey: ["recovery", "setup", address],
+        mutationKey: recoverySetupKey.setup(address),
         gcTime: 0,
         mutationFn: async ({ setupTxData }: MutationParams) => {
             if (!address) return null;
@@ -38,8 +39,7 @@ export function useSetupRecovery(
 
             // Invalidate the recovery options for the given chain
             await queryClient.invalidateQueries({
-                queryKey: ["recovery", "status", address],
-                exact: true,
+                queryKey: recoverySetupKey.status(address),
             });
 
             return txHash;

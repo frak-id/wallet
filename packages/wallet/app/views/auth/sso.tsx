@@ -7,14 +7,19 @@ import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import styles from "@/module/authentication/component/Sso/index.module.css";
+import { ssoKey } from "@/module/authentication/queryKeys/sso";
 import {
     type CompressedSsoData,
     compressedSsoToParams,
 } from "@/module/authentication/utils/ssoDataCompression";
+import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
+import type { Session } from "@/types/Session";
+import { decompressJson } from "@frak-labs/core-sdk";
 import { Fingerprint } from "@shared/module/asset/icons/Fingerprint";
 import { jotaiStore } from "@shared/module/atoms/store";
+import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
 import { formatHash } from "@shared/module/component/HashDisplay";
 import { Spinner } from "@shared/module/component/Spinner";
 import {
@@ -26,14 +31,10 @@ import { useAtomValue } from "jotai";
 import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import "./sso.global.css";
-import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
-import type { Session } from "@/types/Session";
-import { decompressJson } from "@frak-labs/core-sdk";
-import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
 import { Link, useSearchParams } from "react-router";
 import type { Hex } from "viem";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
+import "./sso.global.css";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -59,7 +60,7 @@ export default function Sso() {
     useQuery({
         gcTime: 0,
         staleTime: 0,
-        queryKey: ["sso", "params-decompression", searchParams.toString()],
+        queryKey: ssoKey.params.bySearchParams(searchParams.toString()),
         queryFn: async () => {
             const compressedString = searchParams.get("p");
             if (!compressedString) {
@@ -325,7 +326,7 @@ function useLoginDemo(options?: UseMutationOptions<Session>) {
         mutateAsync,
     } = useMutation({
         ...options,
-        mutationKey: ["demo-login"],
+        mutationKey: ssoKey.demo.login,
         async mutationFn() {
             // Retrieve the pkey
             const pkey = jotaiStore.get(demoPrivateKeyAtom) as Hex | undefined;

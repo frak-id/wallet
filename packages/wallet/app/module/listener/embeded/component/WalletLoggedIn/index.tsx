@@ -11,6 +11,7 @@ import {
     useEmbededListenerUI,
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
+import { listenerSharingKey } from "@/module/listener/queryKeys/sharing";
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { useGetUserPendingBalance } from "@/module/tokens/hook/useGetUserPendingBalance";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
@@ -205,12 +206,10 @@ function ButtonSharingLink({
         mutate: triggerSharing,
         isPending: isSharing,
     } = useMutation({
-        mutationKey: [
+        mutationKey: listenerSharingKey.sharing.trigger(
             "wallet-embedded",
-            "sharing",
-            "system-sharing",
-            finalSharingLink,
-        ],
+            finalSharingLink
+        ),
         mutationFn: async () => {
             if (!finalSharingLink) return;
 
