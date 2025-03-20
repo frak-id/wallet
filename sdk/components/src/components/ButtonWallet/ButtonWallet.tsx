@@ -1,10 +1,11 @@
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
-import { useEffect, useMemo, useRef } from "preact/hooks";
+import { cx } from "class-variance-authority";
+import { useEffect, useMemo, useState } from "preact/hooks";
+import styles from "./ButtonWallet.module.css";
 import GiftIcon from "./assets/gift.svg";
 import type { ButtonWalletProps } from "./types";
 import { openWalletModal } from "./utils";
-import "./ButtonWallet.css";
 
 /**
  * Button to open wallet modal
@@ -50,12 +51,12 @@ export function ButtonWallet({
         () => rawUseReward !== undefined,
         [rawUseReward]
     );
-    const buttonRef = useRef<HTMLButtonElement>(null);
     const { isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
         targetInteraction
     );
+    const [position, setPosition] = useState<"left" | "right">("right");
 
     /**
      * Setup the position of the button
@@ -63,19 +64,25 @@ export function ButtonWallet({
     useEffect(() => {
         const position =
             window.FrakSetup?.modalWalletConfig?.metadata?.position;
-        buttonRef.current?.parentElement?.classList.add(position ?? "right");
+        setPosition(position ?? "right");
     }, []);
 
     return (
         <button
-            ref={buttonRef}
             type={"button"}
-            class={classname}
+            class={cx(
+                styles.button,
+                position === "left"
+                    ? styles.button__left
+                    : styles.button__right,
+                classname,
+                "override"
+            )}
             disabled={!isClientReady}
             onClick={openWalletModal}
         >
             <GiftIcon />
-            {reward && <span>{reward}</span>}
+            {reward && <span className={styles.reward}>{reward}</span>}
         </button>
     );
 }

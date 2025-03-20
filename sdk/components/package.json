@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",
+    "class-variance-authority": "^0.7.1",
     "preact": "^10.26.4",
     "preact-custom-element": "^4.3.0"
   },

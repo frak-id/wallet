@@ -10,10 +10,6 @@ const scriptSrc =
     process.env.NODE_ENV === "production"
         ? "https://cdn.jsdelivr.net/npm/@frak-labs/components"
         : `${bundleDir}/components.js`;
-const cssSrc =
-    process.env.NODE_ENV === "production"
-        ? "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.css"
-        : `${bundleDir}/components.css`;
 
 export default defineConfig({
     server: {
@@ -29,9 +25,6 @@ export default defineConfig({
                 data: {
                     injectScript: USE_CDN
                         ? `<script defer src="${scriptSrc}"></script>`
-                        : "",
-                    injectCSS: USE_CDN
-                        ? `<link id="frak-button-wallet" rel="stylesheet" href="${cssSrc}" />`
                         : "",
                     injectReactScan: DEBUG
                         ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`

@@ -317,9 +317,10 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "0.0.11",
+      "version": "0.0.12",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
+        "class-variance-authority": "^0.7.1",
         "preact": "^10.26.4",
         "preact-custom-element": "^4.3.0",
       },
@@ -335,7 +336,7 @@
     },
     "sdk/core": {
       "name": "@frak-labs/core-sdk",
-      "version": "0.0.8",
+      "version": "0.0.9",
       "dependencies": {
         "async-lz-string": "^1.1.0",
         "js-sha256": "^0.11.0",
@@ -354,7 +355,7 @@
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
-      "version": "0.0.30",
+      "version": "0.0.31",
       "devDependencies": {
         "@microsoft/api-extractor": "^7.52.1",
         "@rslib/core": "^0.5.4",
@@ -362,7 +363,7 @@
     },
     "sdk/react": {
       "name": "@frak-labs/react-sdk",
-      "version": "0.0.8",
+      "version": "0.0.9",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
       },
