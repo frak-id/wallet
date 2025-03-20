@@ -116,7 +116,7 @@ export function ButtonShare({
         <>
             <button
                 type={"button"}
-                className={cx(styles.buttonShare, classname)}
+                className={cx(styles.buttonShare, classname, "override")}
                 onClick={onClick}
             >
                 {!isClientReady && <Spinner />} {btnText}
