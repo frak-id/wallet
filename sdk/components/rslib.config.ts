@@ -1,7 +1,7 @@
+import { tools } from "@frak-labs/shared/tooling/rslib";
 import { pluginPreact } from "@rsbuild/plugin-preact";
 import { pluginSvgr } from "@rsbuild/plugin-svgr";
 import { type LibConfig, defineConfig } from "@rslib/core";
-import { TsCheckerRspackPlugin } from "ts-checker-rspack-plugin";
 
 /**
  * Create the lib config for NPM distribution
@@ -85,8 +85,6 @@ export default defineConfig({
         }),
     ],
     tools: {
-        rspack: {
-            plugins: [new TsCheckerRspackPlugin()],
-        },
+        ...tools,
     },
 });

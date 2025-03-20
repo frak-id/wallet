@@ -30,6 +30,7 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/backend-elysia": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
+    "@rsdoctor/rspack-plugin": "^1.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "elysia": "^1.2.10",

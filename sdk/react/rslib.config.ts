@@ -1,6 +1,6 @@
+import { tools } from "@frak-labs/shared/tooling/rslib";
 import { pluginReact } from "@rsbuild/plugin-react";
 import { type LibConfig, defineConfig } from "@rslib/core";
-import { TsCheckerRspackPlugin } from "ts-checker-rspack-plugin";
 
 function createLibConfig(config: LibConfig = {}): LibConfig {
     const basicConfig: LibConfig = {
@@ -39,8 +39,6 @@ export default defineConfig({
     },
     plugins: [pluginReact()],
     tools: {
-        rspack: {
-            plugins: [new TsCheckerRspackPlugin()],
-        },
+        ...tools,
     },
 });

@@ -1,5 +1,5 @@
+import { tools } from "@frak-labs/shared/tooling/rslib";
 import { defineConfig } from "@rslib/core";
-import { TsCheckerRspackPlugin } from "ts-checker-rspack-plugin";
 
 export default defineConfig({
     lib: [
@@ -29,8 +29,6 @@ export default defineConfig({
         cleanDistPath: true,
     },
     tools: {
-        rspack: {
-            plugins: [new TsCheckerRspackPlugin()],
-        },
+        ...tools,
     },
 });
