@@ -95,6 +95,8 @@ function mapModalMetadata(request: ModalRpcStepsInput) {
                 secondaryActionText
             );
         }
+
+        // todo: should also support final dismissed metadata
     }
 
     return Object.fromEntries(resultMap);

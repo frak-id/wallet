@@ -29,7 +29,13 @@ export type FinalActionType =
     | {
           key: "sharing";
           options?: {
+              /**
+               * @deprecated Use the top level `config.metadata.i18n` instead
+               */
               popupTitle?: string;
+              /**
+               * @deprecated Use the top level `config.metadata.i18n` instead
+               */
               text?: string;
               link?: string;
           };

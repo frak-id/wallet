@@ -71,16 +71,6 @@ import type {
  *                 logoUrl: "https://my-app.com/logo.png",
  *                 homepageLink: "https://my-app.com",
  *             },
- *             metadata: {
- *                 // Modal title on desktop
- *                 title: "Login on My-App",
- *                 // Modal description (and yep it accept markdown)
- *                 description: "## Please login to continue",
- *                 // Primary button text
- *                 primaryActionText: "Register",
- *                 // Secondary button text
- *                 secondaryActionText: "Login",
- *             },
  *         },
  *         // Simple session opening, with no customisation
  *         openSession: {},
@@ -92,11 +82,6 @@ import type {
  *                 nonce: generateSiweNonce(),
  *                 version: "1",
  *             },
- *             metadata: {
- *                 title: "Authenticate with SIWE",
- *                 description: "Please authenticate with SIWE to continue",
- *                 primaryActionText: "Authenticate",
- *             },
  *         },
  *         // Send batched transaction
  *         sendTransaction: {
@@ -104,10 +89,6 @@ import type {
  *                 { to: "0xdeadbeef", data: "0xdeadbeef" },
  *                 { to: "0xdeadbeef", data: "0xdeadbeef" },
  *             ],
- *             metadata: {
- *                 title: "Send a transaction",
- *                 description: "Please send a transaction to continue",
- *             },
  *         },
  *         // Success message with sharing options
  *         final: {
