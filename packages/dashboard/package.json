@@ -44,7 +44,7 @@
     "lucide-react": "^0.479.0",
     "mongodb": "^6.13.0",
     "lru-cache": "^11.0.2",
-    "next": "15.2.1",
+    "next": "15.2.3",
     "normalize.css": "^8.0.1",
     "radash": "^12.1.0",
     "react": "^19",
