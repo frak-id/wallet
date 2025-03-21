@@ -9,12 +9,14 @@ import {
     type ClientLifecycleEvent,
     type ExtractedParametersFromRpc,
     type IFrameEvent,
+    type IFrameRpcEvent,
     type IFrameRpcSchema,
     type RpcResponse,
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
+import { Sia } from "@timeleap/sia";
 import { keccak256, toHex } from "viem";
 import type { Address, Hex } from "viem";
 
@@ -75,18 +77,28 @@ export function createIFrameRequestResolver(
     }
 
     // Listen to the window message
-    const onMessage = async (message: MessageEvent<IFrameEvent>) => {
+    const onMessage = async (
+        message: MessageEvent<{
+            topic: "clientLifecycle" | "iframeLifecycle" | "rpc";
+            payload: Uint8Array;
+        }>
+    ) => {
         // Check if the message data are object
         if (typeof message.data !== "object") {
             return;
         }
 
+        // Deserialize the message
+        const payload = deserializeMessage(message);
+
+        // If we don't have a payload, return
+        if (!payload) {
+            return;
+        }
+
         // Check if that's a client lifecycle request event
-        if (
-            "clientLifecycle" in message.data ||
-            "iframeLifecycle" in message.data
-        ) {
-            await handleLifecycleEvents(message, setReadyToHandleRequest);
+        if ("clientLifecycle" in payload || "iframeLifecycle" in payload) {
+            await handleLifecycleEvents(payload, setReadyToHandleRequest);
             return;
         }
 
@@ -106,7 +118,7 @@ export function createIFrameRequestResolver(
         }
 
         // Get the data
-        const { id, topic, data } = message.data;
+        const { id, topic, data } = payload;
         if (!(id && topic)) {
             return;
         }
@@ -193,17 +205,17 @@ export function createIFrameRequestResolver(
  * @param setReadyToHandleRequest
  */
 async function handleLifecycleEvents(
-    message: MessageEvent<IFrameEvent>,
+    payload: IFrameEvent,
     setReadyToHandleRequest: () => void
 ) {
     // Check if that's an iframe lifecycle request event
-    if (!("clientLifecycle" in message.data)) {
+    if (!("clientLifecycle" in payload)) {
         // Check if that's a legacy hearbeat event
         // todo: To be delete once the SDK will be updated everywhere
         if (
-            "iframeLifecycle" in message.data &&
+            "iframeLifecycle" in payload &&
             // @ts-ignore: Legacy versions of the SDK can send this
-            message.data.iframeLifecycle === "heartbeat"
+            payload.iframeLifecycle === "heartbeat"
         ) {
             setReadyToHandleRequest();
             return;
@@ -216,7 +228,7 @@ async function handleLifecycleEvents(
     }
 
     // Extract the client lifecucle events data
-    const clientMsg = message.data;
+    const clientMsg = payload;
     const { clientLifecycle } = clientMsg;
 
     switch (clientLifecycle) {
@@ -251,7 +263,7 @@ async function handleLifecycleEvents(
             // Set the handshake response
             const hasContext = jotaiStore.set(
                 handleHandshakeResponse,
-                message as MessageEvent<ClientLifecycleEvent>
+                payload as unknown as MessageEvent<ClientLifecycleEvent>
             );
             // Once we got a context, we can tell that we are rdy to handle request
             if (hasContext) {
@@ -270,4 +282,67 @@ function isInIframe() {
         return false;
     }
     return window.self !== window.top;
+}
+
+/**
+ * Deserialize the message
+ * @param message
+ */
+function deserializeMessage(
+    message: MessageEvent<{
+        topic: "clientLifecycle" | "iframeLifecycle" | "rpc";
+        payload: Uint8Array;
+    }>
+) {
+    if (message.data.topic === "rpc") {
+        return deserializeIframeRpc(message.data.payload);
+    }
+
+    if (message.data.topic === "iframeLifecycle") {
+        return deserializeIframeLifecycle(message.data.payload) as IFrameEvent;
+    }
+
+    if (message.data.topic === "clientLifecycle") {
+        return deserializeClientLifecycle(message.data.payload) as IFrameEvent;
+    }
+}
+
+/**
+ * Deserialize the iframe rpc message
+ * @param payload
+ */
+function deserializeIframeRpc(payload: Uint8Array) {
+    const desia = new Sia(payload);
+    const deserialized: IFrameRpcEvent = {
+        id: desia.readString8(),
+        topic: desia.readString8() as ExtractedParametersFromRpc<IFrameRpcSchema>["method"],
+        data: {
+            compressed: desia.readString8(),
+            compressedHash: desia.readString8(),
+        },
+    };
+    return deserialized;
+}
+
+/**
+ * Deserialize the iframe lifecycle message
+ * @param payload
+ */
+function deserializeIframeLifecycle(payload: Uint8Array) {
+    const desia = new Sia(payload);
+    return {
+        iframeLifecycle: desia.readString8(),
+    };
+}
+
+/**
+ * Deserialize the client lifecycle message
+ * @param payload
+ */
+function deserializeClientLifecycle(payload: Uint8Array) {
+    const desia = new Sia(payload);
+    return {
+        clientLifecycle: desia.readString8(),
+        data: JSON.parse(desia.readString16()),
+    };
 }
