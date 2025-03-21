@@ -130,8 +130,5 @@ export type IFrameEvent =
 export type IFrameRpcEvent = {
     id: string;
     topic: ExtractedParametersFromRpc<IFrameRpcSchema>["method"];
-    data: {
-        compressed: string;
-        compressedHash: string;
-    };
+    data: string;
 };

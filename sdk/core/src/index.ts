@@ -3,12 +3,22 @@ export {
     createIFrameFrakClient,
     setupClient,
     DebugInfoGatherer,
+    encodeIFrameRpcEvent,
+    decodeIFrameRpcEvent,
+    encodeIFrameLifecycleEvent,
+    decodeIFrameLifecycleEvent,
+    encodeClientLifecycleCustomCssEvent,
+    decodeClientLifecycleCustomCssEvent,
+    encodeClientLifecycleRestoreBackupEvent,
+    decodeClientLifecycleRestoreBackupEvent,
+    encodeClientLifecycleHearbeatEvent,
+    decodeClientLifecycleHearbeatEvent,
+    encodeClientLifecycleHandshakeResponse,
+    decodeClientLifecycleHandshakeResponse,
 } from "./clients";
 
 // Utils
 export {
-    hashAndCompressData,
-    decompressDataAndCheckHash,
     compressJson,
     decompressJson,
     createIframe,

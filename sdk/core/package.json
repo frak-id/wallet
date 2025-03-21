@@ -85,9 +85,7 @@
     "viem": "^2.x"
   },
   "dependencies": {
-    "@timeleap/sia": "^2.2.0",
-    "async-lz-string": "^1.1.0",
-    "js-sha256": "^0.11.0"
+    "@timeleap/sia": "^2.2.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.4",

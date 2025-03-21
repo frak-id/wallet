@@ -1,0 +1,3 @@
+schema IFrameLifecycleEvent {
+  iframeLifecycle string8
+}

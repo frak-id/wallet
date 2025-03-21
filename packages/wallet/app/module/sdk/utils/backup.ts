@@ -7,14 +7,9 @@ import {
 } from "@/module/wallet/atoms/pendingInteraction";
 import type { PendingInteraction } from "@/types/Interaction";
 import type { SdkSession, Session } from "@/types/Session";
-import {
-    type CompressedData,
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-} from "@frak-labs/core-sdk";
+import { compressJson, decompressJson } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { atom } from "jotai";
-import { tryit } from "radash";
 import type { Hex } from "viem";
 
 /**
@@ -37,12 +32,9 @@ export async function restoreBackupData({
     backup,
     productId,
 }: { backup: string; productId: Hex }) {
-    const compressedBackup = JSON.parse(backup) as CompressedData;
-
     // Decompress the backup data and
-    const [, data] = await tryit(() =>
-        decompressDataAndCheckHash<BackupData>(compressedBackup)
-    )();
+    const data = decompressJson<BackupData>(backup);
+
     if (!data) {
         throw new Error("Invalid backup data");
     }
@@ -113,12 +105,12 @@ export async function pushBackupData(args?: { productId?: Hex }) {
     }
 
     // Create a compressed backup
-    const compressedBackup = await hashAndCompressData(backup);
+    const compressedBackup = compressJson(backup);
 
     // And then push the event
     emitLifecycleEvent({
         iframeLifecycle: "do-backup",
-        data: { backup: JSON.stringify(compressedBackup) },
+        data: { backup: compressedBackup },
     });
 }
 

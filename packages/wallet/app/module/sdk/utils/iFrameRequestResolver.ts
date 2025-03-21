@@ -9,11 +9,16 @@ import {
     type ClientLifecycleEvent,
     type ExtractedParametersFromRpc,
     type IFrameEvent,
-    type IFrameRpcEvent,
     type IFrameRpcSchema,
     type RpcResponse,
-    decompressDataAndCheckHash,
-    hashAndCompressData,
+    compressJson,
+    decodeClientLifecycleCustomCssEvent,
+    decodeClientLifecycleHandshakeResponse,
+    decodeClientLifecycleHearbeatEvent,
+    decodeClientLifecycleRestoreBackupEvent,
+    decodeIFrameLifecycleEvent,
+    decodeIFrameRpcEvent,
+    decompressJson,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { Sia } from "@timeleap/sia";
@@ -132,7 +137,7 @@ export function createIFrameRequestResolver(
         // Build the emitter for this call
         const responseEmitter: IFrameResponseEmitter = async (result) => {
             // Hash and compress the results
-            const compressedResult = await hashAndCompressData(result);
+            const compressedResult = compressJson(result);
 
             // Then post the message and a response
             message.source?.postMessage(
@@ -148,7 +153,7 @@ export function createIFrameRequestResolver(
         };
 
         // Decompress the data
-        const uncompressedData = await decompressDataAndCheckHash(data);
+        const uncompressedData = decompressJson(data);
 
         // Response to the requests
         // @ts-ignore
@@ -291,6 +296,11 @@ function isInIframe() {
 function deserializeMessage(
     message: MessageEvent<{
         topic: "clientLifecycle" | "iframeLifecycle" | "rpc";
+        subTopic?:
+            | "heartbeat"
+            | "handshake-response"
+            | "restore-backup"
+            | "modal-css";
         payload: Uint8Array;
     }>
 ) {
@@ -303,7 +313,32 @@ function deserializeMessage(
     }
 
     if (message.data.topic === "clientLifecycle") {
-        return deserializeClientLifecycle(message.data.payload) as IFrameEvent;
+        if (message.data.subTopic === "heartbeat") {
+            return {
+                clientLifecycle: "heartbeat",
+                data: decodeClientLifecycleHearbeatEvent(
+                    new Sia(message.data.payload)
+                ),
+            } as IFrameEvent;
+        }
+        if (message.data.subTopic === "handshake-response") {
+            return {
+                clientLifecycle: "handshake-response",
+                data: decodeClientLifecycleHandshakeResponse(
+                    new Sia(message.data.payload)
+                ),
+            } as unknown as IFrameEvent;
+        }
+        if (message.data.subTopic === "restore-backup") {
+            return decodeClientLifecycleRestoreBackupEvent(
+                new Sia(message.data.payload)
+            ) as IFrameEvent;
+        }
+        if (message.data.subTopic === "modal-css") {
+            return decodeClientLifecycleCustomCssEvent(
+                new Sia(message.data.payload)
+            ) as IFrameEvent;
+        }
     }
 }
 
@@ -312,16 +347,12 @@ function deserializeMessage(
  * @param payload
  */
 function deserializeIframeRpc(payload: Uint8Array) {
-    const desia = new Sia(payload);
-    const deserialized: IFrameRpcEvent = {
-        id: desia.readString8(),
-        topic: desia.readString8() as ExtractedParametersFromRpc<IFrameRpcSchema>["method"],
-        data: {
-            compressed: desia.readString8(),
-            compressedHash: desia.readString8(),
-        },
+    const decoded = decodeIFrameRpcEvent(new Sia(payload));
+    return {
+        id: decoded.id,
+        topic: decoded.topic as ExtractedParametersFromRpc<IFrameRpcSchema>["method"],
+        data: decoded.data,
     };
-    return deserialized;
 }
 
 /**
@@ -329,20 +360,8 @@ function deserializeIframeRpc(payload: Uint8Array) {
  * @param payload
  */
 function deserializeIframeLifecycle(payload: Uint8Array) {
-    const desia = new Sia(payload);
+    const decoded = decodeIFrameLifecycleEvent(new Sia(payload));
     return {
-        iframeLifecycle: desia.readString8(),
-    };
-}
-
-/**
- * Deserialize the client lifecycle message
- * @param payload
- */
-function deserializeClientLifecycle(payload: Uint8Array) {
-    const desia = new Sia(payload);
-    return {
-        clientLifecycle: desia.readString8(),
-        data: JSON.parse(desia.readString16()),
+        iframeLifecycle: decoded.iframeLifecycle,
     };
 }

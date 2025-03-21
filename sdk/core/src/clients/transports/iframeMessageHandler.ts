@@ -7,6 +7,14 @@ import {
 import { RpcErrorCodes } from "../../types/rpc/error";
 import type { IFrameEvent, IFrameRpcEvent } from "../../types/transport";
 import type { DebugInfoGatherer } from "../DebugInfo";
+import {
+    encodeClientLifecycleCustomCssEvent,
+    encodeClientLifecycleHandshakeResponse,
+    encodeClientLifecycleHearbeatEvent,
+    encodeClientLifecycleRestoreBackupEvent,
+} from "../schemas/clientLifecycleEvent";
+import { encodeIFrameLifecycleEvent } from "../schemas/iFrameLifecycleEvent";
+import { encodeIFrameRpcEvent } from "../schemas/iFrameRpcEvent";
 import type { IFrameChannelManager } from "./iframeChannelManager";
 import type { IframeLifecycleManager } from "./iframeLifecycleManager";
 
@@ -185,20 +193,12 @@ function serializeMessage(message: IFrameEvent) {
  */
 function serializeIframeRpc(message: IFrameRpcEvent) {
     const sia = new Sia();
-
     const messageData: IFrameRpcEvent = message;
-
-    const payload = sia
-        .seek(0)
-        .addString8(messageData.id)
-        .addString8(messageData.topic)
-        .addString8(messageData.data.compressed)
-        .addString8(messageData.data.compressedHash)
-        .toUint8ArrayReference();
+    const payload = encodeIFrameRpcEvent(sia, messageData);
 
     return {
         topic: "rpc",
-        payload,
+        payload: payload.toUint8ArrayReference(),
     };
 }
 
@@ -208,17 +208,12 @@ function serializeIframeRpc(message: IFrameRpcEvent) {
  */
 function serializeIframeLifecycle(message: IFrameLifecycleEvent) {
     const sia = new Sia();
-
     const messageData: IFrameLifecycleEvent = message;
-
-    const payload = sia
-        .seek(0)
-        .addString8(messageData.iframeLifecycle)
-        .toUint8ArrayReference();
+    const payload = encodeIFrameLifecycleEvent(sia, messageData);
 
     return {
         topic: "iframeLifecycle",
-        payload,
+        payload: payload.toUint8ArrayReference(),
     };
 }
 
@@ -228,28 +223,51 @@ function serializeIframeLifecycle(message: IFrameLifecycleEvent) {
  */
 function serializeClientLifecycle(message: ClientLifecycleEvent) {
     const sia = new Sia();
-
     const messageData: ClientLifecycleEvent = message;
 
-    const payload = sia
-        .seek(0)
-        .addString8(messageData.clientLifecycle)
-        .addString16(handleData(messageData))
-        .toUint8ArrayReference();
-
-    return {
-        topic: "clientLifecycle",
-        payload,
-    };
-}
-
-/**
- * Handle the data
- * @ignore
- */
-function handleData(message: ClientLifecycleEvent) {
-    if (message.clientLifecycle === "heartbeat") {
-        return JSON.stringify("");
+    if (messageData.clientLifecycle === "heartbeat") {
+        return {
+            topic: "clientLifecycle",
+            subTopic: "heartbeat",
+            payload: encodeClientLifecycleHearbeatEvent(
+                sia,
+                messageData
+            ).toUint8ArrayReference(),
+        };
     }
-    return JSON.stringify(message.data);
+
+    if (messageData.clientLifecycle === "handshake-response") {
+        return {
+            topic: "clientLifecycle",
+            subTopic: "handshake-response",
+            payload: encodeClientLifecycleHandshakeResponse(
+                sia,
+                messageData
+            ).toUint8ArrayReference(),
+        };
+    }
+
+    if (messageData.clientLifecycle === "restore-backup") {
+        return {
+            topic: "clientLifecycle",
+            subTopic: "restore-backup",
+            payload: encodeClientLifecycleRestoreBackupEvent(
+                sia,
+                messageData
+            ).toUint8ArrayReference(),
+        };
+    }
+
+    if (messageData.clientLifecycle === "modal-css") {
+        return {
+            topic: "clientLifecycle",
+            subTopic: "modal-css",
+            payload: encodeClientLifecycleCustomCssEvent(
+                sia,
+                messageData
+            ).toUint8ArrayReference(),
+        };
+    }
+
+    throw new Error("Invalid client lifecycle event");
 }

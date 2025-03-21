@@ -1,0 +1,5 @@
+schema IFrameRpcEvent {
+  id    string8
+  topic string8
+  data  string16
+}

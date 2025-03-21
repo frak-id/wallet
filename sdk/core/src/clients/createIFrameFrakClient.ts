@@ -9,10 +9,7 @@ import type {
     RpcResponse,
 } from "../types/transport";
 import { Deferred } from "../utils/Deferred";
-import {
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-} from "../utils/compression";
+import { compressJson, decompressJson } from "../utils/compression";
 import { BACKUP_KEY } from "../utils/constants";
 import { DebugInfoGatherer } from "./DebugInfo";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
@@ -83,11 +80,11 @@ export function createIFrameFrakClient({
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
             // Decompress the message
-            const decompressed = await decompressDataAndCheckHash<
-                RpcResponse<IFrameRpcSchema>
-            >(message.data);
+            const decompressed = decompressJson<RpcResponse<IFrameRpcSchema>>(
+                message.data
+            );
             // If it contains an error, reject it
-            if (decompressed.error) {
+            if (decompressed?.error) {
                 result.reject(
                     new FrakRpcError(
                         decompressed.error.code,
@@ -97,14 +94,14 @@ export function createIFrameFrakClient({
                 );
             } else {
                 // Otherwise, resolve with the right status
-                result.resolve(decompressed.result as TResult);
+                result.resolve(decompressed?.result as TResult);
             }
             // Then close the channel
             channelManager.removeChannel(channelId);
         });
 
         // Compress the message to send
-        const compressedMessage = await hashAndCompressData(args);
+        const compressedMessage = compressJson(args);
 
         // Send the message to the iframe
         messageHandler.sendEvent({
@@ -136,11 +133,11 @@ export function createIFrameFrakClient({
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
             // Decompress the message
-            const decompressed = await decompressDataAndCheckHash<
-                RpcResponse<IFrameRpcSchema>
-            >(message.data);
+            const decompressed = decompressJson<RpcResponse<IFrameRpcSchema>>(
+                message?.data
+            );
             // Transmit the result if it's a success
-            if (decompressed.result) {
+            if (decompressed?.result) {
                 callback(decompressed.result as TResult);
             } else {
                 throw new InternalError("No valid result in the response");
@@ -148,7 +145,7 @@ export function createIFrameFrakClient({
         });
 
         // Compress the message to send
-        const compressedMessage = await hashAndCompressData(args);
+        const compressedMessage = compressJson(args);
 
         // Send the message to the iframe
         messageHandler.sendEvent({

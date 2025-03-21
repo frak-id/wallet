@@ -1,0 +1,31 @@
+schema ClientLifecycleCustomCssEvent {
+  clientLifecycle string8
+  data ClientLifecycleCustomCssEventData
+}
+
+schema ClientLifecycleCustomCssEventData {
+    cssLink string8
+}
+
+schema ClientLifecycleRestoreBackupEvent {
+  clientLifecycle string8
+  data ClientLifecycleRestoreBackupEventData
+}
+
+schema ClientLifecycleRestoreBackupEventData {
+    backup string8
+}
+
+schema ClientLifecycleHearbeatEvent {
+  clientLifecycle string8
+}
+
+schema ClientLifecycleHandshakeResponse {
+  clientLifecycle string8
+  data ClientLifecycleHandshakeResponseData
+}
+
+schema ClientLifecycleHandshakeResponseData {
+    token string8
+    currentUrl string8
+}
