@@ -25,13 +25,11 @@ export function SsoButton({
     productId,
     ssoMetadata,
     text,
-    defaultText,
     className,
 }: {
     productId: Hex;
     ssoMetadata: SsoMetadata;
-    text?: string;
-    defaultText?: string;
+    text: string;
     className?: string;
 }) {
     // Get the current listener context (with a request)
@@ -62,13 +60,7 @@ export function SsoButton({
         return null;
     }
 
-    return (
-        <RegularSsoButton
-            link={link}
-            text={text ?? defaultText}
-            className={className}
-        />
-    );
+    return <RegularSsoButton link={link} text={text} className={className} />;
 }
 
 function RegularSsoButton({

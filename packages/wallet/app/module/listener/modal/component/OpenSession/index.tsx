@@ -14,16 +14,13 @@ import { useEffect } from "react";
  * @constructor
  */
 export function OpenSessionModalStep({
-    params,
     onFinish,
     onError,
 }: {
-    params: OpenInteractionSessionModalStepType["params"];
     onFinish: (args: OpenInteractionSessionModalStepType["returns"]) => void;
     onError: (reason?: string) => void;
 }) {
     const { t } = useListenerTranslation();
-    const { metadata } = params;
     const {
         data: currentSession,
         isPending: isFetchingStatus,
@@ -101,8 +98,7 @@ export function OpenSessionModalStep({
                         }}
                     >
                         {isPending && <Spinner />}
-                        {metadata?.primaryActionText ??
-                            t("sdk.modal.openSession.default.primaryAction")}
+                        {t("sdk.modal.openSession.primaryAction")}
                     </button>
                 </div>
             </div>

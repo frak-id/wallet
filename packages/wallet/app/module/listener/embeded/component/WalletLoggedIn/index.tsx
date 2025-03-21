@@ -192,12 +192,6 @@ function ButtonSharingLink({
     finalSharingLink: string | null;
 }) {
     const { data: currentSession } = useInteractionSessionStatus();
-    const {
-        currentRequest: {
-            params: { loggedIn },
-        },
-    } = useEmbededListenerUI();
-    const options = loggedIn?.action?.options;
     const { t } = useListenerTranslation();
 
     // Trigger native sharing
@@ -215,8 +209,8 @@ function ButtonSharingLink({
 
             // Build our sharing data
             const shareData = {
-                title: options?.popupTitle ?? t("sharing.default.title"),
-                text: options?.text ?? t("sharing.default.text"),
+                title: t("sharing.title"),
+                text: t("sharing.text"),
                 url: finalSharingLink,
             };
 

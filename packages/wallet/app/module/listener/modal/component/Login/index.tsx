@@ -27,7 +27,7 @@ export function LoginModalStep({
 }) {
     const resolvingContext = useAtomValue(iframeResolvingContextAtom);
     const { t } = useListenerTranslation();
-    const { metadata, ssoMetadata } = params;
+    const { ssoMetadata } = params;
 
     // Set the allowSso flag to true by default
     const allowSso = params.allowSso ?? true;
@@ -61,10 +61,7 @@ export function LoginModalStep({
                         <SsoButton
                             productId={resolvingContext?.productId ?? "0x"}
                             ssoMetadata={ssoMetadata ?? {}}
-                            text={metadata?.primaryActionText}
-                            defaultText={t(
-                                "sdk.modal.login.default.primaryAction"
-                            )}
+                            text={t("sdk.modal.login.primaryAction")}
                             className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
                         />
                     </div>
@@ -81,8 +78,7 @@ export function LoginModalStep({
                             }}
                         >
                             {isLoading && <Spinner />}
-                            {metadata?.secondaryActionText ??
-                                t("sdk.modal.login.default.secondaryAction")}
+                            {t("sdk.modal.login.secondaryAction")}
                         </button>
                     </div>
                 )}

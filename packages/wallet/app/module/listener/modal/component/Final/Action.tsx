@@ -29,8 +29,6 @@ export function FinalModalActionComponent({
         return (
             <SharingButtons
                 isModalSuccess={isSuccess}
-                popupTitle={action?.options?.popupTitle}
-                text={action?.options?.text}
                 link={action?.options?.link}
             />
         );
@@ -45,7 +43,7 @@ export function FinalModalActionComponent({
                 trackEvent("cta-dismissed");
             }}
         >
-            {t("sdk.modal.default.dismissBtn")}
+            {t("sdk.modal.dismiss.primaryAction")}
         </button>
     );
 }
@@ -60,13 +58,9 @@ export function FinalModalActionComponent({
 function SharingButtons({
     isModalSuccess,
     link,
-    popupTitle,
-    text,
 }: {
     isModalSuccess: boolean;
     link?: string;
-    popupTitle?: string;
-    text?: string;
 }) {
     const { sourceUrl } = useSafeResolvingContext();
     const { address } = useAccount();
@@ -105,8 +99,8 @@ function SharingButtons({
 
             // Build our sharing data
             const shareData = {
-                title: popupTitle ?? t("sharing.default.title"),
-                text: text ?? t("sharing.default.text"),
+                title: t("sharing.title"),
+                text: t("sharing.text"),
                 url: finalSharingLink,
             };
 

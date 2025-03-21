@@ -61,66 +61,54 @@
     },
     "sdk": {
         "modal": {
-            "default": {
-                "dismissBtn": "Je continue ma navigation",
-                "dismissBtn_sharing": "Partager sans être récompensé"
+            "dismiss": {
+                "primaryAction": "Je continue ma navigation",
+                "primaryAction_sharing": "Partager sans être récompensé"
             },
             "final": {
-                "default": {
-                    "title": "Succès",
-                    "title_reward": "Gains",
-                    "title_sharing": "Partager",
-                    "description_sharing": "Recevez jusqu'a **{{ estimatedReward }}** de la part de **{{ productName }}** directement sur votre porte-monnaie pour tout achat réalisé grâce à votre partage.\n\nRetrouvez votre porte-monnaie sur [wallet.frak.id](https://wallet.frak.id).\n\nPrêt, Partagez, Gagnez !",
-                    "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
-                    "description": "Vous avez effectué toutes les étapes avec succès."
-                },
+                "title": "Succès",
+                "title_reward": "Gains",
+                "title_sharing": "Partager",
+                "description_sharing": "Recevez jusqu'a **{{ estimatedReward }}** de la part de **{{ productName }}** directement sur votre porte-monnaie pour tout achat réalisé grâce à votre partage.\n\nRetrouvez votre porte-monnaie sur [wallet.frak.id](https://wallet.frak.id).\n\nPrêt, Partagez, Gagnez !",
+                "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
+                "description": "Vous avez effectué toutes les étapes avec succès.",
                 "dismissed": {
                     "description": "Tout est bon",
                     "description_sharing": "Partager cet article."
                 }
             },
             "login": {
-                "default": {
-                    "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**.",
-                    "description_other": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**",
-                    "description_sharing": "En partageant ce produit, je deviens ambassadeur-rice **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement dans mon porte-monnaie.",
-                    "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
-                    "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
-                    "secondaryAction": "J'ai déjà un porte-monnaie",
-                    "privyAction": "Connection via Privy",
-                    "title": "Connexion"
-                },
+                "description": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**.",
+                "description_other": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**",
+                "description_sharing": "En partageant ce produit, je deviens ambassadeur-rice **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement dans mon porte-monnaie.",
+                "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
+                "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
+                "secondaryAction": "J'ai déjà un porte-monnaie",
+                "privyAction": "Connection via Privy",
+                "title": "Connexion",
                 "success": "Connexion réussie"
             },
             "openSession": {
-                "default": {
-                    "description": "Bravo votre porte-monnaie est créé ! Activez-le maintenant pour recevoir jusqu'a **{{ estimatedReward }}**.",
-                    "primaryAction": "J'active mon porte-monnaie",
-                    "title": "Activation"
-                }
+                "description": "Bravo votre porte-monnaie est créé ! Activez-le maintenant pour recevoir jusqu'a **{{ estimatedReward }}**.",
+                "primaryAction": "J'active mon porte-monnaie",
+                "title": "Activation"
             },
             "sendTransaction": {
-                "default": {
-                    "description": "Pour terminer, autorisez cette transaction dans votre porte-monnaie. Cela garantit un traitement sécurisé.",
-                    "primaryAction_one": "Envoyer une transaction",
-                    "primaryAction_other": "Envoyer des transactions",
-                    "title": "Transaction"
-                }
+                "description": "Pour terminer, autorisez cette transaction dans votre porte-monnaie. Cela garantit un traitement sécurisé.",
+                "primaryAction_one": "Envoyer une transaction",
+                "primaryAction_other": "Envoyer des transactions",
+                "title": "Transaction"
             },
             "siweAuthenticate": {
-                "default": {
-                    "description": "Veuillez vous authentifier avec votre porte-monnaie pour continuer en toute sécurité. Votre signature confirme votre identité.",
-                    "primaryAction": "Authentifier",
-                    "title": "Authentification"
-                }
+                "description": "Veuillez vous authentifier avec votre porte-monnaie pour continuer en toute sécurité. Votre signature confirme votre identité.",
+                "primaryAction": "Authentifier",
+                "title": "Authentification"
             }
         },
         "wallet": {
             "login": {
-                "default": {
-                    "text": "Créez votre porte-monnaie avec **{{ productName }}** et recevez jusqu’à **{{ estimatedReward }}** par ami(e) parrainé(e)",
-                    "primaryAction": "Je crée mon porte-monnaie"
-                }
+                "text": "Créez votre porte-monnaie avec **{{ productName }}** et recevez jusqu’à **{{ estimatedReward }}** par ami(e) parrainé(e)",
+                "primaryAction": "Je crée mon porte-monnaie"
             },
             "loggedIn": {
                 "onboarding": {
@@ -138,10 +126,8 @@
             "share": "Partager",
             "shareSuccess": "Partagé"
         },
-        "default": {
-            "text": "Découvrez ce produit incroyable !",
-            "title": "Lien d'invitation {{productName}}"
-        }
+        "text": "Découvrez ce produit incroyable !",
+        "title": "Lien d'invitation {{productName}}"
     },
     "wallet": {
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",

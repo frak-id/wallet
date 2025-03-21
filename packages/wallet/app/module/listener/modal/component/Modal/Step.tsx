@@ -59,14 +59,11 @@ export function ModalStepIndicator() {
         if (!currentSteps) return [];
         return currentSteps.map((step) => {
             // Get the name
-            let name = step.params.metadata?.title;
-            if (!name) {
-                const context =
-                    step.key === "final" ? step.params.action.key : undefined;
-                name = t(`sdk.modal.${step.key}.default.title`, {
-                    context,
-                });
-            }
+            const context =
+                step.key === "final" ? step.params.action.key : undefined;
+            const name = t(`sdk.modal.${step.key}.title`, {
+                context,
+            });
 
             return {
                 name,

@@ -14,6 +14,7 @@ export type GenericModalStepType<TKey, TParams, TReturns> = {
 /**
  * Metadata that can be used to customize a modal step
  * @group Modal Display
+ * @deprecated Use the top level `config.customizations.i18n`  instead
  */
 export type ModalStepMetadata = {
     metadata?: {

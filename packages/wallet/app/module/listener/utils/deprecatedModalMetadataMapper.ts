@@ -1,6 +1,7 @@
 import type {
     DisplayEmbededWalletParamsType,
     ModalRpcStepsInput,
+    ModalStepMetadata,
 } from "@frak-labs/core-sdk";
 import type { UIRequest } from "../providers/ListenerUiProvider";
 
@@ -31,20 +32,20 @@ function mapEmbeddedModalMetadata(request: DisplayEmbededWalletParamsType) {
     if (loggedInAction?.key === "sharing") {
         const { popupTitle, text } = loggedInAction.options ?? {};
         if (popupTitle) {
-            resultMap.set("sharing.default.title", popupTitle);
+            resultMap.set("sharing.title", popupTitle);
         }
         if (text) {
-            resultMap.set("sharing.default.text", text);
+            resultMap.set("sharing.text", text);
         }
     }
 
     // Add the logged out translations
     const { text, buttonText } = request.loggedOut.metadata ?? {};
     if (text) {
-        resultMap.set("sdk.wallet.login.default.text", text);
+        resultMap.set("sdk.wallet.login.text", text);
     }
     if (buttonText) {
-        resultMap.set("sdk.wallet.login.default.primaryAction", buttonText);
+        resultMap.set("sdk.wallet.login.primaryAction", buttonText);
     }
 
     return Object.fromEntries(resultMap);
@@ -62,42 +63,45 @@ function mapModalMetadata(request: ModalRpcStepsInput) {
             continue;
         }
 
-        // Get the step metadata
-        const { title, description, primaryActionText, secondaryActionText } =
-            step.metadata;
+        // Add the metadata to the map
+        addMetadataToMap(resultMap, key, step.metadata);
 
-        // Add the translations
-        if (title) {
-            resultMap.set(`sdk.modal.${key}.default.title`, title);
-            resultMap.set(`sdk.modal.${key}.default.title_reward`, title);
-            resultMap.set(`sdk.modal.${key}.default.title_sharing`, title);
-        }
-        if (description) {
-            resultMap.set(`sdk.modal.${key}.default.description`, description);
-            resultMap.set(
-                `sdk.modal.${key}.default.description_reward`,
-                description
-            );
-            resultMap.set(
-                `sdk.modal.${key}.default.description_sharing`,
-                description
+        // If we got dismissed metadata, add it to the map
+        if ("dismissedMetadata" in step && step.dismissedMetadata) {
+            addMetadataToMap(
+                resultMap,
+                `${key}.dismissed`,
+                step.dismissedMetadata
             );
         }
-        if (primaryActionText) {
-            resultMap.set(
-                `sdk.modal.${key}.default.primaryAction`,
-                primaryActionText
-            );
-        }
-        if (secondaryActionText) {
-            resultMap.set(
-                `sdk.modal.${key}.default.secondaryAction`,
-                secondaryActionText
-            );
-        }
-
-        // todo: should also support final dismissed metadata
     }
 
     return Object.fromEntries(resultMap);
 }
+
+/**
+ * Add the metadata to the map
+ */
+function addMetadataToMap(
+    map: Map<string, string>,
+    key: string,
+    metadata: ModalStepMetadata["metadata"]
+) {
+    const { title, description, primaryActionText, secondaryActionText } =
+        metadata ?? {};
+
+    if (title) {
+        map.set(`sdk.modal.${key}.title`, title);
+    }
+    if (description) {
+        map.set(`sdk.modal.${key}.description`, description);
+    }
+    if (primaryActionText) {
+        map.set(`sdk.modal.${key}.primaryAction`, primaryActionText);
+    }
+    if (secondaryActionText) {
+        map.set(`sdk.modal.${key}.secondaryAction`, secondaryActionText);
+    }
+}
+
+// todo: on each key we should replace the {REWARD} placeholder with the {{ estimatedReward }}

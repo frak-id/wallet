@@ -71,11 +71,6 @@ type UIContext = {
     translation: {
         lang?: "en" | "fr";
         t: (key: string, options?: TOptions) => string;
-        fallbackT: (
-            provided: string | undefined,
-            fallbackKey: string,
-            options?: TOptions
-        ) => string;
         i18n: i18n;
     };
 };
@@ -207,24 +202,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 ...options,
                 estimatedReward: formattedReward,
             });
-
-        // Create a fallback translation string
-        const fallbackT = (
-            provided: string | undefined,
-            fallbackKey: string,
-            options?: TOptions
-        ): string => {
-            // If we got a provided string, use it
-            if (provided) {
-                i18n.format;
-                // Just replace any placeholder with the right value
-                //  todo: we should use the i18n format for variable??
-                return provided.replace(/{REWARD}/g, formattedReward);
-            }
-            // Otherwise, use the fallback key
-            return t(fallbackKey, options);
-        };
-        return { lang, i18n, t, fallbackT };
+        return { lang, i18n, t };
     }, [currentRequest, resolvingContext?.origin, rewardData, initialI18n]);
 
     return (

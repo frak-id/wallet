@@ -243,47 +243,34 @@ function CurrentModalMetadataInfo() {
     const modalSteps = useAtomValue(displayedRpcModalStepsAtom);
 
     // Extract step key and metadata
-    const { stepKey, stepAction, metadata } = useMemo(() => {
+    const descriptionKey = useMemo(() => {
         const currentStep =
             modalSteps?.steps?.[modalSteps.currentStep] ?? undefined;
-        let stepAction = "default";
-
-        if (!currentStep) return { stepKey: undefined, metadata: undefined };
+        if (!currentStep) return null;
 
         // If we are in the final step, and the modal was dismissed, used the dismissed metadata
-        let metadata = currentStep.params.metadata;
         if (currentStep.key === "final" && modalSteps?.dismissed) {
-            stepAction = "dismissed";
-            metadata =
-                currentStep.params.dismissedMetadata ??
-                currentStep.params.metadata;
+            return `sdk.modal.${currentStep.key}.dismissed.description`;
         }
 
-        return {
-            stepKey: currentStep.key,
-            stepAction,
-            metadata,
-        };
+        // Otherwise, use the default description
+        return `sdk.modal.${currentStep.key}.description`;
     }, [modalSteps]);
 
     // Get the right message depending on the step
     return useMemo(() => {
-        if (!stepKey) return null;
+        if (!descriptionKey) return null;
 
         // Check if i18n contain the keys
-        const defaultDescriptionKey = `sdk.modal.${stepKey}.${stepAction}.description`;
-        const hasDescription = i18n.exists(defaultDescriptionKey);
+        const hasDescription = i18n.exists(descriptionKey);
 
         // Return the matching component
         return (
             <MetadataInfo
-                metadata={metadata}
-                defaultDescription={
-                    hasDescription ? t(defaultDescriptionKey) : undefined
-                }
+                description={hasDescription ? t(descriptionKey) : undefined}
             />
         );
-    }, [stepKey, stepAction, metadata, i18n, t]);
+    }, [descriptionKey, i18n, t]);
 }
 
 /**
@@ -330,7 +317,6 @@ function CurrentModalStepComponent({
             case "openSession":
                 return (
                     <OpenSessionModalStep
-                        params={currentStep.params}
                         onFinish={currentStep.onResponse}
                         onError={onError}
                     />
