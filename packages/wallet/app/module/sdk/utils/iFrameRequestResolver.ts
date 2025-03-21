@@ -259,7 +259,7 @@ async function handleLifecycleEvents(
                     i18n.addResourceBundle(
                         lang,
                         "customized",
-                        resources,
+                        { sdk: resources },
                         // Deep override
                         true,
                         // Overwrite
@@ -269,8 +269,6 @@ async function handleLifecycleEvents(
             );
             // Wait for all the namespaces to be loaded
             await Promise.allSettled(loadNamespaceAsync);
-            // Refresh the i18n instance
-            await i18n.reloadResources();
             return;
         }
         case "restore-backup": {

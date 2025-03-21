@@ -10,6 +10,18 @@ export function FrakProvider({ children }: PropsWithChildren) {
         metadata: {
             name: "Demo - EthCC",
         },
+        customizations: {
+            i18n: {
+                en: {
+                    "modal.sendTransaction.default.description":
+                        "Heyooh - test pname {{ productName }}",
+                },
+                fr: {
+                    "modal.sendTransaction.default.description":
+                        "Heyooh - test pname {{ productName }}",
+                },
+            },
+        },
         domain: "ethcc.news-paper.xyz",
     };
 
