@@ -215,7 +215,7 @@ async function handleLifecycleEvents(
         return;
     }
 
-    // Extract the client lifecucle events data
+    // Extract the client lifecycle events data
     const clientMsg = message.data;
     const { clientLifecycle } = clientMsg;
 

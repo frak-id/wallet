@@ -1,9 +1,12 @@
+import type { I18nConfig } from "../config";
+
 /**
  * Event related to the iframe lifecycle
  * @ignore
  */
 export type ClientLifecycleEvent =
     | CustomCssEvent
+    | CustomI18nEvent
     | RestoreBackupEvent
     | HearbeatEvent
     | HandshakeResponse;
@@ -11,6 +14,11 @@ export type ClientLifecycleEvent =
 type CustomCssEvent = {
     clientLifecycle: "modal-css";
     data: { cssLink: string };
+};
+
+type CustomI18nEvent = {
+    clientLifecycle: "modal-i18n";
+    data: { i18n: I18nConfig };
 };
 
 type RestoreBackupEvent = {
