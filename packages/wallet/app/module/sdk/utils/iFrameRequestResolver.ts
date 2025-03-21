@@ -259,7 +259,7 @@ async function handleLifecycleEvents(
                     i18n.addResourceBundle(
                         lang,
                         "customized",
-                        { sdk: resources },
+                        resources,
                         // Deep override
                         true,
                         // Overwrite

@@ -79,6 +79,9 @@ export function FullDialog() {
                                     logoUrl:
                                         "https://pbs.twimg.com/profile_images/1593655640643305474/aTQ98ZdJ_400x400.jpg",
                                 },
+                                metadata: {
+                                    description: "Blablabla",
+                                },
                             },
                         },
                     })

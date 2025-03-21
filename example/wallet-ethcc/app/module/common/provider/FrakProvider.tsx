@@ -13,11 +13,11 @@ export function FrakProvider({ children }: PropsWithChildren) {
         customizations: {
             i18n: {
                 en: {
-                    "modal.sendTransaction.default.description":
+                    "sdk.modal.sendTransaction.default.description":
                         "Heyooh - test pname {{ productName }}",
                 },
                 fr: {
-                    "modal.sendTransaction.default.description":
+                    "sdk.modal.sendTransaction.default.description":
                         "Heyooh - test pname {{ productName }}",
                 },
             },

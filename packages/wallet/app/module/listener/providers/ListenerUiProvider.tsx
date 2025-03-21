@@ -26,6 +26,7 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
 type GenericWalletUiType = {
     appName: string;
@@ -60,7 +61,8 @@ export type ModalUiType = {
     ) => Promise<void>;
 };
 
-type UIRequest = (EmbededWalletUiType | ModalUiType) & GenericWalletUiType;
+export type UIRequest = (EmbededWalletUiType | ModalUiType) &
+    GenericWalletUiType;
 
 type UIContext = {
     currentRequest: UIRequest | undefined;
@@ -185,6 +187,17 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             // Use the translation fallback if not found in the custom ns
             fallbackNS: "translation",
         });
+
+        // Map the deprecated modal metadata
+        const deprecatedModalMetadata =
+            mapDeprecatedModalMetadata(currentRequest);
+        i18n.addResourceBundle(
+            lang,
+            "customized",
+            deprecatedModalMetadata,
+            true,
+            false
+        );
 
         // Create the new t function with the right context
         const rawT = i18n.getFixedT(lang, null) as typeof i18n.t;
