@@ -46,6 +46,21 @@ export type FrakWalletSdkConfig = {
         css?: string;
         /**
          * Custom i18n configuration for the modal
+         *  See [i18next json format](https://www.i18next.com/misc/json-format#i18next-json-v4)
+         *
+         * Available context variables
+         *  - `{{ productName }}` : The name of your website (`metadata.name`)
+         *  - `{{ productOrigin }}` : The origin url of your website
+         *  - `{{ estimatedReward }}` : The estimated reward for the user (based on the specific `targetInteraction` you can specify, or the max referrer reward if no target interaction is specified)
+         *
+         * @example
+         * {
+         *  fr: {
+         *      "sdk.modal.title": "Titre de modal",
+         *      "sdk.modal.description": "Description de modal, avec {{ estimatedReward }} de gains possible",
+         *  },
+         *  en: "https://example.com/en.json"
+         * }
          */
         i18n?: I18nConfig;
     };
