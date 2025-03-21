@@ -83,7 +83,6 @@
                 "description_reward": "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
                 "primaryAction": "I create my wallet under 30sec",
                 "secondaryAction": "I already have a wallet",
-                "privyAction": "Connect via Privy",
                 "title": "Connection",
                 "success": "Connection successful"
             },

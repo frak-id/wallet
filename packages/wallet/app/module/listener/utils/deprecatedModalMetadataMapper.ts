@@ -59,10 +59,6 @@ function mapModalMetadata(request: ModalRpcStepsInput) {
 
     // Iterate over each steps
     for (const [key, step] of Object.entries(request)) {
-        if (!step.metadata) {
-            continue;
-        }
-
         // Add the metadata to the map
         addMetadataToMap(resultMap, key, step.metadata);
 
@@ -73,6 +69,21 @@ function mapModalMetadata(request: ModalRpcStepsInput) {
                 `${key}.dismissed`,
                 step.dismissedMetadata
             );
+        }
+
+        // If that's a sharing step, add sharing metadata's
+        if (
+            key === "final" &&
+            "action" in step &&
+            step.action.key === "sharing"
+        ) {
+            const { popupTitle, text } = step.action.options ?? {};
+            if (popupTitle) {
+                resultMap.set("sharing.title", popupTitle);
+            }
+            if (text) {
+                resultMap.set("sharing.text", text);
+            }
         }
     }
 
@@ -87,8 +98,11 @@ function addMetadataToMap(
     key: string,
     metadata: ModalStepMetadata["metadata"]
 ) {
+    if (!metadata) {
+        return;
+    }
     const { title, description, primaryActionText, secondaryActionText } =
-        metadata ?? {};
+        metadata;
 
     if (title) {
         map.set(`sdk.modal.${key}.title`, title);
