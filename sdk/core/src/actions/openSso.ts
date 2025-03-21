@@ -39,9 +39,9 @@ export async function openSso(
     client: FrakClient,
     args: OpenSsoParamsType
 ): Promise<void> {
-    const { metadata } = client.config;
+    const { metadata, customizations } = client.config;
     await client.request({
         method: "frak_sso",
-        params: [args, metadata.name, metadata.css],
+        params: [args, metadata.name, customizations?.css],
     });
 }

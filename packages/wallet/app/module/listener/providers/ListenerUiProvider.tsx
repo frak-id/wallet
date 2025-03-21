@@ -178,6 +178,14 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                     estimatedReward: formattedReward,
                 },
             },
+            // Create a new instance of the i18n instance to avoid sharing the same resource store
+            forkResourceStore: true,
+            // Load both the default and the potentially customized i18n
+            ns: ["translation", "customized"],
+            // Default ns is the user provided ns
+            defaultNS: "customized",
+            // Use the translation fallback if not found in the custom ns
+            fallbackNS: "translation",
         });
 
         // Create the new t function with the right context

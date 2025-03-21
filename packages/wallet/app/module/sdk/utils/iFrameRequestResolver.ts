@@ -15,6 +15,7 @@ import {
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
+import { getI18n } from "react-i18next";
 import { keccak256, toHex } from "viem";
 import type { Address, Hex } from "viem";
 
@@ -225,6 +226,51 @@ async function handleLifecycleEvents(
             style.rel = "stylesheet";
             style.href = clientMsg.data.cssLink;
             document.head.appendChild(style);
+            return;
+        }
+        case "modal-i18n": {
+            const override = clientMsg.data.i18n;
+            if (Object.keys(override).length === 0) {
+                return;
+            }
+            // Get the current i18n instance
+            const i18n = getI18n();
+            // Add each override
+            const loadNamespaceAsync = Object.entries(override).map(
+                async ([lang, value]) => {
+                    // The resources we will add
+                    let resources: { [key: string]: string } =
+                        typeof value === "string" ? {} : value;
+                    // If that's a string, that's an url, fetch it
+                    if (typeof value === "string") {
+                        try {
+                            const response = await fetch(value);
+                            const json = await response.json();
+                            resources = json;
+                        } catch (e) {
+                            console.warn(
+                                "Failed to load custom translation file",
+                                e,
+                                { value, lang }
+                            );
+                        }
+                    }
+                    // Add the resources
+                    i18n.addResourceBundle(
+                        lang,
+                        "customized",
+                        resources,
+                        // Deep override
+                        true,
+                        // Overwrite
+                        true
+                    );
+                }
+            );
+            // Wait for all the namespaces to be loaded
+            await Promise.allSettled(loadNamespaceAsync);
+            // Refresh the i18n instance
+            await i18n.reloadResources();
             return;
         }
         case "restore-backup": {
