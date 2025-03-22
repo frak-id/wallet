@@ -6,6 +6,12 @@ import type {
 } from "@frak-labs/core-sdk";
 import type { UIRequest } from "../providers/ListenerUiProvider";
 
+// Regex replacing {REWARD} with {{ estimatedReward }}
+const REWARD_REGEX = /{REWARD}/g;
+const REWARD_REGEX_REPLACE = "{{ estimatedReward }}";
+const replaceReward = (text: string) =>
+    text.replace(REWARD_REGEX, REWARD_REGEX_REPLACE);
+
 /**
  * Map legacy modal metadata to i18n ressources
  */
@@ -126,16 +132,33 @@ function addMetadataToMap(
 
     if (title) {
         map.set(`sdk.modal.${key}.title`, title);
+        map.set(`sdk.modal.${key}.title_sharing`, title);
+        map.set(`sdk.modal.${key}.title_reward`, title);
     }
     if (description) {
-        map.set(`sdk.modal.${key}.description`, description);
+        map.set(`sdk.modal.${key}.description`, replaceReward(description));
+        map.set(
+            `sdk.modal.${key}.description_sharing`,
+            replaceReward(description)
+        );
+        map.set(
+            `sdk.modal.${key}.description_reward`,
+            replaceReward(description)
+        );
     }
     if (primaryActionText) {
         map.set(`sdk.modal.${key}.primaryAction`, primaryActionText);
+        map.set(`sdk.modal.${key}.primaryAction_sharing`, primaryActionText);
+        map.set(`sdk.modal.${key}.primaryAction_reward`, primaryActionText);
     }
     if (secondaryActionText) {
         map.set(`sdk.modal.${key}.secondaryAction`, secondaryActionText);
+        map.set(
+            `sdk.modal.${key}.secondaryAction_sharing`,
+            secondaryActionText
+        );
+        map.set(`sdk.modal.${key}.secondaryAction_reward`, secondaryActionText);
     }
 }
 
-// todo: on each key we should replace the {REWARD} placeholder with the {{ estimatedReward }}
+// todo: msg pack stuff: https://github.com/nlohmann/json/discussions/2581 - https://jsonjoy.com/blog/json-codec-benchmarks

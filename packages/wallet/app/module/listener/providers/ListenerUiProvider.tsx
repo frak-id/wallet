@@ -183,15 +183,6 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             fallbackNS: "translation",
         });
 
-        console.log(
-            "customized ns",
-            i18n.getResourceBundle(lang, "customized")
-        );
-        console.log(
-            "translation ns",
-            i18n.getResourceBundle(lang, "translation")
-        );
-
         // Map the deprecated modal metadata
         const deprecatedModalMetadata =
             mapDeprecatedModalMetadata(currentRequest);
