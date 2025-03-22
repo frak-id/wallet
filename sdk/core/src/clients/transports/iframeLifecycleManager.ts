@@ -26,7 +26,7 @@ export function createIFrameLifecycleManager({
             case "connected":
                 isConnectedDeferred.resolve(true);
                 break;
-            // Perform a nexus backup
+            // Perform a frak backup
             case "do-backup":
                 if (messageEvent.data.backup) {
                     localStorage.setItem(BACKUP_KEY, messageEvent.data.backup);
@@ -34,7 +34,7 @@ export function createIFrameLifecycleManager({
                     localStorage.removeItem(BACKUP_KEY);
                 }
                 break;
-            // Remove nexus backup
+            // Remove frak backup
             case "remove-backup":
                 localStorage.removeItem(BACKUP_KEY);
                 break;

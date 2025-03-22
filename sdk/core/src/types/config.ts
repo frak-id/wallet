@@ -9,7 +9,7 @@ export type Currency = "eur" | "usd" | "gbp";
 export type Language = "fr" | "en";
 
 /**
- * Configuration for the Nexus Wallet SDK
+ * Configuration for the Frak Wallet SDK
  */
 export type FrakWalletSdkConfig = {
     /**

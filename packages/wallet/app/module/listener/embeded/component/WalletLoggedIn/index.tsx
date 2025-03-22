@@ -101,7 +101,7 @@ function ActionButtons() {
     const link = loggedIn?.action?.options?.link;
     const { sourceUrl } = useSafeResolvingContext();
 
-    // Ensure the sharing link contain the current nexus wallet as referrer
+    // Ensure the sharing link contain the current frak wallet as referrer
     const finalSharingLink = FrakContextManager.update({
         url: link ?? sourceUrl,
         context: {

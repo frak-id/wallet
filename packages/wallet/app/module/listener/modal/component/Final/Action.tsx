@@ -71,7 +71,7 @@ function SharingButtons({
     const finalSharingLink = useMemo(() => {
         const url = link ?? sourceUrl;
         if (isModalSuccess) {
-            // Ensure the sharing link contain the current nexus wallet as referrer
+            // Ensure the sharing link contain the current frak wallet as referrer
             return FrakContextManager.update({
                 url,
                 context: {
