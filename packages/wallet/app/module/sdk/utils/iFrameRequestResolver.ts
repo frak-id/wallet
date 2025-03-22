@@ -8,13 +8,16 @@ import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import {
     type ClientLifecycleEvent,
     type ExtractedParametersFromRpc,
+    type I18nConfig,
     type IFrameEvent,
     type IFrameRpcSchema,
+    type LocalizedI18nConfig,
     type RpcResponse,
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
+import type { i18n as I18nType } from "i18next";
 import { getI18n } from "react-i18next";
 import { keccak256, toHex } from "viem";
 import type { Address, Hex } from "viem";
@@ -235,31 +238,30 @@ async function handleLifecycleEvents(
             }
             // Get the current i18n instance
             const i18n = getI18n();
-            // Add each override
+
+            if (isLocalizedConfig(override, i18n)) {
+                // Handle as a localized config (direct translations)
+                const mapped = await mapI18nConfig(override);
+                // Add the resources to the current language
+                i18n.addResourceBundle(
+                    i18n.language,
+                    "customized",
+                    mapped,
+                    true, // Deep merge
+                    true // Overwrite
+                );
+                return;
+            }
+
+            // Otherwise, add each language override
             const loadNamespaceAsync = Object.entries(override).map(
                 async ([lang, value]) => {
-                    // The resources we will add
-                    let resources: { [key: string]: string } =
-                        typeof value === "string" ? {} : value;
-                    // If that's a string, that's an url, fetch it
-                    if (typeof value === "string") {
-                        try {
-                            const response = await fetch(value);
-                            const json = await response.json();
-                            resources = json;
-                        } catch (e) {
-                            console.warn(
-                                "Failed to load custom translation file",
-                                e,
-                                { value, lang }
-                            );
-                        }
-                    }
+                    const mapped = await mapI18nConfig(value);
                     // Add the resources
                     i18n.addResourceBundle(
                         lang,
                         "customized",
-                        resources,
+                        mapped,
                         // Deep override
                         true,
                         // Overwrite
@@ -314,4 +316,49 @@ function isInIframe() {
         return false;
     }
     return window.self !== window.top;
+}
+
+/**
+ * Map an i18n config to a localized i18n config
+ * @param value
+ * @returns
+ */
+async function mapI18nConfig(value: LocalizedI18nConfig) {
+    // The resources we will add
+    let resources: { [key: string]: string } =
+        typeof value === "string" ? {} : value;
+    // If that's a string, that's an url, fetch it
+    if (typeof value === "string") {
+        try {
+            const response = await fetch(value);
+            const json = await response.json();
+            resources = json;
+        } catch (e) {
+            console.warn("Failed to load custom translation file", e, {
+                value,
+            });
+        }
+    }
+    return resources;
+}
+
+/**
+ * Check if a value is a localized i18n config
+ * @param value
+ * @param i18n
+ * @returns
+ */
+function isLocalizedConfig(
+    value: I18nConfig,
+    i18n: I18nType
+): value is LocalizedI18nConfig {
+    return (
+        // Check if it's a string (URL to json)
+        typeof value === "string" ||
+        // Or if it's an object where keys are translation keys (not language codes)
+        (typeof value === "object" &&
+            Object.keys(value).length > 0 &&
+            // If keys don't look like language codes but like translation paths
+            !Object.keys(value).some((key) => i18n.languages.includes(key)))
+    );
 }

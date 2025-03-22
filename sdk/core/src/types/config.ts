@@ -1,15 +1,18 @@
 /**
  * All the currencies available
+ * @category Config
  */
 export type Currency = "eur" | "usd" | "gbp";
 
 /**
  * All the languages available
+ * @category Config
  */
 export type Language = "fr" | "en";
 
 /**
  * Configuration for the Frak Wallet SDK
+ * @category Config
  */
 export type FrakWalletSdkConfig = {
     /**
@@ -43,24 +46,9 @@ export type FrakWalletSdkConfig = {
         /**
          * Custom CSS styles to apply to the modals and components
          */
-        css?: string;
+        css?: `${string}.css`;
         /**
          * Custom i18n configuration for the modal
-         *  See [i18next json format](https://www.i18next.com/misc/json-format#i18next-json-v4)
-         *
-         * Available context variables
-         *  - `{{ productName }}` : The name of your website (`metadata.name`)
-         *  - `{{ productOrigin }}` : The origin url of your website
-         *  - `{{ estimatedReward }}` : The estimated reward for the user (based on the specific `targetInteraction` you can specify, or the max referrer reward if no target interaction is specified)
-         *
-         * @example
-         * {
-         *  fr: {
-         *      "sdk.modal.title": "Titre de modal",
-         *      "sdk.modal.description": "Description de modal, avec {{ estimatedReward }} de gains possible",
-         *  },
-         *  en: "https://example.com/en.json"
-         * }
          */
         i18n?: I18nConfig;
     };
@@ -72,15 +60,44 @@ export type FrakWalletSdkConfig = {
 };
 
 /**
- * Configuration for the i18n of the modal
- * The key is the language and the value is either an url to a json file containing key-value pairs or an object of key-value pairs
+ * Custom i18n configuration for the modal
+ *  See [i18next json format](https://www.i18next.com/misc/json-format#i18next-json-v4)
+ *
+ * Available variables
+ *  - `{{ productName }}` : The name of your website (`metadata.name`)
+ *  - `{{ productOrigin }}` : The origin url of your website
+ *  - `{{ estimatedReward }}` : The estimated reward for the user (based on the specific `targetInteraction` you can specify, or the max referrer reward if no target interaction is specified)
+ *
+ * Context of the translation [see i18n context](https://www.i18next.com/translation-function/context)
+ *  - For modal display, the key of the final action (`sharing`, `reward`, or undefined)
+ *  - For embedded wallet display, the key of the logged in action (`sharing` or undefined)
  *
  * @example
- * {
+ * ```ts
+ * // Multi language config
+ * const multiI18n = {
  *  fr: {
  *      "sdk.modal.title": "Titre de modal",
+ *      "sdk.modal.description": "Description de modal, avec {{ estimatedReward }} de gains possible",
  *  },
  *  en: "https://example.com/en.json"
  * }
+ *
+ * // Single language config
+ * const singleI18n = {
+ *      "sdk.modal.title": "Modal title",
+ *      "sdk.modal.description": "Modal description, with {{ estimatedReward }} of gains possible",
+ * }
+ * ```
+ *
+ * @category Config
  */
-export type I18nConfig = Record<Language, string | { [key: string]: string }>;
+export type I18nConfig =
+    | Record<Language, LocalizedI18nConfig>
+    | LocalizedI18nConfig;
+
+/**
+ * A localized i18n config
+ * @category Config
+ */
+export type LocalizedI18nConfig = `${string}.css` | { [key: string]: string };

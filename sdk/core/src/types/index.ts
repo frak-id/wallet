@@ -41,6 +41,7 @@ export type {
     Currency,
     Language,
     I18nConfig,
+    LocalizedI18nConfig,
 } from "./config";
 export type {
     CompressedData,

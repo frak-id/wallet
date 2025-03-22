@@ -104,6 +104,7 @@ function ListenerContent() {
                         request.params[0].metadata?.targetInteraction,
                     i18n: {
                         lang: request.params[1].lang,
+                        context: request.params[0].loggedIn?.action?.key,
                     },
                 });
                 trackEvent("display-embedded-wallet", request.params[0]);
