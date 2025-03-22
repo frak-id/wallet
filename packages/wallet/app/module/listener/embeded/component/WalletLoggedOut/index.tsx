@@ -14,9 +14,7 @@ import styles from "./index.module.css";
  */
 export function LoggedOutComponent() {
     const {
-        currentRequest: {
-            params: { metadata },
-        },
+        currentRequest: { logoUrl, homepageLink },
     } = useEmbededListenerUI();
     const { t } = useListenerTranslation();
     const productId = useSafeResolvingContext()?.productId;
@@ -24,18 +22,14 @@ export function LoggedOutComponent() {
     return (
         <>
             <div className={styles.modalListenerWallet__text}>
-                <Markdown
-                    md={t("sdk.wallet.login.text", {
-                        productName: metadata?.name,
-                    })}
-                />
+                <Markdown md={t("sdk.wallet.login.text")} />
             </div>
             {productId && (
                 <SsoButton
                     productId={productId}
                     ssoMetadata={{
-                        logoUrl: metadata?.logo,
-                        homepageLink: metadata?.homepageLink,
+                        logoUrl,
+                        homepageLink,
                     }}
                     text={t("sdk.wallet.login.primaryAction")}
                     className={`${styles.modalListenerWallet__buttonPrimary} ${prefixWalletCss("button-primary")}`}

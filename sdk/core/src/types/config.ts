@@ -38,6 +38,14 @@ export type FrakWalletSdkConfig = {
          * @defaultValue `"eur"`
          */
         currency?: Currency;
+        /**
+         * The logo URL that will be displayed in a few components
+         */
+        logoUrl?: string;
+        /**
+         * The homepage link that could be displayed in a few components
+         */
+        homepageLink?: string;
     };
     /**
      * Some customization for the modal

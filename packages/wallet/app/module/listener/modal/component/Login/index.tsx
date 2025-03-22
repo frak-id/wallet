@@ -6,12 +6,15 @@ import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingCon
 import { SsoButton } from "@/module/listener/component/SsoButton";
 import { DismissButton } from "@/module/listener/modal/component/Generic";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
-import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
+import {
+    useListenerTranslation,
+    useModalListenerUI,
+} from "@/module/listener/providers/ListenerUiProvider";
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@shared/module/component/Spinner";
 import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { useAtomValue } from "jotai";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 /**
  * The component for the login step of a modal
@@ -27,7 +30,18 @@ export function LoginModalStep({
 }) {
     const resolvingContext = useAtomValue(iframeResolvingContextAtom);
     const { t } = useListenerTranslation();
-    const { ssoMetadata } = params;
+    const {
+        currentRequest: { homepageLink, logoUrl },
+    } = useModalListenerUI();
+
+    const ssoMetadata = useMemo(() => {
+        if (!params.allowSso) return {};
+
+        return {
+            logoUrl: params.ssoMetadata?.logoUrl ?? logoUrl,
+            homepageLink: params.ssoMetadata?.homepageLink ?? homepageLink,
+        };
+    }, [params, homepageLink, logoUrl]);
 
     // Set the allowSso flag to true by default
     const allowSso = params.allowSso ?? true;
@@ -60,7 +74,7 @@ export function LoginModalStep({
                     <div>
                         <SsoButton
                             productId={resolvingContext?.productId ?? "0x"}
-                            ssoMetadata={ssoMetadata ?? {}}
+                            ssoMetadata={ssoMetadata}
                             text={t("sdk.modal.login.primaryAction")}
                             className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
                         />

@@ -39,13 +39,11 @@ const isOnboarding = true;
  */
 export function LoggedInComponent() {
     const {
-        currentRequest: {
-            params: { metadata },
-        },
+        currentRequest: { configMetadata },
     } = useEmbededListenerUI();
     const { userBalance } = useGetUserBalance();
     const { userPendingBalance } = useGetUserPendingBalance();
-    const currencyAmountKey = getCurrencyAmountKey(metadata?.currency);
+    const currencyAmountKey = getCurrencyAmountKey(configMetadata?.currency);
     const isPending = !!(
         userPendingBalance?.[currencyAmountKey] &&
         userPendingBalance?.[currencyAmountKey] > 0
@@ -59,7 +57,7 @@ export function LoggedInComponent() {
             <Balance
                 amount={amount}
                 isPending={isPending}
-                currency={metadata?.currency ?? "eur"}
+                currency={configMetadata?.currency ?? "eur"}
             />
             <ActionButtons />
         </>

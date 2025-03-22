@@ -16,6 +16,7 @@ import { LoginModalStep } from "@/module/listener/modal/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/modal/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/modal/component/Transaction";
 import {
+    type GenericWalletUiType,
     type ModalUiType,
     useListenerTranslation,
     useListenerUI,
@@ -42,7 +43,8 @@ import styles from "./index.module.css";
 export function ListenerModal({
     metadata,
     emitter,
-}: { metadata: ModalUiType["metadata"]; emitter: ModalUiType["emitter"] }) {
+    logoUrl,
+}: ModalUiType & GenericWalletUiType) {
     const { clearRequest } = useListenerUI();
 
     /**
@@ -140,14 +142,11 @@ export function ListenerModal({
             </span>
         );
 
-        // The icon path
-        const iconPath = metadata?.header?.icon;
-
         // Build the header icon component (only if we got an icon)
-        const icon = iconPath ? (
+        const icon = logoUrl ? (
             <div className={styles.modalListener__iconContainer}>
                 <img
-                    src={iconPath}
+                    src={logoUrl}
                     alt={""}
                     className={styles.modalListener__icon}
                 />
@@ -156,7 +155,7 @@ export function ListenerModal({
         ) : null;
 
         // Build the footer (only if no icon present)
-        const footer = iconPath ? null : (
+        const footer = logoUrl ? null : (
             <div className={styles.modalListener__footer}>{providedBy}</div>
         );
 
@@ -165,7 +164,7 @@ export function ListenerModal({
             footer,
             icon,
         };
-    }, [metadata]);
+    }, [metadata, logoUrl]);
 
     return (
         <ModalComponent

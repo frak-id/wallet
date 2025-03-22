@@ -28,13 +28,16 @@ import {
 import { useTranslation } from "react-i18next";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
-type GenericWalletUiType = {
+export type GenericWalletUiType = {
     appName: string;
+    logoUrl?: string;
+    homepageLink?: string;
     targetInteraction?: FullInteractionTypesKey;
     i18n?: {
         lang?: "en" | "fr";
         context?: string;
     };
+    configMetadata: FrakWalletSdkConfig["metadata"];
 };
 
 /**
@@ -43,9 +46,7 @@ type GenericWalletUiType = {
  */
 type EmbededWalletUiType = {
     type: "embeded";
-    params: {
-        metadata: FrakWalletSdkConfig["metadata"];
-    } & DisplayEmbededWalletParamsType;
+    params: DisplayEmbededWalletParamsType;
 };
 
 /**
@@ -54,7 +55,7 @@ type EmbededWalletUiType = {
  */
 export type ModalUiType = {
     type: "modal";
-    metadata: FrakWalletSdkConfig["metadata"] & ModalRpcMetadata;
+    metadata: ModalRpcMetadata;
     steps: ModalRpcStepsInput;
     emitter: (
         response: RpcResponse<IFrameRpcSchema, "frak_displayModal">
@@ -132,9 +133,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 
         // Get the supported currency (e.g. "eur")
         const supportedCurrency = getSupportedCurrency(
-            currentRequest?.type === "embeded"
-                ? currentRequest.params.metadata?.currency
-                : currentRequest?.metadata?.currency
+            currentRequest?.configMetadata?.currency
         );
 
         // Get the currency amount key (e.g. "eurAmount")
@@ -258,7 +257,7 @@ export function useModalListenerUI() {
         );
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {
-        currentRequest: ModalUiType;
+        currentRequest: ModalUiType & GenericWalletUiType;
     };
 }
 
@@ -273,7 +272,7 @@ export function useEmbededListenerUI() {
         );
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {
-        currentRequest: EmbededWalletUiType;
+        currentRequest: EmbededWalletUiType & GenericWalletUiType;
     };
 }
 
