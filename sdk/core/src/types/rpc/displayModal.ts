@@ -58,6 +58,9 @@ export type ModalRpcMetadata = {
 } & (
     | {
           isDismissible: true;
+          /**
+           * @deprecated Use `config.customizations.i18n` instead
+           */
           dismissActionTxt?: string;
       }
     | {

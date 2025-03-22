@@ -1,5 +1,6 @@
 import type {
     DisplayEmbededWalletParamsType,
+    ModalRpcMetadata,
     ModalRpcStepsInput,
     ModalStepMetadata,
 } from "@frak-labs/core-sdk";
@@ -13,7 +14,7 @@ export function mapDeprecatedModalMetadata(request?: UIRequest) {
         return mapEmbeddedModalMetadata(request.params);
     }
     if (request?.type === "modal") {
-        return mapModalMetadata(request.steps);
+        return mapModalMetadata(request.steps, request.metadata);
     }
     return {};
 }
@@ -54,8 +55,27 @@ function mapEmbeddedModalMetadata(request: DisplayEmbededWalletParamsType) {
 /**
  * Map the modal metadata to i18n resources
  */
-function mapModalMetadata(request: ModalRpcStepsInput) {
+function mapModalMetadata(
+    request: ModalRpcStepsInput,
+    metadata?: ModalRpcMetadata
+) {
     const resultMap = new Map<string, string>();
+
+    // Add the dismissed action text if present
+    if (metadata?.dismissActionTxt) {
+        resultMap.set(
+            "sdk.modal.dismiss.primaryAction",
+            metadata.dismissActionTxt
+        );
+        resultMap.set(
+            "sdk.modal.dismiss.primaryAction_sharing",
+            metadata.dismissActionTxt
+        );
+        resultMap.set(
+            "sdk.modal.dismiss.primaryAction_reward",
+            metadata.dismissActionTxt
+        );
+    }
 
     // Iterate over each steps
     for (const [key, step] of Object.entries(request)) {
