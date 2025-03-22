@@ -124,7 +124,7 @@ export function ListenerModal({
     /**
      * The inner component to display
      */
-    const { titleComponent, icon, footer, context } = useMemo(() => {
+    const { titleComponent, icon, footer } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = metadata?.header?.title ? (
             <>{metadata.header.title}</>
@@ -161,7 +161,6 @@ export function ListenerModal({
         );
 
         return {
-            context: metadata?.context,
             titleComponent,
             footer,
             icon,
@@ -176,11 +175,6 @@ export function ListenerModal({
         >
             <>
                 {icon}
-                {context && (
-                    <div className={styles.modalListener__context}>
-                        {context}
-                    </div>
-                )}
                 <CurrentModalMetadataInfo />
                 <ModalStepIndicator />
                 <CurrentModalStepComponent onError={onError} />

@@ -42,9 +42,6 @@ export function SendTransaction() {
             <Button
                 onClick={() =>
                     displayModal({
-                        metadata: {
-                            context: "Test transaction",
-                        },
                         steps: {
                             sendTransaction: {
                                 tx: {

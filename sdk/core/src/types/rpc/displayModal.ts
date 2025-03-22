@@ -53,7 +53,6 @@ export type ModalRpcMetadata = {
         title?: string;
         icon?: string;
     };
-    context?: string;
     targetInteraction?: FullInteractionTypesKey;
 } & (
     | {
