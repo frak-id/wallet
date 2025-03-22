@@ -14,11 +14,11 @@ export function FrakProvider({ children }: PropsWithChildren) {
             i18n: {
                 en: {
                     "sdk.modal.sendTransaction.description":
-                        "Heyooh - test pname {{ productName }}",
+                        "Sending ETHCC transaction on {{ productName }}",
                 },
                 fr: {
                     "sdk.modal.sendTransaction.description":
-                        "Heyooh - test pname {{ productName }}",
+                        "Envoie de transaction ETHCC sur {{ productName }}",
                 },
             },
         },

@@ -44,9 +44,6 @@ export function FullDialog() {
                     displayModal({
                         steps: {
                             siweAuthenticate: {
-                                metadata: {
-                                    title: "EthCC SIWE",
-                                },
                                 siwe: {
                                     domain: "example.com",
                                     uri: "https://wallet.frak.id/",
@@ -56,9 +53,6 @@ export function FullDialog() {
                                 },
                             },
                             sendTransaction: {
-                                metadata: {
-                                    title: "EthCC Transaction",
-                                },
                                 tx: {
                                     to: addresses.productInteractionManager,
                                     value: "0x00",
@@ -80,8 +74,16 @@ export function FullDialog() {
                                         "https://pbs.twimg.com/profile_images/1593655640643305474/aTQ98ZdJ_400x400.jpg",
                                 },
                                 metadata: {
-                                    description: "Blablabla",
+                                    description: "Deprecated description",
                                 },
+                            },
+                        },
+                        metadata: {
+                            i18n: {
+                                "sdk.modal.siweAuthenticate.title":
+                                    "EthCC SIWE",
+                                "sdk.modal.sendTransaction.title":
+                                    "EthCC Transaction",
                             },
                         },
                     })
