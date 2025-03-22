@@ -16,33 +16,31 @@ function setConfig() {
         metadata: {
             name: "Gapianne",
             lang: "fr",
+            currency: "eur",
+            logoUrl: logo,
+            homepageLink: "https://gapianne.com/",
+        },
+        customizations: {
+            i18n: {
+                "sharing.title": "Prêt(e) à révéler un secret bien-être ?",
+                "sharing.text": "Découvre ce produit chez Gapianne",
+            },
         },
         domain: window.location.host,
     };
     window.FrakSetup.modalConfig = {
         login: {
             allowSso: true,
-            ssoMetadata: {
-                logoUrl: logo,
-                homepageLink: "https://gapianne.com/",
-            },
         },
         metadata: {
-            header: {
-                icon: logo,
-            },
             isDismissible: true,
         },
     };
     window.FrakSetup.modalShareConfig = {
-        popupTitle: "Prêt(e) à révéler un secret bien-être ?",
-        text: "Découvre ce produit chez Gapianne",
         link: window.location.href,
     };
     window.FrakSetup.modalWalletConfig = {
         metadata: {
-            logo,
-            homepageLink: "https://gapianne.com/",
             position: "left",
         },
     };
