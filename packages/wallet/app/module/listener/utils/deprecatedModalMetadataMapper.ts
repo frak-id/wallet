@@ -13,7 +13,7 @@ const replaceReward = (text: string) =>
     text.replace(REWARD_REGEX, REWARD_REGEX_REPLACE);
 
 /**
- * Map legacy modal metadata to i18n ressources
+ * Map legacy modal metadata to i18n resources
  */
 export function mapDeprecatedModalMetadata(request?: UIRequest) {
     if (request?.type === "embeded") {

@@ -1,4 +1,5 @@
 import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
+import type { I18nConfig } from "../config";
 import type {
     FinalModalStepType,
     LoginModalStepType,
@@ -54,6 +55,10 @@ export type ModalRpcMetadata = {
         icon?: string;
     };
     targetInteraction?: FullInteractionTypesKey;
+    /**
+     * Some i18n override for the displayed modal (i.e. update the displayed text only for this modal)
+     */
+    i18n?: I18nConfig;
 } & (
     | {
           isDismissible: true;

@@ -14,14 +14,14 @@ export type LoggedOutEmbededView = {
          *  - can be formatted in markdown
          *
          * If not set, it will default to a internationalized message
-         * @deprecated Use the top level `config.customizations.i18n`  instead
+         * @deprecated Use the top level `config.customizations.i18n`, or `metadata.i18n` instead
          */
         text?: string;
         /**
          * The text that will be displayed on the login button
          *
          * If not set, it will default to a internationalized message
-         * @deprecated Use the top level `config.customizations.i18n`  instead
+         * @deprecated Use the top level `config.customizations.i18n`, or `metadata.i18n` instead
          */
         buttonText?: string;
     };
