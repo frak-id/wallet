@@ -89,8 +89,16 @@ export function useSetupInteractionContract() {
                     header: {
                         title: "Deploy interaction handler",
                     },
-                    context:
-                        "Deploying user interactions handler for your product",
+                    i18n: {
+                        fr: {
+                            "sdk.modal.sendTransaction.description":
+                                "Déployer le gestionnaire d'interactions utilisateur pour votre produit",
+                        },
+                        en: {
+                            "sdk.modal.sendTransaction.description":
+                                "Deploying user interactions handler for your product",
+                        },
+                    },
                 },
             });
 

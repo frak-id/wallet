@@ -16,7 +16,14 @@ export const useDeleteCampaign = () => {
             if (result.key === "require-onchain-delete") {
                 const { hash } = await sendTxAsync({
                     metadata: {
-                        context: `Deleting the campaign ${campaignId}`,
+                        i18n: {
+                            fr: {
+                                "sdk.modal.sendTransaction.description": `Supprimer la campagne ${campaignId}`,
+                            },
+                            en: {
+                                "sdk.modal.sendTransaction.description": `Delete campaign ${campaignId}`,
+                            },
+                        },
                     },
                     tx: result.tx,
                 });

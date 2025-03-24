@@ -122,7 +122,16 @@ export function useMintMyProduct() {
                         header: {
                             title: "Post mint setup",
                         },
-                        context: "Setting up the product post mint",
+                        i18n: {
+                            fr: {
+                                "sdk.modal.sendTransaction.description":
+                                    "Configuration du produit après la création",
+                            },
+                            en: {
+                                "sdk.modal.sendTransaction.description":
+                                    "Setting up the product post mint",
+                            },
+                        },
                     },
                 });
 
