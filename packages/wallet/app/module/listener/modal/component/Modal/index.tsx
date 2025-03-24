@@ -16,6 +16,7 @@ import { LoginModalStep } from "@/module/listener/modal/component/Login";
 import { OpenSessionModalStep } from "@/module/listener/modal/component/OpenSession";
 import { TransactionModalStep } from "@/module/listener/modal/component/Transaction";
 import {
+    type GenericWalletUiType,
     type ModalUiType,
     useListenerTranslation,
     useListenerUI,
@@ -42,7 +43,8 @@ import styles from "./index.module.css";
 export function ListenerModal({
     metadata,
     emitter,
-}: { metadata: ModalUiType["metadata"]; emitter: ModalUiType["emitter"] }) {
+    logoUrl,
+}: ModalUiType & GenericWalletUiType) {
     const { clearRequest } = useListenerUI();
 
     /**
@@ -124,7 +126,7 @@ export function ListenerModal({
     /**
      * The inner component to display
      */
-    const { titleComponent, icon, footer, context } = useMemo(() => {
+    const { titleComponent, icon, footer } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = metadata?.header?.title ? (
             <>{metadata.header.title}</>
@@ -140,14 +142,11 @@ export function ListenerModal({
             </span>
         );
 
-        // The icon path
-        const iconPath = metadata?.header?.icon;
-
         // Build the header icon component (only if we got an icon)
-        const icon = iconPath ? (
+        const icon = logoUrl ? (
             <div className={styles.modalListener__iconContainer}>
                 <img
-                    src={iconPath}
+                    src={logoUrl}
                     alt={""}
                     className={styles.modalListener__icon}
                 />
@@ -156,17 +155,16 @@ export function ListenerModal({
         ) : null;
 
         // Build the footer (only if no icon present)
-        const footer = iconPath ? null : (
+        const footer = logoUrl ? null : (
             <div className={styles.modalListener__footer}>{providedBy}</div>
         );
 
         return {
-            context: metadata?.context,
             titleComponent,
             footer,
             icon,
         };
-    }, [metadata]);
+    }, [metadata, logoUrl]);
 
     return (
         <ModalComponent
@@ -176,11 +174,6 @@ export function ListenerModal({
         >
             <>
                 {icon}
-                {context && (
-                    <div className={styles.modalListener__context}>
-                        {context}
-                    </div>
-                )}
                 <CurrentModalMetadataInfo />
                 <ModalStepIndicator />
                 <CurrentModalStepComponent onError={onError} />
@@ -243,47 +236,34 @@ function CurrentModalMetadataInfo() {
     const modalSteps = useAtomValue(displayedRpcModalStepsAtom);
 
     // Extract step key and metadata
-    const { stepKey, stepAction, metadata } = useMemo(() => {
+    const descriptionKey = useMemo(() => {
         const currentStep =
             modalSteps?.steps?.[modalSteps.currentStep] ?? undefined;
-        let stepAction = "default";
-
-        if (!currentStep) return { stepKey: undefined, metadata: undefined };
+        if (!currentStep) return null;
 
         // If we are in the final step, and the modal was dismissed, used the dismissed metadata
-        let metadata = currentStep.params.metadata;
         if (currentStep.key === "final" && modalSteps?.dismissed) {
-            stepAction = "dismissed";
-            metadata =
-                currentStep.params.dismissedMetadata ??
-                currentStep.params.metadata;
+            return `sdk.modal.${currentStep.key}.dismissed.description`;
         }
 
-        return {
-            stepKey: currentStep.key,
-            stepAction,
-            metadata,
-        };
+        // Otherwise, use the default description
+        return `sdk.modal.${currentStep.key}.description`;
     }, [modalSteps]);
 
     // Get the right message depending on the step
     return useMemo(() => {
-        if (!stepKey) return null;
+        if (!descriptionKey) return null;
 
         // Check if i18n contain the keys
-        const defaultDescriptionKey = `sdk.modal.${stepKey}.${stepAction}.description`;
-        const hasDescription = i18n.exists(defaultDescriptionKey);
+        const hasDescription = i18n.exists(descriptionKey);
 
         // Return the matching component
         return (
             <MetadataInfo
-                metadata={metadata}
-                defaultDescription={
-                    hasDescription ? t(defaultDescriptionKey) : undefined
-                }
+                description={hasDescription ? t(descriptionKey) : undefined}
             />
         );
-    }, [stepKey, stepAction, metadata, i18n, t]);
+    }, [descriptionKey, i18n, t]);
 }
 
 /**
@@ -330,7 +310,6 @@ function CurrentModalStepComponent({
             case "openSession":
                 return (
                     <OpenSessionModalStep
-                        params={currentStep.params}
                         onFinish={currentStep.onResponse}
                         onError={onError}
                     />

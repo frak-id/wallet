@@ -1,4 +1,5 @@
 import type { FullInteractionTypesKey } from "../../../constants/interactionTypes";
+import type { I18nConfig } from "../../config";
 import type { LoggedInEmbededView } from "./loggedIn";
 import type { LoggedOutEmbededView } from "./loggedOut";
 
@@ -41,5 +42,9 @@ export type DisplayEmbededWalletParamsType = {
          * The position of the component
          */
         position?: "left" | "right";
+        /**
+         * Some i18n override for the displayed modal (i.e. update the displayed text only for this modal)
+         */
+        i18n?: I18nConfig;
     };
 };

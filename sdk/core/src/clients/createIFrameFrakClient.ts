@@ -263,18 +263,30 @@ async function postConnectionSetup({
     await lifecycleManager.isConnected;
 
     // Push raw CSS if needed
-    const pushCss = async () => {
-        const cssLink = config.metadata.css;
+    async function pushCss() {
+        const cssLink = config.customizations?.css;
         if (!cssLink) return;
 
         messageHandler.sendEvent({
             clientLifecycle: "modal-css",
             data: { cssLink },
         });
-    };
+    }
+
+    // Push i18n if needed
+    async function pushI18n() {
+        const i18n = config.customizations?.i18n;
+        if (!i18n) return;
+
+        // Push the i18n for each language
+        messageHandler.sendEvent({
+            clientLifecycle: "modal-i18n",
+            data: { i18n },
+        });
+    }
 
     // Push local backup if needed
-    const pushBackup = async () => {
+    async function pushBackup() {
         if (typeof window === "undefined") return;
 
         const backup = window.localStorage.getItem(BACKUP_KEY);
@@ -284,7 +296,7 @@ async function postConnectionSetup({
             clientLifecycle: "restore-backup",
             data: { backup },
         });
-    };
+    }
 
-    await Promise.all([pushCss(), pushBackup()]);
+    await Promise.all([pushCss(), pushI18n(), pushBackup()]);
 }

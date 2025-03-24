@@ -39,13 +39,11 @@ const isOnboarding = true;
  */
 export function LoggedInComponent() {
     const {
-        currentRequest: {
-            params: { metadata },
-        },
+        currentRequest: { configMetadata },
     } = useEmbededListenerUI();
     const { userBalance } = useGetUserBalance();
     const { userPendingBalance } = useGetUserPendingBalance();
-    const currencyAmountKey = getCurrencyAmountKey(metadata?.currency);
+    const currencyAmountKey = getCurrencyAmountKey(configMetadata?.currency);
     const isPending = !!(
         userPendingBalance?.[currencyAmountKey] &&
         userPendingBalance?.[currencyAmountKey] > 0
@@ -59,7 +57,7 @@ export function LoggedInComponent() {
             <Balance
                 amount={amount}
                 isPending={isPending}
-                currency={metadata?.currency ?? "eur"}
+                currency={configMetadata?.currency ?? "eur"}
             />
             <ActionButtons />
         </>
@@ -101,7 +99,7 @@ function ActionButtons() {
     const link = loggedIn?.action?.options?.link;
     const { sourceUrl } = useSafeResolvingContext();
 
-    // Ensure the sharing link contain the current nexus wallet as referrer
+    // Ensure the sharing link contain the current frak wallet as referrer
     const finalSharingLink = FrakContextManager.update({
         url: link ?? sourceUrl,
         context: {
@@ -192,12 +190,6 @@ function ButtonSharingLink({
     finalSharingLink: string | null;
 }) {
     const { data: currentSession } = useInteractionSessionStatus();
-    const {
-        currentRequest: {
-            params: { loggedIn },
-        },
-    } = useEmbededListenerUI();
-    const options = loggedIn?.action?.options;
     const { t } = useListenerTranslation();
 
     // Trigger native sharing
@@ -215,8 +207,8 @@ function ButtonSharingLink({
 
             // Build our sharing data
             const shareData = {
-                title: options?.popupTitle ?? t("sharing.default.title"),
-                text: options?.text ?? t("sharing.default.text"),
+                title: t("sharing.title"),
+                text: t("sharing.text"),
                 url: finalSharingLink,
             };
 

@@ -15,8 +15,10 @@ import {
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
+import { getI18n } from "react-i18next";
 import { keccak256, toHex } from "viem";
 import type { Address, Hex } from "viem";
+import { mapI18nConfig } from "./i18nMapper";
 
 /**
  * The current resolving context
@@ -215,7 +217,7 @@ async function handleLifecycleEvents(
         return;
     }
 
-    // Extract the client lifecucle events data
+    // Extract the client lifecycle events data
     const clientMsg = message.data;
     const { clientLifecycle } = clientMsg;
 
@@ -225,6 +227,16 @@ async function handleLifecycleEvents(
             style.rel = "stylesheet";
             style.href = clientMsg.data.cssLink;
             document.head.appendChild(style);
+            return;
+        }
+        case "modal-i18n": {
+            const override = clientMsg.data.i18n;
+            if (Object.keys(override).length === 0) {
+                return;
+            }
+            // Get the current i18n instance
+            const i18n = getI18n();
+            await mapI18nConfig(override, i18n);
             return;
         }
         case "restore-backup": {

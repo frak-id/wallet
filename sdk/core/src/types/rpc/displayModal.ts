@@ -1,4 +1,5 @@
 import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
+import type { I18nConfig } from "../config";
 import type {
     FinalModalStepType,
     LoginModalStepType,
@@ -53,11 +54,17 @@ export type ModalRpcMetadata = {
         title?: string;
         icon?: string;
     };
-    context?: string;
     targetInteraction?: FullInteractionTypesKey;
+    /**
+     * Some i18n override for the displayed modal (i.e. update the displayed text only for this modal)
+     */
+    i18n?: I18nConfig;
 } & (
     | {
           isDismissible: true;
+          /**
+           * @deprecated Use `config.customizations.i18n` or `metadata.i18n` instead
+           */
           dismissActionTxt?: string;
       }
     | {

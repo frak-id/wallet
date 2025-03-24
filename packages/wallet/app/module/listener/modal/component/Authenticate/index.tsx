@@ -22,7 +22,6 @@ export function SiweAuthenticateModalStep({
     onFinish: (result: SiweAuthenticateModalStepType["returns"]) => void;
 }) {
     const { t } = useListenerTranslation();
-    const { metadata } = params;
     const { address, chainId } = useAccount();
     const siweMessage: SiweMessage | undefined = useMemo(() => {
         if (!(address && chainId)) {
@@ -82,10 +81,7 @@ export function SiweAuthenticateModalStep({
                         }}
                     >
                         {isPending && <Spinner />}
-                        {metadata?.primaryActionText ??
-                            t(
-                                "sdk.modal.siweAuthenticate.default.primaryAction"
-                            )}
+                        {t("sdk.modal.siweAuthenticate.primaryAction")}
                     </button>
                 </div>
             </div>

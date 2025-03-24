@@ -61,65 +61,52 @@
     },
     "sdk": {
         "modal": {
-            "default": {
-                "dismissBtn": "Continue browsing",
-                "dismissBtn_sharing": "Share without being paid"
+            "dismiss": {
+                "primaryAction": "Continue browsing",
+                "primaryAction_sharing": "Share without being paid"
             },
             "final": {
-                "default": {
-                    "title": "Success",
-                    "title_reward": "Gains",
-                    "title_sharing": "Share",
-                    "description": "You've successfully completed all the steps.",
-                    "description_sharing": "Your wallet has been created to receive your **{{ productName }}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).",
-                    "description_reward": "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!"
-                },
+                "title": "Success",
+                "title_reward": "Gains",
+                "title_sharing": "Share",
+                "description": "You've successfully completed all the steps.",
+                "description_sharing": "Your wallet has been created to receive your **{{ productName }}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).",
+                "description_reward": "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!",
                 "dismissed": {
                     "description": "All good",
                     "description_sharing": "Share this article."
                 }
             },
             "login": {
-                "default": {
-                    "description": "Login to your Frak account to get the best experience on **{{ productName }}**",
-                    "description_sharing": "{{ productName }} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
-                    "description_reward": "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
-                    "primaryAction": "I create my wallet under 30sec",
-                    "secondaryAction": "I already have a wallet",
-                    "privyAction": "Connect via Privy",
-                    "title": "Connection"
-                },
+                "description": "Login to your Frak account to get the best experience on **{{ productName }}**",
+                "description_sharing": "{{ productName }} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
+                "description_reward": "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
+                "primaryAction": "I create my wallet under 30sec",
+                "secondaryAction": "I already have a wallet",
+                "title": "Connection",
                 "success": "Connection successful"
             },
             "openSession": {
-                "default": {
-                    "description": "Congratulations, your wallet has been created! Click on the button below to activate it and receive your winnings.",
-                    "primaryAction": "Activate my wallet",
-                    "title": "Activation"
-                }
+                "description": "Congratulations, your wallet has been created! Click on the button below to activate it and receive your winnings.",
+                "primaryAction": "Activate my wallet",
+                "title": "Activation"
             },
             "sendTransaction": {
-                "default": {
-                    "description": "To complete, authorize this transaction in your wallet. This ensures secure processing.",
-                    "primaryAction_one": "Send transaction",
-                    "primaryAction_other": "Send transactions",
-                    "title": "Transaction"
-                }
+                "description": "To complete, authorize this transaction in your wallet. This ensures secure processing.",
+                "primaryAction_one": "Send transaction",
+                "primaryAction_other": "Send transactions",
+                "title": "Transaction"
             },
             "siweAuthenticate": {
-                "default": {
-                    "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
-                    "primaryAction": "Authenticate",
-                    "title": "Authentication"
-                }
+                "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
+                "primaryAction": "Authenticate",
+                "title": "Authentication"
             }
         },
         "wallet": {
             "login": {
-                "default": {
-                    "text": "Create your wallet with **{{ productName }}** and receive up to **{{ estimatedReward }}€** per referred friend",
-                    "primaryAction": "I create my wallet"
-                }
+                "text": "Create your wallet with **{{ productName }}** and receive up to **{{ estimatedReward }}€** per referred friend",
+                "primaryAction": "I create my wallet"
             },
             "loggedIn": {
                 "onboarding": {
@@ -137,10 +124,8 @@
             "share": "Share",
             "shareSuccess": "Shared"
         },
-        "default": {
-            "text": "Discover this amazing product!",
-            "title": "{{productName}} invite link"
-        }
+        "text": "Discover this amazing product!",
+        "title": "{{productName}} invite link"
     },
     "wallet": {
         "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",

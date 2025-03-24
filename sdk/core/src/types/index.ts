@@ -36,7 +36,13 @@ export type {
     IFrameLifecycleEvent,
     ClientLifecycleEvent,
 } from "./lifecycle";
-export type { FrakWalletSdkConfig, Currency } from "./config";
+export type {
+    FrakWalletSdkConfig,
+    Currency,
+    Language,
+    I18nConfig,
+    LocalizedI18nConfig,
+} from "./config";
 export type {
     CompressedData,
     HashProtectedData,

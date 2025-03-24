@@ -45,6 +45,9 @@ export type {
     SsoMetadata,
     OpenSsoParamsType,
     Currency,
+    Language,
+    I18nConfig,
+    LocalizedI18nConfig,
     TokenAmountType,
     GetProductInformationReturnType,
     // RPC Embeded wallet

@@ -5,8 +5,8 @@ import type { FrakWalletSdkConfig } from "../types";
  * @ignore
  */
 export const baseIframeProps = {
-    id: "nexus-wallet",
-    name: "nexus-wallet",
+    id: "frak-wallet",
+    name: "frak-wallet",
     allow: "publickey-credentials-get *; clipboard-write; web-share *",
     style: {
         width: "0",
@@ -32,7 +32,7 @@ export function createIframe({
     HTMLIFrameElement | undefined
 > {
     // Check if the iframe is already created
-    const alreadyCreatedIFrame = document.querySelector("#nexus-wallet");
+    const alreadyCreatedIFrame = document.querySelector("#frak-wallet");
 
     // If the iframe is already created, remove it
     if (alreadyCreatedIFrame) {

@@ -51,7 +51,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
             const stepsPrepared = prepareInputStepsArray(
                 {
-                    appName: request.params[1]?.name,
+                    appName: request.params[2]?.name,
                     context,
                     steps,
                     metadata: request.params[1],
@@ -73,16 +73,24 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
                 initialResult: currentResult as ModalRpcStepsResultType,
             });
 
+            const metadata = request.params[1] ?? {};
+            const configMetadata = request.params[2] ?? {};
+
             // Save it on the listener UI provider
             setRequest({
+                // Modal ui specific
                 type: "modal",
+                metadata,
                 steps,
-                metadata: request.params[1],
                 emitter,
-                appName: request.params[1]?.name,
+                // Generic ui
+                appName: configMetadata?.name,
+                logoUrl: metadata?.header?.icon ?? configMetadata?.logoUrl,
+                homepageLink: configMetadata?.homepageLink,
                 targetInteraction: request.params[1]?.targetInteraction,
+                configMetadata,
                 i18n: {
-                    lang: request.params[1]?.lang,
+                    lang: configMetadata?.lang,
                     context: steps?.final?.action?.key,
                 },
             });

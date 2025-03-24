@@ -10,6 +10,18 @@ export function FrakProvider({ children }: PropsWithChildren) {
         metadata: {
             name: "Demo - EthCC",
         },
+        customizations: {
+            i18n: {
+                en: {
+                    "sdk.modal.sendTransaction.description":
+                        "Sending ETHCC transaction on {{ productName }}",
+                },
+                fr: {
+                    "sdk.modal.sendTransaction.description":
+                        "Envoie de transaction ETHCC sur {{ productName }}",
+                },
+            },
+        },
         domain: "ethcc.news-paper.xyz",
     };
 

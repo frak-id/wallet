@@ -64,7 +64,8 @@ export type IFrameRpcSchema = [
         Method: "frak_displayModal";
         Parameters: [
             requests: ModalRpcStepsInput,
-            metadata: FrakWalletSdkConfig["metadata"] & ModalRpcMetadata,
+            metadata: ModalRpcMetadata | undefined,
+            configMetadata: FrakWalletSdkConfig["metadata"],
         ];
         ReturnType: ModalRpcStepsResultType;
     },
@@ -105,12 +106,12 @@ export type IFrameRpcSchema = [
         ReturnType: GetProductInformationReturnType;
     },
     /**
-     * Method to show the embeded wallet, with potential customisation
+     * Method to show the embedded wallet, with potential customization
      */
     {
         Method: "frak_displayEmbededWallet";
         Parameters: [
-            DisplayEmbededWalletParamsType,
+            request: DisplayEmbededWalletParamsType,
             metadata: FrakWalletSdkConfig["metadata"],
         ];
         ReturnType: undefined;

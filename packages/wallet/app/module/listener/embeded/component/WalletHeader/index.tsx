@@ -11,9 +11,7 @@ import styles from "../Wallet/index.module.css";
 export function ListenerWalletHeader() {
     const session = jotaiStore.get(sessionAtom);
     const {
-        currentRequest: {
-            params: { metadata },
-        },
+        currentRequest: { logoUrl },
     } = useEmbededListenerUI();
 
     return (
@@ -25,10 +23,10 @@ export function ListenerWalletHeader() {
                     className={styles.modalListenerWallet__logoFrak}
                 />
             )}
-            {metadata?.logo && (
+            {logoUrl && (
                 <h1>
                     <img
-                        src={metadata?.logo}
+                        src={logoUrl}
                         className={styles.modalListenerWallet__logo}
                         alt=""
                     />

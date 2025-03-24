@@ -47,7 +47,7 @@ export function TransactionModalStep({
                     sendTransaction(toSendTx);
                 }}
             >
-                {t("sdk.modal.sendTransaction.default.primaryAction", {
+                {t("sdk.modal.sendTransaction.primaryAction", {
                     count: txs.length,
                 })}
             </AuthFingerprint>

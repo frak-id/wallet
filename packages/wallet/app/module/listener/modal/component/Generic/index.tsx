@@ -11,21 +11,16 @@ import { useAtom } from "jotai";
 import { useMemo } from "react";
 
 export function MetadataInfo({
-    metadata,
-    defaultDescription,
+    description,
 }: {
-    metadata?: { description?: string };
-    defaultDescription?: string;
+    description?: string;
 }) {
-    if (metadata?.description || defaultDescription) {
+    if (description) {
         return (
             <div
                 className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
             >
-                <Markdown
-                    md={metadata?.description}
-                    defaultTxt={defaultDescription}
-                />
+                <Markdown md={description} />
             </div>
         );
     }
@@ -54,7 +49,6 @@ export function DismissButton() {
         if (finalStepIndex === modalSteps.currentStep) return empty;
 
         const info = {
-            customLbl: metadata.dismissActionTxt,
             index: finalStepIndex,
         };
 
@@ -102,7 +96,7 @@ export function DismissButton() {
                 trackEvent("cta-dismissed");
             }}
         >
-            {info.customLbl ?? t("sdk.modal.default.dismissBtn")}
+            {t("sdk.modal.dismiss.primaryAction")}
         </button>
     );
 }

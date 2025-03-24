@@ -124,28 +124,29 @@ export function NewsArticle({ articleId }: { articleId: string }) {
                         type={"button"}
                         className={`button ${styles.article__social}`}
                         onClick={() => {
-                            const finalAction = {
-                                key: "sharing",
-                                options: {
-                                    popupTitle:
-                                        "Share this article with your friends",
-                                    text: "Discover this awesome article",
-                                    link:
-                                        typeof window !== "undefined"
-                                            ? window.location.href
-                                            : "",
-                                },
-                            } as const;
+                            const shareLink =
+                                typeof window !== "undefined"
+                                    ? window.location.href
+                                    : "";
 
                             displayModal({
                                 metadata: {
                                     isDismissible: true,
+                                    i18n: {
+                                        "sharing.title":
+                                            "Share this article with your friends",
+                                        "sharing.text":
+                                            "Discover this awesome article",
+                                    },
                                 },
                                 steps: {
                                     login: loginModalStep,
                                     openSession: {},
                                     final: {
-                                        action: finalAction,
+                                        action: {
+                                            key: "sharing",
+                                            options: { link: shareLink },
+                                        },
                                     },
                                 },
                             });

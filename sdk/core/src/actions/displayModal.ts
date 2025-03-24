@@ -10,13 +10,13 @@ import type {
  * @param client - The current Frak Client
  * @param args
  * @param args.steps - The different steps of the modal
- * @param args.metadata - The metadata for the modal (customisation, etc)
+ * @param args.metadata - The metadata for the modal (customization, etc)
  * @returns The result of each modal steps
  *
  * @description This function will display a modal to the user with the provided steps and metadata.
  *
  * @remarks
- * - The UI of the displayed modal can be configured with the `customCss` property in the `metadata.css` field of the top-level config.
+ * - The UI of the displayed modal can be configured with the `customCss` property in the `customizations.css` field of the top-level config.
  * - The `login` and `openSession` steps will be automatically skipped if the user is already logged in or has an active session. It's safe to include these steps in all cases to ensure proper user state.
  * - Steps are automatically reordered in the following sequence:
  *     1. `login` (if needed)
@@ -33,9 +33,9 @@ import type {
  * ```ts
  * const results = await displayModal(frakConfig, {
  *     steps: {
- *         // Simple login with no SSO, nor customisation
+ *         // Simple login with no SSO, nor customization
  *         login: { allowSso: false },
- *         // Simple session opening, with no customisation
+ *         // Simple session opening, with no customization
  *         openSession: {},
  *         // Success message
  *         final: {
@@ -54,7 +54,7 @@ import type {
  * ```
  *
  * @example
- * A full modal example, with a few customisation options, with the steps:
+ * A full modal example, with a few customization options, with the steps:
  *  1. Login (Skipped if already logged in)
  *  2. Open a session (Skipped if already opened)
  *  3. Authenticate via SIWE
@@ -71,16 +71,6 @@ import type {
  *                 logoUrl: "https://my-app.com/logo.png",
  *                 homepageLink: "https://my-app.com",
  *             },
- *             metadata: {
- *                 // Modal title on desktop
- *                 title: "Login on My-App",
- *                 // Modal description (and yep it accept markdown)
- *                 description: "## Please login to continue",
- *                 // Primary button text
- *                 primaryActionText: "Register",
- *                 // Secondary button text
- *                 secondaryActionText: "Login",
- *             },
  *         },
  *         // Simple session opening, with no customisation
  *         openSession: {},
@@ -92,11 +82,6 @@ import type {
  *                 nonce: generateSiweNonce(),
  *                 version: "1",
  *             },
- *             metadata: {
- *                 title: "Authenticate with SIWE",
- *                 description: "Please authenticate with SIWE to continue",
- *                 primaryActionText: "Authenticate",
- *             },
  *         },
  *         // Send batched transaction
  *         sendTransaction: {
@@ -104,10 +89,6 @@ import type {
  *                 { to: "0xdeadbeef", data: "0xdeadbeef" },
  *                 { to: "0xdeadbeef", data: "0xdeadbeef" },
  *             ],
- *             metadata: {
- *                 title: "Send a transaction",
- *                 description: "Please send a transaction to continue",
- *             },
  *         },
  *         // Success message with sharing options
  *         final: {
@@ -145,6 +126,6 @@ export async function displayModal<
 ): Promise<ModalRpcStepsResultType<T>> {
     return (await client.request({
         method: "frak_displayModal",
-        params: [steps, { ...metadata, ...client.config.metadata }],
+        params: [steps, metadata, client.config.metadata],
     })) as ModalRpcStepsResultType<T>;
 }
