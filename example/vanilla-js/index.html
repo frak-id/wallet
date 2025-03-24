@@ -6,6 +6,7 @@
     <title>Example Vanilla JS</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32"/>
     <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/bench.ts"></script>
     <%- injectScript %>
     <%- injectReactScan %>
     <style>
@@ -38,5 +39,35 @@
 <br />
 <frak-button-share classname="button" use-reward text="Share! You will earn {REWARD}" no-reward-text="Share and earn!"></frak-button-share>
 <frak-button-wallet use-reward></frak-button-wallet>
+<br />
+<h2>Benchmarks</h2>
+<button onclick="window.benchJsonJoy()">Bench Json Joy</button>
+<button onclick="window.benchJson()">Bench Json</button>
+<button onclick="window.benchMsgPackerFast()">Bench MsgPackerFast</button>
+<button onclick="window.benchMsgPacker()">Bench MsgPacker</button>
+<h2>Sha256</h2>
+<button onclick="window.benchJsSha256()">Bench Js Sha256</button>
+<button onclick="window.benchViemSha256()">Bench Viem Sha256</button>
+<button onclick="window.benchNativeSha256()">Bench Native Sha256</button>
+<h2>Keccak256</h2>
+<button onclick="window.benchViemKeccak256()">Bench Viem Keccak256</button>
+<button onclick="window.benchJsKeccak256()">Bench Js Keccak256</button>
+<h2>Shake128</h2>
+<button onclick="window.benchShake128()">Bench Shake128</button>
+<script type="module">
+  import { benchJsonJoy, benchJson, benchMsgPackerFast, benchMsgPacker, benchJsSha256, benchViemSha256, benchNativeSha256, benchViemKeccak256, benchJsKeccak256, benchShake128 } from '/src/bench.ts';
+  
+  // Bind the functions to the window object
+  window.benchJsonJoy = benchJsonJoy;
+  window.benchJson = benchJson;
+  window.benchMsgPackerFast = benchMsgPackerFast;
+  window.benchMsgPacker = benchMsgPacker;
+  window.benchJsSha256 = benchJsSha256;
+  window.benchViemSha256 = benchViemSha256;
+  window.benchNativeSha256 = benchNativeSha256;
+  window.benchViemKeccak256 = benchViemKeccak256;
+  window.benchJsKeccak256 = benchJsKeccak256;
+  window.benchShake128 = benchShake128;
+</script>
 </body>
 </html>
