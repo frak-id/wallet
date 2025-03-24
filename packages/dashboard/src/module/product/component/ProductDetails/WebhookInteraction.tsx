@@ -65,12 +65,12 @@ function WebhookInteraction({ productId }: { productId: Hex }) {
 
     // The key that will be used for webhook
     const signinKey = useMemo(() => {
-        if (webhookInteractionStatus?.webhookSigninKey) {
+        if (webhookInteractionStatus?.setup) {
             return webhookInteractionStatus?.webhookSigninKey;
         }
 
         return generatePrivateKey();
-    }, [webhookInteractionStatus?.webhookSigninKey]);
+    }, [webhookInteractionStatus]);
 
     if (isLoading) {
         return <Spinner />;

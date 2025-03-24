@@ -23,9 +23,9 @@ export const pushInteractionsRoutes = new Elysia()
             interactionDiamondRepository,
             sixDegrees,
         }) => {
-            if (!walletSdkSession) return;
+            if (!walletSdkSession) return error(403, "Invalid wallet address");
             if (!interactions.length) {
-                return;
+                return [];
             }
 
             // Ensure no wallet mismatch
@@ -88,7 +88,7 @@ export const pushInteractionsRoutes = new Elysia()
             );
             if (!interactionsForInsert.length) {
                 log.warn("No interaction to insert post filter");
-                return;
+                return [];
             }
 
             // Insert it in the pending state
@@ -109,7 +109,7 @@ export const pushInteractionsRoutes = new Elysia()
             body: t.Object({
                 interactions: t.Array(InteractionRequestDto),
             }),
-            result: {
+            response: {
                 403: t.String(),
                 200: t.Array(t.String()),
             },

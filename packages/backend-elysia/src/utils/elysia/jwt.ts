@@ -6,11 +6,9 @@ import {
     ValidationError,
     getSchemaValidator,
 } from "elysia";
-
 import {
     type JWSHeaderParameters,
     type JWTPayload,
-    type KeyLike,
     SignJWT,
     jwtVerify,
 } from "jose";
@@ -57,7 +55,7 @@ export interface JWTOption<
     /**
      * JWT Secret
      */
-    secret: string | Uint8Array | KeyLike;
+    secret: string | Uint8Array;
     /**
      * Type strict validation for JWT payload
      */
