@@ -62,8 +62,8 @@
     "react-webcam": "^7.2.0",
     "remix-utils": "^8.5.0",
     "vaul": "^1.1.2",
-    "viem": "^2.23.9",
-    "wagmi": "^2.14.12"
+    "viem": "^2.23.14",
+    "wagmi": "^2.14.15"
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
