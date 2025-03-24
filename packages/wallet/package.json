@@ -78,7 +78,7 @@
     "postcss-preset-env": "^10.1.5",
     "sst": "3.9.33",
     "typescript": "^5",
-    "vite": "^6.2.2",
+    "vite": "^6.2.3",
     "vite-plugin-mkcert": "^1.17.8",
     "vite-tsconfig-paths": "^5.1.4"
   },
