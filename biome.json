@@ -19,7 +19,9 @@
             "bundle.js",
             "sst-env.d.ts",
             ".react-router/**",
-            ".rslib/**"
+            ".rslib/**",
+            ".svelte-kit/**",
+            "**/*.svelte"
         ]
     },
     "organizeImports": {
