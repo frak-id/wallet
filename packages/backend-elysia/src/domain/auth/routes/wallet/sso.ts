@@ -1,6 +1,6 @@
 import { t } from "@backend-utils";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
-import { compressToBase64 } from "async-lz-string";
+import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import { and, eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
@@ -50,9 +50,7 @@ export const walletSsoRoutes = new Elysia({
                 id: ssoId,
                 ...params,
             };
-            const compressedParams = await compressToBase64(
-                JSON.stringify(finalParams)
-            );
+            const compressedParams = compressJsonToB64(finalParams);
 
             // The final url for the sso
             const url = new URL(

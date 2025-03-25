@@ -9,12 +9,13 @@ import type { PendingInteraction } from "@/types/Interaction";
 import type { SdkSession, Session } from "@/types/Session";
 import {
     type CompressedData,
+    compressJsonToB64,
     decompressDataAndCheckHash,
+    decompressJsonFromB64,
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { atom } from "jotai";
-import { tryit } from "radash";
 import type { Hex } from "viem";
 
 /**
@@ -37,14 +38,23 @@ export async function restoreBackupData({
     backup,
     productId,
 }: { backup: string; productId: Hex }) {
-    const compressedBackup = JSON.parse(backup) as CompressedData;
-
     // Decompress the backup data and
-    const [, data] = await tryit(() =>
-        decompressDataAndCheckHash<BackupData>(compressedBackup)
-    )();
+    let data: BackupData | undefined;
+    try {
+        const decompressed = decompressJsonFromB64<CompressedData>(backup);
+        if (!decompressed) {
+            throw new Error("Invalid backup data");
+        }
+        data = decompressDataAndCheckHash<BackupData>(decompressed);
+    } catch (e) {
+        console.error("Error decompressing backup data", {
+            e,
+            backup,
+        });
+    }
     if (!data) {
-        throw new Error("Invalid backup data");
+        console.log("restoreBackupData - invalid backup data", { data });
+        return;
     }
 
     // Ensure that the backup data is for the current product
@@ -113,12 +123,12 @@ export async function pushBackupData(args?: { productId?: Hex }) {
     }
 
     // Create a compressed backup
-    const compressedBackup = await hashAndCompressData(backup);
+    const compressedBackup = hashAndCompressData(backup);
 
     // And then push the event
     emitLifecycleEvent({
         iframeLifecycle: "do-backup",
-        data: { backup: JSON.stringify(compressedBackup) },
+        data: { backup: compressJsonToB64(compressedBackup) },
     });
 }
 

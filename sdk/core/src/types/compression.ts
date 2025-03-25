@@ -4,7 +4,7 @@
  *  @ignore
  */
 export type CompressedData = Readonly<{
-    compressed: string;
+    compressed: Uint8Array;
     compressedHash: string;
 }>;
 

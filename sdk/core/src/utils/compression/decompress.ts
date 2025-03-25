@@ -1,19 +1,23 @@
-import { decompressFromBase64 } from "async-lz-string";
-import { sha256 } from "js-sha256";
+import { CborDecoder } from "@jsonjoy.com/json-pack/lib/cbor";
+import { sha256 } from "viem";
 import { FrakRpcError, RpcErrorCodes } from "../../types";
 import type {
     CompressedData,
     HashProtectedData,
 } from "../../types/compression";
+import { base64urlDecode } from "./b64";
+import { hashJson } from "./compress";
+
+const decoder = new CborDecoder();
 
 /**
  * Decompress the given string
  * @param compressedData The params to encode
  * @ignore
  */
-export async function decompressDataAndCheckHash<T>(
+export function decompressDataAndCheckHash<T>(
     compressedData: CompressedData
-): Promise<HashProtectedData<T>> {
+): HashProtectedData<T> {
     // Ensure we got the required params first
     if (!(compressedData?.compressed && compressedData?.compressedHash)) {
         throw new FrakRpcError(
@@ -23,7 +27,7 @@ export async function decompressDataAndCheckHash<T>(
     }
 
     // Decompress and parse the data
-    const parsedData = await decompressJson<HashProtectedData<T>>(
+    const parsedData = decompressJson<HashProtectedData<T>>(
         compressedData.compressed
     );
     if (!parsedData) {
@@ -52,7 +56,7 @@ export async function decompressDataAndCheckHash<T>(
 
     // And check the validation hash
     const { validationHash: _, ...rawResultData } = parsedData;
-    const expectedValidationHash = sha256(JSON.stringify(rawResultData));
+    const expectedValidationHash = hashJson(rawResultData);
     if (expectedValidationHash !== parsedData.validationHash) {
         throw new FrakRpcError(
             RpcErrorCodes.corruptedResponse,
@@ -68,12 +72,20 @@ export async function decompressDataAndCheckHash<T>(
  * @param data
  * @ignore
  */
-export async function decompressJson<T>(data: string): Promise<T | null> {
-    const decompressed = await decompressFromBase64(data);
+export function decompressJson<T>(data: Uint8Array): T | null {
     try {
-        return JSON.parse(decompressed) as T;
+        return decoder.decode(data) as T;
     } catch (e) {
-        console.error("Invalid compressed data", { e, decompressed });
+        console.error("Invalid compressed data", { e, data });
         return null;
     }
+}
+
+/**
+ * Decompress json data
+ * @param data
+ * @ignore
+ */
+export function decompressJsonFromB64<T>(data: string): T | null {
+    return decompressJson(base64urlDecode(data));
 }

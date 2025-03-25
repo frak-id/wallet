@@ -83,7 +83,7 @@ export function createIFrameFrakClient({
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
             // Decompress the message
-            const decompressed = await decompressDataAndCheckHash<
+            const decompressed = decompressDataAndCheckHash<
                 RpcResponse<IFrameRpcSchema>
             >(message.data);
             // If it contains an error, reject it
@@ -104,7 +104,7 @@ export function createIFrameFrakClient({
         });
 
         // Compress the message to send
-        const compressedMessage = await hashAndCompressData(args);
+        const compressedMessage = hashAndCompressData(args);
 
         // Send the message to the iframe
         messageHandler.sendEvent({
@@ -136,7 +136,7 @@ export function createIFrameFrakClient({
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
             // Decompress the message
-            const decompressed = await decompressDataAndCheckHash<
+            const decompressed = decompressDataAndCheckHash<
                 RpcResponse<IFrameRpcSchema>
             >(message.data);
             // Transmit the result if it's a success
@@ -148,7 +148,7 @@ export function createIFrameFrakClient({
         });
 
         // Compress the message to send
-        const compressedMessage = await hashAndCompressData(args);
+        const compressedMessage = hashAndCompressData(args);
 
         // Send the message to the iframe
         messageHandler.sendEvent({

@@ -1,33 +1,27 @@
-import { compressToBase64 } from "async-lz-string";
-import { sha256 } from "js-sha256";
+import { CborEncoder } from "@jsonjoy.com/json-pack/lib/cbor";
+import { sha256 } from "viem";
 import type {
     CompressedData,
     HashProtectedData,
 } from "../../types/compression";
+import { base64urlEncode } from "./b64";
 
-/*
- * After investigation, here is the result:
- *   - Single level compression -> Ok (save approx 20% on the overral size, we can do better with the hash I think)
- *   - Second level (compressing json containing a compressed string) -> useless, increase by approx 5%
- *
- * HMAC could be a good way to add a layer of protection (with a key per provider, using like the apiKey or smth like that?)
- */
+const encoder = new CborEncoder();
 
 /**
  * Compress the given params, and add hash protection to (rapidly) prevent interception modification
  * @param data The params to encode
  * @ignore
  */
-export async function hashAndCompressData<T>(data: T): Promise<CompressedData> {
+export function hashAndCompressData<T>(data: T): CompressedData {
     // Create a hash of the main params
-    const validationHash = sha256(JSON.stringify(data));
     const hashProtectedData: HashProtectedData<T> = {
         ...data,
-        validationHash,
+        validationHash: hashJson(data),
     };
 
-    // Stringify and compress it (with the hash added inside)
-    const compressed = await compressJson(hashProtectedData);
+    // Encode the full data
+    const compressed = encoder.encode(hashProtectedData);
 
     // Digest the compressed string
     const compressedHash = sha256(compressed);
@@ -43,6 +37,24 @@ export async function hashAndCompressData<T>(data: T): Promise<CompressedData> {
  * @param data
  * @ignore
  */
-export async function compressJson(data: unknown): Promise<string> {
-    return compressToBase64(JSON.stringify(data));
+export function compressJson(data: unknown): Uint8Array {
+    return encoder.encode(data);
+}
+
+/**
+ * Compress json data
+ * @param data
+ * @ignore
+ */
+export function compressJsonToB64(data: unknown): string {
+    return base64urlEncode(compressJson(data));
+}
+
+/**
+ * Compress json data
+ * @param data
+ * @ignore
+ */
+export function hashJson(data: unknown): string {
+    return sha256(encoder.encode(data));
 }

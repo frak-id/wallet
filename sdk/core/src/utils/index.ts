@@ -1,8 +1,13 @@
 export { createIframe } from "./iframeHelper";
-export { hashAndCompressData, compressJson } from "./compression/compress";
+export {
+    hashAndCompressData,
+    compressJson,
+    compressJsonToB64,
+} from "./compression/compress";
 export {
     decompressDataAndCheckHash,
     decompressJson,
+    decompressJsonFromB64,
 } from "./compression/decompress";
 export { FrakContextManager } from "./FrakContext";
 export { Deferred } from "./Deferred";

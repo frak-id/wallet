@@ -11,6 +11,8 @@ export {
     decompressDataAndCheckHash,
     compressJson,
     decompressJson,
+    compressJsonToB64,
+    decompressJsonFromB64,
     createIframe,
     FrakContextManager,
     Deferred,
