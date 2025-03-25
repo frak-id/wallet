@@ -21,6 +21,7 @@ Render a card with a title, description, and action button.
 <script lang="ts">
   import type { Component } from "svelte";
   import BrowserWindow from "$lib/components/BrowserWindow.svelte";
+
   /**
    * @description Card props
    * @param {string} title - The title of the card
@@ -33,9 +34,10 @@ Render a card with a title, description, and action button.
     description: string;
     action: string;
     image: Component;
+    showWallet?: boolean;
   };
 
-  let { title, description, action, image }: CardProps = $props();
+  let { title, description, action, image, showWallet }: CardProps = $props();
 
   // Image is a component, so we need to derive it
   let Image = $derived(image);
@@ -48,7 +50,11 @@ Render a card with a title, description, and action button.
   <h3>{title}</h3>
   <p>{description}</p>
 
-  <button class="card__button">{action}</button>
+  <frak-button-share
+    text={action}
+    classname="card__button"
+    {...showWallet && { "show-wallet": true }}
+  ></frak-button-share>
 </div>
 
 <style>
@@ -75,7 +81,7 @@ Render a card with a title, description, and action button.
     margin: 0 0 20px 0;
   }
 
-  .card__button {
+  :global(.card__button) {
     background-color: #fff;
     color: #0066ff;
     border: 1px solid #0066ff;
@@ -85,9 +91,9 @@ Render a card with a title, description, and action button.
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-  }
 
-  .card__button:hover {
-    background-color: #f0f7ff;
+    &:hover {
+      background-color: #f0f7ff;
+    }
   }
 </style>

@@ -22,20 +22,23 @@ Render a list of components.
     description: string;
     action: string;
     image: Component;
+    showWallet?: boolean;
   };
 
   const embedOptions: Option[] = [
     {
       title: "Share Button",
       description: "Add a share button to your site",
-      action: "See below",
+      action: "Open share modal",
       image: ButtonShare,
+      showWallet: false,
     },
     {
       title: "Wallet Button",
       description: "Add a wallet button to your site",
-      action: "See below",
+      action: "Open wallet modal",
       image: ButtonWallet,
+      showWallet: true,
     },
   ];
 </script>
