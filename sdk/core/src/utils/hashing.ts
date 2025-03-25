@@ -1,4 +1,4 @@
-import { sha256 } from "js-sha256";
+import { sha256, toHex } from "viem";
 import { FrakRpcError, RpcErrorCodes } from "../types";
 import type { HashProtectedData } from "../types/compression";
 
@@ -9,7 +9,7 @@ import type { HashProtectedData } from "../types/compression";
  */
 export function hashData<T>(data: T): HashProtectedData<T> {
     // Create a hash of the main params
-    const validationHash = sha256(JSON.stringify(data));
+    const validationHash = sha256(toHex(JSON.stringify(data)));
     const hashProtectedData: HashProtectedData<T> = {
         ...data,
         validationHash,
@@ -40,7 +40,7 @@ export function checkHash<T>(data: HashProtectedData<T>): HashProtectedData<T> {
 
     // And check the validation hash
     const { validationHash: _, ...rawResultData } = data;
-    const expectedValidationHash = sha256(JSON.stringify(rawResultData));
+    const expectedValidationHash = sha256(toHex(JSON.stringify(rawResultData)));
     if (expectedValidationHash !== data.validationHash) {
         throw new FrakRpcError(
             RpcErrorCodes.corruptedResponse,
