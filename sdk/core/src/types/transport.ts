@@ -1,5 +1,6 @@
 import type { RpcSchema } from "viem";
 import type { Prettify } from "viem/chains";
+import type { CompressedData } from "./compression";
 import type { ClientLifecycleEvent, IFrameLifecycleEvent } from "./lifecycle";
 import type { IFrameRpcSchema } from "./rpc";
 
@@ -130,8 +131,5 @@ export type IFrameEvent =
 export type IFrameRpcEvent = {
     id: string;
     topic: ExtractedParametersFromRpc<IFrameRpcSchema>["method"];
-    data: {
-        compressed: string;
-        compressedHash: string;
-    };
+    data: CompressedData;
 };

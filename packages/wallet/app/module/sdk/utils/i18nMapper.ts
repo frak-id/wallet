@@ -20,6 +20,7 @@ export async function mapI18nConfig(value: I18nConfig, i18n: I18nType) {
             true, // Deep merge
             true // Overwrite
         );
+        return;
     }
 
     // Otherwise, add each language override

@@ -1,30 +1,11 @@
 import { type Address, bytesToHex, hexToBytes } from "viem";
 import type { FrakContext } from "../types";
+import { base64urlDecode, base64urlEncode } from "./compression/b64";
 
 /**
  * The context key
  */
 const contextKey = "fCtx";
-
-function base64url_encode(buffer: Uint8Array): string {
-    return btoa(Array.from(buffer, (b) => String.fromCharCode(b)).join(""))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
-}
-
-function base64url_decode(value: string): Uint8Array {
-    const m = value.length % 4;
-    return Uint8Array.from(
-        atob(
-            value
-                .replace(/-/g, "+")
-                .replace(/_/g, "/")
-                .padEnd(value.length + (m === 0 ? 0 : 4 - m), "=")
-        ),
-        (c) => c.charCodeAt(0)
-    );
-}
 
 /**
  * Compress the current Frak context
@@ -35,7 +16,7 @@ function compress(context?: Partial<FrakContext>): string | undefined {
     if (!context?.r) return;
     try {
         const bytes = hexToBytes(context.r);
-        return base64url_encode(bytes);
+        return base64urlEncode(bytes);
     } catch (e) {
         console.error("Error compressing Frak context", { e, context });
     }
@@ -50,7 +31,7 @@ function compress(context?: Partial<FrakContext>): string | undefined {
 function decompress(context?: string): FrakContext | undefined {
     if (!context || context.length === 0) return;
     try {
-        const bytes = base64url_decode(context);
+        const bytes = base64urlDecode(context);
         return { r: bytesToHex(bytes, { size: 20 }) as Address };
     } catch (e) {
         console.error("Error decompressing Frak context", { e, context });

@@ -122,7 +122,7 @@ export function createIFrameRequestResolver(
         // Build the emitter for this call
         const responseEmitter: IFrameResponseEmitter = async (result) => {
             // Hash and compress the results
-            const compressedResult = await hashAndCompressData(result);
+            const compressedResult = hashAndCompressData(result);
 
             // Then post the message and a response
             message.source?.postMessage(
@@ -138,7 +138,7 @@ export function createIFrameRequestResolver(
         };
 
         // Decompress the data
-        const uncompressedData = await decompressDataAndCheckHash(data);
+        const uncompressedData = decompressDataAndCheckHash(data);
 
         // Response to the requests
         // @ts-ignore

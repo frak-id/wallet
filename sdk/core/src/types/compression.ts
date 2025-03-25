@@ -3,10 +3,7 @@
  *  -> The encoded should contain a HashProtectedData once decoded
  *  @ignore
  */
-export type CompressedData = Readonly<{
-    compressed: string;
-    compressedHash: string;
-}>;
+export type CompressedData = Uint8Array;
 
 /**
  * The encoded data to send to a client / received by a client

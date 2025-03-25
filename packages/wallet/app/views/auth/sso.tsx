@@ -16,7 +16,7 @@ import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import type { Session } from "@/types/Session";
-import { decompressJson } from "@frak-labs/core-sdk";
+import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
 import { Fingerprint } from "@shared/module/asset/icons/Fingerprint";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
@@ -63,11 +63,13 @@ export default function Sso() {
         queryKey: ssoKey.params.bySearchParams(searchParams.toString()),
         queryFn: async () => {
             const compressedString = searchParams.get("p");
+            console.log("compressedString", compressedString);
             if (!compressedString) {
                 return null;
             }
             const compressedParam =
-                await decompressJson<CompressedSsoData>(compressedString);
+                decompressJsonFromB64<CompressedSsoData>(compressedString);
+            console.log("compressedParam", compressedParam);
             if (!compressedParam) {
                 return null;
             }
