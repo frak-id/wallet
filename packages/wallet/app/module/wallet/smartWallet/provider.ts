@@ -173,8 +173,6 @@ async function buildSmartAccount<
                     msg: options.challenge,
                 });
 
-                // Store this shit somewhere
-
                 // Perform the verification of the signature
                 return parseWebAuthNAuthentication(authenticationResponse);
             },

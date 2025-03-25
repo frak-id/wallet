@@ -27,12 +27,13 @@ import {
     isAddressEqual,
 } from "viem";
 import {
+    type UserOperation,
     entryPoint06Abi,
     entryPoint06Address,
+    estimateUserOperationGas,
     getUserOperationHash,
     toSmartAccount,
 } from "viem/account-abstraction";
-import { estimateGas } from "viem/actions";
 
 export type FrakWebAuthNWallet = SmartAccountV06;
 
@@ -211,21 +212,33 @@ export async function baseFrakWallet<
                     return undefined;
                 }
 
-                const [, estimation] = await tryit(() =>
-                    estimateGas(client as unknown as typeof currentViemClient, {
-                        account: userOperation.sender ?? accountAddress,
-                        to: userOperation.sender ?? accountAddress,
-                        data: userOperation.callData as Hex,
-                    })
+                // Do a user operation gas estimation
+                const [, userOpEstimation] = await tryit(() =>
+                    estimateUserOperationGas(
+                        client as unknown as typeof currentViemClient,
+                        // @ts-ignore
+                        userOperation as unknown as UserOperation
+                    )
                 )();
-                if (!estimation) {
+                if (!userOpEstimation) {
                     return undefined;
                 }
-                // The margin depend on the chain, if testnet x10, if mainnet x1.25
-                const margin = client?.chain?.testnet === true ? 1000n : 125n;
+
+                // The margin depend on the chain, if testnet x10, if mainnet x1.5
+                const margin = client?.chain?.testnet === true ? 1000n : 150n;
+                // Verification gas margin, 20% on testnet, 5% on mainnet
+                const verificationMargin =
+                    client?.chain?.testnet === true ? 120n : 105n;
                 // Use the estimation with 25% of error margin on the estimation
                 return {
-                    callGasLimit: (estimation * margin) / 100n,
+                    callGasLimit:
+                        (userOpEstimation.callGasLimit * margin) / 100n,
+                    preVerificationGas:
+                        (userOpEstimation.preVerificationGas * margin) / 100n,
+                    verificationGasLimit:
+                        (userOpEstimation.verificationGasLimit *
+                            verificationMargin) /
+                        100n,
                 };
             },
         },
