@@ -21,15 +21,7 @@ export function hashAndCompressData<T>(data: T): CompressedData {
     };
 
     // Encode the full data
-    const compressed = encoder.encode(hashProtectedData);
-
-    // Digest the compressed string
-    const compressedHash = sha256(compressed);
-
-    return {
-        compressed,
-        compressedHash,
-    };
+    return encoder.encode(hashProtectedData);
 }
 
 /**

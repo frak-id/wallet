@@ -8,10 +8,9 @@ import {
 import type { PendingInteraction } from "@/types/Interaction";
 import type { SdkSession, Session } from "@/types/Session";
 import {
-    type CompressedData,
-    compressJsonToB64,
+    base64urlDecode,
+    base64urlEncode,
     decompressDataAndCheckHash,
-    decompressJsonFromB64,
     hashAndCompressData,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
@@ -41,10 +40,7 @@ export async function restoreBackupData({
     // Decompress the backup data and
     let data: BackupData | undefined;
     try {
-        const decompressed = decompressJsonFromB64<CompressedData>(backup);
-        if (!decompressed) {
-            throw new Error("Invalid backup data");
-        }
+        const decompressed = base64urlDecode(backup);
         data = decompressDataAndCheckHash<BackupData>(decompressed);
     } catch (e) {
         console.error("Error decompressing backup data", {
@@ -128,7 +124,7 @@ export async function pushBackupData(args?: { productId?: Hex }) {
     // And then push the event
     emitLifecycleEvent({
         iframeLifecycle: "do-backup",
-        data: { backup: compressJsonToB64(compressedBackup) },
+        data: { backup: base64urlEncode(compressedBackup) },
     });
 }
 

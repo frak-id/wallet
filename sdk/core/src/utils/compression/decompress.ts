@@ -1,5 +1,4 @@
 import { CborDecoder } from "@jsonjoy.com/json-pack/lib/cbor";
-import { sha256 } from "viem";
 import { FrakRpcError, RpcErrorCodes } from "../../types";
 import type {
     CompressedData,
@@ -19,7 +18,7 @@ export function decompressDataAndCheckHash<T>(
     compressedData: CompressedData
 ): HashProtectedData<T> {
     // Ensure we got the required params first
-    if (!(compressedData?.compressed && compressedData?.compressedHash)) {
+    if (!compressedData.length) {
         throw new FrakRpcError(
             RpcErrorCodes.corruptedResponse,
             "Missing compressed data"
@@ -27,9 +26,7 @@ export function decompressDataAndCheckHash<T>(
     }
 
     // Decompress and parse the data
-    const parsedData = decompressJson<HashProtectedData<T>>(
-        compressedData.compressed
-    );
+    const parsedData = decompressJson<HashProtectedData<T>>(compressedData);
     if (!parsedData) {
         throw new FrakRpcError(
             RpcErrorCodes.corruptedResponse,
@@ -42,15 +39,6 @@ export function decompressDataAndCheckHash<T>(
         throw new FrakRpcError(
             RpcErrorCodes.corruptedResponse,
             "Missing validation hash"
-        );
-    }
-
-    //  Then check the global compressed hash
-    const expectedCompressedHash = sha256(compressedData.compressed);
-    if (expectedCompressedHash !== compressedData.compressedHash) {
-        throw new FrakRpcError(
-            RpcErrorCodes.corruptedResponse,
-            "Invalid compressed hash"
         );
     }
 

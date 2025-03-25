@@ -9,6 +9,7 @@ export {
     decompressJson,
     decompressJsonFromB64,
 } from "./compression/decompress";
+export { base64urlDecode, base64urlEncode } from "./compression/b64";
 export { FrakContextManager } from "./FrakContext";
 export { Deferred } from "./Deferred";
 export { baseIframeProps } from "./iframeHelper";
