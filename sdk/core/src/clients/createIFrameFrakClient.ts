@@ -81,7 +81,7 @@ export function createIFrameFrakClient({
         const result = new Deferred<TResult>();
 
         // Create the channel
-        const channelId = channelManager.createChannel(async (message) => {
+        const channelId = channelManager.createChannel((message) => {
             // Decompress the message
             const decompressed = decompressDataAndCheckHash<
                 RpcResponse<IFrameRpcSchema>
@@ -134,7 +134,7 @@ export function createIFrameFrakClient({
         }
 
         // Create the channel
-        const channelId = channelManager.createChannel(async (message) => {
+        const channelId = channelManager.createChannel((message) => {
             // Decompress the message
             const decompressed = decompressDataAndCheckHash<
                 RpcResponse<IFrameRpcSchema>

@@ -123,7 +123,7 @@ export function createIFrameMessageHandler({
         }
 
         // If founded, call the resolver
-        await resolver(event.data);
+        resolver(event.data);
     }
 
     // Copy the reference to our message handler

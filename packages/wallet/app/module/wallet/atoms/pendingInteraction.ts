@@ -2,7 +2,7 @@ import type { PendingInteraction } from "@/types/Interaction";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { unique } from "radash";
-import { keccak256, stringToHex } from "viem";
+import { sha256, stringToHex } from "viem";
 
 type PendingInteractionsStorage = {
     interactions: PendingInteraction[];
@@ -50,7 +50,7 @@ const filterDuplicateInteractions = (
     interactions: PendingInteraction[]
 ): PendingInteraction[] =>
     unique(interactions, (interaction) =>
-        keccak256(stringToHex(JSON.stringify(interaction)))
+        sha256(stringToHex(JSON.stringify(interaction)))
     );
 
 /**

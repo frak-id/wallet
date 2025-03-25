@@ -3,7 +3,7 @@ import type { IFrameRpcEvent } from "../../types/transport";
 /**
  * Represent an IFrame channel manager
  */
-type IFrameChannelResolver = (message: IFrameRpcEvent) => Promise<void>;
+type IFrameChannelResolver = (message: IFrameRpcEvent) => void;
 
 /**
  * Represent an IFrame channel id
