@@ -7,14 +7,9 @@ import {
 } from "@/module/wallet/atoms/pendingInteraction";
 import type { PendingInteraction } from "@/types/Interaction";
 import type { SdkSession, Session } from "@/types/Session";
-import {
-    type CompressedData,
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-} from "@frak-labs/core-sdk";
+import { checkHash, hashData } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { atom } from "jotai";
-import { tryit } from "radash";
 import type { Hex } from "viem";
 
 /**
@@ -37,12 +32,8 @@ export async function restoreBackupData({
     backup,
     productId,
 }: { backup: string; productId: Hex }) {
-    const compressedBackup = JSON.parse(backup) as CompressedData;
-
-    // Decompress the backup data and
-    const [, data] = await tryit(() =>
-        decompressDataAndCheckHash<BackupData>(compressedBackup)
-    )();
+    // Check the hash of the backup data
+    const data = checkHash<BackupData>(JSON.parse(backup));
     if (!data) {
         throw new Error("Invalid backup data");
     }
@@ -112,13 +103,13 @@ export async function pushBackupData(args?: { productId?: Hex }) {
         return;
     }
 
-    // Create a compressed backup
-    const compressedBackup = await hashAndCompressData(backup);
+    // Hash the backup data
+    const compressedBackup = hashData(backup);
 
     // And then push the event
     emitLifecycleEvent({
         iframeLifecycle: "do-backup",
-        data: { backup: JSON.stringify(compressedBackup) },
+        data: { backup: compressedBackup as unknown as string },
     });
 }
 

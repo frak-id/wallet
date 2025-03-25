@@ -1,6 +1,7 @@
 import { FrakRpcError } from "../../types";
 import { RpcErrorCodes } from "../../types/rpc/error";
 import type { IFrameEvent } from "../../types/transport";
+import { decodeJson, encodeJson } from "../../utils/encoding";
 import type { DebugInfoGatherer } from "../DebugInfo";
 import type { IFrameChannelManager } from "./iframeChannelManager";
 import type { IframeLifecycleManager } from "./iframeLifecycleManager";
@@ -78,7 +79,7 @@ export function createIFrameMessageHandler({
     const contentWindow = iframe.contentWindow;
 
     // Create the function that will handle incoming iframe messages
-    async function msgHandler(event: MessageEvent<IFrameEvent>) {
+    async function msgHandler(event: MessageEvent<Uint8Array>) {
         if (!event.origin) {
             return;
         }
@@ -95,20 +96,23 @@ export function createIFrameMessageHandler({
             return;
         }
 
-        // Check if the data are an object
-        if (typeof event.data !== "object") {
+        // Check if the message data is an Uint8Array
+        if (!(event.data instanceof Uint8Array)) {
             return;
         }
+
+        // Decode the message
+        const message = decodeJson<IFrameEvent>(event.data);
 
         // Store the debug info
-        debugInfo.setLastResponse(event);
+        debugInfo.setLastResponse(event, message);
 
         // Check if that's a lifecycle event
-        if ("iframeLifecycle" in event.data) {
-            await iframeLifecycleManager.handleEvent(event.data);
+        if ("iframeLifecycle" in message) {
+            await iframeLifecycleManager.handleEvent(message);
             return;
         }
-        if ("clientLifecycle" in event.data) {
+        if ("clientLifecycle" in message) {
             console.error(
                 "Client lifecycle event received on the client side, dismissing it"
             );
@@ -116,14 +120,14 @@ export function createIFrameMessageHandler({
         }
 
         // Otherwise, ensure we got a channel with a resolver
-        const channel = event.data.id;
+        const channel = message.id;
         const resolver = channelManager.getRpcResolver(channel);
         if (!resolver) {
             return;
         }
 
         // If founded, call the resolver
-        await resolver(event.data);
+        await resolver(message);
     }
 
     // Copy the reference to our message handler
@@ -131,7 +135,8 @@ export function createIFrameMessageHandler({
 
     // Build our helpers function
     function sendEvent(message: IFrameEvent) {
-        contentWindow.postMessage(message, {
+        const encoded = encodeJson(message);
+        contentWindow.postMessage(encoded, {
             targetOrigin: frakWalletUrl,
         });
         debugInfo.setLastRequest(message, frakWalletUrl);

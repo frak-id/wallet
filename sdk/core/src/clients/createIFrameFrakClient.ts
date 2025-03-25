@@ -1,4 +1,8 @@
-import { type ExtractedParametersFromRpc, FrakRpcError } from "../types";
+import {
+    type ExtractedParametersFromRpc,
+    FrakRpcError,
+    type HashProtectedData,
+} from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
@@ -9,11 +13,8 @@ import type {
     RpcResponse,
 } from "../types/transport";
 import { Deferred } from "../utils/Deferred";
-import {
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-} from "../utils/compression";
 import { BACKUP_KEY } from "../utils/constants";
+import { checkHash, hashData } from "../utils/hashing";
 import { DebugInfoGatherer } from "./DebugInfo";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
 import {
@@ -82,10 +83,12 @@ export function createIFrameFrakClient({
 
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
-            // Decompress the message
-            const decompressed = await decompressDataAndCheckHash<
-                RpcResponse<IFrameRpcSchema>
-            >(message.data);
+            // Check the hash of the message
+            const decompressed = checkHash<RpcResponse<IFrameRpcSchema>>(
+                message.data as unknown as HashProtectedData<
+                    RpcResponse<IFrameRpcSchema>
+                >
+            );
             // If it contains an error, reject it
             if (decompressed.error) {
                 result.reject(
@@ -103,14 +106,14 @@ export function createIFrameFrakClient({
             channelManager.removeChannel(channelId);
         });
 
-        // Compress the message to send
-        const compressedMessage = await hashAndCompressData(args);
+        // Hash the message to send
+        const data = hashData(args);
 
         // Send the message to the iframe
         messageHandler.sendEvent({
             id: channelId,
             topic: args.method,
-            data: compressedMessage,
+            data,
         });
 
         return result.promise;
@@ -135,10 +138,12 @@ export function createIFrameFrakClient({
 
         // Create the channel
         const channelId = channelManager.createChannel(async (message) => {
-            // Decompress the message
-            const decompressed = await decompressDataAndCheckHash<
-                RpcResponse<IFrameRpcSchema>
-            >(message.data);
+            // Check the hash of the message
+            const decompressed = checkHash<RpcResponse<IFrameRpcSchema>>(
+                message.data as unknown as HashProtectedData<
+                    RpcResponse<IFrameRpcSchema>
+                >
+            );
             // Transmit the result if it's a success
             if (decompressed.result) {
                 callback(decompressed.result as TResult);
@@ -147,8 +152,8 @@ export function createIFrameFrakClient({
             }
         });
 
-        // Compress the message to send
-        const compressedMessage = await hashAndCompressData(args);
+        // Hash the message to send
+        const compressedMessage = hashData(args);
 
         // Send the message to the iframe
         messageHandler.sendEvent({

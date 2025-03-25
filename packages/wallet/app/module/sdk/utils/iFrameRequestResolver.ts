@@ -1,4 +1,5 @@
 import {
+    getIFrameResolvingContext,
     handleHandshakeResponse,
     iframeResolvingContextAtom,
     startFetchResolvingContextViaHandshake,
@@ -6,14 +7,14 @@ import {
 import { restoreBackupData } from "@/module/sdk/utils/backup";
 import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import {
-    type ClientLifecycleEvent,
     type ExtractedParametersFromRpc,
     type IFrameEvent,
     type IFrameRpcSchema,
     type RpcResponse,
-    decompressDataAndCheckHash,
-    hashAndCompressData,
+    checkHash,
+    hashData,
 } from "@frak-labs/core-sdk";
+import { decodeJson } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { getI18n } from "react-i18next";
 import { keccak256, toHex } from "viem";
@@ -77,29 +78,33 @@ export function createIFrameRequestResolver(
     }
 
     // Listen to the window message
-    const onMessage = async (message: MessageEvent<IFrameEvent>) => {
-        // Check if the message data are object
-        if (typeof message.data !== "object") {
+    const onMessage = async (messageEncoded: MessageEvent<Uint8Array>) => {
+        // Check if the message data is an Uint8Array
+        if (!(messageEncoded.data instanceof Uint8Array)) {
             return;
         }
 
-        // Check if that's a client lifecycle request event
-        if (
-            "clientLifecycle" in message.data ||
-            "iframeLifecycle" in message.data
-        ) {
-            await handleLifecycleEvents(message, setReadyToHandleRequest);
+        // Decode the message
+        const message = decodeJson<IFrameEvent>(messageEncoded.data);
+
+        if ("clientLifecycle" in message || "iframeLifecycle" in message) {
+            // Check if that's a client lifecycle request event
+            await handleLifecycleEvents(
+                message,
+                messageEncoded,
+                setReadyToHandleRequest
+            );
             return;
         }
 
         // Recompute the product id associated with the message
-        const productId = keccak256(toHex(new URL(message.origin).host));
+        const productId = keccak256(toHex(new URL(messageEncoded.origin).host));
 
         // Check if we got a current resolving context
         const currentContext = jotaiStore.get(iframeResolvingContextAtom);
 
-        // Check if the product id matches (and only proceed if we got a safe context)
         if (productId !== currentContext?.productId) {
+            // Check if the product id matches (and only proceed if we got a safe context)
             console.error("Received a message from an unknown origin", {
                 productId,
                 currentContext,
@@ -108,7 +113,7 @@ export function createIFrameRequestResolver(
         }
 
         // Get the data
-        const { id, topic, data } = message.data;
+        const { id, topic, data } = message;
         if (!(id && topic)) {
             return;
         }
@@ -121,24 +126,24 @@ export function createIFrameRequestResolver(
 
         // Build the emitter for this call
         const responseEmitter: IFrameResponseEmitter = async (result) => {
-            // Hash and compress the results
-            const compressedResult = await hashAndCompressData(result);
+            // Hash the results
+            const compressedResult = hashData(result);
 
             // Then post the message and a response
-            message.source?.postMessage(
+            messageEncoded.source?.postMessage(
                 {
                     id,
                     topic,
                     data: compressedResult,
                 },
                 {
-                    targetOrigin: message.origin,
+                    targetOrigin: messageEncoded.origin,
                 }
             );
         };
 
-        // Decompress the data
-        const uncompressedData = await decompressDataAndCheckHash(data);
+        // Check the hash of the data
+        const uncompressedData = checkHash(data);
 
         // Response to the requests
         // @ts-ignore
@@ -195,17 +200,18 @@ export function createIFrameRequestResolver(
  * @param setReadyToHandleRequest
  */
 async function handleLifecycleEvents(
-    message: MessageEvent<IFrameEvent>,
+    message: IFrameEvent,
+    messageEncoded: MessageEvent<Uint8Array>,
     setReadyToHandleRequest: () => void
 ) {
     // Check if that's an iframe lifecycle request event
-    if (!("clientLifecycle" in message.data)) {
+    if (!("clientLifecycle" in message)) {
         // Check if that's a legacy hearbeat event
         // todo: To be delete once the SDK will be updated everywhere
         if (
-            "iframeLifecycle" in message.data &&
+            "iframeLifecycle" in message &&
             // @ts-ignore: Legacy versions of the SDK can send this
-            message.data.iframeLifecycle === "heartbeat"
+            message.iframeLifecycle === "heartbeat"
         ) {
             setReadyToHandleRequest();
             return;
@@ -218,19 +224,18 @@ async function handleLifecycleEvents(
     }
 
     // Extract the client lifecycle events data
-    const clientMsg = message.data;
-    const { clientLifecycle } = clientMsg;
+    const { clientLifecycle } = message;
 
     switch (clientLifecycle) {
         case "modal-css": {
             const style = document.createElement("link");
             style.rel = "stylesheet";
-            style.href = clientMsg.data.cssLink;
+            style.href = message.data.cssLink;
             document.head.appendChild(style);
             return;
         }
         case "modal-i18n": {
-            const override = clientMsg.data.i18n;
+            const override = message.data.i18n;
             if (Object.keys(override).length === 0) {
                 return;
             }
@@ -249,7 +254,7 @@ async function handleLifecycleEvents(
             }
             // Restore the backup
             await restoreBackupData({
-                backup: clientMsg.data.backup,
+                backup: message.data.backup as unknown as string,
                 productId: context.productId,
             });
             return;
@@ -260,11 +265,15 @@ async function handleLifecycleEvents(
             return;
         }
         case "handshake-response": {
-            // Set the handshake response
-            const hasContext = jotaiStore.set(
-                handleHandshakeResponse,
-                message as MessageEvent<ClientLifecycleEvent>
+            const iframeResolvingContext = getIFrameResolvingContext(
+                messageEncoded,
+                message.data.currentUrl
             );
+            // Set the handshake response
+            const hasContext = jotaiStore.set(handleHandshakeResponse, {
+                message,
+                iframeResolvingContext,
+            });
             // Once we got a context, we can tell that we are rdy to handle request
             if (hasContext) {
                 setReadyToHandleRequest();

@@ -9,7 +9,7 @@ import {
     getFromLocalStorage,
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
-import { compressJson } from "@frak-labs/core-sdk";
+import { encodeJson } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
@@ -68,13 +68,15 @@ export function useGetOpenSsoLink() {
                 }
             }
 
-            // Otherwise, just compress the params and send them
-            const compressedString = await compressJson(compressedParam);
+            // Otherwise, just encode the params and send them
+            const compressedString = encodeJson(compressedParam);
 
             // Build the url with the params
             const ssoUrl = new URL(window.location.origin);
             ssoUrl.pathname = "/sso";
-            ssoUrl.searchParams.set("p", compressedString);
+            console.log("SSO URL compressedString", compressedString);
+            // TODO: Uncomment this when we have a way to encode the Uint8Array
+            // ssoUrl.searchParams.set("p", compressedString);
 
             // Return the link
             return { url: ssoUrl.toString() };

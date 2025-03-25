@@ -57,17 +57,24 @@ export const startFetchResolvingContextViaHandshake = atom(null, (get, set) => {
  */
 export const handleHandshakeResponse = atom(
     null,
-    (get, set, event: MessageEvent<ClientLifecycleEvent>) => {
+    (
+        get,
+        set,
+        event: {
+            message: ClientLifecycleEvent;
+            iframeResolvingContext?: IFrameResolvingContext;
+        }
+    ) => {
         if (
-            event.data.clientLifecycle !== "handshake-response" ||
-            !event.data?.data?.token
+            event.message.clientLifecycle !== "handshake-response" ||
+            !event.message?.data?.token
         ) {
             console.warn("Invalid handshake event type");
             return false;
         }
 
         // Extract the response token and ensure it match
-        const responseToken = event.data.data.token;
+        const responseToken = event.message.data.token;
         const tokens = get(handshakeTokensAtom);
         if (!tokens.has(responseToken)) {
             console.warn(`Invalid handshake token ${responseToken}`);
@@ -76,19 +83,13 @@ export const handleHandshakeResponse = atom(
 
         // Set the new resolving context (only if different)
         const currentContext = get(iframeResolvingContextAtom);
-        const context = getIFrameResolvingContext(
-            event as MessageEvent<
-                Extract<
-                    ClientLifecycleEvent,
-                    { clientLifecycle: "handshake-response" }
-                >
-            >
-        );
         if (
-            currentContext?.sourceUrl !== context?.sourceUrl ||
-            currentContext?.isAutoContext !== context?.isAutoContext
+            currentContext?.sourceUrl !==
+                event.iframeResolvingContext?.sourceUrl ||
+            currentContext?.isAutoContext !==
+                event.iframeResolvingContext?.isAutoContext
         ) {
-            set(iframeResolvingContextAtom, context);
+            set(iframeResolvingContextAtom, event.iframeResolvingContext);
         }
 
         // Remove the token
@@ -105,17 +106,15 @@ export const handleHandshakeResponse = atom(
 /**
  * Get the current iFrame resolving context
  */
-function getIFrameResolvingContext(
-    event?: MessageEvent<
-        Extract<ClientLifecycleEvent, { clientLifecycle: "handshake-response" }>
-    >
+export function getIFrameResolvingContext(
+    event?: MessageEvent<Uint8Array>,
+    currentUrl?: string
 ): IFrameResolvingContext | undefined {
     if (typeof document === "undefined") {
         return undefined;
     }
     // Get the referrer of the iframe
-    const sourceUrl =
-        event?.data?.data?.currentUrl ?? event?.origin ?? document?.referrer;
+    const sourceUrl = currentUrl ?? event?.origin ?? document?.referrer;
     if (!sourceUrl) {
         console.warn("No origin to compute resolving context", {
             sourceUrl,

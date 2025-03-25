@@ -57,9 +57,9 @@ export class DebugInfoGatherer {
     }
 
     // Update communication logs
-    public setLastResponse(event: MessageEvent<IFrameEvent>) {
+    public setLastResponse(event: MessageEvent<Uint8Array>, data: IFrameEvent) {
         this.lastResponse = {
-            event: event.data,
+            event: data,
             origin: event.origin,
             timestamp: Date.now(),
         };

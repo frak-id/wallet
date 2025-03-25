@@ -7,10 +7,6 @@ export {
 
 // Utils
 export {
-    hashAndCompressData,
-    decompressDataAndCheckHash,
-    compressJson,
-    decompressJson,
     createIframe,
     FrakContextManager,
     Deferred,
@@ -19,6 +15,10 @@ export {
     getSupportedLocale,
     getCurrencyAmountKey,
     formatAmount,
+    encodeJson,
+    decodeJson,
+    hashData,
+    checkHash,
 } from "./utils";
 
 // Constants

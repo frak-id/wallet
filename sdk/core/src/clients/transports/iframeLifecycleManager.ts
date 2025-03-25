@@ -1,6 +1,7 @@
 import type { IFrameLifecycleEvent } from "../../types";
 import { Deferred } from "../../utils/Deferred";
 import { BACKUP_KEY } from "../../utils/constants";
+import { encodeJson } from "../../utils/encoding";
 import { changeIframeVisibility } from "../../utils/iframeHelper";
 
 /** @ignore */
@@ -29,7 +30,10 @@ export function createIFrameLifecycleManager({
             // Perform a frak backup
             case "do-backup":
                 if (messageEvent.data.backup) {
-                    localStorage.setItem(BACKUP_KEY, messageEvent.data.backup);
+                    localStorage.setItem(
+                        BACKUP_KEY,
+                        JSON.stringify(messageEvent.data.backup)
+                    );
                 } else {
                     localStorage.removeItem(BACKUP_KEY);
                 }
@@ -49,13 +53,13 @@ export function createIFrameLifecycleManager({
             // Handshake handling
             case "handshake": {
                 iframe.contentWindow?.postMessage(
-                    {
+                    encodeJson({
                         clientLifecycle: "handshake-response",
                         data: {
                             token: messageEvent.data.token,
                             currentUrl: window.location.href,
                         },
-                    },
+                    }),
                     "*"
                 );
                 break;

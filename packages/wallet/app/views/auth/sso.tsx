@@ -8,15 +8,10 @@ import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogi
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import styles from "@/module/authentication/component/Sso/index.module.css";
 import { ssoKey } from "@/module/authentication/queryKeys/sso";
-import {
-    type CompressedSsoData,
-    compressedSsoToParams,
-} from "@/module/authentication/utils/ssoDataCompression";
 import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import type { Session } from "@/types/Session";
-import { decompressJson } from "@frak-labs/core-sdk";
 import { Fingerprint } from "@shared/module/asset/icons/Fingerprint";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
@@ -37,7 +32,7 @@ import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
 
 export default function Sso() {
-    const { i18n, t } = useTranslation();
+    const { /* i18n, */ t } = useTranslation();
 
     /**
      * The current metadata
@@ -66,29 +61,30 @@ export default function Sso() {
             if (!compressedString) {
                 return null;
             }
-            const compressedParam =
-                await decompressJson<CompressedSsoData>(compressedString);
-            if (!compressedParam) {
-                return null;
-            }
-            const { productId, redirectUrl, directExit, lang, metadata } =
-                compressedSsoToParams(compressedParam);
+            return compressedString;
+            // TODO: Uncomment this when we have a way to encode the Uint8Array
+            // const compressedParam = decodeJson<CompressedSsoData>(compressedString);
+            // if (!compressedParam) {
+            //     return null;
+            // }
+            // const { productId, redirectUrl, directExit, lang, metadata } =
+            //     compressedSsoToParams(compressedParam);
 
-            // Save the current sso context
-            jotaiStore.set(ssoContextAtom, {
-                id: compressedParam.id ?? undefined,
-                productId: productId ?? undefined,
-                redirectUrl: redirectUrl ?? undefined,
-                directExit: directExit ?? undefined,
-                metadata: metadata ?? undefined,
-            });
+            // // Save the current sso context
+            // jotaiStore.set(ssoContextAtom, {
+            //     id: compressedParam.id ?? undefined,
+            //     productId: productId ?? undefined,
+            //     redirectUrl: redirectUrl ?? undefined,
+            //     directExit: directExit ?? undefined,
+            //     metadata: metadata ?? undefined,
+            // });
 
-            // If we got a language, change the i18n language
-            if (lang && i18n.language !== lang) {
-                await i18n.changeLanguage(lang);
-            }
-            // Return no data
-            return null;
+            // // If we got a language, change the i18n language
+            // if (lang && i18n.language !== lang) {
+            //     await i18n.changeLanguage(lang);
+            // }
+            // // Return no data
+            // return null;
         },
         refetchOnMount: true,
         refetchOnWindowFocus: true,

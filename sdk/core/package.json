@@ -85,7 +85,7 @@
     "viem": "^2.x"
   },
   "dependencies": {
-    "async-lz-string": "^1.1.0",
+    "@jsonjoy.com/json-pack": "^1.2.0",
     "js-sha256": "^0.11.0"
   },
   "devDependencies": {
