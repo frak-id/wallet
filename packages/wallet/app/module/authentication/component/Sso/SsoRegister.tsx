@@ -59,8 +59,9 @@ export function SsoRegisterComponent({
                     icon={<Fingerprint color={"#fff"} sizes={39} />}
                     isShiny={false}
                     action={() => {
-                        register();
-                        trackEvent("cta-sso-register");
+                        register().then(() => {
+                            trackEvent("cta-sso-register");
+                        });
                     }}
                     disabled={
                         isRegisterInProgress ||
@@ -84,8 +85,9 @@ export function SsoRegisterComponent({
                     isRegisterInProgress || isPreviouslyUsedAuthenticatorError
                 }
                 onClick={() => {
-                    register();
-                    trackEvent("cta-sso-register");
+                    register().then(() => {
+                        trackEvent("cta-sso-register");
+                    });
                 }}
                 type={"button"}
             >
