@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 0.0.14
+
+### Patch Changes
+
+- [`cc0e807`](https://github.com/frak-id/wallet/commit/cc0e807add74165ac56ebd3289c1d5e90bd367b9) Thanks [@srod](https://github.com/srod)! - ✨ Add BUILD_TIMESTAMP to components for dynamic CDN loading
+
+- Updated dependencies [[`cc0e807`](https://github.com/frak-id/wallet/commit/cc0e807add74165ac56ebd3289c1d5e90bd367b9)]:
+  - @frak-labs/core-sdk@0.0.11
+
 ## 0.0.13
 
 ### Patch Changes
