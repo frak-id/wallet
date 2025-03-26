@@ -17,7 +17,7 @@ Render a learn more link.
 
 <div class="learn-more">
   <a
-    href="https://docs.frak.id"
+    href="https://docs.frak.id/components"
     target="_blank"
     rel="noreferrer"
     class="learn-more-link"

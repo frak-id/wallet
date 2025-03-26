@@ -28,14 +28,14 @@ Render a list of components.
   const embedOptions: Option[] = [
     {
       title: "Share Button",
-      description: "Add a share button to your site",
+      description: "Add a share button in your page",
       action: "Open share modal",
       image: ButtonShare,
       showWallet: false,
     },
     {
       title: "Wallet Button",
-      description: "Add a wallet button to your site",
+      description: "Add a floating wallet button (bottom right)",
       action: "Open wallet modal",
       image: ButtonWallet,
       showWallet: true,

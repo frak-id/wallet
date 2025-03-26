@@ -48,4 +48,8 @@
     background-color: #ffffff;
     color: #333;
   }
+
+  .main {
+    padding: 10px;
+  }
 </style>

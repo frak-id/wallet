@@ -59,12 +59,11 @@ Render a card with a title, description, and action button.
 
 <style>
   .card {
-    flex: 1;
-    min-width: 250px;
-    max-width: 300px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    width: 100%;
+    max-width: 300px;
   }
 
   h3 {

@@ -66,9 +66,5 @@ Render a browser window with a control bar and a content area.
   .browser__content {
     padding: 20px 0px;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 150px;
-    background-color: #fff;
   }
 </style>
