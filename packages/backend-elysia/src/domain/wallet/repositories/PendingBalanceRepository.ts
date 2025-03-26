@@ -1,13 +1,10 @@
 import { log } from "@backend-common";
-import type { PricingRepository } from "@backend-common/repositories";
 import type { TokenAmount } from "@backend-utils";
-import {
-    type GetInteractionsResponseDto,
-    type GetRewardHistoryResponseDto,
-    usdcArbitrumAddress,
+import type {
+    GetInteractionsResponseDto,
+    GetRewardHistoryResponseDto,
 } from "@frak-labs/app-essentials";
 import type { KyInstance } from "ky";
-import { LRUCache } from "lru-cache";
 import type { Address, Chain, Client, Transport } from "viem";
 import { getCode } from "viem/actions";
 
@@ -17,17 +14,9 @@ import { getCode } from "viem/actions";
  * based on user actions, with caching to prevent excessive RPC calls
  */
 export class PendingBalanceRepository {
-    // Cache for pending balances to reduce RPC calls
-    private readonly pendingBalanceCache = new LRUCache<Address, number>({
-        max: 1000,
-        // Keep in cache for 5 minutes
-        ttl: 300_000,
-    });
-
     constructor(
         private readonly client: Client<Transport, Chain>,
-        private readonly indexerApi: KyInstance,
-        private readonly pricingRepository: PricingRepository
+        private readonly indexerApi: KyInstance
     ) {}
 
     async getPendingBalance({
@@ -35,15 +24,11 @@ export class PendingBalanceRepository {
     }: { address: Address }): Promise<TokenAmount> {
         const pendingBalance = await this._getPendingBalance({ address });
 
-        const price = await this.pricingRepository.getTokenPrice({
-            token: usdcArbitrumAddress,
-        });
-
         return {
             amount: pendingBalance,
-            eurAmount: price ? pendingBalance * price.eur : 0,
-            usdAmount: price ? pendingBalance * price.usd : 0,
-            gbpAmount: price ? pendingBalance * price.gbp : 0,
+            eurAmount: pendingBalance,
+            usdAmount: pendingBalance,
+            gbpAmount: pendingBalance,
         };
     }
 
@@ -59,12 +44,6 @@ export class PendingBalanceRepository {
     private async _getPendingBalance({
         address,
     }: { address: Address }): Promise<number> {
-        // Check cache first
-        const cachedBalance = this.pendingBalanceCache.get(address);
-        if (cachedBalance !== undefined) {
-            return cachedBalance;
-        }
-
         try {
             // Check if the user has earned a reward
             const hasEarnedReward = await this.hasEarnedReward(address);
@@ -90,7 +69,6 @@ export class PendingBalanceRepository {
             }
 
             // Cache the result
-            this.pendingBalanceCache.set(address, pendingBalance);
             return pendingBalance;
         } catch (error) {
             log.error("Error getting pending balance", { error, address });

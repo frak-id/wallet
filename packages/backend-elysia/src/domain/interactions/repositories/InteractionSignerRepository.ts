@@ -78,10 +78,14 @@ export class InteractionSignerRepository {
             signerAccount,
         });
         if (!isAllowed) {
-            log.warn("Signer not allowed on product", {
-                productId,
-                signer: signerAccount.address,
-            });
+            log.warn(
+                {
+                    productId,
+                    interactionContract,
+                    signer: signerAccount.address,
+                },
+                "Signer not allowed on product"
+            );
             return undefined;
         }
 

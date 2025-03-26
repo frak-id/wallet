@@ -19,6 +19,9 @@ export function useGetUserPendingBalance() {
             return data;
         },
         enabled: !!address,
+        refetchOnMount: true,
+        refetchOnWindowFocus: true,
+        refetchOnReconnect: true,
     });
 
     return {

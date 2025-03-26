@@ -42,7 +42,8 @@ export function LoggedInComponent() {
         currentRequest: { configMetadata },
     } = useEmbededListenerUI();
     const { userBalance } = useGetUserBalance();
-    const { userPendingBalance } = useGetUserPendingBalance();
+    const { userPendingBalance, refetch: refetchPendingBalance } =
+        useGetUserPendingBalance();
     const currencyAmountKey = getCurrencyAmountKey(configMetadata?.currency);
     const isPending = !!(
         userPendingBalance?.[currencyAmountKey] &&
@@ -59,7 +60,7 @@ export function LoggedInComponent() {
                 isPending={isPending}
                 currency={configMetadata?.currency ?? "eur"}
             />
-            <ActionButtons />
+            <ActionButtons refetchPendingBalance={refetchPendingBalance} />
         </>
     );
 }
@@ -89,7 +90,9 @@ function Balance({
     );
 }
 
-function ActionButtons() {
+function ActionButtons({
+    refetchPendingBalance,
+}: { refetchPendingBalance: () => void }) {
     const { address } = useAccount();
     const {
         currentRequest: {
@@ -109,19 +112,21 @@ function ActionButtons() {
 
     return (
         <div className={styles.modalListenerWallet__actionButtons}>
-            <ButtonOpenSession />
+            <ButtonOpenSession refetchPendingBalance={refetchPendingBalance} />
             <ButtonCopyLink finalSharingLink={finalSharingLink} />
             <ButtonSharingLink finalSharingLink={finalSharingLink} />
         </div>
     );
 }
 
-function ButtonOpenSession() {
+function ButtonOpenSession({
+    refetchPendingBalance,
+}: { refetchPendingBalance: () => void }) {
     const { data: currentSession } = useInteractionSessionStatus();
     const { t } = useListenerTranslation();
-    const { mutate: openSession, isPending: isOpeningSession } =
+    const { mutateAsync: openSession, isPending: isOpeningSession } =
         useOpenSession();
-    const { mutate: closeSession, isPending: isClosingSession } =
+    const { mutateAsync: closeSession, isPending: isClosingSession } =
         useCloseSession();
 
     return (
@@ -131,13 +136,17 @@ function ButtonOpenSession() {
                 icon={<Power />}
                 onClick={() => {
                     if (currentSession) {
-                        closeSession();
-                        trackEvent("cta-close-session");
+                        closeSession().then(() => {
+                            refetchPendingBalance();
+                            trackEvent("cta-close-session");
+                        });
                         return;
                     }
 
-                    openSession();
-                    trackEvent("cta-open-session");
+                    openSession().then(() => {
+                        refetchPendingBalance();
+                        trackEvent("cta-open-session");
+                    });
                 }}
                 isLoading={isOpeningSession || isClosingSession}
                 disabled={isOpeningSession || isClosingSession}
@@ -156,8 +165,10 @@ function ButtonOpenSession() {
 
 function ButtonCopyLink({
     finalSharingLink,
+    refetchPendingBalance,
 }: {
     finalSharingLink: string | null;
+    refetchPendingBalance: () => void;
 }) {
     const { data: currentSession } = useInteractionSessionStatus();
     const { copied, copy } = useCopyToClipboardWithState();
@@ -177,6 +188,7 @@ function ButtonCopyLink({
                 if (!finalSharingLink) return;
                 copy(finalSharingLink);
                 trackEvent("sharing-copy-link", { link: finalSharingLink });
+                refetchPendingBalance();
             }}
         >
             {t(copied ? "sharing.btn.copySuccess" : "sharing.btn.copy")}
@@ -186,8 +198,10 @@ function ButtonCopyLink({
 
 function ButtonSharingLink({
     finalSharingLink,
+    refetchPendingBalance,
 }: {
     finalSharingLink: string | null;
+    refetchPendingBalance: () => void;
 }) {
     const { data: currentSession } = useInteractionSessionStatus();
     const { t } = useListenerTranslation();
@@ -221,6 +235,7 @@ function ButtonSharingLink({
                 const [err] = await tryit(() => navigator.share(shareData))();
                 // If no error, return the shared state
                 if (!err) return t("sharing.btn.shareSuccess");
+                refetchPendingBalance();
             }
         },
     });
