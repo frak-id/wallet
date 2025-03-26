@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.32
+
+### Patch Changes
+
+- [#57](https://github.com/frak-id/wallet/pull/57) [`720bd2a`](https://github.com/frak-id/wallet/commit/720bd2a54dc144ff0deac26241d86b3082fd2c33) Thanks [@KONFeature](https://github.com/KONFeature)! - Update gapianne overide with the new wallet ui
+
 ## 0.0.31
 
 ### Patch Changes
