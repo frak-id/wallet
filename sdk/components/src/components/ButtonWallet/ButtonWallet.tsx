@@ -70,6 +70,7 @@ export function ButtonWallet({
     return (
         <button
             type={"button"}
+            aria-label="Open wallet"
             class={cx(
                 styles.button,
                 position === "left"

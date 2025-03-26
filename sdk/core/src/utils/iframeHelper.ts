@@ -7,6 +7,7 @@ import type { FrakWalletSdkConfig } from "../types";
 export const baseIframeProps = {
     id: "frak-wallet",
     name: "frak-wallet",
+    title: "Frak Wallet",
     allow: "publickey-credentials-get *; clipboard-write; web-share *",
     style: {
         width: "0",
