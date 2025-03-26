@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.33
+
+### Patch Changes
+
+- [`15d968a`](https://github.com/frak-id/wallet/commit/15d968aff59be75e231af77a73119c152e61f4df) Thanks [@KONFeature](https://github.com/KONFeature)! - Add floating btn on gapianne
+
 ## 0.0.32
 
 ### Patch Changes
