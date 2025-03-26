@@ -11,8 +11,12 @@ Render a header with a title.
 ```
 -->
 
+<script lang="ts">
+  import { _ } from "svelte-i18n";
+</script>
+
 <header>
-  <h1>Learn how to use Frak Components</h1>
+  <h1>{$_("common.h1")}</h1>
 </header>
 
 <style>

@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@lucide/svelte": "^0.484.0",
-    "normalize.css": "^8.0.1"
+    "normalize.css": "^8.0.1",
+    "svelte-i18n": "^4.0.1"
   }
 }

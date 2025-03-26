@@ -16,6 +16,7 @@ Render a list of components.
   import Card from "$lib/components/Card.svelte";
   import ButtonWallet from "$lib/components/ButtonWallet.svelte";
   import ButtonShare from "$lib/components/ButtonShare.svelte";
+  import { _ } from "svelte-i18n";
 
   type Option = {
     title: string;
@@ -27,16 +28,16 @@ Render a list of components.
 
   const embedOptions: Option[] = [
     {
-      title: "Share Button",
-      description: "Add a share button in your page",
-      action: "Open share modal",
+      title: $_("components.shareButton.title"),
+      description: $_("components.shareButton.description"),
+      action: $_("components.shareButton.action"),
       image: ButtonShare,
       showWallet: false,
     },
     {
-      title: "Wallet Button",
-      description: "Add a floating wallet button (bottom right)",
-      action: "Open wallet modal",
+      title: $_("components.walletButton.title"),
+      description: $_("components.walletButton.description"),
+      action: $_("components.walletButton.action"),
       image: ButtonWallet,
       showWallet: true,
     },
@@ -44,8 +45,8 @@ Render a list of components.
 </script>
 
 <div class="header">
-  <div class="embed-options-label">EMBED OPTIONS</div>
-  <h2>Frak offers components to embed on your site</h2>
+  <div class="embed-options-label">{$_("common.embedOptions")}</div>
+  <h2>{$_("common.h2")}</h2>
 </div>
 
 <div class="list-components">

@@ -1,0 +1,20 @@
+{
+    "common": {
+        "h1": "Learn how to use Frak Components",
+        "learnMore": "Learn more about Frak Components",
+        "embedOptions": "Embed options",
+        "h2": "Frak offers components to embed on your site"
+    },
+    "components": {
+        "shareButton": {
+            "title": "Share Button",
+            "description": "Add a share button in your page",
+            "action": "Open share modal"
+        },
+        "walletButton": {
+            "title": "Wallet Button",
+            "description": "Add a floating wallet button",
+            "action": "Open wallet modal"
+        }
+    }
+}

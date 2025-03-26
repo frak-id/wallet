@@ -13,6 +13,7 @@ Render a learn more link.
 
 <script lang="ts">
   import { ArrowRight } from "@lucide/svelte";
+  import { _ } from "svelte-i18n";
 </script>
 
 <div class="learn-more">
@@ -22,7 +23,7 @@ Render a learn more link.
     rel="noreferrer"
     class="learn-more-link"
   >
-    Learn more about Frak Components
+    {$_("common.learnMore")}
     <ArrowRight size={16} />
   </a>
 </div>
