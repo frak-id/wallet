@@ -11,6 +11,7 @@
         "@frak-labs-example/news-interactions",
         "@frak-labs-example/wallet-ethcc",
         "@frak-labs-example/vanilla-js",
+        "@frak-labs-example/components",
 
         "@frak-labs/shared",
         "@frak-labs/backend-elysia",
