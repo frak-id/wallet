@@ -86,7 +86,16 @@ export function useEditCampaign() {
                     header: {
                         title: "Edit campaign",
                     },
-                    context: "Edit budget and date of the campaign",
+                    i18n: {
+                        fr: {
+                            "sdk.modal.sendTransaction.description":
+                                "Modifier le budget et la date de la campagne",
+                        },
+                        en: {
+                            "sdk.modal.sendTransaction.description":
+                                "Edit budget and date of the campaign",
+                        },
+                    },
                 },
             });
 

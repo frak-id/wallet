@@ -24,10 +24,17 @@ export function PurchaseTrackerWebhook({ productId }: { productId: Hex }) {
         productId,
     });
 
+    const initialState = useMemo(() => {
+        if (oracleSetupData?.webhookStatus?.setup) {
+            return oracleSetupData?.webhookStatus?.platform;
+        }
+
+        return "shopify";
+    }, [oracleSetupData]);
+
     // Current platform and webhook url to setup
-    const [currentPlatform, setCurrentPlatform] = useState<OraclePlatform>(
-        oracleSetupData?.webhookStatus?.platform ?? "shopify"
-    );
+    const [currentPlatform, setCurrentPlatform] =
+        useState<OraclePlatform>(initialState);
     const webhookUrl = useMemo(() => {
         return `${process.env.BACKEND_URL}/oracle/${currentPlatform}/${productId}/hook`;
     }, [productId, currentPlatform]);

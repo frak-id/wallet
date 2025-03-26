@@ -31,7 +31,16 @@ export function useUpdateCampaignRunningStatus() {
                     header: {
                         title: "Update campaign",
                     },
-                    context: "Update the running status of the campaign",
+                    i18n: {
+                        fr: {
+                            "sdk.modal.sendTransaction.description":
+                                "Mettre à jour le statut d'exécution de la campagne",
+                        },
+                        en: {
+                            "sdk.modal.sendTransaction.description":
+                                "Update the running status of the campaign",
+                        },
+                    },
                 },
             });
 

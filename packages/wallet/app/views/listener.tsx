@@ -90,21 +90,26 @@ function ListenerContent() {
              * When the display of the embeded wallet is requested
              */
             frak_displayEmbededWallet: async (request) => {
+                const configMetadata = request.params[1];
                 setRequest({
+                    // Embedded ui specific
                     type: "embeded",
-                    params: {
-                        ...request.params[0],
-                        metadata: {
-                            ...request.params[1],
-                            ...request.params[0].metadata,
-                        },
-                    },
-                    appName: request.params[1].name,
+                    params: request.params[0],
+                    // Generic ui
+                    appName: configMetadata.name,
+                    logoUrl:
+                        request.params[0].metadata?.logo ??
+                        configMetadata.logoUrl,
+                    homepageLink:
+                        request.params[0].metadata?.homepageLink ??
+                        configMetadata.homepageLink,
                     targetInteraction:
                         request.params[0].metadata?.targetInteraction,
                     i18n: {
-                        lang: request.params[1].lang,
+                        lang: configMetadata.lang,
+                        context: request.params[0].loggedIn?.action?.key,
                     },
+                    configMetadata,
                 });
                 trackEvent("display-embedded-wallet", request.params[0]);
             },

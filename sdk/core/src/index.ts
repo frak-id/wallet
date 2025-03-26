@@ -11,6 +11,8 @@ export {
     decompressDataAndCheckHash,
     compressJson,
     decompressJson,
+    compressJsonToB64,
+    decompressJsonFromB64,
     createIframe,
     FrakContextManager,
     Deferred,
@@ -19,6 +21,8 @@ export {
     getSupportedLocale,
     getCurrencyAmountKey,
     formatAmount,
+    base64urlDecode,
+    base64urlEncode,
 } from "./utils";
 
 // Constants
@@ -45,6 +49,9 @@ export type {
     SsoMetadata,
     OpenSsoParamsType,
     Currency,
+    Language,
+    I18nConfig,
+    LocalizedI18nConfig,
     TokenAmountType,
     GetProductInformationReturnType,
     // RPC Embeded wallet

@@ -35,8 +35,9 @@ export function SsoLoginComponent({
                     icon={<Fingerprint color={"#fff"} sizes={39} />}
                     isShiny={false}
                     action={() => {
-                        login({ lastAuthentication });
-                        trackEvent("cta-sso-login");
+                        login({ lastAuthentication }).then(() => {
+                            trackEvent("cta-sso-login");
+                        });
                     }}
                     disabled={isLoading}
                     className={styles.sso__buttonPrimary}
@@ -54,8 +55,9 @@ export function SsoLoginComponent({
                 className={styles.sso__buttonLink}
                 disabled={isLoading}
                 onClick={() => {
-                    login({ lastAuthentication });
-                    trackEvent("cta-sso-login");
+                    login({ lastAuthentication }).then(() => {
+                        trackEvent("cta-sso-login");
+                    });
                 }}
                 type={"button"}
             >

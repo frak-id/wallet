@@ -38,7 +38,14 @@ export function useSetBankDistributionStatus({
                     header: {
                         title: "Toggle distribution state",
                     },
-                    context: `Toggle distribution state of bank ${bank}`,
+                    i18n: {
+                        fr: {
+                            "sdk.modal.sendTransaction.description": `Basculer le statut de distribution de la banque ${bank}`,
+                        },
+                        en: {
+                            "sdk.modal.sendTransaction.description": `Toggle distribution state of bank ${bank}`,
+                        },
+                    },
                 },
             });
 

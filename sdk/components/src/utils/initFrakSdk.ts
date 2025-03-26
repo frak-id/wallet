@@ -1,4 +1,5 @@
 import { setupClient } from "@frak-labs/core-sdk";
+import { openWalletModal } from "../components/ButtonWallet/utils";
 import { dispatchClientReadyEvent } from "./clientReady";
 import { setupModalConfig, setupReferral } from "./setup";
 
@@ -51,6 +52,9 @@ export async function initFrakSdk(): Promise<void> {
 
     // Reset the setup flag
     window.frakSetupInProgress = false;
+
+    // Handle the action query param
+    handleActionQueryParam();
 }
 
 /**
@@ -78,4 +82,20 @@ function preChecks(): boolean {
     }
 
     return true;
+}
+
+/**
+ * Check the query param contain params for an auto opening of the frak modal
+ */
+function handleActionQueryParam() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const frakAction = urlParams.get("frakAction");
+    if (!frakAction) {
+        return;
+    }
+
+    if (frakAction === "share") {
+        console.log("[Frak SDK] Auto open query param found");
+        openWalletModal();
+    }
 }

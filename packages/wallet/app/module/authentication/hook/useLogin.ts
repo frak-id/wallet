@@ -1,4 +1,8 @@
-import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
+import {
+    type LastAuthentication,
+    addLastAuthenticationAtom,
+} from "@/module/authentication/atoms/lastAuthenticator";
+import { authKey } from "@/module/authentication/queryKeys/auth";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
@@ -32,7 +36,7 @@ export function useLogin(
         mutateAsync: login,
     } = useMutation({
         ...options,
-        mutationKey: ["login"],
+        mutationKey: authKey.login,
         mutationFn: async (args?: {
             lastAuthentication?: PreviousAuthenticatorModel;
         }) => {
@@ -86,7 +90,10 @@ export function useLogin(
             const session = { ...authentication, token };
 
             // Save this to the last authenticator
-            await jotaiStore.set(addLastAuthenticationAtom, authentication);
+            await jotaiStore.set(
+                addLastAuthenticationAtom,
+                authentication as LastAuthentication
+            );
 
             // Store the session
             jotaiStore.set(sessionAtom, session);

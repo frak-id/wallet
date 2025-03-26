@@ -23,7 +23,7 @@ export const webhookPushRoutes = new Elysia()
         params: t.Object({
             productId: t.Optional(t.Hex()),
         }),
-        header: t.Partial(
+        headers: t.Partial(
             t.Object({
                 "x-hmac-sha256": t.String(),
             })

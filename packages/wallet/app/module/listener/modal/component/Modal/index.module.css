@@ -118,11 +118,6 @@
     color: #818c9c;
 }
 
-.modalListener__context {
-    margin-bottom: 12px;
-    font-size: 12px;
-}
-
 .modalListener__buttonsWrapper {
     display: flex;
     flex-direction: column;

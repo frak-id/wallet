@@ -73,9 +73,20 @@ export function useRemoveProductMember() {
                             ? "Renouncing"
                             : "Updating member",
                     },
-                    context: args.isRenouncing
-                        ? "Renouncing to a permissions on the product"
-                        : `Revoking permissions to ${args.wallet} on the product`,
+                    i18n: {
+                        fr: {
+                            "sdk.modal.sendTransaction.description":
+                                args.isRenouncing
+                                    ? "Renoncer à des permissions sur le produit"
+                                    : `Revoker les permissions à ${args.wallet} sur le produit`,
+                        },
+                        en: {
+                            "sdk.modal.sendTransaction.description":
+                                args.isRenouncing
+                                    ? "Renouncing to permissions on the product"
+                                    : `Revoking permissions to ${args.wallet} on the product`,
+                        },
+                    },
                 },
             });
 

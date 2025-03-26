@@ -39,7 +39,7 @@ export function useReferralInteraction({
     modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
     options?: ProcessReferralOptions;
 } = {}) {
-    // Get the nexus client
+    // Get the frak client
     const client = useFrakClient();
 
     // Get the current frak context

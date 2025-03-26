@@ -2,10 +2,12 @@ import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingCon
 import { useEstimatedInteractionReward } from "@/module/listener/hooks/useEstimatedInteractionReward";
 import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import type {
+    Currency,
     DisplayEmbededWalletParamsType,
     FrakWalletSdkConfig,
     FullInteractionTypesKey,
     IFrameRpcSchema,
+    Language,
     ModalRpcMetadata,
     ModalRpcStepsInput,
     RpcResponse,
@@ -26,14 +28,19 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { mapI18nConfig } from "../../sdk/utils/i18nMapper";
+import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
-type GenericWalletUiType = {
+export type GenericWalletUiType = {
     appName: string;
+    logoUrl?: string;
+    homepageLink?: string;
     targetInteraction?: FullInteractionTypesKey;
     i18n?: {
         lang?: "en" | "fr";
         context?: string;
     };
+    configMetadata: FrakWalletSdkConfig["metadata"];
 };
 
 /**
@@ -42,9 +49,7 @@ type GenericWalletUiType = {
  */
 type EmbededWalletUiType = {
     type: "embeded";
-    params: {
-        metadata: FrakWalletSdkConfig["metadata"];
-    } & DisplayEmbededWalletParamsType;
+    params: DisplayEmbededWalletParamsType;
 };
 
 /**
@@ -53,14 +58,15 @@ type EmbededWalletUiType = {
  */
 export type ModalUiType = {
     type: "modal";
-    metadata: FrakWalletSdkConfig["metadata"] & ModalRpcMetadata;
+    metadata: ModalRpcMetadata;
     steps: ModalRpcStepsInput;
     emitter: (
         response: RpcResponse<IFrameRpcSchema, "frak_displayModal">
     ) => Promise<void>;
 };
 
-type UIRequest = (EmbededWalletUiType | ModalUiType) & GenericWalletUiType;
+export type UIRequest = (EmbededWalletUiType | ModalUiType) &
+    GenericWalletUiType;
 
 type UIContext = {
     currentRequest: UIRequest | undefined;
@@ -69,11 +75,6 @@ type UIContext = {
     translation: {
         lang?: "en" | "fr";
         t: (key: string, options?: TOptions) => string;
-        fallbackT: (
-            provided: string | undefined,
-            fallbackKey: string,
-            options?: TOptions
-        ) => string;
         i18n: i18n;
     };
 };
@@ -116,6 +117,72 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     }, []);
 
     /**
+     * Get the right reward estimation for the current target interaction + currency
+     */
+    const getReward = useCallback(
+        (currency?: Currency, targetInteraction?: FullInteractionTypesKey) => {
+            // Get the supported currency (e.g. "eur")
+            const supportedCurrency = getSupportedCurrency(currency);
+
+            // Get the currency amount key (e.g. "eurAmount")
+            const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
+
+            // Find the right estimated reward depending on the context
+            let estimatedReward = Math.ceil(
+                rewardData?.maxReferrer?.[currencyAmountKey] ?? 0
+            );
+            if (rewardData && targetInteraction) {
+                // Find the max reward for the target interaction
+                const targetReward = rewardData.rewards
+                    .filter(
+                        (reward) =>
+                            reward.interactionTypeKey === targetInteraction
+                    )
+                    .map((reward) => reward.referrer.eurAmount)
+                    .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
+                // If found a reward, set it as the estimated reward
+                if (targetReward > 0) {
+                    estimatedReward = Math.ceil(targetReward);
+                }
+            }
+
+            // Format the reward
+            return formatAmount(estimatedReward, supportedCurrency);
+        },
+        [rewardData]
+    );
+
+    /**
+     * Populate the i18n resources for the current request
+     */
+    const populateI18nResources = useCallback(
+        (i18n: i18n, lang: Language, request?: UIRequest) => {
+            if (!request) return;
+
+            // Map the deprecated modal metadata
+            const deprecatedModalMetadata = mapDeprecatedModalMetadata(request);
+            i18n.addResourceBundle(
+                lang,
+                "customized",
+                deprecatedModalMetadata,
+                true,
+                false
+            );
+
+            // Map potential custom i18n config
+            if (request?.type === "embeded" && request.params.metadata?.i18n) {
+                mapI18nConfig(request.params.metadata.i18n, i18n);
+                return;
+            }
+            if (request?.type === "modal" && request.metadata.i18n) {
+                mapI18nConfig(request.metadata.i18n, i18n);
+                return;
+            }
+        },
+        []
+    );
+
+    /**
      * Build the new translation context for the listener UI
      *  - Set the language to the request language
      *  - Compute the right reward estimation depending on the request context
@@ -124,7 +191,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     const translation = useMemo(() => {
         // Get the language from the request or the detected language from the i18n instance
         const lang =
-            currentRequest?.i18n?.lang ?? (initialI18n.language as "en" | "fr");
+            currentRequest?.i18n?.lang ?? (initialI18n.language as Language);
         const context = currentRequest
             ? {
                   productName: currentRequest.appName,
@@ -133,40 +200,10 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
               }
             : {};
 
-        // Get the supported currency (e.g. "eur")
-        const supportedCurrency = getSupportedCurrency(
-            currentRequest?.type === "embeded"
-                ? currentRequest.params.metadata?.currency
-                : currentRequest?.metadata?.currency
-        );
-
-        // Get the currency amount key (e.g. "eurAmount")
-        const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
-
-        // Find the right estimated reward depending on the context
-        let estimatedReward = Math.ceil(
-            rewardData?.maxReferrer?.[currencyAmountKey] ?? 0
-        );
-        if (rewardData && currentRequest?.targetInteraction) {
-            // Find the max reward for the target interaction
-            const targetReward = rewardData.rewards
-                .filter(
-                    (reward) =>
-                        reward.interactionTypeKey ===
-                        currentRequest.targetInteraction
-                )
-                .map((reward) => reward.referrer.eurAmount)
-                .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
-            // If found a reward, set it as the estimated reward
-            if (targetReward > 0) {
-                estimatedReward = Math.ceil(targetReward);
-            }
-        }
-
         // Format the reward
-        const formattedReward = formatAmount(
-            estimatedReward,
-            supportedCurrency
+        const formattedReward = getReward(
+            currentRequest?.configMetadata?.currency,
+            currentRequest?.targetInteraction
         );
 
         // Create the new i18n instance with the right context
@@ -178,7 +215,16 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                     estimatedReward: formattedReward,
                 },
             },
+            // Load both the default and the potentially customized i18n
+            ns: ["translation", "customized"],
+            // Default ns is the user provided ns
+            defaultNS: "customized",
+            // Use the translation fallback if not found in the custom ns
+            fallbackNS: "translation",
         });
+
+        // Populate the i18n resources
+        populateI18nResources(i18n, lang, currentRequest);
 
         // Create the new t function with the right context
         const rawT = i18n.getFixedT(lang, null) as typeof i18n.t;
@@ -188,25 +234,14 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 ...options,
                 estimatedReward: formattedReward,
             });
-
-        // Create a fallback translation string
-        const fallbackT = (
-            provided: string | undefined,
-            fallbackKey: string,
-            options?: TOptions
-        ): string => {
-            // If we got a provided string, use it
-            if (provided) {
-                i18n.format;
-                // Just replace any placeholder with the right value
-                //  todo: we should use the i18n format for variable??
-                return provided.replace(/{REWARD}/g, formattedReward);
-            }
-            // Otherwise, use the fallback key
-            return t(fallbackKey, options);
-        };
-        return { lang, i18n, t, fallbackT };
-    }, [currentRequest, resolvingContext?.origin, rewardData, initialI18n]);
+        return { lang, i18n, t };
+    }, [
+        currentRequest,
+        resolvingContext?.origin,
+        initialI18n,
+        getReward,
+        populateI18nResources,
+    ]);
 
     return (
         <ListenerUiContext.Provider
@@ -261,7 +296,7 @@ export function useModalListenerUI() {
         );
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {
-        currentRequest: ModalUiType;
+        currentRequest: ModalUiType & GenericWalletUiType;
     };
 }
 
@@ -276,7 +311,7 @@ export function useEmbededListenerUI() {
         );
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {
-        currentRequest: EmbededWalletUiType;
+        currentRequest: EmbededWalletUiType & GenericWalletUiType;
     };
 }
 

@@ -2,13 +2,14 @@ import {
     type AppSpecificSsoMetadata,
     ssoConsumeKey,
 } from "@/module/authentication/atoms/sso";
+import { ssoKey } from "@/module/authentication/queryKeys/sso";
 import { ssoParamsToCompressed } from "@/module/authentication/utils/ssoDataCompression";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import {
     getFromLocalStorage,
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
-import { compressJson } from "@frak-labs/core-sdk";
+import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
@@ -68,7 +69,7 @@ export function useGetOpenSsoLink() {
             }
 
             // Otherwise, just compress the params and send them
-            const compressedString = await compressJson(compressedParam);
+            const compressedString = compressJsonToB64(compressedParam);
 
             // Build the url with the params
             const ssoUrl = new URL(window.location.origin);
@@ -136,16 +137,14 @@ export function useSsoLink({
     }, [useConsumeKey]);
 
     const { data, ...query } = useQuery({
-        queryKey: [
-            "sso",
-            "link",
+        queryKey: ssoKey.link.full({
             productId,
             metadata,
             directExit,
             redirectUrl,
             lang,
-            safeConsumeKey,
-        ],
+            consumeKey: safeConsumeKey,
+        }),
         queryFn: async () => {
             // Return the link
             return getLink({
@@ -157,11 +156,12 @@ export function useSsoLink({
                 consumeKey: safeConsumeKey,
             });
         },
-        // Try to refetch the link the least possible (to keep the sso openned)
+        // Try to refetch the link the least possible (to keep the sso opened)
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         refetchOnMount: false,
     });
+
     return {
         link: data?.url,
         trackingId: data?.trackingId,

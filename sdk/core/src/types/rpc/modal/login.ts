@@ -5,7 +5,8 @@ import type { GenericModalStepType } from "./generic";
 /** @inline */
 type LoginWithSso = {
     allowSso: true;
-    ssoMetadata: SsoMetadata;
+    // Optional metadata for the SSO (if not provided, will be recomputed from the top level wallet sdk)
+    ssoMetadata?: SsoMetadata;
 };
 
 /** @inline */

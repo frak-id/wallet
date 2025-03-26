@@ -65,7 +65,16 @@ export function useEditProduct({ productId }: { productId: Hex }) {
                     header: {
                         title: "Update product",
                     },
-                    context: "Change product name and type",
+                    i18n: {
+                        fr: {
+                            "sdk.modal.sendTransaction.description":
+                                "Changer le nom et le type du produit",
+                        },
+                        en: {
+                            "sdk.modal.sendTransaction.description":
+                                "Change product name and type",
+                        },
+                    },
                 },
             });
 

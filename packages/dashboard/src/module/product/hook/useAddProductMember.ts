@@ -44,7 +44,14 @@ export function useAddProductMember() {
                     header: {
                         title: "Add member",
                     },
-                    context: `Granting permissions to ${args.wallet} on the product`,
+                    i18n: {
+                        fr: {
+                            "sdk.modal.sendTransaction.description": `Accorder des permissions à ${args.wallet} sur le produit`,
+                        },
+                        en: {
+                            "sdk.modal.sendTransaction.description": `Granting permissions to ${args.wallet} on the product`,
+                        },
+                    },
                 },
             });
 

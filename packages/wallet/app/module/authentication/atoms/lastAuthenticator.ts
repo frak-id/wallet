@@ -5,7 +5,7 @@ import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import type { Address } from "viem";
 
-type LastAuthentication = Omit<WebAuthNWallet, "publicKey"> & {
+export type LastAuthentication = Omit<WebAuthNWallet, "publicKey"> & {
     publicKey: P256PubKey | Readonly<Address>;
     transports?: AuthenticatorTransportFuture[];
 };

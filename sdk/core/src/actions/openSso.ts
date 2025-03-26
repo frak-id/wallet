@@ -29,7 +29,7 @@ import type { FrakClient, OpenSsoParamsType } from "../types";
  * ```ts [Redirection]
  * // Trigger an sso opening within a popup with direct exit
  * await openSso(frakConfig, {
- *     redirectUrl: "https://my-app.com/nexus-sso",
+ *     redirectUrl: "https://my-app.com/frak-sso",
  *     metadata,
  * });
  * ```
@@ -39,9 +39,9 @@ export async function openSso(
     client: FrakClient,
     args: OpenSsoParamsType
 ): Promise<void> {
-    const { metadata } = client.config;
+    const { metadata, customizations } = client.config;
     await client.request({
         method: "frak_sso",
-        params: [args, metadata.name, metadata.css],
+        params: [args, metadata.name, customizations?.css],
     });
 }

@@ -65,7 +65,14 @@ export function ValidationCampaign() {
                 const [, result] = await tryit(() =>
                     sendTransaction({
                         metadata: {
-                            context: `Create campaign ${campaign.title}`,
+                            i18n: {
+                                fr: {
+                                    "sdk.modal.sendTransaction.description": `Créer la campagne ${campaign.title}`,
+                                },
+                                en: {
+                                    "sdk.modal.sendTransaction.description": `Create campaign ${campaign.title}`,
+                                },
+                            },
                         },
                         tx,
                     })

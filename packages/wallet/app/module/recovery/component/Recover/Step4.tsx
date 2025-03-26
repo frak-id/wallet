@@ -5,6 +5,7 @@ import {
     recoveryNewWalletAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { Button } from "@shared/module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
@@ -33,7 +34,11 @@ export function Step4() {
         const { wallet } = await createRecoveryPasskeyAsync({
             file: recoveryFileContent,
         });
-        setNewWallet(wallet);
+        if (!Array.isArray(wallet.publicKey)) {
+            console.error("Invalid wallet public key", wallet.publicKey);
+            return;
+        }
+        setNewWallet(wallet as WebAuthNWallet);
         setStep(ACTUAL_STEP + 1);
     }, [
         createRecoveryPasskeyAsync,

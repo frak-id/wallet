@@ -1,5 +1,9 @@
-import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
+import {
+    type LastAuthentication,
+    addLastAuthenticationAtom,
+} from "@/module/authentication/atoms/lastAuthenticator";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
+import { authKey } from "@/module/authentication/queryKeys/auth";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
@@ -31,7 +35,7 @@ export function useRegister(
         mutateAsync: register,
     } = useMutation({
         ...options,
-        mutationKey: ["register"],
+        mutationKey: authKey.register,
         mutationFn: async () => {
             // Build the credentials to exclude
             const excludeCredentials = previousAuthenticators?.map(
@@ -74,7 +78,10 @@ export function useRegister(
             const session = { ...authentication, token };
 
             // Save this to the last authenticator
-            await jotaiStore.set(addLastAuthenticationAtom, authentication);
+            await jotaiStore.set(
+                addLastAuthenticationAtom,
+                authentication as LastAuthentication
+            );
 
             // Store the session
             jotaiStore.set(sessionAtom, session);

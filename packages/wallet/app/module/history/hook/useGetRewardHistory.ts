@@ -1,4 +1,5 @@
 import { getRewardHistory } from "@/module/history/action/rewardHistory";
+import { historyKey } from "@/module/history/queryKeys/history";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 
@@ -8,7 +9,7 @@ export function useGetRewardHistory() {
 
     // The query fn that will fetch the history
     const { data: history } = useQuery({
-        queryKey: ["history", "rewards", address],
+        queryKey: historyKey.rewards.byAddress(address),
         queryFn: async () => {
             return await getRewardHistory({
                 account: address ?? "0x",

@@ -24,7 +24,7 @@ export function useEnforceWagmiConnection() {
     const { state, connectors } = useConfig();
 
     /**
-     * Extract the nexus connector
+     * Extract the frak connector
      */
     const frakConnector = useMemo(
         () =>
@@ -35,7 +35,7 @@ export function useEnforceWagmiConnection() {
     );
 
     /**
-     * Connect to the nexus connector
+     * Connect to the frak connector
      */
     const { connect, isPending } = useConnect();
 

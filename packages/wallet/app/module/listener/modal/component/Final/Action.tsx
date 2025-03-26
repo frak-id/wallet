@@ -4,6 +4,7 @@ import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPu
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
+import { listenerSharingKey } from "@/module/listener/queryKeys/sharing";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
@@ -28,8 +29,6 @@ export function FinalModalActionComponent({
         return (
             <SharingButtons
                 isModalSuccess={isSuccess}
-                popupTitle={action?.options?.popupTitle}
-                text={action?.options?.text}
                 link={action?.options?.link}
             />
         );
@@ -44,7 +43,7 @@ export function FinalModalActionComponent({
                 trackEvent("cta-dismissed");
             }}
         >
-            {t("sdk.modal.default.dismissBtn")}
+            {t("sdk.modal.dismiss.primaryAction")}
         </button>
     );
 }
@@ -59,13 +58,9 @@ export function FinalModalActionComponent({
 function SharingButtons({
     isModalSuccess,
     link,
-    popupTitle,
-    text,
 }: {
     isModalSuccess: boolean;
     link?: string;
-    popupTitle?: string;
-    text?: string;
 }) {
     const { sourceUrl } = useSafeResolvingContext();
     const { address } = useAccount();
@@ -76,7 +71,7 @@ function SharingButtons({
     const finalSharingLink = useMemo(() => {
         const url = link ?? sourceUrl;
         if (isModalSuccess) {
-            // Ensure the sharing link contain the current nexus wallet as referrer
+            // Ensure the sharing link contain the current frak wallet as referrer
             return FrakContextManager.update({
                 url,
                 context: {
@@ -95,19 +90,17 @@ function SharingButtons({
         mutate: triggerSharing,
         isPending: isSharing,
     } = useMutation({
-        mutationKey: [
+        mutationKey: listenerSharingKey.sharing.trigger(
             "final-modal",
-            "sharing",
-            "system-sharing",
-            finalSharingLink,
-        ],
+            finalSharingLink
+        ),
         mutationFn: async () => {
             if (!finalSharingLink) return;
 
             // Build our sharing data
             const shareData = {
-                title: popupTitle ?? t("sharing.default.title"),
-                text: text ?? t("sharing.default.text"),
+                title: t("sharing.title"),
+                text: t("sharing.text"),
                 url: finalSharingLink,
             };
 
