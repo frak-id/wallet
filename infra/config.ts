@@ -37,7 +37,10 @@ export function getStaticVariable({
 // Some simple config depending on the stack
 export const indexerUrl = isProd
     ? "https://indexer.frak.id"
-    : "https://indexer-dev.frak.id";
+    : "https://ponder.gcp-dev.frak.id";
+export const erpcUrl = isProd
+    ? "https://rpc.frak.id/nexus-rpc/evm/"
+    : "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/";
 export const backendUrl = getStaticVariable({
     prod: "https://backend.frak.id",
     dev: "https://backend-dev.frak.id",

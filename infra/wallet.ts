@@ -1,6 +1,7 @@
 import {
     backendUrl,
     drpcApiKey,
+    erpcUrl,
     indexerUrl,
     isProd,
     nexusRpcSecret,
@@ -33,6 +34,7 @@ new sst.aws.StaticSite("Wallet", {
         STAGE: $app.stage,
         BACKEND_URL: backendUrl,
         INDEXER_URL: indexerUrl,
+        ERPC_URL: erpcUrl,
         DRPC_API_KEY: drpcApiKey.value,
         PIMLICO_API_KEY: pimlicoApiKey.value,
         NEXUS_RPC_SECRET: nexusRpcSecret.value,

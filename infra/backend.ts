@@ -1,7 +1,7 @@
 import * as aws from "@pulumi/aws";
 import { Output, all } from "@pulumi/pulumi";
 import { ServiceTargets } from "./components/ServiceTargets.ts";
-import { indexerUrl, isProd, vpc } from "./config";
+import { erpcUrl, indexerUrl, isProd, vpc } from "./config";
 
 // Get the master cluster
 const clusterName = `master-cluster-${isProd ? "production" : "dev"}`;
@@ -23,14 +23,6 @@ const image = await aws.ecr.getImage({
 
 // The domain name we will be using
 const domainName = isProd ? "backend.frak.id" : "backend-dev.frak.id";
-
-/**
- * Get the rpc url via cloudmap service discovery
- */
-const cloudmapErpcUrl = vpc.nodes.cloudmapNamespace.name.apply(
-    (namespaceName) =>
-        `http://Erpc.production.frak-indexer.${namespaceName}:8080/nexus-rpc/evm`
-);
 
 /**
  * All the ssm secrets we will load into the service
@@ -100,7 +92,8 @@ const fullEnv = {
     ),
     POSTGRES_DB: isProd ? "backend" : "backend_dev",
     POSTGRES_USER: isProd ? "backend" : "backend-dev",
-    ERPC_URL: $dev ? "" : cloudmapErpcUrl,
+    // todo: should be direct kubernetes serve + namespace once on gcp
+    ERPC_URL: erpcUrl,
     HOSTNAME: $dev ? "" : domainName,
 };
 

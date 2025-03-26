@@ -1,6 +1,7 @@
 import {
     backendUrl,
     drpcApiKey,
+    erpcUrl,
     indexerUrl,
     isProd,
     mongoBusinessDb,
@@ -33,6 +34,7 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
         FRAK_WALLET_URL: walletUrl,
         BACKEND_URL: backendUrl,
         INDEXER_URL: indexerUrl,
+        ERPC_URL: erpcUrl,
     },
     link: [
         drpcApiKey,

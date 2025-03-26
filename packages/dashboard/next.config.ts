@@ -42,6 +42,7 @@ const nextConfig: NextConfig = {
         FRAK_WALLET_URL: process.env.FRAK_WALLET_URL,
         BACKEND_URL: process.env.BACKEND_URL,
         INDEXER_URL: process.env.INDEXER_URL,
+        ERPC_URL: process.env.ERPC_URL,
         DEBUG: JSON.stringify(DEBUG),
         // Secrets from sst
         ...envFromSst,
