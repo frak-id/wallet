@@ -12,6 +12,8 @@ Render a share button as svg.
 -->
 
 <svg
+  width="100%"
+  height="100%"
   clip-rule="evenodd"
   fill-rule="evenodd"
   viewBox="0 0 216 161"
