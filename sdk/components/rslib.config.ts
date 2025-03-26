@@ -87,4 +87,9 @@ export default defineConfig({
     tools: {
         ...tools,
     },
+    source: {
+        define: {
+            "process.env.BUILD_TIMESTAMP": JSON.stringify(Date.now()),
+        },
+    },
 });
