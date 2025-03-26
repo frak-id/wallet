@@ -6,11 +6,9 @@ import type {
 } from "@frak-labs/core-sdk";
 import type { UIRequest } from "../providers/ListenerUiProvider";
 
-// Regex replacing {REWARD} with {{ estimatedReward }}
-const REWARD_REGEX = /{REWARD}/g;
-const REWARD_REGEX_REPLACE = "{{ estimatedReward }}";
+// Replacing `{REWARD}` with `{{ estimatedReward }}`
 const replaceReward = (text: string) =>
-    text.replace(REWARD_REGEX, REWARD_REGEX_REPLACE);
+    text.replace("{REWARD}", "{{ estimatedReward }}");
 
 /**
  * Map legacy modal metadata to i18n resources
