@@ -67,3 +67,14 @@ export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
         types: "./sst-env.d.ts",
     },
 });
+
+/**
+ * Frak components demo website
+ */
+export const componentsWebsite = new sst.aws.SvelteKit("ComponentsDemo", {
+    path: "example/components",
+    // Set the custom domain
+    domain: {
+        name: "components.frak.id",
+    },
+});
