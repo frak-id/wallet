@@ -13,9 +13,9 @@ Render a list of components.
 
 <script lang="ts">
   import type { Component } from "svelte";
-  import Card from "$lib/components/Card.svelte";
-  import ButtonWallet from "$lib/components/ButtonWallet.svelte";
-  import ButtonShare from "$lib/components/ButtonShare.svelte";
+  import Card from "$lib/landing/components/Card.svelte";
+  import ButtonWallet from "$lib/landing/components/ButtonWallet.svelte";
+  import ButtonShare from "$lib/landing/components/ButtonShare.svelte";
   import { _ } from "svelte-i18n";
 
   type Option = {

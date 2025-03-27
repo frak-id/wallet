@@ -1,6 +1,7 @@
 <script lang="ts">
+  import "../app.css";
   import "$lib/css/all.css";
-  import Header from "$lib/components/Header.svelte";
+  import { Toaster } from "$lib/components/ui/sonner";
 </script>
 
 <svelte:head>
@@ -22,11 +23,10 @@
 </svelte:head>
 
 <main class="main">
-  <Header />
-
   <slot />
 
   <frak-button-wallet></frak-button-wallet>
+  <Toaster />
 </main>
 
 <style>

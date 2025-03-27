@@ -13,7 +13,7 @@ Render a header with a title.
 
 <script lang="ts">
   import { _ } from "svelte-i18n";
-  import ButtonTheme from "$lib/components/ButtonTheme.svelte";
+  import ButtonTheme from "$lib/landing/components/ButtonTheme.svelte";
 </script>
 
 <header>
