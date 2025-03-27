@@ -1,5 +1,13 @@
-import { drpcApiKey, erpcUrl, indexerUrl, nexusRpcSecret, pimlicoApiKey, sessionEncryptionKy, vapidPublicKey } from "../config";
-import { normalizedStageName } from "../utils";
+import {
+    drpcApiKey,
+    erpcUrl,
+    indexerUrl,
+    nexusRpcSecret,
+    pimlicoApiKey,
+    sessionEncryptionKy,
+    vapidPublicKey,
+} from "../config";
+import { isProd, normalizedStageName } from "../utils";
 import { backendNamespace, domainName } from "./utils";
 
 const dbInstance = $output(
@@ -10,6 +18,12 @@ const dbInstance = $output(
 const dbPassword = $output(
     gcp.secretmanager.getSecretVersion({
         secret: `wallet-backend-db-secret-${normalizedStageName}`,
+    })
+).apply((secret) => secret.secretData);
+
+const masterPkey = $output(
+    gcp.secretmanager.getSecretVersion({
+        secret: `master-pkey-${isProd ? "prod" : "dev"}`,
     })
 ).apply((secret) => secret.secretData);
 
@@ -29,7 +43,7 @@ export const elysiaSecrets = new kubernetes.core.v1.Secret("elysia-secrets", {
         INDEXER_URL: indexerUrl,
         ERPC_URL: erpcUrl,
         DOMAIN_NAME: domainName,
-
+        MASTER_KEY_SECRET_ID: masterPkey,
         // Postgres related
         POSTGRES_DB: "wallet-backend",
         POSTGRES_USER: `wallet-backend_${normalizedStageName}`,

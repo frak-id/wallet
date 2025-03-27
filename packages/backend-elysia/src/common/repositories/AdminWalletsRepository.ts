@@ -50,7 +50,26 @@ export class AdminWalletsRepository {
      */
     private async getMasterPrivateKey() {
         return this.getFromCacheOrFetch("master-pkey", async () => {
-            // Fetch the aws secret
+            // If we got it in env
+            if (process.env.MASTER_KEY_SECRET) {
+                const value = JSON.parse(process.env.MASTER_KEY_SECRET) as {
+                    masterPrivateKey: string;
+                };
+                if (!value.masterPrivateKey) {
+                    throw new Error("Missing masterPrivateKey in the secret");
+                }
+                return `0x${value.masterPrivateKey}` as Hex;
+            }
+
+            // If we don't have it
+            if (!process.env.MASTER_KEY_SECRET_ID) {
+                throw new Error(
+                    "Missing MASTER_KEY_SECRET_ID or MASTER_KEY_SECRET"
+                );
+            }
+
+            // Fetch the secret
+            // todo: to be removed once backend is fully on gcp
             const secretValue = await this.secretManager.send(
                 new GetSecretValueCommand({
                     SecretId: process.env.MASTER_KEY_SECRET_ID,
