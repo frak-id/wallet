@@ -1,8 +1,7 @@
-import path from "node:path";
 import { KubernetesService } from "../components/KubernetesService";
 import { normalizedStageName } from "../utils";
-import { baseDomainName, backendNamespace, getDbUrl, domainName } from "./utils";
 import { elysiaSecrets } from "./secrets";
+import { backendNamespace, domainName } from "./utils";
 
 const appLabels = { app: "elysia" };
 const imageName = "elysia";
@@ -131,7 +130,7 @@ export const backendInstance = new KubernetesService(
                 directory: "packages/backend-elysia",
                 command: "bun run dev",
             },
-            environment: elysiaSecrets.data
+            environment: elysiaSecrets.data,
         },
     },
     {

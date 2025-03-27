@@ -1,8 +1,6 @@
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
-import { cluster } from "radash";
 import type { NewsPaperContextApp } from "../context";
-import { LlmFormatterRepository } from "../repositories/LlmFormatterRepository";
 import type { NewsRepository } from "../repositories/NewsRepository";
 import { WorldNewsApiRepository } from "../repositories/WorldNewsApiRepository";
 
@@ -23,12 +21,10 @@ export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
                     const worldNewsApiRepository = new WorldNewsApiRepository(
                         process.env.WORLD_NEWS_API_KEY as string
                     );
-                    const llmRepository = new LlmFormatterRepository();
 
                     // Perform the logic
                     await fetchLatestNew({
                         newsDbRepository: app.decorator.newsDbRepository,
-                        llmRepository,
                         worldNewsApiRepository,
                         logger,
                     });
@@ -45,12 +41,10 @@ export const fetchLatestNewsJob = (app: NewsPaperContextApp) =>
  */
 async function fetchLatestNew({
     newsDbRepository,
-    llmRepository,
     worldNewsApiRepository,
     logger,
 }: {
     newsDbRepository: NewsRepository;
-    llmRepository: LlmFormatterRepository;
     worldNewsApiRepository: WorldNewsApiRepository;
     logger: pino.Logger;
 }) {
@@ -67,69 +61,40 @@ async function fetchLatestNew({
         "Fetched news"
     );
 
-    // We will make cluster of 2 news, to process in //
-    const clusters = cluster(latestNews, 2);
+    // Process each news
+    try {
+        // For each news, format the text
+        const formattedNews = latestNews.map((news) => ({
+            ...news,
+            summary: news.summary ?? news.text.slice(0, 300),
+            text: news.text,
+        }));
 
-    // Process each cluster
-    for (const cluster of clusters) {
-        logger.debug(
+        // Map them into the right format for our database
+        const documents = formattedNews.map((news) => ({
+            _id: news.id.toString(),
+            title: news.title,
+            text: news.text,
+            summary: news.summary,
+            author: news.author,
+            url: news.url,
+            image: news.image,
+            publishDate: new Date(news.publish_date),
+            sentiment: news.sentiment,
+            category: news.catgory?.toLowerCase(),
+            sourceCountry: news.source_country.toUpperCase(),
+        }));
+
+        // Then insert them
+        const insertResult = await newsDbRepository.insertMany(documents);
+        logger.info(
             {
-                length: cluster.length,
-                ids: cluster.map((news) => news.id),
+                amount: insertResult.insertedCount,
+                ids: insertResult.insertedIds,
             },
-            "Processing news cluster"
+            "Inserted news"
         );
-        try {
-            // For each news, format the text
-            const formattedNews = await Promise.all(
-                cluster.map(async (news) => {
-                    const llmText = await llmRepository.formatNews({
-                        title: news.title,
-                        text: news.text,
-                        summary: news.summary,
-                    });
-                    const summary =
-                        news.summary ?? (await llmRepository.getSummary(news));
-
-                    return {
-                        ...news,
-                        summary,
-                        text: llmText,
-                        origin: {
-                            text: news.text,
-                            summary: news.summary,
-                        },
-                    };
-                })
-            );
-
-            // Map them into the right format for our database
-            const documents = formattedNews.map((news) => ({
-                _id: news.id.toString(),
-                title: news.title,
-                text: news.text,
-                origin: news.origin,
-                summary: news.summary,
-                author: news.author,
-                url: news.url,
-                image: news.image,
-                publishDate: new Date(news.publish_date),
-                sentiment: news.sentiment,
-                category: news.catgory?.toLowerCase(),
-                sourceCountry: news.source_country.toUpperCase(),
-            }));
-
-            // Then insert them
-            const insertResult = await newsDbRepository.insertMany(documents);
-            logger.info(
-                {
-                    amount: insertResult.insertedCount,
-                    ids: insertResult.insertedIds,
-                },
-                "Inserted news"
-            );
-        } catch (error) {
-            logger.warn({ error }, "Error while processing news cluster");
-        }
+    } catch (error) {
+        logger.warn({ error }, "Error while processing news cluster");
     }
 }

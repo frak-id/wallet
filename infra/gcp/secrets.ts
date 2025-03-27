@@ -6,7 +6,7 @@ const dbInstance = $output(
     gcp.sql.getDatabaseInstance({
         name: `master-db-${normalizedStageName}`,
     })
-);    
+);
 const dbPassword = $output(
     gcp.secretmanager.getSecretVersion({
         secret: `wallet-backend-db-secret-${normalizedStageName}`,
@@ -15,7 +15,7 @@ const dbPassword = $output(
 
 /**
  * All the secrets for the elysia instance
- * todo: KMS master key? Bedrock LLM? 
+ * todo: KMS master key? Bedrock LLM?
  */
 export const elysiaSecrets = new kubernetes.core.v1.Secret("elysia-secrets", {
     metadata: {
@@ -43,7 +43,8 @@ export const elysiaSecrets = new kubernetes.core.v1.Secret("elysia-secrets", {
         // Sessions
         JWT_SECRET: new sst.Secret("JWT_SECRET").value,
         JWT_SDK_SECRET: new sst.Secret("JWT_SDK_SECRET").value,
-        PRODUCT_SETUP_CODE_SALT: new sst.Secret("PRODUCT_SETUP_CODE_SALT").value,
+        PRODUCT_SETUP_CODE_SALT: new sst.Secret("PRODUCT_SETUP_CODE_SALT")
+            .value,
         SESSION_ENCRYPTION_KEY: new sst.Secret("SESSION_ENCRYPTION_KEY").value,
 
         // Notifications

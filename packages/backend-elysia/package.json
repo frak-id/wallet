@@ -24,7 +24,6 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.772.0",
     "@aws-sdk/client-secrets-manager": "^3.772.0",
     "@bogeychan/elysia-logger": "^0.1.8",
     "@elysiajs/cors": "^1.2.0",
