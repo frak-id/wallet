@@ -1,4 +1,4 @@
-import { erpcUrl, indexerUrl } from "../config";
+import { drpcApiKey, erpcUrl, indexerUrl, nexusRpcSecret, pimlicoApiKey, sessionEncryptionKy, vapidPublicKey } from "../config";
 import { normalizedStageName } from "../utils";
 import { backendNamespace, domainName } from "./utils";
 
@@ -45,17 +45,17 @@ export const elysiaSecrets = new kubernetes.core.v1.Secret("elysia-secrets", {
         JWT_SDK_SECRET: new sst.Secret("JWT_SDK_SECRET").value,
         PRODUCT_SETUP_CODE_SALT: new sst.Secret("PRODUCT_SETUP_CODE_SALT")
             .value,
-        SESSION_ENCRYPTION_KEY: new sst.Secret("SESSION_ENCRYPTION_KEY").value,
+        SESSION_ENCRYPTION_KEY: sessionEncryptionKy.value,
 
         // Notifications
-        VAPID_PUBLIC_KEY: new sst.Secret("VAPID_PUBLIC_KEY").value,
+        VAPID_PUBLIC_KEY: vapidPublicKey.value,
         VAPID_PRIVATE_KEY: new sst.Secret("VAPID_PRIVATE_KEY").value,
 
         // API key's
-        PIMLICO_API_KEY: new sst.Secret("PIMLICO_API_KEY").value,
-        DRPC_API_KEY: new sst.Secret("DRPC_API_KEY").value,
+        PIMLICO_API_KEY: pimlicoApiKey.value,
+        DRPC_API_KEY: drpcApiKey.value,
         COIN_GECKO_API_KEY: new sst.Secret("COIN_GECKO_API_KEY").value,
         WORLD_NEWS_API_KEY: new sst.Secret("WORLD_NEWS_API_KEY").value,
-        NEXUS_RPC_SECRET: new sst.Secret("NEXUS_RPC_SECRET").value,
+        NEXUS_RPC_SECRET: nexusRpcSecret.value,
     },
 });
