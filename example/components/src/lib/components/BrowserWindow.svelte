@@ -41,26 +41,35 @@ Render a browser window with a control bar and a content area.
 <style>
   .browser__window {
     width: 100%;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--card-shadow);
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 
   .browser__controls {
-    background-color: #f5f5f5;
+    background-color: var(--bg-secondary);
     padding: 8px 12px;
     display: flex;
     gap: 6px;
     align-items: center;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 
   .browser__dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: #ccc;
+    background-color: var(--browser-dot-color);
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 
   .browser__content {

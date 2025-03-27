@@ -62,11 +62,14 @@ Render a list of components.
   }
 
   .embed-options-label {
-    color: #0066ff;
+    color: var(--accent-color);
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 1px;
     margin-bottom: 16px;
+    transition:
+      color 0.3s ease,
+      transform 0.3s ease;
   }
 
   .list-components {

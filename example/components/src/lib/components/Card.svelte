@@ -67,32 +67,36 @@ Render a card with a title, description, and action button.
   }
 
   h3 {
-    color: #0a2540;
+    color: var(--text-primary);
     font-size: 18px;
     font-weight: 600;
     margin: 0 0 8px 0;
+    transition: color 0.3s ease;
   }
 
   p {
-    color: #4a5568;
+    color: var(--text-secondary);
     font-size: 14px;
     line-height: 1.5;
     margin: 0 0 20px 0;
+    transition: color 0.3s ease;
   }
 
   :global(.card__button) {
-    background-color: #fff;
-    color: #0066ff;
-    border: 1px solid #0066ff;
+    background-color: var(--bg-primary);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
     border-radius: 4px;
     padding: 8px 16px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
 
     &:hover {
-      background-color: #f0f7ff;
+      background-color: var(--bg-secondary);
     }
   }
 </style>

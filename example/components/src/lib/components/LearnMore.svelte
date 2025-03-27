@@ -34,7 +34,7 @@ Render a learn more link.
   }
 
   .learn-more-link {
-    color: #0066ff;
+    color: var(--accent-color);
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
@@ -42,5 +42,6 @@ Render a learn more link.
     align-items: center;
     justify-content: center;
     gap: 8px;
+    transition: color 0.3s ease;
   }
 </style>
