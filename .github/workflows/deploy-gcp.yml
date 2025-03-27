@@ -12,6 +12,7 @@ on:
     branches:
       - main
       - dev
+      - chore/gcp
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}-gcp
 
