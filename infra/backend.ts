@@ -1,7 +1,16 @@
 import * as aws from "@pulumi/aws";
 import { Output, all } from "@pulumi/pulumi";
 import { ServiceTargets } from "./components/ServiceTargets.ts";
-import { erpcUrl, indexerUrl, isProd, vpc } from "./config";
+import { erpcUrl, indexerUrl } from "./config";
+import { isProd } from "./utils.ts";
+
+// Get the VPC
+const vpcId = $output(
+    aws.ec2.getVpc({
+        filters: [{ name: "tag:Name", values: ["master-vpc"] }],
+    })
+).apply((vpc) => vpc.id);
+export const vpc = sst.aws.Vpc.get("MasterVpc", vpcId);
 
 // Get the master cluster
 const clusterName = `master-cluster-${isProd ? "production" : "dev"}`;

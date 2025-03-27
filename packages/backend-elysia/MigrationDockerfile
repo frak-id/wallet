@@ -1,0 +1,12 @@
+
+FROM oven/bun
+
+WORKDIR /monorepo
+
+# Install dependencies and build the project
+RUN bun install --frozen-lockfile 
+
+ENV NODE_ENV=production
+
+# Run the migration
+CMD ["bun", "run", "--cwd", "packages/backend-elysia", "db:migrate"]

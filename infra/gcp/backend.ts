@@ -1,49 +1,32 @@
+import { KubernetesJob } from "../components/KubernetesJob";
 import { KubernetesService } from "../components/KubernetesService";
-import { normalizedStageName } from "../utils";
-import { elysiaSecrets } from "./secrets";
+import { elysiaImage, migrationImage } from "./images";
+import { dbMigrationSecrets, elysiaSecrets } from "./secrets";
 import { backendNamespace, domainName } from "./utils";
 
 const appLabels = { app: "elysia" };
-const imageName = "elysia";
-const repository = `elysia-${normalizedStageName}`;
 
+// todo: job handling db migration stuff
 /**
- * Artifact registry for the elysia image
+ * Create the db migration job
  */
-const registry = new gcp.artifactregistry.Repository("elysia-gcr", {
-    repositoryId: repository,
-    format: "DOCKER",
-    description: "Artifact registry for the elysia image",
-    location: "europe-west1",
-    project: gcp.config.project,
-});
-
-/**
- * Create the erpc image
- */
-const registryPath = registry.location.apply(
-    (location) =>
-        `${location}-docker.pkg.dev/${gcp.config.project}/${repository}`
-);
-const latestTag = registryPath.apply((path) => `${path}/${imageName}:latest`);
-const elysiaImage = new docker.Image(
-    imageName,
-    {
-        imageName: latestTag,
-        build: {
-            context: $cli.paths.root,
-            dockerfile: "infra/docker/ElysiaDockerfile",
-            platform: "linux/arm64",
-            args: {
-                NODE_ENV: "production",
-                STAGE: normalizedStageName,
-            },
+const migrationJob = new KubernetesJob("ElysiaDbMigration", {
+    namespace: backendNamespace.metadata.name,
+    appLabels,
+    job: {
+        container: {
+            name: "db-migration",
+            image: migrationImage.imageName,
+            envFrom: [
+                {
+                    secretRef: {
+                        name: dbMigrationSecrets.metadata.name,
+                    },
+                },
+            ],
         },
     },
-    {
-        dependsOn: [registry],
-    }
-);
+});
 
 /**
  * Deploy elysia using the new service
@@ -134,6 +117,6 @@ export const backendInstance = new KubernetesService(
         },
     },
     {
-        dependsOn: [registry, elysiaImage, elysiaSecrets],
+        dependsOn: [elysiaImage, elysiaSecrets, migrationJob],
     }
 );

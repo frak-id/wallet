@@ -2,7 +2,7 @@ import * as aws from "@pulumi/aws";
 import { type ComponentResourceOptions, Output, all } from "@pulumi/pulumi";
 import type { Component } from "../../.sst/platform/src/components/component.js";
 import type * as sstDuration from "../../.sst/platform/src/components/duration";
-import { isProd } from "../config.ts";
+import { isProd } from "../utils.js";
 
 // Some re-export from sst platform
 const SstComponent: typeof Component = await import(

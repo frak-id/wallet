@@ -1,14 +1,7 @@
-import * as aws from "@pulumi/aws";
-
-// Get the VPC
-const { id: vpcId } = await aws.ec2.getVpc({
-    filters: [{ name: "tag:Name", values: ["master-vpc"] }],
-});
-export const vpc = sst.aws.Vpc.get("MasterVpc", vpcId);
+import { isProd } from "./utils";
 
 // Get some info about the deployment env
-export const isProd = $app.stage === "prod";
-export const isLocal = $dev ?? false;
+const isLocal = $dev ?? false;
 
 /**
  * Get a static variable depending on the stack

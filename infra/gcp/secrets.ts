@@ -73,3 +73,22 @@ export const elysiaSecrets = new kubernetes.core.v1.Secret("elysia-secrets", {
         NEXUS_RPC_SECRET: nexusRpcSecret.value,
     },
 });
+
+export const dbMigrationSecrets = new kubernetes.core.v1.Secret(
+    "db-migration-secret",
+    {
+        metadata: {
+            name: `db-migration-section-${normalizedStageName}`,
+            namespace: backendNamespace.metadata.name,
+        },
+        type: "Opaque",
+        stringData: {
+            STAGE: normalizedStageName,
+            // Postgres related
+            POSTGRES_DB: "wallet-backend",
+            POSTGRES_USER: `wallet-backend_${normalizedStageName}`,
+            POSTGRES_PASSWORD: dbPassword,
+            POSTGRES_HOST: dbInstance.privateIpAddress,
+        },
+    }
+);

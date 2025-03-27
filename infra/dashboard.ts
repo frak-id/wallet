@@ -3,12 +3,12 @@ import {
     drpcApiKey,
     erpcUrl,
     indexerUrl,
-    isProd,
     mongoBusinessDb,
     nexusRpcSecret,
     sessionEncryptionKy,
     walletUrl,
 } from "./config";
+import { isProd } from "./utils";
 
 const subdomain = isProd ? "business" : "business-dev";
 

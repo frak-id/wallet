@@ -117,7 +117,7 @@ jobs:
         if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         uses: docker/build-push-action@v6
         with:
-          file: ./infra/docker/ElysiaDockerfile
+          file: ./packages/backend-elysia/Dockerfile
           platforms: linux/arm64
           push: true
           tags: |
