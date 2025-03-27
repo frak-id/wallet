@@ -58,8 +58,8 @@ export function OnboardingWelcome() {
     const calledOnce = useRef(false);
 
     useEffect(() => {
-        // Hide the onboarding after 8 seconds
-        setTimeout(() => setHidden(true), 8_000);
+        // Hide the onboarding after 2.5 seconds
+        setTimeout(() => setHidden(true), 2_500);
     }, []);
 
     useEffect(() => {
@@ -101,7 +101,7 @@ export function OnboardingActivate({
     isHidden = true,
 }: { isReverse?: boolean; isHidden?: boolean }) {
     const { translation } = useEmbededListenerUI();
-    const DELAY_MS = 8_000;
+    const DELAY_MS = 1_500;
 
     const [isVisible, setIsVisible] = useState(false);
 
