@@ -20,7 +20,7 @@ Render a card with a title, description, and action button.
 
 <script lang="ts">
   import type { Component } from "svelte";
-  import BrowserWindow from "$lib/components/BrowserWindow.svelte";
+  import BrowserWindow from "$lib/landing/components/BrowserWindow.svelte";
 
   /**
    * @description Card props

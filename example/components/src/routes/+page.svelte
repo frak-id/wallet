@@ -1,11 +1,15 @@
 <script lang="ts">
-  import LearnMore from "$lib/components/LearnMore.svelte";
-  import ListComponents from "$lib/components/ListComponents.svelte";
+  import LearnMore from "$lib/landing/components/LearnMore.svelte";
+  import ListComponents from "$lib/landing/components/ListComponents.svelte";
+  import Header from "$lib/landing/components/Header.svelte";
 </script>
+
+<Header />
 
 <div class="content">
   <ListComponents />
   <LearnMore />
+  <a href="/configuration">Configuration</a>
 </div>
 
 <style>
