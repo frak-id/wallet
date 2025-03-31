@@ -8,19 +8,20 @@ export const config = $state<{
         currency?: string;
     };
     customizations: {
-        i18n: {
-            en: Record<string, string>;
-            fr: Record<string, string>;
-        };
+        i18n: Record<
+            string,
+            {
+                [key: string]: string;
+            }
+        >;
     };
 }>({
     metadata: {
         name: "",
+        lang: "auto",
+        currency: "eur",
     },
     customizations: {
-        i18n: {
-            en: {},
-            fr: {},
-        },
+        i18n: {},
     },
 });

@@ -6,17 +6,28 @@
     CardTitle,
   } from "$lib/components/ui/card";
   import { config } from "$lib/configuration/state/config.svelte";
+  import { cleanObjects } from "$lib/configuration/utils/cleanObjects";
 
-  const removeLanguageIfAuto = () => {
-    const { lang, ...rest } = config.metadata;
-    return lang === "auto" ? rest : config.metadata;
-  };
+  function removeLanguageIfAuto(metadata: typeof config.metadata) {
+    const { lang, ...rest } = metadata;
+    return lang === "auto" ? rest : metadata;
+  }
+
+  function removeCurrencyIfEur(metadata: typeof config.metadata) {
+    const { currency, ...rest } = metadata;
+    return currency === "eur" ? rest : metadata;
+  }
+
+  function removeDefaultValues(metadata: typeof config.metadata) {
+    return removeLanguageIfAuto(removeCurrencyIfEur(metadata));
+  }
 
   const code = $derived.by(() => {
     return JSON.stringify(
       {
         ...config,
-        metadata: removeLanguageIfAuto(),
+        metadata: cleanObjects(removeDefaultValues(config.metadata)),
+        customizations: cleanObjects(config.customizations),
       },
       null,
       2,

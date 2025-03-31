@@ -1,63 +1,93 @@
 <script lang="ts">
   import Preview from "./Preview.svelte";
-  import { Label } from "$lib/components/ui/label";
   import { Input } from "$lib/components/ui/input";
-  import { Textarea } from "$lib/components/ui/textarea";
-  import { Button } from "$lib/components/ui/button";
-  import { createForm } from "svelte-forms-lib";
   import { config } from "$lib/configuration/state/config.svelte";
   import { toast } from "svelte-sonner";
   import type { Language } from "@frak-labs/core-sdk";
   import { getLanguageLabel } from "$lib/configuration/utils/languages";
+  import { defaults, superForm } from "sveltekit-superforms";
+  import { typeboxClient, typebox } from "sveltekit-superforms/adapters";
+  import { customizationFormSchema } from "$lib/configuration/schemas/customization";
+  import {
+    FormField,
+    FormControl,
+    FormLabel,
+    FormDescription,
+    FormFieldErrors,
+    FormButton,
+  } from "$lib/components/ui/form";
 
   let { lang = "en" }: { lang?: Language } = $props();
 
-  const { form, handleChange, handleSubmit } = createForm({
-    initialValues: {
-      ...config,
+  // Get the default data for the language
+  const defaultDataLang = config.customizations.i18n[lang];
+
+  const data = defaults(typebox(customizationFormSchema), {
+    defaults: {
+      description: defaultDataLang?.["sdk.modal.login.description"] ?? "",
+      primaryAction: defaultDataLang?.["sdk.modal.login.primaryAction"] ?? "",
     },
-    onSubmit: (values) => {
-      if (values.customizations?.i18n && config.customizations) {
-        config.customizations.i18n[lang] = values.customizations.i18n[lang];
+  });
+
+  const form = superForm(data, {
+    id: `login-form-${lang}`,
+    dataType: "json",
+    SPA: true,
+    resetForm: false,
+    clearOnSubmit: "errors-and-message",
+    validators: typeboxClient(customizationFormSchema),
+    onUpdate({ form }) {
+      // If the form is not valid, return
+      if (!form.valid) return;
+
+      // If the language data is not set, set it to an empty object
+      if (!config.customizations.i18n[lang]) {
+        config.customizations.i18n[lang] = {};
       }
+
+      // Get the language data
+      const langData = config.customizations.i18n[lang];
+
+      // Update the language data
+      langData["sdk.modal.login.description"] = form.data?.description ?? "";
+      langData["sdk.modal.login.primaryAction"] =
+        form.data?.primaryAction ?? "";
+
+      // Show a success toast
       toast.success(
         `Customization settings saved for ${getLanguageLabel(lang)}`,
       );
     },
   });
+
+  const { form: formData, enhance } = form;
 </script>
 
 <div class="grid gap-10 grid-cols-2 w-full">
-  <Preview form={$form} {lang} />
+  <Preview formData={$formData} {lang} />
 
-  <form onsubmit={handleSubmit} class="grid gap-4 w-full">
-    <div class="grid gap-1">
-      <Label for="description">Description</Label>
-      <Textarea
-        placeholder=""
-        class="w-full"
-        id="description"
-        name="description"
-        onchange={handleChange}
-        bind:value={
-          $form.customizations.i18n[lang]["sdk.modal.login.description"]
-        }
-      />
-    </div>
-    <div class="grid gap-1">
-      <Label for="primaryAction">Primary action</Label>
-      <Input
-        type="text"
-        placeholder=""
-        class="w-full"
-        id="primaryAction"
-        name="primaryAction"
-        onchange={handleChange}
-        bind:value={
-          $form.customizations.i18n[lang]["sdk.modal.login.primaryAction"]
-        }
-      />
-    </div>
-    <Button type="submit">Save {getLanguageLabel(lang)} settings</Button>
+  <form use:enhance class="grid gap-4 w-1/2">
+    <FormField {form} name="description" class="grid gap-1">
+      <FormControl>
+        {#snippet children({ props })}
+          <FormLabel>Description</FormLabel>
+          <Input {...props} bind:value={$formData.description} />
+        {/snippet}
+      </FormControl>
+      <FormDescription>Description of the login screen</FormDescription>
+      <FormFieldErrors />
+    </FormField>
+
+    <FormField {form} name="primaryAction" class="grid gap-1">
+      <FormControl>
+        {#snippet children({ props })}
+          <FormLabel>Primary action</FormLabel>
+          <Input {...props} bind:value={$formData.primaryAction} />
+        {/snippet}
+      </FormControl>
+      <FormDescription>Primary action of the login screen</FormDescription>
+      <FormFieldErrors />
+    </FormField>
+    <FormButton>Submit</FormButton>
   </form>
 </div>

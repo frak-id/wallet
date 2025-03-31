@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Language } from "@frak-labs/core-sdk";
 
-  let { form, lang = "en" }: { form: any; lang: Language } = $props();
+  let { formData, lang = "en" }: { formData: any; lang: Language } = $props();
 
   const defaultValues = {
     en: {
@@ -13,17 +13,20 @@
       primaryAction: "Créer mon porte-monnaie",
     },
   };
+
+  const description = $derived(
+    formData.description || defaultValues[lang].description,
+  );
+  const primaryAction = $derived(
+    formData.primaryAction || defaultValues[lang].primaryAction,
+  );
 </script>
 
 <div class="share-modal">
-  <p>
-    {form.customizations.i18n[lang]["sdk.modal.login.description"] ??
-      defaultValues[lang].description}
-  </p>
+  <p>{description}</p>
   <p class="button-container">
     <button type="button" class="button-primary">
-      {form.customizations.i18n[lang]["sdk.modal.login.primaryAction"] ??
-        defaultValues[lang].primaryAction}
+      {primaryAction}
     </button>
   </p>
 </div>
