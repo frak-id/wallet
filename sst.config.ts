@@ -45,6 +45,9 @@ export default $config({
                     directory: "./",
                 },
             });
+
+            // Gcp dev stuff
+            await import("./infra/gcp/dev.ts");
         }
 
         // Deploy backend
