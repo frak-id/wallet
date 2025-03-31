@@ -71,7 +71,10 @@
         <Input {...props} bind:value={$formData.metadata.name} />
       {/snippet}
     </FormControl>
-    <FormDescription>This is your public display name.</FormDescription>
+    <FormDescription
+      >App Name is <strong>required</strong> and will be used as the title of the
+      app.
+    </FormDescription>
     <FormFieldErrors />
   </FormField>
 
@@ -92,9 +95,9 @@
       </Select>
     </FormControl>
     <FormDescription>
-      This is the language of the app. It will be used to display the app in the
-      correct language.<br />By default, the language will be the language of
-      the browser.
+      Language of the app (<strong>optional</strong>).<br /> It will be used to
+      display the app in the correct language.<br />By default, the language
+      will be the language of the browser.
     </FormDescription>
   </FormField>
 
@@ -115,9 +118,34 @@
       </Select>
     </FormControl>
     <FormDescription>
-      This is the currency of the app. It will be used to display the app in the
-      correct currency. By default, the currency will be in Euro.
+      Currency of the app (<strong>optional</strong>).<br />
+      It will be used to display the app in the correct currency. By default, the
+      currency will be in Euro.
     </FormDescription>
+  </FormField>
+
+  <FormField {form} name="metadata.logoUrl" class="grid gap-1">
+    <FormControl>
+      <FormLabel>Logo URL</FormLabel>
+      <Input bind:value={$formData.metadata.logoUrl} />
+    </FormControl>
+    <FormDescription>
+      URL of your logo (<strong>optional</strong>).<br />
+      It will be used on modal and sso popup.
+    </FormDescription>
+    <FormFieldErrors />
+  </FormField>
+
+  <FormField {form} name="metadata.homepageLink" class="grid gap-1">
+    <FormControl>
+      <FormLabel>Homepage Link</FormLabel>
+      <Input bind:value={$formData.metadata.homepageLink} />
+    </FormControl>
+    <FormDescription>
+      URL of your homepage website (<strong>optional</strong>).<br />
+      It will be used as a link on logo.
+    </FormDescription>
+    <FormFieldErrors />
   </FormField>
   <FormButton>Submit</FormButton>
 </form>

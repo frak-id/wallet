@@ -6,6 +6,8 @@ export const config = $state<{
         name: string;
         lang?: string;
         currency?: string;
+        logoUrl?: string;
+        homepageLink?: string;
     };
     customizations: {
         i18n: Record<

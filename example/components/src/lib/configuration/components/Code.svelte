@@ -36,9 +36,6 @@
 </script>
 
 <Card class="w-full">
-  <CardHeader>
-    <CardTitle>Get the code</CardTitle>
-  </CardHeader>
   <CardContent>
     <pre>{code}</pre>
   </CardContent>

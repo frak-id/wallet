@@ -1,12 +1,8 @@
 import { type Static, Type } from "@sinclair/typebox";
 
 export const customizationFormSchema = Type.Object({
-    description: Type.String({
-        required: false,
-    }),
-    primaryAction: Type.String({
-        required: false,
-    }),
+    description: Type.Optional(Type.String()),
+    primaryAction: Type.Optional(Type.String()),
 });
 
 export type FormSchema = Static<typeof customizationFormSchema>;
