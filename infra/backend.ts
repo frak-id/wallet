@@ -129,11 +129,11 @@ new sst.aws.Service("Elysia", {
     cluster: sstCluster,
     // Development configuration
     //  todo: Find a way to link SSM parameters to the dev env
-    dev: {
-        autostart: true,
-        directory: "packages/backend-elysia",
-        command: "bun run dev",
-    },
+    // dev: {
+    //     autostart: true,
+    //     directory: "packages/backend-elysia",
+    //     command: "bun run dev",
+    // },
     // hardware config
     cpu: isProd ? "0.5 vCPU" : "0.25 vCPU",
     memory: isProd ? "1 GB" : "0.5 GB",

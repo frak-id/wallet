@@ -1,47 +1,40 @@
-const stage = "staging";
-
-// Get the db instance
-const dbInstance = $output(
-    gcp.sql.getDatabaseInstance({
-        name: `master-db-${stage}`,
-    })
-);
-
-const bastionHost = "bastion-host";
-const bastionZone = "europe-west1-b";
-const dbHost = dbInstance.privateIpAddress;
+import { dbInstance, elysiaEnv, postgresEnv } from "./secrets";
 
 // Launch the tunnel
 const tunnelCmd = new sst.x.DevCommand("db-tunnel", {
     dev: {
-        title: "[DB] Tunnel",
-        autostart: false,
+        title: "GCP Tunnel",
+        autostart: true,
         command: "bash ./infra/gcp-tunnel.sh",
     },
     environment: {
-        BASTION_HOST: bastionHost,
-        BASTION_ZONE: bastionZone,
+        BASTION_HOST: "bastion-host",
+        BASTION_ZONE: "europe-west1-b",
         LOCAL_PORT: "8888",
-        DB_HOST: dbHost,
+        DB_HOST: dbInstance.privateIpAddress,
         DB_PORT: "5432",
     },
 });
 
 // Get the db parameters
-const dbPassword = $output(
-    gcp.secretmanager.getSecretVersion({
-        secret: `wallet-backend-db-secret-${stage}`,
-    })
-).apply((secret) => secret.secretData);
 const dbEnv = {
-    POSTGRES_DB: "wallet-backend",
-    POSTGRES_USER: `wallet-backend_${stage}`,
-    POSTGRES_PASSWORD: dbPassword,
-    POSTGRES_HOST: "localhost",
+    ...postgresEnv,
     POSTGRES_PORT: "8888",
 };
 
 // Helpers command
+export const backend = new sst.x.DevCommand("backend", {
+    dev: {
+        title: "Backend",
+        autostart: true,
+        command: "bun run dev",
+        directory: "packages/backend-elysia",
+    },
+    environment: {
+        ...elysiaEnv,
+        ...dbEnv,
+    },
+});
 export const dbGcpStudio = new sst.x.DevCommand(
     "db:gcp:studio",
     {
