@@ -30,7 +30,7 @@
       "name": "@frak-labs-example/components",
       "version": "0.0.1",
       "dependencies": {
-        "@lucide/svelte": "^0.485.0",
+        "@lucide/svelte": "^0.486.0",
         "@sinclair/typebox": "^0.34.31",
         "normalize.css": "^8.0.1",
         "svelte-i18n": "^4.0.1",
@@ -934,7 +934,7 @@
 
     "@lucasmogari/react-pagination": ["@lucasmogari/react-pagination@2.1.0", "", { "peerDependencies": { "react": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-WKHmwWCcdReBRRTZ38NrH5hIVXP51DAkveNL+ZnPc/k1yPNDy92CYnBu24o0NgTjOVvNTFQRnCQy+wxiDslPOg=="],
 
-    "@lucide/svelte": ["@lucide/svelte@0.485.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-8+pW8gyRc7D9tklhNxXV3v0N/7yIo64Njjs/+6zaD2d4dDqQkPT8WgVUQ/XXoKAAimJNiyrtu1SK4YiK42Jo9Q=="],
+    "@lucide/svelte": ["@lucide/svelte@0.486.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-Q8dav9ruYhdLepb2NNngYeGaMHxFv4Qd1FPc7YYkqouHfjTOJ3fLeyKmbANioRRmtMrLBNfOez9v5EIca+VCFg=="],
 
     "@manypkg/find-root": ["@manypkg/find-root@1.1.0", "", { "dependencies": { "@babel/runtime": "^7.5.5", "@types/node": "^12.7.1", "find-up": "^4.1.0", "fs-extra": "^8.1.0" } }, "sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA=="],
 

@@ -4,49 +4,97 @@
   import Dismiss from "./Dismiss.svelte";
   import Css from "./Css.svelte";
   import Final from "./Final.svelte";
+  import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+  } from "$lib/components/ui/accordion";
 </script>
 
 <div class="container">
-  <h2>Customization of CSS</h2>
-  <Css />
+  <Accordion type="multiple">
+    <AccordionItem value="css">
+      <AccordionTrigger><h2>Customization of CSS</h2></AccordionTrigger>
+      <AccordionContent>
+        <Css />
+      </AccordionContent>
+    </AccordionItem>
 
-  <h2>Customization of login screen</h2>
+    <AccordionItem value="login-en">
+      <AccordionTrigger
+        ><h2>Customization of login screen in English</h2></AccordionTrigger
+      >
+      <AccordionContent>
+        <Login lang="en" />
+      </AccordionContent>
+    </AccordionItem>
 
-  <h3>English</h3>
-  <Login lang="en" />
+    <AccordionItem value="login-fr">
+      <AccordionTrigger
+        ><h2>Customization of login screen in French</h2></AccordionTrigger
+      >
+      <AccordionContent>
+        <Login lang="fr" />
+      </AccordionContent>
+    </AccordionItem>
 
-  <h3>French</h3>
-  <Login lang="fr" />
-</div>
+    <AccordionItem value="activation-en">
+      <AccordionTrigger
+        ><h2>
+          Customization of activation screen in English
+        </h2></AccordionTrigger
+      >
+      <AccordionContent>
+        <Activation lang="en" />
+      </AccordionContent>
+    </AccordionItem>
 
-<div class="container">
-  <h2>Customization of activation screen</h2>
+    <AccordionItem value="activation-fr">
+      <AccordionTrigger
+        ><h2>Customization of activation screen in French</h2></AccordionTrigger
+      >
+      <AccordionContent>
+        <Activation lang="fr" />
+      </AccordionContent>
+    </AccordionItem>
 
-  <h3>English</h3>
-  <Activation lang="en" />
+    <AccordionItem value="dismiss-en">
+      <AccordionTrigger
+        ><h2>Customization of dismiss screen in English</h2></AccordionTrigger
+      >
+      <AccordionContent>
+        <Dismiss lang="en" />
+      </AccordionContent>
+    </AccordionItem>
 
-  <h3>French</h3>
-  <Activation lang="fr" />
-</div>
+    <AccordionItem value="dismiss-fr">
+      <AccordionTrigger
+        ><h2>Customization of dismiss screen in French</h2></AccordionTrigger
+      >
+      <AccordionContent>
+        <Dismiss lang="fr" />
+      </AccordionContent>
+    </AccordionItem>
 
-<div class="container">
-  <h2>Customization of dismiss screen</h2>
+    <AccordionItem value="final-en">
+      <AccordionTrigger
+        ><h2>Customization of final screen in English</h2></AccordionTrigger
+      >
+      <AccordionContent>
+        <Final lang="en" />
+      </AccordionContent>
+    </AccordionItem>
 
-  <h3>English</h3>
-  <Dismiss lang="en" />
-
-  <h3>French</h3>
-  <Dismiss lang="fr" />
-</div>
-
-<div class="container">
-  <h2>Customization of final screen</h2>
-
-  <h3>English</h3>
-  <Final lang="en" />
-
-  <h3>French</h3>
-  <Final lang="fr" />
+    <AccordionItem value="final-fr">
+      <AccordionTrigger
+        ><h2>Customization of final screen in French</h2></AccordionTrigger
+      >
+      <AccordionContent>
+        <Final lang="fr" />
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
 </div>
 
 <style>
