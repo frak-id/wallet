@@ -125,73 +125,70 @@ const backendServiceTargets = new ServiceTargets("BackendServiceDomain", {
 });
 
 // Create the elysia backend service (only on prod stage)
-new sst.aws.Service("Elysia", {
-    cluster: sstCluster,
-    // Development configuration
-    //  todo: Find a way to link SSM parameters to the dev env
-    // dev: {
-    //     autostart: true,
-    //     directory: "packages/backend-elysia",
-    //     command: "bun run dev",
-    // },
-    // hardware config
-    cpu: isProd ? "0.5 vCPU" : "0.25 vCPU",
-    memory: isProd ? "1 GB" : "0.5 GB",
-    storage: "20 GB",
-    architecture: "arm64",
-    // Image to be used
-    image: image.imageUri,
-    // Scaling options
-    scaling: isProd
-        ? {
-              min: 1,
-              max: 4,
-              cpuUtilization: 80,
-              memoryUtilization: 80,
-          }
-        : {
-              min: 1,
-              max: 1,
-          },
-    // Logging options
-    logging: {
-        retention: "3 days",
-    },
-    // Env
-    environment: fullEnv,
-    // Secrets from SSM
-    ssm: ssmSecrets,
-    // Some custom permissions
-    permissions: [
-        {
-            actions: ["ssm:GetParameter"],
-            resources: ["*"],
+if (isProd) {
+    new sst.aws.Service("Elysia", {
+        cluster: sstCluster,
+        // Development configuration
+        //  todo: Find a way to link SSM parameters to the dev env
+        // dev: {
+        //     autostart: true,
+        //     directory: "packages/backend-elysia",
+        //     command: "bun run dev",
+        // },
+        // hardware config
+        cpu: "0.5 vCPU",
+        memory: "1 GB",
+        storage: "20 GB",
+        architecture: "arm64",
+        // Image to be used
+        image: image.imageUri,
+        // Scaling options
+        scaling: {
+            min: 1,
+            max: 4,
+            cpuUtilization: 80,
+            memoryUtilization: 80,
         },
-        {
-            actions: ["bedrock:InvokeModel"],
-            resources: ["*"],
+        // Logging options
+        logging: {
+            retention: "3 days",
         },
-        {
-            actions: ["secretsmanager:GetSecretValue"],
-            resources: [masterSecretKey.then((key) => key.arn)],
+        // Env
+        environment: fullEnv,
+        // Secrets from SSM
+        ssm: ssmSecrets,
+        // Some custom permissions
+        permissions: [
+            {
+                actions: ["ssm:GetParameter"],
+                resources: ["*"],
+            },
+            {
+                actions: ["bedrock:InvokeModel"],
+                resources: ["*"],
+            },
+            {
+                actions: ["secretsmanager:GetSecretValue"],
+                resources: [masterSecretKey.then((key) => key.arn)],
+            },
+        ],
+        // Link the service to the ELB
+        transform: {
+            service: {
+                loadBalancers: all(backendServiceTargets.targetGroups).apply(
+                    (target) =>
+                        Object.values(target).map((target) => ({
+                            targetGroupArn: target.arn,
+                            containerName: "Elysia",
+                            containerPort: target.port.apply(
+                                (port) => port as number
+                            ),
+                        }))
+                ),
+            },
         },
-    ],
-    // Link the service to the ELB
-    transform: {
-        service: {
-            loadBalancers: all(backendServiceTargets.targetGroups).apply(
-                (target) =>
-                    Object.values(target).map((target) => ({
-                        targetGroupArn: target.arn,
-                        containerName: "Elysia",
-                        containerPort: target.port.apply(
-                            (port) => port as number
-                        ),
-                    }))
-            ),
-        },
-    },
-});
+    });
+}
 
 // Expose a few helper on the sst console
 if ($dev) {

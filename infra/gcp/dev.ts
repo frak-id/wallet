@@ -37,6 +37,7 @@ export const backend = new sst.x.DevCommand("backend", {
     environment: {
         ...elysiaEnv,
         ...dbEnv,
+        DOMAIN_NAME: "",
     },
 });
 export const dbGcpStudio = new sst.x.DevCommand(

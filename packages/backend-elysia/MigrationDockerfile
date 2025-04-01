@@ -3,9 +3,13 @@ FROM oven/bun
 
 WORKDIR /monorepo
 
+# Copy the whole monorepo
+COPY . .
+
 # Install dependencies and build the project
 RUN bun install --frozen-lockfile 
 
+# Set the environment variables
 ENV NODE_ENV=production
 
 # Run the migration

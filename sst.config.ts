@@ -28,7 +28,7 @@ export default $config({
 
         // If on gcp, only deploy the backend
         if (isGcp) {
-            // await import("./infra/gcp/backend.ts");
+            await import("./infra/gcp/backend.ts");
             return;
         }
 
