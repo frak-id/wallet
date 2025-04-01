@@ -105,7 +105,7 @@
         },
         "wallet": {
             "login": {
-                "text": "Create your wallet with **{{ productName }}** and receive up to **{{ estimatedReward }}€** per referred friend",
+                "text": "Create your wallet with **{{ productName }}** and receive up to **{{ estimatedReward }}** per referred friend",
                 "primaryAction": "I create my wallet"
             },
             "loggedIn": {
