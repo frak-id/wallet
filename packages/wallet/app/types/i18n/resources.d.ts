@@ -292,6 +292,13 @@ interface Resources {
                 };
             };
         };
+        error: {
+            webauthn: {
+                notAllowed: "You have cancelled the authentication process, please try again.";
+                userOperationExecution: "An error occurred while executing the transaction. Please try again.";
+                generic: "An error occurred. Please try again.";
+            };
+        };
     };
 }
 

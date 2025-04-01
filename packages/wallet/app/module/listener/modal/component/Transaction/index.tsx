@@ -1,3 +1,4 @@
+import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { AccordionTransactions } from "@/module/listener/modal/component/Transaction/AccordionTransactions";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
@@ -52,11 +53,7 @@ export function TransactionModalStep({
                 })}
             </AuthFingerprint>
 
-            {isError && (
-                <p className={`error ${styles.modalListener__error}`}>
-                    {error.message}
-                </p>
-            )}
+            {isError && error && <HandleErrors error={error} />}
         </>
     );
 }

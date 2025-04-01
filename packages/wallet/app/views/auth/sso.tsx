@@ -35,6 +35,7 @@ import { Link, useSearchParams } from "react-router";
 import type { Hex } from "viem";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
+import { HandleErrors } from "@/module/listener/component/HandleErrors";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -48,6 +49,11 @@ export default function Sso() {
      * The success state after login or register
      */
     const [success, setSuccess] = useState(false);
+
+    /**
+     * The error state
+     */
+    const [error, setError] = useState<Error | null>(null);
 
     /**
      * Get the search params and set stuff in the sso context
@@ -169,7 +175,9 @@ export default function Sso() {
                 }
             >
                 <Header />
-                {!success && <Actions onSuccess={onSuccess} />}
+                {!success && (
+                    <Actions onSuccess={onSuccess} onError={setError} />
+                )}
                 {success && (
                     <>
                         <p className={styles.sso__redirect}>
@@ -190,6 +198,7 @@ export default function Sso() {
                         </button>
                     </>
                 )}
+                {error && <HandleErrors error={error} />}
             </Grid>
         </>
     );
@@ -251,11 +260,18 @@ function Header() {
     );
 }
 
-function Actions({ onSuccess }: { onSuccess: () => void }) {
+function Actions({
+    onSuccess,
+    onError,
+}: {
+    onSuccess: () => void;
+    onError: (error: Error | null) => void;
+}) {
     const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
     const privateKey = useAtomValue(demoPrivateKeyAtom);
     const { login, isLoginInProgress } = useLoginDemo({
         onSuccess: () => onSuccess(),
+        onError: (error: Error | null) => onError(error),
     });
     const { t } = useTranslation();
 
@@ -294,6 +310,7 @@ function Actions({ onSuccess }: { onSuccess: () => void }) {
                 </p>
                 <SsoLoginComponent
                     onSuccess={onSuccess}
+                    onError={onError}
                     isPrimary={true}
                     lastAuthentication={{
                         wallet: lastAuthenticator.address,
@@ -301,7 +318,11 @@ function Actions({ onSuccess }: { onSuccess: () => void }) {
                         transports: lastAuthenticator.transports,
                     }}
                 />
-                <SsoRegisterComponent onSuccess={onSuccess} isPrimary={false} />
+                <SsoRegisterComponent
+                    onSuccess={onSuccess}
+                    onError={onError}
+                    isPrimary={false}
+                />
             </>
         );
     }
@@ -309,8 +330,16 @@ function Actions({ onSuccess }: { onSuccess: () => void }) {
     // If no previous wallet
     return (
         <>
-            <SsoRegisterComponent onSuccess={onSuccess} isPrimary={true} />
-            <SsoLoginComponent onSuccess={onSuccess} isPrimary={false} />
+            <SsoRegisterComponent
+                onSuccess={onSuccess}
+                onError={onError}
+                isPrimary={true}
+            />
+            <SsoLoginComponent
+                onSuccess={onSuccess}
+                onError={onError}
+                isPrimary={false}
+            />
         </>
     );
 }

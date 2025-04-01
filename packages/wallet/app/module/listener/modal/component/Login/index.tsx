@@ -3,6 +3,7 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { trackEvent } from "@/module/common/utils/trackEvent";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
+import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { SsoButton } from "@/module/listener/component/SsoButton";
 import { DismissButton } from "@/module/listener/modal/component/Generic";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
@@ -108,11 +109,7 @@ export function LoginModalStep({
                 </p>
             )}
 
-            {isError && error && (
-                <p className={`error ${styles.modalListener__error}`}>
-                    {error.message}
-                </p>
-            )}
+            {isError && error && <HandleErrors error={error} />}
         </>
     );
 }

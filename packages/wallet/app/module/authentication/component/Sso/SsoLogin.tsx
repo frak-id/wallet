@@ -15,16 +15,19 @@ import styles from "./index.module.css";
 export function SsoLoginComponent({
     isPrimary,
     onSuccess,
+    onError,
     lastAuthentication,
 }: {
     isPrimary: boolean;
     onSuccess: () => void;
+    onError: (error: Error | null) => void;
     lastAuthentication?: PreviousAuthenticatorModel;
 }) {
     const ssoId = useAtomValue(ssoContextAtom)?.id;
     const { t } = useTranslation();
     const { login, isLoading } = useLogin({
         onSuccess: () => onSuccess(),
+        onError: (error: Error) => onError(error),
         ssoId,
     });
 
@@ -35,6 +38,9 @@ export function SsoLoginComponent({
                     icon={<Fingerprint color={"#fff"} sizes={39} />}
                     isShiny={false}
                     action={() => {
+                        // Reset the error
+                        onError(null);
+
                         login({ lastAuthentication }).then(() => {
                             trackEvent("cta-sso-login");
                         });
@@ -55,6 +61,9 @@ export function SsoLoginComponent({
                 className={styles.sso__buttonLink}
                 disabled={isLoading}
                 onClick={() => {
+                    // Reset the error
+                    onError(null);
+
                     login({ lastAuthentication }).then(() => {
                         trackEvent("cta-sso-login");
                     });

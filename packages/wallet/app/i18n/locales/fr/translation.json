@@ -289,5 +289,12 @@
                 "button": "Découvrir le Fanclub"
             }
         }
+    },
+    "error": {
+        "webauthn": {
+            "notAllowed": "Vous avez annulé le processus d'authentification, veuillez réessayer.",
+            "userOperationExecution": "Une erreur est survenue lors de l'exécution de la transaction. Veuillez réessayer.",
+            "generic": "Une erreur est survenue. Veuillez réessayer."
+        }
     }
 }

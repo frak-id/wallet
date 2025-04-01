@@ -1,4 +1,5 @@
 import { trackEvent } from "@/module/common/utils/trackEvent";
+import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
@@ -103,11 +104,7 @@ export function OpenSessionModalStep({
                 </div>
             </div>
 
-            {isError && error && (
-                <p className={`error ${styles.modalListener__error}`}>
-                    {error.message}
-                </p>
-            )}
+            {isError && error && <HandleErrors error={error} />}
         </>
     );
 }

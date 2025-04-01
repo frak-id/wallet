@@ -16,12 +16,18 @@ import styles from "./index.module.css";
 export function SsoRegisterComponent({
     isPrimary,
     onSuccess,
-}: { isPrimary: boolean; onSuccess: () => void }) {
+    onError,
+}: {
+    isPrimary: boolean;
+    onSuccess: () => void;
+    onError: (error: Error | null) => void;
+}) {
     const { t } = useTranslation();
     const ssoId = useAtomValue(ssoContextAtom)?.id;
     const { register, error, isRegisterInProgress } = useRegister({
         ssoId,
         onSuccess: () => onSuccess(),
+        onError: (error: Error) => onError(error),
     });
 
     /**
@@ -59,6 +65,9 @@ export function SsoRegisterComponent({
                     icon={<Fingerprint color={"#fff"} sizes={39} />}
                     isShiny={false}
                     action={() => {
+                        // Reset the error
+                        onError(null);
+
                         register().then(() => {
                             trackEvent("cta-sso-register");
                         });
@@ -85,6 +94,9 @@ export function SsoRegisterComponent({
                     isRegisterInProgress || isPreviouslyUsedAuthenticatorError
                 }
                 onClick={() => {
+                    // Reset the error
+                    onError(null);
+
                     register().then(() => {
                         trackEvent("cta-sso-register");
                     });
