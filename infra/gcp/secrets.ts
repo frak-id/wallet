@@ -8,7 +8,7 @@ import {
     vapidPublicKey,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
-import { backendNamespace, domainName } from "./utils";
+import { domainName } from "./utils";
 
 const dbStage = normalizedStageName === "production" ? "production" : "staging";
 
@@ -68,35 +68,3 @@ export const elysiaEnv = {
     WORLD_NEWS_API_KEY: new sst.Secret("WORLD_NEWS_API_KEY").value,
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
 };
-
-/**
- * All the secrets for the elysia instance
- * todo: KMS master key? Bedrock LLM?
- */
-export const elysiaSecrets = new kubernetes.core.v1.Secret("elysia-secrets", {
-    metadata: {
-        name: `elysia-secrets-${normalizedStageName}`,
-        namespace: backendNamespace.metadata.name,
-    },
-    type: "Opaque",
-    stringData: elysiaEnv,
-});
-
-export const dbMigrationSecrets = new kubernetes.core.v1.Secret(
-    "db-migration-secret",
-    {
-        metadata: {
-            name: `db-migration-section-${normalizedStageName}`,
-            namespace: backendNamespace.metadata.name,
-        },
-        type: "Opaque",
-        stringData: {
-            STAGE: normalizedStageName,
-            // Postgres related
-            POSTGRES_DB: "wallet-backend",
-            POSTGRES_USER: `wallet-backend_${normalizedStageName}`,
-            POSTGRES_PASSWORD: dbPassword,
-            POSTGRES_HOST: dbInstance.privateIpAddress,
-        },
-    }
-);

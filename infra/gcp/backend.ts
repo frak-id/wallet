@@ -1,12 +1,48 @@
 import { KubernetesJob } from "../components/KubernetesJob";
 import { KubernetesService } from "../components/KubernetesService";
+import { normalizedStageName } from "../utils";
 import { elysiaImage, migrationImage } from "./images";
-import { dbMigrationSecrets, elysiaSecrets } from "./secrets";
-import { backendNamespace, domainName } from "./utils";
+import { elysiaEnv, postgresEnv } from "./secrets";
+import { domainName } from "./utils";
 
 const appLabels = { app: "elysia" };
 
-// todo: job handling db migration stuff
+// Create a dedicated namespace for backend
+export const backendNamespace = new kubernetes.core.v1.Namespace(
+    "infra-wallet",
+    {
+        metadata: { name: "infra-wallet" },
+    }
+);
+
+/**
+ * All the secrets for the elysia instance
+ */
+const elysiaSecrets = new kubernetes.core.v1.Secret("elysia-secrets", {
+    metadata: {
+        name: `elysia-secrets-${normalizedStageName}`,
+        namespace: backendNamespace.metadata.name,
+    },
+    type: "Opaque",
+    stringData: elysiaEnv,
+});
+
+const dbMigrationSecrets = new kubernetes.core.v1.Secret(
+    "db-migration-secret",
+    {
+        metadata: {
+            name: `db-migration-section-${normalizedStageName}`,
+            namespace: backendNamespace.metadata.name,
+        },
+        type: "Opaque",
+        stringData: {
+            STAGE: normalizedStageName,
+            // Postgres related
+            ...postgresEnv,
+        },
+    }
+);
+
 /**
  * Create the db migration job
  */
