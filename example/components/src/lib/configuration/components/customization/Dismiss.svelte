@@ -16,6 +16,7 @@
     FormButton,
   } from "$lib/components/ui/form";
   import PreviewDismiss from "$lib/configuration/components/customization/PreviewDismiss.svelte";
+  import { saveInLocalstorage } from "$lib/configuration/utils/saveInLocalstorage.svelte";
 
   let { lang = "en" }: { lang?: Language } = $props();
 
@@ -55,6 +56,9 @@
       toast.success(
         `Customization settings saved for ${getLanguageLabel(lang)}`,
       );
+
+      // Finalize save in localstorage
+      saveInLocalstorage();
     },
   });
 

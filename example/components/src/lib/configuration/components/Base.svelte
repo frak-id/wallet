@@ -21,6 +21,7 @@
   } from "$lib/components/ui/select";
   import { toast } from "svelte-sonner";
   import { config } from "$lib/configuration/state/config.svelte";
+  import { saveInLocalstorage } from "$lib/configuration/utils/saveInLocalstorage.svelte";
 
   const data = defaults(typebox(baseFormSchema), {
     defaults: {
@@ -43,6 +44,9 @@
 
       // Show a success toast
       toast.success("Base settings saved");
+
+      // Finalize save in localstorage
+      saveInLocalstorage();
     },
   });
 

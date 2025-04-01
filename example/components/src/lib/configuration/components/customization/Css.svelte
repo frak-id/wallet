@@ -13,6 +13,7 @@
     FormFieldErrors,
     FormButton,
   } from "$lib/components/ui/form";
+  import { saveInLocalstorage } from "$lib/configuration/utils/saveInLocalstorage.svelte";
 
   const data = defaults(typebox(cssFormSchema), {
     defaults: {
@@ -36,6 +37,9 @@
 
       // Show a success toast
       toast.success(`Customization CSS settings saved`);
+
+      // Finalize save in localstorage
+      saveInLocalstorage();
     },
   });
 

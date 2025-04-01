@@ -6,14 +6,25 @@
 
 <svelte:head>
   <script>
-    window.FrakSetup = {
-      config: {
-        walletUrl: "https://wallet-dev.frak.id",
-        metadata: {
-          name: "Example components",
+    const config = localStorage.getItem("frak-wallet-sdk-config");
+
+    if (config) {
+      window.FrakSetup = {
+        config: {
+          walletUrl: "https://wallet-dev.frak.id",
+          ...JSON.parse(config),
         },
-      },
-    };
+      };
+    } else {
+      window.FrakSetup = {
+        config: {
+          walletUrl: "https://wallet-dev.frak.id",
+          metadata: {
+            name: "Example components",
+          },
+        },
+      };
+    }
   </script>
   <script
     type="text/javascript"
