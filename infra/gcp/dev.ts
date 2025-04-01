@@ -1,9 +1,7 @@
 import { dbInstance, elysiaEnv, postgresEnv } from "./secrets";
 
 // Local port is a random number between 8000 and 9999
-const localPort = $output(Math.floor(Math.random() * 2000) + 8000).apply(
-    (port) => port.toString()
-);
+const localPort = "8888";
 
 // Launch the tunnel
 const tunnelCmd = new sst.x.DevCommand("db-tunnel", {

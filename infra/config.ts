@@ -36,7 +36,7 @@ export const erpcUrl = isProd
     : "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/";
 export const backendUrl = getStaticVariable({
     prod: "https://backend.frak.id",
-    dev: "https://backend-dev.frak.id",
+    dev: "https://backend.gcp-dev.frak.id",
     local: "http://localhost:3030",
 });
 export const walletUrl = getStaticVariable({
