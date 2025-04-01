@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Login from "./Login.svelte";
-  import Activation from "./Activation.svelte";
-  import Dismiss from "./Dismiss.svelte";
-  import Css from "./Css.svelte";
-  import Final from "./Final.svelte";
+  import Login from "./customization/Login.svelte";
+  import Activation from "./customization/Activation.svelte";
+  import Dismiss from "./customization/Dismiss.svelte";
+  import Css from "./customization/Css.svelte";
+  import Final from "./customization/Final.svelte";
   import {
     Accordion,
     AccordionContent,

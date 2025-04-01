@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Preview from "./Preview.svelte";
   import { Input } from "$lib/components/ui/input";
   import { config } from "$lib/configuration/state/config.svelte";
   import { toast } from "svelte-sonner";
@@ -7,7 +6,7 @@
   import { getLanguageLabel } from "$lib/configuration/utils/languages";
   import { defaults, superForm } from "sveltekit-superforms";
   import { typeboxClient, typebox } from "sveltekit-superforms/adapters";
-  import { loginFormSchema } from "$lib/configuration/schemas/customization";
+  import { activationFormSchema } from "$lib/configuration/schemas/customization";
   import {
     FormField,
     FormControl,
@@ -16,27 +15,28 @@
     FormFieldErrors,
     FormButton,
   } from "$lib/components/ui/form";
+  import Preview from "$lib/configuration/components/customization/Preview.svelte";
 
   let { lang = "en" }: { lang?: Language } = $props();
 
   // Get the default data for the language
   const defaultDataLang = config.customizations.i18n[lang];
 
-  const data = defaults(typebox(loginFormSchema), {
+  const data = defaults(typebox(activationFormSchema), {
     defaults: {
-      description: defaultDataLang?.["sdk.modal.login.description"] ?? "",
-      primaryAction: defaultDataLang?.["sdk.modal.login.primaryAction"] ?? "",
-      success: defaultDataLang?.["sdk.modal.login.successAction"] ?? "",
+      description: defaultDataLang?.["sdk.modal.openSession.description"] ?? "",
+      primaryAction:
+        defaultDataLang?.["sdk.modal.openSession.primaryAction"] ?? "",
     },
   });
 
   const form = superForm(data, {
-    id: `login-form-${lang}`,
+    id: `activation-form-${lang}`,
     dataType: "json",
     SPA: true,
     resetForm: false,
     clearOnSubmit: "errors-and-message",
-    validators: typeboxClient(loginFormSchema),
+    validators: typeboxClient(activationFormSchema),
     onUpdate({ form }) {
       // If the form is not valid, return
       if (!form.valid) return;
@@ -50,8 +50,9 @@
       const langData = config.customizations.i18n[lang];
 
       // Update the language data
-      langData["sdk.modal.login.description"] = form.data?.description ?? "";
-      langData["sdk.modal.login.primaryAction"] =
+      langData["sdk.modal.openSession.description"] =
+        form.data?.description ?? "";
+      langData["sdk.modal.openSession.primaryAction"] =
         form.data?.primaryAction ?? "";
 
       // Show a success toast
@@ -64,7 +65,7 @@
   const { form: formData, enhance } = form;
 </script>
 
-<div class="grid gap-10 grid-cols-2 w-full">
+<div class="grid gap-10 grid-cols-2 w-full p-1">
   <Preview formData={$formData} {lang} />
 
   <form use:enhance class="grid gap-4">
@@ -90,19 +91,6 @@
       </FormControl>
       <FormDescription>
         Primary action of the login screen (<strong>optional</strong>).
-      </FormDescription>
-      <FormFieldErrors />
-    </FormField>
-
-    <FormField {form} name="success" class="grid gap-1">
-      <FormControl>
-        {#snippet children({ props })}
-          <FormLabel>Success message</FormLabel>
-          <Input {...props} bind:value={$formData.success} />
-        {/snippet}
-      </FormControl>
-      <FormDescription>
-        Success message of the login screen (<strong>optional</strong>).
       </FormDescription>
       <FormFieldErrors />
     </FormField>

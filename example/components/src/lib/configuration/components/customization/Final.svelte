@@ -15,7 +15,8 @@
     FormFieldErrors,
     FormButton,
   } from "$lib/components/ui/form";
-  import PreviewFinal from "./PreviewFinal.svelte";
+  import PreviewFinal from "$lib/configuration/components/customization/PreviewFinal.svelte";
+
   let { lang = "en" }: { lang?: Language } = $props();
 
   // Get the default data for the language
@@ -65,7 +66,7 @@
   const { form: formData, enhance } = form;
 </script>
 
-<div class="grid gap-10 grid-cols-2 w-full">
+<div class="grid gap-10 grid-cols-2 w-full p-1">
   <PreviewFinal formData={$formData} {lang} />
 
   <form use:enhance class="grid gap-4">

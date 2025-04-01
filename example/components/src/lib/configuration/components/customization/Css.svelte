@@ -2,8 +2,6 @@
   import { Input } from "$lib/components/ui/input";
   import { config } from "$lib/configuration/state/config.svelte";
   import { toast } from "svelte-sonner";
-  import type { Language } from "@frak-labs/core-sdk";
-  import { getLanguageLabel } from "$lib/configuration/utils/languages";
   import { defaults, superForm } from "sveltekit-superforms";
   import { typeboxClient, typebox } from "sveltekit-superforms/adapters";
   import { cssFormSchema } from "$lib/configuration/schemas/customization";
@@ -15,8 +13,6 @@
     FormFieldErrors,
     FormButton,
   } from "$lib/components/ui/form";
-
-  let { lang = "en" }: { lang?: Language } = $props();
 
   const data = defaults(typebox(cssFormSchema), {
     defaults: {
@@ -46,7 +42,7 @@
   const { form: formData, enhance } = form;
 </script>
 
-<div class="grid gap-10 grid-cols-2 w-full">
+<div class="grid gap-10 grid-cols-2 w-full p-1">
   <form use:enhance class="grid gap-4">
     <FormField {form} name="css" class="grid gap-1">
       <FormControl>

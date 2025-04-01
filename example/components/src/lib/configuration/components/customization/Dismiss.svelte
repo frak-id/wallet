@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Preview from "./Preview.svelte";
   import { Input } from "$lib/components/ui/input";
   import { config } from "$lib/configuration/state/config.svelte";
   import { toast } from "svelte-sonner";
@@ -7,7 +6,7 @@
   import { getLanguageLabel } from "$lib/configuration/utils/languages";
   import { defaults, superForm } from "sveltekit-superforms";
   import { typeboxClient, typebox } from "sveltekit-superforms/adapters";
-  import { activationFormSchema } from "$lib/configuration/schemas/customization";
+  import { dismissFormSchema } from "$lib/configuration/schemas/customization";
   import {
     FormField,
     FormControl,
@@ -16,27 +15,26 @@
     FormFieldErrors,
     FormButton,
   } from "$lib/components/ui/form";
+  import PreviewDismiss from "$lib/configuration/components/customization/PreviewDismiss.svelte";
 
   let { lang = "en" }: { lang?: Language } = $props();
 
   // Get the default data for the language
   const defaultDataLang = config.customizations.i18n[lang];
 
-  const data = defaults(typebox(activationFormSchema), {
+  const data = defaults(typebox(dismissFormSchema), {
     defaults: {
-      description: defaultDataLang?.["sdk.modal.openSession.description"] ?? "",
-      primaryAction:
-        defaultDataLang?.["sdk.modal.openSession.primaryAction"] ?? "",
+      primaryAction: defaultDataLang?.["sdk.modal.dismiss.primaryAction"] ?? "",
     },
   });
 
   const form = superForm(data, {
-    id: `activation-form-${lang}`,
+    id: `dismiss-form-${lang}`,
     dataType: "json",
     SPA: true,
     resetForm: false,
     clearOnSubmit: "errors-and-message",
-    validators: typeboxClient(activationFormSchema),
+    validators: typeboxClient(dismissFormSchema),
     onUpdate({ form }) {
       // If the form is not valid, return
       if (!form.valid) return;
@@ -50,9 +48,7 @@
       const langData = config.customizations.i18n[lang];
 
       // Update the language data
-      langData["sdk.modal.openSession.description"] =
-        form.data?.description ?? "";
-      langData["sdk.modal.openSession.primaryAction"] =
+      langData["sdk.modal.dismiss.primaryAction"] =
         form.data?.primaryAction ?? "";
 
       // Show a success toast
@@ -65,23 +61,10 @@
   const { form: formData, enhance } = form;
 </script>
 
-<div class="grid gap-10 grid-cols-2 w-full">
-  <Preview formData={$formData} {lang} />
+<div class="grid gap-10 grid-cols-2 w-full p-1">
+  <PreviewDismiss formData={$formData} {lang} />
 
   <form use:enhance class="grid gap-4">
-    <FormField {form} name="description" class="grid gap-1">
-      <FormControl>
-        {#snippet children({ props })}
-          <FormLabel>Description</FormLabel>
-          <Input {...props} bind:value={$formData.description} />
-        {/snippet}
-      </FormControl>
-      <FormDescription>
-        Description of the login screen (<strong>optional</strong>).
-      </FormDescription>
-      <FormFieldErrors />
-    </FormField>
-
     <FormField {form} name="primaryAction" class="grid gap-1">
       <FormControl>
         {#snippet children({ props })}
@@ -90,7 +73,7 @@
         {/snippet}
       </FormControl>
       <FormDescription>
-        Primary action of the login screen (<strong>optional</strong>).
+        Primary action of the dismiss screen (<strong>optional</strong>).
       </FormDescription>
       <FormFieldErrors />
     </FormField>
