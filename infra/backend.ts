@@ -1,7 +1,16 @@
 import * as aws from "@pulumi/aws";
 import { Output, all } from "@pulumi/pulumi";
 import { ServiceTargets } from "./components/ServiceTargets.ts";
-import { erpcUrl, indexerUrl, isProd, vpc } from "./config";
+import { erpcUrl, indexerUrl } from "./config";
+import { isProd } from "./utils.ts";
+
+// Get the VPC
+const vpcId = $output(
+    aws.ec2.getVpc({
+        filters: [{ name: "tag:Name", values: ["master-vpc"] }],
+    })
+).apply((vpc) => vpc.id);
+export const vpc = sst.aws.Vpc.get("MasterVpc", vpcId);
 
 // Get the master cluster
 const clusterName = `master-cluster-${isProd ? "production" : "dev"}`;
@@ -120,11 +129,11 @@ new sst.aws.Service("Elysia", {
     cluster: sstCluster,
     // Development configuration
     //  todo: Find a way to link SSM parameters to the dev env
-    dev: {
-        autostart: true,
-        directory: "packages/backend-elysia",
-        command: "bun run dev",
-    },
+    // dev: {
+    //     autostart: true,
+    //     directory: "packages/backend-elysia",
+    //     command: "bun run dev",
+    // },
     // hardware config
     cpu: isProd ? "0.5 vCPU" : "0.25 vCPU",
     memory: isProd ? "1 GB" : "0.5 GB",

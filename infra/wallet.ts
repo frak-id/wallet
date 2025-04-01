@@ -3,13 +3,13 @@ import {
     drpcApiKey,
     erpcUrl,
     indexerUrl,
-    isProd,
     nexusRpcSecret,
     pimlicoApiKey,
     privyAppId,
     umamiWalletWebsiteId,
     vapidPublicKey,
 } from "./config";
+import { isProd } from "./utils";
 
 const subdomain = isProd ? "wallet" : "wallet-dev";
 

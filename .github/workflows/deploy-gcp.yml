@@ -1,4 +1,4 @@
-name: 🚀 Deploy
+name: 🚀 Deploy GCP
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
       - main
       - dev
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency: ${{ github.workflow }}-${{ github.ref }}-gcp
 
 env:
   CI: true
@@ -45,6 +45,17 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Cache SST
+        id: sst-caching
+        uses: actions/cache@v4
+        with:
+          path: | 
+            .sst/platform/
+            .sst/provider-lock.json
+            .sst/esbuild.json
+          key: ${{ runner.os }}-sst-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-
+
       - uses: dorny/paths-filter@v3
         name: Check changes
         id: changes
@@ -52,9 +63,6 @@ jobs:
           base: ${{ github.ref }}
           list-files: 'shell'
           filters: |
-            deployRequired:
-              - 'packages/**'
-              - 'example/**'
             backend:
               - 'packages/backend-elysia/**'
 
@@ -71,15 +79,15 @@ jobs:
           platforms: linux/arm64
 
       - name: "🔨 Install dependencies"
-        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
+        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         run: bun install --frozen-lockfile
 
       - name: "🔨 Build the SDK"
-        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
+        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         run: bun run build:sdk
 
       - name: "👥 Configure AWS Credentials"
-        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
+        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
@@ -87,52 +95,42 @@ jobs:
           retry-max-attempts: 5
 
       - name:  "👥 Login to Amazon ECR"
-        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
+        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+
+      - name: "👥 Login to Google Cloud"
+        uses: 'google-github-actions/auth@v2'
+        id: 'auth'
+        with:
+          workload_identity_provider: 'projects/426208135260/locations/global/workloadIdentityPools/github/providers/sst-deployer'
+          service_account: 'sst-service-account@frak-main-v1.iam.gserviceaccount.com'
+          project_id: 'frak-main-v1'
+  
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          project_id: 'frak-main-v1'
+          install_components: 'kubectl,gke-gcloud-auth-plugin'
+
+      - name: 'Docker and k8s Auth'
+        run: |
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
+          gcloud container clusters get-credentials master-cluster --location europe-west1-b --project frak-main-v1
+
       - name: "🔧 Setup environment"
-        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
+        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         shell: bash
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "STAGE=prod" >> $GITHUB_ENV
-            echo "ELYSIA_REPO=backend-elysia-prod" >> $GITHUB_ENV
+            echo "STAGE=gcp-production" >> $GITHUB_ENV
           else
-            echo "STAGE=dev" >> $GITHUB_ENV
-            echo "ELYSIA_REPO=backend-elysia-dev" >> $GITHUB_ENV
+            echo "STAGE=gcp-staging" >> $GITHUB_ENV
           fi
-
-          if [[ "${{ steps.changes.outputs.backend }}" == "true" ]]; then
-            echo "BACKEND_IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
-          else
-            echo "BACKEND_IMAGE_TAG=latest" >> $GITHUB_ENV
-          fi
-
-          echo "Deployment stage  : ${{ env.STAGE }}"
-          echo "Elysia rep        : ${{ env.ELYSIA_REPO }}"
-          echo "Backend image tag : ${{ env.BACKEND_IMAGE_TAG }}"
-
-      - name: "🔨 Build Elysia backend"
-        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
-        uses: docker/build-push-action@v6
-        with:
-          file: ./packages/backend-elysia/Dockerfile
-          platforms: linux/arm64
-          push: true
-          tags: |
-            262732185023.dkr.ecr.eu-west-1.amazonaws.com/${{ env.ELYSIA_REPO }}:latest
-            262732185023.dkr.ecr.eu-west-1.amazonaws.com/${{ env.ELYSIA_REPO }}:${{ github.sha }}
-          # Github actions cache
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
-          build-args: |
-            STAGE=${{ env.STAGE }}
-        env:
-          STAGE: ${{ env.STAGE }}
 
       - name: "🚀 SST Deploy"
-        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
+        if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'
         run: |
           STAGE=${STAGE_OVERRIDE:-$STAGE}
           echo "Deploying with stage: $STAGE"
@@ -140,5 +138,3 @@ jobs:
           bun sst deploy --stage $STAGE
         env:
           STAGE: ${{ env.STAGE }}
-          ELYSIA_REPO: ${{ env.ELYSIA_REPO }}
-          BACKEND_IMAGE_TAG: ${{ env.BACKEND_IMAGE_TAG }}

@@ -5,10 +5,6 @@ export type NewsDocument = {
     _id?: string;
     title: string;
     text: string;
-    origin: {
-        text: string;
-        summary?: string;
-    };
     summary: string;
     image: string;
     sourceCountry: string;

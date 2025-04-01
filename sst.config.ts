@@ -11,9 +11,27 @@ export default $config({
                     region: "eu-west-1",
                 },
             },
+            providers: {
+                kubernetes: "4.22.1",
+                "docker-build": "0.0.10",
+                gcp: {
+                    version: "8.22.0",
+                    project: "frak-main-v1",
+                    region: "europe-west1",
+                },
+                docker: "4.6.1",
+            },
         };
     },
     async run() {
+        const isGcp = $app?.stage?.startsWith("gcp");
+
+        // If on gcp, only deploy the backend
+        if (isGcp) {
+            // await import("./infra/gcp/backend.ts");
+            return;
+        }
+
         // Some config
         await import("./infra/config.ts");
 
@@ -27,6 +45,9 @@ export default $config({
                     directory: "./",
                 },
             });
+
+            // Gcp dev stuff
+            await import("./infra/gcp/dev.ts");
         }
 
         // Deploy backend
