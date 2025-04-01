@@ -5,29 +5,34 @@
 
   const defaultValues = {
     en: {
-      description: "Connect to your account with **{{ productName }}**",
-      primaryAction: "Create my wallet",
+      description: "You've successfully completed all the steps.",
+      dismissed: {
+        description: "All good",
+      },
     },
     fr: {
-      description: "Connectez-vous à votre compte avec **{{ productName }}**",
-      primaryAction: "Créer mon porte-monnaie",
+      description: "Vous avez effectué toutes les étapes avec succès.",
+      dismissed: {
+        description: "Tout est bon",
+      },
     },
   };
 
   const description = $derived(
     formData.description || defaultValues[lang].description,
   );
-  const primaryAction = $derived(
-    formData.primaryAction || defaultValues[lang].primaryAction,
+  const dismissedDescription = $derived(
+    formData.dismissed?.description ||
+      defaultValues[lang].dismissed.description,
   );
 </script>
 
 <div>
   <div class="share-modal">
-    <p>{description}</p>
+    <p class="description">{description}</p>
     <p class="button-container">
       <button type="button" class="button-primary">
-        {primaryAction}
+        {dismissedDescription}
       </button>
     </p>
   </div>
@@ -42,26 +47,25 @@
     color: #fff;
   }
 
+  .description {
+    margin-bottom: 25px;
+  }
+
   .button-container {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    right: 0;
     display: flex;
     justify-content: center;
     margin-top: 40px;
   }
 
   .button-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    max-width: 80%;
-    border: 1px solid transparent;
-    padding: 5px 10px;
-    border-radius: 8px;
+    all: unset;
     cursor: pointer;
-    line-height: 24px;
-    text-align: center;
-    background-color: #fff;
-    color: #000;
+    text-decoration: underline;
+    display: inline-flex;
+    gap: 8px;
   }
 </style>

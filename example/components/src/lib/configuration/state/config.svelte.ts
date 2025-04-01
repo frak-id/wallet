@@ -10,6 +10,7 @@ export const config = $state<{
         homepageLink?: string;
     };
     customizations: {
+        css?: string;
         i18n: Record<
             string,
             {

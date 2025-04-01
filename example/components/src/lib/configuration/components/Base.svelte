@@ -29,6 +29,7 @@
   });
 
   const form = superForm(data, {
+    id: `base-form`,
     dataType: "json",
     SPA: true,
     resetForm: false,
@@ -63,89 +64,98 @@
   );
 </script>
 
-<form use:enhance class="grid gap-4 w-1/2">
-  <FormField {form} name="metadata.name" class="grid gap-1">
-    <FormControl>
-      {#snippet children({ props })}
-        <FormLabel>App Name</FormLabel>
-        <Input {...props} bind:value={$formData.metadata.name} />
-      {/snippet}
-    </FormControl>
-    <FormDescription
-      >App Name is <strong>required</strong> and will be used as the title of the
-      app.
-    </FormDescription>
-    <FormFieldErrors />
-  </FormField>
+<div class="container">
+  <form use:enhance class="grid gap-4">
+    <FormField {form} name="metadata.name" class="grid gap-1">
+      <FormControl>
+        {#snippet children({ props })}
+          <FormLabel>App Name</FormLabel>
+          <Input {...props} bind:value={$formData.metadata.name} />
+        {/snippet}
+      </FormControl>
+      <FormDescription
+        >App Name is <strong>required</strong> and will be used as the title of the
+        app.
+      </FormDescription>
+      <FormFieldErrors />
+    </FormField>
 
-  <FormField {form} name="metadata.lang" class="grid gap-1">
-    <FormControl>
-      <FormLabel>Language</FormLabel>
-      <Select
-        type="single"
-        bind:value={$formData.metadata.lang}
-        name="metadata.lang"
-      >
-        <SelectTrigger class="w-[180px]">{selectedLanguage}</SelectTrigger>
-        <SelectContent>
-          {#each languages as language}
-            <SelectItem value={language.value}>{language.label}</SelectItem>
-          {/each}
-        </SelectContent>
-      </Select>
-    </FormControl>
-    <FormDescription>
-      Language of the app (<strong>optional</strong>).<br /> It will be used to
-      display the app in the correct language.<br />By default, the language
-      will be the language of the browser.
-    </FormDescription>
-  </FormField>
+    <FormField {form} name="metadata.lang" class="grid gap-1">
+      <FormControl>
+        <FormLabel>Language</FormLabel>
+        <Select
+          type="single"
+          bind:value={$formData.metadata.lang}
+          name="metadata.lang"
+        >
+          <SelectTrigger class="w-[180px]">{selectedLanguage}</SelectTrigger>
+          <SelectContent>
+            {#each languages as language}
+              <SelectItem value={language.value}>{language.label}</SelectItem>
+            {/each}
+          </SelectContent>
+        </Select>
+      </FormControl>
+      <FormDescription>
+        Language of the app (<strong>optional</strong>).<br /> It will be used
+        to display the app in the correct language.<br />By default, the
+        language will be the language of the browser.
+      </FormDescription>
+    </FormField>
 
-  <FormField {form} name="metadata.currency" class="grid gap-1">
-    <FormControl>
-      <FormLabel>Currency</FormLabel>
-      <Select
-        type="single"
-        bind:value={$formData.metadata.currency}
-        name="metadata.currency"
-      >
-        <SelectTrigger class="w-[180px]">{selectedCurrency}</SelectTrigger>
-        <SelectContent>
-          {#each currencies as currency}
-            <SelectItem value={currency.value}>{currency.label}</SelectItem>
-          {/each}
-        </SelectContent>
-      </Select>
-    </FormControl>
-    <FormDescription>
-      Currency of the app (<strong>optional</strong>).<br />
-      It will be used to display the app in the correct currency. By default, the
-      currency will be in Euro.
-    </FormDescription>
-  </FormField>
+    <FormField {form} name="metadata.currency" class="grid gap-1">
+      <FormControl>
+        <FormLabel>Currency</FormLabel>
+        <Select
+          type="single"
+          bind:value={$formData.metadata.currency}
+          name="metadata.currency"
+        >
+          <SelectTrigger class="w-[180px]">{selectedCurrency}</SelectTrigger>
+          <SelectContent>
+            {#each currencies as currency}
+              <SelectItem value={currency.value}>{currency.label}</SelectItem>
+            {/each}
+          </SelectContent>
+        </Select>
+      </FormControl>
+      <FormDescription>
+        Currency of the app (<strong>optional</strong>).<br />
+        It will be used to display the app in the correct currency. By default, the
+        currency will be in Euro.
+      </FormDescription>
+    </FormField>
 
-  <FormField {form} name="metadata.logoUrl" class="grid gap-1">
-    <FormControl>
-      <FormLabel>Logo URL</FormLabel>
-      <Input bind:value={$formData.metadata.logoUrl} />
-    </FormControl>
-    <FormDescription>
-      URL of your logo (<strong>optional</strong>).<br />
-      It will be used on modal and sso popup.
-    </FormDescription>
-    <FormFieldErrors />
-  </FormField>
+    <FormField {form} name="metadata.logoUrl" class="grid gap-1">
+      <FormControl>
+        <FormLabel>Logo URL</FormLabel>
+        <Input bind:value={$formData.metadata.logoUrl} />
+      </FormControl>
+      <FormDescription>
+        URL of your logo (<strong>optional</strong>).<br />
+        It will be used on modal and sso popup.
+      </FormDescription>
+      <FormFieldErrors />
+    </FormField>
 
-  <FormField {form} name="metadata.homepageLink" class="grid gap-1">
-    <FormControl>
-      <FormLabel>Homepage Link</FormLabel>
-      <Input bind:value={$formData.metadata.homepageLink} />
-    </FormControl>
-    <FormDescription>
-      URL of your homepage website (<strong>optional</strong>).<br />
-      It will be used as a link on logo.
-    </FormDescription>
-    <FormFieldErrors />
-  </FormField>
-  <FormButton>Submit</FormButton>
-</form>
+    <FormField {form} name="metadata.homepageLink" class="grid gap-1">
+      <FormControl>
+        <FormLabel>Homepage Link</FormLabel>
+        <Input bind:value={$formData.metadata.homepageLink} />
+      </FormControl>
+      <FormDescription>
+        URL of your homepage website (<strong>optional</strong>).<br />
+        It will be used as a link on logo.
+      </FormDescription>
+      <FormFieldErrors />
+    </FormField>
+    <FormButton>Submit</FormButton>
+  </form>
+</div>
+
+<style>
+  .container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+</style>

@@ -35,8 +35,17 @@
   });
 </script>
 
-<Card class="w-full">
-  <CardContent>
-    <pre>{code}</pre>
-  </CardContent>
-</Card>
+<div class="container">
+  <Card class="w-full">
+    <CardContent>
+      <pre>window.FrakSetup = {code}</pre>
+    </CardContent>
+  </Card>
+</div>
+
+<style>
+  .container {
+    margin: 0 auto;
+    width: auto;
+  }
+</style>

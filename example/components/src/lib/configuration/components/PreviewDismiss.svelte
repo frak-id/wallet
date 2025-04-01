@@ -5,18 +5,13 @@
 
   const defaultValues = {
     en: {
-      description: "Connect to your account with **{{ productName }}**",
-      primaryAction: "Create my wallet",
+      primaryAction: "Continue browsing",
     },
     fr: {
-      description: "Connectez-vous à votre compte avec **{{ productName }}**",
-      primaryAction: "Créer mon porte-monnaie",
+      primaryAction: "Je continue ma navigation",
     },
   };
 
-  const description = $derived(
-    formData.description || defaultValues[lang].description,
-  );
   const primaryAction = $derived(
     formData.primaryAction || defaultValues[lang].primaryAction,
   );
@@ -24,7 +19,6 @@
 
 <div>
   <div class="share-modal">
-    <p>{description}</p>
     <p class="button-container">
       <button type="button" class="button-primary">
         {primaryAction}
@@ -35,6 +29,7 @@
 
 <style>
   .share-modal {
+    position: relative;
     background-color: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(85px);
     padding: 25px 15px;
@@ -43,25 +38,20 @@
   }
 
   .button-container {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    right: 0;
     display: flex;
     justify-content: center;
     margin-top: 40px;
   }
 
   .button-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    max-width: 80%;
-    border: 1px solid transparent;
-    padding: 5px 10px;
-    border-radius: 8px;
+    all: unset;
     cursor: pointer;
-    line-height: 24px;
-    text-align: center;
-    background-color: #fff;
-    color: #000;
+    text-decoration: underline;
+    display: inline-flex;
+    gap: 8px;
   }
 </style>
