@@ -31,7 +31,6 @@ import { useMutation } from "@tanstack/react-query";
 import { tryit } from "radash";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";
-const isOnboarding = true;
 
 /**
  * View for the logged in user
@@ -85,7 +84,7 @@ function Balance({
             <p className={styles.balance__amount}>
                 {formatAmount(amount, currency)}
             </p>
-            {isOnboarding && <OnboardingWelcome />}
+            <OnboardingWelcome />
         </div>
     );
 }
@@ -99,6 +98,7 @@ function ActionButtons({
             params: { loggedIn },
         },
     } = useEmbeddedListenerUI();
+
     const link = loggedIn?.action?.options?.link;
     const { sourceUrl } = useSafeResolvingContext();
 
@@ -159,12 +159,7 @@ function ButtonOpenSession({
             >
                 {currentSession ? t("common.activated") : t("common.disabled")}
             </ButtonWallet>
-            {isOnboarding && (
-                <OnboardingActivate
-                    isReverse={true}
-                    isHidden={!!currentSession}
-                />
-            )}
+            <OnboardingActivate isReverse={true} isHidden={!!currentSession} />
         </div>
     );
 }
@@ -268,7 +263,7 @@ function ButtonSharingLink({
             >
                 {shareResult ?? t("sharing.btn.share")}
             </ButtonWallet>
-            {isOnboarding && <OnboardingShare isHidden={!currentSession} />}
+            <OnboardingShare isHidden={!currentSession} />
         </div>
     );
 }

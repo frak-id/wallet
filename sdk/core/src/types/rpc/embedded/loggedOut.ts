@@ -1,22 +1,8 @@
 /**
- * The action to display on the logged out embedded view when the user is referred
- *
- * @group Embedded wallet
- */
-export type EmbeddedViewActionReferred = {
-    key: "referred";
-};
-
-/**
  * The view when a user is logged out
  * @group Embedded wallet
  */
 export type LoggedOutEmbeddedView = {
-    /**
-     * The main action to display on the logged out embedded view
-     */
-    action?: EmbeddedViewActionReferred;
-
     /**
      * Metadata option when displaying the embedded view
      */

@@ -2,13 +2,11 @@ import type { Address } from "viem";
 import type { FullInteractionTypesKey } from "../../../constants/interactionTypes";
 import type { I18nConfig } from "../../config";
 import type {
+    EmbeddedViewActionReferred,
     EmbeddedViewActionSharing,
     LoggedInEmbeddedView,
 } from "./loggedIn";
-import type {
-    EmbeddedViewActionReferred,
-    LoggedOutEmbeddedView,
-} from "./loggedOut";
+import type { LoggedOutEmbeddedView } from "./loggedOut";
 
 export type {
     EmbeddedViewActionSharing,

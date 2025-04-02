@@ -90,7 +90,7 @@ export async function processReferral(
         return ensureWalletConnected(client, {
             modalConfig: {
                 ...modalConfig,
-                loggedOut: {
+                loggedIn: {
                     action: {
                         key: "referred",
                     },

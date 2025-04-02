@@ -29,6 +29,20 @@ export type EmbeddedViewActionSharing = {
 };
 
 /**
+ * The action to display on the logged out embedded view when the user is referred
+ *
+ * @group Embedded wallet
+ */
+export type EmbeddedViewActionReferred = {
+    key: "referred";
+
+    /**
+     * No options for a referred action
+     */
+    options?: never;
+};
+
+/**
  * Some configuration options for the embedded view
  *
  * @group Embedded wallet
@@ -37,5 +51,5 @@ export type LoggedInEmbeddedView = {
     /**
      * The main action to display on the logged in embedded view
      */
-    action?: EmbeddedViewActionSharing;
+    action?: EmbeddedViewActionSharing | EmbeddedViewActionReferred;
 };
