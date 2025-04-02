@@ -1,8 +1,7 @@
-import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { sessionContext } from "../../../common";
+import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
 import { pairingContext } from "../context";
-import { pairingTable } from "../db/schema";
 
 /**
  * The websocket route for pairing
@@ -15,39 +14,25 @@ export const wsRoute = new Elysia()
         open: async (ws) => {
             // Check if we got a wallet session
             const walletJwt = ws.data.headers["x-wallet-auth"];
+            const userAgent = ws.data.headers["user-agent"];
 
-            // if no wallet jwt, probably a origin trying to initiate a pairing, check everything for that use case
-            if (!walletJwt) {
-                // todo
-                return;
-            }
-
-            // Get the wallet
-            const wallet = await ws.data.walletJwt.verify(walletJwt);
+            // Parse the wallet JWT
+            let wallet = walletJwt
+                ? ((await ws.data.walletJwt.verify(walletJwt)) as
+                      | StaticWalletTokenDto
+                      | false)
+                : undefined;
             if (!wallet) {
-                return ws.close(4403, "Invalid wallet JWT");
+                wallet = undefined;
             }
 
-            // If no type or webauthn type, subscribe the wallet to all the pairing topics
-            if (!wallet.type || wallet.type === "webauthn") {
-                const pairings =
-                    await ws.data.pairingDb.query.pairingTable.findMany({
-                        where: eq(pairingTable.wallet, wallet.address),
-                    });
-
-                // Subscribe the client to every topics related to this pairing
-                // todo: probably more logics?
-                for (const pairing of pairings) {
-                    ws.subscribe(`pairing:${pairing.pairingId}`);
-                }
-            }
-
-            // If we got a distant webauthn token, subscribe the wallet to the pairing topic
-            if (wallet.type === "distant-webauthn") {
-                ws.subscribe(`pairing:${wallet.pairingId}`);
-            }
-
-            // todo: should we send an acknowledge message or more data upon successful connection?
+            // Handle the pairing open
+            await ws.data.pairing.connectionRepository.handlePairingOpen({
+                query: ws.data.query,
+                userAgent,
+                wallet,
+                ws,
+            });
         },
         // When we close a websocket connection
         close: (ws) => {
@@ -55,10 +40,27 @@ export const wsRoute = new Elysia()
             console.log("close");
         },
         // When we receive a websocket message
-        message: (ws, message) => {
-            // todo: handle the message depending on the headers + data
-            // todo: pairing request should be handled by the open ws method
-            // todo: we need to crack how to link this logic with the current auth logic, to provide a JWT token for the origin wallet
-            console.log(message);
+        message: async (ws, message) => {
+            // todo: we assume that the origin will have a distant webauthn token once sending message, need to double check that (like would the header be automaticly updated?)
+            // Parse the wallet JWT
+            const walletJwt = ws.data.headers["x-wallet-auth"];
+            const wallet = walletJwt
+                ? ((await ws.data.walletJwt.verify(walletJwt)) as
+                      | StaticWalletTokenDto
+                      | false)
+                : undefined;
+
+            // If we don't have a wallet, close the connection
+            if (!wallet) {
+                ws.close(4403, "Missing wallet token");
+                return;
+            }
+
+            // Handle the message
+            await ws.data.pairing.routerRepository.handleMessage({
+                message,
+                ws,
+                wallet,
+            });
         },
     });

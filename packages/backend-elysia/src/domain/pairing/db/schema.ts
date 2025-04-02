@@ -14,7 +14,7 @@ export const pairingTable = pgTable(
     "device_pairing",
     {
         id: serial("id").primaryKey(),
-        pairingId: customHex("pairing_id").notNull(), // Public ID for the pairing
+        pairingId: varchar("pairing_id").notNull(), // Public ID for the pairing
         wallet: customHex("wallet"), // Null until target resolves pairing
 
         // Origin device info
@@ -33,7 +33,7 @@ export const pairingTable = pgTable(
     },
     (table) => [
         uniqueIndex("pairing_id_idx").on(table.pairingId),
-        index("wallet_id_idx").on(table.walletId),
+        index("wallet_id_idx").on(table.wallet),
         uniqueIndex("pairing_code_idx").on(table.pairingCode),
     ]
 );
