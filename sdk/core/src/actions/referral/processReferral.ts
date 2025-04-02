@@ -189,11 +189,7 @@ async function ensureWalletConnected(
 ) {
     // If wallet not connected, or no interaction session
     if (!walletStatus?.interactionSession) {
-        // If we don't have any modal setup, or we don't want to auto display it, do nothing
-        if (!modalConfig) {
-            return undefined;
-        }
-        const result = await displayEmbededWallet(client, modalConfig);
+        const result = await displayEmbededWallet(client, modalConfig ?? {});
         return result?.wallet ?? undefined;
     }
 
