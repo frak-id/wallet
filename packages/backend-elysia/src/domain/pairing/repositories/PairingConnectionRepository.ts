@@ -3,7 +3,6 @@ import { eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
-import type { PairingDb } from "../context";
 import { pairingTable } from "../db/schema";
 import { PairingRepository } from "./PairingRepository";
 
@@ -16,10 +15,6 @@ import { PairingRepository } from "./PairingRepository";
  * We will implement that in a 2nd time
  */
 export class PairingConnectionRepository extends PairingRepository {
-    constructor(private readonly pairingDb: PairingDb) {
-        super();
-    }
-
     /**
      * Handle a WS connection with no wallet session present
      */
@@ -152,6 +147,7 @@ export class PairingConnectionRepository extends PairingRepository {
                 targetUserAgent: userAgent ?? "Unknown",
                 targetName,
                 resolvedAt: new Date(),
+                lastActiveAt: new Date(),
             })
             .where(eq(pairingTable.pairingId, pairing.pairingId));
 
@@ -172,7 +168,7 @@ export class PairingConnectionRepository extends PairingRepository {
         // If we got a distant webauthn token, subscribe the wallet to the pairing topic
         if (wallet.type === "distant-webauthn") {
             ws.subscribe(`pairing:${wallet.pairingId}`);
-            this.sendTopicMessage({
+            await this.sendTopicMessage({
                 ws,
                 pairingId: wallet.pairingId,
                 message: {
@@ -192,7 +188,7 @@ export class PairingConnectionRepository extends PairingRepository {
             // Subscribe the client to every topics related to this pairing
             for (const pairing of pairings) {
                 ws.subscribe(`pairing:${pairing.pairingId}`);
-                this.sendTopicMessage({
+                await this.sendTopicMessage({
                     ws,
                     pairingId: pairing.pairingId,
                     message: {
