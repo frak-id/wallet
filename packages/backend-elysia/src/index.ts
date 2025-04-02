@@ -10,6 +10,7 @@ import {
     interactions,
     notifications,
     oracle,
+    pairing,
     sixDegrees,
     wallet,
 } from "./domain";
@@ -47,6 +48,7 @@ const app = new Elysia({
     .use(notifications)
     .use(wallet)
     .use(business)
+    .use(pairing)
     // 6 degrees related logics
     .use(sixDegrees)
     // Example news paper logics (lazy loaded)
