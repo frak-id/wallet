@@ -59,7 +59,8 @@ export type {
     DisplayEmbeddedWalletResultType,
     LoggedOutEmbeddedView,
     LoggedInEmbeddedView,
-    EmbeddedViewAction,
+    EmbeddedViewActionReferred,
+    EmbeddedViewActionSharing,
     // RPC Modal generics
     ModalStepTypes,
     ModalRpcMetadata,

@@ -5,7 +5,8 @@ export type {
     DisplayEmbeddedWalletResultType,
     LoggedOutEmbeddedView,
     LoggedInEmbeddedView,
-    EmbeddedViewAction,
+    EmbeddedViewActionReferred,
+    EmbeddedViewActionSharing,
 } from "./rpc/embedded";
 export type {
     SsoMetadata,

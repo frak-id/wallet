@@ -88,7 +88,14 @@ export async function processReferral(
         }
         walletRequest = true;
         return ensureWalletConnected(client, {
-            modalConfig,
+            modalConfig: {
+                ...modalConfig,
+                loggedOut: {
+                    action: {
+                        key: "referred",
+                    },
+                },
+            },
             walletStatus,
         });
     }

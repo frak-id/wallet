@@ -1,11 +1,21 @@
 import type { Address } from "viem";
 import type { FullInteractionTypesKey } from "../../../constants/interactionTypes";
 import type { I18nConfig } from "../../config";
-import type { LoggedInEmbeddedView } from "./loggedIn";
-import type { LoggedOutEmbeddedView } from "./loggedOut";
+import type {
+    EmbeddedViewActionSharing,
+    LoggedInEmbeddedView,
+} from "./loggedIn";
+import type {
+    EmbeddedViewActionReferred,
+    LoggedOutEmbeddedView,
+} from "./loggedOut";
 
-export type { EmbeddedViewAction } from "./loggedIn";
-export type { LoggedInEmbeddedView, LoggedOutEmbeddedView };
+export type {
+    EmbeddedViewActionSharing,
+    LoggedInEmbeddedView,
+    LoggedOutEmbeddedView,
+    EmbeddedViewActionReferred,
+};
 
 /**
  * The params used to display the embedded wallet
