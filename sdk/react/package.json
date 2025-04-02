@@ -54,7 +54,7 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf dist",
-    "build": "rslib build && bun run check-exports",
+    "build": "rslib build",
     "build:watch": "rslib build --watch",
     "check-exports": "attw --pack .",
     "typecheck": "tsc --noEmit",
