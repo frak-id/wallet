@@ -50,6 +50,9 @@ export type GenericWalletUiType = {
 type EmbededWalletUiType = {
     type: "embeded";
     params: DisplayEmbededWalletParamsType;
+    emitter: (
+        response: RpcResponse<IFrameRpcSchema, "frak_displayEmbededWallet">
+    ) => Promise<void>;
 };
 
 /**

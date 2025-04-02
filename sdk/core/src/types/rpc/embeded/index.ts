@@ -1,3 +1,4 @@
+import type { Address } from "viem";
 import type { FullInteractionTypesKey } from "../../../constants/interactionTypes";
 import type { I18nConfig } from "../../config";
 import type { LoggedInEmbededView } from "./loggedIn";
@@ -47,4 +48,13 @@ export type DisplayEmbededWalletParamsType = {
          */
         i18n?: I18nConfig;
     };
+};
+
+/**
+ * The result of the display embedded wallet rpc request
+ *
+ * @group Embedded wallet
+ */
+export type DisplayEmbededWalletResultType = {
+    wallet: Address;
 };

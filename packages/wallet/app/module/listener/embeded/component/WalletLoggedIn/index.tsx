@@ -113,8 +113,14 @@ function ActionButtons({
     return (
         <div className={styles.modalListenerWallet__actionButtons}>
             <ButtonOpenSession refetchPendingBalance={refetchPendingBalance} />
-            <ButtonCopyLink finalSharingLink={finalSharingLink} />
-            <ButtonSharingLink finalSharingLink={finalSharingLink} />
+            <ButtonCopyLink
+                finalSharingLink={finalSharingLink}
+                refetchPendingBalance={refetchPendingBalance}
+            />
+            <ButtonSharingLink
+                finalSharingLink={finalSharingLink}
+                refetchPendingBalance={refetchPendingBalance}
+            />
         </div>
     );
 }

@@ -1,4 +1,8 @@
-import type { DisplayEmbededWalletParamsType, FrakClient } from "../types";
+import type {
+    DisplayEmbededWalletParamsType,
+    DisplayEmbededWalletResultType,
+    FrakClient,
+} from "../types";
 
 /**
  * Function used to display the Frak embeded wallet popup
@@ -8,8 +12,8 @@ import type { DisplayEmbededWalletParamsType, FrakClient } from "../types";
 export async function displayEmbededWallet(
     client: FrakClient,
     params: DisplayEmbededWalletParamsType
-): Promise<void> {
-    await client.request({
+): Promise<DisplayEmbededWalletResultType> {
+    return await client.request({
         method: "frak_displayEmbededWallet",
         params: [params, client.config.metadata],
     });

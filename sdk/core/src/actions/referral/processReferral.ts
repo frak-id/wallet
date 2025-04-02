@@ -1,16 +1,15 @@
 import { type Address, type Hex, isAddressEqual } from "viem";
 import { ReferralInteractionEncoder } from "../../interactions";
 import {
-    type DisplayModalParamsType,
+    type DisplayEmbededWalletParamsType,
     type FrakClient,
     type FrakContext,
     FrakRpcError,
-    type ModalStepTypes,
     RpcErrorCodes,
     type WalletStatusReturnType,
 } from "../../types";
 import { FrakContextManager } from "../../utils";
-import { displayModal, sendInteraction } from "../index";
+import { displayEmbededWallet, sendInteraction } from "../index";
 
 /**
  * The different states of the referral process
@@ -76,7 +75,7 @@ export async function processReferral(
     }: {
         walletStatus?: WalletStatusReturnType;
         frakContext?: Partial<FrakContext> | null;
-        modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
+        modalConfig?: DisplayEmbededWalletParamsType;
         productId?: Hex;
         options?: ProcessReferralOptions;
     }
@@ -184,7 +183,7 @@ async function ensureWalletConnected(
         modalConfig,
         walletStatus,
     }: {
-        modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
+        modalConfig?: DisplayEmbededWalletParamsType;
         walletStatus?: WalletStatusReturnType;
     }
 ) {
@@ -194,8 +193,8 @@ async function ensureWalletConnected(
         if (!modalConfig) {
             return undefined;
         }
-        const result = await displayModal(client, modalConfig);
-        return result?.login?.wallet ?? undefined;
+        const result = await displayEmbededWallet(client, modalConfig);
+        return result?.wallet ?? undefined;
     }
 
     return walletStatus.wallet ?? undefined;

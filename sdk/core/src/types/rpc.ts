@@ -5,7 +5,10 @@ import type {
     ModalRpcStepsInput,
     ModalRpcStepsResultType,
 } from "./rpc/displayModal";
-import type { DisplayEmbededWalletParamsType } from "./rpc/embeded";
+import type {
+    DisplayEmbededWalletParamsType,
+    DisplayEmbededWalletResultType,
+} from "./rpc/embeded";
 import type {
     PreparedInteraction,
     SendInteractionReturnType,
@@ -46,7 +49,7 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  *
  * ### frak_displayEmbededWallet
  * - Params: [{@link DisplayEmbededWalletParamsType}]
- * - Returns: undefined
+ * - Returns: {@link DisplayEmbededWalletResultType}
  */
 export type IFrameRpcSchema = [
     /**
@@ -114,6 +117,6 @@ export type IFrameRpcSchema = [
             request: DisplayEmbededWalletParamsType,
             metadata: FrakWalletSdkConfig["metadata"],
         ];
-        ReturnType: undefined;
+        ReturnType: DisplayEmbededWalletResultType;
     },
 ];

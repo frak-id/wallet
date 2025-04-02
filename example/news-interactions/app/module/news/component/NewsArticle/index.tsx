@@ -32,18 +32,6 @@ const loginModalStep = {
 
 export function NewsArticle({ articleId }: { articleId: string }) {
     useReferralInteraction({
-        modalConfig: {
-            steps: {
-                login: loginModalStep,
-                openSession: {},
-                final: {
-                    action: { key: "reward" },
-                },
-            },
-            metadata: {
-                isDismissible: true,
-            },
-        },
         options: {
             alwaysAppendUrl: true,
         },

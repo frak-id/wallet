@@ -1,5 +1,5 @@
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { ListenerUiRenderer } from "@/module/listener/component/ListerUiRenderer";
+import { useDisplayEmbeddedWallet } from "@/module/listener/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
 import { useOnGetProductInformation } from "@/module/listener/hooks/useOnGetProductInformation";
@@ -7,10 +7,7 @@ import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/listener/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
-import {
-    ListenerUiProvider,
-    useListenerUI,
-} from "@/module/listener/providers/ListenerUiProvider";
+import { ListenerUiProvider } from "@/module/listener/providers/ListenerUiProvider";
 import { createIFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
 import { loadPolyfills } from "@shared/module/utils/polyfills";
 import { useEffect, useState } from "react";
@@ -38,9 +35,6 @@ function ListenerContent() {
         ReturnType<typeof createIFrameRequestResolver> | undefined
     >(undefined);
 
-    // Hook used to set the requested listener UI
-    const { setRequest } = useListenerUI();
-
     // Hook used when a wallet status is requested
     const onWalletListenRequest = useWalletStatusListener();
 
@@ -49,6 +43,9 @@ function ListenerContent() {
 
     // Hook when a modal display is asked
     const onDisplayModalRequest = useDisplayModalListener();
+
+    // Hook when a embedded wallet display is asked
+    const onDisplayEmbeddedWallet = useDisplayEmbeddedWallet();
 
     // Hook when a modal display is asked
     const onOpenSso = useOnOpenSso();
@@ -72,9 +69,7 @@ function ListenerContent() {
             /**
              * Listen request for the modal display request
              */
-            frak_displayModal: (request, context, emitter) => {
-                return onDisplayModalRequest(request, context, emitter);
-            },
+            frak_displayModal: onDisplayModalRequest,
 
             /**
              * Listen request for the open sso request
@@ -89,30 +84,7 @@ function ListenerContent() {
             /**
              * When the display of the embeded wallet is requested
              */
-            frak_displayEmbededWallet: async (request) => {
-                const configMetadata = request.params[1];
-                setRequest({
-                    // Embedded ui specific
-                    type: "embeded",
-                    params: request.params[0],
-                    // Generic ui
-                    appName: configMetadata.name,
-                    logoUrl:
-                        request.params[0].metadata?.logo ??
-                        configMetadata.logoUrl,
-                    homepageLink:
-                        request.params[0].metadata?.homepageLink ??
-                        configMetadata.homepageLink,
-                    targetInteraction:
-                        request.params[0].metadata?.targetInteraction,
-                    i18n: {
-                        lang: configMetadata.lang,
-                        context: request.params[0].loggedIn?.action?.key,
-                    },
-                    configMetadata,
-                });
-                trackEvent("display-embedded-wallet", request.params[0]);
-            },
+            frak_displayEmbededWallet: onDisplayEmbeddedWallet,
         });
 
         // Set our new resolver
@@ -123,12 +95,12 @@ function ListenerContent() {
             newResolver.destroy();
         };
     }, [
-        setRequest,
         onWalletListenRequest,
         onInteractionRequest,
         onDisplayModalRequest,
         onOpenSso,
         onGetProductInformation,
+        onDisplayEmbeddedWallet,
     ]);
 
     /**

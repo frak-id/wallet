@@ -56,6 +56,7 @@ export type {
     GetProductInformationReturnType,
     // RPC Embeded wallet
     DisplayEmbededWalletParamsType,
+    DisplayEmbededWalletResultType,
     LoggedOutEmbededView,
     LoggedInEmbededView,
     EmbededViewAction,

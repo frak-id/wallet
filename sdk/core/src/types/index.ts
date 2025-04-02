@@ -2,6 +2,7 @@
 export type { WalletStatusReturnType } from "./rpc/walletStatus";
 export type {
     DisplayEmbededWalletParamsType,
+    DisplayEmbededWalletResultType,
     LoggedOutEmbededView,
     LoggedInEmbededView,
     EmbededViewAction,

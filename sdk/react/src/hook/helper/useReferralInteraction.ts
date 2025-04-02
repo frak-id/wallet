@@ -1,7 +1,6 @@
 import {
     ClientNotFound,
-    type DisplayModalParamsType,
-    type ModalStepTypes,
+    type DisplayEmbededWalletParamsType,
 } from "@frak-labs/core-sdk";
 import {
     type ProcessReferralOptions,
@@ -36,7 +35,7 @@ export function useReferralInteraction({
     options,
 }: {
     productId?: Hex;
-    modalConfig?: DisplayModalParamsType<ModalStepTypes[]>;
+    modalConfig?: DisplayEmbededWalletParamsType;
     options?: ProcessReferralOptions;
 } = {}) {
     // Get the frak client

@@ -21,13 +21,8 @@ export function setupModalConfig(client: FrakClient) {
  * @param client
  */
 export async function setupReferral(client: FrakClient) {
-    if (!window.modalBuilderSteps) {
-        console.error("modalBuilderSteps not found");
-        return;
-    }
-
     const referral = await referralInteraction(client, {
-        modalConfig: window.modalBuilderSteps.reward().params,
+        modalConfig: window.FrakSetup?.modalWalletConfig,
     });
     console.log("referral", referral);
 }
