@@ -6,13 +6,13 @@ import type { WsDirectMessageResponse } from "../dto/WebsocketDirectMessage";
 import type { WsTopicMessage } from "../dto/WebsocketTopicMessage";
 
 export abstract class PairingRepository {
-    constructor(readonly pairingDb: PairingDb) {}
+    constructor(protected readonly pairingDb: PairingDb) {}
 
     /**
      * Send a direct msg to the websocket client
      * @internal
      */
-    sendDirectMessage({
+    protected sendDirectMessage({
         ws,
         message,
     }: {
@@ -26,7 +26,7 @@ export abstract class PairingRepository {
      * Send a topic message to the websocket client
      * @internal
      */
-    async sendTopicMessage({
+    protected async sendTopicMessage({
         ws,
         pairingId,
         message,

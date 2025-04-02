@@ -151,6 +151,12 @@ export class PairingConnectionRepository extends PairingRepository {
             })
             .where(eq(pairingTable.pairingId, pairing.pairingId));
 
+        // Then handle like a regular reconnection
+        await this.handleReconnection({
+            wallet,
+            ws,
+        });
+
         // todo: emit the pairing resolved event with the auth token for the origin
         // todo: craft the output msg to send to the one who joined the pairing
     }
