@@ -34,11 +34,6 @@ export const wsRoute = new Elysia()
                 ws,
             });
         },
-        // When we close a websocket connection
-        close: (ws) => {
-            // todo: should we emit a message in this topic indicating that the target or origin has leaved? For UI purposes?
-            console.log("close");
-        },
         // When we receive a websocket message
         message: async (ws, message) => {
             // todo: we assume that the origin will have a distant webauthn token once sending message, need to double check that (like would the header be automaticly updated?)

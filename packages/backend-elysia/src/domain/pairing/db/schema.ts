@@ -42,12 +42,12 @@ export const webAuthnRequestTable = pgTable(
     "webauthn_request",
     {
         id: serial("id").primaryKey(),
-        requestId: customHex("request_id").notNull(), // Unique request identifier
-        pairingId: customHex("pairing_id").notNull(), // Associated pairing
+        requestId: varchar("request_id").notNull(), // Unique request identifier
+        pairingId: varchar("pairing_id").notNull(), // Associated pairing
 
         // Request details
-        webAuthnOptions: text("webauthn_options").notNull(), // b64 serialized WebAuthn options
-        context: json("context").notNull(), // Origin, operation type, description
+        request: text("webauthn_options").notNull(), // b64 serialized WebAuthn options
+        context: json("context"), // Origin, operation type, description
 
         // Status tracking
         createdAt: timestamp("created_at").defaultNow(),

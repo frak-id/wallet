@@ -19,7 +19,7 @@ export const pairingContext = new Elysia({
         });
 
         const connectionRepository = new PairingConnectionRepository(pairingDb);
-        const routerRepository = new PairingRouterRepository();
+        const routerRepository = new PairingRouterRepository(pairingDb);
 
         return {
             pairing: {

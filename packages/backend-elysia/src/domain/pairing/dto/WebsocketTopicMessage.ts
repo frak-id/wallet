@@ -5,7 +5,10 @@ export type WsWebAuthnRequest = {
     type: "webauthn-request";
     payload: {
         // compressed request (b64 encoded of an AuthenticationRequestJSON)
+        id: string;
         request: string;
+        // Some optional context
+        context?: object;
     };
 };
 
@@ -16,6 +19,7 @@ export type WsWebAuthnResponse = {
     type: "webauthn-response";
     payload: {
         // compressed response (b64 encoded of an AuthenticationResponseJSON)
+        id: string;
         response: string;
     };
 };

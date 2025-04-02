@@ -24,7 +24,12 @@ export type WsPingRequest = {
 export type WsWebAuthnRequest = {
     type: "webauthn-request";
     payload: {
+        // The id of the request
+        id: string;
+        // The request
         request: string;
+        // Some optional context
+        context?: object;
     };
 };
 
@@ -46,7 +51,11 @@ export type WsPongRequest = {
 export type WsWebAuthnResponseRequest = {
     type: "webauthn-response";
     payload: {
+        // The pairing id
         pairingId: string;
+        // The id of the request
+        id: string;
+        // The response
         response: string;
     };
 };
