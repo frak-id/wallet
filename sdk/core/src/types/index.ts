@@ -1,12 +1,12 @@
 // Rpc related
 export type { WalletStatusReturnType } from "./rpc/walletStatus";
 export type {
-    DisplayEmbededWalletParamsType,
-    DisplayEmbededWalletResultType,
-    LoggedOutEmbededView,
-    LoggedInEmbededView,
-    EmbededViewAction,
-} from "./rpc/embeded";
+    DisplayEmbeddedWalletParamsType,
+    DisplayEmbeddedWalletResultType,
+    LoggedOutEmbeddedView,
+    LoggedInEmbeddedView,
+    EmbeddedViewAction,
+} from "./rpc/embedded";
 export type {
     SsoMetadata,
     OpenSsoParamsType,

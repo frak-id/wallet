@@ -1,7 +1,7 @@
 export { watchWalletStatus } from "./watchWalletStatus";
 export { sendInteraction } from "./sendInteraction";
 export { displayModal } from "./displayModal";
-export { displayEmbededWallet } from "./displayEmbededWallet";
+export { displayEmbeddedWallet } from "./displayEmbeddedWallet";
 export { openSso } from "./openSso";
 export { getProductInformation } from "./getProductInformation";
 // Helper to track the purchase status

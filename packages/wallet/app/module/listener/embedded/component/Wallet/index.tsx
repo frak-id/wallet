@@ -1,8 +1,8 @@
 import { sessionAtom } from "@/module/common/atoms/session";
-import { ListenerWalletHeader } from "@/module/listener/embeded/component/WalletHeader";
-import { LoggedInComponent } from "@/module/listener/embeded/component/WalletLoggedIn";
-import { LoggedOutComponent } from "@/module/listener/embeded/component/WalletLoggedOut";
-import { useEmbededListenerUI } from "@/module/listener/providers/ListenerUiProvider";
+import { ListenerWalletHeader } from "@/module/listener/embedded/component/WalletHeader";
+import { LoggedInComponent } from "@/module/listener/embedded/component/WalletLoggedIn";
+import { LoggedOutComponent } from "@/module/listener/embedded/component/WalletLoggedOut";
+import { useEmbeddedListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { Overlay } from "@shared/module/component/Overlay";
 import { cva, cx } from "class-variance-authority";
@@ -26,7 +26,7 @@ export function ListenerWallet() {
         currentRequest: {
             params: { metadata },
         },
-    } = useEmbededListenerUI();
+    } = useEmbeddedListenerUI();
 
     return (
         <>

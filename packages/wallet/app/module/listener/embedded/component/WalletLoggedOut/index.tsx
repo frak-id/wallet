@@ -2,7 +2,7 @@ import { Markdown } from "@/module/common/component/Markdown";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { SsoButton } from "@/module/listener/component/SsoButton";
 import {
-    useEmbededListenerUI,
+    useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { prefixWalletCss } from "@shared/module/utils/prefixWalletCss";
@@ -15,7 +15,7 @@ import styles from "./index.module.css";
 export function LoggedOutComponent() {
     const {
         currentRequest: { logoUrl, homepageLink },
-    } = useEmbededListenerUI();
+    } = useEmbeddedListenerUI();
     const { t } = useListenerTranslation();
     const productId = useSafeResolvingContext()?.productId;
 

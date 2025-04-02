@@ -1,14 +1,14 @@
 import { trackEvent } from "@/module/common/utils/trackEvent";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
-import { ButtonWallet } from "@/module/listener/embeded/component/ButtonWallet";
+import { ButtonWallet } from "@/module/listener/embedded/component/ButtonWallet";
 import {
     OnboardingActivate,
     OnboardingShare,
     OnboardingWelcome,
-} from "@/module/listener/embeded/component/Onboarding";
+} from "@/module/listener/embedded/component/Onboarding";
 import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import {
-    useEmbededListenerUI,
+    useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { listenerSharingKey } from "@/module/listener/queryKeys/sharing";
@@ -40,7 +40,7 @@ const isOnboarding = true;
 export function LoggedInComponent() {
     const {
         currentRequest: { configMetadata },
-    } = useEmbededListenerUI();
+    } = useEmbeddedListenerUI();
     const { userBalance } = useGetUserBalance();
     const { userPendingBalance, refetch: refetchPendingBalance } =
         useGetUserPendingBalance();
@@ -98,7 +98,7 @@ function ActionButtons({
         currentRequest: {
             params: { loggedIn },
         },
-    } = useEmbededListenerUI();
+    } = useEmbeddedListenerUI();
     const link = loggedIn?.action?.options?.link;
     const { sourceUrl } = useSafeResolvingContext();
 

@@ -14,7 +14,7 @@ import { useAccount } from "wagmi";
 type OnDisplayEmbeddedWalletRequest = IFrameRequestResolver<
     Extract<
         ExtractedParametersFromRpc<IFrameRpcSchema>,
-        { method: "frak_displayEmbededWallet" }
+        { method: "frak_displayEmbeddedWallet" }
     >
 >;
 
@@ -40,7 +40,7 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
     useEffect(() => {
         if (!session?.address || !sessionStatus) return;
 
-        if (currentRequest?.type === "embeded") {
+        if (currentRequest?.type === "embedded") {
             // Emit the result and exit
             currentRequest?.emitter({
                 result: {
@@ -61,7 +61,7 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
 
             setRequest({
                 // Embedded ui specific
-                type: "embeded",
+                type: "embedded",
                 params: request.params[0],
                 emitter,
                 // Generic ui

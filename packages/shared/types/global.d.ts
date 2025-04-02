@@ -1,5 +1,5 @@
 import type {
-    DisplayEmbededWalletParamsType,
+    DisplayEmbeddedWalletParamsType,
     FinalActionType,
     FrakClient,
     FrakWalletSdkConfig,
@@ -29,7 +29,7 @@ declare global {
                 { key: "sharing" }
             >["options"];
             // User provided config for the modal wallet
-            modalWalletConfig?: DisplayEmbededWalletParamsType;
+            modalWalletConfig?: DisplayEmbeddedWalletParamsType;
         };
     }
 }

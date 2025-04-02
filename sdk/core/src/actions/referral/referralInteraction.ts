@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import type { DisplayEmbededWalletParamsType, FrakClient } from "../../types";
+import type { DisplayEmbeddedWalletParamsType, FrakClient } from "../../types";
 import { FrakContextManager } from "../../utils";
 import { watchWalletStatus } from "../index";
 import {
@@ -30,7 +30,7 @@ export async function referralInteraction(
         options,
     }: {
         productId?: Hex;
-        modalConfig?: DisplayEmbededWalletParamsType;
+        modalConfig?: DisplayEmbeddedWalletParamsType;
         options?: ProcessReferralOptions;
     } = {}
 ) {

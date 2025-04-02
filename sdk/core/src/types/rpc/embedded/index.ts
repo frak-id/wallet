@@ -1,26 +1,26 @@
 import type { Address } from "viem";
 import type { FullInteractionTypesKey } from "../../../constants/interactionTypes";
 import type { I18nConfig } from "../../config";
-import type { LoggedInEmbededView } from "./loggedIn";
-import type { LoggedOutEmbededView } from "./loggedOut";
+import type { LoggedInEmbeddedView } from "./loggedIn";
+import type { LoggedOutEmbeddedView } from "./loggedOut";
 
-export type { EmbededViewAction } from "./loggedIn";
-export type { LoggedInEmbededView, LoggedOutEmbededView };
+export type { EmbeddedViewAction } from "./loggedIn";
+export type { LoggedInEmbeddedView, LoggedOutEmbeddedView };
 
 /**
  * The params used to display the embedded wallet
  *
  * @group Embedded wallet
  */
-export type DisplayEmbededWalletParamsType = {
+export type DisplayEmbeddedWalletParamsType = {
     /**
      * The embedded view to display once the user is logged in
      */
-    loggedIn?: LoggedInEmbededView;
+    loggedIn?: LoggedInEmbeddedView;
     /**
      * The embedded view to display once the user is logged out
      */
-    loggedOut?: LoggedOutEmbededView;
+    loggedOut?: LoggedOutEmbeddedView;
     /**
      * Some metadata to customize the embedded view
      */
@@ -55,6 +55,6 @@ export type DisplayEmbededWalletParamsType = {
  *
  * @group Embedded wallet
  */
-export type DisplayEmbededWalletResultType = {
+export type DisplayEmbeddedWalletResultType = {
     wallet: Address;
 };

@@ -3,7 +3,7 @@
  *
  * @group Embedded wallet
  */
-export type EmbededViewAction = {
+export type EmbeddedViewAction = {
     key: "sharing";
 
     /**
@@ -33,10 +33,10 @@ export type EmbededViewAction = {
  *
  * @group Embedded wallet
  */
-export type LoggedInEmbededView = {
+export type LoggedInEmbeddedView = {
     /**
      * The main action to display on the logged in embedded view
      *  If none specified, the user will see his wallet with the activation button
      */
-    action?: EmbededViewAction;
+    action?: EmbeddedViewAction;
 };

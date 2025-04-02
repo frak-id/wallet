@@ -54,12 +54,12 @@ export type {
     LocalizedI18nConfig,
     TokenAmountType,
     GetProductInformationReturnType,
-    // RPC Embeded wallet
-    DisplayEmbededWalletParamsType,
-    DisplayEmbededWalletResultType,
-    LoggedOutEmbededView,
-    LoggedInEmbededView,
-    EmbededViewAction,
+    // RPC Embedded wallet
+    DisplayEmbeddedWalletParamsType,
+    DisplayEmbeddedWalletResultType,
+    LoggedOutEmbeddedView,
+    LoggedInEmbeddedView,
+    EmbeddedViewAction,
     // RPC Modal generics
     ModalStepTypes,
     ModalRpcMetadata,

@@ -3,7 +3,7 @@ import { useEstimatedInteractionReward } from "@/module/listener/hooks/useEstima
 import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import type {
     Currency,
-    DisplayEmbededWalletParamsType,
+    DisplayEmbeddedWalletParamsType,
     FrakWalletSdkConfig,
     FullInteractionTypesKey,
     IFrameRpcSchema,
@@ -47,11 +47,11 @@ export type GenericWalletUiType = {
  * Type for the embedded wallet ui type
  *  - todo: Maybe some pre-check hooks, or other stuff to store here? Like which view to display (loggedOut or loggedIn?)
  */
-type EmbededWalletUiType = {
-    type: "embeded";
-    params: DisplayEmbededWalletParamsType;
+type EmbeddedWalletUiType = {
+    type: "embedded";
+    params: DisplayEmbeddedWalletParamsType;
     emitter: (
-        response: RpcResponse<IFrameRpcSchema, "frak_displayEmbededWallet">
+        response: RpcResponse<IFrameRpcSchema, "frak_displayEmbeddedWallet">
     ) => Promise<void>;
 };
 
@@ -68,7 +68,7 @@ export type ModalUiType = {
     ) => Promise<void>;
 };
 
-export type UIRequest = (EmbededWalletUiType | ModalUiType) &
+export type UIRequest = (EmbeddedWalletUiType | ModalUiType) &
     GenericWalletUiType;
 
 type UIContext = {
@@ -173,7 +173,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             );
 
             // Map potential custom i18n config
-            if (request?.type === "embeded" && request.params.metadata?.i18n) {
+            if (request?.type === "embedded" && request.params.metadata?.i18n) {
                 mapI18nConfig(request.params.metadata.i18n, i18n);
                 return;
             }
@@ -304,17 +304,17 @@ export function useModalListenerUI() {
 }
 
 /**
- * Custom hook to get the listener ui context only when displaying an embeded wallet
+ * Custom hook to get the listener ui context only when displaying an embedded wallet
  */
-export function useEmbededListenerUI() {
+export function useEmbeddedListenerUI() {
     const uiContext = useListenerUI();
-    if (uiContext.currentRequest?.type !== "embeded") {
+    if (uiContext.currentRequest?.type !== "embedded") {
         throw new Error(
-            "useModalListenerUI must be used within a embeded displayed UI"
+            "useModalListenerUI must be used within a embedded displayed UI"
         );
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {
-        currentRequest: EmbededWalletUiType & GenericWalletUiType;
+        currentRequest: EmbeddedWalletUiType & GenericWalletUiType;
     };
 }
 

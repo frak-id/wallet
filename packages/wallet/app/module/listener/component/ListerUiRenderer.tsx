@@ -14,7 +14,7 @@ const ListenerModal = lazy(modalImport);
  * Lazy import of the embedded wallet UI
  */
 const walletImport = () =>
-    import("@/module/listener/embeded/component/Wallet").then((module) => ({
+    import("@/module/listener/embedded/component/Wallet").then((module) => ({
         default: module.ListenerWallet,
     }));
 const ListenerWallet = lazy(walletImport);
@@ -53,7 +53,7 @@ export function ListenerUiRenderer() {
     /**
      * If the request is an embedded wallet, display it
      */
-    if (currentRequest.type === "embeded") {
+    if (currentRequest.type === "embedded") {
         return <ListenerWallet />;
     }
 

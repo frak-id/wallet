@@ -1,5 +1,5 @@
-import { Arrow } from "@/module/listener/embeded/component/Onboarding/assets/Arrow";
-import { useEmbededListenerUI } from "@/module/listener/providers/ListenerUiProvider";
+import { Arrow } from "@/module/listener/embedded/component/Onboarding/assets/Arrow";
+import { useEmbeddedListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { cx } from "class-variance-authority";
 import {
@@ -52,7 +52,7 @@ export function OnboardingArrow({ style }: { style?: CSSProperties }) {
 }
 
 export function OnboardingWelcome() {
-    const { translation } = useEmbededListenerUI();
+    const { translation } = useEmbeddedListenerUI();
     const { data: currentSession } = useInteractionSessionStatus();
     const [hidden, setHidden] = useState(false);
     const calledOnce = useRef(false);
@@ -100,7 +100,7 @@ export function OnboardingActivate({
     isReverse,
     isHidden = true,
 }: { isReverse?: boolean; isHidden?: boolean }) {
-    const { translation } = useEmbededListenerUI();
+    const { translation } = useEmbeddedListenerUI();
     const DELAY_MS = 1_500;
 
     const [isVisible, setIsVisible] = useState(false);
@@ -147,7 +147,7 @@ export function OnboardingActivate({
 }
 
 export function OnboardingShare({ isHidden = true }: { isHidden?: boolean }) {
-    const { translation } = useEmbededListenerUI();
+    const { translation } = useEmbeddedListenerUI();
     const [hidden, setHidden] = useState(isHidden);
 
     useEffect(() => {

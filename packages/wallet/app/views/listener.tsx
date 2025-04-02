@@ -82,9 +82,9 @@ function ListenerContent() {
             frak_getProductInformation: onGetProductInformation,
 
             /**
-             * When the display of the embeded wallet is requested
+             * When the display of the embedded wallet is requested
              */
-            frak_displayEmbededWallet: onDisplayEmbeddedWallet,
+            frak_displayEmbeddedWallet: onDisplayEmbeddedWallet,
         });
 
         // Set our new resolver

@@ -1,5 +1,5 @@
 import type {
-    DisplayEmbededWalletParamsType,
+    DisplayEmbeddedWalletParamsType,
     ModalRpcMetadata,
     ModalRpcStepsInput,
     ModalStepMetadata,
@@ -14,7 +14,7 @@ const replaceReward = (text: string) =>
  * Map legacy modal metadata to i18n resources
  */
 export function mapDeprecatedModalMetadata(request?: UIRequest) {
-    if (request?.type === "embeded") {
+    if (request?.type === "embedded") {
         return mapEmbeddedModalMetadata(request.params);
     }
     if (request?.type === "modal") {
@@ -26,7 +26,7 @@ export function mapDeprecatedModalMetadata(request?: UIRequest) {
 /**
  * Map the embedded modal metadata to i18n resources
  */
-function mapEmbeddedModalMetadata(request: DisplayEmbededWalletParamsType) {
+function mapEmbeddedModalMetadata(request: DisplayEmbeddedWalletParamsType) {
     const resultMap = new Map<string, string>();
     if (!request.loggedIn || !request.loggedOut) {
         return {};

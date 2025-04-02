@@ -2,7 +2,7 @@
  * The view when a user is logged out
  * @group Embedded wallet
  */
-export type LoggedOutEmbededView = {
+export type LoggedOutEmbeddedView = {
     /**
      * Metadata option when displaying the embedded view
      */

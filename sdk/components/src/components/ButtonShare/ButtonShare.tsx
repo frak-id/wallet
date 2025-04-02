@@ -1,7 +1,7 @@
 import { Spinner } from "@/components/Spinner";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
-import { displayEmbededWallet } from "@frak-labs/core-sdk/actions";
+import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 import { cx } from "class-variance-authority";
 import { useCallback, useMemo } from "preact/hooks";
 import styles from "./ButtonShare.module.css";
@@ -10,16 +10,16 @@ import { useShareModal } from "./hooks/useShareModal";
 import type { ButtonShareProps } from "./types";
 
 /**
- * Open the embeded wallet modal
+ * Open the embedded wallet modal
  *
  * @description
  * This function will open the wallet modal with the configuration provided in the `window.FrakSetup.modalWalletConfig` object.
  */
-async function modalEmbededWallet() {
+async function modalEmbeddedWallet() {
     if (!window.FrakSetup?.client) {
         throw new Error("Frak client not found");
     }
-    await displayEmbededWallet(
+    await displayEmbeddedWallet(
         window.FrakSetup.client,
         window.FrakSetup?.modalWalletConfig ?? {}
     );
@@ -108,7 +108,7 @@ export function ButtonShare({
      * The action when the button is clicked
      */
     const onClick = useCallback(
-        async () => await (showWallet ? modalEmbededWallet() : handleShare()),
+        async () => await (showWallet ? modalEmbeddedWallet() : handleShare()),
         [showWallet, handleShare]
     );
 
