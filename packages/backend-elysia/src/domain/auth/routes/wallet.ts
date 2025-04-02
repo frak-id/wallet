@@ -97,6 +97,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
 
             // Create the token and set the cookie
             const token = await walletJwt.sign({
+                type: "ecdsa",
                 address: walletAddress,
                 authenticatorId,
                 publicKey: wallet,
@@ -125,6 +126,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
 
             return {
                 token,
+                type: "ecdsa",
                 address: walletAddress,
                 authenticatorId,
                 publicKey: wallet,
