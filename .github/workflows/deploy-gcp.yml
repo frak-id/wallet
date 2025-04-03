@@ -10,7 +10,6 @@ on:
         default: false
   push:
     branches:
-      - main
       - dev
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}-gcp
