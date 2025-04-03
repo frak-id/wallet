@@ -40,6 +40,9 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
             "process.env.APP_VERSION": JSON.stringify(
                 process.env.COMMIT_HASH ?? "UNKNOWN"
             ),
+            "process.env.FRAK_WALLET_URL": JSON.stringify(
+                process.env.FRAK_WALLET_URL
+            ),
         },
         // Remove console and debugger on prod
         esbuild: {

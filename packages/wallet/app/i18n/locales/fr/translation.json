@@ -9,7 +9,8 @@
             "btn": {
                 "new": {
                     "create": "Utilisez la biométrie pour prouver que vous n'êtes pas un robot",
-                    "login": "Connecter un porte-monnaie existant"
+                    "login": "Connecter un porte-monnaie existant",
+                    "phone": "Utiliser un QR code pour me connecter"
                 },
                 "existing": {
                     "create": "Créer un nouveau porte-monnaie",
@@ -83,7 +84,7 @@
                 "description_sharing": "En partageant ce produit, je deviens ambassadeur-rice **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement dans mon porte-monnaie.",
                 "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
                 "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
-                "secondaryAction": "J'ai déjà un porte-monnaie",
+                "secondaryAction": "Utiliser un QR code pour me connecter",
                 "title": "Connexion",
                 "success": "Connexion réussie"
             },

@@ -11,6 +11,7 @@ interface Resources {
                     new: {
                         create: "Use biometrics to prove you're not a robot";
                         login: "Connect an existing wallet";
+                        phone: "Use a QR code to connect";
                     };
                     existing: {
                         create: "Create a new wallet";
@@ -85,7 +86,7 @@ interface Resources {
                     description_sharing: "{{ productName }} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.";
                     description_reward: "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.";
                     primaryAction: "I create my wallet under 30sec";
-                    secondaryAction: "I already have a wallet";
+                    secondaryAction: "Use a QR code to connect";
                     title: "Connection";
                     success: "Connection successful";
                 };
