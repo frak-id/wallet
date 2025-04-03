@@ -1,4 +1,5 @@
 import type { Treaty } from "@elysiajs/eden";
+import type { Hex } from "viem";
 import { authenticatedBackendApi } from "../../common/api/backendClient";
 import type {
     WsOriginMessage,
@@ -18,6 +19,7 @@ export type PairingWsEventListener = (
 type ConnectionParams =
     | {
           action: "initiate";
+          ssoId?: Hex;
       }
     | {
           action: "join";

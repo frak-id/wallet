@@ -2,12 +2,13 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 import type { JwtService } from "../../../utils/elysia/jwt";
 import type {
     StaticWalletTokenDto,
     WalletTokenDto,
 } from "../../auth/models/WalletSessionDto";
+import type { SsoService } from "../../auth/services/WalletSsoService";
 import type { PairingDb } from "../context";
 import { pairingTable } from "../db/schema";
 import {
@@ -29,6 +30,7 @@ export class PairingConnectionRepository extends PairingRepository {
         pairingDb: PairingDb,
         // Helpers to generate the auth tokens
         private readonly walletJwtService: JwtService<typeof WalletTokenDto>,
+        private readonly ssoService: SsoService,
         private readonly generateSdkJwt: ({
             wallet,
         }: { wallet: Address }) => Promise<{ token: string; expires: number }>
@@ -50,7 +52,7 @@ export class PairingConnectionRepository extends PairingRepository {
         wallet?: StaticWalletTokenDto;
         ws: ElysiaWS;
     }) {
-        const { action, pairingCode } = query;
+        const { action, pairingCode, ssoId } = query;
         if (!action && !wallet) {
             console.log("No action or wallet token");
             ws.close(4403, "Missing action or wallet token");
@@ -59,7 +61,7 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // If that's an initiate request
         if (action === "initiate" && !wallet) {
-            await this.handleInitiateRequest({ userAgent, ws });
+            await this.handleInitiateRequest({ userAgent, ws, ssoId });
             return;
         }
 
@@ -94,12 +96,16 @@ export class PairingConnectionRepository extends PairingRepository {
     private async handleInitiateRequest({
         userAgent,
         ws,
-    }: { userAgent?: string; ws: ElysiaWS }) {
+        ssoId: rawSsoId,
+    }: { userAgent?: string; ws: ElysiaWS; ssoId?: string }) {
         const deviceName = this.uaToDeviceName(userAgent);
 
         // Create a new pairing
         const pairingId = randomUUID();
         const pairingCode = randomUUID();
+
+        // Parse the sso id (non blocking, if not provided, we will resolve it later)
+        const ssoId = rawSsoId?.startsWith("0x") ? rawSsoId : undefined;
 
         // Insert the pairing into the database
         await this.pairingDb.insert(pairingTable).values({
@@ -107,6 +113,7 @@ export class PairingConnectionRepository extends PairingRepository {
             pairingCode,
             originUserAgent: userAgent ?? "Unknown",
             originName: deviceName,
+            ssoId: ssoId as Hex | undefined,
         });
 
         // Subscribe the client to the pairing topic
@@ -162,7 +169,7 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // Update the pairing with the wallet address and everything
         const targetName = this.uaToDeviceName(userAgent);
-        await this.pairingDb
+        const [resolvedPairing] = await this.pairingDb
             .update(pairingTable)
             .set({
                 wallet: wallet.address,
@@ -171,7 +178,10 @@ export class PairingConnectionRepository extends PairingRepository {
                 resolvedAt: new Date(),
                 lastActiveAt: new Date(),
             })
-            .where(eq(pairingTable.pairingId, pairing.pairingId));
+            .where(eq(pairingTable.pairingId, pairing.pairingId))
+            .returning({
+                ssoId: pairingTable.ssoId,
+            });
 
         // Build the wallet payload for the origin
         const walletPayload: StaticWalletTokenDto = {
@@ -187,6 +197,16 @@ export class PairingConnectionRepository extends PairingRepository {
             this.walletJwtService.sign(walletPayload),
             this.generateSdkJwt({ wallet: wallet.address }),
         ]);
+
+        // If we got a sso id, resolve the sso session
+        if (resolvedPairing.ssoId) {
+            await this.ssoService.resolveSession({
+                id: resolvedPairing.ssoId,
+                wallet: wallet.address,
+                authenticatorId: wallet.authenticatorId,
+                pairingId: pairing.pairingId,
+            });
+        }
 
         // Send the msg to the origin
         await this.sendTopicMessage({

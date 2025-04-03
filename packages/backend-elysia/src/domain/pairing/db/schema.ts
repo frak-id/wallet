@@ -16,6 +16,9 @@ export const pairingTable = pgTable(
         pairingId: varchar("pairing_id").notNull(), // Public ID for the pairing
         wallet: customHex("wallet"), // Null until target resolves pairing
 
+        // Potential SSO id to resolve once paired
+        ssoId: customHex("sso_id"),
+
         // Origin device info
         originUserAgent: varchar("origin_user_agent").notNull(),
         originName: varchar("origin_name").notNull(), // "Chrome on Windows", etc.
