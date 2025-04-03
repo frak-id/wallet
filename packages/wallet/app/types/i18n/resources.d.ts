@@ -108,14 +108,16 @@ interface Resources {
             };
             wallet: {
                 login: {
-                    text: "Create your wallet with **{{ productName }}** and receive up to **{{ estimatedReward }}€** per referred friend";
+                    text: "Create your wallet with **{{ productName }}** and receive up to **{{ estimatedReward }}** per referred friend";
                     primaryAction: "I create my wallet";
+                    text_referred: "For every purchase on the site **{{ productName }}**, I receive up to **{{ estimatedReward }}** directly in my wallet, usable anywhere I want.";
                 };
                 loggedIn: {
                     onboarding: {
                         welcome: "🥳 Congratulations! Your wallet is created.";
                         activate: "💫 Enable it to be able to share.";
                         share: "🚀 Let's go! Share this product with your loved ones and receive your rewards directly.";
+                        activate_referred: "💫 Enable it to receive your gains.";
                     };
                 };
             };
