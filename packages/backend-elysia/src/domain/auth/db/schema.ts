@@ -26,6 +26,8 @@ export const ssoTable = pgTable(
         authenticatorId: varchar("authenticator_id"),
         // Some potential additional data for the SDK token
         sdkTokenAdditionalData: json("additional_data"),
+        // Resolved pairing id for distant webauthn
+        pairingId: varchar("pairing_id"),
     },
     (table) => [
         index("sso_idx").on(table.ssoId),

@@ -25,11 +25,13 @@ export const walletSsoService = new Elysia({
             wallet,
             authenticatorId,
             additionalData,
+            pairingId,
         }: {
             id: Hex;
             wallet: Address;
             authenticatorId: string;
             additionalData?: StaticWalletSdkTokenDto["additionalData"];
+            pairingId?: string;
         }) {
             try {
                 await db
@@ -39,6 +41,7 @@ export const walletSsoService = new Elysia({
                         wallet,
                         authenticatorId,
                         sdkTokenAdditionalData: additionalData,
+                        pairingId,
                     })
                     .where(and(eq(ssoTable.ssoId, id)))
                     .execute();

@@ -131,9 +131,17 @@ export const walletSsoRoutes = new Elysia({
                 );
 
             // Create our wallet payload
-            // todo: need to handle distant webauthn
             let walletReference: StaticWalletTokenDto;
-            if (authenticator) {
+            if (authenticator && ssoSession.pairingId) {
+                walletReference = {
+                    type: "distant-webauthn",
+                    address: ssoSession.wallet,
+                    authenticatorId: authenticator._id,
+                    publicKey: authenticator.publicKey,
+                    pairingId: ssoSession.pairingId,
+                    transports: undefined,
+                };
+            } else if (authenticator) {
                 walletReference = {
                     type: "webauthn",
                     address: ssoSession.wallet,
