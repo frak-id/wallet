@@ -207,6 +207,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
 
             // Create the token and set the cookie
             const token = await walletJwt.sign({
+                type: "webauthn",
                 address,
                 authenticatorId,
                 publicKey,
@@ -233,6 +234,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
 
             return {
                 token,
+                type: "webauthn",
                 address,
                 authenticatorId,
                 publicKey,
@@ -371,6 +373,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Create the token and set the cookie
             const token = await walletJwt.sign({
                 address: walletAddress,
+                type: "webauthn",
                 authenticatorId: credential.id,
                 publicKey: publicKey,
                 sub: walletAddress,
@@ -379,6 +382,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
 
             return {
                 token,
+                type: "webauthn",
                 address: walletAddress,
                 authenticatorId: credential.id,
                 publicKey,

@@ -3,12 +3,21 @@ import type { Address, Hex } from "viem";
 
 export type Session = {
     token: string;
-} & (WebAuthNWallet | EcdsaWallet);
+} & (WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet);
 
 export type EcdsaWallet = {
+    type: "ecdsa";
     address: Address;
     publicKey: Hex;
     authenticatorId: `ecdsa-${string}`;
+    transports: undefined;
+};
+export type DistantWebAuthnWallet = {
+    type: "distant-webauthn";
+    address: Address;
+    publicKey: Hex;
+    authenticatorId: string;
+    pairingId: string;
     transports: undefined;
 };
 

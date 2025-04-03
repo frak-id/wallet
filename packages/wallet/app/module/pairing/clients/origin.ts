@@ -1,4 +1,5 @@
 import type { Hex } from "viem";
+import { getSafeSession } from "../../listener/utils/localStorage";
 import type { WsOriginMessage, WsOriginRequest } from "../types";
 import { BasePairingClient, type PairingWsEventListener } from "./base";
 
@@ -56,6 +57,26 @@ export class OriginPairingClient extends BasePairingClient<
                 this.connection.on("error", reject);
             }
         });
+    }
+
+    /**
+     * Reconnect to all the pairing associated with the current wallet
+     */
+    async reconnect(): Promise<void> {
+        const session = getSafeSession();
+        if (!session) {
+            console.warn("No session found, skipping reconnection");
+            return;
+        }
+
+        if (session.type !== "distant-webauthn") {
+            console.warn(
+                "Not a distant-webauthn session, skipping reconnection"
+            );
+            return;
+        }
+
+        await this.connect();
     }
 
     /**

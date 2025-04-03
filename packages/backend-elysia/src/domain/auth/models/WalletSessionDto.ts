@@ -28,7 +28,8 @@ const DistantWebAuthNWalletTokenDto = t.Object({
         x: t.Hex(),
         y: t.Hex(),
     }),
-    pairingId: t.Hex(),
+    transports: t.Undefined(),
+    pairingId: t.String(),
 });
 
 export const WalletTokenDto = t.Union([

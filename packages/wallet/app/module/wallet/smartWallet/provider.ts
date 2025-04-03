@@ -11,7 +11,7 @@ import { frakFallbackWalletSmartAccount } from "@/module/wallet/smartWallet/Frak
 import { frakWalletSmartAccount } from "@/module/wallet/smartWallet/FrakSmartWallet";
 import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
 import { parseWebAuthNAuthentication } from "@/module/wallet/smartWallet/webAuthN";
-import type { EcdsaWallet } from "@/types/Session";
+import type { DistantWebAuthnWallet, EcdsaWallet } from "@/types/Session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
@@ -30,7 +30,9 @@ type SmartAccountProviderParameters = {
     /**
      * Method when the account has changed
      */
-    onAccountChanged: (newWallet?: WebAuthNWallet | EcdsaWallet) => void;
+    onAccountChanged: (
+        newWallet?: WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet
+    ) => void;
 
     /**
      * Method used to sign a message via ecdsa
@@ -132,6 +134,7 @@ export function getSmartAccountProvider<
 
 /**
  * Build the smart account client on the given chain id
+ * todo: need to handle distant webauthn
  * @param chainId
  * @param wallet
  */
@@ -142,7 +145,7 @@ async function buildSmartAccount<
     wallet,
     signViaEcdsa,
 }: {
-    wallet: WebAuthNWallet | EcdsaWallet;
+    wallet: WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet;
     signViaEcdsa: (data: Hex, address: Address) => Promise<Hex>;
 }): Promise<
     SmartAccountClient<transport, typeof currentChain, SmartAccount<account>>
