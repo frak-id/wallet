@@ -6,10 +6,10 @@ import { BasePairingClient, type PairingWsEventListener } from "./base";
 /**
  * A pairing client for an origin device (likely desktop, the one responsible to create a pairing)
  *
- * - mecanism to empty the webauthn map?
+ * - mechanism to empty the signature map?
  * - should be auto created if we have a current session of type `distant-webauthn`
- * - we should also bastract the signer of the wagmi provider, to change the signature payload
- * - should expose some stuff that could be usefull on the UI (like pairing step, if we got an anszer to our latest `ping`, amount of pending signature etc)
+ * - we should also abstract the signer of the wagmi provider, to change the signature payload
+ * - should expose some stuff that could be useful on the UI (like pairing step, if we got an answer to our latest `ping`, amount of pending signature etc)
  */
 export class OriginPairingClient extends BasePairingClient<
     WsOriginRequest,
@@ -29,7 +29,11 @@ export class OriginPairingClient extends BasePairingClient<
     /**
      * Initiate a new pairing
      */
-    async initiatePairing(): Promise<{
+    async initiatePairing({
+        ssoId,
+    }: {
+        ssoId?: Hex;
+    } = {}): Promise<{
         pairingId: string;
         pairingCode: string;
     }> {
@@ -49,6 +53,7 @@ export class OriginPairingClient extends BasePairingClient<
 
             this.connect({
                 action: "initiate",
+                ssoId,
             });
 
             // Listen for the pairing initiated event

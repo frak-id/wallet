@@ -1,10 +1,12 @@
 import { LaunchPairing } from "@/module/pairing/component/LaunchPairing";
 import { useState } from "react";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 type AuthenticateWithPhoneProps = {
     text: string;
     className: string;
+    ssoId?: Hex;
 };
 
 /**
@@ -16,6 +18,7 @@ type AuthenticateWithPhoneProps = {
 export function AuthenticateWithPhone({
     text,
     className,
+    ssoId,
 }: AuthenticateWithPhoneProps) {
     const [isPhoneAuthenticated, setIsPhoneAuthenticated] = useState(false);
 
@@ -32,7 +35,7 @@ export function AuthenticateWithPhone({
             </button>
             {isPhoneAuthenticated && (
                 <div className={styles.authenticateWithPhone__fadeIn}>
-                    <LaunchPairing />
+                    <LaunchPairing ssoId={ssoId} />
                 </div>
             )}
         </div>

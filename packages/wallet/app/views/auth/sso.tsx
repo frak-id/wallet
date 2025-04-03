@@ -70,13 +70,11 @@ export default function Sso() {
         queryKey: ssoKey.params.bySearchParams(searchParams.toString()),
         queryFn: async () => {
             const compressedString = searchParams.get("p");
-            console.log("compressedString", compressedString);
             if (!compressedString) {
                 return null;
             }
             const compressedParam =
                 decompressJsonFromB64<CompressedSsoData>(compressedString);
-            console.log("compressedParam", compressedParam);
             if (!compressedParam) {
                 return null;
             }
@@ -177,14 +175,12 @@ export default function Sso() {
             >
                 <Header />
                 {!success && (
-                    <Actions onSuccess={onSuccess} onError={setError} />
+                    <>
+                        <Actions onSuccess={onSuccess} onError={setError} />
+                        <PhonePairingAction />
+                    </>
                 )}
-                <div className={styles.sso__secondaryButtonWrapper}>
-                    <AuthenticateWithPhone
-                        text={t("authent.sso.btn.new.phone")}
-                        className={styles.sso__buttonLink}
-                    />
-                </div>
+
                 {success && (
                     <>
                         <p className={styles.sso__redirect}>
@@ -348,6 +344,25 @@ function Actions({
                 isPrimary={false}
             />
         </>
+    );
+}
+
+function PhonePairingAction() {
+    const { t } = useTranslation();
+    const ssoId = useAtomValue(ssoContextAtom)?.id;
+
+    if (!ssoId) {
+        return null;
+    }
+
+    return (
+        <div className={styles.sso__secondaryButtonWrapper}>
+            <AuthenticateWithPhone
+                text={t("authent.sso.btn.new.phone")}
+                className={styles.sso__buttonLink}
+                ssoId={ssoId}
+            />
+        </div>
     );
 }
 
