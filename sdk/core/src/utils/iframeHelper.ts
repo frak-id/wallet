@@ -17,6 +17,7 @@ export const baseIframeProps = {
         zIndex: 2000001,
         top: "-1000px",
         left: "-1000px",
+        colorScheme: "auto",
     },
 };
 
