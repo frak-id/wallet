@@ -89,6 +89,9 @@ export class PairingRouterRepository extends PairingRepository {
             pairingId: wallet.pairingId,
             message: {
                 type: "ping",
+                payload: {
+                    pairingId: wallet.pairingId,
+                },
             },
         });
     }

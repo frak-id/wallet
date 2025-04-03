@@ -131,9 +131,11 @@ export const walletSsoRoutes = new Elysia({
                 );
 
             // Create our wallet payload
+            // todo: need to handle distant webauthn
             let walletReference: StaticWalletTokenDto;
             if (authenticator) {
                 walletReference = {
+                    type: "webauthn",
                     address: ssoSession.wallet,
                     authenticatorId: authenticator._id,
                     publicKey: authenticator.publicKey,
@@ -142,6 +144,7 @@ export const walletSsoRoutes = new Elysia({
             } else {
                 const authenticatorId = `ecdsa-${ssoSession.wallet}` as const;
                 walletReference = {
+                    type: "ecdsa",
                     address: ssoSession.wallet,
                     authenticatorId: authenticatorId,
                     publicKey: ssoSession.wallet,
