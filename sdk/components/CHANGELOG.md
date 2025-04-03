@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 0.0.15
+
+### Patch Changes
+
+- [`0cd5358`](https://github.com/frak-id/wallet/commit/0cd53582925ba5bd0c3620a1b61bf4e377b88372) Thanks [@srod](https://github.com/srod)! - ✨ Open Wallet embedded when receiving a shared link
+
+- Updated dependencies [[`0cd5358`](https://github.com/frak-id/wallet/commit/0cd53582925ba5bd0c3620a1b61bf4e377b88372)]:
+  - @frak-labs/core-sdk@0.0.12
+
 ## 0.0.14
 
 ### Patch Changes

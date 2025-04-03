@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.35
+
+### Patch Changes
+
+- [`0cd5358`](https://github.com/frak-id/wallet/commit/0cd53582925ba5bd0c3620a1b61bf4e377b88372) Thanks [@srod](https://github.com/srod)! - ✨ Open Wallet embedded when receiving a shared link
+
 ## 0.0.34
 
 ### Patch Changes
