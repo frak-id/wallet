@@ -1,14 +1,10 @@
 import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
-import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
-import type { Address } from "viem";
+import type { Session } from "../../../types/Session";
 
-export type LastAuthentication = Omit<WebAuthNWallet, "publicKey"> & {
-    publicKey: P256PubKey | Readonly<Address>;
-    transports?: AuthenticatorTransportFuture[];
-};
+export type LastAuthentication = WebAuthNWallet;
 
 /**
  * Atom with our last authenticator
@@ -23,7 +19,15 @@ export const lastAuthenticatorAtom = atomWithStorage<LastAuthentication | null>(
  */
 export const addLastAuthenticationAtom = atom(
     null,
-    async (_get, set, authentication: LastAuthentication) => {
+    async (_get, set, authentication: Session) => {
+        // Ensure that's a webauthn one
+        if (
+            authentication.type !== "webauthn" &&
+            authentication.type !== undefined
+        ) {
+            return;
+        }
+
         // Define it as last authentication
         set(lastAuthenticatorAtom, authentication);
 

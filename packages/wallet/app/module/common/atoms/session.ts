@@ -2,6 +2,7 @@ import type { SdkSession, Session } from "@/types/Session";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import type { Address, Hex } from "viem";
+import type { WebAuthNWallet } from "../../../types/WebAuthN";
 
 export const sessionAtom = atomWithStorage<Session | null>(
     "frak_session",
@@ -10,13 +11,20 @@ export const sessionAtom = atomWithStorage<Session | null>(
 
 export const webauthnSessionAtom = atom((get) => {
     const session = get(sessionAtom);
-    if (!session || typeof session.publicKey !== "object") return null;
-    return session;
+    if (!session || (session.type !== undefined && session.type !== "webauthn"))
+        return null;
+    return session as WebAuthNWallet;
 });
 
 export const ecdsaSessionAtom = atom((get) => {
     const session = get(sessionAtom);
-    if (!session || typeof session.publicKey === "object") return null;
+    if (!session || session.type !== "ecdsa") return null;
+    return session;
+});
+
+export const distantWebauthnSessionAtom = atom((get) => {
+    const session = get(sessionAtom);
+    if (!session || session.type !== "distant-webauthn") return null;
     return session;
 });
 

@@ -4,6 +4,7 @@ import { trackEvent } from "@frak-labs/shared/module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import type { Session } from "../../../types/Session";
 import { authenticatedBackendApi } from "../../common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 
@@ -37,7 +38,7 @@ export function useDemoLogin() {
 
             // Extract a few data
             const { token, sdkJwt, ...authentication } = data;
-            const session = { ...authentication, token };
+            const session = { ...authentication, token } as Session;
 
             // Store the session
             jotaiStore.set(sessionAtom, session);

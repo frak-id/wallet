@@ -4,10 +4,10 @@ import { ssoKey } from "@/module/authentication/queryKeys/sso";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { jotaiStore } from "@shared/module/atoms/store";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { Hex } from "viem";
+import type { Session } from "../../../types/Session";
 
 /**
  * hook to consume the sso status
@@ -47,14 +47,10 @@ export function useConsumePendingSso({
             if (data.status === "ok") {
                 // Extract a few data
                 const { token, sdkJwt, ...authentication } = data.session;
-                const session = { ...authentication, token };
+                const session = { ...authentication, token } as Session;
 
-                // Save this to the last authenticator
-                await jotaiStore.set(addLastAuthenticationAtom, {
-                    ...authentication,
-                    transports:
-                        authentication.transports as AuthenticatorTransportFuture[],
-                });
+                // Save this last authentication
+                await jotaiStore.set(addLastAuthenticationAtom, session);
 
                 // Store the session
                 jotaiStore.set(sessionAtom, session);
