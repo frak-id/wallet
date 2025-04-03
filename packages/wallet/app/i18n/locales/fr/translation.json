@@ -9,7 +9,8 @@
             "btn": {
                 "new": {
                     "create": "Utilisez la biométrie pour prouver que vous n'êtes pas un robot",
-                    "login": "Connecter un porte-monnaie existant"
+                    "login": "Connecter un porte-monnaie existant",
+                    "phone": "Utiliser un QR code pour me connecter"
                 },
                 "existing": {
                     "create": "Créer un nouveau porte-monnaie",

@@ -73,6 +73,7 @@ interface Resources {
                     new: {
                         create: "Use biometrics to prove you're not a robot";
                         login: "Connect an existing wallet";
+                        phone: "Use a QR code to connect";
                     };
                     existing: {
                         create: "Create a new wallet";

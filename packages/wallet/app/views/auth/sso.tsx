@@ -36,6 +36,7 @@ import type { Hex } from "viem";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
+import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -178,6 +179,12 @@ export default function Sso() {
                 {!success && (
                     <Actions onSuccess={onSuccess} onError={setError} />
                 )}
+                <div className={styles.sso__secondaryButtonWrapper}>
+                    <AuthenticateWithPhone
+                        text={t("authent.sso.btn.new.phone")}
+                        className={styles.sso__buttonLink}
+                    />
+                </div>
                 {success && (
                     <>
                         <p className={styles.sso__redirect}>
