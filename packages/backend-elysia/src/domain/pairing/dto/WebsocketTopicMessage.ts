@@ -1,4 +1,5 @@
 import type { Hex } from "viem";
+import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
 
 /**
  * When the origin send the request to the target
@@ -14,6 +15,21 @@ export type WsSignatureRequest = {
         request: Hex;
         // Some optional context
         context?: object;
+    };
+};
+
+/**
+ * When the target is paired to the origin, we can emit the authenticated message
+ */
+export type WsAuthenticated = {
+    type: "authenticated";
+    payload: {
+        token: string;
+        sdkJwt: {
+            token: string;
+            expires: number;
+        };
+        wallet: StaticWalletTokenDto;
     };
 };
 
@@ -58,6 +74,7 @@ export type WsPingPong = {
 
 export type WsTopicMessage =
     | WsPartnerConnected
+    | WsAuthenticated
     | WsSignatureRequest
     | WsSignatureResponse
     | WsPingPong;

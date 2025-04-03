@@ -1,4 +1,5 @@
 import type { Hex } from "viem";
+import type { DistantWebAuthnWallet } from "../../types/Session";
 
 export type PairingRole = "origin" | "target";
 
@@ -50,6 +51,17 @@ export type WsOriginMessage =
           payload: {
               pairingId: string;
               pairingCode: string;
+          };
+      }
+    | {
+          type: "authenticated";
+          payload: {
+              token: string;
+              sdkJwt: {
+                  token: string;
+                  expires: number;
+              };
+              wallet: DistantWebAuthnWallet;
           };
       }
     | WsPartnerConnected;

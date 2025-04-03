@@ -1,6 +1,7 @@
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
-import { postgresContext } from "../../common";
+import { postgresContext, sessionContext } from "../../common";
+import { walletSdkSessionService } from "../auth/services/WalletSdkSessionService";
 import { pairingSignatureRequestTable, pairingTable } from "./db/schema";
 import { PairingConnectionRepository } from "./repositories/PairingConnectionRepository";
 import { PairingRouterRepository } from "./repositories/PairingRouterRepository";
@@ -9,7 +10,9 @@ export const pairingContext = new Elysia({
     name: "Context.pairing",
 })
     .use(postgresContext)
-    .decorate(({ postgresDb, ...decorators }) => {
+    .use(sessionContext)
+    .use(walletSdkSessionService)
+    .decorate(({ postgresDb, generateSdkJwt, walletJwt, ...decorators }) => {
         const pairingDb = drizzle({
             client: postgresDb,
             schema: {
@@ -18,7 +21,11 @@ export const pairingContext = new Elysia({
             },
         });
 
-        const connectionRepository = new PairingConnectionRepository(pairingDb);
+        const connectionRepository = new PairingConnectionRepository(
+            pairingDb,
+            walletJwt,
+            generateSdkJwt
+        );
         const routerRepository = new PairingRouterRepository(pairingDb);
 
         return {
@@ -27,6 +34,10 @@ export const pairingContext = new Elysia({
                 connectionRepository: connectionRepository,
                 routerRepository: routerRepository,
             },
+            // Decorators
+            postgresDb,
+            generateSdkJwt,
+            walletJwt,
             ...decorators,
         };
     })

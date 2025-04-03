@@ -80,6 +80,11 @@ export interface JWTOption<
     exp?: string | number;
 }
 
+export type JwtService<Schema extends TSchema | undefined = undefined> = {
+    sign: (payload: UnwrapSchema<Schema>) => Promise<string>;
+    verify: (jwt: string) => Promise<UnwrapSchema<Schema> | false>;
+};
+
 /**
  * JWT plugin for elysia
  *  - Simple port of https://github.com/elysiajs/elysia-jwt, using latest version of jose
@@ -100,8 +105,8 @@ export const jwt = <
     nbf,
     exp,
     ...payload
-}: // End JWT Payload
-JWTOption<Name, Schema>) => {
+    // End JWT Payload
+}: JWTOption<Name, Schema>) => {
     if (!secret) throw new Error("Secret can't be empty");
 
     // Get the key for the given secret
