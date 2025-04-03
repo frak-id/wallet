@@ -1,7 +1,7 @@
 @import "normalize.css/normalize.css";
 
 /* Light Theme Variables */
-.light-theme {
+:root {
     --bg-primary: #ffffff;
     --bg-secondary: #f5f5f5;
     --text-primary: #0a2540;
@@ -15,7 +15,7 @@
 }
 
 /* Dark Theme Variables */
-.dark-theme {
+:root.dark {
     --bg-primary: #181a20;
     --bg-secondary: #2a2a2a;
     --text-primary: #e0e0e0;

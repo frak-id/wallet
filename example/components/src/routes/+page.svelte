@@ -9,7 +9,6 @@
 <div class="content">
   <ListComponents />
   <LearnMore />
-  <a href="/configuration">Configuration</a>
 </div>
 
 <style>

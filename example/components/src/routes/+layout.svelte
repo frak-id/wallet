@@ -2,6 +2,7 @@
   import "../app.css";
   import "$lib/css/all.css";
   import { Toaster } from "$lib/components/ui/sonner";
+  import { ModeWatcher } from "mode-watcher";
 </script>
 
 <svelte:head>
@@ -38,6 +39,7 @@
 
   <frak-button-wallet></frak-button-wallet>
   <Toaster />
+  <ModeWatcher defaultMode={"light"} />
 </main>
 
 <style>
