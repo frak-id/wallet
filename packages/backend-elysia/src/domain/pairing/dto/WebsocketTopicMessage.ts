@@ -18,6 +18,18 @@ export type WsSignatureRequest = {
 };
 
 /**
+ * When the partner is connected
+ */
+export type WsPartnerConnected = {
+    type: "partner-connected";
+    payload: {
+        pairingId: string;
+        deviceName: string;
+        role: "origin" | "target";
+    };
+};
+
+/**
  * When the target send back the response to the origin
  */
 export type WsSignatureResponse = {
@@ -42,10 +54,13 @@ export type WsPingPong = {
     payload: {
         // The pairing id
         pairingId: string;
+        // The device name
+        deviceName: string;
     };
 };
 
 export type WsTopicMessage =
+    | WsPartnerConnected
     | WsSignatureRequest
     | WsSignatureResponse
     | WsPingPong;

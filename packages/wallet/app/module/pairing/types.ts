@@ -2,6 +2,14 @@ import type { Hex } from "viem";
 
 export type PairingRole = "origin" | "target";
 
+type WsPartnerConnected = {
+    type: "partner-connected";
+    payload: {
+        pairingId: string;
+        deviceName: string;
+    };
+};
+
 /**
  * All the message that could be receive by the target
  */
@@ -20,7 +28,8 @@ export type WsTargetMessage =
           payload: {
               pairingId: string;
           };
-      };
+      }
+    | WsPartnerConnected;
 
 /**
  * All the message that could be receive by the origin
@@ -42,7 +51,8 @@ export type WsOriginMessage =
               pairingId: string;
               pairingCode: string;
           };
-      };
+      }
+    | WsPartnerConnected;
 
 /**
  * All the request that could be sent to the backend by the origin

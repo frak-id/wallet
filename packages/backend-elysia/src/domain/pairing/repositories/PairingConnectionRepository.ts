@@ -56,6 +56,7 @@ export class PairingConnectionRepository extends PairingRepository {
         // If we got a wallet token, we need to parse the connection query
         if (wallet) {
             await this.handleReconnection({
+                userAgent,
                 wallet,
                 ws,
             });
@@ -153,21 +154,21 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // Then handle like a regular reconnection
         await this.handleReconnection({
+            userAgent,
             wallet,
             ws,
         });
-
-        // todo: emit the pairing resolved event with the auth token for the origin
-        // todo: craft the output msg to send to the one who joined the pairing
     }
 
     /**
      * Handle reconnection events
      */
     private async handleReconnection({
+        userAgent,
         wallet,
         ws,
     }: {
+        userAgent?: string;
         wallet: StaticWalletTokenDto;
         ws: ElysiaWS;
     }) {
@@ -178,13 +179,14 @@ export class PairingConnectionRepository extends PairingRepository {
                 ws,
                 pairingId: wallet.pairingId,
                 message: {
-                    type: "ping",
+                    type: "partner-connected",
                     payload: {
                         pairingId: wallet.pairingId,
+                        deviceName: this.uaToDeviceName(userAgent),
+                        role: "origin",
                     },
                 },
             });
-            // todo: maybe send an event for the origin to know that the target is back?
             return;
         }
 
@@ -193,6 +195,7 @@ export class PairingConnectionRepository extends PairingRepository {
             const pairings = await this.pairingDb.query.pairingTable.findMany({
                 where: eq(pairingTable.wallet, wallet.address),
             });
+            const deviceName = this.uaToDeviceName(userAgent);
 
             // Subscribe the client to every topics related to this pairing
             for (const pairing of pairings) {
@@ -201,9 +204,11 @@ export class PairingConnectionRepository extends PairingRepository {
                     ws,
                     pairingId: pairing.pairingId,
                     message: {
-                        type: "pong",
+                        type: "partner-connected",
                         payload: {
                             pairingId: pairing.pairingId,
+                            deviceName,
+                            role: "target",
                         },
                     },
                 });
