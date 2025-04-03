@@ -1,26 +1,26 @@
-import type { WsMessage } from "../types";
-import {
-    BasePairingClient,
-    type PairingWsEventListener,
-    isWsMessageData,
-} from "./base";
+import type { Hex } from "viem";
+import type { WsOriginMessage, WsOriginRequest } from "../types";
+import { BasePairingClient, type PairingWsEventListener } from "./base";
 
 /**
  * A pairing client for an origin device (likely desktop, the one responsible to create a pairing)
- * 
+ *
  * - mecanism to empty the webauthn map?
  * - should be auto created if we have a current session of type `distant-webauthn`
  * - we should also bastract the signer of the wagmi provider, to change the signature payload
  * - should expose some stuff that could be usefull on the UI (like pairing step, if we got an anszer to our latest `ping`, amount of pending signature etc)
  */
-export class OriginPairingClient extends BasePairingClient {
+export class OriginPairingClient extends BasePairingClient<
+    WsOriginRequest,
+    WsOriginMessage
+> {
     /**
-     * Map of webauthn requests id to resolving promise
+     * Map of signature requests id to resolving promise
      */
-    private webAuthnRequests = new Map<
+    private signatureRequests = new Map<
         string,
         {
-            resolve: (value: string) => void;
+            resolve: (value: Hex) => void;
             reject: (reason: unknown) => void;
         }
     >();
@@ -37,7 +37,7 @@ export class OriginPairingClient extends BasePairingClient {
             const handlePairingInitiated: PairingWsEventListener = ({
                 data,
             }) => {
-                if (!isWsMessageData(data)) {
+                if (!this.isWsMessageData(data)) {
                     return;
                 }
 
@@ -61,16 +61,13 @@ export class OriginPairingClient extends BasePairingClient {
     /**
      * Send a webauthn request to the pairing server
      */
-    async sendWebAuthnRequest(
-        request: string,
-        context?: object
-    ): Promise<string> {
+    async sendWebAuthnRequest(request: Hex, context?: object): Promise<string> {
         return new Promise((resolve, reject) => {
             const id = crypto.randomUUID();
-            this.webAuthnRequests.set(id, { resolve, reject });
+            this.signatureRequests.set(id, { resolve, reject });
 
             this.send({
-                type: "webauthn-request",
+                type: "signature-request",
                 payload: {
                     id,
                     request,
@@ -90,12 +87,12 @@ export class OriginPairingClient extends BasePairingClient {
     /**
      * Handle a message from the pairing server
      */
-    protected override handleMessage(message: WsMessage) {
-        if (message.type === "webauthn-response") {
-            const request = this.webAuthnRequests.get(message.payload.id);
+    protected override handleMessage(message: WsOriginMessage) {
+        if (message.type === "signature-response") {
+            const request = this.signatureRequests.get(message.payload.id);
             if (request) {
-                request.resolve(message.payload.response);
-                this.webAuthnRequests.delete(message.payload.id);
+                request.resolve(message.payload.signature);
+                this.signatureRequests.delete(message.payload.id);
             }
         }
     }

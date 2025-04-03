@@ -1,13 +1,13 @@
 import { and, eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
-import { webAuthnRequestTable } from "../db/schema";
+import { pairingSignatureRequestTable } from "../db/schema";
 import type {
     WsPingRequest,
     WsPongRequest,
     WsRequestDirectMessage,
-    WsWebAuthnRequest,
-    WsWebAuthnResponseRequest,
+    WsSignatureRequest,
+    WsSignatureResponseRequest,
 } from "../dto/WebsocketDirectMessage";
 import { PairingRepository } from "./PairingRepository";
 
@@ -46,15 +46,15 @@ export class PairingRouterRepository extends PairingRepository {
             case "pong":
                 await this.handlePongRequest({ message: mapped, ws });
                 break;
-            case "webauthn-request":
-                await this.handleWebAuthnRequest({
+            case "signature-request":
+                await this.handleSignatureRequest({
                     message: mapped,
                     ws,
                     wallet,
                 });
                 break;
-            case "webauthn-response":
-                await this.handleWebAuthnResponseRequest({
+            case "signature-response":
+                await this.handleSignatureResponseRequest({
                     message: mapped,
                     ws,
                 });
@@ -93,12 +93,12 @@ export class PairingRouterRepository extends PairingRepository {
         });
     }
 
-    private async handleWebAuthnRequest({
+    private async handleSignatureRequest({
         message,
         ws,
         wallet,
     }: {
-        message: WsWebAuthnRequest;
+        message: WsSignatureRequest;
         ws: ElysiaWS;
         wallet: StaticWalletTokenDto;
     }) {
@@ -115,21 +115,22 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
-        // Save the webauthn request
-        await this.pairingDb.insert(webAuthnRequestTable).values({
+        // Save the request
+        await this.pairingDb.insert(pairingSignatureRequestTable).values({
             pairingId: wallet.pairingId,
             requestId: message.payload.id,
             request: message.payload.request,
             context: message.payload.context,
         });
 
-        // Transmit the webauthn request to the right topic
+        // Transmit the signature request to the right topic
         await this.sendTopicMessage({
             ws,
             pairingId: wallet.pairingId,
             message: {
-                type: "webauthn-request",
+                type: "signature-request",
                 payload: {
+                    pairingId: wallet.pairingId,
                     id: message.payload.id,
                     request: message.payload.request,
                     context: message.payload.context,
@@ -160,6 +161,9 @@ export class PairingRouterRepository extends PairingRepository {
             pairingId: message.payload.pairingId,
             message: {
                 type: "pong",
+                payload: {
+                    pairingId: message.payload.pairingId,
+                },
             },
         });
     }
@@ -167,18 +171,18 @@ export class PairingRouterRepository extends PairingRepository {
     /**
      * Handle a webauthn response request
      */
-    private async handleWebAuthnResponseRequest({
+    private async handleSignatureResponseRequest({
         message,
         ws,
     }: {
-        message: WsWebAuthnResponseRequest;
+        message: WsSignatureResponseRequest;
         ws: ElysiaWS;
     }) {
         // Assert we got everything we need
         if (
             !message.payload?.pairingId ||
             !message.payload?.id ||
-            !message.payload?.response
+            !message.payload?.signature
         ) {
             ws.close(4403, "Invalid message");
             return;
@@ -186,16 +190,19 @@ export class PairingRouterRepository extends PairingRepository {
 
         // Mark the webauthn request as processed
         await this.pairingDb
-            .update(webAuthnRequestTable)
+            .update(pairingSignatureRequestTable)
             .set({
                 processedAt: new Date(),
-                response: message.payload.response,
+                signature: message.payload.signature,
             })
             .where(
                 and(
-                    eq(webAuthnRequestTable.requestId, message.payload.id),
                     eq(
-                        webAuthnRequestTable.pairingId,
+                        pairingSignatureRequestTable.requestId,
+                        message.payload.id
+                    ),
+                    eq(
+                        pairingSignatureRequestTable.pairingId,
                         message.payload.pairingId
                     )
                 )
@@ -206,10 +213,11 @@ export class PairingRouterRepository extends PairingRepository {
             ws,
             pairingId: message.payload.pairingId,
             message: {
-                type: "webauthn-response",
+                type: "signature-response",
                 payload: {
+                    pairingId: message.payload.pairingId,
                     id: message.payload.id,
-                    response: message.payload.response,
+                    signature: message.payload.signature,
                 },
             },
         });

@@ -1,12 +1,17 @@
+import type { Hex } from "viem";
+
 /**
  * When the origin send the request to the target
  */
-export type WsWebAuthnRequest = {
-    type: "webauthn-request";
+export type WsSignatureRequest = {
+    type: "signature-request";
     payload: {
-        // compressed request (b64 encoded of an AuthenticationRequestJSON)
+        // The pairing id
+        pairingId: string;
+        // The id of the request
         id: string;
-        request: string;
+        // The request
+        request: Hex;
         // Some optional context
         context?: object;
     };
@@ -15,12 +20,15 @@ export type WsWebAuthnRequest = {
 /**
  * When the target send back the response to the origin
  */
-export type WsWebAuthnResponse = {
-    type: "webauthn-response";
+export type WsSignatureResponse = {
+    type: "signature-response";
     payload: {
-        // compressed response (b64 encoded of an AuthenticationResponseJSON)
+        // The pairing id
+        pairingId: string;
+        // The id of the request
         id: string;
-        response: string;
+        // The signature response
+        signature: Hex;
     };
 };
 
@@ -31,9 +39,13 @@ export type WsWebAuthnResponse = {
  */
 export type WsPingPong = {
     type: "ping" | "pong";
+    payload: {
+        // The pairing id
+        pairingId: string;
+    };
 };
 
 export type WsTopicMessage =
-    | WsWebAuthnRequest
-    | WsWebAuthnResponse
+    | WsSignatureRequest
+    | WsSignatureResponse
     | WsPingPong;

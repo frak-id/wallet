@@ -1,34 +1,72 @@
+import type { Hex } from "viem";
+
 export type PairingRole = "origin" | "target";
 
-// Backend message types
-export type WsMessage =
-    // Responses from server
+/**
+ * All the message that could be receive by the target
+ */
+export type WsTargetMessage =
     | {
-          type: "pairing-initiated";
-          payload: { pairingId: string; pairingCode: string };
+          type: "signature-request";
+          payload: {
+              pairingId: string;
+              id: string;
+              request: Hex;
+              context?: object;
+          };
       }
-    // Requests from clients
-    | { type: "ping" }
-    | { type: "pong"; payload: { pairingId: string } }
     | {
-          type: "webauthn-request";
-          payload: { id: string; request: string; context?: object };
-      }
-    | {
-          type: "webauthn-response";
-          payload: { pairingId: string; id: string; response: string };
+          type: "ping";
+          payload: {
+              pairingId: string;
+          };
       };
 
-export interface PairingState {
-    isConnected: boolean;
-    role: PairingRole | null;
-    pairingId?: string;
-    pairingCode?: string;
-    deviceName?: string;
-}
+/**
+ * All the message that could be receive by the origin
+ */
+export type WsOriginMessage =
+    | {
+          type: "signature-response";
+          payload: { pairingId: string; id: string; signature: Hex };
+      }
+    | {
+          type: "pong";
+          payload: {
+              pairingId: string;
+          };
+      }
+    | {
+          type: "pairing-initiated";
+          payload: {
+              pairingId: string;
+              pairingCode: string;
+          };
+      };
 
-export interface WebAuthnRequest {
-    id: string;
-    request: string;
-    context?: object;
-}
+/**
+ * All the request that could be sent to the backend by the origin
+ */
+export type WsOriginRequest =
+    | {
+          type: "ping";
+      }
+    | {
+          type: "signature-request";
+          payload: { id: string; request: Hex; context?: object };
+      };
+
+/**
+ * All the request that could be sent to the backend by the target
+ */
+export type WsTargetRequest =
+    | {
+          type: "signature-response";
+          payload: { pairingId: string; id: string; signature: Hex };
+      }
+    | {
+          type: "pong";
+          payload: {
+              pairingId: string;
+          };
+      };

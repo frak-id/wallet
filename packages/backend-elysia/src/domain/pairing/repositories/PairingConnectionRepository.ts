@@ -179,6 +179,9 @@ export class PairingConnectionRepository extends PairingRepository {
                 pairingId: wallet.pairingId,
                 message: {
                     type: "ping",
+                    payload: {
+                        pairingId: wallet.pairingId,
+                    },
                 },
             });
             // todo: maybe send an event for the origin to know that the target is back?
@@ -199,6 +202,9 @@ export class PairingConnectionRepository extends PairingRepository {
                     pairingId: pairing.pairingId,
                     message: {
                         type: "pong",
+                        payload: {
+                            pairingId: pairing.pairingId,
+                        },
                     },
                 });
             }
