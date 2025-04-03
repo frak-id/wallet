@@ -3,7 +3,6 @@ import {
     json,
     pgTable,
     serial,
-    text,
     timestamp,
     uniqueIndex,
     varchar,
@@ -38,15 +37,15 @@ export const pairingTable = pgTable(
     ]
 );
 
-export const webAuthnRequestTable = pgTable(
-    "webauthn_request",
+export const pairingSignatureRequestTable = pgTable(
+    "pairing_signature_request",
     {
         id: serial("id").primaryKey(),
         requestId: varchar("request_id").notNull(), // Unique request identifier
         pairingId: varchar("pairing_id").notNull(), // Associated pairing
 
         // Request details
-        request: text("webauthn_options").notNull(), // b64 serialized WebAuthn options
+        request: customHex("request").notNull(), // b64 serialized WebAuthn options
         context: json("context"), // Origin, operation type, description
 
         // Status tracking
@@ -54,7 +53,7 @@ export const webAuthnRequestTable = pgTable(
         processedAt: timestamp("processed_at"), // When target processed request
 
         // Result (null until processed)
-        response: text("webauthn_response"), // WebAuthn credential response
+        signature: customHex("signature"), // WebAuthn credential response
     },
     (table) => [
         index("request_id_idx").on(table.requestId),

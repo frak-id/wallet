@@ -1,6 +1,11 @@
 import type { Treaty } from "@elysiajs/eden";
 import { authenticatedBackendApi } from "../../common/api/backendClient";
-import type { WsMessage } from "../types";
+import type {
+    WsOriginMessage,
+    WsOriginRequest,
+    WsTargetMessage,
+    WsTargetRequest,
+} from "../types";
 
 type PairingWs = ReturnType<
     typeof authenticatedBackendApi.pairings.ws.subscribe
@@ -19,7 +24,10 @@ type ConnectionParams =
           pairingCode: string;
       };
 
-export abstract class BasePairingClient {
+export abstract class BasePairingClient<
+    TRequest extends WsOriginRequest | WsTargetRequest,
+    TMessage extends WsOriginMessage | WsTargetMessage,
+> {
     protected connection: PairingWs | null = null;
     protected pingInterval: NodeJS.Timeout | null = null;
 
@@ -44,13 +52,13 @@ export abstract class BasePairingClient {
             "message",
             ({ data }) => {
                 // Ensure the data is a valid message
-                if (!isWsMessageData(data)) {
+                if (!this.isWsMessageData(data)) {
                     console.error("Invalid message received", data);
                     return;
                 }
 
                 // Handle the message
-                this.handleMessage(data as WsMessage);
+                this.handleMessage(data);
             },
             {}
         );
@@ -75,12 +83,12 @@ export abstract class BasePairingClient {
     /**
      * Handle a message from the pairing websocket
      */
-    protected abstract handleMessage(message: WsMessage): void;
+    protected abstract handleMessage(message: TMessage): void;
 
     /**
      * Send a message to the pairing websocket
      */
-    protected send(message: WsMessage) {
+    protected send(message: TRequest) {
         this.connection?.send(message);
     }
 
@@ -101,8 +109,8 @@ export abstract class BasePairingClient {
         this.connection?.close();
         this.cleanup();
     }
-}
 
-export function isWsMessageData(data: unknown): data is WsMessage {
-    return typeof data === "object" && data !== null && "type" in data;
+    protected isWsMessageData(data: unknown): data is TMessage {
+        return typeof data === "object" && data !== null && "type" in data;
+    }
 }

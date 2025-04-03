@@ -1,4 +1,5 @@
-import type { WebAuthnRequest, WsMessage } from "../types";
+import { getSafeSession } from "../../listener/utils/localStorage";
+import type { WsTargetMessage, WsTargetRequest } from "../types";
 import { BasePairingClient } from "./base";
 
 /**
@@ -7,7 +8,10 @@ import { BasePairingClient } from "./base";
  * - should be auto created if the user got a webauthn type session
  * - should be destroyed + recreated on joining request
  */
-export class TargetPairingClient extends BasePairingClient {
+export class TargetPairingClient extends BasePairingClient<
+    WsTargetRequest,
+    WsTargetMessage
+> {
     /**
      * Join a new pairing request
      */
@@ -19,30 +23,37 @@ export class TargetPairingClient extends BasePairingClient {
     }
 
     /**
-     * Reconnect to the pairing
+     * Reconnect to all the pairing associated with the current wallet
      */
     async reconnect(): Promise<void> {
+        const session = getSafeSession();
+        if (!session) {
+            console.warn("No session found, skipping reconnection");
+            return;
+        }
+
+        // todo: need to ensure it's a webauthn type session
+
         await this.connect();
     }
 
     /**
      * Handle a message from the pairing server
      */
-    protected override handleMessage(message: WsMessage) {
+    protected override handleMessage(message: WsTargetMessage) {
         // Handle a ping request
         if (message.type === "ping") {
-            // todo: how could we know the topic on which this msg was sent?
-            // this.send({
-            //     type: "pong",
-            //     payload: {
-            //         pairingId: this.pairingId!,
-            //     },
-            // });
+            this.send({
+                type: "pong",
+                payload: {
+                    pairingId: message.payload.pairingId,
+                },
+            });
         }
 
         // Handle webauthn request
-        if (message.type === "webauthn-request") {
-            this.handleWebAuthnRequest(message.payload);
+        if (message.type === "signature-request") {
+            this.handleSignatureRequest(message.payload);
         }
     }
 
@@ -50,22 +61,16 @@ export class TargetPairingClient extends BasePairingClient {
      * Handle a webauthn request
      *  - todo: we should have a queue of pending webauthn requests
      */
-    private async handleWebAuthnRequest(request: WebAuthnRequest) {
+    private async handleSignatureRequest(
+        request: Extract<
+            WsTargetMessage,
+            { type: "signature-request" }
+        >["payload"]
+    ) {
         try {
             // This should be implemented by the consumer
-            if (this.onWebAuthnRequest) {
-                const response = await this.onWebAuthnRequest(request);
-
-                // todo: how could we know the topic on which this msg was sent?
-                // this.send({
-                //     type: "webauthn-response",
-                //     payload: {
-                //         pairingId: this.pairingId!,
-                //         id: request.id,
-                //         response,
-                //     },
-                // });
-            }
+            // todo
+            console.log("handleSignatureRequest", request);
         } catch (error) {
             console.error("Failed to handle WebAuthn request:", error);
         }
@@ -75,9 +80,4 @@ export class TargetPairingClient extends BasePairingClient {
      * Post setup hook
      */
     protected override setupHook() {}
-
-    /**
-     * WebAuthn request handler
-     */
-    onWebAuthnRequest?: (request: WebAuthnRequest) => Promise<string>;
 }
