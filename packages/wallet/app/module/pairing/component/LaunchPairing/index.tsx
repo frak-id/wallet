@@ -2,6 +2,7 @@ import { OriginPairingClient } from "@/module/pairing/clients/origin";
 import { Spinner } from "@frak-labs/shared/module/component/Spinner";
 import { Cuer } from "cuer";
 import { useEffect, useState } from "react";
+import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**
