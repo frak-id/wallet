@@ -1,7 +1,26 @@
+import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
 import type { Hex } from "viem";
+import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 import { getSafeSession } from "../../listener/utils/localStorage";
 import type { WsOriginMessage, WsOriginRequest } from "../types";
-import { BasePairingClient, type PairingWsEventListener } from "./base";
+import {
+    BasePairingClient,
+    type BasePairingState,
+    type PairingWsEventListener,
+} from "./base";
+
+type OriginState = "idle" | "pairing" | "reconnecting" | "paired" | "error";
+
+type OriginPairingState = BasePairingState & {
+    status: OriginState;
+    signatureRequests: Map<
+        string,
+        {
+            resolve: (value: Hex) => void;
+            reject: (reason: unknown) => void;
+        }
+    >;
+};
 
 /**
  * A pairing client for an origin device (likely desktop, the one responsible to create a pairing)
@@ -13,18 +32,19 @@ import { BasePairingClient, type PairingWsEventListener } from "./base";
  */
 export class OriginPairingClient extends BasePairingClient<
     WsOriginRequest,
-    WsOriginMessage
+    WsOriginMessage,
+    OriginPairingState
 > {
     /**
-     * Map of signature requests id to resolving promise
+     * Get the initial state for the client
      */
-    private signatureRequests = new Map<
-        string,
-        {
-            resolve: (value: Hex) => void;
-            reject: (reason: unknown) => void;
-        }
-    >();
+    protected getInitialState(): OriginPairingState {
+        return {
+            partnerDevice: null,
+            status: "idle",
+            signatureRequests: new Map(),
+        };
+    }
 
     /**
      * Initiate a new pairing
@@ -38,7 +58,6 @@ export class OriginPairingClient extends BasePairingClient<
         pairingCode: string;
     }> {
         return new Promise((resolve, reject) => {
-            // todo: should remove the listener when the promise is resolved
             const handlePairingInitiated: PairingWsEventListener = ({
                 data,
             }) => {
@@ -55,6 +74,9 @@ export class OriginPairingClient extends BasePairingClient<
                 action: "initiate",
                 ssoId,
             });
+
+            // Set the state to pairing
+            this.setState({ status: "pairing" });
 
             // Listen for the pairing initiated event
             if (this.connection) {
@@ -81,7 +103,14 @@ export class OriginPairingClient extends BasePairingClient<
             return;
         }
 
-        await this.connect();
+        // Launch the WS connection
+        this.connect();
+
+        // Set the state to reconnecting
+        this.setState({ status: "reconnecting" });
+
+        // Force trigger a ping event
+        this.send({ type: "ping" });
     }
 
     /**
@@ -90,7 +119,9 @@ export class OriginPairingClient extends BasePairingClient<
     async sendWebAuthnRequest(request: Hex, context?: object): Promise<string> {
         return new Promise((resolve, reject) => {
             const id = crypto.randomUUID();
-            this.signatureRequests.set(id, { resolve, reject });
+            const signatureRequests = new Map(this.state.signatureRequests);
+            signatureRequests.set(id, { resolve, reject });
+            this.setState({ signatureRequests });
 
             this.send({
                 type: "signature-request",
@@ -100,13 +131,6 @@ export class OriginPairingClient extends BasePairingClient<
                     context,
                 },
             });
-
-            // Add timeout
-            // todo: do we rly want that?
-            // setTimeout(() => {
-            //     this.webAuthnRequests.delete(id);
-            //     reject(new Error("WebAuthn request timeout"));
-            // }, 120_000);
         });
     }
 
@@ -114,12 +138,45 @@ export class OriginPairingClient extends BasePairingClient<
      * Handle a message from the pairing server
      */
     protected override handleMessage(message: WsOriginMessage) {
+        // Signature response
         if (message.type === "signature-response") {
-            const request = this.signatureRequests.get(message.payload.id);
+            const request = this.state.signatureRequests.get(
+                message.payload.id
+            );
             if (request) {
                 request.resolve(message.payload.signature);
-                this.signatureRequests.delete(message.payload.id);
+                const signatureRequests = new Map(this.state.signatureRequests);
+                signatureRequests.delete(message.payload.id);
+                this.setState({ signatureRequests });
             }
+            return;
+        }
+
+        // Partner connected message (update partner device)
+        if (message.type === "partner-connected") {
+            this.setState({
+                status: "paired",
+                partnerDevice: message.payload.deviceName,
+            });
+            return;
+        }
+
+        // Pong message (enforce paired state)
+        if (message.type === "pong") {
+            this.setState({ status: "paired" });
+            return;
+        }
+
+        // Authenticated message (update session status)
+        if (message.type === "authenticated") {
+            this.setState({ status: "paired" });
+
+            // Store the session
+            jotaiStore.set(sessionAtom, {
+                token: message.payload.token,
+                ...message.payload.wallet,
+            });
+            jotaiStore.set(sdkSessionAtom, message.payload.sdkJwt);
         }
     }
 

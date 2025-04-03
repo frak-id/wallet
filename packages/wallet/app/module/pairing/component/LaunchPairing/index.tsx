@@ -1,8 +1,9 @@
-import { OriginPairingClient } from "@/module/pairing/clients/origin";
 import { Spinner } from "@frak-labs/shared/module/component/Spinner";
 import { Cuer } from "cuer";
+import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
+import { getOriginPairingClient } from "../../clients/store";
 import styles from "./index.module.css";
 
 /**
@@ -10,14 +11,17 @@ import styles from "./index.module.css";
  * @returns A QR code to scan to pair with the wallet
  */
 export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
+    const client = getOriginPairingClient();
     const [pairingCode, setPairingCode] = useState<string | null>(null);
 
     useEffect(() => {
-        const client = new OriginPairingClient();
         client
             .initiatePairing({ ssoId })
             .then(({ pairingCode }) => setPairingCode(pairingCode));
-    }, [ssoId]);
+    }, [client, ssoId]);
+
+    // Get the current state of the client
+    const clientState = useAtomValue(client.stateAtom);
 
     if (!pairingCode) return null;
 
@@ -31,6 +35,7 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
             ) : (
                 <Spinner />
             )}
+            {clientState.status}
         </div>
     );
 }

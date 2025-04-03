@@ -1,6 +1,17 @@
 import { getSafeSession } from "../../listener/utils/localStorage";
 import type { WsTargetMessage, WsTargetRequest } from "../types";
-import { BasePairingClient } from "./base";
+import { BasePairingClient, type BasePairingState } from "./base";
+
+type TargetPairingState = BasePairingState & {
+    pendingRequests: Map<
+        string,
+        {
+            id: string;
+            request: string;
+            context?: object;
+        }
+    >;
+};
 
 /**
  * - should store a list of pending webauthn requests
@@ -10,13 +21,24 @@ import { BasePairingClient } from "./base";
  */
 export class TargetPairingClient extends BasePairingClient<
     WsTargetRequest,
-    WsTargetMessage
+    WsTargetMessage,
+    TargetPairingState
 > {
+    /**
+     * Get the initial state for the client
+     */
+    protected getInitialState(): TargetPairingState {
+        return {
+            partnerDevice: null,
+            pendingRequests: new Map(),
+        };
+    }
+
     /**
      * Join a new pairing request
      */
     async joinPairing(pairingCode: string): Promise<void> {
-        await this.connect({
+        this.connect({
             action: "join",
             pairingCode,
         });
@@ -49,17 +71,26 @@ export class TargetPairingClient extends BasePairingClient<
                     pairingId: message.payload.pairingId,
                 },
             });
+            return;
+        }
+
+        // Handle partner connected
+        if (message.type === "partner-connected") {
+            this.setState({
+                partnerDevice: message.payload.deviceName,
+            });
+            return;
         }
 
         // Handle webauthn request
         if (message.type === "signature-request") {
             this.handleSignatureRequest(message.payload);
+            return;
         }
     }
 
     /**
      * Handle a webauthn request
-     *  - todo: we should have a queue of pending webauthn requests
      */
     private async handleSignatureRequest(
         request: Extract<
@@ -68,6 +99,15 @@ export class TargetPairingClient extends BasePairingClient<
         >["payload"]
     ) {
         try {
+            // Store the request in pending requests
+            const pendingRequests = new Map(this.state.pendingRequests);
+            pendingRequests.set(request.id, {
+                id: request.id,
+                request: request.request,
+                context: request.context,
+            });
+            this.setState({ pendingRequests });
+
             // This should be implemented by the consumer
             // todo
             console.log("handleSignatureRequest", request);

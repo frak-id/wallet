@@ -1,4 +1,11 @@
 import type { Treaty } from "@elysiajs/eden";
+import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
+import {
+    type Atom,
+    type SetStateAction,
+    type WritableAtom,
+    atom,
+} from "jotai/vanilla";
 import type { Hex } from "viem";
 import { authenticatedBackendApi } from "../../common/api/backendClient";
 import type {
@@ -26,17 +33,53 @@ type ConnectionParams =
           pairingCode: string;
       };
 
+export type BasePairingState = {
+    partnerDevice: string | null;
+};
+
 export abstract class BasePairingClient<
     TRequest extends WsOriginRequest | WsTargetRequest,
     TMessage extends WsOriginMessage | WsTargetMessage,
+    TState extends BasePairingState = BasePairingState,
 > {
     protected connection: PairingWs | null = null;
     protected pingInterval: NodeJS.Timeout | null = null;
 
     /**
+     * The base state of the pairing client
+     */
+    protected _state: WritableAtom<TState, [SetStateAction<TState>], void>;
+
+    constructor() {
+        this._state = atom(this.getInitialState());
+    }
+
+    /**
+     * Get the initial state for the client
+     */
+    protected abstract getInitialState(): TState;
+
+    /**
+     * Get the current state
+     */
+    get stateAtom(): Atom<TState> {
+        return this._state;
+    }
+    get state(): TState {
+        return jotaiStore.get(this._state);
+    }
+
+    /**
+     * Update the state
+     */
+    protected setState(newState: Partial<TState>) {
+        jotaiStore.set(this._state, (prev) => ({ ...prev, ...newState }));
+    }
+
+    /**
      * Connect to the pairing websocket
      */
-    protected async connect(params?: ConnectionParams) {
+    protected connect(params?: ConnectionParams) {
         this.connection = authenticatedBackendApi.pairings.ws.subscribe({
             query: params,
         });
