@@ -30,13 +30,20 @@ export abstract class PairingRepository {
         ws,
         pairingId,
         message,
+        topic,
     }: {
         ws: ElysiaWS;
         pairingId: string;
         message: WsTopicMessage;
+        topic: "origin" | "target";
     }) {
         await this.updatePairingLastActive({ pairingId });
-        ws.publish(`pairing:${pairingId}`, message);
+        ws.publish(
+            topic === "origin"
+                ? originTopic(pairingId)
+                : targetTopic(pairingId),
+            message
+        );
     }
 
     /**
@@ -54,4 +61,12 @@ export abstract class PairingRepository {
             })
             .where(eq(pairingTable.pairingId, pairingId));
     }
+}
+
+export function originTopic(pairingId: string) {
+    return `pairing:${pairingId}:origin`;
+}
+
+export function targetTopic(pairingId: string) {
+    return `pairing:${pairingId}:target`;
 }
