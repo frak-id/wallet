@@ -2,7 +2,13 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
-import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
+import type { Address } from "viem";
+import type { JwtService } from "../../../utils/elysia/jwt";
+import type {
+    StaticWalletTokenDto,
+    WalletTokenDto,
+} from "../../auth/models/WalletSessionDto";
+import type { PairingDb } from "../context";
 import { pairingTable } from "../db/schema";
 import {
     PairingRepository,
@@ -19,6 +25,17 @@ import {
  * We will implement that in a 2nd time
  */
 export class PairingConnectionRepository extends PairingRepository {
+    constructor(
+        pairingDb: PairingDb,
+        // Helpers to generate the auth tokens
+        private readonly walletJwtService: JwtService<typeof WalletTokenDto>,
+        private readonly generateSdkJwt: ({
+            wallet,
+        }: { wallet: Address }) => Promise<{ token: string; expires: number }>
+    ) {
+        super(pairingDb);
+    }
+
     /**
      * Handle a WS connection with no wallet session present
      */
@@ -156,7 +173,37 @@ export class PairingConnectionRepository extends PairingRepository {
             })
             .where(eq(pairingTable.pairingId, pairing.pairingId));
 
-        // todo: send a msg to the origin topic with the token
+        // Build the wallet payload for the origin
+        const walletPayload: StaticWalletTokenDto = {
+            type: "distant-webauthn",
+            address: wallet.address,
+            authenticatorId: wallet.authenticatorId,
+            publicKey: wallet.publicKey,
+            transports: undefined,
+            pairingId: pairing.pairingId,
+        };
+
+        const [walletToken, sdkJwt] = await Promise.all([
+            this.walletJwtService.sign(walletPayload),
+            this.generateSdkJwt({ wallet: wallet.address }),
+        ]);
+
+        // Send the msg to the origin
+        await this.sendTopicMessage({
+            ws,
+            pairingId: pairing.pairingId,
+            message: {
+                type: "authenticated",
+                payload: {
+                    token: walletToken,
+                    sdkJwt: sdkJwt,
+                    wallet: walletPayload,
+                },
+            },
+            topic: "origin",
+            // We can skip the update since we will send the partner connect msg just after
+            skipUpdate: true,
+        });
 
         // Then handle like a regular reconnection
         await this.handleReconnection({

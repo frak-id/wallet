@@ -31,13 +31,17 @@ export abstract class PairingRepository {
         pairingId,
         message,
         topic,
+        skipUpdate = false,
     }: {
         ws: ElysiaWS;
         pairingId: string;
         message: WsTopicMessage;
         topic: "origin" | "target";
+        skipUpdate?: boolean;
     }) {
-        await this.updatePairingLastActive({ pairingId });
+        if (!skipUpdate) {
+            await this.updatePairingLastActive({ pairingId });
+        }
         ws.publish(
             topic === "origin"
                 ? originTopic(pairingId)
