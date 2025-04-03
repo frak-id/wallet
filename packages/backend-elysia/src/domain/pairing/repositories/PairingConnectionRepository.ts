@@ -4,7 +4,11 @@ import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
 import { pairingTable } from "../db/schema";
-import { PairingRepository } from "./PairingRepository";
+import {
+    PairingRepository,
+    originTopic,
+    targetTopic,
+} from "./PairingRepository";
 
 /**
  * Repository used to manage the pairing database
@@ -89,7 +93,7 @@ export class PairingConnectionRepository extends PairingRepository {
         });
 
         // Subscribe the client to the pairing topic
-        ws.subscribe(`pairing:${pairingId}`);
+        ws.subscribe(originTopic(pairingId));
 
         // Send back the pairing initiated event to the client
         this.sendDirectMessage({
@@ -152,6 +156,8 @@ export class PairingConnectionRepository extends PairingRepository {
             })
             .where(eq(pairingTable.pairingId, pairing.pairingId));
 
+        // todo: send a msg to the origin topic with the token
+
         // Then handle like a regular reconnection
         await this.handleReconnection({
             userAgent,
@@ -174,7 +180,7 @@ export class PairingConnectionRepository extends PairingRepository {
     }) {
         // If we got a distant webauthn token, subscribe the wallet to the pairing topic
         if (wallet.type === "distant-webauthn") {
-            ws.subscribe(`pairing:${wallet.pairingId}`);
+            ws.subscribe(originTopic(wallet.pairingId));
             await this.sendTopicMessage({
                 ws,
                 pairingId: wallet.pairingId,
@@ -183,9 +189,10 @@ export class PairingConnectionRepository extends PairingRepository {
                     payload: {
                         pairingId: wallet.pairingId,
                         deviceName: this.uaToDeviceName(userAgent),
-                        role: "origin",
                     },
                 },
+                // We are the origin, so send this message to the target
+                topic: "target",
             });
             return;
         }
@@ -199,7 +206,7 @@ export class PairingConnectionRepository extends PairingRepository {
 
             // Subscribe the client to every topics related to this pairing
             for (const pairing of pairings) {
-                ws.subscribe(`pairing:${pairing.pairingId}`);
+                ws.subscribe(targetTopic(pairing.pairingId));
                 await this.sendTopicMessage({
                     ws,
                     pairingId: pairing.pairingId,
@@ -208,9 +215,10 @@ export class PairingConnectionRepository extends PairingRepository {
                         payload: {
                             pairingId: pairing.pairingId,
                             deviceName,
-                            role: "target",
                         },
                     },
+                    // We are the target, so send this message to the origin
+                    topic: "origin",
                 });
             }
             return;

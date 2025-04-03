@@ -64,6 +64,10 @@ export class PairingRouterRepository extends PairingRepository {
         }
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                  Origin related msg (responding to target)                 */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * Handle a ping request
      */
@@ -93,6 +97,7 @@ export class PairingRouterRepository extends PairingRepository {
                     pairingId: wallet.pairingId,
                 },
             },
+            topic: "target",
         });
     }
 
@@ -139,8 +144,13 @@ export class PairingRouterRepository extends PairingRepository {
                     context: message.payload.context,
                 },
             },
+            topic: "target",
         });
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                 Target received msg (responding to origin)                 */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * Handle a pong request
@@ -168,11 +178,12 @@ export class PairingRouterRepository extends PairingRepository {
                     pairingId: message.payload.pairingId,
                 },
             },
+            topic: "origin",
         });
     }
 
     /**
-     * Handle a webauthn response request
+     * Handle a signature response request
      */
     private async handleSignatureResponseRequest({
         message,
@@ -191,7 +202,7 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
-        // Mark the webauthn request as processed
+        // Mark the signature request as processed
         await this.pairingDb
             .update(pairingSignatureRequestTable)
             .set({
@@ -211,7 +222,7 @@ export class PairingRouterRepository extends PairingRepository {
                 )
             );
 
-        // Transmit the webauthn response request to the right topic
+        // Transmit the signature response request to the right topic
         await this.sendTopicMessage({
             ws,
             pairingId: message.payload.pairingId,
@@ -223,6 +234,7 @@ export class PairingRouterRepository extends PairingRepository {
                     signature: message.payload.signature,
                 },
             },
+            topic: "origin",
         });
     }
 }

@@ -25,7 +25,6 @@ export type WsPartnerConnected = {
     payload: {
         pairingId: string;
         deviceName: string;
-        role: "origin" | "target";
     };
 };
 
@@ -54,8 +53,6 @@ export type WsPingPong = {
     payload: {
         // The pairing id
         pairingId: string;
-        // The device name
-        deviceName: string;
     };
 };
 
