@@ -6,7 +6,8 @@ export const isGcp = $app?.stage?.startsWith("gcp") ?? false;
 /**
  * Check if we are in production
  */
-export const isProd = $app?.stage?.endsWith("production") ?? false;
+export const isProd =
+    ($app.stage.endsWith("production") ?? false) || $app.stage === "prod";
 
 /**
  * The normalized stage name

@@ -5,9 +5,11 @@
 export const isRunningLocally =
     process.env.STAGE !== "dev" &&
     process.env.STAGE !== "prod" &&
+    process.env.STAGE !== "production" &&
     process.env.STAGE !== "staging";
 
 /**
  * Check if we are running in production
  */
-export const isRunningInProd = process.env.STAGE === "prod";
+export const isRunningInProd =
+    process.env.STAGE === "prod" || process.env.STAGE === "production";
