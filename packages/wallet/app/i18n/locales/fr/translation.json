@@ -107,13 +107,15 @@
         "wallet": {
             "login": {
                 "text": "Créez votre porte-monnaie avec **{{ productName }}** et recevez jusqu’à **{{ estimatedReward }}** par ami(e) parrainé(e)",
+                "text_referred": "Pour tout achat sur le site **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
                 "primaryAction": "Je crée mon porte-monnaie"
             },
             "loggedIn": {
                 "onboarding": {
                     "welcome": "🥳 Bravo ! Votre porte-monnaie est créé.",
                     "activate": "💫 Activez-le pour pouvoir partager.",
-                    "share": "🚀 C'est parti ! Partagez ce produit à vos proches et recevez directement vos récompenses."
+                    "share": "🚀 C'est parti ! Partagez ce produit à vos proches et recevez directement vos récompenses.",
+                    "activate_referred": "💫 Activez-le pour recevoir vos gains."
                 }
             }
         }
