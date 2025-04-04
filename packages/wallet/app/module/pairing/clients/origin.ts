@@ -32,6 +32,8 @@ export class OriginPairingClient extends BasePairingClient<
     WsOriginMessage,
     OriginPairingState
 > {
+    private pendingPings = 0;
+
     /**
      * Get the initial state for the client
      */
@@ -153,6 +155,7 @@ export class OriginPairingClient extends BasePairingClient<
 
         // Pong message (enforce paired state)
         if (message.type === "pong") {
+            this.pendingPings = 0;
             this.setState({ status: "paired" });
             return;
         }
@@ -178,7 +181,18 @@ export class OriginPairingClient extends BasePairingClient<
      */
     protected startPingInterval() {
         this.pingInterval = setInterval(() => {
+            // If we got more than 5 pending pings, close the connection
+            if (this.pendingPings > 5) {
+                this.connection?.close();
+                this.connection = null;
+                // And reset the ping counter
+                this.pendingPings = 0;
+                return;
+            }
+
+            // Send a ping
             this.send({ type: "ping" });
+            this.pendingPings++;
         }, 5_000);
     }
 }
