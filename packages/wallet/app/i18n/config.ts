@@ -1,4 +1,6 @@
+import enCustomized from "./locales/en/customized.json";
 import enTranslation from "./locales/en/translation.json";
+import frCustomized from "./locales/fr/customized.json";
 import frTranslation from "./locales/fr/translation.json";
 
 // This is the list of languages your application supports, the last one is your
@@ -13,8 +15,14 @@ export const fallbackLng = "en";
 export const defaultNS = "translation";
 
 export const resources = {
-    en: { translation: enTranslation },
-    fr: { translation: frTranslation },
+    en: {
+        translation: enTranslation,
+        customized: enCustomized,
+    },
+    fr: {
+        translation: frTranslation,
+        customized: frCustomized,
+    },
 };
 
 export const interpolation = {

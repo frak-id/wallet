@@ -28,7 +28,10 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { mapI18nConfig } from "../../sdk/utils/i18nMapper";
+import {
+    mapI18nConfig,
+    translationKeyPathToObject,
+} from "../../sdk/utils/i18nMapper";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
 export type GenericWalletUiType = {
@@ -164,13 +167,18 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 
             // Map the deprecated modal metadata
             const deprecatedModalMetadata = mapDeprecatedModalMetadata(request);
-            i18n.addResourceBundle(
-                lang,
-                "customized",
-                deprecatedModalMetadata,
-                true,
-                false
-            );
+            if (
+                deprecatedModalMetadata &&
+                Object.keys(deprecatedModalMetadata).length > 0
+            ) {
+                i18n.addResourceBundle(
+                    lang,
+                    "customized",
+                    translationKeyPathToObject(deprecatedModalMetadata),
+                    true,
+                    true
+                );
+            }
 
             // Map potential custom i18n config
             if (request?.type === "embedded" && request.params.metadata?.i18n) {
