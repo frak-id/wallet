@@ -95,9 +95,9 @@ export class OriginPairingClient extends BasePairingClient<
     }
 
     /**
-     * Send a webauthn request to the pairing server
+     * Send a signature request to the pairing server
      */
-    async sendWebAuthnRequest(request: Hex, context?: object): Promise<string> {
+    async sendSignatureRequest(request: Hex, context?: object): Promise<Hex> {
         return new Promise((resolve, reject) => {
             const id = crypto.randomUUID();
             const signatureRequests = new Map(this.state.signatureRequests);
