@@ -1,23 +1,4 @@
-.sessionClosed {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(80px);
-    color: var(--frak-color-white);
-    font-size: 13px;
-}
-
-.sessionClosed__warning {
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
-        "Android Emoji", "EmojiOne Mozilla", "Twemoji Mozilla", "Noto Emoji",
-        "Segoe UI Symbol", EmojiSymbols, emoji, sans-serif;
-    font-size: 12px;
-}
-
-.sessionClosed__close {
+.sessionClosed__button {
     all: unset;
     display: flex;
     align-items: center;

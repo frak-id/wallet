@@ -312,6 +312,7 @@ interface Resources {
                 };
                 cancel: "Cancel";
                 confirm: "Confirm";
+                pairingInProgress: "Pairing in progress, please authenticate";
             };
         };
         error: {

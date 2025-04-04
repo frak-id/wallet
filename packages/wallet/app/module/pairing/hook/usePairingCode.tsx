@@ -1,6 +1,6 @@
 import { pendingPairingAtom } from "@/module/pairing/atoms/code";
 import { useAtom } from "jotai";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
 /**
@@ -13,10 +13,17 @@ export function usePairingCode() {
     const code = useMemo(() => searchParams.get("code"), [searchParams]);
     const id = useMemo(() => searchParams.get("id"), [searchParams]);
 
+    const resetPairingCode = useCallback(() => {
+        setPairingCode(null);
+    }, [setPairingCode]);
+
     useEffect(() => {
         if (!code || !id) return;
         setPairingCode({ id, code });
     }, [code, id, setPairingCode]);
 
-    return useMemo(() => ({ pairingCode }), [pairingCode]);
+    return useMemo(
+        () => ({ pairingCode, resetPairingCode }),
+        [pairingCode, resetPairingCode]
+    );
 }

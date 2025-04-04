@@ -247,7 +247,8 @@
                 "title": "Please wait"
             },
             "cancel": "Cancel",
-            "confirm": "Confirm"
+            "confirm": "Confirm",
+            "pairingInProgress": "Pairing in progress, please authenticate"
         }
     },
     "error": {

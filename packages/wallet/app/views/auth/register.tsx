@@ -3,6 +3,7 @@ import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
@@ -84,6 +85,7 @@ export default function Register() {
                 </>
             }
         >
+            <PairingInProgress />
             <ButtonAuth
                 trigger={register}
                 disabled={

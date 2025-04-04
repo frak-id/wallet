@@ -247,7 +247,8 @@
                 "title": "Veuillez patienter"
             },
             "cancel": "Annuler",
-            "confirm": "Confirmer"
+            "confirm": "Confirmer",
+            "pairingInProgress": "Jumelage en cours, veuillez vous authentifier"
         }
     },
     "error": {

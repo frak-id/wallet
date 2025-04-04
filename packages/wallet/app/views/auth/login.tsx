@@ -4,6 +4,7 @@ import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -32,6 +33,7 @@ export default function Login() {
                     </>
                 }
             >
+                <PairingInProgress />
                 <ButtonAuth
                     disabled={!isWebAuthnSupported}
                     trigger={() => login({})}
