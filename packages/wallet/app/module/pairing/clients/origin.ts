@@ -74,11 +74,22 @@ export class OriginPairingClient extends BasePairingClient<
             return;
         }
 
+        // Check if we are already connected, if yes, clean that up and reconnect
+        if (this.connection) {
+            this.connection.close();
+            this.connection = null;
+            // Wait a bit for the connection to be closed and retry
+            setTimeout(() => {
+                this.reconnect();
+            }, 200);
+            return;
+        }
+
         // Launch the WS connection
         this.connect();
 
-        // Directly trigger a ping event to check the connection with the partner
-        this.send({ type: "ping" });
+        // Start the ping interval
+        this.startPingInterval();
     }
 
     /**
@@ -156,14 +167,10 @@ export class OriginPairingClient extends BasePairingClient<
                 ...message.payload.wallet,
             });
             jotaiStore.set(sdkSessionAtom, message.payload.sdkJwt);
-        }
-    }
 
-    /**
-     * Setup the hook for the pairing websocket
-     */
-    protected override setupHook() {
-        this.startPingInterval();
+            // And trigger a reconnection
+            this.reconnect();
+        }
     }
 
     /**
@@ -172,6 +179,6 @@ export class OriginPairingClient extends BasePairingClient<
     protected startPingInterval() {
         this.pingInterval = setInterval(() => {
             this.send({ type: "ping" });
-        }, 15000);
+        }, 5_000);
     }
 }

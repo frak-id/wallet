@@ -119,9 +119,4 @@ export class TargetPairingClient extends BasePairingClient<
             console.error("Failed to handle WebAuthn request:", error);
         }
     }
-
-    /**
-     * Post setup hook
-     */
-    protected override setupHook() {}
 }

@@ -123,20 +123,14 @@ export abstract class BasePairingClient<
         this.connection.on("close", () => {
             console.log("Pairing websocket closed");
             this.cleanup();
+            this.connection = null;
         });
 
         this.connection.on("error", (error) => {
             console.warn("Pairing websocket error", error);
-            this.cleanup();
+            this.connection?.close();
         });
-
-        this.setupHook(this.connection);
     }
-
-    /**
-     * Setup the hook for the pairing websocket
-     */
-    protected abstract setupHook(connection: PairingWs): void;
 
     /**
      * Handle a message from the pairing websocket
@@ -161,9 +155,6 @@ export abstract class BasePairingClient<
 
         // Reput the state to initial state
         this.setState(this.getInitialState());
-
-        this.connection?.close();
-        this.connection = null;
     }
 
     /**
