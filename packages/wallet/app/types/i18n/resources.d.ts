@@ -296,6 +296,23 @@ interface Resources {
                     button: "Discover the Fanclub";
                 };
             };
+            pairing: {
+                title: "Confirm phone pairing";
+                text: "You're about to connect this phone to your account";
+                info: {
+                    title: "Phone information";
+                    device: "Phone name:";
+                };
+                error: {
+                    title: "Invalid pairing request";
+                    noCode: "No pairing code provided";
+                };
+                loading: {
+                    title: "Please wait";
+                };
+                cancel: "Cancel";
+                confirm: "Confirm";
+            };
         };
         error: {
             webauthn: {

@@ -230,6 +230,23 @@
                 "text": "Découvrez le Fanclub de {{productName}}",
                 "button": "Découvrir le Fanclub"
             }
+        },
+        "pairing": {
+            "title": "Confirmation de la connexion",
+            "text": "Vous êtes sur le point de connecter ce téléphone à votre compte",
+            "info": {
+                "title": "Informations du téléphone",
+                "device": "Nom du téléphone :"
+            },
+            "error": {
+                "title": "Requête de connexion invalide",
+                "noCode": "Aucun code de connexion fourni"
+            },
+            "loading": {
+                "title": "Veuillez patienter"
+            },
+            "cancel": "Annuler",
+            "confirm": "Confirmer"
         }
     },
     "error": {

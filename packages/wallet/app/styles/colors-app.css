@@ -25,6 +25,9 @@
     --frak-alertDialog-button-secondary-border-color: var(--frak-color-white);
     --frak-button-border-radius: 16px;
     --frak-button-primary-background-color: rgba(0, 0, 0, 0.35);
+    --frak-button-secondary-background-color: var(--frak-color-white);
+    --frak-button-secondary-color: var(--frak-color-black);
+    --frak-button-secondary-border-color: var(--frak-color-white);
     --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
     --frak-button-disabled-text-color: var(--frak-color-grayText);
     --frak-navigation-color: var(--frak-color-white);
