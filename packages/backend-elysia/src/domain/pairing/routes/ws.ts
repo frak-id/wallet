@@ -37,14 +37,8 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
     },
     // When we receive a websocket message
     message: async (ws, message) => {
-        log.debug(
-            {
-                message,
-            },
-            `[Pairing] websocket message from ${ws.id}`
-        );
+        log.debug({ message }, `[Pairing] websocket message from ${ws.id}`);
 
-        // todo: we assume that the origin will have a distant webauthn token once sending message, need to double check that (like would the header be automaticly updated?)
         // Parse the wallet JWT
         const walletJwt = ws.data.query?.wallet;
         const wallet = walletJwt
