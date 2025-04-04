@@ -360,11 +360,12 @@ export const useListenerTranslation = () => useListenerUI().translation;
  *  - >100 -> rounded to the floor 50s
  */
 function normalizeAmount(amount: number) {
-    if (amount < 10) {
-        return Math.ceil(amount);
-    }
-    if (amount < 100) {
-        return Math.round(amount / 10) * 10;
-    }
-    return Math.floor(amount / 50) * 50;
+    return Math.ceil(amount);
+    // if (amount < 10) {
+    //     return Math.ceil(amount);
+    // }
+    // if (amount < 100) {
+    //     return Math.round(amount / 10) * 10;
+    // }
+    // return Math.floor(amount / 50) * 50;
 }
