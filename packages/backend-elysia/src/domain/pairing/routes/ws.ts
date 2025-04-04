@@ -9,7 +9,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
     // When we open a new websocket connection
     open: async (ws) => {
         // Check if we got a wallet session
-        const walletJwt = ws.data.headers["x-wallet-auth"];
+        const walletJwt = ws.data.query?.wallet;
         const userAgent = ws.data.headers["user-agent"];
 
         // Parse the wallet JWT
@@ -34,7 +34,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
     message: async (ws, message) => {
         // todo: we assume that the origin will have a distant webauthn token once sending message, need to double check that (like would the header be automaticly updated?)
         // Parse the wallet JWT
-        const walletJwt = ws.data.headers["x-wallet-auth"];
+        const walletJwt = ws.data.query?.wallet;
         const wallet = walletJwt
             ? ((await ws.data.walletJwt.verify(walletJwt)) as
                   | StaticWalletTokenDto

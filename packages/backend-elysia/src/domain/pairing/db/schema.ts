@@ -60,6 +60,6 @@ export const pairingSignatureRequestTable = pgTable(
     },
     (table) => [
         index("request_id_idx").on(table.requestId),
-        index("pairing_id_idx").on(table.pairingId),
+        index("signature_pairing_id_idx").on(table.pairingId),
     ]
 );
