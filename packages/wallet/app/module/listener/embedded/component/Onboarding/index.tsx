@@ -1,5 +1,5 @@
 import { Arrow } from "@/module/listener/embedded/component/Onboarding/assets/Arrow";
-import { useEmbeddedListenerUI } from "@/module/listener/providers/ListenerUiProvider";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { cx } from "class-variance-authority";
 import {
@@ -52,7 +52,7 @@ export function OnboardingArrow({ style }: { style?: CSSProperties }) {
 }
 
 export function OnboardingWelcome() {
-    const { translation } = useEmbeddedListenerUI();
+    const { lang, i18n } = useListenerTranslation();
     const { data: currentSession } = useInteractionSessionStatus();
     const [hidden, setHidden] = useState(false);
     const calledOnce = useRef(false);
@@ -82,7 +82,8 @@ export function OnboardingWelcome() {
             <Onboarding style={{ top: "92px", right: "-39px" }}>
                 <Trans
                     i18nKey={"sdk.wallet.loggedIn.onboarding.welcome"}
-                    tOptions={{ lng: translation.lang }}
+                    tOptions={{ lng: lang }}
+                    i18n={i18n}
                 />
             </Onboarding>
             <OnboardingArrow
@@ -100,7 +101,7 @@ export function OnboardingActivate({
     isReverse,
     isHidden = true,
 }: { isReverse?: boolean; isHidden?: boolean }) {
-    const { translation } = useEmbeddedListenerUI();
+    const { lang, i18n } = useListenerTranslation();
     const DELAY_MS = 1_500;
 
     const [isVisible, setIsVisible] = useState(false);
@@ -132,7 +133,8 @@ export function OnboardingActivate({
             >
                 <Trans
                     i18nKey={"sdk.wallet.loggedIn.onboarding.activate"}
-                    tOptions={{ lng: translation.lang }}
+                    tOptions={{ lng: lang }}
+                    i18n={i18n}
                 />
             </Onboarding>
             <OnboardingArrow
@@ -147,7 +149,7 @@ export function OnboardingActivate({
 }
 
 export function OnboardingShare({ isHidden = true }: { isHidden?: boolean }) {
-    const { translation } = useEmbeddedListenerUI();
+    const { lang, i18n } = useListenerTranslation();
     const [hidden, setHidden] = useState(isHidden);
 
     useEffect(() => {
@@ -164,7 +166,8 @@ export function OnboardingShare({ isHidden = true }: { isHidden?: boolean }) {
             <Onboarding style={{ top: "-90px", right: "10px" }}>
                 <Trans
                     i18nKey={"sdk.wallet.loggedIn.onboarding.share"}
-                    tOptions={{ lng: translation.lang }}
+                    tOptions={{ lng: lang }}
+                    i18n={i18n}
                 />
             </Onboarding>
             <OnboardingArrow style={{ top: "-53px", left: "60px" }} />

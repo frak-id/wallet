@@ -19,7 +19,9 @@ async function main() {
         .use(I18nextBrowserLanguageDetector) // Setup a client-side language detector
         .init({
             defaultNS,
+            ns: ["translation", "customized"],
             fallbackLng,
+            fallbackNS: "customized",
             supportedLngs,
             resources,
             debug: isRunningLocally,

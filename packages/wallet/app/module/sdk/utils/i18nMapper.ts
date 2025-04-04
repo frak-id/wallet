@@ -12,7 +12,6 @@ export async function mapI18nConfig(value: I18nConfig, i18n: I18nType) {
     if (isLocalizedConfig(value, i18n)) {
         // Handle as a localized config (direct translations)
         const mapped = await mapLocalizedI18nConfig(value);
-        // Add the resources to the current language
         i18n.addResourceBundle(
             i18n.language,
             "customized",
@@ -43,6 +42,8 @@ export async function mapI18nConfig(value: I18nConfig, i18n: I18nType) {
     await Promise.allSettled(loadNamespaceAsync);
 }
 
+type NestedStringRecord = { [key: string]: NestedStringRecord | string };
+
 /**
  * Map an i18n config to a localized i18n config
  * @param value
@@ -50,21 +51,53 @@ export async function mapI18nConfig(value: I18nConfig, i18n: I18nType) {
  */
 async function mapLocalizedI18nConfig(value: LocalizedI18nConfig) {
     // The resources we will add
-    let resources: { [key: string]: string } =
-        typeof value === "string" ? {} : value;
+    let resources: NestedStringRecord = typeof value === "string" ? {} : value;
     // If that's a string, that's an url, fetch it
     if (typeof value === "string") {
         try {
             const response = await fetch(value);
             const json = await response.json();
-            resources = json;
+            resources = translationKeyPathToObject(json);
         } catch (e) {
             console.warn("Failed to load custom translation file", e, {
                 value,
             });
         }
     }
+
+    // Convert the object to a nested object
+    if (typeof value === "object") {
+        resources = translationKeyPathToObject(value);
+    }
+
     return resources;
+}
+
+/**
+ * Convert a translation key path to an object
+ *  -> { "key1.text": "value1", "key1.title": "value2", "key2.text": "value3" } -> { "key1": { "text": "value1", "title": "value2" }, "key2": { "text": "value3" } }
+ */
+export function translationKeyPathToObject(translation: object) {
+    return Object.entries(translation).reduce(
+        (acc: NestedStringRecord, [key, value]) => {
+            const parts = key.split(".");
+            let current = acc;
+
+            // Handle all parts except the last one
+            for (let i = 0; i < parts.length - 1; i++) {
+                const part = parts[i];
+                current[part] = current[part] || {};
+                current = current[part] as NestedStringRecord;
+            }
+
+            // Set the value at the deepest level
+            const lastPart = parts[parts.length - 1];
+            current[lastPart] = value;
+
+            return acc;
+        },
+        {}
+    );
 }
 
 /**

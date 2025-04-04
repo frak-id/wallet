@@ -82,6 +82,8 @@ export function FullDialog() {
                             i18n: {
                                 "sdk.modal.siweAuthenticate.title":
                                     "EthCC SIWE",
+                                "sdk.modal.siweAuthenticate.description":
+                                    "EthCC SIWE text",
                                 "sdk.modal.sendTransaction.title":
                                     "EthCC Transaction",
                             },

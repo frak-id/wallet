@@ -28,7 +28,10 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { mapI18nConfig } from "../../sdk/utils/i18nMapper";
+import {
+    mapI18nConfig,
+    translationKeyPathToObject,
+} from "../../sdk/utils/i18nMapper";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
 export type GenericWalletUiType = {
@@ -123,17 +126,31 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
      * Get the right reward estimation for the current target interaction + currency
      */
     const getReward = useCallback(
-        (currency?: Currency, targetInteraction?: FullInteractionTypesKey) => {
+        ({
+            currency,
+            targetInteraction,
+            context,
+        }: {
+            currency?: Currency;
+            targetInteraction?: FullInteractionTypesKey;
+            context?: string;
+        }) => {
             // Get the supported currency (e.g. "eur")
             const supportedCurrency = getSupportedCurrency(currency);
 
             // Get the currency amount key (e.g. "eurAmount")
             const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
 
+            // If we are in the referred context, we use the referee reward instead of the referrer one
+            const useReferrerReward = context !== "referred";
+
+            // Get the max reward
+            const maxReward = useReferrerReward
+                ? rewardData?.maxReferrer?.[currencyAmountKey]
+                : rewardData?.maxReferee?.[currencyAmountKey];
+
             // Find the right estimated reward depending on the context
-            let estimatedReward = Math.ceil(
-                rewardData?.maxReferrer?.[currencyAmountKey] ?? 0
-            );
+            let estimatedReward = maxReward ?? 0;
             if (rewardData && targetInteraction) {
                 // Find the max reward for the target interaction
                 const targetReward = rewardData.rewards
@@ -141,16 +158,23 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                         (reward) =>
                             reward.interactionTypeKey === targetInteraction
                     )
-                    .map((reward) => reward.referrer.eurAmount)
+                    .map((reward) =>
+                        useReferrerReward
+                            ? reward.referrer.eurAmount
+                            : reward.referee.eurAmount
+                    )
                     .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
                 // If found a reward, set it as the estimated reward
                 if (targetReward > 0) {
-                    estimatedReward = Math.ceil(targetReward);
+                    estimatedReward = targetReward;
                 }
             }
 
             // Format the reward
-            return formatAmount(estimatedReward, supportedCurrency);
+            return formatAmount(
+                normalizeAmount(estimatedReward),
+                supportedCurrency
+            );
         },
         [rewardData]
     );
@@ -164,13 +188,18 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 
             // Map the deprecated modal metadata
             const deprecatedModalMetadata = mapDeprecatedModalMetadata(request);
-            i18n.addResourceBundle(
-                lang,
-                "customized",
-                deprecatedModalMetadata,
-                true,
-                false
-            );
+            if (
+                deprecatedModalMetadata &&
+                Object.keys(deprecatedModalMetadata).length > 0
+            ) {
+                i18n.addResourceBundle(
+                    lang,
+                    "customized",
+                    translationKeyPathToObject(deprecatedModalMetadata),
+                    true,
+                    true
+                );
+            }
 
             // Map potential custom i18n config
             if (request?.type === "embedded" && request.params.metadata?.i18n) {
@@ -204,10 +233,11 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             : {};
 
         // Format the reward
-        const formattedReward = getReward(
-            currentRequest?.configMetadata?.currency,
-            currentRequest?.targetInteraction
-        );
+        const formattedReward = getReward({
+            currency: currentRequest?.configMetadata?.currency,
+            targetInteraction: currentRequest?.targetInteraction,
+            context: currentRequest?.i18n?.context,
+        });
 
         // Create the new i18n instance with the right context
         const i18n = initialI18n.cloneInstance({
@@ -322,3 +352,19 @@ export function useEmbeddedListenerUI() {
  * Custom hooks to get only the translation context
  */
 export const useListenerTranslation = () => useListenerUI().translation;
+
+/**
+ * Normalize the amount to the right displayable format
+ *  - <10 -> ceil
+ *  - <100 -> rounded to the nearest 10s
+ *  - >100 -> rounded to the floor 50s
+ */
+function normalizeAmount(amount: number) {
+    if (amount < 10) {
+        return Math.ceil(amount);
+    }
+    if (amount < 100) {
+        return Math.round(amount / 10) * 10;
+    }
+    return Math.floor(amount / 50) * 50;
+}
