@@ -8,13 +8,13 @@ import {
 } from "jotai/vanilla";
 import type { Hex } from "viem";
 import { authenticatedBackendApi } from "../../common/api/backendClient";
+import { getSafeSession } from "../../listener/utils/localStorage";
 import type {
     WsOriginMessage,
     WsOriginRequest,
     WsTargetMessage,
     WsTargetRequest,
 } from "../types";
-import { getSafeSession } from "../../listener/utils/localStorage";
 
 type PairingWs = ReturnType<
     typeof authenticatedBackendApi.pairings.ws.subscribe
@@ -36,6 +36,7 @@ type ConnectionParams =
 
 export type BasePairingState = {
     partnerDevice: string | null;
+    status: "idle" | "connecting" | "paired";
 };
 
 export abstract class BasePairingClient<
@@ -81,12 +82,18 @@ export abstract class BasePairingClient<
      * Connect to the pairing websocket
      */
     protected connect(params?: ConnectionParams) {
+        if (this.connection) {
+            console.warn("Pairing client is already connected");
+            return;
+        }
+
         this.connection = authenticatedBackendApi.pairings.ws.subscribe({
             query: {
                 ...params,
                 wallet: getSafeSession()?.token,
             },
         });
+        this.setState({ status: "connecting" } as Partial<TState>);
 
         this.setupEventListeners();
     }
@@ -100,6 +107,7 @@ export abstract class BasePairingClient<
         this.connection.on(
             "message",
             ({ data }) => {
+                console.log("Received message", data);
                 // Ensure the data is a valid message
                 if (!this.isWsMessageData(data)) {
                     console.error("Invalid message received", data);
@@ -113,11 +121,12 @@ export abstract class BasePairingClient<
         );
 
         this.connection.on("close", () => {
+            console.log("Pairing websocket closed");
             this.cleanup();
         });
 
         this.connection.on("error", (error) => {
-            console.error("Pairing websocket error", error);
+            console.warn("Pairing websocket error", error);
             this.cleanup();
         });
 
@@ -149,6 +158,9 @@ export abstract class BasePairingClient<
             clearInterval(this.pingInterval);
             this.pingInterval = null;
         }
+
+        // Reput the state to initial state
+        this.setState(this.getInitialState());
 
         this.connection?.close();
         this.connection = null;

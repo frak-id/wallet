@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { log } from "../../../common";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
 import { pairingContext } from "../context";
 
@@ -8,6 +9,7 @@ import { pairingContext } from "../context";
 export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
     // When we open a new websocket connection
     open: async (ws) => {
+        log.debug(`[Pairing] websocket opened: ${ws.id}`);
         // Check if we got a wallet session
         const walletJwt = ws.data.query?.wallet;
         const userAgent = ws.data.headers["user-agent"];
@@ -30,8 +32,18 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
             ws,
         });
     },
+    close: async (ws) => {
+        log.debug(`[Pairing] websocket closed: ${ws.id}`);
+    },
     // When we receive a websocket message
     message: async (ws, message) => {
+        log.debug(
+            {
+                message,
+            },
+            `[Pairing] websocket message from ${ws.id}`
+        );
+
         // todo: we assume that the origin will have a distant webauthn token once sending message, need to double check that (like would the header be automaticly updated?)
         // Parse the wallet JWT
         const walletJwt = ws.data.query?.wallet;
@@ -43,7 +55,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
 
         // If we don't have a wallet, close the connection
         if (!wallet) {
-            ws.close(4403, "Missing wallet token");
+            log.debug(`[Pairing] missing wallet token from ${ws.id}`);
             return;
         }
 

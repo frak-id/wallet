@@ -19,6 +19,11 @@ import {
 const app = new Elysia({
     aot: true,
     precompile: true,
+    // Websocket specific config
+    websocket: {
+        // Idle timeout of 5min in seconds, could take a long time for a pairing to be resolved
+        idleTimeout: 300,
+    },
 })
     .use(
         log.into({

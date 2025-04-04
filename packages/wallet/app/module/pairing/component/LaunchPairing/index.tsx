@@ -1,7 +1,7 @@
 import { Spinner } from "@frak-labs/shared/module/component/Spinner";
 import { Cuer } from "cuer";
 import { useAtomValue } from "jotai";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { Hex } from "viem";
 import { getOriginPairingClient } from "../../clients/store";
 import styles from "./index.module.css";
@@ -12,18 +12,15 @@ import styles from "./index.module.css";
  */
 export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
     const client = getOriginPairingClient();
-    const [pairingCode, setPairingCode] = useState<string | null>(null);
 
     useEffect(() => {
-        client
-            .initiatePairing({ ssoId })
-            .then(({ pairingCode }) => setPairingCode(pairingCode));
+        client.initiatePairing({ ssoId });
     }, [client, ssoId]);
 
     // Get the current state of the client
     const clientState = useAtomValue(client.stateAtom);
 
-    if (!pairingCode) return null;
+    const pairingCode = clientState.pairing?.code;
 
     return (
         <div className={styles.launchPairing}>
@@ -36,7 +33,9 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
             ) : (
                 <Spinner />
             )}
-            {clientState.status}
+            <p>{clientState.status}</p>
+            <p>{clientState.partnerDevice}</p>
+            <p>{pairingCode}</p>
         </div>
     );
 }
