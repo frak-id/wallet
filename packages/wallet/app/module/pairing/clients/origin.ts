@@ -3,16 +3,13 @@ import type { Hex } from "viem";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 import { getSafeSession } from "../../listener/utils/localStorage";
 import type { WsOriginMessage, WsOriginRequest } from "../types";
-import {
-    BasePairingClient,
-    type BasePairingState,
-    type PairingWsEventListener,
-} from "./base";
-
-type OriginState = "idle" | "pairing" | "reconnecting" | "paired" | "error";
+import { BasePairingClient, type BasePairingState } from "./base";
 
 type OriginPairingState = BasePairingState & {
-    status: OriginState;
+    pairing?: {
+        id: string;
+        code: string;
+    };
     signatureRequests: Map<
         string,
         {
@@ -53,36 +50,10 @@ export class OriginPairingClient extends BasePairingClient<
         ssoId,
     }: {
         ssoId?: Hex;
-    } = {}): Promise<{
-        pairingId: string;
-        pairingCode: string;
-    }> {
-        return new Promise((resolve, reject) => {
-            const handlePairingInitiated: PairingWsEventListener = ({
-                data,
-            }) => {
-                if (!this.isWsMessageData(data)) {
-                    return;
-                }
-
-                if (data.type === "pairing-initiated") {
-                    resolve(data.payload);
-                }
-            };
-
-            this.connect({
-                action: "initiate",
-                ssoId,
-            });
-
-            // Set the state to pairing
-            this.setState({ status: "pairing" });
-
-            // Listen for the pairing initiated event
-            if (this.connection) {
-                this.connection.on("message", handlePairingInitiated);
-                this.connection.on("error", reject);
-            }
+    } = {}) {
+        this.connect({
+            action: "initiate",
+            ssoId,
         });
     }
 
@@ -106,10 +77,7 @@ export class OriginPairingClient extends BasePairingClient<
         // Launch the WS connection
         this.connect();
 
-        // Set the state to reconnecting
-        this.setState({ status: "reconnecting" });
-
-        // Force trigger a ping event
+        // Directly trigger a ping event to check the connection with the partner
         this.send({ type: "ping" });
     }
 
@@ -138,6 +106,17 @@ export class OriginPairingClient extends BasePairingClient<
      * Handle a message from the pairing server
      */
     protected override handleMessage(message: WsOriginMessage) {
+        // Pairing initiated message (update pairing)
+        if (message.type === "pairing-initiated") {
+            this.setState({
+                status: "connecting",
+                pairing: {
+                    id: message.payload.pairingId,
+                    code: message.payload.pairingCode,
+                },
+            });
+        }
+
         // Signature response
         if (message.type === "signature-response") {
             const request = this.state.signatureRequests.get(

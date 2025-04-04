@@ -29,6 +29,7 @@ export class TargetPairingClient extends BasePairingClient<
      */
     protected getInitialState(): TargetPairingState {
         return {
+            status: "idle",
             partnerDevice: null,
             pendingRequests: new Map(),
         };
@@ -56,7 +57,7 @@ export class TargetPairingClient extends BasePairingClient<
 
         // todo: need to ensure it's a webauthn type session
 
-        await this.connect();
+        this.connect();
     }
 
     /**
@@ -71,12 +72,14 @@ export class TargetPairingClient extends BasePairingClient<
                     pairingId: message.payload.pairingId,
                 },
             });
+            this.setState({ status: "paired" });
             return;
         }
 
         // Handle partner connected
         if (message.type === "partner-connected") {
             this.setState({
+                status: "paired",
                 partnerDevice: message.payload.deviceName,
             });
             return;
@@ -84,6 +87,7 @@ export class TargetPairingClient extends BasePairingClient<
 
         // Handle webauthn request
         if (message.type === "signature-request") {
+            this.setState({ status: "paired" });
             this.handleSignatureRequest(message.payload);
             return;
         }

@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
+import { log } from "../../../common";
 import type { PairingDb } from "../context";
 import { pairingTable } from "../db/schema";
 import type { WsDirectMessageResponse } from "../dto/WebsocketDirectMessage";
@@ -42,6 +43,16 @@ export abstract class PairingRepository {
         if (!skipUpdate) {
             await this.updatePairingLastActive({ pairingId });
         }
+        log.debug(
+            {
+                type: message.type,
+                formattedTopic:
+                    topic === "origin"
+                        ? originTopic(pairingId)
+                        : targetTopic(pairingId),
+            },
+            "Sending topic message"
+        );
         ws.publish(
             topic === "origin"
                 ? originTopic(pairingId)

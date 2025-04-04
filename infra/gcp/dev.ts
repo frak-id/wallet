@@ -24,6 +24,7 @@ const dbEnv = {
     ...postgresEnv,
     POSTGRES_HOST: "localhost",
     POSTGRES_PORT: localPort,
+    STAGE: "staging",
 };
 
 // Helpers command
@@ -60,6 +61,15 @@ export const dbGcpGenerate = new sst.x.DevCommand("db:gcp:generate", {
         title: "[DB][GCP] Generate",
         autostart: false,
         command: "bunx drizzle-kit generate",
+        directory: "packages/backend-elysia",
+    },
+    environment: dbEnv,
+});
+export const dbGcpMigrate = new sst.x.DevCommand("db:gcp:migrate", {
+    dev: {
+        title: "[DB][GCP] Migrate",
+        autostart: false,
+        command: "bunx drizzle-kit migrate",
         directory: "packages/backend-elysia",
     },
     environment: dbEnv,
