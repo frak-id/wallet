@@ -6,17 +6,13 @@ import { Grid } from "@/module/common/component/Grid";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import styles from "./login.module.css";
 
 export default function Login() {
-    const navigate = useNavigate();
     const { t } = useTranslation();
-
     const isWebAuthnSupported = useIsWebAuthNSupported();
-    const { login } = useLogin({
-        onSuccess: () => navigate("/wallet"),
-    });
+    const { login } = useLogin({});
 
     return (
         <>

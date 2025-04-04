@@ -14,7 +14,6 @@ export default [
         // Auth Routes
         layout("./views/layouts/authentication.tsx", [
             route("/login", "./views/auth/login.tsx"),
-            route("/pairing", "./views/auth/pairing.tsx"),
             route("/register", "./views/auth/register.tsx"),
             route("/register/demo", "./views/auth/register-demo.tsx"),
             route("/recovery", "./views/auth/recovery.tsx"),
@@ -40,6 +39,7 @@ export default [
             route("/membrs", "./views/protected/membrs.tsx"),
             route("/membrs/profile", "./views/protected/membrs-profile.tsx"),
             route("/membrs/fanclub", "./views/protected/membrs-fanclub.tsx"),
+            route("/pairing", "./views/auth/pairing.tsx"),
         ]),
     ]),
 

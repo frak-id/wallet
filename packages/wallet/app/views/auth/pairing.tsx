@@ -3,12 +3,12 @@ import { Title } from "@/module/common/component/Title";
 import { getTargetPairingClient } from "@/module/pairing/clients/store";
 import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
+import { usePairingCode } from "@/module/pairing/hook/usePairingCode";
 import { Button } from "@shared/module/component/Button";
 import { Spinner } from "@shared/module/component/Spinner";
 import { AlertCircle } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router";
 import styles from "./pairing.module.css";
 
 /**
@@ -17,16 +17,15 @@ import styles from "./pairing.module.css";
  */
 export default function Pairing() {
     const client = getTargetPairingClient();
-    const [searchParams] = useSearchParams();
-    const code = searchParams.get("code");
     const { t } = useTranslation();
+    const { pairingCode } = usePairingCode();
 
     useEffect(() => {
-        if (!code) return;
-        client.joinPairing(code);
-    }, [code, client]);
+        if (!pairingCode) return;
+        client.joinPairing(pairingCode);
+    }, [pairingCode, client]);
 
-    if (!code) {
+    if (!pairingCode) {
         return (
             <Grid>
                 <Title size="big" align="center">

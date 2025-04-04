@@ -13,9 +13,7 @@ export default function Register() {
     const navigate = useNavigate();
     const [disabled, setDisabled] = useState(false);
     const isWebAuthnSupported = useIsWebAuthNSupported();
-    const { register, error, isRegisterInProgress } = useRegister({
-        onSuccess: () => navigate("/wallet"),
-    });
+    const { register, error, isRegisterInProgress } = useRegister({});
 
     /**
      * Boolean used to know if the error is about a previously used authenticator
