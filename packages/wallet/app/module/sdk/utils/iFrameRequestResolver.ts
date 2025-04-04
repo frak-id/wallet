@@ -114,8 +114,11 @@ export function createIFrameRequestResolver(
         }
 
         // Get the resolver
-        const resolver = resolversMap[topic];
+        const resolver = resolversMap[normalizeTopic(topic)];
         if (!resolver) {
+            console.error("No resolver found for the topic", {
+                topic,
+            });
             return;
         }
 
@@ -186,6 +189,18 @@ export function createIFrameRequestResolver(
         destroy,
         setReadyToHandleRequest,
     };
+}
+
+/**
+ * Normalize the topic  name (used to mnap deprecated method to new one)
+ */
+function normalizeTopic(
+    topic: keyof IFrameRequestResolverMap
+): keyof IFrameRequestResolverMap {
+    if ((topic as string) === "frak_displayEmbededWallet") {
+        return "frak_displayEmbeddedWallet";
+    }
+    return topic;
 }
 
 /**
