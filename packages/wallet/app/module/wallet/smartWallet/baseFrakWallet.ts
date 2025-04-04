@@ -50,11 +50,11 @@ export async function baseFrakWallet<
     {
         getSignature,
         generateInitCode,
-        getStubSignature,
+        stubSignature,
         preDeterminedAccountAddress,
     }: {
         getSignature: (args: { hash: Hex }) => Promise<Hex>;
-        getStubSignature: () => Hex;
+        stubSignature: Hex;
         generateInitCode: () => Hex;
         preDeterminedAccountAddress?: Address;
     }
@@ -201,9 +201,8 @@ export async function baseFrakWallet<
         },
         // Get dummy sig
         async getStubSignature() {
-            const stub = getStubSignature();
-            // return the coded signature
-            return concatHex(["0x00000000", stub]);
+            // return stub signature encoded as sudo validator
+            return concatHex(["0x00000000", stubSignature]);
         },
         userOperation: {
             // Custom override for gas estimation

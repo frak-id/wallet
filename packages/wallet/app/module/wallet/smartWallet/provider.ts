@@ -7,7 +7,7 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import { getSafeSession } from "@/module/listener/utils/localStorage";
 import { getSignOptions } from "@/module/wallet/action/signOptions";
-import { frakFallbackWalletSmartAccount } from "@/module/wallet/smartWallet/FrakFallbackSmartWallet";
+import { frakEcdsaWalletSmartAccount } from "@/module/wallet/smartWallet/FrakEcdsaSmartWallet";
 import { frakWalletSmartAccount } from "@/module/wallet/smartWallet/FrakSmartWallet";
 import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
 import { parseWebAuthNAuthentication } from "@/module/wallet/smartWallet/webAuthN";
@@ -183,7 +183,7 @@ async function buildSmartAccount<
         });
     } else {
         // That's a ecdsa wallet
-        smartAccount = await frakFallbackWalletSmartAccount(currentViemClient, {
+        smartAccount = await frakEcdsaWalletSmartAccount(currentViemClient, {
             ecdsaAddress: wallet.publicKey,
             preDeterminedAccountAddress: wallet.address,
             signatureProvider({ hash }) {
