@@ -162,7 +162,7 @@ export class PairingConnectionRepository extends PairingRepository {
         }
 
         // Ensure we got a webauthn token
-        if (wallet.type !== undefined || wallet.type !== "webauthn") {
+        if (wallet.type !== undefined && wallet.type !== "webauthn") {
             ws.close(4403, "Can't resolve non-webauthn wallet");
             return;
         }

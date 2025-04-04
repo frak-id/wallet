@@ -14,6 +14,7 @@ import type {
     WsTargetMessage,
     WsTargetRequest,
 } from "../types";
+import { getSafeSession } from "../../listener/utils/localStorage";
 
 type PairingWs = ReturnType<
     typeof authenticatedBackendApi.pairings.ws.subscribe
@@ -81,7 +82,10 @@ export abstract class BasePairingClient<
      */
     protected connect(params?: ConnectionParams) {
         this.connection = authenticatedBackendApi.pairings.ws.subscribe({
-            query: params,
+            query: {
+                ...params,
+                wallet: getSafeSession()?.token,
+            },
         });
 
         this.setupEventListeners();
@@ -145,6 +149,9 @@ export abstract class BasePairingClient<
             clearInterval(this.pingInterval);
             this.pingInterval = null;
         }
+
+        this.connection?.close();
+        this.connection = null;
     }
 
     /**
