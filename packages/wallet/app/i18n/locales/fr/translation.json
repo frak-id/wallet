@@ -232,11 +232,12 @@
             }
         },
         "pairing": {
-            "title": "Confirmation de la connexion",
-            "text": "Vous êtes sur le point de connecter ce téléphone à votre compte",
+            "title": "Confirmation de l'appairage",
+            "text": "Vous êtes sur le point de connecter un appareil à votre compte",
             "info": {
-                "title": "Informations du téléphone",
-                "device": "Nom du téléphone :"
+                "title": "Informations sur l'appairage",
+                "status": "Statut :",
+                "device": "Appareil :"
             },
             "error": {
                 "title": "Requête de connexion invalide",

@@ -53,7 +53,7 @@ export class PairingConnectionRepository extends PairingRepository {
         wallet?: StaticWalletTokenDto;
         ws: ElysiaWS;
     }) {
-        const { action, pairingCode, ssoId } = query;
+        const { action, pairingCode, ssoId, id } = query;
         if (!action && !wallet) {
             log.debug("No action or wallet token");
             ws.close(4403, "Missing action or wallet token");
@@ -69,6 +69,7 @@ export class PairingConnectionRepository extends PairingRepository {
         // If that's a join request
         if (action === "join" && wallet) {
             await this.handleJoinRequest({
+                id,
                 pairingCode,
                 userAgent,
                 wallet,
@@ -136,11 +137,13 @@ export class PairingConnectionRepository extends PairingRepository {
      * Handle a pairing join request
      */
     private async handleJoinRequest({
+        id,
         pairingCode,
         userAgent,
         wallet,
         ws,
     }: {
+        id: string;
         pairingCode: string;
         userAgent?: string;
         wallet: StaticWalletTokenDto;
@@ -148,9 +151,14 @@ export class PairingConnectionRepository extends PairingRepository {
     }) {
         // Find the right pairing
         const pairing = await this.pairingDb.query.pairingTable.findFirst({
-            where: eq(pairingTable.pairingCode, pairingCode),
+            where: eq(pairingTable.pairingId, id),
         });
         if (!pairing) {
+            ws.close(4403, "Invalid pairing code");
+            return;
+        }
+        // Check if the pairing code is valid
+        if (pairing.pairingCode !== pairingCode) {
             ws.close(4403, "Invalid pairing code");
             return;
         }

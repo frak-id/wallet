@@ -32,6 +32,7 @@ type ConnectionParams =
       }
     | {
           action: "join";
+          id: string;
           pairingCode: string;
       };
 

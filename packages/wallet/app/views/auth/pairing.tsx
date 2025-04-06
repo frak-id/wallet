@@ -5,10 +5,8 @@ import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import { usePairingCode } from "@/module/pairing/hook/usePairingCode";
 import { Button } from "@shared/module/component/Button";
-import { Spinner } from "@shared/module/component/Spinner";
 import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./pairing.module.css";
 
@@ -20,11 +18,6 @@ export default function Pairing() {
     const client = getTargetPairingClient();
     const { t } = useTranslation();
     const { pairingCode } = usePairingCode();
-
-    useEffect(() => {
-        if (!pairingCode) return;
-        client.joinPairing(pairingCode);
-    }, [pairingCode, client]);
 
     const pairingState = useAtomValue(client.stateAtom);
 
@@ -42,26 +35,11 @@ export default function Pairing() {
         );
     }
 
-    if (!pairingState.partnerDevice) {
-        return (
-            <Grid>
-                <Title
-                    size="big"
-                    align="center"
-                    className={styles.pairing__loading}
-                >
-                    <Spinner />
-                    {t("wallet.pairing.loading.title")}
-                </Title>
-            </Grid>
-        );
-    }
-
     return (
         <Grid>
             <>
                 <PairingHeader />
-                <PairingInfo state={pairingState} />
+                <PairingInfo state={pairingState} id={pairingCode.id} />
                 <div className={styles.pairing__buttons}>
                     <Button
                         variant="secondary"
@@ -71,7 +49,16 @@ export default function Pairing() {
                     >
                         {t("wallet.pairing.cancel")}
                     </Button>
-                    <Button>{t("wallet.pairing.confirm")}</Button>
+                    <Button
+                        onClick={() => {
+                            client.joinPairing(
+                                pairingCode.id,
+                                pairingCode.code
+                            );
+                        }}
+                    >
+                        {t("wallet.pairing.confirm")}
+                    </Button>
                 </div>
             </>
         </Grid>

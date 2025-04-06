@@ -20,14 +20,14 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
     // Get the current state of the client
     const clientState = useAtomValue(client.stateAtom);
 
-    const pairingCode = clientState.pairing?.code;
+    const pairingInfo = clientState.pairing;
 
     return (
         <div className={styles.launchPairing}>
-            {pairingCode ? (
+            {pairingInfo ? (
                 <Cuer
                     arena={"/icon.svg"}
-                    value={`${process.env.FRAK_WALLET_URL}/pairing?code=${pairingCode}`}
+                    value={`${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo.id}&code=${pairingInfo.code}`}
                     size={200}
                 />
             ) : (
@@ -35,7 +35,8 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
             )}
             <p>{clientState.status}</p>
             <p>{clientState.partnerDevice}</p>
-            <p>{pairingCode}</p>
+            <p>Id: {pairingInfo?.id}</p>
+            <p>Code: {pairingInfo?.code}</p>
         </div>
     );
 }

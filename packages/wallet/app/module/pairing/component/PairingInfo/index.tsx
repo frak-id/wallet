@@ -1,12 +1,17 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import type { TargetPairingState } from "@/module/pairing/clients/target";
+import type { TargetPairingState } from "@/module/pairing/types";
 import { Fingerprint } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { usePairingInfo } from "../../hook/usePairingInfo";
 import styles from "./index.module.css";
 
-export function PairingInfo({ state }: { state: TargetPairingState }) {
+export function PairingInfo({
+    state,
+    id,
+}: { state: TargetPairingState; id: string }) {
     const { t } = useTranslation();
+    const { data: pairingInfo } = usePairingInfo({ id });
 
     return (
         <Panel size={"small"}>
@@ -15,10 +20,18 @@ export function PairingInfo({ state }: { state: TargetPairingState }) {
             </Title>
             <ul className={styles.pairing__list}>
                 <li>
-                    {t("wallet.pairing.info.device")}
-                    {state.partnerDevice}
+                    {t("wallet.pairing.info.status")}
+                    {state.status}
                 </li>
             </ul>
+            {pairingInfo && (
+                <ul className={styles.pairing__list}>
+                    <li>
+                        {t("wallet.pairing.info.device")}
+                        {pairingInfo?.originName ?? "..."}
+                    </li>
+                </ul>
+            )}
         </Panel>
     );
 }

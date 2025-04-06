@@ -36,9 +36,10 @@ export class TargetPairingClient extends BasePairingClient<
     /**
      * Join a new pairing request
      */
-    async joinPairing(pairingCode: string): Promise<void> {
+    joinPairing(id: string, pairingCode: string) {
         this.connect({
             action: "join",
+            id,
             pairingCode,
         });
     }

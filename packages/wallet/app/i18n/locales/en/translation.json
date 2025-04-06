@@ -232,11 +232,12 @@
             }
         },
         "pairing": {
-            "title": "Confirm phone pairing",
-            "text": "You're about to connect this phone to your account",
+            "title": "Confirm device pairing",
+            "text": "You're about to connect this device to your account",
             "info": {
-                "title": "Phone information",
-                "device": "Phone name:"
+                "title": "Pairing information",
+                "status": "Status:",
+                "device": "Device:"
             },
             "error": {
                 "title": "Invalid pairing request",

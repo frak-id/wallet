@@ -29,9 +29,9 @@ export const pairingTable = pgTable(
 
         // Status and security
         pairingCode: varchar("pairing_code").notNull(), // For initial pairing
-        createdAt: timestamp("created_at").defaultNow(),
+        createdAt: timestamp("created_at").notNull().defaultNow(),
         resolvedAt: timestamp("resolved_at"), // When target joins
-        lastActiveAt: timestamp("last_active_at").defaultNow(), // For auto cleanup
+        lastActiveAt: timestamp("last_active_at").notNull().defaultNow(), // For auto cleanup
     },
     (table) => [
         uniqueIndex("pairing_id_idx").on(table.pairingId),

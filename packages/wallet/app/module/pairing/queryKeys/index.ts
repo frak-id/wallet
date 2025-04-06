@@ -10,6 +10,11 @@ export namespace pairingKey {
     const base = "pairing" as const;
 
     /**
+     * Get info for a pairing
+     */
+    export const getInfo = (id: string) => [base, id] as const;
+
+    /**
      * Namespace for target pairing queries
      */
     export namespace target {
