@@ -102,4 +102,3 @@ export const managementRoutes = new Elysia()
             await db.delete(pairingTable).where(eq(pairingTable.pairingId, id));
         }
     );
-// todo: cron job that cleanup every pairing not associated to a wallet within 15min, or pairing inactive for more than 7 days

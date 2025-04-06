@@ -51,6 +51,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 log.error({ decodedSession }, "Error decoding session");
                 return error(404, "Invalid wallet session");
             }
+
             return { ...decodedSession, token: walletAuth };
         },
         {

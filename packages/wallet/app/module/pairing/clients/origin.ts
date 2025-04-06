@@ -134,6 +134,20 @@ export class OriginPairingClient extends BasePairingClient<
             return;
         }
 
+        // Signature reject
+        if (message.type === "signature-reject") {
+            const request = this.state.signatureRequests.get(
+                message.payload.id
+            );
+            if (request) {
+                request.reject(message.payload.reason);
+                const signatureRequests = new Map(this.state.signatureRequests);
+                signatureRequests.delete(message.payload.id);
+                this.setState({ signatureRequests });
+            }
+            return;
+        }
+
         // Partner connected message (update partner device)
         if (message.type === "partner-connected") {
             this.setState({

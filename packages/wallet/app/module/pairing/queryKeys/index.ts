@@ -15,6 +15,17 @@ export namespace pairingKey {
     export const getInfo = (id: string) => [base, id] as const;
 
     /**
+     * Delete a pairing
+     */
+    export const remove = [base, "delete"] as const;
+
+    /**
+     * List all the active pairings
+     */
+    export const listByWallet = (wallet?: Address) =>
+        [base, "list", wallet] as const;
+
+    /**
      * Namespace for target pairing queries
      */
     export namespace target {

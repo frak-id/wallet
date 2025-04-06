@@ -6,6 +6,7 @@ import type {
     WsPingRequest,
     WsPongRequest,
     WsRequestDirectMessage,
+    WsSignatureRejectRequest,
     WsSignatureRequest,
     WsSignatureResponseRequest,
 } from "../dto/WebsocketDirectMessage";
@@ -55,6 +56,12 @@ export class PairingRouterRepository extends PairingRepository {
                 break;
             case "signature-response":
                 await this.handleSignatureResponseRequest({
+                    message: mapped,
+                    ws,
+                });
+                break;
+            case "signature-reject":
+                await this.handleSignatureRejectRequest({
                     message: mapped,
                     ws,
                 });
@@ -243,6 +250,54 @@ export class PairingRouterRepository extends PairingRepository {
                     id: message.payload.id,
                     signature: message.payload.signature,
                 },
+            },
+            topic: "origin",
+        });
+    }
+
+    /**
+     * Handle a signature reject request
+     */
+    private async handleSignatureRejectRequest({
+        message,
+        ws,
+    }: {
+        message: WsSignatureRejectRequest;
+        ws: ElysiaWS;
+    }) {
+        // Assert we got everything we need
+        if (
+            !message.payload?.pairingId ||
+            !message.payload?.id ||
+            !message.payload?.reason
+        ) {
+            ws.close(4403, "Invalid message");
+            return;
+        }
+
+        // Delete the signature
+        await this.pairingDb
+            .delete(pairingSignatureRequestTable)
+            .where(
+                and(
+                    eq(
+                        pairingSignatureRequestTable.requestId,
+                        message.payload.id
+                    ),
+                    eq(
+                        pairingSignatureRequestTable.pairingId,
+                        message.payload.pairingId
+                    )
+                )
+            );
+
+        // Transmit the signature reject request to the right topic
+        await this.sendTopicMessage({
+            ws,
+            pairingId: message.payload.pairingId,
+            message: {
+                type: "signature-reject",
+                payload: message.payload,
             },
             topic: "origin",
         });

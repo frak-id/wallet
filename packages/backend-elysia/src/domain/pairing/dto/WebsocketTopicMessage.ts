@@ -52,12 +52,21 @@ export type WsPartnerConnected = {
 export type WsSignatureResponse = {
     type: "signature-response";
     payload: {
-        // The pairing id
         pairingId: string;
-        // The id of the request
         id: string;
-        // The signature response
         signature: Hex;
+    };
+};
+
+/**
+ * When the target send a signature rejection
+ */
+export type WsSignatureReject = {
+    type: "signature-reject";
+    payload: {
+        pairingId: string;
+        id: string;
+        reason: string;
     };
 };
 
@@ -79,4 +88,5 @@ export type WsTopicMessage =
     | WsAuthenticated
     | WsSignatureRequest
     | WsSignatureResponse
+    | WsSignatureReject
     | WsPingPong;

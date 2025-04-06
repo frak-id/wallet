@@ -109,23 +109,7 @@ export class TargetPairingClient extends BasePairingClient<
 
         // Handle webauthn request
         if (message.type === "signature-request") {
-            this.setState({ status: "paired" });
-            this.handleSignatureRequest(message.payload);
-            return;
-        }
-    }
-
-    /**
-     * Handle a webauthn request
-     */
-    private async handleSignatureRequest(
-        request: Extract<
-            WsTargetMessage,
-            { type: "signature-request" }
-        >["payload"]
-    ) {
-        try {
-            // Store the request in pending requests
+            const request = message.payload;
             this.updateState((state) => {
                 state.pendingSignatures.set(request.id, {
                     id: request.id,
@@ -138,38 +122,52 @@ export class TargetPairingClient extends BasePairingClient<
                     name: request.partnerDeviceName,
                     lastLive: Date.now(),
                 });
-                return state;
+                return {
+                    ...state,
+                    status: "paired",
+                };
             });
-
-            // This should be implemented by the consumer
-            // todo
-            console.log("handleSignatureRequest", request);
-        } catch (error) {
-            console.error("Failed to handle WebAuthn request:", error);
+            return;
         }
     }
 
     /**
-     * Send back a signature response to the pairing server
+     * Send back a signature response or rejection to the pairing server
      */
-    async sendSignatureResponse(id: string, response: Hex) {
-        const request = this.state.pendingSignatures.get(id);
+    sendSignatureResponse(
+        requestId: string,
+        response: { signature: Hex } | { reason: string }
+    ) {
+        const request = this.state.pendingSignatures.get(requestId);
         if (!request) {
-            console.warn("No request found for id", id);
+            console.warn("No request found for id", requestId);
             return;
         }
 
-        this.send({
-            type: "signature-response",
-            payload: {
-                pairingId: request.pairingId,
-                id,
-                signature: response,
-            },
-        });
+        if ("signature" in response) {
+            // Handle signature response
+            this.send({
+                type: "signature-response",
+                payload: {
+                    pairingId: request.pairingId,
+                    id: requestId,
+                    signature: response.signature,
+                },
+            });
+        } else {
+            // Handle signature rejection
+            this.send({
+                type: "signature-reject",
+                payload: {
+                    pairingId: request.pairingId,
+                    id: requestId,
+                    reason: response.reason,
+                },
+            });
+        }
 
         this.updateState((state) => {
-            state.pendingSignatures.delete(id);
+            state.pendingSignatures.delete(requestId);
             return state;
         });
     }

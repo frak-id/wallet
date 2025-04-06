@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
+import { useCallback } from "react";
 import { webauthnSessionAtom } from "../../common/atoms/session";
 import { signHashViaWebAuthN } from "../../wallet/smartWallet/signature";
 import type { TargetPairingClient } from "../clients/target";
@@ -19,17 +20,44 @@ export function useSignSignatureRequest({
         mutationFn: async (request: TargetPairingPendingSignature) => {
             // If no session, throw
             if (!session) {
-                // todo: Should also send a ws rejection?
                 throw new Error("No session found");
             }
 
-            // Do the signature and respond to the ws
-            const signature = await signHashViaWebAuthN({
-                hash: request.request,
-                wallet: session,
-            });
+            // Try to sign it, otherwise, reject it
+            try {
+                // Do the signature and respond to the ws
+                const signature = await signHashViaWebAuthN({
+                    hash: request.request,
+                    wallet: session,
+                });
 
-            await client.sendSignatureResponse(request.id, signature);
+                client.sendSignatureResponse(request.id, { signature });
+            } catch (error) {
+                console.warn("Failed to sign signature request", error);
+                client.sendSignatureResponse(request.id, {
+                    reason:
+                        error instanceof Error
+                            ? error.message
+                            : "Unknown error",
+                });
+                throw error;
+            }
         },
     });
+}
+
+/**
+ * Hooks used to decline a signature request
+ */
+export function useDeclineSignatureRequest({
+    client,
+}: { client: TargetPairingClient }) {
+    return useCallback(
+        (request: TargetPairingPendingSignature) => {
+            client.sendSignatureResponse(request.id, {
+                reason: "Declined",
+            });
+        },
+        [client]
+    );
 }

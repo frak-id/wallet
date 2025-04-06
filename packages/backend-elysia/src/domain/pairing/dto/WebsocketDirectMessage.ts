@@ -48,7 +48,7 @@ export type WsPongRequest = {
 };
 
 /**
- * When the target want to send a signature response
+ * When the target send a signature response
  *  from target
  */
 export type WsSignatureResponseRequest = {
@@ -63,10 +63,27 @@ export type WsSignatureResponseRequest = {
     };
 };
 
+/**
+ * When the target send a signature rejection
+ *  from target
+ */
+export type WsSignatureRejectRequest = {
+    type: "signature-reject";
+    payload: {
+        // The pairing id
+        pairingId: string;
+        // The id of the request
+        id: string;
+        // The reason of the rejection
+        reason: string;
+    };
+};
+
 export type WsDirectMessageResponse = WsPairingCreatedResponse;
 
 export type WsRequestDirectMessage =
     | WsPingRequest
     | WsPongRequest
     | WsSignatureRequest
-    | WsSignatureResponseRequest;
+    | WsSignatureResponseRequest
+    | WsSignatureRejectRequest;

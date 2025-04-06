@@ -40,6 +40,10 @@ export type WsOriginMessage =
           payload: { pairingId: string; id: string; signature: Hex };
       }
     | {
+          type: "signature-reject";
+          payload: { pairingId: string; id: string; reason: string };
+      }
+    | {
           type: "pong";
           payload: {
               pairingId: string;
@@ -84,6 +88,10 @@ export type WsTargetRequest =
     | {
           type: "signature-response";
           payload: { pairingId: string; id: string; signature: Hex };
+      }
+    | {
+          type: "signature-reject";
+          payload: { pairingId: string; id: string; reason: string };
       }
     | {
           type: "pong";
