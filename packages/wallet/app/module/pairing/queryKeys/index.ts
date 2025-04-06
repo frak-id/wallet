@@ -1,3 +1,5 @@
+import type { Address } from "viem";
+
 /**
  * Query keys for pairing queries / mutations
  */
@@ -8,12 +10,15 @@ export namespace pairingKey {
     const base = "pairing" as const;
 
     /**
-     * Initiate a pairing
+     * Namespace for target pairing queries
      */
-    export const initiate = [base, "initiation"];
+    export namespace target {
+        const baseTarget = "target" as const;
 
-    /**
-     * Join a pairing request
-     */
-    export const join = (code: string) => [base, "join", code];
+        /**
+         * Handle a signature request
+         */
+        export const handleSignatureRequest = (wallet?: Address) =>
+            [base, baseTarget, "signature-request", wallet] as const;
+    }
 }

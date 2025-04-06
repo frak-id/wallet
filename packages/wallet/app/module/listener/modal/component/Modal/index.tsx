@@ -34,6 +34,7 @@ import {
     useEffect,
     useMemo,
 } from "react";
+import { OriginPairingState } from "../../../../pairing/component/OriginPairingState";
 import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
 
@@ -173,6 +174,7 @@ export function ListenerModal({
             onOpenChange={onOpenChange}
         >
             <>
+                <OriginPairingState />
                 {icon}
                 <CurrentModalMetadataInfo />
                 <ModalStepIndicator />

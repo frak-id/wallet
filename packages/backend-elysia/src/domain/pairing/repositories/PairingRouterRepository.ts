@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
-import { pairingSignatureRequestTable } from "../db/schema";
+import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import type {
     WsPingRequest,
     WsPongRequest,
@@ -123,6 +123,15 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
+        // Find the pairing name
+        const pairing = await this.pairingDb.query.pairingTable.findFirst({
+            where: eq(pairingTable.pairingId, wallet.pairingId),
+        });
+
+        if (!pairing) {
+            ws.close(4403, "Pairing not found");
+            return;
+        }
         // Save the request
         await this.pairingDb.insert(pairingSignatureRequestTable).values({
             pairingId: wallet.pairingId,
@@ -142,6 +151,7 @@ export class PairingRouterRepository extends PairingRepository {
                     id: message.payload.id,
                     request: message.payload.request,
                     context: message.payload.context,
+                    partnerDeviceName: pairing.originName,
                 },
             },
             topic: "target",

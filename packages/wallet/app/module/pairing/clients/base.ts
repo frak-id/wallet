@@ -10,6 +10,7 @@ import type { Hex } from "viem";
 import { authenticatedBackendApi } from "../../common/api/backendClient";
 import { getSafeSession } from "../../listener/utils/localStorage";
 import type {
+    BasePairingState,
     WsOriginMessage,
     WsOriginRequest,
     WsTargetMessage,
@@ -33,11 +34,6 @@ type ConnectionParams =
           action: "join";
           pairingCode: string;
       };
-
-export type BasePairingState = {
-    partnerDevice: string | null;
-    status: "idle" | "connecting" | "paired";
-};
 
 export abstract class BasePairingClient<
     TRequest extends WsOriginRequest | WsTargetRequest,
@@ -76,6 +72,13 @@ export abstract class BasePairingClient<
      */
     protected setState(newState: Partial<TState>) {
         jotaiStore.set(this._state, (prev) => ({ ...prev, ...newState }));
+    }
+
+    /**
+     * Update the state
+     */
+    protected updateState(updater: (state: TState) => TState) {
+        jotaiStore.set(this._state, updater);
     }
 
     /**

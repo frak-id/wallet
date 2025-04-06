@@ -1,7 +1,5 @@
 import type { Hex } from "viem";
-import type { DistantWebAuthnWallet } from "../../types/Session";
-
-export type PairingRole = "origin" | "target";
+import type { DistantWebAuthnWallet } from "../../../types/Session";
 
 type WsPartnerConnected = {
     type: "partner-connected";
@@ -22,6 +20,7 @@ export type WsTargetMessage =
               id: string;
               request: Hex;
               context?: object;
+              partnerDeviceName: string;
           };
       }
     | {

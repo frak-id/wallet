@@ -3,7 +3,7 @@ import {
     type SmartAccountV06,
     getAccountAddress,
 } from "@/module/wallet/smartWallet/utils";
-import type { P256PubKey, WebAuthNSignature } from "@/types/WebAuthN";
+import type { P256PubKey } from "@/types/WebAuthN";
 import { KernelWallet } from "@frak-labs/app-essentials";
 import {
     type Address,
@@ -14,7 +14,7 @@ import {
     keccak256,
     toHex,
 } from "viem";
-import { formatSignature, getStubSignature } from "./webAuthN";
+import { getStubSignature } from "./webAuthN";
 
 export type FrakWebAuthNWallet = SmartAccountV06;
 
@@ -39,7 +39,7 @@ export async function frakWalletSmartAccount<
     }: {
         authenticatorId: string;
         signerPubKey: P256PubKey;
-        signatureProvider: (message: Hex) => Promise<WebAuthNSignature>;
+        signatureProvider: ({ hash }: { hash: Hex }) => Promise<Hex>;
         preDeterminedAccountAddress?: Address;
     }
 ): Promise<FrakWebAuthNWallet> {
@@ -59,28 +59,12 @@ export async function frakWalletSmartAccount<
 
     if (!computedAccountAddress) throw new Error("Account address not found");
 
-    // Helper to perform a signature of a hash
-    const signHash = async ({ hash }: { hash: Hex }) => {
-        // Sign the hash with the sig provider
-        const { authenticatorData, clientData, challengeOffset, signature } =
-            await signatureProvider(hash);
-
-        // Encode the signature with the web auth n validator info
-        return formatSignature({
-            authenticatorIdHash,
-            rs: [BigInt(signature.r), BigInt(signature.s)],
-            challengeOffset,
-            authenticatorData,
-            clientData,
-        });
-    };
-
     // Get the stub signature
     const stubSignature = getStubSignature({ authenticatorIdHash });
 
     return baseFrakWallet(client, {
         stubSignature,
-        getSignature: signHash,
+        getSignature: signatureProvider,
         generateInitCode,
         preDeterminedAccountAddress,
     });

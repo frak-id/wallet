@@ -2,22 +2,12 @@ import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
 import type { Hex } from "viem";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 import { getSafeSession } from "../../listener/utils/localStorage";
-import type { WsOriginMessage, WsOriginRequest } from "../types";
-import { BasePairingClient, type BasePairingState } from "./base";
-
-type OriginPairingState = BasePairingState & {
-    pairing?: {
-        id: string;
-        code: string;
-    };
-    signatureRequests: Map<
-        string,
-        {
-            resolve: (value: Hex) => void;
-            reject: (reason: unknown) => void;
-        }
-    >;
-};
+import type {
+    OriginPairingState,
+    WsOriginMessage,
+    WsOriginRequest,
+} from "../types";
+import { BasePairingClient } from "./base";
 
 /**
  * A pairing client for an origin device (likely desktop, the one responsible to create a pairing)

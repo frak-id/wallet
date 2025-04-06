@@ -1,11 +1,11 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import type { TargetPairingClient } from "@/module/pairing/clients/target";
+import type { TargetPairingState } from "@/module/pairing/clients/target";
 import { Fingerprint } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
-export function PairingInfo({ client }: { client: TargetPairingClient }) {
+export function PairingInfo({ state }: { state: TargetPairingState }) {
     const { t } = useTranslation();
 
     return (
@@ -16,7 +16,7 @@ export function PairingInfo({ client }: { client: TargetPairingClient }) {
             <ul className={styles.pairing__list}>
                 <li>
                     {t("wallet.pairing.info.device")}
-                    {client.state.partnerDevice}
+                    {state.partnerDevice}
                 </li>
             </ul>
         </Panel>

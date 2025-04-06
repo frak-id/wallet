@@ -6,6 +6,7 @@ import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import { usePairingCode } from "@/module/pairing/hook/usePairingCode";
 import { Button } from "@shared/module/component/Button";
 import { Spinner } from "@shared/module/component/Spinner";
+import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,6 +26,8 @@ export default function Pairing() {
         client.joinPairing(pairingCode);
     }, [pairingCode, client]);
 
+    const pairingState = useAtomValue(client.stateAtom);
+
     if (!pairingCode) {
         return (
             <Grid>
@@ -39,7 +42,7 @@ export default function Pairing() {
         );
     }
 
-    if (!client.state.partnerDevice) {
+    if (!pairingState.partnerDevice) {
         return (
             <Grid>
                 <Title
@@ -58,7 +61,7 @@ export default function Pairing() {
         <Grid>
             <>
                 <PairingHeader />
-                <PairingInfo client={client} />
+                <PairingInfo state={pairingState} />
                 <div className={styles.pairing__buttons}>
                     <Button
                         variant="secondary"

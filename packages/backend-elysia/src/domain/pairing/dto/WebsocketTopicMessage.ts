@@ -15,6 +15,8 @@ export type WsSignatureRequest = {
         request: Hex;
         // Some optional context
         context?: object;
+        // The name of the partner device
+        partnerDeviceName: string;
     };
 };
 

@@ -1,23 +1,20 @@
+import type { Hex } from "viem";
 import { getSafeSession } from "../../listener/utils/localStorage";
-import type { WsTargetMessage, WsTargetRequest } from "../types";
-import { BasePairingClient, type BasePairingState } from "./base";
-
-type TargetPairingState = BasePairingState & {
-    pendingRequests: Map<
-        string,
-        {
-            id: string;
-            request: string;
-            context?: object;
-        }
-    >;
-};
+import type {
+    TargetPairingState,
+    WsTargetMessage,
+    WsTargetRequest,
+} from "../types";
+import { BasePairingClient } from "./base";
 
 /**
  * - should store a list of pending webauthn requests
  * - should be able to fetch all the pending requests ids
  * - should be auto created if the user got a webauthn type session
  * - should be destroyed + recreated on joining request
+ *
+ * todo: Number of live connection with their timestamp
+ *
  */
 export class TargetPairingClient extends BasePairingClient<
     WsTargetRequest,
@@ -31,7 +28,8 @@ export class TargetPairingClient extends BasePairingClient<
         return {
             status: "idle",
             partnerDevice: null,
-            pendingRequests: new Map(),
+            pendingSignatures: new Map(),
+            pairingIdState: new Map(),
         };
     }
 
@@ -55,7 +53,12 @@ export class TargetPairingClient extends BasePairingClient<
             return;
         }
 
-        // todo: need to ensure it's a webauthn type session
+        if (session.type !== undefined && session.type !== "webauthn") {
+            console.warn(
+                "Session is not a webauthn session, skipping reconnection"
+            );
+            return;
+        }
 
         this.connect();
     }
@@ -72,15 +75,33 @@ export class TargetPairingClient extends BasePairingClient<
                     pairingId: message.payload.pairingId,
                 },
             });
-            this.setState({ status: "paired" });
+            this.updateState((state) => {
+                state.pairingIdState.set(message.payload.pairingId, {
+                    name:
+                        state.pairingIdState.get(message.payload.pairingId)
+                            ?.name ?? "",
+                    lastLive: Date.now(),
+                });
+                return {
+                    ...state,
+                    status: "paired",
+                };
+            });
             return;
         }
 
         // Handle partner connected
         if (message.type === "partner-connected") {
-            this.setState({
-                status: "paired",
-                partnerDevice: message.payload.deviceName,
+            this.updateState((state) => {
+                state.pairingIdState.set(message.payload.pairingId, {
+                    name: message.payload.deviceName,
+                    lastLive: Date.now(),
+                });
+                return {
+                    ...state,
+                    status: "paired",
+                    partnerDevice: message.payload.deviceName,
+                };
             });
             return;
         }
@@ -104,13 +125,20 @@ export class TargetPairingClient extends BasePairingClient<
     ) {
         try {
             // Store the request in pending requests
-            const pendingRequests = new Map(this.state.pendingRequests);
-            pendingRequests.set(request.id, {
-                id: request.id,
-                request: request.request,
-                context: request.context,
+            this.updateState((state) => {
+                state.pendingSignatures.set(request.id, {
+                    id: request.id,
+                    pairingId: request.pairingId,
+                    request: request.request,
+                    context: request.context,
+                    from: request.partnerDeviceName,
+                });
+                state.pairingIdState.set(request.pairingId, {
+                    name: request.partnerDeviceName,
+                    lastLive: Date.now(),
+                });
+                return state;
             });
-            this.setState({ pendingRequests });
 
             // This should be implemented by the consumer
             // todo
@@ -118,5 +146,30 @@ export class TargetPairingClient extends BasePairingClient<
         } catch (error) {
             console.error("Failed to handle WebAuthn request:", error);
         }
+    }
+
+    /**
+     * Send back a signature response to the pairing server
+     */
+    async sendSignatureResponse(id: string, response: Hex) {
+        const request = this.state.pendingSignatures.get(id);
+        if (!request) {
+            console.warn("No request found for id", id);
+            return;
+        }
+
+        this.send({
+            type: "signature-response",
+            payload: {
+                pairingId: request.pairingId,
+                id,
+                signature: response,
+            },
+        });
+
+        this.updateState((state) => {
+            state.pendingSignatures.delete(id);
+            return state;
+        });
     }
 }
