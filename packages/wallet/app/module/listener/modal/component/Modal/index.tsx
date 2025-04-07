@@ -21,6 +21,7 @@ import {
     useListenerTranslation,
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
+import { OriginPairingState } from "@/module/pairing/component/OriginPairingState";
 import { RpcErrorCodes } from "@frak-labs/core-sdk";
 import { LogoFrakWithName } from "@shared/module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@shared/module/atoms/store";
@@ -34,7 +35,6 @@ import {
     useEffect,
     useMemo,
 } from "react";
-import { OriginPairingState } from "../../../../pairing/component/OriginPairingState";
 import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
 

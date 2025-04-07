@@ -1,6 +1,7 @@
 import { Markdown } from "@/module/common/component/Markdown";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { SsoButton } from "@/module/listener/component/SsoButton";
+import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
@@ -25,15 +26,21 @@ export function LoggedOutComponent() {
                 <Markdown md={t("sdk.wallet.login.text")} />
             </div>
             {productId && (
-                <SsoButton
-                    productId={productId}
-                    ssoMetadata={{
-                        logoUrl,
-                        homepageLink,
-                    }}
-                    text={t("sdk.wallet.login.primaryAction")}
-                    className={`${styles.modalListenerWallet__buttonPrimary} ${prefixWalletCss("button-primary")}`}
-                />
+                <>
+                    <SsoButton
+                        productId={productId}
+                        ssoMetadata={{
+                            logoUrl,
+                            homepageLink,
+                        }}
+                        text={t("sdk.wallet.login.primaryAction")}
+                        className={`${styles.modalListenerWallet__buttonPrimary} ${prefixWalletCss("button-primary")}`}
+                    />
+                    <AuthenticateWithPhone
+                        text={t("sdk.modal.login.secondaryAction")}
+                        className={`${styles.modalListenerWallet__buttonPrimary} ${prefixWalletCss("button-primary")}`}
+                    />
+                </>
             )}
         </>
     );
