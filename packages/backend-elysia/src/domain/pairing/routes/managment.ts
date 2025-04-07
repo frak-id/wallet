@@ -25,6 +25,7 @@ export const managementRoutes = new Elysia()
                 id: pairing.pairingId,
                 originName: pairing.originName,
                 createdAt: pairing.createdAt,
+                pairingCode: pairing.pairingCode,
             };
         },
         {
@@ -33,6 +34,7 @@ export const managementRoutes = new Elysia()
                     id: t.String(),
                     originName: t.String(),
                     createdAt: t.Date(),
+                    pairingCode: t.String(),
                 }),
                 404: t.String(),
             },

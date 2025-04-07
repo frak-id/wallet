@@ -3,13 +3,15 @@ import { Title } from "@/module/common/component/Title";
 import { getTargetPairingClient } from "@/module/pairing/clients/store";
 import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
-import { usePairingCode } from "@/module/pairing/hook/usePairingCode";
+import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
+import { Skeleton } from "@frak-labs/shared/module/component/Skeleton";
 import { Button } from "@shared/module/component/Button";
 import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { usePairingInfo } from "../../module/pairing/hook/usePairingInfo";
 import styles from "./pairing.module.css";
 
 /**
@@ -19,25 +21,33 @@ import styles from "./pairing.module.css";
 export default function Pairing() {
     const client = getTargetPairingClient();
     const { t } = useTranslation();
-    const { pairingCode, resetPairingCode } = usePairingCode();
+    const { pairingInfo: pendingPairingInfo, resetPairingInfo } =
+        usePendingPairingInfo();
     const navigate = useNavigate();
     const pairingState = useAtomValue(client.stateAtom);
+    const { data: pairingInfo } = usePairingInfo({
+        id: pendingPairingInfo?.id,
+    });
 
     const actionPairing = useCallback(
         (action: "join" | "cancel") => {
-            if (action === "join" && pairingCode) {
-                client.joinPairing(pairingCode.id, pairingCode.code);
+            if (action === "join" && pendingPairingInfo && pairingInfo) {
+                client.joinPairing(
+                    pendingPairingInfo.id,
+                    pairingInfo.pairingCode
+                );
             }
             if (action === "cancel") {
                 client.disconnect();
             }
-            resetPairingCode();
+            resetPairingInfo();
             navigate("/wallet");
         },
-        [navigate, resetPairingCode, client, pairingCode]
+        [navigate, resetPairingInfo, client, pairingInfo, pendingPairingInfo]
     );
 
-    if (!pairingCode) {
+    // No pairing info
+    if (!pendingPairingInfo) {
         return (
             <Grid>
                 <Title size="big" align="center">
@@ -51,11 +61,23 @@ export default function Pairing() {
         );
     }
 
+    // Loading state
+    if (!pairingInfo) {
+        return (
+            <Grid>
+                <>
+                    <PairingHeader />
+                    <Skeleton />
+                </>
+            </Grid>
+        );
+    }
+
     return (
         <Grid>
             <>
                 <PairingHeader />
-                <PairingInfo state={pairingState} id={pairingCode.id} />
+                <PairingInfo state={pairingState} id={pendingPairingInfo.id} />
                 <div className={styles.pairing__buttons}>
                     <Button
                         variant="secondary"

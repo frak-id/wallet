@@ -5,5 +5,4 @@ import { atom } from "jotai";
  */
 export const pendingPairingAtom = atom<{
     id: string;
-    code: string;
 } | null>(null);

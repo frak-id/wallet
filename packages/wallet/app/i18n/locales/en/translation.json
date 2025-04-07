@@ -237,7 +237,8 @@
             "info": {
                 "title": "Pairing information",
                 "status": "Status:",
-                "device": "Device:"
+                "device": "Device:",
+                "code": "Pin code:"
             },
             "error": {
                 "title": "Invalid pairing request",

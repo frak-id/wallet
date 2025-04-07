@@ -12,7 +12,7 @@ export namespace pairingKey {
     /**
      * Get info for a pairing
      */
-    export const getInfo = (id: string) => [base, id] as const;
+    export const getInfo = (id?: string) => [base, id ?? ""] as const;
 
     /**
      * Delete a pairing

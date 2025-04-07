@@ -19,7 +19,6 @@ import { StatusBoxWallet } from "../PairingStatusBox";
  */
 export function TargetPairingState() {
     const session = useAtomValue(webauthnSessionAtom);
-
     if (!session) return null;
     return <InnerTargetPairingState />;
 }

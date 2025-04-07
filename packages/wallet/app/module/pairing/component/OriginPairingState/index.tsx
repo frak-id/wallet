@@ -17,7 +17,6 @@ export function OriginPairingState({
     type = "embedded",
 }: { type?: OriginPairingStateType }) {
     const session = useAtomValue(distantWebauthnSessionAtom);
-
     if (!session) return null;
     return <InnerOriginPairingState type={type} />;
 }

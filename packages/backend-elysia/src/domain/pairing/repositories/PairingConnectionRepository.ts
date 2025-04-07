@@ -104,7 +104,11 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // Create a new pairing
         const pairingId = randomUUID();
-        const pairingCode = randomUUID();
+
+        // Pairing code ia a 6 digit, pin code like, number
+        const pairingCode = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
 
         // Parse the sso id (non blocking, if not provided, we will resolve it later)
         const ssoId = rawSsoId?.startsWith("0x") ? rawSsoId : undefined;

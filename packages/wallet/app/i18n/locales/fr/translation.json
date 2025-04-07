@@ -237,7 +237,8 @@
             "info": {
                 "title": "Informations sur l'appairage",
                 "status": "Statut :",
-                "device": "Appareil :"
+                "device": "Appareil :",
+                "code": "Code pin :"
             },
             "error": {
                 "title": "Requête de connexion invalide",

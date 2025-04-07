@@ -5,10 +5,14 @@ import { pairingKey } from "../queryKeys";
 /**
  * Get info for a pairing
  */
-export function usePairingInfo({ id }: { id: string }) {
+export function usePairingInfo({ id }: { id?: string }) {
     const query = useQuery({
         queryKey: pairingKey.getInfo(id),
         queryFn: async () => {
+            if (!id) {
+                return null;
+            }
+
             const { data } = await authenticatedBackendApi
                 .pairings({ id })
                 .get();
