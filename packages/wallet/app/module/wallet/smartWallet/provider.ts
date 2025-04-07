@@ -7,7 +7,6 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { getSafeSession } from "@/module/listener/utils/localStorage";
 import { frakEcdsaWalletSmartAccount } from "@/module/wallet/smartWallet/FrakEcdsaSmartWallet";
 import { frakWalletSmartAccount } from "@/module/wallet/smartWallet/FrakSmartWallet";
-import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
 import type { DistantWebAuthnWallet, EcdsaWallet } from "@/types/Session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { jotaiStore } from "@shared/module/atoms/store";
@@ -19,6 +18,7 @@ import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
 import type { Address, Hex, Transport } from "viem";
 import type { SmartAccount } from "viem/account-abstraction";
 import { frakPairedWalletSmartAccount } from "./FrakPairedSmartWallet";
+import type { BaseFrakSmartAccount } from "./baseFrakWallet";
 import { signHashViaWebAuthN } from "./signature";
 
 /**
@@ -45,7 +45,7 @@ type SmartAccountProviderParameters = {
  */
 export function getSmartAccountProvider<
     transport extends Transport = Transport,
-    account extends SmartAccountV06 = SmartAccountV06,
+    account extends BaseFrakSmartAccount = BaseFrakSmartAccount,
 >({ onAccountChanged, signViaEcdsa }: SmartAccountProviderParameters) {
     console.log("Building a new smart account provider");
     // A few types shortcut
@@ -138,7 +138,7 @@ export function getSmartAccountProvider<
  */
 async function buildSmartAccount<
     transport extends Transport = Transport,
-    account extends SmartAccountV06 = SmartAccountV06,
+    account extends BaseFrakSmartAccount = BaseFrakSmartAccount,
 >({
     wallet,
     signViaEcdsa,
@@ -148,7 +148,7 @@ async function buildSmartAccount<
 }): Promise<
     SmartAccountClient<transport, typeof currentChain, SmartAccount<account>>
 > {
-    let smartAccount: SmartAccountV06;
+    let smartAccount: BaseFrakSmartAccount;
     if (wallet.type === "ecdsa") {
         // That's a ecdsa wallet
         smartAccount = await frakEcdsaWalletSmartAccount(currentViemClient, {

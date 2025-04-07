@@ -3,16 +3,11 @@ import {
     fetchAccountMetadata,
     wrapMessageForSignature,
 } from "@/module/wallet/smartWallet/signature";
-import {
-    type SmartAccountV06,
-    getAccountAddress,
-    isAlreadyFormattedCall,
-} from "@/module/wallet/smartWallet/utils";
 import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import { KernelExecuteAbi } from "@frak-labs/app-essentials";
 import { kernelAddresses } from "@frak-labs/app-essentials";
 import { isSmartAccountDeployed } from "permissionless";
-import { getAccountNonce } from "permissionless/actions";
+import { getAccountNonce, getSenderAddress } from "permissionless/actions";
 import { memo, tryit } from "radash";
 import {
     type Address,
@@ -25,8 +20,12 @@ import {
     hashMessage,
     hashTypedData,
     isAddressEqual,
+    slice,
+    toFunctionSelector,
 } from "viem";
 import {
+    type SmartAccount,
+    type SmartAccountImplementation,
     type UserOperation,
     entryPoint06Abi,
     entryPoint06Address,
@@ -34,8 +33,61 @@ import {
     getUserOperationHash,
     toSmartAccount,
 } from "viem/account-abstraction";
+import { formatAbiItem } from "viem/utils";
 
-export type FrakWebAuthNWallet = SmartAccountV06;
+export type BaseFrakSmartAccount = SmartAccount<
+    SmartAccountImplementation<typeof entryPoint06Abi, "0.6">
+>;
+
+/**
+ * Check if the given calldata is already formatted as a call to the wallet
+ * @param wallet
+ * @param to
+ * @param data
+ */
+function isAlreadyFormattedCall({
+    wallet,
+    to,
+    data,
+}: { wallet: Address; to: Address; data: Hex }) {
+    if (!isAddressEqual(to, wallet)) {
+        return false;
+    }
+
+    const signature = slice(data, 0, 4);
+    return KernelExecuteAbi.some((x) => {
+        return (
+            x.type === "function" &&
+            signature === toFunctionSelector(formatAbiItem(x))
+        );
+    });
+}
+
+/**
+ * Check the validity of an existing account address, or fetch the pre-deterministic account address for a kernel smart wallet
+ * @param client
+ * @param signerPubKey
+ * @param initCodeProvider
+ */
+const getAccountAddress = async <
+    TTransport extends Transport = Transport,
+    TChain extends Chain = Chain,
+>({
+    client,
+    initCodeProvider,
+}: {
+    client: Client<TTransport, TChain>;
+    initCodeProvider: () => Hex;
+}): Promise<Address> => {
+    // Find the init code for this account
+    const initCode = initCodeProvider();
+
+    // Get the sender address based on the init code
+    return getSenderAddress(client, {
+        initCode: concatHex([kernelAddresses.factory, initCode]),
+        entryPointAddress: entryPoint06Address,
+    });
+};
 
 /**
  * Build a base kernel account for Frak
@@ -58,7 +110,7 @@ export async function baseFrakWallet<
         generateInitCode: () => Hex;
         preDeterminedAccountAddress?: Address;
     }
-): Promise<FrakWebAuthNWallet> {
+): Promise<BaseFrakSmartAccount> {
     // Fetch account address and chain id
     const computedAccountAddress = await getAccountAddress({
         client,

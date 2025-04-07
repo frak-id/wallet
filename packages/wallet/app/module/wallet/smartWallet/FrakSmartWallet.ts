@@ -1,8 +1,7 @@
-import { baseFrakWallet } from "@/module/wallet/smartWallet/baseFrakWallet";
 import {
-    type SmartAccountV06,
-    getAccountAddress,
-} from "@/module/wallet/smartWallet/utils";
+    type BaseFrakSmartAccount,
+    baseFrakWallet,
+} from "@/module/wallet/smartWallet/baseFrakWallet";
 import type { P256PubKey } from "@/types/WebAuthN";
 import { KernelWallet } from "@frak-labs/app-essentials";
 import {
@@ -15,8 +14,6 @@ import {
     toHex,
 } from "viem";
 import { getStubSignature } from "./webAuthN";
-
-export type FrakWebAuthNWallet = SmartAccountV06;
 
 /**
  * Build a kernel smart account from a webauthn credential
@@ -42,7 +39,7 @@ export async function frakWalletSmartAccount<
         signatureProvider: ({ hash }: { hash: Hex }) => Promise<Hex>;
         preDeterminedAccountAddress?: Address;
     }
-): Promise<FrakWebAuthNWallet> {
+): Promise<BaseFrakSmartAccount> {
     const authenticatorIdHash = keccak256(toHex(authenticatorId));
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
@@ -50,14 +47,6 @@ export async function frakWalletSmartAccount<
             authenticatorIdHash,
             signerPubKey,
         });
-
-    // Fetch account address and chain id
-    const computedAccountAddress = await getAccountAddress({
-        client,
-        initCodeProvider: generateInitCode,
-    });
-
-    if (!computedAccountAddress) throw new Error("Account address not found");
 
     // Get the stub signature
     const stubSignature = getStubSignature({ authenticatorIdHash });

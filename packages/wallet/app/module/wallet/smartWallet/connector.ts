@@ -1,8 +1,8 @@
 import { currentChain } from "@/module/blockchain/provider";
 import { getSmartAccountProvider } from "@/module/wallet/smartWallet/provider";
-import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
 import type { Address, Hex, Transport } from "viem";
 import { createConnector } from "wagmi";
+import type { BaseFrakSmartAccount } from "./baseFrakWallet";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
 
@@ -15,7 +15,7 @@ export type FrakWalletConnector = ReturnType<
  */
 export function smartAccountConnector<
     transport extends Transport = Transport,
-    account extends SmartAccountV06 = SmartAccountV06,
+    account extends BaseFrakSmartAccount = BaseFrakSmartAccount,
 >() {
     // A few types shortcut
     type Provider = ReturnType<
