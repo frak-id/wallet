@@ -252,9 +252,9 @@
             "pairingInProgress": "Jumelage en cours, veuillez vous authentifier",
             "origin": {
                 "state": {
-                    "idle": "Téléphone ne répond pas",
-                    "connecting": "Attente de la signature du téléphone",
-                    "paired": "Appairé avec votre téléphone"
+                    "idle": "Ne répond pas",
+                    "connecting": "Attente de la signature",
+                    "paired": "Appairé"
                 }
             },
             "target": {
@@ -263,6 +263,11 @@
                     "connecting": "Appairage avec d'autres appareils",
                     "paired": "Appairé avec d'autres appareils"
                 }
+            },
+            "status": {
+                "idle": "Inactif",
+                "connecting": "Connexion en cours...",
+                "paired": "Appairé"
             }
         }
     },

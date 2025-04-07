@@ -4,6 +4,7 @@ import type { TargetPairingState } from "@/module/pairing/types";
 import { Fingerprint } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { usePairingInfo } from "../../hook/usePairingInfo";
+import { PairingStatus } from "../PairingStatus";
 import styles from "./index.module.css";
 
 export function PairingInfo({
@@ -20,7 +21,8 @@ export function PairingInfo({
             </Title>
             <ul className={styles.pairing__list}>
                 <li>
-                    {t("wallet.pairing.info.status")} {state.status}
+                    {t("wallet.pairing.info.status")}{" "}
+                    <PairingStatus status={state.status} />
                 </li>
                 {pairingInfo && (
                     <li>

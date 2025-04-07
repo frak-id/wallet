@@ -252,9 +252,9 @@
             "pairingInProgress": "Pairing in progress, please authenticate",
             "origin": {
                 "state": {
-                    "idle": "Phone not responding",
-                    "connecting": "Waiting phone signature",
-                    "paired": "Paired with your phone"
+                    "idle": "Not responding",
+                    "connecting": "Waiting signature",
+                    "paired": "Paired"
                 }
             },
             "target": {
@@ -263,6 +263,11 @@
                     "connecting": "Pairing with other devices",
                     "paired": "Paired with other devices"
                 }
+            },
+            "status": {
+                "idle": "Idle",
+                "connecting": "Connecting...",
+                "paired": "Paired"
             }
         }
     },

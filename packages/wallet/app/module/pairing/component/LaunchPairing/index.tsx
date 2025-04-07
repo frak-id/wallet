@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import type { Hex } from "viem";
 import { getOriginPairingClient } from "../../clients/store";
 import { PairingCode } from "../PairingCode";
+import { PairingStatus } from "../PairingStatus";
 import styles from "./index.module.css";
 
 /**
@@ -34,7 +35,9 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
             ) : (
                 <Spinner />
             )}
-            <p>{clientState.status}</p>
+            <div className={styles.launchPairing__status}>
+                <PairingStatus status={clientState.status} />
+            </div>
             {clientState.partnerDevice && (
                 <p className={styles.launchPairing__partnerDevice}>
                     {clientState.partnerDevice}

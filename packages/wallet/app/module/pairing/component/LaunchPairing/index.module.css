@@ -1,3 +1,7 @@
 .launchPairing {
     margin: 20px auto;
 }
+
+.launchPairing__status {
+    margin-top: 15px;
+}

@@ -316,6 +316,25 @@ interface Resources {
                 cancel: "Cancel";
                 confirm: "Confirm";
                 pairingInProgress: "Pairing in progress, please authenticate";
+                origin: {
+                    state: {
+                        idle: "Not responding";
+                        connecting: "Waiting signature";
+                        paired: "Paired";
+                    };
+                };
+                target: {
+                    state: {
+                        idle: "Paired with other devices";
+                        connecting: "Pairing with other devices";
+                        paired: "Paired with other devices";
+                    };
+                };
+                status: {
+                    idle: "Idle";
+                    connecting: "Connecting...";
+                    paired: "Paired";
+                };
             };
         };
         error: {
