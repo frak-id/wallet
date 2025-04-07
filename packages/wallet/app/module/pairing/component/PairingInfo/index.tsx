@@ -20,26 +20,15 @@ export function PairingInfo({
             </Title>
             <ul className={styles.pairing__list}>
                 <li>
-                    {t("wallet.pairing.info.status")}
-                    {state.status}
+                    {t("wallet.pairing.info.status")} {state.status}
                 </li>
+                {pairingInfo && (
+                    <li>
+                        {t("wallet.pairing.info.device")}{" "}
+                        {pairingInfo?.originName ?? "..."}
+                    </li>
+                )}
             </ul>
-            {pairingInfo && (
-                <>
-                    <ul className={styles.pairing__list}>
-                        <li>
-                            {t("wallet.pairing.info.device")}
-                            {pairingInfo?.originName ?? "..."}
-                        </li>
-                    </ul>
-                    <ul className={styles.pairing__list}>
-                        <li>
-                            {t("wallet.pairing.info.code")}
-                            {pairingInfo?.pairingCode ?? "..."}
-                        </li>
-                    </ul>
-                </>
-            )}
         </Panel>
     );
 }

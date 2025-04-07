@@ -4,6 +4,7 @@ import { useAtomValue } from "jotai";
 import { useEffect } from "react";
 import type { Hex } from "viem";
 import { getOriginPairingClient } from "../../clients/store";
+import { PairingCode } from "../PairingCode";
 import styles from "./index.module.css";
 
 /**
@@ -34,9 +35,12 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
                 <Spinner />
             )}
             <p>{clientState.status}</p>
-            <p>{clientState.partnerDevice}</p>
-            <p>Id: {pairingInfo?.id}</p>
-            <p>Code: {pairingInfo?.code}</p>
+            {clientState.partnerDevice && (
+                <p className={styles.launchPairing__partnerDevice}>
+                    {clientState.partnerDevice}
+                </p>
+            )}
+            {pairingInfo?.code && <PairingCode code={pairingInfo.code} />}
         </div>
     );
 }

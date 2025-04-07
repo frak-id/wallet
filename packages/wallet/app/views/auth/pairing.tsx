@@ -1,6 +1,7 @@
 import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
 import { getTargetPairingClient } from "@/module/pairing/clients/store";
+import { PairingCode } from "@/module/pairing/component/PairingCode";
 import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
@@ -78,6 +79,7 @@ export default function Pairing() {
             <>
                 <PairingHeader />
                 <PairingInfo state={pairingState} id={pendingPairingInfo.id} />
+                <PairingCode code={pairingInfo.pairingCode} />
                 <div className={styles.pairing__buttons}>
                     <Button
                         variant="secondary"
