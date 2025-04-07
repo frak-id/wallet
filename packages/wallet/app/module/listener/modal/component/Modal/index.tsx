@@ -174,7 +174,7 @@ export function ListenerModal({
             onOpenChange={onOpenChange}
         >
             <>
-                <OriginPairingState />
+                <OriginPairingState type="modal" />
                 {icon}
                 <CurrentModalMetadataInfo />
                 <ModalStepIndicator />

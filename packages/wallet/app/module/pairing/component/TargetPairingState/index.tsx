@@ -4,7 +4,11 @@ import { webauthnSessionAtom } from "../../../common/atoms/session";
 import { getTargetPairingClient } from "../../clients/store";
 import type { TargetPairingClient } from "../../clients/target";
 import { useSignSignatureRequest } from "../../hook/useSignSignatureRequest";
-import type { TargetPairingPendingSignature } from "../../types";
+import type {
+    BasePairingState,
+    TargetPairingPendingSignature,
+} from "../../types";
+import { StatusBoxWallet } from "../PairingStatusBox";
 
 /**
  * Component displaying the live target pairing state
@@ -28,14 +32,10 @@ export function TargetPairingState() {
 function InnerTargetPairingState() {
     const client = useMemo(() => getTargetPairingClient(), []);
     const state = useAtomValue(client.stateAtom);
+    const { status, text } = getStatusDetails(state);
 
     return (
-        <div>
-            <h2>Pairing</h2>
-            <p>Current: {state.status}</p>
-            <p>Partner: {state.partnerDevice}</p>
-            <p>Pending signatures: {state.pendingSignatures.size}</p>
-            <br />
+        <StatusBoxWallet status={status} title={text}>
             {Array.from(state.pendingSignatures.values()).map((request) => (
                 <SignatureRequestWidget
                     key={request.id}
@@ -43,7 +43,7 @@ function InnerTargetPairingState() {
                     client={client}
                 />
             ))}
-        </div>
+        </StatusBoxWallet>
     );
 }
 
@@ -63,4 +63,24 @@ function SignatureRequestWidget({
             <p>Signing state: {status}</p>
         </div>
     );
+}
+
+function getStatusDetails(state: BasePairingState) {
+    switch (state.status) {
+        case "paired":
+            return {
+                status: "success",
+                text: "Paired with other devices",
+            } as const;
+        case "idle":
+            return {
+                status: "waiting",
+                text: "Paired with other devices",
+            } as const;
+        case "connecting":
+            return {
+                status: "loading",
+                text: "Pairing with other devices",
+            } as const;
+    }
 }

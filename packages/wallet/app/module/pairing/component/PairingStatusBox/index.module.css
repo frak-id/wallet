@@ -1,0 +1,51 @@
+.statusBox {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.statusBoxWallet {
+    margin: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 10px 16px;
+}
+
+.statusBoxModal {
+    position: absolute;
+    top: 18px;
+}
+
+.statusBoxWalletEmbedded {
+    position: absolute;
+    top: 16px;
+    right: 5px;
+}
+
+.statusBox__indicator {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 9999px;
+}
+
+.statusBox__indicator--green {
+    background-color: #22c55e;
+}
+
+.statusBox__indicator--amber {
+    background-color: #f59e0b;
+}
+
+.statusBox__indicator--red {
+    background-color: #dc2626;
+}
+
+.statusBox__content {
+    display: flex;
+    flex-direction: column;
+}
+
+.statusBox__title {
+    font-size: 12px;
+    font-weight: 500;
+}

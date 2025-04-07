@@ -12,6 +12,7 @@ import {
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { listenerSharingKey } from "@/module/listener/queryKeys/sharing";
+import { OriginPairingState } from "@/module/pairing/component/OriginPairingState";
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { useGetUserPendingBalance } from "@/module/tokens/hook/useGetUserPendingBalance";
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
@@ -60,6 +61,7 @@ export function LoggedInComponent() {
                 currency={configMetadata?.currency ?? "eur"}
             />
             <ActionButtons refetchPendingBalance={refetchPendingBalance} />
+            <OriginPairingState type="embedded" />
         </>
     );
 }

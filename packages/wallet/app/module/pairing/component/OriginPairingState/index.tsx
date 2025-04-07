@@ -2,6 +2,10 @@ import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { distantWebauthnSessionAtom } from "../../../common/atoms/session";
 import { getOriginPairingClient } from "../../clients/store";
+import type { BasePairingState } from "../../types";
+import { StatusBoxModal, StatusBoxWalletEmbedded } from "../PairingStatusBox";
+
+type OriginPairingStateType = "embedded" | "modal";
 
 /**
  * Component displaying the live origin pairing state
@@ -9,11 +13,13 @@ import { getOriginPairingClient } from "../../clients/store";
  *
  * Visible on listener, embedded wallet, and wallet
  */
-export function OriginPairingState() {
+export function OriginPairingState({
+    type = "embedded",
+}: { type?: OriginPairingStateType }) {
     const session = useAtomValue(distantWebauthnSessionAtom);
 
     if (!session) return null;
-    return <InnerOriginPairingState />;
+    return <InnerOriginPairingState type={type} />;
 }
 
 /**
@@ -21,14 +27,32 @@ export function OriginPairingState() {
  *  -> Should be a smmall box with an indicator a right doti ndicator
  *  -> dot: red "idle", orange "connecting", green "paired"
  */
-function InnerOriginPairingState() {
+function InnerOriginPairingState({ type }: { type: OriginPairingStateType }) {
     const client = useMemo(() => getOriginPairingClient(), []);
     const state = useAtomValue(client.stateAtom);
+    const { status, text } = getStatusDetails(state);
+    const Component =
+        type === "embedded" ? StatusBoxWalletEmbedded : StatusBoxModal;
 
-    return (
-        <div>
-            <p>Current: {state.status}</p>
-            <p>Partner: {state.partnerDevice}</p>
-        </div>
-    );
+    return <Component status={status} title={text} />;
+}
+
+function getStatusDetails(state: BasePairingState) {
+    switch (state.status) {
+        case "paired":
+            return {
+                status: "success",
+                text: "Paired with your phone",
+            } as const;
+        case "idle":
+            return {
+                status: "waiting",
+                text: "Phone not responding",
+            } as const;
+        case "connecting":
+            return {
+                status: "waiting",
+                text: "Waiting phone signature",
+            } as const;
+    }
 }

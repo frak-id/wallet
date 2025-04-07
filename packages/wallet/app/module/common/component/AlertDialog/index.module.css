@@ -58,6 +58,11 @@
     font-weight: 700;
     font-size: 16px;
 }
+
+.alertDialog__description {
+    margin-top: 30px;
+}
+
 .alertDialog__footer {
     display: flex;
     justify-content: flex-end;
