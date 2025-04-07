@@ -29,7 +29,7 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
             {pairingInfo ? (
                 <Cuer
                     arena={"/icon.svg"}
-                    value={`${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo.id}&code=${pairingInfo.code}`}
+                    value={`${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo.id}`}
                     size={200}
                 />
             ) : (

@@ -8,7 +8,6 @@ import {
 } from "jotai/vanilla";
 import type { Hex } from "viem";
 import { authenticatedBackendApi } from "../../common/api/backendClient";
-import { getSafeSession } from "../../listener/utils/localStorage";
 import type {
     BasePairingState,
     WsOriginMessage,
@@ -34,6 +33,10 @@ type ConnectionParams =
           action: "join";
           id: string;
           pairingCode: string;
+          wallet: string;
+      }
+    | {
+          wallet: string;
       };
 
 export abstract class BasePairingClient<
@@ -43,6 +46,9 @@ export abstract class BasePairingClient<
 > {
     protected connection: PairingWs | null = null;
     protected pingInterval: NodeJS.Timeout | null = null;
+
+    private onCloseHook: (() => void) | null = null;
+    private reconnectRetryCount = 0;
 
     /**
      * The base state of the pairing client
@@ -85,22 +91,53 @@ export abstract class BasePairingClient<
     /**
      * Connect to the pairing websocket
      */
-    protected connect(params?: ConnectionParams) {
+    protected connect(params: ConnectionParams) {
         if (this.connection) {
             console.warn("Pairing client is already connected");
             return;
         }
 
         this.connection = authenticatedBackendApi.pairings.ws.subscribe({
-            query: {
-                ...params,
-                wallet: getSafeSession()?.token,
-            },
+            query: params,
         });
         this.setState({ status: "connecting" } as Partial<TState>);
 
         this.setupEventListeners();
     }
+
+    /**
+     * Force a connection to the pairing websocket, if already open, close it and reconnect
+     */
+    protected forceConnect(connectFn: () => void) {
+        // If no connection, directly connect
+        if (!this.connection) {
+            connectFn();
+            return;
+        }
+
+        // If connection obj is here, but the ws is closed, cleanup and reconnect
+        if (this.connection.ws.readyState === WebSocket.CLOSED) {
+            this.connection = null;
+            this.cleanup();
+            connectFn();
+            return;
+        }
+
+        // If we already got a onCloseHook, exit
+        if (this.onCloseHook) {
+            console.warn("Already waiting for WS to close, skipping");
+            return;
+        }
+
+        // If connection is open, and not in a closed state, close it and save the connectFn in the onCloseHook
+        this.connection.close();
+        this.onCloseHook = connectFn;
+    }
+
+    /**
+     * Reconnect to the pairing websocket
+     */
+    protected abstract reconnect(): void;
 
     /**
      * Setup the event listeners for the pairing websocket
@@ -124,10 +161,37 @@ export abstract class BasePairingClient<
             {}
         );
 
+        this.connection.on("open", () => {
+            console.log("Pairing websocket opened");
+            this.reconnectRetryCount = 0;
+        });
+
         this.connection.on("close", () => {
             console.log("Pairing websocket closed");
             this.cleanup();
             this.connection = null;
+
+            // If we have a function to call on close, call it and clean it up
+            if (this.onCloseHook) {
+                this.onCloseHook();
+                this.onCloseHook = null;
+                return;
+            }
+
+            // If we have too many reconnect retries, give up
+            if (this.reconnectRetryCount > 5) {
+                console.warn("Too many reconnect retries, giving up");
+                return;
+            }
+
+            // Otherwise, just try to reconnect in 200ms
+            setTimeout(() => {
+                console.log(
+                    "Reconnecting to pairing websocket, since no onCloseHook"
+                );
+                this.reconnectRetryCount++;
+                this.reconnect();
+            }, 500);
         });
 
         this.connection.on("error", (error) => {

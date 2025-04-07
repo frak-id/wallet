@@ -20,5 +20,6 @@ export function useGetActivePairings() {
             }
             return data;
         },
+        enabled: !!wallet?.address,
     });
 }

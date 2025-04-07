@@ -43,16 +43,18 @@ export class OriginPairingClient extends BasePairingClient<
     }: {
         ssoId?: Hex;
     } = {}) {
-        this.connect({
-            action: "initiate",
-            ssoId,
-        });
+        this.forceConnect(() =>
+            this.connect({
+                action: "initiate",
+                ssoId,
+            })
+        );
     }
 
     /**
      * Reconnect to all the pairing associated with the current wallet
      */
-    async reconnect(): Promise<void> {
+    reconnect() {
         const session = getSafeSession();
         if (!session) {
             console.warn("No session found, skipping reconnection");
@@ -66,19 +68,10 @@ export class OriginPairingClient extends BasePairingClient<
             return;
         }
 
-        // Check if we are already connected, if yes, clean that up and reconnect
-        if (this.connection) {
-            this.connection.close();
-            this.connection = null;
-            // Wait a bit for the connection to be closed and retry
-            setTimeout(() => {
-                this.reconnect();
-            }, 200);
-            return;
-        }
-
         // Launch the WS connection
-        this.connect();
+        this.connect({
+            wallet: session.token,
+        });
 
         // Start the ping interval
         this.startPingInterval();
@@ -176,7 +169,7 @@ export class OriginPairingClient extends BasePairingClient<
             jotaiStore.set(sdkSessionAtom, message.payload.sdkJwt);
 
             // And trigger a reconnection
-            this.reconnect();
+            this.forceConnect(() => this.reconnect());
         }
     }
 
@@ -184,6 +177,10 @@ export class OriginPairingClient extends BasePairingClient<
      * Start the ping interval
      */
     protected startPingInterval() {
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+        }
+
         this.pingInterval = setInterval(() => {
             // If we got more than 5 pending pings, close the connection
             if (this.pendingPings > 5) {

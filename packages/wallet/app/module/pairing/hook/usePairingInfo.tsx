@@ -24,6 +24,7 @@ export function usePairingInfo({ id }: { id?: string }) {
 
             return data;
         },
+        enabled: !!id,
     });
 
     return query;

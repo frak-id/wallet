@@ -8,13 +8,7 @@ import type {
 import { BasePairingClient } from "./base";
 
 /**
- * - should store a list of pending webauthn requests
- * - should be able to fetch all the pending requests ids
- * - should be auto created if the user got a webauthn type session
- * - should be destroyed + recreated on joining request
- *
- * todo: Number of live connection with their timestamp
- *
+ * The pairing client for a target device, the one responding to the pairing requests
  */
 export class TargetPairingClient extends BasePairingClient<
     WsTargetRequest,
@@ -37,17 +31,26 @@ export class TargetPairingClient extends BasePairingClient<
      * Join a new pairing request
      */
     joinPairing(id: string, pairingCode: string) {
-        this.connect({
-            action: "join",
-            id,
-            pairingCode,
-        });
+        const session = getSafeSession();
+        if (!session) {
+            console.warn("No session found, skipping reconnection");
+            return;
+        }
+
+        this.forceConnect(() =>
+            this.connect({
+                action: "join",
+                id,
+                pairingCode,
+                wallet: session.token,
+            })
+        );
     }
 
     /**
      * Reconnect to all the pairing associated with the current wallet
      */
-    async reconnect(): Promise<void> {
+    reconnect() {
         const session = getSafeSession();
         if (!session) {
             console.warn("No session found, skipping reconnection");
@@ -61,7 +64,9 @@ export class TargetPairingClient extends BasePairingClient<
             return;
         }
 
-        this.connect();
+        this.connect({
+            wallet: session.token,
+        });
     }
 
     /**
