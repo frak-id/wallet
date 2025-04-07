@@ -1,5 +1,6 @@
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { webauthnSessionAtom } from "../../../common/atoms/session";
 import { getTargetPairingClient } from "../../clients/store";
 import type { TargetPairingClient } from "../../clients/target";
@@ -65,21 +66,23 @@ function SignatureRequestWidget({
 }
 
 function getStatusDetails(state: BasePairingState) {
+    const { t } = useTranslation();
+
     switch (state.status) {
         case "paired":
             return {
                 status: "success",
-                text: "Paired with other devices",
+                text: t("wallet.pairing.target.state.paired"),
             } as const;
         case "idle":
             return {
                 status: "waiting",
-                text: "Paired with other devices",
+                text: t("wallet.pairing.target.state.idle"),
             } as const;
         case "connecting":
             return {
                 status: "loading",
-                text: "Pairing with other devices",
+                text: t("wallet.pairing.target.state.connecting"),
             } as const;
     }
 }

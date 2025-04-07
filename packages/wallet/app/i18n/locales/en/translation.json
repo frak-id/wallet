@@ -249,7 +249,21 @@
             },
             "cancel": "Cancel",
             "confirm": "Confirm",
-            "pairingInProgress": "Pairing in progress, please authenticate"
+            "pairingInProgress": "Pairing in progress, please authenticate",
+            "origin": {
+                "state": {
+                    "idle": "Phone not responding",
+                    "connecting": "Waiting phone signature",
+                    "paired": "Paired with your phone"
+                }
+            },
+            "target": {
+                "state": {
+                    "idle": "Paired with other devices",
+                    "connecting": "Pairing with other devices",
+                    "paired": "Paired with other devices"
+                }
+            }
         }
     },
     "error": {

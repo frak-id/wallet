@@ -1,5 +1,6 @@
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { distantWebauthnSessionAtom } from "../../../common/atoms/session";
 import { getOriginPairingClient } from "../../clients/store";
 import type { BasePairingState } from "../../types";
@@ -37,21 +38,23 @@ function InnerOriginPairingState({ type }: { type: OriginPairingStateType }) {
 }
 
 function getStatusDetails(state: BasePairingState) {
+    const { t } = useTranslation();
+
     switch (state.status) {
         case "paired":
             return {
                 status: "success",
-                text: "Paired with your phone",
+                text: t("wallet.pairing.origin.state.paired"),
             } as const;
         case "idle":
             return {
                 status: "waiting",
-                text: "Phone not responding",
+                text: t("wallet.pairing.origin.state.idle"),
             } as const;
         case "connecting":
             return {
                 status: "waiting",
-                text: "Waiting phone signature",
+                text: t("wallet.pairing.origin.state.connecting"),
             } as const;
     }
 }

@@ -249,7 +249,21 @@
             },
             "cancel": "Annuler",
             "confirm": "Confirmer",
-            "pairingInProgress": "Jumelage en cours, veuillez vous authentifier"
+            "pairingInProgress": "Jumelage en cours, veuillez vous authentifier",
+            "origin": {
+                "state": {
+                    "idle": "Téléphone ne répond pas",
+                    "connecting": "Attente de la signature du téléphone",
+                    "paired": "Appairé avec votre téléphone"
+                }
+            },
+            "target": {
+                "state": {
+                    "idle": "Appairé avec d'autres appareils",
+                    "connecting": "Appairage avec d'autres appareils",
+                    "paired": "Appairé avec d'autres appareils"
+                }
+            }
         }
     },
     "error": {
