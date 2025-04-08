@@ -24,6 +24,7 @@ export class TargetPairingClient extends BasePairingClient<
             partnerDevice: null,
             pendingSignatures: new Map(),
             pairingIdState: new Map(),
+            closeInfo: undefined,
         };
     }
 

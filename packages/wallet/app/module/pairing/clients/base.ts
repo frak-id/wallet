@@ -166,8 +166,8 @@ export abstract class BasePairingClient<
             this.reconnectRetryCount = 0;
         });
 
-        this.connection.on("close", () => {
-            console.log("Pairing websocket closed");
+        this.connection.on("close", ({ code, reason }) => {
+            console.log("Pairing websocket closed", { code, reason });
             this.cleanup();
             this.connection = null;
 
@@ -181,6 +181,13 @@ export abstract class BasePairingClient<
             // If we have too many reconnect retries, give up
             if (this.reconnectRetryCount > 5) {
                 console.warn("Too many reconnect retries, giving up");
+                this.setState({
+                    status: "retry-error",
+                    closeInfo: {
+                        code,
+                        reason,
+                    },
+                } as Partial<TState>);
                 return;
             }
 

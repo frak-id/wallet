@@ -32,6 +32,7 @@ export class OriginPairingClient extends BasePairingClient<
             partnerDevice: null,
             status: "idle",
             signatureRequests: new Map(),
+            closeInfo: undefined,
         };
     }
 
