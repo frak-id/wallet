@@ -11,7 +11,7 @@ const appLabels = { app: "elysia" };
 export const backendNamespace = new kubernetes.core.v1.Namespace(
     "infra-wallet",
     {
-        metadata: { name: "infra-wallet" },
+        metadata: { name: `wallet-${normalizedStageName}` },
     }
 );
 
