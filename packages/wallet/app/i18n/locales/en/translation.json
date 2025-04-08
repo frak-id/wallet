@@ -252,17 +252,22 @@
             "pairingInProgress": "Pairing in progress, please authenticate",
             "origin": {
                 "state": {
-                    "idle": "Not responding",
-                    "connecting": "Waiting phone",
-                    "paired": "Paired"
+                    "idle": "Pairing logic initialisation",
+                    "connecting": "Paired device not online",
+                    "paired": "Connected with partner",
+                    "retryError": "Error when connecting to the paired device"
                 }
             },
             "target": {
                 "state": {
-                    "idle": "Paired with other devices",
-                    "connecting": "Pairing with other devices",
-                    "paired": "Paired with other devices",
-                    "retryError": "Connection error"
+                    "connecting": "Connecting to partner device",
+                    "paired": "Connected with other device",
+                    "retryError": "Error when connecting to partner device",
+                    "signatureRequest": "Waiting for signature",
+                    "requests": {
+                        "connecting": "Open your paired device to proceed to the transaction",
+                        "paired": "Wait for partner to process signature"
+                    }
                 }
             },
             "status": {

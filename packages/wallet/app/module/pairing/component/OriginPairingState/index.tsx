@@ -37,7 +37,10 @@ function InnerOriginPairingState({ type }: { type: OriginPairingStateType }) {
     return <Component status={status} title={text} />;
 }
 
-function getStatusDetails(state: BasePairingState) {
+function getStatusDetails(state: BasePairingState): {
+    status: "success" | "waiting" | "loading" | "error";
+    text: string;
+} {
     const { t } = useTranslation();
 
     switch (state.status) {
@@ -45,16 +48,25 @@ function getStatusDetails(state: BasePairingState) {
             return {
                 status: "success",
                 text: t("wallet.pairing.origin.state.paired"),
-            } as const;
+            };
         case "idle":
             return {
                 status: "waiting",
                 text: t("wallet.pairing.origin.state.idle"),
-            } as const;
+            };
         case "connecting":
             return {
                 status: "waiting",
                 text: t("wallet.pairing.origin.state.connecting"),
-            } as const;
+            };
+        case "retry-error":
+            return {
+                status: "error",
+                text: t("wallet.pairing.origin.state.retryError"),
+            };
+        default: {
+            const exhaustiveCheck: never = state.status;
+            throw new Error(`Unhandled status: ${exhaustiveCheck}`);
+        }
     }
 }

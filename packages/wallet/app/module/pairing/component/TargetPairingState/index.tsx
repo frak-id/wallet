@@ -2,7 +2,7 @@ import { webauthnSessionAtom } from "@/module/common/atoms/session";
 import { getTargetPairingClient } from "@/module/pairing/clients/store";
 import { StatusBoxWallet } from "@/module/pairing/component/PairingStatusBox";
 import { SignatureRequestList } from "@/module/pairing/component/SignatureRequest";
-import type { BasePairingState } from "@/module/pairing/types";
+import type { TargetPairingState as TargetPairingStateType } from "@/module/pairing/types";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -40,11 +40,27 @@ function InnerTargetPairingState() {
     );
 }
 
-function getStatusDetails(state: BasePairingState): {
+function getStatusDetails(state: TargetPairingStateType): {
     status: "success" | "waiting" | "loading" | "error";
     text: string;
 } {
     const { t } = useTranslation();
+
+    // If there are pending signatures, we display the signature request state
+    if (state.pendingSignatures.size > 0) {
+        switch (state.status) {
+            case "paired":
+                return {
+                    status: "loading",
+                    text: t("wallet.pairing.target.state.requests.paired"),
+                };
+            case "connecting":
+                return {
+                    status: "waiting",
+                    text: t("wallet.pairing.target.state.requests.connecting"),
+                };
+        }
+    }
 
     switch (state.status) {
         case "paired":

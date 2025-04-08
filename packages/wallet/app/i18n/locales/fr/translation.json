@@ -252,17 +252,22 @@
             "pairingInProgress": "Jumelage en cours, veuillez vous authentifier",
             "origin": {
                 "state": {
-                    "idle": "Ne répond pas",
-                    "connecting": "Attente du téléphone",
-                    "paired": "Appairé"
+                    "idle": "Initialisation du pairage",
+                    "connecting": "Appareil partenaire pas en ligne",
+                    "paired": "Connecté avec le partenaire",
+                    "retryError": "Erreur lors de la connexion à l'appareil partenaire"
                 }
             },
             "target": {
                 "state": {
-                    "idle": "Appairé avec d'autres appareils",
-                    "connecting": "Appairage avec d'autres appareils",
-                    "paired": "Appairé avec d'autres appareils",
-                    "retryError": "Erreur de connexion"
+                    "connecting": "Connexion à l'appareil partenaire",
+                    "paired": "Connecté avec un autre appareil",
+                    "retryError": "Erreur lors de la connexion à l'appareil partenaire",
+                    "signatureRequest": "Attente de signature",
+                    "requests": {
+                        "connecting": "Ouvrez votre appareil pairé pour procéder à la transaction",
+                        "paired": "Attendez que le partenaire signe la transaction"
+                    }
                 }
             },
             "status": {
