@@ -13,6 +13,7 @@ import type {
 import type { SsoService } from "../../auth/services/WalletSsoService";
 import type { PairingDb } from "../context";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
+import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import {
     PairingRepository,
     originTopic,
@@ -57,7 +58,10 @@ export class PairingConnectionRepository extends PairingRepository {
         const { action, pairingCode, ssoId, id } = query;
         if (!action && !wallet) {
             log.debug("No action or wallet token");
-            ws.close(4403, "Missing action or wallet token");
+            ws.close(
+                WsCloseCode.UNAUTHORIZED,
+                "Missing action or wallet token"
+            );
             return;
         }
 
@@ -90,7 +94,7 @@ export class PairingConnectionRepository extends PairingRepository {
         }
 
         // If we got no action and no wallet, we need to close the connection
-        ws.close(4403, "Missing action or wallet token");
+        ws.close(WsCloseCode.UNAUTHORIZED, "Missing action or wallet token");
     }
 
     /**
@@ -159,24 +163,27 @@ export class PairingConnectionRepository extends PairingRepository {
             where: eq(pairingTable.pairingId, id),
         });
         if (!pairing) {
-            ws.close(4403, "Invalid pairing code");
+            ws.close(WsCloseCode.PAIRING_NOT_FOUND, "Pairing not found");
             return;
         }
         // Check if the pairing code is valid
         if (pairing.pairingCode !== pairingCode) {
-            ws.close(4403, "Invalid pairing code");
+            ws.close(WsCloseCode.FORBIDDEN, "Invalid pairing code");
             return;
         }
 
         // Check if the pairing is already resolved
         if (pairing.resolvedAt) {
-            ws.close(4403, "Pairing already resolved");
+            ws.close(WsCloseCode.FORBIDDEN, "Pairing already resolved");
             return;
         }
 
         // Ensure we got a webauthn token
         if (wallet.type !== undefined && wallet.type !== "webauthn") {
-            ws.close(4403, "Can't resolve non-webauthn wallet");
+            ws.close(
+                WsCloseCode.FORBIDDEN,
+                "Can't resolve non-webauthn wallet"
+            );
             return;
         }
 
@@ -309,16 +316,25 @@ export class PairingConnectionRepository extends PairingRepository {
         const pairingIds = pairings.map((p) => p.pairingId);
         const deviceName = this.uaToDeviceName(userAgent);
 
+        // If we got no pairings, we need to close the connection
+        if (pairings.length === 0) {
+            ws.close(
+                WsCloseCode.NO_CONNECTION_TO_CONNECT_TO,
+                "No connection to connect to"
+            );
+            return;
+        }
+
         // Subscribe the client to every topics related to this pairing
-        for (const pairing of pairings) {
-            ws.subscribe(targetTopic(pairing.pairingId));
+        for (const pairing of pairingIds) {
+            ws.subscribe(targetTopic(pairing));
             await this.sendTopicMessage({
                 ws,
-                pairingId: pairing.pairingId,
+                pairingId: pairing,
                 message: {
                     type: "partner-connected",
                     payload: {
-                        pairingId: pairing.pairingId,
+                        pairingId: pairing,
                         deviceName,
                     },
                 },
@@ -338,9 +354,8 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // Send all the pending signatures to the client
         for (const signature of pendingSignatures) {
-            await this.sendTopicMessage({
+            this.sendDirectMessage({
                 ws,
-                pairingId: signature.pairingId,
                 message: {
                     type: "signature-request",
                     payload: {
@@ -354,8 +369,6 @@ export class PairingConnectionRepository extends PairingRepository {
                             )?.originName ?? "Unknown",
                     },
                 },
-                // We are sending back all of this to the client once connected
-                topic: "target",
             });
         }
     }

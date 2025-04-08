@@ -8,12 +8,13 @@ import {
 } from "jotai/vanilla";
 import type { Hex } from "viem";
 import { authenticatedBackendApi } from "../../common/api/backendClient";
-import type {
-    BasePairingState,
-    WsOriginMessage,
-    WsOriginRequest,
-    WsTargetMessage,
-    WsTargetRequest,
+import {
+    type BasePairingState,
+    WsCloseCode,
+    type WsOriginMessage,
+    type WsOriginRequest,
+    type WsTargetMessage,
+    type WsTargetRequest,
 } from "../types";
 
 type PairingWs = ReturnType<
@@ -166,40 +167,7 @@ export abstract class BasePairingClient<
             this.reconnectRetryCount = 0;
         });
 
-        this.connection.on("close", ({ code, reason }) => {
-            console.log("Pairing websocket closed", { code, reason });
-            this.cleanup();
-            this.connection = null;
-
-            // If we have a function to call on close, call it and clean it up
-            if (this.onCloseHook) {
-                this.onCloseHook();
-                this.onCloseHook = null;
-                return;
-            }
-
-            // If we have too many reconnect retries, give up
-            if (this.reconnectRetryCount > 5) {
-                console.warn("Too many reconnect retries, giving up");
-                this.setState({
-                    status: "retry-error",
-                    closeInfo: {
-                        code,
-                        reason,
-                    },
-                } as Partial<TState>);
-                return;
-            }
-
-            // Otherwise, just try to reconnect in 200ms
-            setTimeout(() => {
-                console.log(
-                    "Reconnecting to pairing websocket, since no onCloseHook"
-                );
-                this.reconnectRetryCount++;
-                this.reconnect();
-            }, 500);
-        });
+        this.connection.on("close", (event) => this.handleClose(event));
 
         this.connection.on("error", (error) => {
             console.warn("Pairing websocket error", error);
@@ -230,6 +198,55 @@ export abstract class BasePairingClient<
 
         // Reput the state to initial state
         this.setState(this.getInitialState());
+    }
+
+    /**
+     * Handle a websocket close event
+     */
+    private handleClose({ code, reason }: CloseEvent) {
+        console.log("Pairing websocket closed", { code, reason });
+        this.cleanup();
+        this.connection = null;
+
+        // If we have a function to call on close, call it and clean it up
+        if (this.onCloseHook) {
+            this.onCloseHook();
+            this.onCloseHook = null;
+            return;
+        }
+
+        // Check if we can retry this
+        const isRetryable = code !== WsCloseCode.NO_CONNECTION_TO_CONNECT_TO;
+        if (!isRetryable) {
+            // Nothing to do, we can't retry this
+            this.setState({
+                status: "idle",
+                closeInfo: { code, reason },
+            } as Partial<TState>);
+            return;
+        }
+
+        // If we have too many reconnect retries, give up
+        if (this.reconnectRetryCount > 5) {
+            console.warn("Too many reconnect retries, giving up");
+            this.setState({
+                status: "retry-error",
+                closeInfo: {
+                    code,
+                    reason,
+                },
+            } as Partial<TState>);
+            return;
+        }
+
+        // Otherwise, just try to reconnect in 200ms
+        setTimeout(() => {
+            console.log(
+                "Reconnecting to pairing websocket, since no onCloseHook"
+            );
+            this.reconnectRetryCount++;
+            this.reconnect();
+        }, 500);
     }
 
     /**

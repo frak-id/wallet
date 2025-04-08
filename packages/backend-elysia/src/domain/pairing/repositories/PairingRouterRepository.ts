@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
+import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import type {
     WsPingRequest,
     WsPongRequest,
@@ -27,13 +28,13 @@ export class PairingRouterRepository extends PairingRepository {
     }) {
         // Ensure message is an object
         if (typeof message !== "object" || message === null) {
-            ws.close(4403, "Invalid message");
+            ws.close(WsCloseCode.INVALID_MSG, "Invalid message");
             return;
         }
 
         // Ensure message has a type property
         if (!("type" in message)) {
-            ws.close(4403, "Invalid message");
+            ws.close(WsCloseCode.INVALID_MSG, "Invalid message");
             return;
         }
 
@@ -88,7 +89,7 @@ export class PairingRouterRepository extends PairingRepository {
     }) {
         if (wallet.type !== "distant-webauthn") {
             ws.close(
-                4403,
+                WsCloseCode.FORBIDDEN,
                 "Can't handle ping request from non-distant-webauthn wallet"
             );
             return;
@@ -119,14 +120,14 @@ export class PairingRouterRepository extends PairingRepository {
     }) {
         if (wallet.type !== "distant-webauthn") {
             ws.close(
-                4403,
+                WsCloseCode.FORBIDDEN,
                 "Can't handle ping request from non-distant-webauthn wallet"
             );
             return;
         }
 
         if (!message.payload.id || !message.payload.request) {
-            ws.close(4403, "Invalid message");
+            ws.close(WsCloseCode.INVALID_MSG, "Invalid message");
             return;
         }
 
@@ -136,7 +137,7 @@ export class PairingRouterRepository extends PairingRepository {
         });
 
         if (!pairing) {
-            ws.close(4403, "Pairing not found");
+            ws.close(WsCloseCode.PAIRING_NOT_FOUND, "Pairing not found");
             return;
         }
         // Save the request
@@ -181,7 +182,7 @@ export class PairingRouterRepository extends PairingRepository {
     }) {
         // Assert we got everything we need
         if (!message.payload?.pairingId) {
-            ws.close(4403, "Invalid message");
+            ws.close(WsCloseCode.INVALID_MSG, "Invalid message");
             return;
         }
 
@@ -215,7 +216,7 @@ export class PairingRouterRepository extends PairingRepository {
             !message.payload?.id ||
             !message.payload?.signature
         ) {
-            ws.close(4403, "Invalid message");
+            ws.close(WsCloseCode.INVALID_MSG, "Invalid message");
             return;
         }
 
@@ -271,7 +272,7 @@ export class PairingRouterRepository extends PairingRepository {
             !message.payload?.id ||
             !message.payload?.reason
         ) {
-            ws.close(4403, "Invalid message");
+            ws.close(WsCloseCode.INVALID_MSG, "Invalid message");
             return;
         }
 

@@ -18,7 +18,7 @@ export abstract class PairingRepository {
         message,
     }: {
         ws: ElysiaWS;
-        message: WsDirectMessageResponse;
+        message: WsDirectMessageResponse | WsTopicMessage;
     }) {
         ws.send(message);
     }

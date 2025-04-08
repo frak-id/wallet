@@ -32,6 +32,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
             ws,
         });
     },
+    // When we close the websocket connection
     close: async (ws, code, reason) => {
         log.debug(
             `[Pairing] websocket closed: ${ws.id}, code: ${code}, reason: ${reason}`
