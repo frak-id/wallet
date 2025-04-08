@@ -21,12 +21,12 @@ export function StatusBoxWallet({
     title: string;
 }>) {
     return (
-        <>
+        <div className={styles.statusBoxWrapper}>
             <div className={`${styles.statusBox} ${styles.statusBoxWallet}`}>
                 <InnerStatusBox status={status} title={title} />
             </div>
             {children}
-        </>
+        </div>
     );
 }
 

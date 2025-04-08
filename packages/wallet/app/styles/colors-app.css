@@ -30,6 +30,8 @@
     --frak-button-secondary-border-color: var(--frak-color-white);
     --frak-button-disabled-background-color: var(--frak-color-regent-gray-34);
     --frak-button-disabled-text-color: var(--frak-color-grayText);
+    --frak-button-danger-background-color: var(--frak-color-red);
+    --frak-button-danger-text-color: var(--frak-color-white);
     --frak-navigation-color: var(--frak-color-white);
     --frak-token-item-hover-color: var(--frak-color-grayText);
     --frak-header-wallet-color: var(--frak-color-east-bay);

@@ -268,6 +268,23 @@
                 "idle": "Inactif",
                 "connecting": "Connexion en cours...",
                 "paired": "Appairé"
+            },
+            "signatureRequest": {
+                "title": "Demande de signature",
+                "description": "Un appareil <strongFrom>{{from}}</strongFrom> demande votre signature",
+                "stateTitle": "État de signature",
+                "state": {
+                    "idle": "En attente",
+                    "pending": "En cours",
+                    "success": "Réussie",
+                    "error": "Échoué",
+                    "declined": "Rejeté",
+                    "unknown": "Inconnu"
+                },
+                "buttons": {
+                    "sign": "Signer",
+                    "reject": "Rejeter"
+                }
             }
         }
     },

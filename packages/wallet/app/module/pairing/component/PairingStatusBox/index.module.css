@@ -1,3 +1,7 @@
+.statusBoxWrapper {
+    position: relative;
+}
+
 .statusBox {
     display: flex;
     align-items: center;

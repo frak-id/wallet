@@ -1,15 +1,11 @@
+import { webauthnSessionAtom } from "@/module/common/atoms/session";
+import { getTargetPairingClient } from "@/module/pairing/clients/store";
+import { StatusBoxWallet } from "@/module/pairing/component/PairingStatusBox";
+import { SignatureRequestList } from "@/module/pairing/component/SignatureRequest";
+import type { BasePairingState } from "@/module/pairing/types";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { webauthnSessionAtom } from "../../../common/atoms/session";
-import { getTargetPairingClient } from "../../clients/store";
-import type { TargetPairingClient } from "../../clients/target";
-import { useSignSignatureRequest } from "../../hook/useSignSignatureRequest";
-import type {
-    BasePairingState,
-    TargetPairingPendingSignature,
-} from "../../types";
-import { StatusBoxWallet } from "../PairingStatusBox";
 
 /**
  * Component displaying the live target pairing state
@@ -36,36 +32,18 @@ function InnerTargetPairingState() {
 
     return (
         <StatusBoxWallet status={status} title={text}>
-            {Array.from(state.pendingSignatures.values()).map((request) => (
-                <SignatureRequestWidget
-                    key={request.id}
-                    request={request}
-                    client={client}
-                />
-            ))}
+            <SignatureRequestList
+                requests={Array.from(state.pendingSignatures.values())}
+                client={client}
+            />
         </StatusBoxWallet>
     );
 }
 
-function SignatureRequestWidget({
-    request,
-    client,
-}: { request: TargetPairingPendingSignature; client: TargetPairingClient }) {
-    const { mutate: signRequest, status } = useSignSignatureRequest({ client });
-
-    return (
-        <div>
-            <p>Signature request</p>
-            <p>From: {request.from}</p>
-            <button onClick={() => signRequest(request)} type="button">
-                Sign
-            </button>
-            <p>Signing state: {status}</p>
-        </div>
-    );
-}
-
-function getStatusDetails(state: BasePairingState) {
+function getStatusDetails(state: BasePairingState): {
+    status: "success" | "waiting" | "loading" | "error";
+    text: string;
+} {
     const { t } = useTranslation();
 
     switch (state.status) {
@@ -73,16 +51,25 @@ function getStatusDetails(state: BasePairingState) {
             return {
                 status: "success",
                 text: t("wallet.pairing.target.state.paired"),
-            } as const;
+            };
         case "idle":
             return {
                 status: "waiting",
                 text: t("wallet.pairing.target.state.idle"),
-            } as const;
+            };
         case "connecting":
             return {
                 status: "loading",
                 text: t("wallet.pairing.target.state.connecting"),
-            } as const;
+            };
+        case "retry-error":
+            return {
+                status: "error",
+                text: t("wallet.pairing.target.state.retryError"),
+            };
+        default: {
+            const exhaustiveCheck: never = state.status;
+            throw new Error(`Unhandled status: ${exhaustiveCheck}`);
+        }
     }
 }

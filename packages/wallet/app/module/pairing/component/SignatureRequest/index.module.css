@@ -1,0 +1,74 @@
+.signatureRequest {
+    background: #536187;
+}
+
+.signatureRequestList {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    margin: 0 10px;
+    gap: 10px;
+}
+
+.signatureRequest__wrapper {
+    animation: slideIn 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.signatureRequest__description {
+    margin: 10px 0 15px 0;
+}
+
+.signatureRequest__from {
+    background: var(--frak-header-background-color);
+    border-radius: 6px;
+    padding: 2px 4px;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+}
+
+.signatureRequest__buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.signatureRequest__state {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background-color: var(--frak-color-blue-zodiac-darker);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.signatureRequest__stateLabel {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.signatureRequest__stateLabelError {
+    display: flex;
+    color: var(--frak-color-red);
+}
+
+.signatureRequest__stateLabelSuccess {
+    color: var(--frak-color-green);
+}
