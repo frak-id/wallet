@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
 import type { Address, Hex } from "viem";
@@ -7,11 +7,12 @@ import { log } from "../../../common";
 import type { JwtService } from "../../../utils/elysia/jwt";
 import type {
     StaticWalletTokenDto,
+    StaticWalletWebauthnTokenDto,
     WalletTokenDto,
 } from "../../auth/models/WalletSessionDto";
 import type { SsoService } from "../../auth/services/WalletSsoService";
 import type { PairingDb } from "../context";
-import { pairingTable } from "../db/schema";
+import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import {
     PairingRepository,
     originTopic,
@@ -197,7 +198,6 @@ export class PairingConnectionRepository extends PairingRepository {
             userAgent,
             wallet,
             ws,
-            targetFreshPairing: pairing.pairingId,
         });
 
         // Build the wallet payload for the origin
@@ -250,12 +250,10 @@ export class PairingConnectionRepository extends PairingRepository {
         userAgent,
         wallet,
         ws,
-        targetFreshPairing,
     }: {
         userAgent?: string;
         wallet: StaticWalletTokenDto;
         ws: ElysiaWS;
-        targetFreshPairing?: string;
     }) {
         // If we got a distant webauthn token, subscribe the wallet to the pairing topic
         if (wallet.type === "distant-webauthn") {
@@ -278,38 +276,87 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // If we got a webauthn token, subscribe the wallet to the pairing topic
         if (!wallet.type || wallet.type === "webauthn") {
-            // Get all the pairing ids
-            const pairings = await this.pairingDb
-                .select({
-                    pairingId: pairingTable.pairingId,
-                })
-                .from(pairingTable)
-                .where(eq(pairingTable.wallet, wallet.address));
-
-            const pairingIds = pairings.map((p) => p.pairingId);
-            if (targetFreshPairing) {
-                pairingIds.push(targetFreshPairing);
-            }
-            const deviceName = this.uaToDeviceName(userAgent);
-
-            // Subscribe the client to every topics related to this pairing
-            for (const pairing of new Set(pairingIds)) {
-                ws.subscribe(targetTopic(pairing));
-                await this.sendTopicMessage({
-                    ws,
-                    pairingId: pairing,
-                    message: {
-                        type: "partner-connected",
-                        payload: {
-                            pairingId: pairing,
-                            deviceName,
-                        },
-                    },
-                    // We are the target, so send this message to the origin
-                    topic: "origin",
-                });
-            }
+            await this.targetWalletReconnection({
+                userAgent,
+                wallet,
+                ws,
+            });
             return;
+        }
+    }
+
+    /**
+     * Handle a target wallet reconnection
+     */
+    private async targetWalletReconnection({
+        userAgent,
+        wallet,
+        ws,
+    }: {
+        userAgent?: string;
+        wallet: StaticWalletWebauthnTokenDto;
+        ws: ElysiaWS;
+    }) {
+        // Get all the pairing ids
+        const pairings = await this.pairingDb
+            .select({
+                pairingId: pairingTable.pairingId,
+                originName: pairingTable.originName,
+            })
+            .from(pairingTable)
+            .where(eq(pairingTable.wallet, wallet.address));
+
+        const pairingIds = pairings.map((p) => p.pairingId);
+        const deviceName = this.uaToDeviceName(userAgent);
+
+        // Subscribe the client to every topics related to this pairing
+        for (const pairing of pairings) {
+            ws.subscribe(targetTopic(pairing.pairingId));
+            await this.sendTopicMessage({
+                ws,
+                pairingId: pairing.pairingId,
+                message: {
+                    type: "partner-connected",
+                    payload: {
+                        pairingId: pairing.pairingId,
+                        deviceName,
+                    },
+                },
+                // We are the target, so send this message to the origin
+                topic: "origin",
+            });
+        }
+
+        // Get all the pending signatures for each pairings
+        const pendingSignatures =
+            await this.pairingDb.query.pairingSignatureRequestTable.findMany({
+                where: and(
+                    inArray(pairingSignatureRequestTable.pairingId, pairingIds),
+                    isNull(pairingSignatureRequestTable.processedAt)
+                ),
+            });
+
+        // Send all the pending signatures to the client
+        for (const signature of pendingSignatures) {
+            await this.sendTopicMessage({
+                ws,
+                pairingId: signature.pairingId,
+                message: {
+                    type: "signature-request",
+                    payload: {
+                        pairingId: signature.pairingId,
+                        id: signature.requestId,
+                        request: signature.request,
+                        context: signature.context as object | undefined,
+                        partnerDeviceName:
+                            pairings.find(
+                                (p) => p.pairingId === signature.pairingId
+                            )?.originName ?? "Unknown",
+                    },
+                },
+                // We are sending back all of this to the client once connected
+                topic: "target",
+            });
         }
     }
 
