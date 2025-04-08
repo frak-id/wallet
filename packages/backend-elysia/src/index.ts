@@ -33,7 +33,8 @@ const app = new Elysia({
     .use(cors())
     .onRequest(({ request: { url }, error }) => {
         if (
-            !url.includes(process.env.DOMAIN_NAME ?? "") &&
+            !url.includes("frak.id") &&
+            !url.includes("backend") &&
             !url.includes("/health")
         ) {
             // If it didn't match our url, simulate a DNS error with 523 to prevent bot from abusing our backend
