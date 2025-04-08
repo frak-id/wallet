@@ -253,7 +253,7 @@
             "origin": {
                 "state": {
                     "idle": "Ne répond pas",
-                    "connecting": "Attente de la signature",
+                    "connecting": "Attente du téléphone",
                     "paired": "Appairé"
                 }
             },

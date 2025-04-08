@@ -319,7 +319,7 @@ interface Resources {
                 origin: {
                     state: {
                         idle: "Not responding";
-                        connecting: "Waiting signature";
+                        connecting: "Waiting phone";
                         paired: "Paired";
                     };
                 };
