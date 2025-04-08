@@ -1,5 +1,10 @@
+import { Button } from "@shared/module/component/Button";
 import { Spinner } from "@shared/module/component/Spinner";
-import type { PropsWithChildren } from "react";
+import { useAtomValue } from "jotai";
+import { RefreshCcw } from "lucide-react";
+import { type PropsWithChildren, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { getTargetPairingClient } from "../../clients/store";
 import styles from "./index.module.css";
 
 type Status = "success" | "waiting" | "loading" | "error";
@@ -84,6 +89,30 @@ export function StatusBoxWalletEmbedded({
     );
 }
 
+/**
+ * StatusBoxRefresh is a component that displays a refresh button.
+ * It is used to refresh the pairing process.
+ */
+function StatusBoxRetry() {
+    const client = useMemo(() => getTargetPairingClient(), []);
+    const state = useAtomValue(client.stateAtom);
+    const { t } = useTranslation();
+
+    if (state.status !== "retry-error") return null;
+
+    return (
+        <Button
+            size={"none"}
+            variant={"ghost"}
+            className={styles.statusBox__refresh}
+            onClick={() => client.reconnect()}
+        >
+            <RefreshCcw size={12} />
+            {t("wallet.pairing.refresh")}
+        </Button>
+    );
+}
+
 function InnerStatusBox({
     status,
     title,
@@ -99,6 +128,7 @@ function InnerStatusBox({
             <div className={styles.statusBox__content}>
                 <p className={styles.statusBox__title}>{title}</p>
             </div>
+            <StatusBoxRetry />
         </>
     );
 }

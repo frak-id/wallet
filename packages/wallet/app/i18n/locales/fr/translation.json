@@ -261,7 +261,8 @@
                 "state": {
                     "idle": "Appairé avec d'autres appareils",
                     "connecting": "Appairage avec d'autres appareils",
-                    "paired": "Appairé avec d'autres appareils"
+                    "paired": "Appairé avec d'autres appareils",
+                    "retryError": "Erreur de connexion"
                 }
             },
             "status": {
@@ -285,7 +286,8 @@
                     "sign": "Signer",
                     "reject": "Rejeter"
                 }
-            }
+            },
+            "refresh": "Réessayer"
         }
     },
     "error": {

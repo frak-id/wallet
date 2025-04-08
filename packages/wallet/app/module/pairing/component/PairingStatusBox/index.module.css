@@ -3,6 +3,7 @@
 }
 
 .statusBox {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 5px;
@@ -52,4 +53,14 @@
 .statusBox__title {
     font-size: 12px;
     font-weight: 500;
+}
+
+.statusBox__refresh {
+    position: absolute;
+    top: 11px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
 }

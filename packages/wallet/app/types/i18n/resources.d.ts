@@ -328,6 +328,7 @@ interface Resources {
                         idle: "Paired with other devices";
                         connecting: "Pairing with other devices";
                         paired: "Paired with other devices";
+                        retryError: "Connection error";
                     };
                 };
                 status: {
@@ -352,6 +353,7 @@ interface Resources {
                         reject: "Reject";
                     };
                 };
+                refresh: "Retry";
             };
         };
         error: {

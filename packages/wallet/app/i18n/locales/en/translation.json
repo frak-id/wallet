@@ -261,7 +261,8 @@
                 "state": {
                     "idle": "Paired with other devices",
                     "connecting": "Pairing with other devices",
-                    "paired": "Paired with other devices"
+                    "paired": "Paired with other devices",
+                    "retryError": "Connection error"
                 }
             },
             "status": {
@@ -285,7 +286,8 @@
                     "sign": "Sign",
                     "reject": "Reject"
                 }
-            }
+            },
+            "refresh": "Retry"
         }
     },
     "error": {
