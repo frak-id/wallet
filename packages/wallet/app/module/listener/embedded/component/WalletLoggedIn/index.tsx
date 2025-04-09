@@ -53,6 +53,13 @@ export function LoggedInComponent() {
         ? userPendingBalance[currencyAmountKey]
         : (userBalance?.total?.[currencyAmountKey] ?? 0);
 
+    // Build the footer
+    const footer = (
+        <div className={styles.modalListenerWallet__footer}>
+            <OriginPairingState type="embedded" />
+        </div>
+    );
+
     return (
         <>
             <Balance
@@ -61,7 +68,7 @@ export function LoggedInComponent() {
                 currency={configMetadata?.currency ?? "eur"}
             />
             <ActionButtons refetchPendingBalance={refetchPendingBalance} />
-            <OriginPairingState type="embedded" />
+            {footer}
         </>
     );
 }

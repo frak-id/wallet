@@ -16,7 +16,7 @@ export default function ProtectedLayout() {
     return (
         <AuthRestricted requireAuthenticated={true}>
             <GlobalLayout navigation={true}>
-                <Component />
+                <Component type="wallet" />
                 <Outlet />
             </GlobalLayout>
         </AuthRestricted>

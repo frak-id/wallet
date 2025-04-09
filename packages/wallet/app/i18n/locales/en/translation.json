@@ -291,7 +291,9 @@
                     "reject": "Reject"
                 }
             },
-            "refresh": "Retry"
+            "refresh": "Retry",
+            "refreshCode": "Code:",
+            "refreshReason": "Reason:"
         }
     },
     "error": {

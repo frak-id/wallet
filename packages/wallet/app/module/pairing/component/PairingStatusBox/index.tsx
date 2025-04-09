@@ -1,10 +1,10 @@
+import { getTargetPairingClient } from "@/module/pairing/clients/store";
 import { Button } from "@shared/module/component/Button";
 import { Spinner } from "@shared/module/component/Spinner";
 import { useAtomValue } from "jotai";
 import { RefreshCcw } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { getTargetPairingClient } from "../../clients/store";
 import styles from "./index.module.css";
 
 type Status = "success" | "waiting" | "loading" | "error";
@@ -26,10 +26,11 @@ export function StatusBoxWallet({
     title: string;
 }>) {
     return (
-        <div className={styles.statusBoxWrapper}>
-            <div className={`${styles.statusBox} ${styles.statusBoxWallet}`}>
+        <div className={styles.statusBoxWalletContainer}>
+            <div className={styles.statusBox}>
                 <InnerStatusBox status={status} title={title} />
             </div>
+            <StatusBoxRetry />
             {children}
         </div>
     );
@@ -52,12 +53,13 @@ export function StatusBoxModal({
     title: string;
 }>) {
     return (
-        <>
-            <div className={`${styles.statusBox} ${styles.statusBoxModal}`}>
+        <div className={styles.statusBoxModalContainer}>
+            <div className={styles.statusBox}>
                 <InnerStatusBox status={status} title={title} />
             </div>
+            <StatusBoxRetry />
             {children}
-        </>
+        </div>
     );
 }
 
@@ -78,14 +80,13 @@ export function StatusBoxWalletEmbedded({
     title: string;
 }>) {
     return (
-        <>
-            <div
-                className={`${styles.statusBox} ${styles.statusBoxWalletEmbedded}`}
-            >
+        <div className={styles.statusBoxWalletEmbeddedContainer}>
+            <div className={styles.statusBox}>
                 <InnerStatusBox status={status} title={title} />
             </div>
+            <StatusBoxRetry />
             {children}
-        </>
+        </div>
     );
 }
 
@@ -97,19 +98,37 @@ function StatusBoxRetry() {
     const client = useMemo(() => getTargetPairingClient(), []);
     const state = useAtomValue(client.stateAtom);
     const { t } = useTranslation();
+    const code = state.closeInfo?.code;
+    const reason = state.closeInfo?.reason;
 
     if (state.status !== "retry-error") return null;
 
     return (
-        <Button
-            size={"none"}
-            variant={"ghost"}
-            className={styles.statusBox__refresh}
-            onClick={() => client.reconnect()}
-        >
-            <RefreshCcw size={12} />
-            {t("wallet.pairing.refresh")}
-        </Button>
+        <>
+            <Button
+                size={"none"}
+                variant={"ghost"}
+                className={styles.statusBox__retry}
+                onClick={() => client.reconnect()}
+            >
+                <RefreshCcw size={12} />
+                {t("wallet.pairing.refresh")}
+            </Button>
+            {(code || reason) && (
+                <p className={styles.statusBox__retryText}>
+                    {code && (
+                        <span className={styles.statusBox__retryTextItem}>
+                            {t("wallet.pairing.refreshCode")} {code}
+                        </span>
+                    )}
+                    {reason && (
+                        <span className={styles.statusBox__retryTextItem}>
+                            {t("wallet.pairing.refreshReason")} {reason}
+                        </span>
+                    )}
+                </p>
+            )}
+        </>
     );
 }
 
@@ -128,7 +147,6 @@ function InnerStatusBox({
             <div className={styles.statusBox__content}>
                 <p className={styles.statusBox__title}>{title}</p>
             </div>
-            <StatusBoxRetry />
         </>
     );
 }

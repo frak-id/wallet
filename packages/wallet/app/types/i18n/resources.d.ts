@@ -358,6 +358,8 @@ interface Resources {
                     };
                 };
                 refresh: "Retry";
+                refreshCode: "Code:";
+                refreshReason: "Reason:";
             };
         };
         error: {

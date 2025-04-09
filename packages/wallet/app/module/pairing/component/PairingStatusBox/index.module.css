@@ -1,35 +1,32 @@
-.statusBoxWrapper {
-    position: relative;
-}
-
-.statusBox {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.statusBoxWallet {
+.statusBoxWalletContainer {
     margin: 10px;
     border: 1px solid #e5e7eb;
     border-radius: 18px;
     padding: 10px 16px;
 }
 
-.statusBoxModal {
-    position: absolute;
-    top: 18px;
+.statusBox {
+    display: flex;
+    gap: 5px;
 }
 
-.statusBoxWalletEmbedded {
-    position: absolute;
-    top: 16px;
-    right: 5px;
+.statusBoxModalContainer,
+.statusBoxWalletEmbeddedContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    margin-left: 8px;
+}
+
+.statusBoxWalletEmbeddedContainer {
+    color: #fff;
 }
 
 .statusBox__indicator {
-    width: 1rem;
-    height: 1rem;
+    margin-top: 4px;
+    width: 10px;
+    height: 10px;
     border-radius: 9999px;
 }
 
@@ -55,12 +52,18 @@
     font-weight: 500;
 }
 
-.statusBox__refresh {
-    position: absolute;
-    top: 11px;
-    right: 10px;
+.statusBox__retry {
     display: flex;
     align-items: center;
     gap: 5px;
     font-size: 12px;
+}
+
+.statusBox__retryText {
+    font-size: 12px;
+}
+
+.statusBox__retryTextItem {
+    display: block;
+    text-align: left;
 }

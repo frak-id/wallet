@@ -157,7 +157,10 @@ export function ListenerModal({
 
         // Build the footer (only if no icon present)
         const footer = logoUrl ? null : (
-            <div className={styles.modalListener__footer}>{providedBy}</div>
+            <div className={styles.modalListener__footer}>
+                <OriginPairingState type="modal" />
+                {providedBy}
+            </div>
         );
 
         return {
@@ -174,7 +177,6 @@ export function ListenerModal({
             onOpenChange={onOpenChange}
         >
             <>
-                <OriginPairingState type="modal" />
                 {icon}
                 <CurrentModalMetadataInfo />
                 <ModalStepIndicator />

@@ -2,6 +2,7 @@ import { distantWebauthnSessionAtom } from "@/module/common/atoms/session";
 import { getOriginPairingClient } from "@/module/pairing/clients/store";
 import {
     StatusBoxModal,
+    StatusBoxWallet,
     StatusBoxWalletEmbedded,
 } from "@/module/pairing/component/PairingStatusBox";
 import type { OriginPairingState as OriginPairingStateType } from "@/module/pairing/types";
@@ -10,7 +11,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 type OriginPairingStateProps = {
-    type?: "embedded" | "modal";
+    type: "embedded" | "modal" | "wallet";
 };
 
 /**
@@ -19,9 +20,7 @@ type OriginPairingStateProps = {
  *
  * Visible on listener, embedded wallet, and wallet
  */
-export function OriginPairingState({
-    type = "embedded",
-}: OriginPairingStateProps) {
+export function OriginPairingState({ type }: OriginPairingStateProps) {
     const session = useAtomValue(distantWebauthnSessionAtom);
     if (!session) return null;
     return <InnerOriginPairingState type={type} />;
@@ -36,8 +35,15 @@ function InnerOriginPairingState({ type }: OriginPairingStateProps) {
     const client = useMemo(() => getOriginPairingClient(), []);
     const state = useAtomValue(client.stateAtom);
     const { status, text } = getStatusDetails(state);
-    const Component =
-        type === "embedded" ? StatusBoxWalletEmbedded : StatusBoxModal;
+    const components = {
+        embedded: StatusBoxWalletEmbedded,
+        modal: StatusBoxModal,
+        wallet: StatusBoxWallet,
+    };
+    const Component = components[type];
+    if (!Component) {
+        throw new Error(`Invalid type: ${type}`);
+    }
 
     return <Component status={status} title={text} />;
 }
