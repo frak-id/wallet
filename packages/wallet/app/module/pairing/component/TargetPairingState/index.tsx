@@ -28,7 +28,10 @@ export function TargetPairingState() {
 function InnerTargetPairingState() {
     const client = useMemo(() => getTargetPairingClient(), []);
     const state = useAtomValue(client.stateAtom);
-    const { status, text } = getStatusDetails(state);
+    const { status, text } = getStatusDetails(state) ?? {};
+
+    // Don't display anything if the state is idle
+    if (state.status === "idle" || !status || !text) return null;
 
     return (
         <StatusBoxWallet status={status} title={text}>
@@ -43,23 +46,11 @@ function InnerTargetPairingState() {
 function getStatusDetails(state: TargetPairingStateType): {
     status: "success" | "waiting" | "loading" | "error";
     text: string;
-} {
+} | null {
     const { t } = useTranslation();
 
-    // If there are pending signatures, we display the signature request state
-    if (state.pendingSignatures.size > 0) {
-        switch (state.status) {
-            case "paired":
-                return {
-                    status: "loading",
-                    text: t("wallet.pairing.target.state.requests.paired"),
-                };
-            case "connecting":
-                return {
-                    status: "waiting",
-                    text: t("wallet.pairing.target.state.requests.connecting"),
-                };
-        }
+    if (state.status === "idle") {
+        return null;
     }
 
     switch (state.status) {
@@ -67,11 +58,6 @@ function getStatusDetails(state: TargetPairingStateType): {
             return {
                 status: "success",
                 text: t("wallet.pairing.target.state.paired"),
-            };
-        case "idle":
-            return {
-                status: "waiting",
-                text: t("wallet.pairing.target.state.idle"),
             };
         case "connecting":
             return {

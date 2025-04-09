@@ -322,6 +322,10 @@ interface Resources {
                         connecting: "Paired device not online";
                         paired: "Connected with partner";
                         retryError: "Error when connecting to the paired device";
+                        requests: {
+                            connecting: "Open your paired device to proceed to the transaction";
+                            paired: "Wait for partner to process signature";
+                        };
                     };
                 };
                 target: {
@@ -329,11 +333,6 @@ interface Resources {
                         connecting: "Connecting to partner device";
                         paired: "Connected with other device";
                         retryError: "Error when connecting to partner device";
-                        signatureRequest: "Waiting for signature";
-                        requests: {
-                            connecting: "Open your paired device to proceed to the transaction";
-                            paired: "Wait for partner to process signature";
-                        };
                     };
                 };
                 status: {

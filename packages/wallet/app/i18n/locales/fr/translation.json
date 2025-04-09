@@ -255,19 +255,18 @@
                     "idle": "Initialisation du pairage",
                     "connecting": "Appareil partenaire pas en ligne",
                     "paired": "Connecté avec le partenaire",
-                    "retryError": "Erreur lors de la connexion à l'appareil partenaire"
+                    "retryError": "Erreur de connexion à l'appareil pairé",
+                    "requests": {
+                        "connecting": "Ouvrez votre appareil pairé pour procéder à la transaction",
+                        "paired": "Attendez que le partenaire signe la transaction"
+                    }
                 }
             },
             "target": {
                 "state": {
                     "connecting": "Connexion à l'appareil partenaire",
                     "paired": "Connecté avec un autre appareil",
-                    "retryError": "Erreur lors de la connexion à l'appareil partenaire",
-                    "signatureRequest": "Attente de signature",
-                    "requests": {
-                        "connecting": "Ouvrez votre appareil pairé pour procéder à la transaction",
-                        "paired": "Attendez que le partenaire signe la transaction"
-                    }
+                    "retryError": "Erreur lors de la connexion à l'appareil partenaire"
                 }
             },
             "status": {
