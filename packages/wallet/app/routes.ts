@@ -39,6 +39,7 @@ export default [
             route("/membrs", "./views/protected/membrs.tsx"),
             route("/membrs/profile", "./views/protected/membrs-profile.tsx"),
             route("/membrs/fanclub", "./views/protected/membrs-fanclub.tsx"),
+            route("/pairing", "./views/auth/pairing.tsx"),
         ]),
     ]),
 

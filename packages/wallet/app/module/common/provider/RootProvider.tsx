@@ -14,6 +14,7 @@ import { Provider } from "jotai";
 import { type PropsWithChildren, useEffect, useMemo } from "react";
 import { createClient } from "viem";
 import { WagmiProvider, createConfig } from "wagmi";
+import { usePersistentPairingClient } from "../../pairing/hook/usePersistentPairingClient";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -65,7 +66,7 @@ export function RootProvider({ children }: PropsWithChildren) {
                     </WagmiProviderWithDynamicConfig>
                     <ReactQueryDevtools
                         initialIsOpen={false}
-                        buttonPosition={"bottom-left"}
+                        buttonPosition={"top-right"}
                     />
                 </PersistQueryClientProvider>
             </Provider>
@@ -154,13 +155,14 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
     );
     return (
         <WagmiProvider config={config}>
-            <EnforceWagmiConnection />
+            <SessionStateManager />
             {children}
         </WagmiProvider>
     );
 }
 
-function EnforceWagmiConnection() {
+function SessionStateManager() {
     useEnforceWagmiConnection();
+    usePersistentPairingClient();
     return null;
 }

@@ -1,7 +1,4 @@
-import {
-    type LastAuthentication,
-    addLastAuthenticationAtom,
-} from "@/module/authentication/atoms/lastAuthenticator";
+import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { authKey } from "@/module/authentication/queryKeys/auth";
 import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
@@ -87,13 +84,10 @@ export function useLogin(
 
             // Extract a few data
             const { token, sdkJwt, ...authentication } = data;
-            const session = { ...authentication, token };
+            const session = { ...authentication, token } as Session;
 
             // Save this to the last authenticator
-            await jotaiStore.set(
-                addLastAuthenticationAtom,
-                authentication as LastAuthentication
-            );
+            await jotaiStore.set(addLastAuthenticationAtom, session);
 
             // Store the session
             jotaiStore.set(sessionAtom, session);

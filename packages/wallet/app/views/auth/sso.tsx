@@ -36,6 +36,7 @@ import type { Hex } from "viem";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
+import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -69,13 +70,11 @@ export default function Sso() {
         queryKey: ssoKey.params.bySearchParams(searchParams.toString()),
         queryFn: async () => {
             const compressedString = searchParams.get("p");
-            console.log("compressedString", compressedString);
             if (!compressedString) {
                 return null;
             }
             const compressedParam =
                 decompressJsonFromB64<CompressedSsoData>(compressedString);
-            console.log("compressedParam", compressedParam);
             if (!compressedParam) {
                 return null;
             }
@@ -176,8 +175,12 @@ export default function Sso() {
             >
                 <Header />
                 {!success && (
-                    <Actions onSuccess={onSuccess} onError={setError} />
+                    <>
+                        <Actions onSuccess={onSuccess} onError={setError} />
+                        <PhonePairingAction />
+                    </>
                 )}
+
                 {success && (
                     <>
                         <p className={styles.sso__redirect}>
@@ -341,6 +344,25 @@ function Actions({
                 isPrimary={false}
             />
         </>
+    );
+}
+
+function PhonePairingAction() {
+    const { t } = useTranslation();
+    const ssoId = useAtomValue(ssoContextAtom)?.id;
+
+    if (!ssoId) {
+        return null;
+    }
+
+    return (
+        <div className={styles.sso__secondaryButtonWrapper}>
+            <AuthenticateWithPhone
+                text={t("authent.sso.btn.new.phone")}
+                className={styles.sso__buttonLink}
+                ssoId={ssoId}
+            />
+        </div>
     );
 }
 

@@ -1,5 +1,4 @@
 import type { currentViemClient } from "@/module/blockchain/provider";
-import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
 import { isSmartAccountDeployed } from "permissionless";
@@ -23,8 +22,7 @@ import {
     toSmartAccount,
 } from "viem/account-abstraction";
 import { estimateGas, signMessage } from "viem/actions";
-
-export type NexusRecoverySmartAccount = SmartAccountV06;
+import type { BaseFrakSmartAccount } from "./baseFrakWallet";
 
 /**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
@@ -45,7 +43,7 @@ export function recoverySmartAccount<
         localAccount: LocalAccount<TAccountSource>;
         initialWallet: WebAuthNWallet;
     }
-): Promise<NexusRecoverySmartAccount> {
+): Promise<BaseFrakSmartAccount> {
     if (!initialWallet?.address) throw new Error("Account address not found");
 
     // Helper to check if the smart account is already deployed (with caching)

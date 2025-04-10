@@ -1,5 +1,6 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import { getSafeSession } from "@/module/listener/utils/localStorage";
+import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 import { Skeleton } from "@shared/module/component/Skeleton";
 import { useAtomValue } from "jotai";
 import { type PropsWithChildren, useEffect, useState } from "react";
@@ -18,6 +19,7 @@ export function AuthRestricted({
     const navigate = useNavigate();
     const sessionFromAtom = useAtomValue(sessionAtom);
     const [canDisplay, setCanDisplay] = useState(false);
+    const { pairingInfo } = usePendingPairingInfo();
 
     useEffect(() => {
         // Get the session from the atom, or a safe one
@@ -34,12 +36,12 @@ export function AuthRestricted({
         // If don't require an auth but have token, redirect to wallet
         if (!requireAuthenticated && session?.token) {
             console.log("Redirecting to wallet");
-            navigate("/wallet", { replace: true });
+            navigate(pairingInfo ? "/pairing" : "/wallet", { replace: true });
             return;
         }
 
         setCanDisplay(true);
-    }, [requireAuthenticated, sessionFromAtom, navigate]);
+    }, [requireAuthenticated, sessionFromAtom, navigate, pairingInfo]);
 
     if (canDisplay) {
         return children;

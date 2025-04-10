@@ -16,6 +16,7 @@ import { Spinner } from "@shared/module/component/Spinner";
 import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { useAtomValue } from "jotai";
 import { useEffect, useMemo } from "react";
+import { AuthenticateWithPhone } from "../AuthenticateWithPhone";
 
 /**
  * The component for the login step of a modal
@@ -81,6 +82,10 @@ export function LoginModalStep({
                         />
                     </div>
                 )}
+                <AuthenticateWithPhone
+                    text={t("sdk.modal.login.secondaryAction")}
+                    className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
+                />
                 {!allowSso && (
                     <div>
                         <button

@@ -71,6 +71,13 @@
             "when": 1738775509739,
             "tag": "0009_woozy_krista_starr",
             "breakpoints": true
+        },
+        {
+            "idx": 10,
+            "version": "7",
+            "when": 1743775947894,
+            "tag": "0010_flashy_nightmare",
+            "breakpoints": true
         }
     ]
 }

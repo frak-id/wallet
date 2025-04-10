@@ -1,6 +1,6 @@
 import { KubernetesJob } from "../components/KubernetesJob";
 import { KubernetesService } from "../components/KubernetesService";
-import { normalizedStageName } from "../utils";
+import { isProd, normalizedStageName } from "../utils";
 import { elysiaImage, migrationImage } from "./images";
 import { elysiaEnv, postgresEnv } from "./secrets";
 import { domainName } from "./utils";
@@ -11,7 +11,7 @@ const appLabels = { app: "elysia" };
 export const backendNamespace = new kubernetes.core.v1.Namespace(
     "infra-wallet",
     {
-        metadata: { name: "infra-wallet" },
+        metadata: { name: `wallet-${normalizedStageName}` },
     }
 );
 
@@ -63,6 +63,8 @@ const migrationJob = new KubernetesJob("ElysiaDbMigration", {
         },
     },
 });
+
+const legacyDomain = isProd ? "backend.frak.id" : "backend-dev.frak.id";
 
 /**
  * Deploy elysia using the new service
@@ -132,6 +134,8 @@ export const backendInstance = new KubernetesService(
         ingress: {
             host: domainName,
             tlsSecretName: "elysia-tls",
+            // For legacy purposes
+            additionalHosts: [legacyDomain],
         },
 
         // ServiceMonitor config

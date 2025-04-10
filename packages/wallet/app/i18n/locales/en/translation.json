@@ -9,7 +9,8 @@
             "btn": {
                 "new": {
                     "create": "Use biometrics to prove you're not a robot",
-                    "login": "Connect an existing wallet"
+                    "login": "Connect an existing wallet",
+                    "phone": "Use a QR code to connect"
                 },
                 "existing": {
                     "create": "Create a new wallet",
@@ -229,6 +230,70 @@
                 "text": "Discover the Fanclub of {{productName}}",
                 "button": "Discover the Fanclub"
             }
+        },
+        "pairing": {
+            "title": "Confirm device pairing",
+            "text": "You're about to connect this device to your account",
+            "info": {
+                "title": "Pairing information",
+                "status": "Status:",
+                "device": "Device:"
+            },
+            "code": "Check that the code is correct",
+            "error": {
+                "title": "Invalid pairing request",
+                "noCode": "No pairing code provided"
+            },
+            "loading": {
+                "title": "Please wait"
+            },
+            "cancel": "Cancel",
+            "confirm": "Confirm",
+            "pairingInProgress": "Pairing in progress, please authenticate",
+            "origin": {
+                "state": {
+                    "idle": "Pairing logic initialisation",
+                    "connecting": "Paired device not online",
+                    "paired": "Connected with partner",
+                    "retryError": "Error when connecting to the paired device",
+                    "requests": {
+                        "connecting": "Open your paired device to proceed to the transaction",
+                        "paired": "Wait for partner to process signature"
+                    }
+                }
+            },
+            "target": {
+                "state": {
+                    "connecting": "Connecting to partner device",
+                    "paired": "Connected with other device",
+                    "retryError": "Error when connecting to partner device"
+                }
+            },
+            "status": {
+                "idle": "Idle",
+                "connecting": "Connecting...",
+                "paired": "Paired"
+            },
+            "signatureRequest": {
+                "title": "Signature request",
+                "description": "A device <strongFrom>{{from}}</strongFrom> is requesting your signature",
+                "stateTitle": "Signing state",
+                "state": {
+                    "idle": "Idle",
+                    "pending": "Pending",
+                    "success": "Success",
+                    "error": "Error",
+                    "declined": "Declined",
+                    "unknown": "Unknown"
+                },
+                "buttons": {
+                    "sign": "Sign",
+                    "reject": "Reject"
+                }
+            },
+            "refresh": "Retry",
+            "refreshCode": "Code:",
+            "refreshReason": "Reason:"
         }
     },
     "error": {

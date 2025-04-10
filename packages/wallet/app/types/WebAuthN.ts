@@ -1,9 +1,12 @@
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
 import type { Address, Hex } from "viem";
 
 /**
  * Represent a user WebAuthN wallet
  */
 export type WebAuthNWallet = Readonly<{
+    // Can be undefined for old wallet
+    type?: "webauthn";
     // The address of the wallet
     address: Address;
     // The public key of the wallet
@@ -11,7 +14,7 @@ export type WebAuthNWallet = Readonly<{
     // The authenticator id
     authenticatorId: string;
     // The transports of this authenticator
-    transports?: string[];
+    transports?: AuthenticatorTransportFuture[];
 }>;
 
 /**

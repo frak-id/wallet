@@ -1,5 +1,6 @@
 import { Panel } from "@/module/common/component/Panel";
 import { ToggleSession } from "@/module/common/component/ToggleSession";
+import { Warning } from "@/module/common/component/Warning";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -37,21 +38,15 @@ function SessionClosed({ isClosed }: { isClosed: boolean }) {
 
     return (
         closed && (
-            <div className={styles.sessionClosed}>
-                <p>
-                    <span className={styles.sessionClosed__warning}>
-                        &#9888;
-                    </span>{" "}
-                    {t("wallet.session.closed")}
-                </p>
+            <Warning text={t("wallet.session.closed")}>
                 <button
                     type={"button"}
-                    className={styles.sessionClosed__close}
+                    className={styles.sessionClosed__button}
                     onClick={() => setClosed(false)}
                 >
                     <X size={16} />
                 </button>
-            </div>
+            </Warning>
         )
     );
 }

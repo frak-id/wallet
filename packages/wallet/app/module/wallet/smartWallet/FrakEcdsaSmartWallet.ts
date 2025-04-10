@@ -1,9 +1,9 @@
-import { baseFrakWallet } from "@/module/wallet/smartWallet/baseFrakWallet";
-import type { SmartAccountV06 } from "@/module/wallet/smartWallet/utils";
+import {
+    type BaseFrakSmartAccount,
+    baseFrakWallet,
+} from "@/module/wallet/smartWallet/baseFrakWallet";
 import { KernelWallet } from "@frak-labs/app-essentials";
 import type { Address, Chain, Client, Hex, Transport } from "viem";
-
-export type FrakFallbackWalelt = SmartAccountV06;
 
 /**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
@@ -11,7 +11,7 @@ export type FrakFallbackWalelt = SmartAccountV06;
  * @param authenticatorId
  * @param signatureProvider
  */
-export async function frakFallbackWalletSmartAccount<
+export async function frakEcdsaWalletSmartAccount<
     TTransport extends Transport,
     TChain extends Chain,
 >(
@@ -25,10 +25,10 @@ export async function frakFallbackWalletSmartAccount<
         signatureProvider: (args: { hash: Hex }) => Promise<Hex>;
         preDeterminedAccountAddress?: Address;
     }
-): Promise<FrakFallbackWalelt> {
+): Promise<BaseFrakSmartAccount> {
     return baseFrakWallet(client, {
         getSignature: signatureProvider,
-        getStubSignature: () =>
+        stubSignature:
             "0xfffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c",
         generateInitCode: () =>
             KernelWallet.getFallbackWalletInitCode({

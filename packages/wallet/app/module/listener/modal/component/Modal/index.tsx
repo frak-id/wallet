@@ -21,6 +21,7 @@ import {
     useListenerTranslation,
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
+import { OriginPairingState } from "@/module/pairing/component/OriginPairingState";
 import { RpcErrorCodes } from "@frak-labs/core-sdk";
 import { LogoFrakWithName } from "@shared/module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@shared/module/atoms/store";
@@ -156,7 +157,10 @@ export function ListenerModal({
 
         // Build the footer (only if no icon present)
         const footer = logoUrl ? null : (
-            <div className={styles.modalListener__footer}>{providedBy}</div>
+            <div className={styles.modalListener__footer}>
+                <OriginPairingState type="modal" />
+                {providedBy}
+            </div>
         );
 
         return {

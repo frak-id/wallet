@@ -23,7 +23,7 @@ interface Resources {
                     description_sharing: "{{ productName }} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.";
                     description_reward: "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.";
                     primaryAction: "I create my wallet under 30sec";
-                    secondaryAction: "I already have a wallet";
+                    secondaryAction: "Use a QR code to connect";
                     title: "Connection";
                     success: "Connection successful";
                 };
@@ -46,16 +46,17 @@ interface Resources {
             };
             wallet: {
                 login: {
-                    text: "Create your wallet with **{{ productName }}** and receive up to **{{ estimatedReward }}** per referred friend";
+                    text: "Create your wallet and receive up to **{{ estimatedReward }}** per referred friend";
+                    text_referred: "Welcome! Receive up to **{{ estimatedReward }}** in case of purchase on the site.\n\nCreate your wallet in 1 click";
                     primaryAction: "I create my wallet";
-                    text_referred: "For every purchase on the site **{{ productName }}**, I receive up to **{{ estimatedReward }}** directly in my wallet, usable anywhere I want.";
                 };
                 loggedIn: {
                     onboarding: {
                         welcome: "🥳 Congratulations! Your wallet is created.";
                         activate: "💫 Enable it to be able to share.";
-                        share: "🚀 Let's go! Share this product with your loved ones and receive your rewards directly.";
+                        share: "🚀 Let's go! Share this product and receive your rewards directly.";
                         activate_referred: "💫 Enable it to receive your gains.";
+                        share_referred: "🚀 Share your turn to win more!";
                     };
                 };
             };
@@ -73,6 +74,7 @@ interface Resources {
                     new: {
                         create: "Use biometrics to prove you're not a robot";
                         login: "Connect an existing wallet";
+                        phone: "Use a QR code to connect";
                     };
                     existing: {
                         create: "Create a new wallet";
@@ -294,6 +296,70 @@ interface Resources {
                     text: "Discover the Fanclub of {{productName}}";
                     button: "Discover the Fanclub";
                 };
+            };
+            pairing: {
+                title: "Confirm device pairing";
+                text: "You're about to connect this device to your account";
+                info: {
+                    title: "Pairing information";
+                    status: "Status:";
+                    device: "Device:";
+                };
+                code: "Check that the code is correct";
+                error: {
+                    title: "Invalid pairing request";
+                    noCode: "No pairing code provided";
+                };
+                loading: {
+                    title: "Please wait";
+                };
+                cancel: "Cancel";
+                confirm: "Confirm";
+                pairingInProgress: "Pairing in progress, please authenticate";
+                origin: {
+                    state: {
+                        idle: "Pairing logic initialisation";
+                        connecting: "Paired device not online";
+                        paired: "Connected with partner";
+                        retryError: "Error when connecting to the paired device";
+                        requests: {
+                            connecting: "Open your paired device to proceed to the transaction";
+                            paired: "Wait for partner to process signature";
+                        };
+                    };
+                };
+                target: {
+                    state: {
+                        connecting: "Connecting to partner device";
+                        paired: "Connected with other device";
+                        retryError: "Error when connecting to partner device";
+                    };
+                };
+                status: {
+                    idle: "Idle";
+                    connecting: "Connecting...";
+                    paired: "Paired";
+                };
+                signatureRequest: {
+                    title: "Signature request";
+                    description: "A device <strongFrom>{{from}}</strongFrom> is requesting your signature";
+                    stateTitle: "Signing state";
+                    state: {
+                        idle: "Idle";
+                        pending: "Pending";
+                        success: "Success";
+                        error: "Error";
+                        declined: "Declined";
+                        unknown: "Unknown";
+                    };
+                    buttons: {
+                        sign: "Sign";
+                        reject: "Reject";
+                    };
+                };
+                refresh: "Retry";
+                refreshCode: "Code:";
+                refreshReason: "Reason:";
             };
         };
         error: {

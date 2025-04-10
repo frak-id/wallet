@@ -10,6 +10,7 @@ import {
     interactions,
     notifications,
     oracle,
+    pairing,
     sixDegrees,
     wallet,
 } from "./domain";
@@ -18,6 +19,11 @@ import {
 const app = new Elysia({
     aot: true,
     precompile: true,
+    // Websocket specific config
+    websocket: {
+        // Idle timeout of 5min in seconds, could take a long time for a pairing to be resolved
+        idleTimeout: 300,
+    },
 })
     .use(
         log.into({
@@ -27,7 +33,8 @@ const app = new Elysia({
     .use(cors())
     .onRequest(({ request: { url }, error }) => {
         if (
-            !url.includes(process.env.DOMAIN_NAME ?? "") &&
+            !url.includes("frak.id") &&
+            !url.includes("backend") &&
             !url.includes("/health")
         ) {
             // If it didn't match our url, simulate a DNS error with 523 to prevent bot from abusing our backend
@@ -47,6 +54,7 @@ const app = new Elysia({
     .use(notifications)
     .use(wallet)
     .use(business)
+    .use(pairing)
     // 6 degrees related logics
     .use(sixDegrees)
     // Example news paper logics (lazy loaded)

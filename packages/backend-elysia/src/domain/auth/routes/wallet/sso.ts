@@ -132,8 +132,18 @@ export const walletSsoRoutes = new Elysia({
 
             // Create our wallet payload
             let walletReference: StaticWalletTokenDto;
-            if (authenticator) {
+            if (authenticator && ssoSession.pairingId) {
                 walletReference = {
+                    type: "distant-webauthn",
+                    address: ssoSession.wallet,
+                    authenticatorId: authenticator._id,
+                    publicKey: authenticator.publicKey,
+                    pairingId: ssoSession.pairingId,
+                    transports: undefined,
+                };
+            } else if (authenticator) {
+                walletReference = {
+                    type: "webauthn",
                     address: ssoSession.wallet,
                     authenticatorId: authenticator._id,
                     publicKey: authenticator.publicKey,
@@ -142,6 +152,7 @@ export const walletSsoRoutes = new Elysia({
             } else {
                 const authenticatorId = `ecdsa-${ssoSession.wallet}` as const;
                 walletReference = {
+                    type: "ecdsa",
                     address: ssoSession.wallet,
                     authenticatorId: authenticatorId,
                     publicKey: ssoSession.wallet,

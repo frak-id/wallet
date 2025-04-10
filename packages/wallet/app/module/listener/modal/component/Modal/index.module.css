@@ -192,19 +192,23 @@
 }
 
 .modalListener__footer {
+    position: relative;
     width: 100%;
     margin-top: 8px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: flex-end;
 }
 
 .modalTitle__provided {
-    margin-left: 10px;
+    margin-left: auto;
     font-size: 12px;
     font-style: italic;
     font-weight: 400;
     letter-spacing: -.02em;
+    white-space: nowrap;
 }
+
 .modalTitle__logo {
     margin-left: 2px;
     height: 22px;

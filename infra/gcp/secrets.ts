@@ -8,7 +8,6 @@ import {
     vapidPublicKey,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
-import { domainName } from "./utils";
 
 const dbStage = normalizedStageName === "production" ? "production" : "staging";
 
@@ -42,7 +41,6 @@ export const elysiaEnv = {
     STAGE: normalizedStageName,
     INDEXER_URL: indexerUrl,
     ERPC_URL: erpcUrl,
-    DOMAIN_NAME: domainName,
     MASTER_KEY_SECRET: masterPkey,
     // Postgres related
     ...postgresEnv,

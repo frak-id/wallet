@@ -1,13 +1,8 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
 
-const EcdsaWalletTokenDto = t.Object({
-    address: t.Address(),
-    authenticatorId: t.TemplateLiteral([t.Literal("ecdsa-"), t.String()]),
-    publicKey: t.Hex(),
-    transports: t.Undefined(),
-});
 const WebAuthNWalletTokenDto = t.Object({
+    type: t.Optional(t.Literal("webauthn")), // optional since it's the default type
     address: t.Address(),
     authenticatorId: t.String(),
     publicKey: t.Object({
@@ -17,9 +12,30 @@ const WebAuthNWalletTokenDto = t.Object({
     transports: t.Optional(t.Array(t.String())),
 });
 
+const EcdsaWalletTokenDto = t.Object({
+    type: t.Literal("ecdsa"),
+    address: t.Address(),
+    authenticatorId: t.TemplateLiteral([t.Literal("ecdsa-"), t.String()]),
+    publicKey: t.Hex(),
+    transports: t.Undefined(),
+});
+
+const DistantWebAuthNWalletTokenDto = t.Object({
+    type: t.Literal("distant-webauthn"),
+    address: t.Address(),
+    authenticatorId: t.String(),
+    publicKey: t.Object({
+        x: t.Hex(),
+        y: t.Hex(),
+    }),
+    transports: t.Undefined(),
+    pairingId: t.String(),
+});
+
 export const WalletTokenDto = t.Union([
     EcdsaWalletTokenDto,
     WebAuthNWalletTokenDto,
+    DistantWebAuthNWalletTokenDto,
 ]);
 
 export const WalletAuthResponseDto = t.Intersect([
@@ -48,4 +64,7 @@ export const WalletSdkTokenDto = t.Object({
 });
 
 export type StaticWalletTokenDto = Static<typeof WalletTokenDto>;
+export type StaticWalletWebauthnTokenDto = Static<
+    typeof WebAuthNWalletTokenDto
+>;
 export type StaticWalletSdkTokenDto = Static<typeof WalletSdkTokenDto>;

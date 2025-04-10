@@ -66,6 +66,7 @@ type KubernetesServiceArgs = {
     ingress?: {
         host: Input<string>;
         tlsSecretName: Input<string>;
+        additionalHosts?: string[];
     };
 
     // Info for the service monitor
@@ -90,12 +91,19 @@ export class KubernetesService extends ComponentResource {
         null;
     public readonly devCommand: DevCommand | null = null;
 
+    public readonly labels: Record<string, string>;
+
     constructor(
         private name: string,
         private args: KubernetesServiceArgs,
         private opts?: ComponentResourceOptions
     ) {
         super("k8s:frak:KubernetesService", name, args, opts);
+
+        this.labels = {
+            ...this.args.appLabels,
+            environment: normalizedStageName,
+        };
 
         // If we are running locally, just create a dev command
         if ($dev && this.args.dev) {
@@ -144,15 +152,15 @@ export class KubernetesService extends ComponentResource {
             `${this.name}Deployment`,
             {
                 metadata: {
-                    name: `${this.name}-deployment`.toLocaleLowerCase(),
+                    name: `${this.name}-${normalizedStageName}`.toLocaleLowerCase(),
                     namespace: this.args.namespace,
-                    labels: this.args.appLabels,
+                    labels: this.labels,
                 },
                 spec: {
-                    selector: { matchLabels: this.args.appLabels },
+                    selector: { matchLabels: this.labels },
                     replicas: this.args.pod.replicas || 1,
                     template: {
-                        metadata: { labels: this.args.appLabels },
+                        metadata: { labels: this.labels },
                         spec: {
                             containers: this.args.pod.containers,
                             // We are always deploying on arm64
@@ -190,14 +198,14 @@ export class KubernetesService extends ComponentResource {
             `${this.name}Service`,
             {
                 metadata: {
-                    name: `${this.name}-service`.toLocaleLowerCase(),
-                    labels: this.args.appLabels,
+                    name: `${this.name}-${normalizedStageName}-service`.toLocaleLowerCase(),
+                    labels: this.labels,
                     namespace: this.args.namespace,
                 },
                 spec: {
                     type: "ClusterIP",
                     ports: this.args.service.ports,
-                    selector: this.args.appLabels,
+                    selector: this.labels,
                 },
             },
             {
@@ -220,7 +228,7 @@ export class KubernetesService extends ComponentResource {
             `${this.name}Hpa`,
             {
                 metadata: {
-                    name: `${this.name}-hpa`.toLocaleLowerCase(),
+                    name: `${this.name}-${normalizedStageName}-hpa`.toLocaleLowerCase(),
                     namespace: this.args.namespace,
                 },
                 spec: {
@@ -250,11 +258,38 @@ export class KubernetesService extends ComponentResource {
             );
         }
 
+        // Mapper for the ingress rules
+        const hostToRule = (host: Input<string>) => ({
+            host,
+            http: {
+                paths: [
+                    {
+                        path: "/",
+                        pathType: "Prefix",
+                        backend: {
+                            service: {
+                                name: this.service?.metadata?.name ?? "",
+                                port: { number: 80 },
+                            },
+                        },
+                    },
+                ],
+            },
+        });
+        const rules = [
+            hostToRule(this.args.ingress.host),
+            ...(this.args.ingress.additionalHosts?.map(hostToRule) ?? []),
+        ];
+        const hosts = [
+            this.args.ingress.host,
+            ...(this.args.ingress.additionalHosts ?? []),
+        ];
+
         return new k8s.networking.v1.Ingress(
             `${this.name}Ingress`,
             {
                 metadata: {
-                    name: `${this.name}-ingress`.toLocaleLowerCase(),
+                    name: `${this.name}-${normalizedStageName}-ingress`.toLocaleLowerCase(),
                     namespace: this.args.namespace,
                     annotations: {
                         "nginx.ingress.kubernetes.io/rewrite-target": "/",
@@ -267,31 +302,10 @@ export class KubernetesService extends ComponentResource {
                 },
                 spec: {
                     ingressClassName: "nginx",
-                    rules: [
-                        {
-                            host: this.args.ingress.host,
-                            http: {
-                                paths: [
-                                    {
-                                        path: "/",
-                                        pathType: "Prefix",
-                                        backend: {
-                                            service: {
-                                                name: this.service.metadata
-                                                    .name,
-                                                port: {
-                                                    number: 80, // Assuming the main port is always 80
-                                                },
-                                            },
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    ],
+                    rules,
                     tls: [
                         {
-                            hosts: [this.args.ingress.host],
+                            hosts,
                             secretName: this.args.ingress.tlsSecretName,
                         },
                     ],
@@ -314,21 +328,21 @@ export class KubernetesService extends ComponentResource {
                 apiVersion: "monitoring.coreos.com/v1",
                 kind: "ServiceMonitor",
                 metadata: {
-                    name: `${this.name}-service-monitor`.toLocaleLowerCase(),
+                    name: `${this.name}-${normalizedStageName}-service-monitor`.toLocaleLowerCase(),
                     namespace: this.args.namespace,
                     labels: {
                         // Make sure it's discoverable by prometheus with both labels
                         "app.kubernetes.io/name": "prometheus",
                         release: "prometheus",
                         // Keep the app labels consistent with the service
-                        ...this.args.appLabels,
+                        ...this.labels,
                         // Add the stage name to the labels
                         environment: normalizedStageName,
                     },
                 },
                 spec: {
                     selector: {
-                        matchLabels: this.args.appLabels,
+                        matchLabels: this.labels,
                     },
                     endpoints: [
                         {

@@ -8,6 +8,7 @@ import {
     privyAppId,
     umamiWalletWebsiteId,
     vapidPublicKey,
+    walletUrl,
 } from "./config";
 import { isProd } from "./utils";
 
@@ -41,5 +42,6 @@ new sst.aws.StaticSite("Wallet", {
         VAPID_PUBLIC_KEY: vapidPublicKey.value,
         UMAMI_WALLET_WEBSITE_ID: umamiWalletWebsiteId.value,
         PRIVY_APP_ID: privyAppId.value,
+        FRAK_WALLET_URL: walletUrl,
     },
 });

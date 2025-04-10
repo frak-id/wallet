@@ -1,14 +1,23 @@
-import type { WebAuthNWallet } from "@/types/WebAuthN";
+import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
 import type { Address, Hex } from "viem";
 
 export type Session = {
     token: string;
-} & (WebAuthNWallet | EcdsaWallet);
+} & (WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet);
 
 export type EcdsaWallet = {
+    type: "ecdsa";
     address: Address;
     publicKey: Hex;
     authenticatorId: `ecdsa-${string}`;
+    transports: undefined;
+};
+export type DistantWebAuthnWallet = {
+    type: "distant-webauthn";
+    address: Address;
+    publicKey: P256PubKey;
+    authenticatorId: string;
+    pairingId: string;
     transports: undefined;
 };
 
