@@ -1,4 +1,5 @@
 import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
+import { nanoid } from "nanoid";
 import type { Hex } from "viem";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 import { getSafeSession } from "../../listener/utils/localStorage";
@@ -83,7 +84,7 @@ export class OriginPairingClient extends BasePairingClient<
      */
     async sendSignatureRequest(request: Hex, context?: object): Promise<Hex> {
         return new Promise((resolve, reject) => {
-            const id = crypto.randomUUID();
+            const id = nanoid(16);
             const signatureRequests = new Map(this.state.signatureRequests);
             signatureRequests.set(id, { resolve, reject });
             this.setState({ signatureRequests });

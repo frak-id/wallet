@@ -47,6 +47,7 @@
     "jotai": "^2.12.2",
     "lucide-react": "^0.483.0",
     "micromark": "^4.0.2",
+    "nanoid": "^5.1.5",
     "normalize.css": "^8.0.1",
     "nprogress": "^0.2.0",
     "permissionless": "^0.2.38",
