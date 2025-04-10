@@ -360,6 +360,14 @@ interface Resources {
                 refresh: "Retry";
                 refreshCode: "Code:";
                 refreshReason: "Reason:";
+                list: {
+                    title: "Connected devices";
+                    origin: "Origin :";
+                    target: "Target :";
+                    createdAt: "Created at :";
+                    lastActive: "Last active :";
+                    delete: "Delete device";
+                };
             };
         };
         error: {
