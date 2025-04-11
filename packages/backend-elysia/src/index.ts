@@ -30,7 +30,11 @@ const app = new Elysia({
             autoLogging: isRunningLocally,
         })
     )
-    .use(cors())
+    .use(
+        cors({
+            methods: ["DELETE", "GET", "POST", "PUT", "PATCH"],
+        })
+    )
     .get("/health", () => ({
         status: "ok",
         hostname: process.env.HOSTNAME,
