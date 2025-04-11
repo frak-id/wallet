@@ -15,7 +15,7 @@ export function useDeletePairing({ mutations }: UseDeletePairingProps) {
         ...mutations,
         mutationKey: pairingKey.remove,
         mutationFn: async ({ id }: { id: string }) => {
-            await authenticatedBackendApi.pairings({ id }).delete();
+            await authenticatedBackendApi.pairings({ id }).delete.post();
         },
     });
 }
