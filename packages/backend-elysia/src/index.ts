@@ -32,8 +32,7 @@ const app = new Elysia({
     )
     .use(
         cors({
-            origin: "*",
-            methods: "*",
+            methods: ["DELETE", "GET", "POST", "PUT", "PATCH"],
         })
     )
     .get("/health", () => ({
