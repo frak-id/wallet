@@ -106,6 +106,8 @@ export class PairingRouterRepository extends PairingRepository {
                 },
             },
             topic: "target",
+            // We can skip the update since we are not sure that the target is connected
+            skipUpdate: true,
         });
     }
 

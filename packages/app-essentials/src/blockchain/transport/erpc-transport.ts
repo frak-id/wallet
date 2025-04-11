@@ -3,7 +3,7 @@ import { http, type Chain } from "viem";
 /**
  * The default public rpc url
  */
-const ERPC_URL = "https://rpc.frak.id/nexus-rpc/evm/";
+const ERPC_URL = "https://erpc.gcp.frak.id/nexus-rpc/evm/";
 
 /**
  * Get the erpc http transport

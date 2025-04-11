@@ -76,8 +76,8 @@ export const managementRoutes = new Elysia()
         }
     )
     // Delete a pairing by id
-    .delete(
-        "/:id",
+    .post(
+        "/:id/delete",
         async ({ pairing: { db }, walletSession, params: { id } }) => {
             if (!walletSession) {
                 return error(401, "Unauthorized");

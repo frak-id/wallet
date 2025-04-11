@@ -30,17 +30,11 @@ const app = new Elysia({
             autoLogging: isRunningLocally,
         })
     )
-    .use(cors())
-    .onRequest(({ request: { url }, error }) => {
-        if (
-            !url.includes("frak.id") &&
-            !url.includes("backend") &&
-            !url.includes("/health")
-        ) {
-            // If it didn't match our url, simulate a DNS error with 523 to prevent bot from abusing our backend
-            return error(523);
-        }
-    })
+    .use(
+        cors({
+            methods: ["DELETE", "GET", "POST", "PUT", "PATCH"],
+        })
+    )
     .get("/health", () => ({
         status: "ok",
         hostname: process.env.HOSTNAME,

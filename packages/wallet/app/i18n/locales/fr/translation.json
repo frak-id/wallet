@@ -293,7 +293,15 @@
             },
             "refresh": "Réessayer",
             "refreshCode": "Code :",
-            "refreshReason": "Raison :"
+            "refreshReason": "Raison :",
+            "list": {
+                "title": "Appareils connectés",
+                "origin": "Origine :",
+                "target": "Cible :",
+                "createdAt": "Créé le :",
+                "lastActive": "Dernière activité :",
+                "delete": "Supprimer l'appareil"
+            }
         }
     },
     "error": {
