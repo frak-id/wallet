@@ -106,26 +106,26 @@ const fullEnv = {
     HOSTNAME: $dev ? "" : domainName,
 };
 
-// Create the service targets
-const backendServiceTargets = new ServiceTargets("BackendServiceDomain", {
-    vpcId: vpc.id,
-    domain: domainName,
-    ports: [
-        { listen: "80/http", forward: "3030/http" },
-        { listen: "443/https", forward: "3030/http" },
-    ],
-    health: {
-        path: "/health",
-        interval: "60 seconds",
-        timeout: "5 seconds",
-        successCodes: "200",
-        healthyThreshold: 2,
-        unhealthyThreshold: 5,
-    },
-});
-
 // Create the elysia backend service (only on prod stage)
 if (isProd) {
+    // Create the service targets
+    const backendServiceTargets = new ServiceTargets("BackendServiceDomain", {
+        vpcId: vpc.id,
+        domain: domainName,
+        ports: [
+            { listen: "80/http", forward: "3030/http" },
+            { listen: "443/https", forward: "3030/http" },
+        ],
+        health: {
+            path: "/health",
+            interval: "60 seconds",
+            timeout: "5 seconds",
+            successCodes: "200",
+            healthyThreshold: 2,
+            unhealthyThreshold: 5,
+        },
+    });
+
     new sst.aws.Service("Elysia", {
         cluster: sstCluster,
         // Development configuration
