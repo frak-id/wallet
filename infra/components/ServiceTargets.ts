@@ -67,11 +67,9 @@ export class ServiceTargets extends SstComponent {
     ) {
         super("sst:frak:ServiceTarget", name, args, opts);
 
-        // Get the master load balancer
-        this.lb = this.getMasterLoadBalancer();
-
         // If on local, don't deploy anything
         if ($dev) {
+            this.lb = {} as Promise<aws.lb.GetLoadBalancerResult>;
             this.targetGroups = Output.create(
                 {} as Record<string, aws.lb.TargetGroup>
             );
@@ -80,6 +78,9 @@ export class ServiceTargets extends SstComponent {
             );
             return;
         }
+
+        // Get the master load balancer
+        this.lb = this.getMasterLoadBalancer();
 
         // Create the target groups
         const { listeners, targets } = this.createTargets();
