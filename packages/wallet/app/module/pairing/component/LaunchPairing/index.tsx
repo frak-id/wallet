@@ -31,6 +31,7 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
                     arena={"/icon.svg"}
                     value={`${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo.id}`}
                     size={200}
+                    className={styles.launchPairing__qrCode}
                 />
             ) : (
                 <Spinner />

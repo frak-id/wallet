@@ -99,7 +99,8 @@
             "button": "Récupérez votre <strong>porte-monnaie</strong>",
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil",
-            "privy": "Connection via Privy"
+            "privy": "Connection via Privy",
+            "useQRCode": "Utiliser un QR code pour me connecter"
         },
         "notifications": {
             "noNotifications": "Aucune notifications"
@@ -163,7 +164,8 @@
                 "inProgress": "Création du porte-monnaie en cours<br /> En attente de la validation de votre biométrie"
             },
             "notice": "<sup>*</sup> compte numérique crypté où vous pouvez retrouver tout le contenu que vous possédez, vos données de consommation et les récompenses que vous gagnez",
-            "useExisting": "Utiliser un porte-monnaie existant"
+            "useExisting": "Utiliser un porte-monnaie existant",
+            "useQRCode": "Utiliser un QR code pour me connecter"
         },
         "registerDemo": {
             "button": {

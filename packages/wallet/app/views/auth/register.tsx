@@ -3,7 +3,9 @@ import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
+import { Button } from "@shared/module/component/Button";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
@@ -96,6 +98,11 @@ export default function Register() {
             >
                 {message}
             </ButtonAuth>
+            <AuthenticateWithPhone
+                as={Button}
+                text={t("wallet.register.useQRCode")}
+                width={"full"}
+            />
         </Grid>
     );
 }
