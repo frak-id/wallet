@@ -99,7 +99,8 @@
             "button": "Recover your <strong>wallet</strong>",
             "recover": "Recover wallet from file",
             "walletsOnDevice": "Wallets used on this device",
-            "privy": "Connect via Privy"
+            "privy": "Connect via Privy",
+            "useQRCode": "Use QR code to connect"
         },
         "notifications": {
             "noNotifications": "No notifications"
@@ -163,7 +164,8 @@
                 "inProgress": "Wallet creation in progress<br />Waiting for your biometry validation"
             },
             "notice": "<sup>*</sup>encrypted digital account where you can find all the content you own, your consumption data and the rewards you earn",
-            "useExisting": "Use an existing wallet"
+            "useExisting": "Use an existing wallet",
+            "useQRCode": "Use QR code to connect"
         },
         "registerDemo": {
             "button": {
