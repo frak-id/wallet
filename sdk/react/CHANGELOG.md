@@ -1,5 +1,12 @@
 # @frak-labs/react-sdk
 
+## 0.0.13
+
+### Patch Changes
+
+- Updated dependencies [[`6c4b99c`](https://github.com/frak-id/wallet/commit/6c4b99caafc1a144edd8ac71e0dabe4d0a38248f)]:
+  - @frak-labs/core-sdk@0.0.13
+
 ## 0.0.12
 
 ### Patch Changes

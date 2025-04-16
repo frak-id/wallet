@@ -1,5 +1,11 @@
 # @frak-labs/core-sdk
 
+## 0.0.13
+
+### Patch Changes
+
+- [#68](https://github.com/frak-id/wallet/pull/68) [`6c4b99c`](https://github.com/frak-id/wallet/commit/6c4b99caafc1a144edd8ac71e0dabe4d0a38248f) Thanks [@KONFeature](https://github.com/KONFeature)! - Remove `www.` prefix from domain when calculating the productId
+
 ## 0.0.12
 
 ### Patch Changes

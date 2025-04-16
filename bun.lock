@@ -356,7 +356,7 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "0.0.15",
+      "version": "0.0.16",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "class-variance-authority": "^0.7.1",
@@ -374,7 +374,7 @@
     },
     "sdk/core": {
       "name": "@frak-labs/core-sdk",
-      "version": "0.0.12",
+      "version": "0.0.13",
       "dependencies": {
         "@jsonjoy.com/json-pack": "^1.2.0",
       },
@@ -399,7 +399,7 @@
     },
     "sdk/react": {
       "name": "@frak-labs/react-sdk",
-      "version": "0.0.12",
+      "version": "0.0.13",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
       },
