@@ -39,7 +39,7 @@
     "knip": "^5.50.4",
     "npm-check-updates": "^17.1.18",
     "rimraf": "^6.0.1",
-    "sst": "3.9.33",
+    "sst": "3.13.10",
     "typedoc": "^0.28.2",
     "typedoc-plugin-frontmatter": "^1.3.0",
     "typedoc-plugin-inline-sources": "^1.3.0",
