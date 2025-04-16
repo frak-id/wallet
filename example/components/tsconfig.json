@@ -24,6 +24,9 @@
     "./tests/**/*.ts",
     "./tests/**/*.svelte",
     "../../packages/shared/types/*.d.ts"
+  ],
+  "exclude": [
+    "src/lib/components/ui/**/*"
   ]
   // Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
   // except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
