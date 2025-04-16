@@ -93,7 +93,11 @@ export function createIFrameRequestResolver(
         }
 
         // Recompute the product id associated with the message
-        const productId = keccak256(toHex(new URL(message.origin).host));
+        const normalizedDomain = new URL(message.origin).host.replace(
+            "www.",
+            ""
+        );
+        const productId = keccak256(toHex(normalizedDomain));
 
         // Check if we got a current resolving context
         const currentContext = jotaiStore.get(iframeResolvingContextAtom);

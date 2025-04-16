@@ -125,7 +125,8 @@ function getIFrameResolvingContext(
 
     // Map the origin to an url and compute the product id
     const originUrl = new URL(sourceUrl);
-    const productId = keccak256(toHex(originUrl.host));
+    const normalizedDomain = originUrl.host.replace("www.", "");
+    const productId = keccak256(toHex(normalizedDomain));
     const origin = originUrl.origin;
     const walletReferrer = getWalletReferrer(sourceUrl);
     console.log("Computed resolving context", {

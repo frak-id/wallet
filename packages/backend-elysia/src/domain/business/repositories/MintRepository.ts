@@ -53,7 +53,8 @@ export class MintRepository {
      * @param domain
      */
     precomputeProductId(domain: string) {
-        return BigInt(keccak256(toHex(domain)));
+        const normalizedDomain = domain.replace("www.", "");
+        return BigInt(keccak256(toHex(normalizedDomain)));
     }
 
     /**
