@@ -90,12 +90,12 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             if (!businessSession) {
                 return error(401, "Invalid session");
             }
-            // Normalise the domain
-            const normalisedDomain =
+            // Normalize the domain
+            const normalizedDomain =
                 dnsCheckRepository.getNormalizedDomain(domain);
             // Check if the dns txt is set
             const isValidDomain = await dnsCheckRepository.isValidDomain({
-                domain: normalisedDomain,
+                domain: normalizedDomain,
                 owner: businessSession.wallet,
                 setupCode,
             });
@@ -111,7 +111,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                 const { mintTxHash, productId, bankResult, interactionResult } =
                     await mintRepository.mintProduct({
                         name,
-                        domain: normalisedDomain,
+                        domain: normalizedDomain,
                         productTypes,
                         owner: businessSession.wallet,
                     });

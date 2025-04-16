@@ -6,5 +6,6 @@ import { keccak256, toHex } from "viem";
  */
 export function computeProductId({ domain }: { domain?: string }) {
     const effectiveDomain = domain ?? window.location.host;
-    return keccak256(toHex(effectiveDomain));
+    const normalizedDomain = effectiveDomain.replace("www.", "");
+    return keccak256(toHex(normalizedDomain));
 }

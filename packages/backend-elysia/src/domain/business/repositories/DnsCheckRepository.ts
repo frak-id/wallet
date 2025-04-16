@@ -16,7 +16,8 @@ export class DnsCheckRepository {
         const baseDomainUrl = domain.startsWith("https://")
             ? domain
             : `https://${domain}`;
-        return new URL(baseDomainUrl).host;
+        const domainHost = new URL(baseDomainUrl).host;
+        return domainHost.replace("www.", "");
     }
 
     /**
