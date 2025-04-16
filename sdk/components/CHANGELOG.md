@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 0.0.16
+
+### Patch Changes
+
+- [#68](https://github.com/frak-id/wallet/pull/68) [`e655722`](https://github.com/frak-id/wallet/commit/e6557223f8eaa684b99d1e07f554ae5dc66730a3) Thanks [@KONFeature](https://github.com/KONFeature)! - Side effect of core package update
+
+- Updated dependencies [[`6c4b99c`](https://github.com/frak-id/wallet/commit/6c4b99caafc1a144edd8ac71e0dabe4d0a38248f)]:
+  - @frak-labs/core-sdk@0.0.13
+
 ## 0.0.15
 
 ### Patch Changes
