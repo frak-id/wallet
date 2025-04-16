@@ -38,7 +38,7 @@
     "react-router-dom": "^7.5.0",
     "remix-utils": "^8.5.0",
     "use-dehydrated-state": "^0.1.0",
-    "viem": "^2.23.14"
+    "viem": "^2.27.0"
   },
   "devDependencies": {
     "@react-router/dev": "^7.5.0",

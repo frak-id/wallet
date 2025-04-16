@@ -84,7 +84,7 @@
         "react-router-dom": "^7.5.0",
         "remix-utils": "^8.5.0",
         "swiper": "^11.2.6",
-        "viem": "^2.23.14",
+        "viem": "^2.27.0",
       },
       "devDependencies": {
         "@react-router/dev": "^7.5.0",
@@ -132,7 +132,7 @@
         "react-router-dom": "^7.5.0",
         "remix-utils": "^8.5.0",
         "use-dehydrated-state": "^0.1.0",
-        "viem": "^2.23.14",
+        "viem": "^2.27.0",
       },
       "devDependencies": {
         "@react-router/dev": "^7.5.0",
@@ -147,7 +147,7 @@
       "name": "@frak-labs/app-essentials",
       "version": "0.0.0",
       "dependencies": {
-        "viem": "^2.23.14",
+        "viem": "^2.27.0",
       },
       "devDependencies": {
         "bun-types": "latest",
@@ -181,7 +181,7 @@
         "solady": "^0.1.12",
         "sst": "3.9.33",
         "ua-parser-js": "^2.0.3",
-        "viem": "^2.23.14",
+        "viem": "^2.27.0",
         "web-push": "^3.6.7",
         "whatwg-url": "^14.2.0",
       },
@@ -237,7 +237,7 @@
         "react-day-picker": "^9.6.7",
         "react-dom": "^19",
         "react-hook-form": "^7.55.0",
-        "viem": "^2.23.14",
+        "viem": "^2.27.0",
       },
       "devDependencies": {
         "@types/node": "^22",
@@ -270,7 +270,7 @@
         "react-hook-form": "^7.55.0",
         "react-loading-skeleton": "^3.5.0",
         "react-scan": "^0.3.3",
-        "viem": "^2.23.14",
+        "viem": "^2.27.0",
       },
       "devDependencies": {
         "@frak-labs/app-essentials": "workspace:*",
@@ -333,8 +333,8 @@
         "react-webcam": "^7.2.0",
         "remix-utils": "^8.5.0",
         "vaul": "^1.1.2",
-        "viem": "^2.23.14",
-        "wagmi": "^2.14.15",
+        "viem": "^2.27.0",
+        "wagmi": "^2.14.16",
       },
       "devDependencies": {
         "@frak-labs/backend-elysia": "workspace:*",
@@ -3671,7 +3671,7 @@
 
     "vfile-message": ["vfile-message@4.0.2", "", { "dependencies": { "@types/unist": "^3.0.0", "unist-util-stringify-position": "^4.0.0" } }, "sha512-jRDZ1IMLttGj41KcZvlrYAaI3CfqpLpfpf+Mfig13viT6NKvRzWZ+lXz0Y5D60w6uJIBAOGq9mSHf0gktF0duw=="],
 
-    "viem": ["viem@2.24.3", "", { "dependencies": { "@noble/curves": "1.8.1", "@noble/hashes": "1.7.1", "@scure/bip32": "1.6.2", "@scure/bip39": "1.5.4", "abitype": "1.0.8", "isows": "1.0.6", "ox": "0.6.9", "ws": "8.18.1" }, "peerDependencies": { "typescript": ">=5.0.4" }, "optionalPeers": ["typescript"] }, "sha512-FAoW0hqqpGOlZvfL6GbizDNUd6ZvUyNYYF8HouXbGATrO0RLLh28MOElFNF63hg++uZi2R/EcISs0bvY185z8g=="],
+    "viem": ["viem@2.27.0", "", { "dependencies": { "@noble/curves": "1.8.1", "@noble/hashes": "1.7.1", "@scure/bip32": "1.6.2", "@scure/bip39": "1.5.4", "abitype": "1.0.8", "isows": "1.0.6", "ox": "0.6.9", "ws": "8.18.1" }, "peerDependencies": { "typescript": ">=5.0.4" }, "optionalPeers": ["typescript"] }, "sha512-pKw2dcwDi6TaWlTzLHYazOgjO1GgbUpE1zdLsLNSiCjHNrMTpL/teL0wVHnJDLiB2tR5CL19LBqefYNtRUkH5Q=="],
 
     "vite": ["vite@6.3.0", "", { "dependencies": { "esbuild": "^0.25.0", "fdir": "^6.4.3", "picomatch": "^4.0.2", "postcss": "^8.5.3", "rollup": "^4.34.9", "tinyglobby": "^0.2.12" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "peerDependencies": { "@types/node": "^18.0.0 || ^20.0.0 || >=22.0.0", "jiti": ">=1.21.0", "less": "*", "lightningcss": "^1.21.0", "sass": "*", "sass-embedded": "*", "stylus": "*", "sugarss": "*", "terser": "^5.16.0", "tsx": "^4.8.1", "yaml": "^2.4.2" }, "optionalPeers": ["@types/node", "jiti", "less", "lightningcss", "sass", "sass-embedded", "stylus", "sugarss", "terser", "tsx", "yaml"], "bin": { "vite": "bin/vite.js" } }, "sha512-9aC0n4pr6hIbvi1YOpFjwQ+QOTGssvbJKoeYkuHHGWwlXfdxQlI8L2qNMo9awEEcCPSiS+5mJZk5jH1PAqoDeQ=="],
 
@@ -3948,6 +3948,8 @@
     "@rushstack/terminal/supports-color": ["supports-color@8.1.1", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q=="],
 
     "@safe-global/safe-apps-provider/events": ["events@3.3.0", "", {}, "sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q=="],
+
+    "@safe-global/safe-apps-sdk/viem": ["viem@2.24.3", "", { "dependencies": { "@noble/curves": "1.8.1", "@noble/hashes": "1.7.1", "@scure/bip32": "1.6.2", "@scure/bip39": "1.5.4", "abitype": "1.0.8", "isows": "1.0.6", "ox": "0.6.9", "ws": "8.18.1" }, "peerDependencies": { "typescript": ">=5.0.4" }, "optionalPeers": ["typescript"] }, "sha512-FAoW0hqqpGOlZvfL6GbizDNUd6ZvUyNYYF8HouXbGATrO0RLLh28MOElFNF63hg++uZi2R/EcISs0bvY185z8g=="],
 
     "@svgr/core/camelcase": ["camelcase@6.3.0", "", {}, "sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA=="],
 
