@@ -19,9 +19,7 @@ export function registerWebComponent<P>(
 ): void {
     if (typeof window !== "undefined") {
         // Initialize SDK when document is ready
-        onDocumentReady(async function initComponent() {
-            await initFrakSdk();
-        });
+        onDocumentReady(initFrakSdk);
 
         // Register the component if not already registered
         if (!customElements.get(tagName)) {
