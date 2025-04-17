@@ -11,7 +11,7 @@
       "url": "https://twitter.com/QNivelais"
     }
   ],
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "Legacy SDK, only used here to provide nice wrapper and redirection for older implementation, to not break anything and keep them updated with latest security updates.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
