@@ -1,7 +1,7 @@
 export function gapianne() {
     setConfig();
     replaceNexusShareButton();
-    addWalletButton();
+    // addWalletButton();
 }
 
 /**
@@ -69,7 +69,7 @@ function replaceNexusShareButton() {
 /**
  * Add frak-button-wallet to the body
  */
-function addWalletButton() {
+function _addWalletButton() {
     // Inject only if the cookie button is disabled (has the disabled html tag) (since it's also on the bottom left of the page)
     const id = "axeptio_main_button";
     const cookieButton = document.getElementById(id);
