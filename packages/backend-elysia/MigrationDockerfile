@@ -1,16 +1,17 @@
+FROM oven/bun:slim
 
-FROM oven/bun
+WORKDIR /app
 
-WORKDIR /monorepo
+# Copy only what's needed for migrations
+COPY packages/backend-elysia/drizzle.config.ts ./
+COPY packages/backend-elysia/drizzle/ ./drizzle/
+COPY packages/backend-elysia/src/ ./src/
 
-# Copy the whole monorepo
-COPY . .
-
-# Install dependencies and build the project
-RUN bun install --frozen-lockfile 
+# Install only drizzle-kit and postgres (no need for all node_modules)
+RUN bun install drizzle-kit drizzle-orm postgres
 
 # Set the environment variables
 ENV NODE_ENV=production
 
 # Run the migration
-CMD ["bun", "run", "--cwd", "packages/backend-elysia", "db:migrate"]
+CMD ["bunx", "drizzle-kit", "migrate"]
