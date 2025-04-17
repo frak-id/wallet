@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 0.0.17
+
+### Patch Changes
+
+- [#73](https://github.com/frak-id/wallet/pull/73) [`4dc9621`](https://github.com/frak-id/wallet/commit/4dc962139594cc8aed9699d918f0cde692325709) Thanks [@srod](https://github.com/srod)! - ✨ Initialize components SDK in loader
+
+- Updated dependencies [[`4dc9621`](https://github.com/frak-id/wallet/commit/4dc962139594cc8aed9699d918f0cde692325709)]:
+  - @frak-labs/core-sdk@0.0.14
+
 ## 0.0.16
 
 ### Patch Changes
