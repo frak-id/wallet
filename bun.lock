@@ -391,7 +391,7 @@
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
-      "version": "0.0.35",
+      "version": "0.0.36",
       "devDependencies": {
         "@microsoft/api-extractor": "^7.52.1",
         "@rslib/core": "^0.5.5",

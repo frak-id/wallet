@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.36
+
+### Patch Changes
+
+- [#70](https://github.com/frak-id/wallet/pull/70) [`ce37512`](https://github.com/frak-id/wallet/commit/ce37512fb163cf4de363793c5723eb46c3c87619) Thanks [@KONFeature](https://github.com/KONFeature)! - Remove gapianne floating button
+
 ## 0.0.35
 
 ### Patch Changes
