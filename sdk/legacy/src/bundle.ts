@@ -14,4 +14,4 @@ export * from "@frak-labs/core-sdk/interactions";
 export const createIFrameNexusClient = createIFrameFrakClient;
 
 // Run website specific overrides
-onDocumentReady(() => websiteOverrides());
+onDocumentReady(websiteOverrides);

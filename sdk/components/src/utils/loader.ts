@@ -1,3 +1,11 @@
+import { onDocumentReady } from "@shared/module/utils/onDocumentReady";
+import { initFrakSdk } from "./initFrakSdk";
+
+/**
+ * Initialize the SDK when the document is ready
+ */
+onDocumentReady(initFrakSdk);
+
 /**
  * Map of component tag names to their chunk paths.
  */
