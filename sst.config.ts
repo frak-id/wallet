@@ -50,9 +50,6 @@ export default $config({
             await import("./infra/gcp/dev.ts");
         }
 
-        // Deploy backend
-        await import("./infra/backend.ts");
-
         // Add wallet + dashboard
         await import("./infra/wallet.ts");
         await import("./infra/dashboard.ts");
