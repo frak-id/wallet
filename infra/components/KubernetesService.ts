@@ -298,6 +298,8 @@ export class KubernetesService extends ComponentResource {
                         "cert-manager.io/cluster-issuer": "letsencrypt",
                         "nginx.ingress.kubernetes.io/ssl-redirect": "true",
                         "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
+                        "nginx.ingress.kubernetes.io/enable-modsecurity":
+                            "false",
                     },
                 },
                 spec: {

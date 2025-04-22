@@ -1,6 +1,7 @@
 import { defineConfig } from "drizzle-kit";
 
-const isProd = process.env.STAGE === "prod";
+const isProd =
+    process.env.STAGE === "prod" || process.env.STAGE === "production";
 
 export default defineConfig({
     schema: ["src/domain/*/db/schema.ts"],
