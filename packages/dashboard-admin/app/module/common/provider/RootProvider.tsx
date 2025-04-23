@@ -1,14 +1,9 @@
-import { isRunningInProd } from "@frak-labs/app-essentials";
-import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import type { PropsWithChildren } from "react";
-import { createClient } from "viem";
-import { arbitrum, arbitrumSepolia } from "viem/chains";
-import { WagmiProvider, createConfig } from "wagmi";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -45,23 +40,6 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     // Invalidate the cache when the app version changes
     buster: process.env.APP_VERSION,
 };
-
-const wagmiConfig = createConfig({
-    chains: [isRunningInProd ? arbitrum : arbitrumSepolia],
-    multiInjectedProviderDiscovery: false,
-    client: ({ chain }) =>
-        createClient({
-            chain,
-            transport: getTransport({ chain }),
-            cacheTime: 60_000,
-            batch: {
-                multicall: {
-                    wait: 50,
-                },
-            },
-        }),
-});
-
 export function RootProvider({ children }: PropsWithChildren) {
     return (
         <>
@@ -69,7 +47,7 @@ export function RootProvider({ children }: PropsWithChildren) {
                 client={queryClient}
                 persistOptions={persistOptions}
             >
-                <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
+                {children}
                 <ReactQueryDevtools
                     initialIsOpen={false}
                     buttonPosition={"top-right"}

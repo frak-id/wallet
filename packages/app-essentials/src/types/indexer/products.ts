@@ -1,3 +1,5 @@
+import type { Address } from "viem";
+
 export type GetAllProductsResponseDto = {
     id: string; // bigint under the hood
     domain: string;
@@ -19,14 +21,14 @@ export type GetProductInfoResponseDto = {
     };
     banks: {
         id: string;
-        tokenId: string;
+        tokenId: Address;
         productId: string;
         totalDistributed: string;
         totalClaimed: string;
         isDistributing: boolean;
     }[];
     interactionContracts: {
-        id: string;
+        id: Address;
         productId: string;
         referralTree: string;
         lastUpdateBlock: string;
@@ -42,7 +44,7 @@ export type GetProductInfoResponseDto = {
         createdTimestamp: string;
     }[];
     campaigns: {
-        id: string;
+        id: Address;
         type: string;
         name: string;
         version: string;
@@ -56,7 +58,7 @@ export type GetProductInfoResponseDto = {
         isAuthorisedOnBanking: boolean;
     }[];
     campaignStats: {
-        campaignId: string;
+        campaignId: Address;
         totalInteractions: string;
         openInteractions: string;
         readInteractions: string;

@@ -1,6 +1,7 @@
 import type { GetProductInfoResponseDto } from "@frak-labs/app-essentials";
 import { productTypesMask } from "@frak-labs/core-sdk";
 import { toHex } from "viem";
+import { ProductBanksList } from "~/module/bank/component/ProductBanks";
 import {
     Card,
     CardContent,
@@ -50,7 +51,7 @@ export function ProductInfo({ id }: { id: string }) {
             <GeneralInfo info={product.product} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <BanksList banks={product.banks} />
+                <ProductBanksList banks={product.banks} />
                 <InteractionContractsList
                     contracts={product.interactionContracts}
                 />
@@ -114,90 +115,6 @@ function GeneralInfo({ info }: { info: GetProductInfoResponseDto["product"] }) {
                         {toHex(BigInt(info.id))}
                     </p>
                 </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function BanksList({ banks }: { banks: GetProductInfoResponseDto["banks"] }) {
-    if (banks.length === 0) {
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Banks</CardTitle>
-                    <CardDescription>
-                        Associated banking contracts
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                    <p className="text-muted-foreground italic">
-                        No banks associated with this product
-                    </p>
-                </CardContent>
-            </Card>
-        );
-    }
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Banks</CardTitle>
-                <CardDescription>Associated banking contracts</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-                <ul className="space-y-4">
-                    {banks.map((bank) => (
-                        <li
-                            key={bank.id}
-                            className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
-                        >
-                            <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-medium">Bank Contract</h4>
-                                <div
-                                    className={`text-xs px-2 py-1 rounded-full ${bank.isDistributing ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}
-                                >
-                                    {bank.isDistributing
-                                        ? "Distributing"
-                                        : "Not Distributing"}
-                                </div>
-                            </div>
-                            <div className="space-y-2 text-sm">
-                                <p>
-                                    <span className="text-muted-foreground">
-                                        Address:
-                                    </span>{" "}
-                                    <span className="font-mono">
-                                        {toHex(BigInt(bank.id))}
-                                    </span>
-                                </p>
-                                <p>
-                                    <span className="text-muted-foreground">
-                                        Token ID:
-                                    </span>{" "}
-                                    {bank.tokenId}
-                                </p>
-                                <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t">
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">
-                                            Total Distributed
-                                        </p>
-                                        <p className="font-medium">
-                                            {bank.totalDistributed}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">
-                                            Total Claimed
-                                        </p>
-                                        <p className="font-medium">
-                                            {bank.totalClaimed}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
             </CardContent>
         </Card>
     );
