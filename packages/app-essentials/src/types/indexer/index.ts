@@ -16,3 +16,4 @@ export type {
     GetInteractionItemDto,
     GetInteractionsResponseDto,
 } from "./interactions";
+export type { GetAllProductsResponseDto } from "./products";

@@ -11,4 +11,5 @@ export type {
     GetAllTokenResponseDto,
     GetInteractionItemDto,
     GetInteractionsResponseDto,
+    GetAllProductsResponseDto,
 } from "./indexer";
