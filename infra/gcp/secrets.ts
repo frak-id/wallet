@@ -46,7 +46,6 @@ export const elysiaEnv = {
     ...postgresEnv,
 
     // Mongo related
-    MONGODB_EXAMPLE_URI: new sst.Secret("MONGODB_EXAMPLE_URI").value,
     MONGODB_NEXUS_URI: new sst.Secret("MONGODB_NEXUS_URI").value,
 
     // Sessions

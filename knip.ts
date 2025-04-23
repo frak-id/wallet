@@ -27,7 +27,7 @@ const config: KnipConfig = {
             project: "src/**/*.ts",
         },
         "sdk/core": {
-            entry: "src/**/index.ts",
+            entry: ["src/**/index.ts", "src/bundle.ts"],
             project: "src/**/*.ts",
         },
         "sdk/react": {
@@ -35,7 +35,7 @@ const config: KnipConfig = {
             project: "src/**/*.{ts,tsx}",
         },
         "sdk/components": {
-            entry: "src/**/components.ts",
+            entry: ["src/components.ts", "src/index.ts", "src/utils/loader.ts"],
             project: "src/**/*.{ts,tsx}",
         },
     },
