@@ -1,4 +1,5 @@
 import { productTypesMask } from "@frak-labs/core-sdk";
+import { Link } from "react-router";
 import { Button } from "~/module/common/components/ui/button";
 import {
     Table,
@@ -57,7 +58,9 @@ function ProductRow({ product }: { product: MappedProduct }) {
             <TableCell>{productTypes}</TableCell>
             <TableCell>{readableCreationDate}</TableCell>
             <TableCell>
-                <Button>See more</Button>
+                <Button asChild>
+                    <Link to={`/product/${product.id}`}>See more</Link>
+                </Button>
             </TableCell>
         </TableRow>
     );
