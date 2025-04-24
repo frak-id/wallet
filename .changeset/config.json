@@ -8,7 +8,6 @@
     "baseBranch": "main",
     "updateInternalDependencies": "patch",
     "ignore": [
-        "@frak-labs-example/news-interactions",
         "@frak-labs-example/wallet-ethcc",
         "@frak-labs-example/vanilla-js",
         "@frak-labs-example/components",
