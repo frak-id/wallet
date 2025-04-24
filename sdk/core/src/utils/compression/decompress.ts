@@ -1,4 +1,4 @@
-import { CborDecoder } from "@jsonjoy.com/json-pack/lib/cbor";
+import { CborDecoder } from "@jsonjoy.com/json-pack/lib/cbor/index.js";
 import { FrakRpcError, RpcErrorCodes } from "../../types";
 import type {
     CompressedData,

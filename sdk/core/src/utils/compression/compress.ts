@@ -1,4 +1,4 @@
-import { CborEncoder } from "@jsonjoy.com/json-pack/lib/cbor";
+import { CborEncoder } from "@jsonjoy.com/json-pack/lib/cbor/index.js";
 import { sha256 } from "viem";
 import type {
     CompressedData,
