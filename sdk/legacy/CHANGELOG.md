@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.38
+
+### Patch Changes
+
+- [#76](https://github.com/frak-id/wallet/pull/76) [`6afe559`](https://github.com/frak-id/wallet/commit/6afe5598b1a0be7642499c4d230bea882cd862ca) Thanks [@srod](https://github.com/srod)! - 🔧 Update import paths for CborEncoder and CborDecoder to include index.js
+
 ## 0.0.37
 
 ### Patch Changes
