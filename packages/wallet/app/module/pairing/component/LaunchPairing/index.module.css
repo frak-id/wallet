@@ -4,4 +4,10 @@
 
 .launchPairing__status {
     margin-top: 15px;
+    text-align: center;
+}
+
+.launchPairing__qrCode {
+    display: block;
+    margin: 0 auto;
 }

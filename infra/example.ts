@@ -1,4 +1,4 @@
-import { backendUrl, walletUrl } from "./config";
+import { walletUrl } from "./config";
 
 /**
  * EthCC wallet demo website
@@ -7,7 +7,7 @@ export const ethccWebsite = new sst.aws.StaticSite("WalletExampleEthCC", {
     path: "example/wallet-ethcc",
     // Set the custom domain
     domain: {
-        name: "ethcc.news-paper.xyz",
+        name: "ethcc.frak-labs.com",
     },
     build: {
         command: "bun run build",
@@ -24,40 +24,13 @@ export const ethccWebsite = new sst.aws.StaticSite("WalletExampleEthCC", {
 });
 
 /**
- * EthCC wallet demo website
- */
-export const newsInteractionWebsite = new sst.aws.StaticSite(
-    "NewsInteractionDemo",
-    {
-        path: "example/news-interactions",
-        // Set the custom domain
-        domain: {
-            name: "news-paper.xyz",
-        },
-        build: {
-            command: "bun run build",
-            output: "build/client",
-        },
-        vite: {
-            types: "./sst-env.d.ts",
-        },
-        // Environment variables
-        environment: {
-            STAGE: $app.stage,
-            FRAK_WALLET_URL: walletUrl,
-            BACKEND_URL: backendUrl,
-        },
-    }
-);
-
-/**
  * Vanilla JS demo website
  */
 export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
     path: "example/vanilla-js",
     // Set the custom domain
     domain: {
-        name: "vanilla-js.news-paper.xyz",
+        name: "vanilla.frak-labs.com",
     },
     build: {
         command: "bun run build",

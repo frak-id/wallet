@@ -6,7 +6,6 @@ import { commonRoutes } from "./common/routes";
 import {
     auth,
     business,
-    exampleNewsPaper,
     interactions,
     notifications,
     oracle,
@@ -51,8 +50,6 @@ const app = new Elysia({
     .use(pairing)
     // 6 degrees related logics
     .use(sixDegrees)
-    // Example news paper logics (lazy loaded)
-    .use(exampleNewsPaper)
     // Setup bun serve options
     .listen({
         port: Number.parseInt(process.env.PORT ?? "3030"),

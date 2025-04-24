@@ -1,12 +1,15 @@
 import { LaunchPairing } from "@/module/pairing/component/LaunchPairing";
-import { useState } from "react";
+import type { ButtonProps } from "@shared/module/component/Button";
+import { type ElementType, useState } from "react";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 type AuthenticateWithPhoneProps = {
+    as?: ElementType;
     text: string;
-    className: string;
+    className?: string;
     ssoId?: Hex;
+    width?: ButtonProps["width"];
 };
 
 /**
@@ -16,23 +19,26 @@ type AuthenticateWithPhoneProps = {
  * @returns A button to authenticate with phone
  */
 export function AuthenticateWithPhone({
+    as: Component = "button",
     text,
     className,
     ssoId,
+    width,
 }: AuthenticateWithPhoneProps) {
     const [isPhoneAuthenticated, setIsPhoneAuthenticated] = useState(false);
 
     return (
         <div>
-            <button
+            <Component
                 type={"button"}
-                className={className}
+                className={className ?? ""}
+                width={width}
                 onClick={() => {
                     setIsPhoneAuthenticated(!isPhoneAuthenticated);
                 }}
             >
                 {text}
-            </button>
+            </Component>
             {isPhoneAuthenticated && (
                 <div className={styles.authenticateWithPhone__fadeIn}>
                     <LaunchPairing ssoId={ssoId} />

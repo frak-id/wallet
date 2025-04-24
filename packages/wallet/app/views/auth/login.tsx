@@ -4,7 +4,9 @@ import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
+import { Button } from "@shared/module/component/Button";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -40,6 +42,11 @@ export default function Login() {
                 >
                     <Trans i18nKey={"wallet.login.button"} />
                 </ButtonAuth>
+                <AuthenticateWithPhone
+                    as={Button}
+                    text={t("wallet.login.useQRCode")}
+                    width={"full"}
+                />
             </Grid>
         </>
     );

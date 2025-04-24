@@ -166,6 +166,7 @@ interface Resources {
                 recover: "Recover wallet from file";
                 walletsOnDevice: "Wallets used on this device";
                 privy: "Connect via Privy";
+                useQRCode: "Use QR code to connect";
             };
             notifications: {
                 noNotifications: "No notifications";
@@ -230,6 +231,7 @@ interface Resources {
                 };
                 notice: "<sup>*</sup>encrypted digital account where you can find all the content you own, your consumption data and the rewards you earn";
                 useExisting: "Use an existing wallet";
+                useQRCode: "Use QR code to connect";
             };
             registerDemo: {
                 button: {
