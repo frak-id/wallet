@@ -20,7 +20,7 @@ export type GetProductInfoResponseDto = {
         metadataUrl: string;
     };
     banks: {
-        id: string;
+        id: Address;
         tokenId: Address;
         productId: string;
         totalDistributed: string;
@@ -54,7 +54,7 @@ export type GetProductInfoResponseDto = {
         lastUpdateBlock: string;
         attachTimestamp: string;
         detachTimestamp: string | null;
-        bankingContractId: string;
+        bankingContractId: Address;
         isAuthorisedOnBanking: boolean;
     }[];
     campaignStats: {

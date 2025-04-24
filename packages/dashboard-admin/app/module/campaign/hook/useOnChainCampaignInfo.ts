@@ -55,7 +55,7 @@ export function useOnChainCampaignInfo(address: Address) {
     });
 
     return {
-        data,
+        info: data,
         isLoading,
     };
 }

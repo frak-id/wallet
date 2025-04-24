@@ -12,18 +12,17 @@ type PonderStatus = {
 };
 
 export function useIndexerState() {
-    const { data, isLoading, error, refetch } = useQuery({
+    const { data, isLoading, refetch } = useQuery({
         queryKey: ["indexer-state"],
         queryFn: async () => {
-            const result = await indexerApi.get("/status").json<PonderStatus>();
+            const result = await indexerApi.get("status").json<PonderStatus>();
             return Object.values(result)[0];
         },
     });
 
     return {
-        result: data,
+        state: data,
         isLoading,
-        error,
         refetch,
     };
 }

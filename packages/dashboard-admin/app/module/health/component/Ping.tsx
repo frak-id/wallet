@@ -2,17 +2,33 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, RefreshCw, XCircle } from "lucide-react";
 import type * as React from "react";
 import { Button } from "~/module/common/components/ui/button";
-import { Card, CardContent } from "~/module/common/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "~/module/common/components/ui/card";
 import { cn } from "~/module/common/lib/utils";
 import { useMeasurePing } from "../hook/useMeasurePing";
 
 export function MeasurePings({ urls }: { urls: string[] }) {
     const queryClient = useQueryClient();
     return (
-        <Card
-            className={cn("bg-background border-border shadow-none rounded-xl")}
-        >
+        <Card>
+            <CardHeader>
+                <CardTitle>Pings</CardTitle>
+                <CardDescription>Service response time</CardDescription>
+            </CardHeader>
             <CardContent className="p-3">
+                <div className="flex flex-col gap-1">
+                    {urls.map((url) => (
+                        <HostPingRow key={url} url={url} />
+                    ))}
+                </div>
+            </CardContent>
+            <CardFooter>
                 <Button
                     onClick={() =>
                         queryClient.resetQueries({
@@ -23,12 +39,7 @@ export function MeasurePings({ urls }: { urls: string[] }) {
                 >
                     Refresh
                 </Button>
-                <div className="flex flex-col gap-1">
-                    {urls.map((url) => (
-                        <HostPingRow key={url} url={url} />
-                    ))}
-                </div>
-            </CardContent>
+            </CardFooter>
         </Card>
     );
 }

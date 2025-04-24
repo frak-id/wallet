@@ -2,6 +2,8 @@ import type { GetProductInfoResponseDto } from "@frak-labs/app-essentials";
 import { productTypesMask } from "@frak-labs/core-sdk";
 import { toHex } from "viem";
 import { ProductBanksList } from "~/module/bank/component/ProductBanks";
+import { ProductCampaigns } from "~/module/campaign/component/ProductCampaigns";
+import { useHasActiveCampaign } from "~/module/campaign/hook/useHasActiveCampaign";
 import {
     Card,
     CardContent,
@@ -9,14 +11,6 @@ import {
     CardHeader,
     CardTitle,
 } from "~/module/common/components/ui/card";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "~/module/common/components/ui/table";
 import { useProductInfo } from "../hook/useProductInfo";
 
 export function ProductInfo({ id }: { id: string }) {
@@ -48,7 +42,7 @@ export function ProductInfo({ id }: { id: string }) {
 
     return (
         <>
-            <GeneralInfo info={product.product} />
+            <GeneralInfo info={product.product} campaigns={product.campaigns} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <ProductBanksList banks={product.banks} />
@@ -58,12 +52,18 @@ export function ProductInfo({ id }: { id: string }) {
             </div>
 
             <AdministratorsList administrators={product.administrators} />
-            <CampaignsTable campaigns={product.campaigns} />
+            <ProductCampaigns campaigns={product.campaigns} />
         </>
     );
 }
 
-function GeneralInfo({ info }: { info: GetProductInfoResponseDto["product"] }) {
+function GeneralInfo({
+    info,
+    campaigns,
+}: {
+    info: GetProductInfoResponseDto["product"];
+    campaigns: GetProductInfoResponseDto["campaigns"];
+}) {
     const readableCreationDate = new Date(
         Number(info.createTimestamp) * 1000
     ).toLocaleDateString();
@@ -71,8 +71,11 @@ function GeneralInfo({ info }: { info: GetProductInfoResponseDto["product"] }) {
         .filter(
             ([_, value]) => (BigInt(info.productTypes) & value) !== BigInt(0)
         )
-        .map(([key]) => key)
-        .join(", ");
+        .map(([key]) => key);
+
+    const { hasActiveCampaigns } = useHasActiveCampaign(
+        campaigns.map((campaign) => campaign.id)
+    );
 
     return (
         <Card className="overflow-hidden">
@@ -105,7 +108,17 @@ function GeneralInfo({ info }: { info: GetProductInfoResponseDto["product"] }) {
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">
                         Types
                     </h4>
-                    <p className="font-medium">{types}</p>
+
+                    <div className="flex flex-wrap gap-1">
+                        {types.map((type) => (
+                            <span
+                                key={type}
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                            >
+                                {type}
+                            </span>
+                        ))}
+                    </div>
                 </div>
                 <div className="sm:col-span-2">
                     <h4 className="text-sm font-medium text-muted-foreground mb-1">
@@ -113,6 +126,16 @@ function GeneralInfo({ info }: { info: GetProductInfoResponseDto["product"] }) {
                     </h4>
                     <p className="font-mono text-sm">
                         {toHex(BigInt(info.id))}
+                    </p>
+                </div>
+                <div className="sm:col-span-2">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                        Has Active Campaigns
+                    </h4>
+                    <p
+                        className={`font-medium ${hasActiveCampaigns ? "text-green-500" : "text-red-500"}`}
+                    >
+                        {hasActiveCampaigns ? "Yes" : "No"}
                     </p>
                 </div>
             </CardContent>
@@ -288,96 +311,6 @@ function AdministratorsList({
                             </div>
                         </div>
                     ))}
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function CampaignsTable({
-    campaigns,
-}: { campaigns: GetProductInfoResponseDto["campaigns"] }) {
-    if (campaigns.length === 0) {
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Campaigns</CardTitle>
-                    <CardDescription>
-                        Associated marketing campaigns
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                    <p className="text-muted-foreground italic">
-                        No campaigns associated with this product
-                    </p>
-                </CardContent>
-            </Card>
-        );
-    }
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Campaigns</CardTitle>
-                <CardDescription>
-                    Associated marketing campaigns
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                                <TableHead>Name</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Version</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Contract Address</TableHead>
-                                <TableHead>Banking Contract</TableHead>
-                                <TableHead>Banking Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {campaigns.map((campaign) => (
-                                <TableRow
-                                    key={campaign.id}
-                                    className="hover:bg-muted/50"
-                                >
-                                    <TableCell className="font-medium">
-                                        {campaign.name}
-                                    </TableCell>
-                                    <TableCell>{campaign.type}</TableCell>
-                                    <TableCell>{campaign.version}</TableCell>
-                                    <TableCell>
-                                        <div
-                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${campaign.attached ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}
-                                        >
-                                            {campaign.attached
-                                                ? "Attached"
-                                                : "Detached"}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="font-mono text-xs">
-                                        {toHex(BigInt(campaign.id))}
-                                    </TableCell>
-                                    <TableCell className="font-mono text-xs">
-                                        {toHex(
-                                            BigInt(campaign.bankingContractId)
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div
-                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${campaign.isAuthorisedOnBanking ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
-                                        >
-                                            {campaign.isAuthorisedOnBanking
-                                                ? "Authorized"
-                                                : "Unauthorized"}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
                 </div>
             </CardContent>
         </Card>
