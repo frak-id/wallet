@@ -1,5 +1,14 @@
 # @frak-labs/react-sdk
 
+## 0.0.15
+
+### Patch Changes
+
+- [#76](https://github.com/frak-id/wallet/pull/76) [`6afe559`](https://github.com/frak-id/wallet/commit/6afe5598b1a0be7642499c4d230bea882cd862ca) Thanks [@srod](https://github.com/srod)! - 🔧 Update import paths for CborEncoder and CborDecoder to include index.js
+
+- Updated dependencies [[`6afe559`](https://github.com/frak-id/wallet/commit/6afe5598b1a0be7642499c4d230bea882cd862ca)]:
+  - @frak-labs/core-sdk@0.0.15
+
 ## 0.0.14
 
 ### Patch Changes
