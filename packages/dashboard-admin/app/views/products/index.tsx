@@ -4,8 +4,8 @@ import {
     CardHeader,
     CardTitle,
 } from "~/module/common/components/ui/card";
-import { ProductList } from "../module/product/component/ProductList";
-import type { Route } from "./+types/home";
+import { ProductList } from "~/module/product/component/ProductList";
+import type { Route } from "../../+types/root";
 
 export function meta(_: Route.MetaArgs) {
     return [
@@ -19,19 +19,7 @@ export function meta(_: Route.MetaArgs) {
 
 export default function Home() {
     return (
-        <div className="space-y-8 p-6">
-            {/* Dashboard Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">
-                        Dashboard
-                    </h1>
-                    <p className="text-muted-foreground">
-                        All the deployed products on Frak
-                    </p>
-                </div>
-            </div>
-
+        <>
             {/* Quick Stats */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Card>
@@ -79,6 +67,6 @@ export default function Home() {
             <div>
                 <ProductList />
             </div>
-        </div>
+        </>
     );
 }

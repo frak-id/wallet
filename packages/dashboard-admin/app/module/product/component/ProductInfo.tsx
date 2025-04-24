@@ -47,7 +47,7 @@ export function ProductInfo({ id }: { id: string }) {
     }
 
     return (
-        <div className="space-y-8">
+        <>
             <GeneralInfo info={product.product} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -59,7 +59,7 @@ export function ProductInfo({ id }: { id: string }) {
 
             <AdministratorsList administrators={product.administrators} />
             <CampaignsTable campaigns={product.campaigns} />
-        </div>
+        </>
     );
 }
 

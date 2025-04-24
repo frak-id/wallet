@@ -1,29 +1,6 @@
 {
   "name": "frak-wallet",
   "version": "0.1.0",
-  "description": "Frak ecosystem packages",
-  "private": true,
-  "type": "module",
-  "license": "GNU GPL 3.0",
-  "scripts": {
-    "build:infra": "sst build --stage dev",
-    "build:sdk": "dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} build; done",
-    "changeset": "changeset",
-    "changeset:release": "dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} publish && bun publish --cwd sdk/${d}; done",
-    "changeset:version": "changeset version && bun install --lockfile-only",
-    "clean": "rimraf **/.open-next/ **/.next/ .sst/dist/ .sst/artifacts/",
-    "deploy": "sst deploy --stage dev",
-    "deploy:prod": "sst deploy --stage prod",
-    "deploy-gcp:prod": "sst deploy --stage gcp-production",
-    "deploy-gcp:staging": "sst deploy --stage gcp-staging",
-    "dev": "bun sst dev",
-    "format": "biome check --write .",
-    "format:check": "biome check .",
-    "knip": "knip",
-    "lint": "biome lint .",
-    "update:deps": "npm-check-updates -ui -ws",
-    "typecheck": "bun run --filter '*' typecheck"
-  },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@changesets/changelog-git": "^0.2.1",
@@ -46,10 +23,33 @@
     "typedoc-plugin-markdown": "^4.6.2",
     "typescript": "^5.8.3"
   },
+  "description": "Frak ecosystem packages",
+  "license": "GNU GPL 3.0",
+  "packageManager": "bun@1.2.9",
+  "private": true,
+  "scripts": {
+    "build:infra": "sst build --stage dev",
+    "build:sdk": "dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} build; done",
+    "changeset": "changeset",
+    "changeset:release": "dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} publish && bun publish --cwd sdk/${d}; done",
+    "changeset:version": "changeset version && bun install --lockfile-only",
+    "clean": "rimraf **/.open-next/ **/.next/ .sst/dist/ .sst/artifacts/",
+    "deploy": "sst deploy --stage dev",
+    "deploy:prod": "sst deploy --stage prod",
+    "deploy-gcp:prod": "sst deploy --stage gcp-production",
+    "deploy-gcp:staging": "sst deploy --stage gcp-staging",
+    "dev": "bun sst dev",
+    "format": "biome check --write .",
+    "format:check": "biome check .",
+    "knip": "knip",
+    "lint": "biome lint .",
+    "update:deps": "npm-check-updates -ui -ws",
+    "typecheck": "bun run --filter '*' typecheck"
+  },
+  "type": "module",
   "workspaces": [
     "packages/*",
     "sdk/*",
     "example/*"
-  ],
-  "packageManager": "bun@1.2.9"
+  ]
 }

@@ -1,5 +1,5 @@
-import { ProductInfo } from "../module/product/component/ProductInfo";
-import type { Route } from "./+types/product";
+import { ProductInfo } from "~/module/product/component/ProductInfo";
+import type { Route } from "./+types/id";
 
 /**
  * Receive the id as path param and render the product details

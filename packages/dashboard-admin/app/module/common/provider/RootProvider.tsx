@@ -4,6 +4,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import type { PropsWithChildren } from "react";
+import { ThemeProvider } from "./ThemeProvider";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -43,16 +44,18 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 export function RootProvider({ children }: PropsWithChildren) {
     return (
         <>
-            <PersistQueryClientProvider
-                client={queryClient}
-                persistOptions={persistOptions}
-            >
-                {children}
-                <ReactQueryDevtools
-                    initialIsOpen={false}
-                    buttonPosition={"top-right"}
-                />
-            </PersistQueryClientProvider>
+            <ThemeProvider>
+                <PersistQueryClientProvider
+                    client={queryClient}
+                    persistOptions={persistOptions}
+                >
+                    {children}
+                    <ReactQueryDevtools
+                        initialIsOpen={false}
+                        buttonPosition={"top-right"}
+                    />
+                </PersistQueryClientProvider>
+            </ThemeProvider>
         </>
     );
 }

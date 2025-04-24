@@ -1,5 +1,5 @@
 import type { GetProductInfoResponseDto } from "@frak-labs/app-essentials";
-import { formatUnits, toHex } from "viem";
+import { formatUnits } from "viem";
 import {
     Card,
     CardContent,
@@ -65,7 +65,7 @@ function BankRow({
             <div className="space-y-2 text-sm">
                 <p>
                     <span className="text-muted-foreground">Address:</span>{" "}
-                    <span className="font-mono">{toHex(BigInt(bank.id))}</span>
+                    <span className="font-mono">{bank.id}</span>
                 </p>
                 <p>
                     <span className="text-muted-foreground">Token ID:</span>{" "}

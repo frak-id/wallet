@@ -22,6 +22,10 @@ const config: KnipConfig = {
             entry: ["app/*.{ts,tsx}", "app/views/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}"],
         },
+        "packages/dashboard-admin": {
+            entry: ["app/root.tsx", "app.routes.ts", "app/routes/**/*.tsx"],
+            project: ["app/**/*.{ts,tsx}"],
+        },
         "packages/backend-elysia": {
             entry: "src/index.ts",
             project: "src/**/*.ts",
