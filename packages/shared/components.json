@@ -1,0 +1,20 @@
+{
+    "$schema": "https://ui.shadcn.com/schema.json",
+    "style": "new-york",
+    "rsc": false,
+    "tsx": true,
+    "tailwind": {
+        "config": "tailwind.config.ts",
+        "css": "module/styles/tailwind.css",
+        "baseColor": "neutral",
+        "cssVariables": true
+    },
+    "aliases": {
+        "components": "@shared/module/component",
+        "utils": "@shared/module/utils/tailwind",
+        "ui": "@shared/module/component/ui",
+        "lib": "@shared/module/utils",
+        "hooks": "@shared/module/hook"
+    },
+    "iconLibrary": "lucide"
+}

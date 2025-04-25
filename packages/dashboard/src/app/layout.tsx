@@ -1,6 +1,6 @@
 import { Fonts } from "@/module/common/component/Fonts";
 import { RootProvider } from "@/module/common/provider/RootProvider";
-import "@/styles/all.css";
+import "@shared/module/styles/tailwind.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "../polyfill/bigint-serialization";

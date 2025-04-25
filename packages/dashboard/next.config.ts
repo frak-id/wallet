@@ -47,7 +47,11 @@ const nextConfig: NextConfig = {
         // Secrets from sst
         ...envFromSst,
     },
-    transpilePackages: ["lucide-react", "@frak-labs/app-essentials"],
+    transpilePackages: [
+        "lucide-react",
+        "@frak-labs/app-essentials",
+        "@frak-labs/shared",
+    ],
     compiler: {
         removeConsole: isDistant,
     },
