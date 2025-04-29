@@ -52,7 +52,7 @@ new sst.aws.StaticSite("Admin", {
     path: "packages/dashboard-admin",
     // Set the custom domain
     domain: {
-        name: `${isProd ? "admin" : "admin-dev"}.frak.id`,
+        name: `${isProd ? "admin-stats" : "admin-stats-dev"}.frak.id`,
     },
     build: {
         command: "bun run build",
