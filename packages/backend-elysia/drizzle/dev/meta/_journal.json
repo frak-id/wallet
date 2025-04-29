@@ -78,6 +78,13 @@
             "when": 1743775947894,
             "tag": "0010_flashy_nightmare",
             "breakpoints": true
+        },
+        {
+            "idx": 11,
+            "version": "7",
+            "when": 1745439465176,
+            "tag": "0011_last_ikaris",
+            "breakpoints": true
         }
     ]
 }
