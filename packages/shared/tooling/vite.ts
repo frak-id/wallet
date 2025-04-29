@@ -62,7 +62,11 @@ const multipleLibsFromKey = {
         "node_modules/@lottiefiles",
     ],
     // state: ["@tanstack", "ky", "jotai", "@jsonjoy", "dexie"],
-    react: ["node_modules/react", "node_modules/react-dom", "node_modules/react-router"],
+    react: [
+        "node_modules/react",
+        "node_modules/react-dom",
+        "node_modules/react-router",
+    ],
 };
 
 export function manualChunks(id: string) {

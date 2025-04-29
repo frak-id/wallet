@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@lucide/svelte": "^0.503.0",
-    "@sinclair/typebox": "^0.34.33",
+    "@sinclair/typebox": "0.34.31",
     "normalize.css": "^8.0.1",
     "svelte-i18n": "^4.0.1"
   }
