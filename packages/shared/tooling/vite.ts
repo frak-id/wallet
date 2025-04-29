@@ -1,11 +1,6 @@
 import type { LoggingFunction, RollupLog } from "rollup";
 
 /**
- * Key to single lib bundle
- */
-const singleLibBundle = ["@noble"];
-
-/**
  * Built from a bundle:check and the dependency graph:
  *  - https://npmgraph.js.org/?q=https://raw.githubusercontent.com/frak-id/wallet/refs/heads/dev/packages/wallet/package.json
  *
@@ -66,15 +61,15 @@ const multipleLibsFromKey = {
         "node_modules/qr",
         "node_modules/@lottiefiles",
     ],
-    state: ["@tanstack", "ky", "jotai", "@jsonjoy", "dexie"],
+    // state: ["@tanstack", "ky", "jotai", "@jsonjoy", "dexie"],
+    react: ["node_modules/react", "node_modules/react-dom", "node_modules/react-router"],
 };
 
 export function manualChunks(id: string) {
-    // check if that's a single lib bundle
-    const singleLib = singleLibBundle.find((lib) =>
-        id.includes(`node_modules/${lib}`)
-    );
-    if (singleLib) return singleLib;
+    // todo: temp just for testing
+    if (id.includes("app-essentials")) return "app-essentials";
+    if (id.includes("node_modules")) return "vendor";
+    return;
 
     // Check if that's in the multiple libs bundle
     for (const [key, libs] of Object.entries(multipleLibsFromKey)) {
@@ -87,7 +82,7 @@ export function manualChunks(id: string) {
     if (id.includes("node_modules")) return "vendor";
 
     // All the stuff remaining should be the app
-    return "app";
+    // return "app";
 }
 
 export function onwarn(warning: RollupLog, warn: LoggingFunction) {

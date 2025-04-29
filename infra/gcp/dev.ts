@@ -7,7 +7,7 @@ const localPort = "8888";
 const tunnelCmd = new sst.x.DevCommand("db-tunnel", {
     dev: {
         title: "GCP Tunnel",
-        autostart: true,
+        autostart: false,
         command: "bash ./infra/gcp-tunnel.sh",
     },
     environment: {

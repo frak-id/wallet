@@ -66,4 +66,5 @@ new sst.aws.StaticSite("Admin", {
         STAGE: $app.stage,
         INDEXER_URL: indexerUrl,
     },
+    dev: { autostart: false }
 });

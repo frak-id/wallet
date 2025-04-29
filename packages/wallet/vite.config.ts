@@ -81,7 +81,8 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
             proxy: {},
         },
         build: {
-            cssCodeSplit: false,
+            // todo: should be switched to false once we resolved css conflicts
+            cssCodeSplit: true,
             target: isSsrBuild ? "ES2022" : "ES2020",
             rollupOptions: {
                 output: {
