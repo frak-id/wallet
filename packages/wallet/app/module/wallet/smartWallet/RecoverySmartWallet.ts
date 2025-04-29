@@ -56,7 +56,7 @@ export function recoverySmartAccount<
 
     // Build the smart account itself
     return toSmartAccount({
-        client,
+        client: client as Client<TTransport, TChain, undefined>,
         entryPoint: {
             version: "0.6",
             abi: entryPoint06Abi,

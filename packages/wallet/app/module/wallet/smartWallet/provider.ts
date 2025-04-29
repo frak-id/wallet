@@ -45,14 +45,13 @@ type SmartAccountProviderParameters = {
  */
 export function getSmartAccountProvider<
     transport extends Transport = Transport,
-    account extends BaseFrakSmartAccount = BaseFrakSmartAccount,
 >({ onAccountChanged, signViaEcdsa }: SmartAccountProviderParameters) {
     console.log("Building a new smart account provider");
     // A few types shortcut
     type ConnectorClient = SmartAccountClient<
         transport,
         typeof currentChain,
-        SmartAccount<account>
+        SmartAccount<BaseFrakSmartAccount>
     > & {
         estimateGas?: () => undefined | bigint;
     };
@@ -132,21 +131,21 @@ export function getSmartAccountProvider<
 
 /**
  * Build the smart account client on the given chain id
- * todo: need to handle distant webauthn
  * @param chainId
  * @param wallet
  */
-async function buildSmartAccount<
-    transport extends Transport = Transport,
-    account extends BaseFrakSmartAccount = BaseFrakSmartAccount,
->({
+async function buildSmartAccount<transport extends Transport = Transport>({
     wallet,
     signViaEcdsa,
 }: {
     wallet: WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet;
     signViaEcdsa: (data: Hex, address: Address) => Promise<Hex>;
 }): Promise<
-    SmartAccountClient<transport, typeof currentChain, SmartAccount<account>>
+    SmartAccountClient<
+        transport,
+        typeof currentChain,
+        SmartAccount<BaseFrakSmartAccount>
+    >
 > {
     let smartAccount: BaseFrakSmartAccount;
     if (wallet.type === "ecdsa") {
@@ -200,6 +199,6 @@ async function buildSmartAccount<
     }) as SmartAccountClient<
         transport,
         typeof currentChain,
-        SmartAccount<account>
+        SmartAccount<BaseFrakSmartAccount>
     >;
 }

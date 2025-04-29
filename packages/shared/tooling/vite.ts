@@ -3,7 +3,7 @@ import type { LoggingFunction, RollupLog } from "rollup";
 /**
  * Key to single lib bundle
  */
-const singleLibBundle = ["dexie", "@lottiefiles", "@noble", "@tanstack"];
+const singleLibBundle = ["@noble"];
 
 /**
  * Built from a bundle:check and the dependency graph:
@@ -19,10 +19,13 @@ const multipleLibsFromKey = {
         // top level libs
         "node_modules/viem",
         "node_modules/wagmi",
+        "node_modules/@wagmi",
         "node_modules/ox",
+        "node_modules/permissionless",
         // dependency
         "node_modules/use-sync-external-store",
         "node_modules/@scure",
+        "node_modules/abitype",
         "node_modules/zustand", // <- to move out if we start to use it globally
         "node_modules/mipd",
         "node_modules/elliptic",
@@ -32,18 +35,38 @@ const multipleLibsFromKey = {
         // Lib used to parse webauthn signature
         "node_modules/@peculiar",
         "node_modules/tiny-cbor",
+        "node_modules/@evischuck/tiny-cbor",
         "node_modules/hexagon",
         "node_modules/asn1.js",
+        "node_modules/asn1js",
         "node_modules/pvutils",
         "node_modules/pvtsutils",
+        "node_modules/cbor",
         // Generic lib to check / generate webauthn signature
-        "@node_modules/@simplewebauthn",
+        "node_modules/@simplewebauthn",
     ],
     polyfill: [
         "node_modules/vite-plugin-node-polyfills",
         "node_modules/browserify-rsa",
         "node_modules/browserify-sign",
+        "node_modules/core-js",
     ],
+    ui: [
+        "node_modules/@radix-ui",
+        "node_modules/vaul",
+        "node_modules/react-hook-form",
+        "node_modules/lucide-react",
+        "node_modules/react-dropzone",
+        "node_modules/file-selector",
+        "node_modules/@floating-ui",
+        "node_modules/nprogress",
+        "node_modules/micromark",
+        "node_modules/i18next",
+        "node_modules/cuer",
+        "node_modules/qr",
+        "node_modules/@lottiefiles",
+    ],
+    state: ["@tanstack", "ky", "jotai", "@jsonjoy", "dexie"],
 };
 
 export function manualChunks(id: string) {
@@ -59,6 +82,12 @@ export function manualChunks(id: string) {
             return key;
         }
     }
+
+    // Otherwise, if that's a node module, return vendor
+    if (id.includes("node_modules")) return "vendor";
+
+    // All the stuff remaining should be the app
+    return "app";
 }
 
 export function onwarn(warning: RollupLog, warn: LoggingFunction) {

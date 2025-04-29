@@ -12,5 +12,5 @@ export default defineConfig({
         port: 3003,
         proxy: {},
     },
-    plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
+    plugins: [reactRouter(), tailwindcss(), tsconfigPaths()],
 });

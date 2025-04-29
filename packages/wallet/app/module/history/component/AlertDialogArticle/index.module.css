@@ -1,8 +1,0 @@
-.alertDialogArticle {
-    display: block;
-    width: 100%;
-}
-
-.alertDialogArticle + .alertDialogArticle {
-    margin-top: 20px;
-}

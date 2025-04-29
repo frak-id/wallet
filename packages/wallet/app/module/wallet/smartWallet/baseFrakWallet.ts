@@ -36,7 +36,7 @@ import {
 import { formatAbiItem } from "viem/utils";
 
 export type BaseFrakSmartAccount = SmartAccount<
-    SmartAccountImplementation<typeof entryPoint06Abi, "0.6">
+    SmartAccountImplementation<typeof entryPoint06Abi, "0.6", object, false>
 >;
 
 /**
@@ -146,7 +146,7 @@ export async function baseFrakWallet<
 
     // Build the smart account itself
     return toSmartAccount({
-        client,
+        client: client as Client<TTransport, TChain, undefined>,
         // Entry point config
         entryPoint: {
             version: "0.6",
