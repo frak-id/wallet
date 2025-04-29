@@ -1,8 +1,4 @@
 import { createHmac } from "node:crypto";
-import {
-    GetSecretValueCommand,
-    SecretsManagerClient,
-} from "@aws-sdk/client-secrets-manager";
 import { Mutex } from "async-mutex";
 import { LRUCache } from "lru-cache";
 import { type Hex, hexToBytes, toHex } from "viem";
@@ -50,45 +46,18 @@ export class AdminWalletsRepository {
      */
     private async getMasterPrivateKey() {
         return this.getFromCacheOrFetch("master-pkey", async () => {
+            if (!process.env.MASTER_KEY_SECRET) {
+                throw new Error("Missing MASTER_KEY_SECRET");
+            }
+
             // If we got it in env
-            if (process.env.MASTER_KEY_SECRET) {
-                const value = JSON.parse(process.env.MASTER_KEY_SECRET) as {
-                    masterPrivateKey: string;
-                };
-                if (!value.masterPrivateKey) {
-                    throw new Error("Missing masterPrivateKey in the secret");
-                }
-                return `0x${value.masterPrivateKey}` as Hex;
-            }
-
-            // If we don't have it
-            if (!process.env.MASTER_KEY_SECRET_ID) {
-                throw new Error(
-                    "Missing MASTER_KEY_SECRET_ID or MASTER_KEY_SECRET"
-                );
-            }
-
-            // Fetch the secret
-            // todo: to be removed once backend is fully on gcp
-            const secretValue = await this.secretManager.send(
-                new GetSecretValueCommand({
-                    SecretId: process.env.MASTER_KEY_SECRET_ID,
-                })
-            );
-            if (!secretValue.SecretString) {
-                throw new Error("Unable to find the secret string");
-            }
-
-            // Parse the secret
-            const parsedSecret = JSON.parse(secretValue.SecretString) as {
+            const value = JSON.parse(process.env.MASTER_KEY_SECRET) as {
                 masterPrivateKey: string;
             };
-            if (!parsedSecret.masterPrivateKey) {
+            if (!value.masterPrivateKey) {
                 throw new Error("Missing masterPrivateKey in the secret");
             }
-
-            // Parse it in a readable hex format and return it
-            return `0x${parsedSecret.masterPrivateKey}` as Hex;
+            return `0x${value.masterPrivateKey}` as Hex;
         });
     }
 
