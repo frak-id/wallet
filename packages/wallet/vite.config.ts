@@ -93,7 +93,7 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
                 },
                 onwarn,
             },
-            sourcemap: process.env.STAGE !== "prod",
+            sourcemap: false,
         },
         optimizeDeps: {
             exclude: ["react-scan"],

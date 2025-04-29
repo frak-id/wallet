@@ -14,9 +14,6 @@ type AccountPredefinedKeys =
  * Build the repositories that we will use to interface with our different wallets
  */
 export class AdminWalletsRepository {
-    private secretManager: SecretsManagerClient = new SecretsManagerClient({
-        region: "eu-west-1",
-    });
     private cache: LRUCache<string, Hex> = new LRUCache({
         max: 1024,
     });

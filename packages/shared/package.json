@@ -19,9 +19,9 @@
     "core-js": "^3.41.0",
     "jotai": "^2.12.3",
     "ky": "^1.8.1",
-    "lucide-react": "^0.488.0",
+    "lucide-react": "^0.503.0",
     "react-dropzone": "^14.3.8",
-    "react-hook-form": "^7.55.0",
+    "react-hook-form": "^7.56.1",
     "react-loading-skeleton": "^3.5.0",
     "react-scan": "^0.3.3",
     "viem": "^2.28.1"
@@ -30,12 +30,12 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/backend-elysia": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
-    "@rsdoctor/rspack-plugin": "^1.0.1",
+    "@rsdoctor/rspack-plugin": "^1.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "elysia": "^1.2.25",
     "react": "^19",
-    "rollup": "^4.40.0",
+    "rollup": "^4.40.1",
     "typescript": "^5"
   }
 }
