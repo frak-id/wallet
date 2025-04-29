@@ -81,6 +81,7 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
             proxy: {},
         },
         build: {
+            cssCodeSplit: false,
             target: isSsrBuild ? "ES2022" : "ES2020",
             rollupOptions: {
                 output: {

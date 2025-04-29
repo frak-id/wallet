@@ -13,12 +13,10 @@ export type FrakWalletConnector = ReturnType<
  * Create a connector for the smart account
  */
 export function smartAccountConnector<
-    transport extends Transport = Transport
+    transport extends Transport = Transport,
 >() {
     // A few types shortcut
-    type Provider = ReturnType<
-        typeof getSmartAccountProvider<transport>
-    >;
+    type Provider = ReturnType<typeof getSmartAccountProvider<transport>>;
 
     // The current provider
     let provider: Provider | undefined;

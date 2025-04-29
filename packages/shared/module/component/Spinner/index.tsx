@@ -8,7 +8,11 @@ type SpinnerProps = ComponentPropsWithRef<"span"> & {
 
 export const Spinner = ({ ref, className, ...props }: SpinnerProps) => {
     return (
-        <span {...props} ref={ref as RefObject<HTMLSpanElement>} className={cx(styles.spinner, className)}>
+        <span
+            {...props}
+            ref={ref as RefObject<HTMLSpanElement>}
+            className={cx(styles.spinner, className)}
+        >
             <span className={styles.spinner__leaf} />
             <span className={styles.spinner__leaf} />
             <span className={styles.spinner__leaf} />

@@ -66,13 +66,7 @@ const multipleLibsFromKey = {
         "node_modules/qr",
         "node_modules/@lottiefiles",
     ],
-    state: [
-        "@tanstack",
-        "ky",
-        "jotai",
-        "@jsonjoy",
-        "dexie",
-    ]
+    state: ["@tanstack", "ky", "jotai", "@jsonjoy", "dexie"],
 };
 
 export function manualChunks(id: string) {
@@ -91,6 +85,9 @@ export function manualChunks(id: string) {
 
     // Otherwise, if that's a node module, return vendor
     if (id.includes("node_modules")) return "vendor";
+
+    // All the stuff remaining should be the app
+    return "app";
 }
 
 export function onwarn(warning: RollupLog, warn: LoggingFunction) {
