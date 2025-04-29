@@ -90,6 +90,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.4",
     "@microsoft/api-extractor": "^7.52.5",
+    "@rsbuild/plugin-node-polyfill": "^1.3.0",
     "@rslib/core": "^0.6.7",
     "@types/node": "^22.15.3",
     "typescript": "^5.8.3"
