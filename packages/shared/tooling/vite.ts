@@ -1,92 +1,149 @@
-import type { LoggingFunction, RollupLog } from "rollup";
+import type { LoggingFunction, ManualChunkMeta, RollupLog } from "rollup";
 
-/**
- * Built from a bundle:check and the dependency graph:
- *  - https://npmgraph.js.org/?q=https://raw.githubusercontent.com/frak-id/wallet/refs/heads/dev/packages/wallet/package.json
- *
- * Try to mimic a granular chunking approach: https://web.dev/articles/granular-chunking-nextjs (but manually)
- */
-const multipleLibsFromKey = {
-    "blockchain-libs": [
-        // app essentials
-        "app-essentials/src/blockchain/wallet.ts",
-        "app-essentials/src/blockchain/index.ts",
-        // top level libs
+// Define some specific vendor chunks
+const vendorChunks = {
+    // Generic UI related chunks
+    1: [
+        "node_modules/vaul",
+        "node_modules/@radix-ui",
+        "node_modules/micromark",
+        "node_modules/lucide-react",
+        "node_modules/cuer",
+        "nprogress",
+        "node_modules/react-hook-form",
+        "node_modules/react-dropzone",
+    ],
+    // Blockchain related chunks
+    2: [
         "node_modules/viem",
-        "node_modules/wagmi",
-        "node_modules/@wagmi",
         "node_modules/ox",
         "node_modules/permissionless",
-        // dependency
-        "node_modules/use-sync-external-store",
-        "node_modules/@scure",
-        "node_modules/abitype",
-        "node_modules/zustand", // <- to move out if we start to use it globally
-        "node_modules/mipd",
-        "node_modules/elliptic",
-        "node_modules/readable-stream",
-    ],
-    webauthn: [
-        // Lib used to parse webauthn signature
-        "node_modules/@peculiar",
-        "node_modules/tiny-cbor",
-        "node_modules/@evischuck/tiny-cbor",
-        "node_modules/hexagon",
-        "node_modules/asn1.js",
-        "node_modules/asn1js",
-        "node_modules/pvutils",
-        "node_modules/pvtsutils",
-        "node_modules/cbor",
-        // Generic lib to check / generate webauthn signature
         "node_modules/@simplewebauthn",
+        "node_modules/@peculiar"
     ],
-    polyfill: [
-        "node_modules/vite-plugin-node-polyfills",
-        "node_modules/browserify-rsa",
-        "node_modules/browserify-sign",
-        "node_modules/core-js",
-    ],
-    ui: [
-        "node_modules/@radix-ui",
-        "node_modules/vaul",
-        "node_modules/react-hook-form",
-        "node_modules/lucide-react",
-        "node_modules/react-dropzone",
-        "node_modules/file-selector",
-        "node_modules/@floating-ui",
-        "node_modules/nprogress",
-        "node_modules/micromark",
-        "node_modules/i18next",
-        "node_modules/cuer",
-        "node_modules/qr",
-        "node_modules/@lottiefiles",
-    ],
-    // state: ["@tanstack", "ky", "jotai", "@jsonjoy", "dexie"],
-    react: [
-        "node_modules/react",
-        "node_modules/react-dom",
-        "node_modules/react-router",
+    // Translation + shared ui
+    3: [
+        "i18next",
+        "packages/shared"
     ],
 };
 
-export function manualChunks(id: string) {
-    // todo: temp just for testing
-    if (id.includes("app-essentials")) return "app-essentials";
-    if (id.includes("node_modules")) return "vendor";
-    return;
+// Define the app packages
+const appPackages = [
+    "packages/app-essentials",
+    "packages/wallet",
+    "frak-wallet/sdk/core",
+];
 
-    // Check if that's in the multiple libs bundle
-    for (const [key, libs] of Object.entries(multipleLibsFromKey)) {
+// Package that we shouldn't handle, and let the rollup compiler find the ideal place for them
+const unhandledPackages = [
+    "vite",
+    "node_modules/react-dom/",
+    "node_modules/react-router/",
+];
+
+/**
+ * Create some manual chunks
+ *  -> The check order should be as follow -> unhandled -> listener -> app -> vendorChunks -> vendor
+ * 
+ * If no primary match found, check for potentially sub vendor lib (if also used on app or unhandled it will be placed in the general vendor chunk)
+ */
+export function manualChunks(id: string, meta: ManualChunkMeta) {
+    // if (id.includes("listener")) {
+    //     console.log("listener", id);
+    // }
+
+    // If the package is in the unhandled packages, return undefined
+    if (unhandledPackages.find((pkg) => id.includes(pkg))) {
+        return undefined;
+    }
+
+    // Early exit on some specific app packages
+    if (appPackages.find((pkg) => id.includes(pkg))) {
+        return "app";
+    }
+
+    // Check if that's id is in our predefined list
+    for (const [key, libs] of Object.entries(vendorChunks)) {
         if (libs.find((lib) => id.includes(lib))) {
-            return key;
+            return `vendor${key}`;
         }
     }
 
-    // Otherwise, if that's a node module, return vendor
-    if (id.includes("node_modules")) return "vendor";
+    // Otherwise, try to find a specific (checking the importer of this id recursively)
+    const vendorChunk = findVendorChunk(id, meta);
+    if (vendorChunk?.startsWith("vendor")) {
+        return vendorChunk;
+    }
 
-    // All the stuff remaining should be the app
-    // return "app";
+    // If we didn't find a valid vendor chunk, return the regular chunk
+    return "vendor";
+}
+
+/**
+ * Recursively find the importer package key
+ */
+function findVendorChunk(
+    id: string,
+    meta: ManualChunkMeta,
+    iterations?: number
+): string | undefined | null {
+    const info = meta.getModuleInfo(id);
+    const importers = info?.importers;
+    if (
+        // If entrypoint, or too many iterations, return null
+        info?.isEntry ||
+        (iterations ?? 0) > 5 ||
+        // If no importers, or too many importers, return null
+        !importers ||
+        importers.length > 15
+    ) {
+        return null;
+    }
+
+    // Iterate over each imports
+    const packages = importers.map((importer) => {
+        // If the package is in the unhandled packages, return undefined
+        if (unhandledPackages.find((pkg) => importer.includes(pkg))) {
+            return undefined;
+        }
+
+        // If the root package is in the app packages, return "app"
+        if (appPackages.find((pkg) => importer.includes(pkg))) {
+            return "app";
+        }
+
+        // Try to find a matching vendor chunk
+        for (const [key, libs] of Object.entries(vendorChunks)) {
+            if (libs.find((lib) => importer.includes(lib))) {
+                return `vendor${key}`;
+            }
+        }
+
+        // Recursively find the importer package
+        const recursiveImporter = findVendorChunk(importer, meta, (iterations ?? 0) + 1);
+        if (recursiveImporter) {
+            return recursiveImporter;
+        }
+
+        return undefined;
+    }).filter(Boolean);
+
+    if (packages.length === 0) {
+        return undefined;
+    }
+
+    // Get the unique packages found
+    const uniquePackages = new Set(packages);
+    if (uniquePackages.size > 1) {
+        console.log(
+            `Found multiple importer packages for ${id}: ${Array.from(uniquePackages).join(", ")}`
+        );
+        return undefined;
+    }
+
+    // Return the first package if there is one
+    return Array.from(uniquePackages)[0];
 }
 
 export function onwarn(warning: RollupLog, warn: LoggingFunction) {

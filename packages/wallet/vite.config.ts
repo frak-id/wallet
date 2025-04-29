@@ -89,8 +89,8 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
                     // Set a min chunk size to 16kb
                     // note, this is pre-minification chunk size, not the final bundle size
                     experimentalMinChunkSize: 32000,
-                    manualChunks(id) {
-                        return manualChunks(id);
+                    manualChunks(id, meta) {
+                        return manualChunks(id, meta);
                     },
                 },
                 onwarn,
