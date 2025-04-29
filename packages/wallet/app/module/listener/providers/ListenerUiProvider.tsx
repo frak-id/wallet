@@ -88,7 +88,7 @@ type UIContext = {
 /**
  * Context for the different type of UI we can display
  */
-export const ListenerUiContext = createContext<UIContext | undefined>(
+const ListenerUiContext = createContext<UIContext | undefined>(
     undefined
 );
 
