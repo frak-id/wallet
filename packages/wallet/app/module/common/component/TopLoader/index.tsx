@@ -1,5 +1,5 @@
 import NProgress from "nprogress";
-import nProgressStylesUrl from "nprogress/nprogress.css?url";
+import "nprogress/nprogress.css";
 import { useEffect, useMemo } from "react";
 import { useFetchers, useNavigation } from "react-router";
 
@@ -32,5 +32,3 @@ export function TopLoader() {
 
     return null;
 }
-
-export { nProgressStylesUrl };

@@ -1,9 +1,9 @@
-import { Input, type InputProps } from "@shared/module/component/forms/Input";
 import type {
     ControllerRenderProps,
     FieldPath,
     FieldValues,
 } from "react-hook-form";
+import { Input, type InputProps } from "../Input";
 
 type InputNumberProps = InputProps &
     ControllerRenderProps<FieldValues, FieldPath<FieldValues>>;

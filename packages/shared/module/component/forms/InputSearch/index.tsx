@@ -1,5 +1,5 @@
-import { Input, type InputProps } from "@shared/module/component/forms/Input";
 import { Search } from "lucide-react";
+import { Input, type InputProps } from "../Input";
 import styles from "./index.module.css";
 
 export const InputSearch = ({ ref, type, ...props }: InputProps) => {

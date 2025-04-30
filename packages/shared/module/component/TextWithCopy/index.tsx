@@ -1,6 +1,6 @@
-import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
 import { Check, Clipboard } from "lucide-react";
 import type { CSSProperties, PropsWithChildren } from "react";
+import { useCopyToClipboardWithState } from "../../hook/useCopyToClipboardWithState";
 import { Button } from "../Button";
 import styles from "./index.module.css";
 

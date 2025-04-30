@@ -1,5 +1,4 @@
-import { nProgressStylesUrl } from "@/module/common/component/TopLoader";
-import allCssUrl from "@/styles/all.css?url";
+import "@/styles/all.css?url";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import type { LinksFunction, MetaFunction } from "react-router";
 
@@ -140,11 +139,12 @@ const links: LinksFunction = () => [
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap",
     },
-    {
-        rel: "stylesheet",
-        href: allCssUrl,
-    },
-    { rel: "stylesheet", href: nProgressStylesUrl },
+    // todo: how to handle css url with rsbuild?
+    // {
+    //     rel: "stylesheet",
+    //     href: allCssUrl,
+    // },
+    // { rel: "stylesheet", href: nProgressStylesUrl },
 ];
 
 export const rootConfig = {

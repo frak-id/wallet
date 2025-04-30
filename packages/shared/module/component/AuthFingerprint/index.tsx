@@ -1,8 +1,8 @@
-import { Fingerprint } from "@shared/module/asset/icons/Fingerprint";
-import { FingerprintFrak } from "@shared/module/asset/icons/FingerprintFrak";
-import { ButtonRipple } from "@shared/module/component/ButtonRipple";
 import { cx } from "class-variance-authority";
 import type { PropsWithChildren, ReactNode } from "react";
+import { Fingerprint } from "../../asset/icons/Fingerprint";
+import { FingerprintFrak } from "../../asset/icons/FingerprintFrak";
+import { ButtonRipple } from "../ButtonRipple";
 import styles from "./index.module.css";
 
 type AuthFingerprintProps = {

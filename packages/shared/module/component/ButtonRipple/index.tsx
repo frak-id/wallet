@@ -1,6 +1,6 @@
-import { Spinner } from "@shared/module/component/Spinner";
 import type { MouseEvent } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
+import { Spinner } from "../Spinner";
 import styles from "./index.module.css";
 
 type AuthFingerprintProps = {

@@ -1,4 +1,4 @@
-import { useEscapeKeydown } from "@shared/module/hook/useEscapeKeydown";
+import { useEscapeKeydown } from "../../hook/useEscapeKeydown";
 import styles from "./index.module.css";
 
 type OverlayProps = {

@@ -13,9 +13,6 @@
         "isolatedModules": true,
         "jsx": "preserve",
         "incremental": true,
-        "paths": {
-            "@shared/*": ["./*"]
-        },
         "verbatimModuleSyntax": true
     },
     "include": ["**/*.d.ts", "**/*.ts", "**/*.tsx"],
