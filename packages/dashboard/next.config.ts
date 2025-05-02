@@ -43,6 +43,7 @@ const nextConfig: NextConfig = {
         BACKEND_URL: process.env.BACKEND_URL,
         INDEXER_URL: process.env.INDEXER_URL,
         ERPC_URL: process.env.ERPC_URL,
+        UMAMI_BUSINESS_WEBSITE_ID: process.env.UMAMI_BUSINESS_WEBSITE_ID,
         DEBUG: JSON.stringify(DEBUG),
         // Secrets from sst
         ...envFromSst,

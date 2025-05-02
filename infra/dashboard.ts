@@ -6,6 +6,7 @@ import {
     mongoBusinessDb,
     nexusRpcSecret,
     sessionEncryptionKy,
+    umamiBusinessWebsiteId,
     walletUrl,
 } from "./config";
 import { isProd } from "./utils";
@@ -65,6 +66,7 @@ new sst.aws.StaticSite("Admin", {
     environment: {
         STAGE: $app.stage,
         INDEXER_URL: indexerUrl,
+        UMAMI_BUSINESS_WEBSITE_ID: umamiBusinessWebsiteId.value,
     },
     dev: { autostart: false },
 });
