@@ -1,6 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
+import type { NotificationsService } from "../../notifications/services/NotificationsService";
+import type { PairingDb } from "../context";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import type {
@@ -14,6 +16,13 @@ import type {
 import { PairingRepository } from "./PairingRepository";
 
 export class PairingRouterRepository extends PairingRepository {
+    constructor(
+        pairingDb: PairingDb,
+        private readonly notificationsService: NotificationsService
+    ) {
+        super(pairingDb);
+    }
+
     /**
      * Handle a websocket message
      */
@@ -166,6 +175,17 @@ export class PairingRouterRepository extends PairingRepository {
             },
             topic: "target",
         });
+
+        // Send a notification to the target
+        if (pairing.wallet) {
+            await this.notificationsService.sendNotification({
+                wallets: [pairing.wallet],
+                payload: {
+                    title: "Signature request",
+                    body: "A biometric signature is requested from your desktop device",
+                },
+            });
+        }
     }
 
     /* -------------------------------------------------------------------------- */

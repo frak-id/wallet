@@ -1,8 +1,8 @@
 import { postgresContext } from "@backend-common";
-import { lt } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
+import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import { pushTokensTable } from "./db/schema";
+import { NotificationsService } from "./services/NotificationsService";
 
 export const notificationContext = new Elysia({
     name: "Context.notification",
@@ -13,27 +13,30 @@ export const notificationContext = new Elysia({
             client: postgresDb,
             schema: { pushTokensTable },
         });
+
+        const notificationsService = new NotificationsService(notificationDb);
         return {
             ...decorators,
-            notificationDb,
-            cleanupExpiredTokens: async () => {
-                await notificationDb
-                    .delete(pushTokensTable)
-                    .where(lt(pushTokensTable.expireAt, new Date()))
-                    .execute();
+            notification: {
+                service: notificationsService,
+                db: notificationDb,
             },
         };
     })
-    // Macro tyo automatically cleanup expired tokens
+    // Macro to automatically cleanup expired tokens
     .macro({
         cleanupTokens(isEnabled?: boolean) {
             if (!isEnabled) return;
 
             return {
-                afterResponse: async ({ cleanupExpiredTokens }) => {
-                    await cleanupExpiredTokens();
+                afterResponse: async ({ notification: { service } }) => {
+                    await service.cleanupExpiredTokens();
                 },
             };
         },
     })
     .as("plugin");
+
+export type NotificationDb = PostgresJsDatabase<{
+    pushTokensTable: typeof pushTokensTable;
+}>;

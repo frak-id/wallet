@@ -2,14 +2,10 @@ import { indexerApiContext, log, nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import type { GetMembersWalletResponseDto } from "@frak-labs/app-essentials";
 import { Mutex } from "async-mutex";
-import { inArray } from "drizzle-orm";
 import { Elysia } from "elysia";
 import type { KyInstance } from "ky";
-import { parallel } from "radash";
 import type { Address } from "viem";
-import { sendNotification, setVapidDetails } from "web-push";
 import { notificationContext } from "../context";
-import { pushTokensTable } from "../db/schema";
 import {
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
@@ -27,16 +23,15 @@ export const sendRoutes = new Elysia()
         "/send",
         async ({
             body: { targets, payload },
-            notificationDb,
+            notification: { service },
             sendNotifMutex,
-            cleanupExpiredTokens,
             indexerApi,
             businessSession,
         }) =>
             sendNotifMutex.runExclusive(async () => {
                 if (!businessSession) return;
 
-                await cleanupExpiredTokens();
+                await service.cleanupExpiredTokens();
 
                 // todo: Notification tracking (send, received, clicked)
 
@@ -46,39 +41,12 @@ export const sendRoutes = new Elysia()
                     wallet: businessSession.wallet,
                     indexerApi,
                 });
-                const tokens =
-                    await notificationDb.query.pushTokensTable.findMany({
-                        where: inArray(pushTokensTable.wallet, wallets),
-                    });
-                if (tokens.length === 0) {
-                    log.debug("No push tokens found for the given wallets");
-                    return;
-                }
-                log.info(`Sending notification to ${tokens.length} wallets`);
 
-                // Set the vapid details for the notification
-                setVapidDetails(
-                    "mailto:hello@frak.id",
-                    process.env.VAPID_PUBLIC_KEY as string,
-                    process.env.VAPID_PRIVATE_KEY as string
-                );
-
-                // Send all the notification in parallel, by batch of 30
-                await parallel(
-                    30,
-                    tokens,
-                    async (token) =>
-                        await sendNotification(
-                            {
-                                endpoint: token.endpoint,
-                                keys: {
-                                    p256dh: token.keyP256dh,
-                                    auth: token.keyAuth,
-                                },
-                            },
-                            JSON.stringify(payload)
-                        )
-                );
+                // Send the notification
+                await service.sendNotification({
+                    wallets,
+                    payload,
+                });
             }),
         {
             nextAuthenticated: "business",
