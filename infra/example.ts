@@ -21,6 +21,7 @@ export const ethccWebsite = new sst.aws.StaticSite("WalletExampleEthCC", {
         STAGE: $app.stage,
         FRAK_WALLET_URL: walletUrl,
     },
+    dev: { autostart: false },
 });
 
 /**
@@ -39,6 +40,7 @@ export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
     vite: {
         types: "./sst-env.d.ts",
     },
+    dev: { autostart: false },
 });
 
 /**
@@ -50,4 +52,5 @@ export const componentsWebsite = new sst.aws.SvelteKit("ComponentsDemo", {
     domain: {
         name: "components.frak.id",
     },
+    dev: { autostart: false },
 });

@@ -12,14 +12,18 @@ const config: KnipConfig = {
             ignore: [".sst/**"],
         },
         "example/*": {
-            entry: ["app/*.{ts,tsx}", "app/views/**/*.tsx"],
-            project: ["app/**/*.{ts,tsx}"],
+            entry: ["app/*.{ts,tsx,css}", "app/views/**/*.tsx"],
+            project: ["app/**/*.{ts,tsx,css}"],
         },
         "packages/shared": {
             entry: "**/*.{ts,tsx}",
         },
         "packages/wallet": {
             entry: ["app/*.{ts,tsx}", "app/views/**/*.tsx"],
+            project: ["app/**/*.{ts,tsx}"],
+        },
+        "packages/dashboard-admin": {
+            entry: ["app/root.tsx", "app.routes.ts", "app/routes/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}"],
         },
         "packages/backend-elysia": {

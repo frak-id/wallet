@@ -1,5 +1,5 @@
 import { walletSessionContext } from "@backend-common";
-import { TokenAmountType, t } from "@backend-utils";
+import { t } from "@backend-utils";
 import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { sift } from "radash";
@@ -78,11 +78,11 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                 401: t.String(),
                 200: t.Object({
                     // Total
-                    total: TokenAmountType,
+                    total: t.TokenAmount,
                     // Details about the balances
                     balances: t.Array(
                         t.Intersect([
-                            TokenAmountType,
+                            t.TokenAmount,
                             t.Object({
                                 token: t.Address(),
                                 name: t.String(),
@@ -176,11 +176,11 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                 401: t.String(),
                 200: t.Object({
                     // Total claimable
-                    total: TokenAmountType,
+                    total: t.TokenAmount,
                     // Details about the claimable rewards
                     claimables: t.Array(
                         t.Intersect([
-                            TokenAmountType,
+                            t.TokenAmount,
                             t.Object({
                                 contract: t.Address(),
                                 token: t.Address(),

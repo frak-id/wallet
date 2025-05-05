@@ -6,6 +6,7 @@ import {
     mongoBusinessDb,
     nexusRpcSecret,
     sessionEncryptionKy,
+    umamiBusinessWebsiteId,
     walletUrl,
 } from "./config";
 import { isProd } from "./utils";
@@ -15,7 +16,7 @@ const subdomain = isProd ? "business" : "business-dev";
 const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
 
 /**
- * EthCC wallet demo website
+ * Business dashboard
  */
 export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
     path: "packages/dashboard",
@@ -43,4 +44,29 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
         mongoBusinessDb,
         onRampUrl,
     ],
+});
+
+/**
+ * Admin business website
+ */
+new sst.aws.StaticSite("Admin", {
+    path: "packages/dashboard-admin",
+    // Set the custom domain
+    domain: {
+        name: `${isProd ? "admin-stats" : "admin-stats-dev"}.frak.id`,
+    },
+    build: {
+        command: "bun run build",
+        output: "build/client",
+    },
+    vite: {
+        types: "./sst-env.d.ts",
+    },
+    // Environment variables
+    environment: {
+        STAGE: $app.stage,
+        INDEXER_URL: indexerUrl,
+        UMAMI_BUSINESS_WEBSITE_ID: umamiBusinessWebsiteId.value,
+    },
+    dev: { autostart: false },
 });

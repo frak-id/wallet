@@ -1,5 +1,5 @@
 import { indexerApiContext } from "@backend-common";
-import { TokenAmountType, t } from "@backend-utils";
+import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { interactionsContext } from "../context";
 import { CampaignDataRepository } from "../repositories/CampaignDataRepository";
@@ -85,16 +85,16 @@ export const rewardsRoutes = new Elysia({ prefix: "/reward" })
             response: t.Union([
                 t.Object({
                     // Total for both referrer and referee
-                    maxReferrer: TokenAmountType,
-                    maxReferee: TokenAmountType,
+                    maxReferrer: t.TokenAmount,
+                    maxReferee: t.TokenAmount,
                     // Array of all the activate rewards
                     activeRewards: t.Array(
                         t.Object({
                             campaign: t.Address(),
                             interactionTypeKey: t.String(),
                             token: t.Address(),
-                            referrer: TokenAmountType,
-                            referee: TokenAmountType,
+                            referrer: t.TokenAmount,
+                            referee: t.TokenAmount,
                             triggerData: t.Union([
                                 t.Object({
                                     baseReward: t.Number(),

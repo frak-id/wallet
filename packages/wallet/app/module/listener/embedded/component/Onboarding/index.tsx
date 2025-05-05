@@ -12,7 +12,7 @@ import {
 import { Trans } from "react-i18next";
 import styles from "./index.module.css";
 
-export function Onboarding({
+function Onboarding({
     style,
     isReverse,
     children,
@@ -37,7 +37,7 @@ export function Onboarding({
     );
 }
 
-export function OnboardingArrow({ style }: { style?: CSSProperties }) {
+function OnboardingArrow({ style }: { style?: CSSProperties }) {
     return (
         <Arrow
             className={styles.onboarding__arrow}

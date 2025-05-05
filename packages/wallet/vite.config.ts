@@ -81,19 +81,21 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
             proxy: {},
         },
         build: {
+            // todo: should be switched to false once we resolved css conflicts
+            cssCodeSplit: true,
             target: isSsrBuild ? "ES2022" : "ES2020",
             rollupOptions: {
                 output: {
                     // Set a min chunk size to 16kb
                     // note, this is pre-minification chunk size, not the final bundle size
-                    experimentalMinChunkSize: 16384,
-                    manualChunks(id) {
-                        return manualChunks(id);
+                    experimentalMinChunkSize: 32000,
+                    manualChunks(id, meta) {
+                        return manualChunks(id, meta);
                     },
                 },
                 onwarn,
             },
-            sourcemap: process.env.STAGE !== "prod",
+            sourcemap: false,
         },
         optimizeDeps: {
             exclude: ["react-scan"],

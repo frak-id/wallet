@@ -2,7 +2,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { Spinner } from "@shared/module/component/Spinner";
 import { mergeElement } from "@shared/module/utils/mergeElement";
 import { type VariantProps, cva } from "class-variance-authority";
-import type { ComponentPropsWithRef, ReactNode } from "react";
+import type { ComponentPropsWithRef, ReactNode, RefObject } from "react";
 import styles from "./index.module.css";
 
 export type ButtonProps = ComponentPropsWithRef<"button"> &
@@ -94,7 +94,7 @@ export const Button = ({
                 gap,
                 className,
             })}
-            ref={ref}
+            ref={ref as RefObject<HTMLButtonElement>}
             type={type}
             {...props}
         >

@@ -1,5 +1,5 @@
 import { walletSessionContext } from "@backend-common";
-import { TokenAmountType, t } from "@backend-utils";
+import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { walletContext } from "../context";
 
@@ -19,7 +19,7 @@ export const pendingBalanceRoutes = new Elysia({ prefix: "/pending-balance" })
             authenticated: "wallet",
             response: {
                 401: t.String(),
-                200: TokenAmountType,
+                200: t.TokenAmount,
             },
         }
     );

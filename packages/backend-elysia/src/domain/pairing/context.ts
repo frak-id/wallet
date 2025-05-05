@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 import { postgresContext, sessionContext } from "../../common";
 import { walletSdkSessionService } from "../auth/services/WalletSdkSessionService";
 import { walletSsoService } from "../auth/services/WalletSsoService";
+import { notificationContext } from "../notifications/context";
 import { pairingSignatureRequestTable, pairingTable } from "./db/schema";
 import { PairingConnectionRepository } from "./repositories/PairingConnectionRepository";
 import { PairingRouterRepository } from "./repositories/PairingRouterRepository";
@@ -14,12 +15,14 @@ export const pairingContext = new Elysia({
     .use(sessionContext)
     .use(walletSdkSessionService)
     .use(walletSsoService)
+    .use(notificationContext)
     .decorate(
         ({
             postgresDb,
             generateSdkJwt,
             walletJwt,
             ssoService,
+            notification,
             ...decorators
         }) => {
             const pairingDb = drizzle({
@@ -36,7 +39,10 @@ export const pairingContext = new Elysia({
                 ssoService,
                 generateSdkJwt
             );
-            const routerRepository = new PairingRouterRepository(pairingDb);
+            const routerRepository = new PairingRouterRepository(
+                pairingDb,
+                notification.service
+            );
 
             return {
                 pairing: {
@@ -49,6 +55,7 @@ export const pairingContext = new Elysia({
                 generateSdkJwt,
                 walletJwt,
                 ssoService,
+                notification,
                 ...decorators,
             };
         }

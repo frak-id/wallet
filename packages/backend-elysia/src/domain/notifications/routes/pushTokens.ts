@@ -10,10 +10,10 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
     .use(walletSessionContext)
     .put(
         "",
-        async ({ body, notificationDb, walletSession }) => {
+        async ({ body, notification: { db }, walletSession }) => {
             if (!walletSession) return;
             // Insert our push token
-            await notificationDb
+            await db
                 .insert(pushTokensTable)
                 .values({
                     wallet: walletSession.address,
@@ -48,11 +48,11 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
     )
     .delete(
         "",
-        async ({ notificationDb, walletSession }) => {
+        async ({ notification: { db }, walletSession }) => {
             if (!walletSession) return;
 
             // Remove all the push tokens for this wallet
-            await notificationDb
+            await db
                 .delete(pushTokensTable)
                 .where(eq(pushTokensTable.wallet, walletSession.address))
                 .execute();
@@ -64,11 +64,11 @@ export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
     )
     .get(
         "/hasAny",
-        async ({ notificationDb, walletSession }) => {
+        async ({ notification: { db }, walletSession }) => {
             if (!walletSession) return false;
 
             // Try to find the first push token
-            const item = await notificationDb.query.pushTokensTable.findFirst({
+            const item = await db.query.pushTokensTable.findFirst({
                 where: eq(pushTokensTable.wallet, walletSession.address),
             });
             // Return if we found something

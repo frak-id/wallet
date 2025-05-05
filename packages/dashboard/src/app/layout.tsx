@@ -5,6 +5,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "../polyfill/bigint-serialization";
 import { isRunningInProd } from "@frak-labs/app-essentials";
+import { Analytics } from "@frak-labs/shared/module/component/Analytics";
 
 export const metadata: Metadata = {
     title: "Frak Business Hub | Manage Your Web3 Products",
@@ -68,6 +69,15 @@ export const viewport: Viewport = {
     themeColor: "#001432",
 };
 
+function AnalyticsWrapper() {
+    const websiteId = process.env.UMAMI_BUSINESS_WEBSITE_ID;
+
+    if (websiteId) {
+        return <Analytics websiteId={websiteId} />;
+    }
+    return null;
+}
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -80,6 +90,7 @@ export default function RootLayout({
                     <script src="//unpkg.com/react-scan/dist/auto.global.js" />
                 )}
                 <Fonts />
+                <AnalyticsWrapper />
             </head>
             <body>
                 <RootProvider>{children}</RootProvider>

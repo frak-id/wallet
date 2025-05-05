@@ -5,16 +5,11 @@ import {
     PurchaseInteractionEncoder,
     RetailInteractionEncoder,
 } from "@frak-labs/core-sdk/interactions";
-import { Value } from "@sinclair/typebox/value";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { type Hex, isHex, keccak256, toHex } from "viem";
+import { type Hex, isAddress, isHex, keccak256, toHex } from "viem";
 import { interactionsContext } from "../../context";
 import { backendTrackerTable, pendingInteractionsTable } from "../../db/schema";
-import {
-    BackendInteractionDto,
-    RawBackendInteractionDto,
-} from "../../dto/InteractionDto";
 
 export const webhookPushRoutes = new Elysia()
     .use(interactionsContext)
@@ -81,7 +76,8 @@ export const webhookPushRoutes = new Elysia()
         }) => {
             // Validate the body received
             const body = JSON.parse(rawBody);
-            const isValidBody = Value.Check(BackendInteractionDto, body);
+            const isValidBody =
+                body.wallet && body.interaction && isAddress(body.wallet);
             if (!isValidBody) {
                 return error(400, "Invalid body");
             }
@@ -149,7 +145,8 @@ export const webhookPushRoutes = new Elysia()
         }) => {
             // Validate the body received
             const body = JSON.parse(rawBody);
-            const isValidBody = Value.Check(RawBackendInteractionDto, body);
+            const isValidBody =
+                body.wallet && body.key && body.data && isAddress(body.wallet);
             if (!isValidBody) {
                 return error(400, "Invalid body");
             }

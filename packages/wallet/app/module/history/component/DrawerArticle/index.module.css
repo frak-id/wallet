@@ -1,7 +1,0 @@
-.drawerArticle__trigger {
-    width: 100%;
-}
-
-.drawerArticle__trigger + .drawerArticle__trigger {
-    margin-top: 20px;
-}

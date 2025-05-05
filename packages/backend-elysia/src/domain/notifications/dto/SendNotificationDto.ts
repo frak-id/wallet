@@ -55,3 +55,5 @@ export const SendNotificationPayloadDto = t.Object({
         )
     ),
 });
+
+export type SendNotificationPayload = typeof SendNotificationPayloadDto.static;

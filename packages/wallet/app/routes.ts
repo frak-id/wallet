@@ -43,11 +43,8 @@ export default [
         ]),
     ]),
 
-    // SDK routes
-    layout("./views/layouts/sdk.tsx", [
-        // Listener Routes
-        route("/listener", "./views/listener.tsx"),
-    ]),
+    // Listener route for the SDK
+    route("/listener", "./views/listener.tsx"),
 
     // Catch-all Route
     route("*", "./views/catch-all.tsx"),

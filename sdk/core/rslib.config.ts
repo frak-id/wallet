@@ -1,4 +1,5 @@
 import { tools } from "@frak-labs/shared/tooling/rslib";
+import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
 import { type LibConfig, defineConfig } from "@rslib/core";
 
 function createLibConfig(config: LibConfig = {}): LibConfig {
@@ -51,6 +52,7 @@ export default defineConfig({
             format: "cjs",
         }),
     ],
+    plugins: [pluginNodePolyfill()],
     mode: "production",
     output: {
         target: "web",
