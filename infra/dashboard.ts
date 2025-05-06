@@ -36,6 +36,7 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
         BACKEND_URL: backendUrl,
         INDEXER_URL: indexerUrl,
         ERPC_URL: erpcUrl,
+        UMAMI_BUSINESS_WEBSITE_ID: umamiBusinessWebsiteId.value,
     },
     link: [
         drpcApiKey,
@@ -66,7 +67,6 @@ new sst.aws.StaticSite("Admin", {
     environment: {
         STAGE: $app.stage,
         INDEXER_URL: indexerUrl,
-        UMAMI_BUSINESS_WEBSITE_ID: umamiBusinessWebsiteId.value,
     },
     dev: { autostart: false },
 });
