@@ -5,7 +5,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "../polyfill/bigint-serialization";
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import { Analytics } from "@frak-labs/shared/module/component/Analytics";
+import Script from "next/script";
 
 export const metadata: Metadata = {
     title: "Frak Business Hub | Manage Your Web3 Products",
@@ -73,7 +73,13 @@ function AnalyticsWrapper() {
     const websiteId = process.env.UMAMI_BUSINESS_WEBSITE_ID;
 
     if (websiteId) {
-        return <Analytics websiteId={websiteId} />;
+        return (
+            <Script
+                async
+                src="https://umami.frak.id/script.js"
+                data-website-id={process.env.UMAMI_BUSINESS_WEBSITE_ID}
+            />
+        );
     }
     return null;
 }
