@@ -62,7 +62,10 @@ export function AuthenticationGated({
     if (!isAuthenticated) {
         return (
             <div>
-                <p>Please connect your wallet to continue</p>
+                <h1>Authentication required</h1>
+                <br />
+                <p>Please connect your wallet to {action}</p>
+                <br />
                 <Button
                     onClick={() =>
                         authenticate({
@@ -76,7 +79,7 @@ export function AuthenticationGated({
                     isLoading={isPending}
                     disabled={isPending}
                 >
-                    {isPending && <Spinner />} Connect to {action}
+                    {isPending && <Spinner />} Authenticate
                 </Button>
             </div>
         );

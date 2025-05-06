@@ -11,7 +11,7 @@ import { useMemo } from "react";
  *
  * todo: query param with: domain, setup code, wallet address, product types
  */
-export function Mint() {
+export function EmbeddedMint() {
     const searchParams = useSearchParams();
 
     const { name, domain, setupCode, productTypes } = useMemo(() => {
@@ -42,30 +42,22 @@ export function Mint() {
     return (
         <div>
             <h1>Mint</h1>
+            <br />
             <p>Registering your {domain} website on Frak</p>
+            <br />
             {/* Domain validation info */}
             {isDomainValidLoading ? (
                 <Spinner />
+            ) : isDomainValid ? (
+                <DoMintComponent
+                    name={name}
+                    domain={domain}
+                    setupCode={setupCode}
+                    productTypes={productTypes}
+                />
             ) : (
-                <p>
-                    {isDomainValid ? (
-                        <DoMintComponent
-                            name={name}
-                            domain={domain}
-                            setupCode={setupCode}
-                            productTypes={productTypes}
-                        />
-                    ) : (
-                        "Domain is not valid"
-                    )}
-                </p>
+                <p>Invalid setup code</p>
             )}
-
-            {/* Mint info */}
-
-            <p>{domain}</p>
-            <p>{setupCode}</p>
-            <p>{productTypes}</p>
         </div>
     );
 }
