@@ -2,6 +2,8 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { useEmbeddedListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import { LogoFrakWithName } from "@shared/module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@shared/module/atoms/store";
+import { prefixWalletCss } from "@shared/module/utils/prefixWalletCss";
+import { cx } from "class-variance-authority";
 import styles from "../Wallet/index.module.css";
 
 /**
@@ -20,7 +22,10 @@ export function ListenerWalletHeader() {
                 <LogoFrakWithName
                     width={57}
                     height={16}
-                    className={styles.modalListenerWallet__logoFrak}
+                    className={cx(
+                        styles.modalListenerWallet__logoFrak,
+                        prefixWalletCss("logoFrak")
+                    )}
                 />
             )}
             {logoUrl && (

@@ -26,6 +26,8 @@ import { RpcErrorCodes } from "@frak-labs/core-sdk";
 import { LogoFrakWithName } from "@shared/module/asset/icons/LogoFrakWithName";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { useMediaQuery } from "@shared/module/hook/useMediaQuery";
+import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
+import { cx } from "class-variance-authority";
 import { useAtomValue } from "jotai";
 import {
     type Dispatch,
@@ -137,7 +139,12 @@ export function ListenerModal({
 
         // The provided by frak component
         const providedBy = (
-            <span className={styles.modalTitle__provided}>
+            <span
+                className={cx(
+                    styles.modalTitle__provided,
+                    prefixModalCss("provided")
+                )}
+            >
                 provided by{" "}
                 <LogoFrakWithName className={styles.modalTitle__logo} />
             </span>
