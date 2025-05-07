@@ -5,7 +5,7 @@ import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
 import { Button } from "@frak-labs/shared/module/component/Button";
 import { Spinner } from "@frak-labs/shared/module/component/Spinner";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 /**
  *
@@ -39,6 +39,12 @@ export function EmbeddedMint() {
             setupCode,
         });
 
+    // Button to exit
+    const close = useCallback(() => {
+        // Close the current window
+        window.close();
+    }, []);
+
     return (
         <div>
             <h1>Mint</h1>
@@ -56,7 +62,14 @@ export function EmbeddedMint() {
                     productTypes={productTypes}
                 />
             ) : (
-                <p>Invalid setup code</p>
+                <>
+                    <p>
+                        Can't register your product. Double check that
+                        everything is right.
+                    </p>
+                    <br />
+                    <Button onClick={close}>Exit</Button>
+                </>
             )}
         </div>
     );
@@ -79,8 +92,13 @@ function DoMintComponent({
     // Mint hook
     const {
         infoTxt,
-        mutation: { mutate: triggerMintMyContent, isIdle, error },
-    } = useMintMyProduct();
+        mutation: { mutate: triggerMintMyContent, isPending, error },
+    } = useMintMyProduct({
+        onSuccess: () => {
+            // Close the current window
+            window.close();
+        },
+    });
 
     // Map the product types to the correct type
     const productTypesArray = productTypes.split(",") as (
@@ -93,8 +111,7 @@ function DoMintComponent({
     )[];
 
     return (
-        <div>
-            <p>Minting your {domain} website on Frak</p>
+        <>
             <Button
                 onClick={() =>
                     triggerMintMyContent({
@@ -104,13 +121,13 @@ function DoMintComponent({
                         productTypes: productTypesArray,
                     })
                 }
-                isLoading={isIdle}
-                disabled={!isIdle}
+                isLoading={isPending}
+                disabled={isPending}
             >
                 Register product
             </Button>
             {infoTxt && <p>{infoTxt}</p>}
             {error && <p>{error.message}</p>}
-        </div>
+        </>
     );
 }
