@@ -1,11 +1,14 @@
 "use client";
 
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
 import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
 import { Button } from "@frak-labs/shared/module/component/Button";
 import { Spinner } from "@frak-labs/shared/module/component/Spinner";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import styles from "./index.module.css";
 
 /**
  *
@@ -46,32 +49,45 @@ export function EmbeddedMint() {
     }, []);
 
     return (
-        <div>
-            <h1>Mint</h1>
-            <br />
-            <p>Registering your {domain} website on Frak</p>
-            <br />
-            {/* Domain validation info */}
-            {isDomainValidLoading ? (
-                <Spinner />
-            ) : isDomainValid ? (
-                <DoMintComponent
-                    name={name}
-                    domain={domain}
-                    setupCode={setupCode}
-                    productTypes={productTypes}
-                />
-            ) : (
-                <>
-                    <p>
-                        Can't register your product. Double check that
-                        everything is right.
-                    </p>
-                    <br />
-                    <Button onClick={close}>Exit</Button>
-                </>
-            )}
-        </div>
+        <>
+            <Title className={styles.title}>Register your shop on Frak</Title>
+            <Panel withBadge={false} title={`Registering ${domain}`}>
+                {/* Domain validation info */}
+                {isDomainValidLoading ? (
+                    <Spinner />
+                ) : isDomainValid ? (
+                    <DoMintComponent
+                        name={name}
+                        domain={domain}
+                        setupCode={setupCode}
+                        productTypes={productTypes}
+                    />
+                ) : (
+                    <>
+                        <p className={styles.error}>
+                            Can't register your product. Double check that
+                            everything is right.
+                            <a
+                                href="/dashboard"
+                                target="_blank"
+                                rel="noreferrer"
+                                className={styles.link}
+                            >
+                                Maybe the domain is already registered.
+                            </a>
+                        </p>
+                        <Button
+                            variant="secondary"
+                            size="small"
+                            className={styles.button}
+                            onClick={close}
+                        >
+                            Close
+                        </Button>
+                    </>
+                )}
+            </Panel>
+        </>
     );
 }
 
@@ -113,6 +129,9 @@ function DoMintComponent({
     return (
         <>
             <Button
+                variant="secondary"
+                size="small"
+                className={styles.button}
                 onClick={() =>
                     triggerMintMyContent({
                         name: name ?? domain,
@@ -124,10 +143,9 @@ function DoMintComponent({
                 isLoading={isPending}
                 disabled={isPending}
             >
-                Register product
+                {isPending ? infoTxt : "Register your shop"}
             </Button>
-            {infoTxt && <p>{infoTxt}</p>}
-            {error && <p>{error.message}</p>}
+            {error && <p className={"error"}>{error.message}</p>}
         </>
     );
 }

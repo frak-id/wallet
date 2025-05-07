@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
+import styles from "./layout.module.css";
 import "./layout.css";
-import { MainLayout } from "@/module/common/component/MainLayout";
 
 export default function EmbeddedLayout({
     children,
 }: Readonly<{
     children: ReactNode;
 }>) {
-    return <MainLayout>{children}</MainLayout>;
+    return <main className={styles.main}>{children}</main>;
 }
