@@ -10,10 +10,6 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import styles from "./index.module.css";
 
-/**
- *
- * todo: query param with: domain, setup code, wallet address, product types
- */
 export function EmbeddedMint() {
     const searchParams = useSearchParams();
 
