@@ -1,0 +1,24 @@
+.error {
+    color: #d32f2f;
+    background: #fff0f0;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.link {
+    display: block;
+    margin-top: 10px;
+    color: #d32f2f !important;
+    text-decoration: underline;
+}
+
+.button {
+    margin-top: 10px;
+    background-color: rgb(48, 48, 48);
+    color: #fff;
+}
+
+.title {
+    margin-bottom: 10px;
+}
