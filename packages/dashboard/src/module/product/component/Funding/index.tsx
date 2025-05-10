@@ -15,17 +15,23 @@ import {
 } from "@/module/product/hook/useGetProductFunding";
 import { useSetBankDistributionStatus } from "@/module/product/hook/useSetBankDistributionStatus";
 import { addresses } from "@frak-labs/app-essentials";
+import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { Button } from "@shared/module/component/Button";
 import { Column, Columns } from "@shared/module/component/Columns";
 import { IconInfo } from "@shared/module/component/IconInfo";
 import { Spinner } from "@shared/module/component/Spinner";
 import { Switch } from "@shared/module/component/Switch";
 import { Tooltip } from "@shared/module/component/Tooltip";
+import { useMutation } from "@tanstack/react-query";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
-import { type Hex, isAddressEqual } from "viem";
+import { type Hex, encodeFunctionData, isAddressEqual } from "viem";
+import { readContract } from "viem/actions";
+import { viemClient } from "../../../../context/blockchain/provider";
+import { useWaitForTxAndInvalidateQueries } from "../../../common/utils/useWaitForTxAndInvalidateQueries";
 import styles from "./index.module.css";
 
 /**
@@ -146,6 +152,8 @@ function ProductFundingBank({ bank }: { bank: ProductBank }) {
                 </Column>
             </Columns>
             <FundBalance bank={bank} isTestBank={isTestBank} />
+            <br />
+            <WithdrawFunds bank={bank} />
         </div>
     );
 }
@@ -178,13 +186,11 @@ function BankAmount({
 function ToggleFundingStatus({ bank }: { bank: ProductBank }) {
     const productId = useAtomValue(productIdAtom);
 
-    const { canUpdate, isSettingDistributionStatus, setDistributionStatus } =
+    const { isSettingDistributionStatus, setDistributionStatus } =
         useSetBankDistributionStatus({
             productId: productId ?? "0x0",
             bank: bank.address,
         });
-
-    if (!canUpdate) return null;
 
     return (
         <>
@@ -258,5 +264,70 @@ function StatusTooltip() {
         >
             <IconInfo />
         </Tooltip>
+    );
+}
+
+/**
+ * Withdraw funds from the bank
+ */
+function WithdrawFunds({ bank }: { bank: ProductBank }) {
+    const { mutateAsync: sendTx } = useSendTransactionAction();
+    const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
+
+    const { mutate, isPending } = useMutation({
+        mutationKey: ["product", "funding", "withdraw", bank.address],
+        mutationFn: async () => {
+            // Check if the bank is currently distributing
+            const isDistributing = await readContract(viemClient, {
+                abi: campaignBankAbi,
+                address: bank.address,
+                functionName: "isDistributionEnabled",
+            });
+
+            const txDatas: Hex[] = [];
+
+            // If distributing tokens, disable distribution first
+            if (isDistributing) {
+                txDatas.push(
+                    encodeFunctionData({
+                        abi: campaignBankAbi,
+                        functionName: "updateDistributionState",
+                        args: [false],
+                    })
+                );
+            }
+
+            // Withdraw funds tx hash
+            txDatas.push(
+                encodeFunctionData({
+                    abi: campaignBankAbi,
+                    functionName: "withdraw",
+                })
+            );
+
+            // Send the transaction
+            const { hash } = await sendTx({
+                tx: txDatas.map((data) => ({
+                    to: bank.address,
+                    data,
+                })),
+            });
+
+            // Invalidate product related queries
+            await waitForTxAndInvalidateQueries({
+                hash,
+                queryKey: ["product"],
+            });
+        },
+    });
+
+    return (
+        <Button
+            variant={"submit"}
+            onClick={() => mutate()}
+            isLoading={isPending}
+        >
+            Withdraw funds
+        </Button>
     );
 }
