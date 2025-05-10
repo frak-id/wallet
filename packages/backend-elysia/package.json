@@ -18,7 +18,7 @@
     "build:package": "bun run build.ts",
     "build:binary-linux-arm64": "bun build --compile --minify --target=bun-linux-arm64 --outfile ./server src/index.ts",
     "build:binary": "bun build --compile --minify --target=bun --outfile ./server src/index.ts",
-    "start": "NODE_ENV=production bun dist/index-terser.js",
+    "start": "NODE_ENV=production bun dist/index.js",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
@@ -54,8 +54,7 @@
     "@types/whatwg-url": "^13.0.0",
     "bun-types": "latest",
     "drizzle-kit": "^0.30.5",
-    "pino-pretty": "^13.0.0",
-    "terser": "^5.39.0"
+    "pino-pretty": "^13.0.0"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"

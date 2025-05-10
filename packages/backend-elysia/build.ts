@@ -1,5 +1,4 @@
-import { build, write } from "bun";
-import { minify } from "terser";
+import { build } from "bun";
 
 const stage = process.env.STAGE ?? "dev";
 
@@ -9,7 +8,8 @@ const result = await build({
     entrypoints: ["./src/index.ts"],
     outdir: "./dist",
     // Terser will handle minification
-    minify: false,
+    minify: true,
+    splitting: false,
     target: "bun",
     // Directly replace some known env during build time
     define: {
@@ -18,7 +18,7 @@ const result = await build({
     },
     // Drop any console or debugger related code
     drop: ["console", "debugger"],
-    sourcemap: "none",
+    sourcemap: "linked",
 });
 console.timeEnd("build-time");
 
@@ -35,49 +35,4 @@ if (!result.success) {
 console.log("Build messages:");
 for (const message of result.logs) {
     console.log(message);
-}
-
-console.log("Output files:");
-for (const output of result.outputs) {
-    console.log(
-        ` - ${output.path}: Initial build ${output.size} bytes (${output.kind})`
-    );
-
-    if (output.kind !== "entry-point" && output.kind !== "chunk") {
-        continue;
-    }
-
-    // Read the src code directly
-    const srcCode = await output.text();
-
-    // Send it to terser for further optimisation
-    const isTopLevel = output.kind === "entry-point";
-    console.time(`terser-${output.path}`);
-    const minified = await minify(srcCode, {
-        toplevel: isTopLevel,
-        compress: {
-            // Drop debugger + console (should have been done by bun)
-            drop_debugger: true,
-            drop_console: true,
-            // Drop unused code at the top level
-            toplevel: isTopLevel,
-            // Drop unused function arguments
-            keep_fargs: false,
-            // Multi pass to ensure we evict all the env specific code
-            passes: 3,
-            // We use the latest ecma script version with bun
-            ecma: 2020,
-        },
-        mangle: {
-            toplevel: isTopLevel,
-        },
-    });
-    console.timeEnd(`terser-${output.path}`);
-    const finalName = output.path.replace(".js", "-terser.js");
-    if (minified.code) {
-        console.log(
-            ` - ${output.path}: Terser minification from ${srcCode.length} to ${minified.code.length}`
-        );
-        await write(finalName, minified.code);
-    }
 }
