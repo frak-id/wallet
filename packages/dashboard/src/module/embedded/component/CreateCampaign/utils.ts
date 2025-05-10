@@ -1,3 +1,5 @@
+"use client";
+
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { type Address, type Hex, isAddress, keccak256, toHex } from "viem";
@@ -42,9 +44,7 @@ export function extractSearchParams() {
         }
 
         // Compute product id
-        const url = new URL(domain);
-        const realHostname = url.hostname;
-        const productId = keccak256(toHex(realHostname.replace("www.", "")));
+        const productId = keccak256(toHex(domain.replace("www.", "")));
 
         return {
             name,
@@ -89,7 +89,7 @@ export function createCampaignDraft({
             dateStart: new Date(),
         },
         rewardChaining: {
-            userPercent: 1 - ratio, // todo: Ensure we are passing the right value there, it should be between 0 and 1
+            userPercent: 1 - ratio / 100,
         },
         triggers: {
             started: {

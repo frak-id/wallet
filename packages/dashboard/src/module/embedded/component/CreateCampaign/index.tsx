@@ -1,3 +1,5 @@
+"use client";
+
 import {
     getCreationData,
     saveCampaignDraft,
@@ -45,9 +47,8 @@ export function EmbeddedCreateCampaign() {
         ],
         mutationFn: async () => {
             const campaignDraft = createCampaignDraft(extracted);
-            const campaign = (await saveCampaignDraft(
-                campaignDraft
-            )) as Campaign;
+            const { id } = await saveCampaignDraft(campaignDraft);
+            const campaign = { ...campaignDraft, id } as Campaign;
             const creationData = await getCreationData(campaign);
             const [, result] = await tryit(() =>
                 sendTransaction({
@@ -81,8 +82,8 @@ export function EmbeddedCreateCampaign() {
                 <h1>Create Campaign</h1>
                 <br />
                 <p>
-                    You will be creating a campaign for <b>{extracted.name}</b>{" "}
-                    on <b>{extracted.domain}</b>
+                    You will be creating the campaign <b>{extracted.name}</b> on{" "}
+                    <b>{extracted.domain}</b>
                 </p>
                 <ul>
                     <li>
@@ -92,7 +93,7 @@ export function EmbeddedCreateCampaign() {
                         <b>CAC:</b> ${extracted.cacBrut}
                     </li>
                     <li>
-                        <b>Ratio referrer/referee:</b> {extracted.ratio * 100}%
+                        <b>Ratio referrer/referee:</b> {extracted.ratio}%
                     </li>
                 </ul>
                 {createCampaignError && (
