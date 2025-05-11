@@ -29,7 +29,9 @@ export class NotificationsService {
             }
         );
         if (tokens.length === 0) {
-            log.debug("No push tokens found for the given wallets");
+            log.debug(
+                "[NotificationsService] No push tokens found for the given wallets"
+            );
             return;
         }
 
@@ -41,10 +43,8 @@ export class NotificationsService {
         );
 
         // Send all the notification in parallel, by batch of 30
-        await parallel(
-            30,
-            tokens,
-            async (token) =>
+        await parallel(30, tokens, async (token) => {
+            try {
                 await sendNotification(
                     {
                         endpoint: token.endpoint,
@@ -54,8 +54,14 @@ export class NotificationsService {
                         },
                     },
                     JSON.stringify(payload)
-                )
-        );
+                );
+            } catch (e) {
+                log.warn(
+                    { error: e },
+                    "[NotificationsService] Error sending notification"
+                );
+            }
+        });
     }
 
     /**
