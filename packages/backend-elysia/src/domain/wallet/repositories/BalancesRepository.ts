@@ -1,4 +1,3 @@
-import { log } from "@backend-common";
 import type { GetAllTokenResponseDto } from "@frak-labs/app-essentials";
 import type { KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
@@ -6,13 +5,11 @@ import {
     type Address,
     type Chain,
     type Client,
-    type Hex,
     type Transport,
     erc20Abi,
     formatUnits,
-    keccak256,
 } from "viem";
-import { multicall, readContract } from "viem/actions";
+import { multicall } from "viem/actions";
 
 type TokenMetadata = {
     name: string;
@@ -24,11 +21,6 @@ export class BalancesRepository {
     // A few caches
     private readonly metadataCache = new LRUCache<Address, TokenMetadata>({
         max: 128,
-    });
-    private readonly userBalanceCache = new LRUCache<Hex, bigint>({
-        max: 8192,
-        // Keep in cache for 3 minutes
-        ttl: 180_000,
     });
     private knownTokens: GetAllTokenResponseDto = [];
 
@@ -77,46 +69,35 @@ export class BalancesRepository {
         // Get the known tokens
         const knownTokens = await this.getKnownTokens();
 
-        // Fetch every balance in an async manner
-        const userBalanceFetchAsync = knownTokens.map(
-            async ({ address: contractAddress }) => {
-                // Check in the cache first
-                const key = keccak256(`${address}-${contractAddress}`);
-                const cached = this.userBalanceCache.get(key);
-                if (cached) {
-                    return {
-                        contractAddress,
-                        tokenBalance: cached,
-                    };
-                }
-
-                // Otherwise fetch it from the client
-                try {
-                    const balance = await readContract(this.client, {
-                        address: contractAddress,
+        // Fetch every balance in a single multicall
+        const balanceResults = await multicall(this.client, {
+            contracts: knownTokens.map(
+                ({ address: contractAddress }) =>
+                    ({
                         abi: erc20Abi,
+                        address: contractAddress,
                         functionName: "balanceOf",
                         args: [address],
-                    });
-                    this.userBalanceCache.set(key, balance);
-                    return {
-                        contractAddress,
-                        tokenBalance: balance,
-                    };
-                } catch (error) {
-                    log.warn(
-                        { error },
-                        "[BalancesRepository] Error when fetching the balance directly"
-                    );
-                }
+                    }) as const
+            ),
+        });
+
+        // Map the results to the known tokens
+        const userBalances = balanceResults.map(({ result, error }, index) => {
+            if (error) {
                 return {
-                    contractAddress,
+                    contractAddress: knownTokens[index].address,
                     tokenBalance: 0n,
                 };
             }
-        );
 
-        return await Promise.all(userBalanceFetchAsync);
+            return {
+                contractAddress: knownTokens[index].address,
+                tokenBalance: result,
+            };
+        });
+
+        return userBalances;
     }
 
     /**
