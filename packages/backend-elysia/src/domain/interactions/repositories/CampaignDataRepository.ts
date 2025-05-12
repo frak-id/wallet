@@ -1,3 +1,4 @@
+import { log } from "@backend-common";
 import {
     type CampaignType,
     baseCampaignTriggerPtr,
@@ -7,7 +8,6 @@ import {
 import { interactionTypes } from "@frak-labs/core-sdk";
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { LRUCache } from "lru-cache";
-import { sift, tryit } from "radash";
 import {
     type Address,
     type Chain,
@@ -156,7 +156,9 @@ export class CampaignDataRepository {
         });
 
         // Build our reward output
-        const rewards: CampaignReward[] = sift(await Promise.all(rewardsAsync));
+        const rewards: CampaignReward[] = (
+            await Promise.all(rewardsAsync)
+        ).filter((v) => v !== null && v !== undefined);
 
         // If no rewards, early exit
         if (!rewards.length) {
@@ -195,32 +197,38 @@ export class CampaignDataRepository {
         if (!abi) return defaultChaining;
 
         // Read the config on-chain
-        const [, config] = await tryit(() =>
-            readContract(this.client, {
+        try {
+            const config = await readContract(this.client, {
                 abi,
                 address: campaign,
                 functionName: "getConfig",
                 blockNumber: lastUpdateBlock,
-            })
-        )();
-        if (!config) return defaultChaining;
+            });
+            if (!config) return defaultChaining;
 
-        // Check if the config contain the chaining reward (4 elements i nthe array theorically)
-        const chaining = config[3];
+            // Check if the config contain the chaining reward (4 elements in the array in theory)
+            const chaining = config[3];
 
-        // If we have no chaining, consider it's defaulted to 50 / 80
-        if (!chaining) {
-            this.campaignRewardChainingCache.set(campaign, defaultChaining);
+            // If we have no chaining, consider it's defaulted to 50 / 80
+            if (!chaining) {
+                this.campaignRewardChainingCache.set(campaign, defaultChaining);
+                return defaultChaining;
+            }
+
+            // Otherwise, extract the chaining config (on 10_000 basis)
+            const extracted = {
+                deperditionLevel: Number(chaining.deperditionPerLevel) / 10_000,
+                userPercent: Number(chaining.userPercent) / 10_000,
+            };
+            this.campaignRewardChainingCache.set(campaign, extracted);
+            return extracted;
+        } catch (error) {
+            log.warn(
+                { error },
+                "[CampaignDataRepository] Error while getting the chaining config"
+            );
             return defaultChaining;
         }
-
-        // Otherwise, extract the chaining config (on 10_000 basis)
-        const extracted = {
-            deperditionLevel: Number(chaining.deperditionPerLevel) / 10_000,
-            userPercent: Number(chaining.userPercent) / 10_000,
-        };
-        this.campaignRewardChainingCache.set(campaign, extracted);
-        return extracted;
     }
 
     /**

@@ -309,9 +309,9 @@ async function safeMerkleeRootBlockchainUpdate({
         });
         logger.info({ productId }, "Merkle update finalised");
         return { isSuccess: true, txHash };
-    } catch (e) {
+    } catch (error) {
         logger.error(
-            { error: e },
+            { error },
             `Failed to update the merkle root on chain for ${productId}`
         );
         return { isSuccess: false };

@@ -202,6 +202,10 @@ export class MintRepository {
 
                 // Trigger the deployment
                 const txHash = await writeContract(this.client, request);
+                log.debug(
+                    { productId, txHash },
+                    "Deployed interaction contract"
+                );
                 return { txHash, interactionContract: result };
             });
             if (!result) return;
@@ -212,9 +216,9 @@ export class MintRepository {
             });
             // And return everything
             return result;
-        } catch (e) {
+        } catch (error) {
             log.warn(
-                { productId, error: e },
+                { productId, error },
                 "Failed to deploy the interaction contract"
             );
         }
@@ -268,9 +272,9 @@ export class MintRepository {
                 // Then return the hash + contract
                 return { txHash, bank: result };
             });
-        } catch (e) {
+        } catch (error) {
             log.warn(
-                { productId, error: e },
+                { productId, error },
                 "Failed to deploy the mocked usd bank"
             );
         }
@@ -311,8 +315,8 @@ export class MintRepository {
                 // Then return the hash + contract
                 return { txHash, bank: result };
             });
-        } catch (e) {
-            log.warn({ productId, error: e }, "Failed to deploy the usdc bank");
+        } catch (error) {
+            log.warn({ productId, error }, "Failed to deploy the usdc bank");
         }
     }
 }

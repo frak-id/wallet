@@ -1,7 +1,6 @@
 import { log, walletSdkSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import { sift } from "radash";
 import { isAddressEqual } from "viem";
 import { sixDegreesContext } from "../../../domain/6degrees/context";
 import { interactionsContext } from "../context";
@@ -83,9 +82,9 @@ export const pushInteractionsRoutes = new Elysia()
                 }
             );
 
-            const interactionsForInsert = sift(
+            const interactionsForInsert = (
                 await Promise.all(interactionsForInsertPromise)
-            );
+            ).filter((v) => v !== null);
             if (!interactionsForInsert.length) {
                 log.warn("No interaction to insert post filter");
                 return [];

@@ -1,11 +1,12 @@
 import { inArray, lt } from "drizzle-orm";
-import { parallel } from "radash";
 import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
 import { log } from "../../../common";
 import type { NotificationDb } from "../context";
 import { pushTokensTable } from "../db/schema";
 import type { SendNotificationPayload } from "../dto/SendNotificationDto";
+
+type PushToken = typeof pushTokensTable.$inferSelect;
 
 export class NotificationsService {
     constructor(private readonly notificationDb: NotificationDb) {}
@@ -29,7 +30,9 @@ export class NotificationsService {
             }
         );
         if (tokens.length === 0) {
-            log.debug("No push tokens found for the given wallets");
+            log.debug(
+                "[NotificationsService] No push tokens found for the given wallets"
+            );
             return;
         }
 
@@ -40,22 +43,59 @@ export class NotificationsService {
             process.env.VAPID_PRIVATE_KEY as string
         );
 
-        // Send all the notification in parallel, by batch of 30
-        await parallel(
-            30,
-            tokens,
-            async (token) =>
-                await sendNotification(
-                    {
-                        endpoint: token.endpoint,
-                        keys: {
-                            p256dh: token.keyP256dh,
-                            auth: token.keyAuth,
+        // Send all the notification in chunks
+        try {
+            await this.sendNotificationChunked(tokens, payload);
+        } catch (error) {
+            log.warn(
+                { error },
+                "[NotificationsService] Error sending notification"
+            );
+        }
+    }
+
+    /**
+     * Send a notification to a list of wallets in chunks of 30
+     * @param tokens - The tokens to send the notification to
+     * @param payload - The payload to send
+     */
+    private async sendNotificationChunked(
+        tokens: PushToken[],
+        payload: SendNotificationPayload
+    ) {
+        // Create chunks of 30 tokens
+        const chunks = tokens.reduce((acc, token, index) => {
+            const chunkIndex = Math.floor(index / 30);
+            if (!acc[chunkIndex]) {
+                acc[chunkIndex] = [];
+            }
+            acc[chunkIndex].push(token);
+            return acc;
+        }, [] as PushToken[][]);
+
+        // Iterate over each chunk to send the notification
+        for (const chunk of chunks) {
+            const worker = chunk.map(async (token) => {
+                try {
+                    await sendNotification(
+                        {
+                            endpoint: token.endpoint,
+                            keys: {
+                                p256dh: token.keyP256dh,
+                                auth: token.keyAuth,
+                            },
                         },
-                    },
-                    JSON.stringify(payload)
-                )
-        );
+                        JSON.stringify(payload)
+                    );
+                } catch (error) {
+                    log.warn(
+                        { error },
+                        "[NotificationsService] Error sending notification"
+                    );
+                }
+            });
+            await Promise.allSettled(worker);
+        }
     }
 
     /**

@@ -63,7 +63,10 @@ export class InteractionSignerRepository {
         const interactionContract =
             await this.diamondRepository.getDiamondContract(productId);
         if (!interactionContract) {
-            log.warn({ productId }, "No diamond contract found for product");
+            log.warn(
+                { productId },
+                "[InteractionSignerRepository] No diamond contract found for product"
+            );
             return undefined;
         }
 
@@ -84,7 +87,7 @@ export class InteractionSignerRepository {
                     interactionContract,
                     signer: signerAccount.address,
                 },
-                "Signer not allowed on product"
+                "[InteractionSignerRepository] Signer not allowed on product"
             );
             return undefined;
         }
@@ -200,7 +203,7 @@ export class InteractionSignerRepository {
                     compressed: compressedExecute.length,
                     gas,
                 },
-                "Data sizes for interactions execution"
+                "[InteractionSignerRepository] Data sizes for interactions execution"
             );
 
             // And send it
@@ -211,12 +214,12 @@ export class InteractionSignerRepository {
                 // Provide a 25% more gas than the estimation (in the case of campaign deployed in-between)
                 gas: (gas * 125n) / 100n,
             });
-        } catch (e) {
+        } catch (error) {
             log.error(
                 {
-                    error: e,
+                    error,
                 },
-                "Unable to push interactions"
+                "[InteractionSignerRepository] Unable to push interactions"
             );
             return undefined;
         }

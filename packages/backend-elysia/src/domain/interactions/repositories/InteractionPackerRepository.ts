@@ -43,7 +43,10 @@ export class InteractionPackerRepository {
         const diamondContract =
             await this.diamondRepository.getDiamondContract(productId);
         if (!diamondContract) {
-            log.info({ productId }, "No diamond contract found for product");
+            log.info(
+                { productId },
+                "[InteractionPackerRepository] No diamond contract found for product"
+            );
             return {
                 isSimulationSuccess: false,
             };
@@ -63,15 +66,15 @@ export class InteractionPackerRepository {
             return {
                 isSimulationSuccess: true,
             };
-        } catch (e) {
+        } catch (error) {
             log.warn(
                 {
                     wallet,
                     productId,
                     interactionData,
-                    error: e,
+                    error,
                 },
-                "Interaction simulation failed"
+                "[InteractionPackerRepository] Interaction simulation failed"
             );
             return {
                 isSimulationSuccess: false,

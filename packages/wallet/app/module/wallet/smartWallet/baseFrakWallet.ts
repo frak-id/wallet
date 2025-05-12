@@ -203,7 +203,6 @@ export async function baseFrakWallet<
 
         // Sign simple hash
         async sign({ hash }) {
-            console.log("Want to signe a simple hash", hash);
             const metadata = await getAccountMetadata();
             const challenge = wrapMessageForSignature({
                 message: hash,
@@ -275,8 +274,8 @@ export async function baseFrakWallet<
                     return undefined;
                 }
 
-                // The margin depend on the chain, if testnet x10, if mainnet x1.5
-                const margin = client?.chain?.testnet === true ? 1000n : 150n;
+                // The margin depend on the chain, if testnet x5, if mainnet x1.5
+                const margin = client?.chain?.testnet === true ? 500n : 150n;
                 // Verification gas margin, 20% on testnet, 5% on mainnet
                 const verificationMargin =
                     client?.chain?.testnet === true ? 120n : 105n;

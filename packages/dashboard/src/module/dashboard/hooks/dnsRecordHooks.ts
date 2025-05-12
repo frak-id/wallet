@@ -52,3 +52,36 @@ export function useCheckDomainName() {
         },
     });
 }
+
+/**
+ * Hook to listen to the domain name setup
+ * @param domain
+ * @param enabled
+ */
+export function useListenToDomainNameSetup({
+    domain,
+    setupCode,
+}: { domain: string; setupCode: string }) {
+    return useQuery({
+        queryKey: ["mint", "listen-to-domain-name-setup", domain, setupCode],
+        queryFn: async () => {
+            const { data, error } = await backendApi.business.mint.verify.get({
+                query: { domain, setupCode },
+            });
+            if (error) {
+                console.warn(
+                    "Error while listening to domain name setup",
+                    error
+                );
+                return false;
+            }
+
+            if (data?.isAlreadyMinted) {
+                return false;
+            }
+
+            return data?.isDomainValid ?? false;
+        },
+        enabled: !!domain,
+    });
+}

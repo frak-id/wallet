@@ -3,7 +3,6 @@ import type { pino } from "@bogeychan/elysia-logger";
 import { Mutex } from "async-mutex";
 import { Cron, type CronOptions } from "croner";
 import { Elysia } from "elysia";
-import { sleep } from "radash";
 import type { FrakEvents } from "../events";
 
 type CronContext = Cron & {
@@ -126,7 +125,7 @@ export const mutexCron = <Name extends string = string>({
                             logger.debug(
                                 `[Cron] Waiting ${coolDownInMs}ms before releasing the mutex`
                             );
-                            await sleep(coolDownInMs);
+                            await Bun.sleep(coolDownInMs);
                         }
                     });
                 }

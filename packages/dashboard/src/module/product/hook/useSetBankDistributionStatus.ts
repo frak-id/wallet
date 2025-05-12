@@ -1,4 +1,3 @@
-import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
@@ -14,7 +13,6 @@ export function useSetBankDistributionStatus({
     productId,
     bank,
 }: { productId: Hex; bank: Address }) {
-    const { isAdministrator } = useHasRoleOnProduct({ productId });
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTx } = useSendTransactionAction();
 
@@ -59,7 +57,6 @@ export function useSetBankDistributionStatus({
     });
 
     return {
-        canUpdate: isAdministrator,
         setDistributionStatus,
         isSettingDistributionStatus,
     };
