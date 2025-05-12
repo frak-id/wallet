@@ -137,7 +137,7 @@ export class MintRepository {
         // Wait for the mint to be done before proceeding to the transfer
         await waitForTransactionReceipt(this.client, {
             hash: mintTxHash,
-            confirmations: 1,
+            confirmations: 4,
         });
 
         // Deploy the matching interaction contract
@@ -197,6 +197,10 @@ export class MintRepository {
                     }
                 );
                 if (!result || isAddressEqual(result, zeroAddress)) {
+                    log.warn(
+                        { productId, result },
+                        "[MintRepository] Failed to simulate the interaction contract deployment"
+                    );
                     return;
                 }
 
@@ -204,7 +208,7 @@ export class MintRepository {
                 const txHash = await writeContract(this.client, request);
                 log.debug(
                     { productId, txHash },
-                    "Deployed interaction contract"
+                    "[MintRepository] Deployed interaction contract"
                 );
                 return { txHash, interactionContract: result };
             });
@@ -219,7 +223,7 @@ export class MintRepository {
         } catch (error) {
             log.warn(
                 { productId, error },
-                "Failed to deploy the interaction contract"
+                "[MintRepository] Failed to deploy the interaction contract"
             );
         }
     }
@@ -253,11 +257,19 @@ export class MintRepository {
                     }
                 );
                 if (!result || isAddressEqual(result, zeroAddress)) {
+                    log.warn(
+                        { productId, result },
+                        "[MintRepository] Failed to simulate the mocked usd bank deployment"
+                    );
                     return;
                 }
 
                 // Trigger the deployment
                 const txHash = await writeContract(this.client, request);
+                log.debug(
+                    { productId, txHash },
+                    "[MintRepository] Deployed mocked usd bank"
+                );
 
                 // Then mint a few test tokens to this bank
                 await writeContract(this.client, {
@@ -275,7 +287,7 @@ export class MintRepository {
         } catch (error) {
             log.warn(
                 { productId, error },
-                "Failed to deploy the mocked usd bank"
+                "[MintRepository] Failed to deploy the mocked usd bank"
             );
         }
     }
@@ -306,17 +318,27 @@ export class MintRepository {
                     }
                 );
                 if (!result || isAddressEqual(result, zeroAddress)) {
+                    log.warn(
+                        { productId, result },
+                        "[MintRepository] Failed to simulate the usdc bank deployment"
+                    );
                     return;
                 }
 
                 // Trigger the deployment
                 const txHash = await writeContract(this.client, request);
-
+                log.debug(
+                    { productId, txHash },
+                    "[MintRepository] Deployed usdc bank"
+                );
                 // Then return the hash + contract
                 return { txHash, bank: result };
             });
         } catch (error) {
-            log.warn({ productId, error }, "Failed to deploy the usdc bank");
+            log.warn(
+                { productId, error },
+                "[MintRepository] Failed to deploy the usdc bank"
+            );
         }
     }
 }
