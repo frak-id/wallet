@@ -1,5 +1,5 @@
-import { bodyHmacContext, log } from "@backend-common";
-import { t } from "@backend-utils";
+import { log } from "@backend-common";
+import { t, validateBodyHmac } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
@@ -11,7 +11,6 @@ import type {
 import { purchaseWebhookService } from "../../services/hookService";
 
 export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
-    .use(bodyHmacContext)
     .use(purchaseWebhookService)
     // Error failsafe, to never fail on shopify webhook
     .onError(({ error, code, body, path, headers, response }) => {
@@ -63,7 +62,6 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
             // Context
             oracleDb,
             upsertPurchase,
-            validateBodyHmac,
         }) => {
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = JSON.parse(

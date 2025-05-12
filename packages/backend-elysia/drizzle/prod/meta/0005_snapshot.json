@@ -1,0 +1,1254 @@
+{
+    "id": "4e32457d-999f-4b44-840f-c319b4174d22",
+    "prevId": "3b060209-f098-4076-99b0-59f1e0121994",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.6degrees_fixed_routing": {
+            "name": "6degrees_fixed_routing",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "domain": {
+                    "name": "domain",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "campaign_id": {
+                    "name": "campaign_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {
+                "6degrees_routing_domain": {
+                    "name": "6degrees_routing_domain",
+                    "columns": [
+                        {
+                            "expression": "domain",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.6degrees_wallet_routing": {
+            "name": "6degrees_wallet_routing",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "wallet_pub_key": {
+                    "name": "wallet_pub_key",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "6degrees_routing_wallet": {
+                    "name": "6degrees_routing_wallet",
+                    "columns": [
+                        {
+                            "expression": "wallet_pub_key",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.sso_session": {
+            "name": "sso_session",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "sso_id": {
+                    "name": "sso_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "product_id": {
+                    "name": "product_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "consume_key": {
+                    "name": "consume_key",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "resolved_at": {
+                    "name": "resolved_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "authenticator_id": {
+                    "name": "authenticator_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "additional_data": {
+                    "name": "additional_data",
+                    "type": "json",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "pairing_id": {
+                    "name": "pairing_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "sso_idx": {
+                    "name": "sso_idx",
+                    "columns": [
+                        {
+                            "expression": "sso_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "sso_product_idx": {
+                    "name": "sso_product_idx",
+                    "columns": [
+                        {
+                            "expression": "sso_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "product_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.backend_interactions_tracker": {
+            "name": "backend_interactions_tracker",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "product_id": {
+                    "name": "product_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "hook_signature_key": {
+                    "name": "hook_signature_key",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "source": {
+                    "name": "source",
+                    "type": "backend_interactions_tracker_source",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'custom'"
+                }
+            },
+            "indexes": {
+                "unique_tracker_product_id": {
+                    "name": "unique_tracker_product_id",
+                    "columns": [
+                        {
+                            "expression": "product_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "backend_interactions_tracker_product_id_unique": {
+                    "name": "backend_interactions_tracker_product_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["product_id"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.interactions_purchase_tracker": {
+            "name": "interactions_purchase_tracker",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_purchase_id": {
+                    "name": "external_purchase_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_customer_id": {
+                    "name": "external_customer_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "token": {
+                    "name": "token",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "pushed": {
+                    "name": "pushed",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "wallet_interactions_purchase_map_idx": {
+                    "name": "wallet_interactions_purchase_map_idx",
+                    "columns": [
+                        {
+                            "expression": "wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "unique_map_idx": {
+                    "name": "unique_map_idx",
+                    "nullsNotDistinct": false,
+                    "columns": ["external_purchase_id", "external_customer_id"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.interactions_pending": {
+            "name": "interactions_pending",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "product_id": {
+                    "name": "product_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "type_denominator": {
+                    "name": "type_denominator",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "interaction_data": {
+                    "name": "interaction_data",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "signature": {
+                    "name": "signature",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "simulation_status": {
+                    "name": "simulation_status",
+                    "type": "interactions_simulation_status",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "locked": {
+                    "name": "locked",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": false
+                }
+            },
+            "indexes": {
+                "wallet_pending_interactions_idx": {
+                    "name": "wallet_pending_interactions_idx",
+                    "columns": [
+                        {
+                            "expression": "wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "product_idx": {
+                    "name": "product_idx",
+                    "columns": [
+                        {
+                            "expression": "product_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.interactions_pushed": {
+            "name": "interactions_pushed",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "product_id": {
+                    "name": "product_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "type_denominator": {
+                    "name": "type_denominator",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "interaction_data": {
+                    "name": "interaction_data",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "signature": {
+                    "name": "signature",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "tx_hash": {
+                    "name": "tx_hash",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "wallet_pushed_interactions_idx": {
+                    "name": "wallet_pushed_interactions_idx",
+                    "columns": [
+                        {
+                            "expression": "wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.push_tokens": {
+            "name": "push_tokens",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "endpoint": {
+                    "name": "endpoint",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "key_p256dh": {
+                    "name": "key_p256dh",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "key_auth": {
+                    "name": "key_auth",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "expire_at": {
+                    "name": "expire_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "wallet_push_tokens_idx": {
+                    "name": "wallet_push_tokens_idx",
+                    "columns": [
+                        {
+                            "expression": "wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "unique_push_token": {
+                    "name": "unique_push_token",
+                    "nullsNotDistinct": false,
+                    "columns": ["wallet", "endpoint", "key_p256dh"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.product_oracle": {
+            "name": "product_oracle",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "product_id": {
+                    "name": "product_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "hook_signature_key": {
+                    "name": "hook_signature_key",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "platform": {
+                    "name": "platform",
+                    "type": "product_oracle_platform",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'shopify'"
+                },
+                "merkle_root": {
+                    "name": "merkle_root",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "synced": {
+                    "name": "synced",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": false
+                },
+                "last_sync_tx_hash": {
+                    "name": "last_sync_tx_hash",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "unique_product_id": {
+                    "name": "unique_product_id",
+                    "columns": [
+                        {
+                            "expression": "product_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "product_oracle_product_id_unique": {
+                    "name": "product_oracle_product_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["product_id"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.product_oracle_purchase_item": {
+            "name": "product_oracle_purchase_item",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "purchase_id": {
+                    "name": "purchase_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_id": {
+                    "name": "external_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "price": {
+                    "name": "price",
+                    "type": "numeric",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "title": {
+                    "name": "title",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "image_url": {
+                    "name": "image_url",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "quantity": {
+                    "name": "quantity",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "item_purchase_id_idx": {
+                    "name": "item_purchase_id_idx",
+                    "columns": [
+                        {
+                            "expression": "purchase_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "unique_external_purchase_item_id": {
+                    "name": "unique_external_purchase_item_id",
+                    "columns": [
+                        {
+                            "expression": "external_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "purchase_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "product_oracle_purchase_item_purchase_id_product_oracle_purchase_purchase_id_fk": {
+                    "name": "product_oracle_purchase_item_purchase_id_product_oracle_purchase_purchase_id_fk",
+                    "tableFrom": "product_oracle_purchase_item",
+                    "tableTo": "product_oracle_purchase",
+                    "columnsFrom": ["purchase_id"],
+                    "columnsTo": ["purchase_id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.product_oracle_purchase": {
+            "name": "product_oracle_purchase",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "oracle_id": {
+                    "name": "oracle_id",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "purchase_id": {
+                    "name": "purchase_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_id": {
+                    "name": "external_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_customer_id": {
+                    "name": "external_customer_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "purchase_token": {
+                    "name": "purchase_token",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "total_price": {
+                    "name": "total_price",
+                    "type": "numeric",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "currency_code": {
+                    "name": "currency_code",
+                    "type": "varchar(4)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "purchase_status",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "leaf": {
+                    "name": "leaf",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "unique_external_id": {
+                    "name": "unique_external_id",
+                    "columns": [
+                        {
+                            "expression": "external_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "oracle_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "purchase_id_idx": {
+                    "name": "purchase_id_idx",
+                    "columns": [
+                        {
+                            "expression": "purchase_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "external_listener_id": {
+                    "name": "external_listener_id",
+                    "columns": [
+                        {
+                            "expression": "external_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "purchase_token",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "product_oracle_purchase_oracle_id_product_oracle_id_fk": {
+                    "name": "product_oracle_purchase_oracle_id_product_oracle_id_fk",
+                    "tableFrom": "product_oracle_purchase",
+                    "tableTo": "product_oracle",
+                    "columnsFrom": ["oracle_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "product_oracle_purchase_purchase_id_unique": {
+                    "name": "product_oracle_purchase_purchase_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["purchase_id"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.pairing_signature_request": {
+            "name": "pairing_signature_request",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "request_id": {
+                    "name": "request_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "pairing_id": {
+                    "name": "pairing_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "request": {
+                    "name": "request",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "context": {
+                    "name": "context",
+                    "type": "json",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "processed_at": {
+                    "name": "processed_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "signature": {
+                    "name": "signature",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "request_id_idx": {
+                    "name": "request_id_idx",
+                    "columns": [
+                        {
+                            "expression": "request_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "signature_pairing_id_idx": {
+                    "name": "signature_pairing_id_idx",
+                    "columns": [
+                        {
+                            "expression": "pairing_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.device_pairing": {
+            "name": "device_pairing",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "pairing_id": {
+                    "name": "pairing_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "sso_id": {
+                    "name": "sso_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "origin_user_agent": {
+                    "name": "origin_user_agent",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "origin_name": {
+                    "name": "origin_name",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "target_user_agent": {
+                    "name": "target_user_agent",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_name": {
+                    "name": "target_name",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "pairing_code": {
+                    "name": "pairing_code",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "resolved_at": {
+                    "name": "resolved_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "last_active_at": {
+                    "name": "last_active_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "pairing_id_idx": {
+                    "name": "pairing_id_idx",
+                    "columns": [
+                        {
+                            "expression": "pairing_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "wallet_id_idx": {
+                    "name": "wallet_id_idx",
+                    "columns": [
+                        {
+                            "expression": "wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "pairing_code_idx": {
+                    "name": "pairing_code_idx",
+                    "columns": [
+                        {
+                            "expression": "pairing_code",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        }
+    },
+    "enums": {
+        "public.backend_interactions_tracker_source": {
+            "name": "backend_interactions_tracker_source",
+            "schema": "public",
+            "values": ["custom"]
+        },
+        "public.interactions_simulation_status": {
+            "name": "interactions_simulation_status",
+            "schema": "public",
+            "values": ["pending", "no_session", "failed", "succeeded"]
+        },
+        "public.product_oracle_platform": {
+            "name": "product_oracle_platform",
+            "schema": "public",
+            "values": ["shopify", "woocommerce", "custom", "internal"]
+        },
+        "public.purchase_status": {
+            "name": "purchase_status",
+            "schema": "public",
+            "values": ["pending", "confirmed", "cancelled", "refunded"]
+        }
+    },
+    "schemas": {},
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
+}

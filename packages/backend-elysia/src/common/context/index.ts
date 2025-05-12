@@ -9,4 +9,3 @@ export {
     walletSessionContext,
     walletSdkSessionContext,
 } from "./session";
-export { bodyHmacContext } from "./bodyHmac";

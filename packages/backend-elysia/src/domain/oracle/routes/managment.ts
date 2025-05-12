@@ -67,6 +67,7 @@ export const managmentRoutes = new Elysia()
                         t.Literal("shopify"),
                         t.Literal("woocommerce"),
                         t.Literal("custom"),
+                        t.Literal("internal"),
                     ]),
                     webhookSigninKey: t.String(),
                     stats: t.Optional(
@@ -137,6 +138,7 @@ export const managmentRoutes = new Elysia()
                     t.Literal("shopify"),
                     t.Literal("woocommerce"),
                     t.Literal("custom"),
+                    t.Literal("internal"),
                 ]),
             }),
         }

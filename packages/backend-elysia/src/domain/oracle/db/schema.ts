@@ -16,6 +16,7 @@ export const productOraclePlatformEnum = pgEnum("product_oracle_platform", [
     "shopify",
     "woocommerce",
     "custom",
+    "internal",
 ]);
 
 export const productOracleTable = pgTable(

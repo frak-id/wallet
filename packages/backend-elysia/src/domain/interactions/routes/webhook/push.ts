@@ -1,5 +1,5 @@
-import { bodyHmacContext, log } from "@backend-common";
-import { t } from "@backend-utils";
+import { log } from "@backend-common";
+import { t, validateBodyHmac } from "@backend-utils";
 import { interactionTypes } from "@frak-labs/core-sdk";
 import {
     PurchaseInteractionEncoder,
@@ -13,7 +13,6 @@ import { backendTrackerTable, pendingInteractionsTable } from "../../db/schema";
 
 export const webhookPushRoutes = new Elysia()
     .use(interactionsContext)
-    .use(bodyHmacContext)
     .guard({
         params: t.Object({
             productId: t.Optional(t.Hex()),
@@ -70,7 +69,6 @@ export const webhookPushRoutes = new Elysia()
             error,
             // Context
             saveInteractions,
-            validateBodyHmac,
             interactionsDb,
             interactionDiamondRepository,
         }) => {
@@ -139,7 +137,6 @@ export const webhookPushRoutes = new Elysia()
             error,
             // Context
             saveInteractions,
-            validateBodyHmac,
             interactionsDb,
             interactionDiamondRepository,
         }) => {
