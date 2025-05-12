@@ -2,7 +2,6 @@ import { walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
-import { sift } from "radash";
 import { formatUnits, isAddressEqual, toHex } from "viem";
 import { walletContext } from "../context";
 
@@ -25,7 +24,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             });
 
             // For each balances, get the eur price
-            const mappedBalances = sift(
+            const mappedBalances = (
                 await Promise.all(
                     balances.map(async (tokenBalance) => {
                         // Get the eur price of the token
@@ -54,7 +53,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                         };
                     })
                 )
-            );
+            ).filter((v) => v !== null && v !== undefined);
 
             // Get the total balance
             const totalBalance = mappedBalances.reduce(
@@ -152,7 +151,9 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                         gbpAmount: price ? balance * price.gbp : 0,
                     };
                 });
-            const claimables = sift(await Promise.all(claimablesAsync));
+            const claimables = (await Promise.all(claimablesAsync)).filter(
+                (v) => v !== null && v !== undefined
+            );
 
             // Get the total claimable
             const totalClaimable = claimables.reduce(

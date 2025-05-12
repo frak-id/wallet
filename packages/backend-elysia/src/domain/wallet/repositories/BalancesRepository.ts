@@ -103,10 +103,10 @@ export class BalancesRepository {
                         contractAddress,
                         tokenBalance: balance,
                     };
-                } catch (e) {
+                } catch (error) {
                     log.warn(
-                        { error: e },
-                        "Error when fetching the balance directly"
+                        { error },
+                        "[BalancesRepository] Error when fetching the balance directly"
                     );
                 }
                 return {

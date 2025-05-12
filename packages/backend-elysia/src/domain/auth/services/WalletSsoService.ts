@@ -45,8 +45,8 @@ export const walletSsoService = new Elysia({
                     })
                     .where(and(eq(ssoTable.ssoId, id)))
                     .execute();
-            } catch (err) {
-                log.error({ err }, "Error when resolving the sso session");
+            } catch (error) {
+                log.error({ error }, "Error when resolving the sso session");
             }
         }
 

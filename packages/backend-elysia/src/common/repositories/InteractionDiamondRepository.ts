@@ -38,11 +38,11 @@ export class InteractionDiamondRepository {
             });
             this.addressCache.set(productId, { address });
             return address;
-        } catch (e) {
+        } catch (error) {
             log.error(
                 {
                     productId,
-                    error: e,
+                    error,
                 },
                 "Failed to get diamond contract"
             );

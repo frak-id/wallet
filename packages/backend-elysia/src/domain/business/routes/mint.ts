@@ -1,4 +1,4 @@
-import { blockchainContext, nextSessionContext } from "@backend-common";
+import { blockchainContext, log, nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";
@@ -123,6 +123,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                     bankContract: bankResult?.bank,
                 };
             } catch (e) {
+                log.error({ error: e }, "Failed to mint product");
                 return error(400, (e as Error)?.message ?? "An error occurred");
             }
         },

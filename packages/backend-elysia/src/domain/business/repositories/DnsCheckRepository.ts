@@ -1,7 +1,6 @@
 import * as dns from "node:dns";
 import { promisify } from "node:util";
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import { flat } from "radash";
 import { type Address, concatHex, isHex, keccak256, toHex } from "viem";
 import { URL } from "whatwg-url";
 
@@ -76,8 +75,8 @@ export class DnsCheckRepository {
         const waitedTxtRecord = this.getDnsTxtString({ domain, owner });
         try {
             // Try to resolve the TXT records for the domain
-            const records = flat(await promisify(dns.resolveTxt)(domain));
-            return records.includes(waitedTxtRecord);
+            const records = await promisify(dns.resolveTxt)(domain);
+            return records.flat().includes(waitedTxtRecord);
         } catch {
             return false;
         }

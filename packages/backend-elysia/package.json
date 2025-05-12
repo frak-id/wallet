@@ -41,7 +41,6 @@
     "mongodb": "^6.16.0",
     "permissionless": "^0.2.43",
     "postgres": "^3.4.5",
-    "radash": "^12.1.0",
     "solady": "^0.1.16",
     "sst": "3.13.20",
     "ua-parser-js": "^2.0.3",

@@ -71,7 +71,10 @@ export class PendingBalanceRepository {
             // Cache the result
             return pendingBalance;
         } catch (error) {
-            log.error("Error getting pending balance", { error, address });
+            log.error(
+                { error, address },
+                "[PendingBalanceRepository] Error getting pending balance"
+            );
             return 0;
         }
     }
@@ -90,7 +93,10 @@ export class PendingBalanceRepository {
             // If there's code (not '0x' which means no code), the wallet is activated
             return code !== undefined && code !== "0x";
         } catch (error) {
-            log.error("Error checking wallet activation", { error, address });
+            log.error(
+                { error, address },
+                "[PendingBalanceRepository] Error checking wallet activation"
+            );
             return false;
         }
     }
@@ -115,7 +121,10 @@ export class PendingBalanceRepository {
                     interaction.type === "REFERRED"
             );
         } catch (error) {
-            log.error("Error checking referral sharing", { error, address });
+            log.error(
+                { error, address },
+                "[PendingBalanceRepository] Error checking referral sharing"
+            );
             return false;
         }
     }
@@ -136,7 +145,10 @@ export class PendingBalanceRepository {
             // Check if the user has earned a reward
             return rewards.added.length > 0;
         } catch (error) {
-            log.error("Error checking reward earning", { error, address });
+            log.error(
+                { error, address },
+                "[PendingBalanceRepository] Error checking reward earning"
+            );
             return false;
         }
     }
