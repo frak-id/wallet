@@ -5,12 +5,16 @@ import {
     saveCampaignDraft,
     updateCampaignState,
 } from "@/context/campaigns/action/createCampaign";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
 import type { Campaign } from "@/types/Campaign";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/shared/module/component/Button";
+import { Spinner } from "@shared/module/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { tryit } from "radash";
 import { useCallback } from "react";
+import styles from "../Mint/index.module.css";
 import { createCampaignDraft, extractSearchParams } from "./utils";
 
 /**
@@ -78,66 +82,108 @@ export function EmbeddedCreateCampaign() {
     // Step 1: No createCampaignData
     if (!createCampaignData) {
         return (
-            <div>
-                <h1>Create Campaign</h1>
-                <br />
-                <p>
-                    You will be creating the campaign <b>{extracted.name}</b> on{" "}
-                    <b>{extracted.domain}</b>
-                </p>
-                <ul>
-                    <li>
-                        <b>Weekly Budget:</b> ${extracted.weeklyBudget}
-                    </li>
-                    <li>
-                        <b>CAC:</b> ${extracted.cacBrut}
-                    </li>
-                    <li>
-                        <b>Ratio referrer/referee:</b> {extracted.ratio}%
-                    </li>
-                </ul>
-                {createCampaignError && (
-                    <div style={{ color: "red", margin: "1em 0" }}>
-                        <p>
-                            Error:{" "}
-                            {createCampaignError instanceof Error
-                                ? createCampaignError.message
-                                : String(createCampaignError)}
-                        </p>
-                        <Button onClick={handleClose}>Close</Button>
-                    </div>
-                )}
-                {isCreatingCampaign || isPendingTransaction ? (
-                    <div style={{ margin: "1em 0" }}>
-                        {isCreatingCampaign && (
-                            <p>Creating campaign draft...</p>
-                        )}
-                        {isPendingTransaction && (
+            <>
+                <Title className={styles.title}>Create Campaign</Title>
+                <Panel
+                    withBadge={false}
+                    title={`Creating campaign ${extracted.name}`}
+                >
+                    <p>
+                        You will be creating the campaign{" "}
+                        <b>{extracted.name}</b> on <b>{extracted.domain}</b>
+                    </p>
+                    <ul className={styles.list}>
+                        <li className={styles.listItem}>
+                            <b>Weekly Budget:</b> ${extracted.weeklyBudget}
+                        </li>
+                        <li className={styles.listItem}>
+                            <b>CAC:</b> ${extracted.cacBrut}
+                        </li>
+                        <li className={styles.listItem}>
+                            <b>Ratio referrer/referee:</b> {extracted.ratio}%
+                        </li>
+                    </ul>
+                    {createCampaignError && (
+                        <div className={styles.error}>
                             <p>
-                                Waiting for wallet transaction confirmation...
+                                Error:{" "}
+                                {createCampaignError instanceof Error
+                                    ? createCampaignError.message
+                                    : String(createCampaignError)}
                             </p>
+                            <Button
+                                variant="secondary"
+                                size="small"
+                                className={styles.button}
+                                onClick={handleClose}
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    )}
+                    <Button
+                        variant="secondary"
+                        className={styles.button}
+                        onClick={() => createCampaign()}
+                        disabled={isCreatingCampaign || isPendingTransaction}
+                    >
+                        {isCreatingCampaign || isPendingTransaction ? (
+                            <>
+                                <Spinner />
+                                {isCreatingCampaign && "Creating campaign..."}
+                                {isPendingTransaction &&
+                                    "Waiting for wallet transaction confirmation..."}
+                            </>
+                        ) : (
+                            "Validate and Create"
                         )}
-                    </div>
-                ) : (
-                    <Button onClick={() => createCampaign()}>
-                        Validate and Create
                     </Button>
-                )}
-            </div>
+                </Panel>
+            </>
+        );
+    }
+
+    if (!createCampaignData?.hash) {
+        return (
+            <>
+                <Title className={styles.title}>Campaign not deployed!</Title>
+                <Panel
+                    withBadge={false}
+                    title={"Campaign created but not deployed"}
+                >
+                    <Button
+                        variant="secondary"
+                        size="small"
+                        className={styles.button}
+                        onClick={handleClose}
+                    >
+                        Close
+                    </Button>
+                </Panel>
+            </>
         );
     }
 
     // Step 2: Success state when createCampaignData is present
     return (
-        <div>
-            <h1>Campaign Created!</h1>
-            <br />
-            <p>
-                Campaign created and deployed on the transaction:
-                <br />
-                <b>{createCampaignData.hash}</b>
-            </p>
-            <Button onClick={handleClose}>Close</Button>
-        </div>
+        <>
+            <Title className={styles.title}>Campaign Created!</Title>
+            <Panel
+                withBadge={false}
+                title={"Campaign created and deployed on the transaction:"}
+            >
+                <p>
+                    <b>{createCampaignData.hash}</b>
+                </p>
+                <Button
+                    variant="secondary"
+                    size="small"
+                    className={styles.button}
+                    onClick={handleClose}
+                >
+                    Close
+                </Button>
+            </Panel>
+        </>
     );
 }
