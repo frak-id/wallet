@@ -274,7 +274,7 @@ function WithdrawFunds({ bank }: { bank: ProductBank }) {
     const { mutateAsync: sendTx } = useSendTransactionAction();
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
 
-    const { mutate, isPending } = useMutation({
+    const { mutate: withdraw, isPending: isWithdrawing } = useMutation({
         mutationKey: ["product", "funding", "withdraw", bank.address],
         mutationFn: async () => {
             // Check if the bank is currently distributing
@@ -317,6 +317,8 @@ function WithdrawFunds({ bank }: { bank: ProductBank }) {
             await waitForTxAndInvalidateQueries({
                 hash,
                 queryKey: ["product"],
+                // Long confirmations time to ensure indexer is up to date
+                confirmations: 32,
             });
         },
     });
@@ -324,8 +326,9 @@ function WithdrawFunds({ bank }: { bank: ProductBank }) {
     return (
         <Button
             variant={"submit"}
-            onClick={() => mutate()}
-            isLoading={isPending}
+            onClick={() => withdraw()}
+            isLoading={isWithdrawing}
+            disabled={isWithdrawing}
         >
             Withdraw funds
         </Button>
