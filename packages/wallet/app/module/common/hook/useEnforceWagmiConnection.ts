@@ -5,9 +5,10 @@ import {
 import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
 import { decodeJwt } from "jose";
 import { useEffect, useMemo } from "react";
-import { isAddressEqual } from "viem";
+import { type Hex, isAddressEqual } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { useConfig, useConnect } from "wagmi";
+import { getFromLocalStorage } from "../../listener/utils/localStorage";
 import {
     type SdkSessionPayload,
     demoPrivateKeyAtom,
@@ -83,7 +84,8 @@ export function useEnforceWagmiConnection() {
 
                 // Get the potential pkeys
                 const potentialPkeys = [
-                    jotaiStore.get(demoPrivateKeyAtom),
+                    jotaiStore.get(demoPrivateKeyAtom) ??
+                        getFromLocalStorage<Hex>("frak_demoPrivateKey"),
                     parsedSession?.additionalData?.demoPkey,
                 ];
 
@@ -102,6 +104,12 @@ export function useEnforceWagmiConnection() {
                     // Sign the message
                     return account.signMessage({ message: { raw: hash } });
                 }
+                console.warn("No valid pkey found", {
+                    potentialAddresses: potentialPkeys.map((pkey) =>
+                        pkey ? privateKeyToAccount(pkey).address : "undefined"
+                    ),
+                    address,
+                });
 
                 throw new Error("No valid pkey found");
             }
