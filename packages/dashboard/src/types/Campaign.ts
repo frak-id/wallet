@@ -54,6 +54,16 @@ export type Campaign = {
         userPercent?: number;
         deperditionPerLevel?: number;
     };
+    // The type of distribution for the campaign
+    distribution?:
+        | {
+              type: "fixed";
+          }
+        | {
+              type: "range";
+              minMultiplier: number; // Between 0.7 and 1.3
+              maxMultiplier: number; // Between 1 and 5
+          };
     // Trigger for the campaign
     triggers: Partial<Record<InteractionTypesKey, CampaignTrigger>>;
 };

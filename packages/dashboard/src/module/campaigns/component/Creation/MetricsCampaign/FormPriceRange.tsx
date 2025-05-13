@@ -4,7 +4,6 @@ import { FormFromTo } from "@/module/campaigns/component/Creation/MetricsCampaig
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
-import type { Campaign } from "@/types/Campaign";
 import {
     type InteractionTypesKey,
     type ProductTypesKey,
@@ -13,14 +12,14 @@ import {
 import { Button } from "@shared/module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
-import type { UseFormReturn } from "react-hook-form";
+import { FormNumber } from "./FormNumber";
 
 export function FormPriceRange({
-    form,
     productTypes = [],
+    distributionType,
 }: {
-    form: UseFormReturn<Campaign["triggers"]>;
     productTypes: ProductTypesKey[];
+    distributionType: "fixed" | "range";
 }) {
     const setStep = useSetAtom(campaignStepAtom);
     const { type: currentGoal } = useAtomValue(campaignAtom);
@@ -50,7 +49,7 @@ export function FormPriceRange({
     }, [productTypes, currentGoal]);
 
     return (
-        <Panel title="Configure Price Range">
+        <Panel title="Configure CAC">
             {availableInteractions.length === 0 && (
                 <>
                     <FormDescription>
@@ -69,35 +68,82 @@ export function FormPriceRange({
                     </FormDescription>
                 </>
             )}
-            {availableInteractions.length > 0 && (
-                <FormDescription>
-                    Set a price range for each campaign objective. The budget
-                    will be distributed between the referee and referrer
-                    according to an automatically optimized allocation key. Frak
-                    will apply a 20% management fee to support the campaign
-                    delivery and to cover operational costs.
-                </FormDescription>
-            )}
+            {distributionType === "fixed" &&
+                availableInteractions.length > 0 && (
+                    <FixedPriceInputs
+                        availableInteractions={availableInteractions}
+                    />
+                )}
+            {distributionType === "range" &&
+                availableInteractions.length > 0 && (
+                    <RangePriceInputs
+                        availableInteractions={availableInteractions}
+                    />
+                )}
+        </Panel>
+    );
+}
+
+function FixedPriceInputs({
+    availableInteractions,
+}: {
+    availableInteractions: { key: InteractionTypesKey; label: string }[];
+}) {
+    return (
+        <>
+            <FormDescription>
+                Set the fixed CAC for each campaign objective. The budget will
+                be distributed between the referee and referrer according to the
+                parameters below.
+            </FormDescription>
+            {availableInteractions.map(({ key, label }) => (
+                <FormNumber
+                    key={key}
+                    id={key}
+                    label={label}
+                    field={{
+                        keys: [`triggers.${key}.from`, `triggers.${key}.to`],
+                        label: "CAC",
+                        placeholder: "25,00 €",
+                        rightSection: "EUR",
+                    }}
+                />
+            ))}
+        </>
+    );
+}
+
+function RangePriceInputs({
+    availableInteractions,
+}: {
+    availableInteractions: { key: InteractionTypesKey; label: string }[];
+}) {
+    return (
+        <>
+            <FormDescription>
+                Set a CAC price range for each campaign objective. The budget
+                will be distributed between the referee and referrer according
+                to the parameters below.
+            </FormDescription>
             {availableInteractions.map(({ key, label }) => (
                 <FormFromTo
                     key={key}
                     id={key}
                     label={label}
-                    form={form}
                     from={{
-                        name: `${key}.from`,
+                        name: `triggers.${key}.from`,
                         label: "From",
                         placeholder: "15,00 €",
                         rightSection: "EUR",
                     }}
                     to={{
-                        name: `${key}.to`,
+                        name: `triggers.${key}.to`,
                         label: "To",
                         placeholder: "25,00 €",
                         rightSection: "EUR",
                     }}
                 />
             ))}
-        </Panel>
+        </>
     );
 }

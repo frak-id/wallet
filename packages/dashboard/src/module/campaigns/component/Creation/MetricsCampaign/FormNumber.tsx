@@ -13,38 +13,31 @@ import { type FieldPath, useFormContext } from "react-hook-form";
 import type { Campaign } from "../../../../../types/Campaign";
 import styles from "./FormFromTo.module.css";
 
-type FormFromToProps = {
+type FormNumberProps = {
     id: string;
     label: string;
-    from: {
-        name: FieldPath<Campaign>;
+    field: {
         label: string;
         placeholder: string;
         rightSection: string;
-    };
-    to: {
-        name: FieldPath<Campaign>;
-        label: string;
-        placeholder: string;
-        rightSection: string;
+        keys: FieldPath<Campaign>[];
     };
     hideIfAllZero?: boolean;
     disabled?: boolean;
     defaultChecked?: boolean;
 };
 
-export function FormFromTo({
+export function FormNumber({
     id,
     label,
-    from,
-    to,
+    field: rawField,
     hideIfAllZero,
     disabled,
     defaultChecked = false,
-}: FormFromToProps) {
+}: FormNumberProps) {
     const { getValues, setValue, control } = useFormContext();
 
-    const values = getValues([from.name, to.name]);
+    const values = getValues(rawField.keys);
     const isAllZero = values.every(
         (value) => value === 0 || value === undefined
     );
@@ -61,8 +54,9 @@ export function FormFromTo({
     function checkingCheckbox(value: boolean | "indeterminate") {
         setIsChecked(value);
         if (value === false) {
-            setValue(from.name, 0);
-            setValue(to.name, 0);
+            for (const key of rawField.keys) {
+                setValue(key, 0);
+            }
         }
     }
 
@@ -89,7 +83,7 @@ export function FormFromTo({
             <Row className={styles.formFromTo__row}>
                 <FormField
                     control={control}
-                    name={from.name}
+                    name={rawField.keys[0]}
                     rules={{
                         validate: (value) => {
                             if (checked) return value > 0;
@@ -99,39 +93,14 @@ export function FormFromTo({
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel variant={"light"}>
-                                {from.label}
+                                {rawField.label}
                             </FormLabel>
                             <FormMessage />
                             <FormControl>
                                 <InputNumber
                                     length={"small"}
-                                    placeholder={from.placeholder}
-                                    rightSection={from.rightSection}
-                                    disabled={disabled ?? checked !== true}
-                                    {...field}
-                                />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={control}
-                    name={to.name}
-                    rules={{
-                        validate: (value) => {
-                            if (checked) return value > 0;
-                            return true;
-                        },
-                    }}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel variant={"light"}>{to.label}</FormLabel>
-                            <FormMessage />
-                            <FormControl>
-                                <InputNumber
-                                    length={"small"}
-                                    placeholder={to.placeholder}
-                                    rightSection={to.rightSection}
+                                    placeholder={rawField.placeholder}
+                                    rightSection={rawField.rightSection}
                                     disabled={disabled ?? checked !== true}
                                     {...field}
                                 />
