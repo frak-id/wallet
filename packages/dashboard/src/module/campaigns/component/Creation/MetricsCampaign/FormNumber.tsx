@@ -88,7 +88,15 @@ export function FormNumber({
                     name={rawField.keys[0]}
                     rules={{
                         validate: (value) => {
-                            if (checked) return value > 0;
+                            if (checked) {
+                                if (value <= 1)
+                                    return "The CAC should be greater than 1";
+                                if (Number.isNaN(value))
+                                    return "The CAC should be a number";
+                                if (value > 1000)
+                                    return "The CAC should be less than 1k";
+                            }
+
                             return true;
                         },
                     }}

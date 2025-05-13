@@ -14,6 +14,7 @@ import {
 import { Button } from "@shared/module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
+import { useFormContext } from "react-hook-form";
 import { FormNumber } from "./FormNumber";
 
 export function FormPriceRange({
@@ -50,6 +51,9 @@ export function FormPriceRange({
             }));
     }, [productTypes, currentGoal]);
 
+    const { getFieldState } = useFormContext();
+    const triggerState = getFieldState("triggers");
+
     return (
         <Panel title="Configure CAC">
             {availableInteractions.length === 0 && (
@@ -82,6 +86,13 @@ export function FormPriceRange({
                         availableInteractions={availableInteractions}
                     />
                 )}
+            {triggerState.error && (
+                <p className="error">
+                    {typeof triggerState.error === "string"
+                        ? triggerState.error
+                        : triggerState.error?.message}
+                </p>
+            )}
         </Panel>
     );
 }
@@ -109,6 +120,7 @@ function FixedPriceInputs({
                         placeholder: "25,00 €",
                         rightSection: "EUR",
                     }}
+                    defaultChecked={availableInteractions.length === 1}
                 />
             ))}
         </>
@@ -144,6 +156,7 @@ function RangePriceInputs({
                         placeholder: "25,00 €",
                         rightSection: "EUR",
                     }}
+                    defaultChecked={availableInteractions.length === 1}
                 />
             ))}
         </>

@@ -94,7 +94,15 @@ export function FormFromTo({
                     name={from.name}
                     rules={{
                         validate: (value) => {
-                            if (checked) return value > 0;
+                            if (checked) {
+                                if (value <= 1)
+                                    return "The CAC should be greater than 1";
+                                if (Number.isNaN(value))
+                                    return "The CAC should be a number";
+                                if (value > 1000)
+                                    return "The CAC should be less than 1k";
+                            }
+
                             return true;
                         },
                     }}
@@ -121,8 +129,19 @@ export function FormFromTo({
                     control={control}
                     name={to.name}
                     rules={{
-                        validate: (value) => {
-                            if (checked) return value > 0;
+                        validate: (value, formValues) => {
+                            const fromPath = from.name.split(".")[1];
+                            if (checked) {
+                                if (value <= 1)
+                                    return "The CAC should be greater than 1";
+                                if (Number.isNaN(value))
+                                    return "The CAC should be a number";
+                                if (value > 1000)
+                                    return "The CAC should be less than 1k";
+                                if (formValues.triggers[fromPath].from >= value)
+                                    return "The upper CAC should be greater than the from value";
+                            }
+
                             return true;
                         },
                     }}

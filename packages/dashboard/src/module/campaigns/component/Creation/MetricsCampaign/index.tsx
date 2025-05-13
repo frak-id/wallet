@@ -30,6 +30,26 @@ export function MetricsCampaign() {
     });
     const form = useForm<Campaign>({
         values: useMemo(() => campaign, [campaign]),
+        resolver: (values) => {
+            // Check that we have at least one trigger set with a CAC greater than 0
+            const hasTrigger = Object.values(values.triggers).some(
+                (trigger) => trigger.from > 0
+            );
+            if (!hasTrigger) {
+                return {
+                    values,
+                    errors: {
+                        triggers: {
+                            message: "At least one trigger should be set",
+                        },
+                    },
+                };
+            }
+            return {
+                values,
+                errors: {},
+            };
+        },
     });
     const distributionType = form.watch("distribution.type") ?? "fixed";
 
