@@ -16,7 +16,7 @@ import type { Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import { useOracleSetupData } from "../../hook/useOracleSetupData";
 
-type OraclePlatform = "shopify" | "woocommerce" | "custom";
+type OraclePlatform = "shopify" | "woocommerce" | "custom" | "internal";
 
 export function PurchaseTrackerWebhook({ productId }: { productId: Hex }) {
     // Fetch some data about the current oracle setup
@@ -77,6 +77,7 @@ export function PurchaseTrackerWebhook({ productId }: { productId: Hex }) {
                     <PlatformSelector
                         currentPlatform={currentPlatform}
                         setPlatform={setCurrentPlatform}
+                        isSetup={oracleSetupData.webhookStatus?.setup ?? false}
                     />
 
                     <PlatformRegistration
@@ -98,14 +99,36 @@ export function PurchaseTrackerWebhook({ productId }: { productId: Hex }) {
 function PlatformSelector({
     currentPlatform,
     setPlatform,
+    isSetup,
 }: {
     currentPlatform: OraclePlatform;
     setPlatform: (platform: OraclePlatform) => void;
+    isSetup: boolean;
 }) {
+    const handlePlatformChange = (platform: OraclePlatform) => {
+        if (platform === currentPlatform) return;
+        if (!isSetup) {
+            setPlatform(platform);
+            return;
+        }
+
+        const confirmSuffix =
+            currentPlatform === "internal"
+                ? "\n\nYou won't be able to revert back using this dashboard. You would need to go to the platform-specific application (like the Shopify Frak app) and set up the webhook again from there."
+                : "";
+        const hasConfirmed = window.confirm(
+            `Warning\n\nAre you sure you want to change the platform?\nThis could potentially break your purchase tracking.${confirmSuffix}`
+        );
+        if (hasConfirmed) {
+            setPlatform(platform);
+            return;
+        }
+    };
+
     return (
         <Row align="center">
             <Badge
-                onClick={() => setPlatform("shopify")}
+                onClick={() => handlePlatformChange("shopify")}
                 variant={
                     currentPlatform === "shopify" ? "success" : "secondary"
                 }
@@ -114,7 +137,7 @@ function PlatformSelector({
                 Shopify
             </Badge>
             <Badge
-                onClick={() => setPlatform("woocommerce")}
+                onClick={() => handlePlatformChange("woocommerce")}
                 variant={
                     currentPlatform === "woocommerce" ? "success" : "secondary"
                 }
@@ -123,11 +146,19 @@ function PlatformSelector({
                 WooCommerce
             </Badge>
             <Badge
-                onClick={() => setPlatform("custom")}
+                onClick={() => handlePlatformChange("custom")}
                 variant={currentPlatform === "custom" ? "success" : "secondary"}
                 style={{ cursor: "pointer" }}
             >
                 Custom
+            </Badge>
+            <Badge
+                variant={
+                    currentPlatform === "internal" ? "success" : "secondary"
+                }
+                style={{ cursor: "not-allowed" }}
+            >
+                Internal
             </Badge>
         </Row>
     );
@@ -164,8 +195,12 @@ function PlatformRegistration({
         );
     }
 
+    if (platform === "internal") {
+        return <InternalRegistrationForm />;
+    }
+
     return (
-        <StripeRegistrationForm
+        <ShopifyRegistrationForm
             productId={productId}
             webhookUrl={webhookUrl}
             currentSigninKey={currentSigninKey}
@@ -291,7 +326,7 @@ function WooCommerceRegistrationForm({
     );
 }
 
-function StripeRegistrationForm({
+function ShopifyRegistrationForm({
     productId,
     currentSigninKey,
     webhookUrl,
@@ -361,6 +396,23 @@ function StripeRegistrationForm({
                     </Button>
                 </form>
             </Form>
+        </>
+    );
+}
+
+function InternalRegistrationForm() {
+    return (
+        <>
+            <p>
+                Your product is already registered on Frak using an internal
+                webhook. <br />
+                This could be because you are using one of our third parties
+                application like the Shopify app, or the WordPress plugin.
+            </p>
+            <p>
+                If you think that's a mistake, you can switch to a manual setup
+                using the selector on top.
+            </p>
         </>
     );
 }

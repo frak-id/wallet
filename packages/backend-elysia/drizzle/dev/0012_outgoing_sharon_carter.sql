@@ -1,0 +1,1 @@
+ALTER TYPE "public"."product_oracle_plateform" ADD VALUE 'internal';

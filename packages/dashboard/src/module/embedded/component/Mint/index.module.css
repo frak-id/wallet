@@ -30,3 +30,9 @@
 .listItem {
     margin-bottom: 5px;
 }
+
+.spinner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
