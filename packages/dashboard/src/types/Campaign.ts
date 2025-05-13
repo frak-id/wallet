@@ -58,6 +58,8 @@ export type Campaign = {
     distribution?:
         | {
               type: "fixed";
+              minMultiplier?: never;
+              maxMultiplier?: never;
           }
         | {
               type: "range";

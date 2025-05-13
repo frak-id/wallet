@@ -6,11 +6,11 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import type { Campaign } from "@/types/Campaign";
 import { Checkbox } from "@shared/module/component/forms/Checkbox";
 import { InputNumber } from "@shared/module/component/forms/InputNumber";
 import { useEffect, useState } from "react";
 import { type FieldPath, useFormContext } from "react-hook-form";
-import type { Campaign } from "../../../../../types/Campaign";
 import styles from "./FormFromTo.module.css";
 
 type FormFromToProps = {
