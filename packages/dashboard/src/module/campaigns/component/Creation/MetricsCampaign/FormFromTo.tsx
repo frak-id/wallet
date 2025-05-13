@@ -1,3 +1,5 @@
+"use client";
+
 import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
@@ -104,6 +106,7 @@ export function FormFromTo({
                             <FormMessage />
                             <FormControl>
                                 <InputNumber
+                                    key={`${id}-${from.name}`}
                                     length={"small"}
                                     placeholder={from.placeholder}
                                     rightSection={from.rightSection}
@@ -129,6 +132,7 @@ export function FormFromTo({
                             <FormMessage />
                             <FormControl>
                                 <InputNumber
+                                    key={`${id}-${to.name}`}
                                     length={"small"}
                                     placeholder={to.placeholder}
                                     rightSection={to.rightSection}

@@ -25,7 +25,6 @@ export function FormPriceRange({
                             interactionTypesInfo[trigger as InteractionTypesKey]
                                 .name
                         }
-                        form={form}
                         from={{
                             name: `triggers.${trigger as InteractionTypesKey}.from`,
                             label: "From",

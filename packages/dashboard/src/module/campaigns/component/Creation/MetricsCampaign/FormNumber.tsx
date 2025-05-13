@@ -1,3 +1,5 @@
+"use client";
+
 import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
@@ -98,11 +100,24 @@ export function FormNumber({
                             <FormMessage />
                             <FormControl>
                                 <InputNumber
+                                    key={`${id}-single`}
                                     length={"small"}
                                     placeholder={rawField.placeholder}
                                     rightSection={rawField.rightSection}
                                     disabled={disabled ?? checked !== true}
                                     {...field}
+                                    onChange={(value) => {
+                                        const parsedValue =
+                                            Number.parseFloat(value);
+                                        const finalValue = Number.isNaN(
+                                            parsedValue
+                                        )
+                                            ? 0
+                                            : parsedValue;
+                                        for (const key of rawField.keys) {
+                                            setValue(key, finalValue);
+                                        }
+                                    }}
                                 />
                             </FormControl>
                         </FormItem>

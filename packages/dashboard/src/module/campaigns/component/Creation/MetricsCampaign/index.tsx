@@ -33,17 +33,17 @@ export function MetricsCampaign() {
     });
     const distributionType = form.watch("distribution.type") ?? "fixed";
 
-    function _handleSave(triggers: Campaign["triggers"]) {
+    function handleSave(newCampaign: Campaign) {
         saveCampaign({
             ...campaign,
-            triggers,
+            ...newCampaign,
         });
     }
 
     return (
         <FormLayout>
             <Form {...form}>
-                <form>
+                <form onSubmit={form.handleSubmit(handleSave)}>
                     <Head
                         title={{ content: "Campaign Metrics", size: "small" }}
                         rightSection={

@@ -1,3 +1,5 @@
+"use client";
+
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { useFormContext } from "react-hook-form";
@@ -11,8 +13,6 @@ export function DistributionConfiguration({
     const { register, watch } = useFormContext();
 
     const userPercent = watch("rewardChaining.userPercent");
-
-    // todo: why min and max are saved as string ffs
 
     return (
         <>
@@ -30,6 +30,7 @@ export function DistributionConfiguration({
                     </label>
                     <input
                         id="userPercent-slider"
+                        key="userPercent-slider"
                         type="range"
                         min={0.1}
                         max={0.9}
@@ -54,8 +55,10 @@ function RangeBudgetMultiplierSlider({
     distributionType: "range" | "fixed";
 }) {
     const { register, watch } = useFormContext();
-    const minMultiplier = watch("distribution.minMultiplier");
-    const maxMultiplier = watch("distribution.maxMultiplier");
+    const [minMultiplier, maxMultiplier] = watch([
+        "distribution.minMultiplier",
+        "distribution.maxMultiplier",
+    ]);
 
     if (distributionType !== "range") {
         return null;
@@ -69,6 +72,7 @@ function RangeBudgetMultiplierSlider({
                 </label>
                 <input
                     id="minMultiplier-slider"
+                    key="minMultiplier-slider"
                     type="range"
                     min={0.7}
                     max={1}
@@ -86,6 +90,7 @@ function RangeBudgetMultiplierSlider({
                 </label>
                 <input
                     id="maxMultiplier-slider"
+                    key="maxMultiplier-slider"
                     type="range"
                     min={1}
                     max={5}

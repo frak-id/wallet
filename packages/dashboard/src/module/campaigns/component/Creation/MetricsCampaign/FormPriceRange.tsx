@@ -1,3 +1,5 @@
+"use client";
+
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
 import { FormFromTo } from "@/module/campaigns/component/Creation/MetricsCampaign/FormFromTo";

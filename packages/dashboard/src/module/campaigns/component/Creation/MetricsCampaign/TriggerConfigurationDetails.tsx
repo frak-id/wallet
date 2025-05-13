@@ -1,4 +1,8 @@
+"use client";
+
+import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
 import type { Campaign } from "@/types/Campaign";
+import type { InteractionTypesKey } from "@frak-labs/core-sdk";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -8,20 +12,17 @@ import { useFormContext } from "react-hook-form";
 export function TriggerConfigurationDetails() {
     const { watch } = useFormContext<Campaign>();
 
-    const userPercent = watch("rewardChaining.userPercent");
-    const distribution = watch("distribution");
-    const triggers = watch("triggers");
-    const budget = watch("budget");
+    // This induce a lot more re-renders than needed, but it's the only fcking way I found to re-render on conditional fields updates
+    const campaign = watch();
 
     const triggerDetails = useMemo(
         () =>
-            Object.entries(triggers)
+            Object.entries(campaign.triggers)
                 .map(([trigger, triggerData]) => {
-                    if (triggerData.from === 0) {
+                    const { rewardChaining, distribution, budget } = campaign;
+                    if (triggerData.from === 0 || triggerData.to === 0) {
                         return null;
                     }
-
-                    console.log(distribution);
 
                     const distributionType = distribution?.type ?? "fixed";
                     // Get the average CAC per trigger
@@ -45,10 +46,11 @@ export function TriggerConfigurationDetails() {
                         max: maxReward * 0.2,
                     };
 
+                    const userPercent = rewardChaining?.userPercent ?? 0.1;
                     const refereeEarnings = {
-                        avg: (avgCac - frak.avg) * (userPercent ?? 0.1),
-                        min: (minReward - frak.min) * (userPercent ?? 0.1),
-                        max: (maxReward - frak.max) * (userPercent ?? 0.1),
+                        avg: (avgCac - frak.avg) * userPercent,
+                        min: (minReward - frak.min) * userPercent,
+                        max: (maxReward - frak.max) * userPercent,
                     };
                     const referrerEarnings = {
                         avg: avgCac - frak.avg - refereeEarnings.avg,
@@ -61,6 +63,9 @@ export function TriggerConfigurationDetails() {
 
                     return {
                         trigger,
+                        triggerLbl:
+                            interactionTypesInfo[trigger as InteractionTypesKey]
+                                .name,
                         avgCac,
                         refereeEarnings,
                         referrerEarnings,
@@ -70,7 +75,7 @@ export function TriggerConfigurationDetails() {
                     };
                 })
                 .filter((t) => t !== null),
-        [triggers, userPercent, distribution, budget]
+        [campaign]
     );
 
     return (
@@ -78,6 +83,7 @@ export function TriggerConfigurationDetails() {
             {triggerDetails.map(
                 ({
                     trigger,
+                    triggerLbl,
                     avgCac,
                     frak,
                     refereeEarnings,
@@ -86,7 +92,7 @@ export function TriggerConfigurationDetails() {
                     avgTriggersForBudget,
                 }) => (
                     <div key={trigger}>
-                        <h4>When {trigger} is triggered</h4>
+                        <h4>When {triggerLbl} is triggered</h4>
                         <div>
                             <strong>Average CAC per action:</strong>
                             {avgCac.toFixed(2)}€
