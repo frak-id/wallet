@@ -31,7 +31,7 @@ type CampaignTrigger =
     | {
           // New schema for the trigger
           cac: number;
-          maxCountPerUser?: never;
+          maxCountPerUser?: number;
 
           from?: never;
           to?: never;

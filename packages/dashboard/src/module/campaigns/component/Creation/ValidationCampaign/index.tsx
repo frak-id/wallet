@@ -2,10 +2,10 @@
 
 import { viemClient } from "@/context/blockchain/provider";
 import {
-    getCreationData,
     saveCampaignDraft,
     updateCampaignState,
 } from "@/context/campaigns/action/createCampaign";
+import { getCreationData } from "@/context/campaigns/action/createOnChain";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import {
     campaignIsClosingAtom,
