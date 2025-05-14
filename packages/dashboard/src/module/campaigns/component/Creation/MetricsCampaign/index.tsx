@@ -9,12 +9,13 @@ import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import type { Campaign } from "@/types/Campaign";
+import { Skeleton } from "@frak-labs/shared/module/component/Skeleton";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import { toHex } from "viem";
 import { DistributionConfiguration } from "./DistributionConfig";
-import { FormPriceRange } from "./FormPriceRange";
+import { FormTriggersCac } from "./FormTriggersCac";
 
 export function MetricsCampaign() {
     const campaign = useAtomValue(campaignAtom);
@@ -33,7 +34,7 @@ export function MetricsCampaign() {
         resolver: (values) => {
             // Check that we have at least one trigger set with a CAC greater than 0
             const hasTrigger = Object.values(values.triggers).some(
-                (trigger) => trigger.from > 0
+                (trigger) => trigger.cac && trigger.cac > 0
             );
             if (!hasTrigger) {
                 return {
@@ -60,6 +61,8 @@ export function MetricsCampaign() {
         });
     }
 
+    if (productIsPending) return <Skeleton />;
+
     return (
         <FormLayout>
             <Form {...form}>
@@ -75,9 +78,8 @@ export function MetricsCampaign() {
                         }
                     />
                     <DistributionTypeToggle />
-                    <FormPriceRange
+                    <FormTriggersCac
                         productTypes={product?.productTypes ?? []}
-                        distributionType={distributionType}
                     />
                     <DistributionConfiguration
                         distributionType={distributionType}

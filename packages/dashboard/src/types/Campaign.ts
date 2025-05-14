@@ -18,13 +18,24 @@ export type Budget = "daily" | "weekly" | "monthly" | "global";
  */
 export type CampaignRewardType = "fixed" | "range";
 
-type CampaignTrigger = {
-    // Reward range
-    from: number;
-    to: number;
-    // Reward distribution config
-    maxCountPerUser?: number;
-};
+type CampaignTrigger =
+    | {
+          // Reward range (for the old schema)
+          from: number;
+          to: number;
+          // Reward distribution config
+          maxCountPerUser?: number;
+
+          cac?: never;
+      }
+    | {
+          // New schema for the trigger
+          cac: number;
+          maxCountPerUser?: never;
+
+          from?: never;
+          to?: never;
+      };
 
 /**
  * Direct campaign type

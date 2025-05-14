@@ -2,7 +2,6 @@
 
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
-import { FormFromTo } from "@/module/campaigns/component/Creation/MetricsCampaign/FormFromTo";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
@@ -15,14 +14,12 @@ import { Button } from "@shared/module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
-import { FormNumber } from "./FormNumber";
+import { FormTrigger } from "../Generic/FormTrigger";
 
-export function FormPriceRange({
+export function FormTriggersCac({
     productTypes = [],
-    distributionType,
 }: {
     productTypes: ProductTypesKey[];
-    distributionType: "fixed" | "range";
 }) {
     const setStep = useSetAtom(campaignStepAtom);
     const { type: currentGoal } = useAtomValue(campaignAtom);
@@ -74,18 +71,20 @@ export function FormPriceRange({
                     </FormDescription>
                 </>
             )}
-            {distributionType === "fixed" &&
-                availableInteractions.length > 0 && (
-                    <FixedPriceInputs
-                        availableInteractions={availableInteractions}
+            <FormDescription>
+                Set the CAC for each campaign objective. The budget will be
+                distributed between the referee and referrer according to the
+                parameters below.
+            </FormDescription>
+            {availableInteractions.length > 0 &&
+                availableInteractions.map(({ key }) => (
+                    <FormTrigger
+                        key={key}
+                        interaction={key}
+                        disabled={false}
+                        defaultChecked={availableInteractions.length === 1}
                     />
-                )}
-            {distributionType === "range" &&
-                availableInteractions.length > 0 && (
-                    <RangePriceInputs
-                        availableInteractions={availableInteractions}
-                    />
-                )}
+                ))}
             {triggerState.error && (
                 <p className="error">
                     {typeof triggerState.error === "string"
@@ -94,71 +93,5 @@ export function FormPriceRange({
                 </p>
             )}
         </Panel>
-    );
-}
-
-function FixedPriceInputs({
-    availableInteractions,
-}: {
-    availableInteractions: { key: InteractionTypesKey; label: string }[];
-}) {
-    return (
-        <>
-            <FormDescription>
-                Set the fixed CAC for each campaign objective. The budget will
-                be distributed between the referee and referrer according to the
-                parameters below.
-            </FormDescription>
-            {availableInteractions.map(({ key, label }) => (
-                <FormNumber
-                    key={key}
-                    id={key}
-                    label={label}
-                    field={{
-                        keys: [`triggers.${key}.from`, `triggers.${key}.to`],
-                        label: "CAC",
-                        placeholder: "25,00 €",
-                        rightSection: "EUR",
-                    }}
-                    defaultChecked={availableInteractions.length === 1}
-                />
-            ))}
-        </>
-    );
-}
-
-function RangePriceInputs({
-    availableInteractions,
-}: {
-    availableInteractions: { key: InteractionTypesKey; label: string }[];
-}) {
-    return (
-        <>
-            <FormDescription>
-                Set a CAC price range for each campaign objective. The budget
-                will be distributed between the referee and referrer according
-                to the parameters below.
-            </FormDescription>
-            {availableInteractions.map(({ key, label }) => (
-                <FormFromTo
-                    key={key}
-                    id={key}
-                    label={label}
-                    from={{
-                        name: `triggers.${key}.from`,
-                        label: "From",
-                        placeholder: "15,00 €",
-                        rightSection: "EUR",
-                    }}
-                    to={{
-                        name: `triggers.${key}.to`,
-                        label: "To",
-                        placeholder: "25,00 €",
-                        rightSection: "EUR",
-                    }}
-                    defaultChecked={availableInteractions.length === 1}
-                />
-            ))}
-        </>
     );
 }

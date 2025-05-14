@@ -20,53 +20,48 @@ export function TriggerConfigurationDetails() {
             Object.entries(campaign.triggers)
                 .map(([trigger, triggerData]) => {
                     const { rewardChaining, distribution, budget } = campaign;
-                    if (triggerData.from === 0 || triggerData.to === 0) {
+                    if (!triggerData.cac || triggerData.cac === 0) {
                         return null;
                     }
 
-                    const distributionType = distribution?.type ?? "fixed";
-                    // Get the average CAC per trigger
-                    const avgCac =
-                        distributionType === "fixed"
-                            ? triggerData.from
-                            : (triggerData.from + triggerData.to) / 2;
+                    const cac = triggerData.cac;
 
                     // Get the min and max reward
                     const minReward = distribution?.minMultiplier
-                        ? distribution.minMultiplier * triggerData.from
-                        : triggerData.from;
+                        ? distribution.minMultiplier * cac
+                        : cac;
                     const maxReward = distribution?.maxMultiplier
-                        ? distribution.maxMultiplier * triggerData.to
-                        : triggerData.to;
+                        ? distribution.maxMultiplier * cac
+                        : cac;
 
                     // Compute remaining values
                     const frak = {
-                        avg: avgCac * 0.2,
+                        avg: cac * 0.2,
                         min: minReward * 0.2,
                         max: maxReward * 0.2,
                     };
 
                     const userPercent = rewardChaining?.userPercent ?? 0.1;
                     const refereeEarnings = {
-                        avg: (avgCac - frak.avg) * userPercent,
+                        avg: (cac - frak.avg) * userPercent,
                         min: (minReward - frak.min) * userPercent,
                         max: (maxReward - frak.max) * userPercent,
                     };
                     const referrerEarnings = {
-                        avg: avgCac - frak.avg - refereeEarnings.avg,
+                        avg: cac - frak.avg - refereeEarnings.avg,
                         min: minReward - frak.min - refereeEarnings.min,
                         max: maxReward - frak.max - refereeEarnings.max,
                     };
 
                     // Compute the amount of this trigger that could be done in the given budget
-                    const avgTriggersForBudget = budget.maxEuroDaily / avgCac;
+                    const avgTriggersForBudget = budget.maxEuroDaily / cac;
 
                     return {
                         trigger,
                         triggerLbl:
                             interactionTypesInfo[trigger as InteractionTypesKey]
                                 .name,
-                        avgCac,
+                        cac,
                         refereeEarnings,
                         referrerEarnings,
                         frak,
@@ -84,7 +79,7 @@ export function TriggerConfigurationDetails() {
                 ({
                     trigger,
                     triggerLbl,
-                    avgCac,
+                    cac,
                     frak,
                     refereeEarnings,
                     referrerEarnings,
@@ -95,7 +90,7 @@ export function TriggerConfigurationDetails() {
                         <h4>When {triggerLbl} is triggered</h4>
                         <div>
                             <strong>Average CAC per action:</strong>
-                            {avgCac.toFixed(2)}€
+                            {cac.toFixed(2)}€
                         </div>
                         <div>
                             <strong>Frak Commission:</strong>

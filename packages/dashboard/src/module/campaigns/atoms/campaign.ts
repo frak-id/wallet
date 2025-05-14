@@ -40,8 +40,8 @@ const initialValues: Campaign = {
         userPercent: 0.1,
     },
     triggers: Object.fromEntries(
-        flattenedKeys.map((key) => [key, { from: 0, to: 0 }])
-    ) as Record<InteractionTypesKey, { from: number; to: number }>,
+        flattenedKeys.map((key) => [key, { cac: 0 }])
+    ) as Record<InteractionTypesKey, { cac: number }>,
 };
 
 /**
