@@ -20,6 +20,7 @@ function createNPMConfig(): LibConfig {
             entry: {
                 buttonShare: "./src/components/ButtonShare/index.ts",
                 buttonWallet: "./src/components/ButtonWallet/index.ts",
+                buttonGift: "./src/components/ButtonGift/index.ts",
             },
         },
     };
@@ -73,7 +74,7 @@ export default defineConfig({
     mode: "production",
     output: {
         target: "web",
-        minify: true,
+        minify: false,
         cleanDistPath: true,
     },
     plugins: [

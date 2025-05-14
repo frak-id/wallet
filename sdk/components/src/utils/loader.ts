@@ -18,6 +18,10 @@ const COMPONENTS_MAP = {
         import(
             /* webpackChunkName: "button-wallet" */ "../components/ButtonWallet"
         ),
+    "button-gift": () =>
+        import(
+            /* webpackChunkName: "button-gift" */ "../components/ButtonGift"
+        ),
 } as const;
 
 const observer = new MutationObserver((mutations) => {

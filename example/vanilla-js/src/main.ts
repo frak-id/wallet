@@ -8,6 +8,8 @@ async function init() {
             import("@frak-labs/components/dist/buttonWallet.css"),
             import("@frak-labs/components/dist/buttonShare.js"),
             import("@frak-labs/components/dist/buttonShare.css"),
+            import("@frak-labs/components/dist/buttonGift.js"),
+            import("@frak-labs/components/dist/buttonGift.css"),
         ]);
     }
 

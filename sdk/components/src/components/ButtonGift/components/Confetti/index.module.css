@@ -1,0 +1,34 @@
+.confetti {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    margin: 500px auto 0;
+    text-align: center;
+    padding: 10px 0;
+    cursor: pointer;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%);
+}
+
+.confetti p {
+    position: absolute;
+    display: block;
+    left: 50%;
+    bottom: 0;
+    width: 5px;
+    height: 8px;
+    opacity: 0.8;
+}
+
+.animated p {
+    animation: 2s bang infinite;
+}
+
+@keyframes bang {
+    from {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+}
