@@ -26,13 +26,18 @@ export function TriggerConfigurationDetails() {
 
                     const cac = triggerData.cac;
 
+                    const minMultiplier =
+                        distribution?.type === "range"
+                            ? (distribution?.minMultiplier ?? 0.7)
+                            : 1;
+                    const maxMultiplier =
+                        distribution?.type === "range"
+                            ? (distribution?.maxMultiplier ?? 5)
+                            : 1;
+
                     // Get the min and max reward
-                    const minReward = distribution?.minMultiplier
-                        ? distribution.minMultiplier * cac
-                        : cac;
-                    const maxReward = distribution?.maxMultiplier
-                        ? distribution.maxMultiplier * cac
-                        : cac;
+                    const minReward = cac * minMultiplier;
+                    const maxReward = cac * maxMultiplier;
 
                     // Compute remaining values
                     const frak = {
