@@ -1,22 +1,30 @@
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
-import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
+import { pwaInstallRefAtom } from "@/module/common/component/PwaInstall";
 import { WebApp } from "@shared/module/asset/icons/WebApp";
 import { Button } from "@shared/module/component/Button";
+import { useAtomValue } from "jotai";
+import { useCallback } from "react";
 import { Trans } from "react-i18next";
 
 export function InstallApp() {
-    const { prompt, launchInstallation } = useAddToHomeScreenPrompt();
+    const pwaInstallRef = useAtomValue(pwaInstallRefAtom);
+
+    const handleInstall = useCallback(() => {
+        const pwaInstall = pwaInstallRef?.current;
+        if (!pwaInstall) return;
+        pwaInstall.showDialog(true);
+    }, [pwaInstallRef]);
 
     return (
-        prompt && (
+        !pwaInstallRef?.current?.isUnderStandaloneMode && (
             <Panel variant={"invisible"} size={"none"}>
                 <Button
                     blur={"blur"}
                     width={"full"}
                     align={"left"}
                     gap={"big"}
-                    onClick={() => launchInstallation()}
+                    onClick={handleInstall}
                     leftIcon={<WebApp />}
                 >
                     <ButtonLabel>
