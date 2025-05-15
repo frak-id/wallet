@@ -76,7 +76,7 @@ export function NewCampaign({ title }: { title: string }) {
                     <FormBank />
                     <FormGoals {...form} />
                     <FormSpecialAdvertising {...form} />
-                    <FormBudget {...form} />
+                    <FormBudget />
                     <FormTerritory {...form} />
                     <FormSchedule {...form} />
                     <Actions />

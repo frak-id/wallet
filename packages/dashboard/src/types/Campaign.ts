@@ -18,7 +18,7 @@ export type Budget = "daily" | "weekly" | "monthly" | "global";
  */
 export type CampaignRewardType = "fixed" | "range";
 
-type CampaignTrigger =
+export type CampaignTrigger =
     | {
           // Reward range (for the old schema)
           from: number;
@@ -49,7 +49,7 @@ export type Campaign = {
     specialCategories: SpecialCategory[];
     // The distribution cap of the campaign
     budget: {
-        type: Budget | "" | undefined;
+        type: Budget | undefined;
         maxEuroDaily: number;
     };
     territories: TCountryCode[];

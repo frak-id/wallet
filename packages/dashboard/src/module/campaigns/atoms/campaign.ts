@@ -25,7 +25,7 @@ const initialValues: Campaign = {
     productId: "",
     specialCategories: [],
     budget: {
-        type: "",
+        type: "global",
         maxEuroDaily: 0,
     },
     territories: [],

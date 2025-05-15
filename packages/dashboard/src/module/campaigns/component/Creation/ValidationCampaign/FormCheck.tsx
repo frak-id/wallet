@@ -19,7 +19,7 @@ export function FormCheck(form: UseFormReturn<Campaign>) {
             <FormAdvertising {...form} />
             <FormOrder {...form} />
             <FormGoal {...form} />
-            <FormBudgetRow {...form} isCheckCampaign={true} />
+            <FormBudgetRow {...form} disabled={true} />
             <FormPriceRange />
         </Panel>
     );

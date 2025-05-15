@@ -4,96 +4,65 @@ import {
     FormDescription,
     FormField,
     FormItem,
-    FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
 import { InputNumber } from "@shared/module/component/forms/InputNumber";
-import type { UseFormReturn } from "react-hook-form";
+import { useMemo } from "react";
+import { useFormContext } from "react-hook-form";
+import { Column } from "../../../../common/component/Column";
 
-export function FormBudgetRow(
-    form: UseFormReturn<Campaign> & {
-        isCheckCampaign?: boolean;
-        disabled?: boolean;
-    }
-) {
-    const { isCheckCampaign, disabled } = form;
+export function FormBudgetRow({
+    disabled,
+}: {
+    disabled?: boolean;
+}) {
+    const { control, watch } = useFormContext<Campaign>();
+
+    const maxEuroDaily = watch("budget.maxEuroDaily");
+    const [frakCommission, remainingBudget] = useMemo(() => {
+        const commission = Number(maxEuroDaily) * 0.2;
+        return [commission, Number(maxEuroDaily) - commission];
+    }, [maxEuroDaily]);
 
     return (
-        <Row>
-            <FormField
-                control={form.control}
-                name="budget.type"
-                rules={{ required: "Select a budget" }}
-                render={({ field }) => (
-                    <FormItem>
-                        {isCheckCampaign ? (
-                            <FormDescription label={"Campaign budget"} />
-                        ) : (
-                            <FormLabel>Campaign budget</FormLabel>
-                        )}
-                        <FormMessage />
-                        <Select
-                            onValueChange={(value) => {
-                                if (value === "") return;
-                                field.onChange(value);
-                            }}
-                            value={field.value}
-                            disabled={disabled}
-                        >
+        <Column>
+            <Row>
+                <FormDescription>Global budget:</FormDescription>
+                <FormField
+                    control={control}
+                    name="budget.maxEuroDaily"
+                    rules={{
+                        validate: {
+                            required: (value) => value > 0 || "Invalid amount",
+                        },
+                    }}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormMessage />
                             <FormControl>
-                                <SelectTrigger length={"medium"} {...field}>
-                                    <SelectValue placeholder="Select a budget" />
-                                </SelectTrigger>
+                                <InputNumber
+                                    placeholder={"25,00 €"}
+                                    length={"medium"}
+                                    rightSection={"EUR"}
+                                    disabled={disabled}
+                                    {...field}
+                                />
                             </FormControl>
-                            <SelectContent>
-                                <SelectItem value="daily">
-                                    Daily budget
-                                </SelectItem>
-                                <SelectItem value="weekly">
-                                    Weekly budget
-                                </SelectItem>
-                                <SelectItem value="monthly">
-                                    Monthly budget
-                                </SelectItem>
-                                <SelectItem value="global">
-                                    Global budget
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="budget.maxEuroDaily"
-                rules={{
-                    validate: {
-                        required: (value) => value > 0 || "Invalid amount",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormMessage />
-                        <FormControl>
-                            <InputNumber
-                                placeholder={"25,00 €"}
-                                length={"medium"}
-                                rightSection={"EUR"}
-                                disabled={disabled}
-                                {...field}
-                            />
-                        </FormControl>
-                    </FormItem>
-                )}
-            />
-        </Row>
+                        </FormItem>
+                    )}
+                />
+            </Row>
+            <Row>
+                <FormDescription>
+                    Frak commission: {frakCommission} €
+                </FormDescription>
+            </Row>
+            <Row>
+                <FormDescription>
+                    Remaining budget: {remainingBudget} €
+                </FormDescription>
+            </Row>
+        </Column>
     );
 }

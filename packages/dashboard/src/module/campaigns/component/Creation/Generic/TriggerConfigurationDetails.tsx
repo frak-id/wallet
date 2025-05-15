@@ -5,18 +5,16 @@ import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
-import type { Campaign } from "@/types/Campaign";
+import type { Campaign, CampaignTrigger } from "@/types/Campaign";
 import type { InteractionTypesKey } from "@frak-labs/core-sdk";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
-import { getNumberOfDays } from "../NewCampaign/FormBudget";
 import styles from "./TriggerConfigurationDetails.module.css";
 
 type TriggerDetails = {
     trigger: InteractionTypesKey;
     triggerLbl: string;
     cac: number;
-    frak: { avg: number; min: number; max: number };
     refereeEarnings: { avg: number; min: number; max: number };
     referrerEarnings: { avg: number; min: number; max: number };
     distributionType: "range" | "fixed";
@@ -37,31 +35,36 @@ export function TriggerConfigurationDetails() {
         () =>
             Object.entries(campaign.triggers)
                 .map(([trigger, triggerData]) => {
-                    const { rewardChaining, distribution, budget } = campaign;
-                    if (!triggerData.cac || triggerData.cac === 0) {
+                    // Get the min and max values for the trigger
+                    const { min, max } = getMinMax(triggerData);
+                    if (!min || !max) {
                         return null;
                     }
 
-                    const cac = triggerData.cac;
+                    // Get the reward chaining and distribution values
+                    const { rewardChaining, distribution, budget } = campaign;
 
+                    // Get the min and max multipliers
                     const minMultiplier =
-                        distribution?.type === "range"
+                        distribution?.type === "range" || min !== max
                             ? (distribution?.minMultiplier ?? 0.7)
                             : 1;
                     const maxMultiplier =
-                        distribution?.type === "range"
+                        distribution?.type === "range" || min !== max
                             ? (distribution?.maxMultiplier ?? 5)
                             : 1;
 
                     // Compute remaining values
-                    const { frak, refereeEarnings, referrerEarnings } =
+                    const { refereeEarnings, referrerEarnings, cac } =
                         computeRewards({
-                            cac,
+                            minCac: min,
+                            maxCac: max,
                             minMultiplier,
                             maxMultiplier,
                             userPercent: rewardChaining?.userPercent ?? 0.1,
                         });
 
+                    // Extract conversions tags
                     const conversions: { lbl: string; value: number }[] =
                         extractConversions({ budget, cac });
 
@@ -73,7 +76,6 @@ export function TriggerConfigurationDetails() {
                         cac,
                         refereeEarnings,
                         referrerEarnings,
-                        frak,
                         distributionType: distribution?.type ?? "fixed",
                         conversions,
                     };
@@ -97,13 +99,12 @@ export function TriggerConfigurationDetails() {
 function TriggerDetailsItem({
     triggerLbl,
     cac,
-    frak,
     refereeEarnings,
     referrerEarnings,
     conversions,
     distributionType,
 }: TriggerDetails) {
-    const hasRangeDistribution = frak.min !== frak.max;
+    const hasRangeDistribution = distributionType === "range";
     const formatCurrency = (value: number) => `${value.toFixed(2)}€`;
     const renderValueWithRange = (avg: number, min: number, max: number) => {
         if (min === max) {
@@ -180,14 +181,6 @@ function TriggerDetailsItem({
                         <div
                             className={styles.triggerDetailsReward__columnLabel}
                         >
-                            Frak Commission
-                        </div>
-                        {renderValueWithRange(frak.avg, frak.min, frak.max)}
-                    </div>
-                    <div className={styles.triggerDetailsReward__column}>
-                        <div
-                            className={styles.triggerDetailsReward__columnLabel}
-                        >
                             Referee Earnings
                         </div>
                         {renderValueWithRange(
@@ -227,23 +220,33 @@ function TriggerDetailsItem({
     );
 }
 
+function getMinMax(trigger: CampaignTrigger) {
+    const min = (trigger.cac ? trigger.cac : trigger.from) ?? 0;
+    const max = (trigger.cac ? trigger.cac : trigger.to) ?? 0;
+    return { min, max };
+}
+
 /**
  * Helper to compute the rewards that will be distributed to each party
  */
 function computeRewards({
-    cac,
+    minCac,
+    maxCac,
     minMultiplier,
     maxMultiplier,
     userPercent,
 }: {
-    cac: number;
+    minCac: number;
+    maxCac: number;
     minMultiplier: number;
     maxMultiplier: number;
     userPercent: number;
 }) {
+    const cac = (minCac + maxCac) / 2;
+
     // Get the min and max reward
-    const minReward = cac * minMultiplier;
-    const maxReward = cac * maxMultiplier;
+    const minReward = minCac * minMultiplier;
+    const maxReward = maxCac * maxMultiplier;
 
     // Compute remaining values
     const frak = {
@@ -264,7 +267,7 @@ function computeRewards({
     };
 
     return {
-        frak,
+        cac,
         refereeEarnings,
         referrerEarnings,
     };
@@ -289,21 +292,8 @@ function extractConversions({
                     value: (budget.maxEuroDaily * 0.8) / cac,
                 },
             ];
-        case "daily":
-            return [
-                {
-                    lbl: "Average daily conversions",
-                    value: (budget.maxEuroDaily * 0.8) / cac,
-                },
-            ];
         default: {
-            const numberOfDays = getNumberOfDays(budget.type);
-            const dailyBudget = budget.maxEuroDaily / numberOfDays;
             return [
-                {
-                    lbl: "Average daily conversions",
-                    value: (dailyBudget * 0.8) / cac,
-                },
                 {
                     lbl: `Max ${budget.type} conversions`,
                     value: (budget.maxEuroDaily * 0.8) / cac,
