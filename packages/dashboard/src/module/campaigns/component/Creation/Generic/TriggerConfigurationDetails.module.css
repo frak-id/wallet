@@ -1,3 +1,7 @@
+.triggerConfigurationDetails {
+    margin-top: 20px;
+}
+
 .triggerDetails__columnTitle {
     font-size: 14px;
     color: var(--frak-color-grayText);

@@ -6,13 +6,23 @@ import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
-import { Form, FormLayout } from "@/module/forms/Form";
+import { Row } from "@/module/common/component/Row";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormLayout,
+    FormMessage,
+} from "@/module/forms/Form";
+import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import type { Campaign } from "@/types/Campaign";
 import { Skeleton } from "@frak-labs/shared/module/component/Skeleton";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
-import { useForm, useFormContext } from "react-hook-form";
+import { type UseFormReturn, useForm } from "react-hook-form";
 import { toHex } from "viem";
 import { DistributionConfiguration } from "./DistributionConfig";
 import { FormTriggersCac } from "./FormTriggersCac";
@@ -77,12 +87,13 @@ export function MetricsCampaign() {
                             />
                         }
                     />
-                    <DistributionTypeToggle />
+                    <DistributionTypeToggle {...form} />
                     <FormTriggersCac
                         productTypes={product?.productTypes ?? []}
                     />
                     <DistributionConfiguration
                         distributionType={distributionType}
+                        form={form}
                     />
 
                     <Actions isLoading={productIsPending} />
@@ -92,26 +103,53 @@ export function MetricsCampaign() {
     );
 }
 
-function DistributionTypeToggle() {
-    const { register } = useFormContext();
+function DistributionTypeToggle(form: UseFormReturn<Campaign>) {
     return (
         <Panel title="Distribution Type">
-            <label>
-                <input
-                    type="radio"
-                    value="fixed"
-                    {...register("distribution.type")}
-                />
-                Fixed
-            </label>
-            <label>
-                <input
-                    type="radio"
-                    value="range"
-                    {...register("distribution.type")}
-                />
-                Range
-            </label>
+            <FormField
+                control={form.control}
+                name="distribution.type"
+                rules={{ required: "Select a distribution type" }}
+                render={({ field }) => (
+                    <FormItem>
+                        <Row align={"start"}>
+                            <div>
+                                <FormControl>
+                                    <RadioGroup
+                                        onValueChange={(value) =>
+                                            field.onChange(value)
+                                        }
+                                        defaultValue={field.value}
+                                        {...field}
+                                    >
+                                        <FormItem variant={"radio"}>
+                                            <FormControl>
+                                                <RadioGroupItem
+                                                    value={"fixed"}
+                                                />
+                                            </FormControl>
+                                            <FormLabel variant={"radio"}>
+                                                Fixed
+                                            </FormLabel>
+                                        </FormItem>
+                                        <FormItem variant={"radio"}>
+                                            <FormControl>
+                                                <RadioGroupItem
+                                                    value={"range"}
+                                                />
+                                            </FormControl>
+                                            <FormLabel variant={"radio"}>
+                                                Range
+                                            </FormLabel>
+                                        </FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                            </div>
+                        </Row>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
         </Panel>
     );
 }

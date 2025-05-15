@@ -85,7 +85,7 @@ export function TriggerConfigurationDetails() {
     );
 
     return (
-        <div>
+        <div className={styles.triggerConfigurationDetails}>
             {triggerDetails.map((triggerItem) => (
                 <TriggerDetailsItem
                     key={triggerItem.trigger}

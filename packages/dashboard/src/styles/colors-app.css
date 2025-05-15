@@ -69,4 +69,7 @@
     --frak-alertDialog-background-color: var(--frak-color-white);
     --frak-alertDialog-title-color: var(--frak-color-shark);
     --frak-alertDialog-content-color: var(--frak-color-tuna);
+    --frak-slider-track-background-color: rgba(0, 0, 0, 0.5);
+    --frak-slider-range-background-color: var(--frak-color-royal-blue);
+    --frak-slider-thumb-background-color: var(--frak-color-white);
 }

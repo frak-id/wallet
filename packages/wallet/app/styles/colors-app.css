@@ -53,4 +53,7 @@
     --frak-input-border-width: 0;
     --frak-drawer-background-color: #242321;
     --frak-drawer-handle-background-color: var(--frak-color-mystic);
+    --frak-slider-track-background-color: rgba(0, 0, 0, 0.5);
+    --frak-slider-range-background-color: var(--frak-color-white);
+    --frak-slider-thumb-background-color: var(--frak-color-white);
 }
