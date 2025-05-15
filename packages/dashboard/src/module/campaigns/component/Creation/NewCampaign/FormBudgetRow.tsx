@@ -8,9 +8,11 @@ import {
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { InputNumber } from "@shared/module/component/forms/InputNumber";
+import { CircleDollarSign, Wallet } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { Column } from "../../../../common/component/Column";
+import styles from "./FormBudgetRow.module.css";
 
 export function FormBudgetRow({
     disabled,
@@ -28,7 +30,6 @@ export function FormBudgetRow({
     return (
         <Column>
             <Row>
-                <FormDescription>Global budget:</FormDescription>
                 <FormField
                     control={control}
                     name="budget.maxEuroDaily"
@@ -39,6 +40,7 @@ export function FormBudgetRow({
                     }}
                     render={({ field }) => (
                         <FormItem>
+                            <FormDescription label={"Global budget"} />
                             <FormMessage />
                             <FormControl>
                                 <InputNumber
@@ -53,16 +55,37 @@ export function FormBudgetRow({
                     )}
                 />
             </Row>
-            <Row>
-                <FormDescription>
-                    Frak commission: {frakCommission} €
-                </FormDescription>
-            </Row>
-            <Row>
-                <FormDescription>
-                    Remaining budget: {remainingBudget} €
-                </FormDescription>
-            </Row>
+            <div>
+                <div className={styles.budget__section}>
+                    <div className={styles.budget__iconGroup}>
+                        <div className={`${styles.budget__icon}`}>
+                            <CircleDollarSign />
+                        </div>
+                        <span className={styles.budget__label}>
+                            Frak commission (20%)
+                        </span>
+                    </div>
+                    <div className={`${styles.budget__value}`}>
+                        {frakCommission.toFixed(2)} €
+                    </div>
+                </div>
+
+                <div className={styles.budget__divider} />
+
+                <div className={styles.budget__section}>
+                    <div className={styles.budget__iconGroup}>
+                        <div className={`${styles.budget__icon}`}>
+                            <Wallet />
+                        </div>
+                        <span className={styles.budget__label}>
+                            Rewards distributed to your customers (80%)
+                        </span>
+                    </div>
+                    <div className={`${styles.budget__value}`}>
+                        {remainingBudget.toFixed(2)} €
+                    </div>
+                </div>
+            </div>
         </Column>
     );
 }
