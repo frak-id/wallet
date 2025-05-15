@@ -41,9 +41,10 @@ export function FormBudget(form: UseFormReturn<Campaign>) {
     );
 }
 
-function getNumberOfDays(type: Campaign["budget"]["type"]) {
+export function getNumberOfDays(type: Campaign["budget"]["type"]) {
     switch (type) {
         case "daily":
+            return 1;
         case "weekly":
             return 7;
         case "monthly":

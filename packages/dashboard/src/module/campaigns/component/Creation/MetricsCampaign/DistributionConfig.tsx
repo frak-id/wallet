@@ -3,7 +3,7 @@
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { useFormContext } from "react-hook-form";
-import { TriggerConfigurationDetails } from "./TriggerConfigurationDetails";
+import { TriggerConfigurationDetails } from "../Generic/TriggerConfigurationDetails";
 
 export function DistributionConfiguration({
     distributionType,
