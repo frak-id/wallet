@@ -32,15 +32,11 @@ import styles from "./FormSchedule.module.css";
 export function FormSchedule(form: UseFormReturn<Campaign>) {
     return (
         <Panel title="Schedule">
-            <FormDescription label={"Schedule"}>
+            <FormDescription>
                 You can choose to run your ads continuously, starting today, or
-                only during a specific period.
-            </FormDescription>
-
-            <FormDescription label={"Using a global campaign budget"}>
-                Ad set schedules affect the allocation of an overall campaign
-                budget. Days with greater opportunities have a higher budget. As
-                a result, the amount spent daily will fluctuate.
+                only during a specific period. If you don't set an end date, the
+                campaign will automatically stop when the entire campaign budget
+                has been distributed.
             </FormDescription>
 
             <FormScheduleFields {...form} />

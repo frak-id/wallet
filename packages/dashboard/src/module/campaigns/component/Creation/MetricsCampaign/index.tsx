@@ -161,7 +161,7 @@ function DistributionTypeToggle(form: UseFormReturn<Campaign>) {
                                                 introducer and the new customer.
                                                 The amount of rewards
                                                 distributed is determined
-                                                randomly. Your CAC at the end of
+                                                randomly. Your CPA at the end of
                                                 the campaign is respected.
                                             </span>
                                         </div>

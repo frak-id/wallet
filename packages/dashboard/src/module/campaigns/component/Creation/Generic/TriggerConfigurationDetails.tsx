@@ -289,14 +289,14 @@ function extractConversions({
             return [
                 {
                     lbl: "Max conversions",
-                    value: (budget.maxEuroDaily * 0.8) / cac,
+                    value: budget.maxEuroDaily / cac,
                 },
             ];
         default: {
             return [
                 {
                     lbl: `Max ${budget.type} conversions`,
-                    value: (budget.maxEuroDaily * 0.8) / cac,
+                    value: budget.maxEuroDaily / cac,
                 },
             ];
         }

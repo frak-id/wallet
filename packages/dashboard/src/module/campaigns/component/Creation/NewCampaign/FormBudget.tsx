@@ -6,9 +6,11 @@ export function FormBudget() {
     return (
         <Panel title="Global budget">
             <FormDescription>
-                The campaign budget will allocate this to your currently running
-                ad sets for best results based on your choices and bidding
-                strategy (performance target).
+                The budget is the global amount allocated to your word-of-mouth
+                acquisition campaign. This sum is used to pay out rewards to
+                your community (referrers and new customers). Frak takes a
+                global commission of 20% on the campaign budget, at no extra
+                charge.
             </FormDescription>
             <FormBudgetRow />
         </Panel>

@@ -182,7 +182,9 @@ function getFixedCampaignArgs(
     // Map the budget from eur to token rate
     let capBudget = 0n;
     if (campaign.budget.maxEuroDaily) {
-        capBudget = fiatToTokenMapper(campaign.budget.maxEuroDaily);
+        // Only take 80% of the budget (since we got the frak commission)
+        capBudget =
+            (fiatToTokenMapper(campaign.budget.maxEuroDaily) * 80n) / 100n;
     }
 
     // Build the tx to be sent by the creator to create the given campaign
@@ -317,7 +319,9 @@ function getCampaignRangeArgs(
     // Map the budget from eur to token rate
     let capBudget = 0n;
     if (campaign.budget.maxEuroDaily) {
-        capBudget = fiatToTokenMapper(campaign.budget.maxEuroDaily);
+        // Only take 80% of the budget (since we got the frak commission)
+        capBudget =
+            (fiatToTokenMapper(campaign.budget.maxEuroDaily) * 80n) / 100n;
     }
 
     // Build the tx to be sent by the creator to create the given campaign

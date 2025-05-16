@@ -1,7 +1,6 @@
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
-import { FormOrder } from "@/module/campaigns/component/Creation/ValidationCampaign/FormOrder";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
@@ -17,7 +16,6 @@ export function FormCheck(form: UseFormReturn<Campaign>) {
                 <Input disabled={true} {...form.control.register("title")} />
             </FormItem>
             <FormAdvertising {...form} />
-            <FormOrder {...form} />
             <FormGoal {...form} />
             <FormBudgetRow {...form} disabled={true} />
             <FormPriceRange />

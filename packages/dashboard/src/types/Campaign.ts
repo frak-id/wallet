@@ -43,7 +43,6 @@ export type CampaignTrigger =
 export type Campaign = {
     id?: string;
     title: string;
-    order: string;
     productId: Hex | "";
     type: Goal | "" | undefined;
     specialCategories: SpecialCategory[];

@@ -14,6 +14,7 @@ import { FormMessage } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
 import { Slider } from "@shared/module/component/Slider";
 import type { UseFormReturn } from "react-hook-form";
+import { Row } from "../../../../common/component/Row";
 import { TriggerConfigurationDetails } from "../Generic/TriggerConfigurationDetails";
 
 export function DistributionConfiguration({
@@ -58,21 +59,25 @@ export function DistributionConfiguration({
                                 </FormDescription>
                             )}
                             <FormLabel>
-                                Referrer/Referee Repartition{" "}
+                                Repartition{" "}
                                 <Badge variant="primary" size="small">
                                     {Math.round((field.value ?? 0.1) * 100)}%
                                 </Badge>
                             </FormLabel>
                             <FormControl>
-                                <Slider
-                                    defaultValue={[0.1]}
-                                    min={0.1}
-                                    max={0.9}
-                                    step={0.05}
-                                    onValueChange={field.onChange}
-                                    value={[field.value ?? 0.1]}
-                                    label="User Percent"
-                                />
+                                <Row>
+                                    <span>Referee</span>
+                                    <Slider
+                                        defaultValue={[0.1]}
+                                        min={0.1}
+                                        max={0.9}
+                                        step={0.05}
+                                        onValueChange={field.onChange}
+                                        value={[field.value ?? 0.1]}
+                                        label="User Percent"
+                                    />
+                                    <span>Referrer</span>
+                                </Row>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -107,7 +112,7 @@ function RangeBudgetMultiplierSlider({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>
-                            Reward min{" "}
+                            Minimum multiplier{" "}
                             <Badge variant="primary" size="small">
                                 {field.value ?? 0.7}x
                             </Badge>
@@ -120,7 +125,7 @@ function RangeBudgetMultiplierSlider({
                                 step={0.05}
                                 onValueChange={field.onChange}
                                 value={[field.value ?? 0.7]}
-                                label="Reward min"
+                                label="Minimum multiplier"
                             />
                         </FormControl>
                         <FormMessage />
@@ -133,7 +138,7 @@ function RangeBudgetMultiplierSlider({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>
-                            Reward max{" "}
+                            Maximum multiplier max{" "}
                             <Badge variant="primary" size="small">
                                 {field.value ?? 5}x
                             </Badge>
@@ -146,7 +151,7 @@ function RangeBudgetMultiplierSlider({
                                 step={0.05}
                                 onValueChange={field.onChange}
                                 value={[field.value ?? 5]}
-                                label="Reward max"
+                                label="Maximum multiplier"
                             />
                         </FormControl>
                         <FormMessage />

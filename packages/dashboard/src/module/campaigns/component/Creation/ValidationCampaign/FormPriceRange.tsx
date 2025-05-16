@@ -4,7 +4,7 @@ import { TriggerConfigurationDetails } from "../Generic/TriggerConfigurationDeta
 export function FormPriceRange() {
     return (
         <FormItem>
-            <FormDescription label={"CAC Configuration"} />
+            <FormDescription label={"CPA Configuration"} />
             <TriggerConfigurationDetails />
         </FormItem>
     );

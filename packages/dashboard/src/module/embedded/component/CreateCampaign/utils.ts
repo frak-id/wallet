@@ -75,7 +75,6 @@ export function createCampaignDraft({
 }) {
     const campaign: Campaign = {
         title: name,
-        order: "adaptive",
         productId: productId,
         type: "sales", // always sales for shopify embedded campaign
         specialCategories: [],
