@@ -67,13 +67,9 @@ export function CampaignDetails({
                     <FormAdvertising {...form} />
                     <FormOrder {...form} />
                     <FormGoal {...form} />
-                    <FormBudgetRow
-                        {...form}
-                        isCheckCampaign={true}
-                        disabled={true}
-                    />
+                    <FormBudgetRow {...form} disabled={true} />
                     <CampaignTerritory campaign={campaign} />
-                    <FormPriceRange form={form} disabled={true} />
+                    <FormPriceRange />
                 </Form>
             </Panel>
             <ActionsWrapper

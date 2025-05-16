@@ -63,7 +63,7 @@ export function CampaignEdit() {
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormBudget {...form} />
+                    <FormBudget />
                     <FormSchedule {...form} />
                     <ActionsWrapper
                         left={isSuccessCampaign && <ActionsMessageSuccess />}

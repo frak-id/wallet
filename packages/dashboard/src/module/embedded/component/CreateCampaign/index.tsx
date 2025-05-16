@@ -1,10 +1,10 @@
 "use client";
 
 import {
-    getCreationData,
     saveCampaignDraft,
     updateCampaignState,
 } from "@/context/campaigns/action/createCampaign";
+import { getCreationData } from "@/context/campaigns/action/createOnChain";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import type { Campaign } from "@/types/Campaign";

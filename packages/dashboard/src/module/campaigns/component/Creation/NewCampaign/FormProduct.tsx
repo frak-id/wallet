@@ -14,21 +14,31 @@ import {
     SelectValue,
 } from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
-import type { UseFormReturn } from "react-hook-form";
+import { useEffect, useMemo } from "react";
+import { useFormContext } from "react-hook-form";
 import type { Hex } from "viem";
 
-export function FormProduct(form: UseFormReturn<Campaign>) {
+export function FormProduct() {
+    const { setValue, control } = useFormContext<Campaign>();
+
     const { isEmpty, products } = useMyProducts();
-    const contentList = [
-        ...(products?.operator ?? []),
-        ...(products?.owner ?? []),
-    ];
+    const contentList = useMemo(
+        () => [...(products?.operator ?? []), ...(products?.owner ?? [])],
+        [products]
+    );
     const isDisabled = isEmpty || !products || contentList.length === 0;
+
+    // Small hook to auto select a product if there is only one
+    useEffect(() => {
+        if (contentList.length === 0) return;
+        if (contentList.length > 1) return;
+        setValue("productId", contentList[0].id);
+    }, [contentList, setValue]);
 
     return (
         <Panel title="Product" aria-disabled={isDisabled}>
             <FormField
-                control={form.control}
+                control={control}
                 name="productId"
                 rules={{ required: "Select a product" }}
                 render={({ field }) => (

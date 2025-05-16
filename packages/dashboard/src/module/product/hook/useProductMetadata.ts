@@ -33,3 +33,5 @@ export function useProductMetadata({ productId }: { productId?: Hex }) {
         enabled: !!productId,
     });
 }
+
+export type ProductMetadata = ReturnType<typeof useProductMetadata>["data"];

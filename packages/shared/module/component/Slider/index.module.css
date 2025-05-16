@@ -9,7 +9,7 @@
 }
 
 .slider__track {
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--frak-slider-track-background-color);
     position: relative;
     flex-grow: 1;
     border-radius: 9999px;
@@ -18,7 +18,7 @@
 
 .slider__range {
     position: absolute;
-    background-color: white;
+    background-color: var(--frak-slider-range-background-color);
     border-radius: 9999px;
     height: 100%;
 }
@@ -27,7 +27,7 @@
     display: block;
     width: 20px;
     height: 20px;
-    background-color: white;
+    background-color: var(--frak-slider-thumb-background-color);
     box-shadow: rgba(0, 0, 0, 0.2) 0 2px 10px;
     border-radius: 10px;
 }
