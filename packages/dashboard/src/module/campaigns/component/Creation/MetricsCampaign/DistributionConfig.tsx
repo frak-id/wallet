@@ -66,7 +66,7 @@ export function DistributionConfiguration({
                             <FormControl>
                                 <Slider
                                     defaultValue={[0.1]}
-                                    min={0.01}
+                                    min={0.1}
                                     max={0.9}
                                     step={0.05}
                                     onValueChange={field.onChange}
