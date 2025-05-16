@@ -5,7 +5,7 @@ import type {
     FieldValues,
 } from "react-hook-form";
 
-type InputNumberProps = InputProps &
+export type InputNumberProps = InputProps &
     ControllerRenderProps<FieldValues, FieldPath<FieldValues>>;
 
 export const InputNumber = ({ ref, onChange, ...props }: InputNumberProps) => {

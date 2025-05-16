@@ -1,3 +1,4 @@
+import { InputAmount } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
@@ -9,7 +10,6 @@ import {
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
 import type { InteractionTypesKey } from "@frak-labs/core-sdk";
 import { Checkbox } from "@frak-labs/shared/module/component/forms/Checkbox";
-import { InputNumber } from "@frak-labs/shared/module/component/forms/InputNumber";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import styles from "./FormTrigger.module.css";
@@ -177,11 +177,10 @@ function FixedInput({
                         <FormLabel variant={"light"}>CPA</FormLabel>
                         <FormMessage />
                         <FormControl>
-                            <InputNumber
+                            <InputAmount
                                 key={`${interaction}-single`}
                                 length={"small"}
                                 placeholder={"25,00 €"}
-                                rightSection={"EUR"}
                                 disabled={disabled ?? checked !== true}
                                 {...field}
                             />
@@ -221,11 +220,10 @@ function LegacyRangeInputInputs({
                         <FormLabel variant={"light"}>From</FormLabel>
                         <FormMessage />
                         <FormControl>
-                            <InputNumber
+                            <InputAmount
                                 key={`${interaction}-from`}
                                 length={"small"}
                                 placeholder={"15,00 €"}
-                                rightSection={"EUR"}
                                 disabled={disabled ?? checked !== true}
                                 {...field}
                             />
@@ -244,11 +242,10 @@ function LegacyRangeInputInputs({
                         <FormLabel variant={"light"}>To</FormLabel>
                         <FormMessage />
                         <FormControl>
-                            <InputNumber
+                            <InputAmount
                                 key={`${interaction}-to`}
                                 length={"small"}
                                 placeholder={"25,00 €"}
-                                rightSection={"EUR"}
                                 disabled={disabled ?? checked !== true}
                                 {...field}
                             />

@@ -1,3 +1,4 @@
+import { InputAmount } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
@@ -7,7 +8,6 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { InputNumber } from "@shared/module/component/forms/InputNumber";
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
@@ -43,10 +43,9 @@ export function FormBudgetRow({
                             <FormDescription label={"Global budget"} />
                             <FormMessage />
                             <FormControl>
-                                <InputNumber
+                                <InputAmount
                                     placeholder={"25,00 €"}
                                     length={"medium"}
-                                    rightSection={"EUR"}
                                     disabled={disabled}
                                     {...field}
                                 />

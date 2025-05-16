@@ -1,3 +1,4 @@
+import { InputAmount } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
 import {
     FormField,
@@ -7,7 +8,6 @@ import {
 } from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import { Checkbox } from "@shared/module/component/forms/Checkbox";
-import { Input } from "@shared/module/component/forms/Input";
 import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import styles from "./index.module.css";
@@ -78,8 +78,7 @@ export function RewardFiltering({
                             <FormLabel variant={"light"} weight={"medium"}>
                                 From
                             </FormLabel>
-                            <Input
-                                type={"number"}
+                            <InputAmount
                                 {...field}
                                 value={
                                     rewardsInputDisabled
@@ -88,7 +87,6 @@ export function RewardFiltering({
                                 }
                                 placeholder={"Min reward"}
                                 length={"small"}
-                                rightSection={"EUR"}
                                 onBlur={handleSubmit(onSubmit)}
                             />
                             <FormMessage />
@@ -127,8 +125,7 @@ export function RewardFiltering({
                             <FormLabel variant={"light"} weight={"medium"}>
                                 To
                             </FormLabel>
-                            <Input
-                                type={"number"}
+                            <InputAmount
                                 {...field}
                                 value={
                                     rewardsInputDisabled
@@ -137,7 +134,6 @@ export function RewardFiltering({
                                 }
                                 placeholder={"Max reward"}
                                 length={"small"}
-                                rightSection={"EUR"}
                                 onBlur={handleSubmit(onSubmit)}
                             />
                             <FormMessage />
