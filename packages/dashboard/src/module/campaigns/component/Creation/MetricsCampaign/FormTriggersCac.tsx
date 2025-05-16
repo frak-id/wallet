@@ -15,6 +15,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { FormTrigger } from "../Generic/FormTrigger";
+import styles from "./FormTriggersCac.module.css";
 
 export function FormTriggersCac({
     productTypes = [],
@@ -52,7 +53,7 @@ export function FormTriggersCac({
     const triggerState = getFieldState("triggers");
 
     return (
-        <Panel title="Configure CAC">
+        <Panel title="Set a target cost per action">
             {availableInteractions.length === 0 && (
                 <>
                     <FormDescription>
@@ -72,9 +73,15 @@ export function FormTriggersCac({
                 </>
             )}
             <FormDescription>
-                Set the CAC for each campaign objective. The budget will be
-                distributed between the referee and referrer according to the
-                parameters below.
+                <span>Target CPA</span>
+                <br />
+                <span className={styles.notice}>
+                    "Target CPA" defines your overall acquisition cost per
+                    target action (your goal) to generate the maximum number of
+                    conversions at a cost equal to or lower than the target cost
+                    per action you set. Some conversions may cost more or less
+                    than your target amount.
+                </span>
             </FormDescription>
             {availableInteractions.length > 0 &&
                 availableInteractions.map(({ key }) => (

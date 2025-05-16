@@ -3,7 +3,12 @@
 import { Badge } from "@/module/common/component/Badge";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
-import { FormControl, FormField, FormLabel } from "@/module/forms/Form";
+import {
+    FormControl,
+    FormDescription,
+    FormField,
+    FormLabel,
+} from "@/module/forms/Form";
 import { FormItem } from "@/module/forms/Form";
 import { FormMessage } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
@@ -20,10 +25,12 @@ export function DistributionConfiguration({
 }) {
     return (
         <>
-            <Panel title="Distribution Configuration">
+            <Panel title="Set reward amounts">
                 <Head
                     title={{
-                        content: "Distribution Configuration",
+                        content: `Set ${
+                            distributionType === "range" ? "variable" : "fixed"
+                        } reward amounts`,
                         size: "small",
                     }}
                 />
@@ -32,8 +39,26 @@ export function DistributionConfiguration({
                     name="rewardChaining.userPercent"
                     render={({ field }) => (
                         <FormItem>
+                            {distributionType === "range" && (
+                                <FormDescription>
+                                    Variable rewards allow you to offer more
+                                    attractive reward amounts to your customers.
+                                    Frak guarantees compliance with your CPA at
+                                    the end of your acquisition campaign. Define
+                                    the reward range and its distribution.
+                                </FormDescription>
+                            )}
+                            {distributionType === "fixed" && (
+                                <FormDescription>
+                                    When your goal is reached, the rewards are
+                                    distributed instantly and automatically to
+                                    the business introducer and the new
+                                    customer, directly into their wallets, in
+                                    the set proportions.
+                                </FormDescription>
+                            )}
                             <FormLabel>
-                                Referrer/Referee Repartition:{" "}
+                                Referrer/Referee Repartition{" "}
                                 <Badge variant="primary" size="small">
                                     {Math.round((field.value ?? 0.1) * 100)}%
                                 </Badge>
@@ -82,7 +107,7 @@ function RangeBudgetMultiplierSlider({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>
-                            Min Multiplier:{" "}
+                            Reward min{" "}
                             <Badge variant="primary" size="small">
                                 {field.value ?? 0.7}x
                             </Badge>
@@ -95,7 +120,7 @@ function RangeBudgetMultiplierSlider({
                                 step={0.05}
                                 onValueChange={field.onChange}
                                 value={[field.value ?? 0.7]}
-                                label="Min Multiplier"
+                                label="Reward min"
                             />
                         </FormControl>
                         <FormMessage />
@@ -108,7 +133,7 @@ function RangeBudgetMultiplierSlider({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>
-                            Max Multiplier:{" "}
+                            Reward max{" "}
                             <Badge variant="primary" size="small">
                                 {field.value ?? 5}x
                             </Badge>
@@ -121,7 +146,7 @@ function RangeBudgetMultiplierSlider({
                                 step={0.05}
                                 onValueChange={field.onChange}
                                 value={[field.value ?? 5]}
-                                label="Max Multiplier"
+                                label="Reward max"
                             />
                         </FormControl>
                         <FormMessage />

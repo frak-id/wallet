@@ -152,7 +152,7 @@ function TriggerDetailsItem({
             <Row align="center">
                 <div style={{ minWidth: 180, alignItems: "center" }}>
                     <div className={styles.triggerDetails__columnTitle}>
-                        Average CAC per action
+                        Average CPA per action
                     </div>
                     <div style={{ fontSize: 16, fontWeight: 500 }}>
                         {formatCurrency(cac)}

@@ -174,7 +174,7 @@ function FixedInput({
                 }}
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel variant={"light"}>CAC</FormLabel>
+                        <FormLabel variant={"light"}>CPA</FormLabel>
                         <FormMessage />
                         <FormControl>
                             <InputNumber

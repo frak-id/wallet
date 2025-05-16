@@ -26,6 +26,7 @@ import { type UseFormReturn, useForm } from "react-hook-form";
 import { toHex } from "viem";
 import { DistributionConfiguration } from "./DistributionConfig";
 import { FormTriggersCac } from "./FormTriggersCac";
+import styles from "./index.module.css";
 
 export function MetricsCampaign() {
     const campaign = useAtomValue(campaignAtom);
@@ -105,7 +106,7 @@ export function MetricsCampaign() {
 
 function DistributionTypeToggle(form: UseFormReturn<Campaign>) {
     return (
-        <Panel title="Distribution Type">
+        <Panel title="Define the type of rewards">
             <FormField
                 control={form.control}
                 name="distribution.type"
@@ -122,26 +123,48 @@ function DistributionTypeToggle(form: UseFormReturn<Campaign>) {
                                         defaultValue={field.value}
                                         {...field}
                                     >
-                                        <FormItem variant={"radio"}>
-                                            <FormControl>
-                                                <RadioGroupItem
-                                                    value={"fixed"}
-                                                />
-                                            </FormControl>
-                                            <FormLabel variant={"radio"}>
-                                                Fixed
-                                            </FormLabel>
-                                        </FormItem>
-                                        <FormItem variant={"radio"}>
-                                            <FormControl>
-                                                <RadioGroupItem
-                                                    value={"range"}
-                                                />
-                                            </FormControl>
-                                            <FormLabel variant={"radio"}>
-                                                Range
-                                            </FormLabel>
-                                        </FormItem>
+                                        <div className={styles.radio__group}>
+                                            <FormItem variant={"radio"}>
+                                                <FormControl>
+                                                    <RadioGroupItem
+                                                        value={"fixed"}
+                                                    />
+                                                </FormControl>
+                                                <FormLabel variant={"radio"}>
+                                                    Fixed rewards
+                                                </FormLabel>
+                                            </FormItem>
+                                            <span className={styles.notice}>
+                                                Each time your goal is reached,
+                                                a fixed amount that you define
+                                                is automatically distributed to
+                                                the business introducer and the
+                                                new customer
+                                            </span>
+                                        </div>
+                                        <div className={styles.radio__group}>
+                                            <FormItem variant={"radio"}>
+                                                <FormControl>
+                                                    <RadioGroupItem
+                                                        value={"range"}
+                                                    />
+                                                </FormControl>
+                                                <FormLabel variant={"radio"}>
+                                                    Variable rewards
+                                                </FormLabel>
+                                            </FormItem>
+                                            <span className={styles.notice}>
+                                                Each time your goal is reached,
+                                                an amount within a range you
+                                                define is automatically
+                                                distributed to the business
+                                                introducer and the new customer.
+                                                The amount of rewards
+                                                distributed is determined
+                                                randomly. Your CAC at the end of
+                                                the campaign is respected.
+                                            </span>
+                                        </div>
                                     </RadioGroup>
                                 </FormControl>
                             </div>
