@@ -1,6 +1,8 @@
 "use client";
 
 import { deleteSession } from "@/context/auth/actions/session";
+import { Head } from "@/module/common/component/Head";
+import { Panel } from "@/module/common/component/Panel";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button } from "@shared/module/component/Button";
@@ -13,22 +15,32 @@ export default function SettingsPage() {
 
     return (
         <>
-            <h1>Settings</h1>
-            <p className={styles.walletAddress}>
-                Your wallet address is {walletStatus?.wallet}
-            </p>
+            <Head title={{ content: "Settings" }} />
 
-            <SelectCurrency />
+            <Panel title="Wallet">
+                <p className={styles.walletAddress}>
+                    Your wallet address is {walletStatus?.wallet}
+                </p>
+            </Panel>
 
-            <Button
-                onClick={() => {
-                    deleteSession().then(() => {
-                        router.push("/login");
-                    });
-                }}
-            >
-                Logout
-            </Button>
+            <Panel title="Currency">
+                <SelectCurrency />
+            </Panel>
+
+            <Panel title="Logout">
+                <p>You will be logged out of your account.</p>
+                <Button
+                    variant={"submit"}
+                    className={styles.logoutButton}
+                    onClick={() => {
+                        deleteSession().then(() => {
+                            router.push("/login");
+                        });
+                    }}
+                >
+                    Logout
+                </Button>
+            </Panel>
         </>
     );
 }

@@ -21,7 +21,7 @@ export function SelectCurrency() {
                 htmlFor="currency-select"
                 className={styles.selectCurrency__label}
             >
-                Preferred currency:
+                Choose your preferred currency
             </label>
             <Select
                 name="currency-select"
