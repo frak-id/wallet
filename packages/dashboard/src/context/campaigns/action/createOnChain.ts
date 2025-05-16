@@ -21,6 +21,7 @@ import {
     type InteractionTypesKey,
     interactionTypes,
 } from "@frak-labs/core-sdk";
+import ky from "ky";
 import {
     type Address,
     type Hex,
@@ -38,7 +39,6 @@ import { simulateContract } from "viem/actions";
  */
 export async function getCreationData(campaign: Campaign) {
     const session = await getSafeSession();
-
     if (!campaign.productId) {
         throw new Error("Product id is required");
     }
@@ -56,8 +56,6 @@ export async function getCreationData(campaign: Campaign) {
         throw new Error("Bank is required");
     }
 
-    campaign.bank;
-
     // Compute the cap period
     const capPeriod = getCapPeriod(campaign.budget.type);
 
@@ -74,9 +72,27 @@ export async function getCreationData(campaign: Campaign) {
     }
 
     // Get the token decimal count
-    const { decimals: tokenDecimals } = await getBankTokenInfo({
+    const { decimals: tokenDecimals, token } = await getBankTokenInfo({
         bank: campaign.bank,
     });
+
+    // Get the token rate
+    let tokenToFiatRate = 1;
+    if (campaign.setupCurrency !== "raw") {
+        const tokenRates = await ky
+            .get(`${process.env.BACKEND_URL}/common/rate?token=${token}`)
+            .json<{ eur: number; usd: number; gbp: number }>();
+        if (!tokenRates) {
+            throw new Error("Token rate not found");
+        }
+        tokenToFiatRate = campaign.setupCurrency
+            ? tokenRates[campaign.setupCurrency]
+            : tokenRates.eur;
+    }
+    const fiatToTokenMapper = (amount: number) => {
+        const amountInToken = amount / tokenToFiatRate;
+        return parseUnits(amountInToken.toString(), tokenDecimals);
+    };
 
     // Build the args depending on the distribution types
     const args =
@@ -84,12 +100,12 @@ export async function getCreationData(campaign: Campaign) {
             ? getCampaignRangeArgs(campaign as Campaign & { bank: Address }, {
                   capPeriod,
                   activationPeriod: { start, end },
-                  tokenDecimals,
+                  fiatToTokenMapper,
               })
             : getFixedCampaignArgs(campaign as Campaign & { bank: Address }, {
                   capPeriod,
                   activationPeriod: { start, end },
-                  tokenDecimals,
+                  fiatToTokenMapper,
               });
 
     // Perform a contract simulation
@@ -145,23 +161,29 @@ function getHexValueForKey(key: InteractionTypesKey): Hex | undefined {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                           Fixed campaign sepcific                          */
+/*                           Fixed campaign specifics                         */
 /* -------------------------------------------------------------------------- */
 
 function getFixedCampaignArgs(
     campaign: Campaign & { bank: Address },
     {
         activationPeriod,
-        tokenDecimals,
         capPeriod,
+        fiatToTokenMapper,
     }: {
         activationPeriod: { start: number; end: number };
-        tokenDecimals: number;
         capPeriod: number;
+        fiatToTokenMapper: (amount: number) => bigint;
     }
 ) {
     // Get the token decimal count
-    const triggers = extractFixedTriggers(campaign, tokenDecimals);
+    const triggers = extractFixedTriggers(campaign, fiatToTokenMapper);
+
+    // Map the budget from eur to token rate
+    let capBudget = 0n;
+    if (campaign.budget.maxEuroDaily) {
+        capBudget = fiatToTokenMapper(campaign.budget.maxEuroDaily);
+    }
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(
@@ -172,12 +194,7 @@ function getFixedCampaignArgs(
             // Cap config
             {
                 period: capPeriod,
-                amount: campaign.budget.maxEuroDaily
-                    ? parseUnits(
-                          campaign.budget.maxEuroDaily.toString(),
-                          tokenDecimals
-                      )
-                    : 0n,
+                amount: capBudget,
             },
             // Activation period
             activationPeriod,
@@ -221,7 +238,10 @@ function getFixedCampaignArgs(
  * @param campaign
  * @param tokenDecimals
  */
-function extractFixedTriggers(campaign: Campaign, tokenDecimals: number) {
+function extractFixedTriggers(
+    campaign: Campaign,
+    fiatToTokenMapper: (amount: number) => bigint
+) {
     // Rebuild the triggers
     const triggers = Object.entries(campaign.triggers)
         .filter(([_, trigger]) => "cac" in trigger && (trigger?.cac ?? 0) > 0)
@@ -246,7 +266,7 @@ function extractFixedTriggers(campaign: Campaign, tokenDecimals: number) {
 
             return {
                 interactionType: interactionType,
-                baseReward: parseUnits(reward.toString(), tokenDecimals),
+                baseReward: fiatToTokenMapper(reward),
                 maxCountPerUser: trigger.maxCountPerUser
                     ? BigInt(trigger.maxCountPerUser)
                     : 1n, // Max 1 per user
@@ -283,16 +303,22 @@ function getCampaignRangeArgs(
     campaign: Campaign & { bank: Address },
     {
         activationPeriod,
-        tokenDecimals,
         capPeriod,
+        fiatToTokenMapper,
     }: {
         activationPeriod: { start: number; end: number };
-        tokenDecimals: number;
         capPeriod: number;
+        fiatToTokenMapper: (amount: number) => bigint;
     }
 ) {
     // Get the token decimal count
-    const triggers = extractRangeTriggers(campaign, tokenDecimals);
+    const triggers = extractRangeTriggers(campaign, fiatToTokenMapper);
+
+    // Map the budget from eur to token rate
+    let capBudget = 0n;
+    if (campaign.budget.maxEuroDaily) {
+        capBudget = fiatToTokenMapper(campaign.budget.maxEuroDaily);
+    }
 
     // Build the tx to be sent by the creator to create the given campaign
     const campaignInitData = encodeAbiParameters(
@@ -303,12 +329,7 @@ function getCampaignRangeArgs(
             // Cap config
             {
                 period: capPeriod,
-                amount: campaign.budget.maxEuroDaily
-                    ? parseUnits(
-                          campaign.budget.maxEuroDaily.toString(),
-                          tokenDecimals
-                      )
-                    : 0n,
+                amount: capBudget,
             },
             // Activation period
             activationPeriod,
@@ -351,9 +372,12 @@ function getCampaignRangeArgs(
 /**
  * Extract the triggers from a campaign
  * @param campaign
- * @param tokenDecimals
+ * @param fiatToTokenMapper
  */
-function extractRangeTriggers(campaign: Campaign, tokenDecimals: number) {
+function extractRangeTriggers(
+    campaign: Campaign,
+    fiatToTokenMapper: (amount: number) => bigint
+) {
     // Rebuild the triggers
     const triggers = Object.entries(campaign.triggers)
         .filter(([_, trigger]) => "cac" in trigger && (trigger?.cac ?? 0) > 0)
@@ -387,8 +411,8 @@ function extractRangeTriggers(campaign: Campaign, tokenDecimals: number) {
                 maxCountPerUser: trigger.maxCountPerUser
                     ? BigInt(trigger.maxCountPerUser)
                     : 1n, // Max 1 per user
-                startReward: parseUnits(start.toString(), tokenDecimals),
-                endReward: parseUnits(end.toString(), tokenDecimals),
+                startReward: fiatToTokenMapper(start),
+                endReward: fiatToTokenMapper(end),
                 percentBeta: parseUnits(beta.toString(), 4), // on 1e4
             };
         })

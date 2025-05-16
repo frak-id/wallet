@@ -50,7 +50,7 @@ export type Campaign = {
     // The distribution cap of the campaign
     budget: {
         type: Budget | undefined;
-        maxEuroDaily: number;
+        maxEuroDaily: number; // Named `maxEuroDaily` but it's basicly the budget associated with the `type` period, in the fiat `setupCurrency`. We keep it that way to reduce migrations needed.
     };
     territories: TCountryCode[];
     // The campaign bank address (that will distribute rewards to the end users)
@@ -79,6 +79,8 @@ export type Campaign = {
           };
     // Trigger for the campaign
     triggers: Partial<Record<InteractionTypesKey, CampaignTrigger>>;
+    // The currency used to setup the campaign (if undefined, that's `eur`, if `raw` that's directly the token)
+    setupCurrency?: "eur" | "usd" | "gbp" | "raw";
 };
 
 /**

@@ -97,6 +97,8 @@ export function createCampaignDraft({
                 to: cacBrut,
             },
         },
+        // On shopify we directly use the token symbol for the setup
+        setupCurrency: "raw",
     };
 
     return campaign;

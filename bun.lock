@@ -182,6 +182,7 @@
         "date-fns": "^4.1.0",
         "iron-session": "^8.0.4",
         "jotai": "^2.12.3",
+        "ky": "^1.8.1",
         "lru-cache": "^11.1.0",
         "lucide-react": "^0.503.0",
         "mongodb": "^6.16.0",

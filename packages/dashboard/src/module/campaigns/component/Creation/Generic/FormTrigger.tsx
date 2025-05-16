@@ -1,4 +1,4 @@
-import { InputAmount } from "@/module/common/component/InputAmount";
+import { InputAmountCampaign } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
@@ -177,7 +177,7 @@ function FixedInput({
                         <FormLabel variant={"light"}>CPA</FormLabel>
                         <FormMessage />
                         <FormControl>
-                            <InputAmount
+                            <InputAmountCampaign
                                 key={`${interaction}-single`}
                                 length={"small"}
                                 placeholder={"25,00 €"}
@@ -220,7 +220,7 @@ function LegacyRangeInputInputs({
                         <FormLabel variant={"light"}>From</FormLabel>
                         <FormMessage />
                         <FormControl>
-                            <InputAmount
+                            <InputAmountCampaign
                                 key={`${interaction}-from`}
                                 length={"small"}
                                 placeholder={"15,00 €"}
@@ -242,7 +242,7 @@ function LegacyRangeInputInputs({
                         <FormLabel variant={"light"}>To</FormLabel>
                         <FormMessage />
                         <FormControl>
-                            <InputAmount
+                            <InputAmountCampaign
                                 key={`${interaction}-to`}
                                 length={"small"}
                                 placeholder={"25,00 €"}

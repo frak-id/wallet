@@ -1,4 +1,4 @@
-import { InputAmount } from "@/module/common/component/InputAmount";
+import { InputAmountCampaign } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
@@ -43,7 +43,7 @@ export function FormBudgetRow({
                             <FormDescription label={"Global budget"} />
                             <FormMessage />
                             <FormControl>
-                                <InputAmount
+                                <InputAmountCampaign
                                     placeholder={"25,00 €"}
                                     length={"medium"}
                                     disabled={disabled}
