@@ -1,5 +1,5 @@
 import { Panel } from "@/module/common/component/Panel";
-import { convertToEuro } from "@/module/common/utils/convertToEuro";
+import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 import {
     FormControl,
     FormField,
@@ -13,23 +13,37 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/module/forms/Select";
-import { useGetProductFunding } from "@/module/product/hook/useGetProductFunding";
+import {
+    type ProductBank,
+    useGetProductFunding,
+} from "@/module/product/hook/useGetProductFunding";
 import type { Campaign } from "@/types/Campaign";
-import type { UseFormReturn } from "react-hook-form";
+import { useEffect } from "react";
+import { useFormContext } from "react-hook-form";
 import { toHex } from "viem";
 
-export function FormBank(form: UseFormReturn<Campaign>) {
-    const productId = form.getValues("productId");
+export function FormBank() {
+    const { watch, setValue, control } = useFormContext<Campaign>();
+    const productId = watch("productId");
 
     const { data, isLoading } = useGetProductFunding({
         productId: productId !== "" ? toHex(BigInt(productId)) : undefined,
     });
     const isDisabled = isLoading || !data || data.length === 0;
 
+    // Small hook to auto select a bank if there is only one
+    useEffect(() => {
+        if (!data) return;
+        if (data.length === 0) return;
+        if (data.length > 1) return;
+
+        setValue("bank", data[0].address);
+    }, [data, setValue]);
+
     return (
         <Panel title="Funding bank" aria-disabled={isDisabled}>
             <FormField
-                control={form.control}
+                control={control}
                 name="bank"
                 rules={{ required: "Select a bank" }}
                 render={({ field }) => (
@@ -49,16 +63,10 @@ export function FormBank(form: UseFormReturn<Campaign>) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {(data ?? []).map((bank) => (
-                                        <SelectItem
+                                        <SelectItemBank
                                             key={bank.address}
-                                            value={bank.address}
-                                        >
-                                            {bank.token.name} (
-                                            {convertToEuro(
-                                                bank.formatted.balance
-                                            )}
-                                            )
-                                        </SelectItem>
+                                            bank={bank}
+                                        />
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -68,5 +76,19 @@ export function FormBank(form: UseFormReturn<Campaign>) {
                 )}
             />
         </Panel>
+    );
+}
+
+function SelectItemBank({ bank }: { bank: ProductBank }) {
+    const formattedBalance = useConvertToPreferredCurrency({
+        token: bank.token.address,
+        balance: bank.balance,
+        decimals: bank.token.decimals,
+    });
+    return (
+        <SelectItem key={bank.address} value={bank.address}>
+            {bank.token.name}
+            {formattedBalance && `(${formattedBalance})`}
+        </SelectItem>
     );
 }

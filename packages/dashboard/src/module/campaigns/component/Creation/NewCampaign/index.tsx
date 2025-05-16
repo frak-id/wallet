@@ -72,11 +72,11 @@ export function NewCampaign({ title }: { title: string }) {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormTitle {...form} />
-                    <FormProduct {...form} />
-                    <FormBank {...form} />
+                    <FormProduct />
+                    <FormBank />
                     <FormGoals {...form} />
                     <FormSpecialAdvertising {...form} />
-                    <FormBudget {...form} />
+                    <FormBudget />
                     <FormTerritory {...form} />
                     <FormSchedule {...form} />
                     <Actions />

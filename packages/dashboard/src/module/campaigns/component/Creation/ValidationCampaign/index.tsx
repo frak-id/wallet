@@ -2,10 +2,10 @@
 
 import { viemClient } from "@/context/blockchain/provider";
 import {
-    getCreationData,
     saveCampaignDraft,
     updateCampaignState,
 } from "@/context/campaigns/action/createCampaign";
+import { getCreationData } from "@/context/campaigns/action/createOnChain";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import {
     campaignIsClosingAtom,
@@ -15,6 +15,7 @@ import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { FormCheck } from "@/module/campaigns/component/Creation/ValidationCampaign/FormCheck";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
+import { preferredCurrencyAtom } from "@/module/common/atoms/currency";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
@@ -37,6 +38,7 @@ export function ValidationCampaign() {
     const [txHash, setTxHash] = useState<Hex | undefined>();
     const save = useSaveCampaign();
     const campaignIsClosing = useAtomValue(campaignIsClosingAtom);
+    const preferredCurrency = useAtomValue(preferredCurrencyAtom);
 
     // Hook used to send transaction via the nexus wallet
     const { mutateAsync: sendTransaction, isPending: isPendingTransaction } =
@@ -47,13 +49,17 @@ export function ValidationCampaign() {
         useMutation({
             mutationKey: ["campaign", "create"],
             mutationFn: async (campaign: Campaign) => {
+                const campaignWithCurrency = {
+                    ...campaign,
+                    setupCurrency: preferredCurrency,
+                };
                 // Save it in the database
-                const { id } = await saveCampaignDraft(campaign);
+                const { id } = await saveCampaignDraft(campaignWithCurrency);
                 if (!id) {
                     throw new Error("Unable to save campaign draft");
                 }
                 const newCampaign = {
-                    ...campaign,
+                    ...campaignWithCurrency,
                     id,
                 };
                 // Update the atom

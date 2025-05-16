@@ -1,7 +1,7 @@
 import { blockchainContext } from "@backend-common/context";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import { isHex } from "viem";
+import { isAddress, isHex } from "viem";
 
 export const commonRoutes = new Elysia({ prefix: "/common" })
     .use(blockchainContext)
@@ -42,6 +42,34 @@ export const commonRoutes = new Elysia({ prefix: "/common" })
             response: {
                 200: t.Object({
                     pubKey: t.Address(),
+                }),
+                400: t.String(),
+            },
+        }
+    )
+    .get(
+        "/rate",
+        async ({ query: { token }, error, pricingRepository }) => {
+            if (!isAddress(token)) {
+                return error(400, "Invalid token");
+            }
+
+            const rate = await pricingRepository.getTokenPrice({ token });
+            if (!rate) {
+                return error(400, "Invalid token");
+            }
+
+            return rate;
+        },
+        {
+            query: t.Object({
+                token: t.Address(),
+            }),
+            response: {
+                200: t.Object({
+                    usd: t.Number(),
+                    eur: t.Number(),
+                    gbp: t.Number(),
                 }),
                 400: t.String(),
             },

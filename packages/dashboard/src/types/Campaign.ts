@@ -18,13 +18,24 @@ export type Budget = "daily" | "weekly" | "monthly" | "global";
  */
 export type CampaignRewardType = "fixed" | "range";
 
-type CampaignTrigger = {
-    // Reward range
-    from: number;
-    to: number;
-    // Reward distribution config
-    maxCountPerUser?: number;
-};
+export type CampaignTrigger =
+    | {
+          // Reward range (for the old schema)
+          from: number;
+          to: number;
+          // Reward distribution config
+          maxCountPerUser?: number;
+
+          cac?: never;
+      }
+    | {
+          // New schema for the trigger
+          cac: number;
+          maxCountPerUser?: number;
+
+          from?: never;
+          to?: never;
+      };
 
 /**
  * Direct campaign type
@@ -32,14 +43,13 @@ type CampaignTrigger = {
 export type Campaign = {
     id?: string;
     title: string;
-    order: string;
     productId: Hex | "";
     type: Goal | "" | undefined;
     specialCategories: SpecialCategory[];
     // The distribution cap of the campaign
     budget: {
-        type: Budget | "" | undefined;
-        maxEuroDaily: number;
+        type: Budget | undefined;
+        maxEuroDaily: number; // Named `maxEuroDaily` but it's basicly the budget associated with the `type` period, in the fiat `setupCurrency`. We keep it that way to reduce migrations needed.
     };
     territories: TCountryCode[];
     // The campaign bank address (that will distribute rewards to the end users)
@@ -54,8 +64,22 @@ export type Campaign = {
         userPercent?: number;
         deperditionPerLevel?: number;
     };
+    // The type of distribution for the campaign
+    distribution?:
+        | {
+              type: "fixed";
+              minMultiplier?: never;
+              maxMultiplier?: never;
+          }
+        | {
+              type: "range";
+              minMultiplier: number; // Between 0.7 and 1.3
+              maxMultiplier: number; // Between 1 and 5
+          };
     // Trigger for the campaign
     triggers: Partial<Record<InteractionTypesKey, CampaignTrigger>>;
+    // The currency used to setup the campaign (if undefined, that's `eur`, if `raw` that's directly the token)
+    setupCurrency?: "eur" | "usd" | "gbp" | "raw";
 };
 
 /**

@@ -1,11 +1,13 @@
 "use client";
 
+import { viemClient } from "@/context/blockchain/provider";
 import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
-import { convertToEuro } from "@/module/common/utils/convertToEuro";
+import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { FormLayout } from "@/module/forms/Form";
 import { ProductHead } from "@/module/product/component/ProductHead";
 import { useFundTestBank } from "@/module/product/hook/useFundTestBank";
@@ -28,10 +30,14 @@ import { atom, useAtomValue, useSetAtom } from "jotai";
 import { CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
-import { type Hex, encodeFunctionData, isAddressEqual } from "viem";
+import {
+    type Address,
+    type Hex,
+    encodeFunctionData,
+    formatUnits,
+    isAddressEqual,
+} from "viem";
 import { readContract } from "viem/actions";
-import { viemClient } from "../../../../context/blockchain/provider";
-import { useWaitForTxAndInvalidateQueries } from "../../../common/utils/useWaitForTxAndInvalidateQueries";
 import styles from "./index.module.css";
 
 /**
@@ -82,7 +88,7 @@ function ProductFundingBanks({ banks }: { banks: ProductBank[] }) {
 }
 
 /**
- * Bank informations
+ * Bank information
  * @param bank
  * @returns
  */
@@ -136,18 +142,24 @@ function ProductFundingBank({ bank }: { bank: ProductBank }) {
                     </Title>
                     <BankAmount
                         title="Balance:"
-                        amount={bank.formatted.balance}
+                        balance={bank.balance}
                         symbol={bank.token.symbol}
+                        decimals={bank.token.decimals}
+                        token={bank.token.address}
                     />
                     <BankAmount
                         title="Total distributed:"
-                        amount={bank.formatted.totalDistributed}
+                        balance={bank.totalDistributed}
                         symbol={bank.token.symbol}
+                        decimals={bank.token.decimals}
+                        token={bank.token.address}
                     />
                     <BankAmount
                         title="Total claimed:"
-                        amount={bank.formatted.totalClaimed}
+                        balance={bank.totalClaimed}
                         symbol={bank.token.symbol}
+                        decimals={bank.token.decimals}
+                        token={bank.token.address}
                     />
                 </Column>
             </Columns>
@@ -167,13 +179,31 @@ function ProductFundingBank({ bank }: { bank: ProductBank }) {
  */
 function BankAmount({
     title,
-    amount,
+    balance,
     symbol,
-}: { title: string; amount: string; symbol: string }) {
+    decimals,
+    token,
+}: {
+    title: string;
+    balance: bigint;
+    symbol: string;
+    decimals: number;
+    token: Address;
+}) {
+    const converted = useConvertToPreferredCurrency({
+        balance,
+        decimals,
+        token,
+    });
+    if (converted === undefined) return null;
     return (
         <p>
-            {title} <strong>{convertToEuro(amount)}</strong> (
-            {formatPrice(amount)?.replace("$", `${symbol} `)})
+            {title} <strong>{converted}</strong> (
+            {formatPrice(formatUnits(balance, decimals))?.replace(
+                "$",
+                `${symbol} `
+            )}
+            )
         </p>
     );
 }

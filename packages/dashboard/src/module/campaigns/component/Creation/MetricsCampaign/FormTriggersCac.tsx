@@ -1,10 +1,10 @@
+"use client";
+
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
-import { FormFromTo } from "@/module/campaigns/component/Creation/MetricsCampaign/FormFromTo";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
-import type { Campaign } from "@/types/Campaign";
 import {
     type InteractionTypesKey,
     type ProductTypesKey,
@@ -13,13 +13,13 @@ import {
 import { Button } from "@shared/module/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
-import type { UseFormReturn } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
+import { FormTrigger } from "../Generic/FormTrigger";
+import styles from "./FormTriggersCac.module.css";
 
-export function FormPriceRange({
-    form,
+export function FormTriggersCac({
     productTypes = [],
 }: {
-    form: UseFormReturn<Campaign["triggers"]>;
     productTypes: ProductTypesKey[];
 }) {
     const setStep = useSetAtom(campaignStepAtom);
@@ -49,8 +49,11 @@ export function FormPriceRange({
             }));
     }, [productTypes, currentGoal]);
 
+    const { getFieldState } = useFormContext();
+    const triggerState = getFieldState("triggers");
+
     return (
-        <Panel title="Configure Price Range">
+        <Panel title="Set a target cost per action">
             {availableInteractions.length === 0 && (
                 <>
                     <FormDescription>
@@ -69,35 +72,33 @@ export function FormPriceRange({
                     </FormDescription>
                 </>
             )}
-            {availableInteractions.length > 0 && (
-                <FormDescription>
-                    Set a price range for each campaign objective. The budget
-                    will be distributed between the referee and referrer
-                    according to an automatically optimized allocation key. Frak
-                    will apply a 20% management fee to support the campaign
-                    delivery and to cover operational costs.
-                </FormDescription>
+            <FormDescription>
+                <span>Target CPA</span>
+                <br />
+                <span className={styles.notice}>
+                    "Target CPA" defines your overall acquisition cost per
+                    target action (your goal) to generate the maximum number of
+                    conversions at a cost equal to or lower than the target cost
+                    per action you set. Some conversions may cost more or less
+                    than your target amount.
+                </span>
+            </FormDescription>
+            {availableInteractions.length > 0 &&
+                availableInteractions.map(({ key }) => (
+                    <FormTrigger
+                        key={key}
+                        interaction={key}
+                        disabled={false}
+                        defaultChecked={availableInteractions.length === 1}
+                    />
+                ))}
+            {triggerState.error && (
+                <p className="error">
+                    {typeof triggerState.error === "string"
+                        ? triggerState.error
+                        : triggerState.error?.message}
+                </p>
             )}
-            {availableInteractions.map(({ key, label }) => (
-                <FormFromTo
-                    key={key}
-                    id={key}
-                    label={label}
-                    form={form}
-                    from={{
-                        name: `${key}.from`,
-                        label: "From",
-                        placeholder: "15,00 €",
-                        rightSection: "EUR",
-                    }}
-                    to={{
-                        name: `${key}.to`,
-                        label: "To",
-                        placeholder: "25,00 €",
-                        rightSection: "EUR",
-                    }}
-                />
-            ))}
         </Panel>
     );
 }

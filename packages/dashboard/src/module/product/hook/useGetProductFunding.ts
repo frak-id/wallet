@@ -1,7 +1,7 @@
 import { viemClient } from "@/context/blockchain/provider";
 import { indexerApi } from "@frak-labs/shared/context/server";
 import { useQuery } from "@tanstack/react-query";
-import { type Address, type Hex, erc20Abi, formatUnits } from "viem";
+import { type Address, type Hex, erc20Abi } from "viem";
 import { multicall } from "viem/actions";
 
 type ApiResponse = {
@@ -29,13 +29,11 @@ export type ProductBank = {
         symbol: string;
         decimals: number;
     };
-    formatted: {
-        totalDistributed: string;
-        totalClaimed: string;
-        balance: string;
-    };
 };
 
+/**
+ * todo: should directly map to the prefered currency here?
+ */
 export function useGetProductFunding({ productId }: { productId?: Hex }) {
     return useQuery({
         queryKey: ["product", "funding", productId],
@@ -64,20 +62,6 @@ export function useGetProductFunding({ productId }: { productId?: Hex }) {
                 totalClaimed: BigInt(funding.totalClaimed),
                 isDistributing: funding.isDistributing,
                 balance: balances[index],
-                formatted: {
-                    totalDistributed: formatUnits(
-                        BigInt(funding.totalDistributed),
-                        funding.token.decimals
-                    ),
-                    totalClaimed: formatUnits(
-                        BigInt(funding.totalClaimed),
-                        funding.token.decimals
-                    ),
-                    balance: formatUnits(
-                        BigInt(balances[index]),
-                        funding.token.decimals
-                    ),
-                },
             }));
         },
         enabled: !!productId,

@@ -11,13 +11,6 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/module/forms/Select";
 import type { Campaign } from "@/types/Campaign";
 import {
     MousePointer,
@@ -121,47 +114,10 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
     return (
         <Panel title="Goals">
             <Column>
-                <FormField
-                    control={form.control}
-                    name="order"
-                    rules={{ required: "Select an order" }}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormDescription>
-                                <strong>Enhance Efficiency</strong>: Picking a
-                                goal helps streamline your experience with
-                                settings that best suit your campaign
-                                objectives, while a programmatic AI engine
-                                optimizes the delivery to ensure the best
-                                performance.
-                            </FormDescription>
-                            <FormDescription label={"Type of order"} />
-                            <FormControl>
-                                <Select
-                                    name={field.name}
-                                    onValueChange={(value) => {
-                                        if (value === "") return;
-                                        field.onChange(value);
-                                    }}
-                                    value={field.value}
-                                >
-                                    <SelectTrigger length={"medium"} {...field}>
-                                        <SelectValue placeholder="Select an order" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="adaptive">
-                                            Adaptive Pricing
-                                        </SelectItem>
-                                        <SelectItem value="auctions" disabled>
-                                            Auctions
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <FormDescription>
+                    The choice of your goal defines the event that generates the
+                    distribution of rewards. Pay only when this goal is reached.
+                </FormDescription>
             </Column>
             <Column fullWidth={true}>
                 <FormField

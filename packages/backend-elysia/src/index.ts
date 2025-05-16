@@ -4,6 +4,7 @@ import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { commonRoutes } from "./common/routes";
 import {
+    airtable,
     auth,
     business,
     interactions,
@@ -48,6 +49,8 @@ const app = new Elysia({
     .use(wallet)
     .use(business)
     .use(pairing)
+    // Utils
+    .use(airtable)
     // 6 degrees related logics
     .use(sixDegrees)
     // Setup bun serve options

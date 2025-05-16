@@ -20,12 +20,11 @@ const flattenedKeys: InteractionTypesKey[] = Object.values(
 
 const initialValues: Campaign = {
     title: "",
-    order: "",
     type: "",
     productId: "",
     specialCategories: [],
     budget: {
-        type: "",
+        type: "global",
         maxEuroDaily: 0,
     },
     territories: [],
@@ -33,9 +32,15 @@ const initialValues: Campaign = {
     scheduled: {
         dateStart: new Date(),
     },
+    distribution: {
+        type: "fixed",
+    },
+    rewardChaining: {
+        userPercent: 0.1,
+    },
     triggers: Object.fromEntries(
-        flattenedKeys.map((key) => [key, { from: 0, to: 0 }])
-    ) as Record<InteractionTypesKey, { from: number; to: number }>,
+        flattenedKeys.map((key) => [key, { cac: 0 }])
+    ) as Record<InteractionTypesKey, { cac: number }>,
 };
 
 /**

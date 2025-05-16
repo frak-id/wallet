@@ -7,7 +7,6 @@ import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
-import { FormOrder } from "@/module/campaigns/component/Creation/ValidationCampaign/FormOrder";
 import { FormPriceRange } from "@/module/campaigns/component/Creation/ValidationCampaign/FormPriceRange";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Panel } from "@/module/common/component/Panel";
@@ -65,15 +64,10 @@ export function CampaignDetails({
             <Panel title={"Campaign Details"}>
                 <Form {...form}>
                     <FormAdvertising {...form} />
-                    <FormOrder {...form} />
                     <FormGoal {...form} />
-                    <FormBudgetRow
-                        {...form}
-                        isCheckCampaign={true}
-                        disabled={true}
-                    />
+                    <FormBudgetRow {...form} disabled={true} />
                     <CampaignTerritory campaign={campaign} />
-                    <FormPriceRange form={form} disabled={true} />
+                    <FormPriceRange />
                 </Form>
             </Panel>
             <ActionsWrapper

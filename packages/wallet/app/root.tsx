@@ -15,6 +15,10 @@ import {
     isRouteErrorResponse,
 } from "react-router";
 import type { Route } from "./+types/root";
+import {
+    PwaInstall,
+    PwaInstallScript,
+} from "./module/common/component/PwaInstall";
 
 export const meta = rootConfig.meta;
 export const links = rootConfig.links;
@@ -100,6 +104,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Meta />
                 <Links />
                 <AnalyticsWrapper />
+                <PwaInstallScript />
             </head>
             <body className="scrollbars">
                 {children}
@@ -125,6 +130,7 @@ export default function App() {
             </RootProvider>
             <TopLoader />
             <DetectPWA />
+            <PwaInstall />
         </>
     );
 }
