@@ -266,12 +266,7 @@ function AmountInPreferredCurrency({
         token: row.original.token,
     });
 
-    if (converted === undefined)
-        return (
-            <span>
-                Raw: {getValue()}, token: {row.original.token}
-            </span>
-        );
+    if (converted === undefined) null;
 
     return <span>{converted}</span>;
 }

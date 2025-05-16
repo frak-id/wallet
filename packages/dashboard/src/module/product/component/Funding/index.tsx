@@ -195,7 +195,7 @@ function BankAmount({
         decimals,
         token,
     });
-    if (!converted) return null;
+    if (converted === undefined) return null;
     return (
         <p>
             {title} <strong>{converted}</strong> (
