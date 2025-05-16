@@ -1,0 +1,11 @@
+.selectCurrency {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    color: var(--frak-panel-text-color);
+}
+
+.selectCurrency__label {
+    margin-bottom: 10px;
+    color: var(--frak-color-white);
+}
