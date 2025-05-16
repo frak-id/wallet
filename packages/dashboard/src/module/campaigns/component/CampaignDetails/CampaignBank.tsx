@@ -1,12 +1,12 @@
 import { viemClient } from "@/context/blockchain/provider";
 import { useGetOnChainCampaignDetails } from "@/module/campaigns/hook/useGetOnChainDetails";
 import { Title } from "@/module/common/component/Title";
-import { convertToEuro } from "@/module/common/utils/convertToEuro";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { type Address, erc20Abi, formatUnits } from "viem";
+import { type Address, erc20Abi } from "viem";
 import { multicall } from "viem/actions";
+import { useConvertToPreferredCurrency } from "../../../common/hook/useConversionRate";
 
 /**
  * Display the campaign balance
@@ -84,6 +84,12 @@ export function CampaignBank({
         },
     });
 
+    const formattedBalance = useConvertToPreferredCurrency({
+        balance: bankInfo?.balance,
+        decimals: bankInfo?.decimal,
+        token: bankInfo?.bankToken,
+    });
+
     if (isLoading || !bankInfo) {
         return null;
     }
@@ -97,12 +103,7 @@ export function CampaignBank({
                 Can distribute token:{" "}
                 {bankInfo.canDistributeToken ? "Yes" : "No"}
             </p>
-            <p>
-                Current bank balance:{" "}
-                {convertToEuro(
-                    formatUnits(BigInt(bankInfo.balance), bankInfo.decimal)
-                )}
-            </p>
+            <p>Current bank balance: {formattedBalance}</p>
             <p>
                 <Link href={`/product/${onChainInfos?.productId}/funding`}>
                     Check bank

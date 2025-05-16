@@ -2,7 +2,7 @@ import { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStat
 import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
-import { convertToEuro } from "@/module/common/utils/convertToEuro";
+import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 import { Skeleton } from "@shared/module/component/Skeleton";
 import { computeWithPrecision } from "@shared/module/utils/computeWithPrecision";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +10,7 @@ import {
     type ColumnFiltersState,
     createColumnHelper,
 } from "@tanstack/react-table";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { CellContext, ColumnDef } from "@tanstack/react-table";
 import type { Table as TableReact } from "@tanstack/react-table";
 import { atom } from "jotai";
 import { useAtomValue } from "jotai/index";
@@ -29,11 +29,7 @@ type TableData = Awaited<ReturnType<typeof getMyCampaignsStats>>[number];
 
 const columnHelper = createColumnHelper<TableData>();
 
-function sumRows(
-    table: TableReact<TableData>,
-    column: keyof TableData,
-    formatting?: { dollar?: boolean }
-) {
+function sumRows(table: TableReact<TableData>, column: keyof TableData) {
     const total = table
         .getFilteredRowModel()
         .rows.reduce(
@@ -41,9 +37,6 @@ function sumRows(
                 computeWithPrecision(sum, row.original[column] as number, "+"),
             0
         );
-    if (formatting?.dollar) {
-        return <span>{convertToEuro(total)}</span>;
-    }
     return <span>{total}</span>;
 }
 
@@ -65,8 +58,8 @@ export function TableCampaignPerformance() {
     const columnFilters = useAtomValue(tablePerformanceFiltersAtom);
 
     const { data, isLoading } = useQuery({
-        queryKey: ["campaigns", "all-stats"],
-        queryFn: async () => await getMyCampaignsStats(),
+        queryKey: ["campaigns", "stats"],
+        queryFn: () => getMyCampaignsStats(),
     });
 
     const columns = useMemo(
@@ -176,9 +169,12 @@ export function TableCampaignPerformance() {
                             <span>Cost per share</span>
                         </TooltipTable>
                     ),
-                    footer: ({ table }) =>
-                        sumRows(table, "costPerShare", { dollar: true }),
-                    cell: ({ getValue }) => convertToEuro(getValue()),
+                    cell: ({ row, getValue }) => (
+                        <AmountInPreferredCurrency
+                            row={row}
+                            getValue={getValue}
+                        />
+                    ),
                 }),
                 columnHelper.accessor("ctr", {
                     header: () => (
@@ -211,9 +207,12 @@ export function TableCampaignPerformance() {
                             <span>Cost per Purchase</span>
                         </TooltipTable>
                     ),
-                    footer: ({ table }) =>
-                        sumRows(table, "costPerPurchase", { dollar: true }),
-                    cell: ({ getValue }) => convertToEuro(getValue()),
+                    cell: ({ row, getValue }) => (
+                        <AmountInPreferredCurrency
+                            row={row}
+                            getValue={getValue}
+                        />
+                    ),
                 }),
                 columnHelper.accessor("amountSpent", {
                     header: () => (
@@ -229,9 +228,12 @@ export function TableCampaignPerformance() {
                             <span>Amount Spent</span>
                         </TooltipTable>
                     ),
-                    footer: ({ table }) =>
-                        sumRows(table, "amountSpent", { dollar: true }),
-                    cell: ({ getValue }) => convertToEuro(getValue()),
+                    cell: ({ row, getValue }) => (
+                        <AmountInPreferredCurrency
+                            row={row}
+                            getValue={getValue}
+                        />
+                    ),
                 }),
             ] as ColumnDef<TableData>[],
         []
@@ -253,4 +255,23 @@ export function TableCampaignPerformance() {
             />
         </>
     );
+}
+
+function AmountInPreferredCurrency({
+    row,
+    getValue,
+}: Pick<CellContext<TableData, number>, "row" | "getValue">) {
+    const converted = useConvertToPreferredCurrency({
+        amount: getValue(),
+        token: row.original.token,
+    });
+
+    if (converted === undefined)
+        return (
+            <span>
+                Raw: {getValue()}, token: {row.original.token}
+            </span>
+        );
+
+    return <span>{converted}</span>;
 }

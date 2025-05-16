@@ -1,5 +1,4 @@
 "use client";
-
 import { campaignResetAtom } from "@/module/campaigns/atoms/campaign";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
@@ -8,8 +7,8 @@ import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
 import { useUpdateCampaignRunningStatus } from "@/module/campaigns/hook/useUpdateCampaignRunningStatus";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import type { ReactTableProps } from "@/module/common/component/Table";
-import { convertToEuro } from "@/module/common/utils/convertToEuro";
 import { formatDate } from "@/module/common/utils/formatDate";
+import { formatPrice } from "@/module/common/utils/formatPrice";
 import { Switch } from "@/module/forms/Switch";
 import type { CampaignWithState } from "@/types/Campaign";
 import { Button } from "@shared/module/component/Button";
@@ -109,20 +108,9 @@ export function TableCampaigns() {
                 },
                 columnHelper.accessor("budget.maxEuroDaily", {
                     header: () => "Budget",
-                    cell: ({ getValue, row }) => {
-                        return (
-                            <span className={styles.table__budget}>
-                                <span className={styles.table__budgetAmount}>
-                                    {convertToEuro(getValue())}
-                                </span>
-                                {row.original.budget?.type && (
-                                    <span className={styles.table__budgetType}>
-                                        {capitalize(row.original.budget.type)}
-                                    </span>
-                                )}
-                            </span>
-                        );
-                    },
+                    cell: ({ row, getValue }) => (
+                        <CellBudget row={row} getValue={getValue} />
+                    ),
                 }),
                 columnHelper.display({
                     header: "Action",
@@ -149,6 +137,35 @@ export function TableCampaigns() {
                 />
             </>
         )
+    );
+}
+
+/**
+ * todo: we need to review the campaign object for a better support of each currencies
+ */
+function CellBudget({
+    row,
+    getValue,
+}: Pick<CellContext<CampaignWithState, undefined>, "row" | "getValue">) {
+    // const { bankInfo } = useGetBankInfo({ bank: row.original.bank });
+    // const converted = useConvertToPreferredCurrency({
+    //     amount: getValue(),
+    //     token: bankInfo?.token,
+    // });
+
+    // if (!converted) return <Spinner />;
+
+    return (
+        <span className={styles.table__budget}>
+            <span className={styles.table__budgetAmount}>
+                {formatPrice(getValue(), undefined, "EUR")}
+            </span>
+            {row.original.budget?.type && (
+                <span className={styles.table__budgetType}>
+                    {capitalize(row.original.budget.type)}
+                </span>
+            )}
+        </span>
     );
 }
 

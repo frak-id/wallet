@@ -1,5 +1,5 @@
 import { Panel } from "@/module/common/component/Panel";
-import { convertToEuro } from "@/module/common/utils/convertToEuro";
+import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 import {
     FormControl,
     FormField,
@@ -13,7 +13,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/module/forms/Select";
-import { useGetProductFunding } from "@/module/product/hook/useGetProductFunding";
+import {
+    type ProductBank,
+    useGetProductFunding,
+} from "@/module/product/hook/useGetProductFunding";
 import type { Campaign } from "@/types/Campaign";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
@@ -60,16 +63,10 @@ export function FormBank() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {(data ?? []).map((bank) => (
-                                        <SelectItem
+                                        <SelectItemBank
                                             key={bank.address}
-                                            value={bank.address}
-                                        >
-                                            {bank.token.name} (
-                                            {convertToEuro(
-                                                bank.formatted.balance
-                                            )}
-                                            )
-                                        </SelectItem>
+                                            bank={bank}
+                                        />
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -79,5 +76,19 @@ export function FormBank() {
                 )}
             />
         </Panel>
+    );
+}
+
+function SelectItemBank({ bank }: { bank: ProductBank }) {
+    const formattedBalance = useConvertToPreferredCurrency({
+        token: bank.token.address,
+        balance: bank.balance,
+        decimals: bank.token.decimals,
+    });
+    return (
+        <SelectItem key={bank.address} value={bank.address}>
+            {bank.token.name}
+            {formattedBalance && `(${formattedBalance})`}
+        </SelectItem>
     );
 }

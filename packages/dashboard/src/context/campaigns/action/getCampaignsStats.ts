@@ -75,7 +75,9 @@ export async function getMyCampaignsStats() {
         );
 
         // Get the decimals of the campaign banking
-        const { decimals } = await getBankTokenInfo({ bank: campaign.bank });
+        const { decimals, token } = await getBankTokenInfo({
+            bank: campaign.bank,
+        });
 
         // CTR = share / couverture
         const sharingRate =
@@ -114,6 +116,8 @@ export async function getMyCampaignsStats() {
         return {
             title,
             id: campaignDoc?._id?.toHexString() ?? campaign.id,
+            bank: campaign.bank,
+            token: token,
             // Raw stats
             openInteractions: Number(campaign.openInteractions),
             readInteractions: Number(campaign.readInteractions),
