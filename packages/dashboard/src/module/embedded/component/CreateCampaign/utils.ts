@@ -92,8 +92,7 @@ export function createCampaignDraft({
         },
         triggers: {
             started: {
-                from: cacBrut,
-                to: cacBrut,
+                cac: cacBrut,
             },
         },
         // On shopify we directly use the token symbol for the setup

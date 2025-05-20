@@ -21,7 +21,9 @@ export type CampaignRewardType = "fixed" | "range";
 export type CampaignTrigger =
     | {
           // Reward range (for the old schema)
+          // @deprecated use the cac properties with `multiplier` instead
           from: number;
+          // @deprecated use the cac properties with `multiplier` instead
           to: number;
           // Reward distribution config
           maxCountPerUser?: number;
