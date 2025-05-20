@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
+declare global {
+    interface Window {
+        promptEvent?: IBeforeInstallPromptEvent;
+    }
+}
+
 interface IBeforeInstallPromptEvent extends Event {
     readonly platforms: string[];
     prompt(): Promise<{
@@ -34,17 +40,23 @@ export function useAddToHomeScreenPrompt() {
         setState(null);
     }, [prompt]);
 
-    // Listen on the beforeinstallprompt event (to know if we can install or not the PWA)
     useEffect(() => {
-        const ready = ((e: IBeforeInstallPromptEvent) => {
-            e.preventDefault();
-            setState(e);
-        }) as EventListenerOrEventListenerObject;
+        const interval = setInterval(() => {
+            if (!window.promptEvent) return;
 
-        window.addEventListener("beforeinstallprompt", ready);
+            // Set the window.promptEvent to the current prompt
+            setState(window.promptEvent);
+
+            // Stop polling after the event is available
+            if (window.promptEvent) clearInterval(interval);
+        }, 500);
+
+        // Stop polling after 5 seconds (iOS never fires the event)
+        const timeout = setTimeout(() => clearInterval(interval), 5000);
 
         return () => {
-            window.removeEventListener("beforeinstallprompt", ready);
+            clearInterval(interval);
+            clearTimeout(timeout);
         };
     }, []);
 
