@@ -1,5 +1,6 @@
 "use client";
 
+import { useHasRoleOnProduct } from "@/common/hook/useHasRoleOnProduct";
 import {
     saveCampaignDraft,
     updateCampaignState,
@@ -78,6 +79,40 @@ export function EmbeddedCreateCampaign() {
             return { campaign, creationData, hash: result?.hash };
         },
     });
+
+    const { isOwner, isAdministrator, isCampaignManager } = useHasRoleOnProduct(
+        {
+            productId: extracted.productId,
+        }
+    );
+
+    // Step 0: Check if the product is deployed and if the user is allowed on this product
+    if (!isOwner && !isAdministrator && !isCampaignManager) {
+        return (
+            <>
+                <Title className={styles.title}>Create Campaign</Title>
+                <Panel
+                    withBadge={false}
+                    title={`Creating campaign ${extracted.name}`}
+                >
+                    <div className={styles.error}>
+                        <p>
+                            You are not allowed to create a campaign on this
+                            product
+                        </p>
+                        <Button
+                            variant="secondary"
+                            size="small"
+                            className={styles.button}
+                            onClick={handleClose}
+                        >
+                            Close
+                        </Button>
+                    </div>
+                </Panel>
+            </>
+        );
+    }
 
     // Step 1: No createCampaignData
     if (!createCampaignData) {
