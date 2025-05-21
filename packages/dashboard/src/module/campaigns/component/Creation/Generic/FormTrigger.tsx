@@ -8,6 +8,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
+import type { CampaignTrigger } from "@/types/Campaign";
 import type { InteractionTypesKey } from "@frak-labs/core-sdk";
 import { Checkbox } from "@frak-labs/shared/module/component/forms/Checkbox";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -35,7 +36,7 @@ export function FormTrigger({
     );
 
     const trigger = useMemo(
-        () => triggers[interaction],
+        () => triggers[interaction] as CampaignTrigger | undefined | null,
         [triggers, interaction]
     );
     const label = useMemo(
@@ -45,6 +46,7 @@ export function FormTrigger({
 
     // Check if the trigger is all zeroes
     const isAllZeroes = useMemo(() => {
+        if (!trigger) return true;
         if ("from" in trigger) {
             return trigger.from === 0 && trigger.to === 0;
         }
@@ -74,7 +76,7 @@ export function FormTrigger({
         (value: boolean | "indeterminate") => {
             setIsChecked(value);
             // Early exit if nothing more to do
-            if (value !== false) return;
+            if (value !== false || !trigger) return;
 
             // If we are on legacy forms, we need to set the values to 0
             if ("from" in trigger) {
@@ -130,8 +132,9 @@ function InputRouter({
     validateCacInput: (value: number) => string | true;
     disabled: boolean;
     checked: boolean;
-    trigger: { cac: number } | { from: number; to: number };
+    trigger: CampaignTrigger | undefined | null;
 }) {
+    if (!trigger) return null;
     if ("from" in trigger) {
         return (
             <LegacyRangeInputInputs

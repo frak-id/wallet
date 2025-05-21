@@ -45,7 +45,7 @@ export async function getCreationData(campaign: Campaign) {
 
     // If the triggers record is empty early exit
     const hasTrigger = Object.values(campaign?.triggers ?? {}).some(
-        (trigger) => "cac" in trigger && (trigger?.cac ?? 0) > 0
+        (trigger) => trigger && "cac" in trigger && (trigger?.cac ?? 0) > 0
     );
     if (!hasTrigger) {
         throw new Error("Triggers are required");
@@ -246,7 +246,10 @@ function extractFixedTriggers(
 ) {
     // Rebuild the triggers
     const triggers = Object.entries(campaign.triggers)
-        .filter(([_, trigger]) => "cac" in trigger && (trigger?.cac ?? 0) > 0)
+        .filter(
+            ([_, trigger]) =>
+                trigger && "cac" in trigger && (trigger?.cac ?? 0) > 0
+        )
         .map(([interactionTypeKey, trigger]) => {
             // Can't happen since we got the filter, for type checking
             if (!trigger.cac) {
@@ -280,11 +283,11 @@ function extractFixedTriggers(
     // Check if we got a purchase related triggers, if yes, add an unsafe ppurchase one with same criteria
     const purchaseTrigger = triggers.find(
         (trigger) =>
-            trigger.interactionType === interactionTypes.purchase.completed
+            trigger?.interactionType === interactionTypes.purchase.completed
     );
     const hasUnsafeCompletedTrigger = triggers.some(
         (trigger) =>
-            trigger.interactionType ===
+            trigger?.interactionType ===
             interactionTypes.purchase.unsafeCompleted
     );
     if (purchaseTrigger && !hasUnsafeCompletedTrigger) {
@@ -384,7 +387,10 @@ function extractRangeTriggers(
 ) {
     // Rebuild the triggers
     const triggers = Object.entries(campaign.triggers)
-        .filter(([_, trigger]) => "cac" in trigger && (trigger?.cac ?? 0) > 0)
+        .filter(
+            ([_, trigger]) =>
+                trigger && "cac" in trigger && (trigger?.cac ?? 0) > 0
+        )
         .map(([interactionTypeKey, trigger]) => {
             // Can't happen since we got the filter, for type checking
             if (!trigger.cac) {
@@ -428,11 +434,11 @@ function extractRangeTriggers(
     // Check if we got a purchase related triggers, if yes, add an unsafe ppurchase one with same criteria
     const purchaseTrigger = triggers.find(
         (trigger) =>
-            trigger.interactionType === interactionTypes.purchase.completed
+            trigger?.interactionType === interactionTypes.purchase.completed
     );
     const hasUnsafeCompletedTrigger = triggers.some(
         (trigger) =>
-            trigger.interactionType ===
+            trigger?.interactionType ===
             interactionTypes.purchase.unsafeCompleted
     );
     if (purchaseTrigger && !hasUnsafeCompletedTrigger) {
