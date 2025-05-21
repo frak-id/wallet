@@ -1,6 +1,5 @@
 "use client";
 
-import { useHasRoleOnProduct } from "@/common/hook/useHasRoleOnProduct";
 import {
     saveCampaignDraft,
     updateCampaignState,
@@ -8,6 +7,7 @@ import {
 import { getCreationData } from "@/context/campaigns/action/createOnChain";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
 import type { Campaign } from "@/types/Campaign";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/shared/module/component/Button";
