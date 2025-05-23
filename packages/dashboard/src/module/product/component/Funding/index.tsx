@@ -38,6 +38,7 @@ import {
     isAddressEqual,
 } from "viem";
 import { readContract } from "viem/actions";
+import { useProductMetadata } from "../../hook/useProductMetadata";
 import styles from "./index.module.css";
 
 /**
@@ -63,7 +64,10 @@ export function ProductFunding({ productId }: { productId: Hex }) {
                 {isLoading || isPending ? (
                     <Spinner />
                 ) : (
-                    <ProductFundingBanks banks={data ?? []} />
+                    <ProductFundingBanks
+                        banks={data ?? []}
+                        productId={productId}
+                    />
                 )}
             </Panel>
         </FormLayout>
@@ -75,15 +79,20 @@ export function ProductFunding({ productId }: { productId: Hex }) {
  * @param banks
  * @returns
  */
-function ProductFundingBanks({ banks }: { banks: ProductBank[] }) {
-    const productId = useAtomValue(productIdAtom);
-
+function ProductFundingBanks({
+    banks,
+    productId,
+}: { banks: ProductBank[]; productId: Hex }) {
     if (banks.length === 0 || !productId) {
         return <div>No banks</div>;
     }
 
     return banks.map((bank) => (
-        <ProductFundingBank key={`bank-${bank.address}`} bank={bank} />
+        <ProductFundingBank
+            key={`bank-${bank.address}`}
+            bank={bank}
+            productId={productId}
+        />
     ));
 }
 
@@ -92,7 +101,10 @@ function ProductFundingBanks({ banks }: { banks: ProductBank[] }) {
  * @param bank
  * @returns
  */
-function ProductFundingBank({ bank }: { bank: ProductBank }) {
+function ProductFundingBank({
+    bank,
+    productId,
+}: { bank: ProductBank; productId: Hex }) {
     const isTestBank = useMemo(
         () => isAddressEqual(bank.token.address, addresses.mUSDToken),
         [bank.token.address]
@@ -163,7 +175,11 @@ function ProductFundingBank({ bank }: { bank: ProductBank }) {
                     />
                 </Column>
             </Columns>
-            <FundBalance bank={bank} isTestBank={isTestBank} />
+            <FundBalance
+                bank={bank}
+                isTestBank={isTestBank}
+                productId={productId}
+            />
             <br />
             <WithdrawFunds bank={bank} />
         </div>
@@ -243,8 +259,38 @@ function ToggleFundingStatus({ bank }: { bank: ProductBank }) {
 function FundBalance({
     bank,
     isTestBank,
-}: { bank: ProductBank; isTestBank: boolean }) {
+    productId,
+}: { bank: ProductBank; isTestBank: boolean; productId: Hex }) {
     const { mutate: fundTestBank, isPending } = useFundTestBank();
+    const { data: productMetadata, isLoading: isLoadingProductMetadata } =
+        useProductMetadata({ productId });
+    const isShopify = useMemo(
+        () => productMetadata?.domain?.includes("myshopify") ?? false,
+        [productMetadata]
+    );
+
+    if (isLoadingProductMetadata) {
+        return <Spinner />;
+    }
+
+    if (isShopify) {
+        return (
+            <Columns>
+                <Column>
+                    <p>
+                        You can fund your banks using the Frak shopify
+                        application <pre>apps - Frak - Status - Add funds</pre>{" "}
+                        <Link
+                            href={`https://admin.shopify.com/store/${productMetadata?.domain?.replace(".myshopify.com", "")}/apps/frak/app/status`}
+                            target="_blank"
+                        >
+                            Shopify dashboard
+                        </Link>{" "}
+                    </p>
+                </Column>
+            </Columns>
+        );
+    }
 
     if (isTestBank) {
         return (
