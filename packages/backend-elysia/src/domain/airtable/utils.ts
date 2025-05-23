@@ -1,3 +1,5 @@
+import type { AirtableRequestBody } from "./config";
+
 /**
  * Mapping from request body field names to Airtable field names
  */
@@ -18,7 +20,7 @@ export const AIRTABLE_FIELD_MAPPING: Record<string, string> = {
  * Generic function to map request body fields to Airtable field names
  */
 export function mapToAirtableFields(
-    data: RequestBody
+    data: AirtableRequestBody
 ): Record<string, unknown> {
     const mappedFields: Record<string, unknown> = {};
 

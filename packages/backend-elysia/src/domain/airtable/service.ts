@@ -58,7 +58,7 @@ export class AirtableService {
      */
     async createRecord(
         tableType: TableType,
-        data: RequestBody
+        data: AirtableRequestBody
     ): Promise<string> {
         const config = AIRTABLE_CONFIG[tableType];
         const base = this.airtable.base(config.baseId);
@@ -133,7 +133,7 @@ export class AirtableService {
      */
     async processRequest(
         tableType: TableType,
-        data: RequestBody
+        data: AirtableRequestBody
     ): Promise<{ recordId: string; message: string }> {
         // Check for duplicates
         const isDuplicate = await this.checkDuplicateEmail(
