@@ -29,6 +29,8 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "@simplewebauthn/server": "^13.1.1",
+    "@slack/web-api": "^7.9.2",
+    "airtable": "^0.12.2",
     "async-mutex": "^0.5.0",
     "croner": "^9.0.0",
     "drizzle-orm": "^0.41.0",

@@ -64,6 +64,8 @@ export const elysiaEnv = {
     COIN_GECKO_API_KEY: new sst.Secret("COIN_GECKO_API_KEY").value,
     WORLD_NEWS_API_KEY: new sst.Secret("WORLD_NEWS_API_KEY").value,
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
+    AIRTABLE_API_KEY: new sst.Secret("AIRTABLE_API_KEY").value,
+    SLACK_BOT_TOKEN: new sst.Secret("SLACK_BOT_TOKEN").value,
 
     // Shopify related
     SHOPIFY_API_SECRET: new sst.Secret("SHOPIFY_API_SECRET").value,
