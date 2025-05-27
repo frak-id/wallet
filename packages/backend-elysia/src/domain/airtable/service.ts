@@ -13,7 +13,7 @@ export class AirtableService {
     private slack?: WebClient;
 
     constructor() {
-        const apiKey = process.env.AIRTABLE_API_KEY;
+        const apiKey = process.env.AIRTABLE_API_KEY ?? "no-airtable-api-key";
         if (!apiKey) {
             throw new Error(
                 "AIRTABLE_API_KEY environment variable is required"
