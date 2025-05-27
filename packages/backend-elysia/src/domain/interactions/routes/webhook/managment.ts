@@ -2,7 +2,7 @@ import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { interactionsContext } from "../../context";
 import { backendTrackerTable } from "../../db/schema";
 
@@ -14,7 +14,7 @@ export const webhookManagmentRoutes = new Elysia()
             productId: t.Optional(t.Hex()),
         }),
     })
-    .resolve(({ params: { productId }, error }) => {
+    .resolve(({ params: { productId } }) => {
         if (!productId) {
             return error(400, "Invalid product id");
         }
@@ -64,7 +64,6 @@ export const webhookManagmentRoutes = new Elysia()
             body,
             interactionsDb,
             productId,
-            error,
             businessSession,
             rolesRepository,
         }) => {
@@ -116,7 +115,6 @@ export const webhookManagmentRoutes = new Elysia()
         async ({
             productId,
             interactionsDb,
-            error,
             businessSession,
             rolesRepository,
         }) => {

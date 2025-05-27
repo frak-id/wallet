@@ -6,7 +6,7 @@ import {
     RetailInteractionEncoder,
 } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { type Hex, isAddress, isHex, keccak256, toHex } from "viem";
 import { interactionsContext } from "../../context";
 import { backendTrackerTable, pendingInteractionsTable } from "../../db/schema";
@@ -23,7 +23,7 @@ export const webhookPushRoutes = new Elysia()
             })
         ),
     })
-    .resolve(({ params: { productId }, headers, error }) => {
+    .resolve(({ params: { productId }, headers }) => {
         if (!productId) {
             return error(400, "Invalid product id");
         }
@@ -65,8 +65,6 @@ export const webhookPushRoutes = new Elysia()
             productId,
             hmac,
             body: rawBody,
-            // Response
-            error,
             // Context
             saveInteractions,
             interactionsDb,
@@ -133,8 +131,6 @@ export const webhookPushRoutes = new Elysia()
             productId,
             hmac,
             body: rawBody,
-            // Response
-            error,
             // Context
             saveInteractions,
             interactionsDb,

@@ -1,4 +1,4 @@
-import { Elysia, t } from "elysia";
+import { Elysia, error, t } from "elysia";
 import { unsealData } from "iron-session";
 import type { Address, Hex } from "viem";
 
@@ -54,7 +54,6 @@ export const nextSessionContext = new Elysia({
             return {
                 beforeHandle: async ({
                     cookie: { businessSession },
-                    error,
                     decodeNextSessionCookie,
                 }) => {
                     // Resolve the session

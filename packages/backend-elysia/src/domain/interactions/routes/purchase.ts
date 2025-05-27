@@ -1,6 +1,6 @@
 import { log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { type Address, isHex } from "viem";
 import { interactionsContext } from "../context";
 import { interactionsPurchaseTrackerTable } from "../db/schema";
@@ -13,7 +13,6 @@ export const purchaseInteractionsRoutes = new Elysia()
         async ({
             body,
             headers: { "x-wallet-sdk-auth": walletSdkAuth },
-            error,
             interactionsDb,
             walletSdkJwt,
             emitter,

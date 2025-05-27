@@ -1,5 +1,5 @@
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { oracleContext } from "../context";
 import { PurchaseProofService } from "../services/proofService";
 
@@ -14,7 +14,7 @@ export const proofRoutes = new Elysia({
             purchaseId: t.Optional(t.String()),
         }),
     })
-    .resolve(({ params: { productId, purchaseId }, error }) => {
+    .resolve(({ params: { productId, purchaseId } }) => {
         if (!productId) {
             return error(400, "Invalid product id");
         }
@@ -27,7 +27,7 @@ export const proofRoutes = new Elysia({
     // Get the proof around a given product and purchase
     .get(
         ":productId/purchase/:purchaseId",
-        async ({ productId, purchaseId, error, getPurchaseProof }) => {
+        async ({ productId, purchaseId, getPurchaseProof }) => {
             // Get the purchase proof
             const result = await getPurchaseProof({ productId, purchaseId });
             if (result.status === "purchase-not-found") {

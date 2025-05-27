@@ -1,6 +1,6 @@
 import { walletSdkSessionContext, walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { isAddressEqual } from "viem";
 import { walletSdkSessionService } from "../../services/WalletSdkSessionService";
 import { webAuthNService } from "../../services/WebAuthNService";
@@ -12,7 +12,7 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     // Generate a new token
     .get(
         "/generate",
-        async ({ walletSession, error, generateSdkJwt }) => {
+        async ({ walletSession, generateSdkJwt }) => {
             if (!walletSession) {
                 return error(401, "Unauthorized");
             }
@@ -36,7 +36,6 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
             body: { signature, msg, wallet },
             webAuthNService,
             generateSdkJwt,
-            error,
         }) => {
             // Check the validity of the webauthn signature
             const verificationnResult = await webAuthNService.isValidSignature({

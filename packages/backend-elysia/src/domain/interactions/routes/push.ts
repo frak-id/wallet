@@ -1,6 +1,6 @@
 import { log, walletSdkSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { isAddressEqual } from "viem";
 import { sixDegreesContext } from "../../../domain/6degrees/context";
 import { interactionsContext } from "../context";
@@ -16,7 +16,6 @@ export const pushInteractionsRoutes = new Elysia()
         async ({
             body: { interactions },
             walletSdkSession,
-            error,
             interactionsDb,
             emitter,
             interactionDiamondRepository,

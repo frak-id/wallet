@@ -2,7 +2,7 @@ import { log } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { productOracleTable } from "../../db/schema";
 import type { CustomWebhookDto } from "../../dto/CustomWebhook";
@@ -27,7 +27,7 @@ export const customWebhook = new Elysia({ prefix: "/custom" })
         ),
     })
     // Request pre validation hook
-    .onBeforeHandle(({ headers, error }) => {
+    .onBeforeHandle(({ headers }) => {
         // If it's a test and not running in prod, early exit
         if (headers["x-test"] && isRunningInProd) {
             return error(400, "Purchase test aren't accepted in production");
@@ -39,7 +39,6 @@ export const customWebhook = new Elysia({ prefix: "/custom" })
             params: { productId },
             body,
             headers,
-            error,
             oracleDb,
             upsertPurchase,
         }) => {

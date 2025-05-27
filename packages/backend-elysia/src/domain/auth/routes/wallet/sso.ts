@@ -2,7 +2,7 @@ import { t } from "@backend-utils";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import { and, eq } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import { ssoTable } from "../../db/schema";
@@ -87,8 +87,6 @@ export const walletSsoRoutes = new Elysia({
         "/consume",
         async ({
             body: { id, productId, consumeKey },
-            // Response
-            error,
             // Context
             webAuthNService,
             walletJwt,

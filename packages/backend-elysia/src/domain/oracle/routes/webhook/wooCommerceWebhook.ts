@@ -1,7 +1,7 @@
 import { log } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { eq } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
 import type {
@@ -41,7 +41,7 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
         ),
     })
     // Request pre validation hook
-    .onBeforeHandle(({ headers, error }) => {
+    .onBeforeHandle(({ headers }) => {
         if (!headers["x-wc-webhook-signature"]) {
             return error(400, "Missing signature");
         }
@@ -58,7 +58,6 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
             params: { productId },
             body,
             headers,
-            error,
             // Context
             oracleDb,
             upsertPurchase,

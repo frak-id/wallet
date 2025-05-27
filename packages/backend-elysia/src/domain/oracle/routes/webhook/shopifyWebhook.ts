@@ -2,7 +2,7 @@ import { log } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
 import type {
@@ -35,7 +35,7 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
         ),
     })
     // Request pre validation hook
-    .onBeforeHandle(({ headers, error }) => {
+    .onBeforeHandle(({ headers }) => {
         // If it's a test and not running in prod, early exit
         if (headers["x-shopify-test"] && isRunningInProd) {
             return error(400, "Shopify test aren't accepted in production");
@@ -60,7 +60,6 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             params: { productId },
             body,
             headers,
-            error,
             oracleDb,
             upsertPurchase,
         }) => {

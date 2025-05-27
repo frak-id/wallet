@@ -8,7 +8,7 @@ export const pendingBalanceRoutes = new Elysia({ prefix: "/pending-balance" })
     .use(walletContext)
     .get(
         "",
-        async ({ pendingBalanceRepository, walletSession, error }) => {
+        async ({ pendingBalanceRepository, walletSession }) => {
             if (!walletSession) return error(401, "Unauthorized");
 
             return pendingBalanceRepository.getPendingBalance({

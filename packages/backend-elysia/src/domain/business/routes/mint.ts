@@ -2,7 +2,7 @@ import { blockchainContext, log, nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { toHex } from "viem";
 import { DnsCheckRepository } from "../repositories/DnsCheckRepository";
 import { MintRepository } from "../repositories/MintRepository";
@@ -82,7 +82,6 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
         async ({
             businessSession,
             body: { name, domain, productTypes, setupCode },
-            error,
             mintRepository,
             dnsCheckRepository,
         }) => {

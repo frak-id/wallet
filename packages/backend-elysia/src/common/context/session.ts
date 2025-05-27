@@ -1,6 +1,6 @@
 import { jwt, t } from "@backend-utils";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import {
     WalletSdkTokenDto,
     WalletTokenDto,
@@ -75,7 +75,6 @@ export const sessionContext = new Elysia({
                 return {
                     beforeHandle: async ({
                         cookie: { businessAuth },
-                        error,
                         businessJwt,
                     }) => {
                         if (!businessAuth?.value) {
@@ -107,7 +106,6 @@ export const sessionContext = new Elysia({
                 return {
                     beforeHandle: async ({
                         headers: { "x-wallet-sdk-auth": walletSdkAuth },
-                        error,
                         walletSdkJwt,
                     }) => {
                         if (!walletSdkAuth) {
@@ -131,7 +129,6 @@ export const sessionContext = new Elysia({
             return {
                 beforeHandle: async ({
                     headers: { "x-wallet-auth": walletAuth },
-                    error,
                     walletJwt,
                 }) => {
                     if (!walletAuth) {

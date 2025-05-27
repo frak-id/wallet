@@ -5,7 +5,7 @@ import {
     type RegistrationResponseJSON,
     verifyRegistrationResponse,
 } from "@simplewebauthn/server";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { Binary } from "mongodb";
 import { verifyMessage } from "viem/actions";
 import { sixDegreesContext } from "../../../domain/6degrees/context";
@@ -36,11 +36,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     // Decode token
     .get(
         "/session",
-        async ({
-            headers: { "x-wallet-auth": walletAuth },
-            walletJwt,
-            error,
-        }) => {
+        async ({ headers: { "x-wallet-auth": walletAuth }, walletJwt }) => {
             if (!walletAuth) {
                 return error(404, "No wallet session found");
             }
@@ -67,8 +63,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
         async ({
             // Request
             body: { expectedChallenge, signature, wallet, ssoId, demoPkey },
-            // Response
-            error,
             // Context
             client,
             walletJwt,
@@ -161,8 +155,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 expectedChallenge,
                 ssoId,
             },
-            // Response
-            error,
             // Context
             walletJwt,
             generateSdkJwt,
@@ -271,8 +263,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 ssoId,
                 isSixDegrees,
             },
-            // Response
-            error,
             // Context
             generateSdkJwt,
             walletJwt,

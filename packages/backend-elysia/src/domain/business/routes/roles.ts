@@ -1,7 +1,7 @@
 import { blockchainContext, nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { toHex } from "viem";
 
 export const rolesRoutes = new Elysia({ prefix: "/roles" })
@@ -11,7 +11,6 @@ export const rolesRoutes = new Elysia({ prefix: "/roles" })
         "/",
         async ({
             query: { wallet: initialWallet, productId },
-            error,
             businessSession,
             rolesRepository,
         }) => {

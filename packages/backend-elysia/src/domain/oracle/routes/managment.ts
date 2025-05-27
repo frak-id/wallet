@@ -2,14 +2,14 @@ import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { oracleContext } from "../context";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 
 export const managmentRoutes = new Elysia()
     .use(oracleContext)
     .use(nextSessionContext)
-    .resolve(({ params: { productId }, error }) => {
+    .resolve(({ params: { productId } }) => {
         if (!productId) {
             return error(400, "Invalid product id");
         }
@@ -91,7 +91,6 @@ export const managmentRoutes = new Elysia()
             body,
             oracleDb,
             productId,
-            error,
             businessSession,
             rolesRepository,
         }) => {
@@ -145,13 +144,7 @@ export const managmentRoutes = new Elysia()
     )
     .post(
         ":productId/delete",
-        async ({
-            productId,
-            oracleDb,
-            error,
-            businessSession,
-            rolesRepository,
-        }) => {
+        async ({ productId, oracleDb, businessSession, rolesRepository }) => {
             if (!businessSession) {
                 return error(401, "Unauthorized");
             }
