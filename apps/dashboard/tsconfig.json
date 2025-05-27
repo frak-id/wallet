@@ -17,15 +17,15 @@
     "types": ["bun-types"],
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["../shared/*"],
-      "@backend-utils": ["../backend-elysia/src/utils/index.ts"],
-      "@backend-common": ["../backend-elysia/src/common/index.ts"],
-      "@backend-common/*": ["../backend-elysia/src/common/*"]
+      "@shared/*": ["../../packages/shared/*"],
+      "@backend-utils": ["../../packages/backend-elysia/src/utils/index.ts"],
+      "@backend-common": ["../../packages/backend-elysia/src/common/index.ts"],
+      "@backend-common/*": ["../../packages/backend-elysia/src/common/*"]
     },
     "verbatimModuleSyntax": true
   },
   "include": [
-    "./next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../shared/types/*.d.ts"
+    "./next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../../packages/shared/types/*.d.ts"
   ],
   "exclude": ["node_modules"]
 }

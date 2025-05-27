@@ -19,7 +19,7 @@ const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
  * Business dashboard
  */
 export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
-    path: "packages/dashboard",
+    path: "apps/dashboard",
     // Set the custom domain
     domain: {
         name: `${subdomain}.frak.id`,
@@ -51,7 +51,7 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
  * Admin business website
  */
 new sst.aws.StaticSite("Admin", {
-    path: "packages/dashboard-admin",
+    path: "apps/dashboard-admin",
     // Set the custom domain
     domain: {
         name: `${isProd ? "admin-stats" : "admin-stats-dev"}.frak.id`,

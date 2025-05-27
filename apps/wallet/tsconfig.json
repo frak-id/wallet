@@ -28,9 +28,9 @@
     "paths": {
       "@/*": ["./app/*"],
       "@shared/*": ["../../packages/shared/*"],
-      "@backend-utils": ["../backend-elysia/src/utils/index.ts"],
-      "@backend-common": ["../backend-elysia/src/common/index.ts"],
-      "@backend-common/*": ["../backend-elysia/src/common/*"]
+      "@backend-utils": ["../../packages/backend-elysia/src/utils/index.ts"],
+      "@backend-common": ["../../packages/backend-elysia/src/common/index.ts"],
+      "@backend-common/*": ["../../packages/backend-elysia/src/common/*"]
     },
     "noEmit": true
   }

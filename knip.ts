@@ -18,11 +18,11 @@ const config: KnipConfig = {
         "packages/shared": {
             entry: "**/*.{ts,tsx}",
         },
-        "packages/wallet": {
+        "apps/wallet": {
             entry: ["app/*.{ts,tsx}", "app/views/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}"],
         },
-        "packages/dashboard-admin": {
+        "apps/dashboard-admin": {
             entry: ["app/root.tsx", "app.routes.ts", "app/routes/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}"],
         },

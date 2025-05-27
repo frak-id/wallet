@@ -49,6 +49,7 @@
   "type": "module",
   "workspaces": {
     "packages": [
+      "apps/*",
       "packages/*",
       "sdk/*",
       "example/*"

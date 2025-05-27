@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 import type { ConfigEnv, UserConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { manualChunks, onwarn } from "../shared/tooling/vite";
+import { manualChunks, onwarn } from "../../packages/shared/tooling/vite";
 
 const DEBUG = JSON.stringify(false);
 

@@ -16,10 +16,10 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"],
-      "@shared/*": ["../shared/*"],
-      "@backend-utils": ["../backend-elysia/src/utils/index.ts"],
-      "@backend-common": ["../backend-elysia/src/common/index.ts"],
-      "@backend-common/*": ["../backend-elysia/src/common/*"]
+      "@shared/*": ["../../packages/shared/*"],
+      "@backend-utils": ["../../packages/backend-elysia/src/utils/index.ts"],
+      "@backend-common": ["../../packages/backend-elysia/src/common/index.ts"],
+      "@backend-common/*": ["../../packages/backend-elysia/src/common/*"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,

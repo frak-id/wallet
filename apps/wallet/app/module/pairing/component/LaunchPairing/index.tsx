@@ -24,6 +24,10 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
 
     const pairingInfo = clientState.pairing;
 
+    console.log(
+        `${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo?.id}&code=${pairingInfo?.code}`
+    );
+
     return (
         <div className={styles.launchPairing}>
             {pairingInfo ? (
