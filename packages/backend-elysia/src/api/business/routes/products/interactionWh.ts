@@ -8,8 +8,8 @@ import {
 } from "../../../../domain/interactions";
 import { businessSessionContext } from "../../middleware/session";
 
-export const interactionsManagementRoutes = new Elysia({
-    prefix: "/interactions/wh",
+export const interactionsWhRoutes = new Elysia({
+    prefix: "/interactionsWebhook",
 })
     .use(businessSessionContext)
     .use(interactionsContext)
@@ -27,7 +27,7 @@ export const interactionsManagementRoutes = new Elysia({
     })
     // Status of a backend tracker
     .get(
-        ":productId/status",
+        "/status",
         async ({ productId, interactionsDb }) => {
             // Get the current tracker
             const currentTrackers = await interactionsDb
@@ -62,7 +62,7 @@ export const interactionsManagementRoutes = new Elysia({
     )
     // Setup of a tracker for a product
     .post(
-        ":productId/setup",
+        "/setup",
         async ({
             body,
             interactionsDb,
@@ -113,7 +113,7 @@ export const interactionsManagementRoutes = new Elysia({
         }
     )
     .post(
-        ":productId/delete",
+        "/delete",
         async ({
             productId,
             interactionsDb,

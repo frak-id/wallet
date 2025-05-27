@@ -22,7 +22,7 @@ export function useDnsTxtRecordToSet({
             if (signal.aborted) return "";
 
             // Fetch the dns txt string
-            const { data } = await businessApi.mint.dnsTxt.get({
+            const { data } = await businessApi.product.mint.dnsTxt.get({
                 query: { domain },
             });
             return data ?? "";
@@ -43,7 +43,7 @@ export function useCheckDomainName() {
             domain,
             setupCode,
         }: { domain: string; setupCode?: string }) => {
-            const { data, error } = await businessApi.mint.verify.get({
+            const { data, error } = await businessApi.product.mint.verify.get({
                 query: { domain, setupCode },
             });
             if (error) throw error;
@@ -65,7 +65,7 @@ export function useListenToDomainNameSetup({
     return useQuery({
         queryKey: ["mint", "listen-to-domain-name-setup", domain, setupCode],
         queryFn: async () => {
-            const { data, error } = await businessApi.mint.verify.get({
+            const { data, error } = await businessApi.product.mint.verify.get({
                 query: { domain, setupCode },
             });
             if (error) {

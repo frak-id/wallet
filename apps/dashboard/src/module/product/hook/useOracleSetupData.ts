@@ -28,8 +28,8 @@ export function useOracleSetupData({ productId }: { productId: Hex }) {
 
             // Get the current backend setup status
             const { data: webhookStatus } = await businessApi
-                .oracle({ productId })
-                .status.get();
+                .product({ productId })
+                .oracleWebhook.status.get();
 
             // Check if the updater is allowed on this product
             const isOracleUpdaterAllowed = await readContract(viemClient, {

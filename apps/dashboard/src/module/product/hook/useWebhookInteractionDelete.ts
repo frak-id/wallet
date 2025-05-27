@@ -11,9 +11,9 @@ export function useWebhookInteractionDelete({ productId }: { productId: Hex }) {
     return useMutation({
         mutationKey: ["product", "webhook-interaction", "delete", productId],
         mutationFn: async ({ productId }: { productId: Hex }) => {
-            const { data, error } = await businessApi.interactions
-                .wh({ productId })
-                .delete.post();
+            const { data, error } = await businessApi
+                .product({ productId })
+                .interactionsWebhook.delete.post();
             if (error) throw error;
             return data;
         },

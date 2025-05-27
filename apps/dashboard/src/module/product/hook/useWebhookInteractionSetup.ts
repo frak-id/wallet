@@ -1,5 +1,5 @@
 import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
-import { backendApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/shared/context/server";
 import { useMutation } from "@tanstack/react-query";
 import type { Hex } from "viem";
 
@@ -14,9 +14,12 @@ export function useWebhookInteractionSetup({ productId }: { productId: Hex }) {
             productId,
             hookSignatureKey,
         }: { productId: Hex; hookSignatureKey: string }) => {
-            const { data, error } = await backendApi.interactions
-                .webhook({ productId })
-                .setup.post({ source: "custom", hookSignatureKey });
+            const { data, error } = await businessApi
+                .product({ productId })
+                .interactionsWebhook.setup.post({
+                    source: "custom",
+                    hookSignatureKey,
+                });
             if (error) throw error;
             return data;
         },

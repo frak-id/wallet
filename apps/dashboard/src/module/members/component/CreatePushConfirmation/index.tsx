@@ -7,7 +7,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { FormLayout } from "@/module/forms/Form";
 import { currentPushCreationForm } from "@/module/members/atoms/pushCreationForm";
 import { PushRecap } from "@/module/members/component/CreatePushConfirmation/PushRecap";
-import { backendApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/shared/context/server";
 import { Button } from "@shared/module/component/Button";
 import { Spinner } from "@shared/module/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
@@ -67,7 +67,7 @@ function ConfirmationContent() {
 
             const { payload, target } = currentPushCreation;
 
-            await backendApi.notifications.send.post({
+            await businessApi.notifications.send.post({
                 targets: target,
                 payload: {
                     ...payload,

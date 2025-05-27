@@ -11,7 +11,7 @@ import {
 } from "../../../../domain/notifications";
 import { businessSessionContext } from "../../middleware/session";
 
-export const sendRoutes = new Elysia({ prefix: "/notifications" })
+export const sendRoutes = new Elysia()
     .use(notificationContext)
     .use(businessSessionContext)
     .use(indexerApiContext)

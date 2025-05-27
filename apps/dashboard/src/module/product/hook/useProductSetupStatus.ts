@@ -131,8 +131,8 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
 
             // Get the current backend setup status
             const { data: webhookStatus } = await businessApi
-                .oracle({ productId })
-                .status.get();
+                .product({ productId })
+                .oracleWebhook.status.get();
             const hasWebhook = !!webhookStatus?.setup;
             steps.push({
                 isGood: hasWebhook,

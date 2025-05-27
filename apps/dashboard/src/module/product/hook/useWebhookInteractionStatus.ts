@@ -1,4 +1,4 @@
-import { backendApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/shared/context/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 
@@ -9,9 +9,9 @@ export function useWebhookInteractionStatus({ productId }: { productId: Hex }) {
     return useQuery({
         queryKey: ["product", "webhook-interaction", "status", productId],
         queryFn: async () => {
-            const { data: webhookStatus } = await backendApi.interactions
-                .webhook({ productId })
-                .status.get();
+            const { data: webhookStatus } = await businessApi
+                .product({ productId })
+                .interactionsWebhook.status.get();
 
             return webhookStatus;
         },

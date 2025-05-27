@@ -2,7 +2,7 @@ import { Badge } from "@/module/common/component/Badge";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { Form, FormLabel } from "@/module/forms/Form";
-import { backendApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/shared/context/server";
 import { Button } from "@shared/module/component/Button";
 import { Column, Columns } from "@shared/module/component/Columns";
 import { Spinner } from "@shared/module/component/Spinner";
@@ -425,9 +425,10 @@ function useWebhookSetup({ productId }: { productId: Hex }) {
             webhookKey,
             platform,
         }: { webhookKey: string; platform: OraclePlatform }) => {
-            await backendApi
-                .oracle({ productId })
-                .setup.post({ hookSignatureKey: webhookKey, platform });
+            await businessApi.product({ productId }).oracleWebhook.setup.post({
+                hookSignatureKey: webhookKey,
+                platform,
+            });
         },
         onSettled: async () => {
             await refetch();

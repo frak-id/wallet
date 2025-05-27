@@ -9,9 +9,14 @@ import {
 } from "../../../../domain/oracle";
 import { businessSessionContext } from "../../middleware/session";
 
-export const oracleManagementRoutes = new Elysia({ prefix: "/oracle" })
+export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
     .use(oracleContext)
     .use(businessSessionContext)
+    .guard({
+        params: t.Object({
+            productId: t.Optional(t.Hex()),
+        }),
+    })
     .resolve(({ params: { productId } }) => {
         if (!productId) {
             return error(400, "Invalid product id");
@@ -21,7 +26,7 @@ export const oracleManagementRoutes = new Elysia({ prefix: "/oracle" })
     })
     // Status of the oracle around a product
     .get(
-        ":productId/status",
+        "/status",
         async ({ productId, oracleDb }) => {
             // Get the current oracle
             const currentOracles = await oracleDb
@@ -89,7 +94,7 @@ export const oracleManagementRoutes = new Elysia({ prefix: "/oracle" })
     )
     // Setup of an oracle for a product
     .post(
-        ":productId/setup",
+        "/setup",
         async ({
             body,
             oracleDb,
@@ -145,7 +150,7 @@ export const oracleManagementRoutes = new Elysia({ prefix: "/oracle" })
         }
     )
     .post(
-        ":productId/delete",
+        "/delete",
         async ({ productId, oracleDb, businessSession, rolesRepository }) => {
             if (!businessSession) {
                 return error(401, "Unauthorized");

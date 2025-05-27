@@ -4,8 +4,11 @@ import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";
 import { Elysia, error } from "elysia";
 import { toHex } from "viem";
-import { DnsCheckRepository, MintRepository } from "../../../domain/business";
-import { businessSessionContext } from "../middleware/session";
+import {
+    DnsCheckRepository,
+    MintRepository,
+} from "../../../../domain/business";
+import { businessSessionContext } from "../../middleware/session";
 
 export const mintRoutes = new Elysia({ prefix: "/mint" })
     .use(businessSessionContext)
