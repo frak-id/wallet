@@ -53,6 +53,7 @@ jobs:
           list-files: 'shell'
           filters: |
             deployRequired:
+              - 'apps/**'
               - 'packages/**'
               - 'example/**'
 
