@@ -3,7 +3,11 @@ import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { isAddress, isHex } from "viem";
 
-export const commonRoutes = new Elysia({ prefix: "/common" })
+/**
+ * Common utility routes used across the ecosystem
+ * These endpoints provide shared functionality for admin wallets, pricing, etc.
+ */
+export const commonRoutes = new Elysia({ name: "Routes.common" })
     .use(blockchainContext)
     .get(
         "/adminWallet",

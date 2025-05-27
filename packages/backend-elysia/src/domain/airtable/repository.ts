@@ -8,7 +8,7 @@ import {
 } from "./config";
 import { mapToAirtableFields } from "./utils";
 
-export class AirtableService {
+export class AirtableRepository {
     private airtable: Airtable;
     private slack?: WebClient;
 
