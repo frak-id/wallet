@@ -1,4 +1,4 @@
-import { blockchainContext, dbContext, eventsContext } from "@backend-common";
+import { postgresDb } from "@backend-common";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import {
@@ -19,58 +19,39 @@ import { WalletSessionRepository } from "./repositories/WalletSessionRepository"
 export const interactionsContext = new Elysia({
     name: "Context.interactions",
 })
-    .use(blockchainContext)
-    .use(dbContext)
-    .use(eventsContext)
-    .decorate(
-        ({
-            client,
-            postgresDb,
-            adminWalletsRepository,
-            interactionDiamondRepository,
-            ...decorators
-        }) => {
-            // Build our drizzle DB
-            const interactionsDb = drizzle({
-                client: postgresDb,
-                schema: {
-                    pendingInteractionsTable,
-                    interactionSimulationStatus,
-                    pushedInteractionsTable,
-                    interactionsPurchaseTrackerTable,
-                    backendTrackerTable,
-                },
-            });
+    .decorate((decorators) => {
+        // Build our drizzle DB
+        const interactionsDb = drizzle({
+            client: postgresDb,
+            schema: {
+                pendingInteractionsTable,
+                interactionSimulationStatus,
+                pushedInteractionsTable,
+                interactionsPurchaseTrackerTable,
+                backendTrackerTable,
+            },
+        });
 
-            // Build our db repositories
-            const pendingInteractionsRepository =
-                new PendingInteractionsRepository(interactionsDb);
+        // Build our db repositories
+        const pendingInteractionsRepository = new PendingInteractionsRepository(
+            interactionsDb
+        );
 
-            // Build our blockchain repositories
-            const interactionPackerRepository = new InteractionPackerRepository(
-                client,
-                interactionDiamondRepository
-            );
-            const walletSessionRepository = new WalletSessionRepository(client);
-            const interactionSignerRepository = new InteractionSignerRepository(
-                client,
-                adminWalletsRepository,
-                interactionDiamondRepository
-            );
+        // Build our blockchain repositories
+        const interactionPackerRepository = new InteractionPackerRepository();
+        const walletSessionRepository = new WalletSessionRepository();
+        const interactionSignerRepository = new InteractionSignerRepository();
 
-            return {
-                ...decorators,
-                client,
-                interactionsDb,
-                // Repos
-                pendingInteractionsRepository,
-                interactionDiamondRepository,
-                interactionPackerRepository,
-                walletSessionRepository,
-                interactionSignerRepository,
-            };
-        }
-    )
+        return {
+            ...decorators,
+            interactionsDb,
+            // Repos
+            pendingInteractionsRepository,
+            interactionPackerRepository,
+            walletSessionRepository,
+            interactionSignerRepository,
+        };
+    })
     .as("scoped");
 
 export type InteractionsContextApp = typeof interactionsContext;

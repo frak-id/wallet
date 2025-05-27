@@ -1,4 +1,3 @@
-import { indexerApiContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { interactionsContext } from "../context";
@@ -14,22 +13,15 @@ const emptyTokenAmount = {
 
 export const rewardsRoutes = new Elysia({ prefix: "/reward" })
     .use(interactionsContext)
-    .use(indexerApiContext)
     // Some repo and services to our context
-    .decorate(({ client, indexerApi, pricingRepository, ...decorators }) => {
-        const campaignDataRepository = new CampaignDataRepository(client);
+    .decorate(({ ...decorators }) => {
+        const campaignDataRepository = new CampaignDataRepository();
         const campaignRewardsService = new CampaignRewardsService(
-            client,
-            indexerApi,
-            pricingRepository,
             campaignDataRepository
         );
 
         return {
             ...decorators,
-            client,
-            indexerApi,
-            pricingRepository,
             campaignDataRepository,
             campaignRewardsService,
         };

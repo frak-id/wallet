@@ -1,15 +1,11 @@
-import type { PricingRepository } from "@backend-common/repositories";
+import { indexerApi, pricingRepository, viemClient } from "@backend-common";
 import type { TokenPrice } from "@backend-common/repositories/PricingRepository";
 import { type TokenAmount, referralCampaign_isActive } from "@backend-utils";
 import type { GetCampaignResponseDto } from "@frak-labs/app-essentials";
-import type { KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
 import {
     type Address,
-    type Chain,
-    type Client,
     type Hex,
-    type Transport,
     concatHex,
     formatUnits,
     keccak256,
@@ -51,9 +47,6 @@ export class CampaignRewardsService {
     });
 
     constructor(
-        private readonly client: Client<Transport, Chain>,
-        private readonly indexerApi: KyInstance,
-        private readonly pricingRepository: PricingRepository,
         private readonly campaignDataRepository: CampaignDataRepository
     ) {}
 
@@ -94,7 +87,7 @@ export class CampaignRewardsService {
             if (!token) continue;
 
             // Get the current token price
-            const price = await this.pricingRepository.getTokenPrice({
+            const price = await pricingRepository.getTokenPrice({
                 token: token.address,
             });
             if (!price) continue;
@@ -199,7 +192,7 @@ export class CampaignRewardsService {
         if (cached) {
             return cached;
         }
-        const result = await this.indexerApi
+        const result = await indexerApi
             .get(`campaign?productId=${productId}`)
             .json<GetCampaignResponseDto>();
         this.campaignsPerProductCache.set(productId, result);
@@ -222,7 +215,7 @@ export class CampaignRewardsService {
         const isActives =
             cached?.length === campaigns.length
                 ? cached
-                : await multicall(this.client, {
+                : await multicall(viemClient, {
                       contracts: campaigns.map(
                           (campaign) =>
                               ({

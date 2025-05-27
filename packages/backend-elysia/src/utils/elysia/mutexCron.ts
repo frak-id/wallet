@@ -1,4 +1,4 @@
-import { eventsContext, log } from "@backend-common";
+import { eventEmitter, log } from "@backend-common";
 import type { pino } from "@bogeychan/elysia-logger";
 import { Mutex } from "async-mutex";
 import { Cron, type CronOptions } from "croner";
@@ -73,85 +73,78 @@ export const mutexCron = <Name extends string = string>({
     new Elysia({
         name: "@frak-labs/mutex-cron",
         seed: { name },
-    })
-        .use(eventsContext)
-        .decorate((decorators) => {
-            if (!pattern) throw new Error("pattern is required");
-            if (!name) throw new Error("name is required");
+    }).decorate((decorators) => {
+        if (!pattern) throw new Error("pattern is required");
+        if (!name) throw new Error("name is required");
 
-            // Get our previous stuff
-            const prevCron =
-                (decorators as { cron?: Record<Name, Cron> })?.cron ?? {};
-            const prevMutex =
-                (decorators as { mutex?: Record<Name, Cron> })?.mutex ?? {};
+        // Get our previous stuff
+        const prevCron =
+            (decorators as { cron?: Record<Name, Cron> })?.cron ?? {};
+        const prevMutex =
+            (decorators as { mutex?: Record<Name, Cron> })?.mutex ?? {};
 
-            // The mutex we will use
-            const mutex = new Mutex();
+        // The mutex we will use
+        const mutex = new Mutex();
 
-            // And our logger
-            const logger = log.child({ cron: name });
+        // And our logger
+        const logger = log.child({ cron: name });
 
-            // Add the current app decorators to the cron context
-            const finalOptions: CronOptions = {
-                ...options,
-                context: {
-                    decorators,
-                    logger,
-                },
-                catch: (error) =>
-                    logger.warn(
-                        { error },
-                        "[Cron] error while processing cron"
-                    ),
-            };
+        // Add the current app decorators to the cron context
+        const finalOptions: CronOptions = {
+            ...options,
+            context: {
+                decorators,
+                logger,
+            },
+            catch: (error) =>
+                logger.warn({ error }, "[Cron] error while processing cron"),
+        };
 
-            // And the cron
-            const cron = new Cron(
-                pattern,
-                finalOptions,
-                async (args: { options: CronContext }) => {
-                    if (skipIfLocked && mutex.isLocked()) {
+        // And the cron
+        const cron = new Cron(
+            pattern,
+            finalOptions,
+            async (args: { options: CronContext }) => {
+                if (skipIfLocked && mutex.isLocked()) {
+                    logger.debug(`[Cron] Skipping cron because it's locked`);
+                    return;
+                }
+                // Run exclusively the cron
+                await mutex.runExclusive(async () => {
+                    // Perform the run
+                    await run(args.options);
+                    // If we got an interval, waiting for it before releasing the mutex
+                    if (coolDownInMs) {
                         logger.debug(
-                            `[Cron] Skipping cron because it's locked`
+                            `[Cron] Waiting ${coolDownInMs}ms before releasing the mutex`
                         );
-                        return;
+                        await Bun.sleep(coolDownInMs);
                     }
-                    // Run exclusively the cron
-                    await mutex.runExclusive(async () => {
-                        // Perform the run
-                        await run(args.options);
-                        // If we got an interval, waiting for it before releasing the mutex
-                        if (coolDownInMs) {
-                            logger.debug(
-                                `[Cron] Waiting ${coolDownInMs}ms before releasing the mutex`
-                            );
-                            await Bun.sleep(coolDownInMs);
-                        }
-                    });
-                }
-            );
-
-            // If got a trigger key, listen to it
-            if (triggerKeys) {
-                for (const key of triggerKeys) {
-                    decorators.emitter.on(key, () => {
-                        logger.debug(`[Cron] Event trigger: ${key}`);
-                        cron.trigger().then(() => {
-                            logger.debug(`[Cron] Event trigger end: ${key}`);
-                        });
-                    });
-                }
+                });
             }
+        );
 
-            return {
-                ...decorators,
-                cron: {
-                    ...prevCron,
-                    [name]: cron,
-                } as Record<Name, Cron>,
-                mutex: {
-                    ...prevMutex,
-                    [name]: mutex,
-                } as Record<Name, Mutex>,
-            };
-        });
+        // If got a trigger key, listen to it
+        if (triggerKeys) {
+            for (const key of triggerKeys) {
+                eventEmitter.on(key, () => {
+                    logger.debug(`[Cron] Event trigger: ${key}`);
+                    cron.trigger().then(() => {
+                        logger.debug(`[Cron] Event trigger end: ${key}`);
+                    });
+                });
+            }
+        }
+
+        return {
+            ...decorators,
+            cron: {
+                ...prevCron,
+                [name]: cron,
+            } as Record<Name, Cron>,
+            mutex: {
+                ...prevMutex,
+                [name]: mutex,
+            } as Record<Name, Mutex>,
+        };
+    });

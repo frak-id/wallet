@@ -1,4 +1,4 @@
-import { eventsContext } from "@backend-common";
+import { eventEmitter } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { PurchaseInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
@@ -12,7 +12,6 @@ import {
 
 const outerPurchaseTracker = new Elysia({ name: "Job.OuterPurchaseTracker" })
     .use(interactionsContext)
-    .use(eventsContext)
     .use(PurchaseProofService);
 
 type OuterPurchaseTrackerApp = typeof outerPurchaseTracker;
@@ -26,8 +25,7 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
             skipIfLocked: true,
             coolDownInMs: 3_000,
             run: async ({ context: { logger } }) => {
-                const { interactionsDb, getPurchaseProof, emitter } =
-                    app.decorator;
+                const { interactionsDb, getPurchaseProof } = app.decorator;
                 // Get all the currents tracker (max 50 at the time)
                 const trackers = await interactionsDb
                     .select()
@@ -82,7 +80,7 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
                         );
 
                     // Emit the event to launch potential simulation
-                    emitter.emit("newInteractions");
+                    eventEmitter.emit("newInteractions");
                 }
             },
         })

@@ -1,4 +1,4 @@
-import type { GetMongoDb } from "@backend-common";
+import { getMongoDb } from "@backend-common";
 import type { Collection } from "mongodb";
 import type { Address } from "viem";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
@@ -9,8 +9,6 @@ import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument"
 export class AuthenticatorRepository {
     private collection: Collection<AuthenticatorDocument> | undefined;
 
-    constructor(private readonly getDb: GetMongoDb) {}
-
     /**
      * Get the collection
      */
@@ -19,7 +17,7 @@ export class AuthenticatorRepository {
             return this.collection;
         }
 
-        const db = await this.getDb({
+        const db = await getMongoDb({
             urlKey: "MONGODB_NEXUS_URI",
             db: "nexus",
         });

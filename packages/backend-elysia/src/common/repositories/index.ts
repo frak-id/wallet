@@ -1,4 +1,10 @@
-export { AdminWalletsRepository } from "./AdminWalletsRepository";
-export { InteractionDiamondRepository } from "./InteractionDiamondRepository";
-export { PricingRepository } from "./PricingRepository";
-export { RolesRepository } from "./RolesRepository";
+export {
+    AdminWalletsRepository,
+    adminWalletsRepository,
+} from "./AdminWalletsRepository";
+export {
+    InteractionDiamondRepository,
+    interactionDiamondRepository,
+} from "./InteractionDiamondRepository";
+export { PricingRepository, pricingRepository } from "./PricingRepository";
+export { RolesRepository, rolesRepository } from "./RolesRepository";

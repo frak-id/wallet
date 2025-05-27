@@ -1,4 +1,8 @@
-import { walletSessionContext } from "@backend-common";
+import {
+    indexerApi,
+    pricingRepository,
+    walletSessionContext,
+} from "@backend-common";
 import { t } from "@backend-utils";
 import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
 import { Elysia, error } from "elysia";
@@ -10,7 +14,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .use(walletContext)
     .get(
         "",
-        async ({ pricingRepository, balancesRepository, walletSession }) => {
+        async ({ balancesRepository, walletSession }) => {
             if (!walletSession) return error(401, "Unauthorized");
 
             // Get all the user balances
@@ -92,7 +96,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
     )
     .get(
         "/claimable",
-        async ({ indexerApi, pricingRepository, walletSession }) => {
+        async ({ walletSession }) => {
             if (!walletSession) return error(401, "Unauthorized");
 
             // Fetch the pending rewards for this user

@@ -1,6 +1,9 @@
-import { log } from "@backend-common";
-import type { AdminWalletsRepository } from "@backend-common/repositories";
-import type { InteractionDiamondRepository } from "@backend-common/repositories/InteractionDiamondRepository";
+import {
+    adminWalletsRepository,
+    interactionDiamondRepository,
+    log,
+    viemClient,
+} from "@backend-common";
 import {
     interactionDelegator_execute,
     productInteractionDiamond_hasAllRoles,
@@ -13,11 +16,8 @@ import { LRUCache } from "lru-cache";
 import * as solady from "solady";
 import {
     type Address,
-    type Chain,
-    type Client,
     type Hex,
     type LocalAccount,
-    type Transport,
     encodeFunctionData,
     keccak256,
 } from "viem";
@@ -41,12 +41,6 @@ export class InteractionSignerRepository {
         ttl: 10 * 60 * 1000,
     });
 
-    constructor(
-        private readonly client: Client<Transport, Chain>,
-        private readonly adminWalletRepository: AdminWalletsRepository,
-        private readonly diamondRepository: InteractionDiamondRepository
-    ) {}
-
     /**
      * Sign an interaction
      */
@@ -61,7 +55,7 @@ export class InteractionSignerRepository {
     }): Promise<Hex | undefined> {
         // Get the diamond for id
         const interactionContract =
-            await this.diamondRepository.getDiamondContract(productId);
+            await interactionDiamondRepository.getDiamondContract(productId);
         if (!interactionContract) {
             log.warn(
                 { productId },
@@ -72,7 +66,7 @@ export class InteractionSignerRepository {
 
         // Get the signer
         const signerAccount =
-            await this.adminWalletRepository.getProductSpecificAccount({
+            await adminWalletsRepository.getProductSpecificAccount({
                 productId: BigInt(productId),
             });
         // Ensure he is allowed
@@ -100,7 +94,7 @@ export class InteractionSignerRepository {
             domain: {
                 name: "Frak.ProductInteraction",
                 version: "0.0.1",
-                chainId: this.client.chain.id,
+                chainId: viemClient.chain.id,
                 verifyingContract: interactionContract,
             },
             types: {
@@ -119,7 +113,7 @@ export class InteractionSignerRepository {
         } as const;
 
         // Sign the typed data
-        return await signTypedData(this.client, {
+        return await signTypedData(viemClient, {
             account: signerAccount,
             ...typedData,
         });
@@ -143,7 +137,7 @@ export class InteractionSignerRepository {
             return cached;
         }
 
-        const isAllowed = await readContract(this.client, {
+        const isAllowed = await readContract(viemClient, {
             abi: [productInteractionDiamond_hasAllRoles],
             address: interactionContract,
             functionName: "hasAllRoles",
@@ -162,7 +156,7 @@ export class InteractionSignerRepository {
     ) {
         // The executor that will submit the interactions
         const executorAccount =
-            await this.adminWalletRepository.getKeySpecificAccount({
+            await adminWalletsRepository.getKeySpecificAccount({
                 key: "interaction-executor",
             });
 
@@ -207,7 +201,7 @@ export class InteractionSignerRepository {
             );
 
             // And send it
-            return await sendTransaction(this.client, {
+            return await sendTransaction(viemClient, {
                 account: executorAccount,
                 to: addresses.interactionDelegator,
                 data,
@@ -236,12 +230,12 @@ export class InteractionSignerRepository {
     }: { compressedData: Hex; initialData: Hex; account: LocalAccount }) {
         // Perform both simulation
         const [compressedGas, initialGas] = await Promise.all([
-            estimateGas(this.client, {
+            estimateGas(viemClient, {
                 account,
                 to: addresses.interactionDelegator,
                 data: compressedData,
             }),
-            estimateGas(this.client, {
+            estimateGas(viemClient, {
                 account,
                 to: addresses.interactionDelegator,
                 data: initialData,

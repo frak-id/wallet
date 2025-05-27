@@ -1,14 +1,7 @@
+import { indexerApi, viemClient } from "@backend-common";
 import type { GetAllTokenResponseDto } from "@frak-labs/app-essentials";
-import type { KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
-import {
-    type Address,
-    type Chain,
-    type Client,
-    type Transport,
-    erc20Abi,
-    formatUnits,
-} from "viem";
+import { type Address, erc20Abi, formatUnits } from "viem";
 import { multicall } from "viem/actions";
 
 type TokenMetadata = {
@@ -23,11 +16,6 @@ export class BalancesRepository {
         max: 128,
     });
     private knownTokens: GetAllTokenResponseDto = [];
-
-    constructor(
-        private readonly client: Client<Transport, Chain>,
-        private readonly indexerApi: KyInstance
-    ) {}
 
     /**
      * Get the user balance
@@ -70,7 +58,7 @@ export class BalancesRepository {
         const knownTokens = await this.getKnownTokens();
 
         // Fetch every balance in a single multicall
-        const balanceResults = await multicall(this.client, {
+        const balanceResults = await multicall(viemClient, {
             contracts: knownTokens.map(
                 ({ address: contractAddress }) =>
                     ({
@@ -109,7 +97,7 @@ export class BalancesRepository {
         }
 
         // Fetch all the known tokens
-        const response = await this.indexerApi
+        const response = await indexerApi
             .get("tokens")
             .json<GetAllTokenResponseDto>();
         this.knownTokens = response;
@@ -128,7 +116,7 @@ export class BalancesRepository {
         }
 
         // Fetch the metadata
-        const rawMetadata = await multicall(this.client, {
+        const rawMetadata = await multicall(viemClient, {
             contracts: [
                 {
                     abi: erc20Abi,

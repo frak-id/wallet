@@ -1,11 +1,7 @@
+import { viemClient } from "@backend-common";
 import { addresses, getExecutionAbi } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
-import {
-    type Address,
-    type Client,
-    isAddressEqual,
-    toFunctionSelector,
-} from "viem";
+import { type Address, isAddressEqual, toFunctionSelector } from "viem";
 import { readContract } from "viem/actions";
 
 const sendInteractionSelector = toFunctionSelector({
@@ -42,8 +38,6 @@ export class WalletSessionRepository {
         ttl: 15 * 60 * 1000,
     });
 
-    constructor(private readonly client: Client) {}
-
     /**
      * Check if the user session is valid
      */
@@ -61,7 +55,7 @@ export class WalletSessionRepository {
             validator: Address;
         };
         try {
-            sessionStatus = await readContract(this.client, {
+            sessionStatus = await readContract(viemClient, {
                 address: wallet,
                 abi: [getExecutionAbi],
                 functionName: "getExecution",

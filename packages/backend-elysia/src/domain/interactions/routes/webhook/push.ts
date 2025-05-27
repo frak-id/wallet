@@ -1,4 +1,8 @@
-import { log } from "@backend-common";
+import {
+    eventEmitter,
+    interactionDiamondRepository,
+    log,
+} from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { interactionTypes } from "@frak-labs/core-sdk";
 import {
@@ -33,30 +37,21 @@ export const webhookPushRoutes = new Elysia()
 
         return { productId, hmac: headers["x-hmac-sha256"] };
     })
-    .decorate(
-        ({
-            interactionsDb,
-            emitter,
-            interactionDiamondRepository,
-            ...other
-        }) => ({
-            interactionsDb,
-            emitter,
-            interactionDiamondRepository,
-            ...other,
+    .decorate(({ interactionsDb, ...other }) => ({
+        interactionsDb,
+        ...other,
 
-            saveInteractions: async (
-                interactions: (typeof pendingInteractionsTable.$inferInsert)[]
-            ) => {
-                await interactionsDb
-                    .insert(pendingInteractionsTable)
-                    .values(interactions)
-                    .onConflictDoNothing();
-                // Trigger the simulation job (and don't wait for it)
-                emitter.emit("newInteractions");
-            },
-        })
-    )
+        saveInteractions: async (
+            interactions: (typeof pendingInteractionsTable.$inferInsert)[]
+        ) => {
+            await interactionsDb
+                .insert(pendingInteractionsTable)
+                .values(interactions)
+                .onConflictDoNothing();
+            // Trigger the simulation job (and don't wait for it)
+            eventEmitter.emit("newInteractions");
+        },
+    }))
     // Direct push an interaction
     .post(
         ":productId/push",
@@ -68,7 +63,6 @@ export const webhookPushRoutes = new Elysia()
             // Context
             saveInteractions,
             interactionsDb,
-            interactionDiamondRepository,
         }) => {
             // Validate the body received
             const body = JSON.parse(rawBody);
@@ -134,7 +128,6 @@ export const webhookPushRoutes = new Elysia()
             // Context
             saveInteractions,
             interactionsDb,
-            interactionDiamondRepository,
         }) => {
             // Validate the body received
             const body = JSON.parse(rawBody);

@@ -1,16 +1,9 @@
-import { log } from "@backend-common";
-import type { InteractionDiamondRepository } from "@backend-common/repositories";
+import { interactionDiamondRepository, log, viemClient } from "@backend-common";
 import {
     productInteractionDiamond_delegateToFacet,
     productInteractionDiamond_handleInteraction,
 } from "@backend-utils";
-import {
-    type Address,
-    type Client,
-    type Hex,
-    encodeFunctionData,
-    encodePacked,
-} from "viem";
+import { type Address, type Hex, encodeFunctionData, encodePacked } from "viem";
 import { simulateContract } from "viem/actions";
 import type { InteractionData } from "../types/interactions";
 
@@ -20,11 +13,6 @@ import type { InteractionData } from "../types/interactions";
  *  - Used to simulate transaction
  */
 export class InteractionPackerRepository {
-    constructor(
-        private readonly client: Client,
-        private readonly diamondRepository: InteractionDiamondRepository
-    ) {}
-
     /**
      * Simulate an interaction
      * @param wallet
@@ -41,7 +29,7 @@ export class InteractionPackerRepository {
         interactionData: InteractionData;
     }) {
         const diamondContract =
-            await this.diamondRepository.getDiamondContract(productId);
+            await interactionDiamondRepository.getDiamondContract(productId);
         if (!diamondContract) {
             log.info(
                 { productId },
@@ -53,7 +41,7 @@ export class InteractionPackerRepository {
         }
 
         try {
-            await simulateContract(this.client, {
+            await simulateContract(viemClient, {
                 account: wallet,
                 address: diamondContract,
                 abi: [productInteractionDiamond_delegateToFacet],

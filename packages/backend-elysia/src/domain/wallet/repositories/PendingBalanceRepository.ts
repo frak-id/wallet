@@ -1,11 +1,10 @@
-import { log } from "@backend-common";
+import { indexerApi, log, viemClient } from "@backend-common";
 import type { TokenAmount } from "@backend-utils";
 import type {
     GetInteractionsResponseDto,
     GetRewardHistoryResponseDto,
 } from "@frak-labs/app-essentials";
-import type { KyInstance } from "ky";
-import type { Address, Chain, Client, Transport } from "viem";
+import type { Address } from "viem";
 import { getCode } from "viem/actions";
 
 /**
@@ -14,11 +13,6 @@ import { getCode } from "viem/actions";
  * based on user actions, with caching to prevent excessive RPC calls
  */
 export class PendingBalanceRepository {
-    constructor(
-        private readonly client: Client<Transport, Chain>,
-        private readonly indexerApi: KyInstance
-    ) {}
-
     async getPendingBalance({
         address,
     }: { address: Address }): Promise<TokenAmount> {
@@ -88,7 +82,7 @@ export class PendingBalanceRepository {
     private async isWalletActivated(address: Address): Promise<boolean> {
         try {
             // Get the code at the wallet address
-            const code = await getCode(this.client, { address });
+            const code = await getCode(viemClient, { address });
 
             // If there's code (not '0x' which means no code), the wallet is activated
             return code !== undefined && code !== "0x";
@@ -110,7 +104,7 @@ export class PendingBalanceRepository {
     private async hasSharedReferral(address: Address): Promise<boolean> {
         try {
             // Get all interactions for this address
-            const interactions = await this.indexerApi
+            const interactions = await indexerApi
                 .get(`interactions/${address}`)
                 .json<GetInteractionsResponseDto>();
 
@@ -138,7 +132,7 @@ export class PendingBalanceRepository {
     private async hasEarnedReward(address: Address): Promise<boolean> {
         try {
             // Get the reward history for the user
-            const rewards = await this.indexerApi
+            const rewards = await indexerApi
                 .get(`rewards/${address}/history`)
                 .json<GetRewardHistoryResponseDto>();
 

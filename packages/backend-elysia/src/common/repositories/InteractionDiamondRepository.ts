@@ -1,8 +1,8 @@
-import { log } from "@backend-common";
+import { log, viemClient } from "@backend-common";
 import { interactionManager_getInteractionContract } from "@backend-utils";
 import { addresses } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
-import type { Address, Client, Hex } from "viem";
+import type { Address, Hex } from "viem";
 import { readContract } from "viem/actions";
 
 /**
@@ -17,8 +17,6 @@ export class InteractionDiamondRepository {
         ttl: 10 * 60 * 1000,
     });
 
-    constructor(private readonly client: Client) {}
-
     /**
      * Get the diamond address for a given product
      * @param productId
@@ -30,7 +28,7 @@ export class InteractionDiamondRepository {
         }
 
         try {
-            const address = await readContract(this.client, {
+            const address = await readContract(viemClient, {
                 address: addresses.productInteractionManager,
                 abi: [interactionManager_getInteractionContract],
                 functionName: "getInteractionContract",
@@ -51,3 +49,5 @@ export class InteractionDiamondRepository {
         return undefined;
     }
 }
+
+export const interactionDiamondRepository = new InteractionDiamondRepository();

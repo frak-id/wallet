@@ -1,5 +1,4 @@
-import { log } from "@backend-common";
-import type { AdminWalletsRepository } from "@backend-common/repositories";
+import { adminWalletsRepository, log, viemClient } from "@backend-common";
 import {
     campaignBankFactory_deployCampaignBank,
     interactionManager_deployInteractionContract,
@@ -20,11 +19,8 @@ import { productTypesMask } from "@frak-labs/core-sdk";
 import type { Mutex } from "async-mutex";
 import {
     type Address,
-    type Chain,
-    type Client,
     type Hex,
     type LocalAccount,
-    type Transport,
     isAddressEqual,
     keccak256,
     parseEther,
@@ -43,11 +39,6 @@ import {
  * Repository used to mint a product
  */
 export class MintRepository {
-    constructor(
-        private readonly adminRepository: AdminWalletsRepository,
-        private readonly client: Client<Transport, Chain>
-    ) {}
-
     /**
      * Precompute the product id from a domain
      * @param domain
@@ -63,7 +54,7 @@ export class MintRepository {
      */
     async isExistingProduct(productId: bigint) {
         try {
-            const existingMetadata = await readContract(this.client, {
+            const existingMetadata = await readContract(viemClient, {
                 address: addresses.productRegistry,
                 abi: [productRegistry_getMetadata],
                 functionName: "getMetadata",
@@ -107,15 +98,17 @@ export class MintRepository {
         }
 
         // Get our minter account
-        const minter = await this.adminRepository.getKeySpecificAccount({
+        const minter = await adminWalletsRepository.getKeySpecificAccount({
             key: "minter",
         });
         // Prepare the mint tx and send it
-        const lock = this.adminRepository.getMutexForAccount({ key: "minter" });
+        const lock = adminWalletsRepository.getMutexForAccount({
+            key: "minter",
+        });
         const mintTxHash = await lock.runExclusive(async () => {
-            const nonce = await getTransactionCount(this.client, minter);
+            const nonce = await getTransactionCount(viemClient, minter);
             // Perform the mint transaction
-            const mintSimulation = await simulateContract(this.client, {
+            const mintSimulation = await simulateContract(viemClient, {
                 account: minter,
                 address: addresses.productRegistry,
                 abi: [productRegistry_mint],
@@ -131,11 +124,11 @@ export class MintRepository {
             if (mintSimulation.result !== precomputedProductId) {
                 throw new Error("Invalid product id");
             }
-            return await writeContract(this.client, mintSimulation.request);
+            return await writeContract(viemClient, mintSimulation.request);
         });
 
         // Wait for the mint to be done before proceeding to the transfer
-        await waitForTransactionReceipt(this.client, {
+        await waitForTransactionReceipt(viemClient, {
             hash: mintTxHash,
             confirmations: 4,
         });
@@ -186,16 +179,13 @@ export class MintRepository {
         try {
             const result = await lock.runExclusive(async () => {
                 // Prepare the deployment data
-                const { request, result } = await simulateContract(
-                    this.client,
-                    {
-                        account: minter,
-                        address: addresses.productInteractionManager,
-                        abi: [interactionManager_deployInteractionContract],
-                        functionName: "deployInteractionContract",
-                        args: [productId],
-                    }
-                );
+                const { request, result } = await simulateContract(viemClient, {
+                    account: minter,
+                    address: addresses.productInteractionManager,
+                    abi: [interactionManager_deployInteractionContract],
+                    functionName: "deployInteractionContract",
+                    args: [productId],
+                });
                 if (!result || isAddressEqual(result, zeroAddress)) {
                     log.warn(
                         { productId, result },
@@ -205,7 +195,7 @@ export class MintRepository {
                 }
 
                 // Trigger the deployment
-                const txHash = await writeContract(this.client, request);
+                const txHash = await writeContract(viemClient, request);
                 log.debug(
                     { productId, txHash },
                     "[MintRepository] Deployed interaction contract"
@@ -214,7 +204,7 @@ export class MintRepository {
             });
             if (!result) return;
             // Ensure it's included before proceeding
-            await waitForTransactionReceipt(this.client, {
+            await waitForTransactionReceipt(viemClient, {
                 hash: result.txHash,
                 confirmations: 1,
             });
@@ -242,20 +232,17 @@ export class MintRepository {
         try {
             return await lock.runExclusive(async () => {
                 // Get the current nonce
-                const nonce = await getTransactionCount(this.client, minter);
+                const nonce = await getTransactionCount(viemClient, minter);
 
                 // Prepare the deployment data
-                const { request, result } = await simulateContract(
-                    this.client,
-                    {
-                        account: minter,
-                        abi: [campaignBankFactory_deployCampaignBank],
-                        address: addresses.campaignBankFactory,
-                        functionName: "deployCampaignBank",
-                        args: [productId, addresses.mUSDToken],
-                        nonce,
-                    }
-                );
+                const { request, result } = await simulateContract(viemClient, {
+                    account: minter,
+                    abi: [campaignBankFactory_deployCampaignBank],
+                    address: addresses.campaignBankFactory,
+                    functionName: "deployCampaignBank",
+                    args: [productId, addresses.mUSDToken],
+                    nonce,
+                });
                 if (!result || isAddressEqual(result, zeroAddress)) {
                     log.warn(
                         { productId, result },
@@ -265,14 +252,14 @@ export class MintRepository {
                 }
 
                 // Trigger the deployment
-                const txHash = await writeContract(this.client, request);
+                const txHash = await writeContract(viemClient, request);
                 log.debug(
                     { productId, txHash },
                     "[MintRepository] Deployed mocked usd bank"
                 );
 
                 // Then mint a few test tokens to this bank
-                await writeContract(this.client, {
+                await writeContract(viemClient, {
                     account: minter,
                     address: addresses.mUSDToken,
                     abi: [mintAbi],
@@ -307,16 +294,13 @@ export class MintRepository {
         try {
             return await lock.runExclusive(async () => {
                 // Prepare the deployment data
-                const { request, result } = await simulateContract(
-                    this.client,
-                    {
-                        account: minter,
-                        abi: [campaignBankFactory_deployCampaignBank],
-                        address: addresses.campaignBankFactory,
-                        functionName: "deployCampaignBank",
-                        args: [productId, usdcArbitrumAddress],
-                    }
-                );
+                const { request, result } = await simulateContract(viemClient, {
+                    account: minter,
+                    abi: [campaignBankFactory_deployCampaignBank],
+                    address: addresses.campaignBankFactory,
+                    functionName: "deployCampaignBank",
+                    args: [productId, usdcArbitrumAddress],
+                });
                 if (!result || isAddressEqual(result, zeroAddress)) {
                     log.warn(
                         { productId, result },
@@ -326,7 +310,7 @@ export class MintRepository {
                 }
 
                 // Trigger the deployment
-                const txHash = await writeContract(this.client, request);
+                const txHash = await writeContract(viemClient, request);
                 log.debug(
                     { productId, txHash },
                     "[MintRepository] Deployed usdc bank"

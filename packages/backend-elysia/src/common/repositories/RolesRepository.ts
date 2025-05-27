@@ -1,3 +1,4 @@
+import { viemClient } from "@backend-common";
 import {
     addresses,
     productAdministratorRegistryAbi,
@@ -7,10 +8,7 @@ import {
 import { LRUCache } from "lru-cache";
 import {
     type Address,
-    type Chain,
-    type Client,
     type Hex,
-    type Transport,
     concatHex,
     isAddressEqual,
     keccak256,
@@ -40,8 +38,6 @@ export class RolesRepository {
         ttl: 60_000,
     });
 
-    constructor(private readonly client: Client<Transport, Chain>) {}
-
     /**
      * Get the roles of a given wallet on a product
      * @param wallet
@@ -58,7 +54,7 @@ export class RolesRepository {
         }
 
         // Fetch the roles of the user on the product
-        const [productOwner, walletRoles] = await multicall(this.client, {
+        const [productOwner, walletRoles] = await multicall(viemClient, {
             contracts: [
                 {
                     abi: productRegistryAbi,
@@ -126,3 +122,5 @@ export class RolesRepository {
         });
     }
 }
+
+export const rolesRepository = new RolesRepository();

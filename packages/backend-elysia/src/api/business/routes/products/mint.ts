@@ -1,4 +1,4 @@
-import { blockchainContext, log } from "@backend-common";
+import { log } from "@backend-common";
 import { t } from "@backend-utils";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";
@@ -12,12 +12,10 @@ import { businessSessionContext } from "../../middleware/session";
 
 export const mintRoutes = new Elysia({ prefix: "/mint" })
     .use(businessSessionContext)
-    .use(blockchainContext)
-    .decorate(({ adminWalletsRepository, client }) => ({
+    .decorate({
         dnsCheckRepository: new DnsCheckRepository(),
-        mintRepository: new MintRepository(adminWalletsRepository, client),
-        adminWalletsRepository,
-    }))
+        mintRepository: new MintRepository(),
+    })
     // Get the dns txt record to set for a domain
     .get(
         "/dnsTxt",

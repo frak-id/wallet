@@ -88,3 +88,5 @@ export class PricingRepository {
         return tokenPrice ?? undefined;
     }
 }
+
+export const pricingRepository = new PricingRepository();

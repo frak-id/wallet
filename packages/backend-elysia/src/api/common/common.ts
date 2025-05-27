@@ -1,4 +1,4 @@
-import { blockchainContext } from "@backend-common/context";
+import { adminWalletsRepository, pricingRepository } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { isAddress, isHex } from "viem";
@@ -8,10 +8,9 @@ import { isAddress, isHex } from "viem";
  * These endpoints provide shared functionality for admin wallets, pricing, etc.
  */
 export const commonRoutes = new Elysia({ name: "Routes.common" })
-    .use(blockchainContext)
     .get(
         "/adminWallet",
-        async ({ adminWalletsRepository, query }) => {
+        async ({ query }) => {
             // Case of a product id
             if (query.productId) {
                 if (!isHex(query.productId)) {
@@ -53,7 +52,7 @@ export const commonRoutes = new Elysia({ name: "Routes.common" })
     )
     .get(
         "/rate",
-        async ({ query: { token }, pricingRepository }) => {
+        async ({ query: { token } }) => {
             if (!isAddress(token)) {
                 return error(400, "Invalid token");
             }

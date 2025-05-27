@@ -1,4 +1,4 @@
-import { blockchainContext, log, sessionContext } from "@backend-common";
+import { log, sessionContext, viemClient } from "@backend-common";
 import { t } from "@backend-utils";
 import { WebAuthN } from "@frak-labs/app-essentials";
 import {
@@ -20,7 +20,6 @@ import { walletSdkRoutes } from "./wallet/sdk";
 import { walletSsoRoutes } from "./wallet/sso";
 
 export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
-    .use(blockchainContext)
     .use(sessionContext)
     .use(webAuthNService)
     .use(walletSdkSessionService)
@@ -64,7 +63,6 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             // Request
             body: { expectedChallenge, signature, wallet, ssoId, demoPkey },
             // Context
-            client,
             walletJwt,
             generateSdkJwt,
             webAuthNService,
@@ -74,7 +72,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${expectedChallenge}`;
 
             // Verify the message signature
-            const isValidSignature = await verifyMessage(client, {
+            const isValidSignature = await verifyMessage(viemClient, {
                 signature,
                 message,
                 address: wallet,

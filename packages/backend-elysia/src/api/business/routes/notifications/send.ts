@@ -1,4 +1,4 @@
-import { indexerApiContext, log } from "@backend-common";
+import { indexerApi, log } from "@backend-common";
 import { t } from "@backend-utils";
 import type { GetMembersWalletResponseDto } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
@@ -14,14 +14,12 @@ import { businessSessionContext } from "../../middleware/session";
 export const sendRoutes = new Elysia()
     .use(notificationContext)
     .use(businessSessionContext)
-    .use(indexerApiContext)
     // External endpoint to send notification to a list of wallets
     .post(
         "/send",
         async ({
             body: { targets, payload },
             notification: { service },
-            indexerApi,
             businessSession,
         }) => {
             if (!businessSession) return;

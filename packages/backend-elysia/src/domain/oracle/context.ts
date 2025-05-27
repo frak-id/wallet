@@ -1,4 +1,4 @@
-import { blockchainContext, dbContext, eventsContext } from "@backend-common";
+import { postgresDb } from "@backend-common";
 import { t } from "@backend-utils";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js/driver";
@@ -14,10 +14,7 @@ import { MerkleTreeRepository } from "./repositories/MerkleTreeRepository";
 export const oracleContext = new Elysia({
     name: "Context.oracle",
 })
-    .use(blockchainContext)
-    .use(dbContext)
-    .use(eventsContext)
-    .decorate(({ postgresDb, ...decorators }) => {
+    .decorate((decorators) => {
         const oracleDb = drizzle({
             client: postgresDb,
             schema: {

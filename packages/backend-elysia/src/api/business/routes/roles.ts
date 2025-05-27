@@ -1,4 +1,4 @@
-import { blockchainContext } from "@backend-common";
+import { rolesRepository } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { Elysia, error } from "elysia";
@@ -7,13 +7,11 @@ import { businessSessionContext } from "../middleware/session";
 
 export const rolesRoutes = new Elysia({ prefix: "/roles" })
     .use(businessSessionContext)
-    .use(blockchainContext)
     .get(
         "/",
         async ({
             query: { wallet: initialWallet, productId },
             businessSession,
-            rolesRepository,
         }) => {
             if (!productId) {
                 return error(400, "Invalid product id");

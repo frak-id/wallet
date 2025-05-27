@@ -115,3 +115,5 @@ export class AdminWalletsRepository {
         return newLock;
     }
 }
+
+export const adminWalletsRepository = new AdminWalletsRepository();

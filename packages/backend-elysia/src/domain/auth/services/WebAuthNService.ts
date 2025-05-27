@@ -1,4 +1,4 @@
-import { blockchainContext, dbContext, sessionContext } from "@backend-common";
+import { sessionContext, viemClient } from "@backend-common";
 import {
     KernelWallet,
     WebAuthN,
@@ -16,11 +16,9 @@ import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository
 
 export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
     .use(sessionContext)
-    .use(blockchainContext)
-    .use(dbContext)
     // A few helpers
-    .decorate(({ client, getMongoDb, ...decorators }) => {
-        const authenticatorRepository = new AuthenticatorRepository(getMongoDb);
+    .decorate((decorators) => {
+        const authenticatorRepository = new AuthenticatorRepository();
 
         /**
          * Parse a compressed webauthn response
@@ -46,7 +44,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
             });
 
             // Get the sender address based on the init code
-            return getSenderAddress(client, {
+            return getSenderAddress(viemClient, {
                 initCode: concatHex([kernelAddresses.factory, initCode]),
                 entryPointAddress: entryPoint06Address,
             });
@@ -64,7 +62,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
             });
 
             // Get the sender address based on the init code
-            return getSenderAddress(client, {
+            return getSenderAddress(viemClient, {
                 initCode: concatHex([kernelAddresses.factory, initCode]),
                 entryPointAddress: entryPoint06Address,
             });

@@ -1,4 +1,8 @@
-import type { AdminWalletsRepository } from "@backend-common/repositories";
+import {
+    adminWalletsRepository,
+    eventEmitter,
+    viemClient,
+} from "@backend-common";
 import {
     mutexCron,
     purchaseOracle_getMerkleRoot,
@@ -7,7 +11,7 @@ import {
 import type { pino } from "@bogeychan/elysia-logger";
 import { addresses } from "@frak-labs/app-essentials/blockchain";
 import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
-import { type Client, type Hex, type LocalAccount, encodePacked } from "viem";
+import { type Hex, type LocalAccount, encodePacked } from "viem";
 import {
     readContract,
     simulateContract,
@@ -25,13 +29,7 @@ export const updateMerkleRootJob = (app: OracleContextApp) =>
             pattern: "0 */5 * * * *", // Every 5 minutes
             skipIfLocked: true,
             run: async ({ context: { logger } }) => {
-                const {
-                    oracleDb,
-                    merkleRepository,
-                    adminWalletsRepository,
-                    client,
-                    emitter,
-                } = app.decorator;
+                const { oracleDb, merkleRepository } = app.decorator;
 
                 // Get some unsynced products
                 const notSyncedProductIds = await oracleDb
@@ -86,13 +84,11 @@ export const updateMerkleRootJob = (app: OracleContextApp) =>
                     productIds: [...finalProductIds],
                     oracleDb,
                     merkleRepository,
-                    adminRepository: adminWalletsRepository,
-                    client,
                     logger,
                 });
 
                 // Then emit the oracle updated event
-                emitter.emit("oracleUpdated");
+                eventEmitter.emit("oracleUpdated");
             },
         })
     );
@@ -208,18 +204,14 @@ async function updateProductsMerkleRoot({
     productIds,
     oracleDb,
     merkleRepository,
-    adminRepository,
-    client,
     logger,
 }: {
     productIds: Hex[];
     oracleDb: OracleDb;
     merkleRepository: MerkleTreeRepository;
-    adminRepository: AdminWalletsRepository;
-    client: Client;
     logger: pino.Logger;
 }) {
-    const oracleUpdater = await adminRepository.getKeySpecificAccount({
+    const oracleUpdater = await adminWalletsRepository.getKeySpecificAccount({
         key: "oracle-updater",
     });
 
@@ -238,7 +230,6 @@ async function updateProductsMerkleRoot({
             productId,
             merkleRoot: root,
             oracleUpdater,
-            client,
             logger,
         });
 
@@ -264,17 +255,15 @@ async function safeMerkleeRootBlockchainUpdate({
     productId,
     merkleRoot,
     oracleUpdater,
-    client,
     logger,
 }: {
     productId: Hex;
     merkleRoot: Hex;
     oracleUpdater: LocalAccount;
-    client: Client;
     logger: pino.Logger;
 }) {
     // Get the current merklee root (and early exit if it's the same)
-    const currentRoot = await readContract(client, {
+    const currentRoot = await readContract(viemClient, {
         abi: [purchaseOracle_getMerkleRoot],
         address: addresses.purchaseOracle,
         functionName: "getMerkleRoot",
@@ -290,7 +279,7 @@ async function safeMerkleeRootBlockchainUpdate({
 
     try {
         // Simulate the tx first
-        const { request } = await simulateContract(client, {
+        const { request } = await simulateContract(viemClient, {
             account: oracleUpdater,
             abi: [purchaseOracle_updateMerkleRoot],
             address: addresses.purchaseOracle,
@@ -299,10 +288,10 @@ async function safeMerkleeRootBlockchainUpdate({
         });
 
         // Call the update function
-        const txHash = await writeContract(client, request);
+        const txHash = await writeContract(viemClient, request);
 
         // Wait for the tx to be mined
-        await waitForTransactionReceipt(client, {
+        await waitForTransactionReceipt(viemClient, {
             hash: txHash,
             confirmations: 4,
             retryCount: 8,

@@ -1,3 +1,4 @@
+import { eventEmitter } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { isRunningInProd } from "@frak-labs/app-essentials";
@@ -26,7 +27,6 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     interactionPackerRepository,
                     walletSessionRepository,
                     pendingInteractionsRepository,
-                    emitter,
                 } = app.decorator;
                 // Get interactions to simulate
                 const interactions =
@@ -75,7 +75,7 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
 
                     // Emit the event to trigger the interaction execution
                     if (hasSuccessInteractions) {
-                        emitter.emit("simulatedInteractions");
+                        eventEmitter.emit("simulatedInteractions");
                     }
                 } finally {
                     // Unlock the interactions

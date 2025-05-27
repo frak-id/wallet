@@ -1,4 +1,9 @@
-import { log, walletSdkSessionContext } from "@backend-common";
+import {
+    eventEmitter,
+    interactionDiamondRepository,
+    log,
+    walletSdkSessionContext,
+} from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { isAddressEqual } from "viem";
@@ -17,8 +22,6 @@ export const pushInteractionsRoutes = new Elysia()
             body: { interactions },
             walletSdkSession,
             interactionsDb,
-            emitter,
-            interactionDiamondRepository,
             sixDegrees,
         }) => {
             if (!walletSdkSession) return error(403, "Invalid wallet address");
@@ -97,7 +100,7 @@ export const pushInteractionsRoutes = new Elysia()
                 .returning({ insertedId: pendingInteractionsTable.id });
 
             // Trigger the simulation job (and don't wait for it)
-            emitter.emit("newInteractions");
+            eventEmitter.emit("newInteractions");
 
             // Return the inserted ids
             return results.map((result) => result.insertedId.toString());

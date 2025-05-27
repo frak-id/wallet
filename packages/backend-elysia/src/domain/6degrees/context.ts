@@ -1,7 +1,7 @@
+import { postgresDb } from "@backend-common";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import Elysia from "elysia";
 import ky from "ky";
-import { dbContext } from "../../common";
 import { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
 import { fixedRoutingTable, walletRoutingTable } from "./db/schema";
 import { SixDegreesAuthenticationService } from "./service/SixDegreesAuthenticationService";
@@ -13,50 +13,47 @@ import { SixDegreesRoutingService } from "./service/SixDegreesRoutingService";
  */
 export const sixDegreesContext = new Elysia({
     name: "Context.6degrees",
-})
-    .use(dbContext)
-    .decorate(({ postgresDb, getMongoDb, ...decorators }) => {
-        // Create the 6degrees db
-        const db = drizzle({
-            client: postgresDb,
-            schema: {
-                fixedRoutingTable,
-                walletRoutingTable,
-            },
-        });
-
-        // Build the ky api that will be used to interact with 6degrees
-        const sixDegreesApi = ky.create({
-            prefixUrl: "https://prodbe-f2m.6degrees.co/",
-        });
-
-        // Create the routing service
-        const routingService = new SixDegreesRoutingService(db);
-
-        // Create the authentication service
-        const authenticationService = new SixDegreesAuthenticationService(
-            sixDegreesApi
-        );
-
-        // Create the interaction service
-        const authenticatorRepository = new AuthenticatorRepository(getMongoDb);
-        const interactionService = new SixDegreesInteractionService(
-            sixDegreesApi,
-            authenticatorRepository
-        );
-
-        return {
-            ...decorators,
-            getMongoDb,
-            sixDegrees: {
-                db,
-                api: sixDegreesApi,
-                authenticationService,
-                interactionService,
-                routingService,
-            },
-        };
+}).decorate((decorators) => {
+    // Create the 6degrees db
+    const db = drizzle({
+        client: postgresDb,
+        schema: {
+            fixedRoutingTable,
+            walletRoutingTable,
+        },
     });
+
+    // Build the ky api that will be used to interact with 6degrees
+    const sixDegreesApi = ky.create({
+        prefixUrl: "https://prodbe-f2m.6degrees.co/",
+    });
+
+    // Create the routing service
+    const routingService = new SixDegreesRoutingService(db);
+
+    // Create the authentication service
+    const authenticationService = new SixDegreesAuthenticationService(
+        sixDegreesApi
+    );
+
+    // Create the interaction service
+    const authenticatorRepository = new AuthenticatorRepository();
+    const interactionService = new SixDegreesInteractionService(
+        sixDegreesApi,
+        authenticatorRepository
+    );
+
+    return {
+        ...decorators,
+        sixDegrees: {
+            db,
+            api: sixDegreesApi,
+            authenticationService,
+            interactionService,
+            routingService,
+        },
+    };
+});
 
 export type SixDegreesDb = PostgresJsDatabase<{
     fixedRoutingTable: typeof fixedRoutingTable;

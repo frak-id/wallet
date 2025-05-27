@@ -1,4 +1,4 @@
-import { log } from "@backend-common";
+import { log, viemClient } from "@backend-common";
 import {
     type CampaignType,
     baseCampaignTriggerPtr,
@@ -10,10 +10,7 @@ import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { LRUCache } from "lru-cache";
 import {
     type Address,
-    type Chain,
-    type Client,
     type Hex,
-    type Transport,
     hexToBigInt,
     padHex,
     sliceHex,
@@ -81,8 +78,6 @@ export class CampaignDataRepository {
             }))
     );
 
-    constructor(private readonly client: Client<Transport, Chain>) {}
-
     /**
      * Get a campaign type
      * @returns
@@ -99,7 +94,7 @@ export class CampaignDataRepository {
             return cached;
         }
 
-        const [type] = (await readContract(this.client, {
+        const [type] = (await readContract(viemClient, {
             abi: interactionCampaignAbi,
             address: campaign,
             functionName: "getMetadata",
@@ -136,7 +131,7 @@ export class CampaignDataRepository {
             if (!slot) return null;
 
             // Find the trigger value
-            const triggerValue = await getStorageAt(this.client, {
+            const triggerValue = await getStorageAt(viemClient, {
                 address: campaign,
                 slot,
                 blockNumber: lastUpdateBlock,
@@ -198,7 +193,7 @@ export class CampaignDataRepository {
 
         // Read the config on-chain
         try {
-            const config = await readContract(this.client, {
+            const config = await readContract(viemClient, {
                 abi,
                 address: campaign,
                 functionName: "getConfig",
