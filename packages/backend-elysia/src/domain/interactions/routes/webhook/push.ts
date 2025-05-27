@@ -6,7 +6,7 @@ import {
     RetailInteractionEncoder,
 } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { type Hex, isAddress, isHex, keccak256, toHex } from "viem";
 import { interactionsContext } from "../../context";
 import { backendTrackerTable, pendingInteractionsTable } from "../../db/schema";
@@ -23,12 +23,12 @@ export const webhookPushRoutes = new Elysia()
             })
         ),
     })
-    .resolve(({ params: { productId }, headers, error }) => {
+    .resolve(({ params: { productId }, headers }) => {
         if (!productId) {
-            return error(400, "Invalid product id");
+            return status(400, "Invalid product id");
         }
         if (!headers["x-hmac-sha256"]) {
-            return error(400, "Missing hmac");
+            return status(400, "Missing hmac");
         }
 
         return { productId, hmac: headers["x-hmac-sha256"] };
@@ -65,8 +65,6 @@ export const webhookPushRoutes = new Elysia()
             productId,
             hmac,
             body: rawBody,
-            // Response
-            error,
             // Context
             saveInteractions,
             interactionsDb,
@@ -77,7 +75,7 @@ export const webhookPushRoutes = new Elysia()
             const isValidBody =
                 body.wallet && body.interaction && isAddress(body.wallet);
             if (!isValidBody) {
-                return error(400, "Invalid body");
+                return status(400, "Invalid body");
             }
 
             // Find the product backend tracker for this product id
@@ -86,7 +84,7 @@ export const webhookPushRoutes = new Elysia()
                     where: eq(backendTrackerTable.productId, productId),
                 });
             if (!tracker) {
-                return error(404, "Product backend tracker not found");
+                return status(404, "Product backend tracker not found");
             }
 
             // Validate the body hmac
@@ -102,7 +100,7 @@ export const webhookPushRoutes = new Elysia()
                     productId
                 );
             if (!diamond) {
-                return error(400, "No diamond found for the product");
+                return status(400, "No diamond found for the product");
             }
 
             // Insert the interaction in the pending state
@@ -133,8 +131,6 @@ export const webhookPushRoutes = new Elysia()
             productId,
             hmac,
             body: rawBody,
-            // Response
-            error,
             // Context
             saveInteractions,
             interactionsDb,
@@ -145,7 +141,7 @@ export const webhookPushRoutes = new Elysia()
             const isValidBody =
                 body.wallet && body.key && body.data && isAddress(body.wallet);
             if (!isValidBody) {
-                return error(400, "Invalid body");
+                return status(400, "Invalid body");
             }
 
             // Find the product backend tracker for this product id
@@ -154,7 +150,7 @@ export const webhookPushRoutes = new Elysia()
                     where: eq(backendTrackerTable.productId, productId),
                 });
             if (!tracker) {
-                return error(404, "Product backend tracker not found");
+                return status(404, "Product backend tracker not found");
             }
 
             // Validate the body hmac
@@ -167,7 +163,7 @@ export const webhookPushRoutes = new Elysia()
             // Ensure it's an allowed raw push interaction
             const interaction = mapRawInteraction(body);
             if (!interaction) {
-                return error(400, "Invalid raw interaction");
+                return status(400, "Invalid raw interaction");
             }
 
             // Get the diamond contract for this product
@@ -176,7 +172,7 @@ export const webhookPushRoutes = new Elysia()
                     productId
                 );
             if (!diamond) {
-                return error(400, "No diamond found for the product");
+                return status(400, "No diamond found for the product");
             }
 
             // Insert the interaction in the pending state

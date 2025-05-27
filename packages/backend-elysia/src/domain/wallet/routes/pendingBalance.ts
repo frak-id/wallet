@@ -1,6 +1,6 @@
 import { walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { walletContext } from "../context";
 
 export const pendingBalanceRoutes = new Elysia({ prefix: "/pending-balance" })
@@ -8,8 +8,8 @@ export const pendingBalanceRoutes = new Elysia({ prefix: "/pending-balance" })
     .use(walletContext)
     .get(
         "",
-        async ({ pendingBalanceRepository, walletSession, error }) => {
-            if (!walletSession) return error(401, "Unauthorized");
+        async ({ pendingBalanceRepository, walletSession }) => {
+            if (!walletSession) return status(401, "Unauthorized");
 
             return pendingBalanceRepository.getPendingBalance({
                 address: walletSession.address,

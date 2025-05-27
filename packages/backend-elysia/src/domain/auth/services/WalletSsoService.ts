@@ -58,6 +58,6 @@ export const walletSsoService = new Elysia({
             },
         };
     })
-    .as("plugin");
+    .as("scoped");
 
 export type SsoService = (typeof walletSsoService)["decorator"]["ssoService"];

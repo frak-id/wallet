@@ -104,12 +104,11 @@ async function isSixDegreesContext() {
         return false;
     }
 
-    const getSixDegrees =
-        await authenticatedBackendApi.sixDegrees.routing.index.get({
-            query: {
-                origin: currentContext.origin,
-            },
-        });
+    const getSixDegrees = await authenticatedBackendApi.sixDegrees.routing.get({
+        query: {
+            origin: currentContext.origin,
+        },
+    });
 
     return getSixDegrees.data === "sui";
 }

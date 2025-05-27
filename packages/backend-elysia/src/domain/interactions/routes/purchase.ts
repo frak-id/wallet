@@ -1,6 +1,6 @@
 import { log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { type Address, isHex } from "viem";
 import { interactionsContext } from "../context";
 import { interactionsPurchaseTrackerTable } from "../db/schema";
@@ -13,12 +13,11 @@ export const purchaseInteractionsRoutes = new Elysia()
         async ({
             body,
             headers: { "x-wallet-sdk-auth": walletSdkAuth },
-            error,
             interactionsDb,
             walletSdkJwt,
             emitter,
         }) => {
-            if (!walletSdkAuth) return error(401, "Missing wallet SDK JWT");
+            if (!walletSdkAuth) return status(401, "Missing wallet SDK JWT");
 
             // Get the right address
             let address: Address;
@@ -27,7 +26,7 @@ export const purchaseInteractionsRoutes = new Elysia()
                 address = walletSdkAuth;
             } else {
                 const session = await walletSdkJwt.verify(walletSdkAuth);
-                if (!session) return error(401, "Invalid wallet SDK JWT");
+                if (!session) return status(401, "Invalid wallet SDK JWT");
                 address = session.address;
             }
 

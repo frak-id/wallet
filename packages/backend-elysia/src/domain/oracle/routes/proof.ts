@@ -1,5 +1,5 @@
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { oracleContext } from "../context";
 import { PurchaseProofService } from "../services/proofService";
 
@@ -14,12 +14,12 @@ export const proofRoutes = new Elysia({
             purchaseId: t.Optional(t.String()),
         }),
     })
-    .resolve(({ params: { productId, purchaseId }, error }) => {
+    .resolve(({ params: { productId, purchaseId } }) => {
         if (!productId) {
-            return error(400, "Invalid product id");
+            return status(400, "Invalid product id");
         }
         if (!purchaseId) {
-            return error(400, "Invalid purchase id");
+            return status(400, "Invalid purchase id");
         }
 
         return { productId, purchaseId };
@@ -27,20 +27,20 @@ export const proofRoutes = new Elysia({
     // Get the proof around a given product and purchase
     .get(
         ":productId/purchase/:purchaseId",
-        async ({ productId, purchaseId, error, getPurchaseProof }) => {
+        async ({ productId, purchaseId, getPurchaseProof }) => {
             // Get the purchase proof
             const result = await getPurchaseProof({ productId, purchaseId });
             if (result.status === "purchase-not-found") {
-                return error(404, "Purchase not found");
+                return status(404, "Purchase not found");
             }
             if (result.status === "purchase-not-processed") {
-                return error(423, "Purchase not processed yet");
+                return status(423, "Purchase not processed yet");
             }
             if (result.status === "no-proof-found") {
-                return error(404, "No proof found");
+                return status(404, "No proof found");
             }
             if (result.status === "oracle-not-synced") {
-                return error(423, "Oracle not synced");
+                return status(423, "Oracle not synced");
             }
 
             return {

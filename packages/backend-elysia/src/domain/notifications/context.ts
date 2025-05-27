@@ -35,7 +35,7 @@ export const notificationContext = new Elysia({
             };
         },
     })
-    .as("plugin");
+    .as("scoped");
 
 export type NotificationDb = PostgresJsDatabase<{
     pushTokensTable: typeof pushTokensTable;

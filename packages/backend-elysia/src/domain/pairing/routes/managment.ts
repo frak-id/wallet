@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { isAddressEqual } from "viem";
 import { walletSessionContext } from "../../../common";
 import { t } from "../../../utils";
@@ -18,7 +18,7 @@ export const managementRoutes = new Elysia()
             });
 
             if (!pairing) {
-                return error(404, "Pairing not found");
+                return status(404, "Pairing not found");
             }
 
             return {
@@ -45,7 +45,7 @@ export const managementRoutes = new Elysia()
         "/list",
         async ({ pairing: { db }, walletSession }) => {
             if (!walletSession) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
 
             const pairings = await db.query.pairingTable.findMany({
@@ -80,7 +80,7 @@ export const managementRoutes = new Elysia()
         "/:id/delete",
         async ({ pairing: { db }, walletSession, params: { id } }) => {
             if (!walletSession) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
 
             // Get the pairing
@@ -88,16 +88,16 @@ export const managementRoutes = new Elysia()
                 where: eq(pairingTable.pairingId, id),
             });
             if (!pairing) {
-                return error(404, "Pairing not found");
+                return status(404, "Pairing not found");
             }
 
             if (!pairing.wallet) {
-                return error(404, "Pairing not yet resolved");
+                return status(404, "Pairing not yet resolved");
             }
 
             // Check if the wallet is the owner of the pairing
             if (!isAddressEqual(pairing.wallet, walletSession.address)) {
-                return error(403, "Forbidden");
+                return status(403, "Forbidden");
             }
 
             // Delete the pairing

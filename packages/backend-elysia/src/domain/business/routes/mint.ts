@@ -2,7 +2,7 @@ import { blockchainContext, log, nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { toHex } from "viem";
 import { DnsCheckRepository } from "../repositories/DnsCheckRepository";
 import { MintRepository } from "../repositories/MintRepository";
@@ -82,13 +82,12 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
         async ({
             businessSession,
             body: { name, domain, productTypes, setupCode },
-            error,
             mintRepository,
             dnsCheckRepository,
         }) => {
             // Ensure the session matches
             if (!businessSession) {
-                return error(401, "Invalid session");
+                return status(401, "Invalid session");
             }
             // Normalize the domain
             const normalizedDomain =
@@ -100,7 +99,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                 setupCode,
             });
             if (!isValidDomain) {
-                return error(
+                return status(
                     400,
                     "The domain is invalid (either DNS TXT or invalid setup code)"
                 );
@@ -124,7 +123,10 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                 };
             } catch (e) {
                 log.error({ error: e }, "Failed to mint product");
-                return error(400, (e as Error)?.message ?? "An error occurred");
+                return status(
+                    400,
+                    (e as Error)?.message ?? "An error occurred"
+                );
             }
         },
         {

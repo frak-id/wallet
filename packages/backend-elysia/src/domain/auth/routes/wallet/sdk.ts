@@ -1,6 +1,6 @@
 import { walletSdkSessionContext, walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { isAddressEqual } from "viem";
 import { walletSdkSessionService } from "../../services/WalletSdkSessionService";
 import { webAuthNService } from "../../services/WebAuthNService";
@@ -12,9 +12,9 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     // Generate a new token
     .get(
         "/generate",
-        async ({ walletSession, error, generateSdkJwt }) => {
+        async ({ walletSession, generateSdkJwt }) => {
             if (!walletSession) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
             return await generateSdkJwt({ wallet: walletSession.address });
         },
@@ -36,7 +36,6 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
             body: { signature, msg, wallet },
             webAuthNService,
             generateSdkJwt,
-            error,
         }) => {
             // Check the validity of the webauthn signature
             const verificationnResult = await webAuthNService.isValidSignature({
@@ -46,12 +45,12 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
 
             // If not valid, return an error
             if (!verificationnResult) {
-                return error(403, "Invalid signature");
+                return status(403, "Invalid signature");
             }
 
             // If it's not the same wallet, return an error
             if (!isAddressEqual(verificationnResult.address, wallet)) {
-                return error(403, "Invalid signature");
+                return status(403, "Invalid signature");
             }
 
             // Otherwise generate a new token

@@ -151,4 +151,4 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
             },
         };
     })
-    .as("plugin");
+    .as("scoped");

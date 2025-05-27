@@ -1,7 +1,7 @@
 import { log } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { eq } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
 import type {
@@ -41,12 +41,12 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
         ),
     })
     // Request pre validation hook
-    .onBeforeHandle(({ headers, error }) => {
+    .onBeforeHandle(({ headers }) => {
         if (!headers["x-wc-webhook-signature"]) {
-            return error(400, "Missing signature");
+            return status(400, "Missing signature");
         }
         if (headers["x-wc-webhook-resource"] !== "order") {
-            return error(400, "Unsupported woo commerce webhook");
+            return status(400, "Unsupported woo commerce webhook");
         }
     })
     // Shopify only give us 5sec to answer, all the heavy logic should be in a cron running elsewhere,
@@ -58,7 +58,6 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
             params: { productId },
             body,
             headers,
-            error,
             // Context
             oracleDb,
             upsertPurchase,
@@ -70,13 +69,13 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
 
             // Find the product oracle for this product id
             if (!productId) {
-                return error(400, "Missing product id");
+                return status(400, "Missing product id");
             }
             const oracle = await oracleDb.query.productOracleTable.findFirst({
                 where: eq(productOracleTable.productId, productId),
             });
             if (!oracle) {
-                return error(404, "Product oracle not found");
+                return status(404, "Product oracle not found");
             }
 
             // Validate the body hmac

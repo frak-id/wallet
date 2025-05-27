@@ -1,6 +1,6 @@
 import { jwt, t } from "@backend-utils";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import {
     WalletSdkTokenDto,
     WalletTokenDto,
@@ -75,11 +75,10 @@ export const sessionContext = new Elysia({
                 return {
                     beforeHandle: async ({
                         cookie: { businessAuth },
-                        error,
                         businessJwt,
                     }) => {
                         if (!businessAuth?.value) {
-                            return error(
+                            return status(
                                 "Unauthorized",
                                 "Missing business JWT"
                             );
@@ -93,7 +92,7 @@ export const sessionContext = new Elysia({
                                 value: "",
                                 maxAge: 0,
                             });
-                            return error(
+                            return status(
                                 "Unauthorized",
                                 "Invalid business JWT"
                             );
@@ -107,18 +106,18 @@ export const sessionContext = new Elysia({
                 return {
                     beforeHandle: async ({
                         headers: { "x-wallet-sdk-auth": walletSdkAuth },
-                        error,
                         walletSdkJwt,
                     }) => {
                         if (!walletSdkAuth) {
-                            return error(
+                            return status(
                                 "Unauthorized",
                                 "Missing wallet SDK JWT"
                             );
                         }
                         const auth = await walletSdkJwt.verify(walletSdkAuth);
                         if (!auth) {
-                            return error(
+                            status;
+                            return status(
                                 "Unauthorized",
                                 "Invalid wallet SDK JWT"
                             );
@@ -131,22 +130,21 @@ export const sessionContext = new Elysia({
             return {
                 beforeHandle: async ({
                     headers: { "x-wallet-auth": walletAuth },
-                    error,
                     walletJwt,
                 }) => {
                     if (!walletAuth) {
-                        return error(401, "Missing wallet JWT");
+                        return status(401, "Missing wallet JWT");
                     }
                     const auth = await walletJwt.verify(walletAuth);
                     // Throw an error and remove the token
                     if (!auth) {
-                        return error(401, "Invalid wallet JWT");
+                        return status(401, "Invalid wallet JWT");
                     }
                 },
             };
         },
     })
-    .as("plugin");
+    .as("scoped");
 
 export const walletSessionContext = new Elysia({
     name: "Context.walletSession",
@@ -160,7 +158,7 @@ export const walletSessionContext = new Elysia({
             };
         }
     )
-    .as("plugin");
+    .as("scoped");
 
 export const walletSdkSessionContext = new Elysia({
     name: "Context.walletSdkSession",
@@ -176,4 +174,4 @@ export const walletSdkSessionContext = new Elysia({
             };
         }
     )
-    .as("plugin");
+    .as("scoped");

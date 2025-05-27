@@ -60,7 +60,7 @@ export const pairingContext = new Elysia({
             };
         }
     )
-    .as("plugin");
+    .as("scoped");
 
 export type PairingContextApp = typeof pairingContext;
 

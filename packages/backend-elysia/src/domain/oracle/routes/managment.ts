@@ -2,16 +2,16 @@ import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { oracleContext } from "../context";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 
 export const managmentRoutes = new Elysia()
     .use(oracleContext)
     .use(nextSessionContext)
-    .resolve(({ params: { productId }, error }) => {
+    .resolve(({ params: { productId } }) => {
         if (!productId) {
-            return error(400, "Invalid product id");
+            return status(400, "Invalid product id");
         }
 
         return { productId };
@@ -91,16 +91,15 @@ export const managmentRoutes = new Elysia()
             body,
             oracleDb,
             productId,
-            error,
             businessSession,
             rolesRepository,
         }) => {
             if (!productId) {
-                return error(400, "Invalid product id");
+                return status(400, "Invalid product id");
             }
 
             if (!businessSession) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
             const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
                 wallet: businessSession.wallet,
@@ -108,7 +107,7 @@ export const managmentRoutes = new Elysia()
                 role: productRoles.interactionManager,
             });
             if (!isAllowed) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
 
             const { hookSignatureKey, platform } = body;
@@ -145,15 +144,9 @@ export const managmentRoutes = new Elysia()
     )
     .post(
         ":productId/delete",
-        async ({
-            productId,
-            oracleDb,
-            error,
-            businessSession,
-            rolesRepository,
-        }) => {
+        async ({ productId, oracleDb, businessSession, rolesRepository }) => {
             if (!businessSession) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
             const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
                 wallet: businessSession.wallet,
@@ -161,7 +154,7 @@ export const managmentRoutes = new Elysia()
                 role: productRoles.interactionManager,
             });
             if (!isAllowed) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
 
             // Check if we already got a setup for this product (we could only have one)
@@ -170,7 +163,7 @@ export const managmentRoutes = new Elysia()
                     with: { productId },
                 });
             if (!existingOracle) {
-                return error(
+                return status(
                     404,
                     `Product ${productId} have no current oracle setup`
                 );

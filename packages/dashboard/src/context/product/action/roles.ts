@@ -12,7 +12,7 @@ export async function getRolesOnProduct({
     if (!productId) return undefined;
 
     const stringCookie = (await cookies()).toString();
-    const { data, error } = await backendApi.business.roles.index.get({
+    const { data, error } = await backendApi.business.roles.get({
         query: { productId },
         fetch: {
             headers: {
