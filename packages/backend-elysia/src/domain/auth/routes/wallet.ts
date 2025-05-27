@@ -5,7 +5,7 @@ import {
     type RegistrationResponseJSON,
     verifyRegistrationResponse,
 } from "@simplewebauthn/server";
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 import { Binary } from "mongodb";
 import { verifyMessage } from "viem/actions";
 import { sixDegreesContext } from "../../../domain/6degrees/context";
@@ -36,16 +36,20 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
     // Decode token
     .get(
         "/session",
-        async ({ headers: { "x-wallet-auth": walletAuth }, walletJwt }) => {
+        async ({
+            headers: { "x-wallet-auth": walletAuth },
+            walletJwt,
+            error,
+        }) => {
             if (!walletAuth) {
-                return status(404, "No wallet session found");
+                return error(404, "No wallet session found");
             }
 
             // Decode it
             const decodedSession = await walletJwt.verify(walletAuth);
             if (!decodedSession) {
                 log.error({ decodedSession }, "Error decoding session");
-                return status(404, "Invalid wallet session");
+                return error(404, "Invalid wallet session");
             }
 
             return { ...decodedSession, token: walletAuth };
@@ -63,6 +67,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
         async ({
             // Request
             body: { expectedChallenge, signature, wallet, ssoId, demoPkey },
+            // Response
+            error,
             // Context
             client,
             walletJwt,
@@ -80,7 +86,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 address: wallet,
             });
             if (!isValidSignature) {
-                return status(404, "Invalid signature");
+                return error(404, "Invalid signature");
             }
 
             const authenticatorId = `ecdsa-${wallet}` as const;
@@ -155,6 +161,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 expectedChallenge,
                 ssoId,
             },
+            // Response
+            error,
             // Context
             walletJwt,
             generateSdkJwt,
@@ -168,7 +176,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 msg: expectedChallenge,
             });
             if (!verificationnResult) {
-                return status(404, "Invalid signature");
+                return error(404, "Invalid signature");
             }
 
             // Otherwise all good, extract a few info
@@ -263,6 +271,8 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                 ssoId,
                 isSixDegrees,
             },
+            // Response
+            error,
             // Context
             generateSdkJwt,
             walletJwt,
@@ -294,7 +304,7 @@ export const walletAuthRoutes = new Elysia({ prefix: "/wallet" })
                     },
                     "Registration of a new authenticator failed"
                 );
-                return status(400, "Registration failed");
+                return error(400, "Registration failed");
             }
 
             // Get the public key

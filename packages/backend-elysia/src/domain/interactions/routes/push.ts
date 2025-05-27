@@ -1,6 +1,6 @@
 import { log, walletSdkSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 import { isAddressEqual } from "viem";
 import { sixDegreesContext } from "../../../domain/6degrees/context";
 import { interactionsContext } from "../context";
@@ -16,12 +16,13 @@ export const pushInteractionsRoutes = new Elysia()
         async ({
             body: { interactions },
             walletSdkSession,
+            error,
             interactionsDb,
             emitter,
             interactionDiamondRepository,
             sixDegrees,
         }) => {
-            if (!walletSdkSession) return status(403, "Invalid wallet address");
+            if (!walletSdkSession) return error(403, "Invalid wallet address");
             if (!interactions.length) {
                 return [];
             }
@@ -36,7 +37,7 @@ export const pushInteractionsRoutes = new Elysia()
                         )
                 )
             ) {
-                return status(403, "Invalid wallet address");
+                return error(403, "Invalid wallet address");
             }
             log.debug(`Received ${interactions.length} interactions`);
 

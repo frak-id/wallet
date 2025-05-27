@@ -1,4 +1,4 @@
-import { Elysia, status, t } from "elysia";
+import { Elysia, t } from "elysia";
 import { log } from "../../common";
 import { AirtableRequestBodyType, type TableType } from "./config";
 import { AirtableService } from "./service";
@@ -7,17 +7,17 @@ export const airtable = new Elysia({ prefix: "/airtable" })
     .decorate("airtableService", new AirtableService())
     .post(
         "/",
-        async ({ body, query, airtableService }) => {
+        async ({ body, query, error, airtableService }) => {
             // Validate required parameters
             if (!query.table) {
-                return status(
+                return error(
                     400,
                     "table query parameter is required (demo_request or simulation)"
                 );
             }
 
             if (!["demo_request", "simulation"].includes(query.table)) {
-                return status(
+                return error(
                     400,
                     "table must be either 'demo_request' or 'simulation'"
                 );
@@ -26,7 +26,7 @@ export const airtable = new Elysia({ prefix: "/airtable" })
             const tableType = query.table as TableType;
 
             if (!body.email) {
-                return status(400, "email is required in request body");
+                return error(400, "email is required in request body");
             }
 
             try {
@@ -43,13 +43,10 @@ export const airtable = new Elysia({ prefix: "/airtable" })
 
                 // Handle specific error cases
                 if (errorMessage.includes("already exists")) {
-                    return status(409, errorMessage);
+                    return error(409, errorMessage);
                 }
 
-                return status(
-                    500,
-                    `Failed to process request: ${errorMessage}`
-                );
+                return error(500, `Failed to process request: ${errorMessage}`);
             }
         },
         {

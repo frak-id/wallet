@@ -1,4 +1,4 @@
-import { Elysia, status, t } from "elysia";
+import { Elysia, t } from "elysia";
 import { unsealData } from "iron-session";
 import type { Address, Hex } from "viem";
 
@@ -54,6 +54,7 @@ export const nextSessionContext = new Elysia({
             return {
                 beforeHandle: async ({
                     cookie: { businessSession },
+                    error,
                     decodeNextSessionCookie,
                 }) => {
                     // Resolve the session
@@ -72,10 +73,10 @@ export const nextSessionContext = new Elysia({
                         wanted === "business" &&
                         !(businessSession && resolvedSession)
                     ) {
-                        return status(401, "Missing business auth cookie");
+                        return error(401, "Missing business auth cookie");
                     }
                 },
             };
         },
     })
-    .as("scoped");
+    .as("plugin");

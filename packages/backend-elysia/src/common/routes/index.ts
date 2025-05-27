@@ -1,17 +1,17 @@
 import { blockchainContext } from "@backend-common/context";
 import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 import { isAddress, isHex } from "viem";
 
 export const commonRoutes = new Elysia({ prefix: "/common" })
     .use(blockchainContext)
     .get(
         "/adminWallet",
-        async ({ adminWalletsRepository, query }) => {
+        async ({ adminWalletsRepository, query, error }) => {
             // Case of a product id
             if (query.productId) {
                 if (!isHex(query.productId)) {
-                    return status(400, "Invalid productId");
+                    return error(400, "Invalid productId");
                 }
 
                 const account =
@@ -30,7 +30,7 @@ export const commonRoutes = new Elysia({ prefix: "/common" })
                 return { pubKey: account.address };
             }
 
-            return status(400, "Invalid query");
+            return error(400, "Invalid query");
         },
         {
             query: t.Partial(
@@ -49,14 +49,14 @@ export const commonRoutes = new Elysia({ prefix: "/common" })
     )
     .get(
         "/rate",
-        async ({ query: { token }, pricingRepository }) => {
+        async ({ query: { token }, error, pricingRepository }) => {
             if (!isAddress(token)) {
-                return status(400, "Invalid token");
+                return error(400, "Invalid token");
             }
 
             const rate = await pricingRepository.getTokenPrice({ token });
             if (!rate) {
-                return status(400, "Invalid token");
+                return error(400, "Invalid token");
             }
 
             return rate;

@@ -94,4 +94,4 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
 export const purchaseTrackerJob = new Elysia({ name: "Job.PurchaseTracker" })
     .use(outerPurchaseTracker)
     .use(innerPurchaseTrackerJob)
-    .as("scoped");
+    .as("plugin");

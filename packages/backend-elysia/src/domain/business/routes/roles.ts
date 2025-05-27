@@ -11,20 +11,20 @@ export const rolesRoutes = new Elysia({ prefix: "/roles" })
         "/",
         async ({
             query: { wallet: initialWallet, productId },
-            status,
+            error,
             businessSession,
             rolesRepository,
         }) => {
             if (!productId) {
-                return status(400, "Invalid product id");
+                return error(400, "Invalid product id");
             }
             if (!businessSession) {
-                return status(401, "Unauthorized");
+                return error(401, "Unauthorized");
             }
 
             const wallet = initialWallet ?? businessSession.wallet;
             if (!wallet) {
-                return status(400, "Invalid wallet");
+                return error(400, "Invalid wallet");
             }
 
             // Fetch the roles

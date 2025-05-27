@@ -1,4 +1,5 @@
 import type { InteractionSession } from "@/types/Session";
+import { noopStorage } from "@wagmi/core";
 import { atomWithStorage, createJSONStorage } from "jotai/utils";
 
 export const interactionSessionAtom =
@@ -10,9 +11,3 @@ export const interactionSessionAtom =
         ),
         { getOnInit: true }
     );
-
-const noopStorage = {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-};

@@ -42,7 +42,7 @@ export const oracleContext = new Elysia({
             productId: t.Optional(t.Hex()),
         }),
     })
-    .as("scoped");
+    .as("plugin");
 
 export type OracleContextApp = typeof oracleContext;
 

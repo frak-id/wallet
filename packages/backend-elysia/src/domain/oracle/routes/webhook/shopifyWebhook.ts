@@ -2,7 +2,7 @@ import { log } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
 import type {
@@ -35,21 +35,21 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
         ),
     })
     // Request pre validation hook
-    .onBeforeHandle(({ headers }) => {
+    .onBeforeHandle(({ headers, error }) => {
         // If it's a test and not running in prod, early exit
         if (headers["x-shopify-test"] && isRunningInProd) {
-            return status(400, "Shopify test aren't accepted in production");
+            return error(400, "Shopify test aren't accepted in production");
         }
         // If it's an unsported shopify version, early exit
         if (headers["x-shopify-api-version"] !== "2024-10") {
-            return status(400, "Unsupported shopify version");
+            return error(400, "Unsupported shopify version");
         }
         // Order specific tests, should be moved elsewhere if we got other hooks
         if (!headers["x-shopify-order-id"]) {
-            return status(400, "Missing order id");
+            return error(400, "Missing order id");
         }
         if (!headers["x-shopify-topic"]?.startsWith("orders/")) {
-            return status(400, "Unsupported shopify topic");
+            return error(400, "Unsupported shopify topic");
         }
     })
     // Shopify only give us 5sec to answer, all the heavy logic should be in a cron running elsewhere,
@@ -60,6 +60,7 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             params: { productId },
             body,
             headers,
+            error,
             oracleDb,
             upsertPurchase,
         }) => {
@@ -72,22 +73,22 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                 webhookData?.id !==
                 Number.parseInt(headers["x-shopify-order-id"] ?? "0")
             ) {
-                return status(400, "Order id mismatch");
+                return error(400, "Order id mismatch");
             }
             // Ensure the test field match
             if (headers["x-shopify-test"] !== webhookData?.test) {
-                return status(400, "Test field mismatch");
+                return error(400, "Test field mismatch");
             }
 
             // Find the product oracle for this product id
             if (!productId) {
-                return status(400, "Missing product id");
+                return error(400, "Missing product id");
             }
             const oracle = await oracleDb.query.productOracleTable.findFirst({
                 where: eq(productOracleTable.productId, productId),
             });
             if (!oracle) {
-                return status(404, "Product oracle not found");
+                return error(404, "Product oracle not found");
             }
 
             // Validate the body hmac

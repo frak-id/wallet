@@ -35,7 +35,7 @@ export function useHasRoleOnProduct({
         ],
         queryFn: async () => {
             const finalWallet = wallet ?? walletStatus?.wallet;
-            const { data, error } = await backendApi.business.roles.get({
+            const { data, error } = await backendApi.business.roles.index.get({
                 query: {
                     productId,
                     ...(finalWallet ? { wallet: finalWallet } : {}),

@@ -2,7 +2,7 @@ import { log } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { productOracleTable } from "../../db/schema";
 import type { CustomWebhookDto } from "../../dto/CustomWebhook";
@@ -27,10 +27,10 @@ export const customWebhook = new Elysia({ prefix: "/custom" })
         ),
     })
     // Request pre validation hook
-    .onBeforeHandle(({ headers }) => {
+    .onBeforeHandle(({ headers, error }) => {
         // If it's a test and not running in prod, early exit
         if (headers["x-test"] && isRunningInProd) {
-            return status(400, "Purchase test aren't accepted in production");
+            return error(400, "Purchase test aren't accepted in production");
         }
     })
     .post(
@@ -39,24 +39,25 @@ export const customWebhook = new Elysia({ prefix: "/custom" })
             params: { productId },
             body,
             headers,
+            error,
             oracleDb,
             upsertPurchase,
         }) => {
             // Try to parse the body as a custom webhook type and ensure the type validity
             const webhookData = JSON.parse(body) as CustomWebhookDto;
             if (!webhookData?.id) {
-                return status(400, "Invalid body");
+                return error(400, "Invalid body");
             }
 
             // Find the product oracle for this product id
             if (!productId) {
-                return status(400, "Missing product id");
+                return error(400, "Missing product id");
             }
             const oracle = await oracleDb.query.productOracleTable.findFirst({
                 where: eq(productOracleTable.productId, productId),
             });
             if (!oracle) {
-                return status(404, "Product oracle not found");
+                return error(404, "Product oracle not found");
             }
 
             // Validate the body hmac

@@ -72,7 +72,7 @@ export const PurchaseProofService = new Elysia({
             } as const;
         },
     }))
-    .as("scoped");
+    .as("plugin");
 
 /**
  * Get a purchase status

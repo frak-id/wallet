@@ -75,7 +75,7 @@ export const interactionsContext = new Elysia({
             };
         }
     )
-    .as("scoped");
+    .as("plugin");
 
 export type InteractionsContextApp = typeof interactionsContext;
 
