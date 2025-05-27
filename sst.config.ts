@@ -12,14 +12,14 @@ export default $config({
                 },
             },
             providers: {
-                kubernetes: "4.22.2",
-                "docker-build": "0.0.11",
+                kubernetes: "4.23.0",
+                "docker-build": "0.0.12",
                 gcp: {
-                    version: "8.27.1",
+                    version: "8.32.0",
                     project: "frak-main-v1",
                     region: "europe-west1",
                 },
-                docker: "4.6.1",
+                docker: "4.7.0",
             },
         };
     },

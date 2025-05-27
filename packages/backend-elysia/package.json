@@ -44,7 +44,7 @@
     "permissionless": "^0.2.43",
     "postgres": "^3.4.5",
     "solady": "^0.1.16",
-    "sst": "3.13.20",
+    "sst": "3.16.0",
     "ua-parser-js": "^2.0.3",
     "viem": "^2.28.1",
     "web-push": "^3.6.7",

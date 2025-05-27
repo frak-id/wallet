@@ -1,6 +1,6 @@
 import { walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, error } from "elysia";
 import { walletContext } from "../context";
 
 export const pendingBalanceRoutes = new Elysia({ prefix: "/pending-balance" })

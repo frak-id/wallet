@@ -8,17 +8,17 @@
         "@changesets/changelog-git": "^0.2.1",
         "@changesets/changelog-github": "^0.5.1",
         "@changesets/cli": "^2.29.2",
-        "@pulumi/aws": "^6.78.0",
-        "@pulumi/docker": "^4.6.2",
-        "@pulumi/docker-build": "^0.0.11",
-        "@pulumi/gcp": "^8.27.1",
-        "@pulumi/kubernetes": "^4.22.2",
-        "@pulumi/pulumi": "^3.165.0",
+        "@pulumi/aws": "^6.81.0",
+        "@pulumi/docker": "^4.7.0",
+        "@pulumi/docker-build": "^0.0.12",
+        "@pulumi/gcp": "^8.32.1",
+        "@pulumi/kubernetes": "^4.23.0",
+        "@pulumi/pulumi": "^3.171.0",
         "@types/node": "^22.15.3",
         "knip": "^5.51.0",
         "npm-check-updates": "^18.0.1",
         "rimraf": "^6.0.1",
-        "sst": "3.13.20",
+        "sst": "3.16.0",
         "typedoc": "^0.28.3",
         "typedoc-plugin-frontmatter": "^1.3.0",
         "typedoc-plugin-inline-sources": "^1.3.0",
@@ -137,7 +137,7 @@
         "permissionless": "^0.2.43",
         "postgres": "^3.4.5",
         "solady": "^0.1.16",
-        "sst": "3.13.20",
+        "sst": "3.16.0",
         "ua-parser-js": "^2.0.3",
         "viem": "^2.28.1",
         "web-push": "^3.6.7",
@@ -201,7 +201,7 @@
         "@types/node": "^22",
         "@types/react": "^19",
         "@types/react-dom": "^19",
-        "sst": "3.13.20",
+        "sst": "3.16.0",
         "typescript": "^5",
       },
     },
@@ -344,7 +344,7 @@
         "i18next-resources-for-ts": "^1.6.0",
         "postcss": "^8.5.3",
         "postcss-preset-env": "^10.1.6",
-        "sst": "3.13.20",
+        "sst": "3.16.0",
         "typescript": "^5",
         "vite": "^6.3.3",
         "vite-plugin-mkcert": "^1.17.8",
@@ -415,6 +415,9 @@
         "viem": "^2.x",
       },
     },
+  },
+  "catalog": {
+    "viem": "^2.28.1",
   },
   "packages": {
     "@adraffy/ens-normalize": ["@adraffy/ens-normalize@1.11.0", "", {}, "sha512-/3DDPKHqqIqxUULp8yP4zODUY1i+2xvVWsv8A79xGWdCAG+8sb0hRh0Rk2QyOJUnnbyPUAZYcpBuRe3nS2OIUg=="],
@@ -1095,17 +1098,17 @@
 
     "@protobufjs/utf8": ["@protobufjs/utf8@1.1.0", "", {}, "sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw=="],
 
-    "@pulumi/aws": ["@pulumi/aws@6.78.0", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0", "mime": "^2.0.0" } }, "sha512-RDkXIT8XqzE1OAcZcIiwd5Tfb8q4o3CoLa4VM45I9YAoUIbNoT+7pe+iVly7QoRRDKqrEVpANQ8WUlKBq6DDXg=="],
+    "@pulumi/aws": ["@pulumi/aws@6.81.0", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0", "mime": "^2.0.0" } }, "sha512-DPQPyV1I1JxQJU7yRkvh5vKOceTw3BZm3H/e9Hh02w662vUCOhp/Koci/ZPyWWbfOKam35eUsGIPvdYsWJw/EQ=="],
 
-    "@pulumi/docker": ["@pulumi/docker@4.6.2", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0", "semver": "^5.4.0" } }, "sha512-dMjkR8xkwmYT4mx8GvhQLY4EdmpN6QSDgADXhWaEo5hFxskWqzZUdi/eYlv5OMJPtm3m8V69Q3UOEQAPZPxbyw=="],
+    "@pulumi/docker": ["@pulumi/docker@4.7.0", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0", "semver": "^5.4.0" } }, "sha512-GH1/n/2jz1UCH2Ip7inUASIXV40GK1bMvGap5GiQ8cHuaFLkIX5avE++HP0/AkysXHWoH5cLKDKDJB3ZYalMgw=="],
 
-    "@pulumi/docker-build": ["@pulumi/docker-build@0.0.11", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0" } }, "sha512-W7VPlpbJguOIRTRLnyHkRJ9UJRpnKcMWuoagizT55CbSzAOgCAQ9sBGgAkif4WowcrILHpibttQIE2qsQ1FJ/g=="],
+    "@pulumi/docker-build": ["@pulumi/docker-build@0.0.12", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0" } }, "sha512-NCN9pboxGT/qKkv9c2/7b+S3y/3hZI6FI1+luP4faQeGFmvT4C4GSAw+uKSbayw8EQWqQfavKo9zq2SKrLbxhQ=="],
 
-    "@pulumi/gcp": ["@pulumi/gcp@8.27.1", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0", "@types/express": "^4.16.0", "read-package-json": "^2.0.13" } }, "sha512-D+GXTr7PryTh6g0CDtWa9VWEZlz7487IzmSSyqUKJwFD986q2XlPmsimhlXpRhobVrJi7QJm/3hhZpOQXgVKGQ=="],
+    "@pulumi/gcp": ["@pulumi/gcp@8.32.1", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0", "@types/express": "^4.16.0", "read-package-json": "^2.0.13" } }, "sha512-4v7+FaprU/Hnc+GOdnKhMR25522uoV4e/4hmOQkuYviaKNWPsBhWj82uMa813UjcXLsJ+9QC9PUcFbyfhxcRBA=="],
 
-    "@pulumi/kubernetes": ["@pulumi/kubernetes@4.22.2", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0", "glob": "^10.3.10", "shell-quote": "^1.6.1" } }, "sha512-hPpY3QDWIvZbaa+0Epee1yFQIbVXQi7z1sSyseXFPTitKEqWqVG7tgWhVmTJNkjIlgMTXpdsWIq4QgpCDn9dGQ=="],
+    "@pulumi/kubernetes": ["@pulumi/kubernetes@4.23.0", "", { "dependencies": { "@pulumi/pulumi": "^3.142.0", "glob": "^10.3.10", "shell-quote": "^1.6.1" } }, "sha512-sMNV8cNx+MdvwNXCze3EiYgfRCTilJ9PMq4hqT8lOz7hgX5Un9yyDILJCkrt0wlGlB11Dgbq39mjwCeoImOEgg=="],
 
-    "@pulumi/pulumi": ["@pulumi/pulumi@3.165.0", "", { "dependencies": { "@grpc/grpc-js": "^1.10.1", "@logdna/tail-file": "^2.0.6", "@npmcli/arborist": "^7.3.1", "@opentelemetry/api": "^1.9", "@opentelemetry/exporter-zipkin": "^1.28", "@opentelemetry/instrumentation": "^0.55", "@opentelemetry/instrumentation-grpc": "^0.55", "@opentelemetry/resources": "^1.28", "@opentelemetry/sdk-trace-base": "^1.28", "@opentelemetry/sdk-trace-node": "^1.28", "@types/google-protobuf": "^3.15.5", "@types/semver": "^7.5.6", "@types/tmp": "^0.2.6", "execa": "^5.1.0", "fdir": "^6.1.1", "google-protobuf": "^3.5.0", "got": "^11.8.6", "ini": "^2.0.0", "js-yaml": "^3.14.0", "minimist": "^1.2.6", "normalize-package-data": "^6.0.0", "picomatch": "^3.0.1", "pkg-dir": "^7.0.0", "require-from-string": "^2.0.1", "semver": "^7.5.2", "source-map-support": "^0.5.6", "tmp": "^0.2.1", "upath": "^1.1.0" }, "peerDependencies": { "ts-node": ">= 7.0.1 < 12", "typescript": ">= 3.8.3 < 6" }, "optionalPeers": ["ts-node", "typescript"] }, "sha512-9W7/vqOxzcUf00j3wblolkeLjC6+rbvb/hTqyVmrd86ByzLsZ0e6WZ2Bo/IPElqzw+r0SEDi+Sk451QEaO1ESg=="],
+    "@pulumi/pulumi": ["@pulumi/pulumi@3.171.0", "", { "dependencies": { "@grpc/grpc-js": "^1.10.1", "@logdna/tail-file": "^2.0.6", "@npmcli/arborist": "^7.3.1", "@opentelemetry/api": "^1.9", "@opentelemetry/exporter-zipkin": "^1.28", "@opentelemetry/instrumentation": "^0.55", "@opentelemetry/instrumentation-grpc": "^0.55", "@opentelemetry/resources": "^1.28", "@opentelemetry/sdk-trace-base": "^1.28", "@opentelemetry/sdk-trace-node": "^1.28", "@types/google-protobuf": "^3.15.5", "@types/semver": "^7.5.6", "@types/tmp": "^0.2.6", "execa": "^5.1.0", "fdir": "^6.1.1", "google-protobuf": "^3.5.0", "got": "^11.8.6", "ini": "^2.0.0", "js-yaml": "^3.14.0", "minimist": "^1.2.6", "normalize-package-data": "^6.0.0", "picomatch": "^3.0.1", "pkg-dir": "^7.0.0", "require-from-string": "^2.0.1", "semver": "^7.5.2", "source-map-support": "^0.5.6", "tmp": "^0.2.1", "upath": "^1.1.0" }, "peerDependencies": { "ts-node": ">= 7.0.1 < 12", "typescript": ">= 3.8.3 < 6" }, "optionalPeers": ["ts-node", "typescript"] }, "sha512-HJHvZR0lsLROq3oDYSoXkfeKh0ddjglSmbqk1lkRuGdF8Y5DeD80wOSlD6c4EKWyo4N8f8wtWP7uDc5/HvH07g=="],
 
     "@radix-ui/number": ["@radix-ui/number@1.1.1", "", {}, "sha512-MkKCwxlXTgz6CFoJx3pCwn07GKp36+aZyu/u2Ln2VrA5DcdyCZkASEDBTd8x5whTQQL5CiYf4prXKLcgQdv29g=="],
 
@@ -3371,17 +3374,23 @@
 
     "ssri": ["ssri@10.0.6", "", { "dependencies": { "minipass": "^7.0.3" } }, "sha512-MGrFH9Z4NP9Iyhqn16sDtBpRRNJ0Y2hNa6D65h736fVSaPCHr4DM4sWUNvVaSuC+0OBGhwsrydQwmgfg5LncqQ=="],
 
-    "sst": ["sst@3.13.20", "", { "dependencies": { "aws-sdk": "2.1692.0", "aws4fetch": "1.0.18", "jose": "5.2.3", "opencontrol": "0.0.6", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.13.20", "sst-darwin-x64": "3.13.20", "sst-linux-arm64": "3.13.20", "sst-linux-x64": "3.13.20", "sst-linux-x86": "3.13.20" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-z2BWYfbeF5cdpuzzsdfL2Gd4VB4TMoL19ALthj1tfJK+XIMpjP1EIaMzFwCODcxhYQs1wH6lAeTgG6DYxJwBZg=="],
+    "sst": ["sst@3.16.0", "", { "dependencies": { "aws-sdk": "2.1692.0", "aws4fetch": "1.0.18", "jose": "5.2.3", "opencontrol": "0.0.6", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.16.0", "sst-darwin-x64": "3.16.0", "sst-linux-arm64": "3.16.0", "sst-linux-x64": "3.16.0", "sst-linux-x86": "3.16.0", "sst-win32-arm64": "3.16.0", "sst-win32-x64": "3.16.0", "sst-win32-x86": "3.16.0" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-XX4ktkpyvB2lQCG8/jgH/RWAtdNahE/MjlK6OctM4Nagk1rOrMxxzARit2ZFCisX+ZBvcN0ymgJimnfZqWjM7Q=="],
 
-    "sst-darwin-arm64": ["sst-darwin-arm64@3.13.20", "", { "os": "darwin", "cpu": "arm64" }, "sha512-vjKpQeVG0abQ/sqhx97VM55L8ERztbHyAXQieNU2T6TerOo4tnAFiMofp3f2fVy59csC9CYg0DrTiM2DhQc3SA=="],
+    "sst-darwin-arm64": ["sst-darwin-arm64@3.16.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-NJDGjZ0bl+hWJoT1P2KLyA65OXHkItVg3BNkRsas6qaa+c1U6GU8wLFnfdqkDRnJIYhOIsnZtIquNp7lMIr3ww=="],
 
-    "sst-darwin-x64": ["sst-darwin-x64@3.13.20", "", { "os": "darwin", "cpu": "x64" }, "sha512-W4SnuAyGTb95o+tqPof2fR6w3XIcKv6K9raQg9QZ+E65zbgYsfT9BdnkPxnj9wCwNUfWpMa1gQe+rMzCtv9ElQ=="],
+    "sst-darwin-x64": ["sst-darwin-x64@3.16.0", "", { "os": "darwin", "cpu": "x64" }, "sha512-IZiIUZgTGKjW+aR6/qgqNMzdFS2789PBQjsMquXaTZc7ebRutbCozQ4CC78SuwPXDUZ0/Bz+hyGeXHNOB52lVQ=="],
 
-    "sst-linux-arm64": ["sst-linux-arm64@3.13.20", "", { "os": "linux", "cpu": "arm64" }, "sha512-xDSM9Nra64IiWf6PRwb6EJ/2+QHeg4OohhC1gHY06vUqTi8QVklYaFDZWjMpSUfmKHf+QZp3jMS/mg4JVToj+A=="],
+    "sst-linux-arm64": ["sst-linux-arm64@3.16.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-pvbxU+hrbvtIt347ilbXzVQEl2kXXBIYArLMzblPNg4KblCRvJvH595P86hrr8ZojlOkEb1rC8NSAwiZyBad4g=="],
 
-    "sst-linux-x64": ["sst-linux-x64@3.13.20", "", { "os": "linux", "cpu": "x64" }, "sha512-nZVOrnRsQn3oCyCCHFucdUjxyFurOvxTFDTqiiXcIqUHaKrydWeTU8fgRz5Vc31vbFgVqtoRwT8VSyfEJTAJAQ=="],
+    "sst-linux-x64": ["sst-linux-x64@3.16.0", "", { "os": "linux", "cpu": "x64" }, "sha512-p7qtmdiG1imWSZ7gUbVecee6TIuILTvIe6dgpvkgznYvuTFiMCZaY2SNMFuNRiBoN5zZI0y5osDDXY2uzzo7rA=="],
 
-    "sst-linux-x86": ["sst-linux-x86@3.13.20", "", { "os": "linux", "cpu": "none" }, "sha512-coJ1lnn5NJmYuXZtBrulXivLXTXBxS1r7eRj0WDrFaJ4copZuC/USmclxueDdqAfAWsh3nqQWqPxhoT8lE0Ouw=="],
+    "sst-linux-x86": ["sst-linux-x86@3.16.0", "", { "os": "linux", "cpu": "none" }, "sha512-bw+enzOnZ+MjGd7/h4swGfHpIoyLbIdguelGV7vZLIeuV4t4rZ/hAqfR25GEMjjonVv3Py5hsasMzR2s9GsBLA=="],
+
+    "sst-win32-arm64": ["sst-win32-arm64@3.16.0", "", { "os": "win32", "cpu": "arm64" }, "sha512-bjjYn1gq1p1tBFKvuB3K5ZMuofK/WWmrtKpD+OJOf8PE5fxzRJ8yvOFVIm1QhD4hxDQAPdNonE/P/cXDtKXQig=="],
+
+    "sst-win32-x64": ["sst-win32-x64@3.16.0", "", { "os": "win32", "cpu": "x64" }, "sha512-WFHaUyaLHepKPOMFr7Kf8iECIg1prn3L7c5r+IKgIiv+KznOeslwG6f9mYwxcOYZrZNiXVeDJmDp9xZtB5auSQ=="],
+
+    "sst-win32-x86": ["sst-win32-x86@3.16.0", "", { "os": "win32", "cpu": "none" }, "sha512-Twbdy9sS6zSKsdwpWVEYpFEjVcRAn0Ufdbz+pVdMK3JXniSB7MLC6/KQuxUwvUk2a88+jnPuPVXAYC51SgzDyg=="],
 
     "stackframe": ["stackframe@1.3.4", "", {}, "sha512-oeVtt7eWQS+Na6F//S4kJ2K2VbRlS9D43mAlMyVpVWovy9o+jfgH8O9agzANzaiLjclA0oYzUXEM4PurhSUChw=="],
 
