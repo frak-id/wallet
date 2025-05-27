@@ -3,9 +3,9 @@ import { cors } from "@elysiajs/cors";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { commonApi } from "./api";
+import { businessApi } from "./api/business";
 import {
     auth,
-    business,
     interactions,
     notifications,
     oracle,
@@ -40,13 +40,13 @@ const app = new Elysia({
         stage: process.env.STAGE,
     }))
     .use(commonApi)
+    .use(businessApi)
     // Business logics
     .use(auth)
     .use(oracle)
     .use(interactions)
     .use(notifications)
     .use(wallet)
-    .use(business)
     .use(pairing)
     // 6 degrees related logics
     .use(sixDegrees)
@@ -58,3 +58,6 @@ const app = new Elysia({
 log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);
 
 export type App = typeof app;
+
+export type BusinessApp = typeof businessApi;
+export type CommonApp = typeof commonApi;

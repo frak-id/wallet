@@ -1,4 +1,4 @@
-import { log, postgresContext, sessionContext } from "@backend-common";
+import { dbContext, log, sessionContext } from "@backend-common";
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
@@ -10,7 +10,7 @@ export const walletSsoService = new Elysia({
     name: "Service.walletSso",
 })
     // Add the SSO db to the context
-    .use(postgresContext)
+    .use(dbContext)
     .use(sessionContext)
     .decorate(({ postgresDb, ...decorators }) => {
         // Get our SSO database
@@ -58,6 +58,6 @@ export const walletSsoService = new Elysia({
             },
         };
     })
-    .as("plugin");
+    .as("scoped");
 
 export type SsoService = (typeof walletSsoService)["decorator"]["ssoService"];

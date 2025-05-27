@@ -1,14 +1,18 @@
-import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
-import { interactionsContext } from "../../context";
-import { backendTrackerTable } from "../../db/schema";
+import {
+    backendTrackerTable,
+    interactionsContext,
+} from "../../../../domain/interactions";
+import { businessSessionContext } from "../../middleware/session";
 
-export const webhookManagmentRoutes = new Elysia()
+export const interactionsManagementRoutes = new Elysia({
+    prefix: "/interactions/wh",
+})
+    .use(businessSessionContext)
     .use(interactionsContext)
-    .use(nextSessionContext)
     .guard({
         params: t.Object({
             productId: t.Optional(t.Hex()),
@@ -44,7 +48,6 @@ export const webhookManagmentRoutes = new Elysia()
             };
         },
         {
-            nextAuthenticated: "business",
             response: t.Union([
                 t.Object({
                     setup: t.Literal(false),
@@ -103,7 +106,6 @@ export const webhookManagmentRoutes = new Elysia()
                 .execute();
         },
         {
-            nextAuthenticated: "business",
             body: t.Object({
                 hookSignatureKey: t.String(),
                 source: t.Union([t.Literal("custom")]),
@@ -147,8 +149,5 @@ export const webhookManagmentRoutes = new Elysia()
                 .delete(backendTrackerTable)
                 .where(eq(backendTrackerTable.productId, productId))
                 .execute();
-        },
-        {
-            nextAuthenticated: "business",
         }
     );

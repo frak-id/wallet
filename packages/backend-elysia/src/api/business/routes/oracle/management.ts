@@ -1,14 +1,17 @@
-import { nextSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia, error } from "elysia";
-import { oracleContext } from "../context";
-import { productOracleTable, purchaseStatusTable } from "../db/schema";
+import {
+    oracleContext,
+    productOracleTable,
+    purchaseStatusTable,
+} from "../../../../domain/oracle";
+import { businessSessionContext } from "../../middleware/session";
 
-export const managmentRoutes = new Elysia()
+export const oracleManagementRoutes = new Elysia({ prefix: "/oracle" })
     .use(oracleContext)
-    .use(nextSessionContext)
+    .use(businessSessionContext)
     .resolve(({ params: { productId } }) => {
         if (!productId) {
             return error(400, "Invalid product id");
@@ -130,7 +133,6 @@ export const managmentRoutes = new Elysia()
                 .execute();
         },
         {
-            nextAuthenticated: "business",
             body: t.Object({
                 hookSignatureKey: t.String(),
                 platform: t.Union([
@@ -174,8 +176,5 @@ export const managmentRoutes = new Elysia()
                 .delete(productOracleTable)
                 .where(eq(productOracleTable.productId, productId))
                 .execute();
-        },
-        {
-            nextAuthenticated: "business",
         }
     );

@@ -1,4 +1,4 @@
-import { backendApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/shared/context/server";
 import { cookies } from "next/headers";
 import type { Hex } from "viem";
 
@@ -12,7 +12,7 @@ export async function getRolesOnProduct({
     if (!productId) return undefined;
 
     const stringCookie = (await cookies()).toString();
-    const { data, error } = await backendApi.business.roles.index.get({
+    const { data, error } = await businessApi.roles.index.get({
         query: { productId },
         fetch: {
             headers: {

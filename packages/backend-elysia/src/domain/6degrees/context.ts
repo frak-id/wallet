@@ -1,7 +1,7 @@
-import { mongoDbContext, postgresContext } from "@backend-common";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import Elysia from "elysia";
 import ky from "ky";
+import { dbContext } from "../../common";
 import { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
 import { fixedRoutingTable, walletRoutingTable } from "./db/schema";
 import { SixDegreesAuthenticationService } from "./service/SixDegreesAuthenticationService";
@@ -14,8 +14,7 @@ import { SixDegreesRoutingService } from "./service/SixDegreesRoutingService";
 export const sixDegreesContext = new Elysia({
     name: "Context.6degrees",
 })
-    .use(postgresContext)
-    .use(mongoDbContext)
+    .use(dbContext)
     .decorate(({ postgresDb, getMongoDb, ...decorators }) => {
         // Create the 6degrees db
         const db = drizzle({

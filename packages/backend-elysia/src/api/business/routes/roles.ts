@@ -1,11 +1,12 @@
-import { blockchainContext, nextSessionContext } from "@backend-common";
+import { blockchainContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { Elysia, error } from "elysia";
 import { toHex } from "viem";
+import { businessSessionContext } from "../middleware/session";
 
 export const rolesRoutes = new Elysia({ prefix: "/roles" })
-    .use(nextSessionContext)
+    .use(businessSessionContext)
     .use(blockchainContext)
     .get(
         "/",
@@ -57,7 +58,6 @@ export const rolesRoutes = new Elysia({ prefix: "/roles" })
             };
         },
         {
-            nextAuthenticated: "business",
             query: t.Object({
                 wallet: t.Optional(t.Address()),
                 productId: t.Optional(t.Hex()),

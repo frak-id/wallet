@@ -1,10 +1,8 @@
 export {
     blockchainContext,
-    postgresContext,
-    nextSessionContext,
+    dbContext,
     indexerApiContext,
     sessionContext,
-    mongoDbContext,
     walletSessionContext,
     eventsContext,
     walletSdkSessionContext,

@@ -1,8 +1,4 @@
-import {
-    blockchainContext,
-    mongoDbContext,
-    sessionContext,
-} from "@backend-common";
+import { blockchainContext, dbContext, sessionContext } from "@backend-common";
 import {
     KernelWallet,
     WebAuthN,
@@ -21,7 +17,7 @@ import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository
 export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
     .use(sessionContext)
     .use(blockchainContext)
-    .use(mongoDbContext)
+    .use(dbContext)
     // A few helpers
     .decorate(({ client, getMongoDb, ...decorators }) => {
         const authenticatorRepository = new AuthenticatorRepository(getMongoDb);
@@ -151,4 +147,4 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
             },
         };
     })
-    .as("plugin");
+    .as("scoped");

@@ -1,6 +1,6 @@
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
-import { postgresContext, sessionContext } from "../../common";
+import { dbContext, sessionContext } from "../../common";
 import { walletSdkSessionService } from "../auth/services/WalletSdkSessionService";
 import { walletSsoService } from "../auth/services/WalletSsoService";
 import { notificationContext } from "../notifications/context";
@@ -11,7 +11,7 @@ import { PairingRouterRepository } from "./repositories/PairingRouterRepository"
 export const pairingContext = new Elysia({
     name: "Context.pairing",
 })
-    .use(postgresContext)
+    .use(dbContext)
     .use(sessionContext)
     .use(walletSdkSessionService)
     .use(walletSsoService)
@@ -60,7 +60,7 @@ export const pairingContext = new Elysia({
             };
         }
     )
-    .as("plugin");
+    .as("scoped");
 
 export type PairingContextApp = typeof pairingContext;
 

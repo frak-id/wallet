@@ -1,4 +1,4 @@
-import { postgresContext } from "@backend-common";
+import { dbContext } from "@backend-common";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import { pushTokensTable } from "./db/schema";
@@ -7,7 +7,7 @@ import { NotificationsService } from "./services/NotificationsService";
 export const notificationContext = new Elysia({
     name: "Context.notification",
 })
-    .use(postgresContext)
+    .use(dbContext)
     .decorate(({ postgresDb, ...decorators }) => {
         const notificationDb = drizzle({
             client: postgresDb,
@@ -35,7 +35,7 @@ export const notificationContext = new Elysia({
             };
         },
     })
-    .as("plugin");
+    .as("scoped");
 
 export type NotificationDb = PostgresJsDatabase<{
     pushTokensTable: typeof pushTokensTable;

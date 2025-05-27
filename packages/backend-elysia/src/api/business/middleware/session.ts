@@ -3,10 +3,10 @@ import { unsealData } from "iron-session";
 import type { Address, Hex } from "viem";
 
 /**
- * Build the common context for the app
+ * Build the business context for the app
  */
-export const nextSessionContext = new Elysia({
-    name: "Context.nextSession",
+export const businessSessionContext = new Elysia({
+    name: "Context.businessSession",
 })
     .decorate(
         { as: "append" },
@@ -48,8 +48,8 @@ export const nextSessionContext = new Elysia({
     )
     // Macro to enforce a session or throw an error
     .macro({
-        nextAuthenticated(wanted?: "business") {
-            if (!wanted) return;
+        nextAuthenticated(skip?: boolean) {
+            if (skip) return;
 
             return {
                 beforeHandle: async ({
@@ -68,14 +68,11 @@ export const nextSessionContext = new Elysia({
                     });
 
                     // If none is found, throw an error
-                    if (
-                        wanted === "business" &&
-                        !(businessSession && resolvedSession)
-                    ) {
+                    if (!(businessSession && resolvedSession)) {
                         return error(401, "Missing business auth cookie");
                     }
                 },
             };
         },
     })
-    .as("plugin");
+    .as("scoped");

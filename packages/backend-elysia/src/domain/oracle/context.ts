@@ -1,8 +1,4 @@
-import {
-    blockchainContext,
-    eventsContext,
-    postgresContext,
-} from "@backend-common";
+import { blockchainContext, dbContext, eventsContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js/driver";
@@ -19,7 +15,7 @@ export const oracleContext = new Elysia({
     name: "Context.oracle",
 })
     .use(blockchainContext)
-    .use(postgresContext)
+    .use(dbContext)
     .use(eventsContext)
     .decorate(({ postgresDb, ...decorators }) => {
         const oracleDb = drizzle({
@@ -42,7 +38,7 @@ export const oracleContext = new Elysia({
             productId: t.Optional(t.Hex()),
         }),
     })
-    .as("plugin");
+    .as("scoped");
 
 export type OracleContextApp = typeof oracleContext;
 

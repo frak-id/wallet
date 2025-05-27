@@ -1,4 +1,4 @@
-import { backendApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/shared/context/server";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Hex } from "viem";
 
@@ -11,7 +11,7 @@ export function useFundTestBank() {
     return useMutation({
         mutationKey: ["product", "bank"],
         mutationFn: async ({ bank }: { bank: Hex }) => {
-            await backendApi.business.funding.getTestToken.post({
+            await businessApi.funding.getTestToken.post({
                 bank,
             });
             await queryClient.invalidateQueries({

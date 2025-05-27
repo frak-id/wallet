@@ -1,20 +1,19 @@
-import { blockchainContext, log, nextSessionContext } from "@backend-common";
+import { blockchainContext, log } from "@backend-common";
 import { t } from "@backend-utils";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";
 import { Elysia, error } from "elysia";
 import { toHex } from "viem";
-import { DnsCheckRepository } from "../repositories/DnsCheckRepository";
-import { MintRepository } from "../repositories/MintRepository";
+import { DnsCheckRepository, MintRepository } from "../../../domain/business";
+import { businessSessionContext } from "../middleware/session";
 
 export const mintRoutes = new Elysia({ prefix: "/mint" })
-    .use(nextSessionContext)
+    .use(businessSessionContext)
     .use(blockchainContext)
-    .decorate(({ adminWalletsRepository, client, ...decorators }) => ({
+    .decorate(({ adminWalletsRepository, client }) => ({
         dnsCheckRepository: new DnsCheckRepository(),
         mintRepository: new MintRepository(adminWalletsRepository, client),
         adminWalletsRepository,
-        ...decorators,
     }))
     // Get the dns txt record to set for a domain
     .get(
@@ -30,7 +29,6 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             });
         },
         {
-            nextAuthenticated: "business",
             query: t.Object({
                 domain: t.String(),
             }),
@@ -65,7 +63,6 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             return { isDomainValid, isAlreadyMinted };
         },
         {
-            nextAuthenticated: "business",
             query: t.Object({
                 domain: t.String(),
                 setupCode: t.Optional(t.String()),
@@ -127,7 +124,6 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             }
         },
         {
-            nextAuthenticated: "business",
             body: t.Object({
                 name: t.String(),
                 domain: t.String(),

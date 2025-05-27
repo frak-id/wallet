@@ -1,8 +1,4 @@
-import {
-    blockchainContext,
-    eventsContext,
-    postgresContext,
-} from "@backend-common";
+import { blockchainContext, dbContext, eventsContext } from "@backend-common";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
 import {
@@ -24,7 +20,7 @@ export const interactionsContext = new Elysia({
     name: "Context.interactions",
 })
     .use(blockchainContext)
-    .use(postgresContext)
+    .use(dbContext)
     .use(eventsContext)
     .decorate(
         ({
@@ -75,7 +71,7 @@ export const interactionsContext = new Elysia({
             };
         }
     )
-    .as("plugin");
+    .as("scoped");
 
 export type InteractionsContextApp = typeof interactionsContext;
 

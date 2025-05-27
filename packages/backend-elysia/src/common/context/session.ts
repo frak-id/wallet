@@ -1,4 +1,4 @@
-import { jwt, t } from "@backend-utils";
+import { jwt } from "@backend-utils";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia, error } from "elysia";
 import {
@@ -42,64 +42,9 @@ export const sessionContext = new Elysia({
             iss: "frak.id",
         })
     )
-    // Business JWT
-    .use(
-        jwt({
-            name: "businessJwt",
-            secret: process.env.JWT_SECRET as string,
-            schema: t.Object({
-                wallet: t.Address(),
-                siweMsg: t.String(),
-                siweSignature: t.Hex(),
-            }),
-            // Default jwt payload
-            iss: "frak.id",
-        })
-    )
-    // Then some helpers for potential cookies / headers
-    .guard({
-        cookie: t.Object({
-            businessAuth: t.Optional(t.String()),
-        }),
-    })
-    .onBeforeHandle(({ cookie: { businessAuth } }) => {
-        // Set default properties for businessAuth cookie
-        businessAuth.update(defaultCookiesProps);
-    })
     .macro({
-        authenticated(target?: true | "wallet" | "business" | "wallet-sdk") {
+        authenticated(target?: true | "wallet" | "wallet-sdk") {
             if (!target) return;
-
-            // Business case
-            if (target === "business") {
-                return {
-                    beforeHandle: async ({
-                        cookie: { businessAuth },
-                        businessJwt,
-                    }) => {
-                        if (!businessAuth?.value) {
-                            return error(
-                                "Unauthorized",
-                                "Missing business JWT"
-                            );
-                        }
-                        const auth = await businessJwt.verify(
-                            businessAuth.value
-                        );
-                        // Throw an error and remove the token
-                        if (!auth) {
-                            businessAuth.update({
-                                value: "",
-                                maxAge: 0,
-                            });
-                            return error(
-                                "Unauthorized",
-                                "Invalid business JWT"
-                            );
-                        }
-                    },
-                };
-            }
 
             // Wallet SDK case
             if (target === "wallet-sdk") {
@@ -143,7 +88,7 @@ export const sessionContext = new Elysia({
             };
         },
     })
-    .as("plugin");
+    .as("scoped");
 
 export const walletSessionContext = new Elysia({
     name: "Context.walletSession",
@@ -157,7 +102,7 @@ export const walletSessionContext = new Elysia({
             };
         }
     )
-    .as("plugin");
+    .as("scoped");
 
 export const walletSdkSessionContext = new Elysia({
     name: "Context.walletSdkSession",
@@ -173,4 +118,4 @@ export const walletSdkSessionContext = new Elysia({
             };
         }
     )
-    .as("plugin");
+    .as("scoped");
