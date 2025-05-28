@@ -10,6 +10,9 @@ import {
     purchaseStatusTable,
 } from "./db/schema";
 import { MerkleTreeRepository } from "./repositories/MerkleTreeRepository";
+import { OracleWebhookService } from "./services/hookService";
+import { OracleProofService } from "./services/proofService";
+import { UpdateOracleService } from "./services/updateService";
 
 export const oracleContext = new Elysia({
     name: "Context.oracle",
@@ -24,10 +27,22 @@ export const oracleContext = new Elysia({
                 purchaseItemTable,
             },
         });
+        const merkleRepository = new MerkleTreeRepository(oracleDb);
         return {
             ...decorators,
-            oracleDb,
-            merkleRepository: new MerkleTreeRepository(oracleDb),
+            oracle: {
+                db: oracleDb,
+                merkleRepository,
+                webhookService: new OracleWebhookService(oracleDb),
+                proofService: new OracleProofService(
+                    oracleDb,
+                    merkleRepository
+                ),
+                updateService: new UpdateOracleService(
+                    oracleDb,
+                    merkleRepository
+                ),
+            },
         };
     })
     .guard({

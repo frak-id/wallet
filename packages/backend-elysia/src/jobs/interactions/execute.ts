@@ -1,14 +1,15 @@
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { inArray } from "drizzle-orm";
-import type { InteractionsContextApp, InteractionsDb } from "../context";
 import {
+    type InteractionPackerRepository,
+    type InteractionSignerRepository,
+    type InteractionsContextApp,
+    type InteractionsDb,
+    type PreparedInteraction,
     pendingInteractionsTable,
     pushedInteractionsTable,
-} from "../db/schema";
-import type { InteractionPackerRepository } from "../repositories/InteractionPackerRepository";
-import type { InteractionSignerRepository } from "../repositories/InteractionSignerRepository";
-import type { PreparedInteraction } from "../types/interactions";
+} from "../../domain/interactions";
 
 export const executeInteractionJob = (app: InteractionsContextApp) =>
     app.use(

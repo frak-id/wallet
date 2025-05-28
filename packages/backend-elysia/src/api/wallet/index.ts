@@ -19,7 +19,3 @@ export const walletApi = new Elysia({ prefix: "/wallet" })
 //  - interactions/listenForPurchase -> wallet/interactions/listenForPurchase
 //  - /oracle/:type/:productId/hook -> external/wh/oracle/:type/:productId
 //  - /interactions/webhook/:productId/pushRaw -> external/wh/interactions/webhook/:productId/pushRaw
-
-
-
-

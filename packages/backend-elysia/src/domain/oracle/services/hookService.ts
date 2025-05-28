@@ -1,66 +1,53 @@
 import { log } from "@backend-common";
-import Elysia from "elysia";
-import { oracleContext } from "../context";
+import type { OracleDb } from "../context";
 import { purchaseItemTable, purchaseStatusTable } from "../db/schema";
 
-export const purchaseWebhookService = new Elysia({
-    name: "Service.PurchaseWebhook",
-})
-    .use(oracleContext)
-    .decorate(({ oracleDb, ...decorators }) => {
-        /**
-         * Upsert a purchase in the database
-         * @returns
-         */
-        async function upsertPurchase({
-            purchase,
-            purchaseItems,
-        }: {
-            purchase: typeof purchaseStatusTable.$inferInsert;
-            purchaseItems: (typeof purchaseItemTable.$inferInsert)[];
-        }) {
-            const dbId = await oracleDb.transaction(async (trx) => {
-                // Insert the purchase first
-                const insertedId = await trx
-                    .insert(purchaseStatusTable)
-                    .values(purchase)
-                    .onConflictDoUpdate({
-                        target: [purchaseStatusTable.purchaseId],
-                        set: {
-                            status: purchase.status,
-                            totalPrice: purchase.totalPrice,
-                            currencyCode: purchase.currencyCode,
-                            // Reset leaf on update
-                            leaf: null,
-                            updatedAt: new Date(),
-                            ...(purchase.purchaseToken
-                                ? {
-                                      purchaseToken: purchase.purchaseToken,
-                                  }
-                                : {}),
-                        },
-                    })
-                    .returning({ purchaseId: purchaseStatusTable.id });
+export class OracleWebhookService {
+    constructor(private readonly oracleDb: OracleDb) {}
 
-                // Insert the items if needed
-                if (purchaseItems.length > 0) {
-                    await trx
-                        .insert(purchaseItemTable)
-                        .values(purchaseItems)
-                        .onConflictDoNothing();
-                }
+    async upsertPurchase({
+        purchase,
+        purchaseItems,
+    }: {
+        purchase: typeof purchaseStatusTable.$inferInsert;
+        purchaseItems: (typeof purchaseItemTable.$inferInsert)[];
+    }) {
+        const dbId = await this.oracleDb.transaction(async (trx) => {
+            // Insert the purchase first
+            const insertedId = await trx
+                .insert(purchaseStatusTable)
+                .values(purchase)
+                .onConflictDoUpdate({
+                    target: [purchaseStatusTable.purchaseId],
+                    set: {
+                        status: purchase.status,
+                        totalPrice: purchase.totalPrice,
+                        currencyCode: purchase.currencyCode,
+                        // Reset leaf on update
+                        leaf: null,
+                        updatedAt: new Date(),
+                        ...(purchase.purchaseToken
+                            ? {
+                                  purchaseToken: purchase.purchaseToken,
+                              }
+                            : {}),
+                    },
+                })
+                .returning({ purchaseId: purchaseStatusTable.id });
 
-                return insertedId;
-            });
-            log.debug(
-                { purchase, purchaseItems, insertedId: dbId },
-                "Purchase upserted"
-            );
-        }
+            // Insert the items if needed
+            if (purchaseItems.length > 0) {
+                await trx
+                    .insert(purchaseItemTable)
+                    .values(purchaseItems)
+                    .onConflictDoNothing();
+            }
 
-        return {
-            ...decorators,
-            oracleDb,
-            upsertPurchase,
-        };
-    });
+            return insertedId;
+        });
+        log.debug(
+            { purchase, purchaseItems, insertedId: dbId },
+            "Purchase upserted"
+        );
+    }
+}

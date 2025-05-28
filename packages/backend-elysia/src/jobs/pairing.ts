@@ -1,13 +1,15 @@
 import { mutexCron } from "@backend-utils";
 import { and, isNull, lt, or } from "drizzle-orm";
-import type { PairingContextApp } from "../../../../domain/pairing";
+import Elysia from "elysia";
+import type { PairingContextApp } from "../domain/pairing";
 import {
+    pairingContext,
     pairingSignatureRequestTable,
     pairingTable,
-} from "../../../../domain/pairing";
+} from "../domain/pairing";
 
 // Job cleanup up everything
-export const cleanupCron = (app: PairingContextApp) =>
+const cleanupCron = (app: PairingContextApp) =>
     app.use(
         mutexCron({
             name: "cleanupPairings",
@@ -63,3 +65,8 @@ export const cleanupCron = (app: PairingContextApp) =>
             },
         })
     );
+
+// Pairing related jobs
+export const pairingJobs = new Elysia({ name: "Jobs.pairing" })
+    .use(pairingContext)
+    .use(cleanupCron);

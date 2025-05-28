@@ -4,10 +4,13 @@ import type { pino } from "@bogeychan/elysia-logger";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import type { Address } from "viem";
-import type { InteractionsContextApp, InteractionsDb } from "../context";
-import { pendingInteractionsTable } from "../db/schema";
-import type { InteractionPackerRepository } from "../repositories/InteractionPackerRepository";
-import type { WalletSessionRepository } from "../repositories/WalletSessionRepository";
+import {
+    type InteractionPackerRepository,
+    type InteractionsContextApp,
+    type InteractionsDb,
+    type WalletSessionRepository,
+    pendingInteractionsTable,
+} from "../../domain/interactions";
 
 export const simulateInteractionJob = (app: InteractionsContextApp) =>
     app.use(

@@ -3,15 +3,15 @@ import { t, validateBodyHmac } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
+import { oracleContext } from "../../context";
 import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
 import type {
     WooCommerceOrderStatus,
     WooCommerceOrderUpdateWebhookDto,
 } from "../../dto/WooCommerceWebhook";
-import { purchaseWebhookService } from "../../services/hookService";
 
 export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
-    .use(purchaseWebhookService)
+    .use(oracleContext)
     // Error failsafe, to never fail on shopify webhook
     .onError(({ error, code, body, path, headers, response }) => {
         log.error(
@@ -59,8 +59,10 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
             body,
             headers,
             // Context
-            oracleDb,
-            upsertPurchase,
+            oracle: {
+                db: oracleDb,
+                webhookService: { upsertPurchase },
+            },
         }) => {
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = JSON.parse(

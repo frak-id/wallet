@@ -28,7 +28,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
     // Status of the oracle around a product
     .get(
         "/status",
-        async ({ productId, oracleDb }) => {
+        async ({ productId, oracle: { db: oracleDb } }) => {
             // Get the current oracle
             const currentOracles = await oracleDb
                 .select()
@@ -96,7 +96,12 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
     // Setup of an oracle for a product
     .post(
         "/setup",
-        async ({ body, oracleDb, productId, businessSession }) => {
+        async ({
+            body,
+            oracle: { db: oracleDb },
+            productId,
+            businessSession,
+        }) => {
             if (!productId) {
                 return error(400, "Invalid product id");
             }
@@ -144,34 +149,37 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             }),
         }
     )
-    .post("/delete", async ({ productId, oracleDb, businessSession }) => {
-        if (!businessSession) {
-            return error(401, "Unauthorized");
-        }
-        const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
-            wallet: businessSession.wallet,
-            productId: BigInt(productId),
-            role: productRoles.interactionManager,
-        });
-        if (!isAllowed) {
-            return error(401, "Unauthorized");
-        }
-
-        // Check if we already got a setup for this product (we could only have one)
-        const existingOracle =
-            await oracleDb.query.productOracleTable.findFirst({
-                with: { productId },
+    .post(
+        "/delete",
+        async ({ productId, oracle: { db: oracleDb }, businessSession }) => {
+            if (!businessSession) {
+                return error(401, "Unauthorized");
+            }
+            const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
+                wallet: businessSession.wallet,
+                productId: BigInt(productId),
+                role: productRoles.interactionManager,
             });
-        if (!existingOracle) {
-            return error(
-                404,
-                `Product ${productId} have no current oracle setup`
-            );
-        }
+            if (!isAllowed) {
+                return error(401, "Unauthorized");
+            }
 
-        // Remove it
-        await oracleDb
-            .delete(productOracleTable)
-            .where(eq(productOracleTable.productId, productId))
-            .execute();
-    });
+            // Check if we already got a setup for this product (we could only have one)
+            const existingOracle =
+                await oracleDb.query.productOracleTable.findFirst({
+                    with: { productId },
+                });
+            if (!existingOracle) {
+                return error(
+                    404,
+                    `Product ${productId} have no current oracle setup`
+                );
+            }
+
+            // Remove it
+            await oracleDb
+                .delete(productOracleTable)
+                .where(eq(productOracleTable.productId, productId))
+                .execute();
+        }
+    );

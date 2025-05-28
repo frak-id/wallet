@@ -3,20 +3,16 @@ import { mutexCron } from "@backend-utils";
 import { PurchaseInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { PurchaseProofService } from "../../oracle/services/proofService";
-import { interactionsContext } from "../context";
 import {
+    interactionsContext,
     interactionsPurchaseTrackerTable,
     pendingInteractionsTable,
-} from "../db/schema";
+} from "../../domain/interactions";
+import { oracleContext } from "../../domain/oracle";
 
-const outerPurchaseTracker = new Elysia({ name: "Job.OuterPurchaseTracker" })
-    .use(interactionsContext)
-    .use(PurchaseProofService);
-
-type OuterPurchaseTrackerApp = typeof outerPurchaseTracker;
-
-const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
+const innerPurchaseTrackerJob = (
+    app: typeof interactionsContext & typeof oracleContext
+) =>
     app.use(
         mutexCron({
             name: "purchaseTracker",
@@ -25,7 +21,12 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
             skipIfLocked: true,
             coolDownInMs: 3_000,
             run: async ({ context: { logger } }) => {
-                const { interactionsDb, getPurchaseProof } = app.decorator;
+                const {
+                    interactionsDb,
+                    oracle: {
+                        proofService: { getPurchaseProof },
+                    },
+                } = app.decorator;
                 // Get all the currents tracker (max 50 at the time)
                 const trackers = await interactionsDb
                     .select()
@@ -89,7 +90,9 @@ const innerPurchaseTrackerJob = (app: OuterPurchaseTrackerApp) =>
 /**
  * Export our complete purchase tracker job
  */
-export const purchaseTrackerJob = new Elysia({ name: "Job.PurchaseTracker" })
-    .use(outerPurchaseTracker)
-    .use(innerPurchaseTrackerJob)
-    .as("scoped");
+export const purchaseTrackerJob = new Elysia({
+    name: "Jobs.interactions.purchaseTracker",
+})
+    .use(interactionsContext)
+    .use(oracleContext)
+    .use(innerPurchaseTrackerJob);

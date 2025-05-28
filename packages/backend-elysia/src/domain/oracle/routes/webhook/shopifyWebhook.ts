@@ -4,15 +4,15 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
+import { oracleContext } from "../../context";
 import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
 import type {
     OrderFinancialStatus,
     ShopifyOrderUpdateWebhookDto,
 } from "../../dto/ShopifyWebhook";
-import { purchaseWebhookService } from "../../services/hookService";
 
 export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
-    .use(purchaseWebhookService)
+    .use(oracleContext)
     // Error failsafe, to never fail on shopify webhook
     .onError(({ error, code, body, path, headers }) => {
         log.error(
@@ -60,8 +60,10 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             params: { productId },
             body,
             headers,
-            oracleDb,
-            upsertPurchase,
+            oracle: {
+                db: oracleDb,
+                webhookService: { upsertPurchase },
+            },
         }) => {
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = JSON.parse(
