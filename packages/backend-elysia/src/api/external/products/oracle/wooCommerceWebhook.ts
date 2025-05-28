@@ -1,32 +1,17 @@
-import { log } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
-import { oracleContext } from "../../context";
-import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
-import type {
-    WooCommerceOrderStatus,
-    WooCommerceOrderUpdateWebhookDto,
-} from "../../dto/WooCommerceWebhook";
+import {
+    type WooCommerceOrderStatus,
+    type WooCommerceOrderUpdateWebhookDto,
+    oracleContext,
+    productOracleTable,
+    type purchaseStatusEnum,
+} from "../../../../domain/oracle";
 
-export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
+export const wooCommerceWebhook = new Elysia()
     .use(oracleContext)
-    // Error failsafe, to never fail on shopify webhook
-    .onError(({ error, code, body, path, headers, response }) => {
-        log.error(
-            {
-                error,
-                code,
-                reqPath: path,
-                reqBody: body,
-                reqHeaders: headers,
-                response,
-            },
-            "Error while handling WooCommerce webhook"
-        );
-        return new Response("ko", { status: 200 });
-    })
     .guard({
         headers: t.Partial(
             t.Object({
@@ -39,6 +24,9 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
                 "x-wc-webhook-delivery-id": t.String(),
             })
         ),
+        params: t.Object({
+            productId: t.Optional(t.Hex()),
+        }),
     })
     // Request pre validation hook
     .onBeforeHandle(({ headers }) => {
@@ -52,17 +40,14 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
     // Shopify only give us 5sec to answer, all the heavy logic should be in a cron running elsewhere,
     //   here we should just validate the request and save it
     .post(
-        ":productId/hook",
+        "/woocommerce",
         async ({
             // Query
             params: { productId },
             body,
             headers,
             // Context
-            oracle: {
-                db: oracleDb,
-                webhookService: { upsertPurchase },
-            },
+            oracle: { db: oracleDb, webhookService },
         }) => {
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = JSON.parse(
@@ -94,7 +79,7 @@ export const wooCommerceWebhook = new Elysia({ prefix: "/woocommerce" })
             );
 
             // Insert purchase and items
-            await upsertPurchase({
+            await webhookService.upsertPurchase({
                 purchase: {
                     oracleId: oracle.id,
                     purchaseId,

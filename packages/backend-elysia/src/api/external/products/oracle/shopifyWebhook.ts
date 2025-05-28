@@ -4,23 +4,16 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
-import { oracleContext } from "../../context";
-import { productOracleTable, type purchaseStatusEnum } from "../../db/schema";
-import type {
-    OrderFinancialStatus,
-    ShopifyOrderUpdateWebhookDto,
-} from "../../dto/ShopifyWebhook";
+import {
+    type OrderFinancialStatus,
+    type ShopifyOrderUpdateWebhookDto,
+    oracleContext,
+    productOracleTable,
+    type purchaseStatusEnum,
+} from "../../../../domain/oracle";
 
-export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
+export const shopifyWebhook = new Elysia()
     .use(oracleContext)
-    // Error failsafe, to never fail on shopify webhook
-    .onError(({ error, code, body, path, headers }) => {
-        log.error(
-            { error, code, reqPath: path, reqBody: body, reqHeaders: headers },
-            "Error while handling shopify webhook"
-        );
-        return new Response("ko", { status: 200 });
-    })
     .guard({
         headers: t.Partial(
             t.Object({
@@ -33,6 +26,9 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
                 "x-shopify-topic": t.String(),
             })
         ),
+        params: t.Object({
+            productId: t.Optional(t.Hex()),
+        }),
     })
     // Request pre validation hook
     .onBeforeHandle(({ headers }) => {
@@ -55,15 +51,12 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
     // Shopify only give us 5sec to answer, all the heavy logic should be in a cron running elsewhere,
     //   here we should just validate the request and save it
     .post(
-        ":productId/hook",
+        "/shopify",
         async ({
             params: { productId },
             body,
             headers,
-            oracle: {
-                db: oracleDb,
-                webhookService: { upsertPurchase },
-            },
+            oracle: { db: oracleDb, webhookService },
         }) => {
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = JSON.parse(
@@ -119,7 +112,7 @@ export const shopifyWebhook = new Elysia({ prefix: "/shopify" })
             );
 
             // Insert purchase and items
-            await upsertPurchase({
+            await webhookService.upsertPurchase({
                 purchase: {
                     oracleId: oracle.id,
                     purchaseId,

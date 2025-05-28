@@ -1,5 +1,4 @@
 import { postgresDb } from "@backend-common";
-import { t } from "@backend-utils";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js/driver";
 import { Elysia } from "elysia";
@@ -17,7 +16,7 @@ import { UpdateOracleService } from "./services/updateService";
 export const oracleContext = new Elysia({
     name: "Context.oracle",
 })
-    .decorate((decorators) => {
+    .decorate(() => {
         const oracleDb = drizzle({
             client: postgresDb,
             schema: {
@@ -29,7 +28,6 @@ export const oracleContext = new Elysia({
         });
         const merkleRepository = new MerkleTreeRepository(oracleDb);
         return {
-            ...decorators,
             oracle: {
                 db: oracleDb,
                 merkleRepository,
@@ -44,11 +42,6 @@ export const oracleContext = new Elysia({
                 ),
             },
         };
-    })
-    .guard({
-        params: t.Object({
-            productId: t.Optional(t.Hex()),
-        }),
     })
     .as("scoped");
 

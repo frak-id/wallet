@@ -12,10 +12,13 @@ import {
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { type Hex, isAddress, isHex, keccak256, toHex } from "viem";
-import { interactionsContext } from "../../context";
-import { backendTrackerTable, pendingInteractionsTable } from "../../db/schema";
+import {
+    backendTrackerTable,
+    interactionsContext,
+    pendingInteractionsTable,
+} from "../../../domain/interactions";
 
-export const webhookPushRoutes = new Elysia()
+export const interactionsApi = new Elysia({ prefix: "/interactions" })
     .use(interactionsContext)
     .guard({
         params: t.Object({
@@ -54,7 +57,7 @@ export const webhookPushRoutes = new Elysia()
     }))
     // Direct push an interaction
     .post(
-        ":productId/push",
+        "/push",
         async ({
             // Request
             productId,
@@ -119,7 +122,7 @@ export const webhookPushRoutes = new Elysia()
     )
     // Direct push a raw interaction (non formatted)
     .post(
-        ":productId/pushRaw",
+        "/pushRaw",
         async ({
             // Request
             productId,

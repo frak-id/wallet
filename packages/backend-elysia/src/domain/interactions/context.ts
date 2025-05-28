@@ -44,6 +44,7 @@ export const interactionsContext = new Elysia({
         const walletSessionRepository = new WalletSessionRepository();
         const interactionSignerRepository = new InteractionSignerRepository();
 
+        // Build our campaign repositories
         const campaignDataRepository = new CampaignDataRepository();
         const campaignRewardsService = new CampaignRewardsService(
             campaignDataRepository
@@ -58,6 +59,7 @@ export const interactionsContext = new Elysia({
             walletSessionRepository,
             interactionSignerRepository,
             campaignDataRepository,
+            // Services
             campaignRewardsService,
         };
     })

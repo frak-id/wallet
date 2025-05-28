@@ -4,20 +4,14 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
-import { oracleContext } from "../../context";
-import { productOracleTable } from "../../db/schema";
-import type { CustomWebhookDto } from "../../dto/CustomWebhook";
+import {
+    type CustomWebhookDto,
+    oracleContext,
+    productOracleTable,
+} from "../../../../domain/oracle";
 
-export const customWebhook = new Elysia({ prefix: "/custom" })
+export const customWebhook = new Elysia()
     .use(oracleContext)
-    // Error failsafe, to never fail on shopify webhook
-    .onError(({ error, code, body, path, headers }) => {
-        log.error(
-            { error, code, reqPath: path, reqBody: body, reqHeaders: headers },
-            "Error while handling custom webhook"
-        );
-        return new Response("ko", { status: 200 });
-    })
     .guard({
         headers: t.Partial(
             t.Object({
@@ -25,6 +19,9 @@ export const customWebhook = new Elysia({ prefix: "/custom" })
                 "x-test": t.Optional(t.Boolean()),
             })
         ),
+        params: t.Object({
+            productId: t.Optional(t.Hex()),
+        }),
     })
     // Request pre validation hook
     .onBeforeHandle(({ headers }) => {
@@ -34,15 +31,12 @@ export const customWebhook = new Elysia({ prefix: "/custom" })
         }
     })
     .post(
-        ":productId/hook",
+        "/custom",
         async ({
             params: { productId },
             body,
             headers,
-            oracle: {
-                db: oracleDb,
-                webhookService: { upsertPurchase },
-            },
+            oracle: { db: oracleDb, webhookService },
         }) => {
             // Try to parse the body as a custom webhook type and ensure the type validity
             const webhookData = JSON.parse(body) as CustomWebhookDto;
@@ -84,7 +78,7 @@ export const customWebhook = new Elysia({ prefix: "/custom" })
             );
 
             // Insert purchase and items
-            await upsertPurchase({
+            await webhookService.upsertPurchase({
                 purchase: {
                     oracleId: oracle.id,
                     purchaseId,
