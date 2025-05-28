@@ -36,7 +36,7 @@ export function PurchaseTrackerWebhook({ productId }: { productId: Hex }) {
     const [currentPlatform, setCurrentPlatform] =
         useState<OraclePlatform>(initialState);
     const webhookUrl = useMemo(() => {
-        return `${process.env.BACKEND_URL}/oracle/${currentPlatform}/${productId}/hook`;
+        return `${process.env.BACKEND_URL}/ext/products/${productId}/webhook/oracle/${currentPlatform}`;
     }, [productId, currentPlatform]);
 
     if (!oracleSetupData) {

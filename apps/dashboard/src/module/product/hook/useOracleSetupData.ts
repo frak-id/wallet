@@ -47,7 +47,6 @@ export function useOracleSetupData({ productId }: { productId: Hex }) {
                 oracleUpdater: oracleUpdater,
                 isOracleUpdaterAllowed,
                 isWebhookSetup: webhookStatus?.setup,
-                webhookUrl: `${process.env.BACKEND_URL}/oracle/shopify/${productId}/hook`,
                 webhookStatus,
             };
         },
