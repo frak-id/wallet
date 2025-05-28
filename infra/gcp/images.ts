@@ -31,7 +31,7 @@ export const elysiaImage = new docker.Image(
             context: $cli.paths.root,
             dockerfile: path.join(
                 $cli.paths.root,
-                "packages/backend-elysia/Dockerfile"
+                "services/backend/Dockerfile"
             ),
             platform: "linux/arm64",
             args: {
@@ -57,7 +57,7 @@ export const migrationImage = new docker.Image(
             context: $cli.paths.root,
             dockerfile: path.join(
                 $cli.paths.root,
-                "packages/backend-elysia/MigrationDockerfile"
+                "services/backend/MigrationDockerfile"
             ),
             platform: "linux/arm64",
             args: {

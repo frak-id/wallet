@@ -145,16 +145,6 @@ export const backendInstance = new KubernetesService(
         //     path: "/metrics",
         //     interval: "15s",
         // },
-
-        // Local command
-        dev: {
-            dev: {
-                autostart: true,
-                directory: "packages/backend-elysia",
-                command: "bun run dev",
-            },
-            environment: elysiaSecrets.data,
-        },
     },
     {
         dependsOn: [elysiaImage, elysiaSecrets, migrationJob],

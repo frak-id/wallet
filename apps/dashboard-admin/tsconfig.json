@@ -17,9 +17,9 @@
     "paths": {
       "~/*": ["./app/*"],
       "@shared/*": ["../../packages/shared/*"],
-      "@backend-utils": ["../../packages/backend-elysia/src/utils/index.ts"],
-      "@backend-common": ["../../packages/backend-elysia/src/common/index.ts"],
-      "@backend-common/*": ["../../packages/backend-elysia/src/common/*"]
+      "@backend-utils": ["../../services/backend/src/utils/index.ts"],
+      "@backend-common": ["../../services/backend/src/common/index.ts"],
+      "@backend-common/*": ["../../services/backend/src/common/*"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,

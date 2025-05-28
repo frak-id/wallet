@@ -18,7 +18,7 @@ ENV STAGE=$STAGE
 # Install dependencies and build the project
 RUN bun install --frozen-lockfile
 RUN bun run build:sdk
-RUN cd packages/backend-elysia && bun run build
+RUN cd services/backend && bun run build
 
 # Start a new stage for the final image
 FROM oven/bun
@@ -26,11 +26,11 @@ FROM oven/bun
 WORKDIR /app
 
 # Build in a compiled way
-# COPY --from=builder /monorepo/packages/backend-elysia/server ./server
+# COPY --from=builder /monorepo/services/backend/server ./server
 
 # Build in a bun ways
-COPY --from=builder /monorepo/packages/backend-elysia/package.json .
-COPY --from=builder /monorepo/packages/backend-elysia/dist ./dist
+COPY --from=builder /monorepo/services/backend/package.json .
+COPY --from=builder /monorepo/services/backend/dist ./dist
 
 # Runtime port
 EXPOSE 3030

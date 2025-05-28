@@ -3,9 +3,9 @@ FROM oven/bun:slim
 WORKDIR /app
 
 # Copy only what's needed for migrations
-COPY packages/backend-elysia/drizzle.config.ts ./
-COPY packages/backend-elysia/drizzle/ ./drizzle/
-COPY packages/backend-elysia/src/ ./src/
+COPY services/backend/drizzle.config.ts ./
+COPY services/backend/drizzle/ ./drizzle/
+COPY services/backend/src/ ./src/
 
 # Install only drizzle-kit and postgres (no need for all node_modules)
 RUN bun install drizzle-kit drizzle-orm postgres

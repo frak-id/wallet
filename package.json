@@ -52,7 +52,8 @@
       "apps/*",
       "packages/*",
       "sdk/*",
-      "example/*"
+      "example/*",
+      "services/*"
     ],
     "catalog": {
       "viem": "^2.28.1"
