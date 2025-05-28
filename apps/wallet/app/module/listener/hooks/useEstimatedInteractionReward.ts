@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { listenerInteractionsKey } from "@/module/listener/queryKeys/interactions";
 import type {
@@ -30,7 +30,7 @@ export const estimatedInteractionRewardQuery = ({
         }
 
         const { data, error } =
-            await authenticatedBackendApi.interactions.reward.estimate.get({
+            await authenticatedWalletApi.interactions.estimate.get({
                 query: {
                     productId: productId,
                     ...(interaction ? { interactionKey: interaction } : {}),

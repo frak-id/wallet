@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import { pushBackupData } from "@/module/sdk/utils/backup";
 import {
@@ -40,7 +40,7 @@ export function useConsumePendingInteractions() {
 
             // Submit the interactions
             const { data } =
-                await authenticatedBackendApi.interactions.push.post({
+                await authenticatedWalletApi.interactions.push.post({
                     interactions: interactions.map((interaction) => ({
                         wallet: address,
                         productId: interaction.productId,

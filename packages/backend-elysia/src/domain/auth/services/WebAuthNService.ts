@@ -13,6 +13,7 @@ import { getSenderAddress } from "permissionless/actions";
 import { type Address, type Hex, concatHex, keccak256, toHex } from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
 import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
+import { decodePublicKey } from "../utils/webauthnDecode";
 
 export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
     .use(sessionContext)
@@ -137,6 +138,7 @@ export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
         return {
             ...decorators,
             webAuthNService: {
+                decodePublicKey,
                 authenticatorRepository,
                 isValidSignature,
                 parseCompressedResponse,

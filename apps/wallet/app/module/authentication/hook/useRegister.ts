@@ -1,7 +1,7 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 import { authKey } from "@/module/authentication/queryKeys/auth";
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
@@ -59,7 +59,7 @@ export function useRegister(
             // Verify it
             const encodedResponse = btoa(JSON.stringify(registrationResponse));
             const { data, error } =
-                await authenticatedBackendApi.auth.wallet.register.post({
+                await authenticatedWalletApi.auth.register.post({
                     userAgent: navigator.userAgent,
                     expectedChallenge: registrationOptions.challenge,
                     registrationResponse: encodedResponse,
@@ -104,12 +104,11 @@ async function isSixDegreesContext() {
         return false;
     }
 
-    const getSixDegrees =
-        await authenticatedBackendApi.sixDegrees.routing.index.get({
-            query: {
-                origin: currentContext.origin,
-            },
-        });
+    const getSixDegrees = await authenticatedWalletApi.auth.routing.get({
+        query: {
+            origin: currentContext.origin,
+        },
+    });
 
     return getSixDegrees.data === "sui";
 }

@@ -7,11 +7,12 @@ import { t } from "@backend-utils";
 import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
 import { Elysia, error } from "elysia";
 import { formatUnits, isAddressEqual, toHex } from "viem";
-import { walletContext } from "../context";
+import { walletContext } from "../../../domain/wallet";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .use(walletSessionContext)
     .use(walletContext)
+    // Get current user balance
     .get(
         "",
         async ({ balancesRepository, walletSession }) => {
@@ -94,6 +95,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             },
         }
     )
+    // Get claimable balance
     .get(
         "/claimable",
         async ({ walletSession }) => {
@@ -192,6 +194,24 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                         ])
                     ),
                 }),
+            },
+        }
+    )
+    // Get pending balance
+    .get(
+        "/pending",
+        async ({ pendingBalanceRepository, walletSession }) => {
+            if (!walletSession) return error(401, "Unauthorized");
+
+            return pendingBalanceRepository.getPendingBalance({
+                address: walletSession.address,
+            });
+        },
+        {
+            authenticated: "wallet",
+            response: {
+                401: t.String(),
+                200: t.TokenAmount,
             },
         }
     );

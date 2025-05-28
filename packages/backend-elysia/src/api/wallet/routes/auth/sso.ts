@@ -5,15 +5,15 @@ import { and, eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
-import { ssoTable } from "../../db/schema";
 import {
     type StaticWalletSdkTokenDto,
     type StaticWalletTokenDto,
     WalletAuthResponseDto,
-} from "../../models/WalletSessionDto";
-import { walletSdkSessionService } from "../../services/WalletSdkSessionService";
-import { walletSsoService } from "../../services/WalletSsoService";
-import { webAuthNService } from "../../services/WebAuthNService";
+    ssoTable,
+    walletSdkSessionService,
+    walletSsoService,
+    webAuthNService,
+} from "../../../../domain/auth";
 
 export const walletSsoRoutes = new Elysia({
     prefix: "/sso",

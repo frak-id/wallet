@@ -1,7 +1,7 @@
+import { log } from "@backend-common";
 import { Elysia } from "elysia";
-import { log } from "../../../common";
-import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
-import { pairingContext } from "../context";
+import type { StaticWalletTokenDto } from "../../../../domain/auth";
+import { pairingContext } from "../../../../domain/pairing";
 
 /**
  * The websocket route for pairing

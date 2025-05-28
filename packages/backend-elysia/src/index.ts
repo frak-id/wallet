@@ -2,17 +2,10 @@ import { log } from "@backend-common";
 import { cors } from "@elysiajs/cors";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
-import { commonApi } from "./api";
 import { businessApi } from "./api/business";
-import {
-    auth,
-    interactions,
-    notifications,
-    oracle,
-    pairing,
-    sixDegrees,
-    wallet,
-} from "./domain";
+import { commonApi } from "./api/common";
+import { walletApi } from "./api/wallet";
+import { interactions, oracle } from "./domain";
 
 // Full on service app
 const app = new Elysia({
@@ -41,15 +34,10 @@ const app = new Elysia({
     }))
     .use(commonApi)
     .use(businessApi)
+    .use(walletApi)
     // Business logics
-    .use(auth)
     .use(oracle)
     .use(interactions)
-    .use(notifications)
-    .use(wallet)
-    .use(pairing)
-    // 6 degrees related logics
-    .use(sixDegrees)
     // Setup bun serve options
     .listen({
         port: Number.parseInt(process.env.PORT ?? "3030"),
@@ -60,4 +48,5 @@ log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);
 export type App = typeof app;
 
 export type BusinessApp = typeof businessApi;
+export type WalletApp = typeof walletApi;
 export type CommonApp = typeof commonApi;

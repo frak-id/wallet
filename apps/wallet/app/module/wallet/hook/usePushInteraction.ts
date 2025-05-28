@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import { trackEvent } from "@/module/common/utils/trackEvent";
@@ -53,7 +53,7 @@ export function usePushInteraction() {
             // Otherwise, just set the user referred on product
             try {
                 const { data, error } =
-                    await authenticatedBackendApi.interactions.push.post({
+                    await authenticatedWalletApi.interactions.push.post({
                         interactions: [
                             {
                                 wallet: userAddress,

@@ -8,10 +8,12 @@ import {
     pendingInteractionsTable,
     pushedInteractionsTable,
 } from "./db/schema";
+import { CampaignDataRepository } from "./repositories/CampaignDataRepository";
 import { InteractionPackerRepository } from "./repositories/InteractionPackerRepository";
 import { InteractionSignerRepository } from "./repositories/InteractionSignerRepository";
 import { PendingInteractionsRepository } from "./repositories/PendingInteractionsRepository";
 import { WalletSessionRepository } from "./repositories/WalletSessionRepository";
+import { CampaignRewardsService } from "./services/CampaignRewardsService";
 /**
  * Context for the interactions service
  * @param app
@@ -42,6 +44,11 @@ export const interactionsContext = new Elysia({
         const walletSessionRepository = new WalletSessionRepository();
         const interactionSignerRepository = new InteractionSignerRepository();
 
+        const campaignDataRepository = new CampaignDataRepository();
+        const campaignRewardsService = new CampaignRewardsService(
+            campaignDataRepository
+        );
+
         return {
             ...decorators,
             interactionsDb,
@@ -50,6 +57,8 @@ export const interactionsContext = new Elysia({
             interactionPackerRepository,
             walletSessionRepository,
             interactionSignerRepository,
+            campaignDataRepository,
+            campaignRewardsService,
         };
     })
     .as("scoped");

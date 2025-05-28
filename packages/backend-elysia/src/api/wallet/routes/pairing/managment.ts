@@ -1,10 +1,9 @@
+import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { isAddressEqual } from "viem";
-import { walletSessionContext } from "../../../common";
-import { t } from "../../../utils";
-import { pairingContext } from "../context";
-import { pairingTable } from "../db/schema";
+import { walletSessionContext } from "../../../../common";
+import { pairingContext, pairingTable } from "../../../../domain/pairing";
 
 export const managementRoutes = new Elysia()
     .use(pairingContext)

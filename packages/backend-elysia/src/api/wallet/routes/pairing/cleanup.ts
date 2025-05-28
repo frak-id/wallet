@@ -1,7 +1,10 @@
+import { mutexCron } from "@backend-utils";
 import { and, isNull, lt, or } from "drizzle-orm";
-import { mutexCron } from "../../../utils";
-import type { PairingContextApp } from "../context";
-import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
+import type { PairingContextApp } from "../../../../domain/pairing";
+import {
+    pairingSignatureRequestTable,
+    pairingTable,
+} from "../../../../domain/pairing";
 
 // Job cleanup up everything
 export const cleanupCron = (app: PairingContextApp) =>

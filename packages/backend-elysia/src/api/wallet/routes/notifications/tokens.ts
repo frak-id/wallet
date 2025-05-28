@@ -2,10 +2,12 @@ import { walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { notificationContext } from "../context";
-import { pushTokensTable } from "../db/schema";
+import {
+    notificationContext,
+    pushTokensTable,
+} from "../../../../domain/notifications";
 
-export const pushTokensRoutes = new Elysia({ prefix: "/pushToken" })
+export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     .use(notificationContext)
     .use(walletSessionContext)
     .put(

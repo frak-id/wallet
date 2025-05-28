@@ -2,8 +2,10 @@ import { walletSdkSessionContext, walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { isAddressEqual } from "viem";
-import { walletSdkSessionService } from "../../services/WalletSdkSessionService";
-import { webAuthNService } from "../../services/WebAuthNService";
+import {
+    walletSdkSessionService,
+    webAuthNService,
+} from "../../../../domain/auth";
 
 export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     .use(walletSessionContext)

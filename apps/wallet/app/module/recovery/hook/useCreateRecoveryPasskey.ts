@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
 import type { RecoveryFileContent } from "@/types/Recovery";
@@ -22,7 +22,7 @@ export function useCreateRecoveryPasskey() {
             // Verify the registration and return the formatted output
             const encodedResponse = btoa(JSON.stringify(registrationResponse));
             const { data: wallet, error } =
-                await authenticatedBackendApi.auth.wallet.register.post({
+                await authenticatedWalletApi.auth.register.post({
                     userAgent: navigator.userAgent,
                     expectedChallenge: registrationOptions.challenge,
                     registrationResponse: encodedResponse,

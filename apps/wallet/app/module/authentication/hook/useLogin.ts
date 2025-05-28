@@ -1,6 +1,6 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { authKey } from "@/module/authentication/queryKeys/auth";
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
@@ -66,7 +66,7 @@ export function useLogin(
                 JSON.stringify(authenticationResponse)
             );
             const { data, error } =
-                await authenticatedBackendApi.auth.wallet.login.post({
+                await authenticatedWalletApi.auth.login.post({
                     expectedChallenge: authenticationOptions.challenge,
                     authenticatorResponse: encodedResponse,
                     ssoId: options?.ssoId,

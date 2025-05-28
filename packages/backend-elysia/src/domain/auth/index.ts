@@ -1,4 +1,12 @@
-import { Elysia } from "elysia";
-import { walletAuthRoutes } from "./routes/wallet";
+export { ssoTable } from "./db/schema";
 
-export const auth = new Elysia({ prefix: "/auth" }).use(walletAuthRoutes);
+export { webAuthNService } from "./services/WebAuthNService";
+export { walletSdkSessionService } from "./services/WalletSdkSessionService";
+export { walletSsoService } from "./services/WalletSsoService";
+
+export {
+    WalletAuthResponseDto,
+    type StaticWalletTokenDto,
+    type StaticWalletWebauthnTokenDto,
+    type StaticWalletSdkTokenDto,
+} from "./models/WalletSessionDto";

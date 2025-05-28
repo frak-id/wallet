@@ -7,7 +7,7 @@ import {
     atom,
 } from "jotai/vanilla";
 import type { Hex } from "viem";
-import { authenticatedBackendApi } from "../../common/api/backendClient";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
 import {
     type BasePairingState,
     WsCloseCode,
@@ -18,7 +18,7 @@ import {
 } from "../types";
 
 type PairingWs = ReturnType<
-    typeof authenticatedBackendApi.pairings.ws.subscribe
+    typeof authenticatedWalletApi.pairings.ws.subscribe
 >;
 
 export type PairingWsEventListener = (
@@ -98,7 +98,7 @@ export abstract class BasePairingClient<
             return;
         }
 
-        this.connection = authenticatedBackendApi.pairings.ws.subscribe({
+        this.connection = authenticatedWalletApi.pairings.ws.subscribe({
             query: params,
         });
         this.setState({ status: "connecting" } as Partial<TState>);

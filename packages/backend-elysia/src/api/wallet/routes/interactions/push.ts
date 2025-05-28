@@ -7,10 +7,12 @@ import {
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { isAddressEqual } from "viem";
-import { sixDegreesContext } from "../../../domain/6degrees/context";
-import { interactionsContext } from "../context";
-import { pendingInteractionsTable } from "../db/schema";
-import { InteractionRequestDto } from "../dto/InteractionDto";
+import { sixDegreesContext } from "../../../../domain/6degrees/context";
+import {
+    InteractionRequestDto,
+    interactionsContext,
+    pendingInteractionsTable,
+} from "../../../../domain/interactions";
 
 export const pushInteractionsRoutes = new Elysia()
     .use(interactionsContext)

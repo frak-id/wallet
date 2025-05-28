@@ -2,8 +2,10 @@ import { eventEmitter, log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { type Address, isHex } from "viem";
-import { interactionsContext } from "../context";
-import { interactionsPurchaseTrackerTable } from "../db/schema";
+import {
+    interactionsContext,
+    interactionsPurchaseTrackerTable,
+} from "../../../../domain/interactions";
 
 export const purchaseInteractionsRoutes = new Elysia()
     .use(interactionsContext)

@@ -1,8 +1,6 @@
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import { interactionsContext } from "../context";
-import { CampaignDataRepository } from "../repositories/CampaignDataRepository";
-import { CampaignRewardsService } from "../services/CampaignRewardsService";
+import { interactionsContext } from "../../../../domain/interactions";
 
 const emptyTokenAmount = {
     amount: 0,
@@ -11,21 +9,8 @@ const emptyTokenAmount = {
     gbpAmount: 0,
 };
 
-export const rewardsRoutes = new Elysia({ prefix: "/reward" })
+export const simulateRoutes = new Elysia()
     .use(interactionsContext)
-    // Some repo and services to our context
-    .decorate(({ ...decorators }) => {
-        const campaignDataRepository = new CampaignDataRepository();
-        const campaignRewardsService = new CampaignRewardsService(
-            campaignDataRepository
-        );
-
-        return {
-            ...decorators,
-            campaignDataRepository,
-            campaignRewardsService,
-        };
-    })
     // Estimate potential reward for an interaction
     .get(
         "/estimate",
