@@ -4,7 +4,7 @@ import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useOracleSetupData } from "@/module/product/hook/useOracleSetupData";
-import { backendApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/shared/context/server";
 import { Button } from "@shared/module/component/Button";
 import { Spinner } from "@shared/module/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
@@ -93,9 +93,9 @@ function usePurchaseTrackerSetup({ productId }: { productId: Hex }) {
     return useMutation({
         mutationKey: ["product", "oracle-webhook-internal", "setup", productId],
         mutationFn: async () => {
-            const { error } = await backendApi
-                .oracle({ productId })
-                .setup.post({
+            const { error } = await businessApi
+                .product({ productId })
+                .oracleWebhook.setup.post({
                     hookSignatureKey: "SHOPIFY_SECRET",
                     platform: "internal",
                 });

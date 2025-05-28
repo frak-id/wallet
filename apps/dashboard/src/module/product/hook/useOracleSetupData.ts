@@ -5,7 +5,7 @@ import {
     productAdministratorRegistryAbi,
     productRoles,
 } from "@frak-labs/app-essentials";
-import { backendApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/shared/context/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
@@ -27,9 +27,9 @@ export function useOracleSetupData({ productId }: { productId: Hex }) {
             }
 
             // Get the current backend setup status
-            const { data: webhookStatus } = await backendApi
-                .oracle({ productId })
-                .status.get();
+            const { data: webhookStatus } = await businessApi
+                .product({ productId })
+                .oracleWebhook.status.get();
 
             // Check if the updater is allowed on this product
             const isOracleUpdaterAllowed = await readContract(viemClient, {
@@ -47,7 +47,6 @@ export function useOracleSetupData({ productId }: { productId: Hex }) {
                 oracleUpdater: oracleUpdater,
                 isOracleUpdaterAllowed,
                 isWebhookSetup: webhookStatus?.setup,
-                webhookUrl: `${process.env.BACKEND_URL}/oracle/shopify/${productId}/hook`,
                 webhookStatus,
             };
         },

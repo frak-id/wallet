@@ -33,7 +33,7 @@ export const backend = new sst.x.DevCommand("backend", {
         title: "Backend",
         autostart: true,
         command: "bun run dev",
-        directory: "packages/backend-elysia",
+        directory: "services/backend",
     },
     environment: {
         ...elysiaEnv,
@@ -49,7 +49,7 @@ export const dbGcpStudio = new sst.x.DevCommand(
             title: "[DB][GCP] Inspect",
             autostart: false,
             command: "bunx drizzle-kit studio --port 13001",
-            directory: "packages/backend-elysia",
+            directory: "services/backend",
         },
         environment: dbEnv,
     },
@@ -62,7 +62,7 @@ export const dbGcpGenerate = new sst.x.DevCommand("db:gcp:generate", {
         title: "[DB][GCP] Generate",
         autostart: false,
         command: "bunx drizzle-kit generate",
-        directory: "packages/backend-elysia",
+        directory: "services/backend",
     },
     environment: dbEnv,
 });
@@ -71,7 +71,7 @@ export const dbGcpMigrate = new sst.x.DevCommand("db:gcp:migrate", {
         title: "[DB][GCP] Migrate",
         autostart: false,
         command: "bunx drizzle-kit migrate",
-        directory: "packages/backend-elysia",
+        directory: "services/backend",
     },
     environment: dbEnv,
 });

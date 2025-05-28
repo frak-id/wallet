@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { authenticatedBackendApi } from "../../common/api/backendClient";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { pairingKey } from "../queryKeys";
 
 /**
@@ -13,7 +13,7 @@ export function usePairingInfo({ id }: { id?: string }) {
                 return null;
             }
 
-            const { data } = await authenticatedBackendApi
+            const { data } = await authenticatedWalletApi
                 .pairings({ id })
                 .get();
             console.log("data", data);

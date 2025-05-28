@@ -4,7 +4,7 @@ import {
 } from "@/module/authentication/atoms/sso";
 import { ssoKey } from "@/module/authentication/queryKeys/sso";
 import { ssoParamsToCompressed } from "@/module/authentication/utils/ssoDataCompression";
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import {
     getFromLocalStorage,
     getSafeSession,
@@ -55,7 +55,7 @@ export function useGetOpenSsoLink() {
             // If we got a consumption key, we want sso tracking, thus we need to call the backend to obtain a trackable link
             if (consumeKey) {
                 const { data } =
-                    await authenticatedBackendApi.auth.wallet.sso.create.post({
+                    await authenticatedWalletApi.auth.sso.create.post({
                         productId,
                         consumeKey,
                         params: compressedParam,

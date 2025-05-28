@@ -10,18 +10,18 @@
         },
         {
             "name": "Elysia - backend",
-            "path": "../packages/backend-elysia"
+            "path": "../services/backend"
         },
         {
             "name": "App - Dashboard",
-            "path": "../packages/dashboard"
+            "path": "../apps/dashboard"
         },
         {
             "name": "App - Wallet",
-            "path": "../packages/wallet"
+            "path": "../apps/wallet"
         },
         {
-            "name": "Common - App essentgials",
+            "name": "Common - App essentials",
             "path": "../packages/app-essentials"
         },
         {

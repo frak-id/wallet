@@ -13,7 +13,7 @@ import type {
     SendTransactionModalStepType,
 } from "@frak-labs/core-sdk";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { backendApi } from "@frak-labs/shared/context/server";
+import { backendApi, businessApi } from "@frak-labs/shared/context/server";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { type Hex, encodeFunctionData } from "viem";
@@ -51,7 +51,7 @@ export function useMintMyProduct(
         async mutationFn({ name, domain, setupCode, productTypes }) {
             // Trigger the backend mint
             setInfoTxt("Registering your product");
-            const { data, error } = await backendApi.business.mint.put({
+            const { data, error } = await businessApi.product.mint.put({
                 name,
                 domain,
                 setupCode,

@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
@@ -51,7 +51,7 @@ export function useSubscribeToPushNotification(
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();
-            await authenticatedBackendApi.notifications.pushToken.put({
+            await authenticatedWalletApi.notifications.tokens.put({
                 subscription: {
                     endpoint: jsonSubscription.endpoint ?? "no-endpoint",
                     keys: {

@@ -64,7 +64,8 @@ jobs:
           list-files: 'shell'
           filters: |
             backend:
-              - 'packages/backend-elysia/**'
+              - 'services/backend/**'
+              - 'infra/gcp/**'
 
       - name: Set up QEMU
         if: steps.changes.outputs.backend == 'true' || github.event.inputs.force_deploy == 'true'

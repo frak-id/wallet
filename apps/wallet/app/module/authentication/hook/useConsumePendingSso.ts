@@ -1,7 +1,7 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { ssoConsumeKey } from "@/module/authentication/atoms/sso";
 import { ssoKey } from "@/module/authentication/queryKeys/sso";
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +30,7 @@ export function useConsumePendingSso({
             }
 
             const { data, error } =
-                await authenticatedBackendApi.auth.wallet.sso.consume.post({
+                await authenticatedWalletApi.auth.sso.consume.post({
                     id: trackingId,
                     productId,
                     consumeKey: consumeKey.key,

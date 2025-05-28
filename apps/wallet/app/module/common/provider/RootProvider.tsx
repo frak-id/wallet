@@ -1,5 +1,5 @@
 import { currentChain } from "@/module/blockchain/provider";
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { smartAccountConnector } from "@/module/wallet/smartWallet/connector";
@@ -113,7 +113,7 @@ function SetupServiceWorker() {
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();
-            await authenticatedBackendApi.notifications.pushToken.put({
+            await authenticatedWalletApi.notifications.tokens.put({
                 subscription: {
                     endpoint: jsonSubscription.endpoint ?? "no-endpoint",
                     keys: {

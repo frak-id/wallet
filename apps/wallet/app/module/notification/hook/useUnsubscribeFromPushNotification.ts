@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ export function useUnsubscribeFromPushNotification() {
         queryKey: notificationKey.push.tokenCount,
         queryFn: async () => {
             const result =
-                await authenticatedBackendApi.notifications.pushToken.hasAny.get();
+                await authenticatedWalletApi.notifications.tokens.hasAny.get();
             return result.data ?? false;
         },
     });
@@ -36,7 +36,7 @@ export function useUnsubscribeFromPushNotification() {
             }
 
             // Remove every subscription related to this user
-            await authenticatedBackendApi.notifications.pushToken.delete();
+            await authenticatedWalletApi.notifications.tokens.delete();
 
             // Refetch the push token count
             await refetch();

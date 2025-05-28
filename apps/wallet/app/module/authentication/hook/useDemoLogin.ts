@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { Session } from "../../../types/Session";
-import { authenticatedBackendApi } from "../../common/api/backendClient";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 
 export function useDemoLogin() {
@@ -25,7 +25,7 @@ export function useDemoLogin() {
 
             // Launch the backend authentication process
             const { data, error } =
-                await authenticatedBackendApi.auth.wallet.ecdsaLogin.post({
+                await authenticatedWalletApi.auth.ecdsaLogin.post({
                     expectedChallenge: challenge,
                     signature,
                     wallet: account.address as Address,

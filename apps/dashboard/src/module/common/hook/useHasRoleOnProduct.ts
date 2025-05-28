@@ -1,5 +1,5 @@
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { backendApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/shared/context/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
 
@@ -35,7 +35,7 @@ export function useHasRoleOnProduct({
         ],
         queryFn: async () => {
             const finalWallet = wallet ?? walletStatus?.wallet;
-            const { data, error } = await backendApi.business.roles.index.get({
+            const { data, error } = await businessApi.roles.index.get({
                 query: {
                     productId,
                     ...(finalWallet ? { wallet: finalWallet } : {}),

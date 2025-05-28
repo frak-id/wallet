@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import { sdkKey } from "@/module/common/queryKeys/sdk";
@@ -31,13 +31,11 @@ export function useGetSafeSdkSession() {
             JSON.stringify(lastWebAuthnAction.signature)
         );
         const { data: session, error } =
-            await authenticatedBackendApi.auth.wallet.sdk.fromWebAuthNSignature.post(
-                {
-                    signature: encodedSignature,
-                    msg: lastWebAuthnAction.msg,
-                    wallet: lastWebAuthnAction.wallet,
-                }
-            );
+            await authenticatedWalletApi.auth.sdk.fromWebAuthNSignature.post({
+                signature: encodedSignature,
+                msg: lastWebAuthnAction.msg,
+                wallet: lastWebAuthnAction.wallet,
+            });
         if (error) {
             console.error(
                 "Unable to generate a new token from previous signature",
@@ -69,7 +67,7 @@ export function useGetSafeSdkSession() {
             // If we got a current token, check it's validity
             if (sdkSession) {
                 const { data } =
-                    await authenticatedBackendApi.auth.wallet.sdk.isValid.get({
+                    await authenticatedWalletApi.auth.sdk.isValid.get({
                         headers: {
                             "x-wallet-sdk-auth": sdkSession.token,
                         },
@@ -93,7 +91,7 @@ export function useGetSafeSdkSession() {
 
             // Otherwise, craft a new token from the cookie (can fail in third parties context)
             const { data, error } =
-                await authenticatedBackendApi.auth.wallet.sdk.generate.get();
+                await authenticatedWalletApi.auth.sdk.generate.get();
             if (error) {
                 console.error("Unable to generate a new token", error);
                 return null;

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { authenticatedBackendApi } from "../../common/api/backendClient";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { webauthnSessionAtom } from "../../common/atoms/session";
 import { pairingKey } from "../queryKeys";
 
@@ -13,7 +13,7 @@ export function useGetActivePairings() {
     return useQuery({
         queryKey: pairingKey.listByWallet(wallet?.address),
         queryFn: async () => {
-            const { data } = await authenticatedBackendApi.pairings.list.get();
+            const { data } = await authenticatedWalletApi.pairings.list.get();
             if (!data) {
                 console.warn("No pairings found");
                 return null;
