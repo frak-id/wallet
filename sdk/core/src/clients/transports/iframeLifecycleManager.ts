@@ -60,6 +60,11 @@ export function createIFrameLifecycleManager({
                 );
                 break;
             }
+            // Redirect handling
+            case "redirect": {
+                window.location.href = `${messageEvent.data.baseRedirectUrl}${encodeURIComponent(window.location.href)}`;
+                break;
+            }
         }
     };
 

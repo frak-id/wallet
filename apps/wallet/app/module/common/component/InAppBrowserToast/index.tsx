@@ -8,6 +8,7 @@ import { useAtom } from "jotai";
 import { X } from "lucide-react";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
 import styles from "./index.module.css";
 
 /**
@@ -15,7 +16,7 @@ import styles from "./index.module.css";
  */
 export function InAppBrowserToast() {
     const { t } = useTranslation();
-    const { isInAppBrowser, redirectUrl } = useIsInAppBrowser();
+    const { isInAppBrowser, isInIframe, redirectUrl } = useIsInAppBrowser();
     const [isDismissed, setIsDismissed] = useAtom(
         inAppBrowserToastDismissedAtom
     );
@@ -25,22 +26,35 @@ export function InAppBrowserToast() {
 
     // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
     useEffect(() => {
-        if (isInAppBrowser && !hasAttemptedRedirect && redirectUrl) {
-            setHasAttemptedRedirect(true);
-            window.location.href = redirectUrl;
-        }
+        if (!redirectUrl) return;
+        if (isInIframe || !isInAppBrowser || hasAttemptedRedirect) return;
+
+        setHasAttemptedRedirect(true);
+        handleRedirect();
     }, [
         isInAppBrowser,
+        isInIframe,
         hasAttemptedRedirect,
         redirectUrl,
         setHasAttemptedRedirect,
     ]);
 
-    const handleToastClick = useCallback(() => {
-        if (redirectUrl) {
-            window.location.href = redirectUrl;
+    const handleRedirect = useCallback(() => {
+        if (!redirectUrl) return;
+
+        if (isInIframe) {
+            // If in an iframe, ask the parent to redirect to the new url
+            emitLifecycleEvent({
+                iframeLifecycle: "redirect",
+                data: {
+                    baseRedirectUrl: redirectUrl,
+                },
+            });
+        } else {
+            // Otherwise, redirect directly
+            window.location.href = `${redirectUrl}${encodeURIComponent(window.location.href)}`;
         }
-    }, [redirectUrl]);
+    }, [redirectUrl, isInIframe]);
 
     const handleDismiss = useCallback(
         (e: React.MouseEvent) => {
@@ -60,7 +74,7 @@ export function InAppBrowserToast() {
             <button
                 type="button"
                 className={styles.inAppBrowserToast__clickable}
-                onClick={handleToastClick}
+                onClick={handleRedirect}
                 aria-label={t("wallet.inAppBrowser.clickToOpen")}
             >
                 <Warning text={t("wallet.inAppBrowser.warning")}>
