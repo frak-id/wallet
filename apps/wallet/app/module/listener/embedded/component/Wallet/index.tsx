@@ -1,4 +1,5 @@
 import { sessionAtom } from "@/module/common/atoms/session";
+import { InAppBrowserToast } from "@/module/common/component/InAppBrowserToast";
 import { ListenerWalletHeader } from "@/module/listener/embedded/component/WalletHeader";
 import { LoggedInComponent } from "@/module/listener/embedded/component/WalletLoggedIn";
 import { LoggedOutComponent } from "@/module/listener/embedded/component/WalletLoggedOut";
@@ -56,6 +57,7 @@ function CurrentEmbeddedViewComponent() {
                 session && styles["modalListenerWallet__inner--loggedIn"]
             )}
         >
+            <InAppBrowserToast />
             <ListenerWalletHeader />
             {session ? <LoggedInComponent /> : <LoggedOutComponent />}
         </div>

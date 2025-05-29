@@ -1,4 +1,5 @@
 import { Header } from "@/module/common/component/Header";
+import { InAppBrowserToast } from "@/module/common/component/InAppBrowserToast";
 import { Navigation } from "@/module/common/component/Navigation";
 import { cx } from "class-variance-authority";
 import type { ReactNode } from "react";
@@ -15,6 +16,7 @@ export function GlobalLayout({
 }>) {
     return (
         <div className={"desktop scrollbars"}>
+            <InAppBrowserToast />
             {header && <Header />}
             <main
                 className={cx(

@@ -304,6 +304,10 @@
                 "lastActive": "Dernière activité :",
                 "delete": "Supprimer l'appareil"
             }
+        },
+        "inAppBrowser": {
+            "warning": "Vous utilisez un navigateur intégré. Votre expérience pourrait être dégradée. Appuyez pour ouvrir dans votre navigateur.",
+            "clickToOpen": "Appuyez pour ouvrir dans votre navigateur"
         }
     },
     "error": {

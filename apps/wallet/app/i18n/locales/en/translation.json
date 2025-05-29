@@ -304,6 +304,10 @@
                 "lastActive": "Last active :",
                 "delete": "Delete device"
             }
+        },
+        "inAppBrowser": {
+            "warning": "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.",
+            "clickToOpen": "Tap to open in your browser."
         }
     },
     "error": {

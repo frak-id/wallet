@@ -371,6 +371,10 @@ interface Resources {
                     delete: "Delete device";
                 };
             };
+            inAppBrowser: {
+                warning: "You're using an embedded browser. Your experience may be degraded.";
+                clickToOpen: "Tap to open in your browser";
+            };
         };
         error: {
             webauthn: {

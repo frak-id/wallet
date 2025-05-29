@@ -1,5 +1,6 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
+import { InAppBrowserToast } from "@/module/common/component/InAppBrowserToast";
 import {
     displayedRpcModalStepsAtom,
     modalRpcResultsAtom,
@@ -183,6 +184,7 @@ export function ListenerModal({
             open={true}
             onOpenChange={onOpenChange}
         >
+            <InAppBrowserToast />
             <>
                 {icon}
                 <CurrentModalMetadataInfo />

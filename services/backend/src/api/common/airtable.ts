@@ -7,10 +7,10 @@ import { AirtableRepository } from "../../domain/airtable";
  * Airtable API routes for external integrations
  * Used by landing pages and other external services
  */
-export const airtableRoutes = new Elysia({ prefix: "/airtable" })
+export const airtableRoutes = new Elysia({ name: "Routes.airtable" })
     .decorate("airtableRepository", new AirtableRepository())
     .post(
-        "/",
+        "/airtable",
         async ({ body, query, airtableRepository }) => {
             // Validate required parameters
             if (!query.table) {
