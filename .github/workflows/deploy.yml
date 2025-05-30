@@ -82,6 +82,7 @@ jobs:
         if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
         shell: bash
         run: |
+          echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "STAGE=prod" >> $GITHUB_ENV
           else
@@ -95,7 +96,13 @@ jobs:
         run: |
           STAGE=${STAGE_OVERRIDE:-$STAGE}
           echo "Deploying with stage: $STAGE"
+          
           bun sst install
-          bun sst deploy --stage $STAGE
+          if [[ $STAGE == "prod" ]]; then
+            bun sst deploy --stage prod
+          else
+            bun sst deploy --stage dev
+            bun sst deploy --stage example
+          fi
         env:
           STAGE: ${{ env.STAGE }}

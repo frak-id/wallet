@@ -19,16 +19,30 @@ export default $config({
                     project: "frak-main-v1",
                     region: "europe-west1",
                 },
-                docker: "4.7.0",
             },
         };
     },
     async run() {
-        const isGcp = $app?.stage?.startsWith("gcp");
+        // Check if we are deploying the example stack
+        const isExample = $app?.stage?.startsWith("example");
+        if (isExample) {
+            await import("./infra/example.ts");
+            return;
+        }
 
-        // If on gcp, only deploy the backend
+        // Check if we are deploying on GCP (only `services` are deployed on GCP)
+        const isGcp = $app?.stage?.startsWith("gcp");
         if (isGcp) {
             await import("./infra/gcp/backend.ts");
+            return;
+        }
+
+        // Check if we are running in dev (if yes, import basicly all the stacks and exit)
+        if ($dev) {
+            // Gcp dev stuff
+            await import("./infra/gcp/dev.ts");
+            await import("./infra/wallet.ts");
+            await import("./infra/dashboard.ts");
             return;
         }
 
@@ -46,17 +60,13 @@ export default $config({
                 },
             });
 
-            // Gcp dev stuff
+            // Missing dev stacks (since they didn't matched the previous if)
+            await import("./infra/example.ts");
             await import("./infra/gcp/dev.ts");
         }
 
         // Add wallet + dashboard
         await import("./infra/wallet.ts");
         await import("./infra/dashboard.ts");
-
-        // Deploy example on non prod stacks
-        if ($app.stage !== "prod") {
-            await import("./infra/example.ts");
-        }
     },
 });

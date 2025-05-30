@@ -1,103 +1,91 @@
-# Frak Wallet - Streamlining Web3 Integration
+# Frak Wallet
 
-This repository contains the **Frak Wallet SDK**, designed to help web2 corporations create mouth-to-mouth acquisition campaigns through seamless Web3 integration. It provides tools for implementing referral tracking and reward systems, leveraging blockchain technology under the hood.
+Web3 infrastructure for seamless referral tracking and reward systems, enabling corporations to build mouth-to-mouth acquisition campaigns.
 
-## Try It Out
+## Repository Scope
 
-- **Wallet**: [wallet.frak.id](https://wallet.frak.id)
-- **Example Website**: [news-paper.xyz](https://news-paper.xyz)
-- **ERPC and Ponder Deployment**: [GitHub - frak-id/wallet](https://github.com/frak-id/wallet)
+This monorepo contains the complete Frak ecosystem infrastructure, including wallets, SDKs, examples, and backend services. For additional resources:
 
-## Overview
+- **Blockchain Indexing**: [frak-id/indexer](https://github.com/frak-id/indexer) - Ponder-based blockchain event indexing
+- **RPC Infrastructure**: [frak-id/erpc](https://github.com/frak-id/erpc) - Load balancing and caching layer
 
-Frak Wallet enables developers to integrate blockchain-based referral and reward systems into their applications, facilitating mouth-to-mouth acquisition campaigns. By tracking interactions on-chain, it allows for transparent and verifiable referral programs and user engagement metrics.
+## Documentation
 
-## Key Features
+Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)** for integration guides, API references, and examples.
 
-- **Referral Tracking**: Implement and monitor referral campaigns with automatic on-chain tracking and reward distribution.
-- **Reward Systems**: Set up campaigns that incentivize user interactions and sharing.
-- **Seamless Integration**: Easily integrate with both React and vanilla JavaScript applications.
-- **Gasless Transactions**: Enable delegated user sessions for improved user experience.
-- **Advanced Authentication**: Utilize Sign-In with Ethereum (SIWE) for secure authentication.
+## Project Structure
 
-## Use Cases
+### 📱 Applications (`/apps`)
+- **`wallet/`** - Main Frak Wallet interface for users
+- **`dashboard/`** - Business dashboard for campaign management
+- **`dashboard-admin/`** - Administrative interface
 
-### For Web2 Corporations
+### 📦 Core Packages (`/packages`)
+- **`shared/`** - Common utilities and types across the ecosystem
+- **`app-essentials/`** - Essential components and utilities for applications
+- **`browserslist-config/`** - Browser compatibility configuration
 
-- **Mouth-to-Mouth Acquisition**: Boost user acquisition through blockchain-powered referral programs.
-- **Engagement Tracking**: Record user interactions on-chain when they engage with your content or services.
-- **Reward Programs**: Automatically distribute rewards based on user referrals and engagement.
-- **Community Building**: Foster a verifiable community with transparent interaction records.
+### 🛠️ SDK (`/sdk`)
+- **`core/`** - Core SDK functionality and blockchain interactions
+- **`react/`** - React-specific hooks and components
+- **`components/`** - Reusable UI components for integrations
+- **`legacy/`** - Legacy SDK components for backward compatibility
 
-### For dApp Developers
+### 🌐 Backend Services (`/services`)
+- **`backend/`** - Elysia.js-based API and business logic
 
-- **Smooth Onboarding**: Simplify user onboarding with account abstraction.
-- **Flexible Reward Mechanisms**: Implement custom token or NFT-based rewards tied to user actions.
-- **Interaction Tracking**: Maintain transparent records of user activity on-chain.
+### 🏗️ Infrastructure (`/infra`)
+- **AWS & SST configurations** - Serverless deployment infrastructure
+- **GCP integrations** - Google Cloud Platform services
+- **Component definitions** - Reusable infrastructure components
 
-## Integration Benefits
+### 📚 Examples (`/example`)
+- **`vanilla-js/`** - Pure JavaScript integration examples
+- **`wallet-ethcc/`** - Conference-specific wallet implementation
+- **`components/`** - Component usage examples
 
-By integrating the Frak Wallet SDK, you can:
+### 📖 Documentation (`/docs`)
+- Generated documentation and guides
 
-- **Enhance User Experience**: Provide a seamless Web3 experience without blockchain complexities.
-- **Increase Engagement**: Encourage user participation and sharing through incentivized programs.
-- **Build Trust**: Utilize transparent blockchain technology for verifiable interactions.
-- **Easy Implementation**: Integrate the Frak Wallet SDK into your existing setup with minimal effort.
-- **Future-Proof**: Stay ahead with the latest in blockchain technology, including Account Abstraction and WebAuthn.
+## Technology Stack
 
-## Getting Started
+### Frontend Stack
+- **[Next.js](https://nextjs.org/)** - React framework with SSR
+- **[TanStack Query](https://tanstack.com/)** - Data fetching and state management
+- **[Wagmi](https://wagmi.sh/)** - Ethereum hooks for React
+- **[Viem](https://viem.sh/)** - TypeScript interface for Ethereum
 
-### Prerequisites
+### Backend & Infrastructure
+- **[Elysia.js](https://elysiajs.com/)** - Fast and type-safe backend framework
+- **[SST](https://sst.dev/)** - Infrastructure as Code on AWS
+- **[Pulumi](https://www.pulumi.com/)** - Cloud infrastructure management
 
-- **Bun**: Install [Bun](https://bun.sh/) on your machine.
-- **AWS Account**: Set up an AWS account using AWS CLI for configuration storage and website deployments.
+### Blockchain Infrastructure
+- **[Pimlico](https://www.pimlico.io/)** - Paymaster and bundler operations
+- **[ZeroDev](https://zerodev.app/)** - Smart account solutions
+- **[ERPC](https://www.erpc.cloud/)** - RPC load balancing and caching [Deployment repo](https://github.com/frak-id/infra-blockchain)
+- **[Ponder](https://ponder.sh/)** - Blockchain event indexing [Deployment repo](https://github.com/frak-id/infra-blockchain)
 
-### Installation
+### Development Tools
+- **[Changesets](https://github.com/changesets/changesets)** - Package versioning and releases
+- **[Typedoc](https://typedoc.org/)** - Documentation generation
+- **[Knip](https://knip.dev/)** - Dead code elimination
+- **[Biome](https://biomejs.dev/)** - Ultra-fast linting and formatting
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/frak-id/wallet.git
-   ```
-2. **Navigate to the Project Directory**:
-   ```bash
-   cd wallet
-   ```
-3. **Install Dependencies**:
-   ```bash
-   bun install
-   ```
+## Quick Start
 
-### Running the Development Server
+```bash
+# Clone the repository
+git clone https://github.com/frak-id/wallet.git
+cd wallet
 
-- **Start the Server**:
-  ```bash
-  bun dev
-  ```
+# Install dependencies
+bun install
 
-## Built With
-
-- **[Bun](https://bun.sh/)**: JavaScript toolkit for performance and efficiency.
-- **[Elysia.js](https://elysiajs.com/)**: Fast and scalable backend framework.
-- **[Next.js](https://nextjs.org/)**: React framework for server-side rendering.
-- **[Biome](https://biomejs.dev/)**: Ultra-fast linting and formatting.
-- **[TanStack Query](https://tanstack.com/)**: Efficient data fetching and async state management.
-- **[Wagmi](https://wagmi.sh/)**: Ethereum hooks for React.
-- **[Viem](https://viem.sh/)**: Blockchain communication library.
-- **[Lucide](https://lucide.dev/)**: Beautiful and consistent icons.
-
-### Infrastructure
-
-- **[SST](https://sst.dev/)**: Infrastructure as Code (IaC) on AWS.
-- **[OpenNext](https://open-next.js.org/)**: Deploy Next.js apps outside of Vercel.
-- **[Pimlico](https://www.pimlico.io/)**: Paymaster and bundler operations.
-- **[ZeroDev](https://zerodev.app/)**: Smart account solutions.
-- **[ERPC](https://www.erpc.cloud/)**: RPC load balancing and caching. [Deployment Repository](https://github.com/frak-id/wallet)
-- **[Ponder](https://ponder.sh/)**: Blockchain event indexing. [Deployment Repository](https://github.com/frak-id/wallet)
-
-## Contributing
-
-We welcome contributions! Feel free to submit a pull request.
+# Start development server
+bun dev
+```
 
 ## License
 
-This project is licensed under the **GNU GPLv3 License**. See the [LICENSE](LICENSE) file for details.
+GNU GPLv3 License - see [LICENSE](LICENSE) for details.

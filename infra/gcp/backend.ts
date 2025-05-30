@@ -52,7 +52,7 @@ const migrationJob = new KubernetesJob("ElysiaDbMigration", {
     job: {
         container: {
             name: "db-migration",
-            image: migrationImage.imageName,
+            image: migrationImage.ref,
             envFrom: [
                 {
                     secretRef: {
@@ -81,7 +81,7 @@ export const backendInstance = new KubernetesService(
             containers: [
                 {
                     name: "elysia",
-                    image: elysiaImage.imageName,
+                    image: elysiaImage.ref,
                     ports: [{ containerPort: 3030 }],
                     env: [],
                     // Mount all the secrets
