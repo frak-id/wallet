@@ -34,16 +34,22 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Set commit hash for cache busting
-        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2
+    
+      - name: Setup SST Cache
+        id: sst-caching
+        uses: actions/cache@v4
+        with:
+          path: | 
+            .sst/platform/
+            .sst/provider-lock.json
+            .sst/esbuild.json
+          key: ${{ runner.os }}-sst-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-
 
       - uses: dorny/paths-filter@v3
         name: Check changes
@@ -56,6 +62,20 @@ jobs:
               - 'apps/**'
               - 'packages/**'
               - 'example/**'
+              - 'services/**'
+              - 'infra/**'
+            example:
+              - 'example/**'
+              - 'packages/**'
+              - 'infra/**'
+            apps:
+              - 'apps/**'
+              - 'packages/**'
+              - 'infra/**'
+            services:
+              - 'services/**'
+              - 'packages/**'
+              - 'infra/**'
 
       - name: "🔨 Install dependencies"
         if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
@@ -72,11 +92,28 @@ jobs:
           role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
           aws-region: eu-west-1
           retry-max-attempts: 5
+      
+      - name: "👥 Login to Google Cloud"
+        uses: 'google-github-actions/auth@v2'
+        if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
+        id: 'auth'
+        with:
+          workload_identity_provider: 'projects/426208135260/locations/global/workloadIdentityPools/github/providers/sst-deployer'
+          service_account: 'sst-service-account@frak-main-v1.iam.gserviceaccount.com'
+          project_id: 'frak-main-v1'
+  
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
+        with:
+          project_id: 'frak-main-v1'
+          install_components: 'kubectl,gke-gcloud-auth-plugin'
 
-      - name:  "👥 Login to Amazon ECR"
-        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: 'Docker and k8s Auth'
+        if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
+        run: |
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
+          gcloud container clusters get-credentials master-cluster --location europe-west1-b --project frak-main-v1
 
       - name: "🔧 Setup environment"
         if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
@@ -91,18 +128,30 @@ jobs:
 
           echo "Deployment stage  : ${{ env.STAGE }}"
 
-      - name: "🚀 SST Deploy"
-        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
+      - name: "🚀 Deploy Services"
+        if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
         run: |
-          STAGE=${STAGE_OVERRIDE:-$STAGE}
-          echo "Deploying with stage: $STAGE"
-          
-          bun sst install
+          if [[ $STAGE == "prod" ]]; then
+            bun sst deploy --stage gcp-production
+          else
+            bun sst deploy --stage gcp-staging
+          fi
+        env:
+          STAGE: ${{ env.STAGE }}
+
+      - name: "🚀 Deploy Apps"
+        if: steps.changes.outputs.apps == 'true' || github.event.inputs.force_deploy == 'true'
+        run: |
           if [[ $STAGE == "prod" ]]; then
             bun sst deploy --stage prod
           else
             bun sst deploy --stage dev
-            bun sst deploy --stage example
           fi
+        env:
+          STAGE: ${{ env.STAGE }}
+
+      - name: "🚀 Deploy Example"
+        if: steps.changes.outputs.example == 'true' || github.event.inputs.force_deploy == 'true'
+        run: bun sst deploy --stage example
         env:
           STAGE: ${{ env.STAGE }}
