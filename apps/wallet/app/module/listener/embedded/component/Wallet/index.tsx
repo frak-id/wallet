@@ -7,6 +7,7 @@ import { useEmbeddedListenerUI } from "@/module/listener/providers/ListenerUiPro
 import { jotaiStore } from "@shared/module/atoms/store";
 import { Overlay } from "@shared/module/component/Overlay";
 import { cva, cx } from "class-variance-authority";
+import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
 
 const walletStyles = cva(styles.modalListenerWallet, {
@@ -58,6 +59,7 @@ function CurrentEmbeddedViewComponent() {
             )}
         >
             <InAppBrowserToast />
+            <ToastLoading />
             <ListenerWalletHeader />
             {session ? <LoggedInComponent /> : <LoggedOutComponent />}
         </div>

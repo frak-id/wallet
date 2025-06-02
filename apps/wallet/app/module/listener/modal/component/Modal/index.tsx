@@ -38,6 +38,7 @@ import {
     useEffect,
     useMemo,
 } from "react";
+import { ToastLoading } from "../../../component/ToastLoading";
 import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
 
@@ -185,6 +186,7 @@ export function ListenerModal({
             onOpenChange={onOpenChange}
         >
             <InAppBrowserToast />
+            <ToastLoading />
             <>
                 {icon}
                 <CurrentModalMetadataInfo />
