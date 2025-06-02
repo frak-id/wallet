@@ -1,3 +1,4 @@
+import { OpenPanel } from "@openpanel/web";
 import { type ExtractedParametersFromRpc, FrakRpcError } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
@@ -13,6 +14,7 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "../utils/compression";
+import { computeProductId } from "../utils/computeProductId";
 import { BACKUP_KEY } from "../utils/constants";
 import { DebugInfoGatherer } from "./DebugInfo";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
@@ -173,11 +175,29 @@ export function createIFrameFrakClient({
         iframe.remove();
     };
 
+    // Init open panel
+    let openPanel: OpenPanel | undefined;
+    if (
+        process.env.OPEN_PANEL_API_URL &&
+        process.env.OPEN_PANEL_SDK_CLIENT_ID
+    ) {
+        console.log("[Frak SDK] Initializing OpenPanel");
+        openPanel = new OpenPanel({
+            apiUrl: process.env.OPEN_PANEL_API_URL,
+            clientId: process.env.OPEN_PANEL_SDK_CLIENT_ID,
+            trackScreenViews: true,
+            trackOutgoingLinks: true,
+            trackAttributes: true,
+        });
+        openPanel.init();
+    }
+
     // Perform the post connection setup
     const waitForSetup = postConnectionSetup({
         config,
         messageHandler,
         lifecycleManager,
+        openPanel,
     }).then(() => debugInfo.updateSetupStatus(true));
 
     return {
@@ -188,6 +208,7 @@ export function createIFrameFrakClient({
         request,
         listenerRequest,
         destroy,
+        openPanel,
     };
 }
 
@@ -254,10 +275,12 @@ async function postConnectionSetup({
     config,
     messageHandler,
     lifecycleManager,
+    openPanel,
 }: {
     config: FrakWalletSdkConfig;
     lifecycleManager: IframeLifecycleManager;
     messageHandler: IFrameMessageHandler;
+    openPanel?: OpenPanel;
 }): Promise<void> {
     // Wait for the handler to be connected
     await lifecycleManager.isConnected;
@@ -298,5 +321,20 @@ async function postConnectionSetup({
         });
     }
 
-    await Promise.all([pushCss(), pushI18n(), pushBackup()]);
+    // Track sdk setup event
+    async function trackSdkSetup() {
+        if (!openPanel) return;
+
+        await openPanel.track("sdk_setup", {
+            domain: config.domain,
+            product: computeProductId(config),
+        });
+    }
+
+    await Promise.allSettled([
+        pushCss(),
+        pushI18n(),
+        pushBackup(),
+        trackSdkSetup(),
+    ]);
 }

@@ -1,5 +1,14 @@
-import { useEnvironment } from "@/module/root/hook/useEnvironment";
+import { OpenPanel } from "@openpanel/web";
 import { Analytics } from "@shared/module/component/Analytics";
+import { useEffect } from "react";
+
+export const openPanel = new OpenPanel({
+    apiUrl: process.env.OPEN_PANEL_API_URL,
+    clientId: process.env.OPEN_PANEL_WALLET_CLIENT_ID ?? "",
+    trackScreenViews: true,
+    trackOutgoingLinks: true,
+    trackAttributes: true,
+});
 
 /**
  * AnalyticsWrapper component
@@ -10,12 +19,15 @@ import { Analytics } from "@shared/module/component/Analytics";
  * @returns {null} - Returns null.
  */
 export function AnalyticsWrapper() {
-    const { isProduction } = useEnvironment();
-
     const websiteId = process.env.UMAMI_WALLET_WEBSITE_ID;
 
-    if (isProduction && websiteId) {
+    useEffect(() => {
+        openPanel.init();
+    }, []);
+
+    if (websiteId) {
         return <Analytics websiteId={websiteId} />;
     }
+
     return null;
 }

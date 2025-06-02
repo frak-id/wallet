@@ -43,6 +43,12 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
             "process.env.FRAK_WALLET_URL": JSON.stringify(
                 process.env.FRAK_WALLET_URL
             ),
+            "process.env.OPEN_PANEL_API_URL": JSON.stringify(
+                process.env.OPEN_PANEL_API_URL
+            ),
+            "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
+                process.env.OPEN_PANEL_WALLET_CLIENT_ID
+            ),
         },
         // Remove console and debugger on prod
         esbuild: {

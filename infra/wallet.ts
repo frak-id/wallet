@@ -4,6 +4,8 @@ import {
     erpcUrl,
     indexerUrl,
     nexusRpcSecret,
+    openPanelApiUrl,
+    openPanelWalletClientId,
     pimlicoApiKey,
     privyAppId,
     umamiWalletWebsiteId,
@@ -43,5 +45,7 @@ new sst.aws.StaticSite("Wallet", {
         UMAMI_WALLET_WEBSITE_ID: umamiWalletWebsiteId.value,
         PRIVY_APP_ID: privyAppId.value,
         FRAK_WALLET_URL: walletUrl,
+        OPEN_PANEL_API_URL: openPanelApiUrl,
+        OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,
     },
 });

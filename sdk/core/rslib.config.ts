@@ -62,4 +62,16 @@ export default defineConfig({
     tools: {
         ...tools,
     },
+    source: {
+        define: {
+            "process.env.OPEN_PANEL_API_URL": JSON.stringify(
+                process.env.OPEN_PANEL_API_URL ??
+                    "https://op-api.gcp-dev.frak.id"
+            ),
+            "process.env.OPEN_PANEL_SDK_CLIENT_ID": JSON.stringify(
+                process.env.OPEN_PANEL_SDK_CLIENT_ID ??
+                    "4c2a39f7-f4c9-406a-a773-a6a298320b12"
+            ),
+        },
+    },
 });

@@ -49,7 +49,10 @@ export const businessUrl = getStaticVariable({
     dev: "https://business-dev.frak.id",
     local: "https://localhost:3001",
 });
-export const stage = $app.stage ?? "dev";
+export const openPanelApiUrl = getStaticVariable({
+    prod: "https://op-api.gcp.frak.id",
+    dev: "https://op-api.gcp-dev.frak.id",
+});
 
 // Some secrets
 export const drpcApiKey = new sst.Secret("DRPC_API_KEY");
@@ -63,3 +66,7 @@ export const umamiBusinessWebsiteId = new sst.Secret(
 export const sessionEncryptionKy = new sst.Secret("SESSION_ENCRYPTION_KEY");
 export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
 export const privyAppId = new sst.Secret("PRIVY_APP_ID");
+export const openPanelWalletClientId = new sst.Secret(
+    "OPEN_PANEL_WALLET_CLIENT_ID"
+);
+export const openPanelSdkClientId = new sst.Secret("OPEN_PANEL_SDK_CLIENT_ID");
