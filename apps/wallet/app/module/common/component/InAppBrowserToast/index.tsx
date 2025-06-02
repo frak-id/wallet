@@ -77,19 +77,21 @@ export function InAppBrowserToast() {
                 onClick={handleRedirect}
                 aria-label={t("wallet.inAppBrowser.clickToOpen")}
             >
-                <Warning text={t("wallet.inAppBrowser.warning")}>
-                    <div className={styles.inAppBrowserToast__actions}>
-                        <button
-                            type="button"
-                            onClick={handleDismiss}
-                            className={styles.inAppBrowserToast__dismissButton}
-                            aria-label="Dismiss inapp browser warning"
-                        >
-                            <X size={16} />
-                        </button>
-                    </div>
-                </Warning>
+                <Warning
+                    text={t("wallet.inAppBrowser.warning")}
+                    className={styles.inAppBrowserToast__warning}
+                />
             </button>
+            <div className={styles.inAppBrowserToast__actions}>
+                <button
+                    type="button"
+                    onClick={handleDismiss}
+                    className={styles.inAppBrowserToast__dismissButton}
+                    aria-label="Dismiss inapp browser warning"
+                >
+                    <X size={16} />
+                </button>
+            </div>
         </div>
     );
 }

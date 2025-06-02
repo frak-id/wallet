@@ -1,8 +1,5 @@
 .inAppBrowserToast {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     z-index: 1000;
     max-width: 90vw;
     width: auto;
@@ -25,11 +22,18 @@
 }
 
 .inAppBrowserToast__actions {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-top: 8px;
+}
+
+.inAppBrowserToast__warning {
+    padding-right: 50px;
 }
 
 .inAppBrowserToast__hint {
