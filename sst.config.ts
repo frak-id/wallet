@@ -43,6 +43,7 @@ export default $config({
             await import("./infra/gcp/dev.ts");
             await import("./infra/wallet.ts");
             await import("./infra/dashboard.ts");
+            await import("./infra/example.ts");
             return;
         }
 
