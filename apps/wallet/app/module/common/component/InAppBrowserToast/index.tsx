@@ -2,14 +2,12 @@ import {
     inAppBrowserToastDismissedAtom,
     socialRedirectAttemptedAtom,
 } from "@/module/common/atoms/inAppBrowser";
-import { Warning } from "@/module/common/component/Warning";
+import { Toast } from "@/module/common/component/Toast";
 import { useIsInAppBrowser } from "@/module/common/hook/useIsInAppBrowser";
 import { useAtom } from "jotai";
-import { X } from "lucide-react";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
-import styles from "./index.module.css";
 
 /**
  * Toast component that displays when user is in an in-app browser
@@ -70,28 +68,12 @@ export function InAppBrowserToast() {
     }
 
     return (
-        <div className={styles.inAppBrowserToast}>
-            <button
-                type="button"
-                className={styles.inAppBrowserToast__clickable}
-                onClick={handleRedirect}
-                aria-label={t("wallet.inAppBrowser.clickToOpen")}
-            >
-                <Warning
-                    text={t("wallet.inAppBrowser.warning")}
-                    className={styles.inAppBrowserToast__warning}
-                />
-            </button>
-            <div className={styles.inAppBrowserToast__actions}>
-                <button
-                    type="button"
-                    onClick={handleDismiss}
-                    className={styles.inAppBrowserToast__dismissButton}
-                    aria-label="Dismiss inapp browser warning"
-                >
-                    <X size={16} />
-                </button>
-            </div>
-        </div>
+        <Toast
+            text={t("wallet.inAppBrowser.warning")}
+            ariaLabel={t("wallet.inAppBrowser.clickToOpen")}
+            ariaDismissLabel={t("wallet.inAppBrowser.dismiss")}
+            onClick={handleRedirect}
+            onDismiss={handleDismiss}
+        />
     );
 }

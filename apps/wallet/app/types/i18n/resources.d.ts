@@ -374,9 +374,12 @@ interface Resources {
             inAppBrowser: {
                 warning: "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.";
                 clickToOpen: "Tap to open in your browser.";
+                dismiss: "Dismiss inapp browser warning";
             };
             toastLoading: {
                 stuck: "Stuck? You can try to <button>cleanup</button>.<br /><br />(this will logout and you will need to redo a login / pairing)<br /><br />See the <pLink>Troubleshooting</pLink> section for more information.";
+                dismiss: "Dismiss inapp browser warning";
+                loading: "Loading in progress, please wait...";
             };
         };
         error: {

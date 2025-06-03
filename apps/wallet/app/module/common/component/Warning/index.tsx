@@ -1,12 +1,12 @@
 import { cx } from "class-variance-authority";
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 
 export function Warning({
     text,
     className,
     children,
-}: PropsWithChildren<{ text: string; className?: string }>) {
+}: PropsWithChildren<{ text: string | ReactNode; className?: string }>) {
     return (
         <div className={cx(styles.warning, className)}>
             <p>

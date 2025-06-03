@@ -1,12 +1,13 @@
-import { Spinner } from "@shared/module/component/Spinner";
+import { Toast } from "@/module/common/component/Toast";
 import { useIsMutating } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useSdkCleanup } from "../hooks/useSdkCleanup";
 import styles from "./ToastLoading.module.css";
 
 export function ToastLoading() {
+    const { t } = useTranslation();
     const cleanup = useSdkCleanup();
     const isMutating = useIsMutating();
     const [showStuck, setShowStuck] = useState(false);
@@ -52,15 +53,18 @@ export function ToastLoading() {
     if (!showStuck) {
         return (
             <div className={styles.toastLoading}>
-                <Spinner />
+                <Toast
+                    isLoading={true}
+                    text={t("wallet.toastLoading.loading")}
+                />
             </div>
         );
     }
 
     // after 5sec after the mutating is unchanged, link to the troubleshooting section + the button to logout and redo a login / pairing (cleanup hook)
     return (
-        <div className={styles.toastStuck}>
-            <div className={styles.toastStuck__content}>
+        <Toast
+            text={
                 <Trans
                     i18nKey="wallet.toastLoading.stuck"
                     components={{
@@ -83,7 +87,13 @@ export function ToastLoading() {
                         ),
                     }}
                 />
-            </div>
-        </div>
+            }
+            ariaLabel={t("wallet.toastLoading.stuck")}
+            ariaDismissLabel={t("wallet.toastLoading.dismiss")}
+            onDismiss={() => {
+                setShowStuck(false);
+                startStuckTimer();
+            }}
+        />
     );
 }
