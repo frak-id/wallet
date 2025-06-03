@@ -6,17 +6,16 @@
     "@changesets/changelog-git": "^0.2.1",
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.2",
-    "@pulumi/aws": "^6.78.0",
-    "@pulumi/docker": "^4.6.2",
-    "@pulumi/docker-build": "^0.0.11",
-    "@pulumi/gcp": "^8.27.1",
-    "@pulumi/kubernetes": "^4.22.2",
-    "@pulumi/pulumi": "^3.165.0",
+    "@pulumi/aws": "^6.81.0",
+    "@pulumi/docker-build": "^0.0.12",
+    "@pulumi/gcp": "^8.32.1",
+    "@pulumi/kubernetes": "^4.23.0",
+    "@pulumi/pulumi": "^3.171.0",
     "@types/node": "^22.15.3",
     "knip": "^5.51.0",
     "npm-check-updates": "^18.0.1",
     "rimraf": "^6.0.1",
-    "sst": "3.13.20",
+    "sst": "3.16.0",
     "typedoc": "^0.28.3",
     "typedoc-plugin-frontmatter": "^1.3.0",
     "typedoc-plugin-inline-sources": "^1.3.0",
@@ -35,6 +34,7 @@
     "changeset:version": "changeset version && bun install --lockfile-only",
     "clean": "rimraf **/.open-next/ **/.next/ .sst/dist/ .sst/artifacts/",
     "deploy": "sst deploy --stage dev",
+    "deploy:example": "sst deploy --stage example",
     "deploy:prod": "sst deploy --stage prod",
     "deploy-gcp:prod": "sst deploy --stage gcp-production",
     "deploy-gcp:staging": "sst deploy --stage gcp-staging",
@@ -47,9 +47,16 @@
     "typecheck": "bun run --filter '*' typecheck"
   },
   "type": "module",
-  "workspaces": [
-    "packages/*",
-    "sdk/*",
-    "example/*"
-  ]
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*",
+      "sdk/*",
+      "example/*",
+      "services/*"
+    ],
+    "catalog": {
+      "viem": "^2.28.1"
+    }
+  }
 }

@@ -18,7 +18,7 @@ const subdomain = isProd ? "wallet" : "wallet-dev";
  * Wallet website
  */
 new sst.aws.StaticSite("Wallet", {
-    path: "packages/wallet",
+    path: "apps/wallet",
     // Set the custom domain
     domain: {
         name: `${subdomain}.frak.id`,

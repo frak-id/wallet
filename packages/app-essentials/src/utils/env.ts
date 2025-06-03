@@ -4,6 +4,7 @@
  */
 export const isRunningLocally =
     process.env.STAGE !== "dev" &&
+    process.env.STAGE !== "example" &&
     process.env.STAGE !== "prod" &&
     process.env.STAGE !== "production" &&
     process.env.STAGE !== "staging";

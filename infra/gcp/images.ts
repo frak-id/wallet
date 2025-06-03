@@ -1,7 +1,6 @@
 import path from "node:path";
 import { normalizedStageName } from "../utils";
 
-const imageName = "elysia";
 const repository = `elysia-${normalizedStageName}`;
 
 /**
@@ -22,23 +21,25 @@ const registryPath = registry.location.apply(
 /**
  * Create the elysia image
  */
-const latestTag = registryPath.apply((path) => `${path}/${imageName}:latest`);
-export const elysiaImage = new docker.Image(
-    imageName,
+export const elysiaImage = new dockerbuild.Image(
+    "elysia-image",
     {
-        imageName: latestTag,
-        build: {
-            context: $cli.paths.root,
-            dockerfile: path.join(
-                $cli.paths.root,
-                "packages/backend-elysia/Dockerfile"
-            ),
-            platform: "linux/arm64",
-            args: {
-                NODE_ENV: "production",
-                STAGE: normalizedStageName,
-            },
+        context: {
+            location: $cli.paths.root,
         },
+        dockerfile: {
+            location: path.join($cli.paths.root, "services/backend/Dockerfile"),
+        },
+        platforms: ["linux/arm64"],
+        buildArgs: {
+            NODE_ENV: "production",
+            STAGE: normalizedStageName,
+        },
+        push: true,
+        tags: registryPath.apply((path) => [
+            `${path}/elysia:${process.env.COMMIT_HASH ? `git-${process.env.COMMIT_HASH}` : "local-build"}`,
+            `${path}/elysia:latest`,
+        ]),
     },
     {
         dependsOn: [registry],
@@ -48,23 +49,28 @@ export const elysiaImage = new docker.Image(
 /**
  * Create the db migration image
  */
-const migrationTag = registryPath.apply((path) => `${path}/migration:latest`);
-export const migrationImage = new docker.Image(
-    "migration",
+export const migrationImage = new dockerbuild.Image(
+    "migration-image",
     {
-        imageName: migrationTag,
-        build: {
-            context: $cli.paths.root,
-            dockerfile: path.join(
-                $cli.paths.root,
-                "packages/backend-elysia/MigrationDockerfile"
-            ),
-            platform: "linux/arm64",
-            args: {
-                NODE_ENV: "production",
-                STAGE: normalizedStageName,
-            },
+        context: {
+            location: $cli.paths.root,
         },
+        dockerfile: {
+            location: path.join(
+                $cli.paths.root,
+                "services/backend/MigrationDockerfile"
+            ),
+        },
+        platforms: ["linux/arm64"],
+        buildArgs: {
+            NODE_ENV: "production",
+            STAGE: normalizedStageName,
+        },
+        push: true,
+        tags: registryPath.apply((path) => [
+            `${path}/migration:${process.env.COMMIT_HASH ? `git-${process.env.COMMIT_HASH}` : "local-build"}`,
+            `${path}/migration:latest`,
+        ]),
     },
     {
         dependsOn: [registry],

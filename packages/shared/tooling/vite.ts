@@ -29,7 +29,7 @@ const vendorChunks = {
 // Define the app packages
 const appPackages = [
     "packages/app-essentials",
-    "packages/wallet",
+    "apps/wallet",
     "frak-wallet/sdk/core",
 ];
 

@@ -1,0 +1,18 @@
+.toastLoading {
+    margin-bottom: 10px;
+}
+
+.toastStuck__button {
+    all: unset;
+    color: white;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.toastStuck__link {
+    all: unset;
+    color: var(--frak-color-primary) !important;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 600;
+}
