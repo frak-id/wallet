@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 0.0.19
+
+### Patch Changes
+
+- [#93](https://github.com/frak-id/wallet/pull/93) [`1772437`](https://github.com/frak-id/wallet/commit/1772437ef7aee3e920de32b721df212c0c8a085b) Thanks [@srod](https://github.com/srod)! - Handle new `redirect` lifecycle event to exit social inapp browser
+
+- Updated dependencies [[`1772437`](https://github.com/frak-id/wallet/commit/1772437ef7aee3e920de32b721df212c0c8a085b)]:
+  - @frak-labs/core-sdk@0.0.16
+
 ## 0.0.18
 
 ### Patch Changes
