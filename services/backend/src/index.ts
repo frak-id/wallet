@@ -1,13 +1,13 @@
 import { log } from "@backend-common";
 import { cors } from "@elysiajs/cors";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import type { BodyInit } from "bun";
-import { Elysia, error, redirect } from "elysia";
+import { Elysia } from "elysia";
 import { businessApi } from "./api/business";
 import { commonApi } from "./api/common";
 import { externalApi } from "./api/external";
 import { walletApi } from "./api/wallet";
 import { jobs } from "./jobs";
+import { legacyRouteMapper } from "./legacyRoutes";
 
 // Full on service app
 const app = new Elysia({
@@ -41,78 +41,7 @@ const app = new Elysia({
     // All the jobs
     .use(jobs)
     // Finally, the legacy route mapper routes
-    .all(
-        "*",
-        async ({ path, headers, request, body }) => {
-            // Redirect previous domain based routes to the new ones
-
-            // Handle listen for purchase
-            // interactions/listenForPurchase -> wallet/interactions/listenForPurchase
-            if (path.startsWith("/interactions/listenForPurchase")) {
-                log.debug(
-                    { path },
-                    "Redirecting to new listen for purchase route"
-                );
-                return redirect("/wallet/interactions/listenForPurchase", 308);
-            }
-
-            // Handle legacy external routes (a lot of webhooks there, so directly invoke the matching controller)
-            if (
-                path.startsWith("/interactions/webhook/") ||
-                (path.startsWith("/oracle") && path.endsWith("/hook"))
-            ) {
-                // Get the new path for this route
-                let newPath: string;
-                if (path.startsWith("/interactions/webhook/")) {
-                    // interactions/webhook/{productId}/{action} -> ext/products/{productId}/webhook/interactions/{action}
-                    const productId = path.split("/")[3];
-                    const action = path.split("/")[4];
-                    newPath = `/ext/products/${productId}/webhook/interactions/${action}`;
-                } else if (
-                    path.startsWith("/oracle") &&
-                    path.endsWith("/hook")
-                ) {
-                    // oracle/{type}/{productId}/hook -> ext/products/{productId}/webhook/oracle/{type}
-                    const type = path.split("/")[2];
-                    const productId = path.split("/")[3];
-                    newPath = `/ext/products/${productId}/webhook/oracle/${type}`;
-                } else {
-                    throw new Error("Invalid path");
-                }
-
-                // Construct the new path for the webhook handler
-                const newUrl = new URL(newPath, `http://${headers.host}`);
-                log.debug(
-                    {
-                        path,
-                        newUrl: newUrl.toString(),
-                        headers,
-                    },
-                    "Handling legacy external route, direct controller invocation"
-                );
-
-                // Create a new request with the updated path
-                const newRequest = new Request(newUrl.toString(), {
-                    method: request.method,
-                    headers: request.headers,
-                    body: body as BodyInit | undefined,
-                    mode: request.mode,
-                    referrer: request.referrer,
-                    referrerPolicy: request.referrerPolicy,
-                    credentials: request.credentials,
-                });
-
-                // Let the external api handle the request
-                return await externalApi.handle(newRequest);
-            }
-
-            // Handle unknown routes
-            return error(404, "Not found");
-        },
-        {
-            parse: "text",
-        }
-    )
+    .use(legacyRouteMapper)
     // Setup bun serve options
     .listen({
         port: Number.parseInt(process.env.PORT ?? "3030"),
