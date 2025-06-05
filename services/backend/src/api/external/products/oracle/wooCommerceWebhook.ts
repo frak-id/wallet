@@ -1,7 +1,8 @@
 import { t, validateBodyHmac } from "@backend-utils";
 import { eq } from "drizzle-orm";
-import { Elysia, error } from "elysia";
+import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
+import { log } from "../../../../common";
 import {
     type WooCommerceOrderStatus,
     type WooCommerceOrderUpdateWebhookDto,
@@ -31,10 +32,10 @@ export const wooCommerceWebhook = new Elysia()
     // Request pre validation hook
     .onBeforeHandle(({ headers }) => {
         if (!headers["x-wc-webhook-signature"]) {
-            return error(400, "Missing signature");
+            throw new Error("Missing signature");
         }
         if (headers["x-wc-webhook-resource"] !== "order") {
-            return error(400, "Unsupported woo commerce webhook");
+            throw new Error("Unsupported woo commerce webhook");
         }
     })
     // Shopify only give us 5sec to answer, all the heavy logic should be in a cron running elsewhere,
@@ -56,13 +57,14 @@ export const wooCommerceWebhook = new Elysia()
 
             // Find the product oracle for this product id
             if (!productId) {
-                return error(400, "Missing product id");
+                throw new Error("Missing product id");
             }
             const oracle = await oracleDb.query.productOracleTable.findFirst({
                 where: eq(productOracleTable.productId, productId),
             });
             if (!oracle) {
-                return error(404, "Product oracle not found");
+                log.warn({ productId }, "Product oracle not found");
+                throw new Error("Product oracle not found");
             }
 
             // Validate the body hmac

@@ -2,7 +2,7 @@ import { log } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
-import { Elysia, error } from "elysia";
+import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import {
     type CustomWebhookDto,
@@ -27,7 +27,7 @@ export const customWebhook = new Elysia()
     .onBeforeHandle(({ headers }) => {
         // If it's a test and not running in prod, early exit
         if (headers["x-test"] && isRunningInProd) {
-            return error(400, "Purchase test aren't accepted in production");
+            throw new Error("Purchase test aren't accepted in production");
         }
     })
     .post(
@@ -41,18 +41,19 @@ export const customWebhook = new Elysia()
             // Try to parse the body as a custom webhook type and ensure the type validity
             const webhookData = JSON.parse(body) as CustomWebhookDto;
             if (!webhookData?.id) {
-                return error(400, "Invalid body");
+                throw new Error("Invalid body");
             }
 
             // Find the product oracle for this product id
             if (!productId) {
-                return error(400, "Missing product id");
+                throw new Error("Missing product id");
             }
             const oracle = await oracleDb.query.productOracleTable.findFirst({
                 where: eq(productOracleTable.productId, productId),
             });
             if (!oracle) {
-                return error(404, "Product oracle not found");
+                log.warn({ productId }, "Product oracle not found");
+                throw new Error("Product oracle not found");
             }
 
             // Validate the body hmac
