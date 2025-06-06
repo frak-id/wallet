@@ -19,6 +19,7 @@ import {
     PwaInstall,
     PwaInstallScript,
 } from "./module/common/component/PwaInstall";
+import { AnalyticsWrapper } from "./module/root/component/AnalyticsWrapper";
 
 export const meta = rootConfig.meta;
 export const links = rootConfig.links;
@@ -104,6 +105,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Meta />
                 <Links />
                 <PwaInstallScript />
+                <AnalyticsWrapper />
             </head>
             <body className="scrollbars">
                 {children}
