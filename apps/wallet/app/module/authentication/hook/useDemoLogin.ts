@@ -13,9 +13,7 @@ export function useDemoLogin() {
         mutationKey: authKey.demo.login,
         async mutationFn({ pkey, ssoId }: { pkey: Hex; ssoId?: Hex }) {
             // Identify the user and track the event
-            await trackAuthInitiated("demo", {
-                ssoId,
-            });
+            const events = [trackAuthInitiated("demo", { ssoId })];
 
             const account = privateKeyToAccount(pkey);
 
@@ -54,9 +52,8 @@ export function useDemoLogin() {
             jotaiStore.set(sdkSessionAtom, sdkJwt);
 
             // Identify the user and track the event
-            await trackAuthCompleted("demo", session, {
-                ssoId,
-            });
+            events.push(trackAuthCompleted("demo", session, { ssoId }));
+            await Promise.allSettled(events);
 
             return session;
         },

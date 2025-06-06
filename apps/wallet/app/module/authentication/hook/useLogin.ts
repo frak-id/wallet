@@ -39,10 +39,12 @@ export function useLogin(
             lastAuthentication?: PreviousAuthenticatorModel;
         }) => {
             // Identify the user and track the event
-            await trackAuthInitiated("login", {
-                method: args?.lastAuthentication ? "specific" : "global",
-                ssoId: options?.ssoId,
-            });
+            const events = [
+                trackAuthInitiated("login", {
+                    method: args?.lastAuthentication ? "specific" : "global",
+                    ssoId: options?.ssoId,
+                }),
+            ];
 
             // Get the authenticate options (if needed)
             const allowCredentials = args?.lastAuthentication
@@ -108,9 +110,13 @@ export function useLogin(
             });
 
             // Track the event
-            await trackAuthCompleted("login", session, {
-                ssoId: options?.ssoId,
-            });
+            events.push(
+                trackAuthCompleted("login", session, {
+                    ssoId: options?.ssoId,
+                })
+            );
+
+            await Promise.allSettled(events);
 
             return session;
         },

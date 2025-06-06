@@ -36,9 +36,11 @@ export function useRegister(
         mutationKey: authKey.register,
         mutationFn: async () => {
             // Identify the user and track the event
-            await trackAuthInitiated("register", {
-                ssoId: options?.ssoId,
-            });
+            const events = [
+                trackAuthInitiated("register", {
+                    ssoId: options?.ssoId,
+                }),
+            ];
 
             // Build the credentials to exclude
             const excludeCredentials = previousAuthenticators?.map(
@@ -88,9 +90,12 @@ export function useRegister(
             jotaiStore.set(sdkSessionAtom, sdkJwt);
 
             // Track the event
-            await trackAuthCompleted("register", session, {
-                ssoId: options?.ssoId,
-            });
+            events.push(
+                trackAuthCompleted("register", session, {
+                    ssoId: options?.ssoId,
+                })
+            );
+            await Promise.allSettled(events);
 
             return session;
         },

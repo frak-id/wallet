@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { RESET } from "jotai/utils";
 import { useCallback } from "react";
+import { trackGenericEvent } from "../../common/analytics";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 import { emitLifecycleEvent } from "../../sdk/utils/lifecycleEvents";
 import { displayedRpcModalStepsAtom } from "../modal/atoms/modalEvents";
@@ -20,6 +21,7 @@ export function useSdkCleanup() {
     const queryClient = useQueryClient();
 
     return useCallback(() => {
+        trackGenericEvent("sdk-cleanup");
         // Cancel any pending webauthn request
         WebAuthnAbortService.cancelCeremony();
 

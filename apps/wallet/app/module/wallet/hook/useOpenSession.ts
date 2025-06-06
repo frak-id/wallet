@@ -33,9 +33,12 @@ export function useOpenSession({
                 return;
             }
 
-            // Get timestamp in a week (duration of the session)
+            // Track the initiated event
+            const events = [trackGenericEvent("open-session_initiated")];
+
+            // Get timestamp in a month (duration of the session)
             const sessionEnd = new Date();
-            sessionEnd.setDate(sessionEnd.getDate() + 7);
+            sessionEnd.setDate(sessionEnd.getDate() + 30);
 
             // Get the session open data
             const sessionSetupTx = getEnableSessionData({
@@ -52,14 +55,16 @@ export function useOpenSession({
             // Send the pending interactions
             await consumePendingInteractions();
 
-            // Track the event
-            await trackGenericEvent("open-session");
+            // Track the completed event
+            events.push(trackGenericEvent("open-session_completed"));
 
             // Refresh the interactions stuff
             await queryClient.invalidateQueries({
                 queryKey: interactionsKey.sessionStatus.baseKey,
                 exact: false,
             });
+
+            await Promise.allSettled(events);
 
             return {
                 openSessionTxHash,

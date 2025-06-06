@@ -16,6 +16,9 @@ export function useCloseSession() {
                 return;
             }
 
+            // Track the initiated event
+            const events = [trackGenericEvent("close-session_initiated")];
+
             // Get the disable data
             const disableTxData = getDisableSessionData({ wallet: address });
 
@@ -26,14 +29,16 @@ export function useCloseSession() {
             });
             console.log(`Close session tx hash: ${txHash}`);
 
-            // Track the event
-            await trackGenericEvent("close-session");
+            // Track the completed event
+            events.push(trackGenericEvent("close-session_completed"));
 
             // Refresh the interactions stuff
             await queryClient.invalidateQueries({
                 queryKey: interactionsKey.sessionStatus.baseKey,
                 exact: false,
             });
+
+            await Promise.allSettled(events);
 
             return txHash;
         },

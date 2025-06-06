@@ -3,7 +3,6 @@ import { useIsMutating } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { trackGenericEvent } from "../../common/analytics";
 import { useSdkCleanup } from "../hooks/useSdkCleanup";
 import styles from "./ToastLoading.module.css";
 
@@ -75,7 +74,6 @@ export function ToastLoading() {
                                 onClick={() => {
                                     cleanup();
                                     startStuckTimer();
-                                    trackGenericEvent("stuck-cleanup");
                                 }}
                                 className={styles.toastStuck__button}
                             />

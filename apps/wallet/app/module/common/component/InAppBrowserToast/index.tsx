@@ -8,6 +8,7 @@ import { useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
+import { trackGenericEvent } from "../../analytics";
 
 /**
  * Toast component that displays when user is in an in-app browser
@@ -42,6 +43,9 @@ export function InAppBrowserToast() {
 
         if (isInIframe) {
             // If in an iframe, ask the parent to redirect to the new url
+            trackGenericEvent("in-app-browser-redirect", {
+                target: "sd-iframe",
+            });
             emitLifecycleEvent({
                 iframeLifecycle: "redirect",
                 data: {
@@ -50,6 +54,9 @@ export function InAppBrowserToast() {
             });
         } else {
             // Otherwise, redirect directly
+            trackGenericEvent("in-app-browser-redirect", {
+                target: "window",
+            });
             window.location.href = `${redirectUrl}${encodeURIComponent(window.location.href)}`;
         }
     }, [redirectUrl, isInIframe]);

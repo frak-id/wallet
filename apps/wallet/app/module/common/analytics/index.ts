@@ -42,7 +42,6 @@ export function updateGlobalProperties(
 ) {
     if (!openPanel) return;
     const current = openPanel.global ?? {};
-    console.log("updateGlobalProperties", { current, properties });
     openPanel.setGlobalProperties({
         ...current,
         ...properties,
@@ -86,8 +85,10 @@ export async function trackAuthCompleted(
                 sessionSrc: "pairing",
             },
         }),
-        // Track the event
+        // Track the auth related event
         openPanel.track(`${event}_completed`, args),
+        // Track another event to tell that the user is logged in
+        openPanel.track("user_logged_in"),
     ]);
 }
 
@@ -116,9 +117,5 @@ export async function trackGenericEvent(
     params?: Record<string, unknown>
 ) {
     if (!openPanel) return;
-    console.log("trackGenericEvent", {
-        prop: openPanel.global,
-        profile: openPanel.profileId,
-    });
     await openPanel.track(event, params);
 }

@@ -7,6 +7,7 @@ import { RESET } from "jotai/utils";
 import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { trackGenericEvent } from "../../../common/analytics";
 
 function cleanLocalStorage() {
     // Clear static local storage items
@@ -39,6 +40,7 @@ export function Logout() {
                 width={"full"}
                 align={"left"}
                 onClick={async () => {
+                    trackGenericEvent("logout");
                     // Session deletion
                     jotaiStore.set(sessionAtom, RESET);
                     jotaiStore.set(sdkSessionAtom, RESET);
