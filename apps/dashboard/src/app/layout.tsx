@@ -2,10 +2,10 @@ import { Fonts } from "@/module/common/component/Fonts";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/styles/all.css";
 import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import "../polyfill/bigint-serialization";
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import Script from "next/script";
+import { openPanel } from "../module/common/utils/openPanel";
 
 export const metadata: Metadata = {
     title: "Frak Business Hub | Manage Your Web3 Products",
@@ -70,17 +70,10 @@ export const viewport: Viewport = {
 };
 
 function AnalyticsWrapper() {
-    const websiteId = process.env.UMAMI_BUSINESS_WEBSITE_ID;
+    useEffect(() => {
+        openPanel?.init();
+    }, []);
 
-    if (websiteId) {
-        return (
-            <Script
-                async
-                src="https://umami.frak.id/script.js"
-                data-website-id={process.env.UMAMI_BUSINESS_WEBSITE_ID}
-            />
-        );
-    }
     return null;
 }
 

@@ -1,5 +1,4 @@
 import { sessionAtom } from "@/module/common/atoms/session";
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
@@ -10,6 +9,7 @@ import type {
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect } from "react";
 import { useAccount } from "wagmi";
+import { trackGenericEvent } from "../../common/analytics";
 
 type OnDisplayEmbeddedWalletRequest = IFrameRequestResolver<
     Extract<
@@ -80,7 +80,7 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
                 configMetadata,
             });
 
-            trackEvent("display-embedded-wallet", request.params[0]);
+            trackGenericEvent("open-embedded-wallet", request.params[0]);
         },
         [setRequest]
     );

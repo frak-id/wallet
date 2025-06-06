@@ -1,3 +1,4 @@
+import { OpenPanel } from "@openpanel/web";
 import { type ExtractedParametersFromRpc, FrakRpcError } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
@@ -173,6 +174,23 @@ export function createIFrameFrakClient({
         iframe.remove();
     };
 
+    // Init open panel
+    let openPanel: OpenPanel | undefined;
+    if (
+        process.env.OPEN_PANEL_API_URL &&
+        process.env.OPEN_PANEL_SDK_CLIENT_ID
+    ) {
+        console.log("[Frak SDK] Initializing OpenPanel");
+        openPanel = new OpenPanel({
+            apiUrl: process.env.OPEN_PANEL_API_URL,
+            clientId: process.env.OPEN_PANEL_SDK_CLIENT_ID,
+            trackScreenViews: true,
+            trackOutgoingLinks: true,
+            trackAttributes: true,
+        });
+        openPanel.init();
+    }
+
     // Perform the post connection setup
     const waitForSetup = postConnectionSetup({
         config,
@@ -298,5 +316,5 @@ async function postConnectionSetup({
         });
     }
 
-    await Promise.all([pushCss(), pushI18n(), pushBackup()]);
+    await Promise.allSettled([pushCss(), pushI18n(), pushBackup()]);
 }

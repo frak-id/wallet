@@ -7,12 +7,14 @@ import { Button } from "@shared/module/component/Button";
 import { useAtomValue } from "jotai";
 import { useCallback } from "react";
 import { Trans } from "react-i18next";
+import { trackGenericEvent } from "../../../common/analytics";
 
 export function InstallApp() {
     const { prompt, launchInstallation } = useAddToHomeScreenPrompt();
     const pwaInstallRef = useAtomValue(pwaInstallRefAtom);
 
     const handleInstall = useCallback(() => {
+        trackGenericEvent("install-pwa_initiated");
         if (prompt) {
             launchInstallation();
             return;

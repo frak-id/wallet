@@ -1,18 +1,16 @@
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
-import { listenerSharingKey } from "@/module/listener/queryKeys/sharing";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
-import { useMutation } from "@tanstack/react-query";
 import { Copy, Share } from "lucide-react";
-import { tryit } from "radash";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
+import { trackGenericEvent } from "../../../../common/analytics";
+import { useShareLink } from "../../../hooks/useShareLink";
 
 export function FinalModalActionComponent({
     action,
@@ -40,7 +38,7 @@ export function FinalModalActionComponent({
             className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
             onClick={() => {
                 onFinish({});
-                trackEvent("cta-dismissed");
+                trackGenericEvent("modal-dismissed");
             }}
         >
             {t("sdk.modal.dismiss.primaryAction")}
@@ -89,33 +87,7 @@ function SharingButtons({
         data: shareResult,
         mutate: triggerSharing,
         isPending: isSharing,
-    } = useMutation({
-        mutationKey: listenerSharingKey.sharing.trigger(
-            "final-modal",
-            finalSharingLink
-        ),
-        mutationFn: async () => {
-            if (!finalSharingLink) return;
-
-            // Build our sharing data
-            const shareData = {
-                title: t("sharing.title"),
-                text: t("sharing.text"),
-                url: finalSharingLink,
-            };
-
-            // Trigger copy to clipboard if no native sharing
-            if (
-                typeof navigator !== "undefined" &&
-                typeof navigator.share === "function" &&
-                navigator.canShare(shareData)
-            ) {
-                const [err] = await tryit(() => navigator.share(shareData))();
-                // If no error, return the shared state
-                if (!err) return t("sharing.btn.shareSuccess");
-            }
-        },
-    });
+    } = useShareLink(finalSharingLink);
 
     // Listen to different stuff to trigger the interaction push
     useTriggerPushInterraction({
@@ -128,7 +100,9 @@ function SharingButtons({
                 onClick={async () => {
                     if (!finalSharingLink) return;
                     copy(finalSharingLink);
-                    trackSharingLink("sharing-copy-link", finalSharingLink);
+                    trackGenericEvent("sharing-copy-link", {
+                        link: finalSharingLink,
+                    });
                 }}
             >
                 <Copy size={32} absoluteStrokeWidth={true} />
@@ -139,7 +113,6 @@ function SharingButtons({
                 onClick={() => {
                     if (!finalSharingLink) return;
                     triggerSharing();
-                    trackSharingLink("sharing-share-link", finalSharingLink);
                 }}
             >
                 <Share size={32} absoluteStrokeWidth={true} />{" "}
@@ -147,13 +120,4 @@ function SharingButtons({
             </ButtonAction>
         </div>
     );
-}
-
-/**
- * Track the sharing link
- * @param name
- * @param link
- */
-function trackSharingLink(name: string, link: string) {
-    trackEvent(name, { link });
 }

@@ -1,4 +1,3 @@
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { ButtonWallet } from "@/module/listener/embedded/component/ButtonWallet";
 import {
@@ -11,7 +10,6 @@ import {
     useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
-import { listenerSharingKey } from "@/module/listener/queryKeys/sharing";
 import { OriginPairingState } from "@/module/pairing/component/OriginPairingState";
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { useGetUserPendingBalance } from "@/module/tokens/hook/useGetUserPendingBalance";
@@ -28,9 +26,9 @@ import { Copy } from "@shared/module/asset/icons/Copy";
 import { Power } from "@shared/module/asset/icons/Power";
 import { Share } from "@shared/module/asset/icons/Share";
 import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
-import { useMutation } from "@tanstack/react-query";
-import { tryit } from "radash";
 import { useAccount } from "wagmi";
+import { trackGenericEvent } from "../../../../common/analytics";
+import { useShareLink } from "../../../hooks/useShareLink";
 import styles from "./index.module.css";
 
 /**
@@ -153,14 +151,12 @@ function ButtonOpenSession({
                     if (currentSession) {
                         closeSession().then(() => {
                             refetchPendingBalance();
-                            trackEvent("cta-close-session");
                         });
                         return;
                     }
 
                     openSession().then(() => {
                         refetchPendingBalance();
-                        trackEvent("cta-open-session");
                     });
                 }}
                 isLoading={isOpeningSession || isClosingSession}
@@ -197,7 +193,9 @@ function ButtonCopyLink({
             onClick={async () => {
                 if (!finalSharingLink) return;
                 copy(finalSharingLink);
-                trackEvent("sharing-copy-link", { link: finalSharingLink });
+                trackGenericEvent("sharing-copy-link", {
+                    link: finalSharingLink,
+                });
                 refetchPendingBalance();
             }}
         >
@@ -221,32 +219,9 @@ function ButtonSharingLink({
         data: shareResult,
         mutate: triggerSharing,
         isPending: isSharing,
-    } = useMutation({
-        mutationKey: listenerSharingKey.sharing.trigger(
-            "wallet-embedded",
-            finalSharingLink
-        ),
-        mutationFn: async () => {
-            if (!finalSharingLink) return;
-
-            // Build our sharing data
-            const shareData = {
-                title: t("sharing.title"),
-                text: t("sharing.text"),
-                url: finalSharingLink,
-            };
-
-            // Trigger copy to clipboard if no native sharing
-            if (
-                typeof navigator !== "undefined" &&
-                typeof navigator.share === "function" &&
-                navigator.canShare(shareData)
-            ) {
-                const [err] = await tryit(() => navigator.share(shareData))();
-                // If no error, return the shared state
-                if (!err) return t("sharing.btn.shareSuccess");
-                refetchPendingBalance();
-            }
+    } = useShareLink(finalSharingLink, {
+        onSuccess: () => {
+            refetchPendingBalance();
         },
     });
 
@@ -265,7 +240,7 @@ function ButtonSharingLink({
                 onClick={() => {
                     if (!finalSharingLink) return;
                     triggerSharing();
-                    trackEvent("sharing-share-link", {
+                    trackGenericEvent("sharing-share-link", {
                         link: finalSharingLink,
                     });
                 }}

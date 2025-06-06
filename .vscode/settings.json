@@ -1,5 +1,11 @@
 {
     "files.exclude": {
+        "**/.idea": true,
+        "**/.react-router": true,
+        "**/.rslib": true,
+        "**/.sst": true,
+        "**/.turbo": true,
+        "**/node_modules": true,
         "packages/backend-elysia": false
     }
 }

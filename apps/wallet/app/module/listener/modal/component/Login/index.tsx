@@ -1,7 +1,6 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { SsoButton } from "@/module/listener/component/SsoButton";
@@ -94,7 +93,6 @@ export function LoginModalStep({
                             disabled={isLoading || !isWebAuthnSupported}
                             onClick={() => {
                                 login({});
-                                trackEvent("cta-login");
                             }}
                         >
                             {isLoading && <Spinner />}

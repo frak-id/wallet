@@ -11,6 +11,7 @@ import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 
 /**
  * Hook that handle the registration process
@@ -34,6 +35,11 @@ export function useRegister(
         ...options,
         mutationKey: authKey.register,
         mutationFn: async () => {
+            // Identify the user and track the event
+            await trackAuthInitiated("register", {
+                ssoId: options?.ssoId,
+            });
+
             // Build the credentials to exclude
             const excludeCredentials = previousAuthenticators?.map(
                 (auth) =>
@@ -80,6 +86,11 @@ export function useRegister(
             // Store the session
             jotaiStore.set(sessionAtom, session);
             jotaiStore.set(sdkSessionAtom, sdkJwt);
+
+            // Track the event
+            await trackAuthCompleted("register", session, {
+                ssoId: options?.ssoId,
+            });
 
             return session;
         },
