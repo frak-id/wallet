@@ -14,7 +14,8 @@ import {
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai";
-import type { PropsWithChildren } from "react";
+import { type PropsWithChildren, useEffect } from "react";
+import { openPanel } from "../utils/openPanel";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -49,6 +50,11 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 };
 
 export function RootProvider({ children }: PropsWithChildren) {
+    useEffect(() => {
+        if (!openPanel) return;
+        openPanel.init();
+    }, []);
+
     return (
         <Provider store={jotaiStore}>
             <PersistQueryClientProvider
