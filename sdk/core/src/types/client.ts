@@ -1,4 +1,3 @@
-import type { OpenPanel } from "@openpanel/web";
 import type { FrakWalletSdkConfig } from "./config";
 import type { IFrameTransport } from "./transport";
 
@@ -10,5 +9,4 @@ export type FrakClient = {
     debugInfo: {
         formatDebugInfo: (error: Error | unknown | string) => string;
     };
-    openPanel?: OpenPanel;
 } & IFrameTransport;

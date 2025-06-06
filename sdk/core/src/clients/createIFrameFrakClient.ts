@@ -14,7 +14,6 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "../utils/compression";
-import { computeProductId } from "../utils/computeProductId";
 import { BACKUP_KEY } from "../utils/constants";
 import { DebugInfoGatherer } from "./DebugInfo";
 import { createIFrameChannelManager } from "./transports/iframeChannelManager";
@@ -197,7 +196,6 @@ export function createIFrameFrakClient({
         config,
         messageHandler,
         lifecycleManager,
-        openPanel,
     }).then(() => debugInfo.updateSetupStatus(true));
 
     return {
@@ -208,7 +206,6 @@ export function createIFrameFrakClient({
         request,
         listenerRequest,
         destroy,
-        openPanel,
     };
 }
 
@@ -275,12 +272,10 @@ async function postConnectionSetup({
     config,
     messageHandler,
     lifecycleManager,
-    openPanel,
 }: {
     config: FrakWalletSdkConfig;
     lifecycleManager: IframeLifecycleManager;
     messageHandler: IFrameMessageHandler;
-    openPanel?: OpenPanel;
 }): Promise<void> {
     // Wait for the handler to be connected
     await lifecycleManager.isConnected;
@@ -321,20 +316,5 @@ async function postConnectionSetup({
         });
     }
 
-    // Track sdk setup event
-    async function trackSdkSetup() {
-        if (!openPanel) return;
-
-        await openPanel.track("sdk_setup", {
-            domain: config.domain,
-            product: computeProductId(config),
-        });
-    }
-
-    await Promise.allSettled([
-        pushCss(),
-        pushI18n(),
-        pushBackup(),
-        trackSdkSetup(),
-    ]);
+    await Promise.allSettled([pushCss(), pushI18n(), pushBackup()]);
 }

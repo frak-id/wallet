@@ -80,12 +80,7 @@ export function ButtonWallet({
                 "override"
             )}
             disabled={!isClientReady}
-            onClick={() => {
-                window.FrakSetup?.client?.openPanel?.track(
-                    "button_wallet_clicked"
-                );
-                openWalletModal();
-            }}
+            onClick={openWalletModal}
         >
             <GiftIcon />
             {reward && <span className={styles.reward}>{reward}</span>}
