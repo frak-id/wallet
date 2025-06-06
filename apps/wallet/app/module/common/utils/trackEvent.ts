@@ -1,10 +1,13 @@
 import { sessionAtom } from "@/module/common/atoms/session";
+import { openPanel } from "@/module/common/utils/openPanel";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { jotaiStore } from "@shared/module/atoms/store";
 import { trackEvent as trackUmamiEvent } from "@shared/module/utils/trackEvent";
-import { openPanel } from "../../root/component/AnalyticsWrapper";
 
-export function trackEvent(name: string, params?: Record<string, unknown>) {
+export async function trackEvent(
+    name: string,
+    params?: Record<string, unknown>
+) {
     // Get the current session
     const session = jotaiStore.get(sessionAtom);
 
@@ -12,16 +15,18 @@ export function trackEvent(name: string, params?: Record<string, unknown>) {
     const currentContext = jotaiStore.get(iframeResolvingContextAtom);
 
     // Track the event on umami
-    trackUmamiEvent(name, {
-        ...params,
-        ...(session?.address && {
-            wallet: session.address,
+    await Promise.allSettled([
+        // Track umami events (TODO: To be removed once openPanel is fully integrated)
+        trackUmamiEvent(name, {
+            ...params,
+            ...(session?.address && {
+                wallet: session.address,
+            }),
+            ...(currentContext?.walletReferrer && {
+                walletReferrer: currentContext.walletReferrer,
+            }),
         }),
-        ...(currentContext?.walletReferrer && {
-            walletReferrer: currentContext.walletReferrer,
-        }),
-    });
-
-    // Track the even with open panel
-    openPanel.track(name, params);
+        // Track the even with open panel
+        await openPanel?.track(name, params),
+    ]);
 }

@@ -7,6 +7,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { Session } from "../../../types/Session";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
+import { openPanel } from "../../common/utils/openPanel";
 
 export function useDemoLogin() {
     return useMutation({
@@ -44,12 +45,28 @@ export function useDemoLogin() {
             jotaiStore.set(sessionAtom, session);
             jotaiStore.set(sdkSessionAtom, sdkJwt);
 
-            // Track the event
-            trackEvent("cta-demo-login");
-
             // Store the session
             jotaiStore.set(sessionAtom, session);
             jotaiStore.set(sdkSessionAtom, sdkJwt);
+
+            // Identify the user and track the event
+            await Promise.allSettled([
+                // Identify the user
+                openPanel?.identify({
+                    profileId: session.address,
+                    properties: {
+                        sessionType: session.type ?? "webauthn",
+                        sessionSrc: "demo-account",
+                    },
+                }),
+                // Track the event
+                trackEvent("login-demo", {
+                    address: session.address,
+                    sessionType: session.type ?? "webauthn",
+                    sessionSrc: "demo-account",
+                }),
+            ]);
+
             return session;
         },
     });

@@ -8,6 +8,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { Hex } from "viem";
 import type { Session } from "../../../types/Session";
+import { openPanel } from "../../common/utils/openPanel";
+import { trackEvent } from "../../common/utils/trackEvent";
 
 /**
  * hook to consume the sso status
@@ -55,6 +57,23 @@ export function useConsumePendingSso({
                 // Store the session
                 jotaiStore.set(sessionAtom, session);
                 jotaiStore.set(sdkSessionAtom, sdkJwt);
+
+                await Promise.allSettled([
+                    // Identify the user
+                    openPanel?.identify({
+                        profileId: session.address,
+                        properties: {
+                            sessionType: session.type ?? "webauthn",
+                            sessionSrc: "sso",
+                        },
+                    }),
+                    // Track the event
+                    trackEvent("login-sso", {
+                        address: session.address,
+                        sessionType: session.type ?? "webauthn",
+                        sessionSrc: "sso",
+                    }),
+                ]);
             }
 
             // If the status is not-found, remove the sso link query
