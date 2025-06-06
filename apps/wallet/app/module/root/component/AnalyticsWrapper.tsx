@@ -1,6 +1,6 @@
-import { openPanel } from "@/module/common/utils/openPanel";
 import { Analytics } from "@shared/module/component/Analytics";
 import { useEffect } from "react";
+import { openPanel } from "../../common/analytics";
 
 /**
  * AnalyticsWrapper component

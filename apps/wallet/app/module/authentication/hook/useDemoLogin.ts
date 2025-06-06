@@ -1,13 +1,12 @@
 import { authKey } from "@/module/authentication/queryKeys/auth";
 import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
-import { trackEvent } from "@frak-labs/shared/module/utils/trackEvent";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { Session } from "../../../types/Session";
+import { trackAuthCompleted } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
-import { openPanel } from "../../common/utils/openPanel";
 
 export function useDemoLogin() {
     return useMutation({
@@ -50,22 +49,7 @@ export function useDemoLogin() {
             jotaiStore.set(sdkSessionAtom, sdkJwt);
 
             // Identify the user and track the event
-            await Promise.allSettled([
-                // Identify the user
-                openPanel?.identify({
-                    profileId: session.address,
-                    properties: {
-                        sessionType: session.type ?? "webauthn",
-                        sessionSrc: "demo-account",
-                    },
-                }),
-                // Track the event
-                trackEvent("login-demo", {
-                    address: session.address,
-                    sessionType: session.type ?? "webauthn",
-                    sessionSrc: "demo-account",
-                }),
-            ]);
+            await trackAuthCompleted("demo", session);
 
             return session;
         },

@@ -1,4 +1,3 @@
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
@@ -95,7 +94,6 @@ export function OpenSessionModalStep({
                         disabled={isPending || isFetchingStatus}
                         onClick={() => {
                             openSession();
-                            trackEvent("cta-open-session");
                         }}
                     >
                         {isPending && <Spinner />}

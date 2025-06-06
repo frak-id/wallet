@@ -4,11 +4,11 @@ import {
     ssoPopupName,
     useSsoLink,
 } from "@/module/authentication/hook/useGetOpenSsoLink";
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { useListenerWithRequestUI } from "@/module/listener/providers/ListenerUiProvider";
 import type { SsoMetadata } from "@frak-labs/core-sdk";
 import { type ReactNode, useState } from "react";
 import type { Hex } from "viem";
+import { trackAuthentication } from "../../common/analytics";
 
 /**
  * Button used to launch an SSO registration
@@ -97,11 +97,12 @@ function RegularSsoButton({
                 // If we got a window, focus it and save the clicked state
                 if (openedWindow) {
                     openedWindow.focus();
+                    trackAuthentication("sso_initiated");
                 } else {
                     // Otherwise, mark that we fail to open it
                     setFailToOpen(true);
+                    trackAuthentication("sso_init_failed");
                 }
-                trackEvent("cta-sso");
             }}
         >
             {text}
@@ -128,7 +129,7 @@ function LinkSsoButton({
             target="frak-sso"
             rel="noreferrer"
             onClick={() => {
-                trackEvent("cta-sso");
+                trackAuthentication("sso_initiated");
             }}
         >
             {text}

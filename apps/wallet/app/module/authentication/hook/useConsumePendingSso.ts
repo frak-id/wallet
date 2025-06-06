@@ -8,8 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { Hex } from "viem";
 import type { Session } from "../../../types/Session";
-import { openPanel } from "../../common/utils/openPanel";
-import { trackEvent } from "../../common/utils/trackEvent";
+import { trackAuthCompleted, trackAuthFailed } from "../../common/analytics";
 
 /**
  * hook to consume the sso status
@@ -58,26 +57,13 @@ export function useConsumePendingSso({
                 jotaiStore.set(sessionAtom, session);
                 jotaiStore.set(sdkSessionAtom, sdkJwt);
 
-                await Promise.allSettled([
-                    // Identify the user
-                    openPanel?.identify({
-                        profileId: session.address,
-                        properties: {
-                            sessionType: session.type ?? "webauthn",
-                            sessionSrc: "sso",
-                        },
-                    }),
-                    // Track the event
-                    trackEvent("login-sso", {
-                        address: session.address,
-                        sessionType: session.type ?? "webauthn",
-                        sessionSrc: "sso",
-                    }),
-                ]);
+                // Track the event
+                await trackAuthCompleted("sso", session);
             }
 
             // If the status is not-found, remove the sso link query
             if (data.status === "not-found") {
+                await trackAuthFailed("sso", "sso-not-found");
                 queryClient.removeQueries({
                     queryKey: ssoKey.link.baseKey,
                     exact: false,

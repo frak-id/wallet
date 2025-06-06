@@ -1,6 +1,7 @@
 import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
 import { nanoid } from "nanoid";
 import type { Hex } from "viem";
+import { trackAuthCompleted } from "../../common/analytics";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 import { getSafeSession } from "../../listener/utils/localStorage";
 import type {
@@ -169,6 +170,9 @@ export class OriginPairingClient extends BasePairingClient<
                 ...message.payload.wallet,
             });
             jotaiStore.set(sdkSessionAtom, message.payload.sdkJwt);
+
+            // Track the event
+            trackAuthCompleted("pairing", message.payload.wallet);
 
             // And trigger a reconnection
             this.forceConnect(() => this.reconnect());

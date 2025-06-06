@@ -2,6 +2,7 @@ import { getDisableSessionData } from "@/module/interaction/utils/getEnableDisab
 import { interactionsKey } from "@/module/wallet/queryKeys/interactions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount, useSendTransaction } from "wagmi";
+import { trackGenericEvent } from "../../common/analytics";
 
 export function useCloseSession() {
     const queryClient = useQueryClient();
@@ -24,6 +25,9 @@ export function useCloseSession() {
                 data: disableTxData,
             });
             console.log(`Close session tx hash: ${txHash}`);
+
+            // Track the event
+            await trackGenericEvent("close-session");
 
             // Refresh the interactions stuff
             await queryClient.invalidateQueries({

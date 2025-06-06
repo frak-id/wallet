@@ -7,6 +7,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAccount, useSendTransaction } from "wagmi";
+import { trackGenericEvent } from "../../common/analytics";
 
 /**
  * Hook used to open a session
@@ -48,10 +49,11 @@ export function useOpenSession({
                 data: sessionSetupTx,
             });
 
-            console.log(`Open session tx hash: ${openSessionTxHash}`);
-
             // Send the pending interactions
             await consumePendingInteractions();
+
+            // Track the event
+            await trackGenericEvent("open-session");
 
             // Refresh the interactions stuff
             await queryClient.invalidateQueries({

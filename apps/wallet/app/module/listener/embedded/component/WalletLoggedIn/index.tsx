@@ -1,4 +1,3 @@
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { ButtonWallet } from "@/module/listener/embedded/component/ButtonWallet";
 import {
@@ -31,6 +30,7 @@ import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipbo
 import { useMutation } from "@tanstack/react-query";
 import { tryit } from "radash";
 import { useAccount } from "wagmi";
+import { trackGenericEvent } from "../../../../common/analytics";
 import styles from "./index.module.css";
 
 /**
@@ -153,14 +153,12 @@ function ButtonOpenSession({
                     if (currentSession) {
                         closeSession().then(() => {
                             refetchPendingBalance();
-                            trackEvent("cta-close-session");
                         });
                         return;
                     }
 
                     openSession().then(() => {
                         refetchPendingBalance();
-                        trackEvent("cta-open-session");
                     });
                 }}
                 isLoading={isOpeningSession || isClosingSession}
@@ -197,7 +195,9 @@ function ButtonCopyLink({
             onClick={async () => {
                 if (!finalSharingLink) return;
                 copy(finalSharingLink);
-                trackEvent("sharing-copy-link", { link: finalSharingLink });
+                trackGenericEvent("sharing-copy-link", {
+                    link: finalSharingLink,
+                });
                 refetchPendingBalance();
             }}
         >
@@ -265,7 +265,7 @@ function ButtonSharingLink({
                 onClick={() => {
                     if (!finalSharingLink) return;
                     triggerSharing();
-                    trackEvent("sharing-share-link", {
+                    trackGenericEvent("sharing-share-link", {
                         link: finalSharingLink,
                     });
                 }}

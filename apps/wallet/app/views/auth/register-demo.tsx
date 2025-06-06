@@ -10,6 +10,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { generatePrivateKey } from "viem/accounts";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
+import { trackAuthInitiated } from "../../module/common/analytics";
 import styles from "./register.module.css";
 
 export default function RegisterDemo() {
@@ -63,6 +64,9 @@ function useRegisterDemo(options?: UseMutationOptions<Session>) {
         ...options,
         mutationKey: authKey.demo.register,
         mutationFn: async () => {
+            // Identify the user and track the event
+            await trackAuthInitiated("demo");
+
             // Generate a private key
             const privateKey = generatePrivateKey();
             jotaiStore.set(demoPrivateKeyAtom, privateKey);

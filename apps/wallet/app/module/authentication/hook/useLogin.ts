@@ -13,6 +13,7 @@ import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 
 /**
  * Hook that handle the registration process
@@ -37,6 +38,11 @@ export function useLogin(
         mutationFn: async (args?: {
             lastAuthentication?: PreviousAuthenticatorModel;
         }) => {
+            // Identify the user and track the event
+            await trackAuthInitiated("login", {
+                method: args?.lastAuthentication ? "specific" : "global",
+            });
+
             // Get the authenticate options (if needed)
             const allowCredentials = args?.lastAuthentication
                 ? [
@@ -99,6 +105,9 @@ export function useLogin(
                 _id: data.address,
                 username: "mocked-username",
             });
+
+            // Track the event
+            await trackAuthCompleted("login", session);
 
             return session;
         },

@@ -8,6 +8,7 @@ import {
 import { jotaiStore } from "@shared/module/atoms/store";
 import { atom, useAtomValue } from "jotai";
 import { type Address, isAddressEqual, keccak256, toHex } from "viem";
+import { updateGlobalProperties } from "../../common/analytics";
 
 /**
  * The atom storing the current iframe resolving context
@@ -89,6 +90,14 @@ export const handleHandshakeResponse = atom(
             currentContext?.isAutoContext !== context?.isAutoContext
         ) {
             set(iframeResolvingContextAtom, context);
+
+            // Set open panel global properties
+            updateGlobalProperties({
+                isIframe: true,
+                productId: context?.productId,
+                sourceUrl: context?.sourceUrl,
+                walletReferrer: context?.walletReferrer,
+            });
         }
 
         // Remove the token

@@ -1,5 +1,4 @@
 import { TextData } from "@/module/common/component/TextData";
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
@@ -9,6 +8,7 @@ import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { useMemo } from "react";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
+import { trackGenericEvent } from "../../../../common/analytics";
 
 /**
  * The component for the siwe authentication step of a modal
@@ -50,11 +50,13 @@ export function SiweAuthenticateModalStep({
     const { signMessage, isPending, isError, error } = useSignMessage({
         mutation: {
             // Link success and error hooks
-            onSuccess: (signature) =>
-                onFinish({
+            onSuccess: (signature) => {
+                trackGenericEvent("modal-siwe");
+                return onFinish({
                     signature,
                     message,
-                }),
+                });
+            },
         },
     });
 
@@ -75,10 +77,7 @@ export function SiweAuthenticateModalStep({
                         className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
                         disabled={isPending}
                         onClick={() => {
-                            signMessage({
-                                message,
-                            });
-                            trackEvent("cta-authenticate");
+                            signMessage({ message });
                         }}
                     >
                         {isPending && <Spinner />}

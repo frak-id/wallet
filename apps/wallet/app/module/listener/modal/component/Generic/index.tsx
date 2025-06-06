@@ -1,5 +1,4 @@
 import { Markdown } from "@/module/common/component/Markdown";
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { displayedRpcModalStepsAtom } from "@/module/listener/modal/atoms/modalEvents";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import {
@@ -9,6 +8,7 @@ import {
 import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
+import { trackGenericEvent } from "../../../../common/analytics";
 
 export function MetadataInfo({
     description,
@@ -93,7 +93,7 @@ export function DismissButton() {
             className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
             onClick={() => {
                 goToDismiss();
-                trackEvent("cta-dismissed");
+                trackGenericEvent("modal-dismissed");
             }}
         >
             {t("sdk.modal.dismiss.primaryAction")}

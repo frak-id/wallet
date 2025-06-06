@@ -1,4 +1,3 @@
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
 import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
@@ -13,6 +12,7 @@ import { Copy, Share } from "lucide-react";
 import { tryit } from "radash";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
+import { trackGenericEvent } from "../../../../common/analytics";
 
 export function FinalModalActionComponent({
     action,
@@ -40,7 +40,7 @@ export function FinalModalActionComponent({
             className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
             onClick={() => {
                 onFinish({});
-                trackEvent("cta-dismissed");
+                trackGenericEvent("modal-dismissed");
             }}
         >
             {t("sdk.modal.dismiss.primaryAction")}
@@ -155,5 +155,5 @@ function SharingButtons({
  * @param link
  */
 function trackSharingLink(name: string, link: string) {
-    trackEvent(name, { link });
+    trackGenericEvent(name, { link });
 }
