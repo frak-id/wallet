@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { Session } from "../../../types/Session";
-import { trackAuthCompleted } from "../../common/analytics";
+import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 
@@ -12,6 +12,11 @@ export function useDemoLogin() {
     return useMutation({
         mutationKey: authKey.demo.login,
         async mutationFn({ pkey, ssoId }: { pkey: Hex; ssoId?: Hex }) {
+            // Identify the user and track the event
+            await trackAuthInitiated("demo", {
+                ssoId,
+            });
+
             const account = privateKeyToAccount(pkey);
 
             // Generate the msg to sign with the challenge
@@ -49,7 +54,9 @@ export function useDemoLogin() {
             jotaiStore.set(sdkSessionAtom, sdkJwt);
 
             // Identify the user and track the event
-            await trackAuthCompleted("demo", session);
+            await trackAuthCompleted("demo", session, {
+                ssoId,
+            });
 
             return session;
         },

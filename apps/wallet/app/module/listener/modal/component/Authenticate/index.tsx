@@ -8,7 +8,6 @@ import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
 import { useMemo } from "react";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
-import { trackGenericEvent } from "../../../../common/analytics";
 
 /**
  * The component for the siwe authentication step of a modal
@@ -50,13 +49,11 @@ export function SiweAuthenticateModalStep({
     const { signMessage, isPending, isError, error } = useSignMessage({
         mutation: {
             // Link success and error hooks
-            onSuccess: (signature) => {
-                trackGenericEvent("modal-siwe");
-                return onFinish({
+            onSuccess: (signature) =>
+                onFinish({
                     signature,
                     message,
-                });
-            },
+                }),
         },
     });
 

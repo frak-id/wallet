@@ -3,7 +3,7 @@ import { Cuer } from "cuer";
 import { useAtomValue } from "jotai";
 import { useEffect } from "react";
 import type { Hex } from "viem";
-import { trackAuthentication } from "../../../common/analytics";
+import { trackAuthInitiated } from "../../../common/analytics";
 import { getOriginPairingClient } from "../../clients/store";
 import { PairingCode } from "../PairingCode";
 import { PairingStatus } from "../PairingStatus";
@@ -18,7 +18,9 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
 
     useEffect(() => {
         client.initiatePairing({ ssoId });
-        trackAuthentication("pairing_initiated");
+        trackAuthInitiated("pairing", {
+            ssoId,
+        });
     }, [client, ssoId]);
 
     // Get the current state of the client

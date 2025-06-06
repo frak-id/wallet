@@ -37,7 +37,6 @@ import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
-import { trackAuthInitiated } from "../../module/common/analytics";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -382,9 +381,6 @@ function useLoginDemo(options?: UseMutationOptions<Session>) {
         ...options,
         mutationKey: ssoKey.demo.login,
         async mutationFn() {
-            // Identify the user and track the event
-            await trackAuthInitiated("demo");
-
             // Retrieve the pkey
             const pkey = jotaiStore.get(demoPrivateKeyAtom) as Hex | undefined;
             if (!pkey) {

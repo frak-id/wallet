@@ -19,6 +19,20 @@ export const openPanel =
           })
         : undefined;
 
+export function initOpenPanel() {
+    if (!openPanel) return;
+
+    openPanel.init();
+
+    if (typeof window === "undefined") return;
+    const isIframe = window.self !== window.top;
+    const isPwa = window.matchMedia("(display-mode: standalone)").matches;
+    updateGlobalProperties({
+        isIframe,
+        isPwa,
+    });
+}
+
 /**
  * Update the global properties of the open panel
  * @param properties - The properties to update
@@ -28,25 +42,36 @@ export function updateGlobalProperties(
 ) {
     if (!openPanel) return;
     const current = openPanel.global ?? {};
+    console.log("updateGlobalProperties", { current, properties });
     openPanel.setGlobalProperties({
         ...current,
         ...properties,
     });
 }
 
+/**
+ * Track the authentication initiated event
+ */
 export async function trackAuthInitiated(
     event: AnalyticsAuthenticationType,
     args?: {
-        method: "global" | "specific";
+        method?: "global" | "specific";
+        ssoId?: string;
     }
 ) {
     if (!openPanel) return;
     await openPanel.track(`${event}_initiated`, args);
 }
 
+/**
+ * Track the authentication completed event
+ */
 export async function trackAuthCompleted(
     event: AnalyticsAuthenticationType,
-    wallet: Omit<Session, "token">
+    wallet: Omit<Session, "token">,
+    args?: {
+        ssoId?: string;
+    }
 ) {
     if (!openPanel) return;
     updateGlobalProperties({
@@ -62,24 +87,38 @@ export async function trackAuthCompleted(
             },
         }),
         // Track the event
-        openPanel.track(`${event}_completed`),
+        openPanel.track(`${event}_completed`, args),
     ]);
 }
 
+/**
+ * Track the authentication failed event
+ */
 export async function trackAuthFailed(
     event: AnalyticsAuthenticationType,
-    reason: string
+    reason: string,
+    args?: {
+        ssoId?: string;
+    }
 ) {
     if (!openPanel) return;
     openPanel.track(`${event}_failed`, {
+        ...args,
         reason,
     });
 }
 
+/**
+ * Track generic events
+ */
 export async function trackGenericEvent(
     event: string,
     params?: Record<string, unknown>
 ) {
     if (!openPanel) return;
+    console.log("trackGenericEvent", {
+        prop: openPanel.global,
+        profile: openPanel.profileId,
+    });
     await openPanel.track(event, params);
 }

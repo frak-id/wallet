@@ -8,7 +8,7 @@ import { useListenerWithRequestUI } from "@/module/listener/providers/ListenerUi
 import type { SsoMetadata } from "@frak-labs/core-sdk";
 import { type ReactNode, useState } from "react";
 import type { Hex } from "viem";
-import { trackAuthentication } from "../../common/analytics";
+import { trackAuthFailed, trackAuthInitiated } from "../../common/analytics";
 
 /**
  * Button used to launch an SSO registration
@@ -60,17 +60,26 @@ export function SsoButton({
         return null;
     }
 
-    return <RegularSsoButton link={link} text={text} className={className} />;
+    return (
+        <RegularSsoButton
+            link={link}
+            text={text}
+            className={className}
+            trackingId={trackingId}
+        />
+    );
 }
 
 function RegularSsoButton({
     link,
     text,
     className,
+    trackingId,
 }: {
     link: string;
     text: ReactNode;
     className?: string;
+    trackingId?: string;
 }) {
     const [failToOpen, setFailToOpen] = useState(false);
 
@@ -78,7 +87,12 @@ function RegularSsoButton({
     if (failToOpen) {
         return (
             <>
-                <LinkSsoButton link={link} text={text} className={className} />
+                <LinkSsoButton
+                    link={link}
+                    text={text}
+                    className={className}
+                    trackingId={trackingId}
+                />
             </>
         );
     }
@@ -97,11 +111,13 @@ function RegularSsoButton({
                 // If we got a window, focus it and save the clicked state
                 if (openedWindow) {
                     openedWindow.focus();
-                    trackAuthentication("sso_initiated");
+                    trackAuthInitiated("sso", {
+                        ssoId: trackingId,
+                    });
                 } else {
                     // Otherwise, mark that we fail to open it
                     setFailToOpen(true);
-                    trackAuthentication("sso_init_failed");
+                    trackAuthFailed("sso", "failed-to-open");
                 }
             }}
         >
@@ -117,10 +133,12 @@ function LinkSsoButton({
     link,
     text,
     className,
+    trackingId,
 }: {
     link: string;
     text: ReactNode;
     className?: string;
+    trackingId?: string;
 }) {
     return (
         <a
@@ -129,7 +147,9 @@ function LinkSsoButton({
             target="frak-sso"
             rel="noreferrer"
             onClick={() => {
-                trackAuthentication("sso_initiated");
+                trackAuthInitiated("sso", {
+                    ssoId: trackingId,
+                });
             }}
         >
             {text}

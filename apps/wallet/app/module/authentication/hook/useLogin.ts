@@ -41,6 +41,7 @@ export function useLogin(
             // Identify the user and track the event
             await trackAuthInitiated("login", {
                 method: args?.lastAuthentication ? "specific" : "global",
+                ssoId: options?.ssoId,
             });
 
             // Get the authenticate options (if needed)
@@ -107,7 +108,9 @@ export function useLogin(
             });
 
             // Track the event
-            await trackAuthCompleted("login", session);
+            await trackAuthCompleted("login", session, {
+                ssoId: options?.ssoId,
+            });
 
             return session;
         },

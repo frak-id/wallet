@@ -58,12 +58,16 @@ export function useConsumePendingSso({
                 jotaiStore.set(sdkSessionAtom, sdkJwt);
 
                 // Track the event
-                await trackAuthCompleted("sso", session);
+                await trackAuthCompleted("sso", session, {
+                    ssoId: trackingId,
+                });
             }
 
             // If the status is not-found, remove the sso link query
             if (data.status === "not-found") {
-                await trackAuthFailed("sso", "sso-not-found");
+                await trackAuthFailed("sso", "sso-not-found", {
+                    ssoId: trackingId,
+                });
                 queryClient.removeQueries({
                     queryKey: ssoKey.link.baseKey,
                     exact: false,
