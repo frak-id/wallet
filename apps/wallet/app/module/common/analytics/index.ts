@@ -27,9 +27,12 @@ export function initOpenPanel() {
     if (typeof window === "undefined") return;
     const isIframe = window.self !== window.top;
     const isPwa = window.matchMedia("(display-mode: standalone)").matches;
+    const referrer =
+        isIframe && document.referrer !== "" ? document.referrer : undefined;
     updateGlobalProperties({
         isIframe,
         isPwa,
+        iframeReferrer: referrer,
     });
 }
 

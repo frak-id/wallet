@@ -95,8 +95,8 @@ export const handleHandshakeResponse = atom(
             updateGlobalProperties({
                 isIframe: true,
                 productId: context?.productId,
-                sourceUrl: context?.sourceUrl,
-                walletReferrer: context?.walletReferrer,
+                contextUrl: context?.sourceUrl,
+                contextReferrer: context?.walletReferrer,
             });
         }
 
