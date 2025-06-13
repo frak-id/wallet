@@ -57,14 +57,14 @@
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
     "sst": "3.17.5",
     "typescript": "^5"
   },
   "overrides": {
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0"
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6"
   },
   "browserslist": [
     "extends @frak-labs/browserslist-config"
