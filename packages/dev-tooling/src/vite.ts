@@ -23,7 +23,7 @@ const vendorChunks = {
         "node_modules/@peculiar",
     ],
     // Translation + shared ui
-    3: ["i18next", "packages/shared"],
+    3: ["i18next", "packages/ui"],
 };
 
 // Define the app packages
