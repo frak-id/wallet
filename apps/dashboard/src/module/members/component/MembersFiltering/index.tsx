@@ -8,7 +8,7 @@ import { InteractionsFiltering } from "@/module/members/component/MembersFilteri
 import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
 import { ProductFiltering } from "@/module/members/component/MembersFiltering/ProductFiltering";
 import { RewardFiltering } from "@/module/members/component/MembersFiltering/RewardFiltering";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import { useSetAtom } from "jotai";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";

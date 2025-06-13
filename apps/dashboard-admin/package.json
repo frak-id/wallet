@@ -13,7 +13,8 @@
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
-    "@frak-labs/shared": "workspace:*",
+    "@frak-labs/ui": "workspace:*",
+    "@frak-labs/client": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",

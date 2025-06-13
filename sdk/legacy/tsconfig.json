@@ -49,10 +49,6 @@
     // Declaration files
     "declaration": true,
     "declarationDir": "./dist",
-
-    "paths": {
-      "@shared/*": ["../../packages/shared/*"]
-    }
   },
   "tsc-alias": {
     "resolveFullPaths": true,

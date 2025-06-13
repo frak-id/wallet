@@ -1,6 +1,6 @@
 import { Badge } from "@/module/common/component/Badge";
 import type { CampaignState } from "@/types/Campaign";
-import { Tooltip } from "@shared/module/component/Tooltip";
+import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 
 /**
  * If state == created, display additional badges (isActive, isAttached)

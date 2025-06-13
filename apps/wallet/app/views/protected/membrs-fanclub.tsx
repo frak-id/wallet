@@ -1,5 +1,5 @@
 import { Grid } from "@/module/common/component/Grid";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import styles from "./membrs-fanclub.module.css";
 

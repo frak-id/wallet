@@ -1,7 +1,7 @@
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
-import { jotaiStore } from "@shared/module/atoms/store";
-import { Button } from "@shared/module/component/Button";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { Button } from "@frak-labs/ui/component/Button";
 import { useQueryClient } from "@tanstack/react-query";
 import { RESET } from "jotai/utils";
 import { LogOut } from "lucide-react";

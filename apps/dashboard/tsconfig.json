@@ -17,7 +17,6 @@
     "types": ["bun-types"],
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["../../packages/shared/*"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
       "@backend-common": ["../../services/backend/src/common/index.ts"],
       "@backend-common/*": ["../../services/backend/src/common/*"]

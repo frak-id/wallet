@@ -12,7 +12,7 @@ import {
 import { FormItem } from "@/module/forms/Form";
 import { FormMessage } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Slider } from "@shared/module/component/Slider";
+import { Slider } from "@frak-labs/ui/component/Slider";
 import type { UseFormReturn } from "react-hook-form";
 import { Row } from "../../../../common/component/Row";
 import { TriggerConfigurationDetails } from "../Generic/TriggerConfigurationDetails";

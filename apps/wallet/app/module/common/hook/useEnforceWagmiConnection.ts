@@ -2,7 +2,7 @@ import {
     type FrakWalletConnector,
     smartAccountConnector,
 } from "@/module/wallet/smartWallet/connector";
-import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { decodeJwt } from "jose";
 import { useEffect, useMemo } from "react";
 import { type Hex, isAddressEqual } from "viem";

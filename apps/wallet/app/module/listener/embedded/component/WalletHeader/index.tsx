@@ -1,8 +1,8 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useEmbeddedListenerUI } from "@/module/listener/providers/ListenerUiProvider";
-import { LogoFrakWithName } from "@shared/module/asset/icons/LogoFrakWithName";
-import { jotaiStore } from "@shared/module/atoms/store";
-import { prefixWalletCss } from "@shared/module/utils/prefixWalletCss";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
+import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import { cx } from "class-variance-authority";
 import styles from "../Wallet/index.module.css";
 

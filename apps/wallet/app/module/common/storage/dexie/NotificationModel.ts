@@ -1,4 +1,4 @@
-import type { NotificationPayload } from "@frak-labs/shared/types/NotificationPayload";
+import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
 
 /**
  * Interface representing a notification

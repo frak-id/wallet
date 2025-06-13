@@ -5,7 +5,7 @@ import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 

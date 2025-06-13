@@ -9,10 +9,10 @@ import type { ManageTeamTableData } from "@/module/product/component/TableTeam/i
 import { useRemoveProductMember } from "@/module/product/hook/useRemoveProductMember";
 import { permissionLabelsArray } from "@/module/product/utils/permissions";
 import type { ProductRolesKey } from "@frak-labs/app-essentials";
-import { Button } from "@shared/module/component/Button";
-import { WalletAddress } from "@shared/module/component/HashDisplay";
-import { Tooltip } from "@shared/module/component/Tooltip";
-import { Checkbox } from "@shared/module/component/forms/Checkbox";
+import { Button } from "@frak-labs/ui/component/Button";
+import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import type { CellContext } from "@tanstack/react-table";
 import { Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";

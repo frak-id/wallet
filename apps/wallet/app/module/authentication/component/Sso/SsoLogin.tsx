@@ -1,8 +1,8 @@
 import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
-import { Fingerprint } from "@shared/module/asset/icons/Fingerprint";
-import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
+import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
+import { Fingerprint } from "@frak-labs/ui/icons/Fingerprint";
 import { useAtomValue } from "jotai";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";

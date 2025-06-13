@@ -1,5 +1,5 @@
 import { Warning } from "@/module/common/component/Warning";
-import { Spinner } from "@shared/module/component/Spinner";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { X } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import styles from "./index.module.css";

@@ -1,5 +1,5 @@
 import { viemClient } from "@/context/blockchain/provider";
-import { indexerApi } from "@frak-labs/shared/context/server";
+import { indexerApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import { type Address, type Hex, erc20Abi } from "viem";
 import { multicall } from "viem/actions";

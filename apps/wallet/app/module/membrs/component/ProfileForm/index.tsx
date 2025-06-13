@@ -1,9 +1,9 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import type { User } from "@/types/User";
-import { Pencil } from "@shared/module/asset/icons/Pencil";
-import { Button } from "@shared/module/component/Button";
-import { Input } from "@shared/module/component/forms/Input";
-import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Input } from "@frak-labs/ui/component/forms/Input";
+import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
+import { Pencil } from "@frak-labs/ui/icons/Pencil";
 import { useAtom, useAtomValue } from "jotai";
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";

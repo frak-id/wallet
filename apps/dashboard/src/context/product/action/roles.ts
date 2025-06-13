@@ -1,4 +1,4 @@
-import { businessApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/client/server";
 import { cookies } from "next/headers";
 import type { Hex } from "viem";
 

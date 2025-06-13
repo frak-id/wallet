@@ -1,4 +1,4 @@
-import { detectPWA } from "@shared/module/utils/detectPWA";
+import { detectPWA } from "@frak-labs/ui/utils/detectPWA";
 import { useEffect } from "react";
 
 export function DetectPWA() {

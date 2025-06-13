@@ -1,5 +1,5 @@
+import { businessApi } from "@frak-labs/client/server";
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { businessApi } from "@frak-labs/shared/context/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
 

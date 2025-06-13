@@ -4,7 +4,7 @@ import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampai
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Input } from "@shared/module/component/forms/Input";
+import { Input } from "@frak-labs/ui/component/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
 import { FormPriceRange } from "./FormPriceRange";
 

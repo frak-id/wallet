@@ -22,10 +22,10 @@ import {
     formatAmount,
     getCurrencyAmountKey,
 } from "@frak-labs/core-sdk";
-import { Copy } from "@shared/module/asset/icons/Copy";
-import { Power } from "@shared/module/asset/icons/Power";
-import { Share } from "@shared/module/asset/icons/Share";
-import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
+import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
+import { Copy } from "@frak-labs/ui/icons/Copy";
+import { Power } from "@frak-labs/ui/icons/Power";
+import { Share } from "@frak-labs/ui/icons/Share";
 import { useAccount } from "wagmi";
 import { trackGenericEvent } from "../../../../common/analytics";
 import { useShareLink } from "../../../hooks/useShareLink";

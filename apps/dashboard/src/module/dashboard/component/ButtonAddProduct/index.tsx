@@ -17,12 +17,12 @@ import {
 import { MultiSelect } from "@/module/forms/MultiSelect";
 import { productTypesLabel } from "@/module/product/utils/productTypes";
 import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
-import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
-import { Button } from "@shared/module/component/Button";
-import { Spinner } from "@shared/module/component/Spinner";
-import { TextWithCopy } from "@shared/module/component/TextWithCopy";
-import { Input } from "@shared/module/component/forms/Input";
-import { validateUrl } from "@shared/module/utils/validateUrl";
+import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
+import { Input } from "@frak-labs/ui/component/forms/Input";
+import { validateUrl } from "@frak-labs/ui/utils/validateUrl";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck, Plus } from "lucide-react";
 import { useEffect, useState } from "react";

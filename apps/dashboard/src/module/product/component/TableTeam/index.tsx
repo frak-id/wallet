@@ -10,10 +10,10 @@ import {
 import { useGetProductAdministrators } from "@/module/product/hook/useGetProductAdministrators";
 import { permissionLabels } from "@/module/product/utils/permissions";
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button } from "@shared/module/component/Button";
-import { WalletAddress } from "@shared/module/component/HashDisplay";
-import { Skeleton } from "@shared/module/component/Skeleton";
-import { Tooltip } from "@shared/module/component/Tooltip";
+import { Button } from "@frak-labs/ui/component/Button";
+import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import dynamic from "next/dynamic";

@@ -8,8 +8,8 @@ import {
     type ProductSetupStatusItem,
     useProductSetupStatus,
 } from "@/module/product/hook/useProductSetupStatus";
-import { Button } from "@shared/module/component/Button";
-import { Spinner } from "@shared/module/component/Spinner";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { AlertCircle, BadgeCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Hex } from "viem";

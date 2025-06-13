@@ -1,5 +1,5 @@
 import { authKey } from "@/module/authentication/queryKeys/auth";
-import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";

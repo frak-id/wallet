@@ -5,7 +5,7 @@ import {
     productAdministratorRegistryAbi,
     productRoles,
 } from "@frak-labs/app-essentials";
-import { businessApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";

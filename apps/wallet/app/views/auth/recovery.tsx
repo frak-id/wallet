@@ -10,7 +10,7 @@ import {
     recoveryResetAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { Accordion } from "@shared/module/component/Accordion";
+import { Accordion } from "@frak-labs/ui/component/Accordion";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";

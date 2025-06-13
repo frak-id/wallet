@@ -1,8 +1,8 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
-import { FingerprintFrak } from "@shared/module/asset/icons/FingerprintFrak";
-import { Button } from "@shared/module/component/Button";
-import { formatHash } from "@shared/module/component/HashDisplay";
+import { Button } from "@frak-labs/ui/component/Button";
+import { formatHash } from "@frak-labs/ui/component/HashDisplay";
+import { FingerprintFrak } from "@frak-labs/ui/icons/FingerprintFrak";
 import { SquareUser } from "lucide-react";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";

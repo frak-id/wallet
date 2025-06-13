@@ -1,5 +1,5 @@
 import { useEnvironment } from "@/module/root/hook/useEnvironment";
-import { ReactScan } from "@shared/module/component/ReactScan";
+import { ReactScan } from "@frak-labs/ui/component/ReactScan";
 
 /**
  * ReactScanWrapper component

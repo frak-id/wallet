@@ -8,7 +8,7 @@ import {
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";

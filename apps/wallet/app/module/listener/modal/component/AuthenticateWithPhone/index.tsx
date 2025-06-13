@@ -1,5 +1,5 @@
 import { LaunchPairing } from "@/module/pairing/component/LaunchPairing";
-import type { ButtonProps } from "@shared/module/component/Button";
+import type { ButtonProps } from "@frak-labs/ui/component/Button";
 import { type ElementType, useState } from "react";
 import type { Hex } from "viem";
 import styles from "./index.module.css";

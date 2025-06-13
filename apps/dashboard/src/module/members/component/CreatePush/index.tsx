@@ -9,8 +9,8 @@ import { AudiencePanel } from "@/module/members/component/CreatePush/AudiencePan
 import { PushPayloadPanel } from "@/module/members/component/CreatePush/PushPayloadPanel";
 import { PushTitlePanel } from "@/module/members/component/CreatePush/PushTitlePanel";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import type { NotificationPayload } from "@frak-labs/shared/types/NotificationPayload";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
+import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
 import { useAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";

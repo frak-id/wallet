@@ -1,0 +1,24 @@
+{
+  "name": "@frak-labs/client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "GNU GPL 3.0",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server/index.ts",
+    "./server/*": "./src/server/*",
+    "./types/*": "./src/types/*"
+  },
+  "dependencies": {
+    "@elysiajs/eden": "^1.2.0",
+    "ky": "^1.8.1"
+  },
+  "devDependencies": {
+    "@frak-labs/backend-elysia": "workspace:*",
+    "elysia": "^1.2.25",
+    "typescript": "^5"
+  }
+}

@@ -25,8 +25,7 @@
     "rootDirs": [".", "./.react-router/types"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./app/*"],
-      "@shared/*": ["../../packages/shared/*"]
+      "@/*": ["./app/*"]
     },
     "noEmit": true
   }

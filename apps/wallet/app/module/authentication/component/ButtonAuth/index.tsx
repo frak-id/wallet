@@ -1,4 +1,4 @@
-import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
+import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
 import { useState } from "react";
 import type { PropsWithChildren } from "react";
 

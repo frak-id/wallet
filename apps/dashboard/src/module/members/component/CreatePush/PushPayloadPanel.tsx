@@ -10,9 +10,9 @@ import {
 } from "@/module/forms/Form";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 import { PushPreview } from "@/module/members/component/CreatePush/PushPreview";
-import { Column, Columns } from "@shared/module/component/Columns";
-import { Input } from "@shared/module/component/forms/Input";
-import { TextArea } from "@shared/module/component/forms/TextArea";
+import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Input } from "@frak-labs/ui/component/forms/Input";
+import { TextArea } from "@frak-labs/ui/component/forms/TextArea";
 import { useFormContext } from "react-hook-form";
 
 /**

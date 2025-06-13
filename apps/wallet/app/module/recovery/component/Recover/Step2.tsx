@@ -4,8 +4,8 @@ import {
     recoveryFileContentAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { Button } from "@shared/module/component/Button";
-import { WalletAddress } from "@shared/module/component/HashDisplay";
+import { Button } from "@frak-labs/ui/component/Button";
+import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";

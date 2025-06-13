@@ -2,7 +2,7 @@ import { groupByDay } from "@/module/history/utils/groupByDay";
 import type { HistoryGroup } from "@/types/HistoryGroup";
 import type { RewardHistory } from "@/types/RewardHistory";
 import type { GetRewardHistoryResponseDto } from "@frak-labs/app-essentials";
-import { indexerApi } from "@frak-labs/shared/context/server";
+import { indexerApi } from "@frak-labs/client/server";
 import { type Address, formatUnits, isAddressEqual } from "viem";
 
 /**

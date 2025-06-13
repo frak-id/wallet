@@ -58,8 +58,7 @@
     "jsxImportSource": "preact",
 
     "paths": {
-      "@/*": ["./src/*"],
-      "@shared/*": ["../../packages/shared/*"]
+      "@/*": ["./src/*"]
     }
   },
   "tsc-alias": {

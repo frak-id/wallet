@@ -5,12 +5,12 @@ import {
     interactionValidatorRoles,
     productInteractionManagerAbi,
 } from "@frak-labs/app-essentials";
+import { backendApi } from "@frak-labs/client";
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import {
     useSendTransactionAction,
     useWalletStatus,
 } from "@frak-labs/react-sdk";
-import { backendApi } from "@frak-labs/shared/context/server/backendClient";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 import { readContract, simulateContract } from "viem/actions";

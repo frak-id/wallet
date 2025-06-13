@@ -1,7 +1,7 @@
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { Button } from "@frak-labs/shared/module/component/Button";
-import { useCopyToClipboardWithState } from "@shared/module/hook/useCopyToClipboardWithState";
+import { Button } from "@frak-labs/ui/component/Button";
+import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { Cuer } from "cuer";
 import { ArrowDownToLine, Copy } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";

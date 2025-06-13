@@ -1,4 +1,4 @@
-import { Spinner } from "@frak-labs/shared/module/component/Spinner";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { Cuer } from "cuer";
 import { useAtomValue } from "jotai";
 import { useEffect } from "react";

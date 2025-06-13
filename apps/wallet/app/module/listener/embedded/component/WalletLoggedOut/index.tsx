@@ -6,7 +6,7 @@ import {
     useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
-import { prefixWalletCss } from "@shared/module/utils/prefixWalletCss";
+import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import styles from "./index.module.css";
 
 /**

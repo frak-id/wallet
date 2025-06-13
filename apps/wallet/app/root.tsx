@@ -3,7 +3,7 @@ import { RootProvider } from "@/module/common/provider/RootProvider";
 import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
 import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
-import { Spinner } from "@shared/module/component/Spinner";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { type ReactNode, useEffect } from "react";
 import {
     Links,

@@ -15,7 +15,7 @@ import {
     type ModalStepTypes,
     RpcErrorCodes,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useCallback } from "react";
 import { trackGenericEvent } from "../../common/analytics";
 

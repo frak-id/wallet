@@ -1,7 +1,7 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
-import { indexerApi } from "@frak-labs/shared/context/server";
+import { indexerApi } from "@frak-labs/client/server";
 import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {

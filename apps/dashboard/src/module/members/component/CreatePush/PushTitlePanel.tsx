@@ -8,7 +8,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
-import { Input } from "@shared/module/component/forms/Input";
+import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useFormContext } from "react-hook-form";
 
 /**

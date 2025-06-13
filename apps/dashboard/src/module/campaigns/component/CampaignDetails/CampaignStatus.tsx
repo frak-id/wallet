@@ -8,7 +8,7 @@ import { Title } from "@/module/common/component/Title";
 import {
     TransactionHash,
     WalletAddress,
-} from "@shared/module/component/HashDisplay";
+} from "@frak-labs/ui/component/HashDisplay";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 import { useMemo } from "react";

@@ -4,7 +4,7 @@ import {
 } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { WalletAddress } from "@shared/module/component/HashDisplay";
+import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import { useAtomValue } from "jotai";
 import { Fingerprint, KeyRound } from "lucide-react";
 import { useTranslation } from "react-i18next";

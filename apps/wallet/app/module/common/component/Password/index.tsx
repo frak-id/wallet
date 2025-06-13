@@ -1,5 +1,5 @@
-import { Button } from "@shared/module/component/Button";
-import { Input } from "@shared/module/component/forms/Input";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Input } from "@frak-labs/ui/component/forms/Input";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";

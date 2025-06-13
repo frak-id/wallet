@@ -6,7 +6,7 @@ import { Grid } from "@/module/common/component/Grid";
 import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";

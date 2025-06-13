@@ -5,7 +5,7 @@ import { useDeletePairing } from "@/module/pairing/hook/useDeletePairing";
 import { useGetActivePairings } from "@/module/pairing/hook/useListPairings";
 import { pairingKey } from "@/module/pairing/queryKeys";
 import type { Pairing } from "@/module/pairing/types";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { Laptop, Trash2 } from "lucide-react";

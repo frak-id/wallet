@@ -11,8 +11,8 @@ import {
     useModalListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
-import { Spinner } from "@shared/module/component/Spinner";
-import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import { useAtomValue } from "jotai";
 import { useEffect, useMemo } from "react";
 import { AuthenticateWithPhone } from "../AuthenticateWithPhone";

@@ -3,7 +3,7 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@shared/module/component/Accordion";
+} from "@frak-labs/ui/component/Accordion";
 import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 

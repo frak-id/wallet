@@ -2,7 +2,7 @@ import { getSessionStatus } from "@/module/interaction/action/interactionSession
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import { interactionsKey } from "@/module/wallet/queryKeys/interactions";
 import type { InteractionSession } from "@/types/Session";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import type { UndefinedInitialDataOptions } from "@tanstack/react-query";
 import { RESET } from "jotai/utils";

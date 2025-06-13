@@ -17,7 +17,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Checkbox } from "@shared/module/component/forms/Checkbox";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { format, isBefore, startOfDay } from "date-fns";
 import { useEffect, useState } from "react";
 import type {

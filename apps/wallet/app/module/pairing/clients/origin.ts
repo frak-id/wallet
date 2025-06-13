@@ -1,4 +1,4 @@
-import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { nanoid } from "nanoid";
 import type { Hex } from "viem";
 import { trackAuthCompleted } from "../../common/analytics";
