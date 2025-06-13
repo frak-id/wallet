@@ -1,4 +1,4 @@
-import { tools } from "@frak-labs/dev-tooling/rslib";
+import { tools } from "@frak-labs/dev-tooling";
 import { defineConfig } from "@rslib/core";
 
 export default defineConfig({

@@ -1,6 +1,6 @@
 {
   // This tsconfig file contains the shared config for the build (tsconfig.build.json) and type checking (tsconfig.json) config.
-  "include": ["./src", "../../packages/shared/types/**/*.d.ts", "../../packages/shared/module/utils/**/*.ts"],
+  "include": ["./src", "../../packages/ui/types/**/*.d.ts", "../../packages/ui/utils/**/*.ts"],
   "compilerOptions": {
     // Output directory
     "outDir": "./dist",
@@ -58,7 +58,8 @@
     "jsxImportSource": "preact",
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@frak-labs/ui/types/*": ["../../packages/ui/types/*"]
     }
   },
   "tsc-alias": {

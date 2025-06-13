@@ -2,7 +2,7 @@ import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig } from "vite";
 import type { UserConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { onwarn } from "../../packages/shared/tooling/vite";
+import { onwarn } from "../../packages/dev-tooling";
 
 const DEBUG = JSON.stringify(false);
 

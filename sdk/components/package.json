@@ -63,7 +63,8 @@
     "@rslib/core": "^0.9.2",
     "@types/node": "^22",
     "@types/preact-custom-element": "^4.0.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@frak-labs/dev-tooling": "workspace:*"
   },
   "browserslist": [
     "extends @frak-labs/browserslist-config"

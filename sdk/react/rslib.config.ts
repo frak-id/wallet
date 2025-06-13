@@ -1,4 +1,4 @@
-import { tools } from "@frak-labs/dev-tooling/rslib";
+import { tools } from "@frak-labs/dev-tooling";
 import { pluginReact } from "@rsbuild/plugin-react";
 import { type LibConfig, defineConfig } from "@rslib/core";
 
