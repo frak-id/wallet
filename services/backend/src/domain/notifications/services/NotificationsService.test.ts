@@ -1,23 +1,9 @@
-import { describe, expect, it, mock, beforeEach } from "bun:test";
-import { NotificationsService } from "./NotificationsService";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import type { Address } from "viem";
+import type { NotificationDb } from "../context";
+import { NotificationsService } from "./NotificationsService";
 
 // Mock web-push
-mock.module("web-push", () => ({
-    sendNotification: mock(() => Promise.resolve()),
-    setVapidDetails: mock(() => {}),
-}));
-
-mock.module("../../../common", () => ({
-    log: {
-        debug: mock(() => {}),
-        warn: mock(() => {}),
-    },
-}));
-
-mock.module("@frak-labs/app-essentials", () => ({
-    isRunningInProd: false,
-}));
 
 type MockDb = {
     query: {
@@ -32,24 +18,52 @@ describe("NotificationsService", () => {
     let service: NotificationsService;
     let mockDb: MockDb;
 
+    /* -------------------------------------------------------------------------- */
+    /*                                    Mocks                                   */
+    /* -------------------------------------------------------------------------- */
+
+    mock.module("web-push", () => ({
+        sendNotification: mock(() => Promise.resolve()),
+        setVapidDetails: mock(() => {}),
+    }));
+
+    mock.module("../../../common", () => ({
+        log: {
+            debug: mock(() => {}),
+            warn: mock(() => {}),
+        },
+    }));
+
+    mock.module("@frak-labs/app-essentials", () => ({
+        isRunningInProd: false,
+    }));
+
+    /* -------------------------------------------------------------------------- */
+    /*                                    Setup                                   */
+    /* -------------------------------------------------------------------------- */
+
     beforeEach(() => {
         mockDb = {
             query: {
                 pushTokensTable: {
-                    findMany: mock(() => Promise.resolve([
-                        {
-                            wallet: "0x1234567890abcdef1234567890abcdef12345678",
-                            endpoint: "https://fcm.googleapis.com/fcm/send/test1",
-                            keyP256dh: "test-p256dh-key-1",
-                            keyAuth: "test-auth-key-1",
-                        },
-                        {
-                            wallet: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                            endpoint: "https://fcm.googleapis.com/fcm/send/test2",
-                            keyP256dh: "test-p256dh-key-2",
-                            keyAuth: "test-auth-key-2",
-                        },
-                    ])),
+                    findMany: mock(() =>
+                        Promise.resolve([
+                            {
+                                wallet: "0x1234567890abcdef1234567890abcdef12345678",
+                                endpoint:
+                                    "https://fcm.googleapis.com/fcm/send/test1",
+                                keyP256dh: "test-p256dh-key-1",
+                                keyAuth: "test-auth-key-1",
+                            },
+                            {
+                                wallet: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+                                endpoint:
+                                    "https://fcm.googleapis.com/fcm/send/test2",
+                                keyP256dh: "test-p256dh-key-2",
+                                keyAuth: "test-auth-key-2",
+                            },
+                        ])
+                    ),
                 },
             },
             delete: mock(() => ({
@@ -59,15 +73,23 @@ describe("NotificationsService", () => {
             })),
         };
 
-        service = new NotificationsService(mockDb as any);
+        service = new NotificationsService(mockDb as unknown as NotificationDb);
     });
+
+    /* -------------------------------------------------------------------------- */
+    /*                                    Tests                                   */
+    /* -------------------------------------------------------------------------- */
 
     describe("sendNotification", () => {
         it("should handle empty token list gracefully", async () => {
-            mockDb.query.pushTokensTable.findMany = mock(() => Promise.resolve([]));
+            mockDb.query.pushTokensTable.findMany = mock(() =>
+                Promise.resolve([])
+            );
 
             const result = await service.sendNotification({
-                wallets: ["0x1234567890abcdef1234567890abcdef12345678"] as Address[],
+                wallets: [
+                    "0x1234567890abcdef1234567890abcdef12345678",
+                ] as Address[],
                 payload: {
                     title: "Test Notification",
                     body: "This is a test",
@@ -98,7 +120,9 @@ describe("NotificationsService", () => {
 
         it("should handle notification sending errors gracefully", async () => {
             // This test just verifies the method completes without throwing
-            const wallets = ["0x1234567890abcdef1234567890abcdef12345678"] as Address[];
+            const wallets = [
+                "0x1234567890abcdef1234567890abcdef12345678",
+            ] as Address[];
             const payload = {
                 title: "Test Notification",
                 body: "This is a test",
@@ -106,7 +130,9 @@ describe("NotificationsService", () => {
             };
 
             // Should not throw even if external service fails
-            expect(service.sendNotification({ wallets, payload })).resolves.toBeUndefined();
+            expect(
+                service.sendNotification({ wallets, payload })
+            ).resolves.toBeUndefined();
         });
     });
 
@@ -122,15 +148,17 @@ describe("NotificationsService", () => {
         it("should handle large numbers of tokens by chunking", async () => {
             // Create a large number of mock tokens (more than 30)
             const manyTokens = Array.from({ length: 65 }, (_, i) => ({
-                wallet: `0x${i.toString(16).padStart(40, '0')}`,
+                wallet: `0x${i.toString(16).padStart(40, "0")}`,
                 endpoint: `https://fcm.googleapis.com/fcm/send/test${i}`,
                 keyP256dh: `test-p256dh-key-${i}`,
                 keyAuth: `test-auth-key-${i}`,
             }));
 
-            mockDb.query.pushTokensTable.findMany = mock(() => Promise.resolve(manyTokens));
+            mockDb.query.pushTokensTable.findMany = mock(() =>
+                Promise.resolve(manyTokens)
+            );
 
-            const wallets = manyTokens.map(token => token.wallet as Address);
+            const wallets = manyTokens.map((token) => token.wallet as Address);
             const payload = {
                 title: "Test Notification",
                 body: "This is a test",
@@ -138,7 +166,9 @@ describe("NotificationsService", () => {
             };
 
             // Should not throw with large number of tokens
-            expect(service.sendNotification({ wallets, payload })).resolves.toBeUndefined();
+            expect(
+                service.sendNotification({ wallets, payload })
+            ).resolves.toBeUndefined();
         });
     });
 });

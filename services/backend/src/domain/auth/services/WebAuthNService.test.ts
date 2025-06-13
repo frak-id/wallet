@@ -1,58 +1,77 @@
 import { describe, expect, it, mock } from "bun:test";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/server";
-import { WebAuthNService } from "./WebAuthNService";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
+import { WebAuthNService } from "./WebAuthNService";
 
 // Mock the external dependencies
-mock.module("permissionless/actions", () => ({
-    getSenderAddress: mock(() => Promise.resolve("0x1234567890abcdef1234567890abcdef12345678")),
-}));
-
-mock.module("@simplewebauthn/server", () => ({
-    verifyAuthenticationResponse: mock(() => Promise.resolve({
-        verified: true,
-        authenticationInfo: {
-            newCounter: 5,
-        },
-    })),
-}));
-
-mock.module("@backend-common", () => ({
-    viemClient: {
-        request: mock(() => Promise.resolve("0x1234567890abcdef")),
-    },
-}));
 
 describe("WebAuthNService", () => {
     const mockAuthenticatorRepository: AuthenticatorRepository = {
-        getByCredentialId: mock(() => Promise.resolve({
-            _id: "test-credential-id",
-            counter: 4,
-            publicKey: { x: "0x123", y: "0x456" },
-            credentialPublicKey: { buffer: new ArrayBuffer(8) },
-            transports: ["usb", "nfc"],
-        })),
+        getByCredentialId: mock(() =>
+            Promise.resolve({
+                _id: "test-credential-id",
+                counter: 4,
+                publicKey: { x: "0x123", y: "0x456" },
+                credentialPublicKey: { buffer: new ArrayBuffer(8) },
+                transports: ["usb", "nfc"],
+            })
+        ),
         updateCounter: mock(() => Promise.resolve()),
     } as unknown as AuthenticatorRepository;
 
     const webAuthNService = new WebAuthNService(mockAuthenticatorRepository);
 
+    /* -------------------------------------------------------------------------- */
+    /*                                    Mocks                                   */
+    /* -------------------------------------------------------------------------- */
+
+    mock.module("permissionless/actions", () => ({
+        getSenderAddress: mock(() =>
+            Promise.resolve("0x1234567890abcdef1234567890abcdef12345678")
+        ),
+    }));
+
+    mock.module("@simplewebauthn/server", () => ({
+        verifyAuthenticationResponse: mock(() =>
+            Promise.resolve({
+                verified: true,
+                authenticationInfo: {
+                    newCounter: 5,
+                },
+            })
+        ),
+    }));
+
+    mock.module("@backend-common", () => ({
+        viemClient: {
+            request: mock(() => Promise.resolve("0x1234567890abcdef")),
+        },
+    }));
+
+    /* -------------------------------------------------------------------------- */
+    /*                                    Tests                                   */
+    /* -------------------------------------------------------------------------- */
+
     describe("parseCompressedResponse", () => {
         it("should parse base64 encoded JSON response", () => {
             const testData = { test: "data", number: 123 };
-            const encoded = Buffer.from(JSON.stringify(testData)).toString("base64");
-            
+            const encoded = Buffer.from(JSON.stringify(testData)).toString(
+                "base64"
+            );
+
             const result = webAuthNService.parseCompressedResponse(encoded);
-            
+
             expect(result).toEqual(testData);
         });
 
         it("should handle empty object", () => {
             const testData = {};
-            const encoded = Buffer.from(JSON.stringify(testData)).toString("base64");
-            
+            const encoded = Buffer.from(JSON.stringify(testData)).toString(
+                "base64"
+            );
+
             const result = webAuthNService.parseCompressedResponse(encoded);
-            
+
             expect(result).toEqual(testData);
         });
     });
@@ -73,7 +92,8 @@ describe("WebAuthNService", () => {
 
     describe("getEcdsaWalletAddress", () => {
         it("should return a valid ECDSA wallet address", async () => {
-            const ecdsaAddress = "0x1234567890abcdef1234567890abcdef12345678" as const;
+            const ecdsaAddress =
+                "0x1234567890abcdef1234567890abcdef12345678" as const;
 
             const result = await webAuthNService.getEcdsaWalletAddress({
                 ecdsaAddress,
@@ -91,9 +111,11 @@ describe("WebAuthNService", () => {
             } as unknown as AuthenticatorRepository;
             const service = new WebAuthNService(mockRepo);
 
-            const compressedSignature = Buffer.from(JSON.stringify({
-                id: "non-existent-id",
-            })).toString("base64");
+            const compressedSignature = Buffer.from(
+                JSON.stringify({
+                    id: "non-existent-id",
+                })
+            ).toString("base64");
 
             const result = await service.isValidSignature({
                 compressedSignature,
@@ -116,7 +138,9 @@ describe("WebAuthNService", () => {
                 clientExtensionResults: {},
             };
 
-            const compressedSignature = Buffer.from(JSON.stringify(mockSignature)).toString("base64");
+            const compressedSignature = Buffer.from(
+                JSON.stringify(mockSignature)
+            ).toString("base64");
 
             const result = await webAuthNService.isValidSignature({
                 compressedSignature,
@@ -152,7 +176,9 @@ describe("WebAuthNService", () => {
                 clientExtensionResults: {},
             };
 
-            const compressedSignature = Buffer.from(JSON.stringify(mockSignature)).toString("base64");
+            const compressedSignature = Buffer.from(
+                JSON.stringify(mockSignature)
+            ).toString("base64");
 
             await service.isValidSignature({
                 compressedSignature,
