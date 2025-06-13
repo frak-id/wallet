@@ -52,7 +52,7 @@
     "nanoid": "^5.1.5",
     "normalize.css": "^8.0.1",
     "nprogress": "^0.2.0",
-    "permissionless": "^0.2.43",
+    "permissionless": "^0.2.47",
     "radash": "^12.1.0",
     "react": "^19.1.0",
     "react-avatar-editor": "^13.0.2",
@@ -65,7 +65,7 @@
     "react-webcam": "^7.2.0",
     "remix-utils": "^8.7.0",
     "vaul": "^1.1.2",
-    "viem": "^2.31.1",
+    "viem": "^2.31.2",
     "wagmi": "^2.15.6"
   },
   "devDependencies": {
