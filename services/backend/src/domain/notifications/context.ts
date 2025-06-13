@@ -12,13 +12,13 @@ export const notificationContext = new Elysia({
             client: postgresDb,
             schema: { pushTokensTable },
         });
-
-        const notificationsService = new NotificationsService(notificationDb);
         return {
             ...decorators,
-            notification: {
-                service: notificationsService,
+            notifications: {
                 db: notificationDb,
+                services: {
+                    notifications: new NotificationsService(notificationDb),
+                },
             },
         };
     })
@@ -28,8 +28,8 @@ export const notificationContext = new Elysia({
             if (!isEnabled) return;
 
             return {
-                afterResponse: async ({ notification: { service } }) => {
-                    await service.cleanupExpiredTokens();
+                afterResponse: async ({ notifications: { services } }) => {
+                    await services.notifications.cleanupExpiredTokens();
                 },
             };
         },

@@ -15,7 +15,12 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
     // Get current user balance
     .get(
         "",
-        async ({ balancesRepository, walletSession }) => {
+        async ({
+            wallet: {
+                repositories: { balances: balancesRepository },
+            },
+            walletSession,
+        }) => {
             if (!walletSession) return error(401, "Unauthorized");
 
             // Get all the user balances
@@ -200,7 +205,12 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
     // Get pending balance
     .get(
         "/pending",
-        async ({ pendingBalanceRepository, walletSession }) => {
+        async ({
+            wallet: {
+                repositories: { pendingBalance: pendingBalanceRepository },
+            },
+            walletSession,
+        }) => {
             if (!walletSession) return error(401, "Unauthorized");
 
             return pendingBalanceRepository.getPendingBalance({

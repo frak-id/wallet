@@ -9,26 +9,19 @@ import {
     type StaticWalletSdkTokenDto,
     type StaticWalletTokenDto,
     WalletAuthResponseDto,
+    authContext,
     ssoTable,
-    walletSdkSessionService,
-    walletSsoService,
-    webAuthNService,
 } from "../../../../domain/auth";
 
 export const walletSsoRoutes = new Elysia({
     prefix: "/sso",
 })
     // Add the SSO db to the context
-    .use(walletSsoService)
-    .use(walletSdkSessionService)
-    .use(webAuthNService)
+    .use(authContext)
     // Route to create a new sso session
     .post(
         "/create",
-        async ({
-            body: { productId, consumeKey, params },
-            ssoService: { db },
-        }) => {
+        async ({ body: { productId, consumeKey, params }, auth: { db } }) => {
             // Generate the sso id
             const paramHash = keccak256(toHex(JSON.stringify(params)));
             const ssoId = keccak256(
@@ -88,10 +81,12 @@ export const walletSsoRoutes = new Elysia({
         async ({
             body: { id, productId, consumeKey },
             // Context
-            webAuthNService,
+            auth: {
+                db,
+                services: { walletSdkSession },
+                repositories: { authenticator: authenticatorRepository },
+            },
             walletJwt,
-            ssoService: { db },
-            generateSdkJwt,
         }) => {
             // Get the sso session
             const ssoSessions = await db
@@ -124,7 +119,7 @@ export const walletSsoRoutes = new Elysia({
 
             // Get the authenticator db and resolve it
             const authenticator =
-                await webAuthNService.authenticatorRepository.getByCredentialId(
+                await authenticatorRepository.getByCredentialId(
                     ssoSession.authenticatorId
                 );
 
@@ -172,7 +167,7 @@ export const walletSsoRoutes = new Elysia({
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await generateSdkJwt({
+            const sdkJwt = await walletSdkSession.generateSdkJwt({
                 wallet: ssoSession.wallet,
                 additionalData: ssoSession.sdkTokenAdditionalData as
                     | StaticWalletSdkTokenDto["additionalData"]

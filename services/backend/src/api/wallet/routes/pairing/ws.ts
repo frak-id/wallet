@@ -25,7 +25,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
         }
 
         // Handle the pairing open
-        await ws.data.pairing.connectionRepository.handlePairingOpen({
+        await ws.data.pairing.repositories.connection.handlePairingOpen({
             query: ws.data.query,
             userAgent,
             wallet,
@@ -57,7 +57,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
         }
 
         // Handle the message
-        await ws.data.pairing.routerRepository.handleMessage({
+        await ws.data.pairing.repositories.router.handleMessage({
             message,
             ws,
             wallet,

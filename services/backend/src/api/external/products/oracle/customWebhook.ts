@@ -36,7 +36,10 @@ export const customWebhook = new Elysia()
             params: { productId },
             body,
             headers,
-            oracle: { db: oracleDb, webhookService },
+            oracle: {
+                db: oracleDb,
+                services: { webhook },
+            },
         }) => {
             // Try to parse the body as a custom webhook type and ensure the type validity
             const webhookData = JSON.parse(body) as CustomWebhookDto;
@@ -79,7 +82,7 @@ export const customWebhook = new Elysia()
             );
 
             // Insert purchase and items
-            await webhookService.upsertPurchase({
+            await webhook.upsertPurchase({
                 purchase: {
                     oracleId: oracle.id,
                     purchaseId,

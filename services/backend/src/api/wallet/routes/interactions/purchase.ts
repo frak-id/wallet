@@ -15,7 +15,7 @@ export const purchaseInteractionsRoutes = new Elysia()
         async ({
             body,
             headers: { "x-wallet-sdk-auth": walletSdkAuth },
-            interactionsDb,
+            interactions: { db: interactionsDb },
             walletSdkJwt,
         }) => {
             if (!walletSdkAuth) return error(401, "Missing wallet SDK JWT");

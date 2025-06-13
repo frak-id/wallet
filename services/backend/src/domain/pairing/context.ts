@@ -1,8 +1,7 @@
 import { postgresDb, sessionContext } from "@backend-common";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
-import { walletSdkSessionService } from "../auth/services/WalletSdkSessionService";
-import { walletSsoService } from "../auth/services/WalletSsoService";
+import { authContext } from "../auth";
 import { notificationContext } from "../notifications/context";
 import { pairingSignatureRequestTable, pairingTable } from "./db/schema";
 import { PairingConnectionRepository } from "./repositories/PairingConnectionRepository";
@@ -12,52 +11,43 @@ export const pairingContext = new Elysia({
     name: "Context.pairing",
 })
     .use(sessionContext)
-    .use(walletSdkSessionService)
-    .use(walletSsoService)
+    .use(authContext)
     .use(notificationContext)
-    .decorate(
-        ({
-            generateSdkJwt,
+    .decorate(({ walletJwt, auth, notifications }) => {
+        const pairingDb = drizzle({
+            client: postgresDb,
+            schema: {
+                pairingTable,
+                pairingSignatureRequestTable,
+            },
+        });
+
+        const connectionRepository = new PairingConnectionRepository(
+            pairingDb,
             walletJwt,
-            ssoService,
-            notification,
-            ...decorators
-        }) => {
-            const pairingDb = drizzle({
-                client: postgresDb,
-                schema: {
-                    pairingTable,
-                    pairingSignatureRequestTable,
-                },
-            });
+            auth.services.walletSso,
+            auth.services.walletSdkSession.generateSdkJwt
+        );
+        const routerRepository = new PairingRouterRepository(
+            pairingDb,
+            notifications.services.notifications
+        );
 
-            const connectionRepository = new PairingConnectionRepository(
-                pairingDb,
-                walletJwt,
-                ssoService,
-                generateSdkJwt
-            );
-            const routerRepository = new PairingRouterRepository(
-                pairingDb,
-                notification.service
-            );
-
-            return {
-                pairing: {
-                    db: pairingDb,
-                    connectionRepository: connectionRepository,
-                    routerRepository: routerRepository,
+        return {
+            pairing: {
+                db: pairingDb,
+                repositories: {
+                    connection: connectionRepository,
+                    router: routerRepository,
                 },
-                // Decorators
-                postgresDb,
-                generateSdkJwt,
-                walletJwt,
-                ssoService,
-                notification,
-                ...decorators,
-            };
-        }
-    )
+            },
+            // Decorators
+            postgresDb,
+            walletJwt,
+            notifications,
+            auth,
+        };
+    })
     .as("scoped");
 
 export type PairingContextApp = typeof pairingContext;

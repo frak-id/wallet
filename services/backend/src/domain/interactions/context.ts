@@ -52,15 +52,19 @@ export const interactionsContext = new Elysia({
 
         return {
             ...decorators,
-            interactionsDb,
-            // Repos
-            pendingInteractionsRepository,
-            interactionPackerRepository,
-            walletSessionRepository,
-            interactionSignerRepository,
-            campaignDataRepository,
-            // Services
-            campaignRewardsService,
+            interactions: {
+                db: interactionsDb,
+                repositories: {
+                    pendingInteractions: pendingInteractionsRepository,
+                    interactionPacker: interactionPackerRepository,
+                    walletSession: walletSessionRepository,
+                    interactionSigner: interactionSignerRepository,
+                    campaignData: campaignDataRepository,
+                },
+                services: {
+                    campaignRewards: campaignRewardsService,
+                },
+            },
         };
     })
     .as("scoped");
