@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, mock } from "bun:test";
 import type { Address, Hex } from "viem";
+import { setupAllMocks, resetAllMocks, clearAllMocks, mocks } from "../../../../test/mocks";
 import type { CampaignDataRepository } from "../repositories/CampaignDataRepository";
 import { CampaignRewardsService } from "./CampaignRewardsService";
 
@@ -12,80 +13,62 @@ describe("CampaignRewardsService", () => {
     const mockTokenAddress = "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address;
 
     /* -------------------------------------------------------------------------- */
-    /*                                    Mocks                                   */
-    /* -------------------------------------------------------------------------- */
-
-    const multicallSpy = mock(() => Promise.resolve([true]));
-    const baseIndexerMock = mock(() =>
-        Promise.resolve({
-            campaigns: [
-                {
-                    address: mockCampaignAddress,
-                    token: mockTokenAddress,
-                    attached: true,
-                    lastUpdateBlock: "1000000",
-                },
-            ],
-            tokens: [
-                {
-                    address: mockTokenAddress,
-                    decimals: 18,
-                    symbol: "TEST",
-                    name: "Test Token",
-                },
-            ],
-        })
-    );
-    const indexerGetSpy = mock(() => ({
-        json: baseIndexerMock,
-    }));
-
-    mock.module("@backend-common", () => ({
-        indexerApi: {
-            get: indexerGetSpy,
-        },
-        pricingRepository: {
-            getTokenPrice: mock(() =>
-                Promise.resolve({
-                    eur: 1.0,
-                    usd: 1.1,
-                    gbp: 0.9,
-                })
-            ),
-        },
-        viemClient: {},
-    }));
-
-    mock.module("@backend-utils", () => ({
-        referralCampaign_isActive: {
-            name: "isActive",
-            type: "function",
-        },
-    }));
-
-    mock.module("viem/actions", () => ({
-        multicall: multicallSpy,
-    }));
-
-    mock.module("viem", () => ({
-        concatHex: mock((values: string[]) => values.join("")),
-        formatUnits: mock((value: bigint, decimals: number) => "1.0"),
-        keccak256: mock((data: string) => "0x123456789abcdef" as Hex),
-    }));
-
-    /* -------------------------------------------------------------------------- */
     /*                                    Setup                                   */
     /* -------------------------------------------------------------------------- */
 
+    beforeAll(() => {
+        setupAllMocks();
+    });
+
+    afterAll(() => {
+        clearAllMocks();
+    });
+
     beforeEach(() => {
-        multicallSpy.mockClear();
-        indexerGetSpy.mockClear();
+        resetAllMocks();
+        
+        // Setup test-specific mock implementations
+        mocks.viem.multicall.mockImplementation(() => Promise.resolve([true]));
+        mocks.viem.concatHex.mockImplementation((values: string[]) => values.join("") as any);
+        mocks.viem.formatUnits.mockImplementation(() => "1.0");
+        mocks.viem.keccak256.mockImplementation(() => "0x123456789abcdef" as Hex);
+        
+        mocks.backendCommon.indexerApi.get.mockImplementation(() => ({
+            json: mock(() =>
+                Promise.resolve({
+                    campaigns: [
+                        {
+                            address: mockCampaignAddress,
+                            token: mockTokenAddress,
+                            attached: true,
+                            lastUpdateBlock: "1000000",
+                        },
+                    ],
+                    tokens: [
+                        {
+                            address: mockTokenAddress,
+                            decimals: 18,
+                            symbol: "TEST",
+                            name: "Test Token",
+                        },
+                    ],
+                })
+            ),
+        }));
+        
+        mocks.backendCommon.pricingRepository.getTokenPrice.mockImplementation(() =>
+            Promise.resolve({
+                eur: 1.0,
+                usd: 1.1,
+                gbp: 0.9,
+            })
+        );
 
         mockCampaignDataRepository = {
             getRewardsFromStorage: mock(() =>
                 Promise.resolve([
                     {
-                        interactionTypeKey: "read",
+                        interactionTypeKey: "read" as any,
                         triggerData: {
                             baseReward: BigInt("1000000000000000000"), // 1.0 in wei
                         },
@@ -137,7 +120,7 @@ describe("CampaignRewardsService", () => {
         });
 
         it("should return undefined when no campaigns exist", async () => {
-            indexerGetSpy.mockReturnValue({
+            mocks.backendCommon.indexerApi.get.mockReturnValue({
                 json: mock(() =>
                     Promise.resolve({
                         campaigns: [],
@@ -154,7 +137,7 @@ describe("CampaignRewardsService", () => {
         });
 
         it("should return undefined when no campaigns are attached", async () => {
-            indexerGetSpy.mockReturnValue({
+            mocks.backendCommon.indexerApi.get.mockReturnValue({
                 json: mock(() =>
                     Promise.resolve({
                         campaigns: [
@@ -185,7 +168,7 @@ describe("CampaignRewardsService", () => {
         });
 
         it("should return undefined when no campaigns are active", async () => {
-            multicallSpy.mockReturnValue(Promise.resolve([false]));
+            mocks.viem.multicall.mockReturnValue(Promise.resolve([false]));
 
             const result = await service.getActiveRewardsForProduct({
                 productId: mockProductId,
@@ -195,7 +178,7 @@ describe("CampaignRewardsService", () => {
         });
 
         it("should handle missing token", async () => {
-            indexerGetSpy.mockReturnValue({
+            mocks.backendCommon.indexerApi.get.mockReturnValue({
                 json: mock(() =>
                     Promise.resolve({
                         campaigns: [
@@ -226,8 +209,7 @@ describe("CampaignRewardsService", () => {
         });
 
         it("should handle missing token price", async () => {
-            const { pricingRepository } = await import("@backend-common");
-            pricingRepository.getTokenPrice = mock(() => Promise.resolve(null));
+            mocks.backendCommon.pricingRepository.getTokenPrice.mockImplementation(() => Promise.resolve(null));
 
             const result = await service.getActiveRewardsForProduct({
                 productId: mockProductId,
@@ -240,7 +222,7 @@ describe("CampaignRewardsService", () => {
             mockCampaignDataRepository.getRewardsFromStorage = mock(() =>
                 Promise.resolve([
                     {
-                        interactionTypeKey: "purchase",
+                        interactionTypeKey: "purchase" as any,
                         triggerData: {
                             startReward: BigInt("500000000000000000"), // 0.5 in wei
                             endReward: BigInt("2000000000000000000"), // 2.0 in wei
@@ -262,6 +244,9 @@ describe("CampaignRewardsService", () => {
         });
 
         it("should use cache for subsequent calls", async () => {
+            // Clear previous calls from other tests
+            mocks.backendCommon.indexerApi.get.mockClear();
+            
             // First call
             await service.getActiveRewardsForProduct({
                 productId: mockProductId,
@@ -273,7 +258,7 @@ describe("CampaignRewardsService", () => {
             });
 
             // Should only call API once due to caching
-            expect(indexerGetSpy).toHaveBeenCalledTimes(1);
+            expect(mocks.backendCommon.indexerApi.get).toHaveBeenCalledTimes(1);
         });
 
         it("should cache active campaign results", async () => {
@@ -282,7 +267,7 @@ describe("CampaignRewardsService", () => {
                 productId: mockProductId,
             });
 
-            multicallSpy.mockReset();
+            mocks.viem.multicall.mockReset();
 
             // Second call with same campaigns (cache hit)
             await service.getActiveRewardsForProduct({
@@ -290,12 +275,12 @@ describe("CampaignRewardsService", () => {
             });
 
             // Should not have been called again since cached
-            expect(multicallSpy).toHaveBeenCalledTimes(0);
+            expect(mocks.viem.multicall).toHaveBeenCalledTimes(0);
         });
 
         it("should handle multiple campaigns", async () => {
-            indexerGetSpy.mockReset();
-            indexerGetSpy.mockReturnValue({
+            mocks.backendCommon.indexerApi.get.mockReset();
+            mocks.backendCommon.indexerApi.get.mockReturnValue({
                 json: mock(() =>
                     Promise.resolve({
                         campaigns: [
@@ -324,12 +309,12 @@ describe("CampaignRewardsService", () => {
                 ),
             });
 
-            multicallSpy.mockReturnValue(Promise.resolve([true, true]));
+            mocks.viem.multicall.mockReturnValue(Promise.resolve([true, true]));
 
             mockCampaignDataRepository.getRewardsFromStorage = mock(() =>
                 Promise.resolve([
                     {
-                        interactionTypeKey: "read",
+                        interactionTypeKey: "read" as any,
                         triggerData: {
                             baseReward: BigInt("1000000000000000000"),
                         },

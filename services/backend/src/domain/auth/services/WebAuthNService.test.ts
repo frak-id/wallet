@@ -1,9 +1,8 @@
-import { describe, expect, it, mock } from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, mock } from "bun:test";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/server";
+import { setupAllMocks, resetAllMocks, clearAllMocks, mocks } from "../../../../test/mocks";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 import { WebAuthNService } from "./WebAuthNService";
-
-// Mock the external dependencies
 
 describe("WebAuthNService", () => {
     const mockAuthenticatorRepository: AuthenticatorRepository = {
@@ -22,31 +21,38 @@ describe("WebAuthNService", () => {
     const webAuthNService = new WebAuthNService(mockAuthenticatorRepository);
 
     /* -------------------------------------------------------------------------- */
-    /*                                    Mocks                                   */
+    /*                                    Setup                                   */
     /* -------------------------------------------------------------------------- */
 
-    mock.module("permissionless/actions", () => ({
-        getSenderAddress: mock(() =>
-            Promise.resolve("0x1234567890abcdef1234567890abcdef12345678")
-        ),
-    }));
+    beforeAll(() => {
+        setupAllMocks();
+    });
 
-    mock.module("@simplewebauthn/server", () => ({
-        verifyAuthenticationResponse: mock(() =>
+    beforeEach(() => {
+        resetAllMocks();
+        
+        // Setup test-specific mock implementations
+        mocks.permissionless.getSenderAddress.mockImplementation(() =>
+            Promise.resolve("0x1234567890abcdef1234567890abcdef12345678")
+        );
+        
+        mocks.simplewebauthn.verifyAuthenticationResponse.mockImplementation(() =>
             Promise.resolve({
                 verified: true,
                 authenticationInfo: {
                     newCounter: 5,
                 },
             })
-        ),
-    }));
+        );
+        
+        mocks.backendCommon.viemClient.request.mockImplementation(() => 
+            Promise.resolve("0x1234567890abcdef")
+        );
+    });
 
-    mock.module("@backend-common", () => ({
-        viemClient: {
-            request: mock(() => Promise.resolve("0x1234567890abcdef")),
-        },
-    }));
+    afterAll(() => {
+        clearAllMocks();
+    });
 
     /* -------------------------------------------------------------------------- */
     /*                                    Tests                                   */
