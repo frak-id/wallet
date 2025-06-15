@@ -1,5 +1,5 @@
 {
-  "exclude": ["**/*.test.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/__mock__/*"],
   "compilerOptions": {
     "baseUrl": "./src",
     "target": "esnext",
