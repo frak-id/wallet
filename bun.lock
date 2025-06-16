@@ -166,6 +166,7 @@
         "react-router-dom": "^7.6.2",
         "react-webcam": "^7.2.0",
         "remix-utils": "^8.7.0",
+        "ua-parser-js": "^2.0.3",
         "vaul": "^1.1.2",
         "viem": "^2.31.2",
         "wagmi": "^2.15.6",

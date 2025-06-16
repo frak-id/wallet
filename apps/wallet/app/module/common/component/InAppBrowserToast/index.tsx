@@ -3,19 +3,18 @@ import {
     socialRedirectAttemptedAtom,
 } from "@/module/common/atoms/inAppBrowser";
 import { Toast } from "@/module/common/component/Toast";
-import { useIsInAppBrowser } from "@/module/common/hook/useIsInAppBrowser";
 import { useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
 import { trackGenericEvent } from "../../analytics";
+import { inAppRedirectUrl, isInAppBrowser, isInIframe } from "../../lib/inApp";
 
 /**
  * Toast component that displays when user is in an in-app browser
  */
 export function InAppBrowserToast() {
     const { t } = useTranslation();
-    const { isInAppBrowser, isInIframe, redirectUrl } = useIsInAppBrowser();
     const [isDismissed, setIsDismissed] = useAtom(
         inAppBrowserToastDismissedAtom
     );
@@ -25,22 +24,13 @@ export function InAppBrowserToast() {
 
     // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
     useEffect(() => {
-        if (!redirectUrl) return;
         if (isInIframe || !isInAppBrowser || hasAttemptedRedirect) return;
 
         setHasAttemptedRedirect(true);
         handleRedirect();
-    }, [
-        isInAppBrowser,
-        isInIframe,
-        hasAttemptedRedirect,
-        redirectUrl,
-        setHasAttemptedRedirect,
-    ]);
+    }, [hasAttemptedRedirect, setHasAttemptedRedirect]);
 
     const handleRedirect = useCallback(() => {
-        if (!redirectUrl) return;
-
         if (isInIframe) {
             // If in an iframe, ask the parent to redirect to the new url
             trackGenericEvent("in-app-browser-redirect", {
@@ -49,7 +39,7 @@ export function InAppBrowserToast() {
             emitLifecycleEvent({
                 iframeLifecycle: "redirect",
                 data: {
-                    baseRedirectUrl: redirectUrl,
+                    baseRedirectUrl: inAppRedirectUrl,
                 },
             });
         } else {
@@ -57,9 +47,9 @@ export function InAppBrowserToast() {
             trackGenericEvent("in-app-browser-redirect", {
                 target: "window",
             });
-            window.location.href = `${redirectUrl}${encodeURIComponent(window.location.href)}`;
+            window.location.href = `${inAppRedirectUrl}${encodeURIComponent(window.location.href)}`;
         }
-    }, [redirectUrl, isInIframe]);
+    }, []);
 
     const handleDismiss = useCallback(
         (e: React.MouseEvent) => {

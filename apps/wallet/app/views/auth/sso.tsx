@@ -35,6 +35,7 @@ import { Link, useSearchParams } from "react-router";
 import type { Hex } from "viem";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
+import { ua } from "@/module/common/lib/ua";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 
@@ -351,7 +352,8 @@ function PhonePairingAction() {
     const { t } = useTranslation();
     const ssoId = useAtomValue(ssoContextAtom)?.id;
 
-    if (!ssoId) {
+    // Don't show the phone pairing action if we don't have an sso id or if we are on a mobile device
+    if (!ssoId || ua.isMobile) {
         return null;
     }
 

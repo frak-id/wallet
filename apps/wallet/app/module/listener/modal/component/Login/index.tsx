@@ -1,6 +1,6 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import { isWebAuthNSupported } from "@/module/common/lib/webauthn";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { SsoButton } from "@/module/listener/component/SsoButton";
@@ -54,8 +54,6 @@ export function LoginModalStep({
 
     const session = useAtomValue(sessionAtom);
 
-    const isWebAuthnSupported = useIsWebAuthNSupported();
-
     /**
      * Listen to the session status, and exit directly after a session is set in the storage
      *  - Will be triggered if the user goes through the external registration process
@@ -90,7 +88,7 @@ export function LoginModalStep({
                         <button
                             type={"button"}
                             className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
-                            disabled={isLoading || !isWebAuthnSupported}
+                            disabled={isLoading || !isWebAuthNSupported}
                             onClick={() => {
                                 login({});
                             }}

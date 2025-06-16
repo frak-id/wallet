@@ -3,7 +3,7 @@ import { LoginList } from "@/module/authentication/component/LoginList";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
-import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
+import { isWebAuthNSupported } from "@/module/common/lib/webauthn";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { Button } from "@frak-labs/ui/component/Button";
@@ -14,7 +14,6 @@ import styles from "./login.module.css";
 
 export default function Login() {
     const { t } = useTranslation();
-    const isWebAuthnSupported = useIsWebAuthNSupported();
     const { login } = useLogin({});
 
     return (
@@ -37,7 +36,7 @@ export default function Login() {
             >
                 <PairingInProgress />
                 <ButtonAuth
-                    disabled={!isWebAuthnSupported}
+                    disabled={!isWebAuthNSupported}
                     trigger={() => login({})}
                 >
                     <Trans i18nKey={"wallet.login.button"} />

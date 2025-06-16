@@ -1,3 +1,4 @@
+import { ua } from "@/module/common/lib/ua";
 import { LaunchPairing } from "@/module/pairing/component/LaunchPairing";
 import type { ButtonProps } from "@frak-labs/ui/component/Button";
 import { type ElementType, useState } from "react";
@@ -26,6 +27,10 @@ export function AuthenticateWithPhone({
     width,
 }: AuthenticateWithPhoneProps) {
     const [isPhoneAuthenticated, setIsPhoneAuthenticated] = useState(false);
+
+    if (ua.isMobile) {
+        return null;
+    }
 
     return (
         <div>

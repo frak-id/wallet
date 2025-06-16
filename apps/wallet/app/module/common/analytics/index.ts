@@ -1,5 +1,7 @@
 import { OpenPanel } from "@openpanel/web";
+import { isStandalonePWA } from "ua-parser-js/helpers";
 import type { Session } from "../../../types/Session";
+import { isInIframe } from "../lib/inApp";
 import type {
     AnalyticsAuthenticationType,
     AnalyticsGlobalProperties,
@@ -25,13 +27,11 @@ export function initOpenPanel() {
     openPanel.init();
 
     if (typeof window === "undefined") return;
-    const isIframe = window.self !== window.top;
-    const isPwa = window.matchMedia("(display-mode: standalone)").matches;
     const referrer =
-        isIframe && document.referrer !== "" ? document.referrer : undefined;
+        isInIframe && document.referrer !== "" ? document.referrer : undefined;
     updateGlobalProperties({
-        isIframe,
-        isPwa,
+        isIframe: isInIframe,
+        isPwa: isStandalonePWA(),
         iframeReferrer: referrer,
     });
 }

@@ -18,6 +18,7 @@ import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { getI18n } from "react-i18next";
 import { keccak256, toHex } from "viem";
 import type { Address, Hex } from "viem";
+import { isInIframe } from "../../common/lib/inApp";
 import { mapI18nConfig } from "./i18nMapper";
 
 /**
@@ -72,7 +73,7 @@ export function createIFrameRequestResolver(
     if (typeof window === "undefined") {
         throw new Error("IFrame resolver should be used in the browser");
     }
-    if (!isInIframe()) {
+    if (!isInIframe) {
         throw new Error("IFrame resolver should be used in an iframe");
     }
 
@@ -291,14 +292,4 @@ async function handleLifecycleEvents(
             return;
         }
     }
-}
-
-/**
- * Simple helper to check if we currently are in an iframe
- */
-function isInIframe() {
-    if (typeof window === "undefined") {
-        return false;
-    }
-    return window.self !== window.top;
 }
