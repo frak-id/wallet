@@ -1,13 +1,15 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import * as dns from "node:dns";
 import { DnsCheckRepository } from "./DnsCheckRepository";
 
 describe("DnsCheckRepository", () => {
     let dnsCheckRepository: DnsCheckRepository;
     const mockOwner = "0x1234567890abcdef1234567890abcdef12345678" as const;
+    const resolveTxtSpy = spyOn(dns, "resolveTxt");
 
     beforeEach(() => {
         mock.module("@frak-labs/app-essentials", () => ({
-            isRunningInProd: false,
+            isRunningInProd: true,
         }));
         dnsCheckRepository = new DnsCheckRepository();
     });
@@ -121,10 +123,14 @@ describe("DnsCheckRepository", () => {
             });
 
             // In non-production mode, this should still return true due to fallback
-            expect(result).toBe(true);
+            expect(result).toBe(false);
         });
 
         it("should return true in non-production environment when no setup code", async () => {
+            mock.module("@frak-labs/app-essentials", () => ({
+                isRunningInProd: false,
+            }));
+
             const result = await dnsCheckRepository.isValidDomain({
                 domain: "example.com",
                 owner: mockOwner,
@@ -133,15 +139,44 @@ describe("DnsCheckRepository", () => {
             expect(result).toBe(true);
         });
 
-        it("should ignore non-hex setup codes", async () => {
+        it("should check DNS record when no setup code is provided", async () => {
+            resolveTxtSpy.mockImplementation((_, callback) => {
+                callback(null, [
+                    [
+                        "frak-business; hash=0x006154dba00e3da922ec9194035f0092c269285388a77a5da28f87952cfa6bab",
+                    ],
+                ]);
+            });
+
             const result = await dnsCheckRepository.isValidDomain({
                 domain: "example.com",
                 owner: mockOwner,
-                setupCode: "not-a-hex-string",
             });
 
             // Should fall back to DNS check, which returns true in non-prod
+            expect(resolveTxtSpy).toHaveBeenCalledWith(
+                "example.com",
+                expect.any(Function)
+            );
             expect(result).toBe(true);
+        });
+
+        it("should check DNS record when no setup code is provided and dns is not set", async () => {
+            resolveTxtSpy.mockImplementation((_, callback) => {
+                callback(null, []);
+            });
+
+            const result = await dnsCheckRepository.isValidDomain({
+                domain: "example.com",
+                owner: mockOwner,
+            });
+
+            // Should fall back to DNS check, which returns true in non-prod
+            expect(resolveTxtSpy).toHaveBeenCalledWith(
+                "example.com",
+                expect.any(Function)
+            );
+            expect(result).toBe(false);
         });
     });
 });

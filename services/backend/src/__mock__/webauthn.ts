@@ -1,9 +1,15 @@
 import { spyOn } from "bun:test";
 import * as webauthn from "@simplewebauthn/server";
 
-const verifySpy = spyOn(webauthn, "verifyAuthenticationResponse");
+let verifySpy = spyOn(webauthn, "verifyAuthenticationResponse");
 
 export const webauthnMocks = {
     ...webauthn,
     verifyAuthenticationResponse: verifySpy,
 };
+
+export function mockWebauthn() {
+    verifySpy = spyOn(webauthn, "verifyAuthenticationResponse");
+
+    webauthnMocks.verifyAuthenticationResponse = verifySpy;
+}

@@ -3,6 +3,7 @@ import type {
     AuthenticationResponseJSON,
     VerifiedAuthenticationResponse,
 } from "@simplewebauthn/server";
+import { mockAll } from "../../../__mock__";
 import { permissionlessActionsMocks } from "../../../__mock__/viem";
 import { webauthnMocks } from "../../../__mock__/webauthn";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
@@ -11,6 +12,8 @@ import { WebAuthNService } from "./WebAuthNService";
 describe("WebAuthNService", () => {
     // Setup all the mocks needed for this test
     beforeAll(() => {
+        mockAll();
+
         webauthnMocks.verifyAuthenticationResponse.mockImplementation(() =>
             Promise.resolve({
                 verified: true,
