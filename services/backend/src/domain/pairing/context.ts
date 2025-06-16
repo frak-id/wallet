@@ -26,7 +26,7 @@ export const pairingContext = new Elysia({
             pairingDb,
             walletJwt,
             auth.services.walletSso,
-            auth.services.walletSdkSession.generateSdkJwt
+            auth.services.walletSdkSession
         );
         const routerRepository = new PairingRouterRepository(
             pairingDb,

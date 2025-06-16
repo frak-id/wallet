@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
-import type { Address, Hex } from "viem";
+import type { Hex } from "viem";
 import { log } from "../../../common";
 import type { JwtService } from "../../../utils/elysia/jwt";
 import type {
@@ -10,6 +10,7 @@ import type {
     StaticWalletWebauthnTokenDto,
     WalletTokenDto,
 } from "../../auth/models/WalletSessionDto";
+import type { WalletSdkSessionService } from "../../auth/services/WalletSdkSessionService";
 import type { WalletSsoService } from "../../auth/services/WalletSsoService";
 import type { PairingDb } from "../context";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
@@ -34,9 +35,7 @@ export class PairingConnectionRepository extends PairingRepository {
         // Helpers to generate the auth tokens
         private readonly walletJwtService: JwtService<typeof WalletTokenDto>,
         private readonly ssoService: WalletSsoService,
-        private readonly generateSdkJwt: ({
-            wallet,
-        }: { wallet: Address }) => Promise<{ token: string; expires: number }>
+        private readonly walletSdkSession: WalletSdkSessionService
     ) {
         super(pairingDb);
     }
@@ -219,7 +218,7 @@ export class PairingConnectionRepository extends PairingRepository {
 
         const [walletToken, sdkJwt] = await Promise.all([
             this.walletJwtService.sign(walletPayload),
-            this.generateSdkJwt({ wallet: wallet.address }),
+            this.walletSdkSession.generateSdkJwt({ wallet: wallet.address }),
         ]);
 
         // If we got a sso id, resolve the sso session
