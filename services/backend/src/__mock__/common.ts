@@ -33,6 +33,9 @@ export const adminWalletsRepositoryMocks = {
     getKeySpecificAccount: mock(() =>
         Promise.resolve(undefined as undefined | LocalAccount)
     ),
+    getMutexForAccount: mock(() => ({
+        runExclusive: mock((fn: () => Promise<unknown>) => fn()),
+    })),
 };
 
 mock.module("@backend-common", () => ({

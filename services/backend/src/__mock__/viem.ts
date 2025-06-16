@@ -29,6 +29,7 @@ let waitForTransactionReceiptSpy = spyOn(
     viemActions,
     "waitForTransactionReceipt"
 );
+let getTransactionCountSpy = spyOn(viemActions, "getTransactionCount");
 
 export const viemActionsMocks = {
     multicall: multicallSpy,
@@ -36,6 +37,7 @@ export const viemActionsMocks = {
     simulateContract: simulateContractSpy,
     writeContract: writeContractSpy,
     waitForTransactionReceipt: waitForTransactionReceiptSpy,
+    getTransactionCount: getTransactionCountSpy,
 };
 
 export function mockViemActions() {
@@ -47,12 +49,14 @@ export function mockViemActions() {
         viemActions,
         "waitForTransactionReceipt"
     );
+    getTransactionCountSpy = spyOn(viemActions, "getTransactionCount");
 
     viemActionsMocks.multicall = multicallSpy;
     viemActionsMocks.readContract = readContractSpy;
     viemActionsMocks.simulateContract = simulateContractSpy;
     viemActionsMocks.writeContract = writeContractSpy;
     viemActionsMocks.waitForTransactionReceipt = waitForTransactionReceiptSpy;
+    viemActionsMocks.getTransactionCount = getTransactionCountSpy;
 }
 
 /* -------------------------------------------------------------------------- */
