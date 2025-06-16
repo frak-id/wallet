@@ -166,6 +166,7 @@
         "react-router-dom": "^7.6.2",
         "react-webcam": "^7.2.0",
         "remix-utils": "^8.7.0",
+        "sonner": "^2.0.5",
         "ua-parser-js": "^2.0.3",
         "vaul": "^1.1.2",
         "viem": "^2.31.2",
@@ -3351,6 +3352,8 @@
     "solady": ["solady@0.1.19", "", {}, "sha512-G++8xhNVkRaCw7uySX1obmhYLOk7nFjeCc1XcTmA+WQ7cQXqYDca+DoDpWI/N6iWKOcQQXoLwx+5Vkx9LDSABw=="],
 
     "sonic-boom": ["sonic-boom@4.2.0", "", { "dependencies": { "atomic-sleep": "^1.0.0" } }, "sha512-INb7TM37/mAcsGmc9hyyI6+QR3rR1zVRu36B0NeGXKnOOLiZOfER5SA+N7X7k3yUYRzLWafduTDvJAfDswwEww=="],
+
+    "sonner": ["sonner@2.0.5", "", { "peerDependencies": { "react": "^18.0.0 || ^19.0.0 || ^19.0.0-rc", "react-dom": "^18.0.0 || ^19.0.0 || ^19.0.0-rc" } }, "sha512-YwbHQO6cSso3HBXlbCkgrgzDNIhws14r4MO87Ofy+cV2X7ES4pOoAK3+veSmVTvqNx1BWUxlhPmZzP00Crk2aQ=="],
 
     "source-map": ["source-map@0.6.1", "", {}, "sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g=="],
 

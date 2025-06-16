@@ -24,6 +24,8 @@
 }
 
 .alertDialog__content {
+    /* Create a new stacking context for the toaster to be inside our modal */
+    transform: translateZ(0);
     background-color: var(--frak-alertDialog-background-color);
     backdrop-filter: blur(85px);
     position: fixed;

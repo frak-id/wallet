@@ -77,6 +77,8 @@
     height: 100%;
     overflow: hidden;
     animation: opacity .3s .2s forwards;
+    /* Create a new stacking context for the toaster to be inside our modal */
+    transform: translateZ(0);
 }
 
 .modalListenerWallet__inner--loggedIn {

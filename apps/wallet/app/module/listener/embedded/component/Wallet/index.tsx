@@ -7,6 +7,7 @@ import { useEmbeddedListenerUI } from "@/module/listener/providers/ListenerUiPro
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { Overlay } from "@frak-labs/ui/component/Overlay";
 import { cva, cx } from "class-variance-authority";
+import { Toaster } from "sonner";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
 
@@ -58,6 +59,7 @@ function CurrentEmbeddedViewComponent() {
                 session && styles["modalListenerWallet__inner--loggedIn"]
             )}
         >
+            <Toaster position="top-center" />
             <InAppBrowserToast />
             <ToastLoading />
             <ListenerWalletHeader />

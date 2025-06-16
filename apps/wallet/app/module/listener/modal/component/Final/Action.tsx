@@ -8,6 +8,7 @@ import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboa
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
+import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import { trackGenericEvent } from "../../../../common/analytics";
 import { useShareLink } from "../../../hooks/useShareLink";
@@ -87,7 +88,11 @@ function SharingButtons({
         data: shareResult,
         mutate: triggerSharing,
         isPending: isSharing,
-    } = useShareLink(finalSharingLink);
+    } = useShareLink(finalSharingLink, {
+        onSuccess: (message) => {
+            message && toast.success(message as string);
+        },
+    });
 
     // Listen to different stuff to trigger the interaction push
     useTriggerPushInterraction({
@@ -103,10 +108,11 @@ function SharingButtons({
                     trackGenericEvent("sharing-copy-link", {
                         link: finalSharingLink,
                     });
+                    toast.success(t("sharing.btn.copySuccess"));
                 }}
             >
                 <Copy size={32} absoluteStrokeWidth={true} />
-                {t(copied ? "sharing.btn.copySuccess" : "sharing.btn.copy")}
+                {t("sharing.btn.copy")}
             </ButtonAction>
             <ButtonAction
                 disabled={isSharing}
@@ -116,7 +122,7 @@ function SharingButtons({
                 }}
             >
                 <Share size={32} absoluteStrokeWidth={true} />{" "}
-                {shareResult ?? t("sharing.btn.share")}
+                {t("sharing.btn.share")}
             </ButtonAction>
         </div>
     );

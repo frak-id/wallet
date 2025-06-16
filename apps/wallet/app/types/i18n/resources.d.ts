@@ -129,9 +129,9 @@ interface Resources {
         sharing: {
             btn: {
                 copy: "Copy link";
-                copySuccess: "Link copied";
+                copySuccess: "Link copied!";
                 share: "Share";
-                shareSuccess: "Shared";
+                shareSuccess: "Link shared!";
             };
             text: "Discover this amazing product!";
             title: "{{productName}} invite link";
@@ -377,9 +377,8 @@ interface Resources {
                 dismiss: "Dismiss inapp browser warning";
             };
             toastLoading: {
-                stuck: "Stuck? You can try to <button>cleanup</button>.<br /><br />(this will logout and you will need to redo a login / pairing)<br /><br />See the <pLink>Troubleshooting</pLink> section for more information.";
+                stuck: "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)";
                 dismiss: "Dismiss inapp browser warning";
-                loading: "Loading in progress, please wait...";
             };
         };
         error: {

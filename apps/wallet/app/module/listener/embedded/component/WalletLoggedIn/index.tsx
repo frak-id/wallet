@@ -26,6 +26,7 @@ import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboa
 import { Copy } from "@frak-labs/ui/icons/Copy";
 import { Power } from "@frak-labs/ui/icons/Power";
 import { Share } from "@frak-labs/ui/icons/Share";
+import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import { trackGenericEvent } from "../../../../common/analytics";
 import { useShareLink } from "../../../hooks/useShareLink";
@@ -188,7 +189,8 @@ function ButtonCopyLink({
     return (
         <ButtonWallet
             variant={!currentSession ? "disabled" : "primary"}
-            disabled={!currentSession}
+            disabled={!currentSession || copied}
+            isLoading={copied}
             icon={<Copy />}
             onClick={async () => {
                 if (!finalSharingLink) return;
@@ -197,9 +199,10 @@ function ButtonCopyLink({
                     link: finalSharingLink,
                 });
                 refetchPendingBalance();
+                toast.success(t("sharing.btn.copySuccess"));
             }}
         >
-            {t(copied ? "sharing.btn.copySuccess" : "sharing.btn.copy")}
+            {t("sharing.btn.copy")}
         </ButtonWallet>
     );
 }
@@ -220,8 +223,9 @@ function ButtonSharingLink({
         mutate: triggerSharing,
         isPending: isSharing,
     } = useShareLink(finalSharingLink, {
-        onSuccess: () => {
+        onSuccess: (message) => {
             refetchPendingBalance();
+            message && toast.success(message as string);
         },
     });
 
@@ -245,7 +249,7 @@ function ButtonSharingLink({
                     });
                 }}
             >
-                {shareResult ?? t("sharing.btn.share")}
+                {t("sharing.btn.share")}
             </ButtonWallet>
             <OnboardingShare isHidden={!currentSession} />
         </div>

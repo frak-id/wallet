@@ -63,9 +63,9 @@
     "sharing": {
         "btn": {
             "copy": "Copier le lien",
-            "copySuccess": "Lien copié",
+            "copySuccess": "Lien copié !",
             "share": "Partager",
-            "shareSuccess": "Partagé"
+            "shareSuccess": "Lien partagé !"
         },
         "text": "Découvrez ce produit incroyable !",
         "title": "Lien d'invitation {{productName}}"
@@ -312,8 +312,7 @@
         },
         "toastLoading": {
             "stuck": "Vous êtes bloqué ? Consulter la section <pLink>Dépannage</pLink> pour plus d'informations.<br /><br />Vous pouvez essayer de <button>nettoyer</button>.<br />(cela vous déconnectera et vous devrez redémarrer une connexion / appairage)",
-            "dismiss": "Masquer le message",
-            "loading": "Chargement en cours, veuillez patienter..."
+            "dismiss": "Masquer le message"
         }
     },
     "error": {
