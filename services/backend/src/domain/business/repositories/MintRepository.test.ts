@@ -1,9 +1,9 @@
 import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import type { Address, Hex, LocalAccount } from "viem";
-import { mockAll } from "../../../__mock__";
-import { adminWalletsRepositoryMocks } from "../../../__mock__/common";
-import { viemActionsMocks } from "../../../__mock__/viem";
+import { mockAll } from "../../../../test/mock";
+import { adminWalletsRepositoryMocks } from "../../../../test/mock/common";
+import { viemActionsMocks } from "../../../../test/mock/viem";
 import { MintRepository } from "./MintRepository";
 
 describe("MintRepository", () => {

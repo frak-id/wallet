@@ -3,8 +3,8 @@ import type { Address, Hex } from "viem";
 import {
     indexerApiMocks,
     pricingRepositoryMocks,
-} from "../../../__mock__/common";
-import { viemActionsMocks } from "../../../__mock__/viem";
+} from "../../../../test/mock/common";
+import { viemActionsMocks } from "../../../../test/mock/viem";
 import type { CampaignDataRepository } from "../repositories/CampaignDataRepository";
 import { CampaignRewardsService } from "./CampaignRewardsService";
 

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Hex } from "viem";
-import { mockAll } from "../../../__mock__";
+import { mockAll } from "../../../../test/mock";
 import type { OracleDb } from "../context";
 import { purchaseItemTable, purchaseStatusTable } from "../db/schema";
 import { OracleWebhookService } from "./hookService";

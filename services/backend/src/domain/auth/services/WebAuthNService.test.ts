@@ -3,9 +3,9 @@ import type {
     AuthenticationResponseJSON,
     VerifiedAuthenticationResponse,
 } from "@simplewebauthn/server";
-import { mockAll } from "../../../__mock__";
-import { permissionlessActionsMocks } from "../../../__mock__/viem";
-import { webauthnMocks } from "../../../__mock__/webauthn";
+import { mockAll } from "../../../../test/mock";
+import { permissionlessActionsMocks } from "../../../../test/mock/viem";
+import { webauthnMocks } from "../../../../test/mock/webauthn";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 import { WebAuthNService } from "./WebAuthNService";
 

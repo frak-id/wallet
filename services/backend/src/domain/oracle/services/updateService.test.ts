@@ -9,9 +9,9 @@ import {
 } from "bun:test";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Hex, LocalAccount } from "viem";
-import { mockAll } from "../../../__mock__";
-import { adminWalletsRepositoryMocks } from "../../../__mock__/common";
-import { viemActionsMocks } from "../../../__mock__/viem";
+import { mockAll } from "../../../../test/mock";
+import { adminWalletsRepositoryMocks } from "../../../../test/mock/common";
+import { viemActionsMocks } from "../../../../test/mock/viem";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 import { UpdateOracleService } from "./updateService";

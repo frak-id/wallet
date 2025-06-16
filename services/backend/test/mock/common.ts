@@ -1,6 +1,7 @@
 import { mock } from "bun:test";
 import type { LocalAccount } from "viem";
 import { viemMocks } from "./viem";
+import postgres from "postgres";
 
 /* -------------------------------------------------------------------------- */
 /*                                     Env                                    */
@@ -38,11 +39,21 @@ export const adminWalletsRepositoryMocks = {
     })),
 };
 
+export const interactionDiamondRepositoryMocks = {
+    getInteractionDiamond: mock(() => Promise.resolve(undefined)),
+}
+
+export const rolesRepositoryMocks = {
+    getRoles: mock(() => Promise.resolve([])),
+}
+
 mock.module("@backend-common", () => ({
     indexerApi: indexerApiMocks,
     pricingRepository: pricingRepositoryMocks,
     viemClient: viemMocks,
     adminWalletsRepository: adminWalletsRepositoryMocks,
+    interactionDiamondRepository: interactionDiamondRepositoryMocks,
+    rolesRepository: rolesRepositoryMocks,
     log: {
         debug: mock(() => {}),
         info: mock(() => {}),

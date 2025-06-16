@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Hex } from "viem";
-import { mockAll } from "../../../__mock__";
+import { mockAll } from "../../../../test/mock";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 import { OracleProofService } from "./proofService";

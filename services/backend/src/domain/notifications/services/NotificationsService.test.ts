@@ -10,7 +10,7 @@ import {
 } from "bun:test";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Address } from "viem";
-import { webPushMocks } from "../../../__mock__/common";
+import { webPushMocks } from "../../../../test/mock/common";
 import { pushTokensTable } from "../db/schema";
 import { NotificationsService } from "./NotificationsService";
 
