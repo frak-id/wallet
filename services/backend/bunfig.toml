@@ -1,0 +1,2 @@
+[test]
+preload = ["./test/mock/preload.ts"]

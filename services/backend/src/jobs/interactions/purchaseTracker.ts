@@ -22,8 +22,10 @@ const innerPurchaseTrackerJob = (
             coolDownInMs: 3_000,
             run: async ({ context: { logger } }) => {
                 const {
-                    interactionsDb,
-                    oracle: { proofService },
+                    interactions: { db: interactionsDb },
+                    oracle: {
+                        services: { proof },
+                    },
                 } = app.decorator;
                 // Get all the currents tracker (max 50 at the time)
                 const trackers = await interactionsDb
@@ -34,7 +36,7 @@ const innerPurchaseTrackerJob = (
 
                 // For each tracker, try to get the proof, and if done, push the interactions
                 for (const tracker of trackers) {
-                    const result = await proofService.getPurchaseProof({
+                    const result = await proof.getPurchaseProof({
                         token: tracker.token,
                         externalId: tracker.externalPurchaseId,
                     });

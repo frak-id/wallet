@@ -30,16 +30,14 @@ export const oracleContext = new Elysia({
         return {
             oracle: {
                 db: oracleDb,
-                merkleRepository,
-                webhookService: new OracleWebhookService(oracleDb),
-                proofService: new OracleProofService(
-                    oracleDb,
-                    merkleRepository
-                ),
-                updateService: new UpdateOracleService(
-                    oracleDb,
-                    merkleRepository
-                ),
+                repositories: {
+                    merkleTree: merkleRepository,
+                },
+                services: {
+                    webhook: new OracleWebhookService(oracleDb),
+                    proof: new OracleProofService(oracleDb, merkleRepository),
+                    update: new UpdateOracleService(oracleDb, merkleRepository),
+                },
             },
         };
     })

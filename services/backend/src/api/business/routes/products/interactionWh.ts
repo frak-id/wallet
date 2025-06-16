@@ -29,9 +29,9 @@ export const interactionsWhRoutes = new Elysia({
     // Status of a backend tracker
     .get(
         "/status",
-        async ({ productId, interactionsDb }) => {
+        async ({ productId, interactions: { db } }) => {
             // Get the current tracker
-            const currentTrackers = await interactionsDb
+            const currentTrackers = await db
                 .select()
                 .from(backendTrackerTable)
                 .where(eq(backendTrackerTable.productId, productId))
@@ -64,7 +64,7 @@ export const interactionsWhRoutes = new Elysia({
     // Setup of a tracker for a product
     .post(
         "/setup",
-        async ({ body, interactionsDb, productId, businessSession }) => {
+        async ({ body, interactions: { db }, productId, businessSession }) => {
             if (!businessSession) {
                 return error(401, "Unauthorized");
             }
@@ -84,7 +84,7 @@ export const interactionsWhRoutes = new Elysia({
             const { hookSignatureKey, source } = body;
 
             // Insert or update it
-            await interactionsDb
+            await db
                 .insert(backendTrackerTable)
                 .values({
                     productId,
@@ -107,34 +107,37 @@ export const interactionsWhRoutes = new Elysia({
             }),
         }
     )
-    .post("/delete", async ({ productId, interactionsDb, businessSession }) => {
-        if (!businessSession) {
-            return error(401, "Unauthorized");
-        }
-        const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
-            wallet: businessSession.wallet,
-            productId: BigInt(productId),
-            role: productRoles.interactionManager,
-        });
-        if (!isAllowed) {
-            return error(401, "Unauthorized");
-        }
+    .post(
+        "/delete",
+        async ({ productId, interactions: { db }, businessSession }) => {
+            if (!businessSession) {
+                return error(401, "Unauthorized");
+            }
+            const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
+                wallet: businessSession.wallet,
+                productId: BigInt(productId),
+                role: productRoles.interactionManager,
+            });
+            if (!isAllowed) {
+                return error(401, "Unauthorized");
+            }
 
-        // Check if we already got a setup for this product (we could only have one)
-        const existingTrackers = await interactionsDb
-            .select({ id: backendTrackerTable.id })
-            .from(backendTrackerTable)
-            .where(eq(backendTrackerTable.productId, productId));
-        if (!existingTrackers.length) {
-            return error(
-                404,
-                `Product ${productId} have no current tracker setup`
-            );
-        }
+            // Check if we already got a setup for this product (we could only have one)
+            const existingTrackers = await db
+                .select({ id: backendTrackerTable.id })
+                .from(backendTrackerTable)
+                .where(eq(backendTrackerTable.productId, productId));
+            if (!existingTrackers.length) {
+                return error(
+                    404,
+                    `Product ${productId} have no current tracker setup`
+                );
+            }
 
-        // Remove it
-        await interactionsDb
-            .delete(backendTrackerTable)
-            .where(eq(backendTrackerTable.productId, productId))
-            .execute();
-    });
+            // Remove it
+            await db
+                .delete(backendTrackerTable)
+                .where(eq(backendTrackerTable.productId, productId))
+                .execute();
+        }
+    );

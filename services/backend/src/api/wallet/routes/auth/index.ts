@@ -2,11 +2,7 @@ import { log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { sixDegreesContext } from "../../../../domain/6degrees/context";
-import {
-    WalletAuthResponseDto,
-    walletSdkSessionService,
-    webAuthNService,
-} from "../../../../domain/auth";
+import { WalletAuthResponseDto, authContext } from "../../../../domain/auth";
 import { loginRoutes } from "./login";
 import { registerRoutes } from "./register";
 import { routingRoutes } from "./routing";
@@ -15,8 +11,7 @@ import { walletSsoRoutes } from "./sso";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
     .use(sessionContext)
-    .use(webAuthNService)
-    .use(walletSdkSessionService)
+    .use(authContext)
     // SSO + sdk sub routes
     .use(walletSsoRoutes)
     .use(walletSdkRoutes)

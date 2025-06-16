@@ -7,7 +7,13 @@ import { PendingBalanceRepository } from "./repositories/PendingBalanceRepositor
  */
 export const walletContext = new Elysia({
     name: "Context.wallet",
-}).decorate({
-    balancesRepository: new BalancesRepository(),
-    pendingBalanceRepository: new PendingBalanceRepository(),
-});
+})
+    .decorate({
+        wallet: {
+            repositories: {
+                balances: new BalancesRepository(),
+                pendingBalance: new PendingBalanceRepository(),
+            },
+        },
+    })
+    .as("scoped");

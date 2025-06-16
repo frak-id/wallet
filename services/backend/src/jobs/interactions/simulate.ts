@@ -26,10 +26,14 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
             coolDownInMs: 5_000,
             run: async ({ context: { logger } }) => {
                 const {
-                    interactionsDb,
-                    interactionPackerRepository,
-                    walletSessionRepository,
-                    pendingInteractionsRepository,
+                    interactions: { db: interactionsDb },
+                    interactions: {
+                        repositories: {
+                            interactionPacker: interactionPackerRepository,
+                            walletSession: walletSessionRepository,
+                            pendingInteractions: pendingInteractionsRepository,
+                        },
+                    },
                 } = app.decorator;
                 // Get interactions to simulate
                 const interactions =

@@ -10,7 +10,7 @@ import type {
     StaticWalletWebauthnTokenDto,
     WalletTokenDto,
 } from "../../auth/models/WalletSessionDto";
-import type { SsoService } from "../../auth/services/WalletSsoService";
+import type { WalletSsoService } from "../../auth/services/WalletSsoService";
 import type { PairingDb } from "../context";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
@@ -33,7 +33,7 @@ export class PairingConnectionRepository extends PairingRepository {
         pairingDb: PairingDb,
         // Helpers to generate the auth tokens
         private readonly walletJwtService: JwtService<typeof WalletTokenDto>,
-        private readonly ssoService: SsoService,
+        private readonly ssoService: WalletSsoService,
         private readonly generateSdkJwt: ({
             wallet,
         }: { wallet: Address }) => Promise<{ token: string; expires: number }>

@@ -64,7 +64,10 @@ export const shopifyWebhook = new Elysia()
             params: { productId },
             body,
             headers,
-            oracle: { db: oracleDb, webhookService },
+            oracle: {
+                db: oracleDb,
+                services: { webhook },
+            },
         }) => {
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = JSON.parse(
@@ -121,7 +124,7 @@ export const shopifyWebhook = new Elysia()
             );
 
             // Insert purchase and items
-            await webhookService.upsertPurchase({
+            await webhook.upsertPurchase({
                 purchase: {
                     oracleId: oracle.id,
                     purchaseId,

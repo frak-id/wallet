@@ -23,7 +23,7 @@ export const pushInteractionsRoutes = new Elysia()
         async ({
             body: { interactions },
             walletSdkSession,
-            interactionsDb,
+            interactions: { db: interactionsDb },
             sixDegrees,
         }) => {
             if (!walletSdkSession) return error(403, "Invalid wallet address");
@@ -48,7 +48,7 @@ export const pushInteractionsRoutes = new Elysia()
             // Check if the user got a sixdegrees token
             if (walletSdkSession.additionalData?.sixDegreesToken) {
                 log.info("Pushing interactions to 6degrees");
-                await sixDegrees.interactionService.pushInteraction(
+                await sixDegrees.services.interaction.pushInteraction(
                     interactions.map((interaction) => interaction.interaction),
                     walletSdkSession.additionalData?.sixDegreesToken
                 );
