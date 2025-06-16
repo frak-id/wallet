@@ -11,7 +11,7 @@ import type {
 } from "@frak-labs/core-sdk";
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/core-sdk";
 import { useDisplayModal } from "@frak-labs/react-sdk";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";
 import { encodeFunctionData } from "viem";

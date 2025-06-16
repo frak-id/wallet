@@ -9,7 +9,7 @@ import {
     NavigationLabel,
     SubNavigationItem,
 } from "@/module/common/component/Navigation";
-import { useMediaQuery } from "@shared/module/hook/useMediaQuery";
+import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";

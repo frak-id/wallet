@@ -9,7 +9,7 @@ import { useSendPing } from "@/module/listener/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
 import { ListenerUiProvider } from "@/module/listener/providers/ListenerUiProvider";
 import { createIFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
-import { loadPolyfills } from "@shared/module/utils/polyfills";
+import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect, useState } from "react";
 
 loadPolyfills();

@@ -1,6 +1,6 @@
 "use server";
 import { type ProductRolesKey, productRoles } from "@frak-labs/app-essentials";
-import { indexerApi } from "@frak-labs/shared/context/server";
+import { indexerApi } from "@frak-labs/client/server";
 import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {

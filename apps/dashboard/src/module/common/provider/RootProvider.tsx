@@ -5,7 +5,7 @@ import {
     FrakConfigProvider,
     FrakIFrameClientProvider,
 } from "@frak-labs/react-sdk";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -14,7 +14,8 @@ import {
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai";
-import type { PropsWithChildren } from "react";
+import { type PropsWithChildren, useEffect } from "react";
+import { openPanel } from "../utils/openPanel";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -49,6 +50,11 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 };
 
 export function RootProvider({ children }: PropsWithChildren) {
+    useEffect(() => {
+        if (!openPanel) return;
+        openPanel.init();
+    }, []);
+
     return (
         <Provider store={jotaiStore}>
             <PersistQueryClientProvider

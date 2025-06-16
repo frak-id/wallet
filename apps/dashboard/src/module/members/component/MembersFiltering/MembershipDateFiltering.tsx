@@ -15,7 +15,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import { Checkbox } from "@shared/module/component/forms/Checkbox";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { format, startOfDay } from "date-fns";
 import { memo, useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";

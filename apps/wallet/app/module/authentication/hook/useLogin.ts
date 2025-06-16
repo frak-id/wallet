@@ -7,12 +7,13 @@ import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/P
 import { userAtom } from "@/module/membrs/atoms/user";
 import type { Session } from "@/types/Session";
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 
 /**
  * Hook that handle the registration process
@@ -37,6 +38,14 @@ export function useLogin(
         mutationFn: async (args?: {
             lastAuthentication?: PreviousAuthenticatorModel;
         }) => {
+            // Identify the user and track the event
+            const events = [
+                trackAuthInitiated("login", {
+                    method: args?.lastAuthentication ? "specific" : "global",
+                    ssoId: options?.ssoId,
+                }),
+            ];
+
             // Get the authenticate options (if needed)
             const allowCredentials = args?.lastAuthentication
                 ? [
@@ -99,6 +108,15 @@ export function useLogin(
                 _id: data.address,
                 username: "mocked-username",
             });
+
+            // Track the event
+            events.push(
+                trackAuthCompleted("login", session, {
+                    ssoId: options?.ssoId,
+                })
+            );
+
+            await Promise.allSettled(events);
 
             return session;
         },

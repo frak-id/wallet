@@ -49,17 +49,8 @@ export function ToastLoading() {
     // Early exit if we don't have any mutation in progress
     if (isMutating < 1) return null;
 
-    // before the 5sec threshold, just display a loading indicator
-    if (!showStuck) {
-        return (
-            <div className={styles.toastLoading}>
-                <Toast
-                    isLoading={true}
-                    text={t("wallet.toastLoading.loading")}
-                />
-            </div>
-        );
-    }
+    // before the 5sec threshold, display nothing
+    if (!showStuck) return null;
 
     // after 5sec after the mutating is unchanged, link to the troubleshooting section + the button to logout and redo a login / pairing (cleanup hook)
     return (

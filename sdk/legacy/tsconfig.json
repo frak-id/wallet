@@ -1,6 +1,6 @@
 {
   // This tsconfig file contains the shared config for the build (tsconfig.build.json) and type checking (tsconfig.json) config.
-  "include": ["./src", "../../packages/shared/types/*.d.ts"],
+  "include": ["./src"],
   "compilerOptions": {
     // Output directory
     "outDir": "./dist",
@@ -49,10 +49,6 @@
     // Declaration files
     "declaration": true,
     "declarationDir": "./dist",
-
-    "paths": {
-      "@shared/*": ["../../packages/shared/*"]
-    }
   },
   "tsc-alias": {
     "resolveFullPaths": true,

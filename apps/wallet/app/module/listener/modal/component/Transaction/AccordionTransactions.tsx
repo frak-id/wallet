@@ -4,8 +4,8 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@shared/module/component/Accordion";
-import { WalletAddress } from "@shared/module/component/HashDisplay";
+} from "@frak-labs/ui/component/Accordion";
+import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import { useTranslation } from "react-i18next";
 import { formatEther } from "viem";
 import styles from "./index.module.css";

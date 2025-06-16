@@ -1,9 +1,9 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { uploadProfilePhotoAtom } from "@/module/membrs/atoms/uploadProfilePhoto";
-import { Upload } from "@shared/module/asset/icons/Upload";
-import { Button } from "@shared/module/component/Button";
-import { Slider } from "@shared/module/component/Slider";
-import { Uploader } from "@shared/module/component/Uploader";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Slider } from "@frak-labs/ui/component/Slider";
+import { Uploader } from "@frak-labs/ui/component/Uploader";
+import { Upload } from "@frak-labs/ui/icons/Upload";
 import { atom, useAtom, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactAvatarEditor from "react-avatar-editor";

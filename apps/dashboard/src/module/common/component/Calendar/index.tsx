@@ -1,6 +1,6 @@
 "use client";
 
-import { buttonVariants } from "@shared/module/component/Button";
+import { buttonVariants } from "@frak-labs/ui/component/Button";
 import { cx } from "class-variance-authority";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComponentProps } from "react";

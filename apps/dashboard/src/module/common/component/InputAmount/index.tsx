@@ -3,7 +3,7 @@ import type { Campaign } from "@/types/Campaign";
 import {
     InputNumber,
     type InputNumberProps,
-} from "@shared/module/component/forms/InputNumber";
+} from "@frak-labs/ui/component/forms/InputNumber";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";

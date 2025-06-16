@@ -4,22 +4,22 @@ import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";
 import { Elysia, error } from "elysia";
 import { toHex } from "viem";
-import {
-    DnsCheckRepository,
-    MintRepository,
-} from "../../../../domain/business";
+import { businessContext } from "../../../../domain/business";
 import { businessSessionContext } from "../../middleware/session";
 
 export const mintRoutes = new Elysia({ prefix: "/mint" })
     .use(businessSessionContext)
-    .decorate({
-        dnsCheckRepository: new DnsCheckRepository(),
-        mintRepository: new MintRepository(),
-    })
+    .use(businessContext)
     // Get the dns txt record to set for a domain
     .get(
         "/dnsTxt",
-        async ({ dnsCheckRepository, query: { domain }, businessSession }) => {
+        async ({
+            business: {
+                repositories: { dnsCheck: dnsCheckRepository },
+            },
+            query: { domain },
+            businessSession,
+        }) => {
             if (!businessSession) {
                 return "";
             }
@@ -40,8 +40,12 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
     .get(
         "/verify",
         async ({
-            mintRepository,
-            dnsCheckRepository,
+            business: {
+                repositories: {
+                    mint: mintRepository,
+                    dnsCheck: dnsCheckRepository,
+                },
+            },
             query: { domain, setupCode },
             businessSession,
         }) => {
@@ -80,8 +84,12 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
         async ({
             businessSession,
             body: { name, domain, productTypes, setupCode },
-            mintRepository,
-            dnsCheckRepository,
+            business: {
+                repositories: {
+                    mint: mintRepository,
+                    dnsCheck: dnsCheckRepository,
+                },
+            },
         }) => {
             // Ensure the session matches
             if (!businessSession) {

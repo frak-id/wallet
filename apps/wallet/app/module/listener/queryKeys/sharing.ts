@@ -11,7 +11,7 @@ export namespace listenerSharingKey {
      * Query keys for sharing
      */
     export const sharing = {
-        trigger: (component: string, link: string | null) =>
-            [base, component, "system-sharing", link ?? "no-link"] as const,
+        trigger: (link: string | null) =>
+            [base, "system-sharing", link ?? "no-link"] as const,
     };
 }

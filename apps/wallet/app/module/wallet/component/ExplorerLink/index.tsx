@@ -1,5 +1,5 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import { formatHash } from "@shared/module/component/HashDisplay";
+import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { ExternalLink } from "lucide-react";
 import type { Hex } from "viem";
 import { arbitrum, arbitrumSepolia } from "viem/chains";

@@ -3,11 +3,12 @@ import { ssoConsumeKey } from "@/module/authentication/atoms/sso";
 import { ssoKey } from "@/module/authentication/queryKeys/sso";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { Hex } from "viem";
 import type { Session } from "../../../types/Session";
+import { trackAuthCompleted, trackAuthFailed } from "../../common/analytics";
 
 /**
  * hook to consume the sso status
@@ -55,10 +56,18 @@ export function useConsumePendingSso({
                 // Store the session
                 jotaiStore.set(sessionAtom, session);
                 jotaiStore.set(sdkSessionAtom, sdkJwt);
+
+                // Track the event
+                await trackAuthCompleted("sso", session, {
+                    ssoId: trackingId,
+                });
             }
 
             // If the status is not-found, remove the sso link query
             if (data.status === "not-found") {
+                await trackAuthFailed("sso", "sso-not-found", {
+                    ssoId: trackingId,
+                });
                 queryClient.removeQueries({
                     queryKey: ssoKey.link.baseKey,
                     exact: false,

@@ -1,4 +1,4 @@
-import { tools } from "@frak-labs/shared/tooling/rslib";
+import { tools } from "@frak-labs/dev-tooling";
 import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
 import { type LibConfig, defineConfig } from "@rslib/core";
 

@@ -2,23 +2,26 @@ import { walletSdkSessionContext, walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { isAddressEqual } from "viem";
-import {
-    walletSdkSessionService,
-    webAuthNService,
-} from "../../../../domain/auth";
+import { authContext } from "../../../../domain/auth";
 
 export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     .use(walletSessionContext)
-    .use(webAuthNService)
-    .use(walletSdkSessionService)
+    .use(authContext)
     // Generate a new token
     .get(
         "/generate",
-        async ({ walletSession, generateSdkJwt }) => {
+        async ({
+            walletSession,
+            auth: {
+                services: { walletSdkSession },
+            },
+        }) => {
             if (!walletSession) {
                 return error(401, "Unauthorized");
             }
-            return await generateSdkJwt({ wallet: walletSession.address });
+            return await walletSdkSession.generateSdkJwt({
+                wallet: walletSession.address,
+            });
         },
         {
             authenticated: "wallet",
@@ -36,11 +39,12 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
         "/fromWebAuthNSignature",
         async ({
             body: { signature, msg, wallet },
-            webAuthNService,
-            generateSdkJwt,
+            auth: {
+                services: { webAuthN, walletSdkSession },
+            },
         }) => {
             // Check the validity of the webauthn signature
-            const verificationnResult = await webAuthNService.isValidSignature({
+            const verificationnResult = await webAuthN.isValidSignature({
                 compressedSignature: signature,
                 msg,
             });
@@ -56,7 +60,7 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
             }
 
             // Otherwise generate a new token
-            return await generateSdkJwt({
+            return await walletSdkSession.generateSdkJwt({
                 wallet: verificationnResult.address,
             });
         },

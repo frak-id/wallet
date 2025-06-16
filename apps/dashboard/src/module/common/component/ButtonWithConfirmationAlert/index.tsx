@@ -1,5 +1,5 @@
 import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import { X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 

@@ -6,7 +6,7 @@ import type {
     GetMembersRequestDto,
     GetMembersResponseDto,
 } from "@frak-labs/app-essentials";
-import { indexerApi } from "@frak-labs/shared/context/server";
+import { indexerApi } from "@frak-labs/client/server";
 
 export type GetMembersParam = Omit<
     GetMembersRequestDto,

@@ -4,7 +4,7 @@ import { AccordionTransactions } from "@/module/listener/modal/component/Transac
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
-import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
+import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
 import { useMemo } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 

@@ -19,7 +19,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import type { Campaign } from "@/types/Campaign";
-import { Skeleton } from "@frak-labs/shared/module/component/Skeleton";
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";

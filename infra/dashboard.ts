@@ -5,6 +5,8 @@ import {
     indexerUrl,
     mongoBusinessDb,
     nexusRpcSecret,
+    openPanelApiUrl,
+    openPanelBusinessClientId,
     sessionEncryptionKy,
     umamiBusinessWebsiteId,
     walletUrl,
@@ -37,6 +39,8 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
         INDEXER_URL: indexerUrl,
         ERPC_URL: erpcUrl,
         UMAMI_BUSINESS_WEBSITE_ID: umamiBusinessWebsiteId.value,
+        OPEN_PANEL_API_URL: openPanelApiUrl,
+        OPEN_PANEL_BUSINESS_CLIENT_ID: openPanelBusinessClientId.value,
     },
     link: [
         drpcApiKey,

@@ -90,6 +90,8 @@ export const sessionContext = new Elysia({
     })
     .as("scoped");
 
+export type SessionContextType = typeof sessionContext;
+
 export const walletSessionContext = new Elysia({
     name: "Context.walletSession",
 })

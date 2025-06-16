@@ -6,7 +6,7 @@ import {
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";

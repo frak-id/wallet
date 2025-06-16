@@ -1,5 +1,5 @@
 import type { GetProductInfoResponseDto } from "@frak-labs/app-essentials";
-import { indexerApi } from "@frak-labs/shared/context/server";
+import { indexerApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import { toHex } from "viem";
 

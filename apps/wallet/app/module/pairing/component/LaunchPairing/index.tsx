@@ -1,8 +1,9 @@
-import { Spinner } from "@frak-labs/shared/module/component/Spinner";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { Cuer } from "cuer";
 import { useAtomValue } from "jotai";
 import { useEffect } from "react";
 import type { Hex } from "viem";
+import { trackAuthInitiated } from "../../../common/analytics";
 import { getOriginPairingClient } from "../../clients/store";
 import { PairingCode } from "../PairingCode";
 import { PairingStatus } from "../PairingStatus";
@@ -17,16 +18,15 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
 
     useEffect(() => {
         client.initiatePairing({ ssoId });
+        trackAuthInitiated("pairing", {
+            ssoId,
+        });
     }, [client, ssoId]);
 
     // Get the current state of the client
     const clientState = useAtomValue(client.stateAtom);
 
     const pairingInfo = clientState.pairing;
-
-    console.log(
-        `${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo?.id}&code=${pairingInfo?.code}`
-    );
 
     return (
         <div className={styles.launchPairing}>

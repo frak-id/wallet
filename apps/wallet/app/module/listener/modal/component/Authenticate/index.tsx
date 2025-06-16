@@ -1,11 +1,10 @@
 import { TextData } from "@/module/common/component/TextData";
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
-import { Spinner } from "@shared/module/component/Spinner";
-import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import { useMemo } from "react";
 import { type SiweMessage, createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
@@ -75,10 +74,7 @@ export function SiweAuthenticateModalStep({
                         className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
                         disabled={isPending}
                         onClick={() => {
-                            signMessage({
-                                message,
-                            });
-                            trackEvent("cta-authenticate");
+                            signMessage({ message });
                         }}
                     >
                         {isPending && <Spinner />}

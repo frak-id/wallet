@@ -1,5 +1,4 @@
 import { sessionAtom } from "@/module/common/atoms/session";
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import {
     type DisplayedModalStep,
     setNewModalAtom,
@@ -16,8 +15,9 @@ import {
     type ModalStepTypes,
     RpcErrorCodes,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useCallback } from "react";
+import { trackGenericEvent } from "../../common/analytics";
 
 type OnDisplayModalRequest = IFrameRequestResolver<
     Extract<
@@ -123,7 +123,7 @@ function trackModalDisplay(
         }
     }
 
-    trackEvent("display-modal", trackingData);
+    trackGenericEvent("open-modal", trackingData);
 }
 
 /**

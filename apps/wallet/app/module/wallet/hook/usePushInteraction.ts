@@ -1,14 +1,14 @@
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
-import { trackEvent } from "@/module/common/utils/trackEvent";
 import { pushBackupData } from "@/module/sdk/utils/backup";
 import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
 import type { PreparedInteraction } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
+import { trackGenericEvent } from "../../common/analytics";
 
 export function usePushInteraction() {
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();
@@ -69,7 +69,7 @@ export function usePushInteraction() {
                     return { status: "push-error" } as const;
                 }
 
-                trackEvent("interaction-pushed", {
+                trackGenericEvent("interaction-pushed", {
                     productId,
                     handlerType: interaction.handlerTypeDenominator,
                     data: interaction.interactionData,

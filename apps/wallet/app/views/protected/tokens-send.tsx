@@ -8,8 +8,8 @@ import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
 import type { BalanceItem } from "@/types/Balance";
-import { Button } from "@shared/module/component/Button";
-import { Input } from "@shared/module/component/forms/Input";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Input } from "@frak-labs/ui/component/forms/Input";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type {

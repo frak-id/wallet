@@ -8,9 +8,9 @@ import {
     productRoles,
 } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { Button } from "@shared/module/component/Button";
-import { Column, Columns } from "@shared/module/component/Columns";
-import { Spinner } from "@shared/module/component/Spinner";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { type Address, type Hex, encodeFunctionData } from "viem";
 import { useOracleSetupData } from "../../hook/useOracleSetupData";
 import { useProductMetadata } from "../../hook/useProductMetadata";

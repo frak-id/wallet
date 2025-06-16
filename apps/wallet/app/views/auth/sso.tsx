@@ -17,11 +17,11 @@ import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import type { Session } from "@/types/Session";
 import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
-import { Fingerprint } from "@shared/module/asset/icons/Fingerprint";
-import { jotaiStore } from "@shared/module/atoms/store";
-import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
-import { formatHash } from "@shared/module/component/HashDisplay";
-import { Spinner } from "@shared/module/component/Spinner";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
+import { formatHash } from "@frak-labs/ui/component/HashDisplay";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Fingerprint } from "@frak-labs/ui/icons/Fingerprint";
 import {
     type UseMutationOptions,
     useMutation,
@@ -35,6 +35,7 @@ import { Link, useSearchParams } from "react-router";
 import type { Hex } from "viem";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
+import { ua } from "@/module/common/lib/ua";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 
@@ -351,7 +352,8 @@ function PhonePairingAction() {
     const { t } = useTranslation();
     const ssoId = useAtomValue(ssoContextAtom)?.id;
 
-    if (!ssoId) {
+    // Don't show the phone pairing action if we don't have an sso id or if we are on a mobile device
+    if (!ssoId || ua.isMobile) {
         return null;
     }
 

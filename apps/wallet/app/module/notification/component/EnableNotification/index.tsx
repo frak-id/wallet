@@ -2,8 +2,8 @@ import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
-import { NotificationsMobile } from "@shared/module/asset/icons/NotificationsMobile";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
+import { NotificationsMobile } from "@frak-labs/ui/icons/NotificationsMobile";
 import { Trans } from "react-i18next";
 
 export function EnableNotification() {

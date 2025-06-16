@@ -4,7 +4,7 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@shared/module/component/Accordion";
+} from "@frak-labs/ui/component/Accordion";
 import { useAtomValue } from "jotai";
 import { BadgeCheck } from "lucide-react";
 import type { PropsWithChildren } from "react";

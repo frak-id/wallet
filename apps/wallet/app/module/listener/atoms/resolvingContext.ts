@@ -5,9 +5,10 @@ import {
     type ClientLifecycleEvent,
     FrakContextManager,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { atom, useAtomValue } from "jotai";
 import { type Address, isAddressEqual, keccak256, toHex } from "viem";
+import { updateGlobalProperties } from "../../common/analytics";
 
 /**
  * The atom storing the current iframe resolving context
@@ -89,6 +90,14 @@ export const handleHandshakeResponse = atom(
             currentContext?.isAutoContext !== context?.isAutoContext
         ) {
             set(iframeResolvingContextAtom, context);
+
+            // Set open panel global properties
+            updateGlobalProperties({
+                isIframe: true,
+                productId: context?.productId,
+                contextUrl: context?.sourceUrl,
+                contextReferrer: context?.walletReferrer,
+            });
         }
 
         // Remove the token

@@ -19,12 +19,14 @@ export const sendRoutes = new Elysia()
         "/send",
         async ({
             body: { targets, payload },
-            notification: { service },
+            notifications: {
+                services: { notifications },
+            },
             businessSession,
         }) => {
             if (!businessSession) return;
 
-            await service.cleanupExpiredTokens();
+            await notifications.cleanupExpiredTokens();
 
             // todo: Notification tracking (send, received, clicked)
 
@@ -36,7 +38,7 @@ export const sendRoutes = new Elysia()
             });
 
             // Send the notification
-            await service.sendNotification({
+            await notifications.sendNotification({
                 wallets,
                 payload,
             });

@@ -7,6 +7,8 @@
 }
 
 .drawer__contentWrapper {
+    /* Create a new stacking context for the toaster to be inside our modal */
+    transform: translateZ(0);
     position: fixed;
     bottom: 0;
     left: 0;

@@ -8,12 +8,12 @@ import {
     productInteractionManagerAbi,
     productRoles,
 } from "@frak-labs/app-essentials/blockchain";
+import { backendApi, businessApi } from "@frak-labs/client/server";
 import type {
     ProductTypesKey,
     SendTransactionModalStepType,
 } from "@frak-labs/core-sdk";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { backendApi, businessApi } from "@frak-labs/shared/context/server";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { type Hex, encodeFunctionData } from "viem";

@@ -16,7 +16,10 @@ const updateMerkleRootJob = (app: OracleContextApp) =>
             skipIfLocked: true,
             run: async ({ context: { logger } }) => {
                 const {
-                    oracle: { db: oracleDb, updateService },
+                    oracle: {
+                        db: oracleDb,
+                        services: { update: updateService },
+                    },
                 } = app.decorator;
 
                 // Get some unsynced products

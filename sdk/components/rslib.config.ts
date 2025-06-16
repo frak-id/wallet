@@ -1,4 +1,4 @@
-import { tools } from "@frak-labs/shared/tooling/rslib";
+import { tools } from "@frak-labs/dev-tooling";
 import { pluginPreact } from "@rsbuild/plugin-preact";
 import { pluginSvgr } from "@rsbuild/plugin-svgr";
 import { type LibConfig, defineConfig } from "@rslib/core";

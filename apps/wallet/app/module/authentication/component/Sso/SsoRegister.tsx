@@ -1,9 +1,8 @@
 import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Notice } from "@/module/common/component/Notice";
-import { trackEvent } from "@/module/common/utils/trackEvent";
-import { Fingerprint } from "@shared/module/asset/icons/Fingerprint";
-import { AuthFingerprint } from "@shared/module/component/AuthFingerprint";
+import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
+import { Fingerprint } from "@frak-labs/ui/icons/Fingerprint";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -68,9 +67,7 @@ export function SsoRegisterComponent({
                         // Reset the error
                         onError(null);
 
-                        register().then(() => {
-                            trackEvent("cta-sso-register");
-                        });
+                        register();
                     }}
                     disabled={
                         isRegisterInProgress ||
@@ -97,9 +94,7 @@ export function SsoRegisterComponent({
                     // Reset the error
                     onError(null);
 
-                    register().then(() => {
-                        trackEvent("cta-sso-register");
-                    });
+                    register();
                 }}
                 type={"button"}
             >

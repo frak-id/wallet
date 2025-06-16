@@ -24,10 +24,10 @@ import {
 } from "@/module/listener/providers/ListenerUiProvider";
 import { OriginPairingState } from "@/module/pairing/component/OriginPairingState";
 import { RpcErrorCodes } from "@frak-labs/core-sdk";
-import { LogoFrakWithName } from "@shared/module/asset/icons/LogoFrakWithName";
-import { jotaiStore } from "@shared/module/atoms/store";
-import { useMediaQuery } from "@shared/module/hook/useMediaQuery";
-import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
+import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
+import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import { cx } from "class-variance-authority";
 import { useAtomValue } from "jotai";
 import {
@@ -38,6 +38,7 @@ import {
     useEffect,
     useMemo,
 } from "react";
+import { Toaster } from "sonner";
 import { ToastLoading } from "../../../component/ToastLoading";
 import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
@@ -185,6 +186,7 @@ export function ListenerModal({
             open={true}
             onOpenChange={onOpenChange}
         >
+            <Toaster position="top-center" />
             <InAppBrowserToast />
             <ToastLoading />
             <>

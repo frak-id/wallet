@@ -13,7 +13,7 @@ import { SixDegreesRoutingService } from "./service/SixDegreesRoutingService";
  */
 export const sixDegreesContext = new Elysia({
     name: "Context.6degrees",
-}).decorate((decorators) => {
+}).decorate(() => {
     // Create the 6degrees db
     const db = drizzle({
         client: postgresDb,
@@ -44,13 +44,17 @@ export const sixDegreesContext = new Elysia({
     );
 
     return {
-        ...decorators,
         sixDegrees: {
             db,
             api: sixDegreesApi,
-            authenticationService,
-            interactionService,
-            routingService,
+            repositories: {
+                authenticator: authenticatorRepository,
+            },
+            services: {
+                authentication: authenticationService,
+                interaction: interactionService,
+                routing: routingService,
+            },
         },
     };
 });

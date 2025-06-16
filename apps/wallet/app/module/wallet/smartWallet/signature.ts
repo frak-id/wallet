@@ -1,4 +1,4 @@
-import { jotaiStore } from "@frak-labs/shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { tryit } from "radash";
 import {

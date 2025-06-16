@@ -6,8 +6,8 @@ import {
     useSignSignatureRequest,
 } from "@/module/pairing/hook/useSignSignatureRequest";
 import type { TargetPairingPendingSignature } from "@/module/pairing/types";
-import { Button } from "@shared/module/component/Button";
-import { Spinner } from "@shared/module/component/Spinner";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import type { MutationStatus } from "@tanstack/react-query";
 import { Check, Shield, X } from "lucide-react";
 import { useState } from "react";

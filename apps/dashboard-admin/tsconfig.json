@@ -16,7 +16,6 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"],
-      "@shared/*": ["../../packages/shared/*"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
       "@backend-common": ["../../services/backend/src/common/index.ts"],
       "@backend-common/*": ["../../services/backend/src/common/*"]

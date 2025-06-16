@@ -40,14 +40,14 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
 
         return { productId, hmac: headers["x-hmac-sha256"] };
     })
-    .decorate(({ interactionsDb, ...other }) => ({
-        interactionsDb,
+    .decorate(({ interactions: { db }, ...other }) => ({
+        interactionsDb: db,
         ...other,
 
         saveInteractions: async (
             interactions: (typeof pendingInteractionsTable.$inferInsert)[]
         ) => {
-            await interactionsDb
+            await db
                 .insert(pendingInteractionsTable)
                 .values(interactions)
                 .onConflictDoNothing();

@@ -10,7 +10,7 @@ import {
     productAdministratorRegistryAbi,
     productRoles,
 } from "@frak-labs/app-essentials";
-import { indexerApi } from "@frak-labs/shared/context/server";
+import { indexerApi } from "@frak-labs/client/server";
 import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";

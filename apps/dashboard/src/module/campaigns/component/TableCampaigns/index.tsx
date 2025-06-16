@@ -11,8 +11,8 @@ import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { Switch } from "@/module/forms/Switch";
 import type { CampaignWithState } from "@/types/Campaign";
-import { Button } from "@shared/module/component/Button";
-import { Skeleton } from "@shared/module/component/Skeleton";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import {
     type CellContext,
     type ColumnFiltersState,

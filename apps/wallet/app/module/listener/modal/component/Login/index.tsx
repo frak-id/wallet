@@ -1,7 +1,6 @@
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { useIsWebAuthNSupported } from "@/module/common/hook/useIsWebAuthNSupported";
-import { trackEvent } from "@/module/common/utils/trackEvent";
+import { isWebAuthNSupported } from "@/module/common/lib/webauthn";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { SsoButton } from "@/module/listener/component/SsoButton";
@@ -12,8 +11,8 @@ import {
     useModalListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
-import { Spinner } from "@shared/module/component/Spinner";
-import { prefixModalCss } from "@shared/module/utils/prefixModalCss";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import { useAtomValue } from "jotai";
 import { useEffect, useMemo } from "react";
 import { AuthenticateWithPhone } from "../AuthenticateWithPhone";
@@ -55,8 +54,6 @@ export function LoginModalStep({
 
     const session = useAtomValue(sessionAtom);
 
-    const isWebAuthnSupported = useIsWebAuthNSupported();
-
     /**
      * Listen to the session status, and exit directly after a session is set in the storage
      *  - Will be triggered if the user goes through the external registration process
@@ -91,10 +88,9 @@ export function LoginModalStep({
                         <button
                             type={"button"}
                             className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
-                            disabled={isLoading || !isWebAuthnSupported}
+                            disabled={isLoading || !isWebAuthNSupported}
                             onClick={() => {
                                 login({});
-                                trackEvent("cta-login");
                             }}
                         >
                             {isLoading && <Spinner />}

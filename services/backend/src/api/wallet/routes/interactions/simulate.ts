@@ -16,11 +16,13 @@ export const simulateRoutes = new Elysia()
         "/estimate",
         async ({
             query: { productId, interactionKey },
-            campaignRewardsService,
+            interactions: {
+                services: { campaignRewards },
+            },
         }) => {
             // Get all the active rewards
             const activeRewards =
-                await campaignRewardsService.getActiveRewardsForProduct({
+                await campaignRewards.getActiveRewardsForProduct({
                     productId,
                 });
             if (!activeRewards) return null;

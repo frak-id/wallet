@@ -4,7 +4,7 @@ import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiC
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { smartAccountConnector } from "@/module/wallet/smartWallet/connector";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -13,8 +13,9 @@ import type { PersistQueryClientProviderProps } from "@tanstack/react-query-pers
 import { Provider } from "jotai";
 import { type PropsWithChildren, useEffect, useMemo } from "react";
 import { createClient } from "viem";
-import { WagmiProvider, createConfig } from "wagmi";
+import { WagmiProvider, createConfig, useAccount } from "wagmi";
 import { usePersistentPairingClient } from "../../pairing/hook/usePersistentPairingClient";
+import { openPanel } from "../analytics";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -164,5 +165,13 @@ function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
 function SessionStateManager() {
     useEnforceWagmiConnection();
     usePersistentPairingClient();
+
+    // Set the open panel profile id with the wagmi address
+    const { address } = useAccount();
+    useEffect(() => {
+        if (!openPanel) return;
+        openPanel.profileId = address;
+    }, [address]);
+
     return null;
 }

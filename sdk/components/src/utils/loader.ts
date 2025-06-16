@@ -1,4 +1,4 @@
-import { onDocumentReady } from "@shared/module/utils/onDocumentReady";
+import { onDocumentReady } from "@frak-labs/ui/utils/onDocumentReady";
 import { initFrakSdk } from "./initFrakSdk";
 
 /**

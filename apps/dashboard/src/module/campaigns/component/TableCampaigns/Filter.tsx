@@ -7,8 +7,8 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
-import { Button } from "@shared/module/component/Button";
-import { InputSearch } from "@shared/module/component/forms/InputSearch";
+import { Button } from "@frak-labs/ui/component/Button";
+import { InputSearch } from "@frak-labs/ui/component/forms/InputSearch";
 import { format } from "date-fns";
 import { atom, useAtom } from "jotai";
 import { useSetAtom } from "jotai/index";

@@ -1,5 +1,5 @@
 import { isConnectedVideoDevices } from "@/module/membrs/utils/isConnectedVideoDevices";
-import { Button } from "@shared/module/component/Button";
+import { Button } from "@frak-labs/ui/component/Button";
 import {
     type Dispatch,
     type SetStateAction,

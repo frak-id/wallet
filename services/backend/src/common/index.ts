@@ -2,6 +2,7 @@ export {
     sessionContext,
     walletSessionContext,
     walletSdkSessionContext,
+    type SessionContextType,
 } from "./context";
 export { log } from "./logger";
 // Repositories singleton

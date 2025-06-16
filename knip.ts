@@ -15,7 +15,7 @@ const config: KnipConfig = {
             entry: ["app/*.{ts,tsx,css}", "app/views/**/*.tsx"],
             project: ["app/**/*.{ts,tsx,css}"],
         },
-        "packages/shared": {
+        "packages/ui": {
             entry: "**/*.{ts,tsx}",
         },
         "apps/wallet": {

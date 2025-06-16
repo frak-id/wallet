@@ -1,4 +1,4 @@
-import { backendApi } from "@frak-labs/shared/context/server";
+import { backendApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 

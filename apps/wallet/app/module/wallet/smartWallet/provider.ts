@@ -9,7 +9,7 @@ import { frakEcdsaWalletSmartAccount } from "@/module/wallet/smartWallet/FrakEcd
 import { frakWalletSmartAccount } from "@/module/wallet/smartWallet/FrakSmartWallet";
 import type { DistantWebAuthnWallet, EcdsaWallet } from "@/types/Session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import {
     type SmartAccountClient,
     createSmartAccountClient,

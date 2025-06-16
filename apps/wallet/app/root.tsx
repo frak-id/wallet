@@ -1,11 +1,10 @@
 import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
-import { AnalyticsWrapper } from "@/module/root/component/AnalyticsWrapper";
 import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
 import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
-import { Spinner } from "@shared/module/component/Spinner";
-import type { ReactNode } from "react";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { type ReactNode, useEffect } from "react";
 import {
     Links,
     Meta,
@@ -15,10 +14,12 @@ import {
     isRouteErrorResponse,
 } from "react-router";
 import type { Route } from "./+types/root";
+import { initOpenPanel } from "./module/common/analytics";
 import {
     PwaInstall,
     PwaInstallScript,
 } from "./module/common/component/PwaInstall";
+import { AnalyticsWrapper } from "./module/root/component/AnalyticsWrapper";
 
 export const meta = rootConfig.meta;
 export const links = rootConfig.links;
@@ -103,8 +104,8 @@ export function Layout({ children }: { children: ReactNode }) {
                 />
                 <Meta />
                 <Links />
-                <AnalyticsWrapper />
                 <PwaInstallScript />
+                <AnalyticsWrapper />
             </head>
             <body className="scrollbars">
                 {children}
@@ -123,6 +124,9 @@ export function Layout({ children }: { children: ReactNode }) {
  * @returns {JSX.Element} - The rendered application.
  */
 export default function App() {
+    useEffect(() => {
+        initOpenPanel();
+    }, []);
     return (
         <>
             <RootProvider>

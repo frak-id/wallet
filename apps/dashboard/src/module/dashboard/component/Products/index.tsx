@@ -2,7 +2,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { ButtonAddProduct } from "@/module/dashboard/component/ButtonAddProduct";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
-import { Spinner } from "@shared/module/component/Spinner";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
 

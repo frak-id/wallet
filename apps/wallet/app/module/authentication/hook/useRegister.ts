@@ -6,11 +6,12 @@ import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
 import type { Session } from "@/types/Session";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 
 /**
  * Hook that handle the registration process
@@ -34,6 +35,13 @@ export function useRegister(
         ...options,
         mutationKey: authKey.register,
         mutationFn: async () => {
+            // Identify the user and track the event
+            const events = [
+                trackAuthInitiated("register", {
+                    ssoId: options?.ssoId,
+                }),
+            ];
+
             // Build the credentials to exclude
             const excludeCredentials = previousAuthenticators?.map(
                 (auth) =>
@@ -80,6 +88,14 @@ export function useRegister(
             // Store the session
             jotaiStore.set(sessionAtom, session);
             jotaiStore.set(sdkSessionAtom, sdkJwt);
+
+            // Track the event
+            events.push(
+                trackAuthCompleted("register", session, {
+                    ssoId: options?.ssoId,
+                })
+            );
+            await Promise.allSettled(events);
 
             return session;
         },

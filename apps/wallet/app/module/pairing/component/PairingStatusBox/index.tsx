@@ -1,6 +1,6 @@
 import { getTargetPairingClient } from "@/module/pairing/clients/store";
-import { Button } from "@shared/module/component/Button";
-import { Spinner } from "@shared/module/component/Spinner";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useAtomValue } from "jotai";
 import { RefreshCcw } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";

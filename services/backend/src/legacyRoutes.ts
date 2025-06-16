@@ -31,6 +31,7 @@ export const legacyRouteMapper = (app: Elysia) =>
             const newRequest = new Request(newUrl.toString(), {
                 method: request.method,
                 headers: request.headers,
+                // @ts-ignore: idk why but dashboard isn't happy with that during typecheck
                 body: body as BodyInit | undefined,
                 mode: request.mode,
                 referrer: request.referrer,

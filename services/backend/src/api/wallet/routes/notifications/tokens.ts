@@ -12,7 +12,7 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     .use(walletSessionContext)
     .put(
         "",
-        async ({ body, notification: { db }, walletSession }) => {
+        async ({ body, notifications: { db }, walletSession }) => {
             if (!walletSession) return;
             // Insert our push token
             await db
@@ -50,7 +50,7 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     )
     .delete(
         "",
-        async ({ notification: { db }, walletSession }) => {
+        async ({ notifications: { db }, walletSession }) => {
             if (!walletSession) return;
 
             // Remove all the push tokens for this wallet
@@ -66,7 +66,7 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     )
     .get(
         "/hasAny",
-        async ({ notification: { db }, walletSession }) => {
+        async ({ notifications: { db }, walletSession }) => {
             if (!walletSession) return false;
 
             // Try to find the first push token

@@ -3,6 +3,7 @@ import type {
     ModalStepTypes,
 } from "@frak-labs/core-sdk";
 import { atom } from "jotai";
+import { trackGenericEvent } from "../../../common/analytics";
 
 export type AnyModalKey = ModalStepTypes["key"];
 
@@ -81,6 +82,8 @@ export const setNewModalAtom = atom(
                     ...currentResults,
                     [step.key]: response,
                 });
+
+                trackGenericEvent(`modal_step_${step.key}_completed`);
 
                 // Update the displayed step index
                 set(displayedRpcModalStepsAtom, (current) => ({

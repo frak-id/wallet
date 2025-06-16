@@ -10,7 +10,7 @@ import {
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
 import { compressJsonToB64 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@shared/module/atoms/store";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import type { Hex } from "viem";

@@ -4,7 +4,7 @@ import {
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import type { RecoveryFileContent } from "@/types/Recovery";
-import { Uploader } from "@shared/module/component/Uploader";
+import { Uploader } from "@frak-labs/ui/component/Uploader";
 import { useAtom, useSetAtom } from "jotai";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";

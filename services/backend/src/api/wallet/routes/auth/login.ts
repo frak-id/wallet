@@ -6,17 +6,13 @@ import { sixDegreesContext } from "../../../../domain/6degrees/context";
 import {
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
-    walletSdkSessionService,
-    walletSsoService,
-    webAuthNService,
+    authContext,
 } from "../../../../domain/auth";
 
 export const loginRoutes = new Elysia()
     .use(sessionContext)
+    .use(authContext)
     .use(sixDegreesContext)
-    .use(webAuthNService)
-    .use(walletSdkSessionService)
-    .use(walletSsoService)
     // Ecdsa login
     .post(
         "/ecdsaLogin",
@@ -25,9 +21,9 @@ export const loginRoutes = new Elysia()
             body: { expectedChallenge, signature, wallet, ssoId, demoPkey },
             // Context
             walletJwt,
-            generateSdkJwt,
-            webAuthNService,
-            ssoService,
+            auth: {
+                services: { walletSdkSession, walletSso, webAuthN },
+            },
         }) => {
             // Rebuild the message that have been signed
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${expectedChallenge}`;
@@ -45,7 +41,7 @@ export const loginRoutes = new Elysia()
             const authenticatorId = `ecdsa-${wallet}` as const;
 
             // Get the wallet address
-            const walletAddress = await webAuthNService.getEcdsaWalletAddress({
+            const walletAddress = await webAuthN.getEcdsaWalletAddress({
                 ecdsaAddress: wallet,
             });
 
@@ -61,14 +57,14 @@ export const loginRoutes = new Elysia()
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await generateSdkJwt({
+            const sdkJwt = await walletSdkSession.generateSdkJwt({
                 wallet: walletAddress,
                 additionalData: { demoPkey },
             });
 
             // If all good, mark the sso as done
             if (ssoId) {
-                await ssoService.resolveSession({
+                await walletSso.resolveSession({
                     id: ssoId,
                     wallet: walletAddress,
                     authenticatorId,
@@ -116,13 +112,13 @@ export const loginRoutes = new Elysia()
             },
             // Context
             walletJwt,
-            generateSdkJwt,
-            webAuthNService,
-            ssoService,
+            auth: {
+                services: { walletSdkSession, walletSso, webAuthN },
+            },
             sixDegrees,
         }) => {
             // Check if that's a valid webauthn signature
-            const verificationnResult = await webAuthNService.isValidSignature({
+            const verificationnResult = await webAuthN.isValidSignature({
                 compressedSignature: rawAuthenticatorResponse,
                 msg: expectedChallenge,
             });
@@ -145,9 +141,9 @@ export const loginRoutes = new Elysia()
 
             // Check if that's a six degrees wallet, and iuf yes, generate a token accordingly
             const isSixDegrees =
-                await sixDegrees.routingService.isRoutedWallet(address);
+                await sixDegrees.services.routing.isRoutedWallet(address);
             if (isSixDegrees) {
-                const token = await sixDegrees.authenticationService.login({
+                const token = await sixDegrees.services.authentication.login({
                     publicKey: rawPublicKey,
                     challenge: expectedChallenge,
                     signature: rawAuthenticatorResponse,
@@ -169,14 +165,14 @@ export const loginRoutes = new Elysia()
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await generateSdkJwt({
+            const sdkJwt = await walletSdkSession.generateSdkJwt({
                 wallet: address,
                 additionalData,
             });
 
             // If all good, mark the sso as done
             if (ssoId) {
-                await ssoService.resolveSession({
+                await walletSso.resolveSession({
                     id: ssoId,
                     wallet: address,
                     authenticatorId,

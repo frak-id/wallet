@@ -1,4 +1,4 @@
-import { sessionContext, viemClient } from "@backend-common";
+import { viemClient } from "@backend-common";
 import {
     KernelWallet,
     WebAuthN,
@@ -8,143 +8,127 @@ import {
     type AuthenticationResponseJSON,
     verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
-import { Elysia } from "elysia";
 import { getSenderAddress } from "permissionless/actions";
 import { type Address, type Hex, concatHex, keccak256, toHex } from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
-import { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
+import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 import { decodePublicKey } from "../utils/webauthnDecode";
 
-export const webAuthNService = new Elysia({ name: "Service.webAuthN" })
-    .use(sessionContext)
-    // A few helpers
-    .decorate((decorators) => {
-        const authenticatorRepository = new AuthenticatorRepository();
+export class WebAuthNService {
+    constructor(
+        private readonly authenticatorRepository: AuthenticatorRepository
+    ) {}
 
-        /**
-         * Parse a compressed webauthn response
-         */
-        function parseCompressedResponse<T>(response: string): T {
-            return JSON.parse(
-                Buffer.from(response, "base64").toString("utf-8")
-            );
-        }
+    /**
+     * Parse a compressed webauthn response
+     */
+    parseCompressedResponse<T>(response: string): T {
+        return JSON.parse(Buffer.from(response, "base64").toString("utf-8"));
+    }
 
-        /**
-         * Get a wallet address from an authenticator
-         */
-        async function getWalletAddress({
-            authenticatorId,
-            pubKey,
-        }: { authenticatorId: string; pubKey: { x: Hex; y: Hex } }) {
-            // Compute base stuff to fetch the smart wallet address
-            const authenticatorIdHash = keccak256(toHex(authenticatorId));
-            const initCode = KernelWallet.getWebAuthNSmartWalletInitCode({
-                authenticatorIdHash,
-                signerPubKey: pubKey,
-            });
+    /**
+     * Get a wallet address from an authenticator
+     */
+    async getWalletAddress({
+        authenticatorId,
+        pubKey,
+    }: { authenticatorId: string; pubKey: { x: Hex; y: Hex } }) {
+        // Compute base stuff to fetch the smart wallet address
+        const authenticatorIdHash = keccak256(toHex(authenticatorId));
+        const initCode = KernelWallet.getWebAuthNSmartWalletInitCode({
+            authenticatorIdHash,
+            signerPubKey: pubKey,
+        });
 
-            // Get the sender address based on the init code
-            return getSenderAddress(viemClient, {
-                initCode: concatHex([kernelAddresses.factory, initCode]),
-                entryPointAddress: entryPoint06Address,
-            });
-        }
+        // Get the sender address based on the init code
+        return getSenderAddress(viemClient, {
+            initCode: concatHex([kernelAddresses.factory, initCode]),
+            entryPointAddress: entryPoint06Address,
+        });
+    }
 
-        /**
-         * Get a wallet address from an authenticator
-         */
-        async function getEcdsaWalletAddress({
+    /**
+     * Get a wallet address from an authenticator
+     */
+    async getEcdsaWalletAddress({ ecdsaAddress }: { ecdsaAddress: Address }) {
+        // Compute base stuff to fetch the smart wallet address
+        const initCode = KernelWallet.getFallbackWalletInitCode({
             ecdsaAddress,
-        }: { ecdsaAddress: Address }) {
-            // Compute base stuff to fetch the smart wallet address
-            const initCode = KernelWallet.getFallbackWalletInitCode({
-                ecdsaAddress,
-            });
+        });
 
-            // Get the sender address based on the init code
-            return getSenderAddress(viemClient, {
-                initCode: concatHex([kernelAddresses.factory, initCode]),
-                entryPointAddress: entryPoint06Address,
-            });
+        // Get the sender address based on the init code
+        return getSenderAddress(viemClient, {
+            initCode: concatHex([kernelAddresses.factory, initCode]),
+            entryPointAddress: entryPoint06Address,
+        });
+    }
+
+    /**
+     * Check if a signature is valid for a given wallet
+     */
+    async isValidSignature({
+        compressedSignature,
+        msg,
+    }: {
+        compressedSignature: string;
+        msg: string;
+    }) {
+        // Decode the authenticator response
+        const signature =
+            this.parseCompressedResponse<AuthenticationResponseJSON>(
+                compressedSignature
+            );
+
+        // Find the authenticator
+        const authenticator =
+            await this.authenticatorRepository.getByCredentialId(signature.id);
+        if (!authenticator) {
+            return false;
         }
 
-        /**
-         * Check if a signature is valid for a given wallet
-         */
-        async function isValidSignature({
-            compressedSignature,
-            msg,
-        }: {
-            compressedSignature: string;
-            msg: string;
-        }) {
-            // Decode the authenticator response
-            const signature =
-                parseCompressedResponse<AuthenticationResponseJSON>(
-                    compressedSignature
-                );
+        // Check if the address match the signature provided
+        const walletAddress = await this.getWalletAddress({
+            authenticatorId: signature.id,
+            pubKey: authenticator.publicKey,
+        });
 
-            // Find the authenticator
-            const authenticator =
-                await authenticatorRepository.getByCredentialId(signature.id);
-            if (!authenticator) {
-                return false;
-            }
-
-            // Check if the address match the signature provided
-            const walletAddress = await getWalletAddress({
-                authenticatorId: signature.id,
-                pubKey: authenticator.publicKey,
-            });
-
-            // Ensure the verification pass
-            const verification = await verifyAuthenticationResponse({
-                response: signature,
-                expectedOrigin: WebAuthN.rpOrigin,
-                expectedRPID: WebAuthN.rpId,
-                credential: {
-                    counter: authenticator.counter,
-                    id: authenticator._id,
-                    publicKey: authenticator.credentialPublicKey.buffer,
-                },
-                expectedChallenge: msg,
-            });
-            if (!verification) {
-                return false;
-            }
-
-            // Update this authenticator counter (if the counter has changed, not the case with touch id)
-            if (
-                verification.authenticationInfo.newCounter !==
-                authenticator.counter
-            ) {
-                await authenticatorRepository.updateCounter({
-                    credentialId: authenticator._id,
-                    counter: verification.authenticationInfo.newCounter + 1,
-                });
-            }
-
-            // All good, return a few info
-            return {
-                authenticatorId: authenticator._id,
-                address: walletAddress,
-                publicKey: authenticator.publicKey,
-                rawPublicKey: authenticator.credentialPublicKey.buffer,
-                transports: authenticator.transports,
-            };
-        }
-
-        return {
-            ...decorators,
-            webAuthNService: {
-                decodePublicKey,
-                authenticatorRepository,
-                isValidSignature,
-                parseCompressedResponse,
-                getWalletAddress,
-                getEcdsaWalletAddress,
+        // Ensure the verification pass
+        const verification = await verifyAuthenticationResponse({
+            response: signature,
+            expectedOrigin: WebAuthN.rpOrigin,
+            expectedRPID: WebAuthN.rpId,
+            credential: {
+                counter: authenticator.counter,
+                id: authenticator._id,
+                publicKey: authenticator.credentialPublicKey.buffer,
             },
+            expectedChallenge: msg,
+        });
+        if (!verification) {
+            return false;
+        }
+
+        // Update this authenticator counter (if the counter has changed, not the case with touch id)
+        if (
+            verification.authenticationInfo.newCounter !== authenticator.counter
+        ) {
+            await this.authenticatorRepository.updateCounter({
+                credentialId: authenticator._id,
+                counter: verification.authenticationInfo.newCounter + 1,
+            });
+        }
+
+        // All good, return a few info
+        return {
+            authenticatorId: authenticator._id,
+            address: walletAddress,
+            publicKey: authenticator.publicKey,
+            rawPublicKey: authenticator.credentialPublicKey.buffer,
+            transports: authenticator.transports,
         };
-    })
-    .as("scoped");
+    }
+
+    get decodePublicKey() {
+        return decodePublicKey;
+    }
+}

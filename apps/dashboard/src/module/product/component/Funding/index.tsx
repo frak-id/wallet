@@ -19,12 +19,12 @@ import { useSetBankDistributionStatus } from "@/module/product/hook/useSetBankDi
 import { addresses } from "@frak-labs/app-essentials";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { Button } from "@shared/module/component/Button";
-import { Column, Columns } from "@shared/module/component/Columns";
-import { IconInfo } from "@shared/module/component/IconInfo";
-import { Spinner } from "@shared/module/component/Spinner";
-import { Switch } from "@shared/module/component/Switch";
-import { Tooltip } from "@shared/module/component/Tooltip";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { IconInfo } from "@frak-labs/ui/component/IconInfo";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Switch } from "@frak-labs/ui/component/Switch";
+import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import { useMutation } from "@tanstack/react-query";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { CheckCircle, XCircle } from "lucide-react";

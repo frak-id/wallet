@@ -1,4 +1,4 @@
-import { businessApi } from "@frak-labs/shared/context/server";
+import { businessApi } from "@frak-labs/client/server";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { sleep } from "radash";
 

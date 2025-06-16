@@ -4,9 +4,10 @@ import { ListenerWalletHeader } from "@/module/listener/embedded/component/Walle
 import { LoggedInComponent } from "@/module/listener/embedded/component/WalletLoggedIn";
 import { LoggedOutComponent } from "@/module/listener/embedded/component/WalletLoggedOut";
 import { useEmbeddedListenerUI } from "@/module/listener/providers/ListenerUiProvider";
-import { jotaiStore } from "@shared/module/atoms/store";
-import { Overlay } from "@shared/module/component/Overlay";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { Overlay } from "@frak-labs/ui/component/Overlay";
 import { cva, cx } from "class-variance-authority";
+import { Toaster } from "sonner";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
 
@@ -58,6 +59,7 @@ function CurrentEmbeddedViewComponent() {
                 session && styles["modalListenerWallet__inner--loggedIn"]
             )}
         >
+            <Toaster position="top-center" />
             <InAppBrowserToast />
             <ToastLoading />
             <ListenerWalletHeader />

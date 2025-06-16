@@ -10,7 +10,7 @@ import {
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
 import type { CampaignTrigger } from "@/types/Campaign";
 import type { InteractionTypesKey } from "@frak-labs/core-sdk";
-import { Checkbox } from "@frak-labs/shared/module/component/forms/Checkbox";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import styles from "./FormTrigger.module.css";
