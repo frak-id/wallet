@@ -12,12 +12,14 @@
         "@frak-labs-example/vanilla-js",
         "@frak-labs-example/components",
 
-        "@frak-labs/shared",
+        "@frak-labs/ui",
         "@frak-labs/backend-elysia",
         "@frak-labs/nexus-dashboard",
         "@frak-labs/dashboard-admin",
         "@frak-labs/nexus-wallet",
         "@frak-labs/app-essentials",
-        "@frak-labs/browserslist-config"
+        "@frak-labs/browserslist-config",
+        "@frak-labs/client",
+        "@frak-labs/dev-tooling"
     ]
 }

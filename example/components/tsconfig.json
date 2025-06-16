@@ -22,8 +22,7 @@
     "./src/**/*.svelte",
     "./tests/**/*.js",
     "./tests/**/*.ts",
-    "./tests/**/*.svelte",
-    "../../packages/shared/types/*.d.ts"
+    "./tests/**/*.svelte"
   ],
   "exclude": [
     "src/lib/components/ui/**/*"
