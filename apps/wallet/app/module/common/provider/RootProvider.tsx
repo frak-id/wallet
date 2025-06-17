@@ -15,7 +15,7 @@ import { type PropsWithChildren, useEffect, useMemo } from "react";
 import { createClient } from "viem";
 import { WagmiProvider, createConfig, useAccount } from "wagmi";
 import { usePersistentPairingClient } from "../../pairing/hook/usePersistentPairingClient";
-import { openPanel } from "../analytics";
+import { setProfileId } from "../analytics";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -169,8 +169,7 @@ function SessionStateManager() {
     // Set the open panel profile id with the wagmi address
     const { address } = useAccount();
     useEffect(() => {
-        if (!openPanel) return;
-        openPanel.profileId = address;
+        setProfileId(address);
     }, [address]);
 
     return null;
