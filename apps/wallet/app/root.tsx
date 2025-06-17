@@ -4,7 +4,7 @@ import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
 import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { type ReactNode, useEffect } from "react";
+import type { ReactNode } from "react";
 import {
     Links,
     Meta,
@@ -14,12 +14,13 @@ import {
     isRouteErrorResponse,
 } from "react-router";
 import type { Route } from "./+types/root";
-import { initOpenPanel } from "./module/common/analytics";
 import {
     PwaInstall,
     PwaInstallScript,
 } from "./module/common/component/PwaInstall";
 import { AnalyticsWrapper } from "./module/root/component/AnalyticsWrapper";
+// Import open panel to ensure it's initialized
+import "./module/common/analytics";
 
 export const meta = rootConfig.meta;
 export const links = rootConfig.links;
@@ -124,9 +125,6 @@ export function Layout({ children }: { children: ReactNode }) {
  * @returns {JSX.Element} - The rendered application.
  */
 export default function App() {
-    useEffect(() => {
-        initOpenPanel();
-    }, []);
     return (
         <>
             <RootProvider>

@@ -18,22 +18,56 @@ export const openPanel =
               trackScreenViews: true,
               trackOutgoingLinks: true,
               trackAttributes: false,
+              // We use a filter to ensure we got the open panel instance initialized
+              //  A bit hacky, but this way we are sure that we got everything needed for the first event ever sent
+              filter: ({ type, payload }) => {
+                  if (type !== "track") return true;
+                  if (!payload?.properties) return true;
+
+                  // Check if we we got the properties once initialized
+                  if (!("isIframe" in payload.properties)) {
+                      console.log("force initOpenPanel");
+                      payload.properties = {
+                          ...payload.properties,
+                          ...getInitProperties(),
+                      };
+                  }
+
+                  return true;
+              },
           })
         : undefined;
 
-export function initOpenPanel() {
-    if (!openPanel) return;
-
-    openPanel.init();
-
-    if (typeof window === "undefined") return;
+/**
+ * Get the properties to init open panel
+ */
+function getInitProperties() {
+    if (typeof window === "undefined") return {};
     const referrer =
         isInIframe && document.referrer !== "" ? document.referrer : undefined;
-    updateGlobalProperties({
+    return {
         isIframe: isInIframe,
         isPwa: isStandalonePWA(),
         iframeReferrer: referrer,
-    });
+    };
+}
+
+/**
+ * Function used to init open panel
+ */
+function initOpenPanel() {
+    if (!openPanel) return;
+    openPanel.init();
+    updateGlobalProperties(getInitProperties());
+}
+initOpenPanel();
+
+/**
+ * Set the profile id of the open panel
+ */
+export function setProfileId(profileId?: string) {
+    if (!openPanel) return;
+    openPanel.profileId = profileId;
 }
 
 /**
