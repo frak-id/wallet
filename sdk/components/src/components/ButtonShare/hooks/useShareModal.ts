@@ -53,6 +53,16 @@ export function useShareModal(targetInteraction?: FullInteractionTypesKey) {
 
             const debugInfo =
                 window.FrakSetup.client.debugInfo.formatDebugInfo(e);
+
+            // Track the error
+            window.FrakSetup.client.openPanel?.track("share_modal_error", {
+                error:
+                    e instanceof Object && "message" in e
+                        ? e.message
+                        : "Unknown error",
+                debugInfo,
+            });
+
             setDebugInfo(debugInfo);
             setIsError(true);
             console.error("Error while opening the modal", e);

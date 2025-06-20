@@ -32,6 +32,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+          STAGE: production
 
       - uses: gacts/purge-jsdelivr-cache@v1
         if: steps.changesets.outputs.published == 'true'

@@ -29,8 +29,8 @@ export function watchWalletStatus(
         return client
             .request({ method: "frak_listenToWalletStatus" })
             .then((result) => {
-                // Save the potential interaction token
-                savePotentialToken(result.interactionToken);
+                // Handle side effects of this request
+                walletStatusSideEffect(client, result);
 
                 // Return the result
                 return result;
@@ -48,11 +48,11 @@ export function watchWalletStatus(
                 method: "frak_listenToWalletStatus",
             },
             (status) => {
+                // Handle side effects of this request
+                walletStatusSideEffect(client, status);
+
                 // Transmit the status to the callback
                 callback(status);
-
-                // Save the potential interaction token
-                savePotentialToken(status.interactionToken);
 
                 // If the promise hasn't resolved yet, resolve it
                 if (!hasResolved) {
@@ -68,16 +68,24 @@ export function watchWalletStatus(
  * Helper to save a potential interaction token
  * @param interactionToken
  */
-function savePotentialToken(interactionToken?: string) {
+function walletStatusSideEffect(
+    client: FrakClient,
+    status: WalletStatusReturnType
+) {
     if (typeof window === "undefined") {
         return;
     }
 
-    if (interactionToken) {
+    // Update the global properties
+    client.openPanel?.setGlobalProperties({
+        wallet: status.wallet ?? null,
+    });
+
+    if (status.interactionToken) {
         // If we got an interaction token, save it
         window.sessionStorage.setItem(
             "frak-wallet-interaction-token",
-            interactionToken
+            status.interactionToken
         );
     } else {
         // Otherwise, remove it

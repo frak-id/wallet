@@ -107,10 +107,14 @@ export function ButtonShare({
     /**
      * The action when the button is clicked
      */
-    const onClick = useCallback(
-        async () => await (showWallet ? modalEmbeddedWallet() : handleShare()),
-        [showWallet, handleShare]
-    );
+    const onClick = useCallback(async () => {
+        window.FrakSetup.client?.openPanel?.track("share_button_clicked");
+        if (showWallet) {
+            await modalEmbeddedWallet();
+        } else {
+            await handleShare();
+        }
+    }, [showWallet, handleShare]);
 
     return (
         <>
