@@ -186,7 +186,26 @@ export function createIFrameFrakClient({
             clientId: process.env.OPEN_PANEL_SDK_CLIENT_ID,
             trackScreenViews: true,
             trackOutgoingLinks: true,
-            trackAttributes: true,
+            trackAttributes: false,
+            // We use a filter to ensure we got the open panel instance initialized
+            //  A bit hacky, but this way we are sure that we got everything needed for the first event ever sent
+            filter: ({ type, payload }) => {
+                if (type !== "track") return true;
+                if (!payload?.properties) return true;
+
+                // Check if we we got the properties once initialized
+                if (!("sdkVersion" in payload.properties)) {
+                    payload.properties = {
+                        ...payload.properties,
+                        sdkVersion: process.env.SDK_VERSION,
+                    };
+                }
+
+                return true;
+            },
+        });
+        openPanel.setGlobalProperties({
+            sdkVersion: process.env.SDK_VERSION,
         });
         openPanel.init();
     }
@@ -206,6 +225,7 @@ export function createIFrameFrakClient({
         request,
         listenerRequest,
         destroy,
+        openPanel,
     };
 }
 

@@ -360,6 +360,7 @@
       "version": "0.0.16",
       "dependencies": {
         "@jsonjoy.com/json-pack": "^1.2.0",
+        "@openpanel/web": "^1.0.1",
       },
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",

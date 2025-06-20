@@ -105,7 +105,16 @@ export async function processReferral(
         const interaction = ReferralInteractionEncoder.referred({
             referrer,
         });
-        await sendInteraction(client, { productId, interaction });
+        await Promise.allSettled([
+            // Send the interaction
+            sendInteraction(client, { productId, interaction }),
+            // Track the event
+            client.openPanel?.track("user_referred", {
+                properties: {
+                    referrer: referrer,
+                },
+            }),
+        ]);
     }
 
     try {
