@@ -290,7 +290,7 @@ function Actions({
                     }}
                     disabled={isLoginInProgress}
                     className={styles.sso__buttonPrimary}
-                    childrenPosition={"top"}
+                    childrenPosition={"bottom"}
                 >
                     {t("authent.sso.btn.existing.login")}
                 </AuthFingerprint>

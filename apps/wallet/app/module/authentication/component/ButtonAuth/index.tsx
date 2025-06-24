@@ -5,10 +5,12 @@ import type { PropsWithChildren } from "react";
 export function ButtonAuth({
     trigger,
     disabled,
+    isLoading,
     children,
 }: PropsWithChildren<{
     trigger: () => Promise<unknown>;
     disabled?: boolean;
+    isLoading?: boolean;
 }>) {
     const [disabledButton, setDisabledButton] = useState(false);
 
@@ -20,6 +22,7 @@ export function ButtonAuth({
                 setDisabledButton(false);
             }}
             disabled={disabledButton || disabled}
+            isLoading={isLoading}
         >
             {children}
         </AuthFingerprint>

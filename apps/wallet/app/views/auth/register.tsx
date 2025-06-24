@@ -94,6 +94,7 @@ export default function Register() {
                     isPreviouslyUsedAuthenticatorError ||
                     !isWebAuthNSupported
                 }
+                isLoading={isRegisterInProgress}
             >
                 {message}
             </ButtonAuth>

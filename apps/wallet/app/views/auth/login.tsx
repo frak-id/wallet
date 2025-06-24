@@ -14,7 +14,7 @@ import styles from "./login.module.css";
 
 export default function Login() {
     const { t } = useTranslation();
-    const { login } = useLogin({});
+    const { login, isLoading } = useLogin({});
 
     return (
         <>
@@ -36,7 +36,8 @@ export default function Login() {
             >
                 <PairingInProgress />
                 <ButtonAuth
-                    disabled={!isWebAuthNSupported}
+                    disabled={!isWebAuthNSupported || isLoading}
+                    isLoading={isLoading}
                     trigger={() => login({})}
                 >
                     <Trans i18nKey={"wallet.login.button"} />

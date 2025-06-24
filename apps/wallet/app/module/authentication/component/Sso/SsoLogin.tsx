@@ -44,7 +44,7 @@ export function SsoLoginComponent({
                     }}
                     disabled={isLoading}
                     className={styles.sso__buttonPrimary}
-                    childrenPosition={"top"}
+                    childrenPosition={"bottom"}
                 >
                     {t("authent.sso.btn.existing.login")}
                 </AuthFingerprint>

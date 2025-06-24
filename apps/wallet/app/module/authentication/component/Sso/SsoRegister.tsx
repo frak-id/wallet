@@ -74,7 +74,7 @@ export function SsoRegisterComponent({
                         isPreviouslyUsedAuthenticatorError
                     }
                     className={styles.sso__buttonPrimary}
-                    childrenPosition={"top"}
+                    childrenPosition={"bottom"}
                 >
                     {t("authent.sso.btn.new.create")}
                 </AuthFingerprint>

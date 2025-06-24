@@ -1,8 +1,6 @@
 import { cx } from "class-variance-authority";
 import type { PropsWithChildren, ReactNode } from "react";
-import { Fingerprint } from "../../icons/Fingerprint";
-import { FingerprintFrak } from "../../icons/FingerprintFrak";
-import { ButtonRipple } from "../ButtonRipple";
+import { ButtonAuth } from "../ButtonAuth";
 import styles from "./index.module.css";
 
 type AuthFingerprintProps = {
@@ -12,6 +10,7 @@ type AuthFingerprintProps = {
     className?: string;
     isShiny?: boolean;
     childrenPosition?: "top" | "bottom";
+    isLoading?: boolean;
 };
 
 export function AuthFingerprint({
@@ -21,31 +20,33 @@ export function AuthFingerprint({
     icon,
     className = "",
     isShiny = true,
+    isLoading,
     childrenPosition = "bottom",
 }: PropsWithChildren<AuthFingerprintProps>) {
-    const content = icon ? (
-        icon
-    ) : disabled ? (
-        <Fingerprint />
-    ) : (
-        <FingerprintFrak />
-    );
+    // const content = icon ? (
+    //     icon
+    // ) : disabled ? (
+    //     <Fingerprint />
+    // ) : (
+    //     <FingerprintFrak />
+    // );
     return (
         <>
             {childrenPosition === "top" && <span>{children}</span>}
-            <ButtonRipple
+            <ButtonAuth
                 onClick={action}
                 disabled={disabled}
                 size={"big"}
+                isLoading={isLoading}
                 className={cx(
                     className,
                     styles["authFingerprint__button--centered"],
                     isShiny && styles.authFingerprint__shiny
                 )}
             >
-                {content}
+                {/* {content} */}
                 {childrenPosition === "bottom" && <span>{children}</span>}
-            </ButtonRipple>
+            </ButtonAuth>
         </>
     );
 }
