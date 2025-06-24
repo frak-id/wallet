@@ -1,8 +1,7 @@
 import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Notice } from "@/module/common/component/Notice";
-import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
-import { Fingerprint } from "@frak-labs/ui/icons/Fingerprint";
+import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -60,10 +59,8 @@ export function SsoRegisterComponent({
     if (isPrimary) {
         return (
             <p className={styles.sso__primaryButtonWrapper}>
-                <AuthFingerprint
-                    icon={<Fingerprint color={"#fff"} sizes={39} />}
-                    isShiny={false}
-                    action={() => {
+                <ButtonAuth
+                    onClick={() => {
                         // Reset the error
                         onError(null);
 
@@ -73,11 +70,9 @@ export function SsoRegisterComponent({
                         isRegisterInProgress ||
                         isPreviouslyUsedAuthenticatorError
                     }
-                    className={styles.sso__buttonPrimary}
-                    childrenPosition={"bottom"}
                 >
                     {t("authent.sso.btn.new.create")}
-                </AuthFingerprint>
+                </ButtonAuth>
                 {statusComponent}
             </p>
         );

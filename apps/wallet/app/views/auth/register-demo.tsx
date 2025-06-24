@@ -1,9 +1,9 @@
-import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { authKey } from "@/module/authentication/queryKeys/auth";
 import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import type { Session } from "@/types/Session";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -41,7 +41,7 @@ export default function RegisterDemo() {
 
     return (
         <Grid className={styles.register__grid}>
-            <ButtonAuth trigger={register} disabled={disabled}>
+            <ButtonAuth onClick={() => register()} disabled={disabled}>
                 {message}
             </ButtonAuth>
         </Grid>

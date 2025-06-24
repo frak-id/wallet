@@ -1,52 +1,84 @@
+import { type VariantProps, cva, cx } from "class-variance-authority";
 import { Fingerprint } from "lucide-react";
-import type { PropsWithChildren, ReactNode } from "react";
+import type {
+    ComponentPropsWithRef,
+    PropsWithChildren,
+    ReactNode,
+} from "react";
 import styles from "./index.module.css";
 
-type ButtonAuthProps = {
-    type?: "button" | "submit";
-    onClick?: () => void;
-    disabled?: boolean;
-    icon?: ReactNode;
-    className?: string;
-    size?: "none" | "small" | "normal" | "big";
-    isLoading?: boolean;
-};
+type ButtonAuthSize = "none" | "small" | "normal" | "big";
+type ButtonAuthProps = ComponentPropsWithRef<"button"> &
+    VariantProps<typeof buttonAuthVariants> & {
+        className?: string;
+        size?: ButtonAuthSize;
+        isLoading?: boolean;
+        children?: ReactNode;
+    };
+
+const buttonAuthVariants = cva(styles.buttonAuth, {
+    variants: {
+        size: {
+            none: styles["size--none"],
+            small: styles["size--small"],
+            normal: styles["size--normal"],
+            big: styles["size--big"],
+        },
+        width: {
+            auto: styles["width--auto"],
+            full: styles["width--full"],
+        },
+    },
+    defaultVariants: {
+        size: "normal",
+        width: "auto",
+    },
+});
 
 export function ButtonAuth({
-    children,
     type = "button",
     disabled,
     onClick,
     className = "",
     size,
     isLoading,
+    width,
+    children,
 }: PropsWithChildren<ButtonAuthProps>) {
     return (
         <button
             type={type}
-            className={`${styles.mainButton} ${isLoading ? styles.authenticating : ""}`}
+            className={buttonAuthVariants({
+                size,
+                className,
+                width,
+            })}
             disabled={disabled}
             onClick={onClick}
         >
-            <div className={styles.buttonOverlay} />
+            <span className={styles.buttonAuth__overlay} />
 
-            <div className={styles.buttonContent}>
-                <div className={styles.iconContainer}>
-                    <div className={styles.iconWrapper}>
-                        <Fingerprint
-                            className={`${styles.icon} ${isLoading ? styles.pulsingIcon : ""}`}
-                        />
+            <span className={styles.buttonAuth__content}>
+                <ButtonAuthIcon isLoading={isLoading} />
+                <span className={styles.buttonAuth__text}>{children}</span>
+            </span>
 
-                        {isLoading && <div className={styles.spinner} />}
-                    </div>
-                </div>
-
-                <div className={styles.textContainer}>
-                    <div className={styles.secondaryText}>{children}</div>
-                </div>
-            </div>
-
-            <div className={styles.shimmer} />
+            <span className={styles.buttonAuth__shimmer} />
         </button>
+    );
+}
+
+function ButtonAuthIcon({ isLoading }: { isLoading?: boolean }) {
+    return (
+        <span className={styles.buttonAuth__iconWrapper}>
+            <Fingerprint
+                className={cx(
+                    styles.buttonAuth__icon,
+                    isLoading && styles.buttonAuth__pulsingIcon
+                )}
+            />
+
+            {isLoading && <div className={styles.buttonAuth__spinner} />}
+        </span>
     );
 }

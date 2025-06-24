@@ -17,8 +17,8 @@ import {
 import { MultiSelect } from "@/module/forms/MultiSelect";
 import { productTypesLabel } from "@/module/product/utils/productTypes";
 import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
-import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
 import { Button } from "@frak-labs/ui/component/Button";
+import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
 import { Input } from "@frak-labs/ui/component/forms/Input";
@@ -393,9 +393,9 @@ function NewProductVerify({
                 <br />
                 Uri: <strong>{domain}</strong>
             </p>
-            <AuthFingerprint
+            <ButtonAuth
                 className={styles.newProductForm__fingerprint}
-                action={() => {
+                onClick={() => {
                     setIsMinting(true);
                     triggerMintMyContent(
                         {
@@ -413,8 +413,8 @@ function NewProductVerify({
                 }}
                 disabled={!isIdle}
             >
-                Validate you Product
-            </AuthFingerprint>
+                Validate your product
+            </ButtonAuth>
 
             {error && <p className={"error"}>{error.message}</p>}
             <ProductSuccessInfo txHash={mintTxHash} infoTxt={infoTxt} />

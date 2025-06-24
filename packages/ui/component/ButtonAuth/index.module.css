@@ -1,5 +1,4 @@
-.mainButton {
-    padding: 24px;
+.buttonAuth {
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, #425dad 0%, #2d3561 100%);
@@ -9,36 +8,60 @@
         rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
-    color: white;
+    color: var(--frak-color-white);
     transform: translateY(0);
 }
 
-.mainButton:hover {
+.size--none {
+    padding: 0;
+}
+
+.size--small {
+    padding: 12px;
+}
+
+.size--normal {
+    padding: 24px;
+}
+
+.size--big {
+    padding: 32px;
+}
+
+.width--auto {
+    width: auto;
+}
+
+.width--full {
+    width: 100%;
+}
+
+.buttonAuth:hover {
     background: linear-gradient(135deg, #5a70d8 0%, #3a4270 100%);
     box-shadow: 0 32px 64px -12px rgba(76, 99, 210, 0.4), 0 0 0 1px
         rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
 }
 
-.mainButton:active {
+.buttonAuth:active {
     transform: translateY(1px);
     box-shadow: 0 20px 40px -12px rgba(76, 99, 210, 0.3), 0 0 0 1px
         rgba(255, 255, 255, 0.1);
     transition: all 0.1s ease;
 }
 
-.mainButton:focus-visible {
+.buttonAuth:focus-visible {
     outline: 2px solid #60a5fa;
     outline-offset: 2px;
 }
 
-.mainButton:disabled {
+.buttonAuth:disabled {
     cursor: not-allowed;
     opacity: 0.6;
     transform: none;
 }
 
-.buttonOverlay {
+.buttonAuth__overlay {
     position: absolute;
     inset: 0;
     background: linear-gradient(
@@ -50,11 +73,11 @@
     transition: opacity 0.3s ease;
 }
 
-.mainButton:hover .buttonOverlay {
+.buttonAuth:hover .buttonAuth__overlay {
     opacity: 1;
 }
 
-.buttonContent {
+.buttonAuth__content {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -64,12 +87,7 @@
     text-align: left;
 }
 
-.iconContainer {
-    position: relative;
-    flex-shrink: 0;
-}
-
-.iconWrapper {
+.buttonAuth__iconWrapper {
     position: relative;
     display: flex;
     align-items: center;
@@ -78,26 +96,22 @@
     height: 2rem;
 }
 
-.icon {
+.buttonAuth__icon {
     width: 2rem;
     height: 2rem;
     color: white;
     transition: transform 0.3s ease;
 }
 
-.mainButton:hover .icon {
+.buttonAuth:hover .buttonAuth__icon {
     transform: scale(1.1) rotate(12deg);
 }
 
-.pulsingIcon {
+.buttonAuth__pulsingIcon {
     animation: pulse 2s infinite;
 }
 
-.successIcon {
-    animation: zoomIn 0.3s ease;
-}
-
-.spinner {
+.buttonAuth__spinner {
     position: absolute;
     inset: -4px;
     border-radius: 50%;
@@ -106,22 +120,7 @@
     animation: spin 1s linear infinite;
 }
 
-.textContainer {
-    /* flex: 1; */
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.primaryText {
-    color: white;
-    font-weight: 700;
-    font-size: 1.25rem;
-    line-height: 1.3;
-    transition: transform 0.3s ease;
-}
-
-.secondaryText {
+.buttonAuth__text {
     color: rgba(255, 255, 255, 0.85);
     font-weight: 500;
     font-size: 0.95rem;
@@ -129,7 +128,7 @@
     transition: transform 0.3s ease;
 }
 
-.shimmer {
+.buttonAuth__shimmer {
     position: absolute;
     inset: 0;
     background: linear-gradient(
@@ -142,38 +141,8 @@
     transition: transform 1s ease;
 }
 
-.mainButton:hover .shimmer {
+.buttonAuth:hover .buttonAuth__shimmer {
     transform: translateX(100%) skewX(12deg);
-}
-
-.securityBadge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: #64748b;
-}
-
-.shieldIcon {
-    width: 1rem;
-    height: 1rem;
-}
-
-.actionIndicator {
-    position: absolute;
-    right: 24px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1.5rem;
-    height: 1.5rem;
-    color: rgba(255, 255, 255, 0.7);
-    transition: all 0.3s ease;
-}
-
-.mainButton:hover .actionIndicator {
-    color: white;
-    transform: translateY(-50%) translateX(4px);
 }
 
 @keyframes pulse {
@@ -195,78 +164,20 @@
     }
 }
 
-@keyframes zoomIn {
-    from {
-        transform: scale(0);
-    }
-    to {
-        transform: scale(1);
-    }
-}
-
 @media (hover: none) and (pointer: coarse) {
-    .mainButton:hover {
+    .buttonAuth:hover {
         transform: none;
     }
 
-    .mainButton:active {
+    .buttonAuth:active {
         transform: translateY(1px);
         background: linear-gradient(135deg, #3a4b96 0%, #252a50 100%);
     }
 }
 
-@media (max-width: 640px) {
-    .container {
-        padding: 1rem;
-    }
-
-    .content {
-        max-width: 100%;
-    }
-
-    .title {
-        font-size: 1.75rem;
-    }
-
-    .subtitle {
-        font-size: 1rem;
-    }
-
-    .mainButton {
-        min-height: 5rem;
-        padding: 1.25rem;
-    }
-
-    .buttonContent {
-        gap: 0.75rem;
-    }
-
-    .icon {
-        width: 1.75rem;
-        height: 1.75rem;
-    }
-
-    .primaryText {
-        font-size: 1.1rem;
-    }
-
-    .secondaryText {
-        font-size: 0.9rem;
-    }
-}
-
 @media (max-width: 480px) {
-    .buttonContent {
+    .buttonAuth__content {
         flex-direction: column;
         text-align: center;
-        gap: 0.75rem;
-    }
-
-    .primaryText {
-        font-size: 1rem;
-    }
-
-    .secondaryText {
-        font-size: 0.85rem;
     }
 }
