@@ -1,5 +1,6 @@
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
+import { trackEvent } from "@frak-labs/core-sdk";
 import { cx } from "class-variance-authority";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import styles from "./ButtonWallet.module.css";
@@ -81,9 +82,7 @@ export function ButtonWallet({
             )}
             disabled={!isClientReady}
             onClick={() => {
-                window.FrakSetup.client?.openPanel?.track(
-                    "wallet_button_clicked"
-                );
+                trackEvent(window.FrakSetup.client, "wallet_button_clicked");
                 openWalletModal();
             }}
         >

@@ -8,7 +8,7 @@ import {
     RpcErrorCodes,
     type WalletStatusReturnType,
 } from "../../types";
-import { FrakContextManager } from "../../utils";
+import { FrakContextManager, trackEvent } from "../../utils";
 import { displayEmbeddedWallet, sendInteraction } from "../index";
 
 /**
@@ -109,7 +109,7 @@ export async function processReferral(
             // Send the interaction
             sendInteraction(client, { productId, interaction }),
             // Track the event
-            client.openPanel?.track("user_referred", {
+            trackEvent(client, "user_referred", {
                 properties: {
                     referrer: referrer,
                 },

@@ -23,6 +23,7 @@ export {
     formatAmount,
     base64urlDecode,
     base64urlEncode,
+    trackEvent,
 } from "./utils";
 
 // Constants

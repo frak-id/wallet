@@ -4,6 +4,7 @@ import {
     FrakRpcError,
     type FullInteractionTypesKey,
     RpcErrorCodes,
+    trackEvent,
 } from "@frak-labs/core-sdk";
 import { useCallback, useState } from "preact/hooks";
 
@@ -55,7 +56,7 @@ export function useShareModal(targetInteraction?: FullInteractionTypesKey) {
                 window.FrakSetup.client.debugInfo.formatDebugInfo(e);
 
             // Track the error
-            window.FrakSetup.client.openPanel?.track("share_modal_error", {
+            trackEvent(window.FrakSetup.client, "share_modal_error", {
                 error:
                     e instanceof Object && "message" in e
                         ? e.message
