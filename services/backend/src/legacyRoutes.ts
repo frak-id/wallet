@@ -40,7 +40,27 @@ export const legacyRouteMapper = (app: Elysia) =>
             });
 
             // Let the external api handle the request
-            return await app.handle(newRequest);
+            const response = await app.handle(newRequest);
+
+            // Strip down CORS related headers from the response since it would clash with the existing CORS handler
+            const headersToStrip = [
+                "access-control-allow-origin",
+                "access-control-allow-credentials",
+                "access-control-allow-headers",
+                "access-control-allow-methods",
+                "access-control-allow-origin",
+            ];
+            const newHeaders = new Headers();
+            for (const [key, value] of response.headers.entries()) {
+                if (!headersToStrip.includes(key)) {
+                    newHeaders.set(key, value);
+                }
+            }
+
+            return new Response(response.body, {
+                status: response.status,
+                headers: newHeaders,
+            });
         },
         {
             parse: "text",
