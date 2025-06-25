@@ -89,6 +89,6 @@ function walletStatusSideEffect(
         );
     } else {
         // Otherwise, remove it
-        window.sessionStorage.removeItem("frak.interaction-token");
+        window.sessionStorage.removeItem("frak-wallet-interaction-token");
     }
 }
