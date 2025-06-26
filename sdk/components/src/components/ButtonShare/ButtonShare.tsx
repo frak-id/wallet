@@ -1,7 +1,6 @@
 import { Spinner } from "@/components/Spinner";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
-import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 import { cx } from "class-variance-authority";
 import { useCallback, useMemo } from "preact/hooks";
 import styles from "./ButtonShare.module.css";
@@ -19,7 +18,7 @@ async function modalEmbeddedWallet() {
     if (!window.FrakSetup?.client) {
         throw new Error("Frak client not found");
     }
-    await displayEmbeddedWallet(
+    await window.FrakSDK.actions.displayEmbeddedWallet(
         window.FrakSetup.client,
         window.FrakSetup?.modalWalletConfig ?? {}
     );

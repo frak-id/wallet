@@ -1,16 +1,12 @@
 import type { FrakClient } from "@frak-labs/core-sdk";
-import {
-    type ModalBuilder,
-    modalBuilder,
-    referralInteraction,
-} from "@frak-labs/core-sdk/actions";
+import type { ModalBuilder } from "@frak-labs/core-sdk/actions";
 
 /**
  * Setup the modal config
  * @param client
  */
 export function setupModalConfig(client: FrakClient) {
-    window.modalBuilderSteps = modalBuilder(
+    window.modalBuilderSteps = window.FrakSDK.actions.modalBuilder(
         client,
         window.FrakSetup?.modalConfig ?? {}
     );
@@ -21,7 +17,7 @@ export function setupModalConfig(client: FrakClient) {
  * @param client
  */
 export async function setupReferral(client: FrakClient) {
-    const referral = await referralInteraction(client, {
+    const referral = await window.FrakSDK.actions.referralInteraction(client, {
         modalConfig: window.FrakSetup?.modalWalletConfig,
     });
     console.log("referral", referral);

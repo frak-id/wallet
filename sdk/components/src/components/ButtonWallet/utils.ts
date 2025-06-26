@@ -1,5 +1,4 @@
 import { safeVibrate } from "@/utils/safeVibrate";
-import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 
 /**
  * Open the wallet modal
@@ -13,7 +12,7 @@ export function openWalletModal() {
         return;
     }
     safeVibrate();
-    displayEmbeddedWallet(
+    window.FrakSDK.actions.displayEmbeddedWallet(
         window.FrakSetup.client,
         window.FrakSetup?.modalWalletConfig ?? {}
     );

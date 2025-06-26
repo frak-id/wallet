@@ -1,6 +1,5 @@
 import { getModalBuilderSteps } from "@/utils/setup";
 import {
-    DebugInfoGatherer,
     FrakRpcError,
     type FullInteractionTypesKey,
     RpcErrorCodes,
@@ -21,7 +20,7 @@ export function useShareModal(targetInteraction?: FullInteractionTypesKey) {
         if (!window.FrakSetup?.client) {
             console.error("Frak client not found");
             setDebugInfo(
-                DebugInfoGatherer.empty().formatDebugInfo(
+                window.FrakSDK.DebugInfoGatherer.empty().formatDebugInfo(
                     "Frak client not found"
                 )
             );

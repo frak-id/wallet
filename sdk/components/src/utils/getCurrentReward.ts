@@ -1,9 +1,4 @@
-import {
-    type FullInteractionTypesKey,
-    formatAmount,
-    getCurrencyAmountKey,
-} from "@frak-labs/core-sdk";
-import { getProductInformation } from "@frak-labs/core-sdk/actions";
+import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 
 /**
  * The parameters for the getCurrentReward function
@@ -27,12 +22,13 @@ export async function getCurrentReward({
         return;
     }
 
-    const { maxReferrer, rewards } = await getProductInformation(client);
+    const { maxReferrer, rewards } =
+        await window.FrakSDK.actions.getProductInformation(client);
 
     if (!maxReferrer) return;
 
     // Get the currency amount key (e.g. "eurAmount")
-    const currencyAmountKey = getCurrencyAmountKey(
+    const currencyAmountKey = window.FrakSDK.getCurrencyAmountKey(
         client.config.metadata?.currency
     );
 
@@ -49,5 +45,8 @@ export async function getCurrentReward({
         }
     }
 
-    return formatAmount(currentReward, client.config.metadata?.currency);
+    return window.FrakSDK.formatAmount(
+        currentReward,
+        client.config.metadata?.currency
+    );
 }

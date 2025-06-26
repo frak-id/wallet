@@ -1,3 +1,3 @@
 export * from "./index";
-export * from "./actions";
-export * from "./interactions";
+export * as actions from "./actions";
+export * as interactions from "./interactions";

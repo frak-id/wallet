@@ -7,6 +7,7 @@ import type {
     ModalBuilder,
     ModalRpcMetadata,
 } from "@frak-labs/core-sdk";
+import type CoreBundle from "@frak-labs/core-sdk/bundle";
 
 declare global {
     interface Window {
@@ -30,8 +31,8 @@ declare global {
             >["options"];
             // User provided config for the modal wallet
             modalWalletConfig?: DisplayEmbeddedWalletParamsType;
-            // Export the core sdk
-            core?: typeof import("@frak-labs/core-sdk/bundle");
         };
+        // The Frak core SDK itself
+        FrakSDK: typeof CoreBundle;
     }
 }
