@@ -95,7 +95,8 @@
     "viem": "^2.23.14"
   },
   "dependencies": {
-    "@jsonjoy.com/json-pack": "^1.2.0"
+    "@jsonjoy.com/json-pack": "^1.2.0",
+    "@openpanel/web": "^1.0.1"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
