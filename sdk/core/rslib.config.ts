@@ -14,6 +14,7 @@ function createLibConfig(config: LibConfig = {}): LibConfig {
                 index: "./src/index.ts",
                 actions: "./src/actions/index.ts",
                 interactions: "./src/interactions/index.ts",
+                bundle: "./src/bundle.ts",
             },
         },
     };

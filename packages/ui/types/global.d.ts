@@ -30,6 +30,8 @@ declare global {
             >["options"];
             // User provided config for the modal wallet
             modalWalletConfig?: DisplayEmbeddedWalletParamsType;
+            // Export the core sdk
+            core?: typeof import("@frak-labs/core-sdk/bundle");
         };
     }
 }

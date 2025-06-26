@@ -67,6 +67,16 @@
         "types": "./dist/interactions.d.cts",
         "default": "./dist/interactions.cjs"
       }
+    },
+    "./bundle": {
+      "import": {
+        "types": "./dist/bundle.d.ts",
+        "default": "./dist/bundle.js"
+      },
+      "require": {
+        "types": "./dist/bundle.d.cts",
+        "default": "./dist/bundle.cjs"
+      }
     }
   },
   "scripts": {
