@@ -129,13 +129,24 @@ export function EmbeddedCreateCampaign() {
                     </p>
                     <ul className={styles.list}>
                         <li className={styles.listItem}>
-                            <b>Weekly Budget:</b> ${extracted.weeklyBudget}
+                            <b>Budget type:</b> {extracted.budget.type}
+                        </li>
+                        <li className={styles.listItem}>
+                            <b>Budget amount:</b>
+                            {extracted.budget.maxEuroDaily}
                         </li>
                         <li className={styles.listItem}>
                             <b>CAC:</b> ${extracted.cacBrut}
                         </li>
                         <li className={styles.listItem}>
                             <b>Ratio referrer/referee:</b> {extracted.ratio}%
+                        </li>
+                        <li className={styles.listItem}>
+                            <b>Setup currency:</b>{" "}
+                            {!extracted.setupCurrency ||
+                            extracted.setupCurrency === "raw"
+                                ? "usd"
+                                : extracted.setupCurrency}
                         </li>
                     </ul>
                     {createCampaignError && (

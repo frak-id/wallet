@@ -5,6 +5,56 @@ import { useMemo } from "react";
 import { type Address, type Hex, isAddress, keccak256, toHex } from "viem";
 import type { Campaign } from "../../../../types/Campaign";
 
+function getBudget({
+    weeklyBudget,
+    monthlyBudget,
+    globalBudget,
+}: {
+    weeklyBudget: string | null;
+    monthlyBudget: string | null;
+    globalBudget: string | null;
+}): Campaign["budget"] {
+    // Check each budget
+    if (weeklyBudget && Number.isNaN(Number(weeklyBudget))) {
+        throw new Error("Invalid weekly budget");
+    }
+
+    if (monthlyBudget && Number.isNaN(Number(monthlyBudget))) {
+        throw new Error("Invalid monthly budget");
+    }
+
+    if (globalBudget && Number.isNaN(Number(globalBudget))) {
+        throw new Error("Invalid global budget");
+    }
+
+    if (weeklyBudget && monthlyBudget && globalBudget) {
+        throw new Error("Only one budget can be provided");
+    }
+
+    if (!weeklyBudget && !monthlyBudget && !globalBudget) {
+        throw new Error("Missing required parameters");
+    }
+
+    if (weeklyBudget) {
+        return {
+            type: "weekly",
+            maxEuroDaily: Number(weeklyBudget),
+        };
+    }
+
+    if (monthlyBudget) {
+        return {
+            type: "monthly",
+            maxEuroDaily: Number(monthlyBudget),
+        };
+    }
+
+    return {
+        type: "global",
+        maxEuroDaily: Number(globalBudget),
+    };
+}
+
 export function extractSearchParams() {
     const searchParams = useSearchParams();
     return useMemo(() => {
@@ -13,26 +63,19 @@ export function extractSearchParams() {
         const name = searchParams?.get("n");
         const bankId = searchParams?.get("bid");
         const domain = searchParams?.get("d");
-        const weeklyBudget = searchParams?.get("wb");
         const cacBrut = searchParams?.get("cac");
         const ratio = searchParams?.get("r");
+        const setupCurrency = searchParams?.get("sc");
+        // Budget props
+        const weeklyBudget = searchParams?.get("wb");
+        const monthlyBudget = searchParams?.get("mb");
+        const globalBudget = searchParams?.get("gb");
 
-        if (
-            !name ||
-            !bankId ||
-            !domain ||
-            !weeklyBudget ||
-            !cacBrut ||
-            !ratio
-        ) {
+        if (!name || !bankId || !domain || !cacBrut || !ratio) {
             throw new Error("Missing required parameters");
         }
         if (!isAddress(bankId)) {
             throw new Error("Invalid bank id");
-        }
-
-        if (Number.isNaN(Number(weeklyBudget))) {
-            throw new Error("Invalid weekly budget");
         }
 
         if (Number.isNaN(Number(cacBrut))) {
@@ -43,6 +86,13 @@ export function extractSearchParams() {
             throw new Error("Invalid ratio");
         }
 
+        if (
+            setupCurrency &&
+            !["eur", "usd", "gbp", "raw"].includes(setupCurrency)
+        ) {
+            throw new Error("Invalid setup currency");
+        }
+
         // Compute product id
         const productId = keccak256(toHex(domain.replace("www.", "")));
 
@@ -50,10 +100,20 @@ export function extractSearchParams() {
             name,
             bankId,
             domain,
-            weeklyBudget: Number(weeklyBudget),
+            budget: getBudget({
+                weeklyBudget,
+                monthlyBudget,
+                globalBudget,
+            }),
             cacBrut: Number(cacBrut),
             ratio: Number(ratio),
             productId,
+            setupCurrency: setupCurrency as
+                | "eur"
+                | "usd"
+                | "gbp"
+                | "raw"
+                | undefined,
         };
     }, [searchParams]);
 }
@@ -62,26 +122,25 @@ export function createCampaignDraft({
     name,
     bankId,
     productId,
-    weeklyBudget,
+    budget,
     cacBrut,
     ratio,
+    setupCurrency,
 }: {
     name: string;
     bankId: Address;
     productId: Hex;
-    weeklyBudget: number;
+    budget: Campaign["budget"];
     cacBrut: number;
     ratio: number;
+    setupCurrency?: "eur" | "usd" | "gbp" | "raw";
 }) {
     const campaign: Campaign = {
         title: name,
         productId: productId,
         type: "sales", // always sales for shopify embedded campaign
         specialCategories: [],
-        budget: {
-            type: "weekly",
-            maxEuroDaily: weeklyBudget,
-        },
+        budget,
         territories: ["FR", "BE", "SH", "GB", "US"], // Wide coverage for simplified setup
         bank: bankId,
         scheduled: {
@@ -96,7 +155,7 @@ export function createCampaignDraft({
             },
         },
         // On shopify we directly use the token symbol for the setup
-        setupCurrency: "raw",
+        setupCurrency: setupCurrency ?? "raw",
     };
 
     return campaign;
