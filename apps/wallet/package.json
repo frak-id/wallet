@@ -16,7 +16,16 @@
     "format": "biome check --write .",
     "typecheck": "react-router typegen && tsc --noEmit",
     "bundle:check": "sst shell bunx vite-bundle-visualizer",
-    "i18n:types": "bun run i18next-resources-for-ts interface -i ./app/i18n/locales/en/ -o app/types/i18n/resources.d.ts"
+    "i18n:types": "bun run i18next-resources-for-ts interface -i ./app/i18n/locales/en/ -o app/types/i18n/resources.d.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:dev": "TARGET_ENV=dev playwright test",
+    "test:e2e:prod": "TARGET_ENV=prod playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:trace": "playwright show-trace",
+    "test:e2e:dev:ui": "TARGET_ENV=dev playwright test --ui",
+    "test:e2e:prod:ui": "TARGET_ENV=prod playwright test --ui",
+    "test:e2e:dev:codegen": "TARGET_ENV=dev playwright codegen wallet-dev.frak.id"
   },
   "dependencies": {
     "@elysiajs/eden": "^1.2.0",
@@ -72,7 +81,9 @@
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
+    "@playwright/test": "^1.53.1",
     "@react-router/dev": "^7.6.2",
+    "@types/dotenv": "^8.2.3",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^19.1.8",
     "@types/react-avatar-editor": "^13.0.4",

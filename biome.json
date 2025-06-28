@@ -21,7 +21,9 @@
             ".react-router/**",
             ".rslib/**",
             ".svelte-kit/**",
-            "**/*.svelte"
+            "**/*.svelte",
+            "playwright-report/**",
+            "test-results/**"
         ]
     },
     "organizeImports": {
