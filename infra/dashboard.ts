@@ -8,7 +8,6 @@ import {
     openPanelApiUrl,
     openPanelBusinessClientId,
     sessionEncryptionKy,
-    umamiBusinessWebsiteId,
     walletUrl,
 } from "./config";
 import { isProd } from "./utils";
@@ -38,7 +37,6 @@ export const dashboardWebsite = new sst.aws.Nextjs("Dashboard", {
         BACKEND_URL: backendUrl,
         INDEXER_URL: indexerUrl,
         ERPC_URL: erpcUrl,
-        UMAMI_BUSINESS_WEBSITE_ID: umamiBusinessWebsiteId.value,
         OPEN_PANEL_API_URL: openPanelApiUrl,
         OPEN_PANEL_BUSINESS_CLIENT_ID: openPanelBusinessClientId.value,
     },

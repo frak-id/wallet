@@ -56,10 +56,6 @@ export const drpcApiKey = new sst.Secret("DRPC_API_KEY");
 export const pimlicoApiKey = new sst.Secret("PIMLICO_API_KEY");
 export const nexusRpcSecret = new sst.Secret("NEXUS_RPC_SECRET");
 export const vapidPublicKey = new sst.Secret("VAPID_PUBLIC_KEY");
-export const umamiWalletWebsiteId = new sst.Secret("UMAMI_WALLET_WEBSITE_ID");
-export const umamiBusinessWebsiteId = new sst.Secret(
-    "UMAMI_BUSINESS_WEBSITE_ID"
-);
 export const sessionEncryptionKy = new sst.Secret("SESSION_ENCRYPTION_KEY");
 export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
 export const privyAppId = new sst.Secret("PRIVY_APP_ID");

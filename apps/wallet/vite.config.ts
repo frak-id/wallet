@@ -30,9 +30,6 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
             "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
                 process.env.VAPID_PUBLIC_KEY
             ),
-            "process.env.UMAMI_WALLET_WEBSITE_ID": JSON.stringify(
-                process.env.UMAMI_WALLET_WEBSITE_ID
-            ),
             "process.env.PRIVY_APP_ID": JSON.stringify(
                 process.env.PRIVY_APP_ID
             ),
