@@ -1,5 +1,11 @@
 # @frak-labs/core-sdk
 
+## 0.0.18
+
+### Patch Changes
+
+- [#105](https://github.com/frak-id/wallet/pull/105) [`2538a52`](https://github.com/frak-id/wallet/commit/2538a52bcd2ff9b55bddd12a07c7309a28d29b7e) Thanks [@KONFeature](https://github.com/KONFeature)! - Fix openpanel analytics
+
 ## 0.0.17
 
 ### Patch Changes
