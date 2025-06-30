@@ -337,7 +337,7 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "0.0.19",
+      "version": "0.0.20",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "class-variance-authority": "^0.7.1",
@@ -356,7 +356,7 @@
     },
     "sdk/core": {
       "name": "@frak-labs/core-sdk",
-      "version": "0.0.16",
+      "version": "0.0.17",
       "dependencies": {
         "@jsonjoy.com/json-pack": "^1.2.0",
         "@openpanel/web": "^1.0.1",
@@ -376,7 +376,7 @@
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
-      "version": "0.0.38",
+      "version": "0.0.39",
       "devDependencies": {
         "@frak-labs/dev-tooling": "workspace:*",
         "@microsoft/api-extractor": "^7.52.8",
@@ -385,7 +385,7 @@
     },
     "sdk/react": {
       "name": "@frak-labs/react-sdk",
-      "version": "0.0.16",
+      "version": "0.0.17",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
       },
