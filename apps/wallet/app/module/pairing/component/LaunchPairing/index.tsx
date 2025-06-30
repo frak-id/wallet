@@ -3,9 +3,10 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
 import { atom, useAtom, useAtomValue } from "jotai";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { getOriginPairingClient } from "../../clients/store";
+import type { OriginPairingState } from "../../types";
 import { PairingCode } from "../PairingCode";
 import { PairingStatus } from "../PairingStatus";
 import styles from "./index.module.css";
@@ -23,6 +24,10 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
     const [showFullScreen, setShowFullScreen] = useState(showBrighterQRCode);
     const [isExiting, setIsExiting] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const client = getOriginPairingClient();
+
+    // Get the current state of the client
+    const clientState = useAtomValue(client.stateAtom);
 
     // Sync showFullScreen with jotai atom
     useEffect(() => {
@@ -46,6 +51,18 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
         return () => setShowBrighterQRCode(false);
     }, [setShowBrighterQRCode]);
 
+    useEffect(() => {
+        client.initiatePairing({ ssoId });
+        trackAuthInitiated("pairing", {
+            ssoId,
+        });
+    }, [client, ssoId]);
+
+    const pairingContent = useMemo(
+        () => <PairingContent clientState={clientState} />,
+        [clientState]
+    );
+
     return (
         <>
             {showFullScreen && (
@@ -59,31 +76,23 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
                             : styles.launchPairing__brighterQRCode
                     }
                 >
-                    <PairingContent ssoId={ssoId} />
+                    {pairingContent}
                 </div>
             )}
-            <PairingContent ssoId={ssoId} />
+            {pairingContent}
         </>
     );
 }
 
-function PairingContent({ ssoId }: { ssoId?: Hex }) {
+function PairingContent({
+    clientState,
+}: {
+    clientState: OriginPairingState;
+}) {
+    const pairingInfo = clientState.pairing;
     const [showBrighterQRCode, setShowBrighterQRCode] = useAtom(
         showBrighterQRCodeAtom
     );
-    const client = getOriginPairingClient();
-
-    useEffect(() => {
-        client.initiatePairing({ ssoId });
-        trackAuthInitiated("pairing", {
-            ssoId,
-        });
-    }, [client, ssoId]);
-
-    // Get the current state of the client
-    const clientState = useAtomValue(client.stateAtom);
-
-    const pairingInfo = clientState.pairing;
 
     return (
         <div className={styles.launchPairing}>
