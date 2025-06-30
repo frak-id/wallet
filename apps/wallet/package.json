@@ -77,7 +77,6 @@
     "@types/react": "^19.1.8",
     "@types/react-avatar-editor": "^13.0.4",
     "@types/react-dom": "^19.1.6",
-    "@types/umami": "^2.10.0",
     "i18next-resources-for-ts": "^1.6.0",
     "postcss": "^8.5.5",
     "postcss-preset-env": "^10.2.3",

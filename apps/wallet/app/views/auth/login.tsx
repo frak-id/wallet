@@ -1,4 +1,3 @@
-import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
@@ -7,6 +6,7 @@ import { isWebAuthNSupported } from "@/module/common/lib/webauthn";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { Button } from "@frak-labs/ui/component/Button";
+import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -14,7 +14,7 @@ import styles from "./login.module.css";
 
 export default function Login() {
     const { t } = useTranslation();
-    const { login } = useLogin({});
+    const { login, isLoading } = useLogin({});
 
     return (
         <>
@@ -36,8 +36,9 @@ export default function Login() {
             >
                 <PairingInProgress />
                 <ButtonAuth
-                    disabled={!isWebAuthNSupported}
-                    trigger={() => login({})}
+                    disabled={!isWebAuthNSupported || isLoading}
+                    isLoading={isLoading}
+                    onClick={() => login({})}
                 >
                     <Trans i18nKey={"wallet.login.button"} />
                 </ButtonAuth>

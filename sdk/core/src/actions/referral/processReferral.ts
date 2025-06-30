@@ -8,7 +8,7 @@ import {
     RpcErrorCodes,
     type WalletStatusReturnType,
 } from "../../types";
-import { FrakContextManager } from "../../utils";
+import { FrakContextManager, trackEvent } from "../../utils";
 import { displayEmbeddedWallet, sendInteraction } from "../index";
 
 /**
@@ -105,7 +105,16 @@ export async function processReferral(
         const interaction = ReferralInteractionEncoder.referred({
             referrer,
         });
-        await sendInteraction(client, { productId, interaction });
+        await Promise.allSettled([
+            // Send the interaction
+            sendInteraction(client, { productId, interaction }),
+            // Track the event
+            trackEvent(client, "user_referred", {
+                properties: {
+                    referrer: referrer,
+                },
+            }),
+        ]);
     }
 
     try {

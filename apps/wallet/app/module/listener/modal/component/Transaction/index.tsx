@@ -1,10 +1,9 @@
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
-import styles from "@/module/listener/modal/component/Modal/index.module.css";
 import { AccordionTransactions } from "@/module/listener/modal/component/Transaction/AccordionTransactions";
 import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
-import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
+import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { useMemo } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 
@@ -40,10 +39,11 @@ export function TransactionModalStep({
         <>
             <AccordionTransactions txs={txs} />
 
-            <AuthFingerprint
-                className={styles.modalListener__action}
+            <ButtonAuth
+                size={"small"}
+                width={"full"}
                 disabled={isPending}
-                action={() => {
+                onClick={() => {
                     if (!toSendTx) return;
                     sendTransaction(toSendTx);
                 }}
@@ -51,7 +51,7 @@ export function TransactionModalStep({
                 {t("sdk.modal.sendTransaction.primaryAction", {
                     count: txs.length,
                 })}
-            </AuthFingerprint>
+            </ButtonAuth>
 
             {isError && error && <HandleErrors error={error} />}
         </>

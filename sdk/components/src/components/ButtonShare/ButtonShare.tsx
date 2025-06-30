@@ -1,6 +1,7 @@
 import { Spinner } from "@/components/Spinner";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
+import { trackEvent } from "@frak-labs/core-sdk";
 import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 import { cx } from "class-variance-authority";
 import { useCallback, useMemo } from "preact/hooks";
@@ -107,10 +108,14 @@ export function ButtonShare({
     /**
      * The action when the button is clicked
      */
-    const onClick = useCallback(
-        async () => await (showWallet ? modalEmbeddedWallet() : handleShare()),
-        [showWallet, handleShare]
-    );
+    const onClick = useCallback(async () => {
+        trackEvent(window.FrakSetup.client, "share_button_clicked");
+        if (showWallet) {
+            await modalEmbeddedWallet();
+        } else {
+            await handleShare();
+        }
+    }, [showWallet, handleShare]);
 
     return (
         <>

@@ -18,10 +18,9 @@ import { Notice } from "@/module/common/component/Notice";
 import type { Session } from "@/types/Session";
 import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { AuthFingerprint } from "@frak-labs/ui/component/AuthFingerprint";
+import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { Fingerprint } from "@frak-labs/ui/icons/Fingerprint";
 import {
     type UseMutationOptions,
     useMutation,
@@ -282,18 +281,14 @@ function Actions({
     if (privateKey) {
         return (
             <p className={styles.sso__primaryButtonWrapper}>
-                <AuthFingerprint
-                    icon={<Fingerprint color={"#fff"} sizes={39} />}
-                    isShiny={false}
-                    action={() => {
+                <ButtonAuth
+                    onClick={() => {
                         login();
                     }}
                     disabled={isLoginInProgress}
-                    className={styles.sso__buttonPrimary}
-                    childrenPosition={"top"}
                 >
                     {t("authent.sso.btn.existing.login")}
-                </AuthFingerprint>
+                </ButtonAuth>
             </p>
         );
     }

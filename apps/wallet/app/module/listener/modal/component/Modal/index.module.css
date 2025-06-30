@@ -21,10 +21,6 @@
     margin: 4px 0px;
 }
 
-.modalListener__action {
-    margin-top: 20px;
-}
-
 .modalListener__success {
     text-align: center;
     color: var(--frak-color-green);

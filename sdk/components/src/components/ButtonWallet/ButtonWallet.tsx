@@ -1,5 +1,6 @@
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
+import { trackEvent } from "@frak-labs/core-sdk";
 import { cx } from "class-variance-authority";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import styles from "./ButtonWallet.module.css";
@@ -80,7 +81,10 @@ export function ButtonWallet({
                 "override"
             )}
             disabled={!isClientReady}
-            onClick={openWalletModal}
+            onClick={() => {
+                trackEvent(window.FrakSetup.client, "wallet_button_clicked");
+                openWalletModal();
+            }}
         >
             <GiftIcon />
             {reward && <span className={styles.reward}>{reward}</span>}

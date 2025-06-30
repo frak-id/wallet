@@ -18,7 +18,6 @@ import {
     PwaInstall,
     PwaInstallScript,
 } from "./module/common/component/PwaInstall";
-import { AnalyticsWrapper } from "./module/root/component/AnalyticsWrapper";
 // Import open panel to ensure it's initialized
 import "./module/common/analytics";
 
@@ -106,7 +105,6 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Meta />
                 <Links />
                 <PwaInstallScript />
-                <AnalyticsWrapper />
             </head>
             <body className="scrollbars">
                 {children}

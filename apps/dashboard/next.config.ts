@@ -43,7 +43,6 @@ const nextConfig: NextConfig = {
         BACKEND_URL: process.env.BACKEND_URL,
         INDEXER_URL: process.env.INDEXER_URL,
         ERPC_URL: process.env.ERPC_URL,
-        UMAMI_BUSINESS_WEBSITE_ID: process.env.UMAMI_BUSINESS_WEBSITE_ID,
         OPEN_PANEL_API_URL: process.env.OPEN_PANEL_API_URL,
         OPEN_PANEL_BUSINESS_CLIENT_ID:
             process.env.OPEN_PANEL_BUSINESS_CLIENT_ID,

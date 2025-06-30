@@ -19,7 +19,6 @@
         "@frak-labs/nexus-wallet",
         "@frak-labs/app-essentials",
         "@frak-labs/browserslist-config",
-        "@frak-labs/client",
-        "@frak-labs/dev-tooling"
+        "@frak-labs/client"
     ]
 }
