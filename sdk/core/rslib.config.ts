@@ -9,16 +9,6 @@ const openPanelClientId = {
 };
 
 function createLibConfig(config: LibConfig = {}): LibConfig {
-    // Get the right client id based on the stage
-    let opClientId = openPanelClientId.dev;
-    if (process.env.STAGE === "production") {
-        opClientId = openPanelClientId.production;
-    }
-
-    // Get the current version from package.json
-    const packageJson = JSON.parse(fs.readFileSync("./package.json", "utf8"));
-    const sdkVersion = packageJson.version;
-
     // Build the basic config
     const basicConfig: LibConfig = {
         syntax: "es2022",
@@ -33,14 +23,6 @@ function createLibConfig(config: LibConfig = {}): LibConfig {
                 interactions: "./src/interactions/index.ts",
                 bundle: "./src/bundle.ts",
             },
-            define: {
-                "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-                    "https://op-api.gcp.frak.id"
-                ),
-                "process.env.OPEN_PANEL_SDK_CLIENT_ID":
-                    JSON.stringify(opClientId),
-                "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
-            },
         },
     };
 
@@ -49,6 +31,16 @@ function createLibConfig(config: LibConfig = {}): LibConfig {
         ...config,
     };
 }
+
+// Get the right client id based on the stage
+let opClientId = openPanelClientId.dev;
+if (process.env.STAGE === "production") {
+    opClientId = openPanelClientId.production;
+}
+
+// Get the current version from package.json
+const packageJson = JSON.parse(fs.readFileSync("./package.json", "utf8"));
+const sdkVersion = packageJson.version;
 
 export default defineConfig({
     lib: [
@@ -87,5 +79,14 @@ export default defineConfig({
     },
     tools: {
         ...tools,
+    },
+    source: {
+        define: {
+            "process.env.OPEN_PANEL_API_URL": JSON.stringify(
+                "https://op-api.gcp.frak.id"
+            ),
+            "process.env.OPEN_PANEL_SDK_CLIENT_ID": JSON.stringify(opClientId),
+            "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
+        },
     },
 });

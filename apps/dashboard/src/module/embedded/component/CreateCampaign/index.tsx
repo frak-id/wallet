@@ -132,7 +132,7 @@ export function EmbeddedCreateCampaign() {
                             <b>Budget type:</b> {extracted.budget.type}
                         </li>
                         <li className={styles.listItem}>
-                            <b>Budget amount:</b>
+                            <b>Budget amount:</b>{" "}
                             {extracted.budget.maxEuroDaily}
                         </li>
                         <li className={styles.listItem}>
