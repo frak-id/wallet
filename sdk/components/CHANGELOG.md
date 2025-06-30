@@ -1,5 +1,14 @@
 # @frak-labs/components
 
+## 0.0.20
+
+### Patch Changes
+
+- [#103](https://github.com/frak-id/wallet/pull/103) [`333691e`](https://github.com/frak-id/wallet/commit/333691ec7b35768368731584c842d093cef61c05) Thanks [@KONFeature](https://github.com/KONFeature)! - Add analytics tracking within the SDK
+
+- Updated dependencies [[`333691e`](https://github.com/frak-id/wallet/commit/333691ec7b35768368731584c842d093cef61c05)]:
+  - @frak-labs/core-sdk@0.0.17
+
 ## 0.0.19
 
 ### Patch Changes
