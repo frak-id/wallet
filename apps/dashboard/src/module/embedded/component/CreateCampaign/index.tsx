@@ -136,7 +136,7 @@ export function EmbeddedCreateCampaign() {
                             {extracted.budget.maxEuroDaily}
                         </li>
                         <li className={styles.listItem}>
-                            <b>CAC:</b> ${extracted.cacBrut}
+                            <b>CAC:</b> {extracted.cacBrut}
                         </li>
                         <li className={styles.listItem}>
                             <b>Ratio referrer/referee:</b> {extracted.ratio}%

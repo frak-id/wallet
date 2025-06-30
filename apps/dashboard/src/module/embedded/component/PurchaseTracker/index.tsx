@@ -16,8 +16,19 @@ import styles from "../Mint/index.module.css";
 export function EmbeddedPurchaseTracker() {
     const searchParams = useSearchParams();
 
-    const { productId } = useMemo(() => {
+    const { productId, platform, secret } = useMemo(() => {
         const productId = searchParams?.get("pid");
+
+        // Default to shopify values
+        const platform = searchParams?.get("p") ?? "internal";
+        const secret = searchParams?.get("s") ?? "SHOPIFY_SECRET";
+
+        // Validate platform
+        if (
+            !["internal", "custom", "shopify", "woocommerce"].includes(platform)
+        ) {
+            throw new Error("Invalid platform");
+        }
 
         if (!productId) {
             throw new Error("Missing required parameters");
@@ -25,6 +36,12 @@ export function EmbeddedPurchaseTracker() {
 
         return {
             productId,
+            platform: platform as
+                | "internal"
+                | "custom"
+                | "shopify"
+                | "woocommerce",
+            secret,
         };
     }, [searchParams]);
 
@@ -35,6 +52,8 @@ export function EmbeddedPurchaseTracker() {
         isError,
     } = usePurchaseTrackerSetup({
         productId: productId as Hex,
+        platform,
+        secret,
     });
 
     useEffect(() => {
@@ -88,7 +107,15 @@ export function EmbeddedPurchaseTracker() {
     );
 }
 
-function usePurchaseTrackerSetup({ productId }: { productId: Hex }) {
+function usePurchaseTrackerSetup({
+    productId,
+    platform,
+    secret,
+}: {
+    productId: Hex;
+    platform: "internal" | "custom" | "shopify" | "woocommerce";
+    secret: string;
+}) {
     const { refetch } = useOracleSetupData({ productId });
     return useMutation({
         mutationKey: ["product", "oracle-webhook-internal", "setup", productId],
@@ -96,8 +123,8 @@ function usePurchaseTrackerSetup({ productId }: { productId: Hex }) {
             const { error } = await businessApi
                 .product({ productId })
                 .oracleWebhook.setup.post({
-                    hookSignatureKey: "SHOPIFY_SECRET",
-                    platform: "internal",
+                    hookSignatureKey: secret,
+                    platform,
                 });
             if (error) {
                 console.error(error);

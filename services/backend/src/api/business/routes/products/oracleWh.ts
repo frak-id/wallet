@@ -28,7 +28,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
     // Status of the oracle around a product
     .get(
         "/status",
-        async ({ productId, oracle: { db: oracleDb } }) => {
+        async ({ productId, oracle: { db: oracleDb }, businessSession }) => {
             // Get the current oracle
             const currentOracles = await oracleDb
                 .select()
@@ -56,13 +56,17 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             return {
                 setup: true,
                 platform: currentOracle.platform,
-                webhookSigninKey: currentOracle.hookSignatureKey,
-                stats: {
-                    firstPurchase: stats[0]?.firstPurchase ?? undefined,
-                    lastPurchase: stats[0]?.lastPurchase ?? undefined,
-                    lastUpdate: stats[0]?.lastUpdate ?? undefined,
-                    totalPurchaseHandled: stats[0]?.totalPurchaseHandled,
-                },
+                webhookSigninKey: businessSession
+                    ? currentOracle.hookSignatureKey
+                    : "redacted",
+                stats: businessSession
+                    ? {
+                          firstPurchase: stats[0]?.firstPurchase ?? undefined,
+                          lastPurchase: stats[0]?.lastPurchase ?? undefined,
+                          lastUpdate: stats[0]?.lastUpdate ?? undefined,
+                          totalPurchaseHandled: stats[0]?.totalPurchaseHandled,
+                      }
+                    : undefined,
             };
         },
         {
