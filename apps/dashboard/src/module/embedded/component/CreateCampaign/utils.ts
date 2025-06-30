@@ -28,12 +28,14 @@ function getBudget({
     }
 
     // Count how many budgets are provided and ensure exactly one
-    const budgetCount = [weeklyBudget, monthlyBudget, globalBudget].filter(Boolean).length;
-    
+    const budgetCount = [weeklyBudget, monthlyBudget, globalBudget].filter(
+        Boolean
+    ).length;
+
     if (budgetCount === 0) {
         throw new Error("Missing required parameters");
     }
-    
+
     if (budgetCount > 1) {
         throw new Error("Only one budget can be provided");
     }

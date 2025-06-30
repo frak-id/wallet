@@ -3,12 +3,9 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    # Optional: Filter on a unknown file to ensure it doesn't run right now
+    paths:
+      - "dont-run-this.ts"
 
 jobs:
   claude-review:
