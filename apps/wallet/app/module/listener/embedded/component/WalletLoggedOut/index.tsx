@@ -7,6 +7,7 @@ import {
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
+import { cx } from "class-variance-authority";
 import styles from "./index.module.css";
 
 /**
@@ -22,7 +23,12 @@ export function LoggedOutComponent() {
 
     return (
         <>
-            <div className={styles.modalListenerWallet__text}>
+            <div
+                className={cx(
+                    styles.modalListenerWallet__text,
+                    prefixWalletCss("modalListenerWallet__text")
+                )}
+            >
                 <Markdown md={t("sdk.wallet.login.text")} />
             </div>
             {productId && (
@@ -34,11 +40,17 @@ export function LoggedOutComponent() {
                             homepageLink,
                         }}
                         text={t("sdk.wallet.login.primaryAction")}
-                        className={`${styles.modalListenerWallet__buttonPrimary} ${prefixWalletCss("button-primary")}`}
+                        className={cx(
+                            styles.modalListenerWallet__buttonPrimary,
+                            prefixWalletCss("button-primary")
+                        )}
                     />
                     <AuthenticateWithPhone
                         text={t("sdk.modal.login.secondaryAction")}
-                        className={`${styles.modalListenerWallet__buttonPrimary} ${prefixWalletCss("button-primary")}`}
+                        className={cx(
+                            styles.modalListenerWallet__buttonPrimary,
+                            prefixWalletCss("button-primary")
+                        )}
                     />
                 </>
             )}

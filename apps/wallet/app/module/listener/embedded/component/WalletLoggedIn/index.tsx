@@ -26,6 +26,8 @@ import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboa
 import { Copy } from "@frak-labs/ui/icons/Copy";
 import { Power } from "@frak-labs/ui/icons/Power";
 import { Share } from "@frak-labs/ui/icons/Share";
+import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
+import { cx } from "class-variance-authority";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import { trackGenericEvent } from "../../../../common/analytics";
@@ -54,7 +56,12 @@ export function LoggedInComponent() {
 
     // Build the footer
     const footer = (
-        <div className={styles.modalListenerWallet__footer}>
+        <div
+            className={cx(
+                styles.modalListenerWallet__footer,
+                prefixWalletCss("modalListenerWallet__footer")
+            )}
+        >
             <OriginPairingState type="embedded" />
         </div>
     );
@@ -119,7 +126,12 @@ function ActionButtons({
     });
 
     return (
-        <div className={styles.modalListenerWallet__actionButtons}>
+        <div
+            className={cx(
+                styles.modalListenerWallet__actionButtons,
+                prefixWalletCss("modalListenerWallet__actionButtons")
+            )}
+        >
             <ButtonOpenSession refetchPendingBalance={refetchPendingBalance} />
             <ButtonCopyLink
                 finalSharingLink={finalSharingLink}
@@ -144,7 +156,12 @@ function ButtonOpenSession({
         useCloseSession();
 
     return (
-        <div className={styles.modalListenerWallet__wrapperButton}>
+        <div
+            className={cx(
+                styles.modalListenerWallet__wrapperButton,
+                prefixWalletCss("modalListenerWallet__wrapperButton")
+            )}
+        >
             <ButtonWallet
                 variant={currentSession ? "success" : "danger"}
                 icon={<Power />}
@@ -235,7 +252,12 @@ function ButtonSharingLink({
     });
 
     return (
-        <div className={styles.modalListenerWallet__wrapperButton}>
+        <div
+            className={cx(
+                styles.modalListenerWallet__wrapperButton,
+                prefixWalletCss("modalListenerWallet__wrapperButton")
+            )}
+        >
             <ButtonWallet
                 variant={!currentSession ? "disabled" : "primary"}
                 disabled={!currentSession || isSharing}
