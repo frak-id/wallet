@@ -10,6 +10,7 @@ import {
 } from "@frak-labs/app-essentials/blockchain";
 import { backendApi, businessApi } from "@frak-labs/client/server";
 import type {
+    Currency,
     ProductTypesKey,
     SendTransactionModalStepType,
 } from "@frak-labs/core-sdk";
@@ -30,6 +31,7 @@ export function useMintMyProduct(
             domain: string;
             setupCode: string;
             productTypes: ProductTypesKey[];
+            currency?: Currency;
         }
     >
 ) {
@@ -48,7 +50,13 @@ export function useMintMyProduct(
             // Clear info post mutation
             setInfoTxt(undefined);
         },
-        async mutationFn({ name, domain, setupCode, productTypes }) {
+        async mutationFn({
+            name,
+            domain,
+            setupCode,
+            productTypes,
+            currency = "usd",
+        }) {
             // Trigger the backend mint
             setInfoTxt("Registering your product");
             const { data, error } = await businessApi.product.mint.put({
@@ -56,6 +64,7 @@ export function useMintMyProduct(
                 domain,
                 setupCode,
                 productTypes,
+                currency,
             });
             if (error) throw error;
 

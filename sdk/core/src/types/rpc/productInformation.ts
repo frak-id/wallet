@@ -1,6 +1,7 @@
 import type { Address, Hex } from "viem";
 import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
 import type { ProductTypesKey } from "../../constants/productTypes";
+import type { Currency } from "../config";
 
 /**
  * The type for the amount of tokens
@@ -38,6 +39,10 @@ export type GetProductInformationReturnType = {
          */
         productTypes: ProductTypesKey[];
     };
+    /**
+     * The main currency of the product
+     */
+    currency: Currency;
     /**
      * The max potential reward for the referrer
      */
