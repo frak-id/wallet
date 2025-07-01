@@ -50,6 +50,9 @@ function InnerStatus({
                 <p>
                     <b>Types:</b> {info.onChainMetadata.productTypes.join(", ")}
                 </p>
+                <p>
+                    <b>Currency:</b> {info.currency}
+                </p>
             </div>
             <h4>Active reward</h4>
             <div>

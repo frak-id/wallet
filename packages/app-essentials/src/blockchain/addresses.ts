@@ -1,3 +1,5 @@
+import { isRunningInProd } from "../utils/env";
+
 /**
  * The Frak ecosystem addresses
  */
@@ -35,3 +37,28 @@ export const kernelAddresses = {
  * The usdc address on arbitrum
  */
 export const usdcArbitrumAddress = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
+
+/**
+ * Stablecoin addresses for different environments
+ */
+export const stablecoins = {
+    // Production addresses (Arbitrum mainnet)
+    prod: {
+        eure: "0x0c06cCF38114ddfc35e07427B9424adcca9F44F8",
+        gbpe: "0x2D80dBf04D0802abD7A342DaFA5d7cB42bfbb52f",
+        usde: "0x0Fc041a4B6a3F634445804daAFD03f202337C125",
+    },
+    // Testnet addresses (Arbitrum Sepolia)
+    testnet: {
+        eure: "0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B",
+        gbpe: "0x73734dfe9902C4bD411A9577905D9afC15B1d93B",
+        usde: "0xF11444Ee82a391315B06916667796Aa3d33d1A78",
+    },
+} as const;
+
+/**
+ * Get the current stablecoin addresses based on environment
+ */
+export const currentStablecoins = isRunningInProd
+    ? stablecoins.prod
+    : stablecoins.testnet;

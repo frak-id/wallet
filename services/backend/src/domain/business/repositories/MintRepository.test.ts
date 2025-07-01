@@ -116,6 +116,7 @@ describe("MintRepository", () => {
             domain: "example.com",
             productTypes: ["press", "webshop"] as ProductTypesKey[],
             owner: mockOwner,
+            currency: "usd" as const,
         };
 
         beforeEach(() => {
@@ -365,6 +366,158 @@ describe("MintRepository", () => {
                 }
             ).encodeProductTypesMask([]);
             expect(result).toBe(0n);
+        });
+    });
+
+    describe("multi-currency support", () => {
+        const mintParamsWithCurrency = {
+            name: "Test Product",
+            domain: "example.com",
+            productTypes: ["press", "webshop"] as ProductTypesKey[],
+            owner: mockOwner,
+            currency: "eur" as const,
+        };
+
+        beforeEach(() => {
+            // Mock successful product existence check (product doesn't exist)
+            viemActionsMocks.readContract.mockResolvedValue({
+                productTypes: 0n,
+            });
+
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParamsWithCurrency.domain
+            );
+
+            // Mock successful mint simulation
+            viemActionsMocks.simulateContract.mockResolvedValue({
+                request: { to: "0xproductregistry" },
+                result: expectedProductId,
+            });
+
+            // Mock successful deployments
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
+                    request: { to: "0xproductregistry" },
+                    result: expectedProductId,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xinteractionmanager" },
+                    result: mockInteractionAddress,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xcampaignbankfactory" },
+                    result: mockBankAddress,
+                });
+        });
+
+        it("should mint product with EUR currency", async () => {
+            const result = await mintRepository.mintProduct(
+                mintParamsWithCurrency
+            );
+
+            expect(result.productId).toBeDefined();
+            expect(result.mintTxHash).toBe(mockTxHash);
+            expect(result.bankResult?.bank).toBe(mockBankAddress);
+        });
+
+        it("should mint product with GBP currency", async () => {
+            const gbpParams = {
+                ...mintParamsWithCurrency,
+                currency: "gbp" as const,
+            };
+            const result = await mintRepository.mintProduct(gbpParams);
+
+            expect(result.productId).toBeDefined();
+            expect(result.mintTxHash).toBe(mockTxHash);
+            expect(result.bankResult?.bank).toBe(mockBankAddress);
+        });
+
+        it("should mint product with USD currency", async () => {
+            const usdParams = {
+                ...mintParamsWithCurrency,
+                currency: "usd" as const,
+            };
+            const result = await mintRepository.mintProduct(usdParams);
+
+            expect(result.productId).toBeDefined();
+            expect(result.mintTxHash).toBe(mockTxHash);
+            expect(result.bankResult?.bank).toBe(mockBankAddress);
+        });
+    });
+
+    describe("multi-currency support", () => {
+        const mintParamsWithCurrency = {
+            name: "Test Product",
+            domain: "example.com",
+            productTypes: ["press", "webshop"] as ProductTypesKey[],
+            owner: mockOwner,
+            currency: "eur" as const,
+        };
+
+        beforeEach(() => {
+            // Mock successful product existence check (product doesn't exist)
+            viemActionsMocks.readContract.mockResolvedValue({
+                productTypes: 0n,
+            });
+
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParamsWithCurrency.domain
+            );
+
+            // Mock successful mint simulation
+            viemActionsMocks.simulateContract.mockResolvedValue({
+                request: { to: "0xproductregistry" },
+                result: expectedProductId,
+            });
+
+            // Mock successful deployments
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
+                    request: { to: "0xproductregistry" },
+                    result: expectedProductId,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xinteractionmanager" },
+                    result: mockInteractionAddress,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xcampaignbankfactory" },
+                    result: mockBankAddress,
+                });
+        });
+
+        it("should mint product with EUR currency", async () => {
+            const result = await mintRepository.mintProduct(
+                mintParamsWithCurrency
+            );
+
+            expect(result.productId).toBeDefined();
+            expect(result.mintTxHash).toBe(mockTxHash);
+            expect(result.bankResult?.bank).toBe(mockBankAddress);
+        });
+
+        it("should mint product with GBP currency", async () => {
+            const gbpParams = {
+                ...mintParamsWithCurrency,
+                currency: "gbp" as const,
+            };
+            const result = await mintRepository.mintProduct(gbpParams);
+
+            expect(result.productId).toBeDefined();
+            expect(result.mintTxHash).toBe(mockTxHash);
+            expect(result.bankResult?.bank).toBe(mockBankAddress);
+        });
+
+        it("should mint product with USD currency", async () => {
+            const usdParams = {
+                ...mintParamsWithCurrency,
+                currency: "usd" as const,
+            };
+            const result = await mintRepository.mintProduct(usdParams);
+
+            expect(result.productId).toBeDefined();
+            expect(result.mintTxHash).toBe(mockTxHash);
+            expect(result.bankResult?.bank).toBe(mockBankAddress);
         });
     });
 });

@@ -83,7 +83,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
         "",
         async ({
             businessSession,
-            body: { name, domain, productTypes, setupCode },
+            body: { name, domain, productTypes, setupCode, currency },
             business: {
                 repositories: {
                     mint: mintRepository,
@@ -119,6 +119,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                         domain: normalizedDomain,
                         productTypes,
                         owner: businessSession.wallet,
+                        currency,
                     });
 
                 return {
@@ -137,6 +138,11 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                 name: t.String(),
                 domain: t.String(),
                 setupCode: t.Optional(t.String()),
+                currency: t.Union([
+                    t.Literal("usd"),
+                    t.Literal("eur"),
+                    t.Literal("gbp"),
+                ]),
                 productTypes: t.Array(
                     t.UnionEnum(
                         Object.keys(productTypes) as [

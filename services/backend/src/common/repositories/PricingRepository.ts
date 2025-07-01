@@ -1,4 +1,9 @@
-import { addresses, usdcArbitrumAddress } from "@frak-labs/app-essentials";
+import { addresses } from "@frak-labs/app-essentials";
+import {
+    currentStablecoins,
+    usdcArbitrumAddress,
+} from "@frak-labs/app-essentials/blockchain";
+import type { Currency } from "@frak-labs/core-sdk";
 import { Mutex } from "async-mutex";
 import ky, { type KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
@@ -46,13 +51,49 @@ export class PricingRepository {
     }
 
     /**
+     * Get exchange rate between two currencies
+     * @param fromCurrency
+     * @param toCurrency
+     */
+    async getExchangeRate({
+        fromCurrency,
+        toCurrency,
+    }: {
+        fromCurrency: Currency;
+        toCurrency: Currency;
+    }): Promise<number> {
+        // If same currency, return 1
+        if (fromCurrency === toCurrency) {
+            return 1;
+        }
+
+        // For different currencies, we would need to implement proper exchange rate logic
+        // For now, return 1 as a placeholder (this should be implemented with real exchange rates)
+        return 1;
+    }
+
+    /**
      * Get a current token price in both eur and usd
      */
     private async _getTokenPrice({ token }: { token: Address }) {
-        // Replaced mocked USD token address with the usdc address
-        const finalToken = isAddressEqual(token, addresses.mUSDToken)
-            ? usdcArbitrumAddress
-            : token;
+        // Handle special token mappings
+        let finalToken = token;
+
+        // Replace mocked USD token address with the usdc address
+        if (isAddressEqual(token, addresses.mUSDToken)) {
+            finalToken = usdcArbitrumAddress;
+        }
+
+        // For stablecoins, return fixed rates
+        if (isAddressEqual(token, currentStablecoins.usde)) {
+            return { usd: 1, eur: 0.85, gbp: 0.75 }; // Approximate rates
+        }
+        if (isAddressEqual(token, currentStablecoins.eure)) {
+            return { usd: 1.18, eur: 1, gbp: 0.88 }; // Approximate rates
+        }
+        if (isAddressEqual(token, currentStablecoins.gbpe)) {
+            return { usd: 1.33, eur: 1.14, gbp: 1 }; // Approximate rates
+        }
 
         // Check if we have the token in cache
         const cached = this.cache.get(finalToken);
