@@ -3,6 +3,7 @@ import type {
     FinalActionType,
     FrakClient,
     FrakWalletSdkConfig,
+    I18nConfig,
     LoginModalStepType,
     ModalBuilder,
     ModalRpcMetadata,
@@ -30,6 +31,8 @@ declare global {
             >["options"];
             // User provided config for the modal wallet
             modalWalletConfig?: DisplayEmbeddedWalletParamsType;
+            // Campaign-specific i18n configurations
+            campaignI18n?: Record<string, I18nConfig>;
             // Export the core sdk
             core?: typeof import("@frak-labs/core-sdk/bundle");
         };

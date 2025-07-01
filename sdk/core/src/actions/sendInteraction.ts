@@ -21,7 +21,12 @@ import { computeProductId } from "../utils/computeProductId";
  */
 export async function sendInteraction(
     client: FrakClient,
-    { productId, interaction, validation, campaignId }: SendInteractionParamsType
+    {
+        productId,
+        interaction,
+        validation,
+        campaignId,
+    }: SendInteractionParamsType
 ): Promise<SendInteractionReturnType> {
     const pId = productId ?? computeProductId(client.config);
 

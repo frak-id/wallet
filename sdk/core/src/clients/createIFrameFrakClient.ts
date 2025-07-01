@@ -1,7 +1,7 @@
 import { OpenPanel } from "@openpanel/web";
 import { type ExtractedParametersFromRpc, FrakRpcError } from "../types";
 import type { FrakClient } from "../types/client";
-import type { FrakWalletSdkConfig, EnhancedI18nConfig, I18nConfig } from "../types/config";
+import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { InternalError, RpcErrorCodes } from "../types/rpc/error";
 import type {
@@ -316,22 +316,10 @@ async function postConnectionSetup({
         const i18n = config.customizations?.i18n;
         if (!i18n) return;
 
-        // If it's an EnhancedI18nConfig, we need to resolve it to a regular I18nConfig
-        // For now, we'll use the global config from the enhanced config, or fall back to regular config
-        let resolvedI18n: I18nConfig;
-        if (typeof i18n === "object" && !Array.isArray(i18n) && ("global" in i18n || "campaigns" in i18n)) {
-            // It's an EnhancedI18nConfig
-            const enhancedConfig = i18n as EnhancedI18nConfig;
-            resolvedI18n = enhancedConfig.global || {};
-        } else {
-            // It's a regular I18nConfig
-            resolvedI18n = i18n as I18nConfig;
-        }
-
         // Push the i18n for each language
         messageHandler.sendEvent({
             clientLifecycle: "modal-i18n",
-            data: { i18n: resolvedI18n },
+            data: { i18n },
         });
     }
 

@@ -1,6 +1,6 @@
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
-import { resolveI18nFromGlobalSetup } from "@/utils/i18nResolver";
+import { resolveI18nConfig } from "@/utils/i18nResolver";
 import { safeVibrate } from "@/utils/safeVibrate";
 import { trackEvent } from "@frak-labs/core-sdk";
 import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
@@ -50,7 +50,6 @@ export function ButtonWallet({
     useReward: rawUseReward,
     targetInteraction,
     campaignId,
-    campaignI18n,
 }: ButtonWalletProps) {
     const shouldUseReward = useMemo(
         () => rawUseReward !== undefined,
@@ -84,9 +83,8 @@ export function ButtonWallet({
         safeVibrate();
 
         // Resolve i18n configuration
-        const resolvedI18n = resolveI18nFromGlobalSetup({
+        const resolvedI18n = resolveI18nConfig({
             campaignId,
-            campaignI18n,
         });
 
         // Create modal config with resolved i18n
@@ -99,7 +97,7 @@ export function ButtonWallet({
         };
 
         await displayEmbeddedWallet(window.FrakSetup.client, modalConfig);
-    }, [campaignId, campaignI18n]);
+    }, [campaignId]);
 
     return (
         <button

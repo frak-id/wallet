@@ -59,7 +59,9 @@ export class CampaignRewardsService {
     async getActiveRewardsForProduct({
         productId,
         campaignId,
-    }: { productId: Hex; campaignId?: Address }): Promise<ActiveReward[] | undefined> {
+    }: { productId: Hex; campaignId?: Address }): Promise<
+        ActiveReward[] | undefined
+    > {
         // Query our indexer to fetch the campaigns for the given product
         const { campaigns, tokens } = await this.getCampaignData(productId);
         if (!campaigns.length) return undefined;
@@ -214,21 +216,21 @@ export class CampaignRewardsService {
     private filterCampaignsByScope({
         campaigns,
         campaignId,
-    }: { 
-        campaigns: GetCampaignResponseDto["campaigns"]; 
+    }: {
+        campaigns: GetCampaignResponseDto["campaigns"];
         campaignId?: Address;
     }) {
-        return campaigns.filter(campaign => {
+        return campaigns.filter((campaign) => {
             // If no scope info available, assume global (backward compatibility)
             if (!campaign.scope || campaign.scope.type === "global") {
                 return true;
             }
-            
+
             // For specific campaigns, campaignId must be provided and match
             if (campaign.scope.type === "specific") {
                 return campaignId === campaign.address;
             }
-            
+
             return false;
         });
     }

@@ -1,7 +1,8 @@
 import { Spinner } from "@/components/Spinner";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
-import { type CampaignI18nConfig, trackEvent } from "@frak-labs/core-sdk";
+import { resolveI18nConfig } from "@/utils/i18nResolver";
+import { trackEvent } from "@frak-labs/core-sdk";
 import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 import { cx } from "class-variance-authority";
 import { useCallback, useMemo } from "preact/hooks";
@@ -18,22 +19,16 @@ import type { ButtonShareProps } from "./types";
  */
 async function modalEmbeddedWallet({
     campaignId,
-    campaignI18n,
 }: {
     campaignId?: string;
-    campaignI18n?: CampaignI18nConfig;
 } = {}) {
     if (!window.FrakSetup?.client) {
         throw new Error("Frak client not found");
     }
 
-    // Import the resolver here to avoid circular dependency
-    const { resolveI18nFromGlobalSetup } = await import("@/utils/i18nResolver");
-
     // Resolve i18n configuration
-    const resolvedI18n = resolveI18nFromGlobalSetup({
+    const resolvedI18n = resolveI18nConfig({
         campaignId,
-        campaignI18n,
     });
 
     // Create modal config with resolved i18n
@@ -97,7 +92,6 @@ export function ButtonShare({
     targetInteraction,
     showWallet: rawShowWallet,
     campaignId,
-    campaignI18n,
 }: ButtonShareProps) {
     const shouldUseReward = useMemo(
         () => rawUseReward !== undefined,
@@ -115,7 +109,6 @@ export function ButtonShare({
     const { handleShare, isError, debugInfo } = useShareModal({
         targetInteraction,
         campaignId,
-        campaignI18n,
     });
 
     /**
@@ -138,11 +131,11 @@ export function ButtonShare({
     const onClick = useCallback(async () => {
         trackEvent(window.FrakSetup.client, "share_button_clicked");
         if (showWallet) {
-            await modalEmbeddedWallet({ campaignId, campaignI18n });
+            await modalEmbeddedWallet({ campaignId });
         } else {
             await handleShare();
         }
-    }, [showWallet, handleShare, campaignId, campaignI18n]);
+    }, [showWallet, handleShare, campaignId]);
 
     return (
         <>

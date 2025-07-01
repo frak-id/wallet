@@ -1,7 +1,6 @@
-import { resolveI18nFromGlobalSetup } from "@/utils/i18nResolver";
+import { resolveI18nConfig } from "@/utils/i18nResolver";
 import { getModalBuilderSteps } from "@/utils/setup";
 import {
-    type CampaignI18nConfig,
     DebugInfoGatherer,
     FrakRpcError,
     type FullInteractionTypesKey,
@@ -19,11 +18,9 @@ import { useCallback, useState } from "preact/hooks";
 export function useShareModal({
     targetInteraction,
     campaignId,
-    campaignI18n,
 }: {
     targetInteraction?: FullInteractionTypesKey;
     campaignId?: string;
-    campaignI18n?: CampaignI18nConfig;
 }) {
     const [debugInfo, setDebugInfo] = useState<string | undefined>(undefined);
     const [isError, setIsError] = useState(false);
@@ -48,9 +45,8 @@ export function useShareModal({
 
         try {
             // Resolve i18n configuration
-            const resolvedI18n = resolveI18nFromGlobalSetup({
+            const resolvedI18n = resolveI18nConfig({
                 campaignId,
-                campaignI18n,
             });
 
             await modalBuilderSteps
@@ -85,7 +81,7 @@ export function useShareModal({
             setIsError(true);
             console.error("Error while opening the modal", e);
         }
-    }, [targetInteraction, campaignId, campaignI18n]);
+    }, [targetInteraction, campaignId]);
 
     return { handleShare, isError, debugInfo };
 }

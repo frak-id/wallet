@@ -19,11 +19,11 @@ function compress(context?: Partial<FrakContext>): string | undefined {
         const hasCampaign = !!context.c;
         const bufferSize = hasCampaign ? 41 : 20; // 20 + 20 + 1 flag byte or just 20
         const buffer = new Uint8Array(bufferSize);
-        
+
         // Add referrer address
         const referrerBytes = hexToBytes(context.r);
         buffer.set(referrerBytes, 0);
-        
+
         if (hasCampaign && context.c) {
             // Add flag indicating campaign is present
             buffer[20] = 1;
@@ -31,7 +31,7 @@ function compress(context?: Partial<FrakContext>): string | undefined {
             const campaignBytes = hexToBytes(context.c);
             buffer.set(campaignBytes, 21);
         }
-        
+
         return base64urlEncode(buffer);
     } catch (e) {
         console.error("Error compressing Frak context", { e, context });
@@ -48,19 +48,19 @@ function decompress(context?: string): FrakContext | undefined {
     if (!context || context.length === 0) return;
     try {
         const bytes = base64urlDecode(context);
-        
+
         // Extract referrer address (first 20 bytes)
         const referrerBytes = bytes.slice(0, 20);
-        const result: FrakContext = { 
-            r: bytesToHex(referrerBytes, { size: 20 }) as Address 
+        const result: FrakContext = {
+            r: bytesToHex(referrerBytes, { size: 20 }) as Address,
         };
-        
+
         // Check if campaign data is present (buffer size > 20 and flag byte is set)
         if (bytes.length > 20 && bytes[20] === 1) {
             const campaignBytes = bytes.slice(21, 41);
             result.c = bytesToHex(campaignBytes, { size: 20 }) as Address;
         }
-        
+
         return result;
     } catch (e) {
         console.error("Error decompressing Frak context", { e, context });
@@ -74,11 +74,13 @@ function decompress(context?: string): FrakContext | undefined {
  * @param args.url - The url to parse
  * @returns The parsed Frak context (partial if only campaignId is present)
  */
-function parse({ url }: { url: string }): FrakContext | Partial<FrakContext> | null {
+function parse({
+    url,
+}: { url: string }): FrakContext | Partial<FrakContext> | null {
     if (!url) return null;
 
     const urlObj = new URL(url);
-    
+
     // Check if the url contain the frak context key
     const frakContext = urlObj.searchParams.get(contextKey);
     if (frakContext) {
@@ -86,7 +88,7 @@ function parse({ url }: { url: string }): FrakContext | Partial<FrakContext> | n
         const decompressed = decompress(frakContext);
         return decompressed || null;
     }
-    
+
     // Also check for direct campaignId parameter
     const campaignId = urlObj.searchParams.get("campaignId");
     if (campaignId) {
@@ -100,7 +102,7 @@ function parse({ url }: { url: string }): FrakContext | Partial<FrakContext> | n
             console.error("Invalid campaignId parameter", { e, campaignId });
         }
     }
-    
+
     return null;
 }
 
@@ -193,24 +195,24 @@ function replaceUrl({
  * @param args.url - Alternative URL to parse campaignId from
  * @returns The campaign ID if found
  */
-function extractCampaignId({ 
-    context, 
-    url 
-}: { 
-    context?: Partial<FrakContext>; 
-    url?: string; 
+function extractCampaignId({
+    context,
+    url,
+}: {
+    context?: Partial<FrakContext>;
+    url?: string;
 }): Address | undefined {
     // First check context
     if (context?.c) {
         return context.c;
     }
-    
+
     // Then check URL
     if (url) {
         const parsedContext = parse({ url });
         return parsedContext?.c;
     }
-    
+
     return undefined;
 }
 

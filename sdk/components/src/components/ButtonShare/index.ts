@@ -17,7 +17,7 @@ declare global {
 registerWebComponent(
     ButtonShare,
     "frak-button-share",
-    ["text", "campaign-id", "campaign-i18n"],
+    ["text", "campaign-id"],
     {
         shadow: false,
     }

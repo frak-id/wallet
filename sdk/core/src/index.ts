@@ -53,8 +53,6 @@ export type {
     Language,
     I18nConfig,
     LocalizedI18nConfig,
-    CampaignI18nConfig,
-    EnhancedI18nConfig,
     TokenAmountType,
     GetProductInformationReturnType,
     // RPC Embedded wallet

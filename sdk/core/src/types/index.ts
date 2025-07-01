@@ -44,8 +44,6 @@ export type {
     Language,
     I18nConfig,
     LocalizedI18nConfig,
-    CampaignI18nConfig,
-    EnhancedI18nConfig,
 } from "./config";
 export type {
     CompressedData,
